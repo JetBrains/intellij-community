@@ -9,10 +9,13 @@ import fleet.kernel.rete.Query
 import fleet.kernel.rete.RevalidationPort
 import fleet.util.logging.KLogger
 import fleet.fastutil.longs.LongSet
+import fleet.kernel.rete.Many
 import kotlin.coroutines.CoroutineContext
 
-data class QueryTracingKey(val tracingKey: Any,
-                           val logger: KLogger) : CoroutineContext.Element {
+data class QueryTracingKey(
+  val tracingKey: Any,
+  val logger: KLogger,
+) : CoroutineContext.Element {
   companion object : CoroutineContext.Key<QueryTracingKey>
 
   override val key: CoroutineContext.Key<*>
@@ -22,30 +25,31 @@ data class QueryTracingKey(val tracingKey: Any,
 }
 
 
-internal fun <T> Query<T>.tracing(trackingKey: QueryTracingKey?): Query<T> = let { query ->
-  when (trackingKey) {
-    null -> query
-    else -> Query {
-      val queryId = query.hashCode()
-      trackingKey.logger.info { "${trackingKey}: query $queryId is added to the network" }
-      onDispose {
-        trackingKey.logger.info { "${trackingKey}: query $queryId is removed from the network" }
-      }
-      val producer = query.producer()
-      Producer { emit ->
-        val collectorId = emit.hashCode()
-        trackingKey.logger.info { "${trackingKey}: query $queryId is being collected by $collectorId" }
+internal fun <T> Query<*, T>.tracing(trackingKey: QueryTracingKey?): Query<*, T> =
+  let { query ->
+    when (trackingKey) {
+      null -> query
+      else -> Query<Many, T> {
+        val queryId = query.hashCode()
+        trackingKey.logger.info { "${trackingKey}: query $queryId is added to the network" }
         onDispose {
-          trackingKey.logger.info { "${trackingKey}: query $queryId has stopped being collected by $collectorId" }
+          trackingKey.logger.info { "${trackingKey}: query $queryId is removed from the network" }
         }
-        producer.collect { token ->
-          trackingKey.logger.info { "${trackingKey}: query $queryId emits token $token to $collectorId" }
-          emit(token)
+        val producer = query.producer()
+        Producer { emit ->
+          val collectorId = emit.hashCode()
+          trackingKey.logger.info { "${trackingKey}: query $queryId is being collected by $collectorId" }
+          onDispose {
+            trackingKey.logger.info { "${trackingKey}: query $queryId has stopped being collected by $collectorId" }
+          }
+          producer.collect { token ->
+            trackingKey.logger.info { "${trackingKey}: query $queryId emits token $token to $collectorId" }
+            emit(token)
+          }
         }
       }
     }
   }
-}
 
 internal fun RevalidationPort.tracing(patterns: LongSet, tracingKey: QueryTracingKey?): RevalidationPort = let { port ->
   tracingKey?.logger?.info { "${tracingKey}: subscribing revalidation port $port with patterns $patterns" }

@@ -8,6 +8,7 @@ import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.DatomEntry
 import fleet.kernel.rete.impl.SubscriptionsIndex.PatternIndexEntry.RevalidationEntry
 import fleet.fastutil.longs.Long2ObjectOpenHashMap
 import fleet.fastutil.longs.LongSet
+import fleet.kernel.rete.Cardinality
 import kotlinx.coroutines.flow.MutableStateFlow
 import fleet.util.PriorityQueue
 import kotlin.jvm.JvmInline
@@ -33,7 +34,7 @@ internal fun SubscriptionTree.subscriptionScope(
   node: Node,
   subscriptionIndex: SubscriptionsIndex,
   depth: Int,
-  tracingKey: QueryTracingKey?
+  tracingKey: QueryTracingKey?,
 ): SubscriptionScope = let { scope ->
   object : SubscriptionScope {
     override fun onDispose(sub: Subscription) = scope.attach(sub)
@@ -72,12 +73,12 @@ internal fun SubscriptionTree.subscriptionScope(
 
 internal class ProducerNode(
   val node: Node,
-  val producer: Producer<*>
+  val producer: Producer<*>,
 )
 
 internal class ObserverNode(
   val node: Node,
-  var onTokens: OnTokens<*>
+  var onTokens: OnTokens<*>,
 ) {
 
   private var dependants: MutableMap<Match<*>, MutableSet<Node>>? = null
@@ -196,17 +197,17 @@ internal class Propagation {
 internal class ReteNetworkImpl(
   val lastKnownDb: MutableStateFlow<ReteState>,
   val failWhenPropagationFailed: Boolean,
-  val performAdditionalChecks: Boolean
+  val performAdditionalChecks: Boolean,
 ) : ReteNetwork {
 
   val subscriptionIndex = SubscriptionsIndex()
-  val producers = HashMap<InternedQuery<*>, ProducerNode>()
+  val producers = HashMap<InternedQuery<*, *>, ProducerNode>()
   val observers = Long2ObjectOpenHashMap<ObserverNode>()
   var propagation: Propagation? = null
   var nextObserverId: Int = 0
   var hydrating: Boolean = false
 
-  fun <T> safeProducer(query: Query<T>, scope: QueryScope, node: Node): Producer<T> =
+  fun <T> safeProducer(query: Query<*, T>, scope: QueryScope, node: Node): Producer<T> =
     query.runCatching {
       scope.producerImpl().catching { x ->
         Rete.logger.error(x, "producer failed for: $query")
@@ -222,7 +223,7 @@ internal class ReteNetworkImpl(
       }
     }
 
-  fun internQuery(query: InternedQuery<*>, nodeBuilder: () -> ProducerNode): ProducerNode =
+  fun internQuery(query: InternedQuery<*, *>, nodeBuilder: () -> ProducerNode): ProducerNode =
     producers.getOrPut(query) {
       nodeBuilder().also {
         it.node.subscriptionTree.attach {
@@ -260,9 +261,9 @@ internal class ReteNetworkImpl(
        * Since they are fused within the same network Node, subscriptions to patterns are not ordered in any way.
        * However if the upstream would retract the match, the pattern subscription of the downstream, corresponding to this match should have been discarded
        * */
-      override fun <T> Query<T>.producer(): Producer<T> = let { query ->
+      override fun <C : Cardinality, T> Query<C, T>.producer(): Producer<T> = let { query ->
         when {
-          query is InternedQuery<*> -> {
+          query is InternedQuery<*, *> -> {
             val producerNode = internQuery(query) {
               val producerNode = Node(idGen.nextQueryId())
               val queryScope = queryScope(producerNode, 0, idGen, tracingKey)
@@ -295,10 +296,10 @@ internal class ReteNetworkImpl(
     }
 
   override fun <T> observeQuery(
-    query: Query<T>,
+    query: Query<*, T>,
     tracingKey: QueryTracingKey?,
     dependencies: Collection<ObservableMatch<*>>,
-    observer: QueryObserver<T>
+    observer: QueryObserver<T>,
   ): Subscription =
     if (dependencies.all { match -> !match.wasInvalidated }) {
       val db = lastKnownDb.value.dbOrThrow()

@@ -48,7 +48,7 @@ data class Rete internal constructor(
     data class AddObserver<T>(
       val dbTimestamp: Long,
       val dependencies: Collection<ObservableMatch<*>>,
-      val query: Query<T>,
+      val query: Query<*, T>,
       val tracingKey: QueryTracingKey?,
       val observerId: ObserverId,
       val observer: QueryObserver<T>,
@@ -167,9 +167,10 @@ suspend fun <T> withRete(
  * if [Match] is retracted, [body] is cancelled and [WithMatchResult.Failure] returned to the caller
  * runs [body] on [Rete] [fleet.kernel.DbSource]
  * */
-suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): WithMatchResult<U> = let { self ->
-  withObservableMatches((observableSubmatches() as Sequence<ObservableMatch<*>>)) { body(self.value) }
-}
+suspend fun <T, U> Match<T>.withMatch(body: suspend CoroutineScope.(T) -> U): WithMatchResult<U> =
+  let { self ->
+    withObservableMatches((observableSubmatches() as Sequence<ObservableMatch<*>>)) { body(self.value) }
+  }
 
 /**
  * Ensures [Rete] has processed all changes up until the timestamp of the [targetDb] or,
@@ -279,7 +280,7 @@ private val ReteSpinChangeInterceptor: ChangeInterceptor =
  * asynchronously adds [QueryObserver] to the [Query], returns a handle to asynchronously unsubscribe
  * [observer] should be as fast as possible or it will inhibit general throughput of the rete network
  */
-fun <T> Query<T>.observe(
+fun <T> Query<*, T>.observe(
   rete: Rete,
   dbTimestamp: Long,
   contextMatches: ContextMatches?,
@@ -315,8 +316,8 @@ internal suspend fun <T> withReteDbSource(body: suspend CoroutineScope.() -> T):
         res to db().timestamp
       }
       // we're switching db source here:
-      // in general we don't know how this db source is ordered to Rete, 
-      // it might not necessary be a transactor source, 
+      // in general we don't know how this db source is ordered to Rete,
+      // it might not necessary be a transactor source,
       // it might be noria, or other Rete,
       // so let's ensure happens before here by catching up with what we've seen:
       waitForDbSourceToCatchUpWithTimestamp(dbTimestamp)
@@ -347,7 +348,7 @@ private inline fun <T> DisposableHandle.useInline(function: () -> T): T =
  * Whenever Rete coroutine observes the match gone, the coroutine is being proactively cancelled.
  * Cancelled coroutines are being joined, before starting a new ones.
  * */
-suspend fun <T> Query<T>.launchOnEach(body: suspend CoroutineScope.(T) -> Unit) {
+suspend fun <T> Query<Many, T>.launchOnEach(body: suspend CoroutineScope.(T) -> Unit) {
   val rete = currentCoroutineContext().rete
   suspend fun impl(scope: CoroutineScope) {
     val jobs = adaptiveMapOf<Match<*>, Job>()
@@ -372,7 +373,7 @@ suspend fun <T> Query<T>.launchOnEach(body: suspend CoroutineScope.(T) -> Unit) 
 /**
  * Every [TokenSet] produced by this flow corresponds to a single change to the db, if the set of matches has changed for the [Query]
  * */
-fun <T> Query<T>.tokenSetsFlow(): Flow<TokenSet<T>> = let { query ->
+fun <T> Query<*, T>.tokenSetsFlow(): Flow<TokenSet<T>> = let { query ->
   flow {
     val (send, receive) = channels<TokenSet<T>>(Channel.UNLIMITED)
     val rete = currentCoroutineContext().rete
@@ -408,14 +409,14 @@ fun <T> Query<T>.tokenSetsFlow(): Flow<TokenSet<T>> = let { query ->
 /**
  * see [tokenSetsFlow]
  * */
-fun <T> Query<T>.tokensFlow(): Flow<Token<T>> =
+fun <T> Query<*, T>.tokensFlow(): Flow<Token<T>> =
   tokenSetsFlow().flatMapConcat { tokenSet -> tokenSet.asFlow() }
 
 /**
  * Provides a flow of matches.
  * Retraction of a match may be handled by [Match.withMatch] function
  * */
-fun <T> Query<T>.matchesFlow(): Flow<Match<T>> =
+fun <T> Query<*, T>.matchesFlow(): Flow<Match<T>> =
   tokensFlow().mapNotNull { t -> t.match.takeIf { t.added } }
 
 /**
@@ -426,7 +427,7 @@ fun <T> Query<T>.matchesFlow(): Flow<Match<T>> =
  * For example, if [T] contains references to entities, it is possible that a collector of the returned [Flow] will observe a
  * more recent state of the database where these entities already were deleted.
  * */
-fun <T> Query<T>.asValuesFlow(): Flow<T> =
+fun <T> Query<*, T>.asValuesFlow(): Flow<T> =
   matchesFlow().map { it.value }
 
 /**
@@ -476,7 +477,7 @@ suspend fun <T> Flow<Match<T>>.collectLatestMatch(collector: suspend CoroutineSc
  * invokes [f] sequentially with each value of [Query] [Match]es
  * [f] is run in a presence of each [Match], cancelled if [Match] is retracted, and will be invoked for the subsequent ones
  * */
-suspend fun <T> Query<T>.collect(f: suspend CoroutineScope.(T) -> Unit) {
+suspend fun <T> Query<*, T>.collect(f: suspend CoroutineScope.(T) -> Unit) {
   matchesFlow().collectMatches(f)
 }
 
@@ -491,7 +492,7 @@ suspend fun <T> Query<T>.collect(f: suspend CoroutineScope.(T) -> Unit) {
  * when new match arrives, the previous work is cancelled, see [Flow.collectLatest]
  */
 @Deprecated(replaceWith = ReplaceWith("collect(f)", "fleet.kernel.rete.collect"), message = "its usage is either equivalent to .collect() or is a bug")
-suspend fun <T> Query<T>.collectLatest(f: suspend CoroutineScope.(T) -> Unit) {
+suspend fun <T> Query<*, T>.collectLatest(f: suspend CoroutineScope.(T) -> Unit) {
   matchesFlow().collectLatestMatch(f)
 }
 
@@ -501,7 +502,7 @@ private val CoroutineContext.rete: Rete
 /**
  * Accepts only single-valued queries, runs [body] with which ever value is current, cancels it when it is retracted
  * */
-suspend fun <T, U> Query<T>.withCurrentMatch(body: suspend CoroutineScope.(T) -> U): WithMatchResult<U> =
+suspend fun <T, U> Query<*, T>.withCurrentMatch(body: suspend CoroutineScope.(T) -> U): WithMatchResult<U> =
   tokenSetsFlow().map { ts ->
     when (val currentMatch = ts.asserted.singleOrNullOrThrow()) {
       null -> WithMatchResult.Failure(CancellationReason("condition invalidated", null))
@@ -515,17 +516,3 @@ suspend fun <T, U> Query<T>.withCurrentMatch(body: suspend CoroutineScope.(T) ->
  * */
 suspend fun <T> PredicateQuery.withPredicate(body: suspend CoroutineScope.() -> T): WithMatchResult<T> =
   withCurrentMatch { body() }
-
-sealed interface FinalValue<T> {
-  data class Value<T>(val value: T) : FinalValue<T>
-  class Absent<T> : FinalValue<T>
-}
-
-/**
- * Defined for single-valued queries, returns the last asserted value before the query is empty.
- * */
-suspend fun <T : Any> Query<T>.finalValue(): FinalValue<T> =
-  when (val lastSet = tokenSetsFlow().takeWhile { ts -> ts.asserted.isNotEmpty() }.lastOrNull()) {
-    null -> FinalValue.Absent()
-    else -> FinalValue.Value(lastSet.asserted.single().value)
-  }

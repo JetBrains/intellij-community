@@ -5,12 +5,83 @@ import com.jetbrains.rhizomedb.*
 import fleet.kernel.rete.impl.*
 import fleet.kernel.rete.impl.DummyQueryScope
 import fleet.kernel.rete.impl.distinct
+import fleet.util.async.firstNotNull
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
+import kotlin.jvm.JvmName
+
+/**
+ * There is always a match in Single, run with it. If the match is invalidate while the body is running, cancel everything. 
+ */
+suspend fun <T, R> StateQuery<T>.withCurrentMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
+  return matchesFlow().first().withMatch(f)
+}
+
+/**
+ * Will wait until Maybe emits a match and then run with it once.
+ */
+suspend fun <T, R> Query<Maybe, T>.withFirstMatch(f: suspend CoroutineScope.(T) -> R): WithMatchResult<R> {
+  return matchesFlow().first().withMatch(f)
+}
+
+/**
+ * Will try to run [f] when there is a match. If the execution is successfull - returns the result.
+ * If the match was invalidated while the body was running - will try again with the next one.
+ */
+suspend fun <T, R> Query<Maybe, T>.retryWithMatch(f: suspend CoroutineScope.(T) -> R): R {
+  return matchesFlow().firstNotNull {
+    it.withMatch(f).getOrNull()
+  }
+}
+
+fun <T> Query<Maybe, T>.orNull(): StateQuery<T?> =
+  let { source ->
+    Query {
+      val sourceProducer = source.producer()
+      Producer { emit ->
+        var has = false
+        emit(Token(true, Match.of(null)))
+        sourceProducer.collect { token ->
+          when (token.added) {
+            true -> {
+              check(!has)
+              has = true
+              emit(Token(false, Match.of(null)))
+              emit(token)
+            }
+            false -> {
+              check(has)
+              has = false
+              emit(token)
+              emit(Token(true, Match.of(null)))
+            }
+          }
+        }
+      }
+    }
+  }
+
+
+@Suppress("UNCHECKED_CAST")
+fun <T> Query<Many, T>.singleOrNone(): Query<Maybe, T> = checkMatchesCount(0..1) as Query<Maybe, T>
+
+@Suppress("UNCHECKED_CAST")
+fun <T> Query<Many, T>.single(): StateQuery<T> = checkMatchesCount(1..1) as Query<Single, T>
+
+private fun <T> Query<*, T>.checkMatchesCount(range: IntRange): Query<*, T> =
+  run {
+    var count = 0
+    transform { token, emit ->
+      count += if (token.added) 1 else -1
+      check(count in range) { "Query produced $count matches while it was supposed to have only $range" }
+      emit(token)
+    }
+  }
 
 /**
  * Emits a single unconditional match with the given value [t]
  * */
-fun <T> queryOf(t: T): Query<T> = Query {
+fun <T> queryOf(t: T): StateQuery<T> = Query {
   val match = Match.of(t)
   Producer { emit -> emit(Token(true, match)) }
 }
@@ -18,7 +89,7 @@ fun <T> queryOf(t: T): Query<T> = Query {
 /**
  * Converts an [Iterable] to a [Query] producing elemnts as [Match]es
  * */
-fun <T> Iterable<T>.asQuery(): Query<T> = let { iter ->
+fun <T> Iterable<T>.asQuery(): Query<Many, T> = let { iter ->
   Query {
     val tokens = iter.map { t -> Token(true, Match.of(t)) }
     Producer { emit -> tokens.forEach(emit::invoke) }
@@ -28,7 +99,8 @@ fun <T> Iterable<T>.asQuery(): Query<T> = let { iter ->
 /**
  * Provides a match for every entity of a given [EntityType].
  * */
-fun <E : Entity> EntityType<E>.each(): Query<E> = let { entityType ->
+fun <E : Entity> EntityType<E>.each(): SetQuery<E> = let { entityType ->
+  @Suppress("UNCHECKED_CAST")
   queryOf(entityType.eid)
     .lookupAttribute(Entity.Type.attr as Attribute<EID>)
     .rawMap { eid ->
@@ -42,47 +114,48 @@ fun <E : Entity> EntityType<E>.each(): Query<E> = let { entityType ->
  * Query<Unit> can be seen as predicate.
  * It yields Unit when it becomes true, and retracts it back when falsified.
  * */
-typealias PredicateQuery = Query<Unit>
+typealias PredicateQuery = Query<Maybe, Unit>
 
 /**
  * Emits receiver as long as it exists
  * */
-fun <E : Entity> E.asQuery(): Query<E> = let { entity ->
-  queryOf(entity.eid)
-    .getAttribute(Entity.Type.attr as Attribute<EID>)
-    .rawMap { entity }
-}
+fun <E : Entity> E.asQuery(): StateQuery<E> =
+  let { entity ->
+    queryOf(entity.eid)
+      .getAttribute(Entity.Type.attr)
+      .rawMap { entity }
+  }
 
 /**
  * Emits [Unit] until entity is retracted
  * */
 fun Entity.existence(): PredicateQuery = let { e ->
   queryOf(e.eid)
-    .getAttribute(Entity.Type.attr as Attribute<EID>)
+    .getAttribute(Entity.Type.attr)
     .rawMap { }
-  //    .intern("exists", this)
 }
 
 /**
  * Provides a union of two queries.
  * Emits matches from both queries in no particular order, or uniqueness guearantees
  * */
-infix fun <T> Query<T>.union(rhs: Query<T>): Query<T> = let { lhs ->
-  Query {
-    val lhsProducer = lhs.producer()
-    val rhsProducer = rhs.producer()
-    Producer { emit ->
-      lhsProducer.collect(emit)
-      rhsProducer.collect(emit)
+infix fun <T> Query<*, T>.union(rhs: Query<*, T>): Query<Many, T> =
+  let { lhs ->
+    Query {
+      val lhsProducer = lhs.producer()
+      val rhsProducer = rhs.producer()
+      Producer { emit ->
+        lhsProducer.collect(emit)
+        rhsProducer.collect(emit)
+      }
     }
   }
-}
 
 /**
  * Cartesian product of two queries
  * Produces all pairs of matches, where the first element is the match from the lhs, and the second element is from rhs
  * */
-infix fun <T, U> Query<T>.product(rhs: Query<U>): Query<Pair<T, U>> = let { lhs ->
+infix fun <T, U> Query<*, T>.product(rhs: Query<*, U>): Query<Many, Pair<T, U>> = let { lhs ->
   Query {
     val lhsProducer = lhs.producer()
     val rhsProducer = rhs.producer()
@@ -100,7 +173,7 @@ infix fun <T, U> Query<T>.product(rhs: Query<U>): Query<Pair<T, U>> = let { lhs 
  * may yield repeated values if [f] is not injective
  * unlike values, [Match]es will be unique in some way
  * */
-fun <T, U> Query<T>.flatMap(f: (T) -> Set<U>): Query<U> = let { query ->
+fun <T, U> Query<*, T>.flatMap(f: (T) -> Set<U>): Query<Many, U> = let { query ->
   Query { flatMap(query.producer()) { match -> f(match.value) } }
 }
 
@@ -109,68 +182,86 @@ fun <T, U> Query<T>.flatMap(f: (T) -> Set<U>): Query<U> = let { query ->
  * [f] has to be a *pure* function of a database
  * unlike values, [Match]es will be unique in some way
  * */
-fun <T, U> Query<T>.flatMapMatch(f: (Match<T>) -> Set<U>): Query<U> = let { query ->
-  Query { flatMap(query.producer(), f) }
-}
+fun <T, U> Query<*, T>.flatMapMatch(f: (Match<T>) -> Set<U>): Query<Many, U> =
+  let { query ->
+    Query { flatMap(query.producer(), f) }
+  }
 
 /**
  * maps a database snapshot to a single value of [f]
  * [f] is being read-tracked and recalculated whenever related data in the db changes
  * [f] has to be a *pure* function of a database
  * */
-fun <T> query(f: () -> T): Query<T> = queryOf(Unit).flatMap { setOf(f()) }
+@Suppress("UNCHECKED_CAST")
+fun <T> query(f: () -> T): StateQuery<T> = queryOf(Unit).flatMap { setOf(f()) } as StateQuery<T>
 
 /**
  * maps a database snapshot to a single value of [f] unless it returned null
  * [f] is being read-tracked and recalculated whenever related data in the db changes
  * [f] has to be a *pure* function of a database
  * */
-fun <T : Any> queryNotNull(f: () -> T?): Query<T> = queryOf(Unit).flatMap { setOfNotNull(f()) }
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> queryNotNull(f: () -> T?): Query<Maybe, T> = queryOf(Unit).flatMap { setOfNotNull(f()) } as Query<Maybe, T>
 
 /**
  * maps a database snapshot to a set of values returned by [f], yielding them as matches
  * [f] is being read-tracked and recalculated whenever related data in the db changes
  * [f] has to be a *pure* function of a database
  * */
-fun <T> queryMany(f: () -> Set<T>): Query<T> = queryOf(Unit).flatMap { f() }
+fun <T> queryMany(f: () -> Set<T>): Query<Many, T> = queryOf(Unit).flatMap { f() }
 
 /**
  * yields Unit when predicate [p] is true
  * [p] is being read-tracked and recalculated whenever related data in the db changes
  * [p] has to be a *pure* function of a database
  * */
-fun predicateQuery(p: () -> Boolean): Query<Unit> = queryOf(Unit).filter { p() }
+fun predicateQuery(p: () -> Boolean): Query<Maybe, Unit> = queryOf(Unit).filter { p() }
 
 /**
  * [p] is applied to the values of incoming matches and propagates them forward if true,
  * [p] is being read-tracked
  * [p] has to be a *pure* function of a database
  * */
-fun <T> Query<T>.filter(p: (T) -> Boolean): Query<T> =
+@JvmName("filterMaybe")
+@Suppress("UNCHECKED_CAST")
+fun <T> Query<Maybe, T>.filter(p: (T) -> Boolean): Query<Maybe, T> =
+  (this as Query<*, T>).filter(p) as Query<Maybe, T>
+
+fun <T> Query<*, T>.filter(p: (T) -> Boolean): Query<Many, T> =
   flatMap { t -> if (p(t)) setOf(t) else emptySet() }
 
 /**
  * Returns a query containing only matches of the original query that are instances of specified type parameter [R].
  * */
-inline fun <reified R> Query<*>.filterIsInstance(): Query<R> =
+@JvmName("filterIsInstanceMaybe")
+@Suppress("UNCHECKED_CAST")
+inline fun <reified R> Query<Maybe, *>.filterIsInstance(): Query<Maybe, R> =
+  flatMap { t -> if (t is R) setOf(t) else emptySet() } as Query<Maybe, R>
+
+inline fun <reified R> Query<*, *>.filterIsInstance(): Query<Many, R> =
   flatMap { t -> if (t is R) setOf(t) else emptySet() }
 
 /**
  * returns first value of [Query] [Match]es
  * */
-suspend fun <T> Query<T>.first(): T = asValuesFlow().first()
+suspend fun <T> Query<*, T>.first(): T = asValuesFlow().first()
 
 /**
  * returns first value of [Query] [Match]es that satisfies [p] to true,
  * [p] is being read-tracked
  * */
-suspend fun <T> Query<T>.first(p: (T) -> Boolean): T = filter(p).first()
+suspend fun <T> Query<*, T>.first(p: (T) -> Boolean): T = filter(p).first()
 
 /**
  * version of [filter] working with [Match]
  * [p] has to be a *pure* function of a database
  * */
-fun <T> Query<T>.filterMatch(p: (Match<T>) -> Boolean): Query<T> =
+@JvmName("filterMatchMaybe")
+@Suppress("UNCHECKED_CAST")
+fun <T> Query<Maybe, T>.filterMatch(p: (Match<T>) -> Boolean): Query<Maybe, T> =
+  (this as Query<*, T>).filterMatch(p) as Query<Maybe, T>
+
+fun <T> Query<*, T>.filterMatch(p: (Match<T>) -> Boolean): Query<Many, T> =
   flatMapMatch { t -> if (p(t)) setOf(t.value) else emptySet() }
 
 /**
@@ -181,7 +272,8 @@ fun <T> Query<T>.filterMatch(p: (Match<T>) -> Boolean): Query<T> =
  * may yield repeated values if [f] is not injective
  * unlike values, [Match]es will be unique in some way
  * */
-fun <T, U> Query<T>.map(f: (T) -> U): Query<U> = flatMap { t -> setOf(f(t)) }
+@Suppress("UNCHECKED_CAST")
+fun <C : Cardinality, T, U> Query<C, T>.map(f: (T) -> U): Query<C, U> = flatMap { t -> setOf(f(t)) } as Query<C, U>
 
 /**
  * see [map]
@@ -189,48 +281,56 @@ fun <T, U> Query<T>.map(f: (T) -> U): Query<U> = flatMap { t -> setOf(f(t)) }
  * [f] is being read-tracked and recalculated whenever related data in the db changes
  * [f] has to be a *pure* function of a database
  * */
-fun <T, U> Query<T>.mapNotNull(f: (T) -> U?): Query<U> = flatMap { t -> f(t)?.let(::setOf) ?: emptySet() }
+fun <T, U> Query<*, T>.mapNotNull(f: (T) -> U?): Query<Many, U> =
+  flatMap { t -> f(t)?.let(::setOf) ?: emptySet() }
+
+@JvmName("mapNotNullMaybe")
+@Suppress("UNCHECKED_CAST")
+fun <T, U> Query<Maybe, T>.mapNotNull(f: (T) -> U?): Query<Maybe, U> =
+  (this as Query<*, T>).mapNotNull(f) as Query<Maybe, U>
 
 /**
  * Returns a query containing only matches of the original query that are not null.
  * */
-fun <T> Query<T?>.filterNotNull(): Query<T> = mapNotNull { it }
+fun <T> Query<*, T?>.filterNotNull(): Query<Many, T> = mapNotNull { it }
+
+@JvmName("filterNotNullMaybe")
+@Suppress("UNCHECKED_CAST")
+fun <T> Query<Maybe, T?>.filterNotNull(): Query<Maybe, T> =
+  (this as Query<*, T?>).filterNotNull() as Query<Maybe, T>
 
 /**
  * Version of [map] working with [Match]
  * [f] is being read-tracked and recalculated whenever related data in the db changes
  * [f] has to be a *pure* function of a database
  * */
-fun <T, U> Query<T>.mapMatch(f: (Match<T>) -> U): Query<U> = flatMapMatch { t -> setOf(f(t)) }
-
-/**
- * Version of [mapNotNull] working with [Match]
- * unlike values, [Match]es will be unique in some way
- * [f] is being read-tracked and recalculated whenever related data in the db changes
- * [f] has to be a *pure* function of a database
- * */
-fun <T, U> Query<T>.mapMatchNotNull(f: (Match<T>) -> U?): Query<U> = flatMapMatch { t -> f(t)?.let(::setOf) ?: emptySet() }
+@Suppress("UNCHECKED_CAST")
+fun <C : Cardinality, T, U> Query<C, T>.mapMatch(f: (Match<T>) -> U): Query<C, U> =
+  flatMapMatch { t -> setOf(f(t)) } as Query<C, U>
 
 /**
  * Yields Unit whenever receiver produces any match.
  * */
-fun <T> Query<T>.any(): Query<Unit> = rawMap { }.distinct()
+@Suppress("UNCHECKED_CAST")
+fun <T> Query<*, T>.any(): Query<Maybe, Unit> = rawMap { }.distinct() as Query<Maybe, Unit>
 
 /**
  * Query does not carry a distinct set of values by default for performance and memory reasons.
  * Sometimes one need to stop propagating duplicates further for performance reasons.
  * */
-fun <T : Any> Query<T>.distinct(): Query<T> = let { query ->
-  Query { distinct(query.producer()) }
-}
+fun <C : Cardinality, T : Any> Query<C, T>.distinct(): Query<C, T> =
+  let { query ->
+    Query { distinct(query.producer()) }
+  }
 
 /**
  * Merges two queries together to provide pairs of values corresponding to arms, for which a certain value is equal, together with the coinciding value
  * [on] functions are allowed to read the db and will be reactive
  * */
-infix fun <L, R, T> JoinHand<L, T>.join(rhs: JoinHand<R, T>): Query<JoinPair<L, R, T>> = let { lhs ->
-  joinOn(lhs.query, lhs.on, rhs.query, rhs.on)
-}
+infix fun <L, R, T> JoinHand<L, T>.join(rhs: JoinHand<R, T>): Query<Many, JoinPair<L, R, T>> =
+  let { lhs ->
+    joinOn(lhs.query, lhs.on, rhs.query, rhs.on)
+  }
 
 data class JoinPair<L, R, T>(
   val left: L,
@@ -239,7 +339,7 @@ data class JoinPair<L, R, T>(
 )
 
 data class JoinHand<T, U>(
-  val query: Query<T>,
+  val query: Query<*, T>,
   val on: (Match<T>) -> U,
 )
 
@@ -248,24 +348,26 @@ data class JoinHand<T, U>(
  * [f] is being read-tracked and recalculated whenever related data in the db changes
  * [f] has to be a *pure* function of a database
  * */
-fun <T, U> Query<T>.on(f: (T) -> U): JoinHand<T, U> = let { query ->
-  JoinHand(query) { match -> f(match.value) }
-}
+fun <T, U> Query<*, T>.on(f: (T) -> U): JoinHand<T, U> =
+  let { query ->
+    JoinHand(query) { match -> f(match.value) }
+  }
 
 /**
  * version of [on] working with [Match]es
  * [f] is being read-tracked and recalculated whenever related data in the db changes
  * [f] has to be a *pure* function of a database
  * */
-fun <T, U> Query<T>.onMatch(f: (Match<T>) -> U): JoinHand<T, U> = let { query ->
-  JoinHand(query, f)
-}
+fun <T, U> Query<*, T>.onMatch(f: (Match<T>) -> U): JoinHand<T, U> =
+  let { query ->
+    JoinHand(query, f)
+  }
 
 /**
  * Emits a match for every value of an [attribute] of input [Query].
  * Similar to [Entity.get] but for [Query]
  * */
-operator fun <E : Entity, T : Any> Query<E>.get(attribute: EntityAttribute<E, T>): Query<T> =
+operator fun <C : Cardinality, E : Entity, T : Any> Query<C, E>.get(attribute: EntityAttribute<E, T>): Query<C, T> =
   rawMap { m -> m.value.eid }
     .getAttribute(attribute.attr)
     .rawMap { match -> attribute.fromIndexValue(match.value) }
@@ -273,7 +375,7 @@ operator fun <E : Entity, T : Any> Query<E>.get(attribute: EntityAttribute<E, T>
 /**
  * Similar to [Entity.lookup] but for [Query]
  * */
-fun <E : Entity, T : Any> Query<T>.lookup(attribute: EntityAttribute<E, T>): Query<E> =
+fun <E : Entity, T : Any> Query<*, T>.lookup(attribute: EntityAttribute<E, T>): Query<Many, E> =
   rawMap { attribute.toIndexValue(it.value) }
     .lookupAttribute(attribute.attr as Attribute<Any>)
     .rawMap { entity(it.value) as E }
@@ -282,53 +384,59 @@ fun <E : Entity, T : Any> Query<T>.lookup(attribute: EntityAttribute<E, T>): Que
  * Column query for [EntityAttribute],
  * Similar to [EntityAttribute.all] but for [Query]
  * */
-fun <E : Entity, T : Any> EntityAttribute<E, T>.each(): Query<Pair<E, T>> = let { attribute ->
-  Query {
-    column(attribute.attr).rawMap { datomMatch ->
-      val entity = entity(datomMatch.value.eid) as E
-      val value = attribute.fromIndexValue(datomMatch.value.value)
-      entity to value
+fun <E : Entity, T : Any> EntityAttribute<E, T>.each(): Query<Many, Pair<E, T>> =
+  let { attribute ->
+    Query {
+      column(attribute.attr).rawMap { datomMatch ->
+        val entity = entity(datomMatch.value.eid) as E
+        val value = attribute.fromIndexValue(datomMatch.value.value)
+        entity to value
+      }
     }
   }
-}
 
 /**
  * Related to [getOne], but acts on a raw [Attribute] instead of [kotlin.reflect.KProperty]
  * */
-fun <T : Any> Query<EID>.getAttribute(attribute: Attribute<T>): Query<T> = let { query ->
-  Query { getAttribute(query.producer(), attribute) }
-}
+fun <C : Cardinality, T : Any> Query<C, EID>.getAttribute(attribute: Attribute<T>): Query<C, T> =
+  let { query ->
+    Query { getAttribute(query.producer(), attribute) }
+  }
 
 /**
  * Related to [lookup], but acts on a raw [Attribute] instead of [kotlin.reflect.KProperty]
  * */
-fun <T : Any> Query<T>.lookupAttribute(attribute: Attribute<T>): Query<EID> = let { query ->
-  Query { lookupAttribute(query.producer(), attribute) }
-}
+fun <T : Any> Query<*, T>.lookupAttribute(attribute: Attribute<T>): Query<Many, EID> =
+  let { query ->
+    Query { lookupAttribute(query.producer(), attribute) }
+  }
 
 /**
  * Maps a query using a pure function [f].
  * [f] is not supposed to read db, as it will not be tracked and thus will not be reactive
  * [f] has to be a *pure* function
  * */
-fun <T, U> Query<T>.rawMap(f: (Match<T>) -> U): Query<U> = let { query ->
-  Query { query.producer().rawMap(f) }
-}
-
-fun <T, U> Producer<T>.rawMap(f: (Match<T>) -> U): Producer<U> = let { producer ->
-  producer.transform { token, emit ->
-    emit(Token(token.added, token.match.withValue(f(token.match))))
+fun <C : Cardinality, T, U> Query<C, T>.rawMap(f: (Match<T>) -> U): Query<C, U> =
+  let { query ->
+    Query { query.producer().rawMap(f) }
   }
-}
+
+fun <T, U> Producer<T>.rawMap(f: (Match<T>) -> U): Producer<U> =
+  let { producer ->
+    producer.transform { token, emit ->
+      emit(Token(token.added, token.match.withValue(f(token.match))))
+    }
+  }
 
 /**
  * filter matches of query with [p]
  * [p] is not read-tracked and is not supposed to read the db
  * [p] has to be a *pure* function
  * */
-fun <T> Query<T>.rawFilter(p: (Match<T>) -> Boolean): Query<T> = let { query ->
-  Query { query.producer().rawFilter(p) }
-}
+fun <T> Query<*, T>.rawFilter(p: (Match<T>) -> Boolean): Query<Many, T> =
+  let { query ->
+    Query { query.producer().rawFilter(p) }
+  }
 
 fun <T> Producer<T>.rawFilter(p: (Match<T>) -> Boolean): Producer<T> =
   transform { token, emit ->
@@ -339,7 +447,7 @@ fun <T> Producer<T>.rawFilter(p: (Match<T>) -> Boolean): Producer<T> =
  * The most general way to transform tokens. Analogous to Flow.transform. [f] is not being read-tracked.
  * [f] has to be a *pure* function
  * */
-fun <T, U> Query<T>.transform(f: (Token<T>, Collector<U>) -> Unit): Query<U> = let { query ->
+fun <T, U> Query<*, T>.transform(f: (Token<T>, Collector<U>) -> Unit): Query<Many, U> = let { query ->
   Query { query.producer().transform(f) }
 }
 
@@ -352,50 +460,53 @@ fun <T, U> Producer<T>.transform(f: (Token<T>, Collector<U>) -> Unit): Producer<
  * Produces a [Query] with a single match (at any given time), which accumulates all matches of receiver using function [f]
  * [f] has to be pure and is not supposed to read the db.
  * */
-fun <Acc, T> Query<T>.reductions(acc: Acc, f: (Acc, Token<T>) -> Acc): Query<Acc> = let { query ->
-  Query {
-    var state = acc
-    val broadcast = Broadcaster<Acc>()
-    query.producer().collect { token ->
-      val oldState = state
-      val newState = f(state, token)
-      if (oldState != newState) {
-        broadcast(Token(false, Match.nonValidatable(oldState)))
-        broadcast(Token(true, Match.nonValidatable(newState)))
+fun <Acc, T> Query<*, T>.reductions(acc: Acc, f: (Acc, Token<T>) -> Acc): StateQuery<Acc> =
+  let { query ->
+    Query {
+      var state = acc
+      val broadcast = Broadcaster<Acc>()
+      query.producer().collect { token ->
+        val oldState = state
+        val newState = f(state, token)
+        if (oldState != newState) {
+          broadcast(Token(false, Match.nonValidatable(oldState)))
+          broadcast(Token(true, Match.nonValidatable(newState)))
+        }
+        state = newState
       }
-      state = newState
-    }
-    Producer { emit ->
-      emit(Token(true, Match.nonValidatable(state)))
-      broadcast.collect(emit)
+      Producer { emit ->
+        emit(Token(true, Match.nonValidatable(state)))
+        broadcast.collect(emit)
+      }
     }
   }
-}
 
 /**
  * Collects a query with multiple integer matches into a single-match query, representing the summed integer value of all matches.
  * Produces a [Query] with a single integer match (at any given time).
  */
-fun Query<Int>.sum() = reductions(0) { acc, token ->
-  when (token.added) {
-    true -> acc + token.value
-    false -> acc - token.value
+fun Query<Many, Int>.sum(): StateQuery<Int> =
+  reductions(0) { acc, token ->
+    when (token.added) {
+      true -> acc + token.value
+      false -> acc - token.value
+    }
   }
-}
 
 /**
  * Runs [Query] just one time, to produce a [Set] of it's matches.
  * */
-fun <T> Query<T>.matches(): Set<T> = let { query ->
-  DummyQueryScope.run {
-    val hs = HashSet<T>()
-    query.producer().collect { token ->
-      require(token.added)
-      hs.add(token.match.value)
+fun <T> Query<Many, T>.matches(): Set<T> =
+  let { query ->
+    DummyQueryScope.run {
+      val hs = HashSet<T>()
+      query.producer().collect { token ->
+        require(token.added)
+        hs.add(token.match.value)
+      }
+      hs
     }
-    hs
   }
-}
 
 /**
  * Yields a [Unit] when both [this] and [rhs] supplied theirs
@@ -449,22 +560,23 @@ infix fun PredicateQuery.and(rhs: PredicateQuery): PredicateQuery = let { lhs ->
  * }
  * ```
  * */
-fun <T> Query<T>.bind(): BoundQuery<T> = let { query ->
-  val key = Any()
-  BoundQuery(key, query.transform { token, emit ->
-    emit(Token(token.added, token.match.bind(key)))
-  })
-}
+fun <T> Query<*, T>.bind(): BoundQuery<T> =
+  let { query ->
+    val key = Any()
+    BoundQuery(key, query.transform { token, emit ->
+      emit(Token(token.added, token.match.bind(key)))
+    })
+  }
 
-data class BoundQuery<T>(val key: Any, val query: Query<T>) : Query<T> by query
+data class BoundQuery<T>(val key: Any, val query: Query<Many, T>) : Query<Many, T> by query
 
 /**
  * [Producer]s of interned queries are shared between their dependant queries, allowing to share the work and save memory.
  * It makes sense to [intern] query if it is used to construct more than one other query.
  * */
-fun <T> Query<T>.intern(firstKey: Any, vararg keys: Any): Query<T> =
+fun <C : Cardinality, T> Query<C, T>.intern(firstKey: Any, vararg keys: Any): Query<C, T> =
   internImpl(listOf(firstKey, *keys))
 
 @PublishedApi
-internal fun <T> Query<T>.internImpl(key: Any): Query<T> =
+internal fun <C : Cardinality, T> Query<C, T>.internImpl(key: Any): Query<C, T> =
   InternedQuery(key, this)
