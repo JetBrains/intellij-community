@@ -16476,6 +16476,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/asConstructorParameter.kt");
         }
 
+        @TestMetadata("bothActionsTogether.kt")
+        public void testBothActionsTogether() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/bothActionsTogether.kt");
+        }
+
         @TestMetadata("constructorTypeParameterKey.kt")
         public void testConstructorTypeParameterKey() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/constructorTypeParameterKey.kt");
@@ -16526,6 +16531,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/generic.kt");
         }
 
+        @TestMetadata("genericWithUpperBound.kt")
+        public void testGenericWithUpperBound() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/genericWithUpperBound.kt");
+        }
+
         @TestMetadata("leftAndRight.kt")
         public void testLeftAndRight() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/leftAndRight.kt");
@@ -16569,6 +16579,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("typealias.kt")
         public void testTypealias() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/typealias.kt");
+        }
+
+        @TestMetadata("typealiasAlsoHighlighted.kt")
+        public void testTypealiasAlsoHighlighted() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/javaCollectionsWithNullableTypes/typealiasAlsoHighlighted.kt");
         }
 
         @TestMetadata("typealiasInTypeReference.kt")

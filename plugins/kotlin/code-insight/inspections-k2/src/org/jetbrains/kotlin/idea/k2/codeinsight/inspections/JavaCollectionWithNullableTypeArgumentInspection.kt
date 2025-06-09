@@ -8,6 +8,8 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.createSmartPointer
 import org.jdom.Element
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
@@ -15,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulConstructorCallOrN
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.typeArguments
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -27,10 +30,12 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 /**
  * This inspection process:
- * 1. Parameterized constructor calls like `val map = ConcurrentHashMap<String, String>()`.
+ * 1. Parameterized constructor calls like `val map = ConcurrentHashMap<T, String?>()` – process both generics and explicitly nullable types.
  * 2. Properties with type declarations like `val queue: PriorityQueue<String?> = PriorityQueue<String?>()`.
  * 3. Constructors with arguments like `val map = ConcurrentHashMap(someMap)`.
  * 4. Typealiases like
@@ -42,7 +47,12 @@ import org.jetbrains.kotlin.psi.*
 internal class JavaCollectionWithNullableTypeArgumentInspection :
     KotlinApplicableInspectionBase<KtElement, JavaCollectionWithNullableTypeArgumentInspection.Context>() {
 
-    internal class Context(val collectionName: Name, val canMakeNonNullable: Boolean)
+    internal class Context(
+        val collectionName: Name,
+        val canMakeNonNullable: Boolean,
+        // Can contain both explicitly and implicitly nullable type arguments
+        val nullableTypeArguments: List<SmartPsiElementPointer<KtTypeProjection>>
+    )
 
     override fun isApplicableByPsi(element: KtElement): Boolean = true
 
@@ -59,13 +69,25 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
             emptyArray()
         }
 
+        val nullableTypeArguments = context.nullableTypeArguments.mapNotNull { it.dereference() }
+        val rangeInElement =
+            (ApplicabilityRange.union(element) { nullableTypeArguments }).singleOrNull()
+                ?: ApplicabilityRange.self(element).singleOrNull()
+                ?: errorWithAttachment("No range found") { withPsiEntry("KtElement", element) }
+
+        val description = KotlinBundle.message(
+            "java.collection.is.parameterized.with.nullable.type",
+            context.collectionName.asString(),
+            if (nullableTypeArguments.size > 1) 2 else 1
+        )
+
         return createProblemDescriptor(
             /* psiElement = */
             element,
             /* rangeInElement = */
             rangeInElement,
             /* descriptionTemplate = */
-            KotlinBundle.message("java.collection.is.parameterized.with.nullable.type", context.collectionName.asString()),
+            description,
             /* highlightType = */
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
             /* onTheFly = */
@@ -85,21 +107,6 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
 
         override fun visitTypeReference(typeReference: KtTypeReference) {
             visitTargetElement(typeReference, holder, isOnTheFly)
-        }
-    }
-
-    override fun getApplicableRanges(element: KtElement): List<TextRange> {
-        val typeArguments = element.getTypeArguments()
-        val nullableTypeArguments = typeArguments?.filter { it.isExplicitlyNullable() }
-
-        return if (nullableTypeArguments.isNullOrEmpty()) { // Can be implicitly nullable, for example, a type alias for a nullable
-            ApplicabilityRange.self(element)
-        } else {
-            if (nullableTypeArguments.size == typeArguments.size) {
-                ApplicabilityRange.union(element) { nullableTypeArguments }
-            } else {
-                ApplicabilityRange.multiple(element) { nullableTypeArguments }
-            }
         }
     }
 
@@ -130,7 +137,8 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
         }
 
         return if (collectionName.toUnsafe().isNonNullableParameterizedJavaCollection(element)) {
-            Context(collectionName = collectionName.shortName(), canMakeNonNullable = canMakeNonNullable)
+            val nullableTypeArguments = typeArguments.filter { it.isExplicitlyNullable() || it.isImplicitlyNullable() }
+            Context(collectionName = collectionName.shortName(), canMakeNonNullable, nullableTypeArguments.map { it.createSmartPointer() })
         } else {
             null
         }
@@ -141,18 +149,19 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
      */
     private fun KaSession.canMakeNonNullable(typeArguments: List<KtTypeProjection>): Boolean? {
         return if (typeArguments.none { it.isExplicitlyNullable() }) {
-            if (typeArguments.none { it.isImplicitlyNullable() }) return null
-            false
+            val implicitlyNullableTypes = typeArguments.filter { it.isImplicitlyNullable() }
+            if (implicitlyNullableTypes.isEmpty()) return null
+            implicitlyNullableTypes.any { !it.isTypeAlias() }
         } else {
             true
         }
     }
 
-    private fun constructorHasNullableParameters(constructorCall: KaFunctionCall<KaConstructorSymbol>): Boolean {
+    private fun KaSession.constructorHasNullableParameters(constructorCall: KaFunctionCall<KaConstructorSymbol>): Boolean {
         val typeArgumentsMapping = constructorCall.typeArgumentsMapping
         if (typeArgumentsMapping.isEmpty()) return false
         val hasNullableTypes = typeArgumentsMapping.any { (_, typeArgument) ->
-            typeArgument.nullability.isNullable
+            typeArgument.isMarkedNullable
         }
         return hasNullableTypes
     }
@@ -163,7 +172,11 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
     }
 
     private class RemoveNullabilityModCommandAction :
-        KotlinApplicableModCommandAction<KtElement, Unit>(elementClass = KtElement::class) {
+        KotlinApplicableModCommandAction<KtElement, RemoveNullabilityModCommandAction.Context>(elementClass = KtElement::class) {
+
+        data class Context(
+            val typesToMakeNonNullable: Map<SmartPsiElementPointer<KtTypeProjection>, RemoveNullabilityAction>
+        )
 
         override fun getFamilyName(): @IntentionFamilyName String =
             KotlinBundle.message("replace.nullable.type.with.non.nullable.family.name")
@@ -171,23 +184,50 @@ internal class JavaCollectionWithNullableTypeArgumentInspection :
         override fun invoke(
             actionContext: ActionContext,
             element: KtElement,
-            elementContext: Unit,
+            elementContext: Context,
             updater: ModPsiUpdater
         ) {
-            val typeArguments = element.getTypeArguments() ?: return
-            typeArguments.forEach {
-                removeNullability(it)
+            for ((typeArgument, action) in elementContext.typesToMakeNonNullable) {
+                when (action) {
+                    RemoveNullabilityAction.REMOVE_QUESTION_MARK -> typeArgument.dereference()?.removeQuestionMark()
+                    RemoveNullabilityAction.MAKE_DEFINITELY_NON_NULLABLE -> typeArgument.dereference()?.makeDefinitelyNonNullable()
+                }
             }
         }
 
-        private fun removeNullability(typeProjection: KtTypeProjection) {
-            val initialNullableType = typeProjection.typeReference?.typeElement as? KtNullableType ?: return
+        private fun KtTypeProjection.removeQuestionMark() {
+            val initialNullableType = this.typeReference?.typeElement as? KtNullableType ?: return
             val deepestNullableType = generateSequence(initialNullableType) { it.innerType as? KtNullableType }.last()
             val innerType = deepestNullableType.innerType ?: return
             innerType.let { initialNullableType.replace(innerType) }
         }
 
-        override fun KaSession.prepareContext(element: KtElement) {}
+        private fun KtTypeProjection.makeDefinitelyNonNullable() {
+            val initialType = this.typeReference?.typeElement ?: return
+            val definitelyNonNullableType = KtPsiFactory(initialType.project).createType("${initialType.text} & Any")
+            initialType.replace(definitelyNonNullableType)
+        }
+
+        override fun KaSession.prepareContext(element: KtElement): Context {
+            val typeArguments = element.getTypeArguments() ?: return Context(typesToMakeNonNullable = emptyMap())
+
+            val typesAndRemoveNullabilityActions = mutableMapOf<SmartPsiElementPointer<KtTypeProjection>, RemoveNullabilityAction>()
+            typeArguments.forEach {
+                typesAndRemoveNullabilityActions[it.createSmartPointer()] = when {
+                    it.isExplicitlyNullable() -> RemoveNullabilityAction.REMOVE_QUESTION_MARK
+                    // Something that is implicitly nullable and is not a type alias is a type parameter
+                    it.isImplicitlyNullable() && !it.isTypeAlias() -> RemoveNullabilityAction.MAKE_DEFINITELY_NON_NULLABLE
+                    else -> return@forEach
+                }
+            }
+
+            return Context(typesToMakeNonNullable = typesAndRemoveNullabilityActions)
+        }
+
+        private enum class RemoveNullabilityAction {
+            REMOVE_QUESTION_MARK,
+            MAKE_DEFINITELY_NON_NULLABLE,
+        }
     }
 
     val nonNullableParameterizedJavaCollections: MutableSet<FqNameUnsafe> =
@@ -248,7 +288,13 @@ context(KaSession)
 private fun KtTypeProjection.isImplicitlyNullable(): Boolean {
     val userType = typeReference?.typeElement as? KtUserType ?: return false
     val symbol = userType.referenceExpression?.mainReference?.resolveToSymbol() as? KaClassifierSymbol ?: return false
-    return symbol.defaultType.canBeNull
+    return symbol.defaultType.isNullable
+}
+
+context(KaSession)
+private fun KtTypeProjection.isTypeAlias(): Boolean {
+    val lowerBoundType = this.typeReference?.type?.lowerBoundIfFlexible()
+    return lowerBoundType?.abbreviation?.symbol is KaTypeAliasSymbol
 }
 
 private fun KtElement.getTypeArguments(): List<KtTypeProjection>? {
