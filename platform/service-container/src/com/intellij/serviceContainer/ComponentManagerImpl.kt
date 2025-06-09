@@ -457,7 +457,7 @@ abstract class ComponentManagerImpl(
         keyClassName = keyClassName,
         ComponentDescriptorInstanceInitializer(
           componentManager = this,
-          pd = pluginDescriptor,
+          pluginDescriptor = pluginDescriptor,
           interfaceClass = keyClass,
           instanceClassName = implementationClassName,
         ),
