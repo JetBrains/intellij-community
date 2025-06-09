@@ -176,6 +176,14 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     doTest()
   }
 
+  fun testBrokenFileNoHighlightingWithPackage() {
+    doTest()
+  }
+
+  fun testSameNameInnerClass() {
+    doTest()
+  }
+
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.checkHighlighting()
