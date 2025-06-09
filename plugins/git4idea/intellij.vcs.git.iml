@@ -42,9 +42,11 @@
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />
+    <orderEntry type="module" module-name="intellij.platform.diff" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />

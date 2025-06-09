@@ -34,7 +34,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/indexing-impl",
     "//platform/projectModel-api:projectModel",
-    "//java/java-indexing-api:indexing",
   ],
   runtime_deps = [":indexing-impl_resources"]
 )

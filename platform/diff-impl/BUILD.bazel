@@ -33,6 +33,7 @@ jvm_library(
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "@lib//:kotlinx-coroutines-core",
     "//platform/util/coroutines",
+    "//platform/util/diff",
     "//platform/util/jdom",
   ],
   exports = ["//platform/diff-api:diff"],

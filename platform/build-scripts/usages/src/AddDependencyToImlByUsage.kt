@@ -73,7 +73,7 @@ internal class AddDependencyToImlByUsage {
         //"intellij.platform.codeStyle",
         //"intellij.platform.util.base",
         //"intellij.platform.util.base.multiplatform",
-        //"intellij.platform.util.diff",
+        "intellij.platform.util.diff",
         //"intellij.platform.indexing",
         //"intellij.platform.ide",
         //"intellij.platform.jps.model",

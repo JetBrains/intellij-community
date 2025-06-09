@@ -56,7 +56,6 @@ jvm_library(
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
-    "//java/java-indexing-api:indexing",
     "//java/java-analysis-api:analysis",
   ],
   runtime_deps = [

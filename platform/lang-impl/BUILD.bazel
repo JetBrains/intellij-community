@@ -26,6 +26,7 @@ jvm_library(
   javac_opts = ":custom-javac-options",
   deps = [
     "//platform/boot",
+    "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
     "//platform/lang-api:lang",
@@ -40,6 +41,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/refactoring",
     "//platform/usageView-impl",
+    "//platform/util/diff",
     "//platform/workspace/jps",
     "@lib//:swingx",
     "@lib//:guava",

@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
@@ -25,6 +26,7 @@ jvm_library(
     "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/util/diff",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//java/openapi:java",

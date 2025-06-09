@@ -8,6 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diff" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
@@ -18,6 +19,7 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />

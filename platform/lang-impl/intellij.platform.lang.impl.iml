@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.diff" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang" exported="" />
@@ -46,6 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="library" name="Guava" level="project" />

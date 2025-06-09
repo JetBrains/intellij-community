@@ -26,7 +26,7 @@
     <orderEntry type="module" module-name="intellij.xml.dom" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.java.psi" exported="" />
-    <orderEntry type="module" module-name="intellij.java.indexing" exported="" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.java.analysis" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

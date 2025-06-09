@@ -24,7 +24,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "@lib//:kotlin-stdlib",
   ],
-  exports = ["//platform/util/diff"],
   runtime_deps = [":diff_resources"]
 )
 ### auto-generated section `build intellij.platform.diff` end

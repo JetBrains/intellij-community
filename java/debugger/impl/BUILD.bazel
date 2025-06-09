@@ -16,6 +16,7 @@ jvm_library(
     "//java/debugger/openapi:java-debugger",
     "//java/openapi:java",
     "//java/execution/openapi:java-execution",
+    "//java/java-indexing-api:indexing",
     "//resources:java-resources",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",

@@ -35,6 +35,7 @@ jvm_library(
     "//java/java-impl-inspections:impl-inspections",
     "//java/idea-ui:ui",
     "//platform/usageView-impl",
+    "//platform/util/diff",
     "//platform/vcs-api:vcs",
     "//platform/vcs-impl/shared",
     "//platform/editor-ui-ex:editor-ex",

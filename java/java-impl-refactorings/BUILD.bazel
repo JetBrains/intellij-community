@@ -7,8 +7,10 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
+    "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
+    "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
     "//platform/indexing-api:indexing",
@@ -33,6 +35,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "//platform/diff-impl",
     "//platform/usageView-impl",
+    "//platform/util/diff",
     "//platform/util/jdom",
     "//platform/core-ui",
     "//xml/xml-psi-api:psi",

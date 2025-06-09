@@ -21,6 +21,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />

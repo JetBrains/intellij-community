@@ -38,6 +38,7 @@ jvm_library(
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/base/project-structure",
     "//platform/core-ui",
+    "//java/java-indexing-api:indexing",
     "//platform/util/jdom",
     "//platform/util-class-loader:util-classLoader",
     "//platform/projectModel-impl",

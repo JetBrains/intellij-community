@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:guava",
     "@lib//:vavr",
     "@lib//:javax-inject",
+    "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

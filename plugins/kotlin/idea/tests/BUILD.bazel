@@ -23,6 +23,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//java/java-indexing-api:indexing",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui",

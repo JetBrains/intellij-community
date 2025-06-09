@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "//java/openapi:java",
@@ -36,6 +37,7 @@ jvm_library(
   associates = [":java-rareRefactorings"],
   deps = [
     "//java/java-impl:impl",
+    "//java/java-indexing-api:indexing",
     "//platform/core-ui",
     "//java/testFramework",
     "//platform/code-style-impl:codeStyle-impl",

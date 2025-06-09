@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
+    "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",

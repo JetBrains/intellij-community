@@ -25,6 +25,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/refactoring",
+    "//platform/util/diff",
     "//platform/util/progress",
     "//aether-dependency-resolver",
     "//platform/vcs-impl",

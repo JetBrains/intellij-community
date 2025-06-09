@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
+    "//java/java-indexing-api:indexing",
     "//resources:java-resources",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
