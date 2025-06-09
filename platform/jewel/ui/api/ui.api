@@ -76,6 +76,22 @@ public final class org/jetbrains/jewel/ui/DisabledColorFilterKt {
 	public static final fun disabled (Landroidx/compose/ui/graphics/ColorFilter$Companion;)Landroidx/compose/ui/graphics/ColorFilter;
 }
 
+public abstract interface class org/jetbrains/jewel/ui/MenuItemShortcutHintProvider {
+	public abstract fun getShortcutHint (Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;)Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/MenuItemShortcutHintProviderKt {
+	public static final fun getLocalMenuItemShortcutHintProvider ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public abstract interface class org/jetbrains/jewel/ui/MenuItemShortcutProvider {
+	public abstract fun getShortcutKeyStroke (Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;)Ljavax/swing/KeyStroke;
+}
+
+public final class org/jetbrains/jewel/ui/MenuItemShortcutProviderKt {
+	public static final fun getLocalMenuItemShortcutProvider ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public final class org/jetbrains/jewel/ui/Orientation : java/lang/Enum {
 	public static final field Horizontal Lorg/jetbrains/jewel/ui/Orientation;
 	public static final field Vertical Lorg/jetbrains/jewel/ui/Orientation;
@@ -341,6 +357,50 @@ public final class org/jetbrains/jewel/ui/component/ContextMenuDivider : android
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ContextMenuDivider;
 }
 
+public final class org/jetbrains/jewel/ui/component/ContextMenuItemOption : androidx/compose/foundation/ContextMenuItem {
+	public static final field $stable I
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getActionType ()Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;
+	public final fun getIcon ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+}
+
+public abstract class org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction {
+	public static final field $stable I
+}
+
+public final class org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction$CopyMenuItemOptionAction : org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction$CopyMenuItemOptionAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction$CutMenuItemOptionAction : org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction$CutMenuItemOptionAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction$PasteMenuItemOptionAction : org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction$PasteMenuItemOptionAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction$SelectAllMenuItemOptionAction : org/jetbrains/jewel/ui/component/ContextMenuItemOptionAction {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction$SelectAllMenuItemOptionAction;
+	public fun equals (Ljava/lang/Object;)Z
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
 public final class org/jetbrains/jewel/ui/component/ContextMenuRepresentation : androidx/compose/foundation/ContextMenuRepresentation {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ContextMenuRepresentation;
@@ -351,6 +411,23 @@ public final class org/jetbrains/jewel/ui/component/ContextSubmenu : androidx/co
 	public static final field $stable I
 	public fun <init> (Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
 	public final fun getSubmenu ()Lkotlin/jvm/functions/Function0;
+}
+
+public final class org/jetbrains/jewel/ui/component/DefaultMenuController : org/jetbrains/jewel/ui/component/MenuController {
+	public static final field $stable I
+	public fun <init> (Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/DefaultMenuController;)V
+	public synthetic fun <init> (Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/DefaultMenuController;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun clearShortcutActions ()V
+	public fun close-iuPiT84 (I)Z
+	public fun closeAll-HMVJIwE (IZ)V
+	public fun findAndExecuteShortcut (Ljavax/swing/KeyStroke;)Ljava/lang/Boolean;
+	public fun getOnDismissRequest ()Lkotlin/jvm/functions/Function1;
+	public fun isRootMenu ()Z
+	public fun isSubmenu ()Z
+	public fun onHoveredChange (Z)V
+	public fun registerShortcutAction (Ljavax/swing/KeyStroke;Lkotlin/jvm/functions/Function0;)V
+	public fun submenuController (Lkotlin/jvm/functions/Function1;)Lorg/jetbrains/jewel/ui/component/DefaultMenuController;
+	public synthetic fun submenuController (Lkotlin/jvm/functions/Function1;)Lorg/jetbrains/jewel/ui/component/MenuController;
 }
 
 public final class org/jetbrains/jewel/ui/component/DividerKt {
@@ -586,6 +663,23 @@ public final class org/jetbrains/jewel/ui/component/ListItemState {
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class org/jetbrains/jewel/ui/component/MenuController {
+	public abstract fun clearShortcutActions ()V
+	public abstract fun close-iuPiT84 (I)Z
+	public abstract fun closeAll-HMVJIwE (IZ)V
+	public abstract fun findAndExecuteShortcut (Ljavax/swing/KeyStroke;)Ljava/lang/Boolean;
+	public abstract fun getOnDismissRequest ()Lkotlin/jvm/functions/Function1;
+	public abstract fun isRootMenu ()Z
+	public abstract fun isSubmenu ()Z
+	public abstract fun onHoveredChange (Z)V
+	public abstract fun registerShortcutAction (Ljavax/swing/KeyStroke;Lkotlin/jvm/functions/Function0;)V
+	public abstract fun submenuController (Lkotlin/jvm/functions/Function1;)Lorg/jetbrains/jewel/ui/component/MenuController;
+}
+
+public final class org/jetbrains/jewel/ui/component/MenuControllerKt {
+	public static final fun getLocalMenuController ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public final class org/jetbrains/jewel/ui/component/MenuItemState : org/jetbrains/jewel/foundation/state/FocusableComponentState, org/jetbrains/jewel/foundation/state/SelectableComponentState {
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/MenuItemState$Companion;
 	public static final synthetic fun box-impl (J)Lorg/jetbrains/jewel/ui/component/MenuItemState;
@@ -623,6 +717,7 @@ public final class org/jetbrains/jewel/ui/component/MenuItemState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/MenuKt {
+	public static final fun MenuContent (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun MenuSeparator (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuItemMetrics;Lorg/jetbrains/jewel/ui/component/styling/MenuItemColors;Landroidx/compose/runtime/Composer;II)V
 	public static final fun MenuSubmenuItem (Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/icon/IconKey;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PopupMenu (Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Landroidx/compose/ui/window/PopupProperties;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
@@ -650,12 +745,30 @@ public final class org/jetbrains/jewel/ui/component/MenuManagerKt {
 public abstract interface class org/jetbrains/jewel/ui/component/MenuScope {
 	public abstract fun passiveItem (Lkotlin/jvm/functions/Function2;)V
 	public abstract fun selectableItem (ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
+	public abstract fun selectableItemWithActionType (ZLorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
 	public abstract fun submenu (ZLorg/jetbrains/jewel/ui/icon/IconKey;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
 }
 
 public final class org/jetbrains/jewel/ui/component/MenuScope$DefaultImpls {
 	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun selectableItemWithActionType$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun submenu$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+}
+
+public final class org/jetbrains/jewel/ui/component/MenuSelectableItem : org/jetbrains/jewel/ui/component/MenuItem {
+	public static final field $stable I
+	public fun <init> (ZZLorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;Ljava/util/Set;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;)V
+	public synthetic fun <init> (ZZLorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;Ljava/util/Set;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public fun equals (Ljava/lang/Object;)Z
+	public fun getContent ()Lkotlin/jvm/functions/Function2;
+	public final fun getIconKey ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getItemOptionAction ()Lorg/jetbrains/jewel/ui/component/ContextMenuItemOptionAction;
+	public final fun getKeybinding ()Ljava/util/Set;
+	public final fun getOnClick ()Lkotlin/jvm/functions/Function0;
+	public fun hashCode ()I
+	public final fun isEnabled ()Z
+	public final fun isSelected ()Z
+	public fun toString ()Ljava/lang/String;
 }
 
 public final class org/jetbrains/jewel/ui/component/PopupContainerKt {
@@ -1049,6 +1162,12 @@ public final class org/jetbrains/jewel/ui/component/TabsKt {
 public final class org/jetbrains/jewel/ui/component/TextAreaKt {
 	public static final fun TextArea (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/foundation/text/input/InputTransformation;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/input/KeyboardActionHandler;Landroidx/compose/foundation/text/input/TextFieldLineLimits;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/text/input/OutputTransformation;ZLandroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;III)V
 	public static final fun TextArea (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;ILkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;III)V
+}
+
+public final class org/jetbrains/jewel/ui/component/TextContextMenu : androidx/compose/foundation/text/TextContextMenu {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/TextContextMenu;
+	public fun Area (Landroidx/compose/foundation/text/TextContextMenu$TextManager;Landroidx/compose/foundation/ContextMenuState;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TextFieldKt {

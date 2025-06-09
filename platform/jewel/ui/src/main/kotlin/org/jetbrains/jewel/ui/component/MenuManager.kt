@@ -4,6 +4,13 @@ import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.input.InputMode
 
+@Deprecated(
+    message =
+        "The MenuManager class has been superseded by the MenuController interface, " +
+            "which offers improved abstraction and new functionalities like shortcut management. " +
+            "Depend on the DefaultMenuController class for all menu operations.",
+    replaceWith = ReplaceWith("org.jetbrains.jewel.ui.component.DefaultMenuController"),
+)
 public class MenuManager(
     public val onDismissRequest: (InputMode) -> Boolean,
     private val parentMenuManager: MenuManager? = null,
