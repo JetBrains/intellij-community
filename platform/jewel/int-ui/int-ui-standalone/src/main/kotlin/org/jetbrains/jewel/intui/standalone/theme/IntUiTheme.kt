@@ -16,6 +16,8 @@ import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
 import org.jetbrains.jewel.intui.standalone.icon.StandaloneNewUiChecker
+import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneMenuItemShortcutHintProvider
+import org.jetbrains.jewel.intui.standalone.menuShortcut.StandaloneShortcutProvider
 import org.jetbrains.jewel.intui.standalone.styling.Default
 import org.jetbrains.jewel.intui.standalone.styling.Editor
 import org.jetbrains.jewel.intui.standalone.styling.Outlined
@@ -24,6 +26,8 @@ import org.jetbrains.jewel.intui.standalone.styling.dark
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.DefaultComponentStyling
+import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
+import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -310,6 +314,8 @@ public fun IntUiTheme(
         CompositionLocalProvider(
             LocalPainterHintsProvider provides StandalonePainterHintsProvider(theme),
             LocalNewUiChecker provides StandaloneNewUiChecker,
+            LocalMenuItemShortcutProvider provides StandaloneShortcutProvider,
+            LocalMenuItemShortcutHintProvider provides StandaloneMenuItemShortcutHintProvider,
         ) {
             content()
         }
