@@ -2,31 +2,46 @@
 package com.intellij.mcpserver.settings
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.NonNls
 import javax.swing.JComponent
 
 class McpServerSettingsConfigurable : SearchableConfigurable {
   private var settingsPanel: DialogPanel? = null
+  private var enabledCheckboxState: ComponentPredicate? = null
 
   override fun getDisplayName(): String = McpServerBundle.message("configurable.name.mcp.plugin")
 
   override fun createComponent(): JComponent {
     val settings = McpServerSettings.getInstance()
-    lateinit var enabledCheckBox: Cell<JBCheckBox>
 
     val panel = panel {
       row {
-        enabledCheckBox = checkBox(McpServerBundle.message("enable.mcp.server")).bindSelected(settings.state::enableMcpServer)
+        enabledCheckboxState = checkBox(McpServerBundle.message("enable.mcp.server")).bindSelected(settings.state::enableMcpServer).selected
       }
+      row {
+        fun getLabelText(): String = if (McpServerService.getInstance().isRunning) McpServerBundle.message("mcp.server.is.running.on") else ""
+        fun getLinkText(): String = if (McpServerService.getInstance().isRunning) McpServerService.getInstance().serverSseUrl else ""
+
+        val label = label(getLabelText())
+        val link = link(getLinkText()) {
+          BrowserUtil.browse(it.actionCommand!!)
+        }
+        enabledCheckboxState!!.addListener {
+          McpServerService.getInstance().settingsChanged(it)
+          val isServerRunning = McpServerService.getInstance().isRunning
+          label.component.text = if (isServerRunning) getLabelText() else ""
+          link.component.text = if (isServerRunning) McpServerService.getInstance().serverSseUrl else ""
+        }
+      }.enabledIf(enabledCheckboxState!!)
       panel {
         group(McpServerBundle.message("border.title.terminal.commands")) {
           row {
@@ -37,7 +52,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
             comment(McpServerBundle.message("text.warning.enabling.brave.mode.will.allow.terminal.commands.to.execute.without.confirmation.use.with.caution"))
           }
         }
-      }.enabledIf(enabledCheckBox.selected)
+      }.enabledIf(enabledCheckboxState!!)
     }
 
     settingsPanel = panel
@@ -50,7 +65,6 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
 
   override fun apply() {
     settingsPanel?.apply()
-    McpServerService.getInstance().settingsChanged()
   }
 
   override fun reset() {
@@ -58,7 +72,15 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
   }
 
   override fun disposeUIResources() {
+    enabledCheckboxState?.let {
+      val uiEnableValue = it()
+      val settingsEnableValue = McpServerSettings.getInstance().state.enableMcpServer
+      if (uiEnableValue != settingsEnableValue) {
+        McpServerService.getInstance().settingsChanged(settingsEnableValue)
+      }
+    }
     settingsPanel = null
+    enabledCheckboxState = null
   }
 
   override fun getId(): @NonNls String = "com.intellij.mcpserver.settings"

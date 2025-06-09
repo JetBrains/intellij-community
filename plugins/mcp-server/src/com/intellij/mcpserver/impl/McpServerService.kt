@@ -50,21 +50,23 @@ class McpServerService(val cs: CoroutineScope) {
   val isRunning: Boolean
     get() = server.value != null
 
+  val serverSseUrl: String
+    get() = "http://127.0.0.1:${port}/sse"
+
   fun start() {
     McpServerSettings.getInstance().state.enableMcpServer = true
-    settingsChanged()
+    settingsChanged(true)
   }
 
   fun stop() {
     McpServerSettings.getInstance().state.enableMcpServer = false
-    settingsChanged()
+    settingsChanged(false)
   }
 
   val port: Int
     get() = (server.value ?: error("MCP Server is not enabled")).engineConfig.connectors.first().port
 
-  internal fun settingsChanged() {
-    val enabled = McpServerSettings.getInstance().state.enableMcpServer
+  internal fun settingsChanged(enabled: Boolean) {
     server.update { currentServer ->
       if (!enabled) {
         // stop old
@@ -73,7 +75,7 @@ class McpServerService(val cs: CoroutineScope) {
       }
       else {
         // reuse old or start new
-        return@update currentServer ?: startServerIfEnabled()
+        return@update currentServer ?: startServer()
       }
     }
   }
@@ -86,6 +88,11 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun startServerIfEnabled(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
+    if (!McpServerSettings.getInstance().state.enableMcpServer) return null
+    return startServer()
+  }
+
+  private fun startServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
     if (!McpServerSettings.getInstance().state.enableMcpServer) return null
 
     val freePort = findFirstFreePort(DEFAULT_MCP_PORT)

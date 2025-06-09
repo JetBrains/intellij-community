@@ -9,9 +9,8 @@ import java.util.function.Supplier
 const val PATH_TO_BUNDLE: @NonNls String = "messages.McpServerBundle"
 
 internal object McpServerBundle : DynamicBundle(McpServerBundle::class.java, PATH_TO_BUNDLE) {
-
   fun message(key: @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String, vararg params: Any): @Nls String {
-    return getMessage(key, params)
+    return getMessage(key, *params)
   }
 
   fun messagePointer(
