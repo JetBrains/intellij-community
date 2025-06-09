@@ -27,9 +27,9 @@ private fun Reference.createQueryPathList(origin: CustomElementsJsonOrigin): Lis
   val module = module ?: ""
   val refName = name ?: return null
   return listOf(
-    PolySymbolQualifiedName(CustomElementsSymbol.CEM_PACKAGES, pkg),
-    PolySymbolQualifiedName(CustomElementsSymbol.CEM_MODULES, module),
-    PolySymbolQualifiedName(CustomElementsSymbol.CEM_DECLARATIONS, refName)
+    CustomElementsSymbol.CEM_PACKAGES.withName(pkg),
+    CustomElementsSymbol.CEM_MODULES.withName(module),
+    CustomElementsSymbol.CEM_DECLARATIONS.withName(refName)
   )
 }
 

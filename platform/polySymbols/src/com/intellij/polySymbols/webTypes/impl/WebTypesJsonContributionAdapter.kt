@@ -8,8 +8,6 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
-import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolNamespace
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
@@ -36,22 +34,21 @@ abstract class WebTypesJsonContributionAdapter private constructor(
     fun BaseContribution.wrap(
       origin: WebTypesJsonOrigin,
       rootScope: WebTypesScopeBase,
-      root: PolySymbolNamespace,
-      kind: PolySymbolKind,
+      qualifiedKind: PolySymbolQualifiedKind,
     ): WebTypesJsonContributionAdapter =
       if (pattern != null) {
-        Pattern(this, origin, UserDataHolderBase(), rootScope, PolySymbolQualifiedKind(root, kind))
+        Pattern(this, origin, UserDataHolderBase(), rootScope, qualifiedKind)
       }
       else if ((name != null && name.startsWith(VUE_DIRECTIVE_PREFIX))
                && origin.framework == VUE_FRAMEWORK
-               && kind == HTML_ATTRIBUTES.kind) {
-        LegacyVueDirective(this, origin, UserDataHolderBase(), rootScope, root)
+               && qualifiedKind == HTML_ATTRIBUTES) {
+        LegacyVueDirective(this, origin, UserDataHolderBase(), rootScope)
       }
-      else if (name != null && kind == KIND_HTML_VUE_LEGACY_COMPONENTS && this is HtmlElement) {
-        LegacyVueComponent(this, origin, UserDataHolderBase(), rootScope, root)
+      else if (name != null && qualifiedKind == HTML_VUE_LEGACY_COMPONENTS && this is HtmlElement) {
+        LegacyVueComponent(this, origin, UserDataHolderBase(), rootScope)
       }
       else {
-        Static(this, origin, UserDataHolderBase(), rootScope, PolySymbolQualifiedKind(root, kind))
+        Static(this, origin, UserDataHolderBase(), rootScope, qualifiedKind)
       }
   }
 
@@ -86,7 +83,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
            val n = path.substring(1, slash).asWebTypesSymbolNamespace()
                    ?: return@mapNotNull null
            val k = path.substring(slash + 1, path.length)
-           PolySymbolQualifiedKind(n, k)
+           PolySymbolQualifiedKind[n, k]
          }
          .toSet()
      }.also { exclusiveContributions = it }
@@ -175,8 +172,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
     context: WebTypesJsonOrigin,
     cacheHolder: UserDataHolderEx,
     rootScope: WebTypesScopeBase,
-    root: PolySymbolNamespace,
-  ) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, PolySymbolQualifiedKind(root, KIND_HTML_VUE_DIRECTIVES)) {
+  ) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, HTML_VUE_DIRECTIVES) {
 
     override val name: String =
       contribution.name.substring(2)
@@ -194,7 +190,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
 
         override fun dereference(): LegacyVueDirective? =
           rootScope.dereference()?.let {
-            LegacyVueDirective(contribution, jsonContext, cacheHolder, it, qualifiedKind.namespace)
+            LegacyVueDirective(contribution, jsonContext, cacheHolder, it)
           }
 
       }
@@ -205,8 +201,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
     context: WebTypesJsonOrigin,
     cacheHolder: UserDataHolderEx,
     rootScope: WebTypesScopeBase,
-    root: PolySymbolNamespace,
-  ) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, PolySymbolQualifiedKind(root, KIND_HTML_VUE_COMPONENTS)) {
+  ) : WebTypesJsonContributionAdapter(contribution, context, cacheHolder, rootScope, HTML_VUE_COMPONENTS) {
 
     private var _contributionForQuery: GenericContributionsHost? = null
 
@@ -230,7 +225,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
 
         override fun dereference(): LegacyVueComponent? =
           rootScope.dereference()?.let {
-            LegacyVueComponent(contribution as HtmlElement, jsonContext, cacheHolder, it, qualifiedKind.namespace)
+            LegacyVueComponent(contribution as HtmlElement, jsonContext, cacheHolder, it)
           }
 
       }
@@ -264,7 +259,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
           }
           map.remove("vue-scoped-slots")
         }
-        map[KIND_HTML_VUE_COMPONENT_PROPS] = GenericHtmlContributions().also { contributions ->
+        map[HTML_VUE_COMPONENT_PROPS.kind] = GenericHtmlContributions().also { contributions ->
           this.attributes.mapTo(contributions) { attribute ->
             GenericHtmlContributionOrProperty().also { it.value = attribute.convertToPropsContribution() }
           }

@@ -7,7 +7,6 @@ import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.psi.ElementManipulators
@@ -49,8 +48,8 @@ class PolySymbolsHtmlTextInjector : MultiHostInjector {
             val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
               queryExecutor.runNameMatchQuery(listOf(
-                PolySymbolQualifiedName(PolySymbol.HTML_ELEMENTS, tag.name),
-                PolySymbolQualifiedName(PolySymbol.HTML_ATTRIBUTES, attr.name))
+                PolySymbol.HTML_ELEMENTS.withName(tag.name),
+                PolySymbol.HTML_ATTRIBUTES.withName(attr.name))
               ).getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )

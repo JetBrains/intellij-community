@@ -56,58 +56,51 @@ private fun namespaceOf(host: GenericContributionsHost): PolySymbolNamespace =
     else -> throw IllegalArgumentException(host.toString())
   }
 
-internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Triple<PolySymbolNamespace, PolySymbolKind, List<BaseContribution>>> =
+internal fun Contributions.getAllContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolQualifiedKind, List<BaseContribution>>> =
   sequenceOf(css, html)
     .filter { it != null }
-    .flatMap { host -> host.collectDirectContributions(framework).mapWith(namespaceOf(host)) }
+    .flatMap { host -> host.collectDirectContributions(framework) }
     .plus(js?.collectDirectContributions() ?: emptySequence())
 
-internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Triple<PolySymbolNamespace, PolySymbolKind, List<BaseContribution>>> =
+internal fun GenericContributionsHost.getAllContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolQualifiedKind, List<BaseContribution>>> =
   if (this is BaseContribution)
     sequenceOf(this, css, js, html)
       .filter { it != null }
-      .flatMap { host -> host.collectDirectContributions(framework).mapWith(namespaceOf(host)) }
+      .flatMap { host -> host.collectDirectContributions(framework) }
   else
-    this.collectDirectContributions(framework).mapWith(namespaceOf(this))
+    this.collectDirectContributions(framework)
 
-private fun Sequence<Pair<PolySymbolKind, List<BaseContribution>>>.mapWith(namespace: PolySymbolNamespace): Sequence<Triple<PolySymbolNamespace, PolySymbolKind, List<BaseContribution>>> =
-  map {
-    if (namespace == NAMESPACE_HTML && it.first == JS_EVENTS.kind)
-      Triple(JS_EVENTS.namespace, JS_EVENTS.kind, it.second)
-    else Triple(namespace, it.first, it.second)
-  }
-
-internal const val KIND_HTML_VUE_LEGACY_COMPONENTS = "\$vue-legacy-components\$"
+internal val HTML_VUE_LEGACY_COMPONENTS = PolySymbolQualifiedKind[NAMESPACE_HTML, "\$vue-legacy-components\$"]
 
 internal const val VUE_DIRECTIVE_PREFIX = "v-"
 internal const val VUE_FRAMEWORK = "vue"
-internal const val KIND_HTML_VUE_COMPONENTS = "vue-components"
-internal const val KIND_HTML_VUE_COMPONENT_PROPS = "props"
-internal const val KIND_HTML_VUE_DIRECTIVES = "vue-directives"
-internal const val KIND_HTML_VUE_DIRECTIVE_ARGUMENT = "argument"
-internal const val KIND_HTML_VUE_DIRECTIVE_MODIFIERS = "modifiers"
+internal val HTML_VUE_COMPONENTS = PolySymbolQualifiedKind[NAMESPACE_HTML, "vue-components"]
+internal val HTML_VUE_COMPONENT_PROPS = PolySymbolQualifiedKind[NAMESPACE_HTML, "props"]
+internal val HTML_VUE_DIRECTIVES = PolySymbolQualifiedKind[NAMESPACE_HTML, "vue-directives"]
+internal val HTML_VUE_DIRECTIVE_ARGUMENT = PolySymbolQualifiedKind[NAMESPACE_HTML, "argument"]
+internal val HTML_VUE_DIRECTIVE_MODIFIERS = PolySymbolQualifiedKind[NAMESPACE_HTML, "modifiers"]
 
-private fun GenericContributionsHost.collectDirectContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolKind, List<BaseContribution>>> =
+private fun GenericContributionsHost.collectDirectContributions(framework: FrameworkId?): Sequence<Pair<PolySymbolQualifiedKind, List<BaseContribution>>> =
   (when (this) {
     is HtmlContributionsHost -> sequenceOf(
-      Pair(HTML_ATTRIBUTES.kind, this.attributes),
-      Pair(HTML_ELEMENTS.kind, this.elements),
-      Pair(JS_EVENTS.kind, this.events)
+      Pair(HTML_ATTRIBUTES, this.attributes),
+      Pair(HTML_ELEMENTS, this.elements),
+      Pair(JS_EVENTS, this.events)
     ).plus(
       when (this) {
         is Html -> sequenceOf(
-          Pair(if (framework == VUE_FRAMEWORK) KIND_HTML_VUE_LEGACY_COMPONENTS else HTML_ELEMENTS.kind, this.tags)
+          Pair(if (framework == VUE_FRAMEWORK) HTML_VUE_LEGACY_COMPONENTS else HTML_ELEMENTS, this.tags)
         )
         is HtmlElement -> sequenceOf(
-          Pair(JS_EVENTS.kind, this.events)
+          Pair(JS_EVENTS, this.events)
         )
-        is HtmlAttribute -> if (this.name.startsWith(VUE_DIRECTIVE_PREFIX) && !this.name.contains(
-            ' ') && framework == VUE_FRAMEWORK) {
+        is HtmlAttribute -> if (this.name.startsWith(VUE_DIRECTIVE_PREFIX) && !this.name.contains(' ')
+                                && framework == VUE_FRAMEWORK) {
           sequenceOf(
-            Pair(KIND_HTML_VUE_DIRECTIVE_ARGUMENT, this.vueArgument?.toHtmlContribution()?.let { listOf(it) }
-                                                   ?: listOf(matchAllHtmlContribution("Vue directive argument"))),
-            Pair(KIND_HTML_VUE_DIRECTIVE_MODIFIERS, this.vueModifiers.takeIf { it.isNotEmpty() }?.map { it.toHtmlContribution() }
-                                                    ?: listOf(matchAllHtmlContribution("Vue directive modifier")))
+            Pair(HTML_VUE_DIRECTIVE_ARGUMENT, this.vueArgument?.toHtmlContribution()?.let { listOf(it) }
+                                              ?: listOf(matchAllHtmlContribution("Vue directive argument"))),
+            Pair(HTML_VUE_DIRECTIVE_MODIFIERS, this.vueModifiers.takeIf { it.isNotEmpty() }?.map { it.toHtmlContribution() }
+                                               ?: listOf(matchAllHtmlContribution("Vue directive modifier")))
           )
         }
         else emptySequence()
@@ -115,33 +108,39 @@ private fun GenericContributionsHost.collectDirectContributions(framework: Frame
       }
     )
     is CssContributionsHost -> sequenceOf(
-      Pair(CSS_CLASSES.kind, this.classes),
-      Pair(CSS_FUNCTIONS.kind, this.functions),
-      Pair(CSS_PROPERTIES.kind, this.properties),
-      Pair(CSS_PSEUDO_CLASSES.kind, this.pseudoClasses),
-      Pair(CSS_PSEUDO_ELEMENTS.kind, this.pseudoElements),
-      Pair(CSS_PARTS.kind, this.parts),
+      Pair(CSS_CLASSES, this.classes),
+      Pair(CSS_FUNCTIONS, this.functions),
+      Pair(CSS_PROPERTIES, this.properties),
+      Pair(CSS_PSEUDO_CLASSES, this.pseudoClasses),
+      Pair(CSS_PSEUDO_ELEMENTS, this.pseudoElements),
+      Pair(CSS_PARTS, this.parts),
     )
     is JsContributionsHost -> sequenceOf(
-      Pair(JS_EVENTS.kind, this.events),
-      Pair(JS_PROPERTIES.kind, this.properties),
-      Pair(JS_SYMBOLS.kind, this.symbols),
+      Pair(JS_EVENTS, this.events),
+      Pair(JS_PROPERTIES, this.properties),
+      Pair(JS_SYMBOLS, this.symbols),
     )
     else -> emptySequence()
   })
     .plus(this.additionalProperties.asSequence()
-            .map { (name, list) -> Pair(name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
+            .map { (name, list) ->
+              Pair(PolySymbolQualifiedKind[namespaceOf(this), name],
+                   list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList())
+            }
             .filter { it.second.isNotEmpty() })
 
-private fun JsGlobal.collectDirectContributions(): Sequence<Triple<PolySymbolNamespace, PolySymbolKind, List<BaseContribution>>> =
+private fun JsGlobal.collectDirectContributions(): Sequence<Pair<PolySymbolQualifiedKind, List<BaseContribution>>> =
   sequenceOf(
-    Triple(NAMESPACE_JS, JS_EVENTS.kind, this.events),
-    Triple(NAMESPACE_JS, JS_SYMBOLS.kind, this.symbols),
+    Pair(JS_EVENTS, this.events),
+    Pair(JS_SYMBOLS, this.symbols),
   )
-    .filter { it.third.isNotEmpty() }
+    .filter { it.second.isNotEmpty() }
     .plus(additionalProperties.asSequence()
             .filter { (name, _) -> !WebTypesSymbol.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS.contains(name) }
-            .map { (name, list) -> Triple(NAMESPACE_JS, name, list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList()) }
+            .map { (name, list) ->
+              Pair(PolySymbolQualifiedKind[NAMESPACE_JS, name],
+                   list?.mapNotNull { it?.value as? GenericContribution } ?: emptyList())
+            }
             .filter { it.second.isNotEmpty() })
 
 internal val GenericContributionsHost.genericContributions: Map<String, List<GenericContribution>>
@@ -167,7 +166,7 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
           is CssPseudoClass -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is CssPseudoElement -> sequenceOf(Pair(PROP_ARGUMENTS, this.arguments ?: false))
           is JsProperty -> if (this.readOnly == true) sequenceOf(Pair(PROP_READ_ONLY, true)) else emptySequence()
-          is JsSymbol -> this.kind?.let { kind -> PolySymbolJsKind.values().firstOrNull { it.name.equals(kind.value(), true) } }
+          is JsSymbol -> this.kind?.let { kind -> PolySymbolJsKind.entries.firstOrNull { it.name.equals(kind.value(), true) } }
                            ?.let { sequenceOf(Pair(PROP_KIND, it)) }
                          ?: emptySequence()
           else -> emptySequence()
@@ -183,9 +182,7 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedK
   }
     .let { parseWebTypesPath(it, context) }
     .lastOrNull()
-    ?.let {
-      PolySymbolQualifiedKind(it.namespace, it.kind)
-    }
+    ?.qualifiedKind
 
 internal fun Reference.resolve(
   name: String,
@@ -274,7 +271,7 @@ internal fun Reference.codeCompletion(
 ): List<PolySymbolCodeCompletionItem> {
   return when (val reference = this.value) {
     is String -> queryExecutor.runCodeCompletionQuery(
-      parseWebTypesPath("$reference", scope.lastPolySymbol).withLastSegmentName(name), position,
+      parseWebTypesPath(reference, scope.lastPolySymbol).withLastSegmentName(name), position,
       virtualSymbols, scope
     )
     is ReferenceWithProps -> {
@@ -370,7 +367,7 @@ internal val WebTypes.jsTypesSyntaxWithLegacy: WebTypes.JsTypesSyntax?
         try {
           WebTypes.JsTypesSyntax.fromValue(it)
         }
-        catch (e: IllegalArgumentException) {
+        catch (_: IllegalArgumentException) {
           null
         }
       }
@@ -384,7 +381,7 @@ internal val WebTypes.descriptionMarkupWithLegacy: WebTypes.DescriptionMarkup?
         try {
           WebTypes.DescriptionMarkup.fromValue(it)
         }
-        catch (e: IllegalArgumentException) {
+        catch (_: IllegalArgumentException) {
           null
         }
       }
@@ -460,10 +457,10 @@ private fun ReferenceWithProps.createNameConversionRules(context: PolySymbol?): 
   fun buildConvertersMap(value: Any?, addToBuilder: (PolySymbolQualifiedKind, PolySymbolNameConverter) -> Unit) {
     when (value) {
       is NameConverter -> mergeConverters(listOf(value))?.let {
-        addToBuilder(PolySymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
+        addToBuilder(lastPath.qualifiedKind, it)
       }
       is List<*> -> mergeConverters(value.filterIsInstance<NameConverter>())?.let {
-        addToBuilder(PolySymbolQualifiedKind(lastPath.namespace, lastPath.kind), it)
+        addToBuilder(lastPath.qualifiedKind, it)
       }
       is NameConversionRulesSingle -> buildNameConverters(value.additionalProperties, { mergeConverters(listOf(it)) }, addToBuilder)
       is NameConversionRulesMultiple -> buildNameConverters(value.additionalProperties, { mergeConverters(it) }, addToBuilder)
@@ -512,7 +509,7 @@ internal fun <T> buildNameConverters(
     val namespace = path[0].asWebTypesSymbolNamespace() ?: continue
     val symbolKind = path[1]
     val converter = mapper(value) ?: continue
-    addToBuilder(PolySymbolQualifiedKind(namespace, symbolKind), converter)
+    addToBuilder(PolySymbolQualifiedKind[namespace, symbolKind], converter)
   }
 }
 
@@ -545,7 +542,7 @@ fun parseWebTypesPath(path: String?, context: PolySymbol?): List<PolySymbolQuali
 
 internal fun List<PolySymbolQualifiedName>.withLastSegmentName(name: String) =
   if (isNotEmpty())
-    subList(0, size - 1) + last().copy(name = name)
+    subList(0, size - 1) + last().withName(name)
   else
     this
 
@@ -568,7 +565,7 @@ private fun parseWebTypesPath(path: List<String>, context: PolySymbol?): List<Po
     if (i >= path.size) break
     val kind = path[i++]
     val name = if (i >= path.size) "" else path[i++]
-    result.add(PolySymbolQualifiedName(PolySymbolQualifiedKind(namespace, kind), name))
+    result.add(PolySymbolQualifiedName[namespace, kind, name])
   }
   return result
 }

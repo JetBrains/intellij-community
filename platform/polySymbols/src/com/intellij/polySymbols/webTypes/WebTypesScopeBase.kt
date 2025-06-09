@@ -14,6 +14,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.FrameworkId
+import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
@@ -96,16 +97,16 @@ abstract class WebTypesScopeBase :
                                          framework: FrameworkId?,
                                          origin: WebTypesJsonOrigin): Sequence<WebTypesJsonContributionAdapter> =
     root.getAllContributions(framework)
-      .flatMap { (namespace, kind, list) ->
-        list.map { it.wrap(origin, this@WebTypesScopeBase, namespace, kind) }
+      .flatMap { (qualifiedKind, list) ->
+        list.map { it.wrap(origin, this@WebTypesScopeBase, qualifiedKind) }
       }
 
   override fun adaptAllContributions(contribution: GenericContributionsHost,
                                      framework: FrameworkId?,
                                      origin: WebTypesJsonOrigin): Sequence<WebTypesJsonContributionAdapter> =
     contribution.getAllContributions(framework)
-      .flatMap { (namespace, kind, list) ->
-        list.map { it.wrap(origin, this@WebTypesScopeBase, namespace, kind) }
+      .flatMap { (qualifiedKind, list) ->
+        list.map { it.wrap(origin, this@WebTypesScopeBase, qualifiedKind) }
       }
 
   private fun createContextRulesCache(): ClearableLazyValue<MultiMap<PolyContextKind, PolyContextKindRules>> {

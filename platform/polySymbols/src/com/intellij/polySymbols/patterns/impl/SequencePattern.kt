@@ -237,7 +237,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
             symbol = PolySymbolMatch.create(
               name,
               lastMatched.segments.filter { it.start < it.end }.withOffset(-lastMatched.start),
-              PolySymbolQualifiedKind(PolySymbol.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB),
+              PolySymbolQualifiedKind[PolySymbol.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB],
               PolySymbolOrigin.empty()
             ))
         }

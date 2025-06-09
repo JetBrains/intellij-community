@@ -11,9 +11,9 @@ interface CustomElementsSymbol : PolySymbolWithDocumentation {
 
     private const val NAMESPACE_CUSTOM_ELEMENTS_MANIFEST: String = "custom-elements-manifest"
 
-    val CEM_PACKAGES = PolySymbolQualifiedKind(NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "packages")
-    val CEM_MODULES = PolySymbolQualifiedKind(NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "modules")
-    val CEM_DECLARATIONS = PolySymbolQualifiedKind(NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "declarations")
+    val CEM_PACKAGES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "packages"]
+    val CEM_MODULES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "modules"]
+    val CEM_DECLARATIONS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CUSTOM_ELEMENTS_MANIFEST, "declarations"]
 
   }
 

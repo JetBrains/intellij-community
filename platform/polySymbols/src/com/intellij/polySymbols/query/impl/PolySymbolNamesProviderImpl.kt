@@ -98,7 +98,7 @@ class PolySymbolNamesProviderImpl(
 
     if (index < 0) return newName
 
-    val newVariants = getNames(qualifiedName.copy(name = newName), RENAME_QUERY)
+    val newVariants = getNames(qualifiedName.withName(name = newName), RENAME_QUERY)
 
     if (oldVariants.size == newVariants.size)
       return newVariants[index]

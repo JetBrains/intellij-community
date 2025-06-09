@@ -321,23 +321,23 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
     const val NAMESPACE_CSS: String = "css"
     const val NAMESPACE_JS: String = "js"
 
-    val HTML_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, "elements")
-    val HTML_ATTRIBUTES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, "attributes")
-    val HTML_ATTRIBUTE_VALUES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, "values")
-    val HTML_SLOTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_HTML, "slots")
+    val HTML_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_HTML, "elements"]
+    val HTML_ATTRIBUTES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_HTML, "attributes"]
+    val HTML_ATTRIBUTE_VALUES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_HTML, "values"]
+    val HTML_SLOTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_HTML, "slots"]
 
-    val CSS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "properties")
-    val CSS_PSEUDO_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "pseudo-elements")
-    val CSS_PSEUDO_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "pseudo-classes")
-    val CSS_FUNCTIONS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "functions")
-    val CSS_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "classes")
-    val CSS_PARTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_CSS, "parts")
+    val CSS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "properties"]
+    val CSS_PSEUDO_ELEMENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "pseudo-elements"]
+    val CSS_PSEUDO_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "pseudo-classes"]
+    val CSS_FUNCTIONS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "functions"]
+    val CSS_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "classes"]
+    val CSS_PARTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "parts"]
 
-    val JS_EVENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "events")
-    val JS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "properties")
-    val JS_KEYWORDS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "keywords")
-    val JS_SYMBOLS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "symbols")
-    val JS_STRING_LITERALS: PolySymbolQualifiedKind = PolySymbolQualifiedKind(NAMESPACE_JS, "string-literals")
+    val JS_EVENTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "events"]
+    val JS_PROPERTIES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "properties"]
+    val JS_KEYWORDS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "keywords"]
+    val JS_SYMBOLS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "symbols"]
+    val JS_STRING_LITERALS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "string-literals"]
 
     /**
      * Supported by `html/elements` and `html/attributes` symbols,

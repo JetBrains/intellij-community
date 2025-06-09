@@ -2,12 +2,24 @@
 package com.intellij.polySymbols
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.polySymbols.impl.PolySymbolQualifiedKindData
+import org.jetbrains.annotations.ApiStatus
 
-data class PolySymbolQualifiedKind(
-  val namespace: @NlsSafe PolySymbolNamespace,
-  val kind: @NlsSafe PolySymbolKind,
-) {
-  fun withName(name: String): PolySymbolQualifiedName = PolySymbolQualifiedName(this, name)
+@ApiStatus.NonExtendable
+interface PolySymbolQualifiedKind {
 
-  override fun toString(): String = "$namespace/$kind"
+  val namespace: @NlsSafe PolySymbolNamespace
+
+  val kind: @NlsSafe PolySymbolKind
+
+  fun withName(name: String): PolySymbolQualifiedName
+
+  companion object {
+
+    @JvmStatic
+    operator fun get(namespace: PolySymbolNamespace, kind: PolySymbolKind): PolySymbolQualifiedKind =
+      PolySymbolQualifiedKindData.create(namespace, kind)
+
+  }
+
 }

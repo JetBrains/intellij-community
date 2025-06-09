@@ -145,7 +145,7 @@ private class WebTypesComplexPatternConfigProvider(
           else {
             val lastContribution = scopeStack.peek() as PolySymbol
             listOf(PolySymbolMatch.create(listResult.name, listResult.segments,
-                                          PolySymbolQualifiedKind(lastContribution.qualifiedKind.namespace, SPECIAL_MATCHED_CONTRIB),
+                                          PolySymbolQualifiedKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB],
                                           lastContribution.origin))
           }
         }
@@ -166,7 +166,7 @@ private class WebTypesComplexPatternConfigProvider(
           else {
             val lastContribution = scopeStack.peek() as PolySymbol
             sequenceOf(PolySymbolMatch.create(name, matchResult.segments,
-                                              PolySymbolQualifiedKind(lastContribution.namespace, SPECIAL_MATCHED_CONTRIB),
+                                              PolySymbolQualifiedKind[lastContribution.namespace, SPECIAL_MATCHED_CONTRIB],
                                               lastContribution.origin))
           }
         }

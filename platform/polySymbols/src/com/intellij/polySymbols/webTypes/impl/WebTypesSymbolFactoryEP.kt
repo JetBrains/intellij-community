@@ -13,7 +13,7 @@ class WebTypesSymbolFactoryEP internal constructor() : CustomLoadingExtensionPoi
     private val EP_NAME = ExtensionPointName<WebTypesSymbolFactoryEP>("com.intellij.polySymbols.webTypes.symbolFactory")
 
     fun get(qualifiedKind: PolySymbolQualifiedKind): WebTypesSymbolFactory? =
-      EP_NAME.getByKey(qualifiedKind, WebTypesSymbolFactory::class.java) { PolySymbolQualifiedKind(it.namespace ?: "", it.kind ?: "") }
+      EP_NAME.getByKey(qualifiedKind, WebTypesSymbolFactory::class.java) { PolySymbolQualifiedKind[it.namespace ?: "", it.kind ?: ""] }
         ?.instance
   }
 
