@@ -307,6 +307,7 @@
 
       <action id="EditorFocusGutter" class="com.intellij.openapi.editor.actions.FocusGutterAction"/>
       <action id="EditorShowGutterIconTooltip" class="com.intellij.openapi.editor.actions.ShowGutterIconTooltipAction"/>
+      <action id="EditorCenterView" class="com.intellij.openapi.editor.impl.EditorCenterViewToggleAction"/>
     </group>
 
     <action id="ExpandAll" class="com.intellij.ide.actions.ExpandAllAction" icon="AllIcons.Actions.Expandall"/>
