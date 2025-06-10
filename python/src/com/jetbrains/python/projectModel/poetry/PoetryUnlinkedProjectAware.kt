@@ -13,7 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Path
 
 class PoetryUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
-  private val openProvider = PoetryOpenProvider()
+  private val openProvider = PoetryProjectOpenProvider()
   
   override val systemId: ProjectSystemId = PoetryConstants.SYSTEM_ID
 

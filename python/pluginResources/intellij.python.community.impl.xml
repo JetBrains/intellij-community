@@ -53,12 +53,12 @@
     <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryPyProjectTomlPostStartupActivity"/>
 
     <!--Poetry project model-->
-    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.poetry.PoetryOpenProcessor"/>
+    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.poetry.PoetryProjectOpenProcessor"/>
     <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.poetry.PoetryUnlinkedProjectAware"/>
     <postStartupActivity implementation="com.jetbrains.python.projectModel.poetry.PoetryProjectAware$PoetrySyncStartupActivity"/>
 
     <!--uv project model-->
-    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.uv.UvOpenProcessor"/>
+    <projectOpenProcessor implementation="com.jetbrains.python.projectModel.uv.UvProjectOpenProcessor"/>
     <externalSystemUnlinkedProjectAware implementation="com.jetbrains.python.projectModel.uv.UvUnlinkedProjectAware"/>
     <postStartupActivity implementation="com.jetbrains.python.projectModel.uv.UvProjectAware$UvSyncStartupActivity"/>
   </extensions>

@@ -19,8 +19,8 @@ import javax.swing.Icon
  * - The top-level pyproject.toml is added afterward in a project with existing `.idea/`.
  * - pyproject.toml files are found in non-top-level directories (requires IJPL-180733).
  */
-class PoetryOpenProcessor: ProjectOpenProcessor() {
-  private val importProvider = PoetryOpenProvider()
+class PoetryProjectOpenProcessor: ProjectOpenProcessor() {
+  private val importProvider = PoetryProjectOpenProvider()
   
   override val name: @Nls String = PyBundle.message("python.project.model.poetry")
 

@@ -19,8 +19,8 @@ import javax.swing.Icon
  * - The top-level pyproject.toml is added afterward in a project with existing `.idea/`.
  * - pyproject.toml files are found in non-top-level directories (requires IJPL-180733).
  */
-class UvOpenProcessor: ProjectOpenProcessor() {
-  private val importProvider = UvOpenProvider()
+class UvProjectOpenProcessor: ProjectOpenProcessor() {
+  private val importProvider = UvProjectOpenProvider()
   
   override val name: @Nls String = PyBundle.message("python.project.model.uv")
 
