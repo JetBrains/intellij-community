@@ -7,9 +7,9 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.impl.zombie.necropolisPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
-import com.intellij.platform.editor.zombie.rpc.FingerprintedZombieDto
+import com.intellij.platform.editor.zombie.rpc.CacheId
 import com.intellij.platform.editor.zombie.rpc.RemoteManagedCacheApi
-import com.intellij.platform.editor.zombie.rpc.ZombieCacheId
+import com.intellij.platform.editor.zombie.rpc.RemoteManagedCacheValueDto
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.EnumeratorIntegerDescriptor
@@ -23,64 +23,64 @@ import java.nio.file.Path
 
 @Service(Service.Level.PROJECT)
 private class RemoteManagedCacheManager(private val project: Project, private val coroutineScope: CoroutineScope) {
-  private val storage = ConcurrentCollectionFactory.createConcurrentMap<String, ManagedCache<Int, FingerprintedZombieDto>>()
-  fun get(zombieCacheId: ZombieCacheId): ManagedCache<Int, FingerprintedZombieDto> {
-    return storage[zombieCacheId.name]!!
+  private val storage = ConcurrentCollectionFactory.createConcurrentMap<String, ManagedCache<Int, RemoteManagedCacheValueDto>>()
+  fun get(cacheId: CacheId): ManagedCache<Int, RemoteManagedCacheValueDto> {
+    return storage[cacheId.name]!!
   }
-  fun create(zombieCacheId: ZombieCacheId) {
-    val (name, path) = cacheNameAndPath(zombieCacheId.name)
+  fun create(cacheId: CacheId) {
+    val (name, path) = cacheNameAndPath(cacheId.name)
     val builder = PersistentMapBuilder.newBuilder(
       path,
       EnumeratorIntegerDescriptor.INSTANCE,
       Externalizer,
     )
-    storage[zombieCacheId.name] = ManagedPersistentCache(name, builder, coroutineScope)
+    storage[cacheId.name] = ManagedPersistentCache(name, builder, coroutineScope)
   }
 
-  private fun cacheNameAndPath(graveName: String): Pair<String, Path> {
+  private fun cacheNameAndPath(cacheType: String): Pair<String, Path> {
     // IJPL-157893 the cache should survive project renaming
     val projectName = project.getProjectCacheFileName(hashSeparator="-")
     val projectPath = necropolisPath().resolve("$projectName-backend")
-    val cacheName = "$graveName-$projectName" // name should be unique across the application
-    val cachePath = projectPath.resolve(graveName).resolve(graveName)
+    val cacheName = "$cacheType-$projectName" // name should be unique across the application
+    val cachePath = projectPath.resolve(cacheType).resolve(cacheType)
     return cacheName to cachePath
   }
 
-  private object Externalizer : DataExternalizer<FingerprintedZombieDto> {
-    override fun save(out: DataOutput, value: FingerprintedZombieDto) {
+  private object Externalizer : DataExternalizer<RemoteManagedCacheValueDto> {
+    override fun save(out: DataOutput, value: RemoteManagedCacheValueDto) {
       out.writeLong(value.fingerprint)
-      out.writeInt(value.zombie.size)
-      out.write(value.zombie.toByteArray())
+      out.writeInt(value.data.size)
+      out.write(value.data.toByteArray())
     }
 
-    override fun read(`in`: DataInput): FingerprintedZombieDto {
+    override fun read(`in`: DataInput): RemoteManagedCacheValueDto {
       val fingerprint = `in`.readLong()
-      val zombieSize = `in`.readInt()
-      val zombie = ByteArray(zombieSize)
-      `in`.readFully(zombie)
-      return FingerprintedZombieDto(fingerprint, zombie.toList())
+      val dataSize = `in`.readInt()
+      val data = ByteArray(dataSize)
+      `in`.readFully(data)
+      return RemoteManagedCacheValueDto(fingerprint, data.toList())
     }
   }
 }
 
 internal class RemoteManagedCacheApiImpl: RemoteManagedCacheApi {
-  private suspend fun ZombieCacheId.cache() = projectId.findProjectOrNull()?.serviceAsync<RemoteManagedCacheManager>()?.get(this)
-  override suspend fun get(grave: ZombieCacheId, zombieId: Int): FingerprintedZombieDto? {
-    return grave.cache()?.get(zombieId)
+  private suspend fun CacheId.cache() = projectId.findProjectOrNull()?.serviceAsync<RemoteManagedCacheManager>()?.get(this)
+  override suspend fun get(cacheId: CacheId, key: Int): RemoteManagedCacheValueDto? {
+    return cacheId.cache()?.get(key)
   }
 
-  override suspend fun put(grave: ZombieCacheId, zombieId: Int, zombie: FingerprintedZombieDto?) {
-    grave.cache()?.let {
-      if (zombie == null) {
-        it.remove(zombieId)
+  override suspend fun put(cacheId: CacheId, key: Int, value: RemoteManagedCacheValueDto?) {
+    cacheId.cache()?.let {
+      if (value == null) {
+        it.remove(key)
       } else {
-        it.put(zombieId, zombie)
+        it.put(key, value)
       }
     }
   }
 
-  override suspend fun create(grave: ZombieCacheId) {
-    val project = grave.projectId.findProjectOrNull() ?: return
-    project.serviceAsync<RemoteManagedCacheManager>().create(grave)
+  override suspend fun create(cacheId: CacheId) {
+    val project = cacheId.projectId.findProjectOrNull() ?: return
+    project.serviceAsync<RemoteManagedCacheManager>().create(cacheId)
   }
 }

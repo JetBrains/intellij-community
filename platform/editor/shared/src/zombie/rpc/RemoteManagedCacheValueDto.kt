@@ -11,12 +11,12 @@ import java.io.*
 
 @Serializable
 @ApiStatus.Internal
-data class FingerprintedZombieDto(
+data class RemoteManagedCacheValueDto(
   val fingerprint: Long,
-  val zombie: List<Byte>,
+  val data: List<Byte>,
 ) {
   fun <Z: Zombie> toFingerprintedZombie(necromancy: Necromancy<Z>): FingerprintedZombie<Z> {
-    val zombie =  ByteArrayInputStream(zombie.toByteArray()).use {
+    val zombie =  ByteArrayInputStream(data.toByteArray()).use {
       DataInputStream(it).use { dataInput ->
         necromancy.exhumeZombie(dataInput)
       }
@@ -24,11 +24,11 @@ data class FingerprintedZombieDto(
     return FingerprintedZombieImpl(fingerprint, zombie)
   }
   companion object {
-    fun<Z: Zombie> FingerprintedZombie<Z>.fromFingerprintedZombie(necromancy: Necromancy<Z>): FingerprintedZombieDto {
+    fun<Z: Zombie> FingerprintedZombie<Z>.fromFingerprintedZombie(necromancy: Necromancy<Z>): RemoteManagedCacheValueDto {
        return ByteArrayOutputStream().use {bao ->
          DataOutputStream(bao).use { dataOutput: DataOutput ->
            necromancy.buryZombie(dataOutput, zombie())
-           FingerprintedZombieDto(fingerprint(), bao.toByteArray().toList())
+           RemoteManagedCacheValueDto(fingerprint(), bao.toByteArray().toList())
          }
       }
     }

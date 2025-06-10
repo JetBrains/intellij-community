@@ -10,10 +10,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface RemoteManagedCacheApi : RemoteApi<Unit> {
-  suspend fun get(grave: ZombieCacheId, zombieId: Int): FingerprintedZombieDto?
-  suspend fun put(grave: ZombieCacheId, zombieId: Int, zombie: FingerprintedZombieDto?)
+  suspend fun get(cacheId: CacheId, key: Int): RemoteManagedCacheValueDto?
+  suspend fun put(cacheId: CacheId, key: Int, value: RemoteManagedCacheValueDto?)
   // Used for linearization on project load
-  suspend fun create(grave: ZombieCacheId)
+  suspend fun create(cacheId: CacheId)
 
   companion object {
     suspend fun getInstance(): RemoteManagedCacheApi {

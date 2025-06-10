@@ -7,4 +7,4 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-data class ZombieCacheId(val name: String, val projectId: ProjectId)
+data class CacheId(val name: String, val projectId: ProjectId)
