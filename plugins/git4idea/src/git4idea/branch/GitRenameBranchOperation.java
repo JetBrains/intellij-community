@@ -8,13 +8,16 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.BranchRenameListener;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -23,9 +26,32 @@ import static git4idea.GitNotificationIdsHolder.BRANCH_RENAME_ROLLBACK_FAILED;
 import static git4idea.GitNotificationIdsHolder.BRANCH_RENAME_ROLLBACK_SUCCESS;
 
 class GitRenameBranchOperation extends GitBranchOperation {
+  // E.g., fatal: my-branch has no upstream information
+  private static final @NonNls String NO_UPSTREAM_PATTERN = "fatal:.*has no upstream information";
+
   private final @NotNull VcsNotifier myNotifier;
   private final @NotNull @NlsSafe String myCurrentName;
   private final @NotNull @NlsSafe String myNewName;
+  private final @Nullable GitUpstreamBranches myUpstreamBranches;
+
+  GitRenameBranchOperation(@NotNull Project project,
+                           @NotNull Git git,
+                           @NotNull GitBranchUiHandler uiHandler,
+                           @NotNull @NlsSafe String currentName,
+                           @NotNull @NlsSafe String newName,
+                           @NotNull List<? extends GitRepository> repositories,
+                           boolean unsetUpstream) {
+    super(project, git, uiHandler, repositories);
+    myCurrentName = currentName;
+    myNewName = newName;
+    myNotifier = VcsNotifier.getInstance(myProject);
+    if (unsetUpstream) {
+      myUpstreamBranches = new GitUpstreamBranches(repositories, myCurrentName, myGit);
+    }
+    else {
+      myUpstreamBranches = null;
+    }
+  }
 
   GitRenameBranchOperation(@NotNull Project project,
                            @NotNull Git git,
@@ -33,26 +59,35 @@ class GitRenameBranchOperation extends GitBranchOperation {
                            @NotNull @NlsSafe String currentName,
                            @NotNull @NlsSafe String newName,
                            @NotNull List<? extends GitRepository> repositories) {
-    super(project, git, uiHandler, repositories);
-    myCurrentName = currentName;
-    myNewName = newName;
-    myNotifier = VcsNotifier.getInstance(myProject);
+    this(project, git, uiHandler, currentName, newName, repositories, false);
   }
 
   @Override
   protected void execute() {
     while (hasMoreRepositories()) {
       GitRepository repository = next();
-      GitCommandResult result = myGit.renameBranch(repository, myCurrentName, myNewName);
-      if (result.success()) {
-        repository.update();
-        notifyBranchNameChanged(repository, myCurrentName, myNewName);
-        markSuccessful(repository);
-      }
-      else {
-        fatalError(GitBundle.message("git.rename.branch.could.not.rename.from.to", myCurrentName, myNewName), result);
+      GitCommandResult renameBranchResult = myGit.renameBranch(repository, myCurrentName, myNewName);
+      if (!renameBranchResult.success()) {
+        fatalError(GitBundle.message("git.rename.branch.could.not.rename.from.to", myCurrentName, myNewName), renameBranchResult);
         return;
       }
+
+      if (myUpstreamBranches != null) {
+        GitCommandResult unsetUpstreamResult = myGit.unsetUpstream(repository, myNewName);
+
+        if (!unsetUpstreamResult.success()) {
+          boolean canIgnoreError = ContainerUtil.exists(unsetUpstreamResult.getErrorOutput(),
+                                                               line -> line.matches(NO_UPSTREAM_PATTERN));
+          if (!canIgnoreError) {
+            fatalError(GitBundle.message("git.rename.branch.could.not.unset.upstream", myNewName), unsetUpstreamResult);
+            return;
+          }
+        }
+      }
+
+      repository.update();
+      notifyBranchNameChanged(repository, myCurrentName, myNewName);
+      markSuccessful(repository);
     }
     notifySuccess();
   }
@@ -63,7 +98,12 @@ class GitRenameBranchOperation extends GitBranchOperation {
     Collection<GitRepository> repositories = getSuccessfulRepositories();
     for (GitRepository repository : repositories) {
       GitCommandResult result = myGit.renameBranch(repository, myNewName, myCurrentName);
+
       if (result.success()) {
+        if (myUpstreamBranches != null) {
+          myUpstreamBranches.restoreUpstream(repository);
+        }
+
         repository.update();
         notifyBranchNameChanged(repository, myNewName, myCurrentName);
       }

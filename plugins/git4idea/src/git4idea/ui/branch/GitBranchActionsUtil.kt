@@ -35,7 +35,7 @@ internal fun createOrCheckoutNewBranch(project: Project,
                                        @Nls(capitalization = Nls.Capitalization.Title)
                                        title: String = GitBundle.message("branches.create.new.branch.dialog.title"),
                                        initialName: String? = null) {
-  val options = GitNewBranchDialog(project, repositories, title, initialName, true, true, false, true).showAndGetOptions() ?: return
+  val options = GitNewBranchDialog(project, repositories, title, initialName, showResetOption = true, localConflictsAllowed = true).showAndGetOptions() ?: return
   GitBranchCheckoutOperation(project, options.repositories).perform(startPoint, options)
 }
 

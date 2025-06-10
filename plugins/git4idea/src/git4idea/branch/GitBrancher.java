@@ -257,6 +257,11 @@ public interface GitBrancher {
   void renameBranch(@NotNull String currentName, @NotNull String newName, @NotNull List<? extends @NotNull GitRepository> repositories);
 
   /**
+   * Renames the given branch and also unsets its upstream
+   */
+  void renameBranchAndUnsetUpstream(@NotNull String currentName, @NotNull String newName, @NotNull List<? extends @NotNull GitRepository> repositories);
+
+  /**
    * Deletes tag
    */
   void deleteTag(@NotNull String name, @NotNull List<? extends @NotNull GitRepository> repositories);

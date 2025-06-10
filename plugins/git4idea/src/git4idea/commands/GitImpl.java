@@ -423,6 +423,16 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
+  public @NotNull GitCommandResult unsetUpstream(@NotNull GitRepository repository,
+                                                 @NotNull String branchName) {
+    GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.BRANCH);
+    h.setSilent(false);
+    h.setStdoutSuppressed(false);
+    h.addParameters("--unset-upstream", branchName);
+    return runCommand(h);
+  }
+
+  @Override
   public @NotNull GitCommandResult renameBranch(@NotNull GitRepository repository,
                                                 @NotNull String currentName,
                                                 @NotNull String newName,
