@@ -1485,7 +1485,7 @@
                                              implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByLineCompletionCommandProvider"/>
     <codeInsight.completion.command.provider language="JAVA"
                                              implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByBlockCompletionCommandProvider"/>
-    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaIntroduceVariableCommandProvider" />
+    <!--<codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaIntroduceVariableCommandProvider" />-->
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaShowUsagesActionCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.GenerateGetterSetterHandleCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaDeleteCompletionCommandProvider" />
