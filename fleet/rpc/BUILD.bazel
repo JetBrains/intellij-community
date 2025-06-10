@@ -17,6 +17,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom",
+  exported_compiler_plugins = ["@lib//:rpc-plugin"],
   deps = [
     "//fleet/reporting/api",
     "//fleet/reporting/shared",
