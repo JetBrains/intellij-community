@@ -70,7 +70,7 @@ internal suspend fun buildNsisInstaller(
     generator.addDirectory(additionalDirectoryToInclude)
     generator.addDirectory(runtimeDir)
     generator.generateInstallerFile(nsiConfDir.resolve("idea_win.nsh"))
-    generator.generateUninstallerFile(nsiConfDir.resolve("unidea_win.nsh"))
+    generator.generateUninstallerFile(nsiConfDir.resolve("un_idea_win.nsh"))
 
     prepareConfigurationFiles(nsiConfDir, customizer, context, arch)
     for (it in customizer.customNsiConfigurationFiles) {
@@ -154,6 +154,7 @@ private fun prepareConfigurationFiles(nsiConfDir: Path, customizer: WindowsDistr
     if (customizer.fileAssociations.isEmpty()) "NoAssociation"
     else customizer.fileAssociations.joinToString(separator = ",") { if (it.startsWith(".")) it else ".${it}" }
   val appInfo = context.applicationInfo
+  val uninstallFeedbackPage = if (appInfo.isEAP) null else customizer.getUninstallFeedbackPageUrl(appInfo)
   val installDirAndShortcutName = customizer.getNameForInstallDirAndDesktopShortcut(appInfo, context.buildNumber)
   val fileVersionNum = amendVersionNumber(context.buildNumber.replace(".SNAPSHOT", ".0"))
   val productVersionNum = amendVersionNumber(appInfo.majorVersion + '.' + appInfo.minorVersion)
@@ -172,7 +173,7 @@ private fun prepareConfigurationFiles(nsiConfDir: Path, customizer: WindowsDistr
     !define PRODUCT_LOGO_FILE "logo.bmp"
     !define PRODUCT_HEADER_FILE "headerlogo.bmp"
     !define ASSOCIATION "$${fileAssociations}"
-    !define UNINSTALL_WEB_PAGE "$${customizer.getUninstallFeedbackPageUrl(appInfo) ?: "feedback_web_page"}"
+    !define UNINSTALL_WEB_PAGE "$${uninstallFeedbackPage ?: ""}"
 
     ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
     ; set to 1 for release build
