@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.flavors
+package com.jetbrains.python.sdk
 
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import org.jetbrains.annotations.ApiStatus
@@ -10,7 +10,6 @@ import org.jetbrains.annotations.ApiStatus
  * @author Ilya.Kazakevich
  */
 @ApiStatus.Internal
-
 interface WinRegistryService {
   /**
    * @param basePath path like "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node"

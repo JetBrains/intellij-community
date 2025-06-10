@@ -49,14 +49,14 @@ import kotlin.time.Duration.Companion.minutes
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
-private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("pyproject.toml", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
+private const val REPLACE_PYTHON_VERSION = """import re,sys;f=open("$PY_PROJECT_TOML", "r+");orig=f.read();f.seek(0);f.write(re.sub(r"(python = \"\^)[^\"]+(\")", "\g<1>"+'.'.join(str(v) for v in sys.version_info[:2])+"\g<2>", orig))"""
 private val poetryNotFoundException: @Nls String = PyBundle.message("python.sdk.poetry.execution.exception.no.poetry.message")
 private val VERSION_2 = "2.0.0".toVersion()
 
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String> {
   val executable = getPoetryExecutable().getOr { return it }
-  return runExecutableWithProgress(executable, projectPath, 10.minutes, *args)
+  return runExecutableWithProgress(executable, projectPath, 10.minutes, args = args)
 }
 
 

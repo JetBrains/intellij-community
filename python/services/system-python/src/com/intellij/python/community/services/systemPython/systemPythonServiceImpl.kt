@@ -15,7 +15,7 @@ import com.intellij.python.community.services.internal.impl.VanillaPythonWithLan
 import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
-import com.intellij.python.community.services.systemPython.impl.CoreSystemPythonProvider
+import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -91,7 +91,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
     // Only strings are supported by serializer
     var userProvidedPythons by list<String>()
     val userProvidedPythonsAsPath: Collection<Path>
-      get() = userProvidedPythons.filterNotNull().mapNotNull {
+      get() = userProvidedPythons.mapNotNull {
         try {
           Path.of(it)
         }
@@ -107,8 +107,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
     findPythonsMutex.withLock {
       val pythonsUi = mutableMapOf<PythonBinary, UICustomization>()
 
-      val pythonsFromExtensions = (SystemPythonProvider.EP
-                                     .extensionList + listOf(CoreSystemPythonProvider))
+      val pythonsFromExtensions = SystemPythonProvider.EP.extensionList
         .flatMap { provider ->
           val pythons = provider.findSystemPythons(eelApi).getOrNull() ?: emptyList()
           val ui = provider.uiCustomization
