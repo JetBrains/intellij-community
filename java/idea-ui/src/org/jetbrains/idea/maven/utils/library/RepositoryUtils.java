@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.jarRepository.JarHttpDownloaderJps;
 import com.intellij.jarRepository.JarRepositoryManager;
+import com.intellij.jarRepository.RepositoryLibrarySynchronizerKt;
 import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -268,7 +269,7 @@ public final class RepositoryUtils {
   }
 
   public static Promise<?> reloadDependencies(final @NotNull Project project, final @NotNull LibraryEx library) {
-    if (JarHttpDownloaderJps.enabled()) {
+    if (JarHttpDownloaderJps.enabled() && isLibraryHasFixedVersion(library)) {
       Promise<?> promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(library);
 
       // callers of this function typically do not log, so do it for them
@@ -293,6 +294,19 @@ public final class RepositoryUtils {
     });
 
     return mavenResolverPromise;
+  }
+
+  private static boolean isLibraryHasFixedVersion(final @NotNull LibraryEx library) {
+    if (library.getKind() != RepositoryLibraryType.REPOSITORY_LIBRARY_KIND) {
+      return false;
+    }
+
+    RepositoryLibraryProperties libraryProperties = (RepositoryLibraryProperties) library.getProperties();
+    if (libraryProperties == null) {
+      return false;
+    }
+
+    return RepositoryLibrarySynchronizerKt.isLibraryHasFixedVersion(libraryProperties);
   }
 
   public static Promise<?> deleteAndReloadDependencies(final @NotNull Project project,
