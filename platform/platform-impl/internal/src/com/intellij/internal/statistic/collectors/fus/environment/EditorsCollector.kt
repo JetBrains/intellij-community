@@ -23,11 +23,12 @@ private const val TRAE_ID = ".trae"
 private const val ECLIPSE_ID = ".eclipse"
 private const val ZED_ID = ".zed"
 private const val VISUAL_STUDIO_ID = "VisualStudio"
+private const val NEOVIM_ID = "nvim/init.*"
 
 private const val NONE = "none"
 
 internal class EditorsCollector : ApplicationUsagesCollector() {
-  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 9)
+  private val EDITORS_GROUP: EventLogGroup = EventLogGroup("editors", 10)
 
   override fun getGroup(): EventLogGroup = EDITORS_GROUP
 
@@ -40,7 +41,8 @@ internal class EditorsCollector : ApplicationUsagesCollector() {
     TRAE_ID,
     ECLIPSE_ID,
     ZED_ID,
-    VISUAL_STUDIO_ID
+    VISUAL_STUDIO_ID,
+    NEOVIM_ID,
   )
 
   private val CONFIG_EXISTS: EventId1<String> = EDITORS_GROUP.registerEvent(
@@ -118,6 +120,17 @@ internal class EditorsCollector : ApplicationUsagesCollector() {
         if (vsVersions.any()) {
           add(CONFIG_EXISTS.metric(VISUAL_STUDIO_ID))
           add(VISUAL_STUDIO_VERSIONS_INSTALLED.metric(vsVersions))
+        }
+
+        val neovimDir = when {
+          SystemInfo.isWindows -> getWindowsEnvVariableValue("HOMEPATH").let { Paths.get(it) }.resolve("AppData/Local/nvim")
+          else -> homeDir.resolve(".config/nvim")
+        }
+        if (
+          Files.exists(neovimDir.resolve("init.vim")) ||
+          Files.exists(neovimDir.resolve("init.lua"))
+        ) {
+          add(CONFIG_EXISTS.metric(NEOVIM_ID))
         }
 
         if (isEmpty()) {
