@@ -166,6 +166,29 @@ public final class CoroutinesDebugHelper {
     }
   }
 
+  public static Object[] dumpCoroutinesWithStacktracesAsJson() throws ReflectiveOperationException {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      Class<?> debugProbesImplClass = classLoader.loadClass("kotlinx.coroutines.debug.internal.DebugProbesImpl");
+      Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
+      Object[] dump = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
+      Object[] coroutineInfos = (Object[])dump[3];
+      String[] lastObservedStackTraces = new String[coroutineInfos.length];
+      for (int i = 0; i < coroutineInfos.length; i++) {
+        lastObservedStackTraces[i] = lastObservedStackTrace(coroutineInfos[i]);
+      }
+      dump[3] = lastObservedStackTraces;
+      return dump;
+    } catch (Throwable e) {
+      return null;
+    }
+  }
+
+  public static String lastObservedStackTrace(Object debugCoroutineInfo) throws ReflectiveOperationException {
+    List<StackTraceElement> stackTrace = (List<StackTraceElement>)invoke(debugCoroutineInfo, "lastObservedStackTrace");
+    return JsonUtils.dumpStackTraceElements(stackTrace);
+  }
+
   /**
    * This method takes the array of {@link kotlinx.coroutines.debug.internal.DebugCoroutineInfo} instances
    * and for each coroutine finds it's job and the first parent, which corresponds to some coroutine, captured in the dump.

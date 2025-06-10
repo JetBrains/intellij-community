@@ -23,6 +23,17 @@ public final class JsonUtils {
     return result.toString();
   }
 
+  public static String dumpStackTraceElements(List<StackTraceElement> stack) {
+    StringBuilder result = new StringBuilder();
+    result.append("[");
+    for (int i = 0; i < stack.size(); i++) {
+      if (i > 0) result.append(", ");
+      dumpStackTraceElement(result, stack.get(i));
+    }
+    result.append("]");
+    return result.toString();
+  }
+
   public static String escapeJsonString(String s) {
     StringBuilder builder = new StringBuilder();
     int length = s.length();

@@ -27,7 +27,7 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
         try {
             val executionContext = suspendContext.executionContext()
             val coroutineInfos =
-                CoroutinesInfoFromJsonAndReferencesProvider(executionContext).dumpCoroutinesInfo()
+                CoroutinesInfoFromJsonAndReferencesProvider(executionContext).dumpCoroutinesWithStacktraces()
                     ?: CoroutineLibraryAgent2Proxy.instance(executionContext)?.dumpCoroutinesInfo()
                     ?: emptyList()
             coroutineInfoCache.ok(coroutineInfos)

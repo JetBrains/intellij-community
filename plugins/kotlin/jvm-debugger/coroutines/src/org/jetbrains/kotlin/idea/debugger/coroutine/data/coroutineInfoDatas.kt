@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.engine.SuspendContext
+import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ThreadReference
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +28,8 @@ open class CoroutineInfoData(
     val lastObservedFrame: ObjectReference?,
     val lastObservedThread: ThreadReference?,
     val debugCoroutineInfoRef: ObjectReference?,
-    private val stackFrameProvider: CoroutineStackFramesProvider?
+    private val stackFrameProvider: CoroutineStackFramesProvider?,
+    val lastObservedStackTrace: List<Location> = emptyList()
 ) {
     val name: String = name ?: DEFAULT_COROUTINE_NAME
 

@@ -60,10 +60,10 @@ private class CoroutineDumpItem(info: CoroutineInfoData) : MergeableDumpItem {
 
     override val stackTrace: String =
         info.coroutineDescriptor + "\n" +
-                info.continuationStackFrames.map { it.location }.joinToString(prefix = "\t", separator = "\n") { ThreadDumpAction.renderLocation(it) }
+                info.lastObservedStackTrace.joinToString(prefix = "\t", separator = "\n\t") { ThreadDumpAction.renderLocation(it) }
 
     override val interestLevel: Int = when {
-        info.continuationStackFrames.isEmpty() -> -10
+        info.lastObservedStackTrace.isEmpty() -> -10
         else -> stackTrace.count { it == '\n' }
     }
 
