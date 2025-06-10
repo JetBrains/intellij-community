@@ -482,6 +482,7 @@ object PluginManagerCore {
 
     if (initContext.checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
       throw EssentialPluginMissingException(listOf("$CORE_ID (platform prefix: ${System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY)})"))
+        .apply { (pluginErrorsById[CORE_ID])?.let { addSuppressed(Exception(it.logMessage)) } }
     }
 
     checkThirdPartyPluginsPrivacyConsent(parentActivity, idMap)
@@ -611,18 +612,19 @@ object PluginManagerCore {
         throw EssentialPluginMissingException(disabledModulesOfCorePlugin.map { it.moduleName })
       }
     }
-    var missing: MutableList<String>? = null
+    var missing: MutableList<Pair<String, PluginNonLoadReason?>>? = null
     for (id in essentialPlugins) {
       val descriptor = idMap[id]
       if (descriptor == null || !descriptor.isMarkedForLoading) {
         if (missing == null) {
           missing = ArrayList()
         }
-        missing.add(id.idString)
+        missing.add(id.idString to pluginLoadingErrors?.get(id))
       }
     }
     if (missing != null) {
-      throw EssentialPluginMissingException(missing)
+      throw EssentialPluginMissingException(missing.map { it.first })
+        .apply { missing.forEach { (_, reason) -> if (reason != null) addSuppressed(Exception(reason.logMessage)) } }
     }
   }
 
