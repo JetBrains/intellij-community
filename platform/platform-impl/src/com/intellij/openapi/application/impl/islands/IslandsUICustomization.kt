@@ -141,7 +141,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
             config.restore()
           }
 
-          if (FileEditorManager.getInstance(ProjectUtil.getProjectForWindow(frame) ?: return).openFiles.isEmpty()) {
+          val fileEditorManager = (ProjectUtil.getProjectForWindow(frame) ?: return).getServiceIfCreated(FileEditorManager::class.java)
+
+          if (fileEditorManager?.openFiles?.isEmpty() == true) {
             val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
             editorEmptyTextPainter.paintEmptyText(IdeGlassPaneUtil.find(this) as JComponent, g)
           }
