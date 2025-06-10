@@ -1,6 +1,0 @@
-<idea-plugin>
-  <dependencies>
-    <module name="intellij.platform.jewel.ui" />
-    <module name="intellij.platform.jewel.foundation" />
-  </dependencies>
-</idea-plugin>
