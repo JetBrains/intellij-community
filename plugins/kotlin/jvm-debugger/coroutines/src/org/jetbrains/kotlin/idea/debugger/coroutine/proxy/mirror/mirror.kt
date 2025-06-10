@@ -29,6 +29,16 @@ data class MirrorOfCoroutineInfo(
     val creationStackTraceProvider: StackTraceMirrorProvider
 )
 
+data class MirrorOfDebugCoroutineInfo(
+    val context: MirrorOfCoroutineContext?,
+    val sequenceNumber: Long?,
+    val state: String?,
+    val lastObservedThread: ThreadReference?,
+    val lastObservedFrame: ObjectReference?,
+    val creationStackTrace: List<MirrorOfStackTraceElement>,
+    val lastObservedStackTrace: List<MirrorOfStackTraceElement>
+)
+
 data class MirrorOfJob(
     val details: String,
     val parent: JobMirrorProvider

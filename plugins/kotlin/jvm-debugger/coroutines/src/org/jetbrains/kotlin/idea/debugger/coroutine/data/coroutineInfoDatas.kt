@@ -104,22 +104,6 @@ open class CoroutineInfoData(
 }
 
 @ApiStatus.Internal
-fun createCoroutineInfoDataFromMirror(
-    mirror: MirrorOfCoroutineInfo,
-    stackFrameProvider: CoroutineStackFramesProvider
-): CoroutineInfoData =
-    CoroutineInfoData(
-        name = mirror.context?.name,
-        id = mirror.sequenceNumber,
-        state = mirror.state,
-        dispatcher = mirror.context?.dispatcher,
-        lastObservedFrame = mirror.lastObservedFrame,
-        lastObservedThread = mirror.lastObservedThread,
-        debugCoroutineInfoRef = null,
-        stackFrameProvider = stackFrameProvider
-    )
-
-@ApiStatus.Internal
 enum class State(val state: String) {
     RUNNING("RUNNING"),
     SUSPENDED("SUSPENDED"),

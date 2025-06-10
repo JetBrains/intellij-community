@@ -162,8 +162,20 @@ internal class CoroutineLibraryAgent2Proxy(
 
     override fun dumpCoroutinesInfo(): List<CoroutineInfoData> {
         val result = debugProbesImpl.dumpCoroutinesInfo(executionContext)
-        return result.map {
-            createCoroutineInfoDataFromMirror(it, stackFramesProvider)
+        return result.map { mirror ->
+            CoroutineInfoData(
+                name = mirror.context?.name,
+                id = mirror.sequenceNumber,
+                state = mirror.state,
+                dispatcher = mirror.context?.dispatcher,
+                lastObservedFrame = mirror.lastObservedFrame,
+                lastObservedThread = mirror.lastObservedThread,
+                debugCoroutineInfoRef = null,
+                stackFrameProvider = stackFramesProvider,
+                lastObservedStackTrace = mirror.lastObservedStackTrace.map {
+                    findOrCreateLocation(executionContext, it.stackTraceElement())
+                }
+            )
         }
     }
 
