@@ -5,6 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.refactoring.impl.PolySymbolRenameTargetImpl
+import com.intellij.polySymbols.utils.acceptSymbolForPsiSourcedPolySymbolRenameHandler
 
 interface PolySymbolRenameTarget : RenameTarget {
 

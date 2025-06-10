@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
+import org.jetbrains.annotations.ApiStatus
 
 interface PolySymbolHighlightingCustomizer {
 
@@ -20,15 +21,18 @@ interface PolySymbolHighlightingCustomizer {
     internal val EP_NAME: ExtensionPointName<PolySymbolHighlightingCustomizer> =
       ExtensionPointName<PolySymbolHighlightingCustomizer>("com.intellij.polySymbols.highlightingCustomizer")
 
-    internal fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: PolySymbol, level: Int): TextAttributesKey? =
+    @ApiStatus.Internal
+    fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: PolySymbol, level: Int): TextAttributesKey? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolTextAttributes(host, symbol, level) }
 
-    internal fun getTextAttributesFor(kind: PolySymbolQualifiedKind): TextAttributesKey? =
+    @ApiStatus.Internal
+    fun getTextAttributesFor(kind: PolySymbolQualifiedKind): TextAttributesKey? =
       EP_NAME.computeIfAbsent(kind, PolySymbolHighlightingCustomizer::class.java) { kind ->
         listOfNotNull(EP_NAME.extensionList.firstNotNullOfOrNull { it.getSymbolKindTextAttributes(kind) })
       }.firstOrNull()
 
-    internal fun getDefaultHostTextAttributes(host: PsiExternalReferenceHost): TextAttributesKey? {
+    @ApiStatus.Internal
+    fun getDefaultHostTextAttributes(host: PsiExternalReferenceHost): TextAttributesKey? {
       val clazz = host::class.java
       return EP_NAME.computeIfAbsent(clazz) {
         listOf(EP_NAME.extensionList.firstNotNullOfOrNull {

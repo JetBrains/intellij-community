@@ -16,6 +16,7 @@ import com.intellij.polySymbols.utils.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.SmartList
+import com.intellij.util.PlatformUtils
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -32,8 +33,10 @@ class PolySymbolsQueryExecutorImpl(
   override val namesProvider: PolySymbolNamesProvider,
   override val resultsCustomizer: PolySymbolsQueryResultsCustomizer,
   override val context: PolyContext,
-  override val allowResolve: Boolean,
+  allowResolve: Boolean,
 ) : PolySymbolsQueryExecutor {
+
+  override val allowResolve: Boolean = if (PlatformUtils.isJetBrainsClient()) false else allowResolve
 
   private val rootScope: List<PolySymbolsScope> = initializeCompoundScopes(rootScope)
   private var nestingLevel: Int = 0

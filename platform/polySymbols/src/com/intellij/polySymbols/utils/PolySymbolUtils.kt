@@ -4,6 +4,7 @@
 package com.intellij.polySymbols.utils
 
 import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.navigation.EmptyNavigatable
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
@@ -22,9 +23,11 @@ import com.intellij.polySymbols.impl.withRange
 import com.intellij.polySymbols.patterns.impl.applyIcons
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.query.impl.PolySymbolMatchBase
-import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.SyntheticElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.asSafely
 import com.intellij.util.containers.Stack
@@ -209,18 +212,6 @@ val PolySymbol.namespace: PolySymbolNamespace
 
 val PolySymbol.kind: PolySymbolKind
   get() = qualifiedKind.kind
-
-fun PolySymbolNameSegment.getProblemKind(): ProblemKind? =
-  when (problem) {
-    PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART -> ProblemKind.MissingRequiredPart
-    PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL ->
-      if (start == end)
-        ProblemKind.MissingRequiredPart
-      else
-        ProblemKind.UnknownSymbol
-    PolySymbolNameSegment.MatchProblem.DUPLICATE -> ProblemKind.DuplicatedPart
-    null -> null
-  }
 
 val PolySymbol.completeMatch: Boolean
   get() = this !is PolySymbolMatch
@@ -415,3 +406,8 @@ fun createModificationTracker(trackersPointers: List<Pointer<out ModificationTra
     }
     modCount
   }
+@ApiStatus.Internal
+fun acceptSymbolForPsiSourcedPolySymbolRenameHandler(symbol: Symbol): Boolean =
+  symbol is PsiSourcedPolySymbol
+  && symbol.source is PsiNamedElement
+  && symbol.source !is SyntheticElement

@@ -41,8 +41,9 @@ jvm_library(
     "@lib//:jackson-module-kotlin",
     "@lib//:caffeine",
     "//platform/util/jdom",
-    "//platform/polySymbols",
     "//platform/markdown-utils",
+    "//platform/polySymbols",
+    "//platform/polySymbols/backend",
   ],
   exports = ["//xml/xml-frontback-impl:frontback-impl"],
   runtime_deps = [

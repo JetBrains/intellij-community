@@ -8,6 +8,7 @@ import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.utils.matchedNameOrName
+import org.jetbrains.annotations.ApiStatus
 
 class PolySymbolNameSegmentImpl internal constructor(
   override val start: Int,
@@ -19,7 +20,7 @@ class PolySymbolNameSegmentImpl internal constructor(
   symbolKinds: Set<PolySymbolQualifiedKind>?,
   private val explicitApiStatus: PolySymbolApiStatus?,
   private val explicitPriority: PolySymbol.Priority?,
-  internal val highlightingEnd: Int?,
+  @ApiStatus.Internal val highlightingEnd: Int?,
 ) : PolySymbolNameSegment {
 
   init {

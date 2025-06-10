@@ -100,10 +100,6 @@ internal fun PolySymbolNameSegment.withDisplayName(displayName: String?) =
 internal fun PolySymbolNameSegment.withRange(start: Int, end: Int) =
   (this as PolySymbolNameSegmentImpl).withRange(start, end)
 
-internal val PolySymbolNameSegment.highlightingEnd: Int?
-  get() =
-    (this as PolySymbolNameSegmentImpl).highlightingEnd
-
 internal fun PolySymbolNameSegment.copy(
   apiStatus: PolySymbolApiStatus? = null,
   priority: PolySymbol.Priority? = null,
@@ -117,13 +113,3 @@ internal fun PolySymbolNameSegment.copy(
 @ApiStatus.Internal
 fun PolySymbolNameSegment.canUnwrapSymbols(): Boolean =
   (this as PolySymbolNameSegmentImpl).canUnwrapSymbols()
-
-internal fun PolySymbol.removeZeroLengthSegmentsRecursively(): List<PolySymbol> {
-  if (this !is PolySymbolMatch) return listOf(this)
-  val nameLength = matchedName.length
-  return nameSegments
-           .takeIf { it.size > 1 && it.none { segment -> segment.problem != null } }
-           ?.find { segment -> segment.start == 0 && segment.end == nameLength }
-           ?.let { segment -> segment.symbols.flatMap { it.removeZeroLengthSegmentsRecursively() } }
-         ?: listOf(this)
-}

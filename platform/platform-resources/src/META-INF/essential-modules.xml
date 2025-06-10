@@ -69,5 +69,7 @@
 
     <module name="intellij.platform.identifiers.highlighting.shared"/>
     <module name="intellij.platform.identifiers.highlighting.backend"/>
+
+    <module name="intellij.platform.polySymbols" loading="embedded"/>
   </content>
 </idea-plugin>
