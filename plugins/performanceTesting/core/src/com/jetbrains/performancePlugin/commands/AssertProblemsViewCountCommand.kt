@@ -26,7 +26,7 @@ class AssertProblemsViewCountCommand(text: String, line: Int) : PerformanceComma
 
     val actualProblems = ProblemsView
       .getSelectedPanel(context.project)!!
-      .treeModel.root.getFileProblems(editor!!.virtualFile)
+      .treeModel.root.getFileProblems(editor!!.virtualFile!!)
 
     assert(expectedNumberOfErrors == actualProblems.size)
     { "Expected number of errors $expectedNumberOfErrors, actual ${actualProblems.size}\nList of problems:\n$actualProblems" }

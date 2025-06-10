@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
@@ -19,7 +20,7 @@ class IntentionActionUtils {
     @JvmStatic
     fun invokeIntentionAction(editor: Editor, actionName: String) = runBlocking {
       val project = editor.project ?: throw IllegalStateException("Project is null")
-      val psiFile = readAction { PsiManager.getInstance(project).findFile(editor.virtualFile) }
+      val psiFile = readAction { PsiDocumentManager.getInstance(project).getPsiFile(editor.document) }
                     ?: throw IllegalStateException("File is null")
       IntentionManager.getInstance().availableIntentions.firstOrNull { it.text == actionName }
         ?.invoke(project, editor, psiFile) ?: throw IllegalStateException("Intention $actionName not found")
@@ -37,7 +38,7 @@ class IntentionActionUtils {
         }
       }) { "$name quick fix not found" }
       val project = checkNotNull(editor.project) { "Project is null" }
-      val psiFile = checkNotNull(readAction { PsiManager.getInstance(project).findFile(editor.virtualFile) }) { "File is null" }
+      val psiFile = checkNotNull(readAction { PsiDocumentManager.getInstance(project).getPsiFile(editor.document) }) { "File is null" }
       if (action.startInWriteAction()) {
         edtWriteAction {
           action.invoke(project, editor, psiFile)

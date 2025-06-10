@@ -89,7 +89,7 @@ object DocumentationChecker : TestFeatureWithFileMarkup<DocumentationCheckerConf
     override fun KotlinMppTestsContext.restoreMarkup(text: String, editor: Editor): String {
         val caretsInFile = carets.filter {
             val relativePath = it.file.relativeTo(testDataDirectory.toPath())
-            editor.virtualFile.toNioPath().relativeTo(testProjectRoot.toPath()) == relativePath
+            editor.virtualFile?.toNioPath()?.relativeTo(testProjectRoot.toPath()) == relativePath
         }.sortedWith { c1, c2 -> c1.line.compareTo(c2.line).takeIf { it != 0 } ?: c1.offset.compareTo(c2.offset) }
 
         var currentOffset = 0

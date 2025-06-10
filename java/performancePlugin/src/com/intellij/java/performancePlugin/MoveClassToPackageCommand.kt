@@ -50,8 +50,8 @@ class MoveClassToPackageCommand(text: String, line: Int) : PlaybackCommandCorout
     val targetPackage = PackageWrapper(PsiManager.getInstance(project), targetPackageName)
     readAction { if (!targetPackage.exists()) throw IllegalArgumentException("Package $targetPackageName does not exist") }
 
-    val sourceRoot = readAction { ProjectRootManager.getInstance(project).fileIndex.getSourceRootForFile(editor.virtualFile) }
-                     ?: throw IllegalArgumentException("No source root found for ${editor.virtualFile.path}")
+    val sourceRoot = readAction { ProjectRootManager.getInstance(project).fileIndex.getSourceRootForFile(editor.virtualFile!!) }
+                     ?: throw IllegalArgumentException("No source root found for ${editor.virtualFile!!.path}")
 
     val destination = AutocreatingSingleSourceRootMoveDestination(targetPackage, sourceRoot)
 

@@ -358,6 +358,7 @@ public interface Editor extends UserDataHolder {
    * <p>
    * See also {@link com.intellij.openapi.fileEditor.FileDocumentManager#getFile(Document)} as a more reliable alternative.
    */
+  @Nullable
   default VirtualFile getVirtualFile() {
     return null;
   }

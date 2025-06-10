@@ -50,7 +50,7 @@ abstract class AllButThisBreakpointAction : AnAction() {
     val editor = e.getData(CommonDataKeys.EDITOR) ?: return null
     val caretLines = e.getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR)?.let(::listOf)
                      ?: editor.caretModel.allCarets.map { it.logicalPosition.line }
-    val currentFile = editor.virtualFile
+    val currentFile = editor.virtualFile!!
 
     if (caretLines.isEmpty()) return null
 
