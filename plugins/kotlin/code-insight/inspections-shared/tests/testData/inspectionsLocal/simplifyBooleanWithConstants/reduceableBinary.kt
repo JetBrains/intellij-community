@@ -5,6 +5,3 @@
 fun foo(y: Boolean) {
     <caret>2 > 1
 }
-
-// IGNORE_K2 
-// (see KT-73758)

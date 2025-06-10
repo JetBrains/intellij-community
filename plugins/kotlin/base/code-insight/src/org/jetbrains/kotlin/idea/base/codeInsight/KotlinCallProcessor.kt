@@ -235,28 +235,35 @@ object KotlinCallProcessor {
 
             return with(processor) {
                 if (call != null) {
-                    when (call) {
-                        is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
-                        is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
-                        is KaCompoundVariableAccessCall -> {
-                            processCallTarget(VariableCallTarget(element, call, call.variablePartiallyAppliedSymbol))
-                            processCallTarget(FunctionCallTarget(element, call, call.compoundOperation.operationPartiallyAppliedSymbol))
-                        }
-
-                        is KaSimpleVariableAccessCall -> {
-                            processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
-                        }
-
-                        is KaCompoundArrayAccessCall -> {
-                            processCallTarget(FunctionCallTarget(element, call, call.getPartiallyAppliedSymbol))
-                            processCallTarget(FunctionCallTarget(element, call, call.setPartiallyAppliedSymbol))
-                        }
-
-                        else -> true
-                    }
+                    return processResolvedCall(processor, element, call)
                 } else {
                     processUnresolvedCall(element, callInfo)
                 }
+            }
+        }
+    }
+
+
+    fun KaSession.processResolvedCall(targetProcessor: KotlinCallTargetProcessor, element: KtElement, call: KaCall): Boolean {
+        with(targetProcessor) {
+            return when (call) {
+                is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
+                is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
+                is KaCompoundVariableAccessCall -> {
+                    processCallTarget(VariableCallTarget(element, call, call.variablePartiallyAppliedSymbol))
+                    processCallTarget(FunctionCallTarget(element, call, call.compoundOperation.operationPartiallyAppliedSymbol))
+                }
+
+                is KaSimpleVariableAccessCall -> {
+                    processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
+                }
+
+                is KaCompoundArrayAccessCall -> {
+                    processCallTarget(FunctionCallTarget(element, call, call.getPartiallyAppliedSymbol))
+                    processCallTarget(FunctionCallTarget(element, call, call.setPartiallyAppliedSymbol))
+                }
+
+                else -> true
             }
         }
     }
