@@ -14,6 +14,10 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 public class UndoRemoteBehaviorService {
 
   public static boolean isExperimentalFrontendUndoEnabled() {
+    if (!Registry.is("ide.undo.frontend.if.possible", true) ||
+        PlatformUtils.isRider()) {
+      return false;
+    }
     var service = ApplicationManager.getApplication().getService(UndoRemoteBehaviorService.class);
     return service.isSpeculativeUndoEnabled();
   }
@@ -24,7 +28,6 @@ public class UndoRemoteBehaviorService {
   }
 
   protected boolean isSpeculativeUndoEnabled() {
-    return Registry.is("ide.undo.frontend.if.possible", true) &&
-           !PlatformUtils.isRider();
+    return false;
   }
 }
