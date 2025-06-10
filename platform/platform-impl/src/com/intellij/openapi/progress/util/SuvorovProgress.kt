@@ -17,10 +17,9 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.KeyboardFocusManager
-import java.awt.event.InputEvent
 import java.awt.event.InvocationEvent
 import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.locks.ReentrantLock
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 
@@ -212,56 +211,30 @@ object SuvorovProgress {
  * High-performance interceptor of AWT events
  *
  * We instantiate this stealer and register it as postEventHook once to avoid complex interaction with Disposer on each entry to SuvorovProgress.
- * It also uses monitors instead of parks to avoid overhead on thread switches.
+ * The goal of this class is to process very urgent AWT events despite the IDE being frozen.
+ * One needs to be careful to maintain keep AWT events in the order they were posted.
  */
 private class EternalEventStealer(disposable: Disposable) {
   @Volatile
   private var enabled = false
 
-  // We need to maintain the ordering of incoming input events.
-  // Sometimes we are moving events from IdeEventQueue to our `inputEventList`, and in the meantime some other thread performs `postEvent`.
-  // It is easy to break the order of events, so we protect ourselves with a plain lock.
-  private val lock = ReentrantLock()
+  private val specialEvents = LinkedBlockingQueue<SpecialDispatchEvent>()
 
-  val inputEventList = LinkedBlockingQueue<InputEvent>()
-  val invocationEventList = ArrayList<InvocationEvent>(16)
   init {
     IdeEventQueue.getInstance().addPostEventListener(
       { event ->
-        lock.lock()
-        try {
-          if (!enabled) {
-            return@addPostEventListener false
-          }
-
-          if (event is InputEvent) {
-            inputEventList.add(event)
-            return@addPostEventListener true
-          }
-          else if (event is InvocationEvent && EventStealer.isUrgentInvocationEvent(event)) {
-            synchronized(this) {
-              invocationEventList.add(event)
-              (this as Object).notifyAll()
-            }
-            return@addPostEventListener true
-          }
-        }
-        finally {
-          lock.unlock()
+        if (enabled && EventStealer.isUrgentInvocationEvent(event)) {
+          val specialDispatchEvent = SpecialDispatchEvent(event)
+          specialEvents.add(specialDispatchEvent)
+          IdeEventQueue.getInstance().doPostEvent(specialDispatchEvent, true)
+          return@addPostEventListener true
         }
         false
       }, disposable)
   }
 
   fun enable() {
-    lock.lock()
-    try {
-      enabled = true
-      repostAllEvents()
-    }
-    finally {
-      lock.unlock()
-    }
+    enabled = true
   }
 
   fun dispatchAllEventsForTimeout(timeoutMillis: Long, deferred: Deferred<*>) {
@@ -290,13 +263,10 @@ private class EternalEventStealer(disposable: Disposable) {
           // we still return locking result regardless of interruption
           Thread.currentThread().interrupt()
         }
-        var eventIndex = 0
-        while (eventIndex < invocationEventList.size) {
-          val event = invocationEventList[eventIndex]
-          eventIndex++
-          event.dispatch()
+        while (true) {
+          val event = specialEvents.poll() ?: break
+          event.execute()
         }
-        invocationEventList.clear()
         if (!deferred.isActive) {
           return
         }
@@ -305,20 +275,28 @@ private class EternalEventStealer(disposable: Disposable) {
   }
 
   fun disable() {
-    lock.lock()
-    try {
-      enabled = false
-      while (true) {
-        val event = inputEventList.poll() ?: break
-        IdeEventQueue.getInstance().postEvent(event)
-      }
-      for (invocationEvent in invocationEventList) {
-        IdeEventQueue.getInstance().postEvent(invocationEvent)
-      }
+    enabled = false
+  }
+}
+
+private class SpecialDispatchEvent private constructor(val reference: AtomicReference<AWTEvent>) : InvocationEvent(Any(), {
+  execute(reference)
+}) {
+  companion object {
+    fun execute(ref: AtomicReference<AWTEvent>) {
+      val actualEvent = ref.getAndSet(null) ?: return
+      IdeEventQueue.getInstance().dispatchEvent(actualEvent)
     }
-    finally {
-      lock.unlock()
-    }
+  }
+
+  constructor(event: AWTEvent) : this(AtomicReference(event))
+
+  fun execute() {
+    execute(reference)
+  }
+
+  override fun toString(): String {
+    return "SpecialDispatchEvent"
   }
 }
 
