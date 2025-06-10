@@ -110,6 +110,7 @@ jvm_library(
     "//platform/workspace/storage",
     "//xml/xml-psi-api:psi",
     "//libraries/io",
+    "//platform/build-scripts/downloader",
   ]
 )
 
