@@ -1964,7 +1964,7 @@
     <diagnostic.specialPathsProvider implementation="com.intellij.diagnostic.specialPaths.ProjectSpecialPathsProvider"/>
     <diagnostic.specialPathsProvider implementation="com.intellij.diagnostic.specialPaths.ApplicationSpecialPathsProvider"/>
 
-    <editor.rd.localSupport filetype="PLAIN_TEXT"/>
+    <!--<editor.rd.localSupport filetype="PLAIN_TEXT"/> IJPL-189393 -->
   </extensions>
 
   <applicationListeners>
