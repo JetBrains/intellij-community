@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.lineMover;
 
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
@@ -16,8 +16,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.json.split.JsonBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
-
 public final class JsonLineMover extends LineMover {
   private enum Direction {
     Same,
@@ -29,8 +27,6 @@ public final class JsonLineMover extends LineMover {
 
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
-    if (shouldDoNothingInBackendMode()) return false;
-
     myDirection = Direction.Same;
 
     if (!(file instanceof JsonFile) || !super.checkAvailable(editor, file, info, down)) {

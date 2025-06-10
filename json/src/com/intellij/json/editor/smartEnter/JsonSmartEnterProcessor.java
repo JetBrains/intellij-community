@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.smartEnter;
 
 import com.intellij.json.JsonDialectUtil;
@@ -7,7 +7,6 @@ import com.intellij.lang.SmartEnterProcessorWithFixers;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,7 +20,6 @@ import java.util.List;
 
 import static com.intellij.json.JsonElementTypes.COLON;
 import static com.intellij.json.JsonElementTypes.COMMA;
-import static com.intellij.json.split.JsonBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
 
 /**
  * This processor allows
@@ -40,12 +38,6 @@ public final class JsonSmartEnterProcessor extends SmartEnterProcessorWithFixers
   public JsonSmartEnterProcessor() {
     addFixers(new JsonObjectPropertyFixer(), new JsonArrayElementFixer());
     addEnterProcessors(new JsonEnterProcessor());
-  }
-
-  @Override
-  public boolean process(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
-    if (shouldDoNothingInBackendMode()) return true;
-    return super.process(project, editor, psiFile);
   }
 
   @Override

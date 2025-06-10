@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json;
 
 import com.intellij.codeInsight.editorActions.MultiCharQuoteHandler;
@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.json.JsonTokenSets.STRING_LITERALS;
-import static com.intellij.json.split.JsonBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
 
 /**
  * @author Mikhail Golubev
@@ -30,8 +29,6 @@ public final class JsonQuoteHandler extends SimpleTokenSetQuoteHandler implement
 
   @Override
   public @Nullable CharSequence getClosingQuote(@NotNull HighlighterIterator iterator, int offset) {
-    if (shouldDoNothingInBackendMode()) return null;
-
     final IElementType tokenType = iterator.getTokenType();
     if (tokenType == TokenType.WHITE_SPACE) {
       final int index = iterator.getStart() - 1;

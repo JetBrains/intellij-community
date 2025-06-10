@@ -21,8 +21,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.json.split.JsonBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
-
 public final class JsonEnterHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
@@ -31,7 +29,7 @@ public final class JsonEnterHandler implements EnterHandlerDelegate {
                                 @NotNull Ref<Integer> caretAdvanceRef,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
-    if (shouldDoNothingInBackendMode() || !JsonEditorOptions.getInstance().COMMA_ON_ENTER) {
+    if (!JsonEditorOptions.getInstance().COMMA_ON_ENTER) {
       return Result.Continue;
     }
 
