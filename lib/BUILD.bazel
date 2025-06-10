@@ -3974,22 +3974,22 @@ jvm_import(
 java_library(
   name = "kotlinx-io-core",
   exports = [
-    ":kotlinx-io-core-jvm-0_6_0_http_import",
-    ":kotlinx-io-bytestring-jvm-0_6_0_http_import",
+    ":kotlinx-io-core-jvm-0_7_0_http_import",
+    ":kotlinx-io-bytestring-jvm-0_7_0_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "kotlinx-io-core-jvm-0_6_0_http_import",
-  jar = "@kotlinx-io-core-jvm-0_6_0_http//file",
-  source_jar = "@kotlinx-io-core-jvm-0_6_0-sources_http//file"
+  name = "kotlinx-io-core-jvm-0_7_0_http_import",
+  jar = "@kotlinx-io-core-jvm-0_7_0_http//file",
+  source_jar = "@kotlinx-io-core-jvm-0_7_0-sources_http//file"
 )
 
 jvm_import(
-  name = "kotlinx-io-bytestring-jvm-0_6_0_http_import",
-  jar = "@kotlinx-io-bytestring-jvm-0_6_0_http//file",
-  source_jar = "@kotlinx-io-bytestring-jvm-0_6_0-sources_http//file"
+  name = "kotlinx-io-bytestring-jvm-0_7_0_http_import",
+  jar = "@kotlinx-io-bytestring-jvm-0_7_0_http//file",
+  source_jar = "@kotlinx-io-bytestring-jvm-0_7_0-sources_http//file"
 )
 
 java_library(

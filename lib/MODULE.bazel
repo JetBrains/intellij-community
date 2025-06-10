@@ -5515,31 +5515,31 @@ http_file(
 )
 
 http_file(
-  name = "kotlinx-io-core-jvm-0_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.6.0/kotlinx-io-core-jvm-0.6.0.jar",
-  sha256 = "42523c80823d31ef59fae42c9252ef1d3b1189ca9d3cc3adfd402a29d063e6ff",
-  downloaded_file_path = "kotlinx-io-core-jvm-0.6.0.jar"
+  name = "kotlinx-io-core-jvm-0_7_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.7.0/kotlinx-io-core-jvm-0.7.0.jar",
+  sha256 = "6ededc9be4d878aea80c7dd609f91bfc47fcd3d36cc91fd0f3f328fbd6656c8f",
+  downloaded_file_path = "kotlinx-io-core-jvm-0.7.0.jar"
 )
 
 http_file(
-  name = "kotlinx-io-bytestring-jvm-0_6_0_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.6.0/kotlinx-io-bytestring-jvm-0.6.0.jar",
-  sha256 = "baa77a783d70a66af88d6898a1d4971e4aa84e62b26418057379bdf09fb5bada",
-  downloaded_file_path = "kotlinx-io-bytestring-jvm-0.6.0.jar"
+  name = "kotlinx-io-bytestring-jvm-0_7_0_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.7.0/kotlinx-io-bytestring-jvm-0.7.0.jar",
+  sha256 = "ea38a66b0ff46ed82dded9e81d2dce70e5fbe03bd6cc52b4fc8869381dea7b7d",
+  downloaded_file_path = "kotlinx-io-bytestring-jvm-0.7.0.jar"
 )
 
 http_file(
-  name = "kotlinx-io-core-jvm-0_6_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.6.0/kotlinx-io-core-jvm-0.6.0-sources.jar",
-  sha256 = "f10ed36857100403112ce45c9647252d95adc06fab2b0930e9b11e1af255fd86",
-  downloaded_file_path = "kotlinx-io-core-jvm-0.6.0-sources.jar"
+  name = "kotlinx-io-core-jvm-0_7_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-core-jvm/0.7.0/kotlinx-io-core-jvm-0.7.0-sources.jar",
+  sha256 = "b443703c2b34f7c2eeb4a850392c9a282b947ef3d78de608453486cce735d976",
+  downloaded_file_path = "kotlinx-io-core-jvm-0.7.0-sources.jar"
 )
 
 http_file(
-  name = "kotlinx-io-bytestring-jvm-0_6_0-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.6.0/kotlinx-io-bytestring-jvm-0.6.0-sources.jar",
+  name = "kotlinx-io-bytestring-jvm-0_7_0-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-io-bytestring-jvm/0.7.0/kotlinx-io-bytestring-jvm-0.7.0-sources.jar",
   sha256 = "e56a4af58013c739480fb1305224e9af2816b4c7add27db4adc291da7ea403c5",
-  downloaded_file_path = "kotlinx-io-bytestring-jvm-0.6.0-sources.jar"
+  downloaded_file_path = "kotlinx-io-bytestring-jvm-0.7.0-sources.jar"
 )
 
 http_file(
