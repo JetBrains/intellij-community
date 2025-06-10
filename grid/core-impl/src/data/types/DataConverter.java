@@ -10,6 +10,7 @@ import com.intellij.database.run.ui.grid.editors.FormatsCache;
 import com.intellij.database.run.ui.grid.editors.Formatter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import kotlin.uuid.Uuid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -555,12 +556,7 @@ public abstract class DataConverter<V, T> {
 
     @Override
     protected @Nullable String reverseNotNull(@NotNull String value) {
-      try {
-        return UUID.fromString(value).toString();
-      }
-      catch (Exception ignore) {
-      }
-      return UUID.randomUUID().toString();
+      return Uuid.Companion.parse(value).toString();
     }
 
     @Override
@@ -577,13 +573,8 @@ public abstract class DataConverter<V, T> {
 
     @Override
     protected @Nullable UUID reverseNotNull(@NotNull String value) {
-      try {
-        return UUID.fromString(value);
-      }
-      catch (Exception ignore) {
-      }
-      return UUID.randomUUID();
-    }
+      return UuidConverters.toJavaUuid(Uuid.Companion.parse(value));
+   }
 
     @Override
     protected @Nullable String notNull(@NotNull UUID value) {
