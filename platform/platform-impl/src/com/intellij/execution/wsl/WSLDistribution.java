@@ -461,7 +461,7 @@ public class WSLDistribution implements AbstractWslDistribution {
         if (!builder.isEmpty()) {
           builder.append(":");
         }
-        builder.append(envName).append("/ul");
+        builder.append(envName).append("/u");
       }
     });
     if (!builder.isEmpty()) {
