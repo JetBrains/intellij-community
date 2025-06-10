@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -13,6 +14,12 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader;
+
+import java.net.URI;
+import java.nio.file.Path;
 
 public class AddAssertNonNullFromTestFrameworksFixTest extends LightQuickFixParameterizedTestCase {
   private static final LightProjectDescriptor ourProjectDescriptor = new DefaultLightProjectDescriptor() {
@@ -20,8 +27,17 @@ public class AddAssertNonNullFromTestFrameworksFixTest extends LightQuickFixPara
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
 
-      IntelliJProjectConfiguration.LibraryRoots junit3Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit3");
-      PsiTestUtil.addLibrary(model, "JUnit3", "", ArrayUtil.toStringArray(junit3Library.getClassesPaths()));
+      URI uri = BuildDependenciesDownloader.getUriForMavenArtifact(
+        BuildDependenciesConstants.MAVEN_CENTRAL_URL,
+        "junit",
+        "junit",
+        "3.8.2",
+        "jar"
+      );
+
+      String junit3Library = BuildDependenciesDownloader.downloadFileToCacheLocation(
+        new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())), uri).toAbsolutePath().toString();
+      PsiTestUtil.addLibrary(model, "JUnit3", "", junit3Library);
 
       IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
       PsiTestUtil.addLibrary(model, "JUnit4", "", ArrayUtil.toStringArray(junit4Library.getClassesPaths()));
