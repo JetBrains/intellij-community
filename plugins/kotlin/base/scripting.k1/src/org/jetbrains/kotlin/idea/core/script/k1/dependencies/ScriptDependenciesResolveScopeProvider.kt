@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindMatcher
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.KotlinScriptSearchScope
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
-import org.jetbrains.kotlin.idea.core.script.k1.modules.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
 
 /**
  * @see KotlinScriptResolveScopeProvider

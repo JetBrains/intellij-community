@@ -18,6 +18,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.register
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesSourceInfo
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptModuleInfo
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
