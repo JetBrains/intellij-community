@@ -1,17 +1,11 @@
 package com.jetbrains.lsp.implementation
 
 import fleet.util.logging.logger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runInterruptible
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.*
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.ServerSocket
-import kotlin.io.use
+import java.net.Socket
 
 suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(InputStream, OutputStream) -> Unit) {
   ServerSocket(port).use { serverSocket ->
@@ -36,5 +30,34 @@ suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(InputStream
     }
   }
 }
+
+
+/**
+ * VSC opens a **server** socket for LSP to connect to it.
+ */
+suspend fun tcpClient(port: Int, body: suspend CoroutineScope.(InputStream, OutputStream) -> Unit) {
+  val socket = runInterruptible(Dispatchers.IO) {
+    Socket("localhost", port)
+  }
+  socket.use {
+    coroutineScope {
+      body(socket.getInputStream(), socket.getOutputStream())
+    }
+  }
+}
+
+
+suspend fun tcpConnection(clientMode: Boolean, port: Int, body: suspend CoroutineScope.(InputStream, OutputStream) -> Unit) {
+  when {
+    clientMode -> {
+      tcpClient(port, body)
+    }
+
+    else -> {
+      tcpServer(port, body)
+    }
+  }
+}
+
 
 private val LOG = logger<LspClient>()
