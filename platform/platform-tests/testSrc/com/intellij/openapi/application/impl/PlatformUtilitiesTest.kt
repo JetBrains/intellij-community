@@ -170,7 +170,7 @@ class PlatformUtilitiesTest {
       }
     }
     val nbraJob = launch {
-      Cancellation.withNonCancelableSection().use {
+      withContext(NonCancellable) {
         readAction {
           ReadAction.nonBlocking {
             try {
