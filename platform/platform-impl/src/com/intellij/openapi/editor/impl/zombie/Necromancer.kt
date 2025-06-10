@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -60,6 +61,13 @@ interface Necromancer<Z : Zombie> {
    * Called on BGT
    */
   suspend fun exhumeZombie(id: Int): FingerprintedZombie<Z>?
+
+  /**
+   * Try to prefetch the zombie content from the grave. Suitable for that necromancers that could use local cache. Called on BGT
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  suspend fun prefetchGraves(id: Int) {}
 
   /**
    * Determines whether the zombie should be applied to the editor.

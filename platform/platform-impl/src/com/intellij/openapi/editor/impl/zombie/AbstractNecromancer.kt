@@ -59,6 +59,11 @@ abstract class GravingNecromancer<Z : Zombie>(
   final override suspend fun exhumeZombie(id: Int): FingerprintedZombie<Z>? {
     return grave.exhumeZombie(id)
   }
+
+  final override suspend fun prefetchGraves(id: Int) {
+    val fetched = exhumeZombie(id) ?: return
+    grave.buryZombie(id, fetched)
+  }
 }
 
 /**

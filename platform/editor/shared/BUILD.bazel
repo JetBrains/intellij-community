@@ -20,6 +20,7 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl:ide-impl",
     "//platform/kernel/pasta",
+    "//platform/project/shared:project",
   ],
   runtime_deps = [":editor_resources"]
 )

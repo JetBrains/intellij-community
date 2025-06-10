@@ -45,6 +45,7 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     withPersistentMap(opName="put") { map ->
       map.put(key, value)
     }
+
     forceAsync()
   }
 
