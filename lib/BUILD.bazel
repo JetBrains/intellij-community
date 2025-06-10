@@ -1361,22 +1361,22 @@ jvm_import(
 java_library(
   name = "devkit-runtime-module-repository-jps",
   exports = [
-    ":devkit-runtime-module-repository-jps-251_16369_http_import",
-    ":runtime-repository-251_16369_http_import",
+    ":devkit-runtime-module-repository-jps-252_21158_http_import",
+    ":runtime-repository-252_21158_http_import",
   ],
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
-  name = "devkit-runtime-module-repository-jps-251_16369_http_import",
-  jar = "@devkit-runtime-module-repository-jps-251_16369_http//file",
-  source_jar = "@devkit-runtime-module-repository-jps-251_16369-sources_http//file"
+  name = "devkit-runtime-module-repository-jps-252_21158_http_import",
+  jar = "@devkit-runtime-module-repository-jps-252_21158_http//file",
+  source_jar = "@devkit-runtime-module-repository-jps-252_21158-sources_http//file"
 )
 
 jvm_import(
-  name = "runtime-repository-251_16369_http_import",
-  jar = "@runtime-repository-251_16369_http//file",
-  source_jar = "@runtime-repository-251_16369-sources_http//file"
+  name = "runtime-repository-252_21158_http_import",
+  jar = "@runtime-repository-252_21158_http//file",
+  source_jar = "@runtime-repository-252_21158-sources_http//file"
 )
 
 jvm_import(

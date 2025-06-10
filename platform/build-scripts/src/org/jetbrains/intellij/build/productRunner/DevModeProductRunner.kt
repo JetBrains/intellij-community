@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProduct
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
-import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_JAR_PATH
+import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_COMPACT_PATH
 import java.nio.file.Path
 import kotlin.time.Duration
 
@@ -63,7 +63,7 @@ private class DevModeProductRunner(
     }
     val vmPropertiesForLoader = if (context.useModularLoader) {
       VmProperties(mapOf(
-        "intellij.platform.runtime.repository.path" to "$homePath/$MODULE_DESCRIPTORS_JAR_PATH",
+        "intellij.platform.runtime.repository.path" to "$homePath/$MODULE_DESCRIPTORS_COMPACT_PATH",
         "intellij.platform.root.module" to context.productProperties.rootModuleForModularLoader!!,
         "intellij.platform.product.mode" to context.productProperties.productMode.id,
       ))

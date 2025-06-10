@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="devkit.runtime.module.repository.jps" type="repository">
-    <properties jar-repository-id="intellij-dependencies" maven-id="com.jetbrains.intellij.devkit:devkit-runtime-module-repository-jps:251.16369">
+    <properties jar-repository-id="intellij-dependencies" maven-id="com.jetbrains.intellij.devkit:devkit-runtime-module-repository-jps:252.21158">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369.jar">
-          <sha256sum>bb46909020abfc29fb6480b261ab1a887d19d0af83777ac8fb0cb950f45e7005</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/252.21158/devkit-runtime-module-repository-jps-252.21158.jar">
+          <sha256sum>677e12f96a6c48b1b4c4234417cda17bbcb3c25f5c7178ec752ef2a831c65313</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/251.16369/runtime-repository-251.16369.jar">
-          <sha256sum>9c89ef9858148e9f8063adfee151c3e7e99523c2ce5650b2351dcc5a1a01580d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/252.21158/runtime-repository-252.21158.jar">
+          <sha256sum>3ad94d6402b94932f4341c908827016787cdc6ee3201ee64970822a610c55d34</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -20,13 +20,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/251.16369/runtime-repository-251.16369.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/252.21158/devkit-runtime-module-repository-jps-252.21158.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/252.21158/runtime-repository-252.21158.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/251.16369/devkit-runtime-module-repository-jps-251.16369-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/251.16369/runtime-repository-251.16369-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/devkit/devkit-runtime-module-repository-jps/252.21158/devkit-runtime-module-repository-jps-252.21158-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/platform/runtime-repository/252.21158/runtime-repository-252.21158-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
