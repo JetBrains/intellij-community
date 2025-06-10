@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
+import java.util.Locale.getDefault
 
 class KotlinCreateTestDialog(
     project: Project,
@@ -54,7 +55,7 @@ class KotlinCreateTestDialog(
         val suffix = customSettings.TEST_NAME_SUFFIX
         val name =
         if (sourceElement is KtNamedFunction && sourceElement.isTopLevel) {
-            sourceElement.name
+            sourceElement.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
         } else {
             targetClass?.name?.removeSuffixIfPresent("Kt")
         }
