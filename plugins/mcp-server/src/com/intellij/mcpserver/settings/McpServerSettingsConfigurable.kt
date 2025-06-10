@@ -41,7 +41,7 @@ class McpServerSettingsConfigurable : SearchableConfigurable {
           label.component.text = if (isServerRunning) getLabelText() else ""
           link.component.text = if (isServerRunning) McpServerService.getInstance().serverSseUrl else ""
         }
-      }.enabledIf(enabledCheckboxState!!)
+      }.visibleIf(enabledCheckboxState!!)
       panel {
         group(McpServerBundle.message("border.title.terminal.commands")) {
           row {

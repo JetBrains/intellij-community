@@ -93,8 +93,6 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun startServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
-    if (!McpServerSettings.getInstance().state.enableMcpServer) return null
-
     val freePort = findFirstFreePort(DEFAULT_MCP_PORT)
 
     val mcpTools = MutableStateFlow(getMcpTools())
