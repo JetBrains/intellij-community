@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="intellij-plugin-structure" type="repository">
-    <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.306">
+    <properties maven-id="org.jetbrains.intellij.plugins:structure-intellij:3.307">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.306/structure-intellij-3.306.jar">
-          <sha256sum>2d1a2d82e409b71dbf40ba6f63c7d158ddc1532c29a580b94a8ca34c53c6d068</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.307/structure-intellij-3.307.jar">
+          <sha256sum>7b94bc9a8a279af5b14595e9d2a15f6070ec1e0c48770f0be217f5777be5279e</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.306/structure-base-3.306.jar">
-          <sha256sum>401ed43791bd979063160f2edd3239751e1b436cbd2f4ccd102941bb5fe08e38</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.307/structure-base-3.307.jar">
+          <sha256sum>9109fc2ca7cf9881d20a19938297d56d2beb515fed5ab59db81bd87daec5d721</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar">
           <sha256sum>ac0192fd110a0363732b17ea94fd1ce8cfd85790c8e1551e14f866908b5d80e1</sha256sum>
@@ -33,15 +33,15 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.306/structure-intellij-3.306.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.306/structure-base-3.306.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.307/structure-intellij-3.307.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.307/structure-base-3.307.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.306/structure-intellij-3.306-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.306/structure-base-3.306-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-intellij/3.307/structure-intellij-3.307-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/plugins/structure-base/3.307/structure-base-3.307-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/atteo/evo-inflector/1.3/evo-inflector-1.3-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar!/" />
     </SOURCES>
