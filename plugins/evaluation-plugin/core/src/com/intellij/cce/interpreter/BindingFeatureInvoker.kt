@@ -11,10 +11,10 @@ import com.intellij.cce.evaluation.data.EvalDataDescription
  * Feature invoker that add an abstraction layer over evaluation data storage format.
  */
 interface BindingFeatureInvoker : FeatureInvoker {
-  fun invoke(properties: TokenProperties, expectedText: String?): BoundEvalData
+  fun invoke(properties: TokenProperties): BoundEvalData
 
   override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties, sessionId: String): Session =
-    invoke(properties, expectedText).session(expectedText, offset, properties, sessionId)
+    invoke(properties).session(expectedText, offset, properties, sessionId)
 
   override fun comparator(generated: String, expected: String): Boolean = true
 

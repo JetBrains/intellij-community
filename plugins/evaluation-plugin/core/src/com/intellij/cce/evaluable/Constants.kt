@@ -8,6 +8,7 @@ const val INTERNAL_API_CALLS_PROPERTY = "internal_api_calls"
 const val EXTERNAL_API_CALLS_PROPERTY = "external_api_calls"
 const val INTERNAL_RELEVANT_FILES_PROPERTY = "internal_relevant_files"
 const val ORIGINAL_FILE = "original_file"
+const val ORIGINAL_TEXT_PROPERTY = "original_text"
 
 const val METHOD_NAME_PROPERTY = "method_name"
 const val METHOD_BODY_PROPERTY = "method_body"

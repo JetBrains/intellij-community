@@ -12,7 +12,7 @@ import com.intellij.cce.report.CardLayout
  */
 interface PresentableFeatureInvoker : BindingFeatureInvoker {
   // TODO suspend to get rid of runBlockingCancellable everywhere
-  override fun invoke(properties: TokenProperties, expectedText: String?): PresentableEvalData
+  override fun invoke(properties: TokenProperties): PresentableEvalData
 }
 
 data class PresentableEvalData(
