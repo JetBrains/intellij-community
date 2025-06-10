@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
@@ -139,7 +140,7 @@ open class HighlightingNecromancer(
   open fun subscribeDaemonFinished() {
     // as soon as highlighting kicks in and displays its own range highlighters, remove ones we applied from the on-disk cache,
     // but only after the highlighting finished, to avoid flicker
-    val idService = ZombieOriginRecipeBook.getInstance()
+    val fileIdAdapter = FileIdAdapter.getInstance()
     project.messageBus.connect(coroutineScope).subscribe(
       DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
       object : DaemonCodeAnalyzer.DaemonListener {
@@ -149,7 +150,7 @@ open class HighlightingNecromancer(
               if (fileEditor is TextEditor && shouldPutDownActiveZombiesInFile(fileEditor)) {
                 val document = fileEditor.editor.document
                 val file = FileDocumentManager.getInstance().getFile(document) ?: return
-                val fileId = idService.getIdForFile(file) ?: return
+                val fileId = fileIdAdapter.getId(file) ?: return
                 putDownActiveZombiesInFile(file, fileId, document)
               }
             }
@@ -283,7 +284,7 @@ open class HighlightingNecromancer(
   }
 
   private fun fileName(file: VirtualFile): String {
-    return "file(id=${ZombieOriginRecipeBook.getInstance().getIdForFile(file)}, name=${file.name})"
+    return "file(id=${FileIdAdapter.getInstance().getId(file)}, name=${file.name})"
   }
 
   private inner class HighlighterCollector : CommonProcessors.CollectProcessor<RangeHighlighterEx>() {

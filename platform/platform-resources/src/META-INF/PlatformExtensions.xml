@@ -868,9 +868,6 @@
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorFactory"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorFactoryImpl" preload="notHeadless"/>
 
-    <applicationService serviceInterface="com.intellij.openapi.editor.impl.zombie.ZombieOriginRecipeBook"
-                        serviceImplementation="com.intellij.openapi.editor.impl.zombie.ZombieOriginRecipeBookImpl"
-                        preload="notHeadless"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.ClientEditorManager"
                         client="all"/>
 
@@ -1961,6 +1958,9 @@
     <applicationService serviceInterface="com.intellij.platform.ide.provisioner.ProvisionerCompanyBrandingProvider"
                         serviceImplementation="com.intellij.platform.ide.provisioner.DefaultProvisionerCompanyBrandingProvider"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.vfs.FileIdAdapter"
+                        serviceImplementation="com.intellij.openapi.vfs.impl.FileIdAdapterImpl"
+                        preload="notHeadless"/>
     <applicationService serviceImplementation="com.intellij.openapi.vfs.impl.FilePermissionManagerImpl"
                         serviceInterface="com.intellij.openapi.vfs.impl.FilePermissionManager"
                         client="all"/>
