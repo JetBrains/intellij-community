@@ -40,7 +40,6 @@ import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.stubs.elements.KtNameReferenceExpressionElementType
-import javax.swing.Icon
 
 
 internal class KotlinCreateFromUsagesCommandProvider : CommandProvider {
@@ -86,8 +85,6 @@ internal class KotlinCreateFromUsagesCompletionCommand(val ktClass: KtClass) : C
         get() = listOf("Create method from usage")
     override val presentableName: @Nls String
         get() = QuickFixBundle.message("create.method.from.usage.family")
-    override val icon: Icon?
-        get() = null
 
     override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
         val fileDocument = psiFile.fileDocument

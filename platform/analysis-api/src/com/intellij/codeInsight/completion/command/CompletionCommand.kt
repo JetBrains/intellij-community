@@ -27,7 +27,7 @@ abstract class CompletionCommand : UserDataHolderBase() {
    * Represents a localized, human-readable name for the command, used as a main lookup string
    */
   abstract val presentableName: @Nls String
-  abstract val icon: Icon?
+  open val icon: Icon? = null
 
   /**
    * Defines the priority of the command in the code completion system.

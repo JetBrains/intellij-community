@@ -6,8 +6,6 @@ import com.intellij.codeInsight.completion.command.configuration.ApplicationComm
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.editorLineStripeHint.EditorLineStripeTextRenderer
 import com.intellij.codeInsight.highlighting.HighlightManager
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.CharFilter.CUSTOM_DEFAULT_CHAR_FILTERS
 import com.intellij.codeInsight.lookup.impl.LookupCustomizer
@@ -195,7 +193,6 @@ private val SUPPRESS_PREDICATE_KEY = Key.create<EditorHighlightingPredicate>("co
 private val PROMPT_HIGHLIGHTING = Key.create<RangeHighlighter>("completion.command.prompt.highlighting")
 
 private val LOOKUP_HIGHLIGHTING = Key.create<List<RangeHighlighter>>("completion.command.lookup.highlighting")
-private val ICON_RENDER = Key.create<Inlay<PresentationRenderer?>>("completion.command.icon.render")
 private const val PROMPT_LAYER = HighlighterLayer.ERROR + 10
 
 @ApiStatus.Internal
@@ -250,8 +247,6 @@ private class CommandCompletionHighlightingListener(
 
   private fun clear(editor: Editor?) {
     clearPromptHighlighting(editor)
-    val renderer = lookup.removeUserData(ICON_RENDER)
-    renderer?.let { Disposer.dispose(it) }
 
     val project = editor?.project ?: return
     val highlightManager = HighlightManager.getInstance(project)
@@ -288,30 +283,6 @@ private class CommandCompletionHighlightingListener(
     super.lookupCanceled(event)
   }
 
-  private fun updateIcon(lookup: LookupImpl, element: CommandCompletionLookupElement) {
-    if (lookup.getUserData(INSTALLED_ADDITIONAL_MATCHER_KEY) != true) {
-      return
-    }
-    val renderer = lookup.getUserData(ICON_RENDER)
-    renderer?.let { Disposer.dispose(it) }
-    if (element.icon != null) {
-      val factory = PresentationFactory(editor)
-      val iconPresentation = factory.icon(element.icon)
-      val presentationRenderer = PresentationRenderer(iconPresentation)
-      val lookupEditor = InjectedLanguageEditorUtil.getTopLevelEditor(lookup.editor)
-      val inlay: Inlay<PresentationRenderer?>? =
-        if (nonWrittenFiles) {
-          lookupEditor.inlayModel.addInlineElement(0, false, presentationRenderer)
-        }
-        else {
-          lookupEditor.inlayModel.addInlineElement(element.hostStartOffset, true, presentationRenderer)
-        }
-      if (inlay != null) {
-        lookup.putUserData(ICON_RENDER, inlay)
-      }
-    }
-  }
-
   private fun updatePromptHighlighting(lookup: LookupImpl, item: CommandCompletionLookupElement) {
     val installed = ConcurrencyUtil.computeIfAbsent(lookup, INSTALLED_PROMPT_KEY) { AtomicBoolean(false) }
     val startOffset = lookup.lookupOriginalStart - findActualIndex(item.suffix, editor.document.immutableCharSequence,
@@ -340,9 +311,7 @@ private class CommandCompletionHighlightingListener(
     if (lookup !is LookupImpl) return
     completionService?.setHint(lookup, editor, nonWrittenFiles)
     val item = event.item
-    if (updateItem(item)) return
-    val element = item?.`as`(CommandCompletionLookupElement::class.java) ?: return
-    updateIcon(lookup, element)
+    updateItem(item)
   }
 
   private fun updateHighlighting(lookup: LookupImpl, element: CommandCompletionLookupElement) {

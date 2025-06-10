@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 internal class JavaDeleteCompletionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
@@ -66,8 +65,6 @@ private class JavaDeleteCompletionCommand(
     get() = listOf("delete", "remove")
   override val presentableName: @Nls String
     get() = JavaBundle.message("command.completion.delete.element.text")
-  override val icon: Icon?
-    get() = null
   override val priority: Int
     get() = -100
 

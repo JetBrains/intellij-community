@@ -4,7 +4,6 @@ package com.intellij.codeInsight.completion.command.commands
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
 import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
@@ -12,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.Nls
 import java.util.Locale.getDefault
-import javax.swing.Icon
 
 /**
  * An abstract command designed to provide a context-specific code formatting completion action.
@@ -41,8 +39,6 @@ abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), Comple
       .replaceFirst("_", "")
       .lowercase()
       .replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
-  final override val icon: Icon
-    get() = AllIcons.Actions.ReformatCode // Use the reformat icon
 
   override fun getPreview(): IntentionPreviewInfo? {
     return IntentionPreviewInfo.Html(ActionsBundle.message("action.ReformatCode.description"))

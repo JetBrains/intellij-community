@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementWeigher
+import com.intellij.icons.AllIcons.Actions.IntentionBulbGrey
 import com.intellij.icons.AllIcons.Actions.Lightning
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.EditorWindow
@@ -180,7 +181,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
                                                                   .withLookupStrings(command.synonyms)
                                                                   .withPresentableText(lookupString)
                                                                   .withTypeText(tailText)
-                                                                  .withIcon(command.icon ?: Lightning)
+                                                                  .withIcon(command.icon ?: IntentionBulbGrey)
                                                                   .withInsertHandler(CommandInsertHandler(command))
                                                                   .withBoldness(false),
                                                                 command,

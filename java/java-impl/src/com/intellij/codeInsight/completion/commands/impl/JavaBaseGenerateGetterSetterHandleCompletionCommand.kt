@@ -14,7 +14,6 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.util.PsiTreeUtil
-import javax.swing.Icon
 
 internal class GenerateGetterSetterHandleCompletionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
@@ -56,8 +55,6 @@ private class BaseGenerateGetterSetterHandleCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
   private val preview: () -> IntentionPreviewInfo?,
 ) : CompletionCommand(), CompletionCommandWithPreview {
-
-  override val icon: Icon? = null
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val element = getCommandContext(offset, psiFile) ?: return

@@ -189,7 +189,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - <init>():V
 - f:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - a:findTargetToRefactor(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- f:getIcon():javax.swing.Icon
 - f:getPresentableName():java.lang.String
 - getPreview():com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 - f:getSynonyms():java.util.List
@@ -213,7 +212,6 @@ c:com.intellij.codeInsight.actions.VcsFacade
 - f:getAction():com.intellij.codeInsight.actions.CodeInsightAction
 - f:getCustomI18nName():java.lang.String
 - f:getCustomName():java.lang.String
-- getIcon():javax.swing.Icon
 - getPresentableName():java.lang.String
 - f:setCustomI18nName(java.lang.String):V
 - f:setCustomName(java.lang.String):V

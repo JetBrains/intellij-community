@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import javax.swing.Icon
 
 internal class KotlinDeleteCompletionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
@@ -72,8 +71,6 @@ private class KotlinDeleteCompletionCommand(
     get() = listOf("Delete element")
   override val presentableName: @Nls String
     get() = ActionsBundle.message("action.EditorDelete.text")
-  override val icon: Icon?
-    get() = null
   override val priority: Int
         get() = -100
 

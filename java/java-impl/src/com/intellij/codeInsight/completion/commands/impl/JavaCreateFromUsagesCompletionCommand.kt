@@ -22,7 +22,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 
 internal class JavaCreateFromUsagesCommandProvider : CommandProvider {
@@ -54,8 +53,6 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
     get() = listOf("Create method from usage")
   override val presentableName: @Nls String
     get() = QuickFixBundle.message("create.method.from.usage.family")
-  override val icon: Icon?
-    get() = null
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val fileDocument = psiFile.fileDocument
