@@ -138,8 +138,8 @@
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.module.PyModuleService"
                         serviceImplementation="com.jetbrains.python.module.PyModuleServiceImpl"/>
-    <applicationService serviceInterface="com.jetbrains.python.sdk.flavors.WinRegistryService"
-                        serviceImplementation="com.jetbrains.python.sdk.flavors.WinRegistryServiceImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.sdk.WinRegistryService"
+                        serviceImplementation="com.jetbrains.python.sdk.WinRegistryServiceImpl"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
 
     <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
@@ -460,6 +460,9 @@
 
     <registryKey defaultValue="false" description="Don't run `lock` before listing dependencies when using Poetry"
                  restartRequired="false" key="python.poetry.list.packages.without.lock"/>
+
+    <registryKey defaultValue="false" description="Use legacy system python detection method based on flavors"
+                 restartRequired="false" key="python.use.system.legacy.provider"/>
 
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
@@ -895,6 +898,12 @@
 
 
     <systemPythonProvider implementation="com.jetbrains.python.sdk.uv.UvSystemPythonProvider"/>
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.BrewSystemPythonProvider"/>
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.LegacySystemPythonProvider"/>
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.MacSystemPythonProvider"/>
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.PyenvSystemPythonProvider"/>
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.UnixSystemPythonProvider"/>
+    <systemPythonProvider implementation="com.intellij.python.community.services.systemPython.impl.providers.WindowsSystemPythonProvider"/>
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.suppressors.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>

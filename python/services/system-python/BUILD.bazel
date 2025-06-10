@@ -18,7 +18,7 @@ jvm_library(
   name = "system-python",
   module_name = "intellij.python.community.services.systemPython",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-sdk:sdk",
@@ -34,6 +34,7 @@ jvm_library(
     "//platform/util",
     "//python/installer",
     "//python/python-venv:community-impl-venv",
+    "//python/python-psi-impl:psi-impl",
   ],
   exports = ["//python/services/shared"],
   runtime_deps = [":system-python_resources"]
@@ -75,6 +76,7 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//python/python-psi-impl:psi-impl",
   ],
   runtime_deps = [
     ":system-python_resources",
