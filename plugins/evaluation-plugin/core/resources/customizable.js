@@ -25,6 +25,24 @@ function openText(popupId, text, description = null, wrapping = false) {
   showPopup(popupId, highlighted, description);
 }
 
+function openSnippets(popupId, snippets) {
+  const renderedSnippets = renderSnippets(snippets)
+  showPopup(popupId, renderedSnippets)
+}
+
+function renderSnippets(snippets) {
+  const container = document.createElement('div')
+  snippets.forEach(snippet => {
+    const pre = document.createElement('pre')
+    pre.textContent = snippet
+    pre.style.marginBottom = '10px'
+    pre.style.padding = '8px'
+    pre.style.borderBottom = '1px solid #DEDEDE'
+    container.appendChild(pre)
+  })
+  return container
+}
+
 function showPopup(popupId, element, description = null) {
   closePopup();
   element.setAttribute("class", "popup-content");

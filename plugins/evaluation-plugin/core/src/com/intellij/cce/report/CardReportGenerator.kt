@@ -10,7 +10,6 @@ import com.intellij.cce.metric.additionalList
 import com.intellij.cce.workspace.info.FileEvaluationInfo
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
-import kotlinx.html.id
 import kotlinx.html.stream.createHTML
 import java.text.DecimalFormat
 import kotlin.io.path.Path
@@ -349,6 +348,7 @@ private data class PropertyValue(
         is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]}, ${description}, ${property.renderer.wrapping});""", null)
         is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]}, ${description});""", null)
         is DataRenderer.TextDiff -> PropertyValue("""openDiff($element, ${stringValues[0]}, ${stringValues[1]}, ${description});""", null)
+        is DataRenderer.Snippets -> PropertyValue("""openSnippets($element, ${stringValues[0]});""", inline = null)
       }
     }
 
@@ -375,6 +375,9 @@ private data class PropertyValue(
         is DataPlacement.AdditionalConcatenatedLines -> listOf(
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"].split("\n").map(l => "• " + l).join("\n")"""
         )
+        is DataPlacement.AdditionalJsonSerializedStrings -> listOf(
+          """JSON.parse(sessions["${sessionId}"]["_lookups"][${lookupIndex}]["additionalInfo"]["${placement.propertyKey}"])"""
+        )
         is DataPlacement.CurrentFileUpdate -> listOf(
           fileVariable(fileIndex),
           """sessions["${sessionId}"]["_lookups"][${lookupIndex}].suggestions[0].presentationText"""
@@ -393,6 +396,7 @@ private data class PropertyValue(
         DataRenderer.InlineDouble -> listOf("\"${value}\"")
         is DataRenderer.Text -> listOf(embedString(value as String))
         DataRenderer.Lines -> listOf(embedString((value as List<*>).joinToString("\n") { "• $it" }))
+        DataRenderer.Snippets -> (value as List<*>).map { embedString(it as String) }
         DataRenderer.TextDiff -> listOf(
           embedString((value as TextUpdate).originalText),
           embedString((value as TextUpdate).updatedText)

@@ -32,6 +32,10 @@ sealed interface DataRenderer<in T> {
     override val serialName: String = "lines"
   }
 
+  data object Snippets : DataRenderer<List<String>> {
+    override val serialName: String = "snippets"
+  }
+
   data object TextDiff : DataRenderer<TextUpdate> {
     override val serialName: String = "text_diff"
   }
@@ -53,6 +57,7 @@ sealed interface DataRenderer<in T> {
         "text" -> context?.deserialize(json, Text::class.java)
         "lines" -> Lines
         "text_diff" -> TextDiff
+        "snippets" -> Snippets
         else -> throw IllegalArgumentException("Unknown type: $type")
       }
     }

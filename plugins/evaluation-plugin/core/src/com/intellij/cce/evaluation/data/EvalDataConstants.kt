@@ -97,11 +97,11 @@ object Execution {
 
   val EXTRACTED_SNIPPETS_FROM_LLM_RESPONSE: TrivialEvalData<List<String>> = EvalDataDescription(
     name = "Code snippets from llm response",
-    description = "Bind with code snippets extracted with regular expressions from llm response",
-    DataPlacement.AdditionalConcatenatedLines(AIA_EXTRACTED_CODE_SNIPPETS),
+    description = "Bind with code snippets extracted llm response",
+    DataPlacement.AdditionalJsonSerializedStrings(AIA_EXTRACTED_CODE_SNIPPETS),
     presentation = EvalDataPresentation(
       PresentationCategory.EXECUTION,
-      DataRenderer.Lines
+      DataRenderer.Snippets
     )
   )
 

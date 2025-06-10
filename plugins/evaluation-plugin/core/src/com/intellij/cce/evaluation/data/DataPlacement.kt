@@ -53,6 +53,18 @@ sealed interface DataPlacement<In, Out> {
     override fun restore(props: DataProps): List<Double> = listOfNotNull(props.lookup.additionalInfo[propertyKey] as? Double)
   }
 
+  data class AdditionalJsonSerializedStrings(val propertyKey: String) : DataPlacement<List<String>, List<String>> {
+    override val serialName: String = "additional_concatenated_snippets"
+    override fun dump(lookup: Lookup, t: List<String>): Lookup {
+      return lookup.copy(additionalInfo = lookup.additionalInfo + mapOf(propertyKey to gson.toJson(t)))
+    }
+
+    override fun restore(props: DataProps): List<List<String>> {
+      val rawString = props.lookup.additionalInfo[propertyKey] ?: return emptyList()
+      return listOf(gson.fromJson(rawString as String, Array<String>::class.java).toList())
+    }
+  }
+
   data class AdditionalConcatenatedLines(val propertyKey: String) : DataPlacement<List<String>, List<String>> {
     override val serialName: String = "additional_concatenated_lines"
 
@@ -121,6 +133,7 @@ sealed interface DataPlacement<In, Out> {
         "additional_boolean" -> context?.deserialize(json, AdditionalBoolean::class.java)
         "additional_double" -> context?.deserialize(json, AdditionalDouble::class.java)
         "additional_concatenated_lines" -> context?.deserialize(json, AdditionalConcatenatedLines::class.java)
+        "additional_concatenated_snippets" -> context?.deserialize(json, AdditionalJsonSerializedStrings::class.java)
         "latency" -> Latency
         "current_file_update" -> CurrentFileUpdate
         "file_updates" -> context?.deserialize(json, FileUpdates::class.java)
