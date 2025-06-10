@@ -353,8 +353,8 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   protected @NotNull NullabilityAnnotationDataHolder getAllNullabilityAnnotationsWithNickNames() {
-    if (DumbService.isDumb(myProject)) {
-      // Searching for nullability nicknames is not available in the dumb mode
+    if (DumbService.isDumb(myProject) || myProject.isDefault()) {
+      // Searching for nullability nicknames is not available in the dumb mode or for default project
       return NullabilityAnnotationDataHolder.fromMap(getNullabilityMap());
     }
     return CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
