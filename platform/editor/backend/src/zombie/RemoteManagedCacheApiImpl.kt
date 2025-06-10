@@ -33,7 +33,7 @@ private class RemoteManagedCacheManager(private val project: Project, private va
       path,
       EnumeratorIntegerDescriptor.INSTANCE,
       Externalizer,
-    )
+    ).withVersion(SERDE_VERSION)
     storage[cacheId.name] = ManagedPersistentCache(name, builder, coroutineScope)
   }
 
@@ -60,6 +60,9 @@ private class RemoteManagedCacheManager(private val project: Project, private va
       `in`.readFully(data)
       return RemoteManagedCacheValueDto(fingerprint, data.toList())
     }
+  }
+  companion object {
+    private const val SERDE_VERSION = 0
   }
 }
 
