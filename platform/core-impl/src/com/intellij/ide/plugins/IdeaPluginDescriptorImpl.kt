@@ -409,6 +409,14 @@ class PluginMainDescriptor(
 
   fun initialize(context: PluginInitializationContext): PluginNonLoadReason? {
     content.modules.forEach { it.requireDescriptor() }
+    if (content.modules.size > 1) {
+      val duplicates = HashSet<String>()
+      for (item in content.modules) {
+        if (!duplicates.add(item.name)) {
+          return onInitError(PluginHasDuplicateContentModuleDeclaration(this, item.name))
+        }
+      }
+    }
     if (context.isPluginDisabled(pluginId)) {
       return onInitError(PluginIsMarkedDisabled(this))
     }
