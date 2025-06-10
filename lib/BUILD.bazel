@@ -3957,13 +3957,6 @@ jvm_import(
   source_jar = "@kotlinx-io-bytestring-jvm-0_7_0-sources_http//file"
 )
 
-java_library(
-  name = "kotlinx-io-core-provided",
-  exports = [":kotlinx-io-core"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "kotlinx-serialization-cbor",
   jar = "@kotlinx-serialization-cbor-jvm-1_8_1_http//file",
