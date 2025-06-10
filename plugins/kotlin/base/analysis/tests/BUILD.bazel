@@ -16,7 +16,6 @@ jvm_library(
     "//plugins/kotlin/plugin/k1",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "@lib//:junit3",
     "//java/testFramework",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
@@ -31,6 +30,7 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
+    "@lib//:junit4",
   ]
 )
 
