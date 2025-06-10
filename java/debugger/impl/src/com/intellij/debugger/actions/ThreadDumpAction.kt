@@ -10,12 +10,15 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.suspendAllAndEvaluate
 import com.intellij.debugger.impl.*
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.rt.debugger.VirtualThreadDumper
 import com.intellij.threadDumpParser.ThreadDumpParser
@@ -23,6 +26,7 @@ import com.intellij.threadDumpParser.ThreadState
 import com.intellij.unscramble.MergeableDumpItem
 import com.intellij.unscramble.toDumpItems
 import com.intellij.util.lang.JavaVersion
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.jetbrains.jdi.ThreadReferenceImpl
 import com.sun.jdi.*
 import kotlinx.coroutines.TimeoutCancellationException
@@ -39,6 +43,8 @@ class ThreadDumpAction {
   companion object {
     private val extendedProviders: ExtensionPointName<ThreadDumpItemsProviderFactory> =
       ExtensionPointName.Companion.create("com.intellij.debugger.dumpItemsProvider")
+
+    private val EVALUATION_IN_PROGRESS = Key.create<Boolean>("intellij.java.debugger.evaluation.in.progress")
 
     @JvmStatic
     fun buildThreadStates(vmProxy: VirtualMachineProxyImpl): List<ThreadState> {
@@ -91,8 +97,20 @@ class ThreadDumpAction {
         }
 
         if (providers.any { it.requiresEvaluation }) {
+
+          val vm = context.debugProcess!!.virtualMachineProxy
+          // If the previous dump is still being evaluated, only show the Java platform thread dump and do not start a new evaluation.
+          if (vm.getUserData(EVALUATION_IN_PROGRESS) == true) {
+            sendJavaPlatformThreads()
+            XDebuggerManagerImpl.getNotificationGroup()
+              .createNotification(JavaDebuggerBundle.message("thread.dump.during.previous.dump.evaluation.warning"), NotificationType.INFORMATION)
+              .notify(context.project)
+            return
+          }
+
           val timeout = Registry.intValue("debugger.thread.dump.suspension.timeout.ms", 500).milliseconds
           try {
+            vm.putUserData(EVALUATION_IN_PROGRESS, true)
             suspendAllAndEvaluate(context, timeout) { suspendContext ->
               getAllItems(suspendContext)
             }
@@ -100,6 +118,8 @@ class ThreadDumpAction {
           catch (_: TimeoutCancellationException) {
             thisLogger().warn("timeout while waiting for evaluatable context ($timeout)")
             sendJavaPlatformThreads()
+          } finally {
+            vm.removeUserData(EVALUATION_IN_PROGRESS)
           }
         }
         else {
