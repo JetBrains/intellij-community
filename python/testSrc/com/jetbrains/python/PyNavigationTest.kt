@@ -345,10 +345,9 @@ class PyNavigationTest : PyTestCase() {
             x: int
         ab: A | B
         ab.<caret>x
-        """.trimIndent()
-    ).also {
-      assertSize(2, it)
-    }
+        """.trimIndent(),
+      2,
+    )
 
     assertInstanceOf<PyTargetExpression>(a)
     assertEquals("A", a.parentOfType<PyClass>()!!.name)
@@ -368,10 +367,9 @@ class PyNavigationTest : PyTestCase() {
             def __add__(self, other): ...
             def __radd__(self, other): ...
         A() +<caret> B()
-      """.trimIndent()
-    ).also {
-      assertSize(2, it)
-    }
+      """.trimIndent(),
+      2,
+    )
 
     assertInstanceOf<PyFunction>(a)
     assertEquals("__add__", a.name)
@@ -381,6 +379,27 @@ class PyNavigationTest : PyTestCase() {
     assertEquals("__radd__", b.name)
     assertEquals("B", b.parentOfType<PyClass>()!!.name)
 
+  }
+
+  // PY-81789
+  fun `test import isn't declaration and only one from other file`() {
+    runWithAdditionalFileInLibDir(
+      "a.py",
+      """
+      a = 1
+      a = 2""".trimIndent()
+    ) {
+      val (a) = checkMulti(
+        """
+        from a import a
+        
+        <caret>a
+        """.trimIndent(),
+        1
+      )
+
+      assertInstanceOf<PyTargetExpression>(a)
+    }
   }
 
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
@@ -414,11 +433,14 @@ class PyNavigationTest : PyTestCase() {
   }
 
 
-  private fun checkMulti(text: String): List<PsiElement> {
+  private fun checkMulti(text: String, expectedSize: Int?): List<PsiElement> {
     myFixture.configureByText("test.py", text)
     return PyGotoDeclarationHandler()
       .getGotoDeclarationTargets(elementAtCaret, -1, myFixture.editor)!!
       .toList()
+      .also {
+        if (expectedSize != null) assertSize(expectedSize, it)
+      }
   }
 
   private fun checkPyNotPyi(file: PsiElement?) {
