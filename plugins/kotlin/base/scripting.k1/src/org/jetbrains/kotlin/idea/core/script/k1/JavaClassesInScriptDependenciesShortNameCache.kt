@@ -17,7 +17,7 @@ class JavaClassesInScriptDependenciesShortNameCache(private val project: Project
     override fun getAllClassNames() = emptyArray<String>()
 
     override fun getClassesByName(name: String, scope: GlobalSearchScope): Array<out PsiClass> {
-        val classpathScope = ScriptDependencyAware.Companion.getInstance(project).getAllScriptsDependenciesClassFilesScope()
+        val classpathScope = ScriptDependencyAware.getInstance(project).getAllScriptsDependenciesClassFilesScope()
         val classes = StubIndex.getElements(
           JavaShortClassNameIndex.getInstance().key, name, project, classpathScope.intersectWith(scope), PsiClass::class.java
         )

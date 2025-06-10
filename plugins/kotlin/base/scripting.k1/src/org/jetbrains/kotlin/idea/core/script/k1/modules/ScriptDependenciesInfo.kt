@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k1.modules
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
 @K1ModeProjectStructureApi
+@InternalIgnoreDependencyViolation
 sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleInfo, BinaryModuleInfo {
     abstract val sdk: Sdk?
 
@@ -59,6 +61,7 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
     override val moduleContentScope: GlobalSearchScope
         get() = KotlinScriptSearchScope(project, contentScope)
 
+    @InternalIgnoreDependencyViolation
     class ForFile(
         project: Project,
         val scriptFile: VirtualFile,
@@ -109,6 +112,7 @@ sealed class ScriptDependenciesInfo(override val project: Project) : IdeaModuleI
     }
 
     // we do not know which scripts these dependencies are
+    @InternalIgnoreDependencyViolation
     class ForProject(project: Project) : ScriptDependenciesInfo(project) {
         override val sdk: Sdk?
             get() = ScriptDependencyAware.getInstance(project).getFirstScriptsSdk()
