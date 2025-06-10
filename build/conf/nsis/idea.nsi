@@ -975,8 +975,7 @@ done:
 	WriteRegStr HKCR "IntelliJIdeaProjectFile\shell" "" "open"
 "${Index}-Skip:"
   WriteRegStr HKCR "IntelliJIdeaProjectFile\DefaultIcon" "" "$productLauncher,0"
-  WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" \
-    '"$productLauncher" "%1"'
+  WriteRegStr HKCR "IntelliJIdeaProjectFile\shell\open\command" "" '"$productLauncher" "%1"'
 !undef Index
 
 skip_ipr:
@@ -986,23 +985,13 @@ skip_ipr:
   SectionIn RO
   !include "idea_win.nsh"
 
-  ; registration application to be presented in Open With list
-  call ProductRegistration
+  ; registering the application for the "Open With" list
+  Call ProductRegistration
 
+  ; creating the start menu shortcut and storing the start menu directory for the uninstaller
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
-  ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
-  ; save it name in the "MenuFolder" RegValue
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
-                 "$productLauncher" "" "" "" SW_SHOWNORMAL
-
-  StrCpy $7 "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-  ShellLink::GetShortCutWorkingDirectory $7
-  Pop $0
-  DetailPrint "ShortCutWorkingDirectory: $0"
-  ${LogText} ""
-  ${LogText} "ShortCutWorkingDirectory: $0"
-
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher" "" "" "" SW_SHOWNORMAL
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
   StrCpy $2 "MenuFolder"
@@ -1345,9 +1334,25 @@ Function un.deleteDirectoryWithParent
   RMDir "$0\.."  ; delete a parent directory if empty
 FunctionEnd
 
-Function un.deleteDirectoryIfNotEmpty
-  ${If} ${FileExists} "$0\*.*"
-    RMDir /R "$0"
+
+Function un.deleteShortcutIfRight
+  ${IfNot} ${FileExists} "$0"
+    DetailPrint "The $1 shortcut '$0' does does not exist."
+    Return
+  ${EndIf}
+
+  ClearErrors
+  ShellLink::GetShortCutTarget "$0"
+  Pop $R1
+  ${IfNot} ${Errors}
+  ${AndIf} $R1 == "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+    DetailPrint "Deleting the $1 shortcut: $0"
+    Delete "$0"
+    ${If} $1 == "start menu"
+      RMDir "$0\.."  ; delete the parent group if empty
+    ${EndIf}
+  ${Else}
+    DetailPrint "The link '$0' does does not point to a valid launcher."
   ${EndIf}
 FunctionEnd
 
@@ -1399,7 +1404,7 @@ FunctionEnd
 
 Function un.checkIfIDEInUse
 remove_previous_installation:
-  StrCpy $R0 "$INSTDIR\${PRODUCT_EXE_FILE}"
+  StrCpy $R0 "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
   Call un.isIDEInUse
   IfErrors remove_dialog 0
   StrCpy $R0 "$INSTDIR\jbr\bin\java.exe"
@@ -1414,21 +1419,15 @@ FunctionEnd
 
 
 Section "Uninstall"
-  Var /GLOBAL productDir
+  DetailPrint "baseRegKey: $baseRegKey"
+
+  ; the uninstaller is in the "...\bin" subdirectory; correcting
+  StrCpy $INSTDIR "$INSTDIR" -4
+  DetailPrint "Uninstalling from: $INSTDIR"
+
+  Call un.checkIfIDEInUse
 
   Call un.customUninstallActions
-
-  DetailPrint "baseRegKey: $baseRegKey"
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
-  StrCpy $2 "InstallLocation"
-  Call un.OMReadRegStr
-  DetailPrint "uninstall location: $3"
-  ; check if the uninstalled application is running
-  Call un.checkIfIDEInUse
-  ; Uninstaller is in the \bin directory, we need upper level dir
-  StrCpy $productDir $INSTDIR
-  StrCpy $INSTDIR $INSTDIR\..
 
   ; deleting the start menu shortcut
   StrCpy $0 $baseRegKey
@@ -1436,28 +1435,19 @@ Section "Uninstall"
   StrCpy $2 "MenuFolder"
   Call un.OMReadRegStr
   ${If} $3 != ""
-    StrCpy $R0 "$SMPROGRAMS\$3\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-    ClearErrors
-    ShellLink::GetShortCutWorkingDirectory $R0
-    Pop $R1
-    ${IfNot} ${Errors}
-    ${AndIf} $R1 == "$productDir"
-      Delete "$R0"
-      RMDir "$SMPROGRAMS\$3"  ; delete the parent group if empty
-    ${Else}
-      DetailPrint "The link '$R0' does does not point to a valid launcher."
-    ${EndIf}
+    StrCpy $0 "$SMPROGRAMS\$3\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
+    StrCpy $1 "start menu"
+    Call un.deleteShortcutIfRight
   ${EndIf}
 
   ; deleting the desktop shortcut
-  ${If} ${FileExists} "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-    DetailPrint "remove desktop shortcut to launcher: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-  ${EndIf}
+  StrCpy $0 "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
+  StrCpy $1 "desktop"
+  Call un.deleteShortcutIfRight
 
   ; deleting the 'Path' record
   ReadRegStr $R0 HKCU "Environment" "${MUI_PRODUCT}"
-  ${If} $R0 == $productDir
+  ${If} $R0 == "$INSTDIR\bin"
     ReadRegStr $R1 HKCU "Environment" "Path"
     ${UnStrRep} $R2 $R1 ";%${MUI_PRODUCT}%" ""
     ${If} $R2 != $R1
@@ -1482,18 +1472,6 @@ Section "Uninstall"
   ${If} $R2 == 1
     StrCpy $0 "$APPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
     Call un.deleteDirectoryWithParent
-  ${EndIf}
-
-  ; deleting Rider staff
-  ${UnStrStr} $R0 "${MUI_PRODUCT}" "JetBrains Rider"
-  ${If} $R0 == "${MUI_PRODUCT}"
-    !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 7" "State"
-    ${If} $R2 == 1
-      StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\BuildTools"
-      Call un.deleteDirectoryIfNotEmpty
-      StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\jdk8"
-      Call un.deleteDirectoryIfNotEmpty
-    ${EndIf}
   ${EndIf}
 
   ; deleting the uninstaller itself and other cruft
@@ -1571,7 +1549,7 @@ delete_association:
   StrCpy $1 "IntelliJIdeaProjectFile\DefaultIcon"
   StrCpy $2 ""
   Call un.OMReadRegStr
-  ${If} $3 == "$productDir\${PRODUCT_EXE_FILE},0"
+  ${If} $3 == "$INSTDIR\bin\${PRODUCT_EXE_FILE},0"
     StrCpy $1 "IntelliJIdeaProjectFile"
     Call un.OMDeleteRegKey
   ${EndIf}
