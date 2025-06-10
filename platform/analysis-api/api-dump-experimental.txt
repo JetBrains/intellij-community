@@ -39,7 +39,6 @@
 - customPrefixMatcher(java.lang.String):com.intellij.codeInsight.completion.PrefixMatcher
 - a:execute(I,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):V
 - getAdditionalInfo():java.lang.String
-- a:getCommandId():java.lang.String
 - getHighlightInfo():com.intellij.codeInsight.completion.command.HighlightInfoLookup
 - a:getIcon():javax.swing.Icon
 - a:getPresentableName():java.lang.String

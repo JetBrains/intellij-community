@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractGoToImplementationCompletionCommandProvider :
   ActionCommandProvider(actionId = "GotoImplementation",
-                        commandId = "Go to implementation",
+                        synonyms = listOf("Go to implementation"),
                         presentableName = ActionsBundle.message("action.GotoImplementation.text"),
                         icon = null,
                         priority = -100,

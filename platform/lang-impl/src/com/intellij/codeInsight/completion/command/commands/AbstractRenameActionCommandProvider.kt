@@ -14,7 +14,6 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.PsiNamedElement
 
 abstract class AbstractRenameActionCommandProvider : ActionCommandProvider(actionId = IdeActions.ACTION_RENAME,
-                                                                           commandId = "Rename",
                                                                            presentableName = ActionsBundle.message("action.RenameElement.text"),
                                                                            previewText = ActionsBundle.message("action.RenameElement.description"),
                                                                            synonyms = listOf("Rename", "Change name")) {
@@ -36,7 +35,7 @@ abstract class AbstractRenameActionCommandProvider : ActionCommandProvider(actio
       element = element.nameIdentifier
     }
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            commandId = super.commandId,
+                                            synonyms = super.synonyms,
                                             presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,

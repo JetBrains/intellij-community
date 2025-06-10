@@ -50,8 +50,8 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
 
   private val methodNames: Set<String> = psiClass.allMethods.map { it.name }.toSet()
 
-  override val commandId: String
-    get() = "Create method from usage"
+  override val synonyms: List<String>
+    get() = listOf("Create method from usage")
   override val presentableName: @Nls String
     get() = QuickFixBundle.message("create.method.from.usage.family")
   override val icon: Icon?
@@ -84,7 +84,7 @@ internal class JavaCreateFromUsagesCompletionCommand(val psiClass: PsiClass) : C
           generateActions(expression).firstOrNull { it is CreateMethodAction }
         }
       }?: return
-    ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, commandId)
+    ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, presentableName)
   }
 
   override fun customPrefixMatcher(prefix: String): PrefixMatcher {

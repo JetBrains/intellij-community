@@ -15,7 +15,6 @@ import com.intellij.psi.PsiNamedElement
 
 @Deprecated("Use AbstractRenameActionCommandProvider instead")
 internal class RenameActionCommandProvider : ActionCommandProvider(actionId = IdeActions.ACTION_RENAME,
-                                                                   commandId = "Rename",
                                                                    presentableName = ActionsBundle.message("action.RenameElement.text"),
                                                                    previewText = ActionsBundle.message("action.RenameElement.description"),
                                                                    synonyms = listOf("Rename", "Change name")) {
@@ -31,7 +30,7 @@ internal class RenameActionCommandProvider : ActionCommandProvider(actionId = Id
       element = element.nameIdentifier
     }
     return ActionCompletionCommand(actionId = super.actionId,
-                                   commandId = super.commandId,
+                                   synonyms = super.synonyms,
                                    presentableActionName = super.presentableName,
                                    icon = super.icon,
                                    priority = super.priority,

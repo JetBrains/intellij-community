@@ -80,8 +80,6 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
     var customName: String? = null,
     var customI18nName: @Nls String? = null,
   ) : CompletionCommand() {
-    override val commandId: String
-      get() = customName ?: ("Generate \'" + action.templateText + "\'")
     override val presentableName: @Nls String
       get() = customI18nName ?: (CodeInsightBundle.message("command.completion.generate.text", action.templateText))
     override val icon: Icon?

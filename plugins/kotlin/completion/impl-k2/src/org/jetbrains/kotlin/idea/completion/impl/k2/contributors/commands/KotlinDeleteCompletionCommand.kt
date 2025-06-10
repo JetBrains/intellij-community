@@ -68,8 +68,8 @@ private class KotlinDeleteCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
   private val preview: IntentionPreviewInfo,
 ) : CompletionCommand(), CompletionCommandWithPreview, DumbAware {
-  override val commandId: String
-    get() = "Delete element"
+  override val synonyms: List<String>
+    get() = listOf("Delete element")
   override val presentableName: @Nls String
     get() = ActionsBundle.message("action.EditorDelete.text")
   override val icon: Icon?

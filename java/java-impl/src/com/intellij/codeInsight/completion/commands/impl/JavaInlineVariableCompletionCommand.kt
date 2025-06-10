@@ -50,8 +50,8 @@ internal class JavaInlineVariableCompletionCommandProvider : CommandProvider {
 private class JavaInlineVariableCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
 ) : CompletionCommand(), DumbAware, CompletionCommandWithPreview {
-  override val commandId: String
-    get() = "Inline"
+  override val synonyms: List<String>
+    get() = listOf("inline", "insert")
 
   override val presentableName: @Nls String
     get() = JavaBundle.message("command.completion.inline.text")

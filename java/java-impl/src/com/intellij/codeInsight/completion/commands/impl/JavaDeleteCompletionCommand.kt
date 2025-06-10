@@ -62,8 +62,8 @@ private class JavaDeleteCompletionCommand(
   override val highlightInfo: HighlightInfoLookup?,
   private val preview: IntentionPreviewInfo,
 ) : CompletionCommand(), CompletionCommandWithPreview, DumbAware {
-  override val commandId: String
-    get() = "Delete element"
+  override val synonyms: List<String>
+    get() = listOf("delete", "remove")
   override val presentableName: @Nls String
     get() = JavaBundle.message("command.completion.delete.element.text")
   override val icon: Icon?

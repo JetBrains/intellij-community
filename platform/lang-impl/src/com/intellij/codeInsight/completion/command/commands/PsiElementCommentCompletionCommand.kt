@@ -16,7 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 
 internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommandProvider(
   actionId = "CommentByBlockComment",
-  commandId = "Comment/uncomment by block comment",
+  synonyms = listOf("Comment/uncomment by block comment"),
   presentableName = CodeInsightBundle.message("command.completion.psi.element.comment.block.text"),
   previewText = ActionsBundle.message("action.CommentByBlockComment.description")) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
@@ -29,10 +29,10 @@ internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommand
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     val element = getHighLevelContext(context.offset, context.psiFile) ?: return null
     val range = element.textRange ?: return null
-    val adjustedName = if (element is PsiComment) "Uncomment" else "Comment by block comment"
+    val adjustedName = if (element is PsiComment) CodeInsightBundle.message("command.completion.psi.element.uncomment.block.text") else presentableName
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            commandId = adjustedName,
-                                            presentableActionName = super.presentableName,
+                                            synonyms = super.synonyms,
+                                            presentableActionName = adjustedName,
                                             icon = super.icon,
                                             priority = super.priority,
                                             previewText = super.previewText,
@@ -55,7 +55,7 @@ internal class PsiElementCommentByBlockCompletionCommandProvider : ActionCommand
 
 internal class PsiElementCommentByLineCompletionCommandProvider : ActionCommandProvider(
   actionId = "CommentByLineComment",
-  commandId = "Comment by line comment",
+  synonyms = listOf("Comment by line comment"),
   presentableName = CodeInsightBundle.message("command.completion.psi.element.comment.line.text"),
   previewText = ActionsBundle.message("action.CommentByLineComment.description")) {
   override fun isApplicable(offset: Int, psiFile: PsiFile, editor: Editor?): Boolean {
@@ -79,7 +79,6 @@ internal class PsiElementCommentByLineCompletionCommandProvider : ActionCommandP
     val element = getHighLevelContext(context.offset, context.psiFile) ?: return null
     val range = element.textRange ?: return null
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            commandId = super.commandId,
                                             presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,

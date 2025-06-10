@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractShowUsagesActionCompletionCommandProvider :
   ActionCommandProvider(actionId = ShowUsagesAction.ID,
-                        commandId = "Show usages",
+                        synonyms = listOf("Show usages"),
                         presentableName = ActionsBundle.message("action.ShowUsages.text"),
                         icon = null,
                         priority = -100,

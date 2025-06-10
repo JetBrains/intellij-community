@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractMoveCompletionCommandProvider : ActionCommandProvider(
   actionId = "Move",
-  commandId = "Move",
+  synonyms = listOf("Move"),
   presentableName = ActionsBundle.message("action.Move.text"),
   icon = null,
   priority = -100,
@@ -34,7 +34,7 @@ abstract class AbstractMoveCompletionCommandProvider : ActionCommandProvider(
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            commandId = super.commandId,
+                                            synonyms = super.synonyms,
                                             presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,
@@ -56,7 +56,7 @@ abstract class AbstractMoveCompletionCommandProvider : ActionCommandProvider(
 
 abstract class AbstractCopyClassCompletionCommandProvider : ActionCommandProvider(
   actionId = "CopyElement",
-  commandId = "Copy",
+  synonyms = listOf("Copy"),
   presentableName = ActionsBundle.message("action.CopyElement.text"),
   icon = null,
   priority = -100,
@@ -82,7 +82,7 @@ abstract class AbstractCopyClassCompletionCommandProvider : ActionCommandProvide
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            commandId = super.commandId,
+                                            synonyms = super.synonyms,
                                             presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,

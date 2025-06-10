@@ -167,8 +167,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
     if (additionalInfo.isNotEmpty()) {
       tailText += " ($additionalInfo)"
     }
-    val name = presentableName.ifEmpty { command.commandId }
-    val lookupString = name.trim().let {
+    val lookupString = presentableName.trim().let {
       if (it.length > 50) {
         it.substring(0, 50) + "\u2026"
       }
@@ -177,7 +176,6 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
       }
     }
     val element: LookupElement = CommandCompletionLookupElement(LookupElementBuilder.create(lookupString)
-                                                                  .withLookupString(command.commandId)
                                                                   .withLookupString(lookupString)
                                                                   .withLookupStrings(command.synonyms)
                                                                   .withPresentableText(lookupString)
@@ -199,7 +197,7 @@ internal class CommandCompletionProvider : CompletionProvider<CompletionParamete
   private fun createSorter(completionParameters: CompletionParameters): CompletionSorter {
     var weigher = CompletionService.getCompletionService().emptySorter()
       .weigh(object : LookupElementWeigher("priority", true, false) {
-        override fun weigh(element: LookupElement): Comparable<*>? {
+        override fun weigh(element: LookupElement): Comparable<*> {
           if (element.`as`(CommandCompletionLookupElement::class.java) == null) return 0.0
           return element.`as`(PrioritizedLookupElement::class.java)?.priority ?: 0.0
         }
@@ -361,7 +359,7 @@ internal sealed interface InvocationCommandType {
 internal fun findActualIndex(suffix: String, text: CharSequence, offset: Int): Int {
   var indexOf = suffix.length
   if (offset > text.length || offset == 0) return 0
-  while (indexOf > 0 && offset - indexOf >= 0 && text.substring(offset - indexOf, offset) != suffix.substring(0, indexOf)) {
+  while (indexOf > 0 && offset - indexOf >= 0 && text.substring(offset - indexOf, offset) != suffix.take(indexOf)) {
     indexOf--
   }
   //try to find outside

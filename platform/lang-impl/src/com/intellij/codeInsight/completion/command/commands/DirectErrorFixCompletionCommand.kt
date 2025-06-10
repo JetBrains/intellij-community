@@ -29,16 +29,13 @@ import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
 internal class DirectErrorFixCompletionCommand(
-  override val commandId: @Nls String,
+  override val presentableName: @Nls String,
   override val priority: Int?,
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup,
   private val myOffset: Int? = null,
   private val previewProvider: () -> IntentionPreviewInfo?,
 ) : CompletionCommand(), CompletionCommandWithPreview {
-
-  override val presentableName: @Nls String
-    get() = commandId
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     if (editor == null) return
@@ -85,7 +82,7 @@ internal class DirectErrorFixCompletionCommand(
               if (currentName.startsWith("<html>") && currentName.endsWith("</html>")) {
                 currentName = currentName.substring(6, currentName.length - 7)
               }
-              if (currentName == commandId) {
+              if (currentName == presentableName) {
                 return@jobToIndicator fix.action
               }
             }
@@ -95,7 +92,7 @@ internal class DirectErrorFixCompletionCommand(
       }
     }
     if (action == null) return
-    ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelPsiFile, topLevelEditor, action, commandId)
+    ShowIntentionActionsHandler.chooseActionAndInvoke(topLevelPsiFile, topLevelEditor, action, presentableName)
   }
 
   override fun getPreview(): IntentionPreviewInfo? {

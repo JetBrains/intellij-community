@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 
 internal class OptimizeImportCompletionCommandProvider :
   ActionCommandProvider(actionId = "OptimizeImports",
-                        commandId = "Optimize imports",
+                        synonyms = listOf("Optimize imports"),
                         presentableName = ActionsBundle.message("action.OptimizeImports.text"),
                         icon = null,
                         priority = -100,

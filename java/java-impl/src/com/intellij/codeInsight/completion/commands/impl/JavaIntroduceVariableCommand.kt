@@ -42,8 +42,8 @@ internal class JavaIntroduceVariableCommandProvider : CommandProvider {
 }
 
 internal class JavaIntroduceVariableCommand : CompletionCommand(), CompletionCommandWithPreview {
-  override val commandId: String
-    get() = "Introduce variable"
+  override val synonyms: List<String>
+    get() = listOf("Introduce variable")
 
   @Suppress("HardCodedStringLiteral")
   override val presentableName: @Nls String

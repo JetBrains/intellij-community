@@ -22,11 +22,6 @@ import javax.swing.Icon
  * This class is marked as experimental and may change in future releases.
  */
 abstract class CompletionCommand : UserDataHolderBase() {
-  /**
-   * ID to identify this command. It is also used as a lookup string.
-   * It should present this action in English
-   */
-  abstract val commandId: String
 
   /**
    * Represents a localized, human-readable name for the command, used as a main lookup string
@@ -73,7 +68,7 @@ abstract class CompletionCommand : UserDataHolderBase() {
   abstract fun execute(offset: Int, psiFile: PsiFile, editor: Editor?)
 
   override fun toString(): String {
-    return "CompletionCommand(name='$commandId', class='${this::class.simpleName}')"
+    return "CompletionCommand(presentableName='$presentableName', class='${this::class.simpleName}')"
   }
 
 

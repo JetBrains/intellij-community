@@ -57,7 +57,7 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     ApplicationManager.getApplication().invokeLater {
       CommandProcessor.getInstance().executeCommand(context.project, {
         completionCommand.execute(startOffset, psiFile, editor)
-      }, completionCommand.commandId, completionCommand)
+      }, completionCommand.presentableName, completionCommand)
     }
   }
 

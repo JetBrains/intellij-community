@@ -22,9 +22,6 @@ internal class IntentionCompletionCommand(
   private val previewProvider: () -> IntentionPreviewInfo?,
 ) : CompletionCommand(), CompletionCommandWithPreview {
 
-  override val commandId: String
-    get() = intentionAction.text
-
   override val presentableName: @Nls String
     get() = intentionAction.text
 
@@ -43,7 +40,7 @@ internal class IntentionCompletionCommand(
       editor.putUserData(KEY_FORCE_CARET_OFFSET, ForceOffsetData(myOffset, offset))
     }
     if (availableFor) {
-      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction.action, commandId)
+      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction.action, presentableName)
     }
     if (!intentionAction.action.startInWriteAction() || (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset)) {
       //probably, intention moves the cursor or async gui

@@ -82,8 +82,8 @@ internal class KotlinCreateFromUsagesCompletionCommand(val ktClass: KtClass) : C
             (ktClass.symbol as? KaClassSymbol)?.memberScope?.declarations?.map { it.name?.identifier }?.filterNotNull()?.toSet()
         } ?: emptySet()
 
-    override val commandId: String
-        get() = "Create method from usage"
+    override val synonyms: List<String>
+        get() = listOf("Create method from usage")
     override val presentableName: @Nls String
         get() = QuickFixBundle.message("create.method.from.usage.family")
     override val icon: Icon?
@@ -134,7 +134,7 @@ internal class KotlinCreateFromUsagesCompletionCommand(val ktClass: KtClass) : C
             it.javaClass.name == "org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction" &&
                     it.text.contains(KotlinBundle.message("text.member"))
         } ?: return
-        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, commandId)
+        ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, presentableName)
     }
 
     override fun customPrefixMatcher(prefix: String): PrefixMatcher {

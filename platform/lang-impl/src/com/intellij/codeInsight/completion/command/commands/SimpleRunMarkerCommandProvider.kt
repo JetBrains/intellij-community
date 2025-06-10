@@ -28,7 +28,6 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.JBIterable.from
-import org.jetbrains.annotations.Nls
 import java.util.function.Predicate
 import javax.swing.Icon
 
@@ -131,12 +130,10 @@ private fun collectActions(
 
 private class RunMarkerCompletionCommand(
   private val offsetElement: Int,
-  @param:NlsSafe override val commandId: String,
+  @param:NlsSafe override val presentableName: String,
   override val icon: Icon?,
   override val additionalInfo: String?,
 ) : CompletionCommand(), PossiblyDumbAware {
-  override val presentableName: @Nls String
-    get() = commandId
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
     val (_, collectedActions) = runWithModalProgressBlocking(psiFile.project, AnalysisBundle.message("scanning.scope.progress.title")) {
@@ -149,7 +146,7 @@ private class RunMarkerCompletionCommand(
     cachedIntentions.wrapAndUpdateGutters()
     var intentionAction: IntentionAction? = null
     for (caching in cachedIntentions.gutters) {
-      if (caching.text == commandId) {
+      if (caching.text == presentableName) {
         intentionAction = caching.action
         break
       }
@@ -157,7 +154,7 @@ private class RunMarkerCompletionCommand(
     if (intentionAction == null) return
     if (editor == null) return
     if (ShowIntentionActionsHandler.availableFor(psiFile, editor, offset, intentionAction)) {
-      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction, commandId)
+      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction, presentableName)
     }
   }
 }

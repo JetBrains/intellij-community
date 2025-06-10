@@ -27,7 +27,6 @@ import javax.swing.Icon
  * allowing actions to be triggered through code completion features.
  *
  * @property actionId The unique identifier of the IDE action to be executed
- * @property commandId id, which will be used as  lookup string
  * @property presentableName The display internationalized name of the command
  * @property icon Optional icon to be displayed with the command
  * @property priority Optional priority value affecting command ordering
@@ -35,7 +34,6 @@ import javax.swing.Icon
  */
 open class ActionCommandProvider(
   @field:Language("devkit-action-id") var actionId: String,
-  val commandId: String,
   val presentableName: @Nls String,
   val icon: Icon? = null,
   val priority: Int? = null,
@@ -68,7 +66,6 @@ open class ActionCommandProvider(
    */
   protected open fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? =
     ActionCompletionCommand(actionId = actionId,
-                            commandId = commandId,
                             presentableActionName = presentableName,
                             icon = icon,
                             priority = priority,
@@ -125,7 +122,7 @@ open class ActionCommandProvider(
     }
     val range = element.textRange ?: return null
     return ActionCompletionCommand(actionId = actionId,
-                                   commandId = commandId,
+                                   synonyms = synonyms,
                                    presentableActionName = presentableName,
                                    icon = icon,
                                    priority = priority,
@@ -143,7 +140,6 @@ open class ActionCommandProvider(
 @Suppress("HardCodedStringLiteral")
 open class ActionCompletionCommand(
   @field:Language("devkit-action-id") var actionId: String,
-  override val commandId: String,
   presentableActionName: @Nls String,
   private val previewText: @Nls String?,
   override val icon: Icon? = null,

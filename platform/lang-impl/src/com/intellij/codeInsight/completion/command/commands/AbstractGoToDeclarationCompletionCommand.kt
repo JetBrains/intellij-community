@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractGoToDeclarationCompletionCommandProvider :
   ActionCommandProvider(actionId = "GotoDeclaration",
-                        commandId = "Go to declaration",
+                        synonyms = listOf("Go to declaration", "Find declaration"),
                         presentableName = CodeInsightBundle.message("command.completion.GotoDeclaration.text"),
                         icon = null,
                         priority = -100,

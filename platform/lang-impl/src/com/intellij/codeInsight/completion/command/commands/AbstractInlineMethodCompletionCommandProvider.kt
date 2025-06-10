@@ -8,7 +8,7 @@ import com.intellij.psi.PsiFile
 
 abstract class AbstractInlineMethodCompletionCommandProvider :
   ActionCommandProvider(actionId = "Inline",
-                        commandId = "Inline",
+                        synonyms = listOf("Inline"),
                         presentableName = ActionsBundle.message("action.Inline.text"),
                         icon = null,
                         priority = -150,
@@ -21,7 +21,7 @@ abstract class AbstractInlineMethodCompletionCommandProvider :
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand? {
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            commandId = super.commandId,
+                                            synonyms = super.synonyms,
                                             presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,

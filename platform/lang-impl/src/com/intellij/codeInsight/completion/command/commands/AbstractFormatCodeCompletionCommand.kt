@@ -32,8 +32,8 @@ abstract class AbstractFormatCodeCompletionCommandProvider :
 }
 
 abstract class AbstractFormatCodeCompletionCommand : CompletionCommand(), CompletionCommandWithPreview {
-  final override val commandId: String
-    get() = "Format"
+  final override val synonyms: List<String>
+    get() = listOf("Format")
 
   @Suppress("HardCodedStringLiteral")
   final override val presentableName: @Nls String

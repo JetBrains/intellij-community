@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.command.commands
 
+import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.completion.command.CommandCompletionProviderContext
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.Editor
@@ -12,15 +13,15 @@ import com.intellij.psi.PsiFile
  */
 internal class LineCommentCompletionCommandProvider :
   ActionCommandProvider(actionId = "CommentByLineComment",
-                        commandId = "Comment line",
-                        presentableName = ActionsBundle.message("action.CommentByLineComment.text"),
+                        synonyms = listOf("Comment line"),
+                        presentableName = CodeInsightBundle.message("command.completion.comment.line.with.line.comment.text"),
                         icon = null,
                         priority = -100,
                         previewText = ActionsBundle.message("action.CommentByLineComment.description")) {
 
   override fun createCommand(context: CommandCompletionProviderContext): ActionCompletionCommand {
     return object : ActionCompletionCommand(actionId = super.actionId,
-                                            commandId = super.commandId,
+                                            synonyms = super.synonyms,
                                             presentableActionName = super.presentableName,
                                             icon = super.icon,
                                             priority = super.priority,

@@ -13,7 +13,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 
 abstract class AbstractCopyFQNCompletionCommandProvider :
   ActionCommandProvider(actionId = "CopyReference",
-                        commandId = "Copy reference",
+                        synonyms = listOf("Copy reference", "Copy FQN"),
                         presentableName = CodeInsightBundle.message("command.completion.copy.reference.text"),
                         icon = null,
                         priority = -150,
@@ -45,7 +45,7 @@ abstract class AbstractCopyFQNCompletionCommandProvider :
     }
     val range = element.textRange ?: return null
     return ActionCompletionCommand(actionId = super.actionId,
-                                   commandId = super.commandId,
+                                   synonyms = super.synonyms,
                                    presentableActionName = super.presentableName,
                                    icon = super.icon,
                                    priority = super.priority,

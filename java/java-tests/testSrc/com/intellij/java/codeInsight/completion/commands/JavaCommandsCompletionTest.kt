@@ -260,7 +260,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
           }
       }""".trimIndent())
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("Comment with line", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("Comment line", ignoreCase = true) })
     myFixture.checkResult("""
       class A {
           public String getY() {
@@ -565,7 +565,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
     myFixture.doHighlighting()
     myFixture.type(".")
     val elements = myFixture.completeBasic()
-    selectItem(elements.first { element -> element.lookupString.contains("comment with line", ignoreCase = true) })
+    selectItem(elements.first { element -> element.lookupString.contains("comment line", ignoreCase = true) })
     myFixture.checkResult("""
       class A { 
         void foo() {

@@ -36,7 +36,7 @@ internal class GenerateGetterSetterHandleCompletionCommandProvider : CommandProv
       if (modCommandAction == null || modCommandAction.getPresentation(actionContext) == null) continue
       result.add(BaseGenerateGetterSetterHandleCompletionCommand(case.generateGetter,
                                                                  case.generateSetter,
-                                                                 case.name,
+                                                                 listOf(case.name),
                                                                  case.i18nName,
                                                                  HighlightInfoLookup(field.textRange, EditorColors.SEARCH_RESULT_ATTRIBUTES, 0)) {
         IntentionPreviewComputable(context.project, action, context.psiFile, context.editor, context.offset).call()
@@ -51,7 +51,7 @@ private data class GetterSetterCase(val generateGetter: Boolean, val generateSet
 private class BaseGenerateGetterSetterHandleCompletionCommand(
   val generateGetter: Boolean,
   val generateSetter: Boolean,
-  override val commandId: String,
+  override val synonyms: List<String>,
   override val presentableName: String,
   override val highlightInfo: HighlightInfoLookup?,
   private val preview: () -> IntentionPreviewInfo?,
