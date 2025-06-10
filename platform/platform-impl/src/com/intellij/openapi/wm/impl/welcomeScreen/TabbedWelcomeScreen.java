@@ -35,6 +35,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   private final WelcomeScreenLeftPanel myLeftSidebar;
   private final CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> mainPanel;
   private Disposable currentDisposable = null;
+  private ProjectsTab myProjectsTab = null;
 
   TabbedWelcomeScreen() {
     this(true);
@@ -134,6 +135,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   private void loadTabs(List<? extends WelcomeTabFactory> welcomeTabFactories) {
     myLeftSidebar.removeAllTabs();
+    myProjectsTab = null;
     if (currentDisposable != null) {
       Disposer.dispose(currentDisposable);
     }
@@ -142,6 +144,9 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       if (tabFactory.isApplicable()) {
         for (WelcomeScreenTab alsoTab : tabFactory.createWelcomeTabs(this, currentDisposable)) {
           myLeftSidebar.addRootTab(alsoTab);
+          if (alsoTab instanceof ProjectsTab) {
+            myProjectsTab = (ProjectsTab)alsoTab;
+          }
         }
       }
     }
@@ -150,6 +155,11 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   public void setTabListVisible(boolean visible) {
     leftSidebarHolder.setVisible(visible);
+  }
+
+  @ApiStatus.Internal
+  public void switchToProjectsTab() {
+    if (myProjectsTab != null) myLeftSidebar.selectTab(myProjectsTab);
   }
 
   @ApiStatus.Experimental
