@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanc
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -68,9 +69,10 @@ class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() 
   internal class ExecutorRegistryActionConfigurationTuner : ActionConfigurationCustomizer, LightCustomizeStrategy {
     override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
       if (Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
-        Executor.EXECUTOR_EXTENSION_NAME.forEachExtensionSafe(Consumer {
-          (getInstance() as ExecutorRegistryImpl).initExecutorActions(it, actionRegistrar)
-        })
+        val executorRegistry = serviceAsync<ExecutorRegistry>() as ExecutorRegistryImpl
+        Executor.EXECUTOR_EXTENSION_NAME.forEachExtensionSafe {
+          executorRegistry.initExecutorActions(it, actionRegistrar)
+        }
       }
     }
   }
