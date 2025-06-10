@@ -256,6 +256,10 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
     moveMouse(icons.firstOrNull { it.line == line - 1 }!!.location)
   }
 
+  fun clickOnIcon(line: Int) {
+    click(icons.firstOrNull { it.line == line - 1 }!!.location)
+  }
+
   fun rightClickOnIcon(line: Int) {
     rightClick(icons.firstOrNull { it.line == line - 1 }!!.location)
   }
