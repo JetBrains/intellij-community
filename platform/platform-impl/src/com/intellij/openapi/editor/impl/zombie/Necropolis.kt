@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -33,7 +35,8 @@ private val LOG: Logger = logger<Necropolis>()
 
 private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.intellij.textEditorNecromancerAwaker")
 
-internal fun necropolisPath(): Path {
+@ApiStatus.Internal
+fun necropolisPath(): Path {
   return PathManager.getSystemDir().resolve("editor")
 }
 
@@ -59,6 +62,26 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       necromancersRef.set(necromancers)
       subscribeEditorClosed(necromancers)
       necromancers
+    }
+  }
+
+  @ApiStatus.Internal
+  suspend fun prefetchZombies(
+    project: Project,
+    file: VirtualFile,
+  ) {
+    require(project == this.project)
+    if (!project.isDisposed && !project.isDefault) {
+      val fileId = application.serviceAsync<ZombieOriginRecipeBook>().getIdForFile(file) ?: return
+      coroutineScope {
+        for (necromancer in necromancersDeferred.await()) {
+          launch {
+            LOG.runAndLogException {
+              necromancer.prefetchGraves(fileId)
+            }
+          }
+        }
+      }
     }
   }
 
