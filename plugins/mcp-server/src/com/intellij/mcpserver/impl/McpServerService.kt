@@ -6,26 +6,38 @@ import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.traceThrowable
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vfs.AsyncFileListener
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.application
+import com.intellij.util.asDisposable
 import io.ktor.server.cio.CIO
 import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
+import io.ktor.util.collections.ConcurrentMap
 import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
 import io.modelcontextprotocol.kotlin.sdk.server.mcp
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
@@ -45,6 +57,8 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private val server = MutableStateFlow(startServerIfEnabled())
+
+  private val trackedDocuments = ConcurrentMap<Document, VirtualFile>()
 
   val isRunning: Boolean
     get() = server.value != null
@@ -76,6 +90,21 @@ class McpServerService(val cs: CoroutineScope) {
         // reuse old or start new
         return@update currentServer ?: startServer()
       }
+    }
+  }
+
+  private fun documentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
+    if (file != null) {
+      trackedDocuments[document] = file
+    }
+    else {
+      trackedDocuments.remove(document)
+    }
+  }
+
+  class MyDocumentBindingListener : FileDocumentBindingListener {
+    override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
+      getInstance().documentBindingChanged(document, oldFile, file)
     }
   }
 
@@ -159,48 +188,99 @@ class McpServerService(val cs: CoroutineScope) {
       emptyList()
     }
   }.map { it.mcpToolToRegisteredTool() }
-}
 
-private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
-  val tool = Tool(name = descriptor.name,
-                  description = descriptor.description,
-                  inputSchema = Tool.Input(
-                    properties = descriptor.inputSchema.properties,
-                    required = descriptor.inputSchema.requiredParameters.toList()))
-  return RegisteredTool(tool) { request ->
-    val projectPath = (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content
-    val project = if (!projectPath.isNullOrBlank()) {
-      ProjectManager.getInstance().openProjects.find { it.basePath == projectPath } ?: getLastFocusedOrOpenedProject()
-    }
-    else {
-      getLastFocusedOrOpenedProject()
-    }
+  private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
+    val tool = Tool(name = descriptor.name,
+                    description = descriptor.description,
+                    inputSchema = Tool.Input(
+                      properties = descriptor.inputSchema.properties,
+                      required = descriptor.inputSchema.requiredParameters.toList()))
+    return RegisteredTool(tool) { request ->
+      val projectPath = (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content
+      val project = if (!projectPath.isNullOrBlank()) {
+        ProjectManager.getInstance().openProjects.find { it.basePath == projectPath } ?: getLastFocusedOrOpenedProject()
+      }
+      else {
+        getLastFocusedOrOpenedProject()
+      }
 
-    @Suppress("IncorrectCancellationExceptionHandling")
-    val callResult = try {
-      withContext(ProjectContextElement(project)) {
-        call(request.arguments)
+
+      class FileAndContent(val file: VirtualFile, val content: String)
+      val contentBefore = ConcurrentMap<Document, String>()
+
+      val callResult = coroutineScope {
+
+        VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
+          return@AsyncFileListener object : AsyncFileListener.ChangeApplier {}
+          //events.first().
+        })
+
+        val documentListener = object : DocumentListener {
+          // record content before any change
+          override fun beforeDocumentChange(event: DocumentEvent) {
+            contentBefore.putIfAbsent(event.document, event.document.text)
+          }
+
+          override fun documentChanged(event: DocumentEvent) = Unit
+        }
+
+        for ((document, _) in trackedDocuments) {
+          document.addDocumentListener(documentListener, this.asDisposable())
+        }
+
+        application.messageBus.connect(this).subscribe(FileDocumentBindingListener.TOPIC, object : FileDocumentBindingListener {
+          override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
+            if (file != null) {
+              document.addDocumentListener(documentListener, this@coroutineScope.asDisposable())
+            }
+          }
+        })
+
+        @Suppress("IncorrectCancellationExceptionHandling")
+        try {
+          val result = withContext(ProjectContextElement(project)) {
+            this@mcpToolToRegisteredTool.call(request.arguments)
+          }
+
+          try {
+            val events = contentBefore.mapNotNull { entry ->
+              val virtualFile = trackedDocuments[entry.key] ?: return@mapNotNull null
+              DocumentChangeEvent(entry.key, virtualFile, entry.value, readAction { entry.key.text })
+            }
+            application.messageBus.syncPublisher(ToolCallDocumentChangeListener.TOPIC).documentsChanged(this@mcpToolToRegisteredTool.descriptor, events)
+          }
+          catch (ce: CancellationException) {
+            throw ce
+          }
+          catch (t: Throwable) {
+            logger.error("Failed to process changed documents after calling MCP tool ${this@mcpToolToRegisteredTool.descriptor.name}", t)
+          }
+          result
+        }
+        catch (ce: CancellationException) {
+          val message = "MCP tool call has been cancelled: ${ce.message}"
+          logger.traceThrowable { CancellationException(message, ce) }
+          McpToolCallResult.error(message)
+        }
+        catch (mcpException: McpExpectedError) {
+          logger.traceThrowable { mcpException }
+          McpToolCallResult.error(mcpException.mcpErrorText)
+        }
+        catch (t: Throwable) {
+          val errorMessage = "MCP tool call has been failed: ${t.message}"
+          logger.traceThrowable { Exception(errorMessage, t) }
+          McpToolCallResult.error(errorMessage)
+        }
       }
-    }
-    catch (ce: CancellationException) {
-      val message = "MCP tool call has been cancelled: ${ce.message}"
-      logger.traceThrowable { CancellationException(message, ce) }
-      McpToolCallResult.error(message)
-    }
-    catch (mcpException: McpExpectedError) {
-      logger.traceThrowable { mcpException }
-      McpToolCallResult.error(mcpException.mcpErrorText)
-    }
-    catch (t: Throwable) {
-      val errorMessage = "MCP tool call has been failed: ${t.message}"
-      logger.traceThrowable { Exception(errorMessage, t) }
-      McpToolCallResult.error(errorMessage)
-    }
-    val contents = callResult.content.map { content ->
-      when (content) {
-        is McpToolCallResultContent.Text -> TextContent(content.text)
+
+
+      val contents = callResult.content.map { content ->
+        when (content) {
+          is McpToolCallResultContent.Text -> TextContent(content.text)
+        }
       }
+      return@RegisteredTool CallToolResult(content = contents, callResult.isError)
     }
-    return@RegisteredTool CallToolResult(content = contents, callResult.isError)
   }
 }
+
