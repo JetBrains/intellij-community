@@ -53,6 +53,7 @@ import java.io.File
 import java.io.PrintStream
 import java.lang.reflect.Modifier
 import java.nio.charset.Charset
+import java.nio.file.AccessDeniedException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.regex.Pattern
@@ -593,7 +594,17 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val ideaSystemPath = Path.of("$tempDir/system")
     if (cleanSystemDir) {
       spanBuilder("idea.system.path cleanup").use(Dispatchers.IO) {
-        NioFiles.deleteRecursively(ideaSystemPath)
+        try {
+          NioFiles.deleteRecursively(ideaSystemPath)
+        }
+        catch (e: AccessDeniedException) {
+          if (SystemInfoRt.isWindows) {
+            context.messages.reportBuildProblem("Cannot delete $ideaSystemPath: ${e.message}")
+          }
+          else {
+            throw e
+          }
+        }
       }
     }
     @Suppress("SpellCheckingInspection")
