@@ -270,6 +270,18 @@ interface XDebugSessionProxy {
       if (breakpoint !is XBreakpointBase<*, *, *>) return null
       return breakpoint.asProxy()
     }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Monolith) return false
+
+      return session == other.session
+    }
+
+    override fun hashCode(): Int {
+      return session.hashCode()
+    }
+
   }
 }
 
