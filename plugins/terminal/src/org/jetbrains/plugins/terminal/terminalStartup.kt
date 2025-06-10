@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.ExecuteProcessException
@@ -126,8 +126,6 @@ private suspend fun doStartProcess(
   return execOptions.eelIt().convertToJavaProcess() as PtyProcess
 }
 
-internal fun shouldUseEelApi(): Boolean {
-  return `is`("terminal.use.EelApi", false)
-}
+internal fun shouldUseEelApi(): Boolean = Registry.`is`("terminal.use.EelApi", true)
 
 private val log: Logger = logger<AbstractTerminalRunner<*>>()
