@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package sample
 
 enum class Foo {

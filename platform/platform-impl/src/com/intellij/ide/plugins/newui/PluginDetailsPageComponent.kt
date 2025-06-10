@@ -1104,7 +1104,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
       val stamp = instance.getConfirmationStamp(productCode)
       if (stamp == null) {
-        if (ApplicationManager.getApplication().isEAP && !java.lang.Boolean.getBoolean("eap.require.license")) {
+        if (ApplicationManager.getApplication().isEAP && System.getProperty("eap.require.license") !in arrayOf("release", "true")) {
           tagPanel!!.setFirstTagTooltip(IdeBundle.message("tooltip.license.not.required.for.eap.version"))
           licensePanel.hideWithChildren()
           return

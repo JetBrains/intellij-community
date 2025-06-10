@@ -371,6 +371,45 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/smart/frontendAgnostic")
+    public static class FrontendAgnostic extends AbstractJvmSmartCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("EnumExpected.kt")
+        public void testEnumExpected() throws Exception {
+            runTest("../testData/smart/frontendAgnostic/EnumExpected.kt");
+        }
+
+        @TestMetadata("EnumMembers.kt")
+        public void testEnumMembers() throws Exception {
+            runTest("../testData/smart/frontendAgnostic/EnumMembers.kt");
+        }
+
+        @TestMetadata("IfCondition.kt")
+        public void testIfCondition() throws Exception {
+            runTest("../testData/smart/frontendAgnostic/IfCondition.kt");
+        }
+
+        @TestMetadata("JavaEnumMembers.kt")
+        public void testJavaEnumMembers() throws Exception {
+            runTest("../testData/smart/frontendAgnostic/JavaEnumMembers.kt");
+        }
+
+        @TestMetadata("JavaEnumMembersForNullable.kt")
+        public void testJavaEnumMembersForNullable() throws Exception {
+            runTest("../testData/smart/frontendAgnostic/JavaEnumMembersForNullable.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/smart/functionLiterals")
     public static class FunctionLiterals extends AbstractJvmSmartCompletionTest {
         @java.lang.Override
@@ -1286,16 +1325,6 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
             runTest("../testData/smart/EmptyPrefix.kt");
         }
 
-        @TestMetadata("EnumExpected.kt")
-        public void testEnumExpected() throws Exception {
-            runTest("../testData/smart/EnumExpected.kt");
-        }
-
-        @TestMetadata("EnumMembers.kt")
-        public void testEnumMembers() throws Exception {
-            runTest("../testData/smart/EnumMembers.kt");
-        }
-
         @TestMetadata("EqOperator.kt")
         public void testEqOperator() throws Exception {
             runTest("../testData/smart/EqOperator.kt");
@@ -1329,11 +1358,6 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
         @TestMetadata("HighOrderFunction.kt")
         public void testHighOrderFunction() throws Exception {
             runTest("../testData/smart/HighOrderFunction.kt");
-        }
-
-        @TestMetadata("IfCondition.kt")
-        public void testIfCondition() throws Exception {
-            runTest("../testData/smart/IfCondition.kt");
         }
 
         @TestMetadata("ImmediateExtensionMembers.kt")
@@ -1421,19 +1445,9 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
             runTest("../testData/smart/InvokeFunctionVariable.kt");
         }
 
-        @TestMetadata("JavaEnumMembers.kt")
-        public void testJavaEnumMembers() throws Exception {
-            runTest("../testData/smart/JavaEnumMembers.kt");
-        }
-
         @TestMetadata("JavaEnumMembersAfterQualifier.kt")
         public void testJavaEnumMembersAfterQualifier() throws Exception {
             runTest("../testData/smart/JavaEnumMembersAfterQualifier.kt");
-        }
-
-        @TestMetadata("JavaEnumMembersForNullable.kt")
-        public void testJavaEnumMembersForNullable() throws Exception {
-            runTest("../testData/smart/JavaEnumMembersForNullable.kt");
         }
 
         @TestMetadata("JavaStaticFields.kt")

@@ -457,7 +457,7 @@ abstract class ComponentManagerImpl(
         keyClassName = keyClassName,
         ComponentDescriptorInstanceInitializer(
           componentManager = this,
-          pd = pluginDescriptor,
+          pluginDescriptor = pluginDescriptor,
           interfaceClass = keyClass,
           instanceClassName = implementationClassName,
         ),
@@ -612,17 +612,17 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  internal fun initializeService(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  internal suspend fun initializeService(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
     initializeService(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId) {
       it()
     }
   }
 
-  internal inline fun initializeService(
+  internal suspend inline fun initializeService(
     component: Any,
     serviceDescriptor: ServiceDescriptor?,
     pluginId: PluginId,
-    invocator: (() -> Unit) -> Unit,
+    invocator: suspend (() -> Unit) -> Unit,
   ) {
     @Suppress("DEPRECATION")
     if ((serviceDescriptor == null || !isPreInitialized(component)) &&
@@ -633,7 +633,7 @@ abstract class ComponentManagerImpl(
       }
 
       invocator {
-        componentStore.initComponent(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+        componentStore.initComponentBlocking(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
       }
     }
   }

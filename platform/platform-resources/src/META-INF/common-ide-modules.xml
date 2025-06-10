@@ -35,6 +35,7 @@
     
     <module name="intellij.emojipicker"/>
     <module name="intellij.platform.ide.impl.wsl"/>
+    <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
   </content>
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>

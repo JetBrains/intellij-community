@@ -125,11 +125,16 @@ private class CompilerPluginProvider {
       registrar = "com.jetbrains.rhizomedb.plugin.RhizomedbComponentRegistrar",
       commandLineProcessor = "com.jetbrains.rhizomedb.plugin.RhizomedbCommandLineProcessor",
     )
+    private val rpc by getConstructor(
+      registrar = "com.jetbrains.fleet.rpc.plugin.RpcComponentRegistrar",
+      commandLineProcessor = "com.jetbrains.fleet.rpc.plugin.RpcCommandLineProcessor",
+    )
 
     fun provide(id: String): RegisteredPluginInfo {
       return when (id) {
         "jetbrains.fleet.expects-compiler-plugin" -> createPluginInfo(expects)
         "org.jetbrains.fleet.rhizomedb-compiler-plugin" -> createPluginInfo(rhizomeDb)
+        "com.jetbrains.fleet.rpc-compiler-plugin" -> createPluginInfo(rpc)
         else -> throw IllegalArgumentException("plugin requires classpath: $id")
       }
     }

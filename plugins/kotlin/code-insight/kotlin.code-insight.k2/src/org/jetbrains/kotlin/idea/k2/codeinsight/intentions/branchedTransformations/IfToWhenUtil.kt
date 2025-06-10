@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater) {
+fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater): KtWhenExpression {
     val ifExpression = updater.getWritable(element.topmostIfExpression())
     val parent = ifExpression.parent
 
@@ -68,6 +68,8 @@ fun convertIfToWhen(element: KtIfExpression, updater: ModPsiUpdater) {
         val replacedLabeledLoopExpression = loop.replace(labeledLoopExpression)
         replacedLabeledLoopExpression.reformat()
     }
+
+    return result
 }
 
 private fun createWhenExpression(

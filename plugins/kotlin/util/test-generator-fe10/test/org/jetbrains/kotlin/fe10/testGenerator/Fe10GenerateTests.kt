@@ -1360,7 +1360,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractJvmSmartCompletionTest> {
-            model("smart")
+            model("smart", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractDumbCompletionTest> {

@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 fun bar(b: Boolean, c: Char){
     if (<caret>
 }

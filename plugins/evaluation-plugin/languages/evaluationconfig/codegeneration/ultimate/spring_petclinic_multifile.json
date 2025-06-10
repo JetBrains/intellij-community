@@ -7,7 +7,7 @@
   "strategy": {
     "model": "",
     "mode": "",
-    "behaviour": "SELECT_ENTIRE_NODE_AND_CALL_FEATURE",
+    "behaviour": "MULTI_FILE_GENERATION",
     "collectContextOnly": false,
     "userPrompts": {}
   },
@@ -25,7 +25,7 @@
     "filesLimit": 100,
     "order": "LINEAR",
     "trainTestSplit": 70,
-    "registry": "llm.action.generateCodeInplace.interaction.noSelection=[MULTI_FILE*|ORIGINAL_UPDATED|FULL_TEXT|NO_SELECTION_CODE]"
+    "registry":"llm.context.service.debug=true"
   },
   "reports": {
     "evaluationTitle": "Default",

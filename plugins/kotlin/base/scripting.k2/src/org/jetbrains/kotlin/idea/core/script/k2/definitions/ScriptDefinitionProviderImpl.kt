@@ -21,7 +21,6 @@ class ScriptDefinitionProviderImpl(val project: Project) : IdeScriptDefinitionPr
             if (shouldReloadDefinitions.getAndSet(false)) {
                 runCatching {
                     _definitions = SCRIPT_DEFINITIONS_SOURCES.getExtensions(project).flatMap { it.definitions }
-                    clearCache()
                 }.onFailure {
                     shouldReloadDefinitions.set(true)
                 }
@@ -40,6 +39,7 @@ class ScriptDefinitionProviderImpl(val project: Project) : IdeScriptDefinitionPr
 
     fun notifyDefinitionsChanged() {
         shouldReloadDefinitions.set(true)
+        clearCache()
     }
 
     companion object {

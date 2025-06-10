@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStr
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
 import org.jetbrains.kotlin.idea.completion.suppressItemSelectionByCharsOnTyping
 import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
+import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher
+import org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher.matchesExpectedType
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
@@ -40,11 +42,15 @@ internal class LookupElementSink(
         LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
 
     fun addElement(element: LookupElement) {
-        resultSet.addElement(decorateLookupElement(element))
+        decorateLookupElement(element)
+            ?.let(resultSet::addElement)
     }
 
     fun addAllElements(elements: Iterable<LookupElement>) {
-        resultSet.addAllElements(elements.map(::decorateLookupElement))
+        val decoratedElements = elements.asSequence()
+            .mapNotNull(::decorateLookupElement)
+            .asIterable()
+        resultSet.addAllElements(decoratedElements)
     }
 
     fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>) {
@@ -60,7 +66,16 @@ internal class LookupElementSink(
 
     private fun decorateLookupElement(
         element: LookupElement,
-    ): LookupElementDecorator<LookupElement> {
+    ): LookupElementDecorator<LookupElement>? {
+        if (parameters.completionType == CompletionType.SMART
+            && when (element.matchesExpectedType) {
+                ExpectedTypeWeigher.MatchesExpectedType.MATCHES_PREFERRED,
+                ExpectedTypeWeigher.MatchesExpectedType.MATCHES -> false
+
+                else -> true
+            }
+        ) return null
+
         element.groupPriority = groupPriority
         element.contributorClass = contributorClass
 

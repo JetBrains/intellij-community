@@ -329,7 +329,7 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
 /**
  * Closes a project after [action].
  */
-fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
+inline fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
   try {
     return action(this)
   }
@@ -394,7 +394,8 @@ private inline fun <R> closeOpenedProjectsIfFailImpl(closeProject: Project.() ->
   }
 }
 
-private fun Project.closeProject(save: Boolean = false) {
+@PublishedApi
+internal fun Project.closeProject(save: Boolean = false) {
   invokeAndWaitIfNeeded {
     if (save) {
       saveWorkspaceModel()

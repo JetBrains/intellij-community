@@ -127,7 +127,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     storageManager.clearStorages()
   }
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+    initComponentBlocking(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+  }
+
+  override fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
     var componentName: String? = null
     try {
       @Suppress("DEPRECATION")
@@ -180,8 +184,12 @@ abstract class ComponentStoreImpl : IComponentStore {
       if (e is ControlFlowException) {
         throw e
       }
-      LOG.error(PluginException("Cannot init component state (componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
+      error(PluginException("Cannot init component state (componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
     }
+  }
+
+  protected open fun error(error: PluginException) {
+    LOG.error(error)
   }
 
   private fun initJdom(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, pluginId: PluginId): String {

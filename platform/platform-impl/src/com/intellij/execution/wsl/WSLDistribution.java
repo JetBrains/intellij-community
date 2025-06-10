@@ -461,10 +461,7 @@ public class WSLDistribution implements AbstractWslDistribution {
         if (!builder.isEmpty()) {
           builder.append(":");
         }
-        WSLEnvTranslationType translationType = WSLEnvTranslationType.fromFlag(
-          commandLine.getWSLEnvTranslations().getOrDefault(envName, "/u")
-        );
-        builder.append(envName).append(translationType.getTranslationFlag());
+        builder.append(envName).append("/u");
       }
     });
     if (!builder.isEmpty()) {

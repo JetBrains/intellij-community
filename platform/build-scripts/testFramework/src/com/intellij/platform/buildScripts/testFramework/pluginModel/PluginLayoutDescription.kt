@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildScripts.testFramework.pluginModel
 
-import com.intellij.platform.buildScripts.testFramework.distributionContent.FileEntry
-import com.intellij.platform.buildScripts.testFramework.distributionContent.deserializeContentData
+import com.intellij.platform.distributionContent.testFramework.FileEntry
+import com.intellij.platform.distributionContent.testFramework.deserializeContentData
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
@@ -43,7 +43,7 @@ private class YamlFileBasedPluginLayoutProvider(
   private val nameOfTestWhichGeneratesFiles: String,
 ) : PluginLayoutProvider {
   private val ideContentData by lazy {
-    deserializeContentData(ideContentYamlPath.readText()) 
+    deserializeContentData(ideContentYamlPath.readText())
   }
   
   override fun loadCorePluginLayout(): PluginLayoutDescription {

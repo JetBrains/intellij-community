@@ -630,12 +630,13 @@ private fun checkModuleLevelServiceAndExtensionRegistration() {
 private fun checkModuleLevel(plugin: IdeaPluginDescriptorImpl, child: IdeaPluginDescriptorImpl, forbid: Boolean) {
   fun check(list: List<*>, asWarn: Boolean = false) {
     if (list.isNotEmpty()) {
-      val message = "Plugin $plugin is trying to register $list in a content module ($child). This is not supported"
+      val message = "Plugin $plugin is trying to register $list in a content module ($child). " +
+                    "Module-level services and extensions are deprecated, and support is scheduled to be removed."
       if (!asWarn || forbid) {
-        LOG.error(message)
+        LOG.warn(message)
       }
       else {
-        LOG.warn(message)
+        LOG.debug(message)
       }
     }
   }

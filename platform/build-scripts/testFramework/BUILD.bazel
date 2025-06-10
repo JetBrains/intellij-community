@@ -51,6 +51,7 @@ jvm_library(
     "@lib//:tc_service_messages",
     "//platform/buildData",
     "//platform/util/zip",
+    "//platform/distribution-content:distributionContent-testFramework",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` end

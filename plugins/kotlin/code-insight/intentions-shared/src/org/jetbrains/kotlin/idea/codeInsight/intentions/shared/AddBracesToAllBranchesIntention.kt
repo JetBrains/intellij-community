@@ -10,6 +10,7 @@ import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesToAllBranchesIntention.Util.allBranchExpressions
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddBracesUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -41,7 +42,7 @@ internal class AddBracesToAllBranchesIntention : SelfTargetingIntention<KtExpres
         val branches = targetIfOrWhenExpression.targetBranchExpressions()
         for (branch in branches) {
             val container = branch.parent as? KtWhenEntry ?: targetIfOrWhenExpression
-            AddBracesIntention.Util.addBraces(container, branch)
+            AddBracesUtils.addBraces(container, branch)
         }
     }
 

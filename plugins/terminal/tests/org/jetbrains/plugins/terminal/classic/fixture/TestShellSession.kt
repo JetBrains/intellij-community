@@ -5,12 +5,18 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.pty.PtyProcessTtyConnector
 import com.intellij.util.io.delete
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
-import org.jetbrains.plugins.terminal.*
+import com.pty4j.windows.conpty.WinConPtyProcess
+import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
+import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
+import org.jetbrains.plugins.terminal.ShellTerminalWidget
+import org.jetbrains.plugins.terminal.shellStartupOptions
+import org.junit.Assume
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -69,6 +75,12 @@ class TestShellSession(project: Project, parentDisposable: Disposable) {
           logger<TestShellSession>().error("Error closing TtyConnector", t)
         }
         workingDirectory.delete()
+      }
+
+      if (SystemInfo.isWindows) {
+        val msg = "On Windows, the bundled ConPTY in required for test stability"
+        Assume.assumeTrue(msg + ", but got " + process::class.java, process is WinConPtyProcess)
+        Assume.assumeTrue(msg, (process as WinConPtyProcess).isBundledConPtyLibrary)
       }
     }
   }

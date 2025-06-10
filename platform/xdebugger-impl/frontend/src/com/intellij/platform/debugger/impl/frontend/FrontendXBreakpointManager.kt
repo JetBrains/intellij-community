@@ -67,6 +67,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       breakpointEvents.toFlow().collect { event ->
         when (event) {
           is XBreakpointEvent.BreakpointAdded -> {
+            log.info("Breakpoint add request from backend: ${event.breakpointDto.id}")
             addBreakpoint(event.breakpointDto)
           }
           is XBreakpointEvent.BreakpointRemoved -> {
@@ -81,15 +82,15 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
-    if (breakpointDto.id in breakpointIdsRemovedLocally) {
-      // don't add breakpoints if it was already removed locally
-      log.info("Breakpoint creation skipped for ${breakpointDto.id}, because it was removed locally")
-      return null
-    }
     val currentBreakpoint = breakpoints[breakpointDto.id]
     if (currentBreakpoint != null) {
       log.info("Breakpoint creation skipped for ${breakpointDto.id}, because it already exists")
       return currentBreakpoint
+    }
+    if (breakpointDto.id in breakpointIdsRemovedLocally) {
+      // don't add breakpoints if it was already removed locally
+      log.info("Breakpoint creation skipped for ${breakpointDto.id}, because it was removed locally")
+      return null
     }
     val type = FrontendXBreakpointTypesManager.getInstance(project).getTypeById(breakpointDto.typeId) ?: return null
     val newBreakpoint = createXBreakpointProxy(project, cs, breakpointDto, type, this, onBreakpointChange = {
@@ -172,6 +173,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   private fun removeBreakpointLocally(breakpointId: XBreakpointId) {
+    breakpointIdsRemovedLocally.add(breakpointId)
     val removedBreakpoint = breakpoints.remove(breakpointId)
     removedBreakpoint?.dispose()
     if (removedBreakpoint == null) {
@@ -183,7 +185,6 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     if (removedBreakpoint is XLineBreakpointProxy) {
       lineBreakpointManager.unregisterBreakpoint(removedBreakpoint)
     }
-    breakpointIdsRemovedLocally.add(breakpointId)
     breakpointsChanged.tryEmit(Unit)
   }
 

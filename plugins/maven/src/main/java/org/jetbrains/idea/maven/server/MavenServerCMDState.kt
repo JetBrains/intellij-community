@@ -16,12 +16,14 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.externalSystem.issue.BuildIssueException
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpointURI
 import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration.Companion.forService
-import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration.Settings.Companion.withoutMetrics
+import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration.Settings
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentProvider.getJvmArgs
 import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver.getAgentLocation
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
@@ -312,12 +314,21 @@ open class MavenServerCMDState(
       if (agentLocation == null) {
         return
       }
+      val agentSettings = Settings.builder()
+      val jsonPath = Registry.stringValue("maven.server.opentelemetry.agent.json.path")
+        .let { if (it.isNotEmpty()) it.toNioPathOrNull() else null }
+      if (jsonPath != null) {
+        agentSettings.withTelemetryDumpFile(jsonPath)
+      }
+      if (`is`("maven.server.opentelemetry.agent.jvm.metrics")) {
+        agentSettings.withCommonJvmMetrics()
+      }
       val configuration = forService(
         "MavenServer",
         TelemetryContext.current(),
         traceEndpoint,
         agentLocation,
-        withoutMetrics()
+        agentSettings.build()
       )
       val args = getJvmArgs(configuration)
       val parametersList = params.vmParametersList

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
@@ -27,6 +28,14 @@ class KotlinFirCompletionContributor : CompletionContributor() {
             KDocTagCompletionProvider
         )
         extend(CompletionType.BASIC, psiElement(KDocTokens.TAG_NAME), KDocTagCompletionProvider)
+
+        if (RegistryManager.getInstance().`is`("kotlin.k2.smart.completion.enabled")) {
+            extend(
+                CompletionType.SMART,
+                psiElement(),
+                KotlinFirCompletionProvider,
+            )
+        }
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {

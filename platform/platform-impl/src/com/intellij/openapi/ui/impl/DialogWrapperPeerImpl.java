@@ -53,7 +53,9 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
+import kotlin.Pair;
 import kotlin.Unit;
+import kotlin.coroutines.EmptyCoroutineContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -435,7 +437,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     if (changeModalityState) {
       commandProcessor.enterModal();
       LaterInvocator.enterModal(myDialog);
-      var pair = AppImplKt.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
+
+      var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
+                 ? new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN)
+                 : AppImplKt.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
       lockContextCleanup = ThreadContext.installThreadContext(pair.getFirst(), true);
       lockCleanup = pair.getSecond();
     }

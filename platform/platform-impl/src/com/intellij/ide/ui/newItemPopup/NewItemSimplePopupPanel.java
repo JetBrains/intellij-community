@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBTextField;
@@ -23,6 +24,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,6 +106,11 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
       myErrorShowPoint = new RelativePoint(myTextField, point);
     }).setCancelOnWindowDeactivation(false)
       .setCancelOnClickOutside(true);
+
+    if (AccessibleAnnouncerUtil.isAnnouncingAvailable()) {
+      AccessibleAnnouncerUtil.announce(myTextField, UIBundle.message(
+        isWarning ? "validation.info.warning.with.prefix" : "validation.info.error.with.prefix", message), true);
+    }
 
     myErrorPopup = popupBuilder.createPopup();
     myErrorPopup.show(myErrorShowPoint);

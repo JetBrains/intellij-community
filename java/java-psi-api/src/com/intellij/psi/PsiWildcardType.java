@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,12 +26,23 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
   private final PsiManager myManager;
   private final boolean myIsExtending;
   private final PsiType myBound;
+  private final TypeNullability myBaseNullability;
 
   private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound) {
-    super(TypeAnnotationProvider.EMPTY);
+    this(manager, isExtending, bound, TypeAnnotationProvider.EMPTY);
+  }
+
+  private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound, @NotNull TypeAnnotationProvider provider) {
+    this(manager, isExtending, bound, provider, JavaTypeNullabilityUtil.getNullabilityFromAnnotations(provider.getAnnotations()));
+  }
+
+  private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound, 
+                          @NotNull TypeAnnotationProvider provider, @NotNull TypeNullability nullability) {
+    super(provider);
     myManager = manager;
     myIsExtending = isExtending;
     myBound = bound;
+    myBaseNullability = nullability;
   }
 
   public static @NotNull PsiWildcardType createUnbounded(@NotNull PsiManager manager) {
@@ -49,19 +61,21 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
 
   @Override
   public @NotNull TypeNullability getNullability() {
-    if (myBound != null && isExtends()) {
-      return myBound.getNullability();
+    if (!myBaseNullability.equals(TypeNullability.UNKNOWN)) return myBaseNullability;
+    if (myBound != null && myIsExtending) {
+      return myBound.getNullability().inherited();
     }
-    return super.getNullability();
+    return TypeNullability.UNKNOWN;
   }
 
   @Override
   public @NotNull PsiWildcardType withNullability(@NotNull TypeNullability nullability) {
-    if (myBound != null && isExtends()) {
-      PsiType newBound = myBound.withNullability(nullability);
-      return newBound == myBound ? this : createExtends(getManager(), newBound);
-    }
-    return this;
+    return new PsiWildcardType(myManager, myIsExtending, myBound, getAnnotationProvider(), nullability);
+  }
+
+  @Override
+  public @NotNull PsiType annotate(@NotNull TypeAnnotationProvider provider) {
+    return new PsiWildcardType(myManager, myIsExtending, myBound, provider);
   }
 
   @Override

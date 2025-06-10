@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import com.intellij.serialization.PropertyMapping
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.ExternalSystemRunTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinPlatformContainerImpl
@@ -47,6 +48,8 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val ko
     var actualPlatforms: KotlinPlatformContainer = KotlinPlatformContainerImpl()
 
     @Deprecated("Returns only single TargetPlatform", ReplaceWith("actualPlatforms.actualPlatforms"), DeprecationLevel.ERROR)
+    @get:ApiStatus.ScheduledForRemoval
+    @get:Deprecated("Returns only single TargetPlatform", ReplaceWith("actualPlatforms.actualPlatforms"), DeprecationLevel.ERROR)
     val platform: KotlinPlatform
         get() = actualPlatforms.platforms.singleOrNull() ?: KotlinPlatform.COMMON
 

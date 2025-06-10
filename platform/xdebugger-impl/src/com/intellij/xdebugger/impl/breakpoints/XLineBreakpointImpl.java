@@ -68,10 +68,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
     return myState.getFileUrl();
   }
 
-  TextRange getHighlightRange() {
-    return myType.getHighlightRange(this);
-  }
-
   @Override
   public String getPresentableFilePath() {
     String url = getFileUrl();

@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.buildScripts.testFramework.distributionContent
+package com.intellij.platform.distributionContent.testFramework
 
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Serializable
 data class FileEntry(
   /**
@@ -43,6 +45,7 @@ data class FileEntry(
   }
 }
 
+@ApiStatus.Internal
 @Serializable
 data class ProjectLibraryEntry(
   /**
@@ -68,6 +71,7 @@ data class ProjectLibraryEntry(
   fun compareImportantFields(o: ProjectLibraryEntry) = name == o.name && files == o.files && reason == o.reason
 }
 
+@ApiStatus.Internal
 @Serializable
 data class ModuleEntry(
   /**
@@ -88,6 +92,7 @@ data class ModuleEntry(
   @JvmField val libraries: Map<String, List<ModuleLibraryFile>> = emptyMap(),
 )
 
+@ApiStatus.Internal
 @Serializable
 data class ProjectLibraryFile(
   /**
@@ -101,6 +106,7 @@ data class ProjectLibraryFile(
   @JvmField val size: Int = 0,
 )
 
+@ApiStatus.Internal
 @Serializable
 data class ModuleLibraryFile(
   /**
@@ -114,6 +120,7 @@ data class ModuleLibraryFile(
   @JvmField val size: Int = 0,
 )
 
+@ApiStatus.Internal
 @Serializable
 data class PluginContentReport(
   @JvmField val mainModule: String,

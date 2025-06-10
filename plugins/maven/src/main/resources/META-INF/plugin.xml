@@ -428,6 +428,10 @@
 
     <registryKey key="maven.server.opentelemetry.agent.enabled" defaultValue="false"
                  description="Enable performance trace collection from the Maven server side collected by OTLP java agent"/>
+    <registryKey key="maven.server.opentelemetry.agent.jvm.metrics" defaultValue="false"
+                 description="Enable common JVM metrics collection"/>
+    <registryKey key="maven.server.opentelemetry.agent.json.path" defaultValue=""
+                 description="Path to the target directory to which the telemetry JSON will be collected"/>
 
     <intentionAction>
       <language>XML</language>
