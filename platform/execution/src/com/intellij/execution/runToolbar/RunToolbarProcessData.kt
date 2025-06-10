@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.RunManager.Companion.getInstance
@@ -26,7 +26,10 @@ class RunToolbarProcessData {
 
     @ApiStatus.Internal
     @JvmStatic
-    fun prepareBaseSettingCustomization(settings: RunnerAndConfigurationSettings?, addition: Consumer<ExecutionEnvironment>? = null): Consumer<ExecutionEnvironment>? {
+    fun prepareBaseSettingCustomization(
+      settings: RunnerAndConfigurationSettings?,
+      addition: Consumer<ExecutionEnvironment>? = null,
+    ): Consumer<ExecutionEnvironment>? {
       return settings?.let {
         Consumer { ee: ExecutionEnvironment ->
           ee.putUserData(RW_MAIN_CONFIGURATION_ID, settings.uniqueID)
