@@ -56,7 +56,8 @@ class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
       VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
     }
 
-    PythonSdkUpdater.scheduleUpdate(sdk, project)
+
+    PythonSdkUpdater.scheduleUpdate(sdk, project, false)
   }
 }
 
