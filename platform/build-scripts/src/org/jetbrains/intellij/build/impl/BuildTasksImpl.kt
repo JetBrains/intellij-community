@@ -999,6 +999,7 @@ private fun crossPlatformZip(
           !relPath.startsWith("bin/") &&
           !relPath.startsWith("help/") &&
           relPath != MODULE_DESCRIPTORS_JAR_PATH &&
+          relPath != MODULE_DESCRIPTORS_COMPACT_PATH &&
           relPath != PLUGIN_CLASSPATH &&
           !relPath.startsWith("bin/remote-dev-server") &&
           !relPath.startsWith("license/remote-dev-server") &&

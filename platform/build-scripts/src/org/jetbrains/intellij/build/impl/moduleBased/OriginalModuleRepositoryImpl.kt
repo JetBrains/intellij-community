@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.moduleBased
 
-import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.JAR_REPOSITORY_FILE_NAME
+import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.COMPACT_REPOSITORY_FILE_NAME
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization
@@ -23,7 +23,7 @@ import java.nio.file.Path
 import kotlin.io.path.pathString
 
 internal class OriginalModuleRepositoryImpl(private val context: CompilationContext) : OriginalModuleRepository {
-  override val repositoryPath: Path = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
+  override val repositoryPath: Path = context.classesOutputDirectory.resolve(COMPACT_REPOSITORY_FILE_NAME)
 
   override val rawRepositoryData: RawRuntimeModuleRepositoryData
 
@@ -32,7 +32,7 @@ internal class OriginalModuleRepositoryImpl(private val context: CompilationCont
       context.messages.error("Runtime module repository wasn't generated during compilation: $repositoryPath doesn't exist. If you run scripts from the IDE, please make sure that DevKit plugin is installed and enabled.")
     }
     rawRepositoryData = try {
-      RuntimeModuleRepositorySerialization.loadFromJar(repositoryPath)
+      RuntimeModuleRepositorySerialization.loadFromCompactFile(repositoryPath)
     }
     catch (e: MalformedRepositoryException) {
       context.messages.error("Failed to load runtime module repository: ${e.message}", e)

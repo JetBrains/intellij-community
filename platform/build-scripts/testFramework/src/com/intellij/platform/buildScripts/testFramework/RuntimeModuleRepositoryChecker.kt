@@ -14,10 +14,18 @@ import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepos
 import com.intellij.util.containers.FList
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.MODULE_DESCRIPTORS_COMPACT_PATH
+import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
+import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
+import org.jetbrains.intellij.build.impl.hasModuleOutputPath
 import java.io.IOException
 import java.nio.file.Path
-import kotlin.io.path.*
+import kotlin.io.path.ExperimentalPathApi
+import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
+import kotlin.io.path.moveTo
+import kotlin.io.path.pathString
+import kotlin.io.path.walk
 
 /**
  * Checks that runtime module descriptors in the product distribution are valid.
@@ -28,7 +36,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
   private val osSpecificDistPath: Path?,
   private val context: BuildContext,
 ): AutoCloseable {
-  private val descriptorsJarFile: Path
+  private val descriptorsFile: Path
   private val repository: RuntimeModuleRepository
   private val osSpecificFilePaths: List<Path>
   init {
@@ -46,8 +54,8 @@ internal class RuntimeModuleRepositoryChecker private constructor(
     else {
       osSpecificFilePaths = emptyList()
     }
-    descriptorsJarFile = commonDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH)
-    repository = RuntimeModuleRepository.create(descriptorsJarFile)
+    descriptorsFile = commonDistPath.resolve(MODULE_DESCRIPTORS_COMPACT_PATH)
+    repository = RuntimeModuleRepository.create(descriptorsFile)
   }
   
   companion object {
@@ -74,20 +82,20 @@ internal class RuntimeModuleRepositoryChecker private constructor(
 
     private fun createCheckers(context: BuildContext): List<() -> RuntimeModuleRepositoryChecker> {
       val commonDistPath = context.paths.distAllDir 
-      if (commonDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
+      if (commonDistPath.resolve(MODULE_DESCRIPTORS_COMPACT_PATH).exists()) {
         return listOf { RuntimeModuleRepositoryChecker(commonDistPath, null, context) }
       }
       return SUPPORTED_DISTRIBUTIONS
         .mapNotNull { distribution ->
           val osSpecificDistPath = getOsAndArchSpecificDistDirectory(distribution.os, distribution.arch, distribution.libcImpl, context)
-          if (osSpecificDistPath.resolve(MODULE_DESCRIPTORS_JAR_PATH).exists()) {
+          if (osSpecificDistPath.resolve(MODULE_DESCRIPTORS_COMPACT_PATH).exists()) {
             { RuntimeModuleRepositoryChecker(commonDistPath, osSpecificDistPath, context) }
           }
           else null
         }
     }
   }
-  private val moduleRepositoryData by lazy { RuntimeModuleRepositorySerialization.loadFromJar(descriptorsJarFile) }
+  private val moduleRepositoryData by lazy { RuntimeModuleRepositorySerialization.loadFromCompactFile(descriptorsFile) }
 
   private suspend fun checkProductModules(productModulesModule: String, softly: SoftAssertions) {
     try {
@@ -139,7 +147,7 @@ internal class RuntimeModuleRepositoryChecker private constructor(
       }
     }
     catch (e: MalformedRepositoryException) { 
-      softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("Failed to load product-modules.xml for $descriptorsJarFile: $e", e))
+      softly.collectAssertionErrorIfNotRegisteredYet(AssertionError("Failed to load product-modules.xml for $descriptorsFile: $e", e))
     }
   }
 
