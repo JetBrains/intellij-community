@@ -20,7 +20,7 @@ import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
-import java.io.File
+import java.nio.file.Files
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
@@ -52,7 +52,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     var startingDirectory: String? = null
     var shellPath: String? = null
     @get:Property(surroundWithTag = false, flat = true)
-    var envDataOptions = EnvironmentVariablesDataOptions()
+    var envDataOptions: EnvironmentVariablesDataOptions = EnvironmentVariablesDataOptions()
   }
 
   var startingDirectory: String? by ValueWithDefault(state::startingDirectory) { defaultStartingDirectory }
@@ -128,14 +128,14 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
         return "wsl.exe --distribution $wslDistributionName"
       }
     }
-    val shell = System.getenv("SHELL")
-    if (shell != null && File(shell).canExecute()) {
-      return shell
+    val shell = System.getenv("SHELL")?.let { NioFiles.toPath(it) }
+    if (shell != null && Files.exists(shell)) {
+      return shell.toString()
     }
     if (SystemInfo.isUnix) {
-      val bashPath = "/bin/bash"
-      if (File(bashPath).exists()) {
-        return bashPath
+      val bashPath = NioFiles.toPath("/bin/bash")
+      if (bashPath != null && Files.exists(bashPath)) {
+        return bashPath.toString()
       }
       return "/bin/sh"
     }
