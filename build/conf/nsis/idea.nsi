@@ -921,17 +921,12 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
   CreateDirectory $INSTDIR
+
   Call customInstallActions
 
   StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
   ${LogText} "Default launcher: $productLauncher"
   DetailPrint "Default launcher: $productLauncher"
-
-  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $launcherShortcut" "State"
-  ${If} $R0 == 1
-    ${LogText} "Creating shortcut: '$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk' -> '$INSTDIR\bin\${PRODUCT_EXE_FILE}'"
-    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-  ${EndIf}
 
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
   ${If} $R0 == 1
@@ -983,10 +978,22 @@ skip_ipr:
   ${LogText} ""
   ${LogText} "Copy files to $INSTDIR"
   SectionIn RO
+
+  ; main part
   !include "idea_win.nsh"
 
   ; registering the application for the "Open With" list
   Call ProductRegistration
+
+  ; setting the working directory for subsequent `CreateShortCut` instructions
+  SetOutPath "$INSTDIR"
+
+  ; creating the desktop shortcut
+  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $launcherShortcut" "State"
+  ${If} $R0 == 1
+    ${LogText} "Creating shortcut: '$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk' -> '$productLauncher'"
+    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher" "" "" "" SW_SHOWNORMAL
+  ${EndIf}
 
   ; creating the start menu shortcut and storing the start menu directory for the uninstaller
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
