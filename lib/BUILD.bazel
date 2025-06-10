@@ -3060,13 +3060,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-jvm_import(
-  name = "junit3",
-  jar = "@junit-3_8_2_http//file",
-  source_jar = "@junit-3_8_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
 java_library(
   name = "junit4",
   exports = [

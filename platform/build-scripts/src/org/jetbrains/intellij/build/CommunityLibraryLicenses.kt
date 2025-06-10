@@ -723,10 +723,6 @@ object CommunityLibraryLicenses {
       .eplV2("https://github.com/junit-pioneer/junit-pioneer/blob/main/LICENSE.md")
       .suppliedByPersons("Nicolai Parlog", "Matthias Bünger", "Simon Schrottner", "Mihály Verhás", "Daniel Kraus"),
 
-    LibraryLicense(libraryName = "JUnit3", url = "https://github.com/stefanbirkner/junit3")
-      .license("CPL 1.0", "https://github.com/stefanbirkner/junit3/blob/master/cpl-v10.html")
-      .suppliedByPersons("Marc Philipp", "David Saff", "Kevin Cooney", "Stefan Birkner"),
-
     LibraryLicense(libraryName = "JUnit4", url = "https://junit.org/junit4/")
       .eplV1("https://junit.org/junit4/license.html")
       .suppliedByPersons("Marc Philipp", "David Saff", "Kevin Cooney", "Stefan Birkner"),

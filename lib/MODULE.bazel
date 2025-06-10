@@ -4297,20 +4297,6 @@ http_file(
 )
 
 http_file(
-  name = "junit-3_8_2_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/3.8.2/junit-3.8.2.jar",
-  sha256 = "ecdcc08183708ea3f7b0ddc96f19678a0db8af1fb397791d484aed63200558b0",
-  downloaded_file_path = "junit-3.8.2.jar"
-)
-
-http_file(
-  name = "junit-3_8_2-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/3.8.2/junit-3.8.2-sources.jar",
-  sha256 = "79048799144171122d10f8f57bbaf542389e5452a7210c2636000548e984078a",
-  downloaded_file_path = "junit-3.8.2-sources.jar"
-)
-
-http_file(
   name = "junit-4_13_2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/junit/junit/4.13.2/junit-4.13.2.jar",
   sha256 = "8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3",
