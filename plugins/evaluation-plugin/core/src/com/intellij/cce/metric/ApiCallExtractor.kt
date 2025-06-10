@@ -24,7 +24,9 @@ interface ApiCallExtractor {
     allCodeSnippets: List<String>,
     project: Project,
     tokenProperties: TokenProperties,
-  ): List<String>
+  ): List<String> {
+    throw NotImplementedError("External API calls extraction is not implemented")
+  }
 }
 
 interface ApiCallExtractorProvider {

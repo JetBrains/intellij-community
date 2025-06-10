@@ -37,10 +37,6 @@ class PythonApiCallExtractor : ApiCallExtractor {
     psiFile.accept(visitor)
     return callExpressions.mapNotNull { it.callee?.name }
   }
-
-  override suspend fun extractExternalApiCalls(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): List<String> {
-    throw NotImplementedError()
-  }
 }
 
 class PythonApiCallExtractorProvider : ApiCallExtractorProvider {
