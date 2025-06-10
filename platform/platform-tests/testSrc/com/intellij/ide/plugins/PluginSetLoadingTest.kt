@@ -423,6 +423,21 @@ class PluginSetLoadingTest {
   }
 
   @Test
+  fun `plugin with duplicate content module fails to load`() {
+    plugin("foo") {
+      content {
+        module("foo.module") { isSeparateJar = true }
+        module("foo.module") { packagePrefix = "foo.module" }
+      }
+    }.buildDir(pluginsDirPath.resolve("foo"))
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).doesNotHaveEnabledPlugins()
+    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    assertThat(errors).hasSizeGreaterThan(0)
+    assertThat(errors[0].get().toString()).contains("foo", "duplicate", "content module")
+  }
+
+  @Test
   fun testLoadDisabledPlugin() {
     plugin("disabled") { }.buildDir(pluginsDirPath.resolve("disabled"))
     val pluginSet = buildPluginSet {
