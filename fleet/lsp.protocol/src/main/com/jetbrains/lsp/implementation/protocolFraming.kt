@@ -63,6 +63,16 @@ private fun OutputStream.writeFrame(jsonElement: JsonElement) {
 }
 
 suspend fun withBaseProtocolFraming(
+  connection: LspConnection,
+  body: suspend CoroutineScope.(
+    incoming: ReceiveChannel<JsonElement>,
+    outgoing: SendChannel<JsonElement>,
+  ) -> Unit,
+) {
+  withBaseProtocolFraming(connection.inputStream, connection.outputStream, body)
+}
+
+suspend fun withBaseProtocolFraming(
     reader: InputStream,
     writer: OutputStream,
     body: suspend CoroutineScope.(
@@ -124,8 +134,8 @@ fun main() {
         }
     }
     runBlocking(Dispatchers.Default) {
-        tcpServer(9999) { input, output ->
-            withBaseProtocolFraming(input, output) { incoming, outgoing ->
+        tcpServer(9999) { connection ->
+            withBaseProtocolFraming(connection) { incoming, outgoing ->
                 withLsp(incoming, outgoing, handler) { lsp ->
                     awaitCancellation()
                 }

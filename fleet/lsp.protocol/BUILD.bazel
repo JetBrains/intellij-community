@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//fleet/util/core",
+    "@lib//:jetbrains-annotations",
   ]
 )
 ### auto-generated section `build fleet.lsp.protocol` end

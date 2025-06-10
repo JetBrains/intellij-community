@@ -7,7 +7,7 @@ import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
 
-suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(InputStream, OutputStream) -> Unit) {
+suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(LspConnection) -> Unit) {
   ServerSocket(port).use { serverSocket ->
     LOG.info("Server is listening on port ${serverSocket.localPort}")
     supervisorScope {
@@ -18,10 +18,9 @@ suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(InputStream
         LOG.info("A new client connected ${clientSocket.inetAddress}:${clientSocket.port}")
         launch(start = CoroutineStart.ATOMIC) {
           clientSocket.use {
-            val input = clientSocket.getInputStream()
-            val output = clientSocket.getOutputStream()
+            val connection = LspSocketConnection(clientSocket)
             coroutineScope {
-              server(input, output)
+              server(connection)
             }
           }
           LOG.info("Client disconnected ${clientSocket.inetAddress}:${clientSocket.port}")
@@ -35,19 +34,20 @@ suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(InputStream
 /**
  * VSC opens a **server** socket for LSP to connect to it.
  */
-suspend fun tcpClient(port: Int, body: suspend CoroutineScope.(InputStream, OutputStream) -> Unit) {
+suspend fun tcpClient(port: Int, body: suspend CoroutineScope.(LspConnection) -> Unit) {
   val socket = runInterruptible(Dispatchers.IO) {
     Socket("localhost", port)
   }
   socket.use {
     coroutineScope {
-      body(socket.getInputStream(), socket.getOutputStream())
+      val connection = LspSocketConnection(socket)
+      body(connection)
     }
   }
 }
 
 
-suspend fun tcpConnection(clientMode: Boolean, port: Int, body: suspend CoroutineScope.(InputStream, OutputStream) -> Unit) {
+suspend fun tcpConnection(clientMode: Boolean, port: Int, body: suspend CoroutineScope.(LspConnection) -> Unit) {
   when {
     clientMode -> {
       tcpClient(port, body)
@@ -56,6 +56,19 @@ suspend fun tcpConnection(clientMode: Boolean, port: Int, body: suspend Coroutin
     else -> {
       tcpServer(port, body)
     }
+  }
+}
+
+class LspSocketConnection(private val socket: Socket) : LspConnection {
+  override val inputStream: InputStream get() = socket.getInputStream()
+  override val outputStream: OutputStream get() = socket.getOutputStream()
+
+  override fun disconnect() {
+    socket.close()
+  }
+
+  override fun isAlive(): Boolean {
+    return !socket.isClosed
   }
 }
 
