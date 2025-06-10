@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyUserInitiatedResolvableReference
 import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyReferenceOwner
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
@@ -65,7 +66,11 @@ class PyGotoDeclarationHandler : GotoDeclarationHandlerBase() {
           return stubResults.toTypedArray()
         }
 
-        val results = resolved.filter { it !== referenceOwner }
+       val results = resolved
+        .filter { it !== referenceOwner && it !is PyImportElement }
+        .groupBy { it.containingFile }
+        // include all the definitions from the current file, otherwise just the top result
+        .flatMap { if (it.key == sourceElement.containingFile) it.value else listOf(it.value.first()) }
         if (results.isNotEmpty()) {
           return results.toTypedArray()
         }
