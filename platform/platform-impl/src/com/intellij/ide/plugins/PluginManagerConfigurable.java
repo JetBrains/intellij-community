@@ -467,8 +467,7 @@ public final class PluginManagerConfigurable
           List<PluginsGroup> groups = new ArrayList<>();
 
           try {
-            Map<String, List<PluginUiModel>> customRepositoriesMap = CustomPluginRepositoryService.getInstance()
-              .getCustomRepositoryPluginMap();
+            Map<String, List<PluginUiModel>> customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap();
             try {
               if (project != null) {
                 addSuggestedGroup(groups, project, customRepositoriesMap);

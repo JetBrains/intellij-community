@@ -57,6 +57,7 @@ interface UiPluginManagerController {
   fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean
   fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   fun getCustomRepoPlugins(): List<PluginUiModel>
+  fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>>
   fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult
   fun isPluginInstalled(pluginId: PluginId): Boolean

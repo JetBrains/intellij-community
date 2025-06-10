@@ -146,6 +146,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().getCustomRepoPlugins().withSource() }
   }
 
+  override fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
+    return awaitForResult { PluginManagerApi.getInstance().getCustomRepositoryPluginMap() }
+  }
+
   override fun hasPluginRequiresUltimateButItsDisabled(pluginIds: List<PluginId>): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().hasPluginRequiresUltimateButItsDisabled(pluginIds) }
   }

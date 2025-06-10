@@ -187,6 +187,10 @@ class UiPluginManager {
     return getController().getCustomRepoPlugins()
   }
 
+  fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
+    return getController().getCustomRepositoryPluginMap()
+  }
+
   fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {
     return getController().isDisabledInDiff(sessionId, pluginId)
   }

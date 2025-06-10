@@ -92,6 +92,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins().toList().withSource()
   }
 
+  override fun getCustomRepositoryPluginMap(): Map<String, List<PluginUiModel>> {
+    return CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap()
+  }
+
   override fun findPluginNames(pluginIds: List<PluginId>): List<String> {
     val requests = MarketplaceRequests.getInstance()
     return pluginIds.map {

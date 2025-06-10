@@ -89,6 +89,12 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getCustomRepoPlugins().map { PluginDto.fromModel(it) }
   }
 
+  override suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginDto>> {
+    return DefaultUiPluginManagerController.getCustomRepositoryPluginMap().mapValues { entry ->
+      entry.value.map { PluginDto.fromModel(it) }
+    }
+  }
+
   override suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
     return DefaultUiPluginManagerController.enableRequiredPlugins(sessionId, pluginId)
   }

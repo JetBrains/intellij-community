@@ -47,6 +47,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun hasPluginRequiresUltimateButItsDisabled(ids: List<PluginId>): Boolean
   suspend fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId>
   suspend fun getCustomRepoPlugins(): List<PluginDto>
+  suspend fun getCustomRepositoryPluginMap(): Map<String, List<PluginDto>>
   suspend fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean
   suspend fun isPluginInstalled(pluginId: PluginId): Boolean
   suspend fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean
