@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -382,14 +383,34 @@ public final class PluginDownloader {
                                                   .withWaitForClassloaderUnload(true));
   }
 
+  @ApiStatus.Internal
+  public static @NotNull PluginDownloader createDownloader(@NotNull PluginUiModel pluginUiModel,
+                                                           @Nullable String host,
+                                                           @Nullable BuildNumber buildNumber) throws IOException {
+    return createDownloader(pluginUiModel.getDescriptor(), host, buildNumber, pluginUiModel.getDownloadUrl(),
+                            pluginUiModel.isFromMarketplace());
+  }
+
   public static @NotNull PluginDownloader createDownloader(
     @NotNull IdeaPluginDescriptor descriptor,
     @Nullable String host,
     @Nullable BuildNumber buildNumber
   ) throws IOException {
+    boolean fromMarketplace = descriptor instanceof PluginNode;
+    String downloadUrl = fromMarketplace ? ((PluginNode)descriptor).getDownloadUrl() : null;
+    return createDownloader(descriptor, host, buildNumber, downloadUrl, fromMarketplace);
+  }
+
+  private static @NotNull PluginDownloader createDownloader(
+    @NotNull IdeaPluginDescriptor descriptor,
+    @Nullable String host,
+    @Nullable BuildNumber buildNumber,
+    @Nullable String downloadUrl,
+    boolean isFromMarketplace
+  ) throws IOException {
     var currentVersion = PluginManagerCore.getPlugin(descriptor.getPluginId());
-    var url = descriptor instanceof PluginNode && host != null ?
-              toAbsoluteUrl(((PluginNode)descriptor).getDownloadUrl(), host) :
+    var url = isFromMarketplace && host != null ?
+              toAbsoluteUrl(downloadUrl, host) :
               MarketplaceUrls.getPluginDownloadUrl(descriptor, getMarketplaceDownloadsUUID(), buildNumber, currentVersion);
     return new PluginDownloader(descriptor, url, buildNumber, PluginDownloader::showErrorDialog, null);
   }
