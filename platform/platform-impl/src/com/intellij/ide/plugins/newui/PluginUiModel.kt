@@ -125,6 +125,12 @@ interface PluginUiModel {
   var category: String?
   var isDeleted: Boolean
 
+  @get:NlsSafe
+  val sinceBuild: String?
+
+  @get:NlsSafe
+  val untilBuild: String?
+
 
   fun addDependency(id: PluginId, optional: Boolean)
 

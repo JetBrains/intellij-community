@@ -73,6 +73,9 @@ class PluginDto(
   override var category: String? = null
   override var description: String? = null
 
+  override var sinceBuild: String? = null
+  override var untilBuild: String? = null
+
   override fun getDescriptor(): IdeaPluginDescriptor {
     return PluginDtoDescriptorWrapper(this)
   }
@@ -139,6 +142,8 @@ class PluginDto(
         installSource = model.installSource
         description = model.description
         category = model.category
+        sinceBuild = model.sinceBuild
+        untilBuild = model.untilBuild
       }
     }
   }

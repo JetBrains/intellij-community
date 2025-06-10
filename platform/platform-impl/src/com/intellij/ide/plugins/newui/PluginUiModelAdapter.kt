@@ -302,6 +302,12 @@ class PluginUiModelAdapter(
       }
     }
 
+  override val sinceBuild: String?
+    get() = pluginDescriptor.sinceBuild
+
+  override val untilBuild: String?
+    get() = pluginDescriptor.untilBuild
+
   override fun getDescriptor(): IdeaPluginDescriptor = pluginDescriptor
 
   override fun equals(other: Any?): Boolean {
