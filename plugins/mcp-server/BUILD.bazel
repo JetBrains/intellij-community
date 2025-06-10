@@ -61,6 +61,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//plugins/mcp-server/mcpserver.stdio",
     "@lib//:ktor-client-cio",
+    "//platform/util/concurrency",
   ],
   runtime_deps = [":mcpserver_resources"]
 )
@@ -137,6 +138,8 @@ jvm_library(
     "//platform/testFramework/junit5/projectStructure",
     "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
     "@lib//:ktor-client-cio",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
   ],
   runtime_deps = [":mcpserver_resources"]
 )
