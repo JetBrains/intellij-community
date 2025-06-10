@@ -1455,6 +1455,21 @@ Section "Uninstall"
     Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
   ${EndIf}
 
+  ; deleting the 'Path' record
+  ReadRegStr $R0 HKCU "Environment" "${MUI_PRODUCT}"
+  ${If} $R0 == $productDir
+    ReadRegStr $R1 HKCU "Environment" "Path"
+    ${UnStrRep} $R2 $R1 ";%${MUI_PRODUCT}%" ""
+    ${If} $R2 != $R1
+    ${AndIf} $R2 != ""
+      DetailPrint "Updating the 'Path' environment variable."
+      WriteRegExpandStr HKCU "Environment" "Path" "$R2"
+      SetRebootFlag true
+    ${EndIf}
+    DetailPrint "Deleting the '${MUI_PRODUCT}' environment variable."
+    DeleteRegValue HKCU "Environment" "${MUI_PRODUCT}"
+  ${EndIf}
+
   ; deleting caches
   !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
   ${If} $R2 == 1
