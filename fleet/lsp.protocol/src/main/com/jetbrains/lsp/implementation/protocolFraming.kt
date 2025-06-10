@@ -3,9 +3,7 @@ package com.jetbrains.lsp.implementation
 import com.jetbrains.lsp.protocol.Initialize
 import com.jetbrains.lsp.protocol.InitializeResult
 import com.jetbrains.lsp.protocol.*
-import fleet.util.logging.logger
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.Channel
@@ -14,33 +12,7 @@ import kotlinx.serialization.json.JsonElement
 import java.io.InputStream
 import java.io.OutputStream
 import java.io.ByteArrayOutputStream
-import java.net.ServerSocket
 
-suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(InputStream, OutputStream) -> Unit) {
-    ServerSocket(port).use { serverSocket ->
-        LOG.info("Server is listening on port ${serverSocket.localPort}")
-        supervisorScope {
-            while (true) {
-                val clientSocket = runInterruptible(Dispatchers.IO) {
-                    serverSocket.accept()
-                }
-                LOG.info("A new client connected ${clientSocket.inetAddress}:${clientSocket.port}")
-                launch(start = CoroutineStart.ATOMIC) {
-                    clientSocket.use {
-                        val input = clientSocket.getInputStream()
-                        val output = clientSocket.getOutputStream()
-                        coroutineScope {
-                            server(input, output)
-                        }
-                    }
-                    LOG.info("Client disconnected ${clientSocket.inetAddress}:${clientSocket.port}")
-                }
-            }
-        }
-    }
-}
-
-private val LOG = logger<LspClient>()
 
 private fun InputStream.readLine(): String {
     val buffer = ByteArrayOutputStream()
