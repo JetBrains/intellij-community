@@ -377,41 +377,11 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
   }
 
   private @Nullable VirtualFile findByUrl(@NotNull String url, boolean refresh) {
-    VirtualFileSystem fileSystem = getFileSystemForUrl(url);
-    if (fileSystem == null) return null;
-    String path = getPathForUrl(url);
-    if (path == null) return null;
-    return refresh ? fileSystem.refreshAndFindFileByPath(path) : fileSystem.findFileByPath(path);
-  }
-
-  @Override
-  public @Nullable VirtualFile findFileByUrlPreferringId(@NotNull String url, int id) {
-    return findByUrlPreferringId(url, id, false);
-  }
-
-  @Override
-  public @Nullable VirtualFile refreshAndFindFileByUrlPreferringId(@NotNull String url, int id) {
-    return findByUrlPreferringId(url, id, true);
-  }
-
-  private @Nullable VirtualFile findByUrlPreferringId(@NotNull String url, int id, boolean refresh) {
-    VirtualFileSystem fileSystem = getFileSystemForUrl(url);
-    if (fileSystem == null) return null;
-    VirtualFile file = refresh ? fileSystem.refreshAndFindFileById(id) : fileSystem.findFileById(id);
-    if (file != null) return file;
-    String path = getPathForUrl(url);
-    if (path == null) return null;
-    return refresh ? fileSystem.refreshAndFindFileByPath(path) : fileSystem.findFileByPath(path);
-  }
-
-  private @Nullable VirtualFileSystem getFileSystemForUrl(@NotNull String url) {
     int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
-    return protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
-  }
-
-  private static @Nullable String getPathForUrl(@NotNull String url) {
-    int protocolSepIndex = url.indexOf(URLUtil.SCHEME_SEPARATOR);
-    return protocolSepIndex < 0 ? null : url.substring(protocolSepIndex + URLUtil.SCHEME_SEPARATOR.length());
+    VirtualFileSystem fileSystem = protocolSepIndex < 0 ? null : getFileSystem(url.substring(0, protocolSepIndex));
+    if (fileSystem == null) return null;
+    String path = url.substring(protocolSepIndex + URLUtil.SCHEME_SEPARATOR.length());
+    return refresh ? fileSystem.refreshAndFindFileByPath(path) : fileSystem.findFileByPath(path);
   }
 
   @Override

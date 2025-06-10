@@ -42,6 +42,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.FileIdAdapter
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -1266,10 +1267,10 @@ internal data class FileToOpen(
 )
 
 private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: VirtualFileManager): VirtualFile? {
-  // In the case of the JetBrains client, it's better to find the file by its ID to avoid a blocking protocol call inside
+  // In the case of the JetBrains client, it's better to get the file by its ID to avoid a blocking protocol call inside
   // [VirtualFileManager.findFileByUrl]
   val file = if (PlatformUtils.isJetBrainsClient() && fileEntry.id != null) {
-    virtualFileManager.findFileByUrlPreferringId(fileEntry.url, fileEntry.id) ?: virtualFileManager.refreshAndFindFileByUrlPreferringId(fileEntry.url, fileEntry.id)
+    FileIdAdapter.getInstance().getFile(fileEntry.id)
   }
   else {
     virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)

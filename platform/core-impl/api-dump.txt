@@ -97,9 +97,6 @@ f:com.intellij.openapi.vfs.DeduplicatingVirtualFileFilter
 - com.intellij.openapi.vfs.VirtualFileFilter
 - <init>(com.intellij.openapi.vfs.VirtualFileFilter):V
 - accept(com.intellij.openapi.vfs.VirtualFile):Z
-c:com.intellij.openapi.vfs.impl.VirtualFileManagerImpl
-- findFileByUrlPreferringId(java.lang.String,I):com.intellij.openapi.vfs.VirtualFile
-- refreshAndFindFileByUrlPreferringId(java.lang.String,I):com.intellij.openapi.vfs.VirtualFile
 com.intellij.openapi.vfs.impl.http.FileDownloadingListener
 - a:downloadingCancelled():V
 - a:downloadingStarted():V
