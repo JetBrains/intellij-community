@@ -15,7 +15,7 @@ public class UndoRemoteBehaviorService {
 
   public static boolean isExperimentalFrontendUndoEnabled() {
     var service = ApplicationManager.getApplication().getService(UndoRemoteBehaviorService.class);
-    return service.isFrontendUndoEnabled();
+    return service.isSpeculativeUndoEnabled();
   }
 
   public static boolean debugExperimentalFrontendUndo() {
@@ -23,7 +23,7 @@ public class UndoRemoteBehaviorService {
            Registry.is("ide.undo.frontend.if.possible.debug", true);
   }
 
-  protected boolean isFrontendUndoEnabled() {
+  protected boolean isSpeculativeUndoEnabled() {
     return Registry.is("ide.undo.frontend.if.possible", true) &&
            !PlatformUtils.isRider();
   }
