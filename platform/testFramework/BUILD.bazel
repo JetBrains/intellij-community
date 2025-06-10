@@ -122,6 +122,7 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
+    "@lib//:kotlinx-coroutines-slf4j",
     "@lib//:http-client",
     "@lib//:jackson",
     "@lib//:jackson-databind",
