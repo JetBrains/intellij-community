@@ -1467,18 +1467,34 @@ Section "Uninstall"
     DeleteRegValue HKCU "Environment" "${MUI_PRODUCT}"
   ${EndIf}
 
+  ; setting the context for `$APPDATA` and `$LOCALAPPDATA`
+  ${If} $baseRegKey == "HKLM"
+    SetShellVarContext current
+  ${EndIf}
+
   ; deleting caches
   !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 4" "State"
   ${If} $R2 == 1
     StrCpy $0 "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+    DetailPrint "Deleting caches: $0"
     Call un.deleteDirectoryWithParent
+  ${Else}
+    DetailPrint "Keeping caches"
   ${EndIf}
 
   ; deleting settings
   !insertmacro INSTALLOPTIONS_READ $R2 "DeleteSettings.ini" "Field 5" "State"
   ${If} $R2 == 1
     StrCpy $0 "$APPDATA\${MANUFACTURER}\${PRODUCT_PATHS_SELECTOR}"
+    DetailPrint "Deleting settings: $0"
     Call un.deleteDirectoryWithParent
+  ${Else}
+    DetailPrint "Keeping settings"
+  ${EndIf}
+
+  ; restoring the context
+  ${If} $baseRegKey == "HKLM"
+    SetShellVarContext all
   ${EndIf}
 
   ; deleting the uninstaller itself and other cruft
