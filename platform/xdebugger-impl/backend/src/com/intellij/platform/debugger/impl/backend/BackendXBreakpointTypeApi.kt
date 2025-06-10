@@ -129,7 +129,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val position = request.position.sourcePosition()
     val lineTypes = request.types.mapNotNull { XBreakpointUtil.findType(it.id) as? XLineBreakpointType<*> }
     LOG.info("[$requestId] Toggle line breakpoint request received file: ${request.position}, line: ${request.position.line}" +
-             "Request details: hasOneBreakpoint=${request.hasOneBreakpoint}, isTemporary=${request.isTemporary}, isConditional=${request.isConditional}," +
+             "Request details: hasBreakpoints=${request.hasBreakpoints}, isTemporary=${request.isTemporary}, isConditional=${request.isConditional}," +
              "  line breakpoint types: ${lineTypes.map { it.id }}")
 
     val variants = readAction { XDebuggerUtilImpl.getLineBreakpointVariants(project, lineTypes, position) }.await()
@@ -143,7 +143,7 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     if (singleVariant != null) {
       LOG.info("[$requestId] Single variant found: ${singleVariant.text}")
 
-      if (request.hasOneBreakpoint) {
+      if (request.hasBreakpoints) {
         LOG.info("[$requestId] Breakpoint exists, returning XRemoveBreakpointResponse")
         return XRemoveBreakpointResponse
       }
