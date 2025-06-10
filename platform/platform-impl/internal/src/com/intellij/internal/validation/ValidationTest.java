@@ -24,7 +24,7 @@ public final class ValidationTest extends DialogWrapper {
     myPanel = new ValidTest();
     ERRORS = new ValidationInfo[]{
       new ValidationInfo("Field1 should not be empty", myPanel.field1),
-      new ValidationInfo("Field2 is zip. It should contain 5 digits", myPanel.field2),
+      new ValidationInfo("Field2 is zip. It should contain 5 digits", myPanel.field2).asWarning(),
       new ValidationInfo("Field3. Value is not chosen", myPanel.field3),
       new ValidationInfo("Field4: Select A or B", myPanel.p4),
       new ValidationInfo("Field5: You should accept license agreement<br/>text text text text text text text text text text text text<br/>text text text text text text text text text text text text"),
