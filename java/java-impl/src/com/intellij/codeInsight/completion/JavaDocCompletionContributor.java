@@ -294,9 +294,11 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
 
       suggestCodeLiterals(result, position);
 
-      suggestTags(parameters, result, position, false);
+      boolean forceInlineTags = position.getParent() instanceof PsiDocTag &&
+                                !(position.getPrevSibling() instanceof PsiDocToken token
+                                  && token.getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS);
 
-      return;
+      suggestTags(parameters, result, position, forceInlineTags);
     }
 
     super.fillCompletionVariants(parameters, result);
