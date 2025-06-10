@@ -22,7 +22,7 @@ import kotlin.io.path.writeText
 
 @RegistryKey("python.project.model.uv", "true")
 @TestApplication
-class PyUvSyncIntegrationTest {
+class UvProjectSyncIntegrationTest {
   private val testRootFixture = tempPathFixture()
   val testRoot by testRootFixture
 

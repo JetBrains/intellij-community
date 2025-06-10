@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @RegistryKey("python.project.model.poetry", "true")
 @TestApplication
-class PyPoetryOpenIntegrationTest {
+class PoetryProjectOpenIntegrationTest {
   private val testRoot by tempPathFixture()
   private val multiprojectFixture by multiProjectFixture()
 

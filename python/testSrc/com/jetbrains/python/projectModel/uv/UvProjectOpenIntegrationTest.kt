@@ -19,7 +19,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @RegistryKey("python.project.model.uv", "true")
 @TestApplication
-class PyUvOpenIntegrationTest {
+class UvProjectOpenIntegrationTest {
   private val testRoot by tempPathFixture()
   private val multiprojectFixture by multiProjectFixture()
 

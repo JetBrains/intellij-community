@@ -21,7 +21,7 @@ import kotlin.io.path.writeText
 
 @RegistryKey("python.project.model.poetry", "true")
 @TestApplication
-class PyPoetrySyncIntegrationTest {
+class PoetryProjectSyncIntegrationTest {
   private val testRootFixture = tempPathFixture()
   val testRoot by testRootFixture
 
