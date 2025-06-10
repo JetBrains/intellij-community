@@ -1,24 +1,22 @@
 package com.jetbrains.lsp.implementation
 
-import com.jetbrains.lsp.protocol.Initialize
-import com.jetbrains.lsp.protocol.InitializeResult
 import com.jetbrains.lsp.protocol.*
+import fleet.util.async.useAll
+import io.ktor.utils.io.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.io.IOException
 import kotlinx.serialization.json.JsonElement
-import java.io.InputStream
-import java.io.OutputStream
 import java.io.ByteArrayOutputStream
 
-
-private fun InputStream.readLine(): String {
+private suspend fun ByteReadChannel.readLine(): String {
     val buffer = ByteArrayOutputStream()
     var prevChar: Int? = null
     while (true) {
-        val currentChar = this.read()
+        val currentChar = this.readByte().toInt()
         if (currentChar == -1 || (prevChar == '\r'.code && currentChar == '\n'.code)) {
             break
         }
@@ -30,25 +28,35 @@ private fun InputStream.readLine(): String {
     return buffer.toString(Charsets.UTF_8).trim()
 }
 
-private fun InputStream.readFrame(): JsonElement? {
+private suspend fun ByteReadChannel.readFrame(): JsonElement? {
     var contentLength = -1
     var readSomething = false
-    while (true) {
-        val line = this.readLine()
-        if (line.isEmpty()) break
-        readSomething = true
-        val (key, value) = line.split(':').map { it.trim() }
-        if (key == "Content-Length") {
-            contentLength = value.toInt()
-        }
+    val buf = try {
+      while (!isClosedForRead) {
+          val line = this.readLine()
+          if (line.isEmpty()) break
+          readSomething = true
+          val (key, value) = line.split(':').map { it.trim() }
+          if (key == "Content-Length") {
+              contentLength = value.toInt()
+          }
+      }
+      if (!readSomething) return null
+      if (contentLength == -1) throw IllegalStateException("Content-Length header not found")
+      readByteArray(contentLength)
+    } catch (e: Exception) {
+      when (e) {
+        is IOException -> return null
+        else -> throw e
+      }
     }
-    if (!readSomething) return null
-    if (contentLength == -1) throw IllegalStateException("Content-Length header not found")
-    val buf = readNBytes(contentLength)
     return LSP.json.decodeFromString(JsonElement.serializer(), String(buf, Charsets.UTF_8))
 }
 
-private fun OutputStream.writeFrame(jsonElement: JsonElement) {
+/**
+ * @return Boolean indicating whether the frame was successfully written (`true`) or the channel was closed (`false`).
+ */
+private suspend fun ByteWriteChannel.writeFrame(jsonElement: JsonElement): Boolean {
     val str = LSP.json.encodeToString(JsonElement.serializer(), jsonElement)
     val frameStr = buildString {
         // protocol requires string length in bytes
@@ -58,59 +66,64 @@ private fun OutputStream.writeFrame(jsonElement: JsonElement) {
         append("\r\n")
         append(str)
     }
-    write(frameStr.toByteArray(Charsets.UTF_8))
+  try {
+    if (isClosedForWrite) return false
+    writeByteArray(frameStr.toByteArray(Charsets.UTF_8))
     flush()
+    return true
+  }
+  catch (e: Exception) {
+    when (e) {
+      is IOException -> return false
+      else -> throw e
+    }
+  }
 }
 
 suspend fun withBaseProtocolFraming(
   connection: LspConnection,
+  exitSignal: CompletableDeferred<Unit>?,
   body: suspend CoroutineScope.(
     incoming: ReceiveChannel<JsonElement>,
     outgoing: SendChannel<JsonElement>,
   ) -> Unit,
 ) {
-  withBaseProtocolFraming(connection.inputStream, connection.outputStream, body)
-}
+  val reader = connection.input
+  val writer = connection.output
 
-suspend fun withBaseProtocolFraming(
-    reader: InputStream,
-    writer: OutputStream,
-    body: suspend CoroutineScope.(
-        incoming: ReceiveChannel<JsonElement>,
-        outgoing: SendChannel<JsonElement>,
-    ) -> Unit,
-) {
-    coroutineScope {
-        val (incomingSender, incomingReceiver) = channels<JsonElement>()
-        val (outgoingSender, outgoingReceiver) = channels<JsonElement>(Channel.UNLIMITED)
-        launch {
-            launch {
-                incomingSender.use {
-                    while (true) {
-                        val frame = runInterruptible(Dispatchers.IO) {
-                            reader.readFrame()
-                        }
-                        //            println("received frame $frame")
-                        if (frame == null) {
-                            incomingSender.close()
-                            break
-                        }
-                        incomingSender.send(frame)
-                    }
-                }
-            }
-            launch {
-                outgoingReceiver.consumeEach { frame ->
-                    //          println("sending frame $frame")
-                    runInterruptible(Dispatchers.IO) {
-                        writer.writeFrame(frame)
-                    }
-                }
-            }
-        }.use {
-            body(incomingReceiver, outgoingSender)
+  coroutineScope {
+    val (incomingSender, incomingReceiver) = channels<JsonElement>()
+    val (outgoingSender, outgoingReceiver) = channels<JsonElement>(Channel.UNLIMITED)
+    val readJob = launch {
+      incomingSender.use {
+        while (true) {
+          val frame = reader.readFrame()
+          if (frame == null) {
+            exitSignal?.complete(Unit)
+            break
+          }
+          incomingSender.send(frame)
         }
+      }
     }
+    val writeJob = launch {
+      outgoingReceiver.consumeEach { frame ->
+        val success = writer.writeFrame(frame)
+        if (!success) {
+          exitSignal?.complete(Unit)
+        }
+      }
+    }
+
+    try {
+      body(incomingReceiver, outgoingSender)
+    }
+    finally {
+      readJob.cancel()
+      writeJob.cancel()
+      connection.close()
+    }
+  }
 }
 
 fun main() {
@@ -134,8 +147,8 @@ fun main() {
         }
     }
     runBlocking(Dispatchers.Default) {
-        tcpServer(9999) { connection ->
-            withBaseProtocolFraming(connection) { incoming, outgoing ->
+        tcpServer(TcpConnectionConfig.Server(9999, isMulticlient = true)) { connection ->
+            withBaseProtocolFraming(connection, exitSignal = null) { incoming, outgoing ->
                 withLsp(incoming, outgoing, handler) { lsp ->
                     awaitCancellation()
                 }

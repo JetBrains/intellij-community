@@ -67,7 +67,23 @@ kotlin {
     implementation(jps.org.jetbrains.kotlinx.kotlinx.serialization.json.jvm231489733.get().let { "${it.group}:kotlinx-serialization-json:${it.version}" }) {
       isTransitive = false
     }
+    implementation(jps.org.jetbrains.annotations1504825916.get())
+    implementation(jps.org.jetbrains.kotlinx.kotlinx.io.core.jvm479158162.get().let { "${it.group}:kotlinx-io-core:${it.version}" }) {
+      exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+    }
     implementation(project(":util-core"))
+  }
+  sourceSets.jvmMain.dependencies {
+    implementation(jps.io.ktor.ktor.network.tls.jvm656433577.get().let { "${it.group}:${it.name}:${it.version}" }) {
+      exclude(group = "org.slf4j", module = "slf4j-api")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core-jvm")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-coroutines-core")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core-jvm")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-serialization-core")
+      exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-io-core-jvm")
+      exclude(group = "org.jetbrains.kotlinx", module = "kotlinx-io-core")
+    }
   }
   // KOTLIN__MARKER_END
 }

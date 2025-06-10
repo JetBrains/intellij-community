@@ -1,15 +1,13 @@
 package com.jetbrains.lsp.implementation
 
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.core.Closeable
 import org.jetbrains.annotations.TestOnly
-import java.io.InputStream
-import java.io.OutputStream
 
-interface LspConnection {
-  val inputStream: InputStream
-  val outputStream: OutputStream
-
-  @TestOnly
-  fun disconnect()
+interface LspConnection : Closeable {
+  val input: ByteReadChannel
+  val output: ByteWriteChannel
 
   @TestOnly
   fun isAlive(): Boolean

@@ -1,29 +1,36 @@
 package com.jetbrains.lsp.implementation
 
 import fleet.util.logging.logger
+import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.*
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
 import kotlinx.coroutines.*
-import java.io.InputStream
-import java.io.OutputStream
-import java.net.ServerSocket
-import java.net.Socket
 
-suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(LspConnection) -> Unit) {
-  ServerSocket(port).use { serverSocket ->
-    LOG.info("Server is listening on port ${serverSocket.localPort}")
-    supervisorScope {
-      while (true) {
-        val clientSocket = runInterruptible(Dispatchers.IO) {
-          serverSocket.accept()
-        }
-        LOG.info("A new client connected ${clientSocket.inetAddress}:${clientSocket.port}")
-        launch(start = CoroutineStart.ATOMIC) {
-          clientSocket.use {
-            val connection = LspSocketConnection(clientSocket)
-            coroutineScope {
-              server(connection)
+suspend fun tcpServer(config: TcpConnectionConfig.Server, server: suspend CoroutineScope.(LspConnection) -> Unit) {
+  SelectorManager(Dispatchers.IO).use { selectorManager ->
+    aSocket(selectorManager).tcp().bind(port = config.port).use { serverSocket ->
+      LOG.info("Server is listening on port ${serverSocket.localAddress}")
+
+      supervisorScope {
+        var hadClient = false
+        fun shouldAccept() = !hadClient || config.isMulticlient
+
+        while (shouldAccept()) {
+          val client = serverSocket.accept()
+          val clientAddress = client.remoteAddress
+          hadClient = true
+          LOG.info("A new client connected ${clientAddress}")
+          launch(start = CoroutineStart.ATOMIC) {
+            try {
+              client.use { clientSocket ->
+                coroutineScope { server(KtorSocketConnection(clientSocket)) }
+              }
+            }
+            finally {
+              LOG.info("Client disconnected ${clientAddress}")
             }
           }
-          LOG.info("Client disconnected ${clientSocket.inetAddress}:${clientSocket.port}")
         }
       }
     }
@@ -31,39 +38,45 @@ suspend fun tcpServer(port: Int = 0, server: suspend CoroutineScope.(LspConnecti
 }
 
 
-/**
- * VSC opens a **server** socket for LSP to connect to it.
- */
-suspend fun tcpClient(port: Int, body: suspend CoroutineScope.(LspConnection) -> Unit) {
-  val socket = runInterruptible(Dispatchers.IO) {
-    Socket("localhost", port)
-  }
-  socket.use {
-    coroutineScope {
-      val connection = LspSocketConnection(socket)
-      body(connection)
+suspend fun tcpClient(config: TcpConnectionConfig.Client, body: suspend CoroutineScope.(LspConnection) -> Unit) {
+  SelectorManager(Dispatchers.IO).use { selectorManager ->
+    try {
+      aSocket(selectorManager).tcp().connect("localhost", config.port).use { server ->
+        LOG.info("Client is connected to server ${server.remoteAddress}")
+        coroutineScope { body(KtorSocketConnection(server)) }
+      }
+    }
+    finally {
+      LOG.info("Client disconnected from the server")
     }
   }
 }
 
 
-suspend fun tcpConnection(clientMode: Boolean, port: Int, body: suspend CoroutineScope.(LspConnection) -> Unit) {
-  when {
-    clientMode -> {
-      tcpClient(port, body)
-    }
-
-    else -> {
-      tcpServer(port, body)
-    }
+suspend fun tcpConnection(config: TcpConnectionConfig, body: suspend CoroutineScope.(LspConnection) -> Unit) {
+  when (config) {
+    is TcpConnectionConfig.Client -> tcpClient(config, body)
+    is TcpConnectionConfig.Server -> tcpServer(config, body)
   }
 }
 
-class LspSocketConnection(private val socket: Socket) : LspConnection {
-  override val inputStream: InputStream get() = socket.getInputStream()
-  override val outputStream: OutputStream get() = socket.getOutputStream()
+sealed interface TcpConnectionConfig {
+  val port: Int
 
-  override fun disconnect() {
+  val isMulticlient: Boolean
+
+  data class Client(override val port: Int) : TcpConnectionConfig {
+    override val isMulticlient: Boolean = false
+  }
+
+  data class Server(override val port: Int, override val isMulticlient: Boolean) : TcpConnectionConfig
+}
+
+class KtorSocketConnection(private val socket: Socket) : LspConnection {
+  override val input: ByteReadChannel = socket.openReadChannel()
+  override val output: ByteWriteChannel = socket.openWriteChannel(autoFlush = true)
+
+  override fun close() {
     socket.close()
   }
 
