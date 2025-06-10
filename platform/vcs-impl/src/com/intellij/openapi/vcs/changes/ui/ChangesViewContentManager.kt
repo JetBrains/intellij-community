@@ -376,17 +376,11 @@ fun MessageBusConnection.subscribeOnVcsToolWindowLayoutChanges(updateLayout: Run
 internal fun hideWindowedFloatingTwOnCommit(project: Project) {
   val commitTw = getCommitToolWindow(project) ?: return
   if (!commitTw.isActive || !commitTw.isVisible) return
-
-  val commitTwType = commitTw.type
-
-  if (commitTwType.isInWindow()) {
+  if (CommitToolWindowUtil.isInWindow(commitTw.type)) {
     commitTw.hide()
   }
 }
 
-private fun ToolWindowType.isInWindow(): Boolean {
-  return this == ToolWindowType.WINDOWED || this == ToolWindowType.FLOATING
-}
 
 private fun getCommitToolWindow(project: Project): ToolWindow? {
   return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)

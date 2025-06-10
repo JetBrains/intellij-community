@@ -696,4 +696,10 @@
       <add-to-group group-id="Internal.VFS"/>
     </action>
   </actions>
+
+  <actions resource-bundle="messages.VcsBundle">
+    <action id="Vcs.Commit.CloseDialog"
+            class="com.intellij.openapi.vcs.changes.actions.CloseCommitDialogAction"
+            use-shortcut-of="EditorEscape"/>
+  </actions>
 </idea-plugin>
