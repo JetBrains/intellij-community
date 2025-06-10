@@ -885,13 +885,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "commons-cli-provided",
-  exports = [":commons-cli"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "commons-codec",
   jar = "@commons-codec-1_18_0_http//file",
@@ -2334,13 +2327,6 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 
-java_library(
-  name = "jackson-module-kotlin-provided",
-  exports = [":jackson-module-kotlin"],
-  neverlink = True,
-  visibility = ["//visibility:public"]
-)
-
 jvm_import(
   name = "java-aether_dependency_resolver-org-apache-maven-resolver-maven-resolver-connector-basic",
   jar = "@maven-resolver-connector-basic-1_9_22_http//file",
@@ -2778,13 +2764,6 @@ jvm_import(
   name = "jetbrains-markdown",
   jar = "@markdown-jvm-0_7_2_http//file",
   source_jar = "@markdown-jvm-0_7_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "jetbrains-markdown-provided",
-  exports = [":jetbrains-markdown"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
@@ -3926,13 +3905,6 @@ jvm_import(
   name = "kotlinx-datetime-jvm",
   jar = "@kotlinx-datetime-jvm-0_6_2_http//file",
   source_jar = "@kotlinx-datetime-jvm-0_6_2-sources_http//file",
-  visibility = ["//visibility:public"]
-)
-
-java_library(
-  name = "kotlinx-datetime-jvm-provided",
-  exports = [":kotlinx-datetime-jvm"],
-  neverlink = True,
   visibility = ["//visibility:public"]
 )
 
