@@ -197,9 +197,10 @@ final class ClassChecker {
       }
       parent = element;
 
-      if (element instanceof PsiDeclarationStatement){ element = PsiTreeUtil.getChildOfType(element, PsiClass.class);}
+      if (element instanceof PsiDeclarationStatement) element = PsiTreeUtil.getChildOfType(element, PsiClass.class);
 
-      if (element instanceof PsiImplicitClass) return;
+      if (myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASS_NAME_OUT_OF_SCOPE) &&
+          element instanceof PsiImplicitClass) return;
 
       if (element instanceof PsiClass psiClass && name.equals(psiClass.getName())) {
         myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, psiClass));

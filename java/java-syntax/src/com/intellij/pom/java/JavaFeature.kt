@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
-import kotlin.jvm.JvmStatic
 
 /**
  * Represents Java language, JVM, or standard library features and provides information
@@ -100,6 +99,8 @@ enum class JavaFeature {
 
   SCOPED_VALUES(LanguageLevel.JDK_21_PREVIEW, "feature.scoped.values"),
   STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
+
+  IMPLICIT_CLASS_NAME_OUT_OF_SCOPE(LanguageLevel.JDK_22_PREVIEW, "feature.implicit.class.name.out.of.scope"),
   CLASSFILE_API(LanguageLevel.JDK_22_PREVIEW, "feature.classfile.api"),
   STREAM_GATHERERS(LanguageLevel.JDK_22_PREVIEW, "feature.stream.gatherers"),
   STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super"),
