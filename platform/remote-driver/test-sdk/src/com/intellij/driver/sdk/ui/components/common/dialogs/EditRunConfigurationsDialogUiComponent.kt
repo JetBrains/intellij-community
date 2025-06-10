@@ -12,4 +12,5 @@ fun IdeaFrameUI.editRunConfigurationsDialog(action: EditRunConfigurationsDialogU
 
 class EditRunConfigurationsDialogUiComponent(data: ComponentData): DialogUiComponent(data) {
   val addNewConfigurationButton = x { byAccessibleName("Add New Configuration") }
+  val runButton = x { and(byType("com.intellij.ui.components.BasicOptionButtonUI${"$"}MainButton"), byAccessibleName("Run")) }
 }
