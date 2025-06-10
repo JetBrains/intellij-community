@@ -2153,9 +2153,12 @@ public class JavaDocInfoGenerator {
   private void generateInlineReturnValue(@NotNull StringBuilder buffer,
                                          @NotNull PsiInlineDocTag tag,
                                          InheritDocProvider<PsiElement[]> provider) {
-    // According to the spec (https://docs.oracle.com/en/java/javase/16/docs/specs/javadoc/doc-comment-spec.html#return), the format is "Returns<description>."
-    buffer.append("Returns");
-    generateValue(buffer, tag.getDataElements(), 0, provider);
+    // According to the spec (https://docs.oracle.com/en/java/javase/16/docs/specs/javadoc/doc-comment-spec.html#return), the format is "Returns <description>."
+    buffer.append("Returns ");
+    final var elements = Arrays.stream(tag.getDataElements())
+      .dropWhile(e -> e instanceof PsiWhiteSpace)
+      .toArray(PsiElement[]::new);
+    generateValue(buffer, elements, 0, provider);
     buffer.append(".");
   }
 
