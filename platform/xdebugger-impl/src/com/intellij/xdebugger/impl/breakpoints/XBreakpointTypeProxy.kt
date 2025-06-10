@@ -108,6 +108,17 @@ interface XBreakpointTypeProxy {
       }
       return (breakpoint as? XBreakpointBase<*, *, *>)?.asProxy()
     }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Monolith) return false
+
+      return breakpointType == other.breakpointType
+    }
+
+    override fun hashCode(): Int {
+      return breakpointType.hashCode()
+    }
   }
 }
 
