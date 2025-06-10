@@ -1543,6 +1543,8 @@
                  description="Enable experimental support command completion" restartRequired="false"/>
     <registryKey key="ide.completion.command.enabled" defaultValue="true"
                  description="Enable experimental support command completion for internal mode" restartRequired="false"/>
+    <registryKey key="ide.completion.command.support.read.only.files" defaultValue="false"
+                 description="Enable experimental support command completion for read-only files" restartRequired="false"/>
 
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.SyntheticLibraryIndexableIteratorHandler"/>
     <indexableIteratorBuilderHandler implementation="com.intellij.util.indexing.roots.builders.ExternalEntityIndexableIteratorHandler"/>

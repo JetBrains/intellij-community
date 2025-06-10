@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.ApiStatus
 internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTypedHandler {
   override fun isApplicable(editor: Editor, charTyped: Char, dataContext: DataContext): Boolean {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return false
+    if (!Registry.`is`("ide.completion.command.support.read.only.files")) return false
+
     val project = editor.project ?: return false
     val commandCompletionService = project.getService(CommandCompletionService::class.java)
     if (commandCompletionService == null) return false
@@ -64,6 +67,7 @@ internal class CommandCompletionNonWriteAccessTypedHandler : NonWriteAccessTyped
 
   override fun handle(editor: Editor, charTyped: Char, dataContext: DataContext) {
     if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return
+    if (!Registry.`is`("ide.completion.command.support.read.only.files")) return
     val accessCommandCompletionService = editor.project?.getService(NonWriteAccessCommandCompletionService::class.java)
     if (accessCommandCompletionService == null) return
     accessCommandCompletionService.insertNewEditor(editor)
