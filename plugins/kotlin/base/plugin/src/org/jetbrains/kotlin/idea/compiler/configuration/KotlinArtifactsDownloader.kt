@@ -180,15 +180,13 @@ object KotlinArtifactsDownloader {
             .distinct()
     }
 
-    @JvmOverloads
-    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): File? {
+    fun downloadMavenArtifact(groupId: String, artifactId: String, version: String, suffix: String = ".jar"): File? {
         check(isRunningFromSources) {
             "${::downloadArtifactForIdeFromSources.name} must be called only for IDE running from sources or tests. " +
                     "Use ${::downloadMavenArtifacts.name} when run in production"
         }
-
         // In cooperative development artifacts are already downloaded and stored in $PROJECT_DIR$/../build/repo
-        KotlinMavenUtils.findArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version, suffix)?.let {
+        KotlinMavenUtils.findArtifact(groupId, artifactId, version, suffix)?.let {
             return it.toFile()
         }
 
@@ -198,15 +196,15 @@ object KotlinArtifactsDownloader {
             .resolve("kotlin-from-sources-deps")
             .resolve(fileName)
             .also { Files.createDirectories(it.parent) }
-
+        val groupPath = groupId.replace(".", "/")
         if (!artifact.exists()) {
             val intellijDeps =
                 "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/" +
-                    "org/jetbrains/kotlin/$artifactId/$version/$fileName"
+                        "$groupPath/$artifactId/$version/$fileName"
             val idePluginDeps =
                 "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/" +
-                    "org/jetbrains/kotlin/$artifactId/$version/$fileName"
-            val mavenCentral = "https://repo1.maven.org/maven2/org/jetbrains/kotlin/$artifactId/$version/$fileName"
+                        "$groupPath/$artifactId/$version/$fileName"
+            val mavenCentral = "https://repo1.maven.org/maven2/$groupPath/$artifactId/$version/$fileName"
 
             val stream =
                 URL(intellijDeps).openStreamOrNull()
@@ -219,6 +217,11 @@ object KotlinArtifactsDownloader {
         }
 
         return artifact.toFile()
+    }
+
+    @JvmOverloads
+    fun downloadArtifactForIdeFromSources(artifactId: String, version: String, suffix: String = ".jar"): File? {
+        return downloadMavenArtifact(KOTLIN_MAVEN_GROUP_ID, artifactId, version, suffix)
     }
 
     private fun getAllIneOneOldFormatLazyDistUnpacker(version: IdeKotlinVersion) =
