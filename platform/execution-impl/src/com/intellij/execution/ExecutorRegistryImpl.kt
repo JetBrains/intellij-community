@@ -77,25 +77,30 @@ class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() 
         contextActionIdSet = contextActionIdSet,
         idToAction = idToAction,
         runWidgetIdToAction = runWidgetIdToAction,
+        toolbarSettings = ToolbarSettings.getInstance(),
       )
     }
   }
 
   internal class ExecutorRegistryActionConfigurationTuner : ActionConfigurationCustomizer, LightCustomizeStrategy {
     override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
-      if (Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
-        val executorRegistry = serviceAsync<ExecutorRegistry>() as ExecutorRegistryImpl
-        Executor.EXECUTOR_EXTENSION_NAME.forEachExtensionSafe {
-          synchronized(executorRegistry.idToAction) {
-            initExecutorActions(
-              executor = it,
-              actionRegistrar = actionRegistrar,
-              contextActionIdToAction = executorRegistry.contextActionIdToAction,
-              contextActionIdSet = executorRegistry.contextActionIdSet,
-              idToAction = executorRegistry.idToAction,
-              runWidgetIdToAction = executorRegistry.runWidgetIdToAction,
-            )
-          }
+      if (!Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
+        return
+      }
+
+      val toolbarSettings = serviceAsync<ToolbarSettings>()
+      val executorRegistry = serviceAsync<ExecutorRegistry>() as ExecutorRegistryImpl
+      Executor.EXECUTOR_EXTENSION_NAME.forEachExtensionSafe {
+        synchronized(executorRegistry.idToAction) {
+          initExecutorActions(
+            executor = it,
+            actionRegistrar = actionRegistrar,
+            contextActionIdToAction = executorRegistry.contextActionIdToAction,
+            contextActionIdSet = executorRegistry.contextActionIdSet,
+            idToAction = executorRegistry.idToAction,
+            runWidgetIdToAction = executorRegistry.runWidgetIdToAction,
+            toolbarSettings = toolbarSettings,
+          )
         }
       }
     }
@@ -281,6 +286,7 @@ private fun initExecutorActions(
   contextActionIdSet: MutableSet<String>,
   idToAction: MutableMap<String, AnAction>,
   runWidgetIdToAction: HashMap<String, AnAction>,
+  toolbarSettings: ToolbarSettings,
 ) {
   if (contextActionIdSet.contains(executor.getContextActionId())) {
     LOG.error("Executor with context action id: \"${executor.getContextActionId()}\" was already registered!")
@@ -340,7 +346,9 @@ private fun initExecutorActions(
   val group = actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP_MORE) as DefaultActionGroup
   actionRegistrar.addToGroup(group, nonExistingAction, Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"))
 
-  initRunToolbarExecutorActions(executor = executor, actionRegistrar = actionRegistrar, runWidgetIdToAction = runWidgetIdToAction)
+  if (toolbarSettings.isAvailable) {
+    initRunToolbarExecutorActions(executor = executor, actionRegistrar = actionRegistrar, runWidgetIdToAction = runWidgetIdToAction)
+  }
 
   contextActionIdSet.add(executor.getContextActionId())
 }
@@ -350,10 +358,6 @@ private fun initRunToolbarExecutorActions(
   actionRegistrar: ActionRuntimeRegistrar,
   runWidgetIdToAction: MutableMap<String, AnAction>,
 ) {
-  if (!ToolbarSettings.getInstance().isAvailable) {
-    return
-  }
-
   for (process in getProcessesByExecutorId(executor.getId())) {
     if (executor is ExecutorGroup<*>) {
       if (process.showInBar) {
