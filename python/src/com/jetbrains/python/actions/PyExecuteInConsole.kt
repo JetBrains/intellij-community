@@ -3,7 +3,6 @@
 
 package com.jetbrains.python.actions
 
-import com.intellij.codeInsight.hint.HintManager
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
@@ -17,7 +16,6 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentManager
 import com.intellij.xdebugger.XDebuggerManager
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.*
 import com.jetbrains.python.run.PythonRunConfiguration
 import java.util.function.Consumer
@@ -80,7 +78,6 @@ private fun executeCodeInConsole(project: Project,
   var isDebug = false
   var newConsoleListener: PydevConsoleRunner.ConsoleListener? = null
   val virtualFile = (editor as? EditorImpl)?.virtualFile
-  if (!checkIfAvailableAndShowHint(editor)) return
   if (canUseExistingConsole) {
     if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
       val (descriptor, listener) = getCustomDescriptor(project, virtualFile)
@@ -114,16 +111,6 @@ private fun executeCodeInConsole(project: Project,
   }
 }
 
-fun checkIfAvailableAndShowHint(editor: Editor?): Boolean {
-  val virtualFile = (editor as? EditorImpl)?.virtualFile
-  if (editor != null && virtualFile != null && PyExecuteConsoleCustomizer.instance.getCustomDescriptorType(virtualFile) ==
-      DescriptorType.NON_INTERACTIVE) {
-    HintManager.getInstance().showErrorHint(editor, PyBundle.message("python.console.toolbar.action.available.non.interactive"))
-    return false
-  }
-  return true
-}
-
 fun getCustomDescriptor(project: Project, virtualFile: VirtualFile): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
   val executeCustomizer = PyExecuteConsoleCustomizer.instance
   when (executeCustomizer.getCustomDescriptorType(virtualFile)) {
@@ -141,9 +128,6 @@ fun getCustomDescriptor(project: Project, virtualFile: VirtualFile): Pair<RunCon
     }
     DescriptorType.STARTING -> {
       return Pair(null, null)
-    }
-    DescriptorType.NON_INTERACTIVE -> {
-      throw IllegalStateException("This code shouldn't be called for a non-interactive descriptor")
     }
     else -> {
       throw IllegalStateException("Custom descriptor for ${virtualFile} is null")
