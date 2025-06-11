@@ -302,7 +302,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private void reloadProject(@NotNull Project project) {
     ImportSpecBuilder importSpec = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
     if (isCreatingEmptyContentRoots) {
-      importSpec.createDirectoriesForEmptyContentRoots();
+      importSpec.withCreateDirectoriesForEmptyContentRoots();
     }
     importSpec.callback(new ConfigureGradleModuleCallback(importSpec));
     ExternalSystemUtil.refreshProject(PathKt.getSystemIndependentPath(rootProjectPath), importSpec);

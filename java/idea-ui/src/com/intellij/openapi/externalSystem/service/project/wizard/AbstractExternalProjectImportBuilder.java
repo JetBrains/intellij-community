@@ -292,7 +292,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       try {
         refreshProject(externalProjectPath,
                        new ImportSpecBuilder(project, myExternalSystemId)
-                         .use(ProgressExecutionMode.MODAL_SYNC)
+                         .withProgressExecutionMode(ProgressExecutionMode.MODAL_SYNC)
                          .usePreviewMode()
                          .callback(callback));
       }

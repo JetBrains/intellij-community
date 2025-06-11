@@ -62,7 +62,7 @@ public class ImportSpecBuilder {
     myUserData = importSpec.getUserData();
   }
 
-  public ImportSpecBuilder use(@NotNull ProgressExecutionMode executionMode) {
+  public ImportSpecBuilder withProgressExecutionMode(@NotNull ProgressExecutionMode executionMode) {
     myProgressExecutionMode = executionMode;
     return this;
   }
@@ -140,7 +140,7 @@ public class ImportSpecBuilder {
     return this;
   }
 
-  public ImportSpecBuilder createDirectoriesForEmptyContentRoots() {
+  public ImportSpecBuilder withCreateDirectoriesForEmptyContentRoots() {
     myCreateDirectoriesForEmptyContentRoots = true;
     return this;
   }
@@ -161,16 +161,16 @@ public class ImportSpecBuilder {
     return this;
   }
 
-  public ImportSpecBuilder dontReportRefreshErrors() {
+  public ImportSpecBuilder withReportRefreshErrors() {
     return withActivateToolWindowOnFailure(false);
   }
 
-  public ImportSpecBuilder dontNavigateToError() {
+  public ImportSpecBuilder withNavigateToError() {
     isNavigateToError = ThreeState.NO;
     return this;
   }
 
-  public ImportSpecBuilder navigateToError() {
+  public ImportSpecBuilder withNavigateToError() {
     isNavigateToError = ThreeState.YES;
     return this;
   }
@@ -186,7 +186,7 @@ public class ImportSpecBuilder {
   }
 
   @ApiStatus.Experimental
-  public ImportSpecBuilder projectResolverPolicy(@NotNull ProjectResolverPolicy projectResolverPolicy) {
+  public ImportSpecBuilder withProjectResolverPolicy(@NotNull ProjectResolverPolicy projectResolverPolicy) {
     if (projectResolverPolicy.isPartialDataResolveAllowed()) {
       myImportProjectData = false;
     }

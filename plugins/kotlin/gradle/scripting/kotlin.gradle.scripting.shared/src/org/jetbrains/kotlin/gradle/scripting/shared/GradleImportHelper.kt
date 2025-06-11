@@ -43,7 +43,7 @@ fun runPartialGradleImport(project: Project, root: GradleBuildRoot) {
                 "-D${KotlinDslModelsParameters.PROVIDER_MODE_SYSTEM_PROPERTY_NAME}=" +
                         KotlinDslModelsParameters.CLASSPATH_MODE_SYSTEM_PROPERTY_VALUE
             )
-            .projectResolverPolicy(
+            .withProjectResolverPolicy(
                 GradlePartialResolverPolicy { it is KotlinDslScriptModelResolver }
             )
     )

@@ -64,7 +64,7 @@ class GradlePartialSyncTest : GradlePartialSyncTestCase() {
       val projectDataStructure = getProjectDataStructure().graphCopy()
 
       importProject(importSpec = {
-        projectResolverPolicy(GradlePartialResolverPolicy {
+        withProjectResolverPolicy(GradlePartialResolverPolicy {
           it is TestPartialProjectResolverExtension
         })
       })

@@ -318,7 +318,7 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     // to fill those content roots with some files even)
     final override fun createImportSpec(): ImportSpec {
         return ImportSpecBuilder(super.createImportSpec())
-            .createDirectoriesForEmptyContentRoots()
+            .withCreateDirectoriesForEmptyContentRoots()
             .build()
     }
 
