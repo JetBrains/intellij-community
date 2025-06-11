@@ -31,7 +31,7 @@ internal class RemoteLocalCache<Z: Zombie>(
   }
 
   override suspend fun get(key: Int): FingerprintedZombie<Z>? {
-    return localCache.get(key) ?: remoteCache?.get(key)
+    return localCache.get(key) ?: remoteCache?.get(key)?.also { localCache.put(key, it) }
   }
 
   override suspend fun remove(key: Int) {
@@ -50,8 +50,14 @@ internal class RemoteLocalCache<Z: Zombie>(
       coroutineScope: CoroutineScope
     ): RemoteLocalCache<Z> {
       val localCache =  createLocalCache(cacheName, necromancy, project, coroutineScope)
-      val remoteCacheFactory = RemoteCacheFactory.EP.findFirstSafe { true }?.let {it as? RemoteCacheFactory<Z> }
-      val remoteCache = remoteCacheFactory?.createCache(cacheName, necromancy, project, coroutineScope)
+      val remoteCache = RemoteCacheFactory
+        .tryCreateCache<Int, FingerprintedZombie<Z>>(
+          cacheName,
+          EnumeratorIntegerDescriptor.INSTANCE,
+          FingerprintedExternalizer(necromancy),
+          project,
+          coroutineScope
+        )
       return RemoteLocalCache(
         localCache = localCache,
         remoteCache = remoteCache,

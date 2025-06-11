@@ -6,4 +6,4 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Serializable
-data class PrefetchedRemoteCacheValue(val key: Int, val value: RemoteManagedCacheValueDto)
+class PrefetchedRemoteCacheValue(val key: RemoteManagedCacheDto, val value: RemoteManagedCacheDto)
