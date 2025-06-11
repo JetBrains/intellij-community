@@ -32,6 +32,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/lang-impl",
     "//platform/usageView",
+    "//platform/refactoring",
   ],
   exports = ["//platform/searchEverywhere/shared:searchEverywhere"],
   runtime_deps = [":frontend_resources"]

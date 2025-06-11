@@ -36,7 +36,7 @@ class SeSymbolsProvider(private val contributorWrapper: SeAsyncWeightedContribut
     Disposer.dispose(contributorWrapper)
   }
 
-  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.searchScopesInfo.getValue()
+  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.getSearchScopesInfo()
 
   override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
     targetsProviderDelegate.getTypeVisibilityStates<LanguageRef>(index)
