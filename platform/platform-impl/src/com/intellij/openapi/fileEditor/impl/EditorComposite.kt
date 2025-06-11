@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.FileEntryTab
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.Wrapper
@@ -58,6 +59,7 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.TimeUnit
 import javax.swing.*
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<EditorComposite>()
 
@@ -841,6 +843,8 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   var focusComponent: () -> JComponent? = { null }
     private set
 
+  private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
+
   init {
     addFocusListener(object : FocusAdapter() {
       override fun focusGained(e: FocusEvent) {
@@ -867,6 +871,14 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
       override fun getDefaultComponent(aContainer: Container) = composite.focusComponent
     }
     isFocusCycleRoot = true
+
+    skeletonScope.launch(Dispatchers.EDT) {
+      delay(SKELETON_DELAY)
+      // show skeleton if editor is not added after [SKELETON_DELAY]
+      if (components.isEmpty()) {
+        add(EditorSkeleton(skeletonScope), BorderLayout.CENTER)
+      }
+    }
   }
 
   override fun updateUI() {
@@ -877,6 +889,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
   }
 
   fun setComponent(newComponent: JComponent, focusComponent: () -> JComponent?) {
+    skeletonScope.cancel()
     removeAll()
 
     val scrollPanes = UIUtil.uiTraverser(newComponent)
@@ -908,6 +921,11 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     sink[PlatformCoreDataKeys.FILE_EDITOR] = composite.selectedEditor
     sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
     sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = arrayOf(composite.file)
+  }
+
+  companion object {
+    private val SKELETON_DELAY
+      get() = 300.milliseconds
   }
 }
 
