@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectModel
 
+import com.intellij.openapi.externalSystem.model.project.ContentRootData
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -14,6 +15,7 @@ import com.jetbrains.python.PyBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
+import kotlin.io.path.div
 import kotlin.reflect.KClass
 
 /**
@@ -114,7 +116,12 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
         for (moduleName in extProject.dependencies) {
           dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
         }
-        contentRoots = listOf(ContentRootEntity(extProject.root.toVirtualFileUrl(fileUrlManager), emptyList(), source))
+        contentRoots = listOf(ContentRootEntity(extProject.root.toVirtualFileUrl(fileUrlManager), emptyList(), source) {
+          sourceRoots = listOf(SourceRootEntity(
+            url = (extProject.root / "src").toVirtualFileUrl(fileUrlManager),
+            rootTypeId = PYTHON_SOURCE_ROOT_TYPE,
+            entitySource = source))
+        })
         exModuleOptions = ExternalSystemModuleOptionsEntity(source) {
           externalSystem = systemName          
           linkedProjectId = extProject.fullName
@@ -146,4 +153,9 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
   
   private val Project.baseNioPath: Path?
     get() = basePath?.let { Path.of(it) }
+  
+  companion object {
+    // For the time being mark them as java-sources to indicate that in the Project tool window
+    val PYTHON_SOURCE_ROOT_TYPE: SourceRootTypeId = SourceRootTypeId("java-source")
+  }
 }

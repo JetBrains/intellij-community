@@ -9,12 +9,16 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyA
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.INHERITED_SDK
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions.MODULE_SOURCE
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
+import com.intellij.platform.testFramework.assertion.moduleAssertion.SourceRootAssertions
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.io.createFile
+import com.jetbrains.python.projectModel.BaseProjectModelService.Companion.PYTHON_SOURCE_ROOT_TYPE
+import com.jetbrains.python.projectModel.uv.UvConstants
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.io.path.writeText
@@ -27,6 +31,27 @@ class PoetryProjectSyncIntegrationTest {
 
   private val project by projectFixture(testRootFixture, openAfterCreation = true)
   private val multiprojectFixture by multiProjectFixture()
+
+  @Test
+  fun `src directory is mapped to module source root`() = timeoutRunBlocking {
+    testRoot.createFile("pyproject.toml").writeText("""
+      [project]
+      name = "main"
+      dependencies = [
+      ]
+      
+      [tool.poetry]
+      packages = [{include = "main", from = "src"}]
+    """.trimIndent())
+
+    testRoot.createFile("src/main/__init__.py")
+
+    multiprojectFixture.linkProject(project, testRoot, UvConstants.SYSTEM_ID)
+    syncAllProjects(project)
+
+    ModuleAssertions.assertModules(project, "main")
+    SourceRootAssertions.assertSourceRoots(project, "main", { it.rootTypeId == PYTHON_SOURCE_ROOT_TYPE }, testRoot.resolve("src"))
+  }
 
   @Test
   fun `project with path dependencies is properly mapped to IJ modules`() = timeoutRunBlocking {

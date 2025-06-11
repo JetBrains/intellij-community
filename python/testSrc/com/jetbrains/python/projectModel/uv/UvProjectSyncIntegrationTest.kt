@@ -7,8 +7,11 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ContentRootAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.DependencyAssertions
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions
+import com.intellij.platform.testFramework.assertion.moduleAssertion.SourceRootAssertions
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootTypeId
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
@@ -16,6 +19,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.io.createFile
+import com.jetbrains.python.projectModel.BaseProjectModelService.Companion.PYTHON_SOURCE_ROOT_TYPE
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import kotlin.io.path.writeText
@@ -28,6 +32,27 @@ class UvProjectSyncIntegrationTest {
 
   private val project by projectFixture(testRootFixture, openAfterCreation = true)
   private val multiprojectFixture by multiProjectFixture()
+
+  @Test
+  fun `src directory is mapped to module source root`() = timeoutRunBlocking {
+    testRoot.createFile("pyproject.toml").writeText("""
+      [project]
+      name = "main"
+      dependencies = []
+      
+      [build-system]
+      requires = ["hatchling"]
+      build-backend = "hatchling.build"
+    """.trimIndent())
+
+    testRoot.createFile("src/main/__init__.py")
+
+    multiprojectFixture.linkProject(project, testRoot, UvConstants.SYSTEM_ID)
+    syncAllProjects(project)
+
+    ModuleAssertions.assertModules(project, "main")
+    SourceRootAssertions.assertSourceRoots(project, "main", { it.rootTypeId == PYTHON_SOURCE_ROOT_TYPE }, testRoot.resolve("src"))
+  }
 
   @Test
   fun `projects inside dot venv are skipped`() = timeoutRunBlocking {
