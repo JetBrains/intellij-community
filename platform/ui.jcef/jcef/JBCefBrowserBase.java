@@ -203,6 +203,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         cefBrowser = myCefClient.getCefClient().createBrowser(validateUrl(builder.myUrl), CefRendering.DEFAULT, false, null);
       }
       isDefaultBrowserCreated = true;
+    } else {
+      if (cefBrowser.getUIComponent() instanceof JBCefOsrComponent)
+        ((JBCefOsrComponent)cefBrowser.getUIComponent()).setBrowser(cefBrowser);
     }
     myCefBrowser = cefBrowser;
 
