@@ -2,7 +2,6 @@
 package com.intellij.platform.eel.impl.fs
 
 import com.intellij.ide.ApplicationActivity
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystem
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
@@ -36,10 +35,12 @@ internal class EelEarlyAccessApplicationActivity : ApplicationActivity {
           // A: Although this initialization usually takes a second, sometimes it can be significantly slower.
           //    It depends not only on the I/O speed of the machine, but also on personal configurations of the user.
           //    Being called from EDT, this lazy initialization would lead to yet another freeze.
-          logger.error(
-            "Remote file system accessed before Eel initialization. The description is in the source code.",
-            Attachment("path", strPath.toString()),
-          )
+
+          // TODO IJPL-190497
+          //logger.error(
+          //  "Remote file system accessed before Eel initialization. The description is in the source code.",
+          //  Attachment("path", strPath.toString()),
+          //)
         }
       }
     })
