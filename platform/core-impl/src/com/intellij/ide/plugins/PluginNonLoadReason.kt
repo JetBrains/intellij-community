@@ -255,7 +255,7 @@ class PluginHasDuplicateContentModuleDeclaration(
   override val shortMessage: @NlsContexts.Label String
     get() = CoreBundle.message("plugin.loading.error.short.content.modules.are.invalid.duplicate.module", plugin.name)
   override val logMessage: @NonNls String
-    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has duplicate declaration for content module '$moduleId'"
+    get() = "Plugin '${plugin.name}' (${plugin.pluginId}) has duplicate declaration of content module '$moduleId'"
   override val shouldNotifyUser: Boolean
     get() = true
 }
