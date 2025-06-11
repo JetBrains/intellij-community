@@ -13,8 +13,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.ast.*;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
+import com.jetbrains.python.ast.impl.PyUtilCore;
+import com.jetbrains.python.psi.PyAstElementGenerator;
+import com.jetbrains.python.psi.PyStringLiteralCoreUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyStatementMover extends LineMover {
   @Override
   public boolean checkAvailable(@NotNull Editor editor, @NotNull PsiFile file, @NotNull MoveInfo info, boolean down) {
-    if (!(file instanceof PyFile)) return false;
+    if (!(file instanceof PyAstFile)) return false;
     final int offset = editor.getCaretModel().getOffset();
     final SelectionModel selectionModel = editor.getSelectionModel();
     final Document document = editor.getDocument();
@@ -38,8 +41,8 @@ public class PyStatementMover extends LineMover {
       final int selectionEnd = selectionModel.getSelectionEnd();
       end = selectionEnd == 0 ? 0 : selectionEnd - 1;
     }
-    PsiElement elementToMove1 = PyUtil.findNonWhitespaceAtOffset(file, start);
-    PsiElement elementToMove2 = PyUtil.findNonWhitespaceAtOffset(file, end);
+    PsiElement elementToMove1 = PyUtilCore.findNonWhitespaceAtOffset(file, start);
+    PsiElement elementToMove2 = PyUtilCore.findNonWhitespaceAtOffset(file, end);
     if (elementToMove1 == null || elementToMove2 == null) return false;
 
     if (ifInsideString(document, lineNumber, elementToMove1, down)) return false;
@@ -56,8 +59,8 @@ public class PyStatementMover extends LineMover {
     else {
       PsiElement commonParent = PsiTreeUtil.findCommonParent(elementToMove1, elementToMove2);
       if (commonParent == null) return false;
-      elementToMove1 = PyPsiUtils.getParentRightBefore(elementToMove1, commonParent);
-      elementToMove2 = PyPsiUtils.getParentRightBefore(elementToMove2, commonParent);
+      elementToMove1 = PyPsiUtilsCore.getParentRightBefore(elementToMove1, commonParent);
+      elementToMove2 = PyPsiUtilsCore.getParentRightBefore(elementToMove2, commonParent);
       assert elementToMove1 != null && elementToMove2 != null;
     }
 
@@ -75,7 +78,7 @@ public class PyStatementMover extends LineMover {
     final int end = document.getLineEndOffset(lineNumber);
     int nearLine = down ? lineNumber + 1 : lineNumber - 1;
     if (nearLine >= document.getLineCount() || nearLine <= 0) return false;
-    final PyStringLiteralExpression stringLiteralExpression = PsiTreeUtil.getParentOfType(elementToMove1, PyStringLiteralExpression.class);
+    final PyAstStringLiteralExpression stringLiteralExpression = PsiTreeUtil.getParentOfType(elementToMove1, PyAstStringLiteralExpression.class);
     if (stringLiteralExpression != null) {
       final Pair<String,String> quotes = PyStringLiteralCoreUtil.getQuotes(stringLiteralExpression.getText());
       if (quotes != null && (quotes.first.equals("'''") || quotes.first.equals("\"\"\""))) {
@@ -99,7 +102,7 @@ public class PyStatementMover extends LineMover {
     int lineEndOffset = document.getLineEndOffset(lineNumber);
     final int startOffset = document.getLineStartOffset(lineNumber);
 
-    final PyStatementList statementList = getStatementList(elementToMove);
+    final PyAstStatementList statementList = getStatementList(elementToMove);
 
     final PsiElement destination = getDestinationElement(elementToMove, document, lineEndOffset, down);
 
@@ -108,8 +111,8 @@ public class PyStatementMover extends LineMover {
     final int startLine = document.getLineNumber(start);
     final int endLine = document.getLineNumber(end);
 
-    if (elementToMove instanceof PyClass || elementToMove instanceof PyFunction) {
-      PyElement scope = statementList == null ? (PyElement)elementToMove.getContainingFile() : statementList;
+    if (elementToMove instanceof PyAstClass || elementToMove instanceof PyAstFunction) {
+      PyAstElement scope = statementList == null ? (PyAstElement)elementToMove.getContainingFile() : statementList;
       if (destination != null)
         return new ScopeRange(scope, destination, !down, true);
     }
@@ -127,8 +130,8 @@ public class PyStatementMover extends LineMover {
       return new LineRange(lineNumber, lineNumber + 1);
     }
 
-    final PyElement scope = statementList == null ? (PyElement)elementToMove.getContainingFile() : statementList;
-    if ((elementToMove instanceof PyClass) || (elementToMove instanceof PyFunction))
+    final PyAstElement scope = statementList == null ? (PyAstElement)elementToMove.getContainingFile() : statementList;
+    if ((elementToMove instanceof PyAstClass) || (elementToMove instanceof PyAstFunction))
       return new ScopeRange(scope, scope.getFirstChild(), !down, true);
     return new LineRange(startLine, endLine + 1);
   }
@@ -138,11 +141,11 @@ public class PyStatementMover extends LineMover {
   }
 
   private static boolean moveToEmptyLine(final @NotNull PsiElement elementToMove, boolean down) {
-    final PyStatementList statementList = getStatementList(elementToMove);
+    final PyAstStatementList statementList = getStatementList(elementToMove);
     if (statementList != null) {
       if (down) {
         final PsiElement child = statementList.getLastChild();
-        if (elementToMove == child && PsiTreeUtil.getNextSiblingOfType(statementList.getParent(), PyStatementPart.class) != null
+        if (elementToMove == child && PsiTreeUtil.getNextSiblingOfType(statementList.getParent(), PyAstStatementPart.class) != null
             || child != elementToMove) {
           return true;
         }
@@ -154,14 +157,14 @@ public class PyStatementMover extends LineMover {
     return statementList == null;
   }
 
-  private static PyStatementList getStatementList(final @NotNull PsiElement elementToMove) {
-    return PsiTreeUtil.getParentOfType(elementToMove, PyStatementList.class, true,
-                                                                PyStatementWithElse.class, PyLoopStatement.class,
-                                                                PyFunction.class, PyClass.class);
+  private static PyAstStatementList getStatementList(final @NotNull PsiElement elementToMove) {
+    return PsiTreeUtil.getParentOfType(elementToMove, PyAstStatementList.class, true,
+                                                                PyAstStatementWithElse.class, PyAstLoopStatement.class,
+                                                                PyAstFunction.class, PyAstClass.class);
   }
 
   private static @Nullable ScopeRange moveOut(final @NotNull PsiElement elementToMove, final @NotNull Editor editor, boolean down) {
-    final PyStatementList statementList = getStatementList(elementToMove);
+    final PyAstStatementList statementList = getStatementList(elementToMove);
     if (statementList == null) return null;
 
     if ((!down || statementList.getLastChild() != elementToMove) && (down || statementList.getFirstChild() != elementToMove)) {
@@ -169,33 +172,33 @@ public class PyStatementMover extends LineMover {
     }
     boolean addBefore = !down;
     final PsiElement parent = statementList.getParent();
-    final PyStatementPart sibling = down ? PsiTreeUtil.getNextSiblingOfType(parent, PyStatementPart.class)
-                                         : PsiTreeUtil.getPrevSiblingOfType(parent, PyStatementPart.class);
+    final PyAstStatementPart sibling = down ? PsiTreeUtil.getNextSiblingOfType(parent, PyAstStatementPart.class)
+                                            : PsiTreeUtil.getPrevSiblingOfType(parent, PyAstStatementPart.class);
 
     if (sibling != null) {
-      final PyStatementList list = sibling.getStatementList();
+      final PyAstStatementList list = sibling.getStatementList();
       return new ScopeRange(list, down ? list.getFirstChild() : list.getLastChild(), !addBefore);
     }
     else {
       PsiElement scope = getScopeForComment(elementToMove, editor, parent, !down);
-      PsiElement anchor = PsiTreeUtil.getParentOfType(statementList, PyStatement.class);
+      PsiElement anchor = PsiTreeUtil.getParentOfType(statementList, PyAstStatement.class);
       return scope == null || anchor == null ? null : new ScopeRange(scope, anchor, addBefore);
     }
   }
 
   private static PsiElement getScopeForComment(final @NotNull PsiElement elementToMove, final @NotNull Editor editor,
                                                @Nullable PsiElement parent, boolean down) {
-    PsiElement scope = PsiTreeUtil.getParentOfType(parent, PyStatementList.class, PyFile.class);
+    PsiElement scope = PsiTreeUtil.getParentOfType(parent, PyAstStatementList.class, PyAstFile.class);
     final int offset = elementToMove.getTextOffset();
     PsiElement sibling = elementToMove;
     while (scope != null && elementToMove instanceof PsiComment) { // stupid workaround for PY-6408. Related to PSI structure
-      final PsiElement prevSibling = down ? PsiTreeUtil.getNextSiblingOfType(sibling, PyStatement.class) :
-                                            PsiTreeUtil.getPrevSiblingOfType(sibling, PyStatement.class);
+      final PsiElement prevSibling = down ? PsiTreeUtil.getNextSiblingOfType(sibling, PyAstStatement.class) :
+                                            PsiTreeUtil.getPrevSiblingOfType(sibling, PyAstStatement.class);
       if (prevSibling == null) break;
       if (editor.offsetToLogicalPosition(prevSibling.getTextOffset()).column ==
           editor.offsetToLogicalPosition(offset).column) break;
       sibling = scope;
-      scope = PsiTreeUtil.getParentOfType(scope, PyStatementList.class, PyFile.class);
+      scope = PsiTreeUtil.getParentOfType(scope, PyAstStatementList.class, PyAstFile.class);
     }
     return scope;
   }
@@ -203,7 +206,7 @@ public class PyStatementMover extends LineMover {
   private static @Nullable LineRange moveInto(final @NotNull PsiElement elementToMove, final @NotNull PsiFile file,
                                               final @NotNull Editor editor, boolean down, int offset) {
 
-    PsiElement rawElement = PyUtil.findNonWhitespaceAtOffset(file, offset);
+    PsiElement rawElement = PyUtilCore.findNonWhitespaceAtOffset(file, offset);
     if (rawElement == null) return null;
 
     return down ? moveDownInto(editor.getDocument(), rawElement) : moveUpInto(elementToMove, editor, rawElement, false);
@@ -213,18 +216,18 @@ public class PyStatementMover extends LineMover {
                                                 final @NotNull PsiElement rawElement, boolean down) {
     final Document document = editor.getDocument();
     PsiElement element = getCommentOrStatement(document, rawElement);
-    final PyStatementList statementList = getStatementList(elementToMove);
+    final PyAstStatementList statementList = getStatementList(elementToMove);
     final PsiElement scopeForComment = statementList == null ? null :
                                        getScopeForComment(elementToMove, editor, elementToMove, down);
-    PyStatementList statementList2 = getStatementList(element);
+    PyAstStatementList statementList2 = getStatementList(element);
     final int start1 = elementToMove.getTextOffset() - document.getLineStartOffset(document.getLineNumber(elementToMove.getTextOffset()));
     final int start2 = element.getTextOffset() - document.getLineStartOffset(document.getLineNumber(element.getTextOffset()));
     if (start1 != start2) {
-      PyStatementList parent2 = PsiTreeUtil.getParentOfType(statementList2, PyStatementList.class);
+      PyAstStatementList parent2 = PsiTreeUtil.getParentOfType(statementList2, PyAstStatementList.class);
       while (parent2 != scopeForComment && parent2 != null) {
-        element = PsiTreeUtil.getParentOfType(statementList2, PyStatement.class);
+        element = PsiTreeUtil.getParentOfType(statementList2, PyAstStatement.class);
         statementList2 = parent2;
-        parent2 = PsiTreeUtil.getParentOfType(parent2, PyStatementList.class);
+        parent2 = PsiTreeUtil.getParentOfType(parent2, PyAstStatementList.class);
       }
     }
 
@@ -237,7 +240,7 @@ public class PyStatementMover extends LineMover {
 
   private static @Nullable LineRange moveDownInto(final @NotNull Document document, final @NotNull PsiElement rawElement) {
     PsiElement element = getCommentOrStatement(document, rawElement);
-    PyStatementList statementList2 = getStatementList(element);
+    PyAstStatementList statementList2 = getStatementList(element);
     if (statementList2 != null) {                     // move to one-line conditional/loop statement
       final int number = document.getLineNumber(element.getTextOffset());
       final int number2 = document.getLineNumber(statementList2.getParent().getTextOffset());
@@ -245,13 +248,13 @@ public class PyStatementMover extends LineMover {
         return new ScopeRange(statementList2, statementList2.getFirstChild(), true);
       }
     }
-    final PyStatementPart statementPart = PsiTreeUtil.getParentOfType(rawElement, PyStatementPart.class, true, PyStatement.class,
-                                                                      PyStatementList.class);
-    final PyFunction functionDefinition = PsiTreeUtil.getParentOfType(rawElement, PyFunction.class, true, PyStatement.class,
-                                                                      PyStatementList.class);
-    final PyClass classDefinition = PsiTreeUtil.getParentOfType(rawElement, PyClass.class, true, PyStatement.class,
-                                                                PyStatementList.class);
-    PyStatementList list = null;
+    final PyAstStatementPart statementPart = PsiTreeUtil.getParentOfType(rawElement, PyAstStatementPart.class, true, PyAstStatement.class,
+                                                                         PyAstStatementList.class);
+    final PyAstFunction functionDefinition = PsiTreeUtil.getParentOfType(rawElement, PyAstFunction.class, true, PyAstStatement.class,
+                                                                         PyAstStatementList.class);
+    final PyAstClass classDefinition = PsiTreeUtil.getParentOfType(rawElement, PyAstClass.class, true, PyAstStatement.class,
+                                                                   PyAstStatementList.class);
+    PyAstStatementList list = null;
     if (statementPart != null) list = statementPart.getStatementList();
     else if (functionDefinition != null) list = functionDefinition.getStatementList();
     else if (classDefinition != null) list = classDefinition.getStatementList();
@@ -263,15 +266,15 @@ public class PyStatementMover extends LineMover {
 
   private static PsiElement getDestinationElement(final @NotNull PsiElement elementToMove, final @NotNull Document document,
                                                   int lineEndOffset, boolean down) {
-    PsiElement destination = PyUtil.findPrevAtOffset(elementToMove.getContainingFile(), lineEndOffset, PsiWhiteSpace.class);
-    PsiElement sibling = down ? PsiTreeUtil.getNextSiblingOfType(elementToMove, PyStatement.class) :
-                         PsiTreeUtil.getPrevSiblingOfType(elementToMove, PyStatement.class);
+    PsiElement destination = PyUtilCore.findPrevAtOffset(elementToMove.getContainingFile(), lineEndOffset, PsiWhiteSpace.class);
+    PsiElement sibling = down ? PsiTreeUtil.getNextSiblingOfType(elementToMove, PyAstStatement.class) :
+                         PsiTreeUtil.getPrevSiblingOfType(elementToMove, PyAstStatement.class);
     if (destination == null) {
-      if (elementToMove instanceof PyClass) {
+      if (elementToMove instanceof PyAstClass) {
         destination = sibling;
       }
-      else if (elementToMove instanceof PyFunction) {
-        if (!(sibling instanceof PyClass))
+      else if (elementToMove instanceof PyAstFunction) {
+        if (!(sibling instanceof PyAstClass))
           destination = sibling;
         else destination = null;
       }
@@ -280,11 +283,11 @@ public class PyStatementMover extends LineMover {
       }
     }
     if (destination instanceof PsiComment) return destination;
-    if (elementToMove instanceof PyClass) {
+    if (elementToMove instanceof PyAstClass) {
       destination = sibling;
     }
-    else if (elementToMove instanceof PyFunction) {
-      if (!(sibling instanceof PyClass))
+    else if (elementToMove instanceof PyAstFunction) {
+      if (!(sibling instanceof PyAstClass))
         destination = sibling;
       else destination = null;
     }
@@ -295,7 +298,7 @@ public class PyStatementMover extends LineMover {
   }
 
   private static @NotNull PsiElement getCommentOrStatement(final @NotNull Document document, @NotNull PsiElement destination) {
-    final PsiElement statement = PsiTreeUtil.getParentOfType(destination, PyStatement.class, false);
+    final PsiElement statement = PsiTreeUtil.getParentOfType(destination, PyAstStatement.class, false);
     if (statement == null) return destination;
     if (destination instanceof PsiComment) {
       if (document.getLineNumber(destination.getTextOffset()) == document.getLineNumber(statement.getTextOffset()))
@@ -503,9 +506,9 @@ public class PyStatementMover extends LineMover {
     final PsiElement endElement = toMove.myEndElement;
     PsiElement parent = startElement.getParent();
 
-    if (scope instanceof PyStatementList && !(startElement == endElement && startElement instanceof PsiComment)) {
-      final PyStatement[] statements = ((PyStatementList)scope).getStatements();
-      if (statements.length == 1 && statements[0] == anchor && statements[0] instanceof PyPassStatement) {
+    if (scope instanceof PyAstStatementList && !(startElement == endElement && startElement instanceof PsiComment)) {
+      final PyAstStatement[] statements = ((PyAstStatementList)scope).getStatements();
+      if (statements.length == 1 && statements[0] == anchor && statements[0] instanceof PyAstPassStatement) {
         removePass = true;
       }
     }
@@ -554,7 +557,7 @@ public class PyStatementMover extends LineMover {
     int offset = addedElement.getTextRange().getStartOffset();
     int newLine = editor.getDocument().getLineNumber(offset);
     if (newLine != addedElementLine && !removePass) {  // PsiComment gets broken after adjust indent
-      PsiElement psiElement = PyUtil.findNonWhitespaceAtOffset(file, editor.getDocument().getLineEndOffset(addedElementLine) - 1);
+      PsiElement psiElement = PyUtilCore.findNonWhitespaceAtOffset(file, editor.getDocument().getLineEndOffset(addedElementLine) - 1);
       if (psiElement != null) {
         psiElement = getCommentOrStatement(editor.getDocument(), psiElement);
         offset = psiElement.getTextRange().getStartOffset();
@@ -593,11 +596,11 @@ public class PyStatementMover extends LineMover {
   private static void addPassStatement(final @NotNull MyLineRange toMove, final @NotNull Project project) {
     final PsiElement startElement = toMove.myStartElement;
     final PsiElement endElement = toMove.myEndElement;
-    final PyStatementList initialScope = getStatementList(startElement);
+    final PyAstStatementList initialScope = getStatementList(startElement);
 
     if (initialScope != null && !(startElement == endElement && startElement instanceof PsiComment)) {
       if (initialScope.getStatements().length == toMove.statementsSize) {
-        final PyPassStatement passStatement = PyElementGenerator.getInstance(project).createPassStatement();
+        final PyAstPassStatement passStatement = PyAstElementGenerator.getInstance(project).createPassStatement();
         initialScope.addAfter(passStatement, initialScope.getStatements()[initialScope.getStatements().length - 1]);
       }
     }
@@ -670,7 +673,7 @@ public class PyStatementMover extends LineMover {
       addBefore = before;
     }
 
-    ScopeRange(PyElement scope, @NotNull PsiElement anchor, boolean before, boolean b) {
+    ScopeRange(PyAstElement scope, @NotNull PsiElement anchor, boolean before, boolean b) {
       super(scope);
       myScope = scope;
       myAnchor = anchor;

@@ -278,8 +278,6 @@
     <typeDeclarationProvider implementation="com.jetbrains.python.codeInsight.PyTypeDeclarationProvider"/>
     <lang.smartEnterProcessor language="Python"
                               implementationClass="com.jetbrains.python.codeInsight.editorActions.smartEnter.PySmartEnterProcessor"/>
-    <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover" id="pyStatementMover"
-                          order="before line"/>
 
     <elementDescriptionProvider implementation="com.jetbrains.python.findUsages.PyElementDescriptionProvider"/>
     <elementDescriptionProvider implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralElementDescriptionProvider"/>

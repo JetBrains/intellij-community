@@ -107,7 +107,10 @@ public abstract class PyElementGenerator extends PyAstElementGenerator {
     return (PyExpressionStatement)super.createDocstring(content);
   }
 
-  public abstract PyPassStatement createPassStatement();
+  @Override
+  public PyPassStatement createPassStatement() {
+    return (PyPassStatement)super.createPassStatement();
+  }
 
   public abstract @NotNull PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts);
 
