@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParam
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.isConvertibleContextParameter
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.runChangeSignatureForParameter
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
+import org.jetbrains.kotlin.psi.KtContextReceiverList
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 
 class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntention<KtParameter>(
@@ -18,6 +20,7 @@ class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntentio
 
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
         return isConvertibleContextParameter(element)
+                && (element.parent as? KtContextReceiverList)?.ownerDeclaration is KtNamedFunction
     }
 
     override fun applyTo(element: KtParameter, editor: Editor?) {

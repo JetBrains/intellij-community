@@ -10,13 +10,8 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtContextReceiverList
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtParameterList
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 
 object ContextParameterUtils {
     /**
@@ -26,8 +21,7 @@ object ContextParameterUtils {
         if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
         val contextParameterList = ktParameter.parent as? KtContextReceiverList ?: return false
         val contextParameterListOwner = contextParameterList.ownerDeclaration
-        // Change Signature support for context properties is required KTIJ-34042
-        if (contextParameterListOwner !is KtNamedFunction) return false
+        if (contextParameterListOwner !is KtCallableDeclaration) return false
         if (contextParameterListOwner.isOpenAbstractOrOverride()) return false
 
         return true
@@ -36,7 +30,7 @@ object ContextParameterUtils {
     fun isValueParameterConvertibleToContext(ktParameter: KtParameter): Boolean {
         if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
         val valueParameterList = ktParameter.parent as? KtParameterList ?: return false
-        val owner = valueParameterList.ownerFunction as? KtNamedFunction ?: return false
+        val owner = valueParameterList.ownerFunction as? KtCallableDeclaration ?: return false
         if (owner.isOpenAbstractOrOverride()) return false
 
         return true
@@ -47,10 +41,10 @@ object ContextParameterUtils {
      * The Change Signature refactoring runs with this info if [configureChangeInfo] returns `true`.
      */
     fun runChangeSignatureForParameter(element: KtParameter, configureChangeInfo: (KotlinChangeInfo) -> Boolean) {
-        val ktFunction = element.getStrictParentOfType<KtNamedFunction>() ?: return
-        val methodDescriptor = KotlinMethodDescriptor(ktFunction)
+        val ktCallable = element.getStrictParentOfType<KtCallableDeclaration>() ?: return
+        val methodDescriptor = KotlinMethodDescriptor(ktCallable)
         val changeInfo = KotlinChangeInfo(methodDescriptor)
-        configureChangeInfo(changeInfo).ifFalse { return }
+        if (!configureChangeInfo(changeInfo)) return
         KotlinChangeSignatureProcessor(element.project, changeInfo).also {
             it.prepareSuccessfulSwingThreadCallback = Runnable { }
         }.run()
@@ -71,6 +65,20 @@ object ContextParameterUtils {
         changeInfo.getNonReceiverParameters().find {
             !it.isContextParameter && it.oldName == ktParameter.name
         }
+
+    /**
+     * Utility for getting context parameters from a callable declaration.
+     * Returns the list of context parameters if the declaration is a function or a property with context parameters, and null otherwise.
+     *
+     * The utility mitigates the awkward declaration of context parameters in the Kotlin PSI hierarchy.
+     */
+    fun KtCallableDeclaration.getContextParameters(): List<KtParameter>? {
+        return when (this) {
+            is KtNamedFunction -> contextReceiverList?.contextParameters()
+            is KtProperty -> contextReceiverList?.contextParameters()
+            else -> null
+        }
+    }
 
     // to avoid overrides and overridable declarations KTIJ-34463
     private fun KtDeclaration.isOpenAbstractOrOverride(): Boolean =

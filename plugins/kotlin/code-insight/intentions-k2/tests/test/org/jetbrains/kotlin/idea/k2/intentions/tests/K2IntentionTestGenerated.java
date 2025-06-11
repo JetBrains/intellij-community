@@ -14193,6 +14193,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("contextProperty.kt")
+            public void testContextProperty() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextProperty.kt");
+            }
+
             @TestMetadata("contextUsage1.kt")
             public void testContextUsage1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextUsage1.kt");
@@ -14386,6 +14391,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/contextMemberExtensionFunCallInBody.kt");
             }
 
+            @TestMetadata("contextValPropertyWithReceiver.kt")
+            public void testContextValPropertyWithReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/contextValPropertyWithReceiver.kt");
+            }
+
             @TestMetadata("explicitExtensionArgument.kt")
             public void testExplicitExtensionArgument() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/explicitExtensionArgument.kt");
@@ -14424,6 +14434,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("memberFunCallInBody.kt")
             public void testMemberFunCallInBody() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/memberFunCallInBody.kt");
+            }
+
+            @TestMetadata("valPropertyWithReceiver.kt")
+            public void testValPropertyWithReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/valPropertyWithReceiver.kt");
+            }
+
+            @TestMetadata("varPropertyWithReceiver.kt")
+            public void testVarPropertyWithReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/varPropertyWithReceiver.kt");
             }
 
             @TestMetadata("withAnotherContextBefore.kt")
