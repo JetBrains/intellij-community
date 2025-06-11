@@ -75,9 +75,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
     return panel {
       showPreviewUnavailableWarningIfNeeded()
       previewDependentOptionsBlock {
-        if (MarkdownHtmlPanelProvider.getAvailableProviders().size > 1) {
-          htmlPanelProvidersRow()
-        }
+        htmlPanelProvidersRow(MarkdownHtmlPanelProvider.getAvailableProviders())
         row(MarkdownBundle.message("markdown.settings.default.layout")) {
           comboBox(
             model = EnumComboBoxModel(TextEditorWithPreview.Layout::class.java),
@@ -150,10 +148,13 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
     publisher.extensionsSettingsChanged(fromSettingsDialog = true)
   }
 
-  private fun Panel.htmlPanelProvidersRow(): Row {
+  private fun Panel.htmlPanelProvidersRow(availableProviders: List<MarkdownHtmlPanelProvider>): Row {
+    // guaranteed by MarkdownSettingsConfigurable.previewDependentOptionsBlock
+    require(availableProviders.isNotEmpty())
     return row(MarkdownBundle.message("markdown.settings.preview.providers.label")) {
-      val providers = MarkdownHtmlPanelProvider.getProviders().map { it.providerInfo }
-      comboBox(model = DefaultComboBoxModel(providers.toTypedArray()))
+      val providerInfos = availableProviders.map { it.providerInfo }
+      comboBox(model = DefaultComboBoxModel(providerInfos.toTypedArray()))
+        .enabled(availableProviders.size > 1)
         .bindItem(settings::previewPanelProviderInfo.toNullableProperty())
         .widthGroup(comboBoxWidthGroup)
     }
