@@ -22,6 +22,7 @@ interface ExternalProject {
   val name: String
   val root: Path
   val dependencies: List<ExternalProjectDependency>
+  val sourceRoots: List<Path>
 
   /**
    * The colon separated fully qualified name of the project in the form `root:subproject:subsubproject` 

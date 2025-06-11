@@ -117,10 +117,9 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
           dependencies += ModuleDependency(ModuleId(moduleName.name), true, DependencyScope.COMPILE, false)
         }
         contentRoots = listOf(ContentRootEntity(extProject.root.toVirtualFileUrl(fileUrlManager), emptyList(), source) {
-          sourceRoots = listOf(SourceRootEntity(
-            url = (extProject.root / "src").toVirtualFileUrl(fileUrlManager),
-            rootTypeId = PYTHON_SOURCE_ROOT_TYPE,
-            entitySource = source))
+          sourceRoots = extProject.sourceRoots.map { srcRoot ->
+            SourceRootEntity(srcRoot.toVirtualFileUrl(fileUrlManager), PYTHON_SOURCE_ROOT_TYPE, source)
+          }
         })
         exModuleOptions = ExternalSystemModuleOptionsEntity(source) {
           externalSystem = systemName          

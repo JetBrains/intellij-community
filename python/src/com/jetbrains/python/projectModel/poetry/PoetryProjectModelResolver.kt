@@ -15,6 +15,9 @@ data class PoetryProject(
   override val root: Path,
   override val dependencies: List<ExternalProjectDependency>,
 ) : ExternalProject {
+  override val sourceRoots: List<Path>
+    get() = listOfNotNull((root / "src").takeIf { it.isDirectory() })
+
   // Poetry projects don't have any declarative hierarchical structure
   override val fullName: String? 
     get() = name

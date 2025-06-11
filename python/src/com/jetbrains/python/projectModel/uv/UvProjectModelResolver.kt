@@ -12,6 +12,7 @@ import java.nio.file.FileVisitResult
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import kotlin.io.path.*
+import kotlin.io.path.isDirectory
 
 private const val DEFAULT_VENV_DIR = ".venv"
 
@@ -22,7 +23,10 @@ data class UvProject(
   override val fullName: String?,
   val isWorkspace: Boolean,
   val parentWorkspace: UvProject?,
-) : ExternalProject
+) : ExternalProject {
+  override val sourceRoots: List<Path>
+    get() = listOfNotNull((root / "src").takeIf { it.isDirectory() })
+}
 
 private data class UvPyProjectToml(
   val projectName: String,
