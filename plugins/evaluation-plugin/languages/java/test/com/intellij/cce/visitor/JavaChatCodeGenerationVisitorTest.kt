@@ -10,6 +10,8 @@ import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import kotlinx.coroutines.test.runTest
+import kotlin.io.path.Path
+import kotlin.io.path.relativeTo
 
 
 class JavaChatCodeGenerationVisitorTest : LightJavaCodeInsightFixtureTestCase() {
@@ -75,12 +77,16 @@ class JavaChatCodeGenerationVisitorTest : LightJavaCodeInsightFixtureTestCase() 
       mapOf(
         METHOD_NAME_PROPERTY to "myMethod",
         INTERNAL_API_CALLS_PROPERTY to "SuperClass#foo",
-        INTERNAL_RELEVANT_FILES_PROPERTY to "../../../../../../../src/MyClass.java",
+        INTERNAL_RELEVANT_FILES_PROPERTY to psiFile.projectRelativePath(),
         EXTERNAL_API_CALLS_PROPERTY to "",
       )
     )
     val actualAdditionalProperties = visitor.getFile().extractAdditionalProperties()
     assertEquals(expectedAdditionalProperties, actualAdditionalProperties)
+  }
+
+  private fun PsiFile.projectRelativePath(): String {
+    return Path(this.virtualFile.path).relativeTo(Path(project.basePath!!)).toString()
   }
 
   private fun prepareFileWithExternalApiCall(): PsiFile {
