@@ -78,8 +78,6 @@ internal class UndoDumpUnit(
   }
 
   private fun printDocs(docs: Collection<DocumentReference>): String {
-    return docs.joinToString(", ", "[", "]") { d ->
-      d.document?.toString() ?: "null"
-    }
+    return docs.joinToString(", ", "[", "]")
   }
 }

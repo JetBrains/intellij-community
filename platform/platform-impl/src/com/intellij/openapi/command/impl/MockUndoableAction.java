@@ -6,14 +6,14 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
 
 
 @ApiStatus.Experimental
 final class MockUndoableAction extends BasicUndoableAction {
   private final boolean isGlobal;
 
-  MockUndoableAction(@NotNull List<DocumentReference> docRefs, boolean isGlobal) {
+  MockUndoableAction(@NotNull Collection<? extends DocumentReference> docRefs, boolean isGlobal) {
     super(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
     this.isGlobal = isGlobal;
   }

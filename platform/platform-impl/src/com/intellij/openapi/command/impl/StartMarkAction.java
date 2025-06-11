@@ -24,15 +24,15 @@ public final class StartMarkAction extends BasicUndoableAction {
   private boolean myGlobal;
   private Document myDocument;
 
-  StartMarkAction(Document document, @NlsContexts.Command String commandName, boolean isGlobal) {
-    super(DocumentReferenceManager.getInstance().create(document));
+  StartMarkAction(@NotNull DocumentReference docRef, @NlsContexts.Command String commandName, boolean isGlobal) {
+    super(docRef);
     myCommandName = commandName;
-    myDocument = document;
+    myDocument = docRef.getDocument();
     myGlobal = isGlobal;
   }
 
-  private StartMarkAction(Editor editor, @NlsContexts.Command String commandName) {
-    this(editor.getDocument(), commandName, false);
+  private StartMarkAction(@NotNull Editor editor, @NlsContexts.Command String commandName) {
+    this(DocumentReferenceManager.getInstance().create(editor.getDocument()), commandName, false);
   }
 
   @Override

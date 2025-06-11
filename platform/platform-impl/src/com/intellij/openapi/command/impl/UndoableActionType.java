@@ -3,15 +3,12 @@ package com.intellij.openapi.command.impl;
 
 
 import com.intellij.openapi.command.undo.*;
-import com.intellij.openapi.editor.Document;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 
 
 @Experimental
@@ -22,22 +19,23 @@ public enum UndoableActionType {
   MENTION_ONLY,
   EDITOR_CHANGE,
   NON_UNDOABLE,
+  GLOBAL,
   OTHER,
   ;
 
-  public static @Nullable UndoableAction getAction(@NotNull String actionType, @NotNull Collection<? extends Document> docs, boolean isGlobal) {
+  public static @Nullable UndoableAction getAction(@NotNull String actionType, @NotNull Collection<? extends DocumentReference> docRefs, boolean isGlobal) {
     UndoableActionType type = valueOf(actionType);
-    List<DocumentReference> docRefs = ContainerUtil.map(docs, d -> DocumentReferenceManager.getInstance().create(d));
     return switch (type) {
-      case START_MARK -> new StartMarkAction(docs.iterator().next(), "", isGlobal);
-      case FINISH_MARK -> new FinishMarkAction(docRefs.get(0), isGlobal);
+      case START_MARK -> new StartMarkAction(docRefs.stream().iterator().next(), "", isGlobal);
+      case FINISH_MARK -> new FinishMarkAction(docRefs.stream().iterator().next(), isGlobal);
       case MENTION_ONLY -> new MentionOnlyUndoableAction(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
       case EDITOR_CHANGE -> null;
       case NON_UNDOABLE -> {
         yield docRefs.isEmpty()
-              ? null
-              : new NonUndoableAction(docRefs.get(0), isGlobal);
+              ? null // TODO: possibly outdated, docRefs.isEmpty() is still the case?
+              : new NonUndoableAction(docRefs.stream().iterator().next(), isGlobal);
       }
+      case GLOBAL -> new MockGlobalUndoableAction(docRefs);
       case OTHER -> new MockUndoableAction(docRefs, isGlobal);
     };
   }
@@ -57,6 +55,9 @@ public enum UndoableActionType {
     }
     if (action instanceof NonUndoableAction) {
       return NON_UNDOABLE;
+    }
+    if (action instanceof GlobalUndoableAction) {
+      return GLOBAL;
     }
     return OTHER;
   }
