@@ -183,7 +183,7 @@ a:com.intellij.openapi.options.NonLazySchemeProcessor
 - com.intellij.openapi.options.SchemeProcessor
 - <init>():V
 - a:readScheme(org.jdom.Element,Z):com.intellij.openapi.options.Scheme
-a:com.intellij.openapi.options.SchemeManager
+Fa:com.intellij.openapi.options.SchemeManager
 - <init>():V
 - f:addScheme(java.lang.Object):V
 - a:addScheme(java.lang.Object,Z):V
@@ -197,8 +197,8 @@ a:com.intellij.openapi.options.SchemeManager
 - isEmpty():Z
 - a:isMetadataEditable(java.lang.Object):Z
 - a:loadSchemes():java.util.Collection
-- f:reload():V
-- a:reload(kotlin.jvm.functions.Function1):V
+- a:reload():V
+- reload(kotlin.jvm.functions.Function1):V
 - a:removeScheme(java.lang.Object):Z
 - a:removeScheme(java.lang.String):java.lang.Object
 - a:save():V
