@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -37,10 +38,12 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull EventLogMetadataLoader myMetadataLoader;
   private final @NotNull AtomicBoolean myIsInitialized;
+  private final @NotNull AtomicBoolean myIsDictionaryStorageInitialized;
   private final @NotNull EventLogSystemCollector eventLogSystemCollector;
 
   ValidationRulesPersistedStorage(@NotNull String recorderId) {
     myIsInitialized = new AtomicBoolean(false);
+    myIsDictionaryStorageInitialized = new AtomicBoolean(false);
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
@@ -54,6 +57,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
                                             @NotNull EventLogMetadataPersistence persistence,
                                             @NotNull EventLogMetadataLoader loader) {
     myIsInitialized = new AtomicBoolean(false);
+    myIsDictionaryStorageInitialized = new AtomicBoolean(false);
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myMetadataPersistence = persistence;
@@ -104,6 +108,11 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   public void update() {
     EventLogConfigOptionsService.getInstance().updateOptions(myRecorderId, myMetadataLoader);
 
+    updateMetadata();
+    updateDictionaries();
+  }
+
+  private void updateMetadata() {
     long lastModifiedLocally = myMetadataPersistence.getLastModified();
     long lastModifiedOnServer = myMetadataLoader.getLastModifiedOnServer();
     if (LOG.isTraceEnabled()) {
@@ -131,7 +140,9 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     catch (EventLogMetadataLoadException | EventLogMetadataParseException e) {
       eventLogSystemCollector.logMetadataUpdateFailed(e);
     }
+  }
 
+  private void updateDictionaries() {
     var dictionariesLastModifiedLocally = myMetadataPersistence.getDictionariesLastModified();
     var dictionariesLastModifiedOnServer = myMetadataLoader.getDictionariesLastModifiedOnServer(myRecorderId);
     if (LOG.isTraceEnabled()) {
@@ -142,6 +153,11 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     }
 
     DictionaryStorage dictionaryStorage = getDictionaryStorage();
+    if (dictionaryStorage == null) {
+      // no need to log error here because error has been logged in getDictionaryStorage()
+      return;
+    }
+
     for(Map.Entry<String, Long> dictionarylastModifiedOnServerEntry : dictionariesLastModifiedOnServer.entrySet()) {
       try {
         String dictionaryName = dictionarylastModifiedOnServerEntry.getKey();
@@ -152,10 +168,16 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
           dictionaryStorage.updateDictionaryByName(dictionaryName, rawDictionary.getBytes(StandardCharsets.UTF_8));
           myMetadataPersistence.setDictionaryLastModified(dictionarylastModifiedOnServerEntry.getKey(), dictionaryLastModifiedOnServer);
 
-          //TODO: send FUS logs
+          eventLogSystemCollector.logDictionaryUpdated(dictionaryLastModifiedOnServer);
         }
       } catch(Exception e) {
-        // TODO: log error via FUS
+        if (e instanceof EventLogMetadataLoadException) {
+          eventLogSystemCollector.logDictionaryUpdateFailed((EventLogMetadataLoadException)e);
+        } else {
+          eventLogSystemCollector.logDictionaryUpdateFailed(new EventLogMetadataLoadException(
+            EventLogMetadataLoadException.EventLogMetadataLoadErrorType.UNKNOWN_IO_ERROR, e
+          ));
+        }
       }
     }
   }
@@ -176,8 +198,19 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   }
 
   @Override
-  public @NotNull DictionaryStorage getDictionaryStorage() {
-    return myMetadataPersistence.getDictionaryStorage();
+  public @Nullable DictionaryStorage getDictionaryStorage() {
+    if (!myIsDictionaryStorageInitialized.getAndSet(true)) {
+      eventLogSystemCollector.logDictionariesLoaded();
+    }
+
+    try {
+      return myMetadataPersistence.getDictionaryStorage();
+    } catch (IOException e) {
+      eventLogSystemCollector.logDictionariesLoadFailed(new EventLogMetadataLoadException(
+        EventLogMetadataLoadException.EventLogMetadataLoadErrorType.UNKNOWN_IO_ERROR, e)
+      );
+      return null;
+    }
   }
 
   public static @NotNull Map<String, EventGroupRules> createValidators(@Nullable EventLogBuild build,

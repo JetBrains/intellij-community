@@ -52,8 +52,8 @@ public final class EventLogTestMetadataPersistence extends BaseEventLogMetadataP
   }
 
   @Override
-  public DictionaryStorage getDictionaryStorage() {
-    // TODO: create test path with dictionaries and initialize dictionary storage
+  public DictionaryStorage getDictionaryStorage() throws IOException {
+    // no dictionary storage required for test metadata persistence as of now
     return null;
   }
 

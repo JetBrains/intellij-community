@@ -28,7 +28,7 @@ public abstract class BaseEventLogMetadataPersistence {
 
   public abstract @Nullable String getCachedEventsScheme();
 
-  public abstract DictionaryStorage getDictionaryStorage();
+  public abstract DictionaryStorage getDictionaryStorage() throws IOException;
 
   public static Path getDefaultMetadataFile(@NotNull String recorderId,
                                             @NotNull String fileName,

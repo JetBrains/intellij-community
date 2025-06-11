@@ -162,8 +162,8 @@ class ValidationRulesStorageUpdateTest : UsefulTestCase() {
       withServerLastModified(1).
       build()
     doTest(storage)
-    val dictionary = storage.dictionaryStorage.getDictionaryByName("cached_dictionary_is_newer_than_server.cached.ndjson")
-    assertTrue(dictionary.contains("value5"))
+    val dictionary = storage.dictionaryStorage?.getDictionaryByName("cached_dictionary_is_newer_than_server.cached.ndjson")
+    assertTrue(dictionary?.contains("value5") ?: false)
   }
 
   fun test_cached_dictionary_is_older_than_server() {
@@ -172,7 +172,7 @@ class ValidationRulesStorageUpdateTest : UsefulTestCase() {
       withServerLastModified(1583852308336).
       build()
     doTest(storage)
-    val dictionary = storage.dictionaryStorage.getDictionaryByName("cached_dictionary_is_older_than_server.cached.ndjson")
-    assertFalse(dictionary.contains("value5"))
+    val dictionary = storage.dictionaryStorage?.getDictionaryByName("cached_dictionary_is_older_than_server.cached.ndjson")
+    assertFalse(dictionary?.contains("value5") ?: true)
   }
 }

@@ -122,7 +122,11 @@ public final class ValidationTestRulesPersistedStorage implements IntellijValida
 
   @Override
   public @Nullable DictionaryStorage getDictionaryStorage() {
-    return myTestMetadataPersistence.getDictionaryStorage();
+    try {
+      return myTestMetadataPersistence.getDictionaryStorage();
+    } catch (IOException e) {
+      return null;
+    }
   }
 
   private static @Nullable GroupRemoteRule merge(@Nullable GroupRemoteRule testRules, @Nullable GroupRemoteRule productionTestRules) {

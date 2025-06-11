@@ -229,28 +229,23 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
 
   // has to be synchronized in case dictionary update and first validation run at the same time
   @Override
-  public synchronized DictionaryStorage getDictionaryStorage() {
+  public synchronized DictionaryStorage getDictionaryStorage() throws IOException {
     if (dictionaryStorage != null) {
       return dictionaryStorage;
     }
-    try {
-      Path dictionariesDir;
+    Path dictionariesDir;
 
-      EventsSchemePathSettings settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(myRecorderId);
-      if (settings != null && settings.isUseCustomPath()) {
-        dictionariesDir = Path.of(settings.getCustomPath()).getParent().resolve(DICTIONARIES_DIR);
-      }
-      else {
-        dictionariesDir = getDefaultDictionariesDir();
-        initDictionaries(dictionariesDir);
-      }
+    EventsSchemePathSettings settings = EventLogMetadataSettingsPersistence.getInstance().getPathSettings(myRecorderId);
+    if (settings != null && settings.isUseCustomPath()) {
+      dictionariesDir = Path.of(settings.getCustomPath()).getParent().resolve(DICTIONARIES_DIR);
+    }
+    else {
+      dictionariesDir = getDefaultDictionariesDir();
+      initDictionaries(dictionariesDir);
+    }
 
-      dictionaryStorage = new SimpleDictionaryStorage(dictionariesDir.toFile(), Dictionary.AccessMode.RANDOM_FILE_ACCESS);
-      return dictionaryStorage;
-    }
-    catch (IOException e) {
-      return null;
-    }
+    dictionaryStorage = new SimpleDictionaryStorage(dictionariesDir.toFile(), Dictionary.AccessMode.RANDOM_FILE_ACCESS);
+    return dictionaryStorage;
   }
 
   private void initDictionaries(@NotNull Path dictionariesDir) throws IOException {
