@@ -906,7 +906,13 @@ Function updatePathEnvVar
     Return
   ${EndIf}
 
-  WriteRegExpandStr HKCU "Environment" "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
+  ${If} $pathEnvVar != ""
+    StrCpy $R0 $pathEnvVar 1 -1
+    ${If} $R0 != ';'
+      StrCpy $pathEnvVar "$pathEnvVar;"
+    ${EndIf}
+  ${EndIf}
+  WriteRegExpandStr HKCU "Environment" "Path" "$pathEnvVar%${MUI_PRODUCT}%"
   ${If} ${Errors}
     ${LogText} "  ERROR: cannot write the 'Path' env var"
     Return
