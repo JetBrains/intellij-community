@@ -27,10 +27,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
   private static final boolean FORCE_USE_SOFTWARE_RENDERING;
 
   static {
-    if (SystemInfoRt.isMac || SystemInfoRt.isLinux)
-      FORCE_USE_SOFTWARE_RENDERING = Boolean.getBoolean("jcef.remote.use_software_rendering");
-    else
-      FORCE_USE_SOFTWARE_RENDERING = !Boolean.getBoolean("jcef.remote.enable_hardware_rendering"); // NOTE: temporary enabled until fixed IJPL-161293
+    FORCE_USE_SOFTWARE_RENDERING = !Boolean.getBoolean("jcef.remote.enable_hardware_rendering"); // NOTE: temporary enabled until fixed IJPL-161293, IJPL-182455
   }
 
   private final SharedMemoryCache mySharedMemCache = new SharedMemoryCache();
