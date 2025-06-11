@@ -4,27 +4,21 @@ package com.intellij.platform.searchEverywhere.backend.providers.target
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper.ItemWithPresentation
-import com.intellij.ide.actions.searcheverywhere.ScopeChooserAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
-import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.platform.searchEverywhere.*
+import com.intellij.platform.searchEverywhere.backend.providers.ScopeChooserActionProviderDelegate
 import com.intellij.platform.searchEverywhere.providers.*
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilter
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
-import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
-import com.intellij.platform.searchEverywhere.utils.suspendLazy
 import com.intellij.psi.codeStyle.NameUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
-import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 
@@ -42,16 +36,14 @@ class SeTargetItem(val legacyItem: ItemWithPresentation<*>,
 @OptIn(ExperimentalAtomicApi::class)
 @Internal
 class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedContributorWrapper<Any>) {
-  @Volatile
-  private var scopeIdToScope: AtomicReference<Map<String, ScopeDescriptor>> = AtomicReference(emptyMap())
-  val searchScopesInfo: SuspendLazyProperty<SeSearchScopesInfo?> = suspendLazy { getSearchScopesInfo() }
+  private val scopeProviderDelegate = ScopeChooserActionProviderDelegate(contributorWrapper)
 
   suspend fun <T> collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val inputQuery = params.inputQuery
     val defaultMatchers = createDefaultMatchers(inputQuery)
 
     val scopeToApply: String? = SeEverywhereFilter.isEverywhere(params.filter)?.let { isEverywhere ->
-      searchScopesInfo.getValue()?.let { searchScopesInfo ->
+      scopeProviderDelegate.searchScopesInfo.getValue()?.let { searchScopesInfo ->
         if (isEverywhere) searchScopesInfo.everywhereScopeId else searchScopesInfo.projectScopeId
       }
     } ?: run {
@@ -106,55 +98,11 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
   }
 
   private fun applyScope(scopeId: String?) {
-    if (scopeId == null) return
-    val scope = scopeIdToScope.load()[scopeId] ?: return
-
-    contributorWrapper.contributor.getActions { }.filterIsInstance<ScopeChooserAction>().firstOrNull()?.onScopeSelected(scope)
+    scopeProviderDelegate.applyScope(scopeId)
   }
 
-  private suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
-    val contributor = contributorWrapper.contributor
-    val scopeChooserAction: ScopeChooserAction = contributor.getActions({ }).filterIsInstance<ScopeChooserAction>().firstOrNull()
-                                                 ?: return null
-
-    val all = mutableMapOf<String, ScopeDescriptor>()
-    val selectedScope = scopeChooserAction.selectedScope
-
-    val scopeDataList = readAction {
-      scopeChooserAction.scopesWithSeparators
-    }.mapNotNull { scope ->
-      val key = UUID.randomUUID().toString()
-      val data = SeSearchScopeData.from(scope, key)
-      if (data != null) all[key] = scope
-      data
-    }
-    scopeIdToScope.store(all)
-
-    val selectedScopeId = selectedScope.scope?.displayName.let { name ->
-      scopeDataList.firstOrNull {
-        @Suppress("HardCodedStringLiteral")
-        it.name == name
-      }?.scopeId
-    }
-
-    val everywhereScopeId = scopeChooserAction.everywhereScopeName?.let { name ->
-      scopeDataList.firstOrNull {
-        @Suppress("HardCodedStringLiteral")
-        it.name == name
-      }?.scopeId
-    }
-
-    val projectScopeId = scopeChooserAction.projectScopeName?.let { name ->
-      scopeDataList.firstOrNull {
-        @Suppress("HardCodedStringLiteral")
-        it.name == name
-      }?.scopeId
-    }
-
-    return SeSearchScopesInfo(scopeDataList,
-                              selectedScopeId,
-                              projectScopeId,
-                              everywhereScopeId)
+  suspend fun getSearchScopesInfo(): SeSearchScopesInfo? {
+    return scopeProviderDelegate.searchScopesInfo.getValue()
   }
 
   fun <T> getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> {

@@ -28,6 +28,8 @@ jvm_library(
     "//platform/usageView",
     "//platform/util/text-matching",
     "//platform/execution-impl",
+    "//platform/refactoring",
+    "//platform/indexing-api:indexing",
   ],
   runtime_deps = [
     ":backend_resources",

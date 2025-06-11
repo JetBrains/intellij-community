@@ -36,7 +36,7 @@ class SeFilesProvider(private val contributorWrapper: SeAsyncWeightedContributor
     Disposer.dispose(contributorWrapper)
   }
 
-  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.searchScopesInfo.getValue()
+  override suspend fun getSearchScopesInfo(): SeSearchScopesInfo? = targetsProviderDelegate.getSearchScopesInfo()
 
   override suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> =
     targetsProviderDelegate.getTypeVisibilityStates<FileTypeRef>(index)

@@ -26,13 +26,13 @@ import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
 @ApiStatus.Internal
-class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnAction(), CustomComponentAction {
+class JComboboxAction(val project: Project, val onChanged: (String?) -> Unit) : AnAction(), CustomComponentAction {
   private val latestMaskProperty: AtomicProperty<String?> = AtomicProperty(FindSettings.getInstance().fileMask)
   private var latestMask: String? by latestMaskProperty
   val saveMask: () -> Unit = { FindSettings.getInstance().fileMask = latestMask }
 
   override fun createCustomComponent(presentation: Presentation, place: String): ComboboxActionComponent =
-    ComboboxActionComponent(project, latestMaskProperty) { onChanged() }.also { it.isEditable = true }
+    ComboboxActionComponent(project, latestMaskProperty) { onChanged(it) }.also { it.isEditable = true }
 
   override fun actionPerformed(e: AnActionEvent) {}
 
@@ -47,13 +47,14 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
 
   class ComboboxActionComponent(project: Project,
                                 private val latestMaskProperty: AtomicProperty<String?>,
-                                private val onChanged: () -> Unit) :
+                                private val onChanged: (String?) -> Unit) :
     ComboBox<String>(FindSettings.getInstance().recentFileMasks.reversed().toTypedArray()) {
     private val findModel = FindManager.getInstance(project).findInProjectModel
     private val rebuild = {
-      latestMaskProperty.set(getNormalizedText())
-      findModel.fileFilter = getNormalizedText()
-      onChanged()
+      val normalizedText = getNormalizedText()
+      latestMaskProperty.set(normalizedText)
+      findModel.fileFilter = normalizedText
+      onChanged(normalizedText)
     }
 
     init {
