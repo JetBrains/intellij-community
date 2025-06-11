@@ -119,20 +119,24 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
 
     val all = mutableMapOf<String, ScopeDescriptor>()
     val selectedScope = scopeChooserAction.selectedScope
-    var selectedScopeId: String? = null
 
     val scopeDataList = readAction {
       scopeChooserAction.scopesWithSeparators
     }.mapNotNull { scope ->
       val key = UUID.randomUUID().toString()
-      if (selectedScope.scopeEquals(scope.scope)) selectedScopeId = key
-
       val data = SeSearchScopeData.from(scope, key)
       if (data != null) all[key] = scope
       data
     }
-
     scopeIdToScope.store(all)
+
+    val selectedScopeId = selectedScope.scope?.displayName.let { name ->
+      scopeDataList.firstOrNull {
+        @Suppress("HardCodedStringLiteral")
+        it.name == name
+      }?.scopeId
+    }
+
     val everywhereScopeId = scopeChooserAction.everywhereScopeName?.let { name ->
       scopeDataList.firstOrNull {
         @Suppress("HardCodedStringLiteral")
