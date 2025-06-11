@@ -282,6 +282,18 @@ class PluginModelValidator(
       checkDependencies(descriptor.dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo,
                         registeredContentModules)
 
+      val duplicateContentModules = pluginInfo.content.groupBy { it.name }.filter { it.value.size > 1 }.keys
+      if (duplicateContentModules.isNotEmpty()) {
+        reportError(
+          "Plugin '${pluginInfo.pluginId}' has duplicated content modules declarations: ${duplicateContentModules.joinToString()}",
+          pluginInfo.sourceModule,
+          mapOf(
+            "descriptorFile" to pluginInfo.descriptorFile,
+            "duplicateContentModules" to duplicateContentModules.joinToString(),
+          ),
+        )
+      }
+
       for (contentModuleInfo in pluginInfo.content) {
         checkDependencies(
           dependenciesElements = contentModuleInfo.descriptor.dependencies,
