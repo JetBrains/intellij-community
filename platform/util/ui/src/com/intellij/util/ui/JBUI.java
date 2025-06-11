@@ -1932,11 +1932,11 @@ public final class JBUI {
     public static final class Tooltip {
       public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("ToolTip.borderCornerRadius", 4);
 
-      private static final @NotNull Color SEPARATOR_COLOR = JBColor.namedColor("Tooltip.separatorColor", 0xd1d1d1, 0x545658);
-      private static final @NotNull Color FOREGROUND = JBColor.namedColor("Tooltip.foreground", new JBColor(Gray.x00, Gray.xBF));
-      private static final @NotNull Color BACKGROUND = JBColor.namedColor("Tooltip.background", new JBColor(Gray.xF2, new Color(0x3c3f41)));
+      private static final @NotNull Color SEPARATOR_COLOR = JBColor.namedColor("ToolTip.separatorColor", 0xd1d1d1, 0x545658);
+      private static final @NotNull Color FOREGROUND = JBColor.namedColor("ToolTip.foreground", new JBColor(Gray.x00, Gray.xBF));
+      private static final @NotNull Color BACKGROUND = JBColor.namedColor("ToolTip.background", new JBColor(Gray.xF2, new Color(0x3c3f41)));
       private static final @NotNull Color GRAYED_FOREGROUND =
-        JBColor.namedColor("Tooltip.grayedForeground", new JBColor(
+        JBColor.namedColor("ToolTip.grayedForeground", new JBColor(
           JBColor.namedColor("ColorPalette.Gray7", Gray.x90),
           JBColor.namedColor("ColorPalette.Gray8", Gray.x90))
         );
