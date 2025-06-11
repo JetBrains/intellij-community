@@ -5,6 +5,7 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -12,8 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 interface RemoteManagedCacheApi : RemoteApi<Unit> {
   suspend fun get(cacheId: CacheId, key: Int): RemoteManagedCacheValueDto?
   suspend fun put(cacheId: CacheId, key: Int, value: RemoteManagedCacheValueDto?)
-  // Used for linearization on project load
-  suspend fun create(cacheId: CacheId)
+  // Used for linearization on creation & pre-fetching
+  suspend fun createPrefetchFlow(cacheId: CacheId): Flow<PrefetchedRemoteCacheValue>
 
   companion object {
     suspend fun getInstance(): RemoteManagedCacheApi {

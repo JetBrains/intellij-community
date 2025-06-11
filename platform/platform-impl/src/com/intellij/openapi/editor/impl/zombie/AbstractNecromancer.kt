@@ -31,7 +31,7 @@ abstract class WeakNecromancer(name: String) : AbstractNecromancer<Nothing>(name
   final override suspend fun buryZombie(id: Int, zombie: FingerprintedZombie<Nothing>?) = Unit
   final override suspend fun exhumeZombie(id: Int) = null
   final override suspend fun spawnZombie(recipe: SpawnRecipe, zombie: Nothing?) = spawn(recipe)
-  final override suspend fun prefetchGraves(id: Int) = Unit
+  final override suspend fun ensureReady(id: Int) = Unit
 }
 
 /**
@@ -61,9 +61,8 @@ abstract class GravingNecromancer<Z : Zombie>(
     return grave.exhumeZombie(id)
   }
 
-  final override suspend fun prefetchGraves(id: Int) {
-    val fetched = exhumeZombie(id) ?: return
-    grave.buryZombie(id, fetched)
+  final override suspend fun ensureReady(id: Int) {
+    grave.ensureReady(id)
   }
 }
 

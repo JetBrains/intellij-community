@@ -64,7 +64,7 @@ interface Necromancer<Z : Zombie> {
   /**
    * Try to prefetch the zombie content from the grave. Suitable for that necromancers that could use local cache. Called on BGT
    */
-  suspend fun prefetchGraves(id: Int)
+  suspend fun ensureReady(id: Int)
 
   /**
    * Determines whether the zombie should be applied to the editor.
@@ -133,6 +133,7 @@ interface Necromancy<Z : Zombie> {
 interface Grave<Z : Zombie> {
   suspend fun buryZombie(id: Int, zombie: FingerprintedZombie<Z>?)
   suspend fun exhumeZombie(id: Int): FingerprintedZombie<Z>?
+  suspend fun ensureReady(id: Int)
 }
 
 data class TurningRecipe(

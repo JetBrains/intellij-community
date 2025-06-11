@@ -23,6 +23,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.FileIdAdapter
+import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -38,6 +39,16 @@ private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.
 @ApiStatus.Internal
 fun necropolisPath(): Path {
   return PathManager.getSystemDir().resolve("editor")
+}
+
+@ApiStatus.Internal
+fun necropolisCacheNameAndPath(graveName: String, project: Project): Pair<String, Path> {
+  // IJPL-157893 the cache should survive project renaming
+  val projectName = project.getProjectCacheFileName(hashSeparator="-")
+  val projectPath = necropolisPath().resolve(projectName)
+  val cacheName = "$graveName-$projectName" // name should be unique across the application
+  val cachePath = projectPath.resolve(graveName).resolve(graveName)
+  return cacheName to cachePath
 }
 
 /**
@@ -66,7 +77,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
   }
 
   @ApiStatus.Internal
-  suspend fun prefetchZombies(
+  suspend fun ensureReady(
     project: Project,
     file: VirtualFile,
   ) {
@@ -77,7 +88,7 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
         for (necromancer in necromancersDeferred.await()) {
           launch {
             LOG.runAndLogException {
-              necromancer.prefetchGraves(fileId)
+              necromancer.ensureReady(fileId)
             }
           }
         }
