@@ -1526,8 +1526,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myEnableDisableButton!!.isVisible = false
     }
     restartButton!!.isVisible = isPluginAvailable && showRestart
-
-    if (!showRestart && InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(descriptorForActions!!.pluginId)) {
+    val state = UiPluginManager.getInstance().getPluginInstallationState(descriptorForActions!!.pluginId)
+    if (!showRestart && state.status == PluginStatus.UNINSTALLED_WITHOUT_RESTART) {
       installButton!!.setVisible(true)
       installButton!!.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"))
     }
@@ -1671,10 +1671,11 @@ private fun updateUrlComponent(panel: LinkPanel?, messageKey: String, url: Strin
 private fun getDeletedState(pluginUiModel: PluginUiModel): BooleanArray {
   val pluginId = pluginUiModel.pluginId
   var uninstalled = pluginUiModel.isDeleted
-  val uninstalledWithoutRestart = InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)
+
+  val state = UiPluginManager.getInstance().getPluginInstallationState(pluginId)
+  val uninstalledWithoutRestart = state.status == PluginStatus.UNINSTALLED_WITHOUT_RESTART
   if (!uninstalled) {
-    val pluginsState = InstalledPluginsState.getInstance()
-    uninstalled = pluginsState.wasInstalled(pluginId) || pluginsState.wasUpdated(pluginId)
+    uninstalled = state.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART || state.status == PluginStatus.UPDATED
   }
 
   return booleanArrayOf(uninstalled, uninstalledWithoutRestart)
