@@ -80,6 +80,8 @@ fun <T> Flow<T>.launchNowIn(scope: CoroutineScope, context: CoroutineContext = E
     collect()
   }
 
+fun <T> stateFlowOf(value: T): StateFlow<T> = MutableStateFlow(value).asStateFlow()
+
 @ApiStatus.Experimental
 fun <T1, T2, R> combineState(
   scope: CoroutineScope,
