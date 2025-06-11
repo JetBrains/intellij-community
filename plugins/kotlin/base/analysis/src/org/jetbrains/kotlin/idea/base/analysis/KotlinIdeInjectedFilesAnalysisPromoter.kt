@@ -17,8 +17,16 @@ import org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPro
  */
 @ApiStatus.Internal
 interface KotlinIdeInjectedFilesAnalysisPromoter {
+    /**
+     * The main entry point to promote highlighting to some visitor.
+     */
     fun shouldRunAnalysisForInjectedFile(viewProvider: FileViewProvider): Boolean
 
+    /**
+     * This option is used to separate usage of visitors which may produce error highlights from which are not.
+     * Should not be used for visitors that do not produce such highlights, as
+     * essential highlighting is not meant to generate error diagnostics.
+     */
     fun shouldRunOnlyEssentialHighlightingForInjectedFile(psiFile: PsiFile): Boolean
 
     companion object {
