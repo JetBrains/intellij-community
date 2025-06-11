@@ -30,9 +30,11 @@ fun ExtensionRegistry(): ExtensionRegistry? = registry as? ExtensionRegistry
  * When working inside IJ environment, extensions are picked up from the IJ plugin model.
  * When working outside of IJ environment, extensions must be registered explicitly.
  *
- * @See ExtensionKey
  * @see com.intellij.platform.syntax.SyntaxLanguage
  * @see ExtensionRegistry
+ * @see ExtensionPointKey
+ * @see performWithExtensionSupport
+ * @see buildExtensionSupport
  */
 @ApiStatus.Experimental
 interface ExtensionSupport {
