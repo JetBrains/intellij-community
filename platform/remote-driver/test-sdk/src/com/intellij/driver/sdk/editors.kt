@@ -19,6 +19,7 @@ interface Editor {
   fun getVirtualFile(): VirtualFile
   fun getLineHeight(): Int
   fun offsetToVisualPosition(offset: Int): VisualPosition
+  fun offsetToLogicalPosition(offset: Int): LogicalPosition
   fun visualPositionToXY(visualPosition: VisualPosition): Point
   fun offsetToXY(offset: Int): Point
   fun getInlayModel(): InlayModel
