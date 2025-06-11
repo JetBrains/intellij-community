@@ -89,6 +89,7 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - *sf:mapState(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.StateFlow
 - sf:modelFlow(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,com.intellij.openapi.diagnostic.Logger):kotlinx.coroutines.flow.SharedFlow
 - *sf:nestedDisposable(kotlinx.coroutines.CoroutineScope):com.intellij.openapi.Disposable
+- sf:stateFlowOf(java.lang.Object):kotlinx.coroutines.flow.StateFlow
 - sf:stateInNow(kotlinx.coroutines.flow.Flow,kotlinx.coroutines.CoroutineScope,java.lang.Object):kotlinx.coroutines.flow.StateFlow
 - sf:throwFailure(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
 - *sf:withInitial(kotlinx.coroutines.flow.Flow,java.lang.Object):kotlinx.coroutines.flow.Flow
