@@ -5,7 +5,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
 import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.actions.SaveAsTemplateAction;
 import com.intellij.codeInsight.template.impl.*;
@@ -857,6 +856,82 @@ public class JavaLiveTemplateTest extends LiveTemplateTestCase {
             """);
       }
     );
+  }
+
+  public void testIOP() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      JavaFeature.JAVA_LANG_IO.getMinimumLevel(),
+      () -> {
+        myFixture.configureByText(
+          "a.java",
+            """
+            class A{
+              public static void main(String[] args) {
+                <caret>
+              }
+            }
+            """);
+        final TemplateImpl template = TemplateSettings.getInstance().getTemplate("iop", "Java");
+        startTemplate(template);
+        myFixture.checkResult(
+            """
+            class A{
+              public static void main(String[] args) {
+                  IO.println(<caret>);
+              }
+            }
+            """);
+      }
+    );
+  }
+
+  public void testIOR() {
+    IdeaTestUtil.withLevel(
+      getModule(),
+      JavaFeature.JAVA_LANG_IO.getMinimumLevel(),
+      () -> {
+        myFixture.configureByText(
+          "a.java",
+            """
+            class A{
+              public static void main(String[] args) {
+                  <caret>
+              }
+            }""");
+        final TemplateImpl template = TemplateSettings.getInstance().getTemplate("ior", "Java");
+        startTemplate(template);
+        myFixture.checkResult(
+            """
+            class A{
+              public static void main(String[] args) {
+                  IO.readln(<caret>);
+              }
+            }""");
+      }
+    );
+  }
+
+  public void testIOPAvailable() {
+    final TemplateImpl template =
+      TemplateSettings.getInstance().getTemplate("iop", "Java");
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getMinimumLevel(), () -> {
+      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+  }
+
+  public void testIORAvailable() {
+    final TemplateImpl template =
+      TemplateSettings.getInstance().getTemplate("ior", "Java");
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.JAVA_LANG_IO.getMinimumLevel(), () -> {
+      assertTrue(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
+      assertFalse(isApplicable("class Foo {void x(){ <caret>JUNK }", template));
+    });
   }
 
   @Override

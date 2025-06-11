@@ -328,7 +328,7 @@ public final class GenericsUtil {
           if (wildcardType.isSuper() && bound instanceof PsiIntersectionType) {
             return PsiWildcardType.createUnbounded(manager);
           }
-
+//todo
           final PsiType acceptedBound = bound.accept(this);
           if (acceptedBound instanceof PsiWildcardType) {
             if (((PsiWildcardType)acceptedBound).isExtends() != wildcardType.isExtends()) return PsiWildcardType.createUnbounded(manager);
@@ -394,6 +394,7 @@ public final class GenericsUtil {
     PsiType componentType = transformed.getDeepComponentType();
     if (componentType instanceof PsiWildcardType) {
       componentType = ((PsiWildcardType)componentType).getExtendsBound();
+      //todo
       return PsiTypesUtil.createArrayType(componentType, transformed.getArrayDimensions());
     }
     if (transformed instanceof PsiEllipsisType) {
