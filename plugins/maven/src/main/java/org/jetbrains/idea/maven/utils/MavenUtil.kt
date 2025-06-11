@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -41,6 +42,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
@@ -81,6 +83,7 @@ import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
 import org.jetbrains.idea.maven.server.MavenServerEmbedder
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.MavenServerUtil
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.readPluginInfo
@@ -1956,5 +1959,28 @@ object MavenUtil {
       result.add(Path.of(PathUtil.getJarPathForClass(c)))
     }
     return result
+  }
+
+
+  /**
+   * Static state to calculate module output when running IDEA from sources
+   */
+  private val archivedClassesLocation = PathManager.getArchivedCompliedClassesLocation()
+  private val mapping = PathManager.getArchivedCompiledClassesMapping()
+  private val path = PathManager.getJarForClass(MavenServerManager::class.java)?.parent
+
+  /**
+   * Locate output of an IDEA module if running from sources.
+   * @return path to the module output: can point to a directory or a jar file.
+   * `null` if not running from sources or if module cannot be located
+   */
+  @JvmStatic
+  fun locateModuleOutput(moduleName: String): Path? {
+    if (!PluginManagerCore.isRunningFromSources()) return null
+    if (archivedClassesLocation != null && mapping != null) {
+      return mapping["production/$moduleName"]?.toNioPathOrNull()
+    } else {
+      return path?.resolve(moduleName)
+    }
   }
 }
