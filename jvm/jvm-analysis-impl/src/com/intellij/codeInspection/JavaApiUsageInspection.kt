@@ -12,7 +12,6 @@ import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.options.OptionController
 import com.intellij.java.JavaBundle
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.JdkApiCompatibilityService
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
@@ -142,7 +141,6 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
         JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(overriddenMethod, languageLevel)
       }.minOrNull() ?: return
       val toHighlight = overrideAnnotation?.uastAnchor?.sourcePsi ?: method.uastAnchor?.sourcePsi ?: return
-      if (shouldReportSinceLevelForElement(firstCompatibleLanguageLevel, sourcePsi) == true) return
       registerError(toHighlight, firstCompatibleLanguageLevel, holder, isOnTheFly)
     }
   }
@@ -161,7 +159,6 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val languageLevel = getEffectiveLanguageLevel(module)
       val firstCompatibleLanguageLevel = JdkApiCompatibilityService.getInstance()
                                            .firstCompatibleLanguageLevel(constructor, languageLevel) ?: return
-      if (shouldReportSinceLevelForElement(firstCompatibleLanguageLevel, sourcePsi) == true) return
       registerError(sourcePsi, firstCompatibleLanguageLevel, holder, isOnTheFly)
     }
 
@@ -183,7 +180,6 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       if (languageLevel == null) return
       val firstCompatibleLanguageLevel = JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(target, languageLevel)
       if (firstCompatibleLanguageLevel != null) {
-        if (shouldReportSinceLevelForElement(firstCompatibleLanguageLevel, sourcePsi) == true) return
         val psiClass = if (qualifier != null) {
           PsiUtil.resolveClassInType(qualifier.getExpressionType())
         }
@@ -227,12 +223,6 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
       val qualifiedName = psiClass.qualifiedName
       return qualifiedName != null && ignored6ClassesApi.contains(qualifiedName)
     }
-  }
-
-  /** Only runs in production because tests have incorrect SDKs when no mock SDK is available. */
-  private fun shouldReportSinceLevelForElement(lastIncompatibleLevel: LanguageLevel, context: PsiElement): Boolean? {
-    val jdkVersion = JavaVersionService.getInstance().getJavaSdkVersion(context) ?: return null
-    return lastIncompatibleLevel.isAtLeast(jdkVersion.maxLanguageLevel) && !ApplicationManager.getApplication().isUnitTestMode
   }
 
   private fun registerError(reference: PsiElement, sinceLanguageLevel: LanguageLevel, holder: ProblemsHolder, isOnTheFly: Boolean) {
