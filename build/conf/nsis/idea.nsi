@@ -50,7 +50,7 @@ VIProductVersion ${PRODUCT_VERSION_NUM}
 ; thus ${PRODUCT_WITH_VER} is used for uninstall registry information
 !define PRODUCT_REG_VER "${MUI_PRODUCT}\${VER_BUILD}"
 
-Var STARTMENU_FOLDER
+Var startMenuFolder
 Var productLauncher
 Var baseRegKey
 Var silentMode
@@ -261,7 +261,13 @@ FunctionEnd
 ; configuration
 ;------------------------------------------------------------------------------
 
+BrandingText " "
+
+!define MUI_BRANDINGTEXT " "
+!define MUI_ABORTWARNING
+
 !insertmacro MUI_PAGE_WELCOME
+
 Page custom uninstallOldVersionDialog
 
 !define MUI_PAGE_CUSTOMFUNCTION_LEAVE OnDirectoryPageLeave
@@ -269,12 +275,10 @@ Page custom uninstallOldVersionDialog
 !insertmacro MUI_PAGE_DIRECTORY
 
 Page custom ConfirmDesktopShortcut
-!define MUI_PAGE_HEADER_TEXT "$(choose_start_menu_folder)"
-!define MUI_STARTMENUPAGE_NODISABLE
-!define MUI_STARTMENUPAGE_DEFAULTFOLDER "JetBrains"
 
-!insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
-!define MUI_ABORTWARNING
+!define MUI_PAGE_HEADER_TEXT "$(choose_start_menu_folder)"
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "JetBrains"
+!insertmacro MUI_PAGE_STARTMENU Application $startMenuFolder
 
 !define MUI_PAGE_HEADER_TEXT "$(installing_product)"
 !insertmacro MUI_PAGE_INSTFILES
@@ -296,8 +300,6 @@ UninstPage custom un.ConfirmDeleteSettings
 OutFile "${OUT_DIR}\${OUT_FILE}.exe"
 
 InstallDir "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
-!define MUI_BRANDINGTEXT " "
-BrandingText " "
 
 Function PageFinishRun
   IfSilent +2 +1
@@ -1002,15 +1004,19 @@ skip_ipr:
   ${EndIf}
 
   ; creating the start menu shortcut and storing the start menu directory for the uninstaller
-  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
-  CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher" "" "" "" SW_SHOWNORMAL
-  StrCpy $0 $baseRegKey
-  StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
-  StrCpy $2 "MenuFolder"
-  StrCpy $3 "$STARTMENU_FOLDER"
-  Call OMWriteRegStr
-  !insertmacro MUI_STARTMENU_WRITE_END
+  ${If} $startMenuFolder != ""
+    !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
+    CreateDirectory "$SMPROGRAMS\$startMenuFolder"
+    CreateShortCut "$SMPROGRAMS\$startMenuFolder\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" "$productLauncher" "" "" "" SW_SHOWNORMAL
+    StrCpy $0 $baseRegKey
+    StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
+    StrCpy $2 "MenuFolder"
+    StrCpy $3 "$startMenuFolder"
+    Call OMWriteRegStr
+    !insertmacro MUI_STARTMENU_WRITE_END
+  ${Else}
+    DetailPrint "Skipping start menu shortcut."
+  ${EndIf}
 
   ; enabling Java assistive technologies if a screen reader is active (0x0046 = SPI_GETSCREENREADER)
   System::Call "User32::SystemParametersInfo(i 0x0046, i 0, *i .r1, i 0) i .r0"
