@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.core.SettingsSnapshot.MetaInfo
 import com.intellij.util.toByteArray
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -36,10 +35,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     executeAndWaitUntilPushed {
-      runBlocking(Dispatchers.Default) {
-        initModifyAndSave(GeneralSettings.getInstance()) {
-          autoSaveFiles = false
-        }
+      initModifyAndSave(GeneralSettings.getInstance()) {
+        autoSaveFiles = false
       }
     }
 
@@ -59,7 +56,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
     val keymap = createKeymap()
     executeAndWaitUntilPushed {
-      runBlocking(Dispatchers.IO) { componentStore.save() }
+      componentStore.save()
     }
 
     assertServerSnapshot {
@@ -80,7 +77,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     fileTemplate.text= phpCode
     FileTemplateManager.getDefaultInstance().saveAllTemplates()
     executeAndWaitUntilPushed {
-      runBlocking(Dispatchers.IO) { componentStore.save() }
+      componentStore.save()
     }
 
     assertServerSnapshot {
@@ -135,10 +132,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     executeAndWaitUntilPushed {
-      runBlocking(Dispatchers.Default) {
-        initModifyAndSave(UISettings.getInstance()) {
-          recentFilesLimit = 1000
-        }
+      initModifyAndSave(UISettings.getInstance()) {
+        recentFilesLimit = 1000
       }
     }
 

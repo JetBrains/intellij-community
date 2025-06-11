@@ -66,7 +66,6 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
     }
   }
 
-
   @AfterEach
   fun resetComponentStatesToDefault() {
     application.unregisterService(ExportableNonRoamable::class.java)
@@ -89,7 +88,7 @@ internal abstract class SettingsSyncRealIdeTestBase : SettingsSyncTestBase() {
     }
   }
 
-  protected fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>, execution: () -> Unit) {
+  protected suspend fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>, execution: () -> Unit) {
     val cdl = CountDownLatch(1)
     componentStore.reinitLatch = cdl
 

@@ -84,7 +84,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
     assertEquals(expectedState, settingsProvider.settings, "Settings were not applied")
   }
 
-  private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
+  private suspend fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
     SettingsSyncEvents.getInstance().fireSettingsChanged(event)
     bridge.waitForAllExecuted()
     timeoutRunBlocking {
