@@ -83,8 +83,8 @@ final class UndoClientState implements Disposable {
     this.adjustableUndoableActionsHolder = undoManager.getAdjustableUndoableActionsHolder();
     this.sharedUndoStacksHolder = undoManager.getSharedUndoStacksHolder();
     this.sharedRedoStacksHolder = undoManager.getSharedRedoStacksHolder();
-    this.undoStacksHolder = new UndoRedoStacksHolder(true, adjustableUndoableActionsHolder);
-    this.redoStacksHolder = new UndoRedoStacksHolder(false, adjustableUndoableActionsHolder);
+    this.undoStacksHolder = new UndoRedoStacksHolder(adjustableUndoableActionsHolder, true);
+    this.redoStacksHolder = new UndoRedoStacksHolder(adjustableUndoableActionsHolder, false);
     this.commandMerger = new CommandMerger(project, false, isTransparentSupported);
   }
 
@@ -332,8 +332,8 @@ final class UndoClientState implements Disposable {
     LOG.assertTrue(!isInsideCommand());
     flushCurrentCommand(UndoCommandFlushReason.CLEAR_QUEUE);
     currentCommandMerger = null;
-    undoStacksHolder.clearStacks(false, Set.of(docRef));
-    redoStacksHolder.clearStacks(false, Set.of(docRef));
+    undoStacksHolder.clearStacks(Set.of(docRef), false);
+    redoStacksHolder.clearStacks(Set.of(docRef), false);
   }
 
   void clearDocumentReferences(@NotNull Document document) {
@@ -396,8 +396,8 @@ final class UndoClientState implements Disposable {
     var refs = UndoDocumentUtil.getDocRefs(editor);
     if (refs != null) {
       flushCurrentCommand(UndoCommandFlushReason.CLEAR_STACKS);
-      redoStacksHolder.clearStacks(true, new HashSet<>(refs));
-      undoStacksHolder.clearStacks(true, new HashSet<>(refs));
+      redoStacksHolder.clearStacks(new HashSet<>(refs), true);
+      undoStacksHolder.clearStacks(new HashSet<>(refs), true);
       sharedRedoStacksHolder.trimStacks(refs);
       sharedUndoStacksHolder.trimStacks(refs);
     }
@@ -418,11 +418,9 @@ final class UndoClientState implements Disposable {
     sb.append("Merger\n  ");
     sb.append(commandMerger.dumpState());
     sb.append("\n");
-    for (DocumentReference doc : docRefs) {
-      sb.append(dumpStack(doc, true));
-      sb.append("\n");
-      sb.append(dumpStack(doc, false));
-    }
+    sb.append(undoStacksHolder.dump(docRefs));
+    sb.append("\n");
+    sb.append(redoStacksHolder.dump(docRefs));
     return sb.toString();
   }
 
@@ -552,28 +550,11 @@ final class UndoClientState implements Disposable {
   }
 
   private void clearRedoStacks(@NotNull CommandMerger nextMerger) {
-    redoStacksHolder.clearStacks(nextMerger.isGlobal(), nextMerger.getAllAffectedDocuments());
+    redoStacksHolder.clearStacks(nextMerger.getAllAffectedDocuments(), nextMerger.isGlobal());
   }
 
   private boolean isGlobalSplitEnabled() {
     return isGlobalSplitSupported && Registry.is("ide.undo.fallback");
-  }
-
-  private @NotNull String dumpStack(@NotNull DocumentReference doc, boolean isUndo) {
-    String name = isUndo ? "UndoStack" : "RedoStack";
-    UndoRedoList<UndoableGroup> stack = isUndo ? undoStacksHolder.getStack(doc) : redoStacksHolder.getStack(doc);
-    return name + " for " + doc.getDocument() + "\n" + dumpStack(stack);
-  }
-
-  private static @NotNull String dumpStack(@NotNull UndoRedoList<UndoableGroup> stack) {
-    ArrayList<String> reversed = new ArrayList<>();
-    Iterator<UndoableGroup> it = stack.descendingIterator();
-    int i = 0;
-    while (it.hasNext()) {
-      reversed.add("  %s %s".formatted(i, it.next().dumpState0()));
-      i++;
-    }
-    return String.join("\n", reversed);
   }
 
   private @Nullable UndoableGroup getLastAction(@NotNull FileEditor editor, boolean isUndo) {
@@ -599,9 +580,9 @@ final class UndoClientState implements Disposable {
     var affected = new HashSet<DocumentReference>();
     flushCurrentCommand(UndoCommandFlushReason.CLEAR_STACKS);
     redoStacksHolder.collectAllAffectedDocuments(affected);
-    redoStacksHolder.clearStacks(true, affected);
+    redoStacksHolder.clearStacks(affected, true);
     undoStacksHolder.collectAllAffectedDocuments(affected);
-    undoStacksHolder.clearStacks(true, affected);
+    undoStacksHolder.clearStacks(affected, true);
     return affected;
   }
 

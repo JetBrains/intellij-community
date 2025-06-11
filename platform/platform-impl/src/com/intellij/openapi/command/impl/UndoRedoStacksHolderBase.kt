@@ -8,6 +8,6 @@ internal abstract class UndoRedoStacksHolderBase<E>(protected val isUndo: Boolea
   }
 
   override fun newCollection(): UndoRedoList<E> {
-    return UndoRedoList<E>()
+    return UndoRedoList()
   }
 }
