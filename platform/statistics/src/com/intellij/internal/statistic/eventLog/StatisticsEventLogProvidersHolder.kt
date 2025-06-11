@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.EP_NAME
 import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
@@ -41,7 +43,12 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
   }
 
   private fun calculateEventLogProvider(): Map<String, StatisticsEventLoggerProvider> {
-    return calculateEventLogProviderExt().mapValues { it.value.find { provider -> getPluginInfo(provider::class.java).isDevelopedByJetBrains() }?: it.value.first() }
+    return calculateEventLogProviderExt().mapValues {
+      it.value.find { provider ->
+        PluginManager.getPluginByClass(provider::class.java)?.let { plugin -> PluginManagerCore.isDevelopedExclusivelyByJetBrains(plugin) }
+        ?: false
+      } ?: EmptyStatisticsEventLoggerProvider(it.key)
+    }
   }
 
   private fun calculateEventLogProviderExt(): Map<String, Collection<StatisticsEventLoggerProvider>> {

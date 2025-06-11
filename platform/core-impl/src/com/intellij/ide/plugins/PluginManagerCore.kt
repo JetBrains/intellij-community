@@ -244,10 +244,24 @@ object PluginManagerCore {
     isDevelopedByJetBrains(plugin.organization)
 
   @JvmStatic
-  fun isDevelopedByJetBrains(vendorString: String?): Boolean = when {
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(plugin: PluginDescriptor): Boolean =
+    CORE_ID == plugin.getPluginId() || SPECIAL_IDEA_PLUGIN_ID == plugin.getPluginId() ||
+    isDevelopedExclusivelyByJetBrains(plugin.getVendor()) ||
+    isDevelopedExclusivelyByJetBrains(plugin.organization)
+
+  @JvmStatic
+  fun isDevelopedByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, false)
+
+  @JvmStatic
+  @ApiStatus.Internal
+  fun isDevelopedExclusivelyByJetBrains(vendorString: String?): Boolean = isDevelopedByJetBrains(vendorString, true)
+
+  @JvmStatic
+  private fun isDevelopedByJetBrains(vendorString: String?, exclusively: Boolean): Boolean = when {
     vendorString == null -> false
     isVendorJetBrains(vendorString) -> true
-    else -> vendorString.splitToSequence(',').any { isVendorJetBrains(it.trim()) }
+    else -> vendorString.splitToSequence(',').run { if (exclusively) all { isVendorJetBrains(it.trim()) } else any { isVendorJetBrains(it.trim()) } }
   }
 
   @JvmStatic
