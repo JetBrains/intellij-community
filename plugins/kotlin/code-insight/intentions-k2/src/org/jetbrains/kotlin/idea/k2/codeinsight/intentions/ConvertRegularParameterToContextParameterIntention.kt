@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 class ConvertRegularParameterToContextParameterIntention : SelfTargetingIntention<KtParameter>(
     KtParameter::class.java,
     KotlinBundle.lazyMessage("convert.value.parameter.to.context.parameter"),
-) {
+), LowPriorityAction {
     override fun startInWriteAction(): Boolean = false
 
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {

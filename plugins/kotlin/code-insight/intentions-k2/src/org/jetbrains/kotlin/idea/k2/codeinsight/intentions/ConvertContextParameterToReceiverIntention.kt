@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class ConvertContextParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
     KtParameter::class.java, KotlinBundle.lazyMessage("convert.context.parameter.to.receiver.parameter")
-) {
+), LowPriorityAction {
     override fun startInWriteAction(): Boolean = false
 
     override fun isApplicableTo(element: KtParameter, caretOffset: Int): Boolean {
