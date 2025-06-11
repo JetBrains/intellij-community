@@ -70,23 +70,22 @@ object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
         if (match == null) return@mapNotNull null
         val (depName, depUri) = match.destructured
         val depPath = runCatching { Path.of(URI(depUri)) }.getOrNull() ?: return@mapNotNull null
-        if (depPath.isDirectory() && depPath.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
-          return@mapNotNull depName to depPath
+        if (!depPath.isDirectory() || !depPath.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
+          return@mapNotNull null
         }
-        return@mapNotNull null
+        return@mapNotNull depName to depPath
       }
       .toMap()
 
-    val oldStyleModuleDependencies: Map<String, Path> = pyprojectToml.getTableOrEmpty("tool.poetry.dependencies")
+    val oldStyleModuleDependencies = pyprojectToml.getTableOrEmpty("tool.poetry.dependencies")
       .toMap().entries
       .mapNotNull { (depName, depSpec) ->
-        if (depSpec is TomlTable && depSpec.getBoolean("develop") == true) {
-          val depPath = depSpec.getString("path")?.let { pyprojectTomlPath.parent.resolve(it).normalize() }
-          if (depPath != null && depPath.isDirectory() && depPath.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
-            return@mapNotNull depName to depPath
-          }
+        if (depSpec !is TomlTable || depSpec.getBoolean("develop") != true) return@mapNotNull null
+        val depPath = depSpec.getString("path")?.let { pyprojectTomlPath.parent.resolve(it).normalize() }
+        if (depPath == null || !depPath.isDirectory() || !depPath.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
+          return@mapNotNull null
         }
-        return@mapNotNull null
+        return@mapNotNull depName to depPath
       }
       .toMap()
 
