@@ -164,6 +164,12 @@ class CardReportGenerator(
         onClick = propertyValue.popupOpenLogic
       }
 
+      if (propertyValue.link != null) {
+        style += "cursor: pointer;"
+        href = propertyValue.link
+        target = "_blank"
+      }
+
       strong {
         style = "pointer-events: none;"
 
@@ -318,6 +324,7 @@ private data class ResolvedProperty<T>(
 private data class PropertyValue(
   val popupOpenLogic: String?,
   val inline: String?,
+  val link: String? = null
 ) {
   companion object {
     fun <T> build(
@@ -345,6 +352,7 @@ private data class PropertyValue(
         is DataRenderer.InlineBoolean -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineLong -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineDouble -> PropertyValue(null, "${property.value}")
+        is DataRenderer.ClickableLink -> PropertyValue(null, null, "${property.value}")
         is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]}, ${description}, ${property.renderer.wrapping});""", null)
         is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]}, ${description});""", null)
         is DataRenderer.TextDiff -> PropertyValue("""openDiff($element, ${stringValues[0]}, ${stringValues[1]}, ${description});""", null)
@@ -394,6 +402,7 @@ private data class PropertyValue(
         DataRenderer.InlineBoolean -> listOf("\"${value}\"")
         DataRenderer.InlineLong -> listOf("\"${value}\"")
         DataRenderer.InlineDouble -> listOf("\"${value}\"")
+        DataRenderer.ClickableLink -> listOf()
         is DataRenderer.Text -> listOf(embedString(value as String))
         DataRenderer.Lines -> listOf(embedString((value as List<*>).joinToString("\n") { "• $it" }))
         DataRenderer.Snippets -> (value as List<*>).map { embedString(it as String) }

@@ -23,6 +23,10 @@ sealed interface DataRenderer<in T> {
     override val serialName: String = "inline_double"
   }
 
+  data object ClickableLink : DataRenderer<String> {
+    override val serialName: String = "clickable_link"
+  }
+
   data class Text(val wrapping: Boolean = false, val showEmpty: Boolean = false) : DataRenderer<String> {
     override val serialName: String = "text"
     override fun skip(value: String): Boolean = !showEmpty && value.isBlank()
@@ -54,6 +58,7 @@ sealed interface DataRenderer<in T> {
         "inline_boolean" -> InlineBoolean
         "inline_long" -> InlineLong
         "inline_double" -> InlineDouble
+        "clickable_link" -> ClickableLink
         "text" -> context?.deserialize(json, Text::class.java)
         "lines" -> Lines
         "text_diff" -> TextDiff
