@@ -19,7 +19,6 @@
     <registryKey key="yaml.injection.async.indent" defaultValue="true"
                  description="Performs asynchronous indent when typing 'enter' in code injected into YAML"/>
     <lang.findUsagesProvider language="yaml" id="yamlFindUsagesProvider" implementationClass="org.jetbrains.yaml.YAMLFindUsagesProvider"/>
-    <editor.backspaceModeOverride language="yaml" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
