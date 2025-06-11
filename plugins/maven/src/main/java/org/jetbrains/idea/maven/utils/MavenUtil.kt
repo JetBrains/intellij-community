@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -80,12 +81,8 @@ import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.jetbrains.idea.maven.server.MavenServerConnector
-import org.jetbrains.idea.maven.server.MavenServerEmbedder
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.server.MavenServerManager.Companion.getInstance
-import org.jetbrains.idea.maven.server.MavenServerUtil
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil.readPluginInfo
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveLocalRepositoryBlocking
 import org.jetbrains.idea.maven.utils.MavenEelUtil.resolveM2Dir
@@ -1976,11 +1973,16 @@ object MavenUtil {
    */
   @JvmStatic
   fun locateModuleOutput(moduleName: String): Path? {
-    if (!PluginManagerCore.isRunningFromSources()) return null
+    if (!isRunningFromSources()) return null
     if (archivedClassesLocation != null && mapping != null) {
       return mapping["production/$moduleName"]?.toNioPathOrNull()
     } else {
       return path?.resolve(moduleName)
     }
+  }
+
+  @JvmStatic
+  fun isRunningFromSources(): Boolean {
+    return PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()
   }
 }

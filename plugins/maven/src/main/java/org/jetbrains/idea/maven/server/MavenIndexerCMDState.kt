@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
@@ -120,7 +119,7 @@ class MavenIndexerCMDState(
       val pathToClass = PathManager.getJarForClass(MavenServerManager::class.java)
                         ?: throw IllegalStateException("Cannot find path to maven server manager code")
 
-      if (PluginManagerCore.isRunningFromSources()) {
+      if (MavenUtil.isRunningFromSources()) {
         // we are running from some kind of sources build, packed or not.
         MavenLog.LOG.debug("collecting classpath for local run")
         prepareClassPathForLocalRunAndUnitTests(classpath)

@@ -55,7 +55,7 @@ public class Maven3Support implements MavenVersionAwareSupportExtension {
 
     final List<Path> classpath = new ArrayList<>();
 
-    if (PluginManagerCore.isRunningFromSources()) {
+    if (MavenUtil.isRunningFromSources()) {
       MavenLog.LOG.debug("collecting classpath for local run");
       prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath);
     }

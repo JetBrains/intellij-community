@@ -55,7 +55,7 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
     final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
     final List<Path> classpath = new ArrayList<>();
 
-    if (PluginManagerCore.isRunningFromSources()) {
+    if (MavenUtil.isRunningFromSources()) {
       MavenLog.LOG.debug("collecting classpath for local run");
       prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath);
     }

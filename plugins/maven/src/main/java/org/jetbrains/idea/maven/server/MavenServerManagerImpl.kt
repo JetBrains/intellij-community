@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.server
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
@@ -43,7 +42,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import java.util.function.Predicate
 import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
 
 internal class MavenServerManagerImpl : MavenServerManager {
   private val myMultimoduleDirToConnectorMap: MutableMap<String, MavenServerConnector> = HashMap()
@@ -289,7 +287,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     if (eventListenerJar != null) {
       return eventListenerJar
     }
-    if (PluginManagerCore.isRunningFromSources()) {
+    if (MavenUtil.isRunningFromSources()) {
       eventListenerJar = eventSpyPathForLocalBuild
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("""
