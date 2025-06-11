@@ -10,10 +10,10 @@ import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public final class ShTerminalShellPathProvider implements ShDefaultShellPathProvider {
+final class ShTerminalShellPathProvider implements ShDefaultShellPathProvider {
   private final Project myProject;
 
-  public ShTerminalShellPathProvider(Project project) {
+  ShTerminalShellPathProvider(Project project) {
     myProject = project;
   }
 
