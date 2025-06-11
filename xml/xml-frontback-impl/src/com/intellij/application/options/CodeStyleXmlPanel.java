@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.RightMarginForm;
@@ -13,7 +13,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,9 +48,9 @@ public class CodeStyleXmlPanel extends CodeStyleAbstractPanel{
     fillWrappingCombo(myWrapAttributes);
     addPanelToWatch(myPanel);
     myWhiteSpaceAroundCDATA.setModel(new CollectionComboBoxModel<@Nls String>(
-      Arrays.asList(XmlBundle.message("preserve"),
-                    XmlBundle.message("remove.keep.with.tags"),
-                    XmlBundle.message("add.new.lines"))));
+      Arrays.asList(XmlCoreBundle.message("preserve"),
+                    XmlCoreBundle.message("remove.keep.with.tags"),
+                    XmlCoreBundle.message("add.new.lines"))));
   }
 
   @Override

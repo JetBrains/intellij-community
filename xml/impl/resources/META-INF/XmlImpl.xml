@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin>>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.html.compatibleLanguage"
                     beanClass="com.intellij.lang.html.HtmlCompatibleMetaLanguage$HtmlCompatibleLanguageEP"
@@ -21,7 +21,6 @@
     <extensionPoint name="xml.zenCodingGenerator" interface="com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator" dynamic="true"/>
     <extensionPoint name="xml.zenCodingFilter" interface="com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter" dynamic="true"/>
     <extensionPoint name="xml.relatedToHtmlFilesContributor" interface="com.intellij.navigation.RelatedToHtmlFilesContributor" dynamic="true"/>
-    <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension" dynamic="true"/>
     <extensionPoint name="html.scriptDocumentationProvider" interface="com.intellij.lang.documentation.DocumentationProvider" dynamic="true"/>
 
     <extensionPoint name="webSmartKeysConfigurable" beanClass="com.intellij.application.options.editor.WebSmartKeysConfigurableEP" dynamic="true">
@@ -228,8 +227,6 @@
     <codeInsight.wordCompletionFilter language="XHTML" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
     <codeInsight.wordCompletionFilter language="JSP" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
     <codeInsight.wordCompletionFilter language="JSPX" implementationClass="com.intellij.lang.xml.XmlWordCompletionFilter"/>
-
-    <langCodeStyleSettingsProvider implementation="com.intellij.application.options.HtmlLanguageCodeStyleSettingsProvider"/>
 
     <!-- XML -->
     <quoteHandler fileType="XML" className="com.intellij.codeInsight.editorActions.XmlQuoteHandler"/>

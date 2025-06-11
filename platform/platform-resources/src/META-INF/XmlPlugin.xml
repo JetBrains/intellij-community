@@ -35,6 +35,8 @@
 
     <applicationService serviceImplementation="com.intellij.application.options.editor.WebEditorOptions"/>
 
+    <virtualFileCustomDataProvider implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
+
     <lang.parserDefinition language="DTD" implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
     <lang.parserDefinition language="XML" implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
     <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>

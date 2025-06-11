@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CommenterForm;
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +26,7 @@ public class GenerationCodeStylePanel extends CodeStyleAbstractPanel {
   public GenerationCodeStylePanel(@NotNull CodeStyleSettings settings, Language language) {
     super(settings);
     myCommenterForm = new CommenterForm(language);
-    myCommenterForm.getCommenterPanel().setBorder(IdeBorderFactory.createTitledBorder(XmlBundle.message("comments"), true, new JBInsets(10, 10, 10, 10)));
+    myCommenterForm.getCommenterPanel().setBorder(IdeBorderFactory.createTitledBorder(XmlCoreBundle.message("comments"), true, new JBInsets(10, 10, 10, 10)));
   }
 
   @Override
