@@ -49,6 +49,8 @@ jvm_library(
     "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "@lib//:kotlinx-coroutines-test",
+    "//java/testFramework",
   ],
   runtime_deps = [":java_resources"]
 )
