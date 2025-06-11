@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.actions.handlers;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
@@ -29,7 +30,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-public class AddLineBreakpointAction extends DumbAwareAction {
+public class AddLineBreakpointAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
@@ -38,8 +39,8 @@ public class AddLineBreakpointAction extends DumbAwareAction {
     if (editor == null) return;
     XSourcePosition position = getLineBreakpointPosition(e);
     assert position != null;
-    XBreakpointUtil.toggleLineBreakpoint(project, position, false, editor, false, false, true)
-      .onSuccess(bp -> {
+    XBreakpointUtil.toggleLineBreakpointProxy(project, position, false, editor, false, false, true)
+      .thenAccept(bp -> {
         if (bp != null && isConditional()) {
           ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () -> {
             EditorGutterComponentEx gutter = (EditorGutterComponentEx)editor.getGutter();
@@ -85,7 +86,7 @@ public class AddLineBreakpointAction extends DumbAwareAction {
     return false;
   }
 
-  public static class WithCondition extends AddLineBreakpointAction {
+  public static class WithCondition extends AddLineBreakpointAction implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
     @Override
     protected boolean isConditional() {
       return true;

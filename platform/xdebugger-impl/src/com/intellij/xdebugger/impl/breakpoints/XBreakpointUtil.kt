@@ -212,6 +212,7 @@ object XBreakpointUtil {
    * - if folded, checks if line breakpoints could be toggled inside folded text
    */
   @JvmStatic
+  @JvmOverloads
   @VisibleForTesting
   @ApiStatus.Internal
   fun toggleLineBreakpointProxy(
