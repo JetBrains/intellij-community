@@ -73,9 +73,7 @@ internal object GHPRReviewEditorComponentsFactory {
         }
       }
 
-      // TODO: Fix - the editor captures focus on TAB, rather than cycling
       isFocusable = true
-      isFocusCycleRoot = true
 
       launchOnShow("focusRequests") {
         vm.focusRequests.collectLatest { requestFocus(false) }
