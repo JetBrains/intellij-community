@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java.inliner;
 
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
@@ -15,7 +15,7 @@ import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 
 /**
- * JUnit5 Assertions.assertAll
+ * Apache Commons ObjectUtils null-checks
  */
 public class AllNotNullInliner implements CallInliner {
   private static final CallMatcher NULL_TESTS =
