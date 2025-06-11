@@ -24,6 +24,8 @@
     <statementUpDownMover implementation="com.jetbrains.python.codeInsight.editorActions.moveUpDown.PyStatementMover" id="pyStatementMover"
                           order="before line"/>
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
+    <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
+    <applicationService serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>

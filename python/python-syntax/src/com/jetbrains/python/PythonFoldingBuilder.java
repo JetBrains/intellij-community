@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.ast.*;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +48,11 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   private static void appendDescriptors(ASTNode node, List<FoldingDescriptor> descriptors) {
     IElementType elementType = node.getElementType();
-    if (node.getPsi() instanceof PyFile) {
-      final List<PyImportStatementBase> imports = ((PyFile)node.getPsi()).getImportBlock();
+    if (node.getPsi() instanceof PyAstFile) {
+      final List<? extends PyAstImportStatementBase> imports = ((PyAstFile)node.getPsi()).getImportBlock();
       if (imports.size() > 1) {
-        final PyImportStatementBase firstImport = imports.get(0);
-        final PyImportStatementBase lastImport = imports.get(imports.size()-1);
+        final PyAstImportStatementBase firstImport = imports.get(0);
+        final PyAstImportStatementBase lastImport = imports.get(imports.size()-1);
         descriptors.add(new FoldingDescriptor(firstImport, new TextRange(firstImport.getTextRange().getStartOffset(),
                                                                          lastImport.getTextRange().getEndOffset())));
       }
@@ -73,7 +74,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
     else if (elementType == PyElementTypes.ANNOTATION) {
       var annotation = node.getPsi();
-      if (annotation instanceof PyAnnotation pyAnnotation && pyAnnotation.getValue() != null) {
+      if (annotation instanceof PyAstAnnotation pyAnnotation && pyAnnotation.getValue() != null) {
         descriptors.add(new FoldingDescriptor(node, pyAnnotation.getValue().getTextRange(),
                                               FoldingGroup.newGroup(PYTHON_TYPE_ANNOTATION_GROUP_NAME)));
       }
@@ -177,7 +178,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   private static boolean checkFoldBlocks(@NotNull ASTNode statementList, @NotNull IElementType parentType) {
     PsiElement element = statementList.getPsi();
-    assert element instanceof PyStatementList;
+    assert element instanceof PyAstStatementList;
 
     return PyElementTypes.PARTS.contains(parentType) ||
            parentType == PyElementTypes.WITH_STATEMENT ||
@@ -204,7 +205,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
           return parent3.getElementType();
         }
       }
-      else if (parent2.getElementType() instanceof PyFileElementType) {
+      else if (parent2 instanceof PyAstFile) {
         return parent2.getElementType();
       }
     }
@@ -217,7 +218,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       return "import ...";
     }
     if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
-      PyStringLiteralExpression stringLiteralExpression = (PyStringLiteralExpression)node.getPsi();
+      PyAstStringLiteralExpression stringLiteralExpression = (PyAstStringLiteralExpression)node.getPsi();
       String prefix = stringLiteralExpression.getStringElements().get(0).getPrefix();
       if (stringLiteralExpression.isDocString()) {
         final String stringValue = stringLiteralExpression.getStringValue().trim();
@@ -233,7 +234,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     return "...";
   }
 
-  private static String getLanguagePlaceholderForString(PyStringLiteralExpression stringLiteralExpression) {
+  private static String getLanguagePlaceholderForString(PyAstStringLiteralExpression stringLiteralExpression) {
     String stringText = stringLiteralExpression.getText();
     Pair<String, String> quotes = PyStringLiteralCoreUtil.getQuotes(stringText);
     if (quotes != null) {
@@ -280,7 +281,7 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
 
   @Override
   protected boolean isCustomFoldingRoot(@NotNull ASTNode node) {
-    return node.getPsi() instanceof PyFile || node.getElementType() == PyElementTypes.STATEMENT_LIST;
+    return node.getPsi() instanceof PyAstFile || node.getElementType() == PyElementTypes.STATEMENT_LIST;
   }
 
   private static boolean isImport(@NotNull ASTNode node) {

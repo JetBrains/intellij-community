@@ -634,46 +634,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     );
   }
 
-  @Override
-  public List<PyImportStatementBase> getImportBlock() {
-    final List<PyImportStatementBase> result = new ArrayList<>();
-    final PsiElement firstChild = getFirstChild();
-    PsiElement currentStatement;
-    if (firstChild instanceof PyImportStatementBase) {
-      currentStatement = firstChild;
-    }
-    else {
-      currentStatement = PsiTreeUtil.getNextSiblingOfType(firstChild, PyImportStatementBase.class);
-    }
-    if (currentStatement != null) {
-      // skip imports from future before module level dunders
-      final List<PyImportStatementBase> fromFuture = new ArrayList<>();
-      while (currentStatement instanceof PyFromImportStatement && ((PyFromImportStatement)currentStatement).isFromFuture()) {
-        fromFuture.add((PyImportStatementBase)currentStatement);
-        currentStatement = PyPsiUtils.getNextNonCommentSibling(currentStatement, true);
-      }
-
-      // skip module level dunders
-      boolean hasModuleLevelDunders = false;
-      while (PyUtilCore.isAssignmentToModuleLevelDunderName(currentStatement)) {
-        hasModuleLevelDunders = true;
-        currentStatement = PyPsiUtils.getNextNonCommentSibling(currentStatement, true);
-      }
-
-      // if there is an import from future and a module level-dunder between it and other imports,
-      // this import is not considered a part of the import block to avoid problems with "Optimize imports" and foldings
-      if (!hasModuleLevelDunders) {
-        result.addAll(fromFuture);
-      }
-      // collect imports
-      while (currentStatement instanceof PyImportStatementBase) {
-        result.add((PyImportStatementBase)currentStatement);
-        currentStatement = PyPsiUtils.getNextNonCommentSibling(currentStatement, true);
-      }
-    }
-    return result;
-  }
-
   public String extractDeprecationMessage() {
     if (canHaveDeprecationMessage(getText())) {
       return PyFunction.extractDeprecationMessage(getStatements());
