@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal
 
 import com.intellij.application.options.EditorFontsConstants
 import com.intellij.ide.ui.UISettingsUtils
+import com.intellij.ide.util.RunOnceUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -82,7 +83,10 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
 
   override fun loadState(state: TerminalFontSettingsState) {
     columnSpacing = TerminalColumnSpacing.ofFloat(state.COLUMN_SPACING)
-    super.loadState(state)
+
+    if (!resetNonMonospacedFontsOnce(state)) {
+      super.loadState(state)
+    }
 
     // In the case of RemDev settings are synced from backend to frontend using `loadState` method.
     // So, notify the listeners on every `loadState` to not miss the change.
@@ -106,6 +110,27 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
     val colorsManager = EditorColorsManager.getInstance()
     val currentScheme = colorsManager.activeVisibleScheme ?: colorsManager.defaultScheme
     return currentScheme.consoleFontPreferences
+  }
+
+  /**
+   * Because of initial misconfiguration of the settings (IJPL-188621), non-monospaced fonts may be stored in the [storedState].
+   * This logic is intended to reset the font to the default value (from console settings) in this case.
+   * This reset will be performed only once, further calls will do nothing.
+   *
+   * @return whether reset was performed during this call.
+   */
+  fun resetNonMonospacedFontsOnce(storedState: TerminalFontSettingsState): Boolean {
+    return RunOnceUtil.runOnceForApp("TerminalFontSettingsService.fixStoredNonMonospacedFonts") {
+      val adjustedState = if (!FontFamilyService.isMonospaced(storedState.FONT_FAMILY)) {
+        val newState = TerminalFontSettingsState(getConsoleFontPreferences())
+        newState.FONT_SIZE_2D = storedState.FONT_SIZE_2D
+        newState.LINE_SPACING = storedState.LINE_SPACING
+        newState
+      }
+      else storedState
+
+      super.loadState(adjustedState)
+    }
   }
 
   private fun fireListeners() {
