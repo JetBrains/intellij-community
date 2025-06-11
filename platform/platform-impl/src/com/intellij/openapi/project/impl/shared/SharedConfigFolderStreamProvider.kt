@@ -51,7 +51,7 @@ internal class SharedConfigFolderStreamProvider(private val root: Path) : Stream
     if (!file.exists()) return true
 
     Files.walkFileTree(file, object : SimpleFileVisitor<Path>() {
-      override fun visitFile(child: Path, attrs: BasicFileAttributes?): FileVisitResult {
+      override fun visitFile(child: Path, attrs: BasicFileAttributes): FileVisitResult {
         if (!filter(child.name)) return FileVisitResult.CONTINUE
         if (!checkFile(child)) return FileVisitResult.CONTINUE
 

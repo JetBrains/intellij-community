@@ -559,7 +559,7 @@ class JbSettingsImporter(private val configDirPath: Path,
       if (!folder.exists()) return true
 
       Files.walkFileTree(folder, object : SimpleFileVisitor<Path>() {
-        override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+        override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
           if (!filter(file.name)) return FileVisitResult.CONTINUE
           if (!file.isRegularFile()) return FileVisitResult.CONTINUE
 

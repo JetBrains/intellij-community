@@ -141,7 +141,7 @@ internal class SharedConfigFolderNioListener(private val root: Path) {
         return FileVisitResult.CONTINUE
       }
 
-      override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         task(file, false)
         return FileVisitResult.CONTINUE
       }
