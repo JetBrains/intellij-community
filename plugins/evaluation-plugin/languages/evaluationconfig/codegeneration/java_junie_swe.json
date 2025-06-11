@@ -4,8 +4,7 @@
   "revision": "f1dc3c512d211ae3e14fb59af231caebf037d510",
   "outputDir": "bin/ml-eval-code-generation-junie-swe-java-output",
   "strategy": {
-    "instanceId": "fasterxml__jackson-core-1142",
-    "iterations": 1
+    "instanceId": "fasterxml__jackson-core-1142"
   },
   "fileDataset": {
     "url": "remote:https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/junie-swe/java/java_swe_bench.json"
@@ -18,18 +17,11 @@
     "filesLimit": 100,
     "order": "LINEAR",
     "trainTestSplit": 70,
-    "registry": ""
+    "registry": "",
+    "iterationCount": 1
   },
   "reports": {
     "evaluationTitle": "Default",
-    "defaultMetrics": [
-      "Sessions",
-      "Precision",
-      "SessionsWithoutSyntaxErrorsRatio",
-      "WithoutHighlightErrors",
-      "PreservedAPI",
-      "MeanLatency"
-    ],
     "sessionsFilters": [],
     "comparisonFilters": []
   },
