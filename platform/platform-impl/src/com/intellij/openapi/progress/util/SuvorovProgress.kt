@@ -108,7 +108,7 @@ object SuvorovProgress {
       finally {
         // we cannot acquire WI on closing
         if (progress is PotemkinProgress) {
-          progress.dialog.getPopup()?.setShouldDisposeInWriteIntentReadAction(false)
+          progress.dialog.getPopup()?.setShouldUseWriteIntentReadAction(false)
           progress.progressFinished()
           progress.processFinish()
           Disposer.dispose(progress)

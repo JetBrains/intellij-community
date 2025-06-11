@@ -32,9 +32,11 @@ import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ModalityUiUtil
@@ -119,7 +121,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   private val allActivitiesPassed = CompletableDeferred<Any?>()
 
   @Volatile
-  private var isInitProjectActivitiesPassed = false
+  private var isInitProjectActivitiesPassed = CompletableDeferred<Boolean>(parent = coroutineScope.coroutineContext[Job])
 
   private fun checkNonDefaultProject() {
     LOG.assertTrue(!project.isDefault, "Please don't register startup activities for the default project: they won't ever be run")
@@ -127,7 +129,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
   override fun registerStartupActivity(runnable: Runnable) {
     checkNonDefaultProject()
-    LOG.assertTrue(!isInitProjectActivitiesPassed, "Registering startup activity that will never be run")
+    LOG.assertTrue(isInitProjectActivitiesPassed.isActive, "Registering startup activity that will never be run")
     synchronized(lock) {
       initProjectStartupActivities.add(runnable)
     }
@@ -145,7 +147,22 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     }
   }
 
-  override fun startupActivityPassed(): Boolean = isInitProjectActivitiesPassed
+  override fun startupActivityPassed(): Boolean = isInitProjectActivitiesPassed.isCompleted
+
+  override suspend fun waitForInitProjectActivities(@NlsContexts.ProgressTitle progressTitle: String?) {
+    if (isInitProjectActivitiesPassed.isCompleted) {
+      return
+    }
+
+    if (progressTitle == null) {
+      isInitProjectActivitiesPassed.join()
+    }
+    else {
+      withBackgroundProgress(project, progressTitle) {
+        isInitProjectActivitiesPassed.join()
+      }
+    }
+  }
 
   override fun postStartupActivityPassed(): Boolean {
     return when (postStartupActivitiesPassed) {
@@ -158,9 +175,9 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   override fun getAllActivitiesPassedFuture(): CompletableDeferred<Any?> = allActivitiesPassed
 
   suspend fun initProject() {
-    LOG.assertTrue(!isInitProjectActivitiesPassed)
+    LOG.assertTrue(isInitProjectActivitiesPassed.isActive)
     runInitProjectActivities()
-    isInitProjectActivitiesPassed = true
+    isInitProjectActivitiesPassed.complete(true)
   }
 
   suspend fun runPostStartupActivities() {
@@ -246,7 +263,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   // Must be executed in a pooled thread outside a project loading modal task. The only exclusion - test mode.
   private suspend fun doRunPostStartupActivities() {
     try {
-      LOG.assertTrue(isInitProjectActivitiesPassed)
+      LOG.assertTrue(isInitProjectActivitiesPassed.isCompleted)
       val snapshot = PerformanceWatcher.takeSnapshot()
       // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
       // (depending on dumb-awareness), but because there is no other concurrent phase, we measure it as a sequential activity

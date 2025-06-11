@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.IntelliJResourceBundle;
@@ -116,6 +116,11 @@ public final class ConfigurableExtensionPointUtil {
    */
   public static @NotNull ConfigurableGroup getConfigurableGroup(@Nullable Project project, boolean withIdeSettings) {
     Project targetProject = withIdeSettings ? project : ProjectUtil.currentOrDefaultProject(project);
+    return doGetConfigurableGroup(targetProject, withIdeSettings);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull ConfigurableGroup doGetConfigurableGroup(@Nullable Project targetProject, boolean withIdeSettings) {
     return new EpBasedConfigurableGroup(
       targetProject,
       () -> {

@@ -3,7 +3,9 @@ package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.search.SearchUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -27,10 +29,15 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperDialog
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.ui.navigation.Place
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.awt.Component
 import java.awt.Composite
@@ -141,6 +148,45 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
     runCatching {
       showInternal(project = project, groups = groups.asList(), toSelect = null, filter = null)
     }.getOrLogException(LOG)
+  }
+
+  @ApiStatus.Internal
+  override suspend fun showSettingsDialog(project: Project, groups: List<ConfigurableGroup>) {
+    // We want to ensure that clients don’t simply replace one API with another,
+    // but actually rework the invocation to be performed not in EDT.
+    ThreadingAssertions.assertBackgroundThread()
+
+    if (!project.isDefault && useNonModalSettingsWindow()) {
+      withModalProgress(project = project, title = IdeBundle.message("settings.modal.opening.message")) {
+        val settingsFile = SettingsVirtualFileHolder.getInstance(project).getOrCreate(toSelect = null) {
+          val dialog = createDialogWrapper(
+            project = project,
+            groups = groups,
+            toSelect = null,
+            filter = null,
+            isModal = false,
+          ) as SettingsDialog
+          dialog.peer.rootPane.isFocusCycleRoot = true
+          dialog.peer.rootPane.focusTraversalPolicy = IdeFocusTraversalPolicy()
+          dialog
+        }
+        val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+        val options = FileEditorOpenOptions(reuseOpen = true, isSingletonEditorInWindow = true, requestFocus = true)
+        fileEditorManager.openFile(settingsFile, options)
+      }
+    }
+    else {
+      val settingsDialogFactory = serviceAsync<SettingsDialogFactory>()
+      withContext(Dispatchers.EDT) {
+        settingsDialogFactory.create(
+          project = project,
+          groups = filterEmptyGroups(groups),
+          configurable = null,
+          filter = null,
+          isModal = true,
+        ).show()
+      }
+    }
   }
 
   override fun <T : Configurable?> showSettingsDialog(project: Project?, configurableClass: Class<T>) {

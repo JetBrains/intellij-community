@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.CommonBundle;
@@ -17,7 +17,7 @@ import java.util.function.Predicate;
 /**
  * Opens Settings dialog or specific {@link Configurable}.
  */
-public abstract class ShowSettingsUtil {
+public abstract class ShowSettingsUtil implements ShowSettingsUtilEx {
   public static ShowSettingsUtil getInstance() {
     return ApplicationManager.getApplication().getService(ShowSettingsUtil.class);
   }

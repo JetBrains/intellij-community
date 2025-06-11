@@ -3,6 +3,7 @@ package com.intellij.ide.startup
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -13,4 +14,6 @@ abstract class StartupManagerEx : StartupManager() {
   }
 
   abstract fun startupActivityPassed(): Boolean
+
+  abstract suspend fun waitForInitProjectActivities(@NlsContexts.ProgressTitle progressTitle: String?)
 }

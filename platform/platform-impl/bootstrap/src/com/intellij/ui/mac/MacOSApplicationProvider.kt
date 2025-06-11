@@ -3,12 +3,12 @@ package com.intellij.ui.mac
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.CommandLineProcessor
-import com.intellij.ide.CommandLineProcessor.scheduleProcessProtocolCommand
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.AboutAction
 import com.intellij.ide.actions.ActionsCollector
-import com.intellij.ide.actions.ShowSettingsAction
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.idea.IdeStarter.Companion.openFilesOnLoading
 import com.intellij.idea.IdeStarter.Companion.openUriOnLoading
 import com.intellij.jna.JnaLoader
@@ -16,23 +16,29 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.sun.jna.Callback
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Desktop
 import java.awt.event.MouseEvent
@@ -54,31 +60,57 @@ private var UPDATE_CALLBACK_REF: Any? = null
 fun initMacApplication(mainScope: CoroutineScope) {
   val desktop = Desktop.getDesktop()
   desktop.setAboutHandler {
-    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      val project = getProject(useDefault = false)
-      WriteIntentReadAction.run {
+    submit("About", mainScope) { ideFocusManager ->
+      val project = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
+        val project = (ideFocusManager.lastFocusedIdeWindow as? IdeFrame)?.project
         AboutAction.perform(project)
+        project
       }
-      ActionsCollector.getInstance().record(project, ActionManager.getInstance().getAction("About"), null, null)
+
+      reportActionUsed(project, "About")
     }
   }
   desktop.setPreferencesHandler {
-    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      val project = getProject(true)!!
-      submit("Settings", mainScope) {
-        ShowSettingsAction.perform(project)
-        ActionsCollector.getInstance().record(project, ActionManager.getInstance().getAction("ShowSettings"), null, null)
+    submit("Settings", mainScope) { ideFocusManager ->
+      val showSettingsUtil = serviceAsync<ShowSettingsUtil>()
+      // we should not use RW to get focused frame - pure UI should be enough
+      val project = withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+        (ideFocusManager.lastFocusedIdeWindow as? IdeFrame)?.project
       }
+
+      if (project == null || project.isDefault) {
+        LOG.debug("MacMenu: no opened project frame, use default project instead")
+        val defaultProject = project ?: serviceAsync<ProjectManager>().defaultProject
+        showSettingsUtil.showSettingsDialog(defaultProject, listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(null, true)))
+      }
+      else {
+        // Execute in the project coroutine scope to ensure that,
+        // if project opening is canceled or the project is closed, we cancel settings opening.
+        // Still, we `.join` to ensure that mac menu actions is disabled for the entire duration of the task (contract of `submit`).
+        project.serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+          (project.serviceAsync<StartupManager>() as StartupManagerEx)
+            .waitForInitProjectActivities(IdeBundle.message("settings.modal.opening.message"))
+          val configurableGroups = listOf(ConfigurableExtensionPointUtil.doGetConfigurableGroup(project, true))
+          showSettingsUtil.showSettingsDialog(project, configurableGroups)
+        }.join()
+      }
+
+      reportActionUsed(project, "ShowSettings")
     }
   }
   desktop.setQuitHandler { _, response ->
-    if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      submit("Quit", mainScope) { ApplicationManager.getApplication().exit() }
-      response.cancelQuit()
-    }
-    else {
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
       response.performQuit()
+      return@setQuitHandler
     }
+
+    submit("Quit", mainScope) {
+      // Dispatchers.EDT implies WIL — we should rework app exit and add a new suspend API
+      withContext(Dispatchers.EDT) {
+        ApplicationManager.getApplication().exit()
+      }
+    }
+    response.cancelQuit()
   }
   desktop.setOpenFileHandler { event ->
     val files = event.files
@@ -88,20 +120,24 @@ fun initMacApplication(mainScope: CoroutineScope) {
 
     val list = files.map(File::toPath)
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      val project = getProject(useDefault = false)
-      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
+      val project = getNonDefaultProject()
+      mainScope.launch {
         ProjectUtil.openOrImportFilesAsync(list = list, location = "MacMenu", projectToClose = project)
       }
     }
     else {
       openFilesOnLoading(list)
     }
-    Desktop.getDesktop().requestForeground(true)
+    desktop.requestForeground(true)
   }
   if (JnaLoader.isLoaded()) {
     Foundation.executeOnMainThread(false, false, Runnable { installAutoUpdateMenu() })
-    installProtocolHandler()
+    installProtocolHandler(desktop, mainScope)
   }
+}
+
+private suspend fun reportActionUsed(project: Project?, actionId: String) {
+  serviceAsync<ActionsCollector>().record(project, serviceAsync<ActionManager>().getAction(actionId), null, null)
 }
 
 private fun installAutoUpdateMenu() {
@@ -134,51 +170,62 @@ private fun installAutoUpdateMenu() {
   Foundation.invoke(pool, Foundation.createSelector("release"))
 }
 
-private fun getProject(useDefault: Boolean): Project? {
+@RequiresEdt
+private fun getNonDefaultProject(): Project? {
   @Suppress("DEPRECATION")
   var project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContext)
   if (project == null) {
     LOG.debug("MacMenu: no project in data context")
-    val projects = ProjectManager.getInstance().openProjects
-    project = projects.firstOrNull()
-    if (project == null && useDefault) {
-      LOG.debug("MacMenu: use default project instead")
-      project = ProjectManager.getInstance().defaultProject
-    }
+    project = ProjectManager.getInstanceIfCreated()?.openProjects?.firstOrNull()
   }
   LOG.debug { "MacMenu: project = $project" }
   return project
 }
 
-private fun submit(name: String, scope: CoroutineScope, task: () -> Unit) {
-  LOG.debug { "MacMenu: on EDT = ${EDT.isCurrentThreadEdt()}, ENABLED = ${ENABLED.get()}" }
+// The `java.awt.Desktop` API invokes the handler on an AWT thread.
+// However, UI actions must be executed on the EDT — and nowadays, we have multiple "EDT-like" contexts,
+// most notably the write-intent-lock context.
+//
+// Therefore, the most reliable and future-proof approach is to reschedule execution to the main coroutine scope
+// (i.e., the scope from the root `runBlocking` of the application) in a suspend-aware context,
+// and then use the appropriate API to perform UI operations.
+//
+// Yes, this adds a slight delay in reacting to the user action due to the rescheduling,
+// but it aligns with the platform’s threading model.
+private fun submit(name: String, scope: CoroutineScope, task: suspend CoroutineScope.(ideFocusManager: IdeFocusManager) -> Unit) {
+  val log = LOG
+  log.debug { "MacMenu: on EDT = ${EDT.isCurrentThreadEdt()}, ENABLED = ${ENABLED.get()}" }
   if (!ENABLED.get()) {
-    LOG.debug("MacMenu: disabled")
+    log.debug("MacMenu: disabled")
+    return
+  }
+  if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+    log.debug("MacMenu: called too early")
     return
   }
 
-  val component = IdeFocusManager.getGlobalInstance().focusOwner
+  val ideFocusManager = IdeFocusManager.getGlobalInstance()
+  val component = ideFocusManager.focusOwner
   if (component != null && IdeKeyEventDispatcher.isModalContext(component)) {
-    LOG.debug("MacMenu: component in modal context")
+    log.debug("MacMenu: component in modal context")
   }
   else {
     ENABLED.set(false)
-    scope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-      writeIntentReadAction {
-        try {
-          LOG.debug { "MacMenu: init $name" }
-          task()
-        }
-        finally {
-          LOG.debug { "MacMenu: done $name" }
-          ENABLED.set(true)
-        }
+    scope.launch {
+      log.debug { "MacMenu: init $name" }
+      task(ideFocusManager)
+    }.invokeOnCompletion {
+      try {
+        log.debug { "MacMenu: done $name" }
+      }
+      finally {
+        ENABLED.set(true)
       }
     }
   }
 }
 
-private fun installProtocolHandler() {
+private fun installProtocolHandler(desktop: Desktop, mainScope: CoroutineScope) {
   val mainBundle = Foundation.invoke("NSBundle", "mainBundle")
   val urlTypes = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"))
   if (urlTypes == ID.NIL) {
@@ -192,7 +239,8 @@ private fun installProtocolHandler() {
     }
     return
   }
-  Desktop.getDesktop().setOpenURIHandler { event ->
+
+  desktop.setOpenURIHandler { event ->
     val uri = event.uri
     var uriString = uri.toString()
     URLDecoder.decode(uriString, "UTF-8")
@@ -200,7 +248,9 @@ private fun installProtocolHandler() {
       uriString = CommandLineProcessor.SCHEME_INTERNAL + uriString
     }
     if (LoadingState.APP_STARTED.isOccurred) {
-      scheduleProcessProtocolCommand(uriString)
+      mainScope.launch {
+        CommandLineProcessor.processProtocolCommand(uriString)
+      }
     }
     else {
       openUriOnLoading(uriString)

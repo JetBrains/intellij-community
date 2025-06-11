@@ -3801,11 +3801,6 @@ f:com.intellij.ide.startup.StartupActionScriptManager$UnzipCommand
 - <init>(java.nio.file.Path,java.nio.file.Path,java.util.function.Predicate):V
 - execute():V
 - getSource():java.lang.String
-a:com.intellij.ide.startup.StartupManagerEx
-- com.intellij.openapi.startup.StartupManager
-- <init>():V
-- s:getInstanceEx(com.intellij.openapi.project.Project):com.intellij.ide.startup.StartupManagerEx
-- a:startupActivityPassed():Z
 f:com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 - com.intellij.troubleshooting.TroubleInfoCollector
 - <init>():V
