@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessHandler
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.MavenUtil.locateModuleOutput
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.URI
@@ -32,7 +34,10 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import kotlin.io.path.*
+import kotlin.io.path.createDirectories
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.listDirectoryEntries
 
 class MavenIndexerCMDState(
   private val myJdk: Sdk,
@@ -114,13 +119,11 @@ class MavenIndexerCMDState(
       addIndexerRTLibs(classpath)
       val pathToClass = PathManager.getJarForClass(MavenServerManager::class.java)
                         ?: throw IllegalStateException("Cannot find path to maven server manager code")
-      val packed = pathToClass.isRegularFile()
 
-      if (!packed || pathToClass.parent.name == "intellij.maven") {
+      if (PluginManagerCore.isRunningFromSources()) {
         // we are running from some kind of sources build, packed or not.
         MavenLog.LOG.debug("collecting classpath for local run")
-        val root = if (packed) { pathToClass.parent.parent } else { pathToClass.parent }
-        prepareClassPathForLocalRunAndUnitTests(classpath, root, packed)
+        prepareClassPathForLocalRunAndUnitTests(classpath)
         addDependenciesFromMavenRepo(classpath)
       } else {
         // we are running in production
@@ -190,17 +193,10 @@ class MavenIndexerCMDState(
       addDir(classpath, root.resolve("intellij.maven.server.indexer").resolve("lib"))
     }
 
-    private fun prepareClassPathForLocalRunAndUnitTests(classpath: MutableList<Path>, root: Path, packed: Boolean = false) {
+    private fun prepareClassPathForLocalRunAndUnitTests(classpath: MutableList<Path>) {
       classpath.add(PathManager.getJarForClass(MavenId::class.java)!!)
-      listOf(root.resolve("intellij.maven.server"),
-             root.resolve("intellij.maven.server.indexer")).forEach {
-        if (packed) {
-          classpath.add(it.listDirectoryEntries("*.jar").first())
-        }
-        else {
-          classpath.add(it)
-        }
-      }
+      classpath.add(locateModuleOutput("intellij.maven.server")!!)
+      classpath.add(locateModuleOutput("intellij.maven.server.indexer")!!)
     }
 
     private fun addMavenLibs(classpath: MutableList<Path>, mavenHome: Path) {
