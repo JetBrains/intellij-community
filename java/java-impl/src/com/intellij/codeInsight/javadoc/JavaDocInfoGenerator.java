@@ -2387,27 +2387,34 @@ public class JavaDocInfoGenerator {
     return buffer.toString().trim();
   }
 
-  private static @Nullable PsiElement getRefElement(PsiElement[] tagElements) {
+  private @Nullable PsiElement getRefElement(PsiElement[] tagElements) {
     for (PsiElement element : tagElements) {
       if (element instanceof PsiWhiteSpace) { continue; }
-
-      if (element instanceof PsiDocMethodOrFieldRef) {
-        return element;
-      }
-      // JavaDoc references
-      if (element instanceof TreeElement treeElement && treeElement.getTokenType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
-        return element;
-      }
-      // JavaDoc module references
-      if (element instanceof PsiDocTagValue docTagValue) {
-        PsiElement firstChild = docTagValue.getFirstChild();
-        if (firstChild instanceof PsiJavaModuleReferenceElement || firstChild instanceof PsiJavaModuleReference) {
-          return element;
-        }
-      }
+      if (isRefElement(element)) return element;
       break;
     }
     return null;
+  }
+
+  /**
+   * @return true if {@code element} is the reference from a link. E.g. {@code String} in {@code {@link String myLink}}.
+   */
+  protected boolean isRefElement(PsiElement element) {
+    if (element instanceof PsiDocMethodOrFieldRef) {
+      return true;
+    }
+    // JavaDoc references
+    if (element instanceof TreeElement treeElement && treeElement.getTokenType() == JavaDocElementType.DOC_REFERENCE_HOLDER) {
+      return true;
+    }
+    // JavaDoc module references
+    if (element instanceof PsiDocTagValue docTagValue) {
+      PsiElement firstChild = docTagValue.getFirstChild();
+      if (firstChild instanceof PsiJavaModuleReferenceElement || firstChild instanceof PsiJavaModuleReference) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
