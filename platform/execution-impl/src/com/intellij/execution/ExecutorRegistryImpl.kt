@@ -42,15 +42,23 @@ import java.util.function.Consumer
 
 private val LOG = logger<ExecutorRegistryImpl>()
 
+private class ExecutorRegistryState(
+  @JvmField val contextActionIdSet: Set<String>,
+  @JvmField val idToAction: Map<String, AnAction>,
+  @JvmField val contextActionIdToAction: Map<String, AnAction>,
+  @JvmField val runWidgetIdToAction: Map<String, AnAction>,
+)
+
 @ApiStatus.Internal
-class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() {
-  private val contextActionIdSet = HashSet<String>()
-  private val idToAction = HashMap<String, AnAction>()
-  private val contextActionIdToAction = HashMap<String, AnAction>()
+class ExecutorRegistryImpl(private val coroutineScope: CoroutineScope) : ExecutorRegistry() {
+  private var state = ExecutorRegistryState(
+    contextActionIdSet = emptySet(),
+    idToAction = emptyMap(),
+    contextActionIdToAction = emptyMap(),
+    runWidgetIdToAction = emptyMap(),
+  )
 
-  private val runWidgetIdToAction = HashMap<String, AnAction>()
-
-  init {
+  private fun listenExtensionChanges() {
     Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<Executor> {
       override fun extensionAdded(extension: Executor, pluginDescriptor: PluginDescriptor) {
         initExecutorActions(executor = extension, actionRegistrar = ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar())
@@ -67,48 +75,84 @@ class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() 
     const val RUN_CONTEXT_GROUP_MORE: String = "RunContextGroupMore"
   }
 
+  @Synchronized
+  private fun setState(state: ExecutorRegistryState) {
+    this.state = state
+  }
+
+  // synchronized - state is not isolated, as we interact with an ActionManager
   @VisibleForTesting
+  @Synchronized
   fun initExecutorActions(executor: Executor, actionRegistrar: ActionRuntimeRegistrar) {
-    synchronized(idToAction) {
-      initExecutorActions(
-        executor = executor,
-        actionRegistrar = actionRegistrar,
-        contextActionIdToAction = contextActionIdToAction,
-        contextActionIdSet = contextActionIdSet,
-        idToAction = idToAction,
-        runWidgetIdToAction = runWidgetIdToAction,
-        toolbarSettings = ToolbarSettings.getInstance(),
-      )
-    }
+    val contextActionIdSet = HashSet(state.contextActionIdSet)
+    val idToAction = HashMap(state.idToAction)
+    val contextActionIdToAction = HashMap(state.contextActionIdToAction)
+    val runWidgetIdToAction = HashMap(state.runWidgetIdToAction)
+
+    initExecutorActions(
+      executor = executor,
+      actionRegistrar = actionRegistrar,
+      contextActionIdToAction = contextActionIdToAction,
+      contextActionIdSet = contextActionIdSet,
+      idToAction = idToAction,
+      runWidgetIdToAction = runWidgetIdToAction,
+      toolbarSettings = ToolbarSettings.getInstance(),
+    )
+
+    setState(ExecutorRegistryState(
+      contextActionIdSet = contextActionIdSet,
+      idToAction = idToAction,
+      contextActionIdToAction = contextActionIdToAction,
+      runWidgetIdToAction = runWidgetIdToAction,
+    ))
   }
 
   internal class ExecutorRegistryActionConfigurationTuner : ActionConfigurationCustomizer, LightCustomizeStrategy {
     override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
       if (!Executor.EXECUTOR_EXTENSION_NAME.hasAnyExtensions()) {
+        (serviceAsync<ExecutorRegistry>() as ExecutorRegistryImpl).listenExtensionChanges()
         return
       }
 
+      val contextActionIdSet = HashSet<String>()
+      val idToAction = HashMap<String, AnAction>()
+      val contextActionIdToAction = HashMap<String, AnAction>()
+      val runWidgetIdToAction = HashMap<String, AnAction>()
+
       val toolbarSettings = serviceAsync<ToolbarSettings>()
-      val executorRegistry = serviceAsync<ExecutorRegistry>() as ExecutorRegistryImpl
       Executor.EXECUTOR_EXTENSION_NAME.forEachExtensionSafe {
-        synchronized(executorRegistry.idToAction) {
-          initExecutorActions(
-            executor = it,
-            actionRegistrar = actionRegistrar,
-            contextActionIdToAction = executorRegistry.contextActionIdToAction,
-            contextActionIdSet = executorRegistry.contextActionIdSet,
-            idToAction = executorRegistry.idToAction,
-            runWidgetIdToAction = executorRegistry.runWidgetIdToAction,
-            toolbarSettings = toolbarSettings,
-          )
-        }
+        initExecutorActions(
+          executor = it,
+          actionRegistrar = actionRegistrar,
+          contextActionIdToAction = contextActionIdToAction,
+          contextActionIdSet = contextActionIdSet,
+          idToAction = idToAction,
+          runWidgetIdToAction = runWidgetIdToAction,
+          toolbarSettings = toolbarSettings,
+        )
       }
+
+      val executorRegistry = serviceAsync<ExecutorRegistry>() as ExecutorRegistryImpl
+      executorRegistry.setState(ExecutorRegistryState(
+        contextActionIdSet = contextActionIdSet,
+        idToAction = idToAction,
+        contextActionIdToAction = contextActionIdToAction,
+        runWidgetIdToAction = runWidgetIdToAction,
+      ))
+
+      // listen only after first init
+      executorRegistry.listenExtensionChanges()
     }
   }
 
   @VisibleForTesting
   @Synchronized
   fun deinitExecutor(executor: Executor) {
+    val contextActionIdSet = HashSet(state.contextActionIdSet)
+    val idToAction = HashMap(state.idToAction)
+    val contextActionIdToAction = HashMap(state.contextActionIdToAction)
+    val runWidgetIdToAction = HashMap(state.runWidgetIdToAction)
+
     contextActionIdSet.remove(executor.getContextActionId())
 
     val actionManager = ActionManager.getInstance()
@@ -134,6 +178,13 @@ class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() 
                          runWidgetIdToAction, actionManager)
       }
     }
+
+    setState(ExecutorRegistryState(
+      contextActionIdSet = contextActionIdSet,
+      idToAction = idToAction,
+      contextActionIdToAction = contextActionIdToAction,
+      runWidgetIdToAction = runWidgetIdToAction,
+    ))
   }
 
   override fun getExecutorById(executorId: String): Executor? {
