@@ -11,8 +11,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface RemoteManagedCacheApi : RemoteApi<Unit> {
-  suspend fun get(cacheId: CacheId, key: Int): RemoteManagedCacheValueDto?
-  suspend fun put(cacheId: CacheId, key: Int, value: RemoteManagedCacheValueDto?)
+  suspend fun get(cacheId: CacheId, key: RemoteManagedCacheDto): RemoteManagedCacheDto?
+  suspend fun put(cacheId: CacheId, key: RemoteManagedCacheDto, value: RemoteManagedCacheDto?)
   // Used for linearization on creation & pre-fetching
   suspend fun createPrefetchFlow(cacheId: CacheId): Flow<PrefetchedRemoteCacheValue>
 
