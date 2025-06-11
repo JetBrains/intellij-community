@@ -1,0 +1,1 @@
+data class XYZ(val p1: Int)

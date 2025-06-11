@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.utils.SmartList
 
 class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor() {
   override fun canProcessElement(element: PsiElement): Boolean = when {
-    element is KtParameter && (element.ownerFunction is KtFunction || element.ownerFunction is KtPropertyAccessor) -> true
+    element is KtParameter && (element.ownerFunction is KtFunction || element.ownerFunction is KtPropertyAccessor) && !element.hasValOrVar() -> true
 
     // rename started from java (for example by automatic renamer)
     element is KtLightParameter -> true
