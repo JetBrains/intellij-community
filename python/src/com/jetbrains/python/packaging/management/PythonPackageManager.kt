@@ -9,7 +9,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.util.messages.Topic
@@ -27,7 +26,6 @@ import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.CoroutineStart
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
@@ -117,22 +115,19 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   @ApiStatus.Internal
   open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
     val packages = loadPackagesCommand().getOr {
-      outdatedPackages = emptyMap()
-      installedPackages = emptyList()
       return it
     }
-    if (packages == installedPackages)
-      return PyResult.success(packages)
 
-    installedPackages = packages
-
-    ApplicationManager.getApplication().messageBus.apply {
-      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
-      syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
-    }
-    if (!ApplicationManager.getApplication().isUnitTestMode) {
+    reloadDependencies()
+    if (packages != installedPackages) {
+      installedPackages = packages
       PyPackageCoroutine.launch(project) {
         reloadOutdatedPackages()
+      }
+
+      ApplicationManager.getApplication().messageBus.apply {
+        syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(sdk)
+        syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
       }
     }
 
@@ -207,9 +202,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   @ApiStatus.Internal
   suspend fun reloadDependencies(): List<PythonPackage> {
-    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(sdk) ?: return emptyList()
-    val targetModule = project.modules.find { it.pythonSdk == sdk } ?: return emptyList()
-    dependencies = dependenciesExtractor.extract(targetModule)
+    val dependenciesExtractor = PythonDependenciesExtractor.forSdk(project, sdk) ?: return emptyList()
+    dependencies = dependenciesExtractor.extract()
     return dependencies
   }
 

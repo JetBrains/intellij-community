@@ -17,6 +17,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
+import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -53,16 +54,11 @@ suspend fun setupPoetrySdk(
   poetryPath: String? = null,
 ): PyResult<Sdk> {
   val pathString = newProjectPath ?: module?.basePath ?: project?.basePath
-  val projectPath = pathString?.let { Path.of(it) }
+  val projectPath = pathString?.let { tryResolvePath(it) }
                     ?: return PyResult.localizedError(PyBundle.message("python.sdk.provided.path.is.invalid", pathString))
 
-  val actualProject = project ?: module?.project
-  val pythonExecutablePath = if (actualProject != null) {
-    setUpPoetry(projectPath, python, installPackages, poetryPath)
-  }
-  else {
-    setUpPoetry(projectPath, python, installPackages, poetryPath)
-  }.getOr { return it }
+  val pythonExecutablePath = setUpPoetry(projectPath, python, installPackages, poetryPath)
+    .getOr { return it }
 
   val result = createSdk(
     sdkHomePath = pythonExecutablePath,
