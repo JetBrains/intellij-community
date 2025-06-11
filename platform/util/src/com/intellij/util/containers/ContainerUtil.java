@@ -2409,7 +2409,7 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from all collections in order
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <E> List<E> flatten(Collection<E> @NotNull [] collections) {
+  public static @Unmodifiable @NotNull <E> List<E> flatten(Collection<E>... collections) {
     return flatten(Arrays.asList(collections));
   }
 
