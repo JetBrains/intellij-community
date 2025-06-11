@@ -183,6 +183,19 @@ object Analysis {
     )
   )
 
+  val EXECUTION_EXIT_CODE: TrivialEvalData<Int> = EvalDataDescription(
+    name = "Execution exit code",
+    description = "Bind with the exit code of the execution-based tests",
+    DataPlacement.AdditionalInt("performance_exit_code"),
+    presentation = EvalDataPresentation(
+      PresentationCategory.ANALYSIS,
+      renderer = DataRenderer.InlineInt,
+    ),
+    problemIndicators = listOf(
+      ProblemIndicator.FromValue { it != 0 }
+    )
+  )
+
   val ERASED_APIS: TrivialEvalData<List<String>> = EvalDataDescription(
     name = "Erased APIs",
     description = "Bind with the list of erased API names",

@@ -23,6 +23,10 @@ sealed interface DataRenderer<in T> {
     override val serialName: String = "inline_double"
   }
 
+  data object InlineInt : DataRenderer<Int> {
+    override val serialName: String = "inline_int"
+  }
+
   data object ClickableLink : DataRenderer<String> {
     override val serialName: String = "clickable_link"
   }
@@ -58,6 +62,7 @@ sealed interface DataRenderer<in T> {
         "inline_boolean" -> InlineBoolean
         "inline_long" -> InlineLong
         "inline_double" -> InlineDouble
+        "inline_int" -> InlineInt
         "clickable_link" -> ClickableLink
         "text" -> context?.deserialize(json, Text::class.java)
         "lines" -> Lines

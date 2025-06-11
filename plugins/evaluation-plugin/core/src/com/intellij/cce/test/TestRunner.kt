@@ -8,7 +8,7 @@ class TestRunnerParams(val language: Language)
 
 class TestRunRequest(val tests: List<String>, val project: Project)
 class TestRunResult(
-  val passed: List<String>,
+  val exitCode: Int, val passed: List<String>,
   val failed: List<String>,
   val compilationSuccessful: Boolean,
   val output: String,

@@ -32,9 +32,9 @@ class MavenOutputParserTest(private val fileName: String) : BasePlatformTestCase
 
     val content = file.readText()
 
-    val parser = MavenOutputParser()
-    val result = parser.parse(content)
-    checkResult(dump(result))
+    val compilationSuccessful = MavenOutputParser.compilationSuccessful(content)
+    val (passed, failed) = MavenOutputParser.parse(content)
+    checkResult(dump(compilationSuccessful, passed, failed))
   }
 
   // copypast from ActionsProcessorTest.
@@ -52,15 +52,15 @@ class MavenOutputParserTest(private val fileName: String) : BasePlatformTestCase
   }
 }
 
-private fun dump(result: TestRunResult): String {
+private fun dump(compilationSuccessful: Boolean, passed: List<String>, failed: List<String>): String {
   val sb = StringBuilder()
-  sb.appendLine("compilationSuccessful: ${result.compilationSuccessful}")
-  sb.appendLine("passed: ${result.passed.size}")
-  result.passed.forEach {
+  sb.appendLine("compilationSuccessful: ${compilationSuccessful}")
+  sb.appendLine("passed: ${passed.size}")
+  passed.forEach {
     sb.appendLine("\t$it")
   }
-  sb.appendLine("failed: ${result.failed.size}")
-  result.failed.forEach {
+  sb.appendLine("failed: ${failed.size}")
+  failed.forEach {
     sb.appendLine("\t$it")
   }
 
