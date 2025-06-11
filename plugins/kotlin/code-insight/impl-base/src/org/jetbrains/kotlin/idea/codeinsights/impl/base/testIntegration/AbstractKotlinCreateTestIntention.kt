@@ -79,8 +79,8 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
                 )
             }
             element is KtFile -> {
-                // offer to create a test for a kotlin file only when there are top-level functions
-                if (element.declarations.none { it is KtNamedFunction }) return null
+                // offer to create a test for a kotlin file only when there are top-level functions / properties
+                if (element.declarations.none { it is KtNamedFunction || it is KtProperty }) return null
                 TextRange(element.startOffset, element.endOffset)
             }
             element.parent !is KtFile -> null

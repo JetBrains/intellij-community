@@ -14,8 +14,8 @@ abstract class AbstractKotlinTestCreator : TestCreator {
     private fun getTarget(editor: Editor, file: PsiFile): KtElement? {
         val ktElement = file.findElementAt(editor.caretModel.offset)?.parents
             ?.firstOrNull { it is KtClassOrObject || it is KtNamedDeclaration && it.parent is KtFile || it is KtFile } as? KtElement
-        // offer to create a test for a kotlin file only when there are top-level functions
-        return ktElement.takeIf { e -> e !is KtFile || e.declarations.any { it is KtNamedFunction } }
+        // offer to create a test for a kotlin file only when there are top-level functions / properties
+        return ktElement.takeIf { e -> e !is KtFile || e.declarations.any { it is KtNamedFunction || it is KtProperty } }
     }
 
     protected abstract fun createTestIntention(): SelfTargetingRangeIntention<KtElement>

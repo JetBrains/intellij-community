@@ -29,10 +29,12 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.regex.Pattern
@@ -46,8 +48,12 @@ abstract class AbstractKotlinTestFinder : TestFinder {
             return if (!isResolvable(it)) null else it
         }
 
-        from.parentsWithSelf.filterIsInstance<KtNamedFunction>().firstOrNull { !it.isLocal }?.let {
-            return it
+        from.parentsWithSelf.firstNotNullOfOrNull {
+            if (it is KtNamedFunction && it.isTopLevel || it is KtProperty && it.isTopLevel) {
+                return it
+            } else {
+                null
+            }
         }
 
         return findSourceElementInFile(from)
@@ -114,6 +120,14 @@ abstract class AbstractKotlinTestFinder : TestFinder {
             }
         }
 
+        fun addKotlinTopLevelProperties(n: String, proximity: Int) {
+            val key = (sourcePackageName.takeUnless { it.isNullOrEmpty() }?.let { "$it." } ?: "") + n
+            KotlinTopLevelPropertyFqnNameIndex.processElements(key, project, scope) {
+                addElementWithWeight(it, proximity)
+                true
+            }
+        }
+
         for (candidateNameWithWeight in collectPossibleNamesWithWeights) {
             val name = candidateNameWithWeight.first
             val weight = candidateNameWithWeight.second
@@ -148,6 +162,11 @@ abstract class AbstractKotlinTestFinder : TestFinder {
             addKotlinTopLevelFunction(name, weight)
             if (name.first().isUpperCase()) {
                 addKotlinTopLevelFunction(name.replaceFirstChar {  it.lowercase() }, weight + 10)
+            }
+
+            addKotlinTopLevelProperties(name, weight)
+            if (name.first().isUpperCase()) {
+                addKotlinTopLevelProperties(name.replaceFirstChar {  it.lowercase() }, weight + 10)
             }
 
             FilenameIndex.processFilesByName(name + KotlinFileType.DOT_DEFAULT_EXTENSION, false, scope) { virtualFile ->
@@ -227,7 +246,7 @@ abstract class AbstractKotlinTestFinder : TestFinder {
 
     private fun findPotentialNames(element: PsiElement): Collection<String> =
         when(element) {
-            is KtNamedFunction -> buildSet {
+            is KtNamedFunction, is KtProperty -> buildSet {
                 element.name?.let(::add)
                 findSourceElementInFile(element)?.let {
                     this += findPotentialNames( it )

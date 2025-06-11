@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.util.removeSuffixIfPresent
 import java.util.Locale.getDefault
 
@@ -54,11 +55,11 @@ class KotlinCreateTestDialog(
         val prefix = customSettings.TEST_NAME_PREFIX
         val suffix = customSettings.TEST_NAME_SUFFIX
         val name =
-        if (sourceElement is KtNamedFunction && sourceElement.isTopLevel) {
-            sourceElement.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
-        } else {
-            targetClass?.name?.removeSuffixIfPresent("Kt")
-        }
+            if (sourceElement is KtNamedFunction && sourceElement.isTopLevel || sourceElement is KtProperty && sourceElement.isTopLevel) {
+                sourceElement.name?.replaceFirstChar { if (it.isLowerCase()) it.titlecase(getDefault()) else it.toString() }
+            } else {
+                targetClass?.name?.removeSuffixIfPresent("Kt")
+            }
         return name?.let { prefix + name + suffix }
     }
 }
