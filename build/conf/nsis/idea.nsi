@@ -1076,8 +1076,13 @@ Function .onInit
   ${IfNot} $R0 == ${INSTALLER_ARCH}
   ${OrIfNot} ${AtLeastBuild} 14393  ; Windows 10 1607 / Windows Server 2016
     ${LogText} "Architecture: expected=${INSTALLER_ARCH} actual=$R0"
-    MessageBox MB_OK "$(unsupported_win_version)"
-    Abort
+    ReadEnvStr $R0 "TEAMCITY_VERSION"
+    ${If} $R0 == ""
+      MessageBox MB_OK "$(unsupported_win_version)"
+      Abort
+    ${Else}
+      ${LogText} "  ... ignored on TeamCity"
+    ${EndIf}
   ${EndIf}
 
   !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
