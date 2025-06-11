@@ -32,8 +32,7 @@ class SuvorovProgressTest {
     assertThat(clickPerformed).isTrue
   }
 
-  //@Test
-  @Suppress("unused")
+  @Test
   fun `input event gets dropped if progress is long`(@TestDisposable disposable: Disposable) {
     Assumptions.assumeTrue { installSuvorovProgress }
     Registry.get("ide.suvorov.progress.showing.delay.ms").setValue(1, disposable)

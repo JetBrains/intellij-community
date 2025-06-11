@@ -195,32 +195,24 @@ class PlatformUtilitiesTest {
     assertThat(counter.get()).isEqualTo(1)
   }
 
-  @Suppress("ForbiddenInSuspectContextMethod")
   @Test
   fun `transferredWriteAction allows write access when lock action is pending`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     Assumptions.assumeTrue { installSuvorovProgress }
-    try {
-      val bgWaStarted = Job(coroutineContext.job)
-      launch {
-        backgroundWriteAction {
-          bgWaStarted.complete()
-          Thread.sleep(100) // give chance EDT to start waiting for a coroutine
-          (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
-            assertThat(EDT.isCurrentThreadEdt()).isTrue
-            assertThat(application.isWriteAccessAllowed).isTrue
-            runWriteAction {}
-            assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue
-          }
+    val bgWaStarted = Job(coroutineContext.job)
+    launch {
+      backgroundWriteAction {
+        bgWaStarted.complete()
+        Thread.sleep(100) // give chance EDT to start waiting for a coroutine
+        (application as ApplicationImpl).invokeAndWaitWithTransferredWriteAction {
+          assertThat(EDT.isCurrentThreadEdt()).isTrue
+          assertThat(application.isWriteAccessAllowed).isTrue
+          runWriteAction {}
+          assertThat(TransactionGuard.getInstance().isWritingAllowed).isTrue
         }
       }
-      bgWaStarted.join()
-      launch(Dispatchers.EDT) {
-      }
     }
-    finally {
-      application.invokeAndWait {
-        getGlobalThreadingSupport().removeLockAcquisitionInterceptor()
-      }
+    bgWaStarted.join()
+    launch(Dispatchers.EDT) {
     }
   }
 
