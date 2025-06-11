@@ -2,11 +2,12 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolsTestsDebugOutputPrinter
+import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.completeMatch
-import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
 
 class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
@@ -192,13 +193,15 @@ class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
     doTest(path, framework, includeVirtual = includeVirtual, webTypes = webTypes.toList())
   }
 
-  fun doTest(path: String,
-             framework: String? = null,
-             includeVirtual: Boolean = true,
-             expandPatterns: Boolean = false,
-             compareWithCompletionResults: Boolean = true,
-             webTypes: List<String> = emptyList(),
-             customElementsManifests: List<String> = emptyList()) {
+  fun doTest(
+    path: String,
+    framework: String? = null,
+    includeVirtual: Boolean = true,
+    expandPatterns: Boolean = false,
+    compareWithCompletionResults: Boolean = true,
+    webTypes: List<String> = emptyList(),
+    customElementsManifests: List<String> = emptyList(),
+  ) {
     registerFiles(framework, webTypes, customElementsManifests)
     val parsedPath = parseWebTypesPath(path, null)
     val queryExecutor = polySymbolsQueryExecutorFactory.create(null)
@@ -227,7 +230,7 @@ class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           exclude(PolySymbolModifier.ABSTRACT)
         }
         .filter { !it.extension }
-      assertEquals(printMatches(codeCompletionResults), printMatches(results))
+      assertEquals(printMatches(codeCompletionResults, PolySymbolsTestsDebugOutputPrinter), printMatches(results, PolySymbolsTestsDebugOutputPrinter))
     }
 
     doTest(testPath) {
@@ -236,7 +239,7 @@ class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           if (!includeVirtual) exclude(PolySymbolModifier.VIRTUAL)
           exclude(PolySymbolModifier.ABSTRACT)
         }
-        .let { printMatches(it) }
+        .let { printMatches(it, PolySymbolsTestsDebugOutputPrinter) }
     }
   }
 }

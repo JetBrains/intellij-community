@@ -13,7 +13,6 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
-import com.intellij.polySymbols.js.JsSymbolSymbolKind
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
@@ -163,13 +162,14 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
     get() = null
 
   /**
-   * Various symbol properties. There should be no assumption on the type of properties.
-   * Properties can be used by plugins to provide additional information on the symbol.
-   * All properties supported by IDEs are defined through `PROP_*` constants  of [PolySymbol] interface.
-   * Check properties documentation for further reference.
+   * Accessor for various symbol properties. This is a convenience method which
+   * tries to cast the value to an expected type for the defined property.
+   * Plugins can use properties to provide additional information on the symbol.
+   * All properties supported by IDEs are defined through `PROP_*` constants of [PolySymbol] interface.
+   * Check their documentation for further reference.
    */
-  val properties: Map<String, Any>
-    get() = emptyMap()
+  operator fun <T : Any> get(property: PolySymbolProperty<T>): T? =
+    null
 
   /**
    * Returns [TargetPresentation] used by [SearchTarget] and [RenameTarget].
@@ -312,53 +312,28 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
      * Supported by `html/elements` and `html/attributes` symbols,
      * allows to inject the specified language into HTML element text or HTML attribute value.
      */
-    const val PROP_INJECT_LANGUAGE: String = "inject-language"
+    @JvmField
+    val PROP_INJECT_LANGUAGE: PolySymbolProperty<String> = PolySymbolProperty["inject-language"]
 
     /**
      * If a symbol uses a RegEx pattern, usually it will be displayed in a documentation
      * popup section "pattern". Setting this property to `true` hides that section.
      */
-    const val PROP_DOC_HIDE_PATTERN: String = "doc-hide-pattern"
+    @JvmField
+    val PROP_DOC_HIDE_PATTERN: PolySymbolProperty<Boolean> = PolySymbolProperty["doc-hide-pattern"]
 
     /**
      * By default, all symbols show up in code completion.
      * Setting this property to true prevents a symbol from showing up in the code completion.
      */
-    const val PROP_HIDE_FROM_COMPLETION: String = "hide-from-completion"
-
-    /**
-     * Name of boolean property used by `css/pseudo-elements` and `css/pseudo-classes` symbols
-     * to specify whether they require arguments. Defaults to false.
-     **/
-    const val PROP_ARGUMENTS: String = "arguments"
-
-    /**
-     * Name of boolean property used by `js/properties` symbols to specify whether
-     * the property is read-only. Defaults to false.
-     **/
-    const val PROP_READ_ONLY: String = "read-only"
-
-    /**
-     * Name of [JsSymbolSymbolKind] property used by `js/symbols` symbols to specify kind of the JS symbol.
-     * By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
-     **/
-    const val PROP_KIND: String = "kind"
-
-    /**
-     * Name of [JsSymbolSymbolKind] property used by other symbols to specify kind of the JS symbol.
-     * By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
-     **/
-    const val PROP_JS_SYMBOL_KIND: String = "js-symbol-kind"
-
-    /**
-     * Don't provide documentation for the symbol
-     */
-    const val PROP_NO_DOC: String = "ij-no-doc"
+    @JvmField
+    val PROP_HIDE_FROM_COMPLETION: PolySymbolProperty<Boolean> = PolySymbolProperty["hide-from-completion"]
 
     /**
      * Text attributes key of an IntelliJ ColorScheme.
      **/
-    const val PROP_IJ_TEXT_ATTRIBUTES_KEY: String = "ij-text-attributes-key"
+    @JvmField
+    val PROP_IJ_TEXT_ATTRIBUTES_KEY: PolySymbolProperty<String> = PolySymbolProperty["ij-text-attributes-key"]
   }
 }
 

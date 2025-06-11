@@ -39,8 +39,12 @@ open class WebTypesSymbolBase : WebTypesSymbol {
               ?.also { contributions -> _superContributions = contributions }
             ?: emptyList()
 
-  override val properties: Map<String, Any>
-    get() = base.contribution.genericProperties
+  private val contributionProperties by lazy {
+    base.contribution.genericProperties
+  }
+
+  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
+    property.tryCast(contributionProperties[property.name])
 
   override fun isEquivalentTo(symbol: Symbol): Boolean =
     (symbol is WebTypesSymbolBase && symbol.base == this.base)

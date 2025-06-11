@@ -12,34 +12,31 @@ import com.intellij.model.search.SearchRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbolApiStatus.Companion.getMessage
+import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.polySymbols.highlighting.impl.getDefaultProblemMessage
+import com.intellij.polySymbols.impl.removeZeroLengthSegmentsRecursively
+import com.intellij.polySymbols.inspections.PolySymbolsProblemQuickFixProvider
+import com.intellij.polySymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
+import com.intellij.polySymbols.references.PolySymbolReference
+import com.intellij.polySymbols.references.PolySymbolReferenceProblem
+import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
+import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
+import com.intellij.polySymbols.utils.asSingleSymbol
+import com.intellij.polySymbols.utils.getProblemKind
+import com.intellij.polySymbols.utils.hasOnlyExtensions
+import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.containers.MultiMap
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolApiStatus
-import com.intellij.polySymbols.PolySymbolApiStatus.Companion.getMessage
-import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
-import com.intellij.polySymbols.PolySymbolNameSegment
-import com.intellij.polySymbols.PolySymbolsBundle
-import com.intellij.polySymbols.highlighting.impl.getDefaultProblemMessage
-import com.intellij.polySymbols.impl.removeZeroLengthSegmentsRecursively
-import com.intellij.polySymbols.inspections.PolySymbolsProblemQuickFixProvider
-import com.intellij.polySymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
-import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
-import com.intellij.polySymbols.references.PolySymbolReference
-import com.intellij.polySymbols.references.PolySymbolReferenceProblem
-import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
-import com.intellij.polySymbols.utils.asSingleSymbol
-import com.intellij.polySymbols.utils.getProblemKind
-import com.intellij.polySymbols.utils.hasOnlyExtensions
-import com.intellij.polySymbols.utils.nameSegments
 import org.jetbrains.annotations.Nls
 import java.util.*
 
-internal const val IJ_IGNORE_REFS = "ij-no-psi-refs"
+internal val IJ_IGNORE_REFS: PolySymbolProperty<Boolean> = PolySymbolProperty["ij-no-psi-refs"]
 
 class PsiPolySymbolReferenceProviderImpl : PsiSymbolReferenceProvider {
 
@@ -78,7 +75,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: P
     val (nameSegment, offset) = queue.removeFirst()
     val symbols = nameSegment.symbols
     val range = TextRange(nameSegment.start + offset, nameSegment.end + offset)
-    if (symbols.any { it.properties[IJ_IGNORE_REFS] == true }) continue
+    if (symbols.any { it[IJ_IGNORE_REFS] == true }) continue
     if (symbols.all { it.nameSegments.size == 1 }) {
       if (nameSegment.problem != null || symbols.let { it.isNotEmpty() && !it.hasOnlyExtensions() }) {
         result.putValue(range, nameSegment)
@@ -121,7 +118,7 @@ internal fun getReferences(element: PsiElement, symbolNameOffset: Int, symbol: P
           ?.firstOrNull()
       }.takeIf { it.size == segments.size }?.firstOrNull()
       if (showProblems && (deprecation != null || problemOnly || segments.any { it.problem != null })) {
-        NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset), segments, symbolNameOffset,deprecation, problemOnly)
+        NameSegmentReferenceWithProblem(element, symbol, range.shiftRight(symbolNameOffset), segments, symbolNameOffset, deprecation, problemOnly)
       }
       else if (!range.isEmpty && !problemOnly) {
         NameSegmentReference(element, range.shiftRight(symbolNameOffset), segments)
@@ -217,10 +214,10 @@ private class NameSegmentReferenceWithProblem(
                    ?: apiStatus?.since
                      ?.let {
                        PolySymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.since"
-                                                else "web.inspection.message.obsolete.symbol.since", it)
+                                                 else "web.inspection.message.obsolete.symbol.since", it)
                      }
                    ?: PolySymbolsBundle.message(if (isDeprecated) "web.inspection.message.deprecated.symbol.message"
-                                               else "web.inspection.message.obsolete.symbol.message")
+                                                else "web.inspection.message.obsolete.symbol.message")
 
       PolySymbolReferenceProblem.create(
         symbolTypes,

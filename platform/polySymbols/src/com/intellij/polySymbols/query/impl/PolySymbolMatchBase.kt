@@ -229,13 +229,11 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
   override val icon: Icon?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.icon }.firstOrNull()
 
-  override val properties: Map<String, Any>
-    get() = nameSegments.asSequence().flatMap { it.symbols }
-      .flatMap { it.properties.entries }
-      .filter { it.key != PolySymbol.PROP_HIDE_FROM_COMPLETION }
-      .plus(additionalProperties.entries)
-      .map { Pair(it.key, it.value) }
-      .toMap()
+  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
+    property.tryCast(additionalProperties[property.name])
+    ?: if (property != PolySymbol.PROP_HIDE_FROM_COMPLETION)
+      reversedSegments().flatMap { it.symbols }.mapNotNull { it[property] }.firstOrNull()
+    else null
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     if (nameSegments.size == 1)

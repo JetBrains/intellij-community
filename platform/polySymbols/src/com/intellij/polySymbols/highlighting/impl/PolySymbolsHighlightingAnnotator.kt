@@ -47,7 +47,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
-import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.PropertyKey
 import java.util.*
@@ -114,7 +113,7 @@ class PolySymbolsHighlightingAnnotator : Annotator {
         }
         continue
       }
-      if (symbols.any { it.properties[IJ_IGNORE_REFS] == true }
+      if (symbols.any { it[IJ_IGNORE_REFS] == true }
           || symbols.hasOnlyExtensions()
       ) continue
 
@@ -125,7 +124,7 @@ class PolySymbolsHighlightingAnnotator : Annotator {
             PolySymbolHighlightingCustomizer.getSymbolTextAttributes(host, symbol, depth)
               ?.let { return@mapNotNull it }
 
-            symbol.properties[PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]?.asSafely<String>()
+            symbol[PolySymbol.PROP_IJ_TEXT_ATTRIBUTES_KEY]
               ?.let { TextAttributesKey.find(it) }
               ?.let { return@mapNotNull it }
 

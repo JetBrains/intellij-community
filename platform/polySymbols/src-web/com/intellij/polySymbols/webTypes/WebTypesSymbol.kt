@@ -4,11 +4,12 @@ package com.intellij.polySymbols.webTypes
 import com.intellij.model.Pointer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.documentation.DocumentationTarget
-import com.intellij.polySymbols.js.JS_STRING_LITERALS
-import com.intellij.polySymbols.js.JS_PROPERTIES
-import com.intellij.polySymbols.PolySymbol.Companion.PROP_NO_DOC
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
+import com.intellij.polySymbols.js.JS_PROPERTIES
+import com.intellij.polySymbols.js.JS_STRING_LITERALS
+import com.intellij.polySymbols.js.JsSymbolSymbolKind
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
 
@@ -17,12 +18,48 @@ interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolWithDocumentation {
   val location: Location?
 
   override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
-    if (properties[PROP_NO_DOC] != true)
+    if (this[PROP_NO_DOC] != true)
       PolySymbolDocumentationTargetImpl(this, location)
     else
       null
 
   override fun createPointer(): Pointer<out WebTypesSymbol>
+
+  companion object {
+    /**
+     * Don't provide documentation for the symbol
+     */
+    @JvmField
+    val PROP_NO_DOC: PolySymbolProperty<Boolean> = PolySymbolProperty["ij-no-doc"]
+
+    /**
+     * Name of boolean property used by `css/pseudo-elements` and `css/pseudo-classes` symbols
+     * to specify whether they require arguments. Defaults to false.
+     **/
+    @JvmField
+    val PROP_ARGUMENTS: PolySymbolProperty<Any> = PolySymbolProperty["arguments"]
+
+    /**
+     * Name of boolean property used by `js/properties` symbols to specify whether
+     * the property is read-only. Defaults to false.
+     **/
+    @JvmField
+    val PROP_READ_ONLY: PolySymbolProperty<Boolean> = PolySymbolProperty["read-only"]
+
+    /**
+     * Name of [JsSymbolSymbolKind] property used by `js/symbols` symbols to specify kind of the JS symbol.
+     * By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
+     **/
+    @JvmField
+    val PROP_KIND: PolySymbolProperty<JsSymbolSymbolKind> = PolySymbolProperty["kind"]
+
+    /**
+     * Name of [JsSymbolSymbolKind] property used by other symbols to specify kind of the JS symbol.
+     * By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
+     **/
+    @JvmField
+    val PROP_JS_SYMBOL_KIND: PolySymbolProperty<String> = PolySymbolProperty["js-symbol-kind"]
+  }
 
   sealed interface Location
 
@@ -84,13 +121,11 @@ interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolWithDocumentation {
     }
   }
 
-  companion object {
-    internal val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
-      JS_PROPERTIES.kind, JS_STRING_LITERALS.kind
-    )
-  }
-
 }
+
+internal val WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS = setOf(
+  JS_PROPERTIES.kind, JS_STRING_LITERALS.kind
+)
 
 private data class ModuleExportData(
   override val moduleName: String,

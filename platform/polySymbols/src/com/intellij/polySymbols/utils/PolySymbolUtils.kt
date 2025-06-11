@@ -277,8 +277,7 @@ internal val PolySymbol.matchedNameOrName: String
   get() = (this as? PolySymbolMatch)?.matchedName ?: name
 
 val PolySymbol.hideFromCompletion: Boolean
-  get() =
-    properties[PolySymbol.PROP_HIDE_FROM_COMPLETION] == true
+  get() = this[PolySymbol.PROP_HIDE_FROM_COMPLETION] == true
 
 val (PolySymbolNameSegment.MatchProblem?).isCritical: Boolean
   get() = this == PolySymbolNameSegment.MatchProblem.MISSING_REQUIRED_PART || this == PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL

@@ -4,20 +4,29 @@ package com.intellij.polySymbols.testFramework.query
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.polySymbols.utils.completeMatch
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
 import java.util.*
 
 open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
 
   private val parents = Stack<PolySymbol>()
+
+  protected open val propertiesToPrint: List<PolySymbolProperty<*>> =
+    listOf(
+      PolySymbol.PROP_HIDE_FROM_COMPLETION, PolySymbol.PROP_DOC_HIDE_PATTERN, PolySymbol.PROP_INJECT_LANGUAGE,
+      WebTypesSymbol.PROP_ARGUMENTS, WebTypesSymbol.PROP_JS_SYMBOL_KIND, WebTypesSymbol.PROP_KIND,
+      WebTypesSymbol.PROP_NO_DOC, WebTypesSymbol.PROP_READ_ONLY
+    )
 
   override fun printValueImpl(builder: StringBuilder, level: Int, value: Any?): StringBuilder =
     when (value) {
@@ -81,7 +90,14 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is PolySymbolApiStatus.Stable || it.since != null })
       printProperty(level, "priority", source.priority ?: PolySymbol.Priority.NORMAL)
       printProperty(level, "has-pattern", if (source.pattern != null) true else null)
-      printProperty(level, "properties", source.properties.takeIf { it.isNotEmpty() })
+      printProperty(
+        level, "properties",
+        propertiesToPrint
+          .sortedBy { it.name }
+          .mapNotNull { prop -> source[prop]?.let { Pair(prop, it) } }
+          .toMap()
+          .takeIf { it.isNotEmpty() }
+      )
       parents.push(source)
       printProperty(level, "segments", source.nameSegments)
       parents.pop()

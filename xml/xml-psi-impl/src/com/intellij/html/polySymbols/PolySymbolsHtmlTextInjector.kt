@@ -81,9 +81,7 @@ class PolySymbolsHtmlTextInjector : MultiHostInjector {
   private fun List<PolySymbol>.getLanguageToInject() =
     takeIf { it.isNotEmpty() && !it.hasOnlyStandardHtmlSymbols() }
       ?.asSingleSymbol()
-      ?.properties
       ?.get(PolySymbol.PROP_INJECT_LANGUAGE)
-      ?.asSafely<String>()
       ?.lowercase(Locale.US)
 
   private fun findLanguages(scriptLang: String): Sequence<Language> =

@@ -442,7 +442,7 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           if (!includeVirtual) exclude(PolySymbolModifier.VIRTUAL)
           exclude(PolySymbolModifier.ABSTRACT)
         }
-      printMatches(matches)
+      printMatches(matches, PolySymbolsTestsDebugOutputPrinter)
     }
   }
 

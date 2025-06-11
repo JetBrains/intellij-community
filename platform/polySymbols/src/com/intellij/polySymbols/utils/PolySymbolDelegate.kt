@@ -60,8 +60,9 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol {
     get() = delegate.attributeValue
   override val pattern: PolySymbolsPattern?
     get() = delegate.pattern
-  override val properties: Map<String, Any>
-    get() = delegate.properties
+
+  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
+    delegate[property]
 
   override fun getDocumentationTarget(location: PsiElement?): DocumentationTarget? =
     delegate.getDocumentationTarget(location)
