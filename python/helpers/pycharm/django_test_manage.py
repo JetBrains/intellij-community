@@ -2,6 +2,7 @@
 
 import os
 import sys
+import traceback
 
 from django.core.management import ManagementUtility
 
@@ -20,7 +21,8 @@ try:
     from django.conf import settings
     apps = settings.INSTALLED_APPS
 except:
-    pass
+    print("Exception while importing settings: {}".format(str(e)))
+    traceback.print_tb(e.__traceback__)
 
 from django.core import management
 
@@ -30,9 +32,9 @@ try:
   sys.path.append(os.path.join(project_directory, os.pardir))
   project_name = os.path.basename(os.path.normpath(project_directory))
   __import__(project_name)
-except ImportError:
-  # project has custom structure (project directory is not importable)
-  pass
+except ImportError as e:
+  print("Exception while importing project directory {}: {}".format(project_directory, e))
+  traceback.print_tb(e.__traceback__)
 finally:
   sys.path.pop()
 
