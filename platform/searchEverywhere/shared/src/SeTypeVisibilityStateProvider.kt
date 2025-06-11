@@ -6,5 +6,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface SeTypeVisibilityStateProvider {
-  suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation> = emptyList()
+  suspend fun getTypeVisibilityStates(index: Int): List<SeTypeVisibilityStatePresentation>
 }

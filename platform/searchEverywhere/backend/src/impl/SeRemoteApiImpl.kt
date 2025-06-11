@@ -71,7 +71,7 @@ class SeRemoteApiImpl: SeRemoteApi {
     return SeBackendService.getInstance(project).getSearchScopesInfoForProviders(sessionRef, dataContextId, providerIds, isAllTab)
   }
 
-  override suspend fun getTypeVisibilityStatesForProvider(
+  override suspend fun getTypeVisibilityStatesForProviders(
     index: Int,
     projectId: ProjectId,
     sessionRef: DurableRef<SeSessionEntity>,
