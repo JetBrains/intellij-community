@@ -316,8 +316,7 @@ class PsiViewerDebugPanel(
       if (!editor.contentComponent.hasFocus()) return
       if (editor.getSelectionModel().hasSelection()) return
       val rootElement = treeStructure.rootPsiElement as? PsiFile ?: return
-      val offset = event.caret?.offset ?: return
-      val element = rootElement.findElementAt(offset) ?: return
+      val element = rootElement.findElementAt(event.caret.offset) ?: return
       structureTreeModel.select(element, psiTree) { }
     }
 
