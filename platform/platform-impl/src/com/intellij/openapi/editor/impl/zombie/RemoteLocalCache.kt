@@ -11,6 +11,7 @@ import com.intellij.util.io.cache.ManagedPersistentCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -58,12 +59,16 @@ internal class RemoteLocalCache<Z: Zombie>(
           project,
           coroutineScope
         )
+      remoteCache?.preload(coroutineScope, localCache)
       return RemoteLocalCache(
         localCache = localCache,
         remoteCache = remoteCache,
       )
     }
-
+    private fun<Z: Zombie> RemoteCache<Z>.preload(coroutineScope: CoroutineScope, localCache: Cache<Z>) = coroutineScope.launch {
+        val preloadedFromReload = preloadedContent.await()
+        preloadedFromReload.forEach { (key, value) -> localCache.put(key, value) }
+      }
 
     private fun<Z: Zombie> createLocalCache(cacheName: String, necromancy: Necromancy<Z>, project: Project, coroutineScope: CoroutineScope): Cache<Z> {
       val (cacheName, cachePath) = necropolisCacheNameAndPath(cacheName, project)

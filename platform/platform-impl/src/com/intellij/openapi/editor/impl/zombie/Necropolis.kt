@@ -12,7 +12,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
@@ -76,25 +75,6 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
     }
   }
 
-  @ApiStatus.Internal
-  suspend fun ensureReady(
-    project: Project,
-    file: VirtualFile,
-  ) {
-    require(project == this.project)
-    if (!project.isDisposed && !project.isDefault) {
-      val fileId = application.serviceAsync<ZombieOriginRecipeBook>().getIdForFile(file) ?: return
-      coroutineScope {
-        for (necromancer in necromancersDeferred.await()) {
-          launch {
-            LOG.runAndLogException {
-              necromancer.ensureReady(fileId)
-            }
-          }
-        }
-      }
-    }
-  }
 
   suspend fun spawnZombies(
     project: Project,

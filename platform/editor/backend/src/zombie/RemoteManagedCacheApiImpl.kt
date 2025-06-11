@@ -17,9 +17,6 @@ import com.intellij.util.io.PersistentMapBuilder
 import com.intellij.util.io.cache.ManagedCache
 import com.intellij.util.io.cache.ManagedPersistentCache
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flow
 import java.io.DataInput
 import java.io.DataOutput
 
@@ -29,7 +26,7 @@ private class RemoteManagedCacheManager(private val project: Project, private va
   fun get(cacheId: CacheId): ManagedCache<RemoteManagedCacheDto, RemoteManagedCacheDto> {
     return storage[cacheId.name]!!
   }
-  fun create(cacheId: CacheId): Flow<PrefetchedRemoteCacheValue> {
+  suspend fun create(cacheId: CacheId): List<PrefetchedRemoteCacheValue> {
     // RD and monolith caches could be handled, since Necropolis is loaded on backend too
     val (name, path) = necropolisCacheNameAndPath("${cacheId.name}-backend", project)
     val builder = PersistentMapBuilder.newBuilder(
@@ -39,9 +36,7 @@ private class RemoteManagedCacheManager(private val project: Project, private va
     ).withVersion(SERDE_VERSION)
     val cache = ManagedPersistentCache(name, builder, coroutineScope)
     storage[cacheId.name] = cache
-    return flow {
-      cache.entries().forEach { (key, value) -> emit(PrefetchedRemoteCacheValue(key, value)) }
-    }
+    return cache.entries().map { (key, value) -> PrefetchedRemoteCacheValue(key, value) }
   }
 
   private open class Externalizer : DataExternalizer<RemoteManagedCacheDto> {
@@ -86,8 +81,8 @@ internal class RemoteManagedCacheApiImpl: RemoteManagedCacheApi {
     }
   }
 
-  override suspend fun createPrefetchFlow(cacheId: CacheId): Flow<PrefetchedRemoteCacheValue> {
-    val project = cacheId.projectId.findProjectOrNull() ?: return emptyFlow()
+  override suspend fun createPrefetchFlow(cacheId: CacheId): List<PrefetchedRemoteCacheValue> {
+    val project = cacheId.projectId.findProjectOrNull() ?: return emptyList()
     return project.serviceAsync<RemoteManagedCacheManager>().create(cacheId)
   }
 }
