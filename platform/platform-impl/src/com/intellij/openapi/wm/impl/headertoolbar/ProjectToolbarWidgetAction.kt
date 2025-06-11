@@ -19,9 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.openapi.wm.impl.LEFT_ICONS_KEY
 import com.intellij.openapi.wm.impl.ToolbarComboButton
-import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -93,17 +91,6 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     }
   }
 
-  override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
-    return object : ToolbarComboButton(model) {
-      override fun updateFromPresentation(presentation: Presentation) {
-        super.updateFromPresentation(presentation)
-        // Doesn't work for remdev because it uses BackendToolbarComboButton, maybe this should be a client property as well?
-        // Or just make it the default?
-        betweenIconsGap = 9
-      }
-    }
-  }
-
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
     super.updateCustomComponent(component, presentation)
 
@@ -119,14 +106,24 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.description = FileUtil.getLocationRelativeToUserHome(project?.guessProjectDir()?.path) ?: projectName
     e.presentation.putClientProperty(projectKey, project)
     val icons = buildList {
-      UpdatesInfoProviderManager.getInstance().getUpdateIcons().let { addAll(it) }
+      UpdatesInfoProviderManager.getInstance().getUpdateIcons().let { updateIcons ->
+        for (icon in updateIcons) {
+          if (isNotEmpty()) addGap()
+          add(icon)
+        }
+      }
 
       val customizer = ProjectWindowCustomizerService.getInstance()
       if (project != null && customizer.isAvailable()) {
+        if (isNotEmpty()) addGap()
         add(customizer.getProjectIcon(project))
       }
     }
-    e.presentation.putClientProperty(LEFT_ICONS_KEY, icons)
+    e.presentation.icon = when (icons.size) {
+      0 -> null
+      1 -> icons.single()
+      else -> IconManager.getInstance().createRowIcon(*icons.toTypedArray())
+    }
   }
 
   private fun createPopup(it: Project, step: ListPopupStep<PopupFactoryImpl.ActionItem>): ListPopup {
@@ -431,3 +428,9 @@ interface ProjectToolbarWidgetPresentable {
   @get:ApiStatus.Internal
   val isProjectOpening: Boolean get() = false
 }
+
+private fun MutableList<in Icon>.addGap() {
+  add(EmptyIcon.create(BETWEEN_ICONS_GAP, 1))
+}
+
+private const val BETWEEN_ICONS_GAP = 9
