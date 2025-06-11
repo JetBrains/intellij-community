@@ -216,6 +216,7 @@
       <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
       <action class="git4idea.actions.branch.GitPushBranchAction"/>
+      <group id="Git.Branch.Tracked" class="git4idea.actions.branch.GitTrackedBranchActionGroup" popup="true"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <separator/>
@@ -620,6 +621,8 @@
                  description="GPG Agent configuration notification proposal (see git.commit.gpg.signing.enable.embedded.pinentry)"/>
     <registryKey key="git.read.branches.from.disk" defaultValue="false"
                  description="When enabled, read the '.git/refs' directory contents. When disabled, delegate to 'git branch' call."/>
+    <registryKey key="git.tracked.branch.actions.in.widget" defaultValue="true"
+                 description="Show actions for a tracked branch as a sub-popup in the local branch actions popup in Git branches popup."/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
