@@ -8,10 +8,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.*
 
 abstract class AbstractRenameActionCommandProvider : ActionCommandProvider(actionId = IdeActions.ACTION_RENAME,
                                                                            presentableName = ActionsBundle.message("action.RenameElement.text"),
@@ -55,7 +52,7 @@ abstract class AbstractRenameActionCommandProvider : ActionCommandProvider(actio
     if (editor == null) return null
     val context = getTargetContext(targetOffset, editor)
     if (context == null) return null
-    if (!context.isWritable || context !is PsiNamedElement) return null
+    if (context is PsiCompiledElement || context !is PsiNamedElement) return null
     return context
   }
 }
