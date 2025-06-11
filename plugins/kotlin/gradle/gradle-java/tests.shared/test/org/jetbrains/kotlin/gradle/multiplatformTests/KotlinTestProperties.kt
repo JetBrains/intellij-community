@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.KotlinGradl
 import org.jetbrains.kotlin.gradle.multiplatformTests.testProperties.SimpleProperties
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
+import org.jetbrains.kotlin.tooling.core.toKotlinVersion
 import java.io.File
 
 abstract class KotlinTestProperties {
@@ -181,3 +182,8 @@ class KotlinMppTestProperties private constructor(
             )
     }
 }
+
+/**
+ * Just MAJOR.MINOR.PATCH, e.g. "1.9.21" (no `-dev`, no build numbers, etc.)
+ */
+val KotlinTestProperties.kotlinSimpleVersionString: String get() = kotlinVersion.toKotlinVersion().toString()
