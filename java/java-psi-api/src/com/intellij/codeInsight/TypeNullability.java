@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,12 +108,25 @@ public final class TypeNullability {
     }
     return this.nullability() == Nullability.NULLABLE ? this : other;
   }
+  
+  public static @NotNull TypeNullability ofTypeParameter(@NotNull PsiTypeParameter parameter) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(parameter.getProject());
+    if (manager != null) {
+      NullabilityAnnotationInfo typeUseNullability = manager.findDefaultTypeUseNullability(parameter);
+      if (typeUseNullability != null) {
+        return typeUseNullability.toTypeNullability();
+      }
+    }
+    return intersect(ContainerUtil.map(parameter.getSuperTypes(), PsiType::getNullability)).inherited();
+  }
 
   /**
    * @param collection type nullabilities to intersect
    * @return the intersection of the type nullabilities in the collection
    */
   public static @NotNull TypeNullability intersect(@NotNull Collection<@NotNull TypeNullability> collection) {
+    if (collection.isEmpty()) return UNKNOWN;
+    if (collection.size() == 1) return collection.iterator().next();
     Map<Nullability, Set<NullabilitySource>> map = collection.stream().collect(Collectors.groupingBy(
       TypeNullability::nullability, Collectors.mapping(TypeNullability::source, Collectors.toSet())));
     Set<NullabilitySource> sources = map.get(Nullability.NOT_NULL);
