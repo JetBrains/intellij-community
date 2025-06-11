@@ -382,6 +382,7 @@ internal class KotlinFunctionCallUsage(
                 val defaultValueForCall = newReceiverInfo.defaultValueForCall
                 receiverArgument?.let { psiFactory.createExpression(it.text) }
                     ?: defaultValueForCall
+                    ?: psiFactory.createExpression("contextOf()").takeIf { newReceiverInfo.wasContextParameter }
                     ?: psiFactory.createExpression("_")
             } else {
                 null
