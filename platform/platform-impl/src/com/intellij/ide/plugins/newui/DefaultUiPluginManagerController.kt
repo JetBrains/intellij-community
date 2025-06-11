@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
@@ -16,8 +15,6 @@ import com.intellij.ide.plugins.PluginManagerCore.looksLikePlatformPluginAlias
 import com.intellij.ide.plugins.PluginUtils.toPluginDescriptors
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.*
-import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.readOrUpdateFile
-import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.PathManager
@@ -39,7 +36,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.FileVisitResult
-import java.nio.file.Paths
 import java.util.*
 import javax.swing.JComponent
 
@@ -470,11 +466,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override fun loadPluginDetails(
-    xmlId: String,
-    ideCompatibleUpdate: IdeCompatibleUpdate,
-    indicator: ProgressIndicator?,
-  ): PluginUiModel {
-    return MarketplaceRequests.loadPluginModel(xmlId, ideCompatibleUpdate, indicator)
+    model: PluginUiModel
+  ): PluginUiModel? {
+    return MarketplaceRequests.getInstance().loadPluginDetails(model)
   }
 
   @RequiresBackgroundThread

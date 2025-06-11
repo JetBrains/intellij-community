@@ -32,7 +32,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String?): List<IdeCompatibleUpdate>
   suspend fun executeMarketplaceQuery(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
   suspend fun isPluginDisabled(pluginId: PluginId): Boolean
-  suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): PluginDto
+  suspend fun loadMetadata(model: PluginDto): PluginDto?
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   suspend fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   suspend fun getAllPluginsTags(): Set<String>

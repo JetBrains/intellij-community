@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.InstallPluginResult
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.PrepareToUninstallResult
@@ -65,8 +64,8 @@ class UiPluginManager {
     return getController().isPluginDisabled(pluginId)
   }
 
-  fun loadPluginDetails(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginUiModel {
-    return getController().loadPluginDetails(xmlId, ideCompatibleUpdate, indicator)
+  fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
+    return getController().loadPluginDetails(model)
   }
 
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {

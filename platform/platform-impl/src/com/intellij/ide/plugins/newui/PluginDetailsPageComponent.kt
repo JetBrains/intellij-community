@@ -657,7 +657,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         if (!pluginUiModel.detailsLoaded) {
           syncLoading = false
           doLoad(component) {
-            loadPluginDetails(pluginUiModel)
             val loadedModel = loadPluginDetails(pluginUiModel)
             if (loadedModel != null) {
               coroutineContext.ensureActive()
@@ -1431,13 +1430,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
 @ApiStatus.Internal
 fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
-  val externalPluginId = model.externalPluginId ?: return model
-  val externalUpdateId = model.externalUpdateId ?: return model
-  
-  return UiPluginManager.getInstance().loadPluginDetails(
-    model.pluginId.idString,
-    IdeCompatibleUpdate(externalUpdateId = externalUpdateId, externalPluginId = externalPluginId)
-  )
+  return UiPluginManager.getInstance().loadPluginDetails(model)
 }
 
 @ApiStatus.Internal

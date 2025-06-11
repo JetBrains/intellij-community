@@ -4,13 +4,11 @@ package com.intellij.platform.pluginManager.backend.rpc
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
-import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
@@ -119,8 +117,9 @@ class BackendPluginManagerApi : PluginManagerApi {
     return PluginManagerCore.isDisabled(pluginId)
   }
 
-  override suspend fun loadMetadata(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate): PluginDto {
-    return PluginDto.fromModel(DefaultUiPluginManagerController.loadPluginDetails(xmlId, ideCompatibleUpdate))
+  override suspend fun loadMetadata(model: PluginDto): PluginDto? {
+    val pluginDetails = DefaultUiPluginManagerController.loadPluginDetails(model) ?: return null
+    return PluginDto.fromModel(pluginDetails)
   }
 
   override suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {

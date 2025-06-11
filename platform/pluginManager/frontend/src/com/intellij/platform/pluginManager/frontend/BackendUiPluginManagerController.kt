@@ -3,6 +3,7 @@ package com.intellij.platform.pluginManager.frontend
 
 import com.intellij.ide.plugins.InstallPluginRequest
 import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.marketplace.ApplyPluginsStateResult
 import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
@@ -177,8 +178,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().executeMarketplaceQuery(query, count, includeIncompatible) }
   }
 
-  override fun loadPluginDetails(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator?): PluginUiModel {
-    return awaitForResult { PluginManagerApi.getInstance().loadMetadata(xmlId, ideCompatibleUpdate) }
+  override fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
+    return awaitForResult { PluginManagerApi.getInstance().loadMetadata(PluginDto.fromModel(model)) }
   }
 
   override fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>? {

@@ -31,7 +31,7 @@ interface UiPluginManagerController {
   fun getUpdates(): List<PluginUiModel>
   fun isPluginDisabled(pluginId: PluginId): Boolean
   fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
-  fun loadPluginDetails(xmlId: String, ideCompatibleUpdate: IdeCompatibleUpdate, indicator: ProgressIndicator? = null): PluginUiModel
+  fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
   fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
   fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata?
   fun createSession(sessionId: String)
