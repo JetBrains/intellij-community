@@ -25,7 +25,7 @@ interface EvaluationEnvironment : AutoCloseable {
   fun sessionCount(datasetContext: DatasetContext): Int
 
   // TODO should return something closeable for large files
-  fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk>
+  fun chunks(datasetContext: DatasetContext): Sequence<EvaluationChunk>
 
   fun execute(step: EvaluationStep, workspace: EvaluationWorkspace): EvaluationWorkspace?
 

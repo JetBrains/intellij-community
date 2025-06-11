@@ -2,6 +2,7 @@ package com.intellij.cce.evaluable
 
 import com.intellij.cce.actions.ActionsBuilder
 import com.intellij.cce.actions.CallFeature
+import com.intellij.cce.actions.DatasetRef
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.SimpleTokenProperties
 import com.intellij.cce.core.SymbolLocation
@@ -17,19 +18,21 @@ import java.util.UUID
 import kotlin.collections.plusAssign
 
 class ChunkHelper(
-  private val chunkSize: Int,
-  datasetName: String,
+  private val datasetName: String,
+  private val chunkNamePrefix: String,
+  private val iterationsInSameChunk: Boolean = false,
 ) {
-  private val datasetGeneralName = datasetName.split("_").dropLast(1).joinToString("_")
-  private val chunkNamePrefix = datasetName.split("_").last()
+  constructor(datasetRef: DatasetRef, iterationsInSameChunk: Boolean = false) :
+    this(datasetRef.datasetName, datasetRef.chunkNamePrefix, iterationsInSameChunk)
 
   fun <T> chunks(
+    chunkSize: Int,
     entities: Sequence<T>,
     evaluate: ChunkHelper.(Props<T>) -> Result,
-  ): Iterator<EvaluationChunk> {
+  ): Sequence<EvaluationChunk> {
     return entities.chunked(chunkSize).mapIndexed { index, values ->
       object : EvaluationChunk {
-        override val datasetName: String = datasetGeneralName
+        override val datasetName: String = this@ChunkHelper.datasetName
         override val name: String = "${chunkNamePrefix}:${chunkSize * index}-${chunkSize * index + values.size - 1}"
 
         override fun evaluate(
@@ -65,16 +68,22 @@ class ChunkHelper(
             presentationText
           )
         }
+
+        override fun iterate(iterationCount: Int): List<EvaluationChunk> =
+          if (iterationsInSameChunk)
+            chunks(chunkSize * iterationCount, values.asSequence().flatMap { e -> List(iterationCount) { e } }, evaluate).toList()
+          else super.iterate(iterationCount)
       }
-    }.iterator()
+    }
   }
 
   fun <T> presentableChunks(
     layoutManager: LayoutManager,
+    chunkSize: Int,
     entities: Sequence<T>,
     evaluate: ChunkHelper.(Props<T>) -> PresentableResult,
-  ): Iterator<EvaluationChunk> {
-    return chunks(entities) { props ->
+  ): Sequence<EvaluationChunk> {
+    return chunks(chunkSize, entities) { props ->
       var call: CallFeature? = null
       var presentationLineText: String? = null
 
@@ -99,6 +108,11 @@ class ChunkHelper(
       )
     }
   }
+
+  fun presentableChunk(
+    layoutManager: LayoutManager,
+    evaluate: ChunkHelper.(Props<Unit>) -> PresentableResult
+  ): Sequence<EvaluationChunk> = presentableChunks(layoutManager, 1, sequenceOf(Unit)) { evaluate(it) }
 
   fun callFeature(target: String, offset: Int, features: Map<String, String>): CallFeature {
     val actions = ActionsBuilder().run {

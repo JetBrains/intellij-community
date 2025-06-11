@@ -30,7 +30,7 @@ class CsvEnvironment(
 
   override fun sessionCount(datasetContext: DatasetContext): Int = datasetContext.path(datasetRef).readLines().size - 1
 
-  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk> {
+  override fun chunks(datasetContext: DatasetContext): Sequence<EvaluationChunk> {
     val lines = datasetContext.path(datasetRef).readLines()
     val names = lines.first().split(',').map { it.trim() }
     val rows = lines.subList(1, lines.size).asSequence()
@@ -42,7 +42,7 @@ class CsvEnvironment(
         target to features
       }
 
-    return ChunkHelper(chunkSize, datasetRef.name).chunks(rows) { props ->
+    return ChunkHelper(datasetRef).chunks(chunkSize, rows) { props ->
       val (target, features) = props.value
       val call = callFeature(target, props.offset, features)
       ChunkHelper.Result(

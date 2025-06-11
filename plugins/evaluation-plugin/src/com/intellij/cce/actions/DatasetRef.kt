@@ -15,6 +15,9 @@ sealed interface DatasetRef {
 
   fun resultPath(datasetContext: DatasetContext): Path = datasetContext.path(name)
 
+  val datasetName: String get() = name.split("_").dropLast(1).joinToString("_")
+  val chunkNamePrefix: String get() = name.split("_").last()
+
   companion object {
     private const val CONFIG_PROTOCOL = "config:"
     private const val EXISTING_PROTOCOL = "existing:"

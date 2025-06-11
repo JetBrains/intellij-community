@@ -93,14 +93,14 @@ open class ProjectActionsEnvironment(
     return datasetContext.actionsStorage.computeSessionsCount()
   }
 
-  override fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk> {
+  override fun chunks(datasetContext: DatasetContext): Sequence<EvaluationChunk> {
     ensureDataRefIsHandled(datasetContext)
     val files = datasetContext.actionsStorage.getActionFiles()
     return files.shuffled(FILES_RANDOM).asSequence().map { file ->
       val fileActions = datasetContext.actionsStorage.getActions(file)
       val fileText = FilesHelper.getFile(project, fileActions.path).text()
       FileActionsChunk(fileActions, fileText)
-    }.iterator()
+    }
   }
 
   protected fun generateActions(

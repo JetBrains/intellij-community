@@ -21,8 +21,15 @@ interface EvaluationChunk {
     sessionHandler: (Session) -> Unit
   ): Result
 
+  fun iterate(iterationCount: Int): List<EvaluationChunk> = List(iterationCount) { iteration ->
+    val iterationLabel = if (iterationCount > 1) "Iteration $iteration" else ""
+    if (iterationLabel.isNotEmpty()) IterationChunk("${name} - $iterationLabel", this) else this
+  }
+
   data class Result(
     val sessions: List<Session>,
     val presentationText: String?
   )
 }
+
+private class IterationChunk(override val name: String, private val chunk: EvaluationChunk) : EvaluationChunk by chunk
