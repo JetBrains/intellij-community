@@ -53,9 +53,8 @@ object CommunityLibraryLicenses {
 
     androidDependency("Android Studio Platform", libraryName = "studio-platform"),
 
-    LibraryLicense("ANTLR 4.9 Runtime", libraryName = "antlr4-runtime-4.9", url = "https://www.antlr.org")
-      .newBsd("https://www.antlr.org/license.html")
-      .suppliedByPersons("Terence Parr"),
+    LibraryLicense("antlr4-runtime", libraryName = "antlr4-runtime", url = "https://github.com/antlr/antlr4")
+      .newBsd("https://github.com/antlr/antlr4/blob/dev/LICENSE.txt"),
 
     LibraryLicense(libraryName = "apache.logging.log4j.to.slf4j", url = "https://ant.apache.org/")
       .apache("https://logging.apache.org/log4j/log4j-2.2/license.html")
