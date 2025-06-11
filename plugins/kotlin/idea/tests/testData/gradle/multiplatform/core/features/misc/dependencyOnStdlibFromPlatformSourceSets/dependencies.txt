@@ -6,7 +6,6 @@ my-app.commonMain
 
 my-app.commonTest
     commonMain (friend, TEST)
-    org.jetbrains.kotlin:kotlin-stdlib:commonMain:{{KGP_VERSION}} (TEST)
 
 my-app.jsMain
     commonMain (refines, COMPILE)
