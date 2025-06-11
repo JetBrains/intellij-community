@@ -17,7 +17,7 @@ class StdioRunnerTest {
 
   @Test
   fun list_tools_stdio_runner() = runTest {
-    val mcpServerCommandLine = createStdioMcpServerCommandLine(McpServerService.getInstance().port, "Test mcp", "1.0", null)
+    val mcpServerCommandLine = createStdioMcpServerCommandLine(McpServerService.getInstance().port, null)
     val processBuilder = mcpServerCommandLine.toProcessBuilder()
 
       val process = processBuilder.start()

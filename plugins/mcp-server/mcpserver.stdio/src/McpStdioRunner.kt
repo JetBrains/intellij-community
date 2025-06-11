@@ -13,8 +13,6 @@ import kotlinx.io.buffered
 import kotlinx.serialization.json.*
 
 val IJ_MCP_SERVER_PORT: String = ::IJ_MCP_SERVER_PORT.name
-val IJ_MCP_SERVER_NAME: String = ::IJ_MCP_SERVER_NAME.name
-val IJ_MCP_SERVER_VERSION: String = ::IJ_MCP_SERVER_VERSION.name
 val IJ_MCP_SERVER_PROJECT_PATH: String = ::IJ_MCP_SERVER_PROJECT_PATH.name
 
 suspend fun main() {
