@@ -5,6 +5,5 @@
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.editor.frontend.FrontendEditorHandler"/>
-    <textEditorZombieCache implementation="com.intellij.platform.editor.frontend.zombie.ManagedCacheZombieCacheFactory" order="first"/>
   </extensions>
 </idea-plugin>

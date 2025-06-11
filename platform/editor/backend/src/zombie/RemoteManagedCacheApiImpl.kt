@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.impl.zombie.necropolisPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.platform.editor.zombie.rpc.CacheId
+import com.intellij.platform.editor.zombie.rpc.PrefetchedRemoteCacheValue
 import com.intellij.platform.editor.zombie.rpc.RemoteManagedCacheApi
 import com.intellij.platform.editor.zombie.rpc.RemoteManagedCacheValueDto
 import com.intellij.platform.project.findProjectOrNull
@@ -17,6 +18,9 @@ import com.intellij.util.io.PersistentMapBuilder
 import com.intellij.util.io.cache.ManagedCache
 import com.intellij.util.io.cache.ManagedPersistentCache
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import java.io.DataInput
 import java.io.DataOutput
 import java.nio.file.Path
@@ -27,14 +31,19 @@ private class RemoteManagedCacheManager(private val project: Project, private va
   fun get(cacheId: CacheId): ManagedCache<Int, RemoteManagedCacheValueDto> {
     return storage[cacheId.name]!!
   }
-  fun create(cacheId: CacheId) {
-    val (name, path) = cacheNameAndPath(cacheId.name)
+  fun create(cacheId: CacheId): Flow<PrefetchedRemoteCacheValue> {
+    // RD and monolith caches could be handled, since Necropolis is loaded on backend too
+    val (name, path) = cacheNameAndPath("${cacheId.name}-backend")
     val builder = PersistentMapBuilder.newBuilder(
       path,
       EnumeratorIntegerDescriptor.INSTANCE,
       Externalizer,
     ).withVersion(SERDE_VERSION)
-    storage[cacheId.name] = ManagedPersistentCache(name, builder, coroutineScope)
+    val cache = ManagedPersistentCache(name, builder, coroutineScope)
+    storage[cacheId.name] = cache
+    return flow {
+      cache.entries().forEach { (key, value) -> emit(PrefetchedRemoteCacheValue(key, value)) }
+    }
   }
 
   private fun cacheNameAndPath(cacheType: String): Pair<String, Path> {
@@ -82,8 +91,8 @@ internal class RemoteManagedCacheApiImpl: RemoteManagedCacheApi {
     }
   }
 
-  override suspend fun create(cacheId: CacheId) {
-    val project = cacheId.projectId.findProjectOrNull() ?: return
-    project.serviceAsync<RemoteManagedCacheManager>().create(cacheId)
+  override suspend fun createPrefetchFlow(cacheId: CacheId): Flow<PrefetchedRemoteCacheValue> {
+    val project = cacheId.projectId.findProjectOrNull() ?: return emptyFlow()
+    return project.serviceAsync<RemoteManagedCacheManager>().create(cacheId)
   }
 }
