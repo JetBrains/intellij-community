@@ -24,7 +24,7 @@ inline fun Graphics.useG2D(handler: (Graphics2D) -> Unit) {
     handler(g2d)
   }
   finally {
-    dispose()
+    g2d.dispose()
   }
 }
 
