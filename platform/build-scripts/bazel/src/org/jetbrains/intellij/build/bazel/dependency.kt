@@ -252,11 +252,11 @@ internal fun generateDeps(
 
 private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
   require(jar.isAbsolute) {
-    "jar path must be absolute: $jar"
+    "jar path for jps library ${lib.name} must be absolute: $jar"
   }
 
   require(jar == jar.normalize()) {
-    "jar path must not contain redundant . and .. segments: $jar"
+    "jar path for jps library ${lib.name} must not contain redundant . and .. segments: $jar"
   }
 
   val libraryDescriptor = lib.properties.data
