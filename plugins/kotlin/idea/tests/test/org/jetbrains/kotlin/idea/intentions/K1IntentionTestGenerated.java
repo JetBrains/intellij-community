@@ -2864,6 +2864,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/ifWithReturnsAndEmptyLines.kt");
                 }
 
+                @TestMetadata("ifWithSmartCast.kt")
+                public void testIfWithSmartCast() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/ifWithSmartCast.kt");
+                }
+
                 @TestMetadata("ifWithoutElse.kt")
                 public void testIfWithoutElse() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/ifWithoutElse.kt");

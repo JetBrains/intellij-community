@@ -10917,6 +10917,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithReturnsAndEmptyLines.kt");
             }
 
+            @TestMetadata("ifWithSmartCast.kt")
+            public void testIfWithSmartCast() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithSmartCast.kt");
+            }
+
             @TestMetadata("ifWithoutElse.kt")
             public void testIfWithoutElse() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen/ifWithoutElse.kt");
