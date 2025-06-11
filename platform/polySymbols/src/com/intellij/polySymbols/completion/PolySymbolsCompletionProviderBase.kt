@@ -86,7 +86,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
       consumer: (PolySymbolCodeCompletionItem) -> Unit,
     ) {
       processPolySymbolCodeCompletionItems(
-        queryExecutor.runCodeCompletionQuery(qualifiedKind, name, position, additionalScope = queryContext),
+        queryExecutor.codeCompletionQuery(qualifiedKind, name, position).additionalScope(queryContext).run(),
         result, qualifiedKind, name, queryExecutor.framework, location, providedNames, filter, consumer
       )
     }

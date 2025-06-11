@@ -18,7 +18,7 @@
   name: "A simple Vue directive",
   origin: "basic-pattern@1.0 (<none>)",
   complete: true,
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   has-pattern: true,
   segments: [

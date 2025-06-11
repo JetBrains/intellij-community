@@ -97,7 +97,7 @@ internal abstract class SearchMap<T> internal constructor(
       .values
       .asSequence()
       .flatMapWithQueryParameters(params)
-      .filter { !it.extension && !it.abstract && (!it.virtual || params.virtualSymbols) }
+      .filter { !it.extension && params.accept(it) }
       .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, scope) }
       .toList()
 
@@ -111,7 +111,7 @@ internal abstract class SearchMap<T> internal constructor(
       .flatMap { it.asSequence() }
       .distinct()
       .innerMapAndFilter(params)
-      .filter { !it.extension && !it.abstract && (!it.virtual || params.virtualSymbols) }
+      .filter { !it.extension && params.accept(it) }
       .flatMap { it.toCodeCompletionItems(qualifiedName.name, params, scope) }
       .toList()
 

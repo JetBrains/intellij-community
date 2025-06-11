@@ -38,64 +38,107 @@ interface PolySymbolsQueryExecutor : ModificationTracker {
 
   fun createPointer(): Pointer<PolySymbolsQueryExecutor>
 
-  fun runNameMatchQuery(
+  fun nameMatchQuery(
+    path: List<PolySymbolQualifiedName>,
+  ): NameMatchQueryBuilder
+
+  fun listSymbolsQuery(
+    path: List<PolySymbolQualifiedName>,
+    qualifiedKind: PolySymbolQualifiedKind,
+    expandPatterns: Boolean,
+  ): ListSymbolsQueryBuilder
+
+  fun codeCompletionQuery(
+    path: List<PolySymbolQualifiedName>,
+    /** Position to complete at in the last segment of the path **/
+    position: Int,
+  ): CodeCompletionQueryBuilder
+
+  fun nameMatchQuery(
     qualifiedKind: PolySymbolQualifiedKind,
     name: String,
-    virtualSymbols: Boolean = true,
-    abstractSymbols: Boolean = false,
-    strictScope: Boolean = false,
-    additionalScope: List<PolySymbolsScope> = emptyList(),
-  ): List<PolySymbol> =
-    runNameMatchQuery(listOf(qualifiedKind.withName(name)), virtualSymbols, abstractSymbols, strictScope, additionalScope)
+  ): NameMatchQueryBuilder =
+    nameMatchQuery(listOf(qualifiedKind.withName(name)))
 
-  fun runNameMatchQuery(
+  fun nameMatchQuery(
     path: List<PolySymbolQualifiedName>,
-    virtualSymbols: Boolean = true,
-    abstractSymbols: Boolean = false,
-    strictScope: Boolean = false,
-    additionalScope: List<PolySymbolsScope> = emptyList(),
-  ): List<PolySymbol>
+    configurator: NameMatchQueryBuilder.() -> Unit,
+  ): List<PolySymbol> =
+    nameMatchQuery(path).apply(configurator).run()
 
-  fun runListSymbolsQuery(
+  fun nameMatchQuery(
+    qualifiedKind: PolySymbolQualifiedKind,
+    name: String,
+    configurator: NameMatchQueryBuilder.() -> Unit,
+  ): List<PolySymbol> =
+    nameMatchQuery(listOf(qualifiedKind.withName(name))).apply(configurator).run()
+
+  fun listSymbolsQuery(
     qualifiedKind: PolySymbolQualifiedKind,
     expandPatterns: Boolean,
-    virtualSymbols: Boolean = true,
-    abstractSymbols: Boolean = false,
-    strictScope: Boolean = false,
-    additionalScope: List<PolySymbolsScope> = emptyList(),
-  ): List<PolySymbol> =
-    runListSymbolsQuery(emptyList(), qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, additionalScope)
+  ): ListSymbolsQueryBuilder =
+    listSymbolsQuery(emptyList(), qualifiedKind, expandPatterns)
 
-  fun runListSymbolsQuery(
+  fun listSymbolsQuery(
     path: List<PolySymbolQualifiedName>,
     qualifiedKind: PolySymbolQualifiedKind,
     expandPatterns: Boolean,
-    virtualSymbols: Boolean = true,
-    abstractSymbols: Boolean = false,
-    strictScope: Boolean = false,
-    additionalScope: List<PolySymbolsScope> = emptyList(),
-  ): List<PolySymbol>
+    configurator: ListSymbolsQueryBuilder.() -> Unit,
+  ): List<PolySymbol> =
+    listSymbolsQuery(path, qualifiedKind, expandPatterns).apply(configurator).run()
 
-  fun runCodeCompletionQuery(
+  fun listSymbolsQuery(
+    qualifiedKind: PolySymbolQualifiedKind,
+    expandPatterns: Boolean = false,
+    configurator: ListSymbolsQueryBuilder.() -> Unit,
+  ): List<PolySymbol> =
+    listSymbolsQuery(emptyList(), qualifiedKind, expandPatterns).apply(configurator).run()
+
+  fun codeCompletionQuery(
     qualifiedKind: PolySymbolQualifiedKind,
     name: String,
     /** Position to complete at in the last segment of the path **/
     position: Int,
-    virtualSymbols: Boolean = true,
-    additionalScope: List<PolySymbolsScope> = emptyList(),
+  ): CodeCompletionQueryBuilder =
+    codeCompletionQuery(listOf(qualifiedKind.withName(name)), position)
+
+  fun codeCompletionQuery(
+    path: List<PolySymbolQualifiedName>,
+    /** Position to complete at in the last segment of the path **/
+    position: Int,
+    configurator: CodeCompletionQueryBuilder.() -> Unit,
   ): List<PolySymbolCodeCompletionItem> =
-    runCodeCompletionQuery(listOf(qualifiedKind.withName(name)), position, virtualSymbols, additionalScope)
+    codeCompletionQuery(path, position).apply(configurator).run()
 
-  fun runCodeCompletionQuery(
-    path: List<PolySymbolQualifiedName>,
+  fun codeCompletionQuery(
+    qualifiedKind: PolySymbolQualifiedKind,
+    name: String,
     /** Position to complete at in the last segment of the path **/
     position: Int,
-    virtualSymbols: Boolean = true,
-    additionalScope: List<PolySymbolsScope> = emptyList(),
-  ): List<PolySymbolCodeCompletionItem>
+    configurator: CodeCompletionQueryBuilder.() -> Unit,
+  ): List<PolySymbolCodeCompletionItem> =
+    codeCompletionQuery(listOf(qualifiedKind.withName(name)), position).apply(configurator).run()
 
   fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolsQueryExecutor
 
   fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolsScope> = emptyList()): Boolean
+
+  interface QueryBuilder<T>: PolySymbolsQueryParams.Builder<T> {
+    fun additionalScope(scope: PolySymbolsScope): T
+    fun additionalScope(vararg scopes: PolySymbolsScope): T
+    fun additionalScope(scopes: Collection<PolySymbolsScope>): T
+  }
+
+  interface NameMatchQueryBuilder : QueryBuilder<NameMatchQueryBuilder>, PolySymbolsNameMatchQueryParams.BuilderMixin<NameMatchQueryBuilder> {
+    fun run(): List<PolySymbol>
+  }
+
+  interface ListSymbolsQueryBuilder : QueryBuilder<ListSymbolsQueryBuilder>, PolySymbolsListSymbolsQueryParams.BuilderMixin<ListSymbolsQueryBuilder> {
+    fun run(): List<PolySymbol>
+  }
+
+  interface CodeCompletionQueryBuilder : QueryBuilder<CodeCompletionQueryBuilder>, PolySymbolsCodeCompletionQueryParams.BuilderMixin<CodeCompletionQueryBuilder> {
+    fun run(): List<PolySymbolCodeCompletionItem>
+  }
 
 }

@@ -6,12 +6,7 @@ import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolApiStatus
-import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.PolySymbolsScope
+import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
@@ -49,10 +44,10 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol {
     get() = delegate.icon
   override val apiStatus: PolySymbolApiStatus
     get() = delegate.apiStatus
-  override val virtual: Boolean
-    get() = delegate.virtual
-  override val abstract: Boolean
-    get() = delegate.abstract
+  override val modifiers: Set<PolySymbolModifier>
+    get() = delegate.modifiers
+  override val accessModifier: PolySymbolAccessModifier?
+    get() = delegate.accessModifier
   override val extension: Boolean
     get() = delegate.extension
   override val required: Boolean?

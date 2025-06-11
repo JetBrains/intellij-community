@@ -3,6 +3,7 @@ package com.intellij.html.polySymbols.attributeValues
 import com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptor
 import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
@@ -30,13 +31,17 @@ class PolySymbolHtmlAttributeValueReferenceProvider : PsiPolySymbolReferenceProv
     val queryExecutor = PolySymbolsQueryExecutorFactory.create(psiElement)
 
     return if (type == Type.ENUM)
-      if (queryExecutor.runCodeCompletionQuery(HTML_ATTRIBUTE_VALUES, "", 0)
+      if (queryExecutor.codeCompletionQuery(HTML_ATTRIBUTE_VALUES, "", 0)
+          .exclude(PolySymbolModifier.ABSTRACT)
+          .run()
           .filter { !it.completeAfterInsert }
           .none { it.name == name })
         null
       else
         queryExecutor
-          .runNameMatchQuery(HTML_ATTRIBUTE_VALUES, name)
+          .nameMatchQuery(HTML_ATTRIBUTE_VALUES, name)
+          .exclude(PolySymbolModifier.ABSTRACT)
+          .run()
           .takeIf {
             it.isNotEmpty()
             && !it.hasOnlyExtensions()
@@ -45,7 +50,9 @@ class PolySymbolHtmlAttributeValueReferenceProvider : PsiPolySymbolReferenceProv
     else
       queryExecutor
         .also { it.keepUnresolvedTopLevelReferences = true }
-        .runNameMatchQuery(HTML_ATTRIBUTE_VALUES, name)
+        .nameMatchQuery(HTML_ATTRIBUTE_VALUES, name)
+        .exclude(PolySymbolModifier.ABSTRACT)
+        .run()
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()

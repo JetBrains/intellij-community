@@ -8,7 +8,7 @@
    matchedName: "html/ng-bindings/[class.",
    origin: "css@1.0 (<none>)",
    complete: true,
-   virtual: true,
+   modifiers: [virtual],
    priority: NORMAL,
    segments: [
     {
@@ -21,7 +21,7 @@
       name: "Class binding",
       origin: "css@1.0 (<none>)",
       complete: true,
-      virtual: true,
+      modifiers: [virtual],
       priority: NORMAL,
       has-pattern: true,
       segments: [
@@ -118,7 +118,7 @@
    matchedName: "html/ng-bindings/[attr.",
    origin: "css@1.0 (<none>)",
    complete: true,
-   virtual: true,
+   modifiers: [virtual],
    priority: NORMAL,
    segments: [
     {
@@ -131,7 +131,7 @@
       name: "Attribute binding",
       origin: "css@1.0 (<none>)",
       complete: true,
-      virtual: true,
+      modifiers: [virtual],
       priority: NORMAL,
       has-pattern: true,
       segments: [
@@ -225,7 +225,7 @@
    matchedName: "html/ng-bindings/[style.",
    origin: "css@1.0 (<none>)",
    complete: true,
-   virtual: true,
+   modifiers: [virtual],
    priority: NORMAL,
    segments: [
     {
@@ -238,7 +238,7 @@
       name: "Style binding",
       origin: "css@1.0 (<none>)",
       complete: true,
-      virtual: true,
+      modifiers: [virtual],
       priority: NORMAL,
       has-pattern: true,
       segments: [
@@ -299,7 +299,7 @@
    name: "attribute binding",
    origin: "css@1.0 (<none>)",
    complete: true,
-   virtual: true,
+   modifiers: [virtual],
    priority: NORMAL,
    has-pattern: true,
    segments: [
@@ -415,7 +415,7 @@
    name: "event binding",
    origin: "css@1.0 (<none>)",
    complete: true,
-   virtual: true,
+   modifiers: [virtual],
    priority: NORMAL,
    has-pattern: true,
    segments: [
@@ -436,7 +436,7 @@
    name: "event binding",
    origin: "css@1.0 (<none>)",
    complete: true,
-   virtual: true,
+   modifiers: [virtual],
    priority: NORMAL,
    has-pattern: true,
    segments: [

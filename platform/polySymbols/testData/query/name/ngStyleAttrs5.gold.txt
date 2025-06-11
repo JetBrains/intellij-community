@@ -3,7 +3,7 @@
   matchedName: "html/attributes/bind-class.attr-class",
   origin: "css@1.0 (<none>)",
   complete: false,
-  virtual: true,
+  modifiers: [virtual],
   priority: LOWEST,
   segments: [
    {
@@ -13,7 +13,7 @@
      name: "attribute binding",
      origin: "css@1.0 (<none>)",
      complete: true,
-     virtual: true,
+     modifiers: [virtual],
      priority: NORMAL,
      has-pattern: true,
      segments: [
@@ -32,7 +32,7 @@
      name: "Class binding",
      origin: "css@1.0 (<none>)",
      complete: true,
-     virtual: true,
+     modifiers: [virtual],
      priority: NORMAL,
      has-pattern: true,
      segments: [

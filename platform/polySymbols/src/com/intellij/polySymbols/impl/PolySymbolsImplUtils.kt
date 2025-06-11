@@ -11,8 +11,6 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryParams
 import com.intellij.polySymbols.webTypes.json.WebTypes
 import com.intellij.util.IconUtil
@@ -90,10 +88,7 @@ internal fun List<PolySymbol>.sortSymbolsByPriority(extensionsLast: Boolean = tr
 internal fun <T : PolySymbol> Sequence<T>.filterByQueryParams(params: PolySymbolsQueryParams): Sequence<T> =
   this.filter { symbol ->
     symbol.matchContext(params.queryExecutor.context)
-    && ((params as? PolySymbolsNameMatchQueryParams)?.abstractSymbols == true
-        || (params as? PolySymbolsListSymbolsQueryParams)?.abstractSymbols == true
-        || !symbol.abstract)
-    && (params.virtualSymbols != false || !symbol.virtual)
+    && params.accept(symbol)
   }
 
 internal fun PolySymbolNameSegment.withOffset(offset: Int): PolySymbolNameSegmentImpl =

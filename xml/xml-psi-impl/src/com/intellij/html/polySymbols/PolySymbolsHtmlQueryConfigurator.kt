@@ -69,15 +69,19 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope = element.takeIf { queryExecutor.allowResolve }
                            ?.descriptor?.asSafely<PolySymbolElementDescriptor>()?.symbol?.let { listOf(it) }
-                         ?: queryExecutor.runNameMatchQuery(HTML_ELEMENTS, element.name)
+                         ?: queryExecutor.nameMatchQuery(HTML_ELEMENTS, element.name)
+                           .exclude(PolySymbolModifier.ABSTRACT)
+                           .run()
 
       elementScope.forEach(consumer)
 
       val attribute = context as? XmlAttribute ?: return
       attribute.takeIf { queryExecutor.allowResolve }
         ?.descriptor?.asSafely<PolySymbolAttributeDescriptor>()?.symbol?.let(consumer)
-      ?: queryExecutor.runNameMatchQuery(HTML_ATTRIBUTES,
-                                         attribute.name, additionalScope = elementScope)
+      ?: queryExecutor.nameMatchQuery(HTML_ATTRIBUTES, attribute.name)
+        .additionalScope(elementScope)
+        .exclude(PolySymbolModifier.ABSTRACT)
+        .run()
         .forEach(consumer)
     }
 

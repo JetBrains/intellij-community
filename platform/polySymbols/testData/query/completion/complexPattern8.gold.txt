@@ -216,7 +216,7 @@
     kind: EXPRESSION,
    },
    complete: true,
-   virtual: true,
+   modifiers: [virtual],
    apiStatus: deprecated,
    priority: NORMAL,
    segments: [

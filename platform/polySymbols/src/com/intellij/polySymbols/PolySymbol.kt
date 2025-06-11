@@ -66,6 +66,18 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
   val name: @NlsSafe String
 
   /**
+   * A set of symbol modifiers
+   */
+  val modifiers: Set<PolySymbolModifier>
+    get() = emptySet()
+
+  /**
+   * Symbol's access modifier
+   */
+  val accessModifier: PolySymbolAccessModifier?
+    get() = null
+
+  /**
    * An optional icon associated with the symbol, which is going to be used across the IDE.
    * If none is specified, a default icon of the origin will be used and if that’s not available,
    * a default icon for symbol namespace and kind.
@@ -125,28 +137,6 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
    */
   val queryScope: List<PolySymbolsScope>
     get() = listOf(this)
-
-  /**
-   * Some symbols represent only a framework syntax,
-   * which does not translate to a particular symbol in the runtime.
-   * For instance a Vue directive, which needs to be prefixed with `v-` will result in
-   * some special code generated, but as such is not a real HTML attribute.
-   * This distinction allows us to ignore such symbols when looking for references.
-   */
-  @get:JvmName("isVirtual")
-  val virtual: Boolean
-    get() = false
-
-  /**
-   * Some symbols may have a lot in common with each other and
-   * one can use abstract symbols as their super symbol.
-   * For performance reasons, only statically defined symbols (Web Types, Custom Element Manifest)
-   * can inherit from other statically defined symbols.
-   * For dynamically defined symbols you should use regular class inheritance.
-   */
-  @get:JvmName("isAbstract")
-  val abstract: Boolean
-    get() = false
 
   /**
    * Specifies whether the symbol is an extension.

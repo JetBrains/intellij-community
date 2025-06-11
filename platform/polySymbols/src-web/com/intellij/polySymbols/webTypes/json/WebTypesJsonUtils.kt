@@ -4,20 +4,6 @@ package com.intellij.polySymbols.webTypes.json
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.*
-import com.intellij.polySymbols.css.CSS_CLASSES
-import com.intellij.polySymbols.css.CSS_FUNCTIONS
-import com.intellij.polySymbols.css.CSS_PARTS
-import com.intellij.polySymbols.css.CSS_PROPERTIES
-import com.intellij.polySymbols.css.CSS_PSEUDO_CLASSES
-import com.intellij.polySymbols.css.CSS_PSEUDO_ELEMENTS
-import com.intellij.polySymbols.html.HTML_ATTRIBUTES
-import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.js.JS_EVENTS
-import com.intellij.polySymbols.js.JS_PROPERTIES
-import com.intellij.polySymbols.js.JS_SYMBOLS
-import com.intellij.polySymbols.css.NAMESPACE_CSS
-import com.intellij.polySymbols.html.NAMESPACE_HTML
-import com.intellij.polySymbols.js.NAMESPACE_JS
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_ARGUMENTS
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_DOC_HIDE_PATTERN
 import com.intellij.polySymbols.PolySymbol.Companion.PROP_HIDE_FROM_COMPLETION
@@ -29,9 +15,13 @@ import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_NODE_P
 import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_RUBY_GEMS
 import com.intellij.polySymbols.context.PolyContext.Companion.PKG_MANAGER_SYMFONY_BUNDLES
 import com.intellij.polySymbols.context.PolyContextKindRules
+import com.intellij.polySymbols.css.*
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ELEMENTS
+import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.impl.canUnwrapSymbols
-import com.intellij.polySymbols.js.JsSymbolSymbolKind
+import com.intellij.polySymbols.js.*
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
@@ -192,7 +182,11 @@ internal fun Reference.resolve(
   abstractSymbols: Boolean = false,
 ): List<PolySymbol> =
   processPolySymbols(name, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
-    runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
+    nameMatchQuery(path) {
+      if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
+      if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
+      additionalScope(scope)
+    }
   }
 
 internal fun Reference.resolve(
@@ -205,10 +199,18 @@ internal fun Reference.resolve(
     if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
     if (lastSegment.name.isEmpty())
-      runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
-                          false, virtualSymbols2, abstractSymbols2, false, scope)
+      listSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
+                       false) {
+        if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
+        if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
+        additionalScope(scope)
+      }
     else
-      runNameMatchQuery(path, virtualSymbols2, abstractSymbols2, false, scope)
+      nameMatchQuery(path) {
+        if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
+        if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
+        additionalScope(scope)
+      }
   }
 
 internal fun Reference.list(
@@ -221,8 +223,12 @@ internal fun Reference.list(
   processPolySymbols(null, scope, queryExecutor, virtualSymbols, abstractSymbols) { path, virtualSymbols2, abstractSymbols2 ->
     if (path.isEmpty()) return@processPolySymbols emptyList()
     val lastSegment = path.last()
-    runListSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
-                        expandPatterns, virtualSymbols2, abstractSymbols2, false, scope)
+    listSymbolsQuery(path.subList(0, path.size - 1), lastSegment.qualifiedKind,
+                     expandPatterns) {
+      if (!virtualSymbols2) exclude(PolySymbolModifier.VIRTUAL)
+      if (!abstractSymbols2) exclude(PolySymbolModifier.ABSTRACT)
+      additionalScope(scope)
+    }
   }
 
 private fun Reference.processPolySymbols(
@@ -270,15 +276,22 @@ internal fun Reference.codeCompletion(
   virtualSymbols: Boolean = true,
 ): List<PolySymbolCodeCompletionItem> {
   return when (val reference = this.value) {
-    is String -> queryExecutor.runCodeCompletionQuery(
-      parseWebTypesPath(reference, scope.lastPolySymbol).withLastSegmentName(name), position,
-      virtualSymbols, scope
-    )
+    is String -> queryExecutor.codeCompletionQuery(
+      parseWebTypesPath(reference, scope.lastPolySymbol).withLastSegmentName(name), position
+    ) {
+      if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
+      exclude(PolySymbolModifier.ABSTRACT)
+      additionalScope(scope)
+    }
     is ReferenceWithProps -> {
       val nameConversionRules = reference.createNameConversionRules(scope.lastPolySymbol)
       val path = parseWebTypesPath(reference.path ?: return emptyList(), scope.lastPolySymbol).withLastSegmentName(name)
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runCodeCompletionQuery(path, position, reference.includeVirtual ?: virtualSymbols, scope)
+        .codeCompletionQuery(path, position) {
+          if (!(reference.includeVirtual ?: virtualSymbols)) exclude(PolySymbolModifier.VIRTUAL)
+          exclude(PolySymbolModifier.ABSTRACT)
+          additionalScope(scope)
+        }
       if (reference.filter == null) return codeCompletions
       val properties = reference.additionalProperties.toMap()
       PolySymbolsFilter.get(reference.filter)

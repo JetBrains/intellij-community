@@ -8,7 +8,7 @@
    langType: "string",
   },
   complete: true,
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   segments: [
    {
@@ -24,7 +24,7 @@
      },
      complete: true,
      description: "<p>Properties expression",
-     virtual: true,
+     modifiers: [virtual],
      priority: NORMAL,
      has-pattern: true,
      segments: [

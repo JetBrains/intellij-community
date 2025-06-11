@@ -9,7 +9,7 @@
    required: false,
   },
   complete: true,
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   segments: [
    {
@@ -27,7 +27,7 @@
      complete: true,
      description: "<p>Attaches an event listener to the element.…",
      docUrl: "https://v3.vuejs.org/api/directives.html#v-on",
-     virtual: true,
+     modifiers: [virtual],
      priority: NORMAL,
      has-pattern: true,
      segments: [

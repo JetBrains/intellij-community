@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.XmlTagInsertHandler
 import com.intellij.html.polySymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.html.polySymbols.PolySymbolsFrameworkHtmlSupport
 import com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
@@ -73,7 +74,9 @@ class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderB
 
             val fullName = name.substring(0, item.offset) + item.name
             val info = XmlTagInsertHandler.runWithTimeoutOrNull {
-              val match = freshRegistry.runNameMatchQuery(HTML_ATTRIBUTES, fullName)
+              val match = freshRegistry.nameMatchQuery(HTML_ATTRIBUTES, fullName)
+                            .exclude(PolySymbolModifier.ABSTRACT)
+                            .run()
                             .asSingleSymbol() ?: return@runWithTimeoutOrNull null
               PolySymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
             }

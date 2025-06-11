@@ -15,6 +15,7 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
@@ -41,7 +42,12 @@ open class PolySymbolElementDescriptor private constructor(private val tag: XmlT
                         abstractSymbols: Boolean = false,
                         strictScope: Boolean = false): List<PolySymbol> =
     PolySymbolsQueryExecutorFactory.create(tag)
-      .runNameMatchQuery(listOf(qualifiedName), virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
+      .nameMatchQuery(listOf(qualifiedName)) {
+        strictScope(strictScope)
+        if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
+        if (!abstractSymbols) exclude(PolySymbolModifier.ABSTRACT)
+        additionalScope(symbol)
+      }
 
   fun runListSymbolsQuery(qualifiedKind: PolySymbolQualifiedKind,
                           expandPatterns: Boolean,
@@ -49,7 +55,12 @@ open class PolySymbolElementDescriptor private constructor(private val tag: XmlT
                           abstractSymbols: Boolean = false,
                           strictScope: Boolean = false): List<PolySymbol> =
     PolySymbolsQueryExecutorFactory.create(tag)
-      .runListSymbolsQuery(qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
+      .listSymbolsQuery(qualifiedKind, expandPatterns) {
+        strictScope(strictScope)
+        if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
+        if (!abstractSymbols) exclude(PolySymbolModifier.ABSTRACT)
+        additionalScope(symbol)
+      }
 
   fun runCodeCompletionQuery(qualifiedKind: PolySymbolQualifiedKind,
                              name: String,
@@ -57,7 +68,11 @@ open class PolySymbolElementDescriptor private constructor(private val tag: XmlT
                              position: Int,
                              virtualSymbols: Boolean = true): List<PolySymbolCodeCompletionItem> =
     PolySymbolsQueryExecutorFactory.create(tag)
-      .runCodeCompletionQuery(qualifiedKind, name, position, virtualSymbols, listOf(symbol))
+      .codeCompletionQuery(qualifiedKind, name, position) {
+        if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
+        exclude(PolySymbolModifier.ABSTRACT)
+        additionalScope(symbol)
+      }
 
   override fun getQualifiedName(): String {
     return name

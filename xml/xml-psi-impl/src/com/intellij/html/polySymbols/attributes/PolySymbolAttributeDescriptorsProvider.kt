@@ -9,6 +9,7 @@ import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.project.DumbService
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
@@ -28,7 +29,10 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val queryExecutor = PolySymbolsQueryExecutorFactory.create(context)
       val additionalScope = listOf(PolySymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
       queryExecutor
-        .runListSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true, additionalScope = additionalScope, virtualSymbols = false)
+        .listSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true)
+        .exclude(PolySymbolModifier.ABSTRACT, PolySymbolModifier.VIRTUAL)
+        .additionalScope(additionalScope)
+        .run()
         .asSequence()
         .filter { !it.hasOnlyStandardHtmlSymbolsOrExtensions() }
         .map { it.getAttributeDescriptor(it.name, context, queryExecutor) }
@@ -49,7 +53,10 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
         listOf(PolySymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
 
       queryExecutor
-        .runNameMatchQuery(HTML_ATTRIBUTES, attributeName, additionalScope = additionalScope)
+        .nameMatchQuery(HTML_ATTRIBUTES, attributeName)
+        .exclude(PolySymbolModifier.ABSTRACT)
+        .additionalScope(additionalScope)
+        .run()
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()

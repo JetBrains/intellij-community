@@ -3,6 +3,7 @@ package com.intellij.polySymbols.customElements.json
 
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
@@ -19,7 +20,7 @@ fun Reference.createPattern(origin: CustomElementsJsonOrigin): PolySymbolsPatter
 
 fun Reference.resolve(origin: CustomElementsJsonOrigin, queryExecutor: PolySymbolsQueryExecutor): List<PolySymbol> =
   createQueryPathList(origin)
-    ?.let { queryExecutor.runNameMatchQuery(it) }
+    ?.let { queryExecutor.nameMatchQuery(it).exclude(PolySymbolModifier.ABSTRACT).run() }
   ?: emptyList()
 
 private fun Reference.createQueryPathList(origin: CustomElementsJsonOrigin): List<PolySymbolQualifiedName>? {

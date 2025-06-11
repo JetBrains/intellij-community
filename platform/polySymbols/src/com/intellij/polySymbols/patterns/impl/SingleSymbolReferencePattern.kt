@@ -3,6 +3,7 @@ package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.PolySymbolsScope
@@ -14,9 +15,10 @@ import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.nameMatches
 import com.intellij.polySymbols.utils.qualifiedName
 
-class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedName>,
-                                   private val virtualSymbols: Boolean = true,
-                                   private val abstractSymbols: Boolean = false) : PolySymbolsPattern() {
+class SingleSymbolReferencePattern(
+  private val path: List<PolySymbolQualifiedName>,
+                                   private val excludeModifiers: List<PolySymbolModifier> = listOf(PolySymbolModifier.ABSTRACT)
+) : PolySymbolsPattern() {
   override fun getStaticPrefixes(): Sequence<String> =
     emptySequence()
 
@@ -27,7 +29,10 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
                      start: Int,
                      end: Int): List<MatchResult> =
     if (owner?.nameMatches(params.name.substring(start, end), params.queryExecutor) == true)
-      params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
+      params.queryExecutor.nameMatchQuery(path) {
+        exclude(excludeModifiers)
+        additionalScope(scopeStack)
+      }
         .asSingleSymbol()
         ?.let { listOf(MatchResult(PolySymbolNameSegment.create(start, end, it))) }
       ?: emptyList()
@@ -39,7 +44,10 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
                     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
                     params: ListParameters): List<ListResult> =
     if (owner != null) {
-      params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList())
+      params.queryExecutor.nameMatchQuery(path) {
+        exclude(excludeModifiers)
+        additionalScope(scopeStack)
+      }
         .asSingleSymbol()
         ?.let { listOf(ListResult(owner.name, PolySymbolNameSegment.create(0, owner.name.length, it))) }
       ?: emptyList()
@@ -53,7 +61,10 @@ class SingleSymbolReferencePattern(private val path: List<PolySymbolQualifiedNam
                         start: Int,
                         end: Int): CompletionResults =
     if (owner != null
-        && params.queryExecutor.runNameMatchQuery(path, virtualSymbols, abstractSymbols, false, scopeStack.toList()).isNotEmpty()) {
+        && params.queryExecutor.nameMatchQuery(path) {
+        exclude(excludeModifiers)
+        additionalScope(scopeStack)
+      }.isNotEmpty()) {
       CompletionResults(params.queryExecutor.namesProvider
                           .getNames(owner.qualifiedName, PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
                           .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = owner) })

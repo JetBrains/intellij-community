@@ -3,7 +3,7 @@
   matchedName: "html/attributes/[prop1]",
   origin: "css@1.0 (<none>)",
   complete: true,
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   segments: [
    {
@@ -13,7 +13,7 @@
      name: "attribute binding",
      origin: "css@1.0 (<none>)",
      complete: true,
-     virtual: true,
+     modifiers: [virtual],
      priority: NORMAL,
      has-pattern: true,
      segments: [
@@ -31,7 +31,7 @@
      name: "Property binding",
      origin: "css@1.0 (<none>)",
      complete: true,
-     virtual: true,
+     modifiers: [virtual],
      priority: NORMAL,
      has-pattern: true,
      segments: [

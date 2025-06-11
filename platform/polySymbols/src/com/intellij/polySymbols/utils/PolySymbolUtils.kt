@@ -398,9 +398,9 @@ fun PolySymbolsScope.getDefaultCodeCompletions(
   getSymbols(qualifiedName.qualifiedKind,
              PolySymbolsListSymbolsQueryParams.create(
                params.queryExecutor,
-               expandPatterns = false,
-               virtualSymbols = params.virtualSymbols
-             ), scope)
+               expandPatterns = false) {
+               copyFiltersFrom(params)
+             }, scope)
     .flatMap { (it as? PolySymbol)?.toCodeCompletionItems(qualifiedName.name, params, scope) ?: emptyList() }
 
 internal val List<PolySymbolsScope>.lastPolySymbol: PolySymbol?

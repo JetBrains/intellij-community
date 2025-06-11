@@ -6,9 +6,10 @@ import com.intellij.lang.LanguageUtil
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.psi.ElementManipulators
@@ -35,7 +36,9 @@ class PolySymbolsHtmlTextInjector : MultiHostInjector {
           CachedValuesManager.getCachedValue(tag) {
             val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
-              queryExecutor.runNameMatchQuery(HTML_ELEMENTS, tag.name)
+              queryExecutor.nameMatchQuery(HTML_ELEMENTS, tag.name)
+                .exclude(PolySymbolModifier.ABSTRACT)
+                .run()
                 .getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
@@ -49,10 +52,14 @@ class PolySymbolsHtmlTextInjector : MultiHostInjector {
             val tag = attr.parent as HtmlTag
             val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
-              queryExecutor.runNameMatchQuery(listOf(
-                HTML_ELEMENTS.withName(tag.name),
-                HTML_ATTRIBUTES.withName(attr.name))
-              ).getLanguageToInject(),
+              queryExecutor.nameMatchQuery(
+                listOf(
+                  HTML_ELEMENTS.withName(tag.name),
+                  HTML_ATTRIBUTES.withName(attr.name))
+              )
+                .exclude(PolySymbolModifier.ABSTRACT)
+                .run()
+                .getLanguageToInject(),
               PsiModificationTracker.MODIFICATION_COUNT, queryExecutor
             )
           }

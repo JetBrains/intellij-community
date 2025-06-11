@@ -3,6 +3,7 @@ package com.intellij.polySymbols.webTypes.impl
 
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
@@ -84,7 +85,9 @@ private class WebTypesComplexPatternConfigProvider(
     queryExecutor: PolySymbolsQueryExecutor,
     scopeStack: Stack<PolySymbolsScope>,
   ): ComplexPatternOptions {
-    val queryParams = PolySymbolsNameMatchQueryParams.create(queryExecutor, true, false)
+    val queryParams = PolySymbolsNameMatchQueryParams.create(queryExecutor) {
+      exclude(PolySymbolModifier.ABSTRACT)
+    }
     val delegate = pattern.delegate?.resolve(scopeStack, queryParams.queryExecutor)?.firstOrNull()
 
     // Allow delegate pattern to override settings

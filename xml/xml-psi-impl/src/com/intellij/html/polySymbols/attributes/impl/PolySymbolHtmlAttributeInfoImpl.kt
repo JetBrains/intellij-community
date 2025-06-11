@@ -5,6 +5,7 @@ import com.intellij.html.polySymbols.attributes.PolySymbolHtmlAttributeInfo
 import com.intellij.html.polySymbols.attributes.PolySymbolHtmlAttributeValueTypeSupport
 import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
@@ -106,8 +107,11 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
           PolySymbolHtmlAttributeValue.Type.BOOLEAN -> typeSupport.createBooleanType(symbol)
           PolySymbolHtmlAttributeValue.Type.NUMBER -> typeSupport.createNumberType(symbol)
           PolySymbolHtmlAttributeValue.Type.ENUM -> {
-            val valuesSymbols = queryExecutor.runCodeCompletionQuery(
-              HTML_ATTRIBUTE_VALUES, "", 0, virtualSymbols = false, additionalScope = listOf(symbol))
+            val valuesSymbols = queryExecutor.codeCompletionQuery(
+              HTML_ATTRIBUTE_VALUES, "", 0)
+              .exclude(PolySymbolModifier.VIRTUAL, PolySymbolModifier.ABSTRACT)
+              .additionalScope(symbol)
+              .run()
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
           PolySymbolHtmlAttributeValue.Type.SYMBOL -> null
@@ -134,8 +138,10 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
         else if (kind == PolySymbolHtmlAttributeValue.Kind.PLAIN) {
           when (type) {
             PolySymbolHtmlAttributeValue.Type.ENUM -> {
-              queryExecutor.runCodeCompletionQuery(HTML_ATTRIBUTE_VALUES, "", 0,
-                                                   additionalScope = listOf(symbol))
+              queryExecutor.codeCompletionQuery(HTML_ATTRIBUTE_VALUES, "", 0)
+                .exclude(PolySymbolModifier.ABSTRACT)
+                .additionalScope(symbol)
+                .run()
                 .filter { !it.completeAfterInsert }
             }
             PolySymbolHtmlAttributeValue.Type.COMPLEX,

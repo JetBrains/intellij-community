@@ -46,10 +46,10 @@ interface PolySymbolsScope : ModificationTracker {
   ): List<PolySymbol> =
     getSymbols(qualifiedName.qualifiedKind,
                PolySymbolsListSymbolsQueryParams.create(
-                 params.queryExecutor, expandPatterns = false, virtualSymbols = params.virtualSymbols,
-                 abstractSymbols = params.abstractSymbols, strictScope = params.strictScope
-               ),
-               scope)
+                 params.queryExecutor, expandPatterns = false) {
+                 strictScope(params.strictScope)
+                 copyFiltersFrom(params)
+               }, scope)
       .filterIsInstance<PolySymbol>()
       .flatMap { it.match(qualifiedName.name, params, scope) }
 

@@ -8,7 +8,7 @@
    langType: "void",
   },
   complete: true,
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   properties: {
    ng-binding-pattern: true,
@@ -26,7 +26,7 @@
       langType: "void",
      },
      complete: true,
-     virtual: true,
+     modifiers: [virtual],
      priority: NORMAL,
      has-pattern: true,
      properties: {

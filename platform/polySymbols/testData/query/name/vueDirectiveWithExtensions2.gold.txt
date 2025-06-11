@@ -9,7 +9,7 @@
    required: false,
   },
   complete: true,
-  virtual: true,
+  modifiers: [virtual],
   priority: LOWEST,
   properties: {
    doc-hide-pattern: true,
@@ -30,7 +30,7 @@
      complete: true,
      description: "<p>Directives are special attributes with the…",
      docUrl: "https://v3.vuejs.org/guide/template-syntax.html#directives",
-     virtual: true,
+     modifiers: [virtual],
      priority: NORMAL,
      has-pattern: true,
      segments: [

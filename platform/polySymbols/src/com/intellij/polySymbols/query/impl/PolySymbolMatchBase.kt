@@ -198,9 +198,6 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
     get() = matchedName.substring(nameSegments.firstOrNull()?.start ?: 0,
                                   nameSegments.lastOrNull()?.end ?: 0)
 
-  override val virtual: Boolean
-    get() = nameSegments.any { segment -> segment.symbols.any { it.virtual } }
-
   override val extension: Boolean
     get() = nameSegments.isNotEmpty() && nameSegments.all { segment -> segment.symbols.isNotEmpty() && segment.symbols.all { it.extension } }
 
@@ -219,6 +216,9 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
 
   override val attributeValue: PolySymbolHtmlAttributeValue?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.attributeValue }.merge()
+
+  override val modifiers: Set<PolySymbolModifier>
+    get() = nameSegments.asSequence().flatMap { segment -> segment.symbols.flatMap { it.modifiers } }.toSet()
 
   override val required: Boolean?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.required }.firstOrNull()

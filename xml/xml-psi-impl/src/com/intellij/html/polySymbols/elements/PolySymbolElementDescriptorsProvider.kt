@@ -5,6 +5,7 @@ import com.intellij.html.polySymbols.elements.PolySymbolElementDescriptor.Compan
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbols
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.project.DumbService
+import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.utils.hasOnlyExtensions
@@ -20,7 +21,9 @@ class PolySymbolElementDescriptorsProvider : XmlElementDescriptorProvider {
     else {
       val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag)
       queryExecutor
-        .runNameMatchQuery(HTML_ELEMENTS, tag.name)
+        .nameMatchQuery(HTML_ELEMENTS, tag.name)
+        .exclude(PolySymbolModifier.ABSTRACT)
+        .run()
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()

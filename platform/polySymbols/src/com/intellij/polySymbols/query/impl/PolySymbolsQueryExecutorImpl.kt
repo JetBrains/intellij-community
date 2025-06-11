@@ -6,10 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.PolySymbolsScope
+import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.impl.filterByQueryParams
@@ -18,6 +15,7 @@ import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
+import com.intellij.util.SmartList
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -83,35 +81,110 @@ class PolySymbolsQueryExecutorImpl(
     }
   }
 
-  override fun runNameMatchQuery(
+  override fun nameMatchQuery(
     path: List<PolySymbolQualifiedName>,
-    virtualSymbols: Boolean,
-    abstractSymbols: Boolean,
-    strictScope: Boolean,
-    additionalScope: List<PolySymbolsScope>,
-  ): List<PolySymbol> =
-    runNameMatchQuery(path, PolySymbolsNameMatchQueryParams.create(this, virtualSymbols, abstractSymbols, strictScope), additionalScope)
+  ): PolySymbolsQueryExecutor.NameMatchQueryBuilder =
+    NameMatchQueryBuilderImpl(path)
 
-  override fun runListSymbolsQuery(
+  override fun listSymbolsQuery(
     path: List<PolySymbolQualifiedName>,
     qualifiedKind: PolySymbolQualifiedKind,
     expandPatterns: Boolean,
-    virtualSymbols: Boolean,
-    abstractSymbols: Boolean,
-    strictScope: Boolean,
-    additionalScope: List<PolySymbolsScope>,
-  ): List<PolySymbol> =
-    runListSymbolsQuery(path + qualifiedKind.withName(""),
-                        PolySymbolsListSymbolsQueryParams.create(this, expandPatterns = expandPatterns, virtualSymbols = virtualSymbols,
-                                                                 abstractSymbols = abstractSymbols, strictScope = strictScope), additionalScope)
+  ): PolySymbolsQueryExecutor.ListSymbolsQueryBuilder =
+    ListSymbolsQueryBuilderImpl(path, qualifiedKind, expandPatterns)
 
-  override fun runCodeCompletionQuery(
+  override fun codeCompletionQuery(
     path: List<PolySymbolQualifiedName>,
     position: Int,
-    virtualSymbols: Boolean,
-    additionalScope: List<PolySymbolsScope>,
-  ): List<PolySymbolCodeCompletionItem> =
-    runCodeCompletionQuery(path, PolySymbolsCodeCompletionQueryParams.create(this, position, virtualSymbols), additionalScope)
+  ): PolySymbolsQueryExecutor.CodeCompletionQueryBuilder =
+    CodeCompletionQueryBuilderImpl(path, position)
+
+  @Suppress("UNCHECKED_CAST")
+  abstract class AbstractQueryBuilderImpl<T> : AbstractQueryParamsBuilderImpl<T>(), PolySymbolsQueryExecutor.QueryBuilder<T> {
+    protected val additionalScope: MutableList<PolySymbolsScope> = SmartList()
+
+    override fun additionalScope(scope: PolySymbolsScope): T {
+      additionalScope.add(scope)
+      return this as T
+    }
+
+    override fun additionalScope(vararg scopes: PolySymbolsScope): T {
+      additionalScope.addAll(scopes)
+      return this as T
+    }
+
+    override fun additionalScope(scopes: Collection<PolySymbolsScope>): T {
+      additionalScope.addAll(scopes)
+      return this as T
+    }
+
+  }
+
+  private inner class ListSymbolsQueryBuilderImpl(
+    private val path: List<PolySymbolQualifiedName>,
+    private val qualifiedKind: PolySymbolQualifiedKind,
+    private val expandPatterns: Boolean,
+  ) : PolySymbolsQueryExecutor.ListSymbolsQueryBuilder, AbstractQueryBuilderImpl<PolySymbolsQueryExecutor.ListSymbolsQueryBuilder>() {
+
+    private var strictScope: Boolean = false
+
+    override fun strictScope(value: Boolean): PolySymbolsQueryExecutor.ListSymbolsQueryBuilder {
+      this.strictScope = value
+      return this
+    }
+
+    override fun run(): List<PolySymbol> =
+      runListSymbolsQuery(path + qualifiedKind.withName(""),
+                          PolySymbolsListSymbolsQueryParamsData(
+                            this@PolySymbolsQueryExecutorImpl,
+                            expandPatterns = expandPatterns,
+                            strictScope = strictScope,
+                            requiredModifiers = requiredModifiers.toList(),
+                            requiredAccessModifier = requiredAccessModifier,
+                            excludeModifiers = excludeModifiers.toList(),
+                            excludeAccessModifiers = excludeAccessModifiers.toList(),
+                          ), additionalScope.toList())
+  }
+
+  private inner class NameMatchQueryBuilderImpl(
+    private val path: List<PolySymbolQualifiedName>,
+  ) : PolySymbolsQueryExecutor.NameMatchQueryBuilder, AbstractQueryBuilderImpl<PolySymbolsQueryExecutor.NameMatchQueryBuilder>() {
+
+    private var strictScope: Boolean = false
+
+    override fun strictScope(value: Boolean): PolySymbolsQueryExecutor.NameMatchQueryBuilder {
+      this.strictScope = value
+      return this
+    }
+
+    override fun run(): List<PolySymbol> =
+      runNameMatchQuery(path,
+                        PolySymbolsNameMatchQueryParamsData(
+                          this@PolySymbolsQueryExecutorImpl,
+                          strictScope = strictScope,
+                          requiredModifiers = requiredModifiers.toList(),
+                          requiredAccessModifier = requiredAccessModifier,
+                          excludeModifiers = excludeModifiers.toList(),
+                          excludeAccessModifiers = excludeAccessModifiers.toList(),
+                        ), additionalScope.toList())
+  }
+
+  private inner class CodeCompletionQueryBuilderImpl(
+    private val path: List<PolySymbolQualifiedName>,
+    private val position: Int,
+  ) : PolySymbolsQueryExecutor.CodeCompletionQueryBuilder, AbstractQueryBuilderImpl<PolySymbolsQueryExecutor.CodeCompletionQueryBuilder>() {
+
+    override fun run(): List<PolySymbolCodeCompletionItem> =
+      runCodeCompletionQuery(path,
+                             PolySymbolsCodeCompletionQueryParamsData(
+                               this@PolySymbolsQueryExecutorImpl,
+                               position = position,
+                               requiredModifiers = requiredModifiers.toList(),
+                               requiredAccessModifier = requiredAccessModifier,
+                               excludeModifiers = excludeModifiers.toList(),
+                               excludeAccessModifiers = excludeAccessModifiers.toList(),
+                             ), additionalScope.toList())
+  }
 
   override fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolsQueryExecutor =
     if (rules.isEmpty())
@@ -303,8 +376,10 @@ class PolySymbolsQueryExecutorImpl(
     if (path.isEmpty()) return emptyList()
 
     val scope = buildQueryScope(additionalScope)
-    return RecursionManager.doPreventingRecursion(Pair(path, params.virtualSymbols), false) {
-      val contextQueryParams = PolySymbolsNameMatchQueryParams.create(this, true, false)
+    return RecursionManager.doPreventingRecursion(Pair(path, params.recursionKey), false) {
+      val contextQueryParams = PolySymbolsNameMatchQueryParams.create(this) {
+        exclude(PolySymbolModifier.ABSTRACT)
+      }
       val publisher = if (nestingLevel++ == 0)
         ApplicationManager.getApplication().messageBus.syncPublisher(PolySymbolsQueryExecutorListener.TOPIC)
       else
@@ -339,7 +414,7 @@ class PolySymbolsQueryExecutorImpl(
         nestingLevel--
       }
     } ?: run {
-      thisLogger().warn("Recursive Poly Symbols query: ${path.joinToString("/")} with virtualSymbols=${params.virtualSymbols}.\n" +
+      thisLogger().warn("Recursive Poly Symbols query: ${path.joinToString("/")} with params=${params.recursionKey}.\n" +
                         "Root scope: " + rootScope.map {
         it.asSafely<PolySymbol>()?.let { symbol -> "${symbol.qualifiedKind}/${symbol.name}" } ?: it
       } + "\n" +
@@ -405,5 +480,12 @@ class PolySymbolsQueryExecutorImpl(
       resultsCustomizer.apply(this, strict, qualifiedName)
     }
 
+  private val PolySymbolsQueryParams.recursionKey: List<Any> get() {
+    val result = SmartList<Any>()
+    result.add(requiredModifiers)
+    result.add(excludeModifiers)
+    result.add(excludeAccessModifiers)
+    requiredAccessModifier?.let { result.add(it) }
+    return result
+  }
 }
-

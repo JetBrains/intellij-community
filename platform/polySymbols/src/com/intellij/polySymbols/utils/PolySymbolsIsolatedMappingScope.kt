@@ -38,7 +38,10 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
     var result: List<PolySymbolCodeCompletionItem> = emptyList()
     RecursionManager.runInNewContext {
-      result = subQuery.runCodeCompletionQuery(sourceKind, qualifiedName.name, params.position, params.virtualSymbols, additionalScope)
+      result = subQuery.codeCompletionQuery(sourceKind, qualifiedName.name, params.position) {
+        copyFiltersFrom(params)
+        additionalScope(additionalScope)
+      }
         .filter { it.symbol?.let { acceptSymbol(it) } != false }
     }
     return result
@@ -50,7 +53,11 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
     var result: List<PolySymbol> = emptyList()
     RecursionManager.runInNewContext {
-      result = subQuery.runNameMatchQuery(sourceKind, qualifiedName.name, params.virtualSymbols, params.abstractSymbols, params.strictScope, additionalScope)
+      result = subQuery.nameMatchQuery(sourceKind, qualifiedName.name) {
+        copyFiltersFrom(params)
+        strictScope(params.strictScope)
+        additionalScope(additionalScope)
+      }
         .filter { acceptSymbol(it) }
         .map { it.withMatchedKind(qualifiedName.qualifiedKind) }
     }
@@ -63,7 +70,11 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     val sourceKind = mappings[qualifiedKind] ?: return emptyList()
     var result: List<PolySymbol> = emptyList()
     RecursionManager.runInNewContext {
-      result = subQuery.runListSymbolsQuery(sourceKind, params.expandPatterns, params.virtualSymbols, params.abstractSymbols, params.strictScope, additionalScope)
+      result = subQuery.listSymbolsQuery(sourceKind, params.expandPatterns) {
+        copyFiltersFrom(params)
+        strictScope(params.strictScope)
+        additionalScope(additionalScope)
+      }
         .filter { acceptSymbol(it) }
         .applyIf(params.expandPatterns) { map { it.withMatchedKind(qualifiedKind) } }
     }

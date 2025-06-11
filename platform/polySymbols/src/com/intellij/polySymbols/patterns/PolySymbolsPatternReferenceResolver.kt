@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.patterns
 
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.PolySymbolsScope
+import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.query.PolySymbolMatch
@@ -52,9 +49,8 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
   data class Reference(
     val location: List<PolySymbolQualifiedName> = emptyList(),
     val qualifiedKind: PolySymbolQualifiedKind,
-    val includeVirtual: Boolean = true,
-    val includeAbstract: Boolean = false,
     val filter: PolySymbolsFilter? = null,
+    val excludeModifiers: List<PolySymbolModifier> = listOf(PolySymbolModifier.ABSTRACT),
     val nameConversionRules: List<PolySymbolNameConversionRules> = emptyList(),
   ) {
     fun resolve(
@@ -63,8 +59,10 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
       queryExecutor: PolySymbolsQueryExecutor,
     ): List<PolySymbol> {
       val matches = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runNameMatchQuery(location + qualifiedKind.withName(name),
-                           includeVirtual, includeAbstract, false, scope)
+        .nameMatchQuery(location + qualifiedKind.withName(name)) {
+          exclude(excludeModifiers)
+          additionalScope(scope)
+        }
       if (filter == null) return matches
       return filter.filterNameMatches(matches, queryExecutor, scope, emptyMap())
     }
@@ -75,8 +73,10 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
       expandPatterns: Boolean,
     ): List<PolySymbol> {
       val symbols = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runListSymbolsQuery(location, qualifiedKind,
-                             expandPatterns, includeVirtual, includeAbstract, false, scope)
+        .listSymbolsQuery(location, qualifiedKind, expandPatterns) {
+          exclude(excludeModifiers)
+          additionalScope(scope)
+        }
       if (filter == null) return symbols
       return filter.filterNameMatches(symbols, queryExecutor, scope, emptyMap())
     }
@@ -88,8 +88,10 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
       position: Int,
     ): List<PolySymbolCodeCompletionItem> {
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runCodeCompletionQuery(location + qualifiedKind.withName(name),
-                                position, includeVirtual, scopeStack)
+        .codeCompletionQuery(location + qualifiedKind.withName(name), position) {
+          exclude(excludeModifiers)
+          additionalScope(scopeStack)
+        }
       if (filter == null) return codeCompletions
       return filter.filterCodeCompletions(codeCompletions, queryExecutor, scopeStack, emptyMap())
     }

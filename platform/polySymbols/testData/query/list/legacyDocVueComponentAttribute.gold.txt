@@ -29,7 +29,7 @@
   complete: true,
   description: "<p>Directives are special attributes with the…",
   docUrl: "https://v3.vuejs.org/guide/template-syntax.html#directives",
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   has-pattern: true,
   segments: [
@@ -95,7 +95,7 @@
    kind: EXPRESSION,
   },
   complete: true,
-  virtual: true,
+  modifiers: [virtual],
   apiStatus: deprecated,
   priority: NORMAL,
   segments: [
@@ -118,7 +118,7 @@
   complete: true,
   description: "<p>Dynamically bind one or more attributes, o…",
   docUrl: "https://v3.vuejs.org/api/directives.html#v-bind",
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   has-pattern: true,
   segments: [
@@ -141,7 +141,7 @@
   complete: true,
   description: "<p>Attaches an event listener to the element.…",
   docUrl: "https://v3.vuejs.org/api/directives.html#v-on",
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   has-pattern: true,
   segments: [
@@ -164,7 +164,7 @@
   complete: true,
   description: "<p>Denote named slots or slots that expect to…",
   docUrl: "https://v3.vuejs.org/api/directives.html#v-slot",
-  virtual: true,
+  modifiers: [virtual],
   priority: NORMAL,
   has-pattern: true,
   segments: [
