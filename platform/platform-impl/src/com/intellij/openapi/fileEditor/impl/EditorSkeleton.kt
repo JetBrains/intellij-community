@@ -4,6 +4,8 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.*
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBDimension
@@ -17,6 +19,7 @@ import java.awt.*
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.SwingConstants
 import kotlin.math.sin
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -39,17 +42,74 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
       }
     }
 
-    layout = VerticalLayout(LINES_GAP)
-    border = JBUI.Borders.empty(2)
+    layout = BorderLayout()
     isOpaque = false
+    add(createGutterComponent(), BorderLayout.WEST)
+    add(createEditorComponent(), BorderLayout.CENTER)
+  }
 
-    addBlocks()
+  /**
+   * Creates skeleton gutter component with line numbers and gutter icons.
+   */
+  private fun createGutterComponent(): JComponent {
+    return JPanel().apply {
+      layout = HorizontalLayout(4)
+      isOpaque = false
+      add(createLineNumbersComponent())
+      add(createGutterIconsComponent())
+      border = IdeBorderFactory.createBorder(BACKGROUND_COLOR, SideBorder.RIGHT)
+    }
+  }
+
+  /**
+   * Creates skeleton line numbers component.
+   */
+  private fun createLineNumbersComponent(): JComponent {
+    return JPanel().apply {
+      layout = VerticalLayout(LINES_GAP, SwingConstants.RIGHT)
+      border = JBUI.Borders.empty(2, 16, 0, 2)
+      isOpaque = false
+      repeat(9) {
+        add(EditorSkeletonBlock(GUTTER_SMALL, color = { currentColor() }))
+      }
+      repeat(100) {
+        add(EditorSkeletonBlock(GUTTER_NORMAL, color = { currentColor() }))
+      }
+    }
+  }
+
+  /**
+   * Creates component with skeleton gutter icons.
+   */
+  private fun createGutterIconsComponent(): JComponent {
+    return JPanel().apply {
+      layout = VerticalLayout(LINES_GAP, SwingConstants.RIGHT)
+      border = JBUI.Borders.empty(2, 0, 2, 22)
+      isOpaque = false
+      repeat(100) {
+        if (it in GUTTER_ICON_LINES) {
+          add(EditorSkeletonBlock(GUTTER_NORMAL, color = { currentColor() }))
+        }
+        else {
+          Empty()
+        }
+      }
+    }
+  }
+
+  private fun createEditorComponent(): JComponent {
+    return JPanel().apply {
+      layout = VerticalLayout(LINES_GAP)
+      border = JBUI.Borders.empty(2, 6)
+      isOpaque = false
+      addEditorBlocks()
+    }
   }
 
   /**
    * Adds hardcoded skeleton template to the component.
    */
-  private fun addBlocks() {
+  private fun JComponent.addEditorBlocks() {
     repeat(5) {
       Empty()
       Blocks(NORMAL, EXTRA_LARGE, SMALL)
@@ -80,7 +140,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
    * @param indents number of code-like indents (0, 1, 2, 3, etc.)
    * @see EditorSkeletonBlock
    */
-  private fun Blocks(
+  private fun JComponent.Blocks(
     vararg blocks: SkeletonBlockWidth,
     indents: Int = 0,
   ) {
@@ -102,7 +162,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
   /**
    * Adds an empty component like an empty editor line.
    */
-  private fun Empty() {
+  private fun JComponent.Empty() {
     add(BorderLayoutPanel().apply {
       isOpaque = false
       border = JBUI.Borders.empty(EditorSkeletonBlock.HEIGHT / 2 + BLOCKS_GAP / 2, 0)
@@ -124,6 +184,8 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
   }
 
   companion object {
+    private val GUTTER_ICON_LINES
+      get() = listOf(2, 4, 15, 25, 30)
     private val TICK_MS
       get() = 40.milliseconds
     private val LINES_GAP
