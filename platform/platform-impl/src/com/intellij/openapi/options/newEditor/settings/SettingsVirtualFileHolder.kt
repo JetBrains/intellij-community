@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor.settings
 
 import com.intellij.CommonBundle
@@ -18,7 +18,10 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
-import com.intellij.openapi.options.newEditor.*
+import com.intellij.openapi.options.newEditor.OptionsEditorColleague
+import com.intellij.openapi.options.newEditor.SettingsDialog
+import com.intellij.openapi.options.newEditor.SettingsDialogListener
+import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.options.newEditor.settings.SettingsVirtualFileHolder.SettingsVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -95,8 +98,6 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     }
   }
 
-  internal fun virtualFileExists() = settingsFileRef.get() != null
-
   internal fun getVirtualFileIfExists() = settingsFileRef.get()
 
   fun invalidate(): SettingsVirtualFile? {
@@ -110,7 +111,7 @@ internal class SettingsVirtualFileHolder private constructor(private val project
     private val dialogLazy = SynchronizedClearableLazy {
       val dialog = initializer()
       val disposable = Disposable {
-        val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx;
+        val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
         fileEditorManager.closeFile(this)
         wasModified.set(false)
         val manager = project.getServiceIfCreated(FileStatusManager::class.java)
@@ -204,7 +205,7 @@ internal class SettingsVirtualFileHolder private constructor(private val project
       val group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, /* withIdeSettings = */true)
         .takeIf { !it.configurables.isEmpty() }
       val configurableToSelect = ConfigurableVisitor.findById(configurableId, listOf(group)) ?: return
-      settingsEditor.setNavigatingNow();
+      settingsEditor.setNavigatingNow()
       settingsEditor.select(configurableToSelect)
     }
   }
@@ -282,8 +283,6 @@ private class SettingsNavBarModelExtension: AbstractNavBarModelExtension() {
     else
       return null
   }
-
-
 }
 
 private const val SETTINGS_KEY = "settings"
