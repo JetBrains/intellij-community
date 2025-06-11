@@ -3,9 +3,6 @@ package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.util.Pair;
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
-import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
-import org.gradle.tooling.model.BuildIdentifier;
-import org.gradle.tooling.model.ProjectIdentifier;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,16 +25,24 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
 
   private @Nullable DefaultBuildIdentifier myParentBuildIdentifier = null;
 
-  public DefaultGradleLightBuild(
-    @NotNull String name,
-    @NotNull DefaultBuildIdentifier identifier,
-    @NotNull DefaultGradleLightProject project,
-    @NotNull List<DefaultGradleLightProject> projects
-  ) {
-    myName = name;
-    myBuildIdentifier = identifier;
-    myRootProject = project;
-    myProjects = projects;
+  public DefaultGradleLightBuild(@NotNull GradleBuild gradleBuild) {
+    BasicGradleProject rootGradleProject = gradleBuild.getRootProject();
+    myName = rootGradleProject.getName();
+    myBuildIdentifier = new DefaultBuildIdentifier(gradleBuild.getBuildIdentifier().getRootDir());
+
+    Map<BasicGradleProject, DefaultGradleLightProject> projects = gradleBuild.getProjects().stream()
+      .map(it -> new Pair<>(it, new DefaultGradleLightProject(this, it)))
+      .collect(Collectors.toMap(it -> it.getFirst(), it -> it.getSecond()));
+
+    replicateModelHierarchy(
+      rootGradleProject,
+      it -> projects.get(it),
+      BasicGradleProject::getChildren,
+      DefaultGradleLightProject::addChildProject
+    );
+
+    myRootProject = projects.get(rootGradleProject);
+    myProjects = new ArrayList<>(projects.values());
   }
 
   @Override
@@ -78,46 +83,7 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
   }
 
   public static @NotNull DefaultGradleLightBuild convertGradleBuild(@NotNull GradleBuild gradleBuild) {
-    Map<BasicGradleProject, DefaultGradleLightProject> projects = gradleBuild.getProjects().stream()
-      .map(it -> new Pair<>(it, convertGradleProject(it)))
-      .collect(Collectors.toMap(it -> it.getFirst(), it -> it.getSecond()));
-    BasicGradleProject rootGradleProject = gradleBuild.getRootProject();
-
-    replicateModelHierarchy(
-      rootGradleProject,
-      it -> projects.get(it),
-      BasicGradleProject::getChildren,
-      DefaultGradleLightProject::addChildProject
-    );
-
-    return new DefaultGradleLightBuild(
-      rootGradleProject.getName(),
-      convertGradleBuildIdentifier(gradleBuild.getBuildIdentifier()),
-      projects.get(rootGradleProject),
-      new ArrayList<>(projects.values())
-    );
-  }
-
-  public static @NotNull DefaultGradleLightProject convertGradleProject(@NotNull BasicGradleProject gradleProject) {
-    return new DefaultGradleLightProject(
-      gradleProject.getName(),
-      gradleProject.getPath(),
-      gradleProject.getProjectDirectory(),
-      convertGradleProjectIdentifier(gradleProject.getProjectIdentifier())
-    );
-  }
-
-  private static @NotNull DefaultBuildIdentifier convertGradleBuildIdentifier(@NotNull BuildIdentifier buildIdentifier) {
-    return new DefaultBuildIdentifier(
-      buildIdentifier.getRootDir()
-    );
-  }
-
-  private static @NotNull DefaultProjectIdentifier convertGradleProjectIdentifier(@NotNull ProjectIdentifier projectIdentifier) {
-    return new DefaultProjectIdentifier(
-      projectIdentifier.getBuildIdentifier().getRootDir(),
-      projectIdentifier.getProjectPath()
-    );
+    return new DefaultGradleLightBuild(gradleBuild);
   }
 
   public static <ModelA, ModelB> void replicateModelHierarchy(

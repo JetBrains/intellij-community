@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.model;
 
 import org.gradle.tooling.internal.gradle.DefaultProjectIdentifier;
 import org.gradle.tooling.model.ProjectIdentifier;
+import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,8 @@ import java.util.List;
 @ApiStatus.Internal
 public final class DefaultGradleLightProject implements GradleLightProject, Serializable {
 
+  private final @NotNull DefaultGradleLightBuild myBuildModel;
+
   private final @NotNull String myName;
   private final @NotNull String myPath;
   private final @NotNull File myProjectDirectory;
@@ -21,15 +24,22 @@ public final class DefaultGradleLightProject implements GradleLightProject, Seri
   private final @NotNull List<DefaultGradleLightProject> myChildren = new ArrayList<>();
 
   public DefaultGradleLightProject(
-    @NotNull String name,
-    @NotNull String path,
-    @NotNull File projectDirectory,
-    @NotNull DefaultProjectIdentifier projectIdentifier
+    @NotNull DefaultGradleLightBuild buildModel,
+    @NotNull BasicGradleProject gradleProject
   ) {
-    myName = name;
-    myPath = path;
-    myProjectDirectory = projectDirectory;
-    myProjectIdentifier = projectIdentifier;
+    myBuildModel = buildModel;
+    myName = gradleProject.getName();
+    myPath = gradleProject.getPath();
+    myProjectDirectory = gradleProject.getProjectDirectory();
+    myProjectIdentifier = new DefaultProjectIdentifier(
+      gradleProject.getProjectIdentifier().getBuildIdentifier().getRootDir(),
+      gradleProject.getProjectIdentifier().getProjectPath()
+    );
+  }
+
+  @Override
+  public @NotNull GradleLightBuild getBuild() {
+    return myBuildModel;
   }
 
   @Override

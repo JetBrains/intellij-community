@@ -21,6 +21,9 @@ import java.util.Collection;
 public interface GradleLightProject extends ProjectModel {
 
   @NotNull
+  GradleLightBuild getBuild();
+
+  @NotNull
   String getName();
 
   @NotNull
