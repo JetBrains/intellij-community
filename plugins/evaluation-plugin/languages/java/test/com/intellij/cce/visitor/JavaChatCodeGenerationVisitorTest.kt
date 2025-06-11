@@ -5,6 +5,7 @@ import com.intellij.cce.evaluable.INTERNAL_API_CALLS_PROPERTY
 import com.intellij.cce.evaluable.INTERNAL_RELEVANT_FILES_PROPERTY
 import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.java.visitor.JavaChatCodeGenerationVisitor
+import com.intellij.cce.util.extractAdditionalProperties
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
