@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.util.ArrayUtil;
@@ -119,7 +118,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private boolean markFlatDirsDirty(Iterable<String> dirtyPaths) {
     var marked = false;
     for (var dirtyPath : dirtyPaths) {
-      var exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+      var exactOrParent = findCachedFileByPath(this, dirtyPath);
       if (exactOrParent.first != null) {
         exactOrParent.first.markDirty();
         for (var child : exactOrParent.first.getCachedChildren()) {
@@ -138,7 +137,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private boolean markRecursiveDirsDirty(Iterable<String> dirtyPaths) {
     var marked = false;
     for (var dirtyPath : dirtyPaths) {
-      var exactOrParent = VfsImplUtil.findCachedFileByPath(this, dirtyPath);
+      var exactOrParent = findCachedFileByPath(this, dirtyPath);
       if (exactOrParent.first != null) {
         exactOrParent.first.markDirtyRecursively();
         marked = true;

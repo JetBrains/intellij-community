@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.diff.DiffContentFactoryImpl;
@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -139,7 +139,7 @@ public final class VcsImplUtil {
       if (result != null) return result;
     }
 
-    Pair<NewVirtualFile, NewVirtualFile> pair = VfsImplUtil.findCachedFileByPath(LocalFileSystem.getInstance(), path);
+    Pair<NewVirtualFile, NewVirtualFile> pair = NewVirtualFileSystem.findCachedFileByPath(LocalFileSystem.getInstance(), path);
     return pair.first != null ? pair.first : pair.second;
   }
 

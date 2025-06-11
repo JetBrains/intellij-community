@@ -741,8 +741,10 @@ com.intellij.openapi.vfs.newvfs.FileSystemInterface
 - a:resolveSymLink(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - a:setTimeStamp(com.intellij.openapi.vfs.VirtualFile,J):V
 - a:setWritable(com.intellij.openapi.vfs.VirtualFile,Z):V
-f:com.intellij.openapi.vfs.newvfs.VfsImplUtil
+a:com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 - s:findCachedFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.util.Pair
+- ps:findFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
+f:com.intellij.openapi.vfs.newvfs.VfsImplUtil
 - s:findFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - s:findFileByPathIfCached(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - s:forceSyncRefresh(com.intellij.openapi.vfs.VirtualFile):V

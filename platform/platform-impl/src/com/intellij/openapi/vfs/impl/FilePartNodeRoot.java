@@ -6,7 +6,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl.NodeToUpdate;
-import com.intellij.openapi.vfs.newvfs.*;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -155,7 +158,7 @@ public final class FilePartNodeRoot extends FilePartNode {
       currentFS = fs;
       relativePathInsideJar = "";
     }
-    VfsImplUtil.PathFromRoot pair = VfsImplUtil.extractRootFromPath(currentFS, path);
+    NewVirtualFileSystem.PathFromRoot pair = NewVirtualFileSystem.extractRootFromPath(currentFS, path);
     String pathFromRoot = pair == null ? path : pair.pathFromRoot();
     pathFromRoot += relativePathInsideJar;
     List<String> names = splitNames(pathFromRoot);

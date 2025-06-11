@@ -1,21 +1,24 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileListener;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileSystem;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
+  private static final Logger LOG = Logger.getInstance(NewVirtualFileSystem.class);
+
   private final Map<VirtualFileListener, VirtualFileListener> myListenerWrappers = new ConcurrentHashMap<>();
 
   /**
@@ -35,6 +38,8 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   /**
    * IntelliJ platform calls this method with non-null value returned by {@link #normalize}, but if something went wrong
    * and an implementation can't extract a valid root path nevertheless, it should return an empty string.
+   *
+   * @return a root path, if a normalizedPath is recognizable by the current FileSystem, or empty string if not.
    */
   @ApiStatus.OverrideOnly
   protected abstract @NotNull String extractRootPath(@NotNull String normalizedPath);
@@ -81,13 +86,18 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   public abstract int getRank();
 
   @Override
-  public abstract @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newName) throws IOException;
+  public abstract @NotNull VirtualFile copyFile(Object requestor,
+                                                @NotNull VirtualFile file,
+                                                @NotNull VirtualFile newParent,
+                                                @NotNull String newName) throws IOException;
 
   @Override
-  public abstract @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException;
+  public abstract @NotNull VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String name)
+    throws IOException;
 
   @Override
-  public abstract @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name) throws IOException;
+  public abstract @NotNull VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String name)
+    throws IOException;
 
   @Override
   public abstract void deleteFile(Object requestor, @NotNull VirtualFile file) throws IOException;
@@ -123,19 +133,167 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return list(file).length != 0;
   }
 
-  /** Just a way to call protected method {@link NewVirtualFileSystem#normalize(String)} */
-  //TODO RC: it is only used from VfsImplUtil -- move methods from VfsImplUtil to VirtualFileSystem, and ret gid of it?
-  @ApiStatus.Internal
-  public static @Nullable String normalizePath(@NotNull NewVirtualFileSystem fileSystem,
-                                               @NotNull String path) {
-    return fileSystem.normalize(path);
+
+  /* ============================================== static helpers ============================================== */
+
+
+  /**
+   * Resolves the given path against the given fileSystem.
+   *
+   * @return VirtualFile for the path, if resolved, null if not -- e.g. path is invalid or doesn't exist, or not belongs to
+   * fileSystem given.
+   */
+  protected static @Nullable NewVirtualFile findFileByPath(@NotNull NewVirtualFileSystem fileSystem,
+                                                           @NotNull String path) {
+    Pair<NewVirtualFile, Iterable<String>> rootAndPath = extractRootAndPathSegments(fileSystem, path);
+    if (rootAndPath == null) return null;
+
+    NewVirtualFile file = rootAndPath.first;
+    for (String pathElement : rootAndPath.second) {
+      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
+      NewVirtualFile fileBefore = file;
+      //Here we do 'partial canonicalization' of the path: we resolve symlinks, but only before '..' segments.
+      // It makes the resolution a bit surprising: 'a/b/c' and 'a/../a/b/c' could be resolved to different files, if 'a'
+      // is a symlink. But this follows the POSIX rules for path resolution, there symlinks indeed resolved as soon, as
+      // they are met in the path.
+      //Still, the result differs from regular canonicalization, via VirtualFile.getCanonicalPath() or Path.toRealPath(),
+      // there _all_ symlinks are resolved -- and the result also differs from Path.toRealPath(NOFOLLOW_LINKS) where _none_
+      // of symlinks are resolved.
+      if ("..".equals(pathElement)) {
+        if (file.is(VFileProperty.SYMLINK)) {
+          NewVirtualFile canonicalFile = file.getCanonicalFile();
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("[" + file.getPath() + "]: symlink to [" + canonicalFile + "]");
+          }
+          file = canonicalFile != null ? canonicalFile.getParent() : null;
+        }
+        else {
+          file = file.getParent();
+        }
+      }
+      else {
+        file = file.findChild(pathElement);
+      }
+
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("[" + fileBefore.getPath() + "]/[" + pathElement + "] resolved to [" + file + "]");
+      }
+
+      if (file == null) return null;
+    }
+
+    return file;
   }
 
-  /** Just a way to call protected method {@link NewVirtualFileSystem#extractRootPath(String)} */
-  //TODO RC: it is only used from VfsImplUtil.extractRootFromPath(NewVirtualFileSystem, String) -- move methods from VfsImplUtil to VirtualFileSystem, and ret gid of it?
+  /**
+   * Resolves the given path against the given fileSystem, looking only in already cached in VFS {@link VirtualFile}s.
+   * The difference from {@link #findFileByPath(NewVirtualFileSystem, String)} is that this method looks only in already cached
+   * in VFS {@link VirtualFile}s -- i.e. it doesn't load new file-tree branches/leaves into the VFS during resolve.
+   * If cached VFS files are enough to resolve the path, returns {@code Pair(resolvedVirtualFile, null)}, but if VFS files are
+   * NOT enough to resolve the path, returns {@code Pair(null, lastCachedFile)} -- i.e. the last successfully resolved
+   * file-tree branch/leaf along the given path.
+   * Method returns {@code Pair(null, null)} if the path is invalid or doesn't exist, or doesn't belong to the fileSystem given.
+   * <br/>
+   * This method is often used to either get the resolved and already cached file, or call VFS.refresh() or alike starting with
+   * lastCachedFile, if a subtree is not yet resolved.
+   */
+  public static @NotNull Pair<NewVirtualFile, NewVirtualFile> findCachedFileByPath(@NotNull NewVirtualFileSystem fileSystem,
+                                                                                   @NotNull String path) {
+    Pair<NewVirtualFile, Iterable<String>> rootAndPath = extractRootAndPathSegments(fileSystem, path);
+    if (rootAndPath == null) return Pair.empty();
+
+    NewVirtualFile root = rootAndPath.first;
+    Iterable<String> pathSegments = rootAndPath.second;
+    NewVirtualFile currentFile = root;
+    for (String pathElement : pathSegments) {
+      if (pathElement.isEmpty() || ".".equals(pathElement)) continue;
+
+      NewVirtualFile last = currentFile;
+      if ("..".equals(pathElement)) {
+        if (currentFile.is(VFileProperty.SYMLINK)) {
+          String canonicalPath = currentFile.getCanonicalPath();
+          NewVirtualFile canonicalFile = canonicalPath != null ? findCachedFileByPath(fileSystem, canonicalPath).first : null;
+          currentFile = canonicalFile != null ? canonicalFile.getParent() : null;
+        }
+        else {
+          currentFile = currentFile.getParent();
+        }
+      }
+      else {
+        currentFile = currentFile.findChildIfCached(pathElement);
+      }
+
+      if (currentFile == null) {
+        return Pair.create(null, last);
+      }
+    }
+
+    return Pair.create(currentFile, null);
+  }
+
+  /**
+   * @return cached VirtualFile for the given path, or null if the path can't be resolved/invalid, not belongs to the fileSystem given,
+   * or not yet cached in VFS.
+   */
   @ApiStatus.Internal
-  public static @NotNull String extractRootPath(@NotNull NewVirtualFileSystem fileSystem,
-                                                @NotNull String normalizedPath) {
-    return fileSystem.extractRootPath(normalizedPath);
+  public static @Nullable NewVirtualFile findFileByPathIfCached(@NotNull NewVirtualFileSystem fileSystem,
+                                                                @NotNull String path) {
+    return findCachedFileByPath(fileSystem, path).first;
+  }
+
+  private static final String FILE_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separator);
+
+  /**
+   * Same as {@link #extractRootFromPath(NewVirtualFileSystem, String)}, but path-from-root returned not as a single String,
+   * but as an {@link Iterable} of the path's segments.
+   */
+  @ApiStatus.Internal
+  public static @Nullable Pair<@NotNull NewVirtualFile, @NotNull Iterable<String>> extractRootAndPathSegments(@NotNull NewVirtualFileSystem fileSystem,
+                                                                                                              @NotNull String path) {
+    PathFromRoot pair = extractRootFromPath(fileSystem, path);
+    if (pair == null) return null;
+    Iterable<String> parts = StringUtil.tokenize(pair.pathFromRoot(), FILE_SEPARATORS);
+    return Pair.create(pair.root(), parts);
+  }
+
+  /**
+   * Returns a (file system root, relative path inside that root) pair, or {@code null} when the path is invalid or the root is not found.
+   * <br/>
+   * For example:
+   * <pre>
+   * extractRootFromPath(LocalFileSystem.getInstance, "C:/temp") -> (VirtualFile("C:"), "/temp")
+   * extractRootFromPath(JarFileSystem.getInstance, "/temp/temp.jar!/com/foo/bar") -> (VirtualFile("/temp/temp.jar!/"), "/com/foo/bar")
+   * </pre>
+   * <p>
+   * Returns null if the path is incorrect and/or not recognizable by the fileSystem
+   */
+  @ApiStatus.Internal
+  public static @Nullable PathFromRoot extractRootFromPath(@NotNull NewVirtualFileSystem fileSystem,
+                                                           @NotNull String path) {
+    String normalizedPath = fileSystem.normalize(path);
+    if (normalizedPath == null || normalizedPath.isBlank()) {
+      return null;
+    }
+
+    String rootPath = fileSystem.extractRootPath(normalizedPath);
+    if (rootPath.isBlank() || rootPath.length() > normalizedPath.length()) {
+      //rootPath.isBlank() means that it is the path that is incorrect (not belong to the file system)
+      LOG.warn(fileSystem + " has extracted incorrect root '" + rootPath + "' from '" + normalizedPath +
+               "' (original '" + path + "')");
+      return null;
+    }
+
+    NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, fileSystem);
+    if (root == null || !root.exists()) {
+      return null;
+    }
+
+    int restPathStart = rootPath.length();
+    if (restPathStart < normalizedPath.length() && normalizedPath.charAt(restPathStart) == '/') restPathStart++;
+    return new PathFromRoot(root, normalizedPath.substring(restPathStart));
+  }
+
+  @ApiStatus.Internal
+  public record PathFromRoot(@NotNull NewVirtualFile root, @NotNull String pathFromRoot) {
   }
 }

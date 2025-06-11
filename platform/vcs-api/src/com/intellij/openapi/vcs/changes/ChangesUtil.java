@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -228,7 +228,7 @@ public final class ChangesUtil {
   }
 
   /**
-   * @deprecated Prefer using {@link com.intellij.openapi.vfs.newvfs.VfsImplUtil#findCachedFileByPath(NewVirtualFileSystem, String)}
+   * @deprecated Prefer using {@link NewVirtualFileSystem#findCachedFileByPath(NewVirtualFileSystem, String)}
    */
   @Deprecated
   private static @Nullable VirtualFile getValidParentUnderReadAction(@NotNull FilePath filePath) {

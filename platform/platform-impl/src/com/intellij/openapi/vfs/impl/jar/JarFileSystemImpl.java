@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -68,12 +68,12 @@ public class JarFileSystemImpl extends JarFileSystem implements IntegrityCheckCa
 
   @Override
   public VirtualFile findFileByPath(@NotNull String path) {
-    return isValid(path) ? VfsImplUtil.findFileByPath(this, path) : null;
+    return isValid(path) ? findFileByPath(this, path) : null;
   }
 
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return isValid(path) ? VfsImplUtil.findFileByPathIfCached(this, path) : null;
+    return isValid(path) ? findFileByPathIfCached(this, path) : null;
   }
 
   @Override

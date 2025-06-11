@@ -56,12 +56,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public @Nullable VirtualFile findFileByPath(@NotNull String path) {
-    return VfsImplUtil.findFileByPath(this, path);
+    return findFileByPath(this, path);
   }
 
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    return VfsImplUtil.findFileByPathIfCached(this, path);
+    return findFileByPathIfCached(this, path);
   }
 
   @Override
