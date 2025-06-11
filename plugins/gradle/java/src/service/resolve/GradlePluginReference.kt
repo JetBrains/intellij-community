@@ -49,7 +49,7 @@ class GradlePluginReference(
     var lastPart = leftParts.removeLastOrNull()
     while (lastPart != null) {
       if (fileName.isEmpty()) {
-        fileName = "${lastPart}.gradle.kts"
+        fileName = "${lastPart}${pluginId.fileExtension}"
       } else {
         fileName = "$lastPart.$fileName"
       }
@@ -61,6 +61,9 @@ class GradlePluginReference(
     }
     return null
   }
+  
+  private val String.fileExtension: String
+    get() = if (this.endsWith(".settings")) ".settings.gradle.kts" else ".gradle.kts"
 
   private fun findPrecompiledPlugin(
     fileName: String,
