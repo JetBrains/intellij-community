@@ -1,0 +1,10 @@
+<!--suppress PluginXmlValidity -->
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="html.codestyle.panel" interface="com.intellij.application.options.HtmlCodeStylePanelExtension" dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <langCodeStyleSettingsProvider implementation="com.intellij.application.options.HtmlLanguageCodeStyleSettingsProvider"/>
+  </extensions>
+</idea-plugin>

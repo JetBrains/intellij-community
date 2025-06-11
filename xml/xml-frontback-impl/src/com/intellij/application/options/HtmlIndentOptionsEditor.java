@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
-import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlCoreBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,7 +16,7 @@ public class HtmlIndentOptionsEditor extends SmartIndentOptionsEditor {
   @Override
   protected void addComponents() {
     super.addComponents();
-    myUniformIndentCheckBox = new JCheckBox(XmlBundle.message("checkbox.uniform.indent"));
+    myUniformIndentCheckBox = new JCheckBox(XmlCoreBundle.message("checkbox.uniform.indent"));
     add(myUniformIndentCheckBox);
   }
 

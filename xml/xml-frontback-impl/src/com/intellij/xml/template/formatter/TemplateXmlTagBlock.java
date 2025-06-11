@@ -24,12 +24,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.formatter.xml.XmlBlock;
 import com.intellij.psi.formatter.xml.XmlFormattingPolicy;
 import com.intellij.psi.formatter.xml.XmlTagBlock;
-import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.xml.util.BasicHtmlUtil.SCRIPT_TAG_NAME;
 
 public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheritingBlock {
   private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
@@ -85,6 +86,7 @@ public class TemplateXmlTagBlock extends XmlTagBlock implements IndentInheriting
   }
 
   boolean isScriptBlock() {
-    return HtmlUtil.isScriptTag(getTag());
+    var tag = getTag();
+    return tag != null && tag.getLocalName().equalsIgnoreCase(SCRIPT_TAG_NAME);
   }
 }

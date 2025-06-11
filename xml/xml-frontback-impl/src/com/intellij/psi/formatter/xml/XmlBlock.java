@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.xml;
 
 import com.intellij.formatting.*;
@@ -102,7 +102,7 @@ public class XmlBlock extends AbstractXmlBlock {
       return result;
     }
     else {
-      return EMPTY;
+      return AbstractBlock.EMPTY;
     }
   }
 
@@ -182,7 +182,7 @@ public class XmlBlock extends AbstractXmlBlock {
 
 
   protected List<Block> splitComment() {
-    if (myNode.getElementType() != XmlElementType.XML_COMMENT) return EMPTY;
+    if (myNode.getElementType() != XmlElementType.XML_COMMENT) return AbstractBlock.EMPTY;
     final ArrayList<Block> result = new ArrayList<>(3);
     ASTNode child = myNode.getFirstChildNode();
     boolean hasOuterLangElements = false;
@@ -197,7 +197,7 @@ public class XmlBlock extends AbstractXmlBlock {
       return result;
     }
     else {
-      return EMPTY;
+      return AbstractBlock.EMPTY;
     }
   }
 
