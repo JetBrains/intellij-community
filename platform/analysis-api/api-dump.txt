@@ -742,7 +742,6 @@ com.intellij.openapi.vfs.newvfs.FileSystemInterface
 - a:setTimeStamp(com.intellij.openapi.vfs.VirtualFile,J):V
 - a:setWritable(com.intellij.openapi.vfs.VirtualFile,Z):V
 f:com.intellij.openapi.vfs.newvfs.VfsImplUtil
-- s:extractRootFromPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.VfsImplUtil$PathFromRoot
 - s:findCachedFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.util.Pair
 - s:findFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - s:findFileByPathIfCached(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
@@ -752,13 +751,6 @@ f:com.intellij.openapi.vfs.newvfs.VfsImplUtil
 - s:refresh(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,Z):V
 - s:refreshAndFindFileByPath(com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem,java.lang.String):com.intellij.openapi.vfs.newvfs.NewVirtualFile
 - s:releaseHandler(java.lang.String):V
-f:com.intellij.openapi.vfs.newvfs.VfsImplUtil$PathFromRoot
-- java.lang.Record
-- <init>(com.intellij.openapi.vfs.newvfs.NewVirtualFile,java.lang.String):V
-- f:equals(java.lang.Object):Z
-- f:hashCode():I
-- pathFromRoot():java.lang.String
-- root():com.intellij.openapi.vfs.newvfs.NewVirtualFile
 com.intellij.problems.Problem
 - a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 com.intellij.problems.ProblemListener

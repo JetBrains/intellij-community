@@ -123,13 +123,19 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     return list(file).length != 0;
   }
 
+  /** Just a way to call protected method {@link NewVirtualFileSystem#normalize(String)} */
+  //TODO RC: it is only used from VfsImplUtil -- move methods from VfsImplUtil to VirtualFileSystem, and ret gid of it?
   @ApiStatus.Internal
-  public static @Nullable String normalizePath(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
-    return vfs.normalize(path);
+  public static @Nullable String normalizePath(@NotNull NewVirtualFileSystem fileSystem,
+                                               @NotNull String path) {
+    return fileSystem.normalize(path);
   }
 
+  /** Just a way to call protected method {@link NewVirtualFileSystem#extractRootPath(String)} */
+  //TODO RC: it is only used from VfsImplUtil.extractRootFromPath(NewVirtualFileSystem, String) -- move methods from VfsImplUtil to VirtualFileSystem, and ret gid of it?
   @ApiStatus.Internal
-  public static @NotNull String extractRootPath(@NotNull NewVirtualFileSystem vfs, String normalizedPath) {
-    return vfs.extractRootPath(normalizedPath);
+  public static @NotNull String extractRootPath(@NotNull NewVirtualFileSystem fileSystem,
+                                                @NotNull String normalizedPath) {
+    return fileSystem.extractRootPath(normalizedPath);
   }
 }
