@@ -252,6 +252,7 @@ java_library(
     "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
     "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
     "//plugins/git-modal-commit:vcs-git-commit-modal",
+    "//plugins/maven/maven-event-listener:server-eventListener",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end

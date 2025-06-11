@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.server
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
@@ -288,9 +289,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     if (eventListenerJar != null) {
       return eventListenerJar
     }
-    val pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-    val root = pluginFileOrDir.parent
-    if (pluginFileOrDir.isDirectory()) {
+    if (PluginManagerCore.isRunningFromSources()) {
       eventListenerJar = eventSpyPathForLocalBuild
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("""
@@ -301,6 +300,8 @@ internal class MavenServerManagerImpl : MavenServerManager {
       }
     }
     else {
+      val pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
+      val root = pluginFileOrDir.parent
       eventListenerJar = root.resolve("maven-event-listener.jar")
       if (!eventListenerJar!!.exists()) {
         MavenLog.LOG.warn("Event listener does not exist at " + eventListenerJar +
@@ -457,8 +458,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
 
     private val eventSpyPathForLocalBuild: Path
       get() {
-        val root = Path.of(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-        return root.parent.resolve("intellij.maven.server.eventListener")
+        return MavenUtil.locateModuleOutput("intellij.maven.server.eventListener")!!
       }
   }
 }
