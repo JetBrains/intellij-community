@@ -9,7 +9,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.FontPreferences
-import com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.AppFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
@@ -53,7 +52,7 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
 
     val newPreferences = FontPreferencesImpl()
     // start with the console preferences as the default
-    AppConsoleFontOptions.getInstance().fontPreferences.copyTo(newPreferences)
+    getConsoleFontPreferences().copyTo(newPreferences)
     // then overwrite the subset that the terminal settings provide
     settings.copyTo(newPreferences)
     // then apply the settings that aren't a part of FontPreferences
@@ -92,9 +91,8 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
 
   override fun noStateLoaded() {
     // the state is mostly inherited from the console settings
-    val colorsManager = EditorColorsManager.getInstance()
-    val currentScheme = colorsManager.activeVisibleScheme ?: colorsManager.defaultScheme
-    val defaultState = TerminalFontSettingsState(currentScheme.consoleFontPreferences)
+    val consolePreferences = getConsoleFontPreferences()
+    val defaultState = TerminalFontSettingsState(consolePreferences)
     // except the line spacing: it is only inherited if it's different from the default, otherwise we use our own default
     val userSetConsoleLineSpacing = TerminalLineSpacing.ofFloat(defaultState.LINE_SPACING)
     val defaultConsoleLineSpacing = TerminalLineSpacing.ofFloat(FontPreferences.DEFAULT_LINE_SPACING)
@@ -102,6 +100,12 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
       defaultState.LINE_SPACING = DEFAULT_TERMINAL_LINE_SPACING.floatValue
     }
     loadState(defaultState)
+  }
+
+  private fun getConsoleFontPreferences(): FontPreferences {
+    val colorsManager = EditorColorsManager.getInstance()
+    val currentScheme = colorsManager.activeVisibleScheme ?: colorsManager.defaultScheme
+    return currentScheme.consoleFontPreferences
   }
 
   private fun fireListeners() {
