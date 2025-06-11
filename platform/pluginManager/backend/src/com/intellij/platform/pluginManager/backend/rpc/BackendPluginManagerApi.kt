@@ -14,7 +14,6 @@ import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
-import com.intellij.ide.plugins.newui.PluginStatus
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId

@@ -1605,10 +1605,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
 @ApiStatus.Internal
 fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
-
-
-  return UiPluginManager.getInstance().loadPluginDetails(
-    model)
+  return UiPluginManager.getInstance().loadPluginDetails(model)
 }
 
 @ApiStatus.Internal
