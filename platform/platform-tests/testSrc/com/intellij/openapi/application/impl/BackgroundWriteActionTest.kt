@@ -658,5 +658,22 @@ class BackgroundWriteActionTest {
     assertThat(executed.get()).isTrue
   }
 
+  @Test
+  fun `conditional invokeLater with read action`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val job = Job(coroutineContext.job)
+    application.invokeLater({}, {
+      if (EDT.isCurrentThreadEdt()) {
+        job.asCompletableFuture().join()
+        runReadAction { true }
+      }
+      else {
+        false
+      }
+    })
+    backgroundWriteAction {
+      job.complete()
+      application.invokeLater {}
+    }
+  }
 
 }
