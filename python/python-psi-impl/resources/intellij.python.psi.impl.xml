@@ -75,8 +75,6 @@
 
     <lang.lineWrapStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyLineWrapPositionStrategy"/>
 
-    <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
-
     <!-- PyFunctionTypeAnnotation -->
     <lang.parserDefinition language="PyFunctionTypeComment"
                            implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>

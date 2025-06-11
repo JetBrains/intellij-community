@@ -19,5 +19,6 @@
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>
 
     <highlightRangeExtension implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
+    <lang.commenter language="Python" implementationClass="com.jetbrains.python.PythonCommenter"/>
   </extensions>
 </idea-plugin>
