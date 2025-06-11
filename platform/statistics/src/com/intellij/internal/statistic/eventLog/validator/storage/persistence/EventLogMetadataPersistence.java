@@ -173,7 +173,7 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
     RemoteDictionaryList dictionaryList;
     try (InputStream stream = getClass().getClassLoader().getResourceAsStream(builtinDictionariesPath() + "dictionaries.json")) {
       if (stream == null) {
-        LOG.error("Cannot load builtin dictionaries list");
+        LOG.trace("Cannot load builtin dictionaries list");
         return;
       }
       String content = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
@@ -181,7 +181,7 @@ public class EventLogMetadataPersistence extends BaseEventLogMetadataPersistence
     }
 
     if (dictionaryList == null) {
-      LOG.error("Cannot load builtin dictionaries list");
+      LOG.trace("Cannot load builtin dictionaries list");
       return;
     }
 

@@ -147,7 +147,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
         String dictionaryName = dictionarylastModifiedOnServerEntry.getKey();
         Long dictionaryLastModifiedLocally = dictionariesLastModifiedLocally.getOrDefault(dictionaryName, 0L);
         Long dictionaryLastModifiedOnServer = dictionarylastModifiedOnServerEntry.getValue();
-        if (dictionaryLastModifiedOnServer <= 0 || dictionaryLastModifiedOnServer > dictionaryLastModifiedLocally || isUnreachable()) {
+        if (dictionaryLastModifiedOnServer <= 0 || dictionaryLastModifiedOnServer > dictionaryLastModifiedLocally) {
           String rawDictionary = myMetadataLoader.loadDictionaryFromServer(myRecorderId, dictionaryName);
           dictionaryStorage.updateDictionaryByName(dictionaryName, rawDictionary.getBytes(StandardCharsets.UTF_8));
           myMetadataPersistence.setDictionaryLastModified(dictionarylastModifiedOnServerEntry.getKey(), dictionaryLastModifiedOnServer);
