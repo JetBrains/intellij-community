@@ -44,7 +44,7 @@ class KotlinParameterInfo(
 ) : KotlinModifiableParameterInfo {
     val oldName: String = name
     var currentType: KotlinTypeInfo = originalType
-    val wasContextParameter: Boolean = isContextParameter
+    val wasContextParameter: Boolean = originalIndex > -1 && isContextParameter
 
     override fun getName(): @NlsSafe String {
         return name

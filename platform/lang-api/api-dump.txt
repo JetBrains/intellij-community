@@ -866,6 +866,9 @@ com.intellij.refactoring.classMembers.MemberInfoModel
 com.intellij.refactoring.lang.ElementsHandler
 - com.intellij.refactoring.RefactoringActionHandler
 - a:isEnabledOnElements(com.intellij.psi.PsiElement[]):Z
+a:com.intellij.refactoring.suggested.SignaturePresentationBuilder
+- pf:buildParameterList(java.lang.String,java.lang.String,java.util.List,kotlin.jvm.functions.Function3):V
+- bs:buildParameterList$default(com.intellij.refactoring.suggested.SignaturePresentationBuilder,java.lang.String,java.lang.String,java.util.List,kotlin.jvm.functions.Function3,I,java.lang.Object):V
 com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 - sf:Companion:com.intellij.refactoring.suggested.SuggestedRefactoringSupport$Companion
 - a:getAvailability():com.intellij.refactoring.suggested.SuggestedRefactoringAvailability

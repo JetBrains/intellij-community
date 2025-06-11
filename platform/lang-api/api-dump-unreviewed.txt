@@ -4648,7 +4648,6 @@ a:com.intellij.refactoring.suggested.SignaturePresentationBuilder
 - pf:buildParameterList(java.lang.String,java.lang.String,kotlin.jvm.functions.Function3):V
 - pf:buildParameterList(java.lang.String,kotlin.jvm.functions.Function3):V
 - pf:buildParameterList(kotlin.jvm.functions.Function3):V
-- bs:buildParameterList$default(com.intellij.refactoring.suggested.SignaturePresentationBuilder,java.lang.String,java.lang.String,kotlin.jvm.functions.Function3,I,java.lang.Object):V
 - a:buildPresentation():V
 - pf:effect(java.lang.String,java.lang.String):com.intellij.refactoring.suggested.SignatureChangePresentationModel$Effect
 - pf:getFragments():java.util.List

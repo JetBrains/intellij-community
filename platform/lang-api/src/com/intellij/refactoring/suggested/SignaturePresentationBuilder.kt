@@ -51,13 +51,13 @@ abstract class SignaturePresentationBuilder(
   }
 
   @JvmOverloads
-  protected fun buildParameterList(prefix: String = "(", suffix: String = ")", parameterBuilder: ParameterFragmentsBuilder) {
+  protected fun buildParameterList(prefix: String = "(", suffix: String = ")", parameters: List<Parameter> = signature.parameters, parameterBuilder: ParameterFragmentsBuilder) {
     fragments += Leaf(prefix)
-    if (signature.parameters.isNotEmpty()) {
+    if (parameters.isNotEmpty()) {
       fragments += LineBreak("", indentAfter = true)
     }
 
-    for ((index, parameter) in signature.parameters.withIndex()) {
+    for ((index, parameter) in parameters.withIndex()) {
       if (index > 0) {
         fragments += Leaf(",")
         fragments += LineBreak(" ", indentAfter = true)
