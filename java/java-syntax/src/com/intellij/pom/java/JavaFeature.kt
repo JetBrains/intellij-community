@@ -138,6 +138,9 @@ enum class JavaFeature {
   MARKDOWN_COMMENT(LanguageLevel.JDK_23, "feature.markdown.comment"),
   PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_24_PREVIEW, "feature.package.import.shadow.module.import"),
   TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_24_PREVIEW, "feature.package.transitive.dependency.on.java.base"),
+
+  JAVA_LANG_IO(LanguageLevel.JDK_25, "feature.java.lang.io"),
+
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
   ;
 

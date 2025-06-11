@@ -268,6 +268,18 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.iop"
+            name="iop" toReformat="true" toShortenFQNames="true" value="IO.println($END$);">
+    <context>
+      <option name="JAVA_LANG_IO_STATEMENT" value="true" />
+    </context>
+  </template>
+  <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.ior"
+            name="ior" toReformat="true" toShortenFQNames="true" value="IO.readln($END$);">
+    <context>
+      <option name="JAVA_LANG_IO_STATEMENT" value="true" />
+    </context>
+  </template>
   <template description="System.out::println" name="soutc" toReformat="true" toShortenFQNames="true" value="System.out::println">
     <context>
       <option name="JAVA_CODE" value="false" />

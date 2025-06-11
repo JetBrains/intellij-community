@@ -268,6 +268,18 @@ public abstract class JavaCodeContextType extends TemplateContextType {
     }
   }
 
+  public static final class JavaLangIOStatement extends JavaCodeContextType {
+    private final JavaCodeContextType statementContext = new Statement();
+    public JavaLangIOStatement() {
+      super(JavaBundle.message("live.template.context.statement.java.lang.io"));
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      return statementContext.isInContext(element) && PsiUtil.isAvailable(JavaFeature.JAVA_LANG_IO, element);
+    }
+  }
+
   public static final class NormalClassDeclarationBeforeShortMainMethod extends JavaCodeContextType {
     private final JavaCodeContextType declarationContext = new Declaration();
 
