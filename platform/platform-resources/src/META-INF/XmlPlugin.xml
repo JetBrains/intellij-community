@@ -40,6 +40,9 @@
     <lang.parserDefinition language="HTML" implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>
     <lang.parserDefinition language="XHTML" implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
 
+    <languageStubDefinition language="HTML" implementationClass="com.intellij.psi.xml.HtmlLanguageStubDefinition"/>
+    <stubElementRegistryExtension implementation="com.intellij.psi.xml.HtmlStubRegistryExtension"/>
+
     <syntax.elementTypeConverter language="XML" implementationClass="com.intellij.psi.xml.XmlElementTypeConverterExtension"/>
 
     <syntaxHighlighter key="IDEA_PROJECT" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
