@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
-import com.jetbrains.python.psi.PyFStringFragment;
+import com.jetbrains.python.ast.PyAstFStringFragment;
 import com.jetbrains.python.psi.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,7 +76,7 @@ public final class PyLineWrapPositionStrategy extends GenericLineWrapPositionStr
         final PsiElement element = psiFile.findElementAt(wrapPosition);
         final StringLiteralExpression string = PsiTreeUtil.getParentOfType(element, StringLiteralExpression.class);
         if (string != null) {
-          final PyFStringFragment fragment = PsiTreeUtil.getTopmostParentOfType(element, PyFStringFragment.class);
+          final PyAstFStringFragment fragment = PsiTreeUtil.getTopmostParentOfType(element, PyAstFStringFragment.class);
           if (fragment != null) {
             return Math.max(fragment.getTextOffset(), startOffset);
           }
