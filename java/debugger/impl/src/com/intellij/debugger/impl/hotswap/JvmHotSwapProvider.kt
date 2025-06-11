@@ -29,8 +29,6 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
       coroutineScope, listener,
       FileExtensionFilter(jvmExtensions),
       InProjectFilter(session.project),
-      // TODO add another scope check
-      //SearchScopeFilter(debuggerSession.searchScope),
     )
   }
 
