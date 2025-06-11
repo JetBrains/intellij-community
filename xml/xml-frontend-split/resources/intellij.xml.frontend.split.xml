@@ -1,0 +1,60 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.embeddedTokenTypesProvider"
+                    interface="com.intellij.lexer.EmbeddedTokenTypesProvider"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.embeddedTokenHighlighter"
+                    interface="com.intellij.ide.highlighter.EmbeddedTokenHighlighter"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileType name="XML"
+              language="XML"
+              extensions="ant;fxml;jhm;jnlp;jrxml;rng;tld;wsdl;xml;xsd;xsl;xslt;xul"
+              implementationClass="com.intellij.ide.highlighter.XmlFileType"
+              fieldName="INSTANCE"/>
+    <fileType name="DTD"
+              language="DTD"
+              extensions="dtd;elt;ent;mod"
+              implementationClass="com.intellij.ide.highlighter.DTDFileType"
+              fieldName="INSTANCE"/>
+    <fileType name="HTML"
+              language="HTML"
+              extensions="htm;html;sht;shtm;shtml"
+              implementationClass="com.intellij.ide.highlighter.HtmlFileType"
+              fieldName="INSTANCE"/>
+    <fileType name="XHTML"
+              language="XHTML"
+              extensions="xhtml"
+              implementationClass="com.intellij.ide.highlighter.XHtmlFileType"
+              fieldName="INSTANCE"/>
+
+    <applicationService serviceInterface="com.intellij.lang.xml.BasicXmlElementFactory"
+                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendXmlElementFactory"/>
+    <applicationService serviceInterface="com.intellij.lang.html.BasicHtmlElementFactory"
+                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
+    <applicationService serviceInterface="com.intellij.html.embedding.BasicHtmlRawTextElementFactory"
+                        serviceImplementation="com.intellij.xml.frontend.split.editor.FrontendHtmlElementFactory"/>
+
+    <lang.parserDefinition language="XML"
+                           implementationClass="com.intellij.lang.xml.XMLParserDefinition"/>
+    <lang.parserDefinition language="DTD"
+                           implementationClass="com.intellij.lang.dtd.DTDParserDefinition"/>
+    <lang.parserDefinition language="HTML"
+                           implementationClass="com.intellij.lang.html.HTMLParserDefinition"/>
+    <lang.parserDefinition language="XHTML"
+                           implementationClass="com.intellij.lang.xhtml.XHTMLParserDefinition"/>
+
+    <lang.syntaxHighlighterFactory language="XML"
+                                   implementationClass="com.intellij.lang.xml.XmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="DTD"
+                                   implementationClass="com.intellij.lang.dtd.DtdSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="HTML"
+                                   implementationClass="com.intellij.lang.html.HtmlSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="XHTML"
+                                   implementationClass="com.intellij.lang.xhtml.XhtmlSyntaxHighlighterFactory"/>
+
+    <virtualFileCustomDataConsumer implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
+  </extensions>
+</idea-plugin>
