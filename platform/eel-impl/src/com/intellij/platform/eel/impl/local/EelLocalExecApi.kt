@@ -31,9 +31,9 @@ class EelLocalExecPosixApi : EelExecPosixApi {
   ): EelPosixProcess {
     val process = executeImpl(generatedBuilder)
     return if (process is PtyProcess)
-      LocalEelPosixProcess(process, process::setWinSize)
+      LocalEelPosixProcess.create(process, process::setWinSize)
     else
-      LocalEelPosixProcess(process, null)
+      LocalEelPosixProcess.create(process, null)
   }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor
@@ -59,9 +59,9 @@ class EelLocalExecWindowsApi : EelExecWindowsApi {
   ): EelWindowsProcess {
     val process = executeImpl(generatedBuilder)
     return if (process is PtyProcess)
-      LocalEelWindowsProcess(process, process::setWinSize)
+      LocalEelWindowsProcess.create(process, process::setWinSize)
     else
-      LocalEelWindowsProcess(process, null)
+      LocalEelWindowsProcess.create(process, null)
   }
 
   override val descriptor: EelDescriptor = LocalEelDescriptor

@@ -2,10 +2,7 @@
 package com.intellij.platform.eel.impl.local
 
 import com.intellij.openapi.components.Service
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 
 @Service
-internal class EelLocalApiService(private val scope: CoroutineScope) {
-  fun scope(label: String): CoroutineScope = scope.childScope("EelExecApi for $label")
-}
+internal class EelLocalApiService(val scope: CoroutineScope)
