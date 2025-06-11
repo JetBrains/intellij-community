@@ -314,9 +314,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
         continue
       }
 
+      LOG.debug { "removeExternalizableSchemesFromRuntimeState: remove scheme '$scheme'@${System.identityHashCode(scheme)}" }
       activeScheme?.let {
         if (scheme === it) {
           currentPendingSchemeName = processor.getSchemeKey(it)
+          LOG.debug { "removeExternalizableSchemesFromRuntimeState: set currentPendingSchemeName to $currentPendingSchemeName" }
           activeScheme = null
         }
       }
@@ -451,6 +453,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     var fileNameWithoutExtension = currentFileNameWithoutExtension
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
       fileNameWithoutExtension = nameGenerator.generateUniqueName(schemeNameToFileName(processor.getSchemeKey(scheme)))
+      if (LOG.isDebugEnabled) {
+        val allSchemes = schemeListManager.schemes
+        LOG.debug("""
+          |Generate scheme file name '$fileNameWithoutExtension' for '$scheme'@${System.identityHashCode(scheme)}
+          | currentFileNameWithoutExtension=$currentFileNameWithoutExtension
+          | externalInfo=$externalInfo
+          | ${allSchemes.size} schemes:
+          | ${allSchemes.joinToString(separator = "\n ") { "${it.name}@${System.identityHashCode(it)} -> ${schemeListManager.getExternalInfo(it)?.fileNameWithoutExtension}" }}
+          |""".trimMargin())
+      }
     }
 
     val fileName = fileNameWithoutExtension + schemeExtension
