@@ -11,11 +11,8 @@ class AccessibilityAuditManager : AccessibilityAudit {
   var isRunning: Boolean = false
     private set
 
-  override fun runAccessibilityTests(a: Accessible?) {
-    isRunning = true
-    failedInspections.clear()
-
-    val inspections = listOf(
+  private val inspections by lazy {
+    listOf(
       AccessibleActionNotNullInspection(),
       AccessibleEditableTextNotNullInspection(),
       AccessibleNameAndDescriptionNotEqualInspection(),
@@ -24,16 +21,17 @@ class AccessibilityAuditManager : AccessibilityAudit {
       AccessibleStateSetContainsFocusableInspection(),
       AccessibleTextNotNullInspection(),
       AccessibleValueNotNullInspection(),
-      ImplementsAccessibleInterfaceInspection()
+      ImplementsAccessibleInterfaceInspection(),
     )
-    for (inspection in inspections) {
-      if (!inspection.passesInspection(a)) {
-        failedInspections.add(inspection)
-      }
-    }
   }
 
-  fun getSeverityCount(): SeverityCount = SeverityCount.from(failedInspections)
+  override fun runAccessibilityTests(a: Accessible?) {
+    isRunning = true
+    failedInspections.clear()
+    inspections.filterTo(failedInspections) { !it.passesInspection(a) }
+  }
+
+  val severityCount: SeverityCount get() = SeverityCount.from(failedInspections)
 
   override fun clearAccessibilityTestsResult() {
     isRunning = false

@@ -692,14 +692,14 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
         String propertyName = value.toString();
         for (UiInspectorAccessibilityInspection failedInspection : myFailedInspections) {
           if (failedInspection.getPropertyName().equalsIgnoreCase(propertyName.trim())) {
-            this.setIcon(failedInspection.getIcon());
-            this.setHorizontalTextPosition(LEFT);
-            this.setToolTipText(InternalActionsBundle.message("ui.inspector.accessibility.audit.table.property.name.tooltip"));
+            setIcon(failedInspection.getIcon());
+            setHorizontalTextPosition(LEFT);
+            setToolTipText(InternalActionsBundle.message("ui.inspector.accessibility.audit.table.property.name.tooltip"));
             break;
           }
           else {
-            this.setToolTipText(null);
-            this.setIcon(null);
+            setToolTipText(null);
+            setIcon(null);
           }
         }
       }

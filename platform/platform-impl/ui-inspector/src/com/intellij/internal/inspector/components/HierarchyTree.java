@@ -273,14 +273,6 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       return node;
     }
 
-    public List<UiInspectorAccessibilityInspection> getFailedInspections() {
-      return accessibilityAudit.getFailedInspections();
-    }
-
-    public void runAccessibilityTests(Accessible a) { accessibilityAudit.runAccessibilityTests(a); }
-
-    public void clearAccessibilityTestsResult() { accessibilityAudit.clearAccessibilityTestsResult(); }
-
     private ComponentNode(@Nullable Component component,
                           @Nullable Accessible accessible,
                           @NotNull String name,
@@ -362,6 +354,18 @@ public abstract class HierarchyTree extends JTree implements TreeSelectionListen
       }
 
       return result;
+    }
+
+    public List<UiInspectorAccessibilityInspection> getFailedAccessibilityInspections() {
+      return accessibilityAudit.getFailedInspections();
+    }
+
+    public void runAccessibilityAudit() {
+      accessibilityAudit.runAccessibilityTests(myAccessible);
+    }
+
+    public void clearAccessibilityAuditResult() {
+      accessibilityAudit.clearAccessibilityTestsResult();
     }
   }
 
