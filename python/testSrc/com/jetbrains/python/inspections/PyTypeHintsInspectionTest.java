@@ -2979,14 +2979,6 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-76851
-  public void testRecursiveTypeAliasStatements() {
-    doTestByText("""
-               type RecursiveTypeAlias3 = RecursiveTypeAlias3
-               #type RecursiveTypeAlias4[T] = T | RecursiveTypeAlias4[str]
-               """);
-  }
-
-  // PY-76851
   public void testTypeAliasBoundMatch() {
     doTestByText("""
                type TypeAlias[S: str] = list[S]
@@ -3042,6 +3034,45 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                """);
   }
 
+
+  // PY-76851
+  public void testSimpleRecursiveTypeAliasStatement() {
+    doTestByText("""
+                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias</warning>
+                   """);
+  }
+
+  // PY-76851
+  public void testRecursiveTypeAliasStatementInUnion() {
+    doTestByText("""
+                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">int | TypeAlias</warning>
+                   type TypeAlias2 = int | str
+                   """);
+  }
+
+  // PY-76851
+  public void testUnionRecursiveTypeAliasStatement() {
+    doTestByText("""
+                   type TypeAlias = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias | int</warning>
+                   """);
+  }
+
+
+  // PY-76851
+  public void testDeepRecursiveTypeAliasStatement() {
+    doTestByText("""
+                   type TypeAlias1 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias2</warning>
+                   type TypeAlias2 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias3</warning>
+                   type TypeAlias3 = <warning descr="Type hint is invalid or refers to the expression which is not a correct type">TypeAlias1</warning>
+                   """);
+  }
+
+  // PY-76851
+  public void testCorrectRecursiveTypeAliasStatement() {
+    doTestByText("""
+                   type TypeAlias1 = list[TypeAlias1]
+                   """);
+  }
 
   @NotNull
   @Override
