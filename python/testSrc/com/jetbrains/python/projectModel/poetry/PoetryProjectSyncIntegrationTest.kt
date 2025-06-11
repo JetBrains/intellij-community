@@ -54,7 +54,45 @@ class PoetryProjectSyncIntegrationTest {
   }
 
   @Test
-  fun `project with path dependencies is properly mapped to IJ modules`() = timeoutRunBlocking {
+  fun `project with new-style PEP-621 path dependencies`() = timeoutRunBlocking {
+    testRoot.createFile("pyproject.toml").writeText("""
+      [project]
+      name = "main"
+      dependencies = [
+          "lib @ ${testRoot.toUri()}/lib"
+      ]
+    """.trimIndent())
+
+    testRoot.createFile("lib/pyproject.toml").writeText("""
+      [project]
+      name = "lib"
+      dependencies = [
+      ]
+    """.trimIndent())
+
+    multiprojectFixture.linkProject(project, testRoot, PoetryConstants.SYSTEM_ID)
+    syncAllProjects(project)
+
+    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+    ModuleAssertions.assertModules(project, "main", "lib")
+    ModuleAssertions.assertModuleEntity(project, "main") { module ->
+      ContentRootAssertions.assertContentRoots(virtualFileUrlManager, module, testRoot)
+      DependencyAssertions.assertDependencies(module, INHERITED_SDK, MODULE_SOURCE, "lib")
+      DependencyAssertions.assertModuleDependency(module, "lib") { dependency ->
+        Assertions.assertTrue(dependency.exported)
+      }
+    }
+
+    ModuleAssertions.assertModuleEntity(project, "lib") { module ->
+      ContentRootAssertions.assertContentRoots(virtualFileUrlManager, module, testRoot.resolve("lib"))
+      DependencyAssertions.assertDependencies(module, INHERITED_SDK, MODULE_SOURCE)
+    }
+  }
+
+  // This format of path dependencies was used before Poetry 2.0
+  // https://python-poetry.org/history/#added-2
+  @Test
+  fun `project with old-style path dependencies`() = timeoutRunBlocking {
     testRoot.createFile("pyproject.toml").writeText("""
       [tool.poetry]
       name = "main"

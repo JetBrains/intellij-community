@@ -7,8 +7,12 @@ import com.jetbrains.python.projectModel.ExternalProjectGraph
 import com.jetbrains.python.projectModel.PythonProjectModelResolver
 import org.apache.tuweni.toml.Toml
 import org.apache.tuweni.toml.TomlTable
+import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.*
+
+// e.g. "lib @ file:///home/user/projects/main/lib"
+private val PEP_621_PATH_DEPENDENCY = """([\w-]+) @ (file:.*)""".toRegex()
 
 data class PoetryProject(
   override val name: String,
@@ -52,15 +56,28 @@ object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
   }
 
   private fun readPoetryPyProjectToml(pyprojectTomlPath: Path): PoetryPyProjectToml? {
-    // TODO read editable dependencies in newer pyproject.toml
     val pyprojectToml = Toml.parse(pyprojectTomlPath)
     val projectName = pyprojectToml.getString("tool.poetry.name") ?: pyprojectToml.getString("project.name")
     if (projectName == null) {
       return null
     }
+    
+    val moduleDependencies = pyprojectToml.getArrayOrEmpty("project.dependencies")
+      .toList()
+      .filterIsInstance<String>()
+      .mapNotNull { depSpec ->
+        val match = PEP_621_PATH_DEPENDENCY.matchEntire(depSpec)
+        if (match == null) return@mapNotNull null
+        val (depName, depUri) = match.destructured
+        val depPath = runCatching { Path.of(URI(depUri)) }.getOrNull() ?: return@mapNotNull null
+        if (depPath.isDirectory() && depPath.resolve(PoetryConstants.PYPROJECT_TOML).exists()) {
+          return@mapNotNull depName to depPath
+        }
+        return@mapNotNull null
+      }
+      .toMap()
 
-    // Editable path dependencies can appear only inside tool.poetry.dependencies
-    val moduleDependencies: Map<String, Path> = pyprojectToml.getTableOrEmpty("tool.poetry.dependencies")
+    val oldStyleModuleDependencies: Map<String, Path> = pyprojectToml.getTableOrEmpty("tool.poetry.dependencies")
       .toMap().entries
       .mapNotNull { (depName, depSpec) ->
         if (depSpec is TomlTable && depSpec.getBoolean("develop") == true) {
@@ -76,7 +93,7 @@ object PoetryProjectModelResolver : PythonProjectModelResolver<PoetryProject> {
     return PoetryPyProjectToml(
       projectName = projectName,
       root = pyprojectTomlPath.parent,
-      editablePathDependencies = moduleDependencies
+      editablePathDependencies = moduleDependencies.ifEmpty { oldStyleModuleDependencies }
     )
   }
 
