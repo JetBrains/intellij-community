@@ -25,7 +25,7 @@ public abstract class RenamePyElementProcessor extends RenamePsiElementProcessor
       }
       PyTargetExpression conflictingVariable = pyFile.findTopLevelAttribute(newName);
       if (conflictingVariable != null) {
-        conflicts.putValue(conflictingFunction, "A variable named '" + newName + "' is already defined in " + pyFile.getName());
+        conflicts.putValue(conflictingVariable, "A variable named '" + newName + "' is already defined in " + pyFile.getName());
       }
     }
     else if (container instanceof PyClass pyClass) {
