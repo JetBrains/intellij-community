@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.dev.psiViewer.debug
 
 import com.intellij.openapi.components.*
@@ -6,7 +6,7 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 
 @Service
 @State(name = "PsiViewerDebugSettings", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
-class PsiViewerDebugSettings : PersistentStateComponent<PsiViewerDebugSettings> {
+internal class PsiViewerDebugSettings : PersistentStateComponent<PsiViewerDebugSettings> {
   var showDialogFromDebugAction: Boolean = false
 
   var watchMode: Boolean = false

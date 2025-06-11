@@ -60,7 +60,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 
 private val LOG = Logger.getInstance(PsiViewerDebugAction::class.java)
 
-class PsiViewerDebugPanel(
+internal class PsiViewerDebugPanel(
   private val project: Project,
   private val editor: EditorEx,
   private val language: Language,
@@ -341,7 +341,7 @@ class PsiViewerDebugPanel(
     debugSession.removeSessionListener(watchListener)
   }
 
-  internal companion object {
+  companion object {
     fun getTitle(name: @Nls String, inWatchMode: Boolean): @Nls String {
       return if (inWatchMode) name else "$name ${DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis())}"
     }
