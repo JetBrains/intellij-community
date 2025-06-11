@@ -122,7 +122,6 @@ jvm_library(
     "//platform/settings",
     "//platform/util/coroutines",
     "@lib//:jetbrains-annotations",
-    "@lib//:jetbrains-intellij-deps-rwmutex-idea",
     "@lib//:lz4-java",
     "//platform/ml-api:ml",
     "@lib//:kotlinx-collections-immutable",
@@ -145,6 +144,7 @@ jvm_library(
     "//platform/plugins/parser/impl",
     "//platform/eel",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/locking.impl",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -279,7 +279,6 @@ jvm_library(
     "//platform/settings",
     "//platform/util/coroutines",
     "@lib//:jetbrains-annotations",
-    "@lib//:jetbrains-intellij-deps-rwmutex-idea",
     "@lib//:lz4-java",
     "//platform/ml-api:ml",
     "@lib//:kotlinx-collections-immutable",
@@ -302,6 +301,7 @@ jvm_library(
     "//platform/plugins/parser/impl",
     "//platform/eel",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/locking.impl",
   ],
   runtime_deps = [":ide-impl_resources"]
 )

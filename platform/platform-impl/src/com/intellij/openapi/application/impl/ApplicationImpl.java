@@ -44,6 +44,7 @@ import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
+import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -1011,7 +1012,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     @Nls(capitalization = Nls.Capitalization.Title) @Nullable String cancelText,
     @NotNull Consumer<? super @Nullable ProgressIndicator> action
   ) {
-    return getThreadingSupport().runWriteAction(action.getClass(), () -> {
+    return IntelliJLockingUtil.getGlobalThreadingSupport().runWriteAction(action.getClass(), () -> {
       var indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
       indicator.runInSwingThread(() -> {
         action.accept(indicator);
@@ -1364,16 +1365,16 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return true;
     }, app.getCoroutineScope());
 
-    getThreadingSupport().setReadActionListener(app.myLockDispatcherListener);
-    getThreadingSupport().setWriteActionListener(app.myLockDispatcherListener);
-    getThreadingSupport().setWriteIntentReadActionListener(app.myLockDispatcherListener);
-    getThreadingSupport().setLockAcquisitionListener(app.myLockDispatcherListener);
-    getThreadingSupport().setWriteLockReacquisitionListener(app.myLockDispatcherListener);
-    getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
+    app.getThreadingSupport().setReadActionListener(app.myLockDispatcherListener);
+    app.getThreadingSupport().setWriteActionListener(app.myLockDispatcherListener);
+    app.getThreadingSupport().setWriteIntentReadActionListener(app.myLockDispatcherListener);
+    app.getThreadingSupport().setLockAcquisitionListener(app.myLockDispatcherListener);
+    app.getThreadingSupport().setWriteLockReacquisitionListener(app.myLockDispatcherListener);
+    app.getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
     if (ThreadingRuntimeFlagsKt.getInstallSuvorovProgress()) {
       SwingUtilities.invokeLater(() -> {
         SuvorovProgress.INSTANCE.init(app);
-        getThreadingSupport().setLockAcquisitionInterceptor((deferred) -> {
+        app.getThreadingSupport().setLockAcquisitionInterceptor((deferred) -> {
           SuvorovProgress.dispatchEventsUntilComputationCompletes(deferred);
           return Unit.INSTANCE;
         });
@@ -1611,8 +1612,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return getThreadingSupport().isParallelizedReadAction(context);
   }
 
-  private static @NotNull ThreadingSupport getThreadingSupport() {
-    return AppImplKt.getGlobalThreadingSupport();
+  public @NotNull ThreadingSupport getThreadingSupport() {
+    return IntelliJLockingUtil.getGlobalThreadingSupport();
   }
 
   @RequiresBackgroundThread(generateAssertion = false)

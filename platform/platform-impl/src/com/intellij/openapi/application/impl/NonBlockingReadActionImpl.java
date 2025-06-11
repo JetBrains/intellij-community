@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
@@ -137,7 +138,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   private static void invokeLater(@NotNull Runnable runnable) {
     Application app = ApplicationManager.getApplication();
-    AppImplKt.getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
+    IntelliJLockingUtil.getGlobalThreadingSupport().runWhenWriteActionIsCompleted(() -> {
       SideEffectGuard.computeWithAllowedSideEffectsBlocking(EnumSet.of(SideEffectGuard.EffectType.INVOKE_LATER), () -> {
         app.invokeLaterOnWriteThread(runnable, ModalityState.any(), app.getDisposed());
         return Unit.INSTANCE;

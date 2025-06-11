@@ -6,8 +6,9 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.application.*;
-import com.intellij.openapi.application.impl.AppImplKt;
+import com.intellij.openapi.application.ApplicationActivationListener;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.AbstractPopup;
@@ -173,7 +175,7 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
         boolean expired = runnable instanceof ExpirableRunnable && ((ExpirableRunnable)runnable).isExpired();
         if (!expired) {
           // Even immediate code need explicit write-safe context, not implicit one
-          AppImplKt.getGlobalThreadingSupport().runPreventiveWriteIntentReadAction(() -> {
+          IntelliJLockingUtil.getGlobalThreadingSupport().runPreventiveWriteIntentReadAction(() -> {
             runnable.run();
             return null;
           });

@@ -162,6 +162,7 @@ jvm_library(
     "//platform/syntax/syntax-psi-tests:psi-tests_test_lib",
     "//xml/xml-psi-api:psi",
     "//platform/runtime/product",
+    "//platform/locking.impl",
   ],
   runtime_deps = [
     ":tests_test_resources",

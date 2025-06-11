@@ -6,11 +6,11 @@ import com.intellij.ide.ui.ShowingContainer
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.HierarchyEvent

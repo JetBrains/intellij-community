@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application.impl
+package com.intellij.platform.locking.impl
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
-import com.jetbrains.rd.util.forEachReversed
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
@@ -82,10 +81,6 @@ private data class ExposedWritePermitData(
   val oldPermit: WriteIntentPermit?,
 )
 
-@ApiStatus.Internal
-fun newLockingSupport(): ThreadingSupport =
-  NestedLocksThreadingSupport()
-
 /**
  * This class implements a technique that we call "nested locks" (a.k.a. "n-locks", where "n" stands for "natural number").
  *
@@ -155,8 +150,6 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
   companion object {
     private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
     private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
-
-    val defaultInstance: NestedLocksThreadingSupport = NestedLocksThreadingSupport()
   }
 
   /**
@@ -336,8 +329,9 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       hack_setPublishedPermitData(null)
       val writePermits = currentPublishedPermits.writePermitStack
       // forEachReversed is the most performant loop in kotlin, it uses indexes instead of iterators
-      writePermits.forEachReversed {
-        it.release()
+      var writePermitIndex = writePermits.lastIndex
+      while (writePermitIndex >= 0) {
+        writePermits[writePermitIndex--].release()
       }
       currentPublishedPermits.finalWritePermit.release()
       if (currentPublishedPermits.oldPermit == null) {
@@ -1037,8 +1031,9 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       "Suspending write action was requested, but the thread did not start write action properly"
     }
     hack_setPublishedPermitData(null)
-    exposedPermitData.writePermitStack.forEachReversed {
-      it.release()
+    var writePermitIndex = exposedPermitData.writePermitStack.lastIndex
+    while (writePermitIndex >= 0) {
+      exposedPermitData.writePermitStack[writePermitIndex--].release()
     }
     val rootWriteIntentPermit = exposedPermitData.originalWriteIntentPermit
     permit.writePermit.release()
@@ -1155,7 +1150,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override fun allowTakingLocksInsideAndRun(action: java.lang.Runnable) {
+  override fun allowTakingLocksInsideAndRun(action: Runnable) {
     val currentValue = myLockingProhibited.get()
     myLockingProhibited.set(null)
     try {

@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.impl.getGlobalThreadingSupport
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume

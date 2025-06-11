@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGr
 import com.intellij.openapi.actionSystem.util.ActionSystem
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
@@ -44,6 +43,7 @@ import com.intellij.platform.ide.menu.FrameMenuUiKind
 import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.platform.ide.menu.MacNativeActionMenuItem
 import com.intellij.platform.ide.menu.createMacNativeActionMenu
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI

@@ -5,7 +5,7 @@ import com.intellij.concurrency.currentThreadOverriddenContextOrNull
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ModalityStateEx
-import com.intellij.openapi.application.impl.getGlobalThreadingSupport
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey

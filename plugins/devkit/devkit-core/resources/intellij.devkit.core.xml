@@ -555,7 +555,7 @@
     <stacktrace.fold substring="at com.intellij.openapi.application.TransactionGuardImpl"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.WriteAction."/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport"/>
-    <stacktrace.fold substring="at com.intellij.openapi.application.impl.NestedLocksThreadingSupport"/>
+    <stacktrace.fold substring="at com.intellij.platform.locking.impl.NestedLocksThreadingSupport"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl$1.call("/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl$2.run"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction("/>

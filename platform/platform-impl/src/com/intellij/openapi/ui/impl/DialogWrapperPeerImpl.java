@@ -13,7 +13,6 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
-import com.intellij.openapi.application.impl.AppImplKt;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.CommandProcessorEx;
@@ -40,6 +39,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
 import com.intellij.platform.ide.bootstrap.SplashManagerKt;
+import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
@@ -440,7 +440,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
       var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
                  ? new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN)
-                 : AppImplKt.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
+                 : IntelliJLockingUtil.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
       lockContextCleanup = ThreadContext.installThreadContext(pair.getFirst(), true);
       lockCleanup = pair.getSecond();
     }

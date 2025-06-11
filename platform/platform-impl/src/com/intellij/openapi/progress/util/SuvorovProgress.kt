@@ -5,11 +5,11 @@ import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.impl.getGlobalThreadingSupport
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
