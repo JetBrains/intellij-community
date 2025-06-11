@@ -94,6 +94,12 @@ class Descriptable {
 @NullMarked
 class MarkedAsNull {
   void test() {
+    Person person = new Person("user-name", null);
+
+    Assertions.assertThat(person.userType()).isNull();
     Assertions.assertThat((Object)null).isNull();
   }
+
+  public enum UserType { TYPE_1, TYPE_2 }
+  public record Person (String name, @Nullable UserType userType) {}
 }

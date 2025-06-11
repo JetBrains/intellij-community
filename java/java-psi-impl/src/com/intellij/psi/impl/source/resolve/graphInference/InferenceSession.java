@@ -548,7 +548,7 @@ public class InferenceSession {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     for (InferenceVariable variable : variables) {
       final PsiType equalsBound = getEqualsBound(variable, substitutor);
-      if (equalsBound != null && !PsiTypes.nullType().equals(equalsBound)) {
+      if (!PsiTypes.nullType().equals(equalsBound)) {
         substitutor = substitutor.put(variable.getParameter(), equalsBound);
       }
     }
@@ -1173,7 +1173,7 @@ public class InferenceSession {
     }
     final PsiType upperBound = getUpperBound(var, substitutor);
     PsiType type;
-    if (eqBound != PsiTypes.nullType() && (myErased || eqBound != null)) {
+    if (eqBound != PsiTypes.nullType()) {
       PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(eqBound);
       if (aClass instanceof PsiTypeParameter && TypeConversionUtil.isFreshVariable((PsiTypeParameter)aClass)) {
         PsiCapturedWildcardType capturedWildcard = var.getUserData(ORIGINAL_CAPTURE);
@@ -1328,36 +1328,36 @@ public class InferenceSession {
                                  StringUtil.join(var.getBounds(upperBound), typePresentation, ", "));
   }
 
-  private PsiType getLowerBound(InferenceVariable var, PsiSubstitutor substitutor) {
+  private @NotNull PsiType getLowerBound(InferenceVariable var, PsiSubstitutor substitutor) {
     return composeBound(var, InferenceBound.LOWER, pair -> GenericsUtil.getLeastUpperBound(pair.first, pair.second, myManager), substitutor);
   }
 
-  private PsiType getUpperBound(InferenceVariable var, PsiSubstitutor substitutor) {
+  private @NotNull PsiType getUpperBound(InferenceVariable var, PsiSubstitutor substitutor) {
     return composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, substitutor);
   }
 
-  private PsiType getEqualsBound(InferenceVariable var, PsiSubstitutor substitutor) {
+  private @NotNull PsiType getEqualsBound(InferenceVariable var, PsiSubstitutor substitutor) {
     return composeBound(var, InferenceBound.EQ, pair -> !Comparing.equal(pair.first, pair.second) ? null : pair.first, substitutor);
   }
 
-  private PsiType composeBound(InferenceVariable variable,
-                               InferenceBound boundType,
-                               Function<? super Pair<PsiType, PsiType>, ? extends PsiType> fun,
-                               PsiSubstitutor substitutor) {
+  private @NotNull PsiType composeBound(InferenceVariable variable,
+                                        InferenceBound boundType,
+                                        Function<? super Pair<PsiType, PsiType>, ? extends PsiType> fun,
+                                        PsiSubstitutor substitutor) {
     return composeBound(variable, boundType, fun, substitutor, false);
   }
 
-  private PsiType composeBound(InferenceVariable variable,
-                               InferenceBound boundType,
-                               Function<? super Pair<PsiType, PsiType>, ? extends PsiType> fun,
-                               PsiSubstitutor substitutor,
-                               boolean includeNonProperBounds) {
+  private @NotNull PsiType composeBound(InferenceVariable variable,
+                                        InferenceBound boundType,
+                                        Function<? super Pair<PsiType, PsiType>, ? extends PsiType> fun,
+                                        PsiSubstitutor substitutor,
+                                        boolean includeNonProperBounds) {
     final List<PsiType> bounds = variable.getBounds(boundType);
-    PsiType lub = PsiTypes.nullType();
+    PsiType lub = null;
     for (PsiType bound : bounds) {
       bound = substituteNonProperBound(bound, substitutor);
       if (includeNonProperBounds || isProperType(bound)) {
-        if (lub == PsiTypes.nullType()) {
+        if (lub == null) {
           lub = bound;
         }
         else {
@@ -1369,7 +1369,7 @@ public class InferenceSession {
         }
       }
     }
-    return lub;
+    return lub == null ? PsiTypes.nullType() : lub;
   }
 
   public PsiManager getManager() {
@@ -1949,14 +1949,6 @@ public class InferenceSession {
 
   public InferenceSessionContainer getInferenceSessionContainer() {
     return myInferenceSessionContainer;
-  }
-
-  public PsiType startWithFreshVars(PsiType type) {
-    PsiSubstitutor s = PsiSubstitutor.EMPTY;
-    for (InferenceVariable variable : myInferenceVariables) {
-      s = s.put(variable, JavaPsiFacade.getElementFactory(myManager.getProject()).createType(variable.getParameter()));
-    }
-    return s.substitute(type);
   }
 
   public static PsiClass findParameterizationOfTheSameGenericClass(List<? extends PsiType> upperBounds,

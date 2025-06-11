@@ -15,7 +15,7 @@ class Main {
 
     Stream.of("test3")
       .map(Main::testNullableStaticMethod)
-      .map(<warning descr="Method reference argument might be null but passed to non-annotated parameter">Main::requireNonNull</warning>);
+      .map(Main::requireNonNull);
   }
 
   static <T> T requireNonNull(T obj) {

@@ -58,7 +58,8 @@ public final class TypeNullability {
    * @see NullabilitySource.ExtendsBound
    */
   public @NotNull TypeNullability inherited() {
-    return new TypeNullability(myNullability, mySource.inherited());
+    NullabilitySource inherited = mySource.inherited();
+    return inherited.equals(mySource) ? this : new TypeNullability(myNullability, inherited);
   }
 
   public @NotNull TypeNullability instantiatedWith(@NotNull TypeNullability nullability) {
@@ -75,6 +76,34 @@ public final class TypeNullability {
       return nullability;
     }
     return this;
+  }
+
+  public @NotNull TypeNullability join(@NotNull TypeNullability other) {
+    if (this.nullability() == other.nullability()) {
+      if (this.source().equals(other.source())) return this;
+      return new TypeNullability(this.nullability(), NullabilitySource.multiSource(Arrays.asList(this.source(), other.source())));
+    }
+    if (this.nullability() == Nullability.NULLABLE) {
+      return this;
+    }
+    if (other.nullability() == Nullability.NULLABLE) {
+      return other;
+    }
+    return this.nullability() == Nullability.UNKNOWN ? this : other;
+  }
+  
+  public @NotNull TypeNullability meet(@NotNull TypeNullability other) {
+    if (this.nullability() == other.nullability()) {
+      if (this.source().equals(other.source())) return this;
+      return new TypeNullability(Nullability.NOT_NULL, NullabilitySource.multiSource(Arrays.asList(this.source(), other.source())));
+    }
+    if (this.nullability() == Nullability.NOT_NULL) {
+      return this;
+    }
+    if (other.nullability() == Nullability.NOT_NULL) {
+      return other;
+    }
+    return this.nullability() == Nullability.NULLABLE ? this : other;
   }
 
   /**

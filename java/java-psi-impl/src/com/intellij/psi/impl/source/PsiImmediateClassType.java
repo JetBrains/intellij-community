@@ -23,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   private final PsiSubstitutor mySubstitutor;
   private final PsiManager myManager;
   private final @Nullable PsiElement myPsiContext;
-  private final @NotNull TypeNullability myNullability;
+  private final @Nullable TypeNullability myNullability;
   private String myCanonicalText;
   private String myCanonicalTextAnnotated;
   private String myPresentableText;
@@ -113,15 +114,15 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
                                @Nullable LanguageLevel level,
                                @NotNull TypeAnnotationProvider provider,
                                @Nullable PsiElement context) {
-    this(aClass, substitutor, level, provider, context, TypeNullability.UNKNOWN);
+    this(aClass, substitutor, level, provider, context, null);
   }
 
-  public PsiImmediateClassType(@NotNull PsiClass aClass,
-                               @NotNull PsiSubstitutor substitutor,
-                               @Nullable LanguageLevel level,
-                               @NotNull TypeAnnotationProvider provider,
-                               @Nullable PsiElement context,
-                               @NotNull TypeNullability nullability) {
+  PsiImmediateClassType(@NotNull PsiClass aClass,
+                        @NotNull PsiSubstitutor substitutor,
+                        @Nullable LanguageLevel level,
+                        @NotNull TypeAnnotationProvider provider,
+                        @Nullable PsiElement context,
+                        @Nullable TypeNullability nullability) {
     super(level, provider);
     myClass = aClass;
     myManager = aClass.getManager();
@@ -148,7 +149,8 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
 
   @Override
   public @NotNull TypeNullability getNullability() {
-    return myNullability;
+    if (myNullability != null) return myNullability;
+    return JavaTypeNullabilityUtil.getTypeNullability(this);
   }
 
   @Override

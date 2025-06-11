@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
@@ -32,8 +33,8 @@ public final class GenericsUtil {
 
   public static @Nullable PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
-    if (TypeConversionUtil.isNullType(type1)) return type2;
-    if (TypeConversionUtil.isNullType(type2)) return type1;
+    if (TypeConversionUtil.isNullType(type1)) return type2.withNullability(TypeNullability.NULLABLE_MANDATED);
+    if (TypeConversionUtil.isNullType(type2)) return type1.withNullability(TypeNullability.NULLABLE_MANDATED);
     if (Comparing.equal(type1, type2)) return type1;
     return getLeastUpperBound(type1, type2, new LinkedHashSet<>(), manager);
   }
@@ -97,7 +98,8 @@ public final class GenericsUtil {
 
       PsiClass[] supers = getLeastUpperClasses(aClass, bClass);
       if (supers.length == 0) {
-        return PsiType.getJavaLangObject(manager, type1.getResolveScope());
+        return PsiType.getJavaLangObject(manager, type1.getResolveScope())
+          .withNullability(type1.getNullability().join(type2.getNullability()));
       }
 
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
