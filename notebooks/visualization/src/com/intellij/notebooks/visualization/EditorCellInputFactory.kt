@@ -17,7 +17,6 @@ interface EditorCellInputFactory {
     @JvmField
     val EP_NAME: ExtensionPointName<EditorCellInputFactory> = ExtensionPointName.create<EditorCellInputFactory>("org.jetbrains.plugins.notebooks.inputFactory")
 
-
     fun create(cell: EditorCell): EditorCellViewComponent {
       val inputFactory = EP_NAME.extensionsIfPointIsRegistered.firstOrNull { it.supports(cell) } ?: TextEditorCellInputFactory()
       return inputFactory.createComponent(cell)

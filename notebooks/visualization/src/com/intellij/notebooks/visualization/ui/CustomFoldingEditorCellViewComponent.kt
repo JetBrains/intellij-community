@@ -48,7 +48,7 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
   private fun updateGutterIcons(gutterAction: AnAction?) {
     editor.updateManager.update { ctx ->
       gutterActionRenderer = gutterAction?.let { ActionToGutterRendererAdapter(it) }
-      ctx.addFoldingOperation { modelEx ->
+      ctx.addFoldingOperation {
         foldingRegion?.update()
       }
     }
@@ -110,7 +110,7 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
         enableEvents(MOUSE_EVENT_MASK or MOUSE_MOTION_EVENT_MASK)
       }
 
-      override fun getPreferredSize(): Dimension? {
+      override fun getPreferredSize(): Dimension {
         return Dimension(presentation.width, presentation.height)
       }
 

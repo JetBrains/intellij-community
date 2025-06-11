@@ -60,10 +60,8 @@ abstract class JupyterAbstractAboveCellToolbar(
   }
 
   override fun updateUI() {
+    background = if (JBColor.isBright()) JBColor.WHITE else null
     super.updateUI()
-    if (JBColor.isBright()) {
-      background = JBColor.WHITE
-    }
   }
 
   protected abstract fun getArcSize(): Int

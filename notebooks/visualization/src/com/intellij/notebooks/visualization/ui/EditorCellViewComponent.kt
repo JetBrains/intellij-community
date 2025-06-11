@@ -52,7 +52,6 @@ abstract class EditorCellViewComponent : NotebookCellController {
     throw UnsupportedOperationException("Operation is not supported")
   }
 
-
   final override fun checkAndRebuildInlays() {
     _children.forEach { it.checkAndRebuildInlays() }
     doCheckAndRebuildInlays()
