@@ -23,7 +23,7 @@ class JupyterCellActionsToolbar(
     background = EditorColorsManager.getInstance().globalScheme.defaultBackground
   }
 
-  override fun fillRect(g2: Graphics2D) {
+  override fun fillRect(g2d: Graphics2D) {
     val arcSize = getArcSize()
     val shape = RoundRectangle2D.Float(
       TOOLBAR_BORDER_THICKNESS / 2f, TOOLBAR_BORDER_THICKNESS / 2f,
@@ -31,8 +31,8 @@ class JupyterCellActionsToolbar(
       arcSize.toFloat(), arcSize.toFloat()
     )
 
-    g2.clip(shape)
-    g2.fill(shape)
+    g2d.clip(shape)
+    g2d.fill(shape)
   }
 
   override fun getArcSize(): Int = JBUI.scale(8)

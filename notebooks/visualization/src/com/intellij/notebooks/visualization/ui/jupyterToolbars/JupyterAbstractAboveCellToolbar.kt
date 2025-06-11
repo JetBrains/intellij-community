@@ -2,6 +2,7 @@
 package com.intellij.notebooks.visualization.ui.jupyterToolbars
 
 import com.intellij.notebooks.ui.SelectClickedCellEventHelper
+import com.intellij.notebooks.visualization.useG2D
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
@@ -47,19 +48,15 @@ abstract class JupyterAbstractAboveCellToolbar(
   }
 
   override fun paintComponent(g: Graphics) {
-    val g2 = g.create() as Graphics2D
-    try {
-      g2.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, ALPHA)
-      g2.color = this.background
-      fillRect(g2)
-    }
-    finally {
-      g2.dispose()
+    g.useG2D { g2d ->
+      g2d.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, ALPHA)
+      g2d.color = this.background
+      fillRect(g2d)
     }
   }
 
-  protected open fun fillRect(g2: Graphics2D) {
-    g2.fillRoundRect(0, 0, width, height, getArcSize(), getArcSize())
+  protected open fun fillRect(g2d: Graphics2D) {
+    g2d.fillRoundRect(0, 0, width, height, getArcSize(), getArcSize())
   }
 
   override fun updateUI() {

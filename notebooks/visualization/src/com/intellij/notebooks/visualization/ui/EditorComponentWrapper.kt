@@ -2,6 +2,7 @@
 package com.intellij.notebooks.visualization.ui
 
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeHandler
+import com.intellij.notebooks.visualization.useG2D
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
@@ -67,18 +68,14 @@ class EditorComponentWrapper private constructor(private val editor: EditorImpl)
       layer.setLayerEventMask(0)
     }
 
-    override fun paint(graphics: Graphics, component: JComponent) {
-      super.paint(graphics, component)
+    override fun paint(g: Graphics, c: JComponent) {
+      super.paint(g, c)
 
-      val g2d = graphics.create() as Graphics2D
-      try {
+      g.useG2D { g2d ->
         for ((line, color) in overlayLines) {
           g2d.color = color
           g2d.draw(line)
         }
-      }
-      finally {
-        g2d.dispose()
       }
     }
 
