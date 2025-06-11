@@ -350,11 +350,13 @@ private fun <T : JComponent> Cell<T>.setupDefaultValue(
 ): Cell<T> = apply {
   if (!defaultValue.isNullOrEmpty()) {
     val component = this.component.textComponent()
+    val updateForeground = {
+      component.foreground = if (component.text == defaultValue) getDefaultValueColor() else getChangedValueColor()
+    }
     component.document.addDocumentListener(object : DocumentAdapter() {
-      override fun textChanged(e: DocumentEvent) {
-        component.foreground = if (component.text == defaultValue) getDefaultValueColor() else getChangedValueColor()
-      }
+      override fun textChanged(e: DocumentEvent) = updateForeground()
     })
+    updateForeground()
     if (component is JBTextField) {
       component.emptyText.text = defaultValue
     }
