@@ -19,7 +19,7 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunConfigurationStartHistory
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx.Companion.getInstanceEx
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
@@ -36,8 +36,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Consumer
-import java.util.function.Function
-import java.util.function.Supplier
 
 private val LOG = logger<ExecutorRegistryImpl>()
 
@@ -52,7 +50,7 @@ class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() 
   init {
     Executor.EXECUTOR_EXTENSION_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<Executor> {
       override fun extensionAdded(extension: Executor, pluginDescriptor: PluginDescriptor) {
-        initExecutorActions(extension, getInstanceEx().asActionRuntimeRegistrar())
+        initExecutorActions(extension, ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar())
       }
 
       override fun extensionRemoved(extension: Executor, pluginDescriptor: PluginDescriptor) {
@@ -88,23 +86,21 @@ class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() 
     val runContextAction: AnAction?
     val runNonExistingContextAction: AnAction?
     if (executor is ExecutorGroup<*>) {
-      val delegateId = executor.getId() + "_delegate"
+      val delegateId = "${executor.getId()}_delegate"
       val actionGroup = ExecutorGroupActionGroup(executor) {
         @Suppress("DEPRECATION")
         ExecutorAction(it)
       }
-      registerAction(actionRegistrar, delegateId, actionGroup, idToAction)
+      registerAction(actionRegistrar = actionRegistrar, actionId = delegateId, anAction = actionGroup, map = idToAction)
 
-      val toolbarActionGroup: ActionGroup = SplitButtonAction(actionGroup)
+      val toolbarActionGroup = SplitButtonAction(actionGroup)
       val presentation = toolbarActionGroup.getTemplatePresentation()
-      presentation.setIconSupplier(Supplier { executor.getIcon() })
+      presentation.setIconSupplier { executor.getIcon() }
       presentation.setText(executor.getStartActionText())
       presentation.setDescription(executor.getDescription())
       toolbarAction = toolbarActionGroup
-      runContextAction = ExecutorGroupActionGroup(executor, Function { executor -> RunContextAction(executor!!) })
-      runNonExistingContextAction = ExecutorGroupActionGroup(executor, Function { executor ->
-        RunNewConfigurationContextAction(executor!!)
-      })
+      runContextAction = ExecutorGroupActionGroup(executor) { RunContextAction(it) }
+      runNonExistingContextAction = ExecutorGroupActionGroup(executor) { RunNewConfigurationContextAction(it) }
     }
     else {
       @Suppress("DEPRECATION")
@@ -131,9 +127,12 @@ class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() 
       actionRegistrar.addToGroup(group, action, Constraints(Anchor.BEFORE, "CreateRunConfiguration"))
     }
 
-    val nonExistingAction: AnAction = registerAction(actionRegistrar, newConfigurationContextActionId(executor),
-                                                     runNonExistingContextAction,
-                                                     contextActionIdToAction)
+    val nonExistingAction = registerAction(
+      actionRegistrar = actionRegistrar,
+      actionId = newConfigurationContextActionId(executor),
+      anAction = runNonExistingContextAction,
+      map = contextActionIdToAction,
+    )
     val group = actionRegistrar.getActionOrStub(RUN_CONTEXT_GROUP_MORE) as DefaultActionGroup
     actionRegistrar.addToGroup(group, nonExistingAction, Constraints(Anchor.BEFORE, "CreateNewRunConfiguration"))
 
@@ -144,41 +143,65 @@ class ExecutorRegistryImpl(coroutineScope: CoroutineScope) : ExecutorRegistry() 
 
   @Synchronized
   private fun initRunToolbarExecutorActions(executor: Executor, actionRegistrar: ActionRuntimeRegistrar) {
-    if (ToolbarSettings.getInstance().isAvailable) {
-      for (process in getProcessesByExecutorId(executor.getId())) {
-        if (executor is ExecutorGroup<*>) {
-          if (process.showInBar) {
-            val wrappedAction = RunToolbarExecutorGroupAction(RunToolbarExecutorGroup(executor, { RunToolbarGroupProcessAction(process, it) }, process))
-            val presentation = wrappedAction.getTemplatePresentation()
-            presentation.setIcon(executor.getIcon())
-            presentation.setText(process.name)
-            presentation.setDescription(executor.getDescription())
+    if (!ToolbarSettings.getInstance().isAvailable) {
+      return
+    }
 
-            registerActionInGroup(actionRegistrar, process.actionId, wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP,
-                                  runWidgetIdToAction)
-          }
-          else {
-            val holder = RunToolbarAdditionActionsHolder(executor, process)
+    for (process in getProcessesByExecutorId(executor.getId())) {
+      if (executor is ExecutorGroup<*>) {
+        if (process.showInBar) {
+          val wrappedAction = RunToolbarExecutorGroupAction(RunToolbarExecutorGroup(executor, { RunToolbarGroupProcessAction(process, it) }, process))
+          val presentation = wrappedAction.getTemplatePresentation()
+          presentation.setIcon(executor.getIcon())
+          presentation.setText(process.name)
+          presentation.setDescription(executor.getDescription())
 
-            registerActionInGroup(actionRegistrar, RunToolbarAdditionActionsHolder.getAdditionActionId(process), holder.additionAction,
-                                  process.moreActionSubGroupName,
-                                  runWidgetIdToAction)
-            registerActionInGroup(actionRegistrar, RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process),
-                                  holder.moreActionChooserGroup, process.moreActionSubGroupName,
-                                  runWidgetIdToAction)
-          }
+          registerActionInGroup(
+            actionRegistrar = actionRegistrar,
+            actionId = process.actionId,
+            anAction = wrappedAction,
+            groupId = RunToolbarProcess.RUN_WIDGET_GROUP,
+            map = runWidgetIdToAction,
+          )
         }
         else {
-          if (!process.isTemporaryProcess() && process.showInBar) {
-            val wrappedAction = RunToolbarProcessAction(process, executor)
-            val wrappedMainAction = RunToolbarProcessMainAction(process, executor)
+          val holder = RunToolbarAdditionActionsHolder(executor, process)
 
-            registerActionInGroup(actionRegistrar, process.actionId, wrappedAction, RunToolbarProcess.RUN_WIDGET_GROUP, runWidgetIdToAction)
-
-            registerActionInGroup(actionRegistrar, process.getMainActionId(), wrappedMainAction, RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
-                                  runWidgetIdToAction)
-          }
+          registerActionInGroup(
+            actionRegistrar = actionRegistrar,
+            actionId = RunToolbarAdditionActionsHolder.getAdditionActionId(process),
+            anAction = holder.additionAction,
+            groupId = process.moreActionSubGroupName,
+            map = runWidgetIdToAction,
+          )
+          registerActionInGroup(
+            actionRegistrar = actionRegistrar,
+            actionId = RunToolbarAdditionActionsHolder.getAdditionActionChooserGroupId(process),
+            anAction = holder.moreActionChooserGroup,
+            groupId = process.moreActionSubGroupName,
+            map = runWidgetIdToAction,
+          )
         }
+      }
+      else if (!process.isTemporaryProcess() && process.showInBar) {
+        val wrappedAction = RunToolbarProcessAction(process, executor)
+        val wrappedMainAction = RunToolbarProcessMainAction(process, executor)
+
+        registerActionInGroup(
+          actionRegistrar = actionRegistrar,
+          actionId = process.actionId,
+          anAction = wrappedAction,
+          groupId = RunToolbarProcess.RUN_WIDGET_GROUP,
+          map = runWidgetIdToAction,
+        )
+
+        registerActionInGroup(
+          actionRegistrar = actionRegistrar,
+          actionId = process.getMainActionId(),
+          anAction = wrappedMainAction,
+          groupId = RunToolbarProcess.RUN_WIDGET_MAIN_GROUP,
+          map = runWidgetIdToAction,
+        )
       }
     }
   }
