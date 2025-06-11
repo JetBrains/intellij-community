@@ -7,12 +7,10 @@ import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBro
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.client.sessions
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -24,7 +22,6 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
@@ -38,18 +35,20 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.*
+import com.intellij.util.ui.launchOnceOnShow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
-import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Color
 import java.awt.Component
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.UIManager
@@ -363,59 +362,41 @@ private fun <T : JComponent> Cell<T>.setupDefaultValue(
   }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 private fun Cell<TextFieldWithHistoryWithBrowseButton>.setupShellField(project: Project): Cell<TextFieldWithHistoryWithBrowseButton> = apply {
   val cell = this
   val textEditor: JTextField = this.component.childComponent.textEditor
   if (textEditor is JBTextField) {
     textEditor.emptyText.text = message("settings.shell.path.detecting.default")
   }
-
   val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
-
-  val coroutineScope = terminalProjectScope(project).childScope("Terminal (default shell path detection)")
-  this.component.doWhenFirstHidden {
-    coroutineScope.cancel()
-  }
-  val defaultShellPathDeferred: Deferred<String> = coroutineScope.async {
-    projectOptionsProvider.defaultShellPath()
-  }
-  val getDefaultShellPathNow: () -> String? = {
-    runCatching { defaultShellPathDeferred.getCompleted() }.getOrNull()
-  }
-  coroutineScope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
-    val defaultShellPath: String = defaultShellPathDeferred.await()
-    cell.setupDefaultValue({ childComponent.textEditor }, defaultShellPath)
-    if (textEditor.text.isEmpty()) {
-      textEditor.text = defaultShellPath
-    }
-  }
-
-  cell.bindText(getter = {
-    val shellPathWithoutDefault = projectOptionsProvider.shellPathWithoutDefault
-    shellPathWithoutDefault ?: getDefaultShellPathNow().orEmpty()
-  }, setter = { value ->
-    val defaultShellPath = getDefaultShellPathNow()
-    projectOptionsProvider.shellPathWithoutDefault = Strings.nullize(value, defaultShellPath)
-  })
-}
-
-@Suppress("UsagesOfObsoleteApi")
-private fun JComponent.doWhenFirstHidden(action: () -> Unit) {
-  UiNotifyConnector.installOn(this, object: Activatable {
-    private var shown : Boolean = false
-    private var done : Boolean = false
-
-    override fun showNotify() {
-      shown = true
-    }
-
-    override fun hideNotify() {
-      if (!done && shown) {
-        done = true
-        action()
+  val defaultShellPathRef = AtomicReference<String>()
+  this.component.launchOnceOnShow("Terminal (default shell path detection)") {
+    val defaultShellPath: String? = withContext(Dispatchers.Default) {
+      try {
+        projectOptionsProvider.defaultShellPath().also {
+          defaultShellPathRef.set(it)
+          LOG.debug { "Detected default shell path: $it" }
+        }
+      }
+      catch (e: Exception) {
+        currentCoroutineContext().ensureActive()
+        // the coroutine is alive => the exception was thrown by `projectOptionsProvider.defaultShellPath()`
+        LOG.warn("Cannot determine default shell path", e)
+        null
       }
     }
+    if (textEditor is JBTextField) {
+      textEditor.emptyText.clear()
+    }
+    if (defaultShellPath != null && textEditor.text.isEmpty()) {
+      textEditor.text = defaultShellPath
+    }
+    cell.setupDefaultValue({ childComponent.textEditor }, defaultShellPath)
+  }
+  cell.bindText(getter = {
+    projectOptionsProvider.shellPathWithoutDefault ?: defaultShellPathRef.get().orEmpty()
+  }, setter = { value ->
+    projectOptionsProvider.shellPathWithoutDefault = Strings.nullize(value, defaultShellPathRef.get())
   })
 }
 
