@@ -148,7 +148,7 @@ public class ImportSpecBuilder {
     return this;
   }
 
-  public ImportSpecBuilder createDirectoriesForEmptyContentRoots() {
+  public ImportSpecBuilder withCreateDirectoriesForEmptyContentRoots() {
     myCreateDirectoriesForEmptyContentRoots = true;
     return this;
   }
