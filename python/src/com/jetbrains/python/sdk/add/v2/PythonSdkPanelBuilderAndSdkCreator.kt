@@ -20,6 +20,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.*
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -180,6 +181,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     }.getOr { return it }
 
     val statistics = withContext(Dispatchers.EDT) { createStatisticsInfo() }
+    PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, statistics.previouslyConfigured)
     return Result.success(Pair(sdk, statistics))
   }
 

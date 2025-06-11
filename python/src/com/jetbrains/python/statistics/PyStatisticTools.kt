@@ -2,6 +2,7 @@
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -127,6 +128,8 @@ val INTERPRETER_TYPE = EventFields.String("interpreterType", InterpreterType.ent
 val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
                                                                                        CUSTOM.value,
                                                                                        NA.value))
+
+internal val PREVIOUSLY_CONFIGURED: BooleanEventField = EventFields.Boolean("previously_configured")
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"

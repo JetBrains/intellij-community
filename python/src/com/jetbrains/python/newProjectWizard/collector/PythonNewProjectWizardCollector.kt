@@ -13,6 +13,7 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.statistics.EXECUTION_TYPE
 import com.jetbrains.python.statistics.INTERPRETER_CREATION_MODE
 import com.jetbrains.python.statistics.INTERPRETER_TYPE
+import com.jetbrains.python.statistics.PREVIOUSLY_CONFIGURED
 import com.jetbrains.python.statistics.PYTHON_VERSION
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -27,7 +28,6 @@ object PythonNewProjectWizardCollector : CounterUsagesCollector() {
   const val PROJECT_GENERATED_EVENT_ID = "project.generated"
   private val INHERIT_GLOBAL_SITE_PACKAGE_FIELD = EventFields.Boolean("inherit_global_site_package")
   private val MAKE_AVAILABLE_TO_ALL_PROJECTS = EventFields.Boolean("make_available_to_all_projects")
-  private val PREVIOUSLY_CONFIGURED = EventFields.Boolean("previously_configured")
   private val IS_WSL_CONTEXT = EventFields.Boolean("wsl_context")
   private val GENERATOR_FIELD = EventFields.StringValidatedByCustomRule("generator", PyProjectTypeValidationRule::class.java)
   private val DJANGO_ADMIN_FIELD = EventFields.Boolean("django_admin")

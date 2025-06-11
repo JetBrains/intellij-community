@@ -86,7 +86,7 @@ private class AddInterpreterOnTargetAction(
       val model = PyConfigurableInterpreterList.getInstance(project).model
       val sdk = (wizard.currentStepObject as? TargetCustomToolWizardStep)?.customTool as? Sdk
       if (sdk != null) {
-        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk)
+        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(sdk, isPreviouslyConfigured = true)
         if (model.findSdk(sdk.name) == null) {
           model.addSdk(sdk)
           model.apply()

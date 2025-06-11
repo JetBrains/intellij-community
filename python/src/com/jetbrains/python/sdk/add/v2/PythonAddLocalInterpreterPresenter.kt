@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.toNioPathOrNull
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.rootManager
 import com.jetbrains.python.sdk.service.PySdkService.Companion.pySdkService
 import com.jetbrains.python.venvReader.VirtualEnvReader
@@ -43,6 +44,8 @@ class PythonAddLocalInterpreterPresenter(val moduleOrProject: ModuleOrProject, v
       }
       is Result.Success -> {
         moduleOrProject.project.pySdkService.persistSdk(r.result)
+        val isPreviouslyConfigured = addEnvironment.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
+        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(r.result, isPreviouslyConfigured)
         _sdkShared.emit(r.result)
       }
     }

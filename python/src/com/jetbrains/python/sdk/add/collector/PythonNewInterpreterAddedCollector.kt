@@ -13,17 +13,20 @@ object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.new.interpreter.added", 4)
-  private val PROJECT_GENERATED_EVENT = GROUP.registerVarargEvent("interpreted.added",
+  private val GROUP = EventLogGroup("python.new.interpreter.added", 5)
+  private val INTERPRETER_ADDED_EVENT = GROUP.registerVarargEvent("interpreted.added",
                                                                   INTERPRETER_TYPE,
                                                                   EXECUTION_TYPE,
-                                                                  PYTHON_VERSION)
+                                                                  PYTHON_VERSION,
+                                                                  PREVIOUSLY_CONFIGURED,
+                                                                  )
 
-  fun logPythonNewInterpreterAdded(sdk: Sdk) {
-    PROJECT_GENERATED_EVENT.log(
+  fun logPythonNewInterpreterAdded(sdk: Sdk, isPreviouslyConfigured: Boolean) {
+    INTERPRETER_ADDED_EVENT.log(
       INTERPRETER_TYPE.with(sdk.interpreterType.value),
       EXECUTION_TYPE.with(sdk.executionType.value),
-      PYTHON_VERSION.with(sdk.version.toPythonVersion())
+      PYTHON_VERSION.with(sdk.version.toPythonVersion()),
+      PREVIOUSLY_CONFIGURED.with(isPreviouslyConfigured),
     )
   }
 }
