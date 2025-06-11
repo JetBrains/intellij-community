@@ -35,7 +35,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="false"
+    <registryKey defaultValue="true"
                  key="git.branches.widget.rd"
                  description="Experimental rem dev view for git branches widget"/>
 

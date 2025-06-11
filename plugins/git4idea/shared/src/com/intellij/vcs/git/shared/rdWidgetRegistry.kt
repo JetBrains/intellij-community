@@ -5,4 +5,4 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun Registry.Companion.isRdBranchWidgetEnabled(): Boolean =
-  `is`("git.branches.widget.rd", false)
+  `is`("git.branches.widget.rd", true)
