@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.fus
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -11,7 +10,6 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.plugins.terminal.*
-import org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer.Constants
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
@@ -126,8 +124,8 @@ internal class TerminalSettingsStateCollector : ApplicationUsagesCollector() {
     addIfNotDefault(
       metrics,
       BooleanOptions.RUN_COMMANDS_USING_IDE,
-      curValue = PropertiesComponent.getInstance().getBoolean(Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION, Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION_DEFAULT),
-      defaultValue = Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION_DEFAULT
+      curValue = RunCommandUsingIdeUtil.isEnabled,
+      defaultValue = RunCommandUsingIdeUtil.DEFAULT_VALUE
     )
   }
 

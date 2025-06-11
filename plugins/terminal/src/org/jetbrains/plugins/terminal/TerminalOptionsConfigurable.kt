@@ -32,6 +32,7 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.and
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.execution.ParametersListUtil
@@ -276,6 +277,12 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
           checkBox(message("settings.use.option.as.meta.key.label"))
             .bindSelected(optionsProvider::useOptionAsMetaKey)
             .visible(isMac(project))
+        }
+        row {
+          checkBox(message("settings.terminal.smart.command.handling"))
+            .bindSelected(RunCommandUsingIdeUtil::isEnabled)
+            .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.CLASSIC)
+                         .and(ComponentPredicate.fromValue(RunCommandUsingIdeUtil.isVisible)))
         }
         panel {
           configurables(LocalTerminalCustomizer.EP_NAME.extensionList.mapNotNull { it.getConfigurable(project) })

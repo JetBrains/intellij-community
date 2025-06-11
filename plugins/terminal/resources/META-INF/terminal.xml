@@ -125,7 +125,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
-    <localTerminalCustomizer implementation="org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
 
