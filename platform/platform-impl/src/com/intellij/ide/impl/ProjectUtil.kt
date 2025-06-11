@@ -464,7 +464,7 @@ object ProjectUtil {
     if (projectFile.startsWith(storeDir)) {
       return true
     }
-    var parent: Path? = projectFile.parent ?: return false
+    val parent = projectFile.parent ?: return false
     return projectFile.fileName.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) &&
            FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString())
   }

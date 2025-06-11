@@ -372,6 +372,7 @@ com.intellij.openapi.editor.EditorDropHandler
 - handleDrop(java.awt.datatransfer.Transferable,com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.impl.EditorWindow,I):V
 com.intellij.openapi.editor.FileDropHandler
 - a:handleDrop(com.intellij.openapi.editor.FileDropEvent,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP
 com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 - com.intellij.openapi.editor.event.EditorEventMulticaster
 - a:addEditReadOnlyListener(com.intellij.openapi.editor.ex.EditReadOnlyListener,com.intellij.openapi.Disposable):V

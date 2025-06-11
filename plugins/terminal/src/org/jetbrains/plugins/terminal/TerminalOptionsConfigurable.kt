@@ -7,6 +7,9 @@ import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBro
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.client.sessions
@@ -20,33 +23,38 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
-import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.FontComboBox
-import com.intellij.ui.FontInfoRenderer
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.TerminalBundle.message
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import java.awt.Color
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.UIManager
 import javax.swing.event.DocumentEvent
+import javax.swing.plaf.basic.BasicComboBoxEditor
 
 @ApiStatus.Internal
 const val TERMINAL_CONFIGURABLE_ID: String = "terminal"
@@ -210,25 +218,8 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
       group(message("settings.terminal.application.settings")) {
         row(message("settings.shell.path")) {
-          cell(textFieldWithHistoryWithBrowseButton(
-            project,
-            FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
-            historyProvider = {
-              // Use shells detector directly because this code is executed on backend.
-              // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
-              TerminalShellsDetector.detectShells().map { shellInfo ->
-                val filteredOptions = shellInfo.options.filter {
-                  // Do not show login and interactive options in the UI.
-                  // They anyway will be substituted implicitly in the shell starting logic.
-                  // So, there is no need to specify them in the settings.
-                  it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
-                }
-                val shellCommand = (listOf(shellInfo.path) + filteredOptions)
-                ParametersListUtil.join(shellCommand)
-              }
-            },
-          )).setupDefaultValue({ childComponent.textEditor }, projectOptionsProvider.defaultShellPath())
-            .bindText(projectOptionsProvider::shellPath)
+          cell(createShellPathField())
+            .setupShellField(project)
             .align(AlignX.FILL)
         }
         row(message("settings.tab.name")) {
@@ -299,6 +290,33 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
       }
     }
   }
+
+  private fun createShellPathField(): TextFieldWithHistoryWithBrowseButton {
+    val shellPathField = textFieldWithHistoryWithBrowseButton(
+      project,
+      FileChooserDescriptorFactory.singleFile().withDescription(message("settings.terminal.shell.executable.path.browseFolder.description")),
+      historyProvider = {
+        // Use shells detector directly because this code is executed on backend.
+        // But in any other cases, shell should be fetched from backend using TerminalShellsDetectorApi.
+        TerminalShellsDetector.detectShells().map { shellInfo ->
+          val filteredOptions = shellInfo.options.filter {
+            // Do not show login and interactive options in the UI.
+            // They anyway will be substituted implicitly in the shell starting logic.
+            // So, there is no need to specify them in the settings.
+            it != LocalTerminalStartCommandBuilder.INTERACTIVE_CLI_OPTION && !LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS.contains(it)
+          }
+          val shellCommand = (listOf(shellInfo.path) + filteredOptions)
+          ParametersListUtil.join(shellCommand)
+        }
+      },
+    )
+    shellPathField.childComponent.setEditor(object : BasicComboBoxEditor() {
+      override fun createEditorComponent(): JTextField = JBTextField().also {
+        it.border = null
+      }
+    })
+    return shellPathField
+  }
 }
 
 private fun Panel.configurables(configurables: List<UnnamedConfigurable>) {
@@ -341,6 +359,62 @@ private fun <T : JComponent> Cell<T>.setupDefaultValue(
       component.emptyText.text = defaultValue
     }
   }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
+private fun Cell<TextFieldWithHistoryWithBrowseButton>.setupShellField(project: Project): Cell<TextFieldWithHistoryWithBrowseButton> = apply {
+  val cell = this
+  val textEditor: JTextField = this.component.childComponent.textEditor
+  if (textEditor is JBTextField) {
+    textEditor.emptyText.text = message("settings.shell.path.detecting.default")
+  }
+
+  val projectOptionsProvider = TerminalProjectOptionsProvider.getInstance(project)
+
+  val coroutineScope = terminalProjectScope(project).childScope("Terminal (default shell path detection)")
+  this.component.doWhenFirstHidden {
+    coroutineScope.cancel()
+  }
+  val defaultShellPathDeferred: Deferred<String> = coroutineScope.async {
+    projectOptionsProvider.defaultShellPath()
+  }
+  val getDefaultShellPathNow: () -> String? = {
+    runCatching { defaultShellPathDeferred.getCompleted() }.getOrNull()
+  }
+  coroutineScope.launch(Dispatchers.EDT + ModalityState.current().asContextElement()) {
+    val defaultShellPath: String = defaultShellPathDeferred.await()
+    cell.setupDefaultValue({ childComponent.textEditor }, defaultShellPath)
+    if (textEditor.text.isEmpty()) {
+      textEditor.text = defaultShellPath
+    }
+  }
+
+  cell.bindText(getter = {
+    val shellPathWithoutDefault = projectOptionsProvider.shellPathWithoutDefault
+    shellPathWithoutDefault ?: getDefaultShellPathNow().orEmpty()
+  }, setter = { value ->
+    val defaultShellPath = getDefaultShellPathNow()
+    projectOptionsProvider.shellPathWithoutDefault = Strings.nullize(value, defaultShellPath)
+  })
+}
+
+@Suppress("UsagesOfObsoleteApi")
+private fun JComponent.doWhenFirstHidden(action: () -> Unit) {
+  UiNotifyConnector.installOn(this, object: Activatable {
+    private var shown : Boolean = false
+    private var done : Boolean = false
+
+    override fun showNotify() {
+      shown = true
+    }
+
+    override fun hideNotify() {
+      if (!done && shown) {
+        done = true
+        action()
+      }
+    }
+  })
 }
 
 private fun newUiPredicate(): ComponentPredicate {

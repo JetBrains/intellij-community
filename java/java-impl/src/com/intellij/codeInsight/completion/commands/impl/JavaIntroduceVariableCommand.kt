@@ -20,6 +20,7 @@ import com.intellij.refactoring.actions.IntroduceVariableAction
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
+//disabled because there is a conflict
 internal class JavaIntroduceVariableCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
     val editor = context.editor

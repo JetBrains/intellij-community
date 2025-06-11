@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.2.20-dev-4912">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.2.20-dev-5287">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-4912/kotlin-scripting-common-2.2.20-dev-4912.jar">
-          <sha256sum>f58c1e2aa31da309bd66b3fd2c604c8b4d8450e43b29c0e8efdd8913b70bee16</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-5287/kotlin-scripting-common-2.2.20-dev-5287.jar">
+          <sha256sum>db08ef8216e28bb74aac9ec6eedad8ac434570260c1888f8b4cf5a19f5badc62</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-4912/kotlin-scripting-common-2.2.20-dev-4912.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-5287/kotlin-scripting-common-2.2.20-dev-5287.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-4912/kotlin-scripting-common-2.2.20-dev-4912-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.2.20-dev-5287/kotlin-scripting-common-2.2.20-dev-5287-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -59,6 +59,10 @@ sealed interface DataRenderer<in T> {
   }
 }
 
+interface HasDescription {
+  val descriptionText: String
+}
+
 interface TextUpdate {
   val originalText: String
   val updatedText: String
@@ -70,4 +74,6 @@ interface TextUpdate {
   private class Impl(override val originalText: String, override val updatedText: String) : TextUpdate
 }
 
-data class FileUpdate(val filePath: String, override val originalText: String, override val updatedText: String) : TextUpdate
+data class FileUpdate(val filePath: String, override val originalText: String, override val updatedText: String) : TextUpdate, HasDescription {
+  override val descriptionText: String = filePath
+}

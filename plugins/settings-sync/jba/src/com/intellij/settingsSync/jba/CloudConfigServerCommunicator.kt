@@ -173,8 +173,10 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
       return
     jbaAuthService.authRequiredAction = SettingsSyncAuthService.PendingUserAction(
-      SettingsSyncJbaBundle.message("action.settingsSync.authRequired"),
-      SettingsSyncBundle.message("config.button.login")) {
+      message = SettingsSyncJbaBundle.message("action.settingsSync.authRequired"),
+      actionTitle = SettingsSyncBundle.message("config.button.login"),
+      actionDescription = SettingsSyncJbaBundle.message("action.settingsSync.authRequired.text")
+      ) {
       val userData = jbaAuthService.login(it)
       if (userData != null) {
         jbaAuthService.authRequiredAction = null

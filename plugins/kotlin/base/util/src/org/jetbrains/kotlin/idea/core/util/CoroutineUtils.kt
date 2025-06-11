@@ -12,10 +12,12 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use Dispatchers.EDT instead", replaceWith = ReplaceWith("Dispatchers.EDT"))
 object EDT : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !isDispatchThread()

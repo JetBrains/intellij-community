@@ -200,7 +200,7 @@ class CardReportGenerator(
         div("popup-container-header") {
           style = """
             display: flex;
-            justify-content: flex-start;
+            align-items: center;
             background-color: #e0e0e0;
             border: 1px solid #d4d4d4;
             border-bottom: none;
@@ -214,6 +214,13 @@ class CardReportGenerator(
               margin: 4px;
             """
             +"Copy"
+          }
+
+          pre("popup-container-description") {
+            id = "${popupId}-description"
+            style = """
+              margin: 4px;
+            """
           }
         }
 
@@ -333,13 +340,15 @@ private data class PropertyValue(
         if (property.placement != null) nativeTexts(property.placement, fileIndex, sessionId, lookupIndex, property.placementIndex)
         else embeddedTexts(property.renderer, property.value)
 
+      val description = if (property.value is HasDescription) "'${property.value.descriptionText}'" else "null"
+
       return when (property.renderer) {
         is DataRenderer.InlineBoolean -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineLong -> PropertyValue(null, "${property.value}")
         is DataRenderer.InlineDouble -> PropertyValue(null, "${property.value}")
-        is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]}, ${property.renderer.wrapping});""", null)
-        is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]});""", null)
-        is DataRenderer.TextDiff -> PropertyValue("""openDiff($element, ${stringValues[0]}, ${stringValues[1]});""", null)
+        is DataRenderer.Text -> PropertyValue("""openText($element, ${stringValues[0]}, ${description}, ${property.renderer.wrapping});""", null)
+        is DataRenderer.Lines -> PropertyValue("""openText($element, ${stringValues[0]}, ${description});""", null)
+        is DataRenderer.TextDiff -> PropertyValue("""openDiff($element, ${stringValues[0]}, ${stringValues[1]}, ${description});""", null)
       }
     }
 

@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "RemoveRedundantQualifierName")
 
 package com.intellij.application.options
 
@@ -23,15 +23,20 @@ import java.util.concurrent.atomic.AtomicLong
   name = "PathMacrosImpl",
   category = SettingsCategory.SYSTEM,
   exportable = true,
-  storages = [Storage(value = PathVariablesSerializer.STORAGE_FILE_NAME,
-                      roamingType = RoamingType.DISABLED,
-                      usePathMacroManager = false,
-                      useSaveThreshold = ThreeState.NO
-  )],
+  storages = [
+    Storage(
+      value = PathVariablesSerializer.STORAGE_FILE_NAME,
+      roamingType = RoamingType.DISABLED,
+      usePathMacroManager = false,
+      useSaveThreshold = ThreeState.NO
+    )
+  ],
   useLoadedStateAsExisting = false,
   reportStatistic = false,
 )
-open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors: Boolean = true) : PathMacros(), PersistentStateComponent<Element?>, ModificationTracker {
+open class PathMacrosImpl(
+  private val loadContributors: Boolean = true,
+) : PathMacros(), PersistentStateComponent<Element?>, ModificationTracker {
   @Volatile
   private var legacyMacros: Map<String, String> = java.util.Map.of()
 
@@ -44,11 +49,11 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     private val EP_NAME = ExtensionPointName<PathMacroContributor>("com.intellij.pathMacroContributor")
     private val LOG = logger<PathMacrosImpl>()
 
-    const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
+    internal const val IGNORED_MACRO_ELEMENT = "ignoredMacro"
 
     @Deprecated("to be removed")
     @ApiStatus.ScheduledForRemoval
-    const val MAVEN_REPOSITORY = "MAVEN_REPOSITORY"
+    const val MAVEN_REPOSITORY: String = "MAVEN_REPOSITORY"
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
     private val SYSTEM_MACROS: Set<String> = java.util.Set.of(
@@ -64,9 +69,9 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     fun getInstanceEx(): PathMacrosImpl = getInstance() as PathMacrosImpl
   }
 
-  override fun getUserMacroNames() = macros.keys
+  override fun getUserMacroNames(): Set<String> = macros.keys
 
-  override fun getUserMacros() = macros
+  override fun getUserMacros(): Map<String, String> = macros
 
   open fun removeToolMacroNames(result: Set<String?>) {
   }
@@ -89,9 +94,9 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     }
   }
 
-  override fun getModificationCount() = modificationStamp.get()
+  override fun getModificationCount(): Long = modificationStamp.get()
 
-  override fun isIgnoredMacroName(macro: String) = ignoredMacros.contains(macro)
+  override fun isIgnoredMacroName(macro: String): Boolean = ignoredMacros.contains(macro)
 
   override fun getAllMacroNames(): Set<String> {
     val result = HashSet<String>(userMacroNames.size + systemMacroNames.size)
@@ -100,7 +105,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
     return result
   }
 
-  override fun getValue(name: String) = macros[name]
+  override fun getValue(name: String): String? = macros.get(name)
 
   override fun removeAllMacros() {
     if (macros.isNotEmpty()) {
@@ -189,7 +194,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       }
 
       if (value.lastOrNull() == '/') {
-        value = value.substring(0, value.length - 1)
+        value = value.dropLast(1)
       }
       newMacros.put(name, value)
     }
@@ -202,7 +207,7 @@ open class PathMacrosImpl @JvmOverloads constructor(private val loadContributors
       }
     }
 
-    val forcedMacros = linkedMapOf<String, String>()
+    val forcedMacros = LinkedHashMap<String, String>()
     EP_NAME.forEachExtensionSafe { contributor ->
       contributor.forceRegisterPathMacros(forcedMacros)
     }

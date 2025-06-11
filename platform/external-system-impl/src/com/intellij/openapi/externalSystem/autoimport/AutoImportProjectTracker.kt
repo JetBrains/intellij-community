@@ -231,6 +231,11 @@ class AutoImportProjectTracker(
       return true
     }
 
+    if (!projectData.isActivated) {
+      LOG.debug("$projectId: Disabled reload (activation)")
+      return true
+    }
+
     if (projectChangeOperation.isOperationInProgress()) {
       LOG.debug("$projectId: Disabled reload (project change)")
       return true
@@ -254,11 +259,6 @@ class AutoImportProjectTracker(
 
     if (!isEnableAutoReload) {
       LOG.debug("$projectId: Disabled auto-reload (global property)")
-      return true
-    }
-
-    if (!projectData.isActivated) {
-      LOG.debug("$projectId: Disabled auto-reload (activation)")
       return true
     }
 

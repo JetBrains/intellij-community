@@ -118,6 +118,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("DotAfterOperator.kt")
+            public void testDotAfterOperator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/DotAfterOperator.kt");
+            }
+
             @TestMetadata("GetOperator.kt")
             public void testGetOperator() throws Exception {
                 runTest("../../completion/testData/handlers/basic/bracketOperators/GetOperator.kt");
@@ -133,6 +138,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../../completion/testData/handlers/basic/bracketOperators/Newline.kt");
             }
 
+            @TestMetadata("SetOperator.kt")
+            public void testSetOperator() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/SetOperator.kt");
+            }
+
             @TestMetadata("SpacesAfter.kt")
             public void testSpacesAfter() throws Exception {
                 runTest("../../completion/testData/handlers/basic/bracketOperators/SpacesAfter.kt");
@@ -146,6 +156,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("SpacesMixed.kt")
             public void testSpacesMixed() throws Exception {
                 runTest("../../completion/testData/handlers/basic/bracketOperators/SpacesMixed.kt");
+            }
+
+            @TestMetadata("WithComment.kt")
+            public void testWithComment() throws Exception {
+                runTest("../../completion/testData/handlers/basic/bracketOperators/WithComment.kt");
             }
         }
 

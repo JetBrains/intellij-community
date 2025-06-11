@@ -7,6 +7,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+/**
+ * Helper to collect (ID,occurenceMask) pairs -- to be used in {@link IdIndexer} implementations.
+ * Collects both case-sensitive and case-insensitive hashes at the same time.
+ * Creates Map implementation heavily optimized for this specific purpose ({@link IdEntryToScopeMapImpl})
+ * <p/>
+ * All {@link IdIndexer} implementations are strongly recommended to use this class to collect IDs and occurrence masks, instead
+ * of using some other Map implementation directly.
+ */
 public final class IdDataConsumer {
 
   private final @NotNull IdEntryToScopeMapImpl hashToScopeMap = new IdEntryToScopeMapImpl();

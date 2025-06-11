@@ -3,7 +3,6 @@
 import javax.annotation.Tainted
 import javax.annotation.Untainted
 
-
 @Tainted
 val dirty: String = ""
 
@@ -42,7 +41,6 @@ class SinkTestKotlin {
   fun returnDirty(dirty: String?): String? {
     return <warning descr="Unknown string is returned from safe method">dirty</warning> //warn
   }
-
 
   fun sink(@Untainted clear: String?) {
     println(clear!!)

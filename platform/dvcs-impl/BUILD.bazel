@@ -14,7 +14,9 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lvcs-api:lvcs",
     "//platform/vcs-impl",
@@ -52,7 +54,10 @@ jvm_library(
   associates = [":vcs-dvcs-impl"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
+    "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lvcs-api:lvcs",
     "//platform/vcs-impl",

@@ -53,7 +53,7 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
   }
 
   override suspend fun tryInitialize(path: String) {
-    if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
+    if (!serviceAsync<WslIjentAvailabilityService>().useIjentForWslNioFileSystem()) {
       return
     }
 
@@ -68,7 +68,7 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
     val allWslDistributions = serviceAsync<WslDistributionManager>().installedDistributions
 
     val path = Path.of(path)
-    val service = EelNioBridgeService.getInstanceSync()
+    val service = serviceAsync<EelNioBridgeService>()
     val descriptor = service.tryGetEelDescriptor(path)
 
     if (descriptor != null && descriptor !== LocalEelDescriptor) {

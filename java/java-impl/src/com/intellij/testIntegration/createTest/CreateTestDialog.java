@@ -445,6 +445,10 @@ public class CreateTestDialog extends DialogWrapper {
     return myTargetClassNameField.getText();
   }
 
+  protected void setClassName(String className) {
+    myTargetClassNameField.setText(className);
+  }
+
   public PsiClass getTargetClass() {
     return myTargetClass;
   }

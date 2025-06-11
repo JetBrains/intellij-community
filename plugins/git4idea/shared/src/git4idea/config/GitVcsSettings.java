@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import git4idea.fetch.GitFetchTagsMode;
 import git4idea.push.GitPushTagMode;
 import git4idea.reset.GitResetMode;
 import org.jetbrains.annotations.ApiStatus;
@@ -248,6 +249,14 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setPushTagMode(@Nullable GitPushTagMode value) {
     getState().setPushTags(value);
+  }
+
+  public @NotNull GitFetchTagsMode getFetchTagsMode() {
+    return getState().getFetchTagsMode();
+  }
+
+  public void setFetchTagsMode(@Nullable GitFetchTagsMode value) {
+    getState().setFetchTagsMode(value == null ? GitFetchTagsMode.DEFAULT : value);
   }
 
   public boolean shouldSignOffCommit() {

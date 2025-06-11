@@ -53,9 +53,6 @@
     <scriptDefinitionsSource id="ScriptDefinitionForExtensionAndIdeConsoleRootsSource"
                              implementation="org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionForExtensionAndIdeConsoleRootsSource"/>
 
-    <syntheticResolveExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension"/>
-    <extraImportsProviderExtension implementation="org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension"/>
-
     <ktModuleFactory implementation="org.jetbrains.kotlin.idea.core.script.k1.modules.ScriptingKaModuleFactory"/>
     <idea.base.projectStructure.moduleInfoProviderExtension
             implementation="org.jetbrains.kotlin.idea.core.script.k1.modules.ScriptingModuleInfoProviderExtension"/>

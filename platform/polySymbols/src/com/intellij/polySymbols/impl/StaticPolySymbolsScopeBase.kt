@@ -194,7 +194,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     : SearchMap<StaticSymbolContributionAdapter>(namesProvider) {
 
     fun add(item: StaticSymbolContributionAdapter) {
-      add(PolySymbolQualifiedName(item.qualifiedKind, item.name), item.pattern, item)
+      add(item.qualifiedKind.withName(item.name), item.pattern, item)
     }
 
     override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol> {

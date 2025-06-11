@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.Library
@@ -27,7 +28,6 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.util.graph.GraphAlgorithms
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID_NAME
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,13 +41,24 @@ import kotlin.io.path.walk
 
 private val LOG = logger<ExtractModuleService>()
 
+internal enum class ModuleDependencyScope {
+  PRODUCTION,
+  TEST,
+  NONE
+}
+
 internal class DependentModule(
   val module: Module,
-  val stillDependsOnOldModule: Boolean,
+  val extractedPackageDependencyScope: ModuleDependencyScope,
+  val oldModuleDependencyScope: ModuleDependencyScope,
 )
 
 internal suspend fun compilerOutputPath(module: Module): Path? = readAction {
   CompilerModuleExtension.getInstance(module)?.compilerOutputPath?.toNioPath()
+}
+
+internal suspend fun compilerOutputPathForTests(module: Module): Path? = readAction {
+  CompilerModuleExtension.getInstance(module)?.compilerOutputPathForTests?.toNioPath()
 }
 
 internal suspend fun Path.forEachClassfile(action: suspend (Path) -> Unit) {
@@ -95,14 +106,20 @@ class ExtractModuleService(
       } ?: return@withBackgroundProgress
       val compiledPackagePath = packageName.replace('.', '/').let { compilerOutputPath.resolve(it) }
 
-      val fileProcessor = ExtractModuleFileProcessor()
+      val packageFileProcessor = ExtractModuleFileProcessor()
       compiledPackagePath.forEachClassfile { path ->
-        fileProcessor.processFile(path)
+        packageFileProcessor.processFile(path)
+      }
+      val moduleFileProcessor = ExtractModuleFileProcessor()
+      compilerOutputPath.forEachClassfile { path ->
+        if (!path.startsWith(compiledPackagePath)) {
+          moduleFileProcessor.processFile(path)
+        }
       }
 
       readAction {
         val fileIndex = ProjectFileIndex.getInstance(module.project)
-        fileProcessor.referencedClasses.forEach { className ->
+        packageFileProcessor.referencedClasses.forEach { className ->
           val file = JavaPsiFacade.getInstance(module.project).findClass(className, module.getModuleWithDependenciesAndLibrariesScope(
             false))?.containingFile
           val virtualFile = file?.virtualFile ?: return@forEach
@@ -123,19 +140,17 @@ class ExtractModuleService(
         val allDependentModules = readAction {
           collectDependentModules(module)
         }
-        val packageClasses = fileProcessor.gatheredClassLinks.keys.filterTo(HashSet()) { it.startsWith("$packageName.") }
-        val moduleClasses = ExtractModuleFileProcessor().let { fileProcessor ->
-          compilerOutputPath.forEachClassfile { path ->
-            fileProcessor.processFile(path)
-          }
-          fileProcessor.gatheredClassLinks.keys.filterTo(HashSet()) { it !in packageClasses }
-        }
+        val packageClasses = packageFileProcessor.gatheredClassLinks.keys.filterTo(HashSet()) { it.startsWith("$packageName.") }
+        val moduleClasses = moduleFileProcessor.gatheredClassLinks.keys.filterTo(HashSet()) { it !in packageClasses }
 
         val packageDependentModules = filterDependentModules(allDependentModules, packageClasses, moduleClasses)
+
+        val dependencyCleaner = ModuleDependenciesCleaner(module, usedModules)
+        val dependenciesToRemove = dependencyCleaner.findDependenciesToRemove(moduleFileProcessor)
         writeAction {
           extractModule(directory, module, moduleName, usedModules, usedLibraries, targetSourceRootPath, packageDependentModules)
+          dependencyCleaner.removeDependencies(dependenciesToRemove)
         }
-        ModuleDependenciesCleaner(module, usedModules, compilerOutputPath, compiledPackagePath).startInBackground()
       }
       catch (e: Throwable) {
         if (e !is ControlFlowException) {
@@ -149,27 +164,56 @@ class ExtractModuleService(
   }
 
   @OptIn(ExperimentalPathApi::class)
-  private suspend fun filterDependentModules(dependentModules: Set<Module>, packageClasses: Set<String>, moduleClasses: HashSet<String>) =
-    dependentModules.mapNotNull {
-      val compilerOutputPath = compilerOutputPath(it) ?: return@mapNotNull null
-      val fileProcessor = ExtractModuleFileProcessor()
+  private suspend fun filterDependentModules(dependentModules: Set<Module>, packageClasses: Set<String>, moduleClasses: Set<String>) =
+    dependentModules.mapNotNull { dependentModule ->
+      val compilerOutputPath = compilerOutputPath(dependentModule)
+      val compilerOutputPathForTests = compilerOutputPathForTests(dependentModule)
+      if (compilerOutputPath == null && compilerOutputPathForTests == null) return@mapNotNull null
 
-      compilerOutputPath.forEachClassfile { path ->
-        withContext(Dispatchers.IO) {
-          fileProcessor.processFile(path)
-        }
+      val (prodDependsOnPackage, prodDependsOnModule) = rootDependsOnPackageAndModule(compilerOutputPath, packageClasses, moduleClasses)
+      if (prodDependsOnPackage && prodDependsOnModule) { // no need to check tests
+        return@mapNotNull DependentModule(dependentModule, ModuleDependencyScope.PRODUCTION, ModuleDependencyScope.PRODUCTION)
       }
-      val packageDependency = fileProcessor.referencedClasses.any { it in packageClasses }
-      if (!packageDependency) return@mapNotNull null
-      val stillDependsOnModule = fileProcessor.referencedClasses.any { it in moduleClasses }
-      DependentModule(it, stillDependsOnModule)
+
+      val (testDependsOnPackage, testDependsOnModule) = rootDependsOnPackageAndModule(compilerOutputPathForTests, packageClasses, moduleClasses)
+      if (!prodDependsOnPackage && !testDependsOnPackage) { // no need to do anything
+        return@mapNotNull null
+      }
+      
+      val extractedPackageDependencyScope = when {
+        prodDependsOnPackage -> ModuleDependencyScope.PRODUCTION
+        else -> ModuleDependencyScope.TEST
+      }
+      val oldModuleDependencyScope = when {
+        prodDependsOnModule -> ModuleDependencyScope.PRODUCTION
+        testDependsOnModule -> ModuleDependencyScope.TEST
+        else -> ModuleDependencyScope.NONE
+      }
+
+      DependentModule(dependentModule, extractedPackageDependencyScope, oldModuleDependencyScope)
     }
+
+  private suspend fun rootDependsOnPackageAndModule(
+    path: Path?, packageClasses: Set<String>, moduleClasses: Set<String>,
+  ): Pair<Boolean, Boolean> {
+    val fileProcessor = ExtractModuleFileProcessor()
+
+    path?.forEachClassfile { path ->
+      withContext(Dispatchers.IO) {
+        fileProcessor.processFile(path)
+      }
+    }
+
+    val packageDependency = fileProcessor.referencedClasses.any { it in packageClasses }
+    val stillDependsOnModule = fileProcessor.referencedClasses.any { it in moduleClasses }
+
+    return packageDependency to stillDependsOnModule
+  }
 
   @RequiresReadLock
   private fun collectDependentModules(module: Module): Set<Module> {
-    val moduleGraph = ModuleManager.getInstance(project).moduleGraph()
     val dependentModules = LinkedHashSet<Module>()
-    GraphAlgorithms.getInstance().collectOutsRecursively(moduleGraph, module, dependentModules)
+    ModuleUtil.collectModulesDependsOn(module, dependentModules)
     return dependentModules
   }
 
@@ -224,10 +268,19 @@ class ExtractModuleService(
 
     packageDependentModules.forEach { dependentModule ->
       ModuleRootModificationUtil.updateModel(dependentModule.module) { model ->
-        model.addModuleOrderEntry(newModule)
-        if (!dependentModule.stillDependsOnOldModule) {
-          model.findModuleOrderEntry(module)?.let { orderEntry ->
+        val newModuleEntry = model.addModuleOrderEntry(newModule)
+        if (dependentModule.extractedPackageDependencyScope == ModuleDependencyScope.TEST) {
+          newModuleEntry.scope = DependencyScope.TEST
+        }
+        val oldModuleEntry = model.findModuleOrderEntry(module)
+        if (dependentModule.oldModuleDependencyScope == ModuleDependencyScope.NONE) {
+          oldModuleEntry?.let { orderEntry ->
             model.removeOrderEntry(orderEntry)
+          } ?: LOG.error("Could not find module order entry for $module in ${dependentModule.module}")
+        }
+        else if (dependentModule.oldModuleDependencyScope == ModuleDependencyScope.TEST) {
+          oldModuleEntry?.let {
+            it.scope = DependencyScope.TEST
           } ?: LOG.error("Could not find module order entry for $module in ${dependentModule.module}")
         }
       }

@@ -218,13 +218,13 @@ class PolySymbolsQueryExecutorImpl(
         }
         .groupBy {
           queryParams.queryExecutor.namesProvider
-            .getNames(qualifiedName.copy(name = it.name), PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).firstOrNull()
+            .getNames(qualifiedName.withName(it.name), PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).firstOrNull()
           ?: it.name
         }
         .flatMap { (name, list) ->
           ProgressManager.checkCanceled()
           list
-            .customizeMatches(params.strictScope, qualifiedName.copy(name = name))
+            .customizeMatches(params.strictScope, qualifiedName.withName(name))
             .selectBest(PolySymbol::nameSegments, PolySymbol::priority, PolySymbol::extension)
             .applyIf(params.expandPatterns) {
               asSingleSymbol()

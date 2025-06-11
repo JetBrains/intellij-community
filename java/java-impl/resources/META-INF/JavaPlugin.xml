@@ -1031,7 +1031,7 @@
     <callHierarchyProvider language="JAVA" implementationClass="com.intellij.ide.hierarchy.call.JavaCallHierarchyProvider"/>
     <runLineMarkerContributor language="JAVA" order="after applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.testIntegration.TestRunLineMarkerProvider"/>
-    <testGenerator language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator"/>
+    <testGenerator id="javaTestGenerator" language="JAVA" implementationClass="com.intellij.testIntegration.createTest.JavaTestGenerator"/>
     <testCreator language="JAVA" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testFinder implementation="com.intellij.testIntegration.JavaTestFinder"/>
     <filePasteProvider implementation="com.intellij.ide.JavaFilePasteProvider" order="before fileList"/>
@@ -1485,7 +1485,7 @@
                                              implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByLineCompletionCommandProvider"/>
     <codeInsight.completion.command.provider language="JAVA"
                                              implementationClass="com.intellij.codeInsight.completion.command.commands.PsiElementCommentByBlockCompletionCommandProvider"/>
-    <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaIntroduceVariableCommandProvider" />
+    <!--<codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaIntroduceVariableCommandProvider" />-->
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaShowUsagesActionCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.GenerateGetterSetterHandleCompletionCommandProvider" />
     <codeInsight.completion.command.provider language="JAVA" implementationClass="com.intellij.codeInsight.completion.commands.impl.JavaDeleteCompletionCommandProvider" />
@@ -2766,6 +2766,8 @@
     <registryKey key="java.completion.methods.use.tags"
                  defaultValue="true"
                  description="Use additional tags for methods for completion"/>
+
+    <virtualFileCustomDataProvider implementation="com.intellij.ide.JavaCodeStyleSettingsCustomDataSynchronizer"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

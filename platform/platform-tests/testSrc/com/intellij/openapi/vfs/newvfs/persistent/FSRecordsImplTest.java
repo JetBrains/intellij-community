@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -15,6 +15,8 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
@@ -59,6 +61,58 @@ public class FSRecordsImplTest {
       pool.awaitTermination(15, SECONDS);
     }
   }
+
+  @Test
+  public void concurrentlyInsertedRoots_AreStillConsistent() throws Exception {
+    int CPUs = Runtime.getRuntime().availableProcessors();
+    int totalRoots = 100_000;//too many roots could exceed attribute storage max record size
+    int rootsPerThread = totalRoots / CPUs;
+    ExecutorService pool = Executors.newFixedThreadPool(CPUs);
+    try {
+      List<Future<List<String>>> futures  = IntStream.range(0, CPUs)
+        .mapToObj(threadNo -> (Callable<List<String>>)() -> {
+          List<String> rootsUrls = new ArrayList<>(rootsPerThread);
+          for (int i = 0; i < rootsPerThread; i++) {
+            String rootUrl = "file:///root/" + threadNo + "/" + i;
+            rootsUrls.add(rootUrl);
+          }
+          for (final String rootUrl : rootsUrls) {
+            vfs.findOrCreateRootRecord(rootUrl);
+          }
+          return rootsUrls;
+        })
+        .map(pool::submit)
+        .toList();
+
+      List<String> allRootUrls = new ArrayList<>(totalRoots);
+      for (Future<List<String>> future : futures) {
+        allRootUrls.addAll(future.get());//give a chance to deliver exception
+      }
+
+      assertEquals(totalRoots,
+                   vfs.listRoots().length,
+                   "Must be " + totalRoots + " roots");
+
+      List<String> allRootUrlsFromVFS = new ArrayList<>(totalRoots);
+      vfs.forEachRoot((rootUrl, rootId) -> {
+        allRootUrlsFromVFS.add(rootUrl);
+      });
+
+      Collections.sort(allRootUrls);
+      Collections.sort(allRootUrlsFromVFS);
+      assertEquals(
+        allRootUrlsFromVFS,
+        allRootUrls,
+        "Only roots inserted must be returned by .forEachRoot()"
+      );
+
+    }
+    finally {
+      pool.shutdown();
+      pool.awaitTermination(15, SECONDS);
+    }
+  }
+
 
   @Test
   public void writtenFileContentIsDeduplicated_onlyUniqueContentsAreStored() throws IOException {

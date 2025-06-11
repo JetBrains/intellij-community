@@ -49,7 +49,7 @@ class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line)
       val expectedStableIteratorNames = expectedContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.keys.filter { name ->
         meaningfulDebugNames.any { name.startsWith(it) }
       }
-      val actualStableIteratorNames  = actualContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.keys.filter { name ->
+      val actualStableIteratorNames = actualContentDiagnostic.projectIndexedFileProviderDebugNameToFileIds.keys.filter { name ->
         meaningfulDebugNames.any { name.startsWith(it) }
       }
 
@@ -141,6 +141,24 @@ class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line)
       val missingIteratorNames = expectedIteratorNames - actualIteratorNames
       val redundantIteratorNames = actualIteratorNames - expectedIteratorNames
       if (missingIteratorNames.isNotEmpty() || redundantIteratorNames.isNotEmpty()) {
+        if (missingIteratorNames.size == redundantIteratorNames.size) {
+          // The same .jar file may be in different libraries.
+          // It means it may be indexed by different iterators in different IDE launches, and we record only iterator that indexed it.
+
+          // We want to check if we indexed all jars from missing list in redundant list
+
+          // first check that only library iterators are missing and redundant
+          if (missingIteratorNames.all { it.contains("Library") } && redundantIteratorNames.all { it.contains("Library") }) {
+            // parse all .jar names. This expects LibraryIndexableFilesIteratorImpl.getDebugName format
+            val missingJars = missingIteratorNames.map { it.substringAfter("(").substringBefore(")") }.sorted()
+            val redundantJars = redundantIteratorNames.map { it.substringAfter("(").substringBefore(")") }.sorted()
+
+            if (missingJars == redundantJars) {
+              return
+            }
+          }
+        }
+
         error(buildString {
           appendLine("The sets of indexable file iterators do not match")
           appendLine("  Missing iterators: [" + missingIteratorNames.joinToString() + "]")

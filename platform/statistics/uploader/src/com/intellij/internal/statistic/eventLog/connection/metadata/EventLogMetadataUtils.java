@@ -5,11 +5,11 @@ import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.intellij.internal.statistic.config.SerializationHelper;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
-import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataLoadException.EventLogMetadataLoadErrorType;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestResult;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsResponseException;
+import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +21,7 @@ import static com.intellij.internal.statistic.config.StatisticsStringUtil.isEmpt
 /**
  * <ol>
  * <li> All collectors/groups have to be requested online.
- * <li> {@link EventLogMetadataUtils#loadMetadataFromServer(String, EventLogConnectionSettings)} connects to online JB service
+ * <li> {@link EventLogMetadataUtils#loadMetadataFromServer(String, StatsConnectionSettings)} connects to online JB service
  * and requests approved groups with conditions on product builds, group versions and group scheme.
  *
  * <li> Online JB service  returns  result in json file format as described in {@link EventGroupRemoteDescriptors}:
@@ -32,7 +32,7 @@ public final class EventLogMetadataUtils {
   /**
    * @return empty rules if error happened during groups fetching or parsing
    */
-  public static @NotNull EventGroupsFilterRules<EventLogBuild> loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
+  public static @NotNull EventGroupsFilterRules<EventLogBuild> loadAndParseGroupsFilterRules(@NotNull String serviceUrl, @NotNull StatsConnectionSettings settings) {
     try {
       String content = loadMetadataFromServer(serviceUrl, settings);
       EventGroupRemoteDescriptors groups = parseGroupRemoteDescriptors(content);
@@ -65,7 +65,7 @@ public final class EventLogMetadataUtils {
     }
   }
 
-  public static @NotNull String loadMetadataFromServer(@Nullable String serviceUrl, @NotNull EventLogConnectionSettings settings)
+  public static @NotNull String loadMetadataFromServer(@Nullable String serviceUrl, @NotNull StatsConnectionSettings settings)
     throws EventLogMetadataLoadException {
     if (isEmptyOrSpaces(serviceUrl)) {
       throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.EMPTY_SERVICE_URL);
@@ -83,7 +83,7 @@ public final class EventLogMetadataUtils {
     }
   }
 
-  public static long lastModifiedMetadata(@Nullable String serviceUrl, @NotNull EventLogConnectionSettings settings) {
+  public static long lastModifiedMetadata(@Nullable String serviceUrl, @NotNull StatsConnectionSettings settings) {
     if (isEmptyOrSpaces(serviceUrl)) return 0;
 
     try {

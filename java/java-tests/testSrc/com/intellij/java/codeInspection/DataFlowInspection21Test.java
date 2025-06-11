@@ -188,4 +188,8 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testSwitchNoUnreachableBranchesDueToUnresolvedType() {
     doTest();
   }
+  
+  public void testObjectUtilsNullMethods() {
+    doTest();
+  }
 }

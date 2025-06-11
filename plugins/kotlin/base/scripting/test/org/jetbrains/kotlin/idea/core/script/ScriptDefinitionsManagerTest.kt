@@ -300,7 +300,7 @@ class ScriptDefinitionsManagerTest {
     }
 }
 
-private class ScriptDefinitionsManagerUnderTest(val project: Project) : ScriptDefinitionsManager(project) {
+private class ScriptDefinitionsManagerUnderTest(project: Project) : ScriptDefinitionsManager(project) {
     var definitionSources: List<ScriptDefinitionsSource> = emptyList()
     var settings: KotlinScriptingSettings = KotlinScriptingSettings(project)
 

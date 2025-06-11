@@ -582,35 +582,39 @@ class AutoReloadTest : AutoReloadTestCase() {
     initialize()
 
     register(projectAware1, activate = false)
-    assertStateAndReset(projectAware1, numReload = 0, notified = true, activated = false, event = "register inactive project")
+    assertStateAndReset(projectAware1, numReload = 0, notified = false, activated = false, event = "register inactive project")
 
     activate(projectId1)
     assertStateAndReset(projectAware1, numReload = 1, notified = false, activated = true, event = "activate project")
 
     register(projectAware2, activate = false)
     assertStateAndReset(projectAware1, numReload = 0, notified = false, activated = true, event = "register inactive project 2")
-    assertStateAndReset(projectAware2, numReload = 0, notified = true, activated = false, event = "register inactive project 2")
+    assertStateAndReset(projectAware2, numReload = 0, notified = false, activated = false, event = "register inactive project 2")
 
     registerSettingsFile(projectAware1, "settings.groovy")
     registerSettingsFile(projectAware2, "sub-project/settings.groovy")
     val settingsFile1 = createIoFile("settings.groovy")
     val settingsFile2 = createIoFile("sub-project/settings.groovy")
     assertStateAndReset(projectAware1, numReload = 0, notified = false, activated = true, event = "externally created both empty settings files, but project 2 is inactive")
-    assertStateAndReset(projectAware2, numReload = 0, notified = true, activated = false, event = "externally created both empty settings files, but project 2 is inactive")
+    assertStateAndReset(projectAware2, numReload = 0, notified = false, activated = false, event = "externally created both empty settings files, but project 2 is inactive")
 
     settingsFile1.replaceContentInIoFile("println 'hello'")
     settingsFile2.replaceContentInIoFile("println 'hello'")
     assertStateAndReset(projectAware1, numReload = 1, notified = false, activated = true, event = "externally modified both settings files, but project 2 is inactive")
-    assertStateAndReset(projectAware2, numReload = 0, notified = true, activated = false, event = "externally modified both settings files, but project 2 is inactive")
+    assertStateAndReset(projectAware2, numReload = 0, notified = false, activated = false, event = "externally modified both settings files, but project 2 is inactive")
 
     settingsFile1.replaceString("hello", "Hello world!")
     settingsFile2.replaceString("hello", "Hello world!")
-    assertStateAndReset(projectAware1, numReload = 0, notified = true, activated = true, event = "internally modify settings")
-    assertStateAndReset(projectAware2, numReload = 0, notified = true, activated = false, event = "internally modify settings")
+    assertStateAndReset(projectAware1, numReload = 0, notified = true, activated = true, event = "internally modify settings for active project")
+    assertStateAndReset(projectAware2, numReload = 0, notified = false, activated = false, event = "internally modify settings for inactive project")
 
     scheduleProjectReload()
-    assertStateAndReset(projectAware1, numReload = 1, notified = false, activated = true, event = "refresh project")
-    assertStateAndReset(projectAware2, numReload = 1, notified = false, activated = true, event = "refresh project")
+    assertStateAndReset(projectAware1, numReload = 1, notified = false, activated = true, event = "refresh active project")
+    assertStateAndReset(projectAware2, numReload = 0, notified = false, activated = false, event = "refresh inactive project")
+
+    projectAware2.forceReloadProject()
+    assertStateAndReset(projectAware1, numReload = 0, notified = false, activated = true, event = "force refresh other project")
+    assertStateAndReset(projectAware2, numReload = 1, notified = false, activated = true, event = "force refresh inactive project")
   }
 
   fun `test enabling-disabling internal-external changes importing`() {

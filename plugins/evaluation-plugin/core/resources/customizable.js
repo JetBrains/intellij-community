@@ -12,22 +12,25 @@ document.addEventListener("click", function (e) {
   closePopup();
 });
 
-function openDiff(popupId, original, suggested) {
+function openDiff(popupId, original, suggested, description = null) {
   const diff = renderDiff(original, suggested);
-  showPopup(popupId, diff);
+  showPopup(popupId, diff, description);
 }
 
-function openText(popupId, text, wrapping = false) {
+function openText(popupId, text, description = null, wrapping = false) {
   const highlighted = highlightedText(text)
   if (wrapping) {
     highlighted.setAttribute("style", "white-space: pre-wrap;");
   }
-  showPopup(popupId, highlighted);
+  showPopup(popupId, highlighted, description);
 }
 
-function showPopup(popupId, element) {
+function showPopup(popupId, element, description = null) {
   closePopup();
   element.setAttribute("class", "popup-content");
+  if (description != null) {
+    document.getElementById(`${popupId}-description`).textContent = description;
+  }
   document.getElementById(`${popupId}-content`).appendChild(element);
   document.getElementById(popupId).style.visibility = "visible";
 }
@@ -39,6 +42,10 @@ function closePopup() {
 
   for (const element of document.getElementsByClassName("popup-container")) {
     element.style.visibility = "hidden";
+  }
+
+  for (const element of document.getElementsByClassName("popup-container-description")) {
+    element.textContent = "";
   }
 }
 

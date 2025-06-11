@@ -48,11 +48,9 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.manage.*;
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog;
+import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
@@ -83,6 +81,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NonNavigatable;
 import com.intellij.util.Consumer;
@@ -264,7 +263,11 @@ public final class ExternalSystemUtil {
     refreshProjectImpl(Collections.singleton(externalProjectPath), importSpec);
   }
 
-  private static void refreshProjectImpl(final @NotNull Set<String> externalProjectPaths, final @NotNull ImportSpec importSpec) {
+  private static void refreshProjectImpl(final @NotNull Set<String> externalProjectPaths, final @NotNull ImportSpec _importSpec) {
+    var importSpec = new ImportSpecBuilder(_importSpec)
+      .withPreviewMode(_importSpec.isPreviewMode() || !TrustedProjects.isProjectTrusted(_importSpec.getProject()))
+      .build();
+
     var project = importSpec.getProject();
     var externalSystemId = importSpec.getExternalSystemId();
     var isPreviewMode = importSpec.isPreviewMode();
@@ -275,12 +278,6 @@ public final class ExternalSystemUtil {
       throw new IllegalArgumentException("Please, use progress for the project import!");
     }
 
-    if (!isPreviewMode && !TrustedProjects.isProjectTrusted(project)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Skip " + externalSystemId + " load, because project is not trusted", new Throwable());
-      }
-      return;
-    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Stated " + externalSystemId + " load", new Throwable());
     }
@@ -572,6 +569,9 @@ public final class ExternalSystemUtil {
             externalProject.putUserData(ContentRootDataService.CREATE_EMPTY_DIRECTORIES, Boolean.TRUE);
           }
           if (importSpec.shouldImportProjectData()) {
+            if (importSpec.shouldSelectProjectDataToImport()) {
+              selectProjectDataToImport(project, externalProjectData);
+            }
             projectDataManager.importData(externalProject, project);
           }
         }
@@ -622,6 +622,24 @@ public final class ExternalSystemUtil {
         project.putUserData(ExternalSystemDataKeys.NEWLY_OPENED_PROJECT_WITH_IDE_CACHES, null);
         eventDispatcher.onEvent(taskId, getSyncFinishEvent(taskId, finishSyncEventSupplier));
       }
+    }
+  }
+
+  private static void selectProjectDataToImport(
+    @NotNull Project project,
+    @NotNull ExternalProjectInfo projectInfo
+  ) {
+    var application = ApplicationManager.getApplication();
+    if (!application.isHeadlessEnvironment()) {
+      application.invokeAndWait(() -> {
+        var dialog = new ExternalProjectDataSelectorDialog(project, projectInfo);
+        if (dialog.hasMultipleDataToSelect()) {
+          dialog.showAndGet();
+        }
+        else {
+          Disposer.dispose(dialog.getDisposable());
+        }
+      });
     }
   }
 
@@ -1002,16 +1020,24 @@ public final class ExternalSystemUtil {
     @NotNull ExternalProjectSettings projectSettings,
     @NotNull ImportSpec importSpec
   ) {
-    var systemSettings = ExternalSystemApiUtil.getSettings(importSpec.getProject(), importSpec.getExternalSystemId());
-    var existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
-    if (existingSettings != null) {
-      return;
-    }
+    TrackingUtil.trackActivity(importSpec.getProject(), ExternalSystemActivityKey.INSTANCE, () -> {
+      var systemSettings = ExternalSystemApiUtil.getSettings(importSpec.getProject(), importSpec.getExternalSystemId());
+      var existingSettings = systemSettings.getLinkedProjectSettings(projectSettings.getExternalProjectPath());
+      if (existingSettings != null) {
+        return;
+      }
 
-    //noinspection unchecked
-    systemSettings.linkProject(projectSettings);
+      //noinspection unchecked
+      systemSettings.linkProject(projectSettings);
 
-    refreshProject(projectSettings.getExternalProjectPath(), importSpec);
+      if (!Registry.is("external.system.auto.import.disabled")) {
+        ExternalProjectsManager.getInstance(importSpec.getProject()).runWhenInitialized(() -> {
+          refreshProject(projectSettings.getExternalProjectPath(), new ImportSpecBuilder(importSpec)
+            .withSelectProjectDataToImport(systemSettings.showSelectiveImportDialogOnInitialImport())
+          );
+        });
+      }
+    });
   }
 
   public static @Nullable VirtualFile refreshAndFindFileByIoFile(final @NotNull File file) {

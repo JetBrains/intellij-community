@@ -24,6 +24,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlinc-analysis-api",
+    "//java/java-indexing-api:indexing",
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-low-level-api-fir",

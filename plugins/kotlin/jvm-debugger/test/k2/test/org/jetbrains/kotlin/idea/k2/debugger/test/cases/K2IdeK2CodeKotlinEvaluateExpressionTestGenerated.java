@@ -639,6 +639,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/primitivesCoertion.kt");
                 }
 
+                @TestMetadata("privateSuspend.kt")
+                public void testPrivateSuspend() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/privateSuspend.kt");
+                }
+
                 @TestMetadata("stringUpdateInvokeStatic.kt")
                 public void testStringUpdateInvokeStatic() throws Exception {
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/stringUpdateInvokeStatic.kt");

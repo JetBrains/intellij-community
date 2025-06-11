@@ -17,6 +17,9 @@
 *:com.intellij.openapi.diagnostic.ReportingClassSubstitutor
 - s:getClassToReport(java.lang.Object):java.lang.Class
 - a:getSubstitutedClass():java.lang.Class
+f:com.intellij.openapi.util.UserDataAccessorsKt
+- *sf:createUserDataProperty(java.lang.Class):kotlin.properties.ReadWriteProperty
+- *sf:createUserDataProperty(java.lang.Class,kotlin.jvm.functions.Function1):kotlin.properties.ReadWriteProperty
 c:com.intellij.openapi.util.UserDataHolderBase
 - java.util.concurrent.atomic.AtomicReference
 - com.intellij.openapi.util.UserDataHolderEx

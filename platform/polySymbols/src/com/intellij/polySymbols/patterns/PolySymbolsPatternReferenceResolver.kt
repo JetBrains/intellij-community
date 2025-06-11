@@ -63,7 +63,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
       queryExecutor: PolySymbolsQueryExecutor,
     ): List<PolySymbol> {
       val matches = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runNameMatchQuery(location + PolySymbolQualifiedName(qualifiedKind, name),
+        .runNameMatchQuery(location + qualifiedKind.withName(name),
                            includeVirtual, includeAbstract, false, scope)
       if (filter == null) return matches
       return filter.filterNameMatches(matches, queryExecutor, scope, emptyMap())
@@ -88,7 +88,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
       position: Int,
     ): List<PolySymbolCodeCompletionItem> {
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
-        .runCodeCompletionQuery(location + PolySymbolQualifiedName(qualifiedKind, name),
+        .runCodeCompletionQuery(location + qualifiedKind.withName(name),
                                 position, includeVirtual, scopeStack)
       if (filter == null) return codeCompletions
       return filter.filterCodeCompletions(codeCompletions, queryExecutor, scopeStack, emptyMap())

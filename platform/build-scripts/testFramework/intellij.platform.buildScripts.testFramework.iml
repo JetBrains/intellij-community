@@ -66,5 +66,6 @@
     <orderEntry type="library" name="tcServiceMessages" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="module" module-name="intellij.platform.distributionContent.testFramework" />
   </component>
 </module>

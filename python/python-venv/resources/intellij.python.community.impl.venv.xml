@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.sdk"/>
   </dependencies>
 </idea-plugin>

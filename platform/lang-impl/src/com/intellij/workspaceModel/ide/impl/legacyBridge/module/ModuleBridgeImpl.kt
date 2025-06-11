@@ -6,6 +6,8 @@ import com.intellij.configurationStore.ModuleStoreFactory
 import com.intellij.configurationStore.NonPersistentModuleStore
 import com.intellij.configurationStore.RenameableStateStorageManager
 import com.intellij.facet.FacetManagerFactory
+import com.intellij.facet.impl.FacetEventsPublisher
+import com.intellij.facet.impl.FacetManagerFactoryImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
@@ -22,6 +24,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.Milliseconds
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
@@ -32,10 +35,7 @@ import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
@@ -177,14 +177,15 @@ open class ModuleBridgeImpl(
     private val facetsInitializationTimeMs = MillisecondsMeasurer()
     private val updateOptionTimeMs = MillisecondsMeasurer()
 
-    fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, project: Project, coroutineScope: CoroutineScope) {
-      coroutineScope.launch {
-        val facetManagerFactory = project.serviceAsync<FacetManagerFactory>()
-        withContext(Dispatchers.EDT) {
-          facetsInitializationTimeMs.addMeasuredTime {
-            doInitFacetsInEdt(modules, facetManagerFactory)
-          }
+    internal suspend fun initFacets(modules: Collection<Pair<ModuleEntity, ModuleBridge>>, project: Project) {
+      val facetManagerFactory = project.serviceAsync<FacetManagerFactory>() as FacetManagerFactoryImpl
+      span("init facets in EDT", Dispatchers.EDT) {
+        facetsInitializationTimeMs.addMeasuredTime {
+          doInitFacetsInEdt(modules, facetManagerFactory)
         }
+      }
+      span("send onFacetAdded events") {
+        project.serviceAsync<FacetEventsPublisher>().sendEvents(facetManagerFactory)
       }
     }
 

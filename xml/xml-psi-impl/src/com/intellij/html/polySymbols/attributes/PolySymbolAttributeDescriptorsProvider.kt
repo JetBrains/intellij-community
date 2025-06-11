@@ -9,7 +9,7 @@ import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.project.DumbService
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol

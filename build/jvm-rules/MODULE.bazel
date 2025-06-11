@@ -94,6 +94,12 @@ http_file(
   downloaded_file_path = "rhizomedb-compiler-plugin-2.1.20-0.5.jar"
 )
 
+http_file(
+  name = "rpc-compiler-plugin-2_2_0-RC2-0_1_http",
+  url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/fleet/rpc-compiler-plugin/2.2.0-RC2-0.1/rpc-compiler-plugin-2.2.0-RC2-0.1.jar",
+  sha256 = "b11c852cb9063e04d50562c86cf9bcd331a6cd78446c5e3784041a67aa55877a",
+  downloaded_file_path = "rpc-compiler-plugin-2.2.0-RC2-0.1.jar"
+)
 
 
 http_file(

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -44,7 +44,7 @@ class ObsoleteApiUsageInspection : LocalInspectionTool() {
       val declaration = target.toUElement(UDeclaration::class.java)
       if (declaration != null && !arePsiElementsFromTheSameFile(sourceNode.sourcePsi, target)) {
         if (declaration !is UClass && declaration !is UMethod && declaration !is UField) return
-        if (declaration.findAnnotation(OBSOLETE_ANNOTATION_NAME) != null) {
+        if (declaration.findSourceAnnotation(OBSOLETE_ANNOTATION_NAME) != null) {
           val elementToHighlight = (sourceNode as? UDeclaration)?.uastAnchor.sourcePsiElement ?: sourceNode.sourcePsi ?: return
           // Do not highlight method references that map to obsolete functional interface.
           // this problem will be highlighted elsewhere (e.g., at declaration of the method accepting functional interface) 

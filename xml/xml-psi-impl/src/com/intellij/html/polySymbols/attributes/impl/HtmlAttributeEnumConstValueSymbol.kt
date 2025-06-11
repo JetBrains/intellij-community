@@ -2,7 +2,7 @@
 package com.intellij.html.polySymbols.attributes.impl
 
 import com.intellij.model.Pointer
-import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
@@ -15,7 +15,7 @@ internal class HtmlAttributeEnumConstValueSymbol(
   override val source: PsiElement?,
 ) : PsiSourcedPolySymbol {
   override val qualifiedKind: PolySymbolQualifiedKind
-    get() = PolySymbol.HTML_ATTRIBUTE_VALUES
+    get() = HTML_ATTRIBUTE_VALUES
 
   override fun createPointer(): Pointer<HtmlAttributeEnumConstValueSymbol> {
     val origin = this.origin

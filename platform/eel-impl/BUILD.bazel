@@ -31,24 +31,3 @@ jvm_library(
   runtime_deps = [":eel-impl_resources"]
 )
 ### auto-generated section `build intellij.platform.eel.impl` end
-
-### auto-generated section `build intellij.platform.eel.impl.benchmarks` start
-load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
-
-jvm_library(
-  name = "eel-impl-benchmarks_test_lib",
-  visibility = ["//visibility:public"],
-  srcs = glob(["benchmarks/**/*.kt", "benchmarks/**/*.java"], allow_empty = True),
-  deps = [
-    "@lib//:jmh-core",
-    "@lib//:jmh-generator-annprocess",
-    "//platform/eel-impl",
-  ]
-)
-
-jvm_test(
-  name = "eel-impl-benchmarks_test",
-  runtime_deps = [":eel-impl-benchmarks_test_lib"]
-)
-### auto-generated section `build intellij.platform.eel.impl.benchmarks` end

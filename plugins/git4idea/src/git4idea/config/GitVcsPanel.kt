@@ -34,6 +34,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.layout.AdvancedSettingsPredicate
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.ValidationInfoBuilder
@@ -50,6 +51,7 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.config.GitExecutableSelectorPanel.Companion.createGitExecutableSelectorRow
 import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
+import git4idea.fetch.GitFetchTagsMode
 import git4idea.i18n.GitBundle.message
 import git4idea.index.enableStagingArea
 import git4idea.repo.GitRepositoryManager
@@ -274,6 +276,9 @@ internal class GitVcsPanel(private val project: Project) :
       }
     }
     branchUpdateInfoRow()
+
+    fetchTagsRow()
+
     row {
       checkBox(cdOverrideCredentialHelper)
     }
@@ -298,6 +303,25 @@ internal class GitVcsPanel(private val project: Project) :
     for (configurable in configurables) {
       appendDslConfigurable(configurable)
     }
+  }
+
+  private fun Panel.fetchTagsRow() {
+    row(message("settings.git.fetch.tags.label")) {
+      val listCellRenderer = listCellRenderer<GitFetchTagsMode?> {
+        val v = value
+        if (v != null) {
+          text(v.getModeName())
+          text(v.getDescription()) {
+            foreground = greyForeground
+          }
+        }
+        else {
+          text("")
+        }
+      }
+      comboBox(EnumComboBoxModel(GitFetchTagsMode::class.java), renderer = listCellRenderer)
+        .bindItem(projectSettings::getFetchTagsMode, projectSettings::setFetchTagsMode)
+    }.layout(RowLayout.INDEPENDENT)
   }
 
   private fun Panel.updateProjectInfoFilter() {

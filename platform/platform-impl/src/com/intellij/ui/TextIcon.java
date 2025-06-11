@@ -47,12 +47,20 @@ public final class TextIcon implements Icon {
       myStabilizedTextBounds = myCurrentTextBounds;
 
       if (myTextsForMinimumBounds != null) {
+        boolean debug = LOG.isDebugEnabled();
         if (myMinimumTextBounds == null) {
           for (String text : myTextsForMinimumBounds) {
-            myMinimumTextBounds = max(myMinimumTextBounds, getPixelBounds(fnt, text, myContext));
+            Rectangle bounds = getPixelBounds(fnt, text, myContext);
+            if (debug) {
+              LOG.debug("Bounds for text \"" + text + "\" are: " + bounds);
+            }
+            myMinimumTextBounds = max(myMinimumTextBounds, bounds);
           }
         }
         myStabilizedTextBounds = max(myMinimumTextBounds, myStabilizedTextBounds);
+        if (debug) {
+          LOG.debug("StabilizedTextBounds for text \"" + myText + "\" are: " + myStabilizedTextBounds);
+        }
       }
 
       if (myFontTransform != null) {
@@ -72,6 +80,9 @@ public final class TextIcon implements Icon {
   @NotNull
   private static Rectangle max(@Nullable Rectangle one, @NotNull Rectangle other) {
     if (one == null) return other;
+    if (LOG.isDebugEnabled() && ((one.x != other.x) || (one.y != other.y))) {
+      LOG.debug("Attention. Unequal starting points: " + one + ", other = " + other);
+    }
     return new Rectangle(min(one.x, other.x),
                          min(one.y, other.y),
                          Math.max(one.width, other.width),
@@ -217,8 +228,8 @@ public final class TextIcon implements Icon {
     Rectangle bounds = getTextBounds();
     Rectangle currentTextBounds = myCurrentTextBounds;
     if (myForeground != null && bounds != null) {
-      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x + (bounds.width - currentTextBounds.width)/2,
-                                            myInsets.top + y + (bounds.height - currentTextBounds.height)/2,
+      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x + (bounds.width - currentTextBounds.width) / 2,
+                                            myInsets.top + y + (bounds.height - currentTextBounds.height) / 2,
                                             currentTextBounds.width, currentTextBounds.height);
       try {
         Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
@@ -229,6 +240,10 @@ public final class TextIcon implements Icon {
         g2d.setColor(myForeground);
         g2d.setFont(myFont);
         g2d.drawString(myText, -bounds.x, -bounds.y);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Drawing \"" + myText + "\" at " + x + ", " + y + ", insets " + myInsets + "," +
+                    " with bounds " + bounds + " and currentTextBounds " + currentTextBounds);
+        }
       }
       finally {
         g2d.dispose();
@@ -255,7 +270,8 @@ public final class TextIcon implements Icon {
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myStabilizedTextBounds, myTextsForMinimumBounds, withBorders, myBorderColor);
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myStabilizedTextBounds, myTextsForMinimumBounds,
+                        withBorders, myBorderColor);
   }
 
   private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {
@@ -284,6 +300,6 @@ public final class TextIcon implements Icon {
 
   public void uiSettingsChanged() {
     myStabilizedTextBounds = null;
-      myMinimumTextBounds = null;
+    myMinimumTextBounds = null;
   }
 }

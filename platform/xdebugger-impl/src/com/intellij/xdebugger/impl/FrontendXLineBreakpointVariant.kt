@@ -45,13 +45,13 @@ data class XLineBreakpointInstallationInfo(
 }
 
 @ApiStatus.Internal
-fun XLineBreakpointInstallationInfo.toRequest(hasOneBreakpoint: Boolean): XLineBreakpointInstallationRequest = XLineBreakpointInstallationRequest(
+fun XLineBreakpointInstallationInfo.toRequest(hasBreakpoints: Boolean): XLineBreakpointInstallationRequest = XLineBreakpointInstallationRequest(
   types.map { XBreakpointTypeId(it.id) },
   position.toRpc(),
   isTemporary,
   isConditional,
   condition,
-  hasOneBreakpoint,
+  hasBreakpoints,
 )
 
 internal class VariantChoiceData(
@@ -85,9 +85,9 @@ internal fun computeBreakpointProxy(
     try {
       val breakpointManager = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
       breakpointManager.withLightBreakpointIfPossible(editor, info) {
-        val singleBreakpointExists = XDebuggerUtilImpl.findBreakpointsAtLine(project, info).singleOrNull() != null
+        val breakpointExists = XDebuggerUtilImpl.findBreakpointsAtLine(project, info).isNotEmpty()
         val response = XBreakpointTypeApi.getInstance()
-                         .toggleLineBreakpoint(project.projectId(), info.toRequest(singleBreakpointExists))
+                         .toggleLineBreakpoint(project.projectId(), info.toRequest(breakpointExists))
                        ?: throw kotlin.coroutines.cancellation.CancellationException()
         when (response) {
           is XRemoveBreakpointResponse -> {

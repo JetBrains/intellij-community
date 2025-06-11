@@ -47,6 +47,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/util/diff",
     "//platform/vcs-tests:vcs-testFramework",
     "//platform/lang-impl",
     "//platform/vcs-impl/lang",

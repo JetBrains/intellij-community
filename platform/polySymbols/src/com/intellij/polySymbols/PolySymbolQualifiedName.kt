@@ -2,21 +2,30 @@
 package com.intellij.polySymbols
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.ApiStatus
 
-data class PolySymbolQualifiedName(
-  val qualifiedKind: PolySymbolQualifiedKind,
-  val name: @NlsSafe String,
-) {
+@ApiStatus.NonExtendable
+interface PolySymbolQualifiedName {
 
-  val kind: @NlsSafe PolySymbolKind get() = qualifiedKind.kind
+  val qualifiedKind: PolySymbolQualifiedKind
 
-  val namespace: @NlsSafe PolySymbolNamespace get() = qualifiedKind.namespace
+  val name: @NlsSafe String
 
-  fun matches(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-    this.qualifiedKind == qualifiedKind
+  val kind: @NlsSafe PolySymbolKind
 
-  fun matches(qualifiedKind: PolySymbolQualifiedKind, vararg qualifiedKinds: PolySymbolQualifiedKind): Boolean =
-    sequenceOf(qualifiedKind).plus(qualifiedKinds).any(::matches)
+  val namespace: @NlsSafe PolySymbolNamespace
 
-  override fun toString(): String = "${qualifiedKind.namespace}/${qualifiedKind.kind}/$name"
+  fun withName(name: String): PolySymbolQualifiedName
+
+  fun matches(qualifiedKind: PolySymbolQualifiedKind): Boolean
+
+  fun matches(qualifiedKind: PolySymbolQualifiedKind, vararg qualifiedKinds: PolySymbolQualifiedKind): Boolean
+
+  companion object {
+
+    @JvmStatic
+    operator fun get(namespace: PolySymbolNamespace, kind: PolySymbolKind, name: String): PolySymbolQualifiedName =
+      PolySymbolQualifiedKind[namespace, kind].withName(name)
+  }
+
 }

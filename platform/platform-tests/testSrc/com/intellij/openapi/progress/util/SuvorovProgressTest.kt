@@ -81,6 +81,7 @@ class SuvorovProgressTest {
     writeActionMayFinish.complete()
     edtActionCompleted.join()
     delay(10)
+    withContext(Dispatchers.EDT) {}
     clickEventDispatched.get()
   }
 

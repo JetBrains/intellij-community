@@ -45,7 +45,6 @@ import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageManagerBridge;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.psi.PyUtil;
@@ -81,63 +80,6 @@ public final class PythonSdkUpdater {
   @TestOnly
   public static void setEnabledInTests(boolean enabled) {
     ourEnabledInTests = enabled;
-  }
-
-  /**
-   * Schedules a background refresh of the SDKs of the modules for the open project.
-   */
-  private static class PyUpdateSdkRequestData {
-    final Instant myTimestamp;
-    final Throwable myTraceback;
-
-    private PyUpdateSdkRequestData() {
-      this(Instant.now(), new Throwable());
-    }
-
-    private PyUpdateSdkRequestData(@NotNull Instant timestamp, @NotNull Throwable traceback) {
-      myTimestamp = timestamp;
-      myTraceback = traceback;
-    }
-
-    private static @NotNull PyUpdateSdkRequestData merge(@NotNull PyUpdateSdkRequestData oldRequest,
-                                                         @NotNull PyUpdateSdkRequestData newRequest) {
-      return new PyUpdateSdkRequestData(oldRequest.myTimestamp, newRequest.myTraceback);
-    }
-  }
-
-  private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
-    if (!ourEnabledInTests && ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
-      return;
-    }
-    TrackingUtil.trackActivity(project, PythonActivityKey.INSTANCE, () -> {
-      synchronized (ourLock) {
-        if (ourUnderRefresh.contains(sdk)) {
-          if (Trigger.LOG.isDebugEnabled()) {
-            PyUpdateSdkRequestData previousRequest = ourToBeRefreshed.get(sdk);
-            if (previousRequest != null) {
-              String cause = Trigger.getCauseByTrace(previousRequest.myTraceback);
-              Trigger.LOG.debug("Discarding previous update for " + sdk + " triggered by " + cause);
-            }
-          }
-          ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
-          return;
-        }
-        else {
-          ourUnderRefresh.add(sdk);
-        }
-      }
-      ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
-    });
-  }
-
-  /**
-   * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
-   */
-  @ApiStatus.Internal
-  @Deprecated
-  public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
-    return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
   }
 
   /**
@@ -181,7 +123,7 @@ public final class PythonSdkUpdater {
       return true;
     }
     // Don't inline this variable, it needs to anchor the current stack.
-    PyUpdateSdkRequestData request = new PyUpdateSdkRequestData();
+    PyUpdateSdkRequestData request = new PyUpdateSdkRequestData(true);
     // When a new interpreter is still being generated, we need to wait until it finishes and SDK
     // is properly written in ProjectJdkTable. Otherwise, a concurrent background update might fail.
     boolean isSavedSdk = PythonSdkUtil.findSdkByKey(PythonSdkType.getSdkKey(sdk)) != null;
@@ -194,6 +136,47 @@ public final class PythonSdkUpdater {
     return true;
   }
 
+  private static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, @NotNull PyUpdateSdkRequestData requestData) {
+    if (project.isDisposed()) {
+      return;
+    }
+
+    if (!ourEnabledInTests && ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
+      return;
+    }
+    TrackingUtil.trackActivity(project, PythonActivityKey.INSTANCE, () -> {
+      synchronized (ourLock) {
+        if (ourUnderRefresh.contains(sdk)) {
+          if (Trigger.LOG.isDebugEnabled()) {
+            PyUpdateSdkRequestData previousRequest = ourToBeRefreshed.get(sdk);
+            if (previousRequest != null) {
+              String cause = Trigger.getCauseByTrace(previousRequest.myTraceback);
+              Trigger.LOG.debug("Discarding previous update for " + sdk + " triggered by " + cause);
+            }
+          }
+          ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
+          return;
+        }
+        else {
+          ourUnderRefresh.add(sdk);
+        }
+      }
+      if (project.isDisposed()) {
+        return;
+      }
+      ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
+    });
+  }
+
+  /**
+   * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
+   */
+  @ApiStatus.Internal
+  @Deprecated
+  public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
+    return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
+  }
 
   /**
    * Schedule an <i>asynchronous</i> background update of the given SDK.
@@ -206,7 +189,12 @@ public final class PythonSdkUpdater {
    * </ul>
    */
   public static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project) {
-    scheduleUpdate(sdk, project, new PyUpdateSdkRequestData());
+    scheduleUpdate(sdk, project, true);
+  }
+
+  @ApiStatus.Internal
+  public static void scheduleUpdate(@NotNull Sdk sdk, @NotNull Project project, Boolean withPackageUpdate) {
+    scheduleUpdate(sdk, project, new PyUpdateSdkRequestData(withPackageUpdate));
   }
 
   /**
@@ -218,7 +206,32 @@ public final class PythonSdkUpdater {
       if (ourUnderRefresh.contains(sdk) || ourToBeRefreshed.containsKey(sdk)) return;
       ourUnderRefresh.add(sdk);
     }
-    ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, new PyUpdateSdkRequestData()));
+    ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, new PyUpdateSdkRequestData(true)));
+  }
+
+  /**
+   * Schedules a background refresh of the SDKs of the modules for the open project.
+   */
+  private static class PyUpdateSdkRequestData {
+    final Instant myTimestamp;
+    final Throwable myTraceback;
+    final boolean withPackagesUpdate;
+
+    private PyUpdateSdkRequestData(boolean withPackagesUpdate) {
+      this(Instant.now(), new Throwable(), withPackagesUpdate);
+    }
+
+    private PyUpdateSdkRequestData(@NotNull Instant timestamp, @NotNull Throwable traceback, boolean withPackagesUpdate) {
+      myTimestamp = timestamp;
+      myTraceback = traceback;
+      this.withPackagesUpdate = withPackagesUpdate;
+    }
+
+    private static @NotNull PyUpdateSdkRequestData merge(@NotNull PyUpdateSdkRequestData oldRequest,
+                                                         @NotNull PyUpdateSdkRequestData newRequest) {
+      return new PyUpdateSdkRequestData(oldRequest.myTimestamp, newRequest.myTraceback,
+                                        oldRequest.withPackagesUpdate || newRequest.withPackagesUpdate);
+    }
   }
 
   public static boolean isUpdateScheduled(@NotNull Sdk sdk) {
@@ -276,7 +289,9 @@ public final class PythonSdkUpdater {
         }
         // This step also includes setting mapped interpreter paths
         generateSkeletons(mySdk, indicator);
-        refreshPackages(mySdk, indicator);
+        if (myRequestData.withPackagesUpdate) {
+          refreshPackages(mySdk, indicator);
+        }
         addBundledPyiStubsToInterpreterPaths(mySdk);
       }
       catch (ExecutionException e) {
@@ -342,12 +357,11 @@ public final class PythonSdkUpdater {
         indicator.setIndeterminate(true);
         indicator.setText(PyBundle.message("python.sdk.scanning.installed.packages"));
         indicator.setText2("");
-        PyPackageManager instance = PyPackageManager.getInstance(sdk);
-        if (!(instance instanceof PyPackageManagerBridge)) {
-          instance.refreshAndGetPackages(true);
+        if (Disposer.isDisposed((Disposable)sdk)) {
+          return;
         }
-        //It internally invoke lazy list packages update on first call
-        PythonPackageManager.Companion.forSdk(myProject, mySdk);
+        PyPackageManager instance = PyPackageManager.getInstance(sdk);
+        instance.refreshAndGetPackages(true);
       }
       catch (ExecutionException e) {
         if (LOG.isDebugEnabled()) {
@@ -424,6 +438,9 @@ public final class PythonSdkUpdater {
       }
 
       if (requestData != null) {
+        if (Disposer.isDisposed(myProject)) {
+          return;
+        }
         ProgressManager.getInstance().run(new PyUpdateSdkTask(myProject, mySdk, requestData));
       }
     }

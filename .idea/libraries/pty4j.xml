@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="pty4j" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.pty4j:pty4j:0.13.7">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.pty4j:pty4j:0.13.8">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.7/pty4j-0.13.7.jar">
-          <sha256sum>d98bb8e87ce0258afea9204adbf4c50b1011e8ea51f2904ed7ed67decba9671e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.8/pty4j-0.13.8.jar">
+          <sha256sum>1635a8ec4c2d5caf318caf0764ad5ee9d7248f329dadc5ece03aa78438504c27</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.7/pty4j-0.13.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.8/pty4j-0.13.8.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.7/pty4j-0.13.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.13.8/pty4j-0.13.8-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -17,7 +17,6 @@ import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.module.impl.createGrouper
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.impl.CoreProgressManager
-import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ModuleRootManager
@@ -527,13 +526,6 @@ abstract class ModuleManagerBridgeImpl(
     val MutableEntityStorage.mutableModuleMap: MutableExternalEntityMapping<ModuleBridge>
       get() = getMutableExternalMapping(MODULE_BRIDGE_MAPPING_ID)
 
-    fun fireModulesAdded(project: Project, modules: List<Module>) {
-      val bus = project.messageBus
-      if (!bus.isDisposed) {
-        bus.syncPublisher(ModuleListener.TOPIC).modulesAdded(project, modules)
-      }
-    }
-
     internal fun getModuleGroupPath(module: Module, entityStorage: VersionedEntityStorage): Array<String>? {
       val moduleEntity = (module as ModuleBridge).findModuleEntity(entityStorage.current) ?: return null
       return moduleEntity.groupPath?.path?.toTypedArray()
@@ -638,12 +630,13 @@ private fun checkModuleLevelServiceAndExtensionRegistration() {
 private fun checkModuleLevel(plugin: IdeaPluginDescriptorImpl, child: IdeaPluginDescriptorImpl, forbid: Boolean) {
   fun check(list: List<*>, asWarn: Boolean = false) {
     if (list.isNotEmpty()) {
-      val message = "Plugin $plugin is trying to register $list in a content module ($child). This is not supported"
+      val message = "Plugin $plugin is trying to register $list in a content module ($child). " +
+                    "Module-level services and extensions are deprecated, and support is scheduled to be removed."
       if (!asWarn || forbid) {
-        LOG.error(message)
+        LOG.warn(message)
       }
       else {
-        LOG.warn(message)
+        LOG.debug(message)
       }
     }
   }

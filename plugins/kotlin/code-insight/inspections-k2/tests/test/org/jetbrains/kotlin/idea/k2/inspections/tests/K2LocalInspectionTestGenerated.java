@@ -3363,6 +3363,110 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf")
+    public static class SuspiciousCascadingIf extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("if.kt")
+        public void testIf() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/if.kt");
+        }
+
+        @TestMetadata("ifElse.kt")
+        public void testIfElse() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElse.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascade.kt")
+        public void testIfElseBlockCascade() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascade.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascadeBinaryExpr.kt")
+        public void testIfElseBlockCascadeBinaryExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeBinaryExpr.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascadeBinaryExprAddBraces.kt")
+        public void testIfElseBlockCascadeBinaryExprAddBraces() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeBinaryExprAddBraces.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascadeBinaryExprInsideElseBlock.kt")
+        public void testIfElseBlockCascadeBinaryExprInsideElseBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeBinaryExprInsideElseBlock.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascadeElvisExpr.kt")
+        public void testIfElseBlockCascadeElvisExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeElvisExpr.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascadeManyBranches.kt")
+        public void testIfElseBlockCascadeManyBranches() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeManyBranches.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascadeManyBranchesAddBraces.kt")
+        public void testIfElseBlockCascadeManyBranchesAddBraces() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeManyBranchesAddBraces.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascadeQualifiedExpr.kt")
+        public void testIfElseBlockCascadeQualifiedExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeQualifiedExpr.kt");
+        }
+
+        @TestMetadata("ifElseBlockCascadeQualifiedExprAddBraces.kt")
+        public void testIfElseBlockCascadeQualifiedExprAddBraces() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockCascadeQualifiedExprAddBraces.kt");
+        }
+
+        @TestMetadata("ifElseBlockQualifiedExpr.kt")
+        public void testIfElseBlockQualifiedExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseBlockQualifiedExpr.kt");
+        }
+
+        @TestMetadata("ifElseCascade.kt")
+        public void testIfElseCascade() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseCascade.kt");
+        }
+
+        @TestMetadata("ifElseCascadeBinaryExpr.kt")
+        public void testIfElseCascadeBinaryExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseCascadeBinaryExpr.kt");
+        }
+
+        @TestMetadata("ifElseCascadeOneLine.kt")
+        public void testIfElseCascadeOneLine() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseCascadeOneLine.kt");
+        }
+
+        @TestMetadata("ifElseCascadeQualifiedExpr.kt")
+        public void testIfElseCascadeQualifiedExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseCascadeQualifiedExpr.kt");
+        }
+
+        @TestMetadata("ifElseQualifiedExpr.kt")
+        public void testIfElseQualifiedExpr() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/ifElseQualifiedExpr.kt");
+        }
+
+        @TestMetadata("notApplicableRange.kt")
+        public void testNotApplicableRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCascadingIf/notApplicableRange.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/equalsOrHashCode")
     public static class EqualsOrHashCode extends AbstractK2LocalInspectionTest {
         @java.lang.Override

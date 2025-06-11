@@ -55,7 +55,6 @@ private fun String.toReadable(): String = replace(" ", "<Space>").replace("\n", 
 
 @ApiStatus.Internal
 class RetypeLog {
-  val LOG: Logger = Logger.getInstance(RetypeLog::class.java)
   private val log = arrayListOf<String>()
   private var currentTyping: String? = null
   private var currentCompletion: String? = null
@@ -117,6 +116,8 @@ class RetypeLog {
     }
   }
 }
+
+private val LOG: Logger = Logger.getInstance(RetypeLog::class.java)
 
 class RetypeSession(
   private val project: Project,

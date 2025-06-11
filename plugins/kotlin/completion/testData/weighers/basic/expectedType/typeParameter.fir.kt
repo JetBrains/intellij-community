@@ -1,4 +1,4 @@
-// FIR_COMPARISON
+// IGNORE_K2
 
 fun xxx1(): Int = 1
 fun xxx2(): String = ""

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
     "//platform/util/jdom",
@@ -45,6 +46,8 @@ jvm_library(
   associates = [":eclipse"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
     "//platform/util/jdom",

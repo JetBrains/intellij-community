@@ -43,7 +43,10 @@ private class TestComponentStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = TODO("not implemented")
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  override fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  }
+
+  override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
   }
 
   override fun unloadComponent(component: Any) {

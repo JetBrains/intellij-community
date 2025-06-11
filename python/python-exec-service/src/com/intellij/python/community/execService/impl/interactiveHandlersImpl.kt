@@ -8,14 +8,15 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.mapError
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import java.nio.file.Path
 
 internal class ProcessSemiInteractiveHandlerImpl<T>(
   private val pyProcessListener: PyProcessListener?,
   private val code: ProcessSemiInteractiveFun<T>,
 ) : ProcessInteractiveHandler<T> {
-  override suspend fun getResultFromProcess(whatToExec: WhatToExec, args: List<String>, process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>> =
+  override suspend fun getResultFromProcess(binary: Path, args: List<String>, process: EelProcess): Result<T, Pair<EelProcessExecutionResult, CustomErrorMessage?>> =
     coroutineScope {
-      pyProcessListener?.emit(ProcessEvent.ProcessStarted(whatToExec, args))
+      pyProcessListener?.emit(ProcessEvent.ProcessStarted(binary, args))
       val processOutput = async { process.awaitWithReporting(pyProcessListener) }
       val result = code(process.stdin, processOutput)
       pyProcessListener?.emit(ProcessEvent.ProcessEnded(process.exitCode.await()))

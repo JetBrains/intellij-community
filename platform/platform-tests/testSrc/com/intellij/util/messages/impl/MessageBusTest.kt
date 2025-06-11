@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.LoggedErrorProcessorEnabler
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.createSimpleMessageBusOwner
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -373,25 +372,6 @@ class MessageBusTest : MessageBusOwner {
 
     // event is delivered to all subscribers, the error is NOT rethrown
     assertEvents("handler3:t12", "uoe", "handler2:t12")
-  }
-
-  @Test
-  fun postingPerformanceWithLowListenerDensityInHierarchy() {
-    // simulating a million fileWithNoDocumentChanged events on refresh in a thousand-module project
-    val childBus = MessageBusFactoryImpl().createMessageBus(this, bus)
-    childBus.connect().subscribe(TOPIC1, object : T1Listener {
-      override fun t11() {}
-      override fun t12() {}
-    })
-    for (i in 0 until 1000) {
-      MessageBusFactoryImpl().createMessageBus(this, childBus)
-    }
-    PlatformTestUtil.assertTiming("post listener", 3000) {
-      val publisher = bus.syncPublisher(TOPIC1)
-      for (i in 0 until 1000000) {
-        publisher.t11()
-      }
-    }
   }
 
   @Test

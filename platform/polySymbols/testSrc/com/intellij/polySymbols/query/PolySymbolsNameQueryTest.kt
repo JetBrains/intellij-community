@@ -3,6 +3,7 @@ package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.*
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
@@ -394,14 +395,14 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           params: PolySymbolsNameMatchQueryParams,
           scope: Stack<PolySymbolsScope>,
         ): List<PolySymbol> {
-          return if (qualifiedName.qualifiedKind == PolySymbol.HTML_ATTRIBUTES) {
+          return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
               override val origin: PolySymbolOrigin
                 get() = object : PolySymbolOrigin {
                   override val framework: FrameworkId get() = "vue"
                 }
               override val qualifiedKind: PolySymbolQualifiedKind
-                get() = PolySymbol.HTML_ATTRIBUTES
+                get() = HTML_ATTRIBUTES
               override val name: String
                 get() = "bar"
 

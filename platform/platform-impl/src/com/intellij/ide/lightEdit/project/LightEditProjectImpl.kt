@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectServiceInitializer
+import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.schedulePreloadServices
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -40,13 +40,12 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
     componentStore.setPath(projectPath, null)
     runUnderModalProgressIfIsEdt {
       val project = this@LightEditProjectImpl
-      ProjectServiceInitializer.initEssential(project)
+      ProjectManagerImpl.initEssentialProjectPreInit(project)
       ApplicationManager.getApplication().serviceAsync<ProjectEntitiesStorage>().createEntity(project)
       schedulePreloadServices(project)
       launch {
         project.createComponentsNonBlocking()
       }
-      ProjectServiceInitializer.initNonEssential(project)
     }
   }
 

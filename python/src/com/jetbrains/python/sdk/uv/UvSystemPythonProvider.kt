@@ -3,8 +3,8 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
-import com.intellij.python.community.services.systemPython.UICustomization
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult

@@ -628,6 +628,50 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/convertLazyPropertyToOrdinary")
+    public static class ConvertLazyPropertyToOrdinary extends AbstractSharedK1IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comment.kt")
+        public void testComment() throws Exception {
+            runTest("../testData/intentions/convertLazyPropertyToOrdinary/comment.kt");
+        }
+
+        @TestMetadata("multiStatement.kt")
+        public void testMultiStatement() throws Exception {
+            runTest("../testData/intentions/convertLazyPropertyToOrdinary/multiStatement.kt");
+        }
+
+        @TestMetadata("noStatement.kt")
+        public void testNoStatement() throws Exception {
+            runTest("../testData/intentions/convertLazyPropertyToOrdinary/noStatement.kt");
+        }
+
+        @TestMetadata("singleStatement.kt")
+        public void testSingleStatement() throws Exception {
+            runTest("../testData/intentions/convertLazyPropertyToOrdinary/singleStatement.kt");
+        }
+
+        @TestMetadata("singleStatement2.kt")
+        public void testSingleStatement2() throws Exception {
+            runTest("../testData/intentions/convertLazyPropertyToOrdinary/singleStatement2.kt");
+        }
+
+        @TestMetadata("var.kt")
+        public void testVar() throws Exception {
+            runTest("../testData/intentions/convertLazyPropertyToOrdinary/var.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/convertLineCommentToBlockComment")
     public static class ConvertLineCommentToBlockComment extends AbstractSharedK1IntentionTest {
         @java.lang.Override

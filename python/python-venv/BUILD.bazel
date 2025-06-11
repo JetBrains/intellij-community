@@ -28,6 +28,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/core-api:core",
+    "//python/python-exec-service/execService.python",
   ],
   runtime_deps = [":community-impl-venv_resources"]
 )
@@ -57,6 +58,8 @@ jvm_library(
     "//platform/ide-core-impl",
     "//platform/execution",
     "//platform/core-api:core",
+    "//python/python-exec-service/execService.python",
+    "//python/python-exec-service/execService.python:execService.python_test_lib",
   ],
   runtime_deps = [
     ":community-impl-venv_resources",

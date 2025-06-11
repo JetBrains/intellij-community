@@ -210,7 +210,7 @@ class PolySymbolsListQueryTest : PolySymbolsMockQueryExecutorTestBase() {
         .map { it.name }
         .distinct()
         .mapNotNull { name ->
-          queryExecutor.runNameMatchQuery(parsedPath.subList(0, parsedPath.size - 1) + last.copy(name = name), includeVirtual)
+          queryExecutor.runNameMatchQuery(parsedPath.subList(0, parsedPath.size - 1) + last.withName(name), includeVirtual)
             .filter { it.completeMatch }
             .asSingleSymbol()
         }

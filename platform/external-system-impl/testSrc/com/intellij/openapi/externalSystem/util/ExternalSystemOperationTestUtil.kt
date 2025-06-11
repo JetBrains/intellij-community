@@ -7,3 +7,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 val DEFAULT_SYNC_TIMEOUT: Duration = 10.minutes
+
+@JvmField
+val DEFAULT_SYNC_TIMEOUT_MS: Long = DEFAULT_SYNC_TIMEOUT.inWholeMicroseconds

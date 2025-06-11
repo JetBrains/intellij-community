@@ -18,7 +18,7 @@ internal object PreferAbstractForOverrideWeigher {
 
     context(KaSession)
     fun addWeight(element: OverridesCompletionLookupElementDecorator) {
-        element.overrideType = if (element.isImplemented) Weight.NOT_IMPLEMENTED else Weight.IMPLEMENTED
+        element.overrideType = if (element.isImplement) Weight.NOT_IMPLEMENTED else Weight.IMPLEMENTED
     }
 
     private var LookupElement.overrideType by UserDataProperty(Key<Weight>("KOTLIN_COMPLETION_OVERRIDE_TYPE"))

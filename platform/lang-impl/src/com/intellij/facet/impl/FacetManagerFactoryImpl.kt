@@ -24,6 +24,11 @@ class FacetManagerFactoryImpl(
     })
   }
 
+  // must be used only during project init
+  fun getAllFacets(): Collection<FacetManager> {
+    return facetManagerInstances.values
+  }
+
   override fun getFacetManager(module: Module): FacetManager {
     return facetManagerInstances.computeIfAbsent(module) { FacetManagerBridge(module) }
   }

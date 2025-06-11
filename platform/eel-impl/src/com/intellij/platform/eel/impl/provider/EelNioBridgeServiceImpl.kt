@@ -9,9 +9,7 @@ import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.Closeable
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -80,7 +78,7 @@ class EelNioBridgeServiceImpl(coroutineScope: CoroutineScope) : EelNioBridgeServ
     roots.forEachGuaranteed { localRoot ->
       fsRegistry.compute(localRoot.toString()) { _, existingFileSystem ->
         MultiRoutingFileSystemProvider.computeBackend(multiRoutingFileSystemProvider, localRoot.toString(), false, false) { underlyingProvider, actualFs ->
-          require(existingFileSystem == actualFs)
+          require(existingFileSystem == actualFs) { "$existingFileSystem != $actualFs" }
           try {
             existingFileSystem?.close()
           }

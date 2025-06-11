@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.EDT
@@ -36,7 +36,14 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     result
   }
 
-  final override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  final override fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+    if (component is SettingsSavingComponent) {
+      asyncSettingsSavingComponents.drop()
+    }
+    super.initComponentBlocking(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+  }
+
+  final override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
     if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }

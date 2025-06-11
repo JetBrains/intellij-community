@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.highlighter.ProjectFileType
@@ -19,6 +19,7 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.ClassRule
@@ -227,7 +228,7 @@ class ProjectStoreTest {
 
   // heavy test that uses ProjectManagerImpl directly to test (opposite to DefaultProjectStoreTest)
   @Test
-  fun `just created project must inherit settings from the default project`() {
+  fun `just created project must inherit settings from the default project`() = runBlocking<Unit>(Dispatchers.Default) {
     val projectManager = ProjectManagerEx.getInstanceEx()
 
     val testComponent = TestComponent()

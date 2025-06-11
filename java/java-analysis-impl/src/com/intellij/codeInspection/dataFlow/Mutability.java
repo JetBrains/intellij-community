@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -19,7 +19,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ClassUtils;
@@ -153,21 +152,21 @@ public enum Mutability {
   }
 
   private static @NotNull Mutability calcMutability(@NotNull PsiModifierListOwner owner) {
-    if (owner instanceof PsiParameter && owner.getParent() instanceof PsiParameterList list) {
-      PsiMethod method = ObjectUtils.tryCast(list.getParent(), PsiMethod.class);
-      if (method != null) {
-        int index = list.getParameterIndex((PsiParameter)owner);
-        JavaMethodContractUtil.ContractInfo contractInfo = JavaMethodContractUtil.getContractInfo(method);
-        if (contractInfo.isExplicit()) {
-          MutationSignature signature = contractInfo.getMutationSignature();
-          if (signature.mutatesArg(index)) {
-            return MUTABLE;
-          } else if (signature.preservesArg(index)) {
-            return MUST_NOT_MODIFY;
-          }
+    if (owner instanceof PsiParameter parameter
+        && owner.getParent() instanceof PsiParameterList list
+        && list.getParent() instanceof PsiMethod method) {
+      JavaMethodContractUtil.ContractInfo contractInfo = JavaMethodContractUtil.getContractInfo(method);
+      if (contractInfo.isExplicit()) {
+        int index = list.getParameterIndex(parameter);
+        MutationSignature signature = contractInfo.getMutationSignature();
+        if (signature.mutatesArg(index)) {
+          return MUTABLE;
         }
-        return UNKNOWN;
+        else if (signature.preservesArg(index)) {
+          return MUST_NOT_MODIFY;
+        }
       }
+      return UNKNOWN;
     }
     if (AnnotationUtil.isAnnotated(owner, Collections.singleton(UNMODIFIABLE_ANNOTATION),
                                    AnnotationUtil.CHECK_HIERARCHY |
@@ -186,33 +185,40 @@ public enum Mutability {
       if (initializers.isEmpty() && !owner.hasModifierProperty(PsiModifier.STATIC)) {
         initializers = DfaPsiUtil.findAllConstructorInitializers(field);
       }
-      initializers = StreamEx.of(initializers).flatMap(ExpressionUtils::nonStructuralChildren).toList();
-      if (initializers.isEmpty()) return UNKNOWN;
-      Mutability mutability = UNMODIFIABLE;
-      for (PsiExpression initializer : initializers) {
-        Mutability newMutability = UNKNOWN;
-        if (ClassUtils.isImmutable(initializer.getType())) {
-          newMutability = UNMODIFIABLE;
-        } else if (initializer instanceof PsiMethodCallExpression call) {
-          if (STREAM_COLLECT.test(call)) {
-            PsiExpression collector = call.getArgumentList().getExpressions()[0];
-            newMutability = UNMODIFIABLE_COLLECTORS.matches(collector) ? UNMODIFIABLE : UNKNOWN;
-          } else if (STREAM_TO_LIST.test(call)) {
-            newMutability = UNMODIFIABLE;
-          } else {
-            PsiMethod method = call.resolveMethod();
-            newMutability = method == null ? UNKNOWN : getMutability(method);
-          }
-        }
-        mutability = mutability.join(newMutability);
-        if (!mutability.isUnmodifiable()) break;
-      }
-      return mutability;
+      return calcMutability(initializers);
     }
-    return owner instanceof PsiMethodImpl ? JavaSourceInference.inferMutability((PsiMethodImpl)owner) : UNKNOWN;
+    else if (owner instanceof PsiRecordComponent component) {
+      return calcMutability(DfaPsiUtil.findAllConstructorInitializers(component));
+    }
+    return owner instanceof PsiMethodImpl method ? JavaSourceInference.inferMutability(method) : UNKNOWN;
+  }
+
+  private static @NotNull Mutability calcMutability(List<PsiExpression> expressions) {
+    expressions = StreamEx.of(expressions).flatMap(ExpressionUtils::nonStructuralChildren).toList();
+    if (expressions.isEmpty()) return UNKNOWN;
+    Mutability mutability = UNMODIFIABLE;
+    for (PsiExpression initializer : expressions) {
+      Mutability newMutability = UNKNOWN;
+      if (ClassUtils.isImmutable(initializer.getType())) {
+        newMutability = UNMODIFIABLE;
+      } else if (initializer instanceof PsiMethodCallExpression call) {
+        if (STREAM_COLLECT.test(call)) {
+          PsiExpression collector = call.getArgumentList().getExpressions()[0];
+          newMutability = UNMODIFIABLE_COLLECTORS.matches(collector) ? UNMODIFIABLE : UNKNOWN;
+        } else if (STREAM_TO_LIST.test(call)) {
+          newMutability = UNMODIFIABLE;
+        } else {
+          PsiMethod method = call.resolveMethod();
+          newMutability = method == null ? UNKNOWN : getMutability(method);
+        }
+      }
+      mutability = mutability.join(newMutability);
+      if (!mutability.isUnmodifiable()) break;
+    }
+    return mutability;
   }
 
   public static Mutability fromDfType(DfType dfType) {
-    return dfType instanceof DfReferenceType ? ((DfReferenceType)dfType).getMutability() : UNKNOWN;
+    return dfType instanceof DfReferenceType referenceType ? referenceType.getMutability() : UNKNOWN;
   }
 }

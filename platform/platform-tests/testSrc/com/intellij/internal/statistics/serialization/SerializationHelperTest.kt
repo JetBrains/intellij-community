@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.serialization
 
-import com.intellij.internal.statistic.config.EventLogExternalSettings
 import com.intellij.internal.statistic.config.SerializationHelper
-import com.intellij.internal.statistic.config.bean.EventLogConfigVersions
-import com.intellij.internal.statistic.config.bean.EventLogMajorVersionBorders
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.LogEventRecord
 import com.intellij.internal.statistic.eventLog.LogEventRecordRequest
@@ -17,9 +14,7 @@ import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import org.junit.jupiter.api.Assertions
-import java.io.BufferedReader
 import java.io.File
-import java.io.StringReader
 import java.io.StringWriter
 
 internal class SerializationHelperTest : BasePlatformTestCase() {
@@ -90,41 +85,6 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     val realText = File(getTestDataRoot() + "SerializationFeatureUsageData.json").readText(Charsets.UTF_8)
 
     Assertions.assertEquals(realText, serializationText)
-  }
-
-  fun testSerializationEventLogExternalSettings() {
-    val eventLogMajorVersionBorders = EventLogMajorVersionBorders()
-    eventLogMajorVersionBorders.from = "2019.2"
-    eventLogMajorVersionBorders.to = "2020.3"
-
-    val eventLogConfigFilterCondition = EventLogConfigVersions.EventLogConfigFilterCondition()
-    eventLogConfigFilterCondition.releaseType = "ALL"
-    eventLogConfigFilterCondition.from = 0
-    eventLogConfigFilterCondition.to = 256
-
-    val eventLogConfigVersions = EventLogConfigVersions()
-    eventLogConfigVersions.majorBuildVersionBorders = eventLogMajorVersionBorders
-    eventLogConfigVersions.endpoints = mapOf("send" to "https://send/endpoint")
-    eventLogConfigVersions.options = mapOf("option1" to "value1")
-    eventLogConfigVersions.releaseFilters = listOf(eventLogConfigFilterCondition)
-
-    val eventLogExternalSettings = EventLogExternalSettings()
-    eventLogExternalSettings.productCode = "IU"
-    eventLogExternalSettings.versions = listOf(eventLogConfigVersions)
-
-    val serializationText = SerializationHelper.serializeToSingleLine(eventLogExternalSettings)
-    val realText = File(getTestDataRoot() + "SerializationEventLogExternalSettings.json").readText(Charsets.UTF_8)
-
-    Assertions.assertEquals(realText, serializationText)
-  }
-
-  fun testDeserializationEventLogExternalSettings() {
-    val config = File(getTestDataRoot() + "SerializationEventLogExternalSettings.json").readText(Charsets.UTF_8)
-    val reader = BufferedReader(StringReader(config))
-    val deserializationObject = SerializationHelper.deserialize(reader, EventLogExternalSettings::class.java)
-    val serializationText = SerializationHelper.serializeToSingleLine(deserializationObject)
-
-    Assertions.assertEquals(serializationText, config)
   }
 
   fun testSerializationEventGroupRemoteDescriptors() {

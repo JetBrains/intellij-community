@@ -4,7 +4,7 @@ package com.intellij.polySymbols.query
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
-import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
@@ -239,7 +239,7 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           params: PolySymbolsCodeCompletionQueryParams,
           scope: Stack<PolySymbolsScope>,
         ): List<PolySymbolCodeCompletionItem> {
-          return if (qualifiedName.qualifiedKind == PolySymbol.HTML_ATTRIBUTES) {
+          return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
             listOf(PolySymbolCodeCompletionItem.create("bar"))
           }
           else emptyList()

@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.python.PythonBinaryKt.PYTHON_VERSION_ARG;
 import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionError;
 import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionErrorOnEdt;
 import static com.jetbrains.python.venvReader.ResolveUtilKt.tryResolvePath;
@@ -65,12 +66,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
 
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
-  /**
-   * <code>
-   * python --version
-   * </code>
-   */
-  public static final String PYTHON_VERSION_ARG = "--version";
 
 
   /**

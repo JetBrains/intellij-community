@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.SuvorovProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -199,9 +198,7 @@ class PlatformUtilitiesTest {
   @Suppress("ForbiddenInSuspectContextMethod")
   @Test
   fun `transferredWriteAction allows write access when lock action is pending`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
-    application.invokeAndWait {
-      getGlobalThreadingSupport().setLockAcquisitionInterceptor(SuvorovProgress::dispatchEventsUntilComputationCompletes)
-    }
+    Assumptions.assumeTrue { installSuvorovProgress }
     try {
       val bgWaStarted = Job(coroutineContext.job)
       launch {

@@ -265,11 +265,6 @@ public class FE1LegacyUastDeclarationTestGenerated extends AbstractFE1LegacyUast
         runTest("testData/PropertyAccessors.kt");
     }
 
-    @TestMetadata("PropertyDelegate.kt")
-    public void testPropertyDelegate() throws Exception {
-        runTest("testData/PropertyDelegate.kt");
-    }
-
     @TestMetadata("PropertyInitializer.kt")
     public void testPropertyInitializer() throws Exception {
         runTest("testData/PropertyInitializer.kt");

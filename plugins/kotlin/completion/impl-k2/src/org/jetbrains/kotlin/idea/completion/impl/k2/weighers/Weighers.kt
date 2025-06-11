@@ -29,15 +29,10 @@ import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
-import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferAbstractForOverrideWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.PreferredSubtypeWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaParameterNameWeigher
-import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.TrailingLambdaWeigher
+import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.*
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
 import org.jetbrains.kotlin.idea.completion.isPositionSuitableForNull
@@ -159,21 +154,8 @@ internal class WeighingContext private constructor(
         fun create(
             parameters: KotlinFirCompletionParameters,
             positionContext: KotlinNameReferencePositionContext,
+            expectedType: KaType? = null,
         ): WeighingContext {
-            val nameExpression = positionContext.nameExpression
-            val expectedType = when {
-                // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
-                // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
-                // currently in case of callable references actual types are calculated incorrectly, which is why we don't use information
-                // about expected type at all
-                // TODO: calculate actual types for callable references correctly and use information about expected type
-                positionContext is KotlinCallableReferencePositionContext -> null
-                nameExpression.expectedType != null -> nameExpression.expectedType
-                nameExpression.parent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
-                nameExpression.parent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpression)
-                else -> null
-            }
-
             fun KtBinaryExpressionWithTypeRHS.isAsOrSafeAs(): Boolean {
                 val operationElementType = operationReference.getReferencedNameElementType()
                 return operationElementType == KtTokens.AS_KEYWORD || operationElementType == KtTokens.AS_SAFE
@@ -202,7 +184,7 @@ internal class WeighingContext private constructor(
             }
 
             val scopeContext: KaScopeContext = parameters.originalFile
-                .scopeContext(nameExpression)
+                .scopeContext(positionContext.nameExpression)
 
             fun implicitReceivers(): List<KaImplicitReceiver> = when (positionContext) {
                 // Implicit receivers do not match for this position completion context.
@@ -231,7 +213,7 @@ internal class WeighingContext private constructor(
          * TODO: It seems like a bug in the analysis API that this is required: KT-76480
          */
         context(KaSession)
-        private fun getAnnotationLiteralExpectedType(
+        internal fun getAnnotationLiteralExpectedType(
             nameExpression: KtElement,
         ): KaType? {
             val collectionLiteralEntry = nameExpression.parent as? KtCollectionLiteralExpression ?: return null
@@ -243,7 +225,7 @@ internal class WeighingContext private constructor(
         }
 
         context(KaSession)
-        private fun getEqualityExpectedType(
+        internal fun getEqualityExpectedType(
             nameExpression: KtElement,
         ): KaType? {
             val binaryExpression = nameExpression.parent as? KtBinaryExpression
@@ -305,10 +287,6 @@ internal object Weighers {
         symbolWithOrigin: KtSymbolWithOrigin<*>? = null,
     ): E = also { lookupElement -> // todo replace everything with apply
         val symbol = symbolWithOrigin?.symbol
-
-        if (lookupElement is OverridesCompletionLookupElementDecorator) {
-            PreferAbstractForOverrideWeigher.addWeight(lookupElement)
-        }
 
         ExpectedTypeWeigher.addWeight(context, lookupElement, symbol)
         KindWeigher.addWeight(lookupElement, symbol, context)

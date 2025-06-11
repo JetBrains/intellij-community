@@ -6,26 +6,30 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 
 interface KLoggerFactory {
-    fun logger(owner: KClass<*>): KLogger
-    fun logger(owner: Any): KLogger
-    fun logger(name: String): KLogger
+  fun logger(owner: KClass<*>): KLogger
+  fun logger(owner: Any): KLogger
+  fun logger(name: String): KLogger
 
-    fun setLoggingContext(map: Map<String, String>?)
-    fun getLoggingContext(): Map<String, String>?
+  fun setLoggingContext(map: Map<String, String>?)
+  fun getLoggingContext(): Map<String, String>?
 }
 
-class LoggingContextContextElement(val contextMap: Map<String, String>?) : ThreadContextElement<Map<String, String>?> {
+//todo [MM] make it abstract with next dock breaking change
+open class LoggingContextContextElement(val contextMap/*todo [MM] rename to AdditionMap*/: Map<String, String>) : ThreadContextElement<Map<String, String>?> {
   override fun restoreThreadContext(context: CoroutineContext, oldState: Map<String, String>?) {
     KLoggers.loggerFactory.setLoggingContext(oldState)
   }
 
   override fun updateThreadContext(context: CoroutineContext): Map<String, String>? {
     val oldState = KLoggers.loggerFactory.getLoggingContext()
-    KLoggers.loggerFactory.setLoggingContext(contextMap)
+    KLoggers.loggerFactory.setLoggingContext((oldState ?: emptyMap()) + contextMap)
     return oldState
   }
 
+  @Deprecated("Use ShipIdLoggingContextElement/RoleLoggingContextElement", level = DeprecationLevel.WARNING)
   override val key: CoroutineContext.Key<*> get() = LoggingContextContextElement
 
+  @Deprecated("Use ShipIdLoggingContextElement/RoleLoggingContextElement", level = DeprecationLevel.WARNING)
   companion object : CoroutineContext.Key<LoggingContextContextElement>
 }
+

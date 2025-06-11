@@ -60,7 +60,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.canBeReferenceToBuiltInEnumFu
 import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle
 import org.jetbrains.kotlin.idea.core.isInheritable
-import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.intentions.isFinalizeMethod
 import org.jetbrains.kotlin.idea.intentions.isReferenceToBuiltInEnumEntries
@@ -89,6 +88,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
 import org.jetbrains.kotlin.resolve.isInlineClass
 import org.jetbrains.kotlin.resolve.isInlineClassType
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.util.findCallableMemberBySignature
 
 class UnusedSymbolInspection : AbstractKotlinInspection() {
@@ -151,9 +151,8 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             val psiSearchHelper = PsiSearchHelper.getInstance(project)
 
             if (!KotlinSearchUsagesSupport.getInstance(project).findScriptsWithUsages(declaration) {
-                    DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }
-                && !ApplicationManager.getApplication().isUnitTestMode) {
-                // Not all script configuration are loaded; behave like it is used
+                    ScriptConfigurationsProvider.getInstance(project)?.getScriptConfiguration(it) != null
+                } && !ApplicationManager.getApplication().isUnitTestMode) { // Not all script configuration are loaded; behave like it is used
                 return TOO_MANY_OCCURRENCES
             }
 

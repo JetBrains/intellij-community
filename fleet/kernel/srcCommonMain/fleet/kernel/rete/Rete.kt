@@ -495,17 +495,6 @@ suspend fun <T> Query<T>.collectLatest(f: suspend CoroutineScope.(T) -> Unit) {
   matchesFlow().collectLatestMatch(f)
 }
 
-/**
- * returns first value of [Query] [Match]es
- * */
-suspend fun <T> Query<T>.first(): T = matchesFlow().first().value
-
-/**
- * returns first value of [Query] [Match]es that satisfies [p] to true,
- * [p] is being read-tracked
- * */
-suspend fun <T> Query<T>.first(p: (T) -> Boolean): T = filter(p).first()
-
 private val CoroutineContext.rete: Rete
   get() = requireNotNull(this[Rete]) { "no Rete on context $this" }
 

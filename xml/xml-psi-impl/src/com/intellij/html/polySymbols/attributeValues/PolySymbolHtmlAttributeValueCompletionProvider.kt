@@ -4,12 +4,12 @@ package com.intellij.html.polySymbols.attributeValues
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptor
+import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
-import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
@@ -33,7 +33,7 @@ class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProv
 
     val providedNames = mutableSetOf(attribute.name)
     if (type == Type.ENUM) {
-      processCompletionQueryResults(queryExecutor, patchedResultSet, PolySymbol.HTML_ATTRIBUTE_VALUES, name,
+      processCompletionQueryResults(queryExecutor, patchedResultSet, HTML_ATTRIBUTE_VALUES, name,
                                     position, context, providedNames = providedNames) {
         if (!it.completeAfterInsert) {
           it.addToResult(parameters, patchedResultSet)
@@ -41,7 +41,7 @@ class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProv
       }
     }
     else {
-      processCompletionQueryResults(queryExecutor, patchedResultSet, PolySymbol.HTML_ATTRIBUTE_VALUES, name,
+      processCompletionQueryResults(queryExecutor, patchedResultSet, HTML_ATTRIBUTE_VALUES, name,
                                     position, context, providedNames = providedNames) {
         it.addToResult(parameters, patchedResultSet)
       }

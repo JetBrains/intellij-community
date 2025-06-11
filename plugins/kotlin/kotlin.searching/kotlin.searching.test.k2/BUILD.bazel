@@ -14,6 +14,7 @@ jvm_library(
   deps = [
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//java/java-indexing-api:indexing",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/plugin/k2",

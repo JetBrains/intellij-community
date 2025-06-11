@@ -24,13 +24,12 @@ class AssertProblemsViewCountCommand(text: String, line: Int) : PerformanceComma
       .getInstance(context.project)
       .selectedTextEditor)
 
-    val actualNumberOfErrors = ProblemsView
+    val actualProblems = ProblemsView
       .getSelectedPanel(context.project)!!
-      .treeModel.root.getFileProblems(editor!!.virtualFile).size
+      .treeModel.root.getFileProblems(editor!!.virtualFile)
 
-
-    assert(expectedNumberOfErrors == actualNumberOfErrors)
-    { "Expected number of errors $expectedNumberOfErrors, actual $actualNumberOfErrors" }
+    assert(expectedNumberOfErrors == actualProblems.size)
+    { "Expected number of errors $expectedNumberOfErrors, actual ${actualProblems.size}\nList of problems:\n$actualProblems" }
   }
 
   override fun getName(): String = "assertProblemsViewCount"

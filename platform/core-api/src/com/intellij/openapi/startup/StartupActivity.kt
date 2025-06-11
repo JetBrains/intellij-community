@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.startup
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -60,10 +60,25 @@ interface ProjectActivity {
 }
 
 /**
- * `initProjectActivity` activity must be defined only by a core and requires approval by core team.
+ * Defines an activity that runs during project initialization.
+ *
+ * `InitProjectActivity` interfaces must be declared only in the core module and require approval from the Core team before implementation.
+ *
+ * If [isParallelExecution] is `true`, the activity may run in parallel with other initialization activities.
  */
 @Internal
 interface InitProjectActivity {
+  /**
+   * Indicates whether this activity can be executed in parallel with other initialization activities.
+   *
+   * Defaults to `false`.
+   */
+  val isParallelExecution: Boolean
+    get() = false
+
+  val isEssential: Boolean
+    get() = true
+
   suspend fun run(project: Project)
 }
 
@@ -71,7 +86,7 @@ interface InitProjectActivity {
 abstract class InitProjectActivityJavaShim : InitProjectActivity {
   abstract fun runActivity(project: Project)
 
-  override suspend fun run(project: Project): Unit {
+  override suspend fun run(project: Project) {
     runActivity(project)
   }
 }

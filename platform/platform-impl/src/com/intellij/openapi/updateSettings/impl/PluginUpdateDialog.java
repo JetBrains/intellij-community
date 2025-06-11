@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,8 @@ import java.util.stream.Collectors;
 /**
  * @author Alexander Lobas
  */
-final class PluginUpdateDialog extends DialogWrapper {
+@ApiStatus.Internal
+public final class PluginUpdateDialog extends DialogWrapper {
   private final @NotNull Collection<PluginDownloader> myDownloaders;
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
@@ -59,14 +61,14 @@ final class PluginUpdateDialog extends DialogWrapper {
 
   private @Nullable Runnable myFinishCallback;
 
-  PluginUpdateDialog(@Nullable Project project,
+  public PluginUpdateDialog(@Nullable Project project,
                      @NotNull Collection<PluginDownloader> downloaders,
                      @Nullable Collection<PluginNode> customRepositoryPlugins) {
     this(project, downloaders, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatesForPlugins) {
+  public PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatesForPlugins) {
     this(project, updatesForPlugins, null, true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }

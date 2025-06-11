@@ -19,6 +19,9 @@ import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptDependenciesSourceInfo
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptModuleInfo
 import org.jetbrains.kotlin.psi.KtFile
 import java.nio.file.Path
 

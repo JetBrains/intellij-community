@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.Disposable;
@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.Topic;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
 import java.nio.file.Path;
@@ -149,6 +150,8 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * Consider using extension point {@code vfs.asyncListener}.
    */
   public abstract void addAsyncFileListener(@NotNull AsyncFileListener listener, @NotNull Disposable parentDisposable);
+
+  public abstract void addAsyncFileListener(@NotNull CoroutineScope coroutineScope, @NotNull AsyncFileListener listener);
 
   /**
    * Constructs a {@link VirtualFile#getUrl() URL} by specified protocol and path.

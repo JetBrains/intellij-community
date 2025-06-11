@@ -37,12 +37,12 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/eel-provider",
     "//platform/util/coroutines",
+    "//platform/diagnostic/telemetry-impl",
   ],
   exports = [
     "//platform/projectModel-api:projectModel",
     "//jps/model-serialization",
     "//platform/util-ex",
-    "//platform/util/concurrency",
   ],
   runtime_deps = [":projectModel-impl_resources"]
 )

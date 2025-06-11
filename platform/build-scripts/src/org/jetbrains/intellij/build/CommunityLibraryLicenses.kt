@@ -57,9 +57,6 @@ object CommunityLibraryLicenses {
       .newBsd("https://www.antlr.org/license.html")
       .suppliedByPersons("Terence Parr"),
 
-    LibraryLicense("ap-validation", libraryName = "ap-validation", url = "https://github.com/JetBrains/ap-validation")
-      .apache("https://github.com/JetBrains/ap-validation/blob/master/LICENSE"),
-
     LibraryLicense(libraryName = "apache.logging.log4j.to.slf4j", url = "https://ant.apache.org/")
       .apache("https://logging.apache.org/log4j/log4j-2.2/license.html")
       .suppliedByOrganizations(Suppliers.APACHE),
@@ -787,6 +784,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/Kotlin/kotlinx-io/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+    LibraryLicense(name = "Kotlin Logging", libraryName = "io.github.oshai.kotlin.logging.jvm", url = "https://github.com/oshai/kotlin-logging/")
+      .apache("https://github.com/oshai/kotlin-logging/blob/master/LICENSE")
+      .suppliedByPersons("Ohad Shai"),
+
     LibraryLicense("Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-core", url = "https://github.com/Kotlin/kotlinx.serialization")
       .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -1128,6 +1129,12 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "Saxon-9HE", version = "9.9", url = "https://saxon.sourceforge.net/")
       .mpl2("https://www.mozilla.org/en-US/MPL/2.0/"),
 
+    LibraryLicense(name = "Schema Kenerator", libraryName = "io.github.smiley4.schema.kenerator.core", url = "https://github.com/SMILEY4/schema-kenerator",
+                   additionalLibraryNames = listOf(
+                     "io.github.smiley4.schema.kenerator.jsonschema",
+                     "io.github.smiley4.schema.kenerator.serialization",))
+      .apache("https://github.com/SMILEY4/schema-kenerator/blob/develop/LICENSE"),
+
     LibraryLicense("setuptools", version = "44.1.1", attachedTo = "intellij.python", url = "https://setuptools.pypa.io/")
       .mit("https://github.com/pypa/setuptools/blob/main/LICENSE"),
 
@@ -1334,6 +1341,11 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("ai.grazie.utils.lucene.lt.compatibility"),
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("cloud-config-client"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.ap.validation"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.configuration"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.connection.client"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.model"),
+    jetbrainsLibrary("com.jetbrains.fus.reporting.serialization.kotlin"),
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-performance-kotlin"),
     jetbrainsLibrary("completion-ranking-cpp-exp"),
@@ -1374,6 +1386,7 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("intellij.remoterobot.remote.fixtures"),
     jetbrainsLibrary("intellij.remoterobot.robot.server.core"),
     jetbrainsLibrary("jetbrains.compose.hot.reload.gradle.idea"),
+    jetbrainsLibrary("jetbrains.fus.reporting.ap.validation"),
     jetbrainsLibrary("jetbrains.intellij.deps.rwmutex.idea"),
     jetbrainsLibrary("jetbrains.kotlin.compose.compiler.plugin"),
     jetbrainsLibrary("jetbrains.llm.mlapi.catboost.shadow.need.slf4j"),

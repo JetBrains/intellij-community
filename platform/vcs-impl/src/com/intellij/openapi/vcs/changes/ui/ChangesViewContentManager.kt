@@ -22,6 +22,7 @@ import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ObjectUtils.tryCast
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
@@ -366,4 +367,27 @@ fun MessageBusConnection.subscribeOnVcsToolWindowLayoutChanges(updateLayout: Run
   subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
     override fun stateChanged(toolWindowManager: ToolWindowManager) = updateLayout.run()
   })
+}
+
+/**
+ * Hides windowed/floating Commit TW when the commit started. Only for default non-modal commit mode
+ */
+@RequiresEdt
+internal fun hideWindowedFloatingTwOnCommit(project: Project) {
+  val commitTw = getCommitToolWindow(project) ?: return
+  if (!commitTw.isActive || !commitTw.isVisible) return
+
+  val commitTwType = commitTw.type
+
+  if (commitTwType.isInWindow()) {
+    commitTw.hide()
+  }
+}
+
+private fun ToolWindowType.isInWindow(): Boolean {
+  return this == ToolWindowType.WINDOWED || this == ToolWindowType.FLOATING
+}
+
+private fun getCommitToolWindow(project: Project): ToolWindow? {
+  return ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.COMMIT)
 }

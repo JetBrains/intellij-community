@@ -23,6 +23,7 @@ public final class ImportSpecImpl implements ImportSpec {
   private @Nullable ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean importProjectData;
+  private boolean selectProjectDataToImport;
   private boolean createDirectoriesForEmptyContentRoots;
   private boolean isActivateBuildToolWindowOnStart;
   private boolean isActivateBuildToolWindowOnFailure;
@@ -51,6 +52,7 @@ public final class ImportSpecImpl implements ImportSpec {
     @Nullable ExternalProjectRefreshCallback callback,
     boolean isPreviewMode,
     boolean importProjectData,
+    boolean selectProjectDataToImport,
     boolean createDirectoriesForEmptyContentRoots,
     boolean isActivateBuildToolWindowOnStart,
     boolean isActivateBuildToolWindowOnFailure,
@@ -67,6 +69,7 @@ public final class ImportSpecImpl implements ImportSpec {
     this.myCallback = callback;
     this.isPreviewMode = isPreviewMode;
     this.importProjectData = importProjectData;
+    this.selectProjectDataToImport = selectProjectDataToImport;
     this.createDirectoriesForEmptyContentRoots = createDirectoriesForEmptyContentRoots;
     this.isActivateBuildToolWindowOnStart = isActivateBuildToolWindowOnStart;
     this.isActivateBuildToolWindowOnFailure = isActivateBuildToolWindowOnFailure;
@@ -130,6 +133,11 @@ public final class ImportSpecImpl implements ImportSpec {
   @Override
   public boolean shouldImportProjectData() {
     return importProjectData;
+  }
+
+  @Override
+  public boolean shouldSelectProjectDataToImport() {
+    return selectProjectDataToImport;
   }
 
   @Override

@@ -248,7 +248,7 @@ public final class PluginInstallOperation {
 
     myShownErrors = false;
 
-    PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode.getDescriptor(), pluginNode.getRepositoryName(), null);
+    PluginDownloader downloader = PluginDownloader.createDownloader(pluginNode, pluginNode.getRepositoryName(), null);
 
     IdeaPluginDescriptor previousDescriptor = PluginManagerCore.getPlugin(pluginNode.getPluginId());
     String previousVersion = (previousDescriptor == null) ? null : previousDescriptor.getVersion();

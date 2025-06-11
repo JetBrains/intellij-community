@@ -22,7 +22,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.python.community.impl.installer.CondaInstallManager
-import com.intellij.python.community.services.shared.PythonWithLanguageLevel
+import com.intellij.python.community.services.shared.VanillaPythonWithLanguageLevel
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleColoredComponent
@@ -159,8 +159,8 @@ internal fun SimpleColoredComponent.customizeForPythonInterpreter(isLoading: Boo
 
   when (interpreter) {
     is DetectedSelectableInterpreter, is ManuallyAddedSelectableInterpreter -> {
-      icon = IconLoader.getTransparentIcon(interpreter.uiCustomization?.icon ?: PythonPsiApiIcons.Python)
-      val title = interpreter.uiCustomization?.title ?: message("sdk.rendering.detected.grey.text")
+      icon = IconLoader.getTransparentIcon(interpreter.ui?.icon ?: PythonPsiApiIcons.Python)
+      val title = interpreter.ui?.title ?: message("sdk.rendering.detected.grey.text")
       append(String.format("Python %-4s", interpreter.languageLevel))
       append(" (" + replaceHomePathToTilde(interpreter.homePath) + ") $title", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
     }
@@ -252,7 +252,7 @@ internal fun Panel.pythonInterpreterComboBox(
   selectedSdkProperty: ObservableMutableProperty<PythonSelectableInterpreter?>, // todo not sdk
   model: PythonAddInterpreterModel,
   validationRequestor: DialogValidationRequestor,
-  onPathSelected: (PythonWithLanguageLevel) -> Unit,
+  onPathSelected: (VanillaPythonWithLanguageLevel) -> Unit,
   customizer: RowsRange.() -> Unit = {},
 ): PythonInterpreterComboBox {
   val comboBox = PythonInterpreterComboBox(model, onPathSelected, ShowingMessageErrorSync)
@@ -292,7 +292,7 @@ internal fun Panel.pythonInterpreterComboBox(
 
 internal class PythonInterpreterComboBox(
   val controller: PythonAddInterpreterModel,
-  val onPathSelected: (PythonWithLanguageLevel) -> Unit,
+  val onPathSelected: (VanillaPythonWithLanguageLevel) -> Unit,
   private val errorSink: ErrorSink,
 ) : ComboBox<PythonSelectableInterpreter?>() {
 

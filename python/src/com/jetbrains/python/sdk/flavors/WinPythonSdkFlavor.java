@@ -12,10 +12,10 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PythonHelpersLocator;
 import kotlin.text.Regex;
 import org.jetbrains.annotations.*;
 

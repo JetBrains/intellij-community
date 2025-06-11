@@ -3,7 +3,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.execution.RunManager"
                     serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
-    <projectServiceInitializer implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer"/>
+    <projectPreInit implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer" order="after moduleBridgeLoaderService"/>
     <pathMacroFilter implementation="com.intellij.execution.configuration.RunConfigurationPathMacroFilter"/>
 
     <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>

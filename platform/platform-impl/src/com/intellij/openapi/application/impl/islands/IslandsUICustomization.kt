@@ -77,13 +77,13 @@ internal class IslandsUICustomization : InternalUICustomization() {
 
   init {
     val listener = AWTEventListener { event ->
-      if (isManyIslandEnabled) {
+      if (isManyIslandEnabled && JBColor.isBright()) {
         val component = (event as HierarchyEvent).component
         val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
 
         if (isToolWindow) {
           UIUtil.forEachComponentInHierarchy(component) {
-            if (it.background == UIUtil.getPanelBackground()) {
+            if (it.background == JBColor.PanelBackground) {
               it.background = JBUI.CurrentTheme.ToolWindow.background()
             }
           }
@@ -141,7 +141,9 @@ internal class IslandsUICustomization : InternalUICustomization() {
             config.restore()
           }
 
-          if (FileEditorManager.getInstance(ProjectUtil.getProjectForWindow(frame) ?: return).openFiles.isEmpty()) {
+          val fileEditorManager = (ProjectUtil.getProjectForWindow(frame) ?: return).getServiceIfCreated(FileEditorManager::class.java)
+
+          if (fileEditorManager?.openFiles?.isEmpty() == true) {
             val editorEmptyTextPainter = ApplicationManager.getApplication().getService(EditorEmptyTextPainter::class.java)
             editorEmptyTextPainter.paintEmptyText(IdeGlassPaneUtil.find(this) as JComponent, g)
           }

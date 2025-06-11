@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.elements
 
+import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.ideFrame
@@ -44,7 +45,15 @@ class NotebookTableOutputUi(data: ComponentData) : UiComponent(data) {
 
   fun changePageSizeTo(n: Int) {
     if (tableView.rowCount() == n) return
-    val currentPagerText = pager.getAllTexts().first().text
+
+    step("Waiting for a page and pager to load") {
+      waitFor(timeout = 15.seconds) {
+        val currentPagerText = pager.getAllTexts().first().text
+        val rowCount = tableView.rowCount()
+        "$rowCount rows" in currentPagerText
+      }
+    }
+
     pager.click()
     driver.ideFrame {
       popup().waitOneText { it.text.contains("Custom") }.click()

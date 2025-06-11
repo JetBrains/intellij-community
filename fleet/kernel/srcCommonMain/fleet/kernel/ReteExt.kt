@@ -41,16 +41,18 @@ private sealed class State11 {
 fun Entity.onDispose(rete: Rete, action: () -> Unit = {}): DisposableHandle =
   let { entity ->
     when {
-      !exists() -> {
+      !entity.exists() -> {
         action()
         DisposableHandle { }
       }
       else -> {
         val state = AtomicReference<State11>(State11.Initial)
-        val handle = existence().observe(rete = rete,
-                                         contextMatches = null,
-                                         queryTracingKey = null,
-                                         dbTimestamp = DbContext.threadBound.impl.timestamp + 1) { matches ->
+        val handle = entity.existence().observe(
+          rete = rete,
+          contextMatches = null,
+          queryTracingKey = null,
+          dbTimestamp = DbContext.threadBound.impl.timestamp + 1,
+        ) { matches ->
           fun actionPrime() {
             when (val witness = state.compareAndExchange(State11.Initial, State11.ActionInvoked)) {
               is State11.Initial -> {
@@ -94,7 +96,7 @@ suspend fun <T> withCondition(condition: () -> Boolean, body: suspend CoroutineS
 
 suspend fun waitFor(p: () -> Boolean) {
   if (p()) return
-  val result = queryAsFlow { p() }.firstOrNull { it }
+  val result = query { p() }.asValuesFlow().firstOrNull { it }
   // query could be terminated before our coroutine, null means we are in shutdown
   if (result == null) {
     throw CancellationException("Query was terminated")
@@ -115,7 +117,7 @@ suspend fun <T> waitForNotNullWithTimeout(timeMillis: Long = 30000L, p: () -> T?
 suspend fun <T> waitForNotNullWithTimeoutOrNull(timeMillis: Long = 30000L, p: () -> T?): T? {
   val value = p()
   if (value != null) return value
-  return withTimeoutOrNull(timeMillis) { queryAsFlow { p() }.firstOrNull { it != null } }
+  return withTimeoutOrNull(timeMillis) { query { p() }.asValuesFlow().firstOrNull { it != null } }
 }
 
 suspend fun <T> waitForNotNull(p: () -> T?): T {

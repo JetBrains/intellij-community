@@ -43,7 +43,7 @@ private class SaveAsDirectoryBasedFormatAction : AnAction(), DumbAware {
     }
 
     val store = project.stateStore
-    val baseDir = store.getProjectFilePath().parent
+    val baseDir = store.projectFilePath.parent
     val ideaDir = baseDir.resolve(Project.DIRECTORY_STORE_FOLDER)
     try {
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {

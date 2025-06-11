@@ -11,13 +11,15 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.impl.installer.PySdkToInstallManager
-import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
+import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
 import com.intellij.python.community.services.systemPython.impl.CoreSystemPythonProvider
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.getOr
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.installer.installBinary
 import kotlinx.coroutines.*
@@ -61,7 +63,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
   }
 
   override suspend fun registerSystemPython(pythonPath: PythonBinary): PyResult<SystemPython> {
-    val pythonWithLangLevel = PythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr { return it }
+    val pythonWithLangLevel = VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonPath).getOr("Python {$pythonPath} is broken") { return it }
     val systemPython = SystemPython(pythonWithLangLevel, null)
     state.userProvidedPythons.add(pythonPath.pathString)
     cache()?.get(pythonPath.getEelDescriptor())?.add(systemPython)
@@ -82,7 +84,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
       else {
         cache.get(eelApi.descriptor)
       }.sorted()
-    } ?: searchPythonsPhysicallyNoCache(eelApi)
+    } ?: searchPythonsPhysicallyNoCache(eelApi).sorted()
 
 
   class MyServiceState : BaseState() {
@@ -119,7 +121,7 @@ internal class SystemPythonServiceImpl(scope: CoroutineScope) : SystemPythonServ
       val badPythons = mutableSetOf<PythonBinary>()
       val pythons = pythonsFromExtensions + state.userProvidedPythonsAsPath.filter { it.getEelDescriptor() == eelApi.descriptor }
 
-      val result = PythonWithLanguageLevelImpl.createByPythonBinaries(pythons.toSet())
+      val result = VanillaPythonWithLanguageLevelImpl.createByPythonBinaries(pythons.toSet())
         .mapNotNull { (python, r) ->
           when (r) {
             is Result.Success -> SystemPython(r.result, pythonsUi[r.result.pythonBinary])

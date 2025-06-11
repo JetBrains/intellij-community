@@ -49,6 +49,7 @@ import org.jetbrains.intellij.build.generatePluginClassPath
 import org.jetbrains.intellij.build.generatePluginClassPathFromPrebuiltPluginFiles
 import org.jetbrains.intellij.build.getDevModeOrTestBuildDateInSeconds
 import org.jetbrains.intellij.build.impl.ArchivedCompilationContext
+import org.jetbrains.intellij.build.impl.BazelCompilationContext
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -63,6 +64,7 @@ import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepositoryForDevBuild
 import org.jetbrains.intellij.build.impl.getOsDistributionBuilder
 import org.jetbrains.intellij.build.impl.getToolModules
+import org.jetbrains.intellij.build.impl.isRunningFromBazelOut
 import org.jetbrains.intellij.build.impl.layoutPlatformDistribution
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -525,6 +527,7 @@ private suspend fun createBuildContext(
           customBuildPaths = result,
         )
         .let { if (options.unpackCompiledClassesArchives) it else ArchivedCompilationContext(it) }
+        .let { if (!isRunningFromBazelOut()) it else BazelCompilationContext(it) }
       }
     }
 

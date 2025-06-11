@@ -4,7 +4,10 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.python.community.execService.*
+import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.ProcessEvent
+import com.intellij.python.community.execService.execGetStdout
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyExecResult
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -26,7 +29,7 @@ import kotlin.time.Duration.Companion.minutes
 suspend fun runExecutableWithProgress(executable: Path, workDir: Path?, timeout: Duration = 10.minutes, vararg args: String): PyExecResult<String> {
   val ansiDecoder = AnsiEscapeDecoder()
   reportRawProgress { reporter ->
-    return ExecService().execGetStdout(WhatToExec.Binary(executable), args.toList(), ExecOptions(workingDirectory = workDir, timeout = timeout), procListener = {
+    return ExecService().execGetStdout(executable, args.toList(), ExecOptions(workingDirectory = workDir, timeout = timeout), procListener = {
       when (it) {
         is ProcessEvent.ProcessStarted, is ProcessEvent.ProcessEnded -> Unit
         is ProcessEvent.ProcessOutput -> {

@@ -177,15 +177,13 @@ class XBreakpointVisualRepresentation(
   }
 
   fun removeHighlighter() {
-    if (this.highlighter != null) {
-      try {
-        this.highlighter!!.dispose()
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
-      this.rangeMarker = null
+    try {
+      rangeMarker?.dispose()
     }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+    rangeMarker = null
   }
 
   private fun redrawInlineInlays() {

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl.agent
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
@@ -16,6 +17,7 @@ data class AgentConfiguration(
   val context: TelemetryContext,
   val agentLocation: Path,
 ) {
+
   data class Settings(
     val enabled: Boolean,
     val openTelemetryApiEnabled: Boolean,
@@ -23,23 +25,59 @@ data class AgentConfiguration(
     val debug: Boolean,
     val commonMetricsEnabled: Boolean,
     val metricExportInterval: Duration?,
+    val outputJsonDestination: Path?
   ) {
+
+    class Builder(
+      var enabled: Boolean = true,
+      var openTelemetryApiEnabled: Boolean = true,
+      var rmiEnabled: Boolean = true,
+      var debug: Boolean = false,
+      var commonMetricsEnabled: Boolean = false,
+      var metricExportInterval: Duration? = null,
+      var outputJsonDestination: Path? = null
+    ) {
+
+      fun build() : Settings{
+        return Settings(
+          enabled = enabled,
+          openTelemetryApiEnabled = openTelemetryApiEnabled,
+          rmiEnabled = rmiEnabled,
+          debug = debug,
+          commonMetricsEnabled = commonMetricsEnabled,
+          metricExportInterval = metricExportInterval,
+          outputJsonDestination = outputJsonDestination
+        )
+      }
+
+      fun withCommonJvmMetrics() : Builder {
+        commonMetricsEnabled = true
+        return this
+      }
+
+      fun withDebugLogs(): Builder {
+        debug = true
+        return this
+      }
+
+      fun withTelemetryDumpFile(path: Path): Builder {
+        outputJsonDestination = path
+        return this
+      }
+    }
+
     companion object {
       @JvmStatic
-      fun withoutMetrics(): Settings {
-        return Settings(
-          enabled = true,
-          openTelemetryApiEnabled = true,
-          rmiEnabled = true,
-          debug = false,
-          commonMetricsEnabled = false,
-          metricExportInterval = null
-        )
+      fun builder(): Builder {
+        return Builder()
       }
     }
   }
 
   companion object {
+
+    private const val AGENT_EXTENSION_MODULE_NAME = "intellij.platform.diagnostic.telemetry.agent.extension"
+
     @JvmStatic
     fun forService(
       serviceName: String,
@@ -87,6 +125,22 @@ data class AgentConfiguration(
           put("otel.metric.export.interval", settings.metricExportInterval.inWholeMilliseconds.toString())
         }
       }
+      if (settings.outputJsonDestination != null) {
+        val agentExtensionPath = getAgentExtensionPath()
+        if (agentExtensionPath != null) {
+          put("otel.traces.exporter.json.file.enabled", "true")
+          put("otel.traces.exporter.json.file.location", settings.outputJsonDestination.toString())
+          put("otel.javaagent.extensions", agentExtensionPath.toString())
+        }
+      }
+    }
+  }
+
+  private fun getAgentExtensionPath(): Path? {
+    val moduleDescriptor = PluginManagerCore.getPluginSet().findEnabledModule(AGENT_EXTENSION_MODULE_NAME)
+                           ?: return null
+    return moduleDescriptor.jarFiles?.first {
+      it.fileName.toString() == "$AGENT_EXTENSION_MODULE_NAME.jar"
     }
   }
 }

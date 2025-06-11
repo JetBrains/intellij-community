@@ -13,7 +13,6 @@ import fleet.rpc.Rpc
 import fleet.rpc.core.RpcFlow
 import fleet.rpc.core.SendChannelSerializer
 import fleet.rpc.remoteApiDescriptor
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -111,7 +110,7 @@ data class XLineBreakpointInstallationRequest(
   val isTemporary: Boolean,
   val isConditional: Boolean,
   val condition: String?,
-  val hasOneBreakpoint: Boolean,
+  val hasBreakpoints: Boolean,
 )
 
 

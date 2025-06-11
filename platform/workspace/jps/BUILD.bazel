@@ -35,7 +35,6 @@ jvm_library(
     "@lib//:opentelemetry-semconv",
     "//platform/diagnostic/telemetry",
   ],
-  exports = ["//platform/workspace/storage"],
   runtime_deps = [":jps_resources"]
 )
 ### auto-generated section `build intellij.platform.workspace.jps` end

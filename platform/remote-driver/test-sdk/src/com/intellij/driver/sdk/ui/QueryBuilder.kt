@@ -69,10 +69,14 @@ class QueryBuilder {
     return allConditions.joinToString(" and ", "(",")")
   }
 
+  infix fun String.and(other: String): String = and(this, other)
+
   fun or(condition: String, condition2: String, vararg conditions: String): String {
     val allConditions = listOf(condition, condition2, *conditions)
     return allConditions.joinToString(" or ","(",")")
   }
+
+  infix fun String.or(other: String): String = or(this, other)
 
   fun componentWithChild(componentLocator: String, childLocator: String) = "${componentLocator}][.//div[${childLocator}]"
 }

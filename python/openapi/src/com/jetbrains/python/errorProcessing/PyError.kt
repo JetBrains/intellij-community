@@ -2,6 +2,8 @@
 package com.jetbrains.python.errorProcessing
 
 import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * Error that is interested to user.
@@ -9,9 +11,21 @@ import com.intellij.openapi.util.NlsSafe
  * Those are *not* NPEs nor OOBs nor various assertions.
  * Do *not* use `catch(Exception)` or `runCatching` with this class.
  *
+ * Use [message] to provide user-readable error description i.e "could not connect to the Internet".
+ * Upper levels will add additional information there.
+ *
  * Most probably you will send this error to [ErrorSink].
  */
-sealed class PyError(val message: @NlsSafe String) {
+sealed class PyError(message: @NlsSafe String) {
+  private val _messages = CopyOnWriteArrayList<@Nls String>(listOf(message))
+  val message: @Nls String get() = _messages.reversed().joinToString(": ")
+
+  /**
+   * To be used by [getOr], see it for more info
+   */
+  fun addMessage(message: @Nls String) {
+    _messages.add(message)
+  }
 
   override fun toString(): String = message
 }

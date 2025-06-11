@@ -4,19 +4,21 @@ package com.intellij.html.polySymbols
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.editor.XmlHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
+import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlTag
-import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer
 
 class PolySymbolsHtmlHighlightingCustomizer: PolySymbolHighlightingCustomizer {
   override fun getSymbolKindTextAttributes(qualifiedKind: PolySymbolQualifiedKind): TextAttributesKey? =
     when(qualifiedKind) {
-      PolySymbol.HTML_ATTRIBUTES -> XmlHighlighterColors.HTML_ATTRIBUTE_NAME
-      PolySymbol.HTML_ELEMENTS -> XmlHighlighterColors.HTML_TAG_NAME
-      PolySymbol.HTML_ATTRIBUTE_VALUES -> XmlHighlighterColors.HTML_ATTRIBUTE_VALUE
+      HTML_ATTRIBUTES -> XmlHighlighterColors.HTML_ATTRIBUTE_NAME
+      HTML_ELEMENTS -> XmlHighlighterColors.HTML_TAG_NAME
+      HTML_ATTRIBUTE_VALUES -> XmlHighlighterColors.HTML_ATTRIBUTE_VALUE
       else -> null
     }
 

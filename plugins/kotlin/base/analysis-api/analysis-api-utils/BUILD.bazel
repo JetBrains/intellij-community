@@ -19,6 +19,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//java/java-indexing-api:indexing",
     "//plugins/kotlin/base/frontend-agnostic",
     "//platform/core-api:core",
     "//platform/ide-core-impl",

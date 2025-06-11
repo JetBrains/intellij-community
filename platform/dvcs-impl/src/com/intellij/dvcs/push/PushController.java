@@ -57,6 +57,8 @@ public final class PushController implements Disposable {
   private final @NonNls ExecutorService myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DVCS Push");
 
   private final Map<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> myView2Model = new TreeMap<>();
+  private @NotNull Map<RepositoryNode, MyRepoModel<?, ?, ?>> myPriorityRepositories;
+  private @NotNull Map<RepositoryNode, MyRepoModel<?, ?, ?>> myOtherRepositories;
 
   private boolean myHasCommitWarning;
 
@@ -85,6 +87,7 @@ public final class PushController implements Disposable {
         myDialog.enableOkActions(!(Boolean)evt.getNewValue());
       }
     });
+    processRepositories();
     Disposer.register(dialog.getDisposable(), this);
   }
 
@@ -105,7 +108,7 @@ public final class PushController implements Disposable {
     });
   }
 
-  public void startLoadingCommits() {
+  private void processRepositories() {
     Map<RepositoryNode, MyRepoModel<?, ?, ?>> priorityLoading = new LinkedHashMap<>();
     Map<RepositoryNode, MyRepoModel<?, ?, ?>> others = new LinkedHashMap<>();
     RepositoryNode nodeForCurrentEditor = findNodeByRepo(myCurrentlyOpenedRepository);
@@ -134,8 +137,13 @@ public final class PushController implements Disposable {
       boolean shouldScrollTo = myView2Model.values().stream().noneMatch(MyRepoModel::isSelected);
       myPushLog.highlightNodeOrFirst(nodeForCurrentEditor, shouldScrollTo);
     }
-    loadCommitsFromMap(priorityLoading);
-    loadCommitsFromMap(others);
+    myPriorityRepositories = priorityLoading;
+    myOtherRepositories = others;
+  }
+
+  public void startLoadingCommits() {
+    loadCommitsFromMap(myPriorityRepositories);
+    loadCommitsFromMap(myOtherRepositories);
   }
 
   private boolean isPreChecked(@NotNull MyRepoModel<?, ?, ?> model) {

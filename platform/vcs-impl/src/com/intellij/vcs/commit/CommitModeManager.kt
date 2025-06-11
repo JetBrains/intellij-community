@@ -105,7 +105,7 @@ class CommitModeManager(private val project: Project, private val coroutineScope
   }
 
   @CalledInAny
-  fun getCurrentCommitMode() = commitMode
+  fun getCurrentCommitMode(): CommitMode = commitMode
 
   private fun canSetNonModal(): Boolean {
     if (isForceNonModalCommit.asBoolean()) return true

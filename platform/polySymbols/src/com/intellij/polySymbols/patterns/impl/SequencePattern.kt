@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.impl.CompoundInsertHandler
+import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
@@ -237,7 +238,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
             symbol = PolySymbolMatch.create(
               name,
               lastMatched.segments.filter { it.start < it.end }.withOffset(-lastMatched.start),
-              PolySymbolQualifiedKind(PolySymbol.NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB),
+              PolySymbolQualifiedKind[NAMESPACE_HTML, SPECIAL_MATCHED_CONTRIB],
               PolySymbolOrigin.empty()
             ))
         }

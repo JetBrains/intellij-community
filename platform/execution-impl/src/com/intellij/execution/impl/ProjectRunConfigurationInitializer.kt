@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.diagnostic.CoroutineTracerShim
@@ -9,11 +9,14 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModulePointerManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectServiceInitializer
+import com.intellij.openapi.startup.InitProjectActivity
 import kotlinx.coroutines.launch
 
-private class ProjectRunConfigurationInitializer : ProjectServiceInitializer {
-  override suspend fun execute(project: Project) {
+private class ProjectRunConfigurationInitializer : InitProjectActivity {
+  override val isEssential: Boolean
+    get() = false
+
+  override suspend fun run(project: Project) {
     val coroutineTracer = CoroutineTracerShim.coroutineTracer
     @Suppress("UsagesOfObsoleteApi")
     (project as ComponentManagerEx).getCoroutineScope().launch(coroutineTracer.rootTrace()) {

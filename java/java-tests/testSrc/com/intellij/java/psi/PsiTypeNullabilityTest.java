@@ -210,6 +210,24 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       }
       """);
     assertEquals("X<? extends java.lang.CharSequence>", type.getCanonicalText());
+    assertEquals("NULLABLE (inherited @Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
+  }
+  
+  public void testWildcardAnnotated() {
+    PsiType type = configureAndGetExpressionType("""
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
+      
+      class X<T> {
+        native X<@NotNull T> foo();
+      
+        @SuppressWarnings("NullableProblems")
+        static void test(X<@Nullable ?> x) {
+          <caret>x;
+        }
+      }
+      """);
+    assertEquals("X<?>", type.getCanonicalText());
     assertEquals("NULLABLE (@Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
   }
   
@@ -276,7 +294,7 @@ public final class PsiTypeNullabilityTest extends LightJavaCodeInsightFixtureTes
       """);
     assertEquals("java.util.List<? extends java.lang.CharSequence>", type.getCanonicalText());
     assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());
-    assertEquals("NULLABLE (@Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
+    assertEquals("NULLABLE (inherited @Nullable)", ((PsiClassType)type).getParameters()[0].getNullability().toString());
     type = GenericsUtil.eliminateWildcards(type);
     assertEquals("java.util.List<java.lang.CharSequence>", type.getCanonicalText());
     assertEquals("NOT_NULL (@NotNull)", type.getNullability().toString());

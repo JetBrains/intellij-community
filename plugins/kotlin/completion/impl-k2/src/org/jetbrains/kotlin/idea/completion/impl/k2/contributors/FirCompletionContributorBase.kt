@@ -84,13 +84,13 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
     /**
      * Returns the name filter that should be used for index lookups.
-     * If the prefix is less than 3 characters, we do not use the regular [scopeNameFilter] as it will
+     * If the prefix is less than 4 characters, we do not use the regular [scopeNameFilter] as it will
      * match occurrences anywhere in the name, which might yield too many results.
      * For other cases (unless the user invokes completion multiple times), this function will return
      * the [startOnlyNameFilter] that requires a match at the start of the lookup item's lookup strings.
      */
     internal fun getIndexNameFilter(): (Name) -> Boolean {
-        return if (parameters.invocationCount >= 2 || sink.prefixMatcher.prefix.length > 2) {
+        return if (parameters.invocationCount >= 2 || sink.prefixMatcher.prefix.length > 3) {
             scopeNameFilter
         } else {
             startOnlyNameFilter
@@ -98,25 +98,25 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     }
 
     context(KaSession)
-    protected fun createOperatorLookupElements(
+    protected fun createOperatorLookupElement(
         context: WeighingContext,
         signature: KaFunctionSignature<*>,
         options: CallableInsertionOptions,
         namedSymbol: KaNamedFunctionSymbol,
-    ): Sequence<LookupElementBuilder> = sequence {
-        if (!namedSymbol.isOperator) return@sequence
+    ): LookupElementBuilder? {
+        if (!namedSymbol.isOperator) return null
 
         val operatorString = when (namedSymbol.name) {
             OperatorNameConventions.GET, OperatorNameConventions.SET -> "[]"
             OperatorNameConventions.INVOKE -> "()"
-            else -> return@sequence
+            else -> return null
         }
-        KotlinFirLookupElementFactory.createBracketOperatorLookupElement(
+        return KotlinFirLookupElementFactory.createBracketOperatorLookupElement(
             operatorName = Name.identifier(operatorString),
             signature = signature,
             options = options,
             expectedType = context.expectedType
-        ).let { yield(it) }
+        )
     }
 
     context(KaSession)
@@ -159,7 +159,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                 // Only offer bracket operators after dot, not for safe access or implicit receivers
                 parameters.position.parent?.parent is KtDotQualifiedExpression
             ) {
-                yieldAll(createOperatorLookupElements(context, signature, options, namedSymbol))
+                createOperatorLookupElement(context, signature, options, namedSymbol)?.let { yield(it) }
             }
         }.map { builder ->
             if (presentableText == null) builder

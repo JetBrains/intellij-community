@@ -34,6 +34,7 @@ public class ImportSpecBuilder {
   private @Nullable String myVmOptions = null;
   private @Nullable String myArguments = null;
   private boolean myImportProjectData = true;
+  private boolean mySelectProjectDataToImport = false;
   private boolean myCreateDirectoriesForEmptyContentRoots = false;
   private @Nullable ProjectResolverPolicy myProjectResolverPolicy = null;
   private @Nullable Runnable myRerunAction = null;
@@ -56,6 +57,7 @@ public class ImportSpecBuilder {
     myVmOptions = importSpec.getVmOptions();
     myArguments = importSpec.getArguments();
     myImportProjectData = importSpec.shouldImportProjectData();
+    mySelectProjectDataToImport = importSpec.shouldSelectProjectDataToImport();
     myCreateDirectoriesForEmptyContentRoots = importSpec.shouldCreateDirectoriesForEmptyContentRoots();
     myProjectResolverPolicy = importSpec.getProjectResolverPolicy();
     myRerunAction = importSpec.getRerunAction();
@@ -140,7 +142,13 @@ public class ImportSpecBuilder {
     return this;
   }
 
-  public ImportSpecBuilder withCreateDirectoriesForEmptyContentRoots() {
+  @CheckReturnValue
+  public ImportSpecBuilder withSelectProjectDataToImport(boolean selectProjectDataToImport) {
+    mySelectProjectDataToImport = selectProjectDataToImport;
+    return this;
+  }
+
+  public ImportSpecBuilder createDirectoriesForEmptyContentRoots() {
     myCreateDirectoriesForEmptyContentRoots = true;
     return this;
   }
@@ -212,6 +220,7 @@ public class ImportSpecBuilder {
       myCallback,
       isPreviewMode,
       myImportProjectData,
+      mySelectProjectDataToImport,
       myCreateDirectoriesForEmptyContentRoots,
       isActivateBuildToolWindowOnStart,
       isActivateBuildToolWindowOnFailure,

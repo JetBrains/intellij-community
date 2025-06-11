@@ -15,7 +15,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.IdeScriptDefinitionProvider
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
@@ -34,7 +34,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
         if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck) return null
 
-        val applicableDefinitions = ScriptDefinitionsManager.getInstance(project).getDefinitions().filter {
+        val applicableDefinitions = IdeScriptDefinitionProvider.getInstance(project).getDefinitions().filter {
                 !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettings.getInstance(project)
                     .isScriptDefinitionEnabled(it)
             }.toList()

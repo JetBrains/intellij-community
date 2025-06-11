@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -65,7 +65,17 @@ public interface ExtensionPoint<T> {
    */
   boolean unregisterExtensions(@NotNull BiPredicate<String, ExtensionComponentAdapter> extensionClassNameFilter, boolean stopAfterFirstMatch);
 
-  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
+  /**
+   * @deprecated Use {@link #addExtensionPointListener(CoroutineScope, boolean, ExtensionPointListener)}
+   */
+  @Deprecated
+  void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener,
+                                 boolean invokeForLoadedExtensions,
+                                 @Nullable Disposable parentDisposable);
+
+  void addExtensionPointListener(@NotNull CoroutineScope coroutineScope,
+                                 boolean invokeForLoadedExtensions,
+                                 @NotNull ExtensionPointListener<T> listener);
 
   /**
    * Consider using {@link ExtensionPointName#addChangeListener}

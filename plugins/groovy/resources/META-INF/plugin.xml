@@ -401,7 +401,7 @@
     <testFramework implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework" order="first"/>
 
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
-    <testGenerator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
+    <testGenerator id="groovyTestGenerator" language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
     <runLineMarkerContributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestLineMarkerContributor"/>
     <runLineMarkerContributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyAppLineMarkerContributor"/>
     <constructorBodyGenerator language="Groovy"

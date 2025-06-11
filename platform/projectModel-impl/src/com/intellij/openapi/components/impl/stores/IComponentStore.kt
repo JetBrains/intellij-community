@@ -22,7 +22,9 @@ interface IComponentStore {
   fun setPath(path: Path) {
   }
 
-  fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
+  fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
+
+  suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
 
   fun unloadComponent(component: Any)
 

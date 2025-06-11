@@ -45,6 +45,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/annotationOnPropertyWithValueClass.kt");
     }
 
+    @TestMetadata("annotationUseSites.kt")
+    public void testAnnotationUseSites() throws Exception {
+        runTest("testData/declaration/annotationUseSites.kt");
+    }
+
     @TestMetadata("build.gradle.kts")
     public void testBuild_gradle() throws Exception {
         runTest("testData/declaration/build.gradle.kts");
@@ -173,6 +178,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("overriddenYetDeprecated.kt")
     public void testOverriddenYetDeprecated() throws Exception {
         runTest("testData/declaration/overriddenYetDeprecated.kt");
+    }
+
+    @TestMetadata("PropertyDelegate.kt")
+    public void testPropertyDelegate() throws Exception {
+        runTest("testData/declaration/PropertyDelegate.kt");
     }
 
     @TestMetadata("reflectKclassExperimental.kt")

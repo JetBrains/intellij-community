@@ -27,6 +27,7 @@ jvm_library(
   deps = [
     "//plugins/lombok/generated",
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
@@ -57,6 +58,8 @@ jvm_library(
   deps = [
     "//plugins/lombok/generated",
     "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

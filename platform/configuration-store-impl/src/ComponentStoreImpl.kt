@@ -127,7 +127,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     storageManager.clearStorages()
   }
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+    initComponentBlocking(component = component, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+  }
+
+  override fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
     var componentName: String? = null
     try {
       @Suppress("DEPRECATION")
@@ -140,8 +144,8 @@ abstract class ComponentStoreImpl : IComponentStore {
             return
           }
 
-          val componentInfo = createComponentInfo(component, stateSpec = null, serviceDescriptor, pluginId)
-          initComponent(componentInfo, changedStorages = null, reloadData = ThreeState.NO)
+          val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = serviceDescriptor, pluginId = pluginId)
+          initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO)
         }
         else {
           componentName = stateSpec.name
@@ -155,7 +159,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             return
           }
 
-          if (initComponent(componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
+          if (initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
             // if not service, so, component manager will check it later for all components
             val project = project
             if (project != null && project.isInitialized) {
@@ -180,8 +184,12 @@ abstract class ComponentStoreImpl : IComponentStore {
       if (e is ControlFlowException) {
         throw e
       }
-      LOG.error(PluginException("Cannot init component state (componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
+      error(PluginException("Cannot init component state (componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
     }
+  }
+
+  protected open fun error(error: PluginException) {
+    LOG.error(error)
   }
 
   private fun initJdom(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, pluginId: PluginId): String {
@@ -194,9 +202,9 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
 
     val componentName = getComponentName(component)
-    val componentInfo = createComponentInfo(component, stateSpec = null, serviceDescriptor = null, pluginId = pluginId)
-    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)
-      ?.getState(component, componentName, pluginId, stateClass = Element::class.java, mergeInto = null, reload = false)
+    val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = null, pluginId = pluginId)
+    val element = storageManager.getOldStorage(component = component, componentName = componentName, operation = StateStorageOperation.READ)
+      ?.getState(component = component, componentName = componentName, pluginId = pluginId, stateClass = Element::class.java, mergeInto = null, reload = false)
     if (element != null) {
       component.readExternal(element)
     }
@@ -237,14 +245,16 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   private fun getClientAwareComponentInfo(name: String): ComponentInfo? {
     val info = components.get(name) ?: return null
-    if (info.stateSpec?.perClient != true || ClientId.isCurrentlyUnderLocalId)
+    if (info.stateSpec?.perClient != true || ClientId.isCurrentlyUnderLocalId) {
       return info
+    }
 
     val componentManager = storageManager.componentManager ?: application
     val componentClass = info.component.javaClass
     val clientComponent = componentManager.getService(componentClass)
-    if (clientComponent == null || clientComponent === info.component)
+    if (clientComponent == null || clientComponent === info.component) {
       return info
+    }
 
     return ComponentInfoImpl(info.pluginId, clientComponent, info.stateSpec)
   }
@@ -292,8 +302,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           currentModificationCount = info.currentModificationCount
           if (currentModificationCount == info.lastModificationCount) {
             if (isSaveModLogEnabled) {
-              SAVE_MOD_LOG.debug(
-                "${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
+              SAVE_MOD_LOG.debug("${if (isUseModificationCount) "Skip " else ""}$name: modificationCount $currentModificationCount equals to last saved")
             }
             if (isUseModificationCount && !(isForce && allowSavingWithoutModifications)) {
               continue
@@ -478,7 +487,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   ): Boolean {
     val stateClass = ComponentSerializationUtil.getStateClass<Any>(component.javaClass)
     val storage = getReadOnlyStorage(component.javaClass, stateClass, configurationSchemaKey)
-    val state = storage?.getState(component, componentName = "", pluginId, stateClass, mergeInto = null, reload = false)
+    val state = storage?.getState(component = component, componentName = "", pluginId = pluginId, stateClass = stateClass, mergeInto = null, reload = false)
     if (state == null) {
       component.noStateLoaded()
     }

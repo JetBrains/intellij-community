@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.base.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.compilerAllowsAnyScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
-import org.jetbrains.kotlin.idea.core.script.k1.modules.ScriptModuleInfo
+import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.hasNoExceptionsToBeUnderSourceRoot
 import org.jetbrains.kotlin.idea.isEnabled

@@ -3,6 +3,7 @@ package com.intellij.python.community.services.systemPython
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelApi
+import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.systemPython.SystemPythonProvider.Companion.EP
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult

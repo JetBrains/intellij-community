@@ -26,6 +26,7 @@ jvm_library(
   javac_opts = ":custom-javac-options",
   deps = [
     "//platform/boot",
+    "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
     "//platform/lang-api:lang",
@@ -40,6 +41,7 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/refactoring",
     "//platform/usageView-impl",
+    "//platform/util/diff",
     "//platform/workspace/jps",
     "@lib//:swingx",
     "@lib//:guava",
@@ -144,6 +146,8 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/boot",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/editor-ui-api:editor-ui",
     "//jps/model-api:model",
     "//platform/lang-api:lang",

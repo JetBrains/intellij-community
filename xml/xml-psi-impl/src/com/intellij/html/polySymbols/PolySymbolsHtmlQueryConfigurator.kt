@@ -8,12 +8,14 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.*
-import com.intellij.polySymbols.PolySymbol.Companion.HTML_ATTRIBUTE_VALUES
+import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.js.JS_EVENTS
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
@@ -67,14 +69,14 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope = element.takeIf { queryExecutor.allowResolve }
                            ?.descriptor?.asSafely<PolySymbolElementDescriptor>()?.symbol?.let { listOf(it) }
-                         ?: queryExecutor.runNameMatchQuery(PolySymbol.HTML_ELEMENTS, element.name)
+                         ?: queryExecutor.runNameMatchQuery(HTML_ELEMENTS, element.name)
 
       elementScope.forEach(consumer)
 
       val attribute = context as? XmlAttribute ?: return
       attribute.takeIf { queryExecutor.allowResolve }
         ?.descriptor?.asSafely<PolySymbolAttributeDescriptor>()?.symbol?.let(consumer)
-      ?: queryExecutor.runNameMatchQuery(PolySymbol.HTML_ATTRIBUTES,
+      ?: queryExecutor.runNameMatchQuery(HTML_ATTRIBUTES,
                                          attribute.name, additionalScope = elementScope)
         .forEach(consumer)
     }
@@ -102,8 +104,8 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       location: PsiElement,
     ): PolySymbolCodeCompletionItem =
       when (qualifiedKind) {
-        PolySymbol.HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
-        PolySymbol.HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided
+        HTML_ELEMENTS -> item.withTypeText(item.symbol?.origin?.library)
+        HTML_ATTRIBUTES -> item // TODO - we can figure out the actual type with full match provided
         else -> item
       }
   }
@@ -134,17 +136,17 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     ): List<PolySymbolsScope> =
       if (params.queryExecutor.allowResolve) {
         when (qualifiedKind) {
-          PolySymbol.HTML_ELEMENTS ->
+          HTML_ELEMENTS ->
             (HtmlDescriptorUtils.getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
              ?: HtmlDescriptorUtils.getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
              ?: emptyArray())
               .map { HtmlElementDescriptorBasedSymbol(it, tag) }
               .toList()
-          PolySymbol.HTML_ATTRIBUTES ->
+          HTML_ATTRIBUTES ->
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors(tag)
               .map { HtmlAttributeDescriptorBasedSymbol(it, tag) }
               .toList()
-          PolySymbol.JS_EVENTS ->
+          JS_EVENTS ->
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors(tag)
               .filter { it.name.startsWith("on") }
               .map { HtmlEventDescriptorBasedSymbol(it) }
@@ -161,17 +163,17 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     ): List<PolySymbol> {
       if (params.queryExecutor.allowResolve) {
         when (qualifiedName.qualifiedKind) {
-          PolySymbol.HTML_ELEMENTS ->
+          HTML_ELEMENTS ->
             HtmlDescriptorUtils.getStandardHtmlElementDescriptor(tag, qualifiedName.name)
               ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
               ?.match(qualifiedName.name, params, scope)
               ?.let { return it }
-          PolySymbol.HTML_ATTRIBUTES ->
+          HTML_ATTRIBUTES ->
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptor(tag, qualifiedName.name)
               ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
               ?.match(qualifiedName.name, params, scope)
               ?.let { return it }
-          PolySymbol.JS_EVENTS -> {
+          JS_EVENTS -> {
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptor(tag, "on${qualifiedName.name}")
               ?.let { HtmlEventDescriptorBasedSymbol(it) }
               ?.match(qualifiedName.name, params, scope)
@@ -197,7 +199,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
                                  name)
 
     override val qualifiedKind: PolySymbolQualifiedKind
-      get() = PolySymbol.HTML_ELEMENTS
+      get() = HTML_ELEMENTS
 
     override val name: String = descriptor.name
 
@@ -247,7 +249,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
                                        tagName, name)
 
     override val qualifiedKind: PolySymbolQualifiedKind
-      get() = PolySymbol.HTML_ATTRIBUTES
+      get() = HTML_ATTRIBUTES
 
     override val name: String = descriptor.name
 
@@ -325,7 +327,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       getDomEventDocumentation(name)
 
     override val qualifiedKind: PolySymbolQualifiedKind
-      get() = PolySymbol.JS_EVENTS
+      get() = JS_EVENTS
 
     override val name: String = descriptor.name.substring(2)
 

@@ -694,6 +694,7 @@ class JavaCommandsCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testBinaryNotAllowedCalledCompletion() {
     Registry.get("ide.completion.command.force.enabled").setValue(true, getTestRootDisposable())
+    Registry.get("ide.completion.command.support.read.only.files").setValue(true, getTestRootDisposable())
     val psiClass = JavaPsiFacade.getInstance(project).findClass(JAVA_LANG_CLASS, GlobalSearchScope.allScope(project))
     val file = psiClass?.containingFile?.virtualFile
     assertNotNull(file)

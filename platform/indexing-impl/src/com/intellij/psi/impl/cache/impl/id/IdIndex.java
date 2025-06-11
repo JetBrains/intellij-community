@@ -4,6 +4,7 @@ package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.indexing.*;
@@ -22,6 +23,8 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 /**
  * An implementation of identifier index where the key is an identifier hash,
  * and the value is an occurrence mask ({@link UsageSearchContext}).
@@ -31,6 +34,7 @@ import java.util.Map;
 @ApiStatus.Internal
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   private static final Logger LOG = Logger.getInstance(IdIndex.class);
+  private static final ThrottledLogger THROTTLED_LOGGER = new ThrottledLogger(LOG, MINUTES.toMillis(1));
 
   public static final @NonNls ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");
 
@@ -116,8 +120,13 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
             //    But if there are some implementations outside our control that doesn't follow, we 'correct' it by
             //    wrapping the map into IdEntryToScopeMapImpl -- with the associated costs -- and log a warning so
             //    devs could fix it later:
-            LOG.warn(subIndexerType.getClass() + " for [" + inputData.getFile().getPath() + "] " +
-                     "returned non-IdEntryToScopeMapImpl map: " + idsMap.getClass());
+            THROTTLED_LOGGER.warn( () ->
+              subIndexerType.getClass() + " for [" + inputData.getFile().getPath() + "] returned non-IdEntryToScopeMapImpl " +
+              "map (" + idsMap.getClass() +")." +
+              "This is not incorrect, but ineffective -- it is strongly recommended to use " +
+              "com.intellij.psi.impl.cache.impl.id.IdDataConsumer helper class to collect IDs " +
+              "and occurrence masks (instead of plain Map impl) in your IdIndexer implementation "
+            );
             return new IdEntryToScopeMapImpl(idsMap);
           }
           return idsMap;

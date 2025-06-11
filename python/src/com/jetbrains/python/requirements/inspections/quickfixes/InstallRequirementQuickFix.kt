@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 internal class InstallRequirementQuickFix(val requirement: PyRequirement) : LocalQuickFix {
   override fun getFamilyName(): String {
-    return PyBundle.message("QFIX.NAME.install.requirement", requirement.name)
+    return PyBundle.message("QFIX.NAME.install.requirement", requirement.presentableText)
   }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

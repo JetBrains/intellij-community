@@ -12,7 +12,7 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.CancellationCheckInLoopsFixProvider
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
-import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.AddBracesUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSemicolon
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -52,7 +52,7 @@ internal class KtInsertCancellationCheckInLoopFix(cancellationCheckCallFqn: Stri
       is KtBlockExpression -> loopBody
       // single-line loops
       is KtExpression -> {
-        AddBracesIntention.Util.addBraces(this, loopBody)
+        AddBracesUtils.addBraces(this, loopBody)
         body as KtBlockExpression
       }
       // no-body loops like `for (i in 1..10);`

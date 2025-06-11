@@ -55,6 +55,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.PROJECT_PATH
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -118,6 +119,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         notificationManager.dispatchEarlyNotifications()
       }
+    }
+
+    suspend fun initEssentialProjectPreInit(project: Project) {
+      runApprovedExtensions(project, "com.intellij.projectPreInit", essentialOnly = true)
     }
   }
 
@@ -929,7 +934,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     )
 
     if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
-      StartupManager.getInstance(project).runAfterOpened {
+      project.serviceAsync<StartupManager>().runAfterOpened {
         conversionResult.postStartupActivity(project)
       }
     }
@@ -938,8 +943,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   private suspend fun runConversion(projectPath: Path): ConversionResult? {
     val conversionService = (ApplicationManager.getApplication() as ComponentManagerEx)
-                              .getServiceAsyncIfDefined(ConversionService::class.java)
-                            ?: return null
+                              .getServiceAsyncIfDefined(ConversionService::class.java) ?: return null
     val result = span("project conversion") {
       conversionService.convert(projectPath)
     }
@@ -952,7 +956,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 
   open suspend fun configureWorkspace(project: Project, projectStoreBaseDir: Path, options: OpenProjectTask): Module? {
-    if (options.runConfigurators && (options.isNewProject || ModuleManager.getInstance(project).modules.isEmpty())
+    if (options.runConfigurators && (options.isNewProject || project.serviceAsync<ModuleManager>().modules.isEmpty())
         || isLoadedFromCacheButHasNoModules(project)
     ) {
       val module = PlatformProjectOpenProcessor.runDirectoryProjectConfigurators(
@@ -1327,19 +1331,16 @@ private suspend fun initProject(
     coroutineScope {
       val preInitJob = projectInitHelper?.launchPreInit(project)
 
-      ProjectServiceInitializer.initEssential(project)
+      runApprovedExtensions(project, "com.intellij.projectPreInit", essentialOnly = false)
+
       projectInitHelper?.notifyInit(project)
 
       if (preloadServices) {
         schedulePreloadServices(project)
       }
 
-      ProjectServiceInitializer.initNonEssential(project)
-
-      launch {
-        preInitJob?.join()
-        project.createComponentsNonBlocking()
-      }
+      preInitJob?.join()
+      project.createComponentsNonBlocking()
     }
   }
   catch (initThrowable: Throwable) {
@@ -1419,38 +1420,20 @@ internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
          id.idString == "com.intellij.kotlinNative.platformDeps"
 }
 
-/**
- * Initializes project services as part of project init after the service container is configured
- * Can be marked essential to be executed as part of project init before component creation
- *
- * Usage requires IJ Platform team approval (including plugin into allowlist).
- */
-@Internal
-interface ProjectServiceInitializer {
-  suspend fun execute(project: Project)
+private suspend fun runApprovedExtensions(project: Project, epName: String, essentialOnly: Boolean) {
+  val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl).getExtensionPoint<InitProjectActivity>(epName)
+  for (adapter in ep.sortedAdapters) {
+    val pluginDescriptor = adapter.pluginDescriptor
+    if (!isCorePlugin(pluginDescriptor)) {
+      LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+      continue
+    }
 
-  companion object {
-    private suspend fun runApprovedExtensions(project: Project, epName: String) {
-      val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-        .getExtensionPoint<ProjectServiceInitializer>(epName)
-      for (adapter in ep.sortedAdapters) {
-        val pluginDescriptor = adapter.pluginDescriptor
-        if (!isCorePlugin(pluginDescriptor)) {
-          LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
-          continue
-        }
-        else {
-          adapter.createInstance<ProjectServiceInitializer>(ep.componentManager)?.execute(project)
-        }
+    span("run $epName ${adapter.assignableToClassName.substringAfterLast('.')}") {
+      val activity = adapter.createInstance<InitProjectActivity>(ep.componentManager) ?: return@span
+      if (activity.isEssential || !essentialOnly) {
+        activity.run(project)
       }
-    }
-
-    suspend fun initEssential(project: Project) {
-      runApprovedExtensions(project, "com.intellij.projectServiceInitializer.essential")
-    }
-
-    suspend fun initNonEssential(project: Project) {
-      runApprovedExtensions(project, "com.intellij.projectServiceInitializer")
     }
   }
 }

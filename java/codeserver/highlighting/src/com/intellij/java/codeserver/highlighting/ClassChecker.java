@@ -198,6 +198,10 @@ final class ClassChecker {
       parent = element;
 
       if (element instanceof PsiDeclarationStatement) element = PsiTreeUtil.getChildOfType(element, PsiClass.class);
+
+      if (myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASS_NAME_OUT_OF_SCOPE) &&
+          element instanceof PsiImplicitClass) return;
+
       if (element instanceof PsiClass psiClass && name.equals(psiClass.getName())) {
         myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, psiClass));
       }
@@ -403,6 +407,8 @@ final class ClassChecker {
     PsiMethod[] methods = implicitClass.getMethods();
     boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method));
     if (!hasMainMethod) {
+      //don't show errors if there is a package, this package will be highlighted
+      if (file.getPackageStatement() != null) return;
       //don't show errors if the file contains broken {}
       if(hasErrorElementWithBraces(file)) return;
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_NO_MAIN_METHOD.create(file, implicitClass));

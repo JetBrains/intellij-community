@@ -86,7 +86,7 @@ internal fun generateDeps(
       }
     }
     else if (element is JpsLibraryDependency) {
-      val untypedLib = element.library!!
+      val untypedLib = element.library ?: error("library must be not null for $element from ${module.module.name}")
       val lib = untypedLib.asTyped(JpsRepositoryLibraryType.INSTANCE)
       if (lib == null) {
         val files = untypedLib.getPaths(JpsOrderRootType.COMPILED)

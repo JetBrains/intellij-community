@@ -8,7 +8,6 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.*
@@ -21,8 +20,6 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
 
 /**
  * Finds and removes dependencies which aren't used in the code.
@@ -30,27 +27,16 @@ import kotlin.io.path.ExperimentalPathApi
 class ModuleDependenciesCleaner(
   private val module: Module,
   dependenciesToCheck: Collection<Module>,
-  private val compilerOutputPath: Path,
-  private val compiledPackagePath: Path,
 ) {
   private val dependenciesToCheck = dependenciesToCheck.toSet()
   private val project = module.project
+  private val usedModules: MutableSet<Module> = HashSet()
+  private val usedLibraries: MutableSet<Library> = HashSet()
 
-  @OptIn(ExperimentalPathApi::class)
-  suspend fun startInBackground() {
-    val fileProcessor = ExtractModuleFileProcessor()
-    compilerOutputPath.forEachClassfile { path ->
-      if (!path.startsWith(compiledPackagePath)) {
-        fileProcessor.processFile(path)
-      }
-    }
-
-    val usedModules: MutableSet<Module> = HashSet()
-    val usedLibraries: MutableSet<Library> = HashSet()
-
+  internal suspend fun findDependenciesToRemove(moduleFileProcessor: ExtractModuleFileProcessor): Set<Module> {
     readAction {
       val fileIndex = ProjectFileIndex.getInstance(module.project)
-      fileProcessor.referencedClasses
+      moduleFileProcessor.referencedClasses
         .asSequence()
         .mapNotNull { className ->
           findFile(className)?.virtualFile
@@ -71,17 +57,12 @@ class ModuleDependenciesCleaner(
         }
     }
 
-
-    val builder = ForwardDependenciesBuilder(project, AnalysisScope(module))
     val dependenciesToRemove =
       withBackgroundProgress(project, JavaUiBundle.message("progress.title.searching.for.redundant.dependencies", module.name)) {
-        builder.analyze()
-        readAction { processRedundantDependencies(usedModules, fileProcessor.gatheredClassLinks) }
-      } ?: return
+        readAction { processRedundantDependencies(usedModules, moduleFileProcessor.gatheredClassLinks) }
+      } ?: return emptySet()
 
-    writeAction {
-      removeDependencies(dependenciesToRemove, usedModules)
-    }
+    return dependenciesToRemove
   }
 
   @RequiresReadLock
@@ -116,8 +97,8 @@ class ModuleDependenciesCleaner(
   private fun findFile(className: String) = JavaPsiFacade.getInstance(module.project).findClass(className, module.getModuleWithDependenciesAndLibrariesScope(
     false))?.containingFile
 
-  private fun removeDependencies(dependenciesToRemove: Set<Module>, usedModules: Set<Module>) {
-    if (module.isDisposed || dependenciesToRemove.any { it.isDisposed }) return
+  fun removeDependencies(dependenciesToRemove: Set<Module>) {
+    if (module.isDisposed || dependenciesToRemove.any { it.isDisposed } || dependenciesToRemove.isEmpty()) return
 
     val model = ModuleRootManager.getInstance(module).modifiableModel
     val rootModelProvider = object : RootModelProvider {

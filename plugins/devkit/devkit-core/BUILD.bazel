@@ -21,6 +21,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:jetbrains-annotations",
+    "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",

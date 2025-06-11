@@ -83,7 +83,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   private val enableSyncOption = AtomicProperty<InitSyncType>(InitSyncType.GET_FROM_SERVER)
   private val disableSyncOption = AtomicProperty<Int>(DisableSyncType.DISABLE)
   private val remoteSettingsExist = AtomicBooleanProperty(false)
-  private val wasUsedBefore = AtomicBooleanProperty(SettingsSyncLocalSettings.getInstance().userId != null)
+  private val wasUsedBefore = AtomicBooleanProperty(currentUser() != null)
   private val userAccountsList = arrayListOf<UserProviderHolder>()
   private val syncPanelHolder = SettingsSyncPanelHolder()
   private val hasMultipleProviders = AtomicBooleanProperty(RemoteCommunicatorHolder.getExternalProviders().isNotEmpty())
@@ -106,25 +106,22 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
     SettingsSyncEvents.getInstance().removeListener(this)
   }
 
+  private fun currentUser(): UserProviderHolder? {
+    val userId = SettingsSyncLocalSettings.getInstance().userId ?: return null
+    val providerCode = SettingsSyncLocalSettings.getInstance().providerCode ?: return null
+    val authService = RemoteCommunicatorHolder.getProvider(providerCode)?.authService ?: return null
+    return authService.getAvailableUserAccounts().find {
+        it.id == userId
+      }?.toUserProviderHolder(authService.providerName)
+  }
+
   override fun createPanel(): DialogPanel {
     syncConfigPanel = syncPanelHolder.createCombinedSyncSettingsPanel(message("configurable.what.to.sync.label"),
                                                                       SettingsSyncSettings.getInstance(),
                                                                       SettingsSyncLocalSettings.getInstance())
 
     configPanel = panel {
-      var userProviderHolder: UserProviderHolder? = null
-      if (SettingsSyncLocalSettings.getInstance().userId != null && SettingsSyncLocalSettings.getInstance().providerCode != null) {
-        val authService = RemoteCommunicatorHolder.getProvider(SettingsSyncLocalSettings.getInstance().providerCode!!)?.authService
-        syncPanelHolder.crossSyncSupported.set(authService?.crossSyncSupported() ?: true)
-        if (authService != null) {
-          authService.getAvailableUserAccounts().find {
-            it.id == SettingsSyncLocalSettings.getInstance().userId
-          }?.apply {
-            userProviderHolder = toUserProviderHolder(authService.providerName)
-          }
-        }
-      }
-
+      var userProviderHolder: UserProviderHolder? = currentUser()
       updateUserAccountsList()
       val infoRow = row {
         text(message("settings.sync.info.message"))
@@ -228,10 +225,10 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
             cell(syncConfigPanel)
               .onReset {
                 syncConfigPanel.reset()
-                wasUsedBefore.set(SettingsSyncLocalSettings.getInstance().userId != null)
+                wasUsedBefore.set(currentUser() != null)
                 hasMultipleProviders.set(RemoteCommunicatorHolder.getExternalProviders().isNotEmpty())
                 enableCheckbox.isSelected = SettingsSyncSettings.getInstance().syncEnabled
-                if (SettingsSyncLocalSettings.getInstance().userId != null) {
+                if (currentUser() != null) {
                   userDropDownLink.selectedItem = userAccountsList.firstOrNull { it.userId == SettingsSyncLocalSettings.getInstance().userId}
                 } else {
                   userDropDownLink.selectedItem = null
@@ -669,7 +666,9 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
       }
       actionRequiredLabel.text = userActionRequired.message
       actionRequiredButton.text = userActionRequired.actionTitle
-      cellDropDownLink.comment?.text = message("sync.status.action.required.comment", userActionRequired.actionTitle, userActionRequired.message)
+      cellDropDownLink.comment?.text = message("sync.status.action.required.comment",
+                                               userActionRequired.actionTitle,
+                                               userActionRequired.actionDescription ?: userActionRequired.message)
     }
     else {
       cellDropDownLink.comment?.text = ""
@@ -745,7 +744,7 @@ internal class SettingsSyncConfigurable(private val coroutineScope: CoroutineSco
   }
 
   override fun loginStateChanged() {
-    if (wasUsedBefore.get() && SettingsSyncLocalSettings.getInstance().userId == null) {
+    if (wasUsedBefore.get() && currentUser() == null) {
       this.reset()
     }
   }

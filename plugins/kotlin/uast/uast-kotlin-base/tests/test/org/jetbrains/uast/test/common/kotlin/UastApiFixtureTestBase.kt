@@ -2148,6 +2148,7 @@ interface UastApiFixtureTestBase {
             """.trimIndent()
         )
 
+        val annoName = "test.pkg.Anno"
         var count = 0
         val uFile = myFixture.file.toUElementOfType<UFile>()!!
         uFile.accept(
@@ -2156,10 +2157,13 @@ interface UastApiFixtureTestBase {
                     if (!node.name.startsWith("with"))
                         return super.visitField(node)
 
-                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == "test.pkg.Anno" }
-                    TestCase.assertEquals(node.name, 1, uAnnos.size)
+                    val sAnnos = node.sourceAnnotations?.filter { it.qualifiedName == annoName }
+                    TestCase.assertEquals(node.name, 1, sAnnos?.size)
 
-                    val jAnnos = (node.javaPsi as? PsiField)?.annotations?.filter { it.qualifiedName == "test.pkg.Anno" }
+                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == annoName }
+                    TestCase.assertEquals(node.name, 0, uAnnos.size)
+
+                    val jAnnos = (node.javaPsi as? PsiField)?.annotations?.filter { it.qualifiedName == annoName }
                     TestCase.assertEquals(node.name, 0, jAnnos?.size)
 
                     count++
@@ -2170,10 +2174,10 @@ interface UastApiFixtureTestBase {
                     if (!node.name.startsWith("getWith"))
                         return super.visitMethod(node)
 
-                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == "test.pkg.Anno" }
+                    val uAnnos = node.uAnnotations.filter { it.qualifiedName == annoName }
                     TestCase.assertEquals(node.name, 0, uAnnos.size)
 
-                    val jAnnos = node.javaPsi.annotations.filter { it.qualifiedName == "test.pkg.Anno" }
+                    val jAnnos = node.javaPsi.annotations.filter { it.qualifiedName == annoName }
                     TestCase.assertEquals(node.name, 0, jAnnos.size)
 
                     count++
@@ -2226,5 +2230,27 @@ interface UastApiFixtureTestBase {
         TestCase.assertNotNull(anno)
         val expected = anno!!.findDeclaredAttributeValue("expected") as? UClassLiteralExpression
         TestCase.assertEquals("java.lang.Throwable", expected?.type?.canonicalText)
+    }
+
+    fun checkAttributeValueWithExtraParenthesis(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt",
+            """
+                // not replaceWith=ReplaceWith(...), but extra parenthesis
+                @Deprecated(message="good-bye", replaceWith=(ReplaceWith("bar()")))
+                fun foo() {}
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElement()!!
+        val foo = uFile.findElementByTextFromPsi<UMethod>("foo", strict = false)
+            .orFail("cant convert to UMethod: foo")
+        val anno = foo.uAnnotations.single()
+        val attr = anno.findAttributeValue("replaceWith")
+        TestCase.assertNotNull(attr)
+        val replaceWith = ((attr as? UParenthesizedExpression)?.expression ?: attr) as? UCallExpression
+        TestCase.assertNotNull(replaceWith)
+        val literal = replaceWith!!.valueArguments.getOrNull(0)?.evaluate()
+        TestCase.assertNotNull(literal)
+        TestCase.assertEquals("bar()", literal)
     }
 }

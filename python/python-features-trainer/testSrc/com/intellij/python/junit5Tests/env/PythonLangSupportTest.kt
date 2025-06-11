@@ -6,8 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.python.community.impl.venv.createVenv
-import com.intellij.python.community.services.internal.impl.PythonWithLanguageLevelImpl
+import com.intellij.python.community.services.internal.impl.VanillaPythonWithLanguageLevelImpl
+import com.intellij.python.community.services.systemPython.SystemPythonService
+import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
@@ -15,6 +16,7 @@ import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLockin
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.venvReader.VirtualEnvReader.Companion.DEFAULT_VIRTUALENV_DIRNAME
 import kotlinx.coroutines.CompletableDeferred
@@ -54,7 +56,8 @@ class PythonLangSupportTest {
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
-  fun ensureVenvCreatedTest(venvAlreadyExists: Boolean, @PythonBinaryPath python: PythonBinary): Unit = timeoutRunBlocking(10.minutes) {
+  fun ensureVenvCreatedTest(venvAlreadyExists: Boolean, @PythonBinaryPath pythonBinary: PythonBinary): Unit = timeoutRunBlocking(10.minutes) {
+    val python = SystemPythonService().registerSystemPython(pythonBinary).getOrThrow()
     val learningProjectsPath = ProjectUtils.learningProjectsPath
     assert(learningProjectsPath.startsWith(temporarySystemPath)) { "$learningProjectsPath must reside in $temporarySystemPath" }
 
@@ -64,7 +67,7 @@ class PythonLangSupportTest {
 
     if (venvAlreadyExists) {
       val venvPath = learningProjectsPath.resolve(DEFAULT_VIRTUALENV_DIRNAME)
-      createVenv(python, venvPath).orThrow()
+      createVenvFromSystemPython(python, venvPath).orThrow()
     }
 
     val sema = CompletableDeferred<Project>()
@@ -81,7 +84,7 @@ class PythonLangSupportTest {
     val sdk = project.pythonSdk!!
     try {
       val pythonBinary = Path.of(sdk.homePath!!)
-      Assertions.assertTrue(PythonWithLanguageLevelImpl.createByPythonBinary(pythonBinary).orThrow().languageLevel.isPy3K, "Sdk is broken")
+      Assertions.assertTrue(VanillaPythonWithLanguageLevelImpl.createByPythonBinary(pythonBinary).orThrow().languageLevel.isPy3K, "Sdk is broken")
     }
     finally {
       writeAction {

@@ -4,11 +4,13 @@ package com.intellij.internal.statistic.eventLog.config;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.DataCollectorSystemEventLogger;
 import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo;
-import com.intellij.internal.statistic.eventLog.connection.EventLogBasicConnectionSettings;
-import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
+import com.jetbrains.fus.reporting.model.http.StatsBasicConnectionSettings;
+import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
+import com.jetbrains.fus.reporting.model.http.StatsProxyInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.Proxy;
 import java.util.Map;
 
 /**
@@ -18,11 +20,11 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   private final DataCollectorDebugLogger myLogger;
   private final DataCollectorSystemEventLogger myEventLogger;
 
-  private final String myTemplateUrl;
+  private final String myRegionalCode;
   private final String myProductCode;
   private final String myProductVersion;
   private final int myBaselineVersion;
-  private final EventLogBasicConnectionSettings myConnectionSettings;
+  private final StatsBasicConnectionSettings myConnectionSettings;
 
   private final boolean myIsInternal;
   private final boolean myIsTestConfig;
@@ -30,19 +32,22 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
 
   private final boolean myIsEAP;
 
-  public EventLogExternalApplicationInfo(@NotNull String templateUrl, @NotNull String productCode,
+  public EventLogExternalApplicationInfo(@NotNull String regionalCode, @NotNull String productCode,
                                          @NotNull String productVersion, @Nullable String userAgent,
                                          boolean isInternal, boolean isTestConfig, boolean isTestSendEndpoint, boolean isEAP,
                                          @NotNull Map<String, String> extraHeaders,
                                          @NotNull DataCollectorDebugLogger logger,
                                          @NotNull DataCollectorSystemEventLogger eventLogger,
                                          int baselineVersion) {
-    myTemplateUrl = templateUrl;
+    myRegionalCode = regionalCode;
     myProductCode = productCode;
     myProductVersion = productVersion;
     myBaselineVersion = baselineVersion;
-    String externalUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
-    myConnectionSettings = new EventLogBasicConnectionSettings(externalUserAgent, extraHeaders);
+    String externalUserAgent = (userAgent == null ? "IntelliJ" : userAgent) + "(External)";
+    myConnectionSettings = new StatsBasicConnectionSettings(externalUserAgent,
+                                                            extraHeaders,
+                                                            null,
+                                                            new StatsProxyInfo(Proxy.NO_PROXY, null));
     myIsInternal = isInternal;
     myIsTestConfig = isTestConfig;
     myIsTestSendEndpoint = isTestSendEndpoint;
@@ -52,8 +57,8 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   }
 
   @Override
-  public @NotNull String getTemplateUrl() {
-    return myTemplateUrl;
+  public @NotNull String getRegionalCode() {
+    return myRegionalCode;
   }
 
   @Override
@@ -72,7 +77,7 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   }
 
   @Override
-  public @NotNull EventLogConnectionSettings getConnectionSettings() {
+  public @NotNull StatsConnectionSettings getConnectionSettings() {
     return myConnectionSettings;
   }
 

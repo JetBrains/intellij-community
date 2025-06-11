@@ -15,7 +15,7 @@ internal class EelHolderImpl<T : Annotation>(val eelTestProvider: EelIjentTestPr
   override fun toString(): String = buildString {
     append(eelTestProvider.name)
     annotation?.let { annotation ->
-      append("(mandatory, ")
+      append("(configured[mandatory=${eelTestProvider.isMandatory(annotation)}], ")
       append(eelTestProvider.annotationToUserVisibleString(annotation))
       append(")")
     }

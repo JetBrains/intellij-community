@@ -24,8 +24,8 @@ import java.util.List;
 public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
   @VisibleForTesting
   public PersistentFSTreeRawAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
-                              @NotNull PersistentFSRecordAccessor recordAccessor,
-                              @NotNull PersistentFSConnection connection) {
+                                     @NotNull PersistentFSRecordAccessor recordAccessor,
+                                     @NotNull PersistentFSConnection connection) {
     super(attributeAccessor, recordAccessor, connection);
 
     if (!this.attributeAccessor.supportsRawAccess()) {
@@ -126,6 +126,55 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
       return true; //we don't know about children => maybe have, maybe not...
     }
     return hasChildren.booleanValue();
+  }
+
+  @Override
+  protected void cacheRoots() throws IOException {
+    //Roots in VFS are quite special:
+    // The root record itself (in connection.records) is just a normal file record, with parentId=NULL_ID,
+    // and nameId=names.enumerate(root name).
+    //
+    // But all roots are _also_ stored as a CHILDREN attribute of special SUPER_ROOT record with reserved id=1.
+    // That specific CHILDREN attribute format is different from an ordinary CHILDREN attribute format: it stores
+    // both rootIds and root_Url_Ids (both as diff-compressed VARINTs). The thing is: rootUrl != rootName.
+    // E.g. for local Linux fs root: name="/", url="file:"
+    //
+    // We use rootUrl in method findOrCreateRootRecord(rootUrl) -- this is how we uniquely identify root on
+    // an actual filesystem -- i.e. we assume rootUrl is a unique way for identify fs node.
+
+    int maxAllocatedID = connection.records().maxAllocatedID();
+    attributeAccessor.readAttributeRaw(SUPER_ROOT_ID, CHILDREN_ATTR, recordBuffer -> {
+      int rootsCount = DataInputOutputUtil.readINT(recordBuffer);
+      if (rootsCount < 0) {
+        throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: roots count(=" + rootsCount + ") must be >=0");
+      }
+      int[] rootsUrlIds = ArrayUtil.newIntArray(rootsCount);
+      int[] rootsIds = ArrayUtil.newIntArray(rootsCount);
+
+      int prevRootId = 0;
+      int prevUrlId = 0;
+      for (int i = 0; i < rootsCount; i++) {
+        int urlId = DataInputOutputUtil.readINT(recordBuffer) + prevUrlId;
+        int rootId = DataInputOutputUtil.readINT(recordBuffer) + prevRootId;
+
+        checkChildIdValid(SUPER_ROOT_ID, rootId, i, maxAllocatedID);
+
+        rootsUrlIds[i] = urlId;
+        rootsIds[i] = rootId;
+
+        prevUrlId = urlId;
+        prevRootId = rootId;
+      }
+      this.rootsIds = rootsIds;
+      this.rootsUrlIds = rootsUrlIds;
+      return null;
+    });
+
+    if (this.rootsIds == null) {
+      //rootsIds could be null here only if the callback wasn't called => CHILDREN_ATTR doesn't exist => roots catalog is empty
+      this.rootsIds = ArrayUtil.EMPTY_INT_ARRAY;
+      this.rootsUrlIds = ArrayUtil.EMPTY_INT_ARRAY;
+    }
   }
 
   //@Override

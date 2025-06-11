@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -67,12 +67,13 @@ class MissingDeprecatedAnnotationOnScheduledForRemovalApiInspection : LocalInspe
     }
 
     private fun hasDeprecatedAnnotation(node: UAnnotated) =
-      node.findAnnotation(DEPRECATED_ANNOTATION_NAME) != null ||
-      node.findAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null ||
-      node.findAnnotation(SCALA_DEPRECATED_ANNOTATION_NAME) != null
+      node.findSourceAnnotation(DEPRECATED_ANNOTATION_NAME) != null ||
+      node.findSourceAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null ||
+      node.findSourceAnnotation(SCALA_DEPRECATED_ANNOTATION_NAME) != null ||
+      node.findSourceAnnotation(KOTLIN_DEPRECATED_ANNOTATION_NAME) != null
 
     private fun isScheduledForRemoval(annotated: UAnnotated): Boolean =
-      annotated.findAnnotation(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME) != null
+      annotated.findSourceAnnotation(SCHEDULED_FOR_REMOVAL_ANNOTATION_NAME) != null
   }
 
 }

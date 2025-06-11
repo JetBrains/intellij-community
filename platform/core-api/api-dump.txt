@@ -841,6 +841,13 @@ com.intellij.openapi.ui.Queryable
 - a:putInfo(java.util.Map):V
 com.intellij.openapi.ui.Queryable$Contributor
 - a:apply(java.util.Map):V
+a:com.intellij.openapi.util.FilesModificationTrackerBase
+- com.intellij.openapi.util.SimpleModificationTracker
+- com.intellij.openapi.Disposable
+- <init>(com.intellij.openapi.project.Project):V
+- dispose():V
+- f:getProject():com.intellij.openapi.project.Project
+- a:isFileSupported(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.util.registry.RegistryManager
 - sf:Companion:com.intellij.openapi.util.registry.RegistryManager$Companion
 - a:get(java.lang.String):com.intellij.openapi.util.registry.RegistryValue
@@ -879,6 +886,8 @@ com.intellij.openapi.vfs.VirtualFileListener
 - fileDeleted(com.intellij.openapi.vfs.VirtualFileEvent):V
 - fileMoved(com.intellij.openapi.vfs.VirtualFileMoveEvent):V
 - propertyChanged(com.intellij.openapi.vfs.VirtualFilePropertyEvent):V
+a:com.intellij.openapi.vfs.VirtualFileManager
+- a:addAsyncFileListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.vfs.AsyncFileListener):V
 com.intellij.openapi.vfs.VirtualFileManagerListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic

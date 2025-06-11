@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.testIntegration.framework
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.java.library.JavaLibraryUtil
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
@@ -108,7 +110,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
         val candidates = mutableSetOf<String>()
 
         // in the current file
-        PsiTreeUtil.findChildrenOfType(file, KtClassOrObject::class.java)
+        findChildrenKtClassOrObject(file)
             .firstOrNull { it.name == outer }
             ?.fqName?.asString()
             ?.let { candidates.add(it + append(inner)) }
@@ -159,7 +161,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             val shortName = annotationEntry.shortName ?: continue
             val fqName = annotationEntry.typeReference?.text ?: shortName.asString()
 
-            val clazz = PsiTreeUtil.findChildrenOfType(file, KtClassOrObject::class.java)
+            val clazz = findChildrenKtClassOrObject(file)
                 .firstOrNull { it.fqName?.asString()?.endsWith(".${fqName}") == true || it.fqName?.asString() == fqName }
                 ?.toLightClass()
             if (clazz != null && MetaAnnotationUtil.isMetaAnnotated(clazz, fqNames)) return annotationEntry
@@ -185,5 +187,12 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             }
         }
         return null
+    }
+
+    private fun findChildrenKtClassOrObject(file: KtFile): Collection<KtClassOrObject> {
+        return CachedValuesManager.getCachedValue(file) {
+            val result = PsiTreeUtil.findChildrenOfType(file, KtClassOrObject::class.java)
+            CachedValueProvider.Result.create(result, file)
+        }
     }
 }

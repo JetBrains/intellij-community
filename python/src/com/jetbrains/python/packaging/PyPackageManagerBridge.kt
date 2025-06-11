@@ -2,11 +2,14 @@
 package com.jetbrains.python.packaging
 
 import com.intellij.execution.ExecutionException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.getOrNull
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
@@ -36,14 +39,19 @@ internal open class PyPackageManagerBridge(sdk: Sdk) : PyTargetEnvironmentPackag
   }
 
   override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage?> {
-    val pythonPackages = runBlockingMaybeCancellable {
-      if (alwaysRefresh) {
-        packageManagerUI.reloadPackagesBackground()
+    val pythonPackages = if (alwaysRefresh) {
+      runBlockingMaybeCancellable {
+        packageManager.reloadPackages().onFailure {
+          @Suppress("UsagesOfObsoleteApi")
+          thisLogger().warn("Failed to reload packages", PyExecutionException(it))
+        }.getOrNull() ?: emptyList()
       }
-      else {
-        packageManagerUI.manager.listInstalledPackages()
+    }
+    else {
+      runBlockingMaybeCancellable {
+        packageManager.listInstalledPackages()
       }
-    } ?: emptyList()
+    }
 
     return pythonPackages.map { PyPackage(it.name, it.version) }
   }

@@ -265,11 +265,6 @@ public class FirLegacyUastDeclarationTestGenerated extends AbstractFirLegacyUast
         runTest("../../uast-kotlin/tests/testData/PropertyAccessors.kt");
     }
 
-    @TestMetadata("PropertyDelegate.kt")
-    public void testPropertyDelegate() throws Exception {
-        runTest("../../uast-kotlin/tests/testData/PropertyDelegate.kt");
-    }
-
     @TestMetadata("PropertyInitializer.kt")
     public void testPropertyInitializer() throws Exception {
         runTest("../../uast-kotlin/tests/testData/PropertyInitializer.kt");

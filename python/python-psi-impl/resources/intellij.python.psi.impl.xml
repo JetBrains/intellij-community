@@ -1,6 +1,7 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.python.psi"/>
+    <module name="intellij.python.community.helpersLocator"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -533,9 +534,6 @@
     <extensionPoint qualifiedName="Pythonid.pyiStubSuppressor"
                     interface="com.jetbrains.python.pyi.PyiStubSuppressor"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.jetbrains.python.pythonHelpersLocator"
-                    interface="com.jetbrains.python.PythonHelpersLocator"
-                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -615,8 +613,5 @@
     <pyiStubSuppressor implementation="com.jetbrains.python.tensorFlow.TensorflowPyiStubsSuppressor"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.jetbrains.python">
-    <pythonHelpersLocator implementation="com.jetbrains.python.PythonHelpersLocatorDefault" />
-  </extensions>
 
 </idea-plugin>

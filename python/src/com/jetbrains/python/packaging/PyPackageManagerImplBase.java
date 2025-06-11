@@ -11,20 +11,20 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PySdkBundle;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.errorProcessing.ExecError;
 import com.jetbrains.python.errorProcessing.ExecErrorReason;
+import com.jetbrains.python.packaging.common.PythonPackage;
+import com.jetbrains.python.packaging.pip.PipParseUtils;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -287,47 +287,13 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return urlArgument;
   }
 
-  protected final @NotNull List<PyPackage> parsePackagingToolOutput(@NotNull String output) throws PyExecutionException {
+  protected static @NotNull List<PyPackage> parsePackagingToolOutput(@NotNull String output) {
+    List<@NotNull PythonPackage> packageList = PipParseUtils.parseListResult(output);
     List<PyPackage> packages = new ArrayList<>();
-    for (String line : StringUtil.splitByLines(output)) {
-      PyPackage pkg = parsePackaging(line,
-                                     "\t",
-                                     true,
-                                     PySdkBundle.message("python.sdk.packaging.invalid.output.format")
-      );
-
-      if (pkg != null) {
-        packages.add(pkg);
-      }
+    for (PythonPackage pythonPackage : packageList) {
+      PyPackage pkg = new PyPackage(pythonPackage.getName(), pythonPackage.getVersion());
+      packages.add(pkg);
     }
     return packages;
-  }
-
-  protected final @Nullable PyPackage parsePackaging(@NotNull @NonNls String line,
-                                                     @NotNull @NonNls String separator,
-                                                     boolean useLocation,
-                                                     @NotNull @Nls String errorMessage) throws PyExecutionException {
-    List<String> fields = StringUtil.split(line, separator);
-    if (fields.size() < 3) {
-      throw new PyExecutionException(errorMessage);
-    }
-
-    final String name = fields.get(0);
-
-    // TODO does it has to be parsed regardless the name?
-    List<PyRequirement> requirements = fields.size() >= 4 ?
-                                       parseRequirements(toMultilineString(fields.get(3))) :
-                                       List.of();
-
-    return "Python".equals(name) ?
-           null :
-           new PyPackage(name,
-                         fields.get(1),
-                         useLocation ? fields.get(2) : "",
-                         requirements);
-  }
-
-  private static @NotNull String toMultilineString(@NotNull String string) {
-    return StringUtil.join(StringUtil.split(string, ":"), "\n");
   }
 }

@@ -419,6 +419,9 @@ internal class BazelBuildFileGenerator(
           // https://youtrack.jetbrains.com/issue/IJI-2662/RhizomedbCommandLineProcessor-requires-output-dir-but-we-dont-have-it-for-Bazel-compilation
           //option("exported_compiler_plugins", arrayOf("@lib//:rhizomedb-plugin"))
         //}
+        else if (module.name == "fleet.rpc") {
+          option("exported_compiler_plugins", arrayOf("@lib//:rpc-plugin"))
+        }
 
         var deps = moduleList.deps.get(moduleDescriptor)
         if (deps != null && deps.provided.isNotEmpty()) {
