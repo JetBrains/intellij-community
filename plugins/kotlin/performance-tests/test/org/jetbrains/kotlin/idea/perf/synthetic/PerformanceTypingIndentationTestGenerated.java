@@ -1970,6 +1970,31 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/AfterPropertySetter.after.kt");
             }
 
+            @TestMetadata("AfterSuperTypeListMultipleLines.after.kt")
+            public void testAfterSuperTypeListMultipleLines() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/AfterSuperTypeListMultipleLines.after.kt");
+            }
+
+            @TestMetadata("AfterSuperTypeListMultipleLinesInterface.after.kt")
+            public void testAfterSuperTypeListMultipleLinesInterface() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/AfterSuperTypeListMultipleLinesInterface.after.kt");
+            }
+
+            @TestMetadata("AfterSuperTypeListMultipleLinesInvocation.after.kt")
+            public void testAfterSuperTypeListMultipleLinesInvocation() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/AfterSuperTypeListMultipleLinesInvocation.after.kt");
+            }
+
+            @TestMetadata("AfterSuperTypeListMultipleLinesObject.after.kt")
+            public void testAfterSuperTypeListMultipleLinesObject() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/AfterSuperTypeListMultipleLinesObject.after.kt");
+            }
+
+            @TestMetadata("AfterSuperTypeListMultipleLinesTrailingComma.after.kt")
+            public void testAfterSuperTypeListMultipleLinesTrailingComma() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/AfterSuperTypeListMultipleLinesTrailingComma.after.kt");
+            }
+
             @TestMetadata("AfterTry.after.kt")
             public void testAfterTry() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/AfterTry.after.kt");

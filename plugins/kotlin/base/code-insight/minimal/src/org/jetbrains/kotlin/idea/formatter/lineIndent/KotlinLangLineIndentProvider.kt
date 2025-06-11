@@ -164,6 +164,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         OpenTypeBrace,
         CloseTypeBrace,
 
+        ClassifierKeyword,
         FunctionKeyword,
         Dot,
         Quest,
@@ -221,6 +222,9 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             KtTokens.CATCH_KEYWORD to Identifier,
             KtTokens.CONTEXT_KEYWORD to Identifier,
 
+            KtTokens.CLASS_KEYWORD to ClassifierKeyword,
+            KtTokens.OBJECT_KEYWORD to ClassifierKeyword,
+            KtTokens.INTERFACE_KEYWORD to ClassifierKeyword,
             KtTokens.FUN_KEYWORD to FunctionKeyword,
             KtTokens.DOT to Dot,
             KtTokens.QUEST to Quest,
@@ -320,11 +324,22 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             }
 
             val beforeLeftBrace = leftBrace.copyAnd { it.moveBeforeIgnoringWhiteSpaceOrComment() }
-            val leftAnchor = if (beforeLeftBrace.isAt(RightParenthesis)) {
-                beforeLeftBrace.moveBeforeParentheses(LeftParenthesis, RightParenthesis)
-                beforeLeftBrace
-            } else {
-                findFunctionDeclarationBeforeBody(beforeLeftBrace)
+
+            val classifierDefinitionBefore = findClassifierKeywordBefore(beforeLeftBrace)
+            val leftAnchor = when {
+                classifierDefinitionBefore != null -> {
+                    // We are likely at the opening brace of a classifier body, we want to use it as anchor
+                    classifierDefinitionBefore
+                }
+                beforeLeftBrace.isAt(RightParenthesis) -> {
+                    // We could be at a function call, we want to use it as anchor
+                    beforeLeftBrace.moveBeforeParentheses(LeftParenthesis, RightParenthesis)
+                    beforeLeftBrace
+                }
+                else -> {
+                    // We could be at a function declaration
+                    findFunctionDeclarationBeforeBody(beforeLeftBrace)
+                }
             }
 
             val resultPosition = leftAnchor?.takeIf { !it.isAtEnd } ?: leftBrace
@@ -606,6 +621,75 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
                 moveBeforeTypeParametersIfPossible()
 
                 takeIf { it.isAt(FunctionKeyword) }
+            }
+        }
+
+        private fun SemanticEditorPosition.skipSuperTypeListBefore(): SemanticEditorPosition? = with(copy()) {
+            moveBeforeWhileThisIsWhiteSpaceOrComment()
+            // Potentially trailing comma
+            if (isAt(Comma)) {
+                moveBeforeIgnoringWhiteSpaceOrComment()
+            }
+            // Skipping entries in the super type list
+            while (isAt(Identifier) || isAt(RightParenthesis)) {
+                if (isAt(RightParenthesis)) {
+                    // Super constructor invocation
+                    // Skip before arguments
+                    moveBeforeParentheses(LeftParenthesis, RightParenthesis)
+                    moveBeforeWhileThisIsWhiteSpaceOrComment()
+                    // Skip before potentially existing type brackets
+                    if (isAt(CloseTypeBrace)) {
+                        moveBeforeParentheses(OpenTypeBrace, CloseTypeBrace)
+                        moveBeforeWhileThisIsWhiteSpaceOrComment()
+                    }
+                    // Skip before the name of the super type
+                    if (isAt(Identifier)) {
+                        moveBeforeIgnoringWhiteSpaceOrComment()
+                    }
+                } else {
+                    // Interface super type
+                    // Skip identifier
+                    moveBeforeIgnoringWhiteSpaceOrComment()
+                }
+                // Skip potentially preceding comma
+                if (isAt(Comma)) {
+                    moveBeforeIgnoringWhiteSpaceOrComment()
+                }
+            }
+            // We should now be at a colon if it was a super type list
+            if (isAt(Colon)) {
+                moveBeforeIgnoringWhiteSpaceOrComment()
+                this
+            } else {
+                null
+            }
+        }
+
+        private fun findClassifierKeywordBefore(identifierPosition: SemanticEditorPosition): SemanticEditorPosition? {
+            if (identifierPosition.isAt(ClassifierKeyword)) return identifierPosition
+            // Skip potential super type list before the brace
+            val positionBeforePotentialSuperTypeList = identifierPosition.skipSuperTypeListBefore() ?: identifierPosition
+
+            return with(positionBeforePotentialSuperTypeList.copy()) {
+                moveBeforeWhileThisIsWhiteSpaceOrComment()
+                // Skip constructor arguments
+                if (isAt(RightParenthesis)) {
+                    moveBeforeWhileThisIsWhiteSpaceOrComment()
+                    moveBeforeParentheses(LeftParenthesis, RightParenthesis)
+                    moveBeforeWhileThisIsWhiteSpaceOrComment()
+                }
+                // Skip type parameters
+                if (isAt(CloseTypeBrace)) {
+                    moveBeforeWhileThisIsWhiteSpaceOrComment()
+                    moveBeforeParentheses(OpenTypeBrace, CloseTypeBrace)
+                    moveBeforeWhileThisIsWhiteSpaceOrComment()
+                }
+                // Skip the name of the class
+                if (isAt(Identifier)) {
+                    moveBeforeIgnoringWhiteSpaceOrComment()
+                }
+
+                takeIf { it.isAt(ClassifierKeyword) }
             }
         }
 
