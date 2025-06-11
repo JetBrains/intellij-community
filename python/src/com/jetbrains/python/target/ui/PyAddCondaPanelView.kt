@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v1
+package com.jetbrains.python.target.ui
 
 import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.openapi.Disposable
@@ -25,6 +25,7 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Compan
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import com.jetbrains.python.sdk.add.PyAddSdkStateListener
 import com.jetbrains.python.sdk.add.PyAddSdkView
+import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.Nls
@@ -133,7 +134,7 @@ internal class PyAddCondaPanelView(private val model: PyAddCondaPanelModel) : Py
         targetPanelExtension?.applyToTargetConfiguration()
         model.onCondaCreateSdkClicked((Dispatchers.EDT + ModalityState.any().asContextElement()), reporter,
                                       model.targetConfiguration).onFailure {
-          logger<PyAddCondaPanelModel>().warn(it.message)
+          logger<PyAddCondaPanelView>().warn(it.message)
           showError(
             PyBundle.message("python.sdk.conda.cant.create.title"),
             PyBundle.message("python.sdk.conda.cant.create.body", it.message))

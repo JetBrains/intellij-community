@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v1
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.target.ui
 
 import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
@@ -47,6 +47,7 @@ import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.setupAssociated
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
+import com.jetbrains.python.target.createDetectedSdk
 import java.awt.BorderLayout
 import java.util.function.Supplier
 

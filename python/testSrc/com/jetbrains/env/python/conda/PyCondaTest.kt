@@ -14,8 +14,8 @@ import com.jetbrains.getPythonVersion
 import com.jetbrains.python.errorProcessing.asKotlinResult
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.add.v1.loadLocalPythonCondaPath
-import com.jetbrains.python.sdk.add.v1.saveLocalPythonCondaPath
+import com.jetbrains.python.conda.loadLocalPythonCondaPath
+import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.EmptyNamedEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile

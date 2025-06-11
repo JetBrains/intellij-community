@@ -25,11 +25,8 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.show
-import com.jetbrains.python.sdk.add.v1.CreateSdkInterrupted
-import com.jetbrains.python.sdk.add.v1.doCreateSouthPanel
-import com.jetbrains.python.sdk.add.v1.show
-import com.jetbrains.python.sdk.add.v1.swipe
 import com.jetbrains.python.showErrorDialog
+import io.ktor.utils.io.CancellationException
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
 import java.io.IOException
@@ -246,8 +243,8 @@ class PyAddSdkDialog private constructor(
     try {
       selectedPanel?.complete()
     }
-    catch (e: CreateSdkInterrupted) {
-      return
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: IOException) {
       Messages.showErrorDialog(e.localizedMessage, CommonBundle.message("title.error"))

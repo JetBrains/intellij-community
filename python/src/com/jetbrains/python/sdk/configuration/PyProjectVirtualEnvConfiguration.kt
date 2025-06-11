@@ -26,9 +26,9 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.v1.PyAddSdkPanelBase
-import com.jetbrains.python.sdk.add.v1.PyAddSdkPanelBase.Companion.isLocal
-import com.jetbrains.python.sdk.add.v1.TargetPanelExtension
+import com.jetbrains.python.target.ui.PyAddSdkPanelBase
+import com.jetbrains.python.target.ui.PyAddSdkPanelBase.Companion.isLocal
+import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData

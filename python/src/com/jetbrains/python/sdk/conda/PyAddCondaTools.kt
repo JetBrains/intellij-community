@@ -24,9 +24,8 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.add.v1.PyAddCondaPanelModel
-import com.jetbrains.python.sdk.add.v1.loadLocalPythonCondaPath
-import com.jetbrains.python.sdk.add.v1.saveLocalPythonCondaPath
+import com.jetbrains.python.conda.loadLocalPythonCondaPath
+import com.jetbrains.python.conda.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
@@ -214,7 +213,7 @@ private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: Full
     // TODO: Should we test with browsable target as well?
 
     if (targetPlatform.await().platform == Platform.WINDOWS) {
-      logger<PyAddCondaPanelModel>().warn("Remote windows target not supported")
+      logger<TargetCommandExecutor>().warn("Remote windows target not supported")
       return@withContext null
     }
     return@withContext if (executeShellCommand("test -x $expandedPath").await().exitCode == 0) expandedPath

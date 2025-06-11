@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.sdk.add.v1
+package com.jetbrains.python.target.ui
 
 import com.intellij.CommonBundle
 import com.intellij.execution.target.IncompleteTargetEnvironmentConfiguration
@@ -40,6 +40,7 @@ import java.awt.Component
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * The panel that is supposed to be used both for local and non-local target-based versions of "New Interpreter" dialog.
@@ -170,8 +171,8 @@ internal class PyAddTargetBasedSdkPanel(
     try {
       selectedPanel?.complete()
     }
-    catch (e: CreateSdkInterrupted) {
-      return
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
       val cause = ExceptionUtil.findCause(e, PyExecutionException::class.java)
@@ -194,11 +195,11 @@ internal class PyAddTargetBasedSdkPanel(
     private const val SPLITTER_COMPONENT_CARD_PANE = "Splitter"
 
     /**
-     * Applies the empty border (i.e. adds insets) to the nearest [com.intellij.openapi.ui.DialogPanel].
+     * Applies the empty border (i.e. adds insets) to the nearest [DialogPanel].
      *
      * [com.intellij.ui.dsl.gridLayout.impl.GridImpl] adds extra gaps "to guarantee no visual clippings (like focus rings)" are present.
      * This results in an additional offset if checkboxes or radio buttons are added to the panel. We compensate this by adding the proper
-     * border directly to the [com.intellij.openapi.ui.DialogPanel].
+     * border directly to the [DialogPanel].
      *
      * @see com.intellij.ui.dsl.gridLayout.impl.LayoutData.outsideGaps
      * @see com.intellij.ui.dsl.gridLayout.impl.GridImpl.getPreferredSizeData

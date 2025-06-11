@@ -17,12 +17,12 @@ import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.add.v1.TargetPanelExtension
+import com.jetbrains.python.target.ui.TargetPanelExtension
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   /**
    * Docker target may also access WSL, hence returns WSL here.
