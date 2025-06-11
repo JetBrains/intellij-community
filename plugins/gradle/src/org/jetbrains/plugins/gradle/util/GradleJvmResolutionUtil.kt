@@ -29,11 +29,12 @@ fun getGradleJvmLookupProvider(project: Project, projectSettings: GradleProjectS
   SdkLookupProvider.getInstance(project, GradleJvmProviderId(projectSettings))
 
 fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gradleVersion: GradleVersion) {
+  val projectPath = Paths.get(projectSettings.externalProjectPath)
   // Projects using Daemon JVM criteria with a compatible Gradle version will skip the
   // Gradle JVM setup since this will be delegated to Gradle
-  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectSettings)) return
+  if (GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectPath, gradleVersion)) return
 
-  val resolutionContext = GradleJvmResolutionContext(project, Paths.get(projectSettings.externalProjectPath), gradleVersion)
+  val resolutionContext = GradleJvmResolutionContext(project, projectPath, gradleVersion)
   projectSettings.gradleJvm = resolutionContext.findGradleJvm()
   if (projectSettings.gradleJvm != null) {
     return
