@@ -19,7 +19,7 @@ public final class TestGenerators extends LanguageExtension<TestGenerator> {
     super("com.intellij.testGenerator", new JavaTestGenerator());
   }
 
-  public static Collection<TestGenerator> allForLanguageWithDefault(@NotNull Language language) {
+  public static @NotNull Collection<TestGenerator> allForLanguageWithDefault(@NotNull Language language) {
     Set<TestGenerator> generators = new LinkedHashSet<>(INSTANCE.allForLanguage(language));
     generators.add(INSTANCE.getDefaultImplementation());
     return generators;
