@@ -591,22 +591,14 @@ fun getLockPermitContext(forSharing: Boolean = false): Pair<CoroutineContext, Ac
 fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pair<CoroutineContext, AccessToken> {
   val application = ApplicationManager.getApplication()
   return if (application != null) {
-    if (isLockStoredInContext) {
-      val (context, cleanup) = application.getLockStateAsCoroutineContext(baseContext, forSharing)
-      val targetContext = if (EDT.isCurrentThreadEdt()) {
-        context + SafeForRunBlockingUnderReadAction
-      }
-      else {
-        context
-      }
-      targetContext to cleanup
-    }
-    else if (application.isReadAccessAllowed) {
-      RunBlockingUnderReadActionMarker to AccessToken.EMPTY_ACCESS_TOKEN
+    val (context, cleanup) = application.getLockStateAsCoroutineContext(baseContext, forSharing)
+    val targetContext = if (EDT.isCurrentThreadEdt()) {
+      context + SafeForRunBlockingUnderReadAction
     }
     else {
-      EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
+      context
     }
+    targetContext to cleanup
   }
   else {
     EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
@@ -616,13 +608,8 @@ fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pa
 @IntellijInternalApi
 @Internal
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
-  return if (isLockStoredInContext) {
-    val application = ApplicationManager.getApplication()
-    application != null && application.isParallelizedReadAction(this) && application.isReadAccessAllowed && this[SafeForRunBlockingUnderReadAction] == null
-  }
-  else {
-    this[RunBlockingUnderReadActionMarker] != null
-  }
+  val application = ApplicationManager.getApplication()
+  return application != null && application.isParallelizedReadAction(this) && application.isReadAccessAllowed && this[SafeForRunBlockingUnderReadAction] == null
 }
 
 private object RunBlockingUnderReadActionMarker

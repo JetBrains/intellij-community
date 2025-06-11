@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.getGlobalThreadingSupport
-import com.intellij.openapi.application.isLockStoredInContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
@@ -38,7 +37,7 @@ internal class InternalReadAction<T>(
     }
     else {
       // Third condition is check for lock consistency
-      if (isLockStoredInContext && application.isParallelizedReadAction(currentCoroutineContext()) && application.isReadAccessAllowed) {
+      if (application.isParallelizedReadAction(currentCoroutineContext()) && application.isReadAccessAllowed) {
         val unsatisfiedConstraint = findUnsatisfiedConstraint()
         check(unsatisfiedConstraint == null) {
           "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"

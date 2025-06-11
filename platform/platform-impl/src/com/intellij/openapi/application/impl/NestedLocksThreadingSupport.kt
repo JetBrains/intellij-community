@@ -439,10 +439,6 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken> {
-    if (!isLockStoredInContext) {
-      return EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
-    }
-
     val currentComputationStateElement = baseContext[ComputationStateContextElement]
     // we suppose that the caller passes `baseContext` that is actually correct
     val currentComputationState = currentComputationStateElement?.computationState
@@ -550,7 +546,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   override fun isParallelizedReadAction(context: CoroutineContext): Boolean {
-    return isLockStoredInContext && context[ComputationStateContextElement]?.computationState?.isParallelizedReadPermit() == true
+    return context[ComputationStateContextElement]?.computationState?.isParallelizedReadPermit() == true
   }
 
   /**

@@ -4,13 +4,6 @@ package com.intellij.openapi.application
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * - `false` means that lock permits are bound only to threads
- * - `true` means that lock permits also stored in coroutine contexts
- */
-@get:ApiStatus.Internal
-val isLockStoredInContext: Boolean = System.getProperty("ide.store.lock.in.context", "true").toBoolean()
-
-/**
  * - `false` means that [backgroundWriteAction] will perform write actions from a non-modal context on a background thread
  * - `true` means that [backgroundWriteAction] will perform write actions in and old way (on EDT)
  */

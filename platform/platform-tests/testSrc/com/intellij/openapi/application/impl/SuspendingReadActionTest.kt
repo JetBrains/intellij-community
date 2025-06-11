@@ -68,12 +68,7 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
           val suspendingJob = Cancellation.currentJob()!!
           assertReadActionWithoutCurrentJob(suspendingJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
           withContext(Dispatchers.Default) {
-            if (isLockStoredInContext) {
-              assertNestedContext(coroutineContext.job)
-            }
-            else {
-              assertEmptyContext(coroutineContext.job)
-            }
+            assertNestedContext(coroutineContext.job)
           }
           assertReadActionWithoutCurrentJob(suspendingJob)
         }
