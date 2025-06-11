@@ -134,6 +134,6 @@ object SourceRootAssertions {
         }
       }
     }
-    assertEqualsUnordered(actualRoots, expectedRoots, messageSupplier)
+    assertEqualsUnordered(expectedRoots, actualRoots, messageSupplier)
   }
 }
