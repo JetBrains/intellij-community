@@ -9,13 +9,17 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil.findChildrenOfType
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.xml.XmlAttributeValue
+import com.intellij.psi.xml.XmlTag
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.stubindex.KotlinPropertyShortNameIndex
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.utils.mapToSetOrEmpty
+import java.nio.file.Path
+import kotlin.io.path.name
 
 
 internal val KtProperty.isComposeResourceProperty: Boolean
@@ -90,7 +94,10 @@ internal data class ResourceItem(
   }
 
   private fun findAttributeByResourceKey(targetResourcePsiFile: PsiFile, targetResourceItem: ResourceItem): XmlAttributeImpl? =
-    findChildrenOfType(targetResourcePsiFile, XmlAttributeImpl::class.java).firstOrNull { it.value == targetResourceItem.key }
+    findChildrenOfType(targetResourcePsiFile, XmlAttributeImpl::class.java)
+      .firstOrNull {
+        it.parentOfType<XmlTag>()?.name == targetResourceItem.type.typeName && it.value == targetResourceItem.key
+      }
 
 
   companion object {
@@ -165,6 +172,9 @@ internal enum class ResourceType(val typeName: String, val resourceName: String,
   companion object {
     fun fromString(str: String): ResourceType =
       entries.firstOrNull { it.typeName.equals(str, ignoreCase = true) } ?: error("Unknown resource type: '$str'.")
+
+    fun fromPath(path: Path): ResourceType =
+      entries.firstOrNull { it.dirName.equals(path.parent.name, ignoreCase = true) } ?: error("Unknown resource type: '${path.parent.name}'.")
 
     val KNOWN_RESOURCE_NAMES: Set<String> = entries.mapToSetOrEmpty { it.resourceName }
   }
