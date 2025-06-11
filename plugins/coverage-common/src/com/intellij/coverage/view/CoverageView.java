@@ -183,13 +183,15 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
         resetView(() -> myStateBean.setShowOnlyModified(false));
       }
       else {
-        GotItTooltip gotIt = createGotIt();
-        if (gotIt.canShow()) {
-          final JComponent filterAction = ActionButtonUtil.findToolbarActionButton(actionToolbar, button -> button.getIcon() == FILTER_ICON);
-          if (filterAction != null) {
-            gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          GotItTooltip gotIt = createGotIt();
+          if (gotIt.canShow()) {
+            final JComponent filterAction = ActionButtonUtil.findToolbarActionButton(actionToolbar, button -> button.getIcon() == FILTER_ICON);
+            if (filterAction != null) {
+              gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
+            }
           }
-        }
+        });
       }
     }
   }
@@ -259,8 +261,10 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
             if (nodeRoot != null) {
               called = true;
               setWidth(nodeRoot);
-              resetIfAllFiltered(nodeRoot, actionToolbar);
-              logTotalCoverage(nodeRoot);
+              ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                resetIfAllFiltered(nodeRoot, actionToolbar);
+                logTotalCoverage(nodeRoot);
+              });
             }
           }
         }
