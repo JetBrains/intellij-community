@@ -21,8 +21,8 @@ internal object PreferredSubtypeWeigher {
 
     context(KaSession)
     fun addWeight(context: WeighingContext, lookupElement: LookupElement, symbol: KaSymbol) {
-        val actualClassType = (symbol as? KaClassLikeSymbol)?.defaultType ?: return
         val preferredSubtype = context.preferredSubtype ?: return
+        val actualClassType = (symbol as? KaClassLikeSymbol)?.defaultType ?: return
         lookupElement.hasPreferredSubtype = if (actualClassType.semanticallyEquals(preferredSubtype)) {
             Weight.PREFERRED_EXACT_TYPE
         } else if (!actualClassType.isNothingType && actualClassType.isSubtypeOf(preferredSubtype)) {
