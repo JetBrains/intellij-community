@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.folding;
 
 import com.intellij.lang.ASTNode;
@@ -24,8 +24,6 @@ import org.jetbrains.yaml.psi.impl.YAMLHashImpl;
 
 import java.util.List;
 
-import static org.jetbrains.yaml.settingsSync.YamlBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
-
 public class YAMLFoldingBuilder extends CustomFoldingBuilder {
 
   private static final int PLACEHOLDER_LEN = 20;
@@ -35,8 +33,6 @@ public class YAMLFoldingBuilder extends CustomFoldingBuilder {
                                           @NotNull PsiElement root,
                                           @NotNull Document document,
                                           boolean quick) {
-    if (shouldDoNothingInBackendMode()) return;
-
     collectDescriptors(root, descriptors);
   }
 

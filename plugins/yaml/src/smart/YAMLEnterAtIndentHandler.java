@@ -28,7 +28,6 @@ import org.jetbrains.yaml.psi.YAMLSequenceItem;
 
 import java.util.Objects;
 
-import static org.jetbrains.yaml.settingsSync.YamlBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
 import static org.jetbrains.yaml.smart.YamlIndentPreservationUtilsKt.preserveIndentStateBeforeProcessing;
 
 public class YAMLEnterAtIndentHandler implements EnterHandlerDelegate {
@@ -39,8 +38,7 @@ public class YAMLEnterAtIndentHandler implements EnterHandlerDelegate {
                                 @NotNull Ref<Integer> caretAdvance,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
-    if (shouldDoNothingInBackendMode()) return Result.Continue;
-      // this call is not related to YAMLEnterAtIndentHandler, but is needed for `YAMLInjectedElementEnterHandler`
+    // this call is not related to YAMLEnterAtIndentHandler, but is needed for `YAMLInjectedElementEnterHandler`
     // this call is placed here to avoid creating another `EnterHandlerDelegate` with `order="first"`
     preserveIndentStateBeforeProcessing(file, dataContext);
 
