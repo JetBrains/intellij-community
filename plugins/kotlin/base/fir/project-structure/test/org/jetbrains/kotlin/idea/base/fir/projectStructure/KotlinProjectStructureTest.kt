@@ -12,17 +12,13 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findFile
 import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.assertInstanceOf
-import com.intellij.testFramework.requireIs
+import com.intellij.testFramework.*
 import com.intellij.util.CommonProcessors
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
@@ -40,7 +36,6 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.addDependency
@@ -840,8 +835,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val dependency = getFile("utils.kt")
         val scriptFile = getFile("build.gradle.kts")
 
-        ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously(scriptFile)
-
         assertKaModuleType<KaSourceModule>(dependency, kaModule(scriptFile))
     }
 
@@ -855,7 +848,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         )
 
         val scriptFile = getFile("build.gradle.kts")
-        ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously(scriptFile)
         assertKaModuleType<KaScriptModule>(scriptFile, kaModule(scriptFile))
     }
 

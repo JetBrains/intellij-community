@@ -17,11 +17,6 @@
     <internalFileTemplate name="Kotlin Script Gradle"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.jetbrains.kotlin.scripting.idea">
-    <listener order="first" implementation="org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptListener"/>
-    <loader order="first" implementation="org.jetbrains.kotlin.gradle.scripting.shared.legacy.GradleLegacyScriptConfigurationLoader"/>
-  </extensions>
-
   <actions resource-bundle="messages.KotlinGradleScriptingBundle">
     <action id="Kotlin.Gradle.ShowDslLogs" class="org.jetbrains.kotlin.gradle.scripting.shared.actions.ShowKotlinGradleDslLogs"/>
     <action id="LoadKtGradleConfiguration"

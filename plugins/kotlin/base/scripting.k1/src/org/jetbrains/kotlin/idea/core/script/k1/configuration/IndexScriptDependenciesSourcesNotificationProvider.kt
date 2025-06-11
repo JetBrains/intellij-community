@@ -13,9 +13,9 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.findDependentScripts
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
-import org.jetbrains.kotlin.idea.core.script.ucache.findDependentScripts
 import org.jetbrains.kotlin.idea.core.script.ucache.modifyKotlinScriptLibraryEntity
 import java.util.function.Function
 import javax.swing.JComponent

@@ -16,7 +16,7 @@ import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.core.script.IdeScriptDefinitionProvider
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -32,10 +32,10 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
 
         val ktFile = (PsiManager.getInstance(project).findFile(file) as? KtFile)?.takeIf(KtFile::isScript) ?: return null
 
-        if (KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck) return null
+        if (KotlinScriptingSettingsImpl.getInstance(project).suppressDefinitionsCheck) return null
 
         val applicableDefinitions = IdeScriptDefinitionProvider.getInstance(project).getDefinitions().filter {
-                !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettings.getInstance(project)
+                !it.isDefault && it.isScript(KtFileScriptSource(ktFile)) && KotlinScriptingSettingsImpl.getInstance(project)
                     .isScriptDefinitionEnabled(it)
             }.toList()
         if (applicableDefinitions.size < 2 || applicableDefinitions.all { it.isGradleDefinition() }) return null
@@ -71,7 +71,7 @@ class MultipleScriptDefinitionsChecker : EditorNotificationProvider {
             }
 
             createActionLabel(KotlinBundle.message("script.action.text.ignore")) {
-                KotlinScriptingSettings.getInstance(project).suppressDefinitionsCheck = true
+                KotlinScriptingSettingsImpl.getInstance(project).suppressDefinitionsCheck = true
                 EditorNotifications.getInstance(project).updateAllNotifications()
             }
 

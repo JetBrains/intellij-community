@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.project.ProjectManager
-import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
+import org.jetbrains.kotlin.idea.core.script.k1.configuration.utils.ScriptClassRootsStorage
 
 class ScriptCacheDependenciesFileInvalidator : CachesInvalidator() {
     override fun invalidateCaches() {

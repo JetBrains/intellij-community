@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionT
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
-import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleBuildFileHighlightingTest
+import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractK1GradleBuildFileHighlightingTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.*
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1InspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1LocalInspectionTest
@@ -171,7 +171,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
 
     testGroup("gradle/gradle-java/k1", category = GRADLE, testDataPath = "../../../idea/tests/testData") {
-        testClass<AbstractGradleBuildFileHighlightingTest> {
+        testClass<AbstractK1GradleBuildFileHighlightingTest> {
             model(
                 "gradle/highlighting/gradle8",
                 pattern = DIRECTORY,

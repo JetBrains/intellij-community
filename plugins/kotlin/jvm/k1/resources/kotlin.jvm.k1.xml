@@ -1,7 +1,17 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.k1">
   <dependencies>
     <module name="kotlin.jvm.shared"/>
+    <module name="kotlin.base.scripting.k1"/>
   </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scratchFileLanguageProvider"
+            beanClass="com.intellij.lang.LanguageExtensionPoint"
+            dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.kotlin.idea.jvm.k1.scratch.ScratchFileLanguageProvider"/>
+    </extensionPoint>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider id="KtsScratchFileEditorProvider"

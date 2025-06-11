@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.actions.KOTLIN_WORKSHEET_EXTENSION
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.jvm.k1.scratch.actions.RunScratchAction
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.actions.ClearScratchAction
@@ -255,7 +255,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase(),
     }
 
     protected fun configureWorksheetByText(name: String, text: String): ScratchFile {
-        val worksheetFile = myFixture.configureByText(name, text).virtualFile
+        myFixture.configureByText(name, text)
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFixture.file)
 

@@ -141,6 +141,9 @@ jvm_library(
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
+    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
+    "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.k1:kotlin-gradle-scripting-k1",
   ],
   runtime_deps = [":k1_resources"]
 )

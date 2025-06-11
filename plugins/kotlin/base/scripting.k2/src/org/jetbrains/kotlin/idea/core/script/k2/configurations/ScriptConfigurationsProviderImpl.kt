@@ -94,6 +94,8 @@ class ScriptConfigurationsProviderImpl(project: Project, val coroutineScope: Cor
     override fun getScriptSdk(virtualFile: VirtualFile): Sdk? =
         getConfigurationWithSdk(virtualFile)?.sdk ?: ProjectJdkTable.getInstance().allJdks.find { it.canBeUsedForScript() }
 
+    override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? = null
+
     private fun getProjectSdk(): Sdk? {
         return ProjectRootManager.getInstance(project).projectSdk?.takeIf { it.canBeUsedForScript() }
     }

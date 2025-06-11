@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.script
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationTest() {
@@ -24,8 +24,8 @@ abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationT
                 .find { it.name == definitionName }
                 ?: error("Unknown script definition name in SCRIPT DEFINITIONS directive: name=$definitionName, all={${allDefinitions.joinToString { it.name }}}")
             when (action) {
-                "off" -> KotlinScriptingSettings.getInstance(project).setEnabled(scriptDefinition, false)
-                else -> KotlinScriptingSettings.getInstance(project).setOrder(scriptDefinition, action.toInt())
+                "off" -> KotlinScriptingSettingsImpl.getInstance(project).setEnabled(scriptDefinition, false)
+                else -> KotlinScriptingSettingsImpl.getInstance(project).setOrder(scriptDefinition, action.toInt())
             }
         }
 

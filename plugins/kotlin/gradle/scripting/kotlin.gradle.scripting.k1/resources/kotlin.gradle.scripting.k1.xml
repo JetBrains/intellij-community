@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.gradle.scripting.k1">
   <dependencies>
     <module name="kotlin.gradle.scripting.shared"/>
+    <module name="kotlin.base.scripting.k1"/>
     <plugin id="org.jetbrains.plugins.gradle"/>
   </dependencies>
   <projectListeners>
@@ -10,6 +11,8 @@
   </projectListeners>
   <extensions defaultExtensionNs="org.jetbrains.kotlin.scripting.idea">
     <scriptingSupport implementation="org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleScriptingSupport"/>
+    <listener order="first" implementation="org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptListener"/>
+    <loader order="first" implementation="org.jetbrains.kotlin.gradle.scripting.k1.GradleLegacyScriptConfigurationLoader"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -24,6 +27,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDefinitionsContributor"/>
+    <scriptDefinitionsSource implementation="org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptDefinitionsContributor"/>
   </extensions>
 </idea-plugin>

@@ -81,6 +81,8 @@ jvm_library(
     "//java/debugger/shared",
     "//plugins/stream-debugger-core:debugger-streams-core",
     "//plugins/stream-debugger-core/testFramework",
+    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
   ],
   runtime_deps = [
     "//platform/core-api:core",

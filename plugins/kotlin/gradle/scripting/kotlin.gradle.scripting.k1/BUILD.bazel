@@ -32,6 +32,9 @@ jvm_library(
     "//platform/core-impl",
     "//java/java-psi-api:psi",
     "//platform/backend/observation",
+    "@lib//:kotlinc-kotlin-scripting-common",
+    "//plugins/kotlin/base/scripting.k1",
+    "//platform/external-system-impl:externalSystem-impl",
   ],
   runtime_deps = [":kotlin-gradle-scripting-k1_resources"]
 )

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.k1
 
 import com.intellij.ide.projectView.ViewSettings
@@ -11,10 +11,10 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.virtualFile
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.relativeName
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRoot
 import org.jetbrains.kotlin.idea.core.script.ucache.KotlinScriptLibraryRootTypeId
-import org.jetbrains.kotlin.idea.core.script.ucache.relativeName
 import java.nio.file.Path
 
 class KotlinScriptExternalLibrariesNodesProvider: ExternalLibrariesWorkspaceModelNodesProvider<KotlinScriptEntity> {

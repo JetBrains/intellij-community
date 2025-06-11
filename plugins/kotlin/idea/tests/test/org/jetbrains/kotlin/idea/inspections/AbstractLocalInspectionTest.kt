@@ -22,13 +22,13 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import com.intellij.util.io.write
 import com.intellij.util.currentJavaVersion
+import com.intellij.util.io.write
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.registerDirectiveBasedChooserOptionInterceptor
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.intentions.computeOnBackground
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils

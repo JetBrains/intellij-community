@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.ex.PathUtilEx
 import com.intellij.openapi.roots.ProjectRootManager
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.Path
@@ -26,17 +25,13 @@ val scriptClassPath: List<File> = listOf(
     KotlinArtifacts.kotlinReflect
 )
 
-class BundledScriptDefinitionSource(val project: Project) : ScriptDefinitionsSource {
-    override val definitions: Sequence<ScriptDefinition> = sequenceOf(project.defaultDefinition)
-}
-
 fun Project.javaHomePath(): File? {
     val sdk = ProjectRootManager.getInstance(this)?.projectSdk?.takeIf { it.sdkType is JavaSdkType }
     val anyJdk = PathUtilEx.getAnyJdk(this)
     return (sdk ?: anyJdk)?.homePath?.let { File(it) }
 }
 
-internal val Project.defaultDefinition: ScriptDefinition
+val Project.defaultDefinition: ScriptDefinition
     get() {
         val project = this
         val (compilationConfiguration, evaluationConfiguration) = createScriptDefinitionFromTemplate(

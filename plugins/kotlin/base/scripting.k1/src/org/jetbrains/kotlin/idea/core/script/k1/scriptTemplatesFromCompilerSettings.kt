@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition

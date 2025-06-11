@@ -44,6 +44,9 @@
             defaultValue="false"
             restartRequired="true"/>
 
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings"
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.settings.ScriptDefinitionPersistentSettings"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl"/>
 

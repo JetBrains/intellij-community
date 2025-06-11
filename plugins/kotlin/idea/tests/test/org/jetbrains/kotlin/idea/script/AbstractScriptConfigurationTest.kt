@@ -23,10 +23,10 @@ import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.getScriptReports
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.projectStructure.getModuleDir
@@ -157,10 +157,10 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
     override fun setUp() {
         super.setUp()
 
-        settings = KotlinScriptingSettings.getInstance(project).state
+        settings = KotlinScriptingSettingsImpl.getInstance(project).state
 
         ScriptDefinitionsManager.getInstance(project).getDefinitions().forEach {
-            KotlinScriptingSettings.getInstance(project).setEnabled(it, false)
+            KotlinScriptingSettingsImpl.getInstance(project).setEnabled(it, false)
         }
 
         setUpTestProject()
@@ -175,7 +175,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             ThrowableRunnable { System.setProperty("kotlin.script.classpath", oldScripClasspath ?: "") },
             ThrowableRunnable {
                 settings?.let {
-                    KotlinScriptingSettings.getInstance(project).loadState(it)
+                    KotlinScriptingSettingsImpl.getInstance(project).loadState(it)
                 }
             },
             ThrowableRunnable { super.tearDown() }

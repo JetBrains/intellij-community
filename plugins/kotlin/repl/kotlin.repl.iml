@@ -56,5 +56,6 @@
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="kotlin.jsr223" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k1" />
   </component>
 </module>

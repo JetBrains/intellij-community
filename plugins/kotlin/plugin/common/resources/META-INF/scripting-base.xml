@@ -29,11 +29,6 @@
             area="IDEA_PROJECT"/>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scripting.idea.listener"
-            interface="org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener"
-            area="IDEA_PROJECT" dynamic="true"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
             interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
             area="IDEA_PROJECT"

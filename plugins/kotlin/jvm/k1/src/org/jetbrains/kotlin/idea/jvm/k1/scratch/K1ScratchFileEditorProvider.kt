@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.isKotlinWorksheet
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.output.ScratchOutputHandlerAdapter
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ui.KtScratchFileEditorProvider
 
-internal  class K1ScratchFileEditorProvider() : KtScratchFileEditorProvider() {
+internal class K1ScratchFileEditorProvider : KtScratchFileEditorProvider() {
     override fun accept(project: Project, file: VirtualFile): Boolean {
         if (!file.isValid) {
             return false
@@ -44,7 +44,7 @@ internal  class K1ScratchFileEditorProvider() : KtScratchFileEditorProvider() {
     override suspend fun createFileEditor(
       project: Project, file: VirtualFile, document: Document?, editorCoroutineScope: CoroutineScope
     ): FileEditor {
-        val textEditorProvider = TextEditorProvider.Companion.getInstance()
+        val textEditorProvider = TextEditorProvider.getInstance()
         val scratchFile = readAction { createScratchFile(project, file) } ?: return textEditorProvider.createFileEditor(
             project = project,
             file = file,
@@ -70,8 +70,8 @@ internal  class K1ScratchFileEditorProvider() : KtScratchFileEditorProvider() {
     override fun createEditor(project: Project, file: VirtualFile): FileEditor {
         val scratchFile = runBlockingCancellable {
           createScratchFile(project, file)
-        } ?: return TextEditorProvider.Companion.getInstance().createEditor(project, file)
-        return K1ScratchFileEditorWithPreview.Companion.create(scratchFile)
+        } ?: return TextEditorProvider.getInstance().createEditor(project, file)
+        return K1ScratchFileEditorWithPreview.create(scratchFile)
     }
 
     private fun createScratchFile(project: Project, file: VirtualFile): K1KotlinScratchFile? {

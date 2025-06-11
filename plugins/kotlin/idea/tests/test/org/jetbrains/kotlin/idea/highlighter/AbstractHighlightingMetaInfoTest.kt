@@ -6,7 +6,7 @@ import com.intellij.psi.impl.PsiFileEx
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinMultiFileLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.kmp.KMPProjectDescriptorTestUtilities

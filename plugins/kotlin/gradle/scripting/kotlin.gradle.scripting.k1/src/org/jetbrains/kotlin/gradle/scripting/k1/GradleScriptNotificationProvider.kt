@@ -15,8 +15,8 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationPanel.Status
 import com.intellij.ui.EditorNotificationProvider
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.gradle.scripting.shared.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.isGradleKotlinScript
-import org.jetbrains.kotlin.gradle.scripting.shared.legacy.GradleStandaloneScriptActionsManager
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.NotificationKind.*
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator.ScriptUnderRoot

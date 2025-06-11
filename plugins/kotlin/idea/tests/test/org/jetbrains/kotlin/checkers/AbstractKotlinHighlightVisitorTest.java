@@ -15,7 +15,7 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager;
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager;
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor;
 import org.jetbrains.kotlin.idea.refactoring.ElementSelectionUtilsKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;

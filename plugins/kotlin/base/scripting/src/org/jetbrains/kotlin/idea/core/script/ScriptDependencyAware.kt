@@ -21,6 +21,8 @@ interface ScriptDependencyAware {
     fun getFirstScriptsSdk(): Sdk?
     fun getScriptSdk(virtualFile: VirtualFile): Sdk?
 
+    fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile?
+
     companion object {
         fun getInstance(project: Project): ScriptDependencyAware = project.service<ScriptConfigurationsProvider>() as ScriptDependencyAware
 
@@ -33,6 +35,7 @@ interface ScriptDependencyAware {
             override fun getScriptDependenciesClassFiles(virtualFile: VirtualFile): Collection<VirtualFile> = listOf()
             override fun getFirstScriptsSdk(): Sdk? = null
             override fun getScriptSdk(virtualFile: VirtualFile): Sdk? = null
+            override fun getScriptDependingOn(dependencies: Collection<String>): VirtualFile? = null
         }
     }
 }

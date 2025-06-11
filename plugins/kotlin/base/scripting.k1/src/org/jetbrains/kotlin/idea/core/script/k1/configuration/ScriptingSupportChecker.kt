@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
@@ -59,7 +59,7 @@ class ScriptingSupportChecker: EditorNotificationProvider {
         }
 
         // warning panel is hidden
-        if (!KotlinScriptingSettings.getInstance(project).showSupportWarning) {
+        if (!KotlinScriptingSettingsImpl.getInstance(project).showSupportWarning) {
             return null
         }
 
@@ -90,7 +90,7 @@ private fun EditorNotificationPanel.addHideAction(
     createActionLabel(
         KotlinBundle.message("kotlin.script.in.project.sources.hide"),
         Runnable {
-            KotlinScriptingSettings.getInstance(project).showSupportWarning = false
+            KotlinScriptingSettingsImpl.getInstance(project).showSupportWarning = false
             close(project, file)
         },
         false
@@ -104,7 +104,7 @@ private fun EditorNotificationPanel.addDecideLaterAction(
     createActionLabel(
         KotlinBundle.message("kotlin.script.in.project.sources.later"),
         Runnable {
-            KotlinScriptingSettings.getInstance(project).decideOnRemainingInSourceRootLater = true
+            KotlinScriptingSettingsImpl.getInstance(project).decideOnRemainingInSourceRootLater = true
             close(project, file)
         },
         false
@@ -137,7 +137,7 @@ private fun EditorNotificationPanel.close(
 }
 
 private fun decideLaterIsOn(project: Project): Boolean =
-    KotlinScriptingSettings.getInstance(project).decideOnRemainingInSourceRootLater
+    KotlinScriptingSettingsImpl.getInstance(project).decideOnRemainingInSourceRootLater
 
 private fun VirtualFile.isUnderSourceRoot(project: Project): Boolean =
     ProjectRootManager.getInstance(project).fileIndex.isUnderSourceRootOfType(this, KOTLIN_AWARE_SOURCE_ROOT_TYPES)

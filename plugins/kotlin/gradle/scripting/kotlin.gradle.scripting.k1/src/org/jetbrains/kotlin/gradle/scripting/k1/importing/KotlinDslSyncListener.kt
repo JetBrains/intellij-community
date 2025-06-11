@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.scripting.k1.importing
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDefinitionsContributor
+import org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.AbstractKotlinDslSyncListener
 import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslGradleBuildSync
 

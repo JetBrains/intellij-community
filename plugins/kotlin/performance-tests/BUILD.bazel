@@ -80,6 +80,8 @@ jvm_library(
     "@lib//:okhttp",
     "//plugins/kotlin/j2k/shared/tests:tests_test_lib",
     "//plugins/kotlin/j2k/shared",
+    "//plugins/kotlin/base/scripting.k1",
+    "//plugins/kotlin/base/scripting.k1:scripting.k1_test_lib",
   ],
   runtime_deps = [
     ":performance-tests_resources",

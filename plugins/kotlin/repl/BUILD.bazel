@@ -55,6 +55,7 @@ jvm_library(
     "//java/execution/impl",
     "//platform/execution-impl",
     "//plugins/kotlin/jsr223",
+    "//plugins/kotlin/base/scripting.k1",
   ],
   runtime_deps = [":repl_resources"]
 )

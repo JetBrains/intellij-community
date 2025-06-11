@@ -14,15 +14,22 @@ import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.kotlin.gradle.scripting.k1.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.gradle.scripting.k1.roots.GradleScriptingSupport.Companion.isApplicable
+import org.jetbrains.kotlin.gradle.scripting.shared.getDefinitionsTemplateClasspath
+import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
-import org.jetbrains.kotlin.gradle.scripting.shared.scriptConfigurationsNeedToBeUpdated
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
-import org.jetbrains.kotlin.idea.core.script.configuration.ScriptingSupport
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
+import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.configuration.DefaultScriptingSupport
+import org.jetbrains.kotlin.idea.core.script.k1.configuration.ScriptingSupport
+import org.jetbrains.kotlin.idea.core.script.k1.settings.KotlinScriptingSettingsImpl
+import org.jetbrains.kotlin.idea.core.script.k1.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
@@ -179,9 +186,18 @@ class GradleBuildRootsLocatorImpl(val project: Project, private val coroutineSco
     }
 
     private fun updateFloatingAction(file: VirtualFile) {
-        if (isConfigurationOutOfDate(file)) {
-          scriptConfigurationsNeedToBeUpdated(project, file)
+        if (isConfigurationOutOfDate(file) && autoReloadScriptConfigurations(project, file)) {
+            getInstance(project).getScriptInfo(file)?.buildRoot?.let {
+                runPartialGradleImport(project, it)
+            }
         }
+    }
+
+
+    private fun autoReloadScriptConfigurations(project: Project, file: VirtualFile): Boolean {
+        val definition = file.findScriptDefinition(project) ?: return false
+
+        return KotlinScriptingSettingsImpl.getInstance(project).autoReloadConfigurations(definition)
     }
 
     private fun loadStandaloneScriptConfigurations(files: MutableSet<String>) {
@@ -237,6 +253,39 @@ class GradleScriptingSupport(val project: Project) : ScriptingSupport {
                 }
             }
         }
+    }
+
+    fun Imported.collectConfigurations(builder: ScriptClassRootsBuilder) {
+        javaHome?.let { builder.sdks.addSdk(it) }
+
+        val definitions = GradleScriptDefinitionsContributor.getDefinitions(builder.project, pathPrefix, data.gradleHome, data.javaHome)
+        if (definitions == null) {
+            // needed to recreate classRoots if correct script definitions weren't loaded at this moment
+            // in this case classRoots will be recreated after script definitions update
+            builder.useCustomScriptDefinition()
+        }
+
+        builder.addTemplateClassesRoots(getDefinitionsTemplateClasspath(data.gradleHome))
+
+        data.models.forEach { script ->
+            val definition = definitions?.let { selectScriptDefinition(script, it) }
+
+            builder.addCustom(
+                script.file,
+                script.classPath,
+                script.sourcePath,
+                GradleScriptInfo(this, definition, script, builder.project)
+            )
+        }
+    }
+
+    private fun selectScriptDefinition(
+        script: KotlinDslScriptModel,
+        definitions: List<ScriptDefinition>
+    ): ScriptDefinition? {
+        val file = LocalFileSystem.getInstance().findFileByPath(script.file) ?: return null
+        val scriptSource = VirtualFileScriptSource(file)
+        return definitions.firstOrNull { it.isScript(scriptSource) }
     }
 
     companion object {

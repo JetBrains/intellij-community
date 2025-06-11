@@ -78,5 +78,7 @@
     <orderEntry type="module" module-name="kotlin.base.psi" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" scope="TEST" />
   </component>
 </module>

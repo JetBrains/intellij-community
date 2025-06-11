@@ -1,22 +1,17 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.scripting.k2.roots
 
-import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.gradle.scripting.shared.roots.*
-import org.jetbrains.kotlin.gradle.scripting.shared.scriptConfigurationsNeedToBeUpdated
-import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
+import org.jetbrains.kotlin.gradle.scripting.shared.runPartialGradleImport
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
-import java.nio.file.Paths
 
 class GradleBuildRootsLocatorImpl(val project: Project, val coroutineScope: CoroutineScope) : GradleBuildRootsLocator(project, coroutineScope) {
     override fun loadLinkedRoot(settings: GradleProjectSettings, version: String): GradleBuildRoot {
@@ -70,7 +65,9 @@ class GradleBuildRootsLocatorImpl(val project: Project, val coroutineScope: Coro
 
     private fun updateFloatingAction(file: VirtualFile) {
         if (isConfigurationOutOfDate(file)) {
-          scriptConfigurationsNeedToBeUpdated(project, file)
+            getInstance(project).getScriptInfo(file)?.buildRoot?.let {
+                runPartialGradleImport(project, it)
+            }
         }
     }
 

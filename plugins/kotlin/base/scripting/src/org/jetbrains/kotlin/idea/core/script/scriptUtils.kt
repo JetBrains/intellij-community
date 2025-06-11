@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.core.script.configuration.cache.ScriptConfigurationSnapshot
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
@@ -30,6 +29,7 @@ import javax.swing.Icon
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
 import kotlin.script.experimental.util.PropertiesCollection
+
 fun indexSourceRootsEagerly(): Boolean = Registry.`is`("kotlin.scripting.index.dependencies.sources", false)
 
 val KtFile.alwaysVirtualFile: VirtualFile get() = originalFile.virtualFile ?: viewProvider.virtualFile
@@ -133,7 +133,7 @@ var Application.isScriptChangesNotifierDisabled by NotNullableUserDataProperty(
     Key.create("SCRIPT_CHANGES_NOTIFIER_DISABLED"), true
 )
 
-internal val logger = Logger.getInstance("#org.jetbrains.kotlin.idea.script")
+val logger = Logger.getInstance("#org.jetbrains.kotlin.idea.script")
 
 fun scriptingDebugLog(file: KtFile, message: () -> String) {
     scriptingDebugLog(file.originalFile.virtualFile, message)
@@ -159,17 +159,6 @@ fun scriptingWarnLog(message: String, throwable: Throwable?) {
 
 fun scriptingErrorLog(message: String, throwable: Throwable?) {
     logger.error("[KOTLIN_SCRIPTING] $message", throwable)
-}
-
-fun logScriptingConfigurationErrors(file: VirtualFile, snapshot: ScriptConfigurationSnapshot) {
-    if (snapshot.configuration == null) {
-        scriptingWarnLog("Script configuration for file $file was not loaded")
-        for (report in snapshot.reports) {
-            if (report.severity >= ScriptDiagnostic.Severity.WARNING) {
-                scriptingWarnLog(report.message, report.exception)
-            }
-        }
-    }
 }
 
 fun getAllDefinitions(project: Project): List<ScriptDefinition> = IdeScriptDefinitionProvider.getInstance(project).getDefinitions()

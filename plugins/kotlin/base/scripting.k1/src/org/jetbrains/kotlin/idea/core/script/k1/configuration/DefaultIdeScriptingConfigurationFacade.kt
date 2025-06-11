@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.core.script.k1.configuration
 
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
 import org.jetbrains.kotlin.psi.KtFile
 import kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade
 

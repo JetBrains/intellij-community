@@ -4,14 +4,15 @@ package org.jetbrains.kotlin.idea.core.script.k2.settings
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.core.script.k2.definitions.ScriptDefinitionProviderImpl
+import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
-@Service(Service.Level.PROJECT)
 @State(
     name = "ScriptDefinitionSettings",
     storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
 class ScriptDefinitionPersistentSettings(val project: Project) :
-    SimplePersistentStateComponent<DefinitionSettingsState>(DefinitionSettingsState()) {
+    SimplePersistentStateComponent<DefinitionSettingsState>(DefinitionSettingsState()), KotlinScriptingSettings {
 
     fun getIndexedSettingsPerDefinition(): Map<String?, IndexedSetting> = state.settings.mapIndexedTo(mutableListOf()) { index, it ->
         it.definitionId to IndexedSetting(index, it)
@@ -22,8 +23,11 @@ class ScriptDefinitionPersistentSettings(val project: Project) :
         ScriptDefinitionProviderImpl.getInstance(project).notifyDefinitionsChanged()
     }
 
+    override fun autoReloadConfigurations(scriptDefinition: ScriptDefinition): Boolean = true
+    override fun setAutoReloadConfigurations(scriptDefinition: ScriptDefinition, autoReloadScriptDependencies: Boolean): Unit = Unit
+
     companion object {
-        fun getInstance(project: Project): ScriptDefinitionPersistentSettings = project.service()
+        fun getInstance(project: Project): ScriptDefinitionPersistentSettings = project.service<KotlinScriptingSettings>() as ScriptDefinitionPersistentSettings
     }
 }
 

@@ -5,14 +5,8 @@ package org.jetbrains.kotlin.gradle.scripting.shared.roots
 //import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.gradle.scripting.shared.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.gradle.scripting.shared.LastModifiedFiles
-import org.jetbrains.kotlin.gradle.scripting.shared.getDefinitionsTemplateClasspath
-import org.jetbrains.kotlin.gradle.scripting.shared.importing.KotlinDslScriptModel
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
@@ -93,40 +87,7 @@ class Imported(
     override val projectRoots: Collection<String>
         get() = data.projectRoots
 
-    val javaHome = data.javaHome?.takeIf { it.isNotBlank() }?.let { Path.of(it) }?.takeIf { it.exists() }
-
-    fun collectConfigurations(builder: ScriptClassRootsBuilder) {
-        javaHome?.let { builder.sdks.addSdk(it) }
-
-        val definitions = GradleScriptDefinitionsContributor.getDefinitions(builder.project, pathPrefix, data.gradleHome, data.javaHome)
-        if (definitions == null) {
-            // needed to recreate classRoots if correct script definitions weren't loaded at this moment
-            // in this case classRoots will be recreated after script definitions update
-            builder.useCustomScriptDefinition()
-        }
-
-        builder.addTemplateClassesRoots(getDefinitionsTemplateClasspath(data.gradleHome))
-
-        data.models.forEach { script ->
-            val definition = definitions?.let { selectScriptDefinition(script, it) }
-
-            builder.addCustom(
-                script.file,
-                script.classPath,
-                script.sourcePath,
-                GradleScriptInfo(this, definition, script, builder.project)
-            )
-        }
-    }
-
-    private fun selectScriptDefinition(
-        script: KotlinDslScriptModel,
-        definitions: List<ScriptDefinition>
-    ): ScriptDefinition? {
-        val file = LocalFileSystem.getInstance().findFileByPath(script.file) ?: return null
-        val scriptSource = VirtualFileScriptSource(file)
-        return definitions.firstOrNull { it.isScript(scriptSource) }
-    }
+    val javaHome: Path? = data.javaHome?.takeIf { it.isNotBlank() }?.let { Path.of(it) }?.takeIf { it.exists() }
 }
 
 fun GradleProjectSettings.loadLastModifiedFiles(): LastModifiedFiles? {
