@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class ConvertContextParameterToReceiverIntention : SelfTargetingIntention<KtParameter>(
-    KtParameter::class.java, KotlinBundle.lazyMessage("convert.to.receiver.parameter")
+    KtParameter::class.java, KotlinBundle.lazyMessage("convert.context.parameter.to.receiver.parameter")
 ) {
     override fun startInWriteAction(): Boolean = false
 

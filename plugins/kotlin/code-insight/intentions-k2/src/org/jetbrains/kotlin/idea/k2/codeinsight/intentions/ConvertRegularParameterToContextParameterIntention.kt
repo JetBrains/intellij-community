@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 
 class ConvertRegularParameterToContextParameterIntention : SelfTargetingIntention<KtParameter>(
     KtParameter::class.java,
-    KotlinBundle.lazyMessage("convert.to.context.parameter"),
+    KotlinBundle.lazyMessage("convert.value.parameter.to.context.parameter"),
 ) {
     override fun startInWriteAction(): Boolean = false
 

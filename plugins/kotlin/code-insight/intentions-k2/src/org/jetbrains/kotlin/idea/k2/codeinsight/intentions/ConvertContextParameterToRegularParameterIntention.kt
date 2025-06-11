@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.psi.KtParameter
 
 class ConvertContextParameterToRegularParameterIntention : SelfTargetingIntention<KtParameter>(
-    KtParameter::class.java, KotlinBundle.lazyMessage("convert.to.regular.parameter")
+    KtParameter::class.java, KotlinBundle.lazyMessage("convert.context.parameter.to.regular.parameter")
 ) {
     override fun startInWriteAction(): Boolean = false
 

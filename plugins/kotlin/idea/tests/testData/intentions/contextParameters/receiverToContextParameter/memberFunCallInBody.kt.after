@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+context(bar: Bar) fun foo() {
+    bar.bar()
+}
+
+class Bar {
+    fun bar() {}
+}
