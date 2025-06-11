@@ -1377,6 +1377,8 @@ FunctionEnd
 Function un.ConfirmDeleteSettings
   !insertmacro MUI_HEADER_TEXT "$(uninstall_options)" ""
 
+  ${GetParent} $INSTDIR $R1
+  ${UnStrRep} $R1 $R1 '\' '\\'
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 1" "Text" "$(prompt_delete_settings)"
   ${UnStrRep} $R1 $INSTDIR '\' '\\'
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" $R1
@@ -1435,7 +1437,7 @@ Section "Uninstall"
   DetailPrint "baseRegKey: $baseRegKey"
 
   ; the uninstaller is in the "...\bin" subdirectory; correcting
-  StrCpy $INSTDIR "$INSTDIR" -4
+  ${GetParent} "$INSTDIR" $INSTDIR
   DetailPrint "Uninstalling from: $INSTDIR"
 
   Call un.checkIfIDEInUse
