@@ -7,8 +7,8 @@ import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.cache.RemoteManagedCache
 import kotlinx.coroutines.CoroutineScope
 
-interface RemoteCacheFactory<K, V> {
-  fun createCache(
+interface RemoteCacheFactory {
+  fun<K, V> createCache(
     cacheName: String,
     keyExternalizer: DataExternalizer<K>,
     valueExternalizer: DataExternalizer<V>,
@@ -16,8 +16,7 @@ interface RemoteCacheFactory<K, V> {
     coroutineScope: CoroutineScope
   ): RemoteManagedCache<K, V>
   companion object {
-    val EP: ExtensionPointName<RemoteCacheFactory<*, *>> = ExtensionPointName<RemoteCacheFactory<*, *>>("com.intellij.remoteManagedCacheFactory")
-    @Suppress("UNCHECKED_CAST")
+    val EP: ExtensionPointName<RemoteCacheFactory> = ExtensionPointName<RemoteCacheFactory>("com.intellij.remoteManagedCacheFactory")
     fun<K, V> tryCreateCache(
       cacheName: String,
       keyExternalizer: DataExternalizer<K>,
@@ -25,7 +24,7 @@ interface RemoteCacheFactory<K, V> {
       project: Project,
       coroutineScope: CoroutineScope
     ): RemoteManagedCache<K, V>? {
-      val remoteCacheFactory = EP.findFirstSafe { true }?.let {it as? RemoteCacheFactory<K, V> }
+      val remoteCacheFactory = EP.findFirstSafe { true }
       return remoteCacheFactory?.createCache(cacheName, keyExternalizer, valueExternalizer, project, coroutineScope)
     }
   }
