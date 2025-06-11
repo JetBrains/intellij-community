@@ -21,9 +21,11 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -44,6 +46,7 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -434,10 +437,12 @@ class UnindexedFilesScanner (
       sharedExplanationLogger: IndexingReasonExplanationLogger,
     ) {
       runBlockingCancellable {
-        withContext(SCANNING_DISPATCHER) {
+        tracer.spanBuilder("runBlocking in scanning").useWithScope(context = SCANNING_DISPATCHER) {
           providers.forEachConcurrent(SCANNING_PARALLELISM)  { provider ->
             try {
-              scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+              tracer.spanBuilder("Scanning of ${provider.debugName}").use {
+                scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+              }
             }
             catch (t: Throwable) {
               if (t is CancellationException) throw t
@@ -471,9 +476,13 @@ class UnindexedFilesScanner (
       try {
         progressReporter.getSubTaskReporter().use { subTaskReporter ->
           subTaskReporter.setText(provider.rootsScanningProgressText)
-          val files: ArrayDeque<VirtualFile> = getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
+          val files: ArrayDeque<VirtualFile> = tracer.spanBuilder("Getting files to scan").use {
+            getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
+          }
           PushedFilePropertiesUpdaterImpl.finishVisitors(fileScannerVisitors)
-          scanFiles(provider, scanningStatistics, sharedExplanationLogger, files)
+          tracer.spanBuilder("Scanning gathered files").use { span ->
+            scanFiles(provider, scanningStatistics, sharedExplanationLogger, files, span)
+          }
         }
       }
       catch (e: Exception) {
@@ -503,11 +512,18 @@ class UnindexedFilesScanner (
       scanningStatistics: ScanningStatistics,
       sharedExplanationLogger: IndexingReasonExplanationLogger,
       files: ArrayDeque<VirtualFile>,
+      span: Span,
     ) {
       val indexingQueue = project.getService(PerProjectIndexingQueue::class.java)
       scanningStatistics.startFileChecking()
       try {
+        var counter = 0
         readAction {
+          val currentCounter = counter++
+          if (currentCounter != 0) {
+            // report only restarts of scanning read action
+            span.addEvent("Read action restart #${currentCounter} (${files.size} files remain to scan)")
+          }
           val finder =
             if (ourTestMode == TestMode.PUSHING) null
             else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
@@ -776,3 +792,6 @@ private fun <T> Deferred<T>.getCompletedSafe(): T? {
     null
   }
 }
+
+
+private val tracer: IJTracer get() = getInstance().getTracer(Indexes)
