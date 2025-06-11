@@ -1342,6 +1342,29 @@ done:
 FunctionEnd
 
 
+Function un.PSEnum
+  ${If} $2 == "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  ${OrIf} $2 == "$INSTDIR\jbr\bin\java.exe"
+    StrCpy $R1 "[$0] $2"
+    DetailPrint "$R1"
+    StrCpy $0 ""
+  ${EndIf}
+FunctionEnd
+
+Function un.checkIfIDEIsRunning
+  GetFunctionAddress $R0 un.PSEnum
+check_processes:
+  DetailPrint "Enumerating processes"
+  StrCpy $R1 ""
+  PS::Enum $R0
+  ${If} $R1 == ""
+    Return
+  ${EndIf}
+  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK check_processes
+  Abort
+FunctionEnd
+
+
 Function un.deleteDirectoryWithParent
   RMDir /R "$0"
   RMDir "$0\.."  ; delete a parent directory if empty
@@ -1380,7 +1403,6 @@ Function un.ConfirmDeleteSettings
   ${GetParent} $INSTDIR $R1
   ${UnStrRep} $R1 $R1 '\' '\\'
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 1" "Text" "$(prompt_delete_settings)"
-  ${UnStrRep} $R1 $INSTDIR '\' '\\'
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 2" "Text" $R1
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 3" "Text" "$(text_delete_settings)"
   !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 4" "Text" "$(confirm_delete_caches)"
@@ -1405,34 +1427,6 @@ Function un.ConfirmDeleteSettings
 FunctionEnd
 
 
-Function un.isIDEInUse
-  IfFileExists $R0 0 done
-  CopyFiles $R0 "$R0_copy"
-  ClearErrors
-  Delete $R0
-  IfFileExists $R0 done
-  CopyFiles "$R0_copy" $R0
-done:
-  Delete "$R0_copy"
-FunctionEnd
-
-
-Function un.checkIfIDEInUse
-remove_previous_installation:
-  StrCpy $R0 "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
-  Call un.isIDEInUse
-  IfErrors remove_dialog 0
-  StrCpy $R0 "$INSTDIR\jbr\bin\java.exe"
-  Call un.isIDEInUse
-  IfErrors remove_dialog done
-remove_dialog:
-  MessageBox MB_OKCANCEL|MB_ICONQUESTION|MB_TOPMOST "$(application_running)" IDOK remove_previous_installation IDCANCEL cancel
-cancel:
-  Abort
-done:
-FunctionEnd
-
-
 Section "Uninstall"
   DetailPrint "baseRegKey: $baseRegKey"
 
@@ -1440,7 +1434,7 @@ Section "Uninstall"
   ${GetParent} "$INSTDIR" $INSTDIR
   DetailPrint "Uninstalling from: $INSTDIR"
 
-  Call un.checkIfIDEInUse
+  Call un.checkIfIDEIsRunning
 
   Call un.customUninstallActions
 

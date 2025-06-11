@@ -31,6 +31,7 @@ compile the binaries, get required plugins, and pack everything together.
    - `Include/UAC.nsh`
    - `Plugins/x86-unicode/AccessControl.dll`
    - `Plugins/x86-unicode/ExecDos.dll`
+   - `Plugins/x86-unicode/PS.dll`
    - `Plugins/x86-unicode/ShellLink.dll`
    - `Plugins/x86-unicode/UAC.dll`
 3. Zip the 'NSIS' directory.
@@ -38,7 +39,8 @@ compile the binaries, get required plugins, and pack everything together.
 5. Update the version of 'nsisBuild' in community/build/dependencies/dependencies.properties.
 
 Plugin pages; for reference:
-- [UAC](https://nsis.sourceforge.io/UAC_plug-in)
 - [Access Control](https://nsis.sourceforge.io/AccessControl_plug-in)
 - [ExecDos](https://nsis.sourceforge.io/ExecDos_plug-in)
+- [PS](https://nsis.sourceforge.io/PS_plug-in)
 - [ShellLink](https://nsis.sourceforge.io/ShellLink_plug-in)
+- [UAC](https://nsis.sourceforge.io/UAC_plug-in)
