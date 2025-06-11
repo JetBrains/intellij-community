@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.findUsages
+package org.jetbrains.kotlin.idea.k2.findUsages
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -7,7 +7,7 @@ import de.plushnikov.intellij.plugin.LombokTestUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
-class KotlinLombokFindUsages: KotlinLightCodeInsightFixtureTestCase() {
+class KotlinLombokFindUsagesTest: KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
         return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR
     }
