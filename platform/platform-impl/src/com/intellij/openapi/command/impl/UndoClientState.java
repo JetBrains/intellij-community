@@ -215,7 +215,9 @@ final class UndoClientState implements Disposable {
       addDocumentAsAffected(originatorReference);
     }
     originatorReference = null;
-    currentCommandMerger.setEditorStateAfter(EditorAndState.getStateFor(project, editorProvider));
+    // note: result of shouldFlush depends on FocusedComponent :sad_trombone_for_rd:
+    EditorAndState editorStateAfter = EditorAndState.getStateFor(project, editorProvider);
+    currentCommandMerger.setEditorStateAfter(editorStateAfter);
     // we do not want to spoil redo stack in situation, when some 'transparent' actions occurred right after undo.
     if (!currentCommandMerger.isTransparent() && currentCommandMerger.hasActions()) {
       clearRedoStacks(currentCommandMerger);

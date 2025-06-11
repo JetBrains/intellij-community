@@ -75,10 +75,10 @@ public final class CommandMerger {
   }
 
   @Nullable UndoCommandFlushReason shouldFlush(@Nullable Object nextGroupId, @NotNull CommandMerger nextCommandMerger) {
-    if (nextCommandMerger.isTransparent() && nextCommandMerger.editorStateAfter == null && editorStateAfter != null) {
+    if (isTransparentSupported && nextCommandMerger.isTransparent() && nextCommandMerger.editorStateAfter == null && editorStateAfter != null) {
       return createFlushReason("NEXT_TRANSPARENT_WITHOUT_EDITOR_STATE_AFTER", nextGroupId, nextCommandMerger);
     }
-    if (isTransparent() && editorStateBefore == null && nextCommandMerger.editorStateBefore != null) {
+    if (isTransparentSupported && isTransparent() && editorStateBefore == null && nextCommandMerger.editorStateBefore != null) {
       return createFlushReason("CURRENT_TRANSPARENT_WITHOUT_EDITOR_STATE_BEFORE", nextGroupId, nextCommandMerger);
     }
     if (isTransparent() || nextCommandMerger.isTransparent()) {
