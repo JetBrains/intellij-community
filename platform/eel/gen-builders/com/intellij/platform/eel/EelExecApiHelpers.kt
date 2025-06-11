@@ -9,6 +9,7 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.InteractionOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
 
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.CheckReturnValue
  */
 @GeneratedBuilder.Result
 @Deprecated("Use spawnProcess instead")
+@ApiStatus.Internal
 fun EelExecApi.execute(
   exe: String,
 ): EelExecApiHelpers.Execute =
@@ -45,6 +47,7 @@ fun EelExecApi.execute(
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelExecApi.spawnProcess(
   exe: String,
 ): EelExecApiHelpers.SpawnProcess =
@@ -53,11 +56,14 @@ fun EelExecApi.spawnProcess(
     exe = exe,
   )
 
+@ApiStatus.Internal
 object EelExecApiHelpers {
   /**
    * Create it via [com.intellij.platform.eel.EelExecApi.execute].
    */
   @GeneratedBuilder.Result
+  @Deprecated("Use spawnProcess instead")
+  @ApiStatus.Internal
   class Execute(
     private val owner: EelExecApi,
     private var exe: String,
@@ -145,6 +151,7 @@ object EelExecApiHelpers {
    * Create it via [com.intellij.platform.eel.EelExecApi.spawnProcess].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class SpawnProcess(
     private val owner: EelExecApi,
     private var exe: String,

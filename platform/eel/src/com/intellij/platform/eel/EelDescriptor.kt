@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls
  * @see com.intellij.openapi.fileChooser.impl.LocalFileChooserFactory.canUseNativeDialog
  */
 @ApiStatus.OverrideOnly
+@ApiStatus.Internal
 interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
 
 /**
@@ -48,6 +49,7 @@ interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
  * TODO: In the future, [EelDescriptor] may also be serializable.
  * If you need to access the remote environment, you can use the method [toEelApi], which can suspend for some time before returning a working instance of [EelApi]
  */
+@ApiStatus.Internal
 interface EelDescriptor {
   @Deprecated("Use platform instead", ReplaceWith("platform"))
   val operatingSystem: OS

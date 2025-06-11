@@ -2,26 +2,37 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelPlatform.*
+import org.jetbrains.annotations.ApiStatus
 
+@get:ApiStatus.Internal
 val EelPlatform.isMac: Boolean get() = this is Darwin
+@get:ApiStatus.Internal
 val EelPlatform.isLinux: Boolean get() = this is Linux
+@get:ApiStatus.Internal
 val EelPlatform.isWindows: Boolean get() = this is Windows
+@get:ApiStatus.Internal
 val EelPlatform.isFreeBSD: Boolean get() = this is FreeBSD
 
+@get:ApiStatus.Internal
 val EelPlatform.isArm32: Boolean get() = arch is Arch.ARM_32
+@get:ApiStatus.Internal
 val EelPlatform.isArm64: Boolean get() = arch is Arch.ARM_64
+@get:ApiStatus.Internal
 val EelPlatform.isX86: Boolean get() = arch is Arch.X86
+@get:ApiStatus.Internal
 val EelPlatform.isX86_64: Boolean get() = arch is Arch.X86_64
 
 private val UNIX_DIRECTORY_SEPARATORS = charArrayOf('/')
 private val WINDOWS_DIRECTORY_SEPARATORS = charArrayOf('/', '\\')
 
+@get:ApiStatus.Internal
 val EelPlatform.directorySeparators: CharArray
   get() = when (this) {
     is Windows -> WINDOWS_DIRECTORY_SEPARATORS
     is Posix -> UNIX_DIRECTORY_SEPARATORS
   }
 
+@ApiStatus.Internal
 sealed interface EelPlatform {
   val arch: Arch
 
@@ -74,6 +85,7 @@ sealed interface EelPlatform {
   }
 }
 
+@get:ApiStatus.Internal
 val EelPlatform.pathSeparator: String
   get() = when (this) {
     is Windows -> ";"

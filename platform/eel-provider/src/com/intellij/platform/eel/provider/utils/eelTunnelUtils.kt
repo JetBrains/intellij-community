@@ -12,6 +12,7 @@ import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.*
 import java.nio.ByteBuffer
@@ -33,6 +34,7 @@ private val LOG: Logger = Logger.getInstance(EelTunnelsApi::class.java)
  * This function returns when the server starts accepting connections.
  */
 @OptIn(DelicateCoroutinesApi::class)
+@ApiStatus.Internal
 fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress) {
   val serverSocket = ServerSocket()
   serverSocket.bind(InetSocketAddress("localhost", localPort), 1024)
@@ -93,6 +95,7 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
  * @return An address which remote server listens to. It is useful to get the actual port if the port of [address] was 0
  */
 @OptIn(DelicateCoroutinesApi::class)
+@ApiStatus.Internal
 fun CoroutineScope.forwardLocalServer(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress): Deferred<EelTunnelsApi.ResolvedSocketAddress> {
   // todo: do not forward anything if it is local eel
   val remoteAddress = CompletableDeferred<EelTunnelsApi.ResolvedSocketAddress>()
@@ -183,6 +186,7 @@ private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int
   backChannel.close()
 }
 
+@ApiStatus.Internal
 fun EelTunnelsApi.ResolvedSocketAddress.asInetAddress(): InetSocketAddress {
   val inetAddress = when (this) {
     is EelTunnelsApi.ResolvedSocketAddress.V4 -> InetAddress.getByAddress(ByteBuffer.allocate(4).putInt(bits.toInt()).toByteArray())

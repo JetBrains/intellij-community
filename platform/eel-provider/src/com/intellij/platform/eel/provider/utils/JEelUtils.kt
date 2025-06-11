@@ -7,11 +7,13 @@ import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.upgradeBlocking
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
  * A collection of utility methods for Java.
  */
+@ApiStatus.Internal
 object JEelUtils {
 
   @JvmStatic

@@ -2,7 +2,9 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface EelArchiveApi {
   suspend fun extract(archive: EelPath, target: EelPath)
 }

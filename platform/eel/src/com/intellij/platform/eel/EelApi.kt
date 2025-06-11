@@ -4,13 +4,16 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Marker interface that indicates EelApi is running on a local machine.
  * The check for “is local” should be performed only in very specific cases
  */
+@ApiStatus.Internal
 interface LocalEelApi : EelApi
 
+@ApiStatus.Internal
 interface EelApi {
   val descriptor: EelDescriptor
 
@@ -42,6 +45,7 @@ interface EelApi {
   }
 }
 
+@ApiStatus.Internal
 interface EelPosixApi : EelApi {
   override val exec: EelExecPosixApi
   override val platform: EelPlatform.Posix get() = descriptor.platform as EelPlatform.Posix
@@ -50,6 +54,7 @@ interface EelPosixApi : EelApi {
   override val fs: EelFileSystemPosixApi
 }
 
+@ApiStatus.Internal
 interface EelWindowsApi : EelApi {
   override val exec: EelExecWindowsApi
   override val platform: EelPlatform.Windows get() = descriptor.platform as EelPlatform.Windows

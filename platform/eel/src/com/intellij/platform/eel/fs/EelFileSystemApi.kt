@@ -5,9 +5,11 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
 
+@get:ApiStatus.Internal
 val EelFileSystemApi.pathSeparator: String
   get() = when (this) {
     is EelFileSystemPosixApi -> ":"
@@ -15,14 +17,17 @@ val EelFileSystemApi.pathSeparator: String
     else -> throw UnsupportedOperationException("Unsupported OS: ${this::class.java}")
   }
 
+@ApiStatus.Internal
 fun EelFileSystemApi.getPath(string: String): EelPath {
   return EelPath.parse(string, descriptor)
 }
 
+@ApiStatus.Internal
 interface LocalEelFileSystemApi : EelFileSystemApi
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
+@ApiStatus.Internal
 interface EelFileSystemApi {
 
   /**
@@ -583,6 +588,7 @@ interface EelFileSystemApi {
 }
 
 
+@ApiStatus.Internal
 sealed interface EelOpenedFile {
   val path: EelPath
 
@@ -716,8 +722,10 @@ sealed interface EelOpenedFile {
   interface ReaderWriter : Reader, Writer
 }
 
+@ApiStatus.Internal
 interface LocalEelFileSystemPosixApi : EelFileSystemPosixApi, LocalEelFileSystemApi
 
+@ApiStatus.Internal
 interface EelFileSystemPosixApi : EelFileSystemApi {
   override val user: EelUserPosixInfo
 
@@ -853,8 +861,10 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
   }
 }
 
+@ApiStatus.Internal
 interface LocalEelFileSystemWindowsApi : EelFileSystemWindowsApi, LocalEelFileSystemApi
 
+@ApiStatus.Internal
 interface EelFileSystemWindowsApi : EelFileSystemApi {
   override val user: EelUserWindowsInfo
 
@@ -888,6 +898,7 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
 
 @CheckReturnValue
 @Deprecated("Use the method with the builder")
+@ApiStatus.Internal
 suspend fun EelFileSystemApi.changeAttributes(
   path: EelPath,
   setup: (EelFileSystemApi.ChangeAttributesOptions.Builder).() -> Unit,
@@ -898,6 +909,7 @@ suspend fun EelFileSystemApi.changeAttributes(
 
 @CheckReturnValue
 @Deprecated("Use the method with the builder")
+@ApiStatus.Internal
 suspend fun EelFileSystemApi.openForWriting(path: EelPath, setup: (EelFileSystemApi.WriteOptions.Builder).() -> Unit): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> {
   val options = EelFileSystemApi.WriteOptions.Builder(path).apply(setup).build()
   return openForWriting(options)
@@ -905,6 +917,7 @@ suspend fun EelFileSystemApi.openForWriting(path: EelPath, setup: (EelFileSystem
 
 @CheckReturnValue
 @Deprecated("Use the method with the builder")
+@ApiStatus.Internal
 suspend fun EelFileSystemApi.copy(
   source: EelPath,
   target: EelPath,
@@ -916,6 +929,7 @@ suspend fun EelFileSystemApi.copy(
 
 @CheckReturnValue
 @Deprecated("Use the method with the builder")
+@ApiStatus.Internal
 suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryEntryOptions.Builder).() -> Unit): EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError> {
   val options = EelFileSystemApi.CreateTemporaryEntryOptions.Builder().apply(setup).build()
   return createTemporaryDirectory(options)

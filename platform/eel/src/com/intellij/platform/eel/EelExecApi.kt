@@ -11,6 +11,7 @@ import org.jetbrains.annotations.CheckReturnValue
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
  */
+@ApiStatus.Internal
 sealed interface EelExecApi {
 
   val descriptor: EelDescriptor
@@ -199,26 +200,32 @@ sealed interface EelExecApi {
   data object RedirectStdErr : InteractionOptions
 }
 
+@ApiStatus.Internal
 interface EelExecPosixApi : EelExecApi {
   @ThrowsChecked(ExecuteProcessException::class)
   override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelPosixProcess
 }
 
+@ApiStatus.Internal
 interface EelExecWindowsApi : EelExecApi {
   @ThrowsChecked(ExecuteProcessException::class)
   override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelWindowsProcess
 }
 
+@ApiStatus.Internal
 suspend fun EelExecApi.where(exe: String): EelPath? {
   return this.findExeFilesInPath(exe).firstOrNull()
 }
 
+@ApiStatus.Internal
 fun EelExecApi.spawnProcess(exe: String, vararg args: String): EelExecApiHelpers.SpawnProcess =
   spawnProcess(exe).args(*args)
 
+@ApiStatus.Internal
 fun EelExecPosixApi.spawnProcess(exe: String, vararg args: String): EelExecPosixApiHelpers.SpawnProcess =
   spawnProcess(exe).args(*args)
 
+@ApiStatus.Internal
 fun EelExecWindowsApi.spawnProcess(exe: String, vararg args: String): EelExecWindowsApiHelpers.SpawnProcess =
   spawnProcess(exe).args(*args)
 
@@ -226,6 +233,7 @@ fun EelExecWindowsApi.spawnProcess(exe: String, vararg args: String): EelExecWin
  * Path to a shell / command processor: `cmd.exe` on Windows and Bourne Shell (`sh`) on POSIX.
  * Second argument is the one you might provide to this shell to execute command and exit, i.e.: `cmd /C` or `sh -c`
  */
+@ApiStatus.Internal
 suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
   val (shell, cmdArg) = when (this.descriptor.platform) {
     is EelPlatform.Windows -> {

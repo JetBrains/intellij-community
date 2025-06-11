@@ -1,12 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.channels
 
-import org.jetbrains.annotations.CheckReturnValue
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 
 /**
  * Consumes bytes as buffers. Each [send] writes `0` or more bytes or throws an exception in case of IO error
  */
+@ApiStatus.Internal
 interface EelSendChannel {
   /**
    * Writes [src], suspends until written.
@@ -42,6 +43,7 @@ interface EelSendChannel {
  * This method is *not* thread-safe (i.e. you can't send two buffers and the same time).
  */
 @OptIn(EelSendApi::class)
+@ApiStatus.Internal
 suspend fun EelSendChannel.sendWholeBuffer(src: ByteBuffer) {
   if (this is EelSendChannelCustomSendWholeBuffer) {
     return sendWholeBufferCustom(src)

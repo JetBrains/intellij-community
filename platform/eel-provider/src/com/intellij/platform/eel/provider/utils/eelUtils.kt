@@ -11,13 +11,16 @@ import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.*
 
+@ApiStatus.Internal
 fun EelExecApi.fetchLoginShellEnvVariablesBlocking(): Map<String, String> {
   return runBlockingMaybeCancellable { fetchLoginShellEnvVariables() }
 }
 
+@ApiStatus.Internal
 fun CpuArch.toEelArch(): EelPlatform.Arch = when (this) {
   CpuArch.X86 -> EelPlatform.Arch.X86
   CpuArch.X86_64 -> EelPlatform.Arch.X86_64
@@ -27,6 +30,7 @@ fun CpuArch.toEelArch(): EelPlatform.Arch = when (this) {
 }
 
 @Throws(FileSystemException::class)
+@ApiStatus.Internal
 fun <T, E : EelFsError> EelResult<T, E>.getOrThrowFileSystemException(): T =
   when (this) {
     is EelResult.Ok -> value
@@ -34,6 +38,7 @@ fun <T, E : EelFsError> EelResult<T, E>.getOrThrowFileSystemException(): T =
   }
 
 @Throws(FileSystemException::class)
+@ApiStatus.Internal
 suspend fun <T, E : EelFsError, O : OwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSystemException(): T =
   when (val v = eelIt()) {
     is EelResult.Ok -> v.value
@@ -42,6 +47,7 @@ suspend fun <T, E : EelFsError, O : OwnedBuilder<EelResult<T, E>>> O.getOrThrowF
 
 // TODO There's java.nio.file.FileSystemLoopException, so ELOOP should be added to all error codes for a decent support of all exceptions.
 @Throws(FileSystemException::class)
+@ApiStatus.Internal
 fun EelFsError.throwFileSystemException(): Nothing {
   throw when (this) {
     is EelFsError.DoesNotExist -> NoSuchFileException(where.toString(), null, message.nullize())

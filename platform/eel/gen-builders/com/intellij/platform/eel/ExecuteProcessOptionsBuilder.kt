@@ -8,9 +8,11 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.InteractionOptions
 import com.intellij.platform.eel.EelExecApi.PtyOrStdErrSettings
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 class ExecuteProcessOptionsBuilder(
   /**
    * An **absolute** path to the executable.

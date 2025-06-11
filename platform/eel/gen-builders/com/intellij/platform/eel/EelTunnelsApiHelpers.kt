@@ -7,6 +7,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import kotlinx.coroutines.channels.SendChannel
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -34,6 +35,7 @@ import kotlin.time.Duration.Companion.seconds
  * One should not forget to invoke [Connection.close] when the connection is not needed.
  */
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelTunnelsApi.getAcceptorForRemotePort(): EelTunnelsApiHelpers.GetAcceptorForRemotePort =
   EelTunnelsApiHelpers.GetAcceptorForRemotePort(
     owner = this,
@@ -65,16 +67,19 @@ fun EelTunnelsApi.getAcceptorForRemotePort(): EelTunnelsApiHelpers.GetAcceptorFo
  * To configure a socket before connection use [configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
  */
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelTunnelsApi.getConnectionToRemotePort(): EelTunnelsApiHelpers.GetConnectionToRemotePort =
   EelTunnelsApiHelpers.GetConnectionToRemotePort(
     owner = this,
   )
 
+@ApiStatus.Internal
 object EelTunnelsApiHelpers {
   /**
    * Create it via [com.intellij.platform.eel.EelTunnelsApi.getAcceptorForRemotePort].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class GetAcceptorForRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<EelTunnelsApi.ConnectionAcceptor> {
@@ -145,6 +150,7 @@ object EelTunnelsApiHelpers {
    * Create it via [com.intellij.platform.eel.EelTunnelsApi.getConnectionToRemotePort].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class GetConnectionToRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<Connection> {

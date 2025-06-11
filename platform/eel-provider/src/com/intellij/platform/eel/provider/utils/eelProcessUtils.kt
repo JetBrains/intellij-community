@@ -9,20 +9,25 @@ import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 
 /**
  * To simplify [EelProcessExecutionResult] delegation
  */
+@ApiStatus.Internal
 interface EelProcessExecutionResultInfo {
   val exitCode: Int
   val stdout: ByteArray
   val stderr: ByteArray
 }
 
+@get:ApiStatus.Internal
 val EelProcessExecutionResultInfo.stdoutString: String get() = String(stdout)
+@get:ApiStatus.Internal
 val EelProcessExecutionResultInfo.stderrString: String get() = String(stderr)
 
+@ApiStatus.Internal
 class EelProcessExecutionResult(override val exitCode: Int, override val stdout: ByteArray, override val stderr: ByteArray) : EelProcessExecutionResultInfo
 
 /**
@@ -41,6 +46,7 @@ class EelProcessExecutionResult(override val exitCode: Int, override val stdout:
  * @see EelProcess
  */
 @OptIn(DelicateCoroutinesApi::class)
+@ApiStatus.Internal
 suspend fun EelProcess.awaitProcessResult(): EelProcessExecutionResult {
   return computeDetached {
     ByteArrayOutputStream().use { out ->

@@ -31,7 +31,7 @@ import kotlin.reflect.KClass
  * }
  * ```
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Retention(AnnotationRetention.SOURCE)
 @Target(
   AnnotationTarget.CONSTRUCTOR,

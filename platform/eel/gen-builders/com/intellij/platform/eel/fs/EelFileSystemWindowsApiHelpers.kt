@@ -10,10 +10,12 @@ import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemWindowsApi.listDirectoryWithAttrs(
   path: EelPath,
 ): EelFileSystemWindowsApiHelpers.ListDirectoryWithAttrs =
@@ -23,6 +25,7 @@ fun EelFileSystemWindowsApi.listDirectoryWithAttrs(
   )
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemWindowsApi.stat(
   path: EelPath,
 ): EelFileSystemWindowsApiHelpers.Stat =
@@ -31,11 +34,13 @@ fun EelFileSystemWindowsApi.stat(
     path = path,
   )
 
+@ApiStatus.Internal
 object EelFileSystemWindowsApiHelpers {
   /**
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemWindowsApi.listDirectoryWithAttrs].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class ListDirectoryWithAttrs(
     private val owner: EelFileSystemWindowsApi,
     private var path: EelPath,
@@ -77,6 +82,7 @@ object EelFileSystemWindowsApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemWindowsApi.stat].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class Stat(
     private val owner: EelFileSystemWindowsApi,
     private var path: EelPath,

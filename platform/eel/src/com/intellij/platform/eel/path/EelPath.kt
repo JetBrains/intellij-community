@@ -3,7 +3,9 @@ package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
+import org.jetbrains.annotations.ApiStatus
 
+@get:ApiStatus.Internal
 val EelPath.platform: EelPlatform get() = descriptor.platform
 
 /**
@@ -16,6 +18,7 @@ val EelPath.platform: EelPlatform get() = descriptor.platform
  *
  * All operations listed here do not require I/O.
  */
+@ApiStatus.Internal
 sealed interface EelPath {
   companion object {
     @Throws(EelPathException::class)
@@ -156,6 +159,8 @@ sealed interface EelPath {
   }
 }
 
+@ApiStatus.Internal
 operator fun EelPath.div(part: String): EelPath = resolve(part)
 
+@ApiStatus.Internal
 class EelPathException(val raw: String, val reason: String) : RuntimeException("`$raw`: $reason")

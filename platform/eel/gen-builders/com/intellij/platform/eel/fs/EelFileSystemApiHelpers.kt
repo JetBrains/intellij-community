@@ -19,10 +19,12 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.WatchOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.changeAttributes(
   path: EelPath,
 ): EelFileSystemApiHelpers.ChangeAttributes =
@@ -32,6 +34,7 @@ fun EelFileSystemApi.changeAttributes(
   )
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.copy(
   source: EelPath,
   target: EelPath,
@@ -43,12 +46,14 @@ fun EelFileSystemApi.copy(
   )
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.createTemporaryDirectory(): EelFileSystemApiHelpers.CreateTemporaryDirectory =
   EelFileSystemApiHelpers.CreateTemporaryDirectory(
     owner = this,
   )
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.createTemporaryFile(): EelFileSystemApiHelpers.CreateTemporaryFile =
   EelFileSystemApiHelpers.CreateTemporaryFile(
     owner = this,
@@ -63,6 +68,7 @@ fun EelFileSystemApi.createTemporaryFile(): EelFileSystemApiHelpers.CreateTempor
  *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
  */
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.listDirectoryWithAttrs(
   path: EelPath,
 ): EelFileSystemApiHelpers.ListDirectoryWithAttrs =
@@ -72,6 +78,7 @@ fun EelFileSystemApi.listDirectoryWithAttrs(
   )
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.move(
   source: EelPath,
   target: EelPath,
@@ -86,6 +93,7 @@ fun EelFileSystemApi.move(
  * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
  */
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.stat(
   path: EelPath,
 ): EelFileSystemApiHelpers.Stat =
@@ -103,6 +111,7 @@ fun EelFileSystemApi.stat(
  * @throws UnsupportedOperationException if the method isn't implemented for the file system.
  */
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.unwatch(
   path: EelPath,
 ): EelFileSystemApiHelpers.Unwatch =
@@ -130,12 +139,14 @@ fun EelFileSystemApi.unwatch(
  * @throws UnsupportedOperationException if the method isn't implemented for the file system.
  */
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.watchChanges(): EelFileSystemApiHelpers.WatchChanges =
   EelFileSystemApiHelpers.WatchChanges(
     owner = this,
   )
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.openForReadingAndWriting(
   path: EelPath,
 ): EelFileSystemApiHelpers.OpenForReadingAndWriting =
@@ -148,6 +159,7 @@ fun EelFileSystemApi.openForReadingAndWriting(
  * Opens the file only for writing
  */
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemApi.openForWriting(
   path: EelPath,
 ): EelFileSystemApiHelpers.OpenForWriting =
@@ -156,11 +168,13 @@ fun EelFileSystemApi.openForWriting(
     path = path,
   )
 
+@ApiStatus.Internal
 object EelFileSystemApiHelpers {
   /**
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.changeAttributes].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class ChangeAttributes(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
@@ -207,6 +221,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.copy].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class Copy(
     private val owner: EelFileSystemApi,
     private var source: EelPath,
@@ -273,6 +288,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.createTemporaryDirectory].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class CreateTemporaryDirectory(
     private val owner: EelFileSystemApi,
   ) : OwnedBuilder<EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError>> {
@@ -320,6 +336,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.createTemporaryFile].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class CreateTemporaryFile(
     private val owner: EelFileSystemApi,
   ) : OwnedBuilder<EelResult<EelPath, EelFileSystemApi.CreateTemporaryEntryError>> {
@@ -367,6 +384,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.listDirectoryWithAttrs].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class ListDirectoryWithAttrs(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
@@ -408,6 +426,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.move].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class Move(
     private val owner: EelFileSystemApi,
     private var source: EelPath,
@@ -462,6 +481,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.stat].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class Stat(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
@@ -503,6 +523,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.unwatch].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class Unwatch(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
@@ -530,6 +551,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.watchChanges].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class WatchChanges(
     private val owner: EelFileSystemApi,
   ) : OwnedBuilder<Flow<EelFileSystemApi.PathChange>> {
@@ -563,6 +585,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.openForReadingAndWriting].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class OpenForReadingAndWriting(
     private val owner: EelFileSystemApi,
     private var path: EelPath,
@@ -618,6 +641,7 @@ object EelFileSystemApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemApi.openForWriting].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class OpenForWriting(
     private val owner: EelFileSystemApi,
     private var path: EelPath,

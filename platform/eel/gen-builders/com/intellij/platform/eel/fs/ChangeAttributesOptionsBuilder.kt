@@ -9,9 +9,11 @@ import com.intellij.platform.eel.fs.EelFileInfo.Permissions
 import com.intellij.platform.eel.fs.EelFileSystemApi.ChangeAttributesOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.TimeSinceEpoch
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 class ChangeAttributesOptionsBuilder(
   private var path: EelPath,
 ) {

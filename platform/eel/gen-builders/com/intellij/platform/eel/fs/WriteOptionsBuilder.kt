@@ -8,9 +8,11 @@ import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode
 import com.intellij.platform.eel.fs.EelFileSystemApi.WriteOptions
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 class WriteOptionsBuilder(
   private var path: EelPath,
 ) {

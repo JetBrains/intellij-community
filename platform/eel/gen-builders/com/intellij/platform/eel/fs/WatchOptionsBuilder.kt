@@ -8,9 +8,11 @@ import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchOptions
 import com.intellij.platform.eel.fs.EelFileSystemApi.WatchedPath
+import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 class WatchOptionsBuilder() {
   private var changeTypes: Set<FileChangeType> = emptySet()
 

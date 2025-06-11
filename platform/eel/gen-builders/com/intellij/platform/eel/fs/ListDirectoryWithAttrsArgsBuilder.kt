@@ -8,9 +8,11 @@ import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.ListDirectoryWithAttrsArgs
 import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 class ListDirectoryWithAttrsArgsBuilder(
   private var path: EelPath,
 ) {

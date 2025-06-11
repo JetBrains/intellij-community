@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
  * Refrain from making new extension functions for [EelResult] and for using it in state of objects, putting EelResults into collections, etc.
  */
 @ApiStatus.Obsolete
+@ApiStatus.Internal
 sealed interface EelResult<out P, out E /*: EelError*//* TODO Uncomment and fix usages. */> {
   interface Ok<out P> : EelResult<P, Nothing> {
     val value: P
@@ -20,6 +21,7 @@ sealed interface EelResult<out P, out E /*: EelError*//* TODO Uncomment and fix 
 }
 
 @ApiStatus.NonExtendable
+@ApiStatus.Internal
 interface EelError {
   object Unknown : EelError
 }
@@ -29,17 +31,21 @@ interface EelError {
  *  val data = someFun().getOr { return it }
  * ```
  */
+@ApiStatus.Internal
 inline fun <T, E> EelResult<T, E>.getOr(action: (EelResult.Error<E>) -> Nothing): T = when (this) {
   is EelResult.Ok -> this.value
   is EelResult.Error -> action(this)
 }
 
 @JvmOverloads
+@ApiStatus.Internal
 inline fun <T, E> EelResult<T, E>.getOrThrow(exception: (E) -> Throwable = { if (it is Throwable) it else RuntimeException(it.toString()) }): T = getOr { throw exception(it.error) }
 
+@ApiStatus.Internal
 suspend inline fun <T, E, R, O> O.getOrThrow(exception: (E) -> Throwable = { if (it is Throwable) it else RuntimeException(it.toString()) }): T where R : EelResult<T, E>, O : OwnedBuilder<R> =
   eelIt().getOrThrow(exception)
 
+@ApiStatus.Internal
 fun <T, E> EelResult<T, E>.getOrNull(): T? = when (this) {
   is EelResult.Ok -> this.value
   is EelResult.Error -> null

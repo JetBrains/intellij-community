@@ -13,6 +13,7 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -36,15 +37,21 @@ import kotlin.time.Duration.Companion.milliseconds
 // copy functions copy data from/to an eel channel
 
 
+@ApiStatus.Internal
 fun ReadableByteChannel.consumeAsEelChannel(): EelReceiveChannel = NioReadToEelAdapter(this)
+@ApiStatus.Internal
 fun WritableByteChannel.asEelChannel(): EelSendChannel = NioWriteToEelAdapter(this)
 
 // Flushes data after each writing.
+@ApiStatus.Internal
 fun OutputStream.asEelChannel(): EelSendChannel = NioWriteToEelAdapter(Channels.newChannel(this), this)
+@ApiStatus.Internal
 fun InputStream.consumeAsEelChannel(): EelReceiveChannel = NioReadToEelAdapter(Channels.newChannel(this))
+@ApiStatus.Internal
 fun EelReceiveChannel.consumeAsInputStream(blockingContext: CoroutineContext = Dispatchers.IO): InputStream =
   InputStreamAdapterImpl(this, blockingContext)
 
+@ApiStatus.Internal
 fun EelSendChannel.asOutputStream(blockingContext: CoroutineContext = Dispatchers.IO): OutputStream =
   OutputStreamAdapterImpl(this, blockingContext)
 
@@ -53,6 +60,7 @@ fun EelSendChannel.asOutputStream(blockingContext: CoroutineContext = Dispatcher
  * Each buffer is fresh (not reused) but not flipped.
  * Errors are thrown out of the channel (directly or wrapped with [IOException] if not throwable).
  */
+@ApiStatus.Internal
 fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChannel, bufferSize: Int = DEFAULT_BUFFER_SIZE): ReceiveChannel<ByteBuffer> =
   consumeReceiveChannelAsKotlinImpl(receiveChannel, bufferSize)
 
@@ -76,10 +84,14 @@ fun CoroutineScope.consumeReceiveChannelAsKotlin(receiveChannel: EelReceiveChann
  * }
  * ```
  */
+@ApiStatus.Internal
 fun EelReceiveChannel.lines(charset: Charset): Flow<String> = linesImpl(charset)
+@ApiStatus.Internal
 fun EelReceiveChannel.lines(): Flow<String> = lines(Charset.defaultCharset())
 
+@ApiStatus.Internal
 fun Socket.consumeAsEelChannel(): EelReceiveChannel = consumeAsEelChannelImpl()
+@ApiStatus.Internal
 fun Socket.asEelChannel(): EelSendChannel = asEelChannelImpl()
 
 /**
@@ -88,12 +100,14 @@ fun Socket.asEelChannel(): EelSendChannel = asEelChannelImpl()
  * Closing [source] makes [sink] return and [IOException]
  * Calling [closePipe] closes both [sink] and [source], you might provide custom error that will be reported on a writing attempt.
  */
+@ApiStatus.Internal
 interface EelPipe {
   val sink: EelSendChannel
   val source: EelReceiveChannel
   fun closePipe(error: Throwable? = null)
 }
 
+@ApiStatus.Internal
 fun EelPipe(): EelPipe = EelPipeImpl()
 
 
@@ -101,6 +115,7 @@ fun EelPipe(): EelPipe = EelPipeImpl()
  * Reads all data till the end from a channel.
  * Semantics is the same as [InputStream.readAllBytes]
  */
+@ApiStatus.Internal
 suspend fun EelReceiveChannel.readAllBytes(): ByteArray = withContext(Dispatchers.IO) {
   // The current implementation is suboptimal and might be rewritten, but the API should be the same
   consumeAsInputStream().readAllBytes()
@@ -109,12 +124,14 @@ suspend fun EelReceiveChannel.readAllBytes(): ByteArray = withContext(Dispatcher
 /**
  * Result of [copy]
  */
+@ApiStatus.Internal
 sealed class CopyError(override val cause: Throwable) : IOException() {
   class InError(override val cause: Throwable) : CopyError(cause)
   class OutError(override val cause: Throwable) : CopyError(cause)
 }
 
 
+@ApiStatus.Internal
 enum class OnError {
   /**
    * Pretend to error happened, and try again after some time (simple backoff algorithm is used)
@@ -134,6 +151,7 @@ enum class OnError {
  * [onWriteError] and [onReadError] might be used to configure read/write error processing
  */
 @Throws(CopyError::class)
+@ApiStatus.Internal
 suspend fun copy(
   src: EelReceiveChannel,
   dst: EelSendChannel,

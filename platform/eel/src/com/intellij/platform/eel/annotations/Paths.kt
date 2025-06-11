@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.annotations
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * This annotation should be applied to strings that could be directly used to construct [java.nio.file.Path] instances.
  * These strings are either local to the IDE process or have prefix pointing to the specific environment.
@@ -16,6 +18,7 @@ package com.intellij.platform.eel.annotations
   AnnotationTarget.PROPERTY_SETTER,
   AnnotationTarget.TYPE,
 )
+@ApiStatus.Internal
 annotation class MultiRoutingFileSystemPath
 
 /**
@@ -37,6 +40,7 @@ annotation class MultiRoutingFileSystemPath
   AnnotationTarget.PROPERTY_SETTER,
   AnnotationTarget.TYPE,
 )
+@ApiStatus.Internal
 annotation class NativePath
 
 /**
@@ -61,6 +65,7 @@ annotation class NativePath
   AnnotationTarget.PROPERTY_SETTER,
   AnnotationTarget.TYPE,
 )
+@ApiStatus.Internal
 annotation class Filename
 
 @Retention(AnnotationRetention.SOURCE)
@@ -73,4 +78,5 @@ annotation class Filename
   AnnotationTarget.PROPERTY_SETTER,
   AnnotationTarget.TYPE,
 )
+@ApiStatus.Internal
 annotation class LocalPath

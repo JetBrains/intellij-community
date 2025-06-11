@@ -3,6 +3,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.ReadResult.EOF
 import com.intellij.platform.eel.ReadResult.NOT_EOF
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -20,6 +21,7 @@ import com.intellij.platform.eel.ReadResult.NOT_EOF
  * }
  * ```
  */
+@ApiStatus.Internal
 enum class ReadResult {
   EOF,
   NOT_EOF;

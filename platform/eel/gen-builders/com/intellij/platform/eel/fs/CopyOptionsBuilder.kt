@@ -7,9 +7,11 @@ package com.intellij.platform.eel.fs
 import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.CopyOptions
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 class CopyOptionsBuilder(
   private var source: EelPath,
   private var target: EelPath,

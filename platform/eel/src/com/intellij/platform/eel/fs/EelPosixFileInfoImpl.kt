@@ -2,8 +2,10 @@
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 import java.time.ZonedDateTime
 
+@ApiStatus.Internal
 data class EelPosixFileInfoImpl(
   override val type: EelPosixFileInfo.Type,
   override val permissions: EelPosixFileInfo.Permissions,

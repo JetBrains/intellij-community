@@ -4,12 +4,13 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import kotlinx.coroutines.Deferred
-import java.io.IOException
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents some process that was launched via [EelExecApi.spawnProcess].
  *
  */
+@ApiStatus.Internal
 sealed interface EelProcess {
   val pid: EelApi.Pid
 
@@ -57,6 +58,7 @@ sealed interface EelProcess {
   }
 }
 
+@ApiStatus.Internal
 interface EelPosixProcess : EelProcess {
   /**
    * Sends `SIGTERM` on Unix.
@@ -64,6 +66,7 @@ interface EelPosixProcess : EelProcess {
   suspend fun terminate()
 }
 
+@ApiStatus.Internal
 interface EelWindowsProcess : EelProcess {
   // Nothing yet.
 }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -15,6 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * API for sockets. Use [hostAddressBuilder] to create arguments.
  */
+@ApiStatus.Internal
 sealed interface EelTunnelsApi {
   /**
    * Creates a remote UNIX socket forwarding. IJent listens for a connection on the remote machine, and when the connection
@@ -272,6 +274,7 @@ sealed interface EelTunnelsApi {
 /**
  * Socket configuration valid both for server and client socket
  */
+@ApiStatus.Internal
 interface ConfigurableSocket {
   /**
    * Sets the possibility to reuse address of the socket
@@ -283,6 +286,7 @@ interface ConfigurableSocket {
 /**
  * Client only socket options
  */
+@ApiStatus.Internal
 interface ConfigurableClientSocket : ConfigurableSocket {
   /**
    * Disables pending data until acknowledgement
@@ -295,18 +299,22 @@ interface ConfigurableClientSocket : ConfigurableSocket {
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel to server
  */
+@ApiStatus.Internal
 operator fun Connection.component1(): EelSendChannel = sendChannel
 
 /**
  * Convenience operator to decompose connection to a pair of channels when needed.
  * @return channel from server
  */
+@ApiStatus.Internal
 operator fun Connection.component2(): EelReceiveChannel = receiveChannel
 
+@ApiStatus.Internal
 interface EelTunnelsPosixApi : EelTunnelsApi {
 
 }
 
+@ApiStatus.Internal
 interface EelTunnelsWindowsApi : EelTunnelsApi
 
 /**
@@ -331,6 +339,7 @@ interface EelTunnelsWindowsApi : EelTunnelsApi
  *
  * @see EelTunnelsApi.getConnectionToRemotePort for more details on the behavior of [Connection]
  */
+@ApiStatus.Internal
 suspend fun <T> EelTunnelsApiHelpers.GetConnectionToRemotePort.withConnectionToRemotePort(
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
@@ -369,17 +378,20 @@ private suspend fun <T> closeWithExceptionHandling(action: suspend CoroutineScop
   }
 }
 
+@ApiStatus.Internal
 fun EelTunnelsApiHelpers.GetConnectionToRemotePort.hostAddress(
   addr: EelTunnelsApi.HostAddress,
 ): EelTunnelsApiHelpers.GetConnectionToRemotePort =
   hostname(addr.hostname).port(addr.port).protocolPreference(addr.protocolPreference).timeout(addr.timeout)
 
+@ApiStatus.Internal
 suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   host: String, port: UShort,
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
 ): T = getConnectionToRemotePort().hostname(host).port(port).withConnectionToRemotePort(errorHandler, action)
 
+@ApiStatus.Internal
 suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   remotePort: UShort,
   errorHandler: suspend (EelConnectionError) -> T,
@@ -387,6 +399,7 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
 ): T = withConnectionToRemotePort("localhost", remotePort, errorHandler, action)
 
 
+@ApiStatus.Internal
 suspend fun <T> EelTunnelsApiHelpers.GetAcceptorForRemotePort.withAcceptorForRemotePort(
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(EelTunnelsApi.ConnectionAcceptor) -> T,
@@ -399,6 +412,7 @@ suspend fun <T> EelTunnelsApiHelpers.GetAcceptorForRemotePort.withAcceptorForRem
   }
 }
 
+@ApiStatus.Internal
 fun EelTunnelsApiHelpers.GetAcceptorForRemotePort.hostAddress(
   addr: EelTunnelsApi.HostAddress,
 ): EelTunnelsApiHelpers.GetAcceptorForRemotePort =
@@ -407,11 +421,13 @@ fun EelTunnelsApiHelpers.GetAcceptorForRemotePort.hostAddress(
 /**
  * Represents a common class for all network-related errors appearing during the interaction with IJent or local process
  */
+@ApiStatus.Internal
 sealed interface EelNetworkError : EelError
 
 /**
  * An error that can happen during the creation of a connection to a remote server
  */
+@ApiStatus.Internal
 sealed class EelConnectionError(override val message: String) : EelNetworkError, IOException() {
 
   /**

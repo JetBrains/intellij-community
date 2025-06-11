@@ -10,10 +10,12 @@ import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.fs.EelFileSystemApi.SymlinkPolicy
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemPosixApi.listDirectoryWithAttrs(
   path: EelPath,
 ): EelFileSystemPosixApiHelpers.ListDirectoryWithAttrs =
@@ -23,6 +25,7 @@ fun EelFileSystemPosixApi.listDirectoryWithAttrs(
   )
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 fun EelFileSystemPosixApi.stat(
   path: EelPath,
 ): EelFileSystemPosixApiHelpers.Stat =
@@ -31,11 +34,13 @@ fun EelFileSystemPosixApi.stat(
     path = path,
   )
 
+@ApiStatus.Internal
 object EelFileSystemPosixApiHelpers {
   /**
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemPosixApi.listDirectoryWithAttrs].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class ListDirectoryWithAttrs(
     private val owner: EelFileSystemPosixApi,
     private var path: EelPath,
@@ -77,6 +82,7 @@ object EelFileSystemPosixApiHelpers {
    * Create it via [com.intellij.platform.eel.fs.EelFileSystemPosixApi.stat].
    */
   @GeneratedBuilder.Result
+  @ApiStatus.Internal
   class Stat(
     private val owner: EelFileSystemPosixApi,
     private var path: EelPath,

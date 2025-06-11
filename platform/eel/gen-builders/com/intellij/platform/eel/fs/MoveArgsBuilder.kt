@@ -8,9 +8,11 @@ import com.intellij.platform.eel.GeneratedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi.MoveArgs
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 class MoveArgsBuilder(
   private var source: EelPath,
   private var target: EelPath,

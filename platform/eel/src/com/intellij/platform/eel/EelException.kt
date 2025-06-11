@@ -5,6 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 @ApiStatus.NonExtendable
+@ApiStatus.Internal
 abstract class EelException @JvmOverloads constructor(
   open val error: EelError,
   cause: Throwable? = null,

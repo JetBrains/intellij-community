@@ -2,12 +2,13 @@
 package com.intellij.platform.eel.channels
 
 import com.intellij.platform.eel.ReadResult
-import org.jetbrains.annotations.CheckReturnValue
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 
 /**
  * Channel to receive data from
  */
+@ApiStatus.Internal
 interface EelReceiveChannel {
   /**
    * Reads data to [dst] but might read less (see buffer position).

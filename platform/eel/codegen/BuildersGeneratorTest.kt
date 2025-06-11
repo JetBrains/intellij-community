@@ -92,14 +92,24 @@ import kotlin.jvm.optionals.getOrNull
 import kotlin.let
 import kotlin.run
 import kotlin.sequences.associateWithTo
+import kotlin.sequences.filter
+import kotlin.sequences.filterIsInstance
+import kotlin.sequences.flatMap
+import kotlin.sequences.generateSequence
 import kotlin.sequences.joinToString
+import kotlin.sequences.map
+import kotlin.sequences.takeWhile
+import kotlin.sequences.toSet
 import kotlin.takeIf
 import kotlin.text.Regex
+import kotlin.text.RegexOption
 import kotlin.text.buildString
+import kotlin.text.endsWith
 import kotlin.text.isBlank
 import kotlin.text.isNotEmpty
 import kotlin.text.lines
 import kotlin.text.lowercase
+import kotlin.text.matches
 import kotlin.text.orEmpty
 import kotlin.text.prependIndent
 import kotlin.text.removePrefix
@@ -433,7 +443,7 @@ private suspend fun fillRequests(
 private class BuilderRequest(
   val shouldCheckReturnValue: Boolean,
   val throwsAnnotation: String?,
-  val deprecatedAnnotation: String?,
+  val annotations: Collection<String>,
   val argsInterfaceFqn: String,
   val clsFqn: String,
   val methodName: String,
@@ -459,9 +469,27 @@ private fun findBuilders(psiFile: PsiFile, methods: MutableList<BuilderRequest>)
           val methodName = fn.name ?: return
           val methodCls = valueParameter.containingClass()?.fqName ?: return
 
+          val annotationsToCopyRegex = Regex("""
+            (
+            org[.]jetbrains[.]annotations[.]ApiStatus[.](Internal|Experimental|Obsolete|ScheduledForRemoval)
+            |
+            kotlin[.]Deprecated
+            )
+          """.trimIndent(), RegexOption.COMMENTS)
+
           methods += BuilderRequest(
             shouldCheckReturnValue = fn.annotationEntries.mapNotNull { it.shortName?.asString() }.contains("CheckReturnValue"),
-            deprecatedAnnotation = fn.annotationEntries.find { it.shortName?.asString() == "Deprecated" }?.text?.trim(),
+            annotations = generateSequence(fn, PsiElement::getParent)
+              .takeWhile { it !is PsiFile }
+              .filterIsInstance<KtAnnotated>()
+              .flatMap { it.annotationEntries }
+              .filter {
+                analyze(it) {
+                  it.typeReference?.getFqn()?.matches(annotationsToCopyRegex) == true
+                }
+              }
+              .map { it.text.trim() }
+              .toSet(),
             throwsAnnotation = fn.annotationEntries.filter { it.shortName?.asString() in listOf("Throws", "ThrowsChecked") }.joinToString(" ") { it.text.trim() },
             argsInterfaceFqn = typeFqn,
             clsFqn = methodCls.asString(),
@@ -581,6 +609,7 @@ private suspend fun writeBuilderFiles(
           requiredArguments = requiredArguments,
           optionalArguments = optionalArguments,
           propertyNames = propertyNames,
+          annotations = builderRequest.annotations,
         )
       }
 
@@ -613,7 +642,7 @@ private suspend fun writeBuilderFiles(
         }
 
         text += """
-        ${kdoc.renderKdoc()}@GeneratedBuilder.Result${builderRequest.deprecatedAnnotation ?: ""}
+        ${kdoc.renderKdoc()}@GeneratedBuilder.Result${builderRequest.annotations.joinToString("\n")}
         fun ${builderRequest.clsFqn}.${builderRequest.methodName}(${
           requiredArguments.joinToString("") { prop ->
             "\n${prop.name}: ${prop.typeFqn},"
@@ -625,7 +654,9 @@ private suspend fun writeBuilderFiles(
         """
       }
 
-      text += "object ${clsFqn.removePrefix("$sourcePackage.").split('.').first()}Helpers {"
+      val annotationsForGroup = annotationsForGroup(clsBuilderRequests.map { it.annotations })
+
+      text += "$annotationsForGroup object ${clsFqn.removePrefix("$sourcePackage.").split('.').first()}Helpers {"
 
       for (builderRequest in clsBuilderRequests) {
         val argsInterfaceInfo = argsInterfacesByFqn[builderRequest.argsInterfaceFqn]!!
@@ -634,7 +665,7 @@ private suspend fun writeBuilderFiles(
         /**
          * Create it via [${builderRequest.clsFqn}.${builderRequest.methodName}]. 
          */
-        @GeneratedBuilder.Result
+        @GeneratedBuilder.Result${builderRequest.annotations.joinToString("\n")}
         class ${builderRequest.methodName.replaceFirstChar(Char::uppercaseChar)}(
           private val owner: ${builderRequest.clsFqn}, ${
           argsInterfaceInfo.requiredArguments.joinToString("") { prop ->
@@ -680,7 +711,7 @@ private suspend fun writeBuilderFiles(
       for ((argsInterfaceFqn, argsInterfaceInfo) in argsInterfacesByFqn) {
         text = """
         @GeneratedBuilder.Result
-        class ${argsInterfaceInfo.name}Builder${
+        ${argsInterfaceInfo.annotations.sorted().joinToString("\n")} class ${argsInterfaceInfo.name}Builder${
           argsInterfaceInfo.requiredArguments.joinToString("", "(", ")") { prop ->
             "\n${prop.kdoc.renderKdoc()}private var ${prop.name}: ${prop.typeFqn},"
           }
@@ -731,6 +762,21 @@ private suspend fun writeBuilderFiles(
   }
 
   return filesContent
+}
+
+private fun annotationsForGroup(annotationGroups: List<Collection<String>>): String {
+  val union = annotationGroups.flatten().toSet()
+  val result = annotationGroups
+    .reduce { a, b -> a intersect b }
+    .toMutableSet()
+  union.find { it.endsWith(".Experimental") }?.let { experimental ->
+    result += experimental
+  }
+  union.find { it.endsWith(".Internal") }?.let { internal ->
+    result.removeIf { experimental -> experimental.endsWith(".Experimental") }
+    result += internal
+  }
+  return result.sorted().joinToString()
 }
 
 private fun renderPropertyInBuilder(
@@ -847,4 +893,5 @@ private class ArgInterfaceInfo(
   val requiredArguments: List<RequiredArgument>,
   val optionalArguments: List<OptionalArgument>,
   val propertyNames: List<String>,
+  val annotations: Collection<String>,
 )

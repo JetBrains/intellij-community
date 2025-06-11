@@ -3,7 +3,9 @@ package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.EelError
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 sealed interface EelFsError : EelError {
   val where: EelPath
 

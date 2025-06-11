@@ -5,11 +5,13 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelTunnelsApi.GetAcceptorForRemotePort
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 
 @GeneratedBuilder.Result
+@ApiStatus.Internal
 class GetAcceptorForRemotePortBuilder() {
   private var configureServerSocket: @ExtensionFunctionType Function1<ConfigurableSocket, Unit> = {}
 
