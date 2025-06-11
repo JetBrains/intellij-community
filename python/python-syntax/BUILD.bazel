@@ -25,6 +25,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:fastutil-min",
+    "@lib//:guava",
   ],
   runtime_deps = [":syntax_resources"]
 )

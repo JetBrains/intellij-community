@@ -122,7 +122,6 @@
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
     <codeInsight.parameterInfo language="Python" implementationClass="com.jetbrains.python.PyParameterInfoHandler"/>
     <codeInsight.fillParagraph language="Python" implementationClass="com.jetbrains.python.actions.PyFillParagraphHandler"/>
-    <colorSettingsPage implementation="com.jetbrains.python.highlighting.PythonColorsPage"/>
     <stripTrailingSpacesFilterFactory implementation="com.jetbrains.python.editor.PyStripTrailingSpacesFilterFactory"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>

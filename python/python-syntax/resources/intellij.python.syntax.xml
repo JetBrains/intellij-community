@@ -20,6 +20,7 @@
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
     <backspaceHandlerDelegate implementation="com.jetbrains.python.codeInsight.editorActions.PyTripleQuoteBackspaceDelegate"/>
     <annotator language="Python" implementationClass="com.jetbrains.python.validation.PyCompositeAnnotator"/>
+    <colorSettingsPage implementation="com.jetbrains.python.highlighting.PythonColorsPage"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <pyAnnotator implementation="com.jetbrains.python.validation.PyHighlightingAnnotator"/>
