@@ -12,7 +12,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.ast.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
   @Override
   public int tryJoinRawLines(@NotNull Document document, @NotNull PsiFile file, int start, int end) {
-    if (!(file instanceof PyFile)) return CANNOT_JOIN;
+    if (!(file instanceof PyAstFile)) return CANNOT_JOIN;
 
     // step back the probable "\" and space before it.
     final CharSequence text = document.getCharsSequence();
@@ -64,8 +64,8 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     final PsiElement leftElement = file.findElementAt(start);
     final PsiElement rightElement = file.findElementAt(end);
     if (leftElement != null && rightElement != null) {
-      final PyExpression leftExpr = PsiTreeUtil.getParentOfType(leftElement, PyExpression.class);
-      final PyExpression rightExpr = PsiTreeUtil.getParentOfType(rightElement, PyExpression.class);
+      final PyAstExpression leftExpr = PsiTreeUtil.getParentOfType(leftElement, PyAstExpression.class);
+      final PyAstExpression rightExpr = PsiTreeUtil.getParentOfType(rightElement, PyAstExpression.class);
 
       final Request request = new Request(document, start, end, leftElement, leftExpr, rightElement, rightExpr);
 
@@ -119,8 +119,8 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     final Document document;
     final PsiElement leftElem;
     final PsiElement rightElem;
-    final PyExpression leftExpr;
-    final PyExpression rightExpr;
+    final PyAstExpression leftExpr;
+    final PyAstExpression rightExpr;
     final int secondLineStartOffset;
     final int firstLineEndOffset;
 
@@ -128,9 +128,9 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
                     int firstLineEndOffset,
                     int secondLineStartOffset,
                     @NotNull PsiElement leftElem,
-                    @Nullable PyExpression leftExpr,
+                    @Nullable PyAstExpression leftExpr,
                     @NotNull PsiElement rightElem,
-                    @Nullable PyExpression rightExpr) {
+                    @Nullable PyAstExpression rightExpr) {
       this.document = document;
       this.firstLineEndOffset = firstLineEndOffset;
       this.secondLineStartOffset = secondLineStartOffset;
@@ -180,7 +180,7 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private static class BinaryExprJoiner implements Joiner {
     @Override
     public Result join(@NotNull Request req) {
-      if (req.leftExpr instanceof PyBinaryExpression || req.rightExpr instanceof PyBinaryExpression) {
+      if (req.leftExpr instanceof PyAstBinaryExpression || req.rightExpr instanceof PyAstBinaryExpression) {
         // TODO: look at settings for space around binary exprs
         return new Result(" ", 1);
       }
@@ -191,9 +191,9 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private static class StmtJoiner implements Joiner {
     @Override
     public Result join(@NotNull Request req) {
-      final PyStatement leftStmt = PsiTreeUtil.getParentOfType(req.leftExpr, PyStatement.class);
+      final PyAstStatement leftStmt = PsiTreeUtil.getParentOfType(req.leftExpr, PyAstStatement.class);
       if (leftStmt != null) {
-        final PyStatement rightStmt = PsiTreeUtil.getParentOfType(req.rightExpr, PyStatement.class);
+        final PyAstStatement rightStmt = PsiTreeUtil.getParentOfType(req.rightExpr, PyAstStatement.class);
         if (rightStmt != null && rightStmt != leftStmt) {
           // TODO: look at settings for space after semicolon
           return new Result("; ", 1); // cursor after semicolon
@@ -206,12 +206,12 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
   private static class StringLiteralJoiner implements Joiner {
     @Override
     public Result join(@NotNull Request req) {
-      final PyStringElement leftStringElem = PsiTreeUtil.getParentOfType(req.leftElem, PyStringElement.class, false);
-      final PyStringElement rightStringElem = PsiTreeUtil.getParentOfType(req.rightElem, PyStringElement.class, false);
+      final PyAstStringElement leftStringElem = PsiTreeUtil.getParentOfType(req.leftElem, PyAstStringElement.class, false);
+      final PyAstStringElement rightStringElem = PsiTreeUtil.getParentOfType(req.rightElem, PyAstStringElement.class, false);
       if (leftStringElem != null && rightStringElem != null && leftStringElem != rightStringElem) {
         final PsiElement parent = rightStringElem.getParent();
-        if ((leftStringElem.getParent() == parent && parent instanceof PyStringLiteralExpression) ||
-            (req.leftExpr instanceof PyStringLiteralExpression && req.rightExpr instanceof PyStringLiteralExpression)) {
+        if ((leftStringElem.getParent() == parent && parent instanceof PyAstStringLiteralExpression) ||
+            (req.leftExpr instanceof PyAstStringLiteralExpression && req.rightExpr instanceof PyAstStringLiteralExpression)) {
 
           if (leftStringElem.isTerminated() && rightStringElem.isTerminated() && haveSamePrefixes(leftStringElem, rightStringElem)) {
             final String leftElemQuotes = leftStringElem.getQuote();
@@ -233,8 +233,8 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
 
     private static @Nullable Result processStringsWithDifferentQuotes(final @NotNull Request req,
-                                                                      final @NotNull PyStringElement leftElem,
-                                                                      final @NotNull PyStringElement rightElem,
+                                                                      final @NotNull PyAstStringElement leftElem,
+                                                                      final @NotNull PyAstStringElement rightElem,
                                                                       final @NotNull String replacement) {
       if (!leftElem.isTripleQuoted() && !rightElem.isTripleQuoted()) {
         if (!rightElem.getContent().contains(leftElem.getQuote())) {
@@ -254,8 +254,8 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     }
 
     private static @NotNull Result getResultAndSplitStringIfTooLong(final @NotNull Request req,
-                                                                    final @NotNull PyStringElement leftElem,
-                                                                    final @NotNull PyStringElement rightElem,
+                                                                    final @NotNull PyAstStringElement leftElem,
+                                                                    final @NotNull PyAstStringElement rightElem,
                                                                     final @NotNull String replacement,
                                                                     final @NotNull String quote) {
       int cutIntoRight = rightElem.getContentRange().getStartOffset();
@@ -271,7 +271,7 @@ public final class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
       return new Result(replacement + lineEnd, 0, leftElem.getQuote().length(), cutIntoRight);
     }
 
-    private static boolean haveSamePrefixes(@NotNull PyStringElement leftNodeInfo, @NotNull PyStringElement rightNodeInfo) {
+    private static boolean haveSamePrefixes(@NotNull PyAstStringElement leftNodeInfo, @NotNull PyAstStringElement rightNodeInfo) {
       return leftNodeInfo.isUnicode() == rightNodeInfo.isUnicode() &&
              leftNodeInfo.isRaw() == rightNodeInfo.isRaw() &&
              leftNodeInfo.isBytes() == rightNodeInfo.isBytes() &&
