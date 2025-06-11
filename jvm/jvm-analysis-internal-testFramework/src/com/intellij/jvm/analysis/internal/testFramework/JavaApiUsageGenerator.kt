@@ -3,7 +3,6 @@ package com.intellij.jvm.analysis.internal.testFramework
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.JDK_HOME
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.LANGUAGE_LEVEL
-import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.PREVIEW_JDK_HOME
 import com.intellij.jvm.analysis.internal.testFramework.JavaApiUsageGenerator.Companion.SINCE_VERSION
 import com.intellij.openapi.module.JdkApiCompatibilityService
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -31,15 +30,45 @@ import kotlin.io.path.*
 /**
  * Generator which is used to generate required api files for [com.intellij.codeInspection.JavaApiUsageInspection].
  * To generate new API lists for next release, you will need to set [JDK_HOME], [LANGUAGE_LEVEL], [SINCE_VERSION] and then run
- * [testCollectSinceApiUsages].
+ * [testCollectSinceApiUsages]. The API list will be printed on standard out.
  */
 @Ignore
 class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LANGUAGE_LEVEL) {
-    override fun getSdk(): Sdk {
-      val sdk = SdkTableImplementationDelegate.getInstance().createSdk("java-gen", JavaSdk.getInstance(), JDK_HOME)
-      JavaSdk.getInstance().setupSdkPaths(sdk)
-      return sdk
+
+  companion object {
+    /**
+     * Absolute path to the jdk where to find the Java source files to create an API list for. On MacOS include /Contents/Home at the end.
+     */
+    private const val JDK_HOME = "/Library/Java/JavaVirtualMachines/jdk-24.jdk/Contents/Home"
+
+    /**
+     * The language level used to parse the source files.
+     */
+    private val LANGUAGE_LEVEL = LanguageLevel.JDK_24
+
+    /**
+     * The @since tag value to find API's for. By default, matches [LANGUAGE_LEVEL].
+     */
+    private val SINCE_VERSION = LANGUAGE_LEVEL.feature().toString()
+
+    /**
+     * Used in [testGenerateRemovedEntries]
+     */
+    private const val TEMP_API_DIR = "REPLACE_ME"
+
+    /**
+     * Dir to API lists. Used in [testGenerateRemovedEntries] and [testRemoveNonPublicApi]
+     */
+    private const val API_DIR = "REPLACE_ME"
+  }
+
+
+  /**
+   * Generates an API list for the specified [JDK_HOME], [LANGUAGE_LEVEL] and [SINCE_VERSION].
+   */
+  fun testCollectSinceApiUsages() {
+    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
+      doCollectSinceApiUsages()
     }
   }
 
@@ -50,6 +79,20 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
   fun testGenerateRemovedEntries() {
     IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
       removedEntries(Path.of(TEMP_API_DIR), Path.of(API_DIR))
+    }
+  }
+
+  fun testRemoveNonPublicApi() {
+    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
+      filterSignatures(Path.of(API_DIR)) { isPublicApi() }
+    }
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LANGUAGE_LEVEL) {
+    override fun getSdk(): Sdk {
+      val sdk = SdkTableImplementationDelegate.getInstance().createSdk("java-gen", JavaSdk.getInstance(), JDK_HOME)
+      JavaSdk.getInstance().setupSdkPaths(sdk)
+      return sdk
     }
   }
 
@@ -97,12 +140,6 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     return parentMember.isPublicApi()
   }
 
-  fun testRemoveNonPublicApi() {
-    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
-      filterSignatures(Path.of(API_DIR)) { isPublicApi() }
-    }
-  }
-
   /**
    * Can be used to filter out API lists from the [path] according to the provided [filter].
    */
@@ -147,19 +184,13 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     } else clazz
   }
 
-  fun testCollectSinceApiUsages() {
-    IdeaTestUtil.withLevel(myFixture.module, LANGUAGE_LEVEL) {
-      doCollectSinceApiUsages()
-    }
-  }
-
   fun getParamFqns(signature: String): List<String> {
     return signature.substringAfter("(").substringBefore(")").split(";").dropLast(1)
   }
 
   /**
    * Run to generate API lists.
-   * Setting [LANGUAGE_LEVEL], [SINCE_VERSION] and [JDK_HOME] or [PREVIEW_JDK_HOME] is required.
+   * Setting [LANGUAGE_LEVEL], [SINCE_VERSION] and [JDK_HOME] is required.
    */
   private fun doCollectSinceApiUsages() {
     val previews = mutableSetOf<String>()
@@ -185,9 +216,10 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
         return feature?.minimumLevel
       }
     }
+    val srcFile = JarFileSystem.getInstance().findFileByPath("$JDK_HOME/lib/src.zip!/")
+                  ?: throw IllegalStateException("JDK source files not found in $JDK_HOME")
     if (LANGUAGE_LEVEL.isPreview) {
-      val previewSrcFile = JarFileSystem.getInstance().findFileByPath("$PREVIEW_JDK_HOME/lib/src.zip!/") ?: return
-      VfsUtilCore.iterateChildrenRecursively(previewSrcFile, VirtualFileFilter.ALL, previewContentIterator)
+      VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, previewContentIterator)
     }
     val contentIterator = ContentIterator { fileOrDir ->
       val file = PsiManager.getInstance(project).findFile(fileOrDir) as? PsiJavaFile
@@ -200,11 +232,8 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
             if (JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project)) == null) {
               return // If the class is not in all scope, don't generate
             }
-            val paramFqns = getParamFqns(signature).map { name -> name.substringBefore("[").substringBefore("<") }
-            if (paramFqns.any { name -> !isValidTypeName(element, name) }) {
-              throw IllegalStateException("Generated parameters $paramFqns must be fully qualified or primitive")
-            }
             if (isDocumentedSinceApi(element) && !previews.contains(signature)) {
+              checkParametersAreFullyQualified(signature, element)
               println(signature)
             } else if (element is PsiMethod && element.docComment == null) { // find inherited doc
               val sinceSuperVersions = element.findDeepestSuperMethods().map { superMethod ->
@@ -214,9 +243,17 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
               }
               val sinceVersion = sinceSuperVersions.filterNotNull().minOrNull()
               if (sinceVersion == LANGUAGE_LEVEL.toJavaVersion()) {
+                checkParametersAreFullyQualified(signature, element)
                 println(signature)
               }
             }
+          }
+        }
+
+        private fun checkParametersAreFullyQualified(signature: String, element: PsiMember) {
+          val paramFqns = getParamFqns(signature).map { name -> name.substringBefore("[").substringBefore("<") }
+          if (paramFqns.any { name -> !isValidTypeName(element, name) }) {
+            throw IllegalStateException("Generated parameters must be fully qualified or primitive: $signature")
           }
         }
 
@@ -226,7 +263,6 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
       })
       true
     }
-    val srcFile = JarFileSystem.getInstance().findFileByPath("$JDK_HOME/lib/src.zip!/") ?: return
     VfsUtilCore.iterateChildrenRecursively(srcFile, VirtualFileFilter.ALL, contentIterator)
   }
 
@@ -240,28 +276,5 @@ class JavaApiUsageGenerator : LightJavaCodeInsightFixtureTestCase() {
     if (element is PsiTypeParameterListOwner && name in element.typeParameters.map { it.name }) return true
     val parent = element.parentOfType<PsiMember>() ?: return false
     return isValidTypeName(parent, name)
-  }
-
-  companion object {
-    private const val TEMP_API_DIR = "REPLACE_ME"
-
-    /**
-     * Dir to API lists
-     */
-    private const val API_DIR = "REPLACE_ME"
-
-    private const val PREVIEW_JDK_HOME = "/home/me/.jdks/openjdk-20"
-
-    private const val JDK_HOME = "/home/me/.jdks/openjdk-20"
-
-    /**
-     * The language level to check for.
-     */
-    private val LANGUAGE_LEVEL = LanguageLevel.JDK_24
-
-    /**
-     * The @since tag value used should match [LANGUAGE_LEVEL].
-     */
-    private const val SINCE_VERSION = "24"
   }
 }
