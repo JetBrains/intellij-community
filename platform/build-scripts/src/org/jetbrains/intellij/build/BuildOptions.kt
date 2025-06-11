@@ -358,6 +358,11 @@ data class BuildOptions(
   var useLocalLauncher: Boolean = false
 
   /**
+   * When set, `WinExeInstallerBuilder` will use the given local NSIS installation.
+   */
+  var useLocalNSIS: String? = null
+
+  /**
    * When `true`, cross-platform distribution will be packed using zip64 in AlwaysWithCompatibility mode.
    */
   var useZip64ForCrossPlatformDistribution: Boolean = getBooleanProperty("intellij.build.cross.platform.dist.zip64", false)

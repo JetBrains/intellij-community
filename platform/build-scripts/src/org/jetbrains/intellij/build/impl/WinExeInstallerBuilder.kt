@@ -132,12 +132,15 @@ internal suspend fun buildNsisInstaller(
 }
 
 private suspend fun prepareNsis(context: BuildContext, tempDir: Path): Pair<Path, Path> {
-  val nsisVersion = context.dependenciesProperties.property("nsisBuild")
-  val nsisUrl = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/NSIS-${nsisVersion}.zip"
-  val nsisZip = downloadFileToCacheLocation(nsisUrl, context.paths.communityHomeDirRoot)
-  Decompressor.Zip(nsisZip).withZipExtensions().extract(tempDir)
-  val nsisDir = tempDir.resolve("NSIS")
-  require(nsisDir.isDirectory()) { "'${nsisDir.fileName}' is missing from ${nsisUrl}" }
+  val nsisDir = context.options.useLocalNSIS?.let { Path.of(it) } ?: run {
+    val nsisVersion = context.dependenciesProperties.property("nsisBuild")
+    val nsisUrl = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/nsis/NSIS-${nsisVersion}.zip"
+    val nsisZip = downloadFileToCacheLocation(nsisUrl, context.paths.communityHomeDirRoot)
+    Decompressor.Zip(nsisZip).withZipExtensions().extract(tempDir)
+    val nsisDir = tempDir.resolve("NSIS")
+    require(nsisDir.isDirectory()) { "'${nsisDir.fileName}' is missing from ${nsisUrl}" }
+    nsisDir
+  }
   val ext = if (OsFamily.currentOs == OsFamily.WINDOWS) ".exe" else "-${OsFamily.currentOs.dirName}-${JvmArchitecture.currentJvmArch.dirName}"
   @Suppress("SpellCheckingInspection") val nsisBin = nsisDir.resolve("Bin/makensis${ext}")
   require(nsisBin.isRegularFile()) { "'${nsisDir.fileName}' is missing" }
