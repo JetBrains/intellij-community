@@ -15,6 +15,9 @@
  */
 package com.intellij.spellchecker.inspection;
 
+import com.intellij.testFramework.UsefulTestCase;
+import org.junit.Assume;
+
 import java.util.Locale;
 
 /**
@@ -46,6 +49,7 @@ public class CommentsWithMistakesInspectionTest extends SpellcheckerInspectionTe
   }
 
   public void testHtml() {
+    Assume.assumeFalse("This test is skipped on TeamCity", UsefulTestCase.IS_UNDER_TEAMCITY);
     doTest("test.html");
   }
 
