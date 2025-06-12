@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "plugin_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "plugin",
   module_name = "kotlin.base.plugin",
@@ -89,8 +95,12 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:maven-resolver-provider",
     "//platform/util",
+    "//platform/build-scripts/downloader",
   ],
-  runtime_deps = [":plugin_resources"]
+  runtime_deps = [
+    ":plugin_resources",
+    ":plugin_test_resources",
+  ]
 )
 
 jvm_test(

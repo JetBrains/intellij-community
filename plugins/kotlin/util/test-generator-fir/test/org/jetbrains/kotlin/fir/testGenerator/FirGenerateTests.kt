@@ -73,6 +73,7 @@ fun assembleK2Workspace(): TWorkspace = assembleWorkspace()
 
 fun generateK2Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
+    TestGenerator.writeLibrariesVersion(isUpToDateCheck)
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
 }
 

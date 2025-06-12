@@ -6,11 +6,13 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactRepository;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader;
 
 import java.io.File;
 import java.util.List;
+
+import static org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifactsKt.downloadArtifact;
 
 public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndLibraryProjectDescriptor {
 
@@ -74,12 +76,11 @@ public class KotlinWithJdkAndRuntimeLightProjectDescriptor extends KotlinJdkAndL
     }
 
     public static KotlinWithJdkAndRuntimeLightProjectDescriptor getInstance(@NotNull String version) {
-        KotlinArtifactsDownloader instance = KotlinArtifactsDownloader.INSTANCE;
         return new KotlinWithJdkAndRuntimeLightProjectDescriptor(
-                List.of(instance.downloadArtifactForIdeFromSources("kotlin-stdlib", version)),
+                List.of(downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", version, null, "jar", KotlinArtifactRepository.MAVEN_CENTRAL)),
                 List.of(
-                        instance.downloadArtifactForIdeFromSources("kotlin-stdlib", version, "-sources.jar"),
-                        instance.downloadArtifactForIdeFromSources("kotlin-stdlib-common", version, "-sources.jar")
+                        downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib", version, "sources", "jar", KotlinArtifactRepository.MAVEN_CENTRAL),
+                        downloadArtifact("org.jetbrains.kotlin", "kotlin-stdlib-common", version, "sources", "jar", KotlinArtifactRepository.MAVEN_CENTRAL)
                 )
         );
     }

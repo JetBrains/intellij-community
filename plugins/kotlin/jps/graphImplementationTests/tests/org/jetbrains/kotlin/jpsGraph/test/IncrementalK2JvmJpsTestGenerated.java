@@ -5,8 +5,8 @@ package org.jetbrains.kotlin.jpsGraph.test;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker;
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifactsKt;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader;
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout;
 import org.jetbrains.kotlin.jps.build.AbstractIncrementalK2JvmJpsTest;
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners;
@@ -43,10 +43,7 @@ public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJp
         // Use custom compiler for tests
         File unpackedDistDir = new File(PathManager.getSystemPath(), "kotlin-dist-for-ide/kotlinc-dist-for-ide-from-sources-testing-custom/" + compilerVersion);
         if(!unpackedDistDir.exists()) {
-            File distJar = KotlinArtifactsDownloader.INSTANCE.downloadArtifactForIdeFromSources(
-                    "kotlin-dist-for-ide",
-                    compilerVersion
-            );
+            File distJar = TestKotlinArtifactsKt.downloadArtifact("org.jetbrains.kotlin", "kotlin-dist-for-ide", compilerVersion);
             new LazyZipUnpacker(unpackedDistDir).lazyUnpack(distJar);
         }
         return unpackedDistDir;
