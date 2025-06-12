@@ -93,11 +93,11 @@ internal class KotlinWithLombokHighlighting : JavaCodeInsightFixtureTestCase(), 
             }
             
             fun createBuilder(): UserDataClass {
-                return UserDataClass.<error descr="[MISSING_DEPENDENCY_CLASS] Cannot access class 'UserDataClass.UserDataClassBuilder'. Check your module classpath for missing or conflicting dependencies.">builder</error>().<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'name'.">name</error>("hello").age(10).build()
+                return UserDataClass.builder().name("hello").age(10).build()
             }
             
-            fun useBuilder(userBuilder: UserDataClass.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'UserDataClassBuilder'.">UserDataClassBuilder</error>): UserDataClass {
-                return userBuilder.<error descr="[UNRESOLVED_REFERENCE] Unresolved reference 'name'.">name</error>("hello").age(10).build()
+            fun useBuilder(userBuilder: UserDataClass.UserDataClassBuilder): UserDataClass {
+                return userBuilder.name("hello").age(10).build()
             }
         """.trimIndent()
 
