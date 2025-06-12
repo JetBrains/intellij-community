@@ -510,7 +510,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true)
     }
 
-    val requiredPlugins = mutableMapOf<PluginId, IdeaPluginDescriptor>()
+    val requiredPlugins = mutableMapOf<PluginId, IdeaPluginDescriptor?>()
     getRequiredPluginsById(session, pluginId).filter {
       val requiredDescriptor = it.getSecond()
       requiredDescriptor == null || !requiredDescriptor.isEnabled()
@@ -519,7 +519,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return CheckErrorsResult()
     }
 
-    if (requiredPlugins.entries.none { isIncompatible(it.value) }) {
+    if (requiredPlugins.entries.none { it.value == null || isIncompatible(it.value!!) }) {
       val pluginNames = requiredPlugins.map { InstalledPluginsTableModel.getPluginNameOrId(it.key, it.value) }
       return CheckErrorsResult(suggestToEnableRequiredPlugins = true,
                                requiredPluginNames = pluginNames.toSet())
