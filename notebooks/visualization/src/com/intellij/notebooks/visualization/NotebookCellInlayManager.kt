@@ -40,9 +40,19 @@ class NotebookCellInlayManager private constructor(
 
   val cells: List<EditorCell> get() = notebook.cells
 
-  val endNotebookInlays: List<EditorNotebookEndInlay> = EditorNotebookEndInlayProvider.create(this)
+  var endNotebookInlays: List<EditorNotebookEndInlay> = EditorNotebookEndInlayProvider.create(this)
 
   internal val views: MutableMap<EditorCell, EditorCellView> = mutableMapOf()
+
+  fun refresh() {
+    endNotebookInlays.forEach { Disposer.dispose(it) }
+    endNotebookInlays = EditorNotebookEndInlayProvider.create(this)
+
+    for (cell in cells) {
+      disposeCellView(cell)
+      updateCellVisibility(cell, cell.isUnfolded.get())
+    }
+  }
 
   private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
 
