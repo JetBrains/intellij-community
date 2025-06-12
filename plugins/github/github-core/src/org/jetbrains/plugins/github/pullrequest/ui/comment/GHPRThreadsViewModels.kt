@@ -71,18 +71,6 @@ internal class GHPRThreadsViewModelsImpl(
     }
   }.shareIn(cs, SharingStarted.Lazily, 1)
 
-  override val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
-    dataProvider.reviewData.threadsComputationFlow
-      .transformConsecutiveSuccesses(false) {
-        mapDataToModel(GHPullRequestReviewThread::id,
-                       { createThread(it) },
-                       { update(it) })
-      }.map { it.getOrNull().orEmpty() }
-      .stateIn(cs, SharingStarted.Lazily, emptyList())
-
-  private fun CoroutineScope.createThread(initialData: GHPullRequestReviewThread) =
-    UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData)
-
   private val threadOrder: StateFlow<ComputedResult<TreeSet<ThreadIdAndPosition>>?> =
     combine(changesFetchFlow, dataProvider.reviewData.threadsComputationFlow) { allChangesResult, allThreadsResult ->
       val allChanges = allChangesResult.getOrNull() ?: return@combine ComputedResult.loading()
@@ -101,6 +89,32 @@ internal class GHPRThreadsViewModelsImpl(
           .toMap()
       }
     }
+
+  private val unorderedCompactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
+    dataProvider.reviewData.threadsComputationFlow
+      .transformConsecutiveSuccesses(false) {
+        mapDataToModel(GHPullRequestReviewThread::id,
+                       { createThread(it) },
+                       { update(it) })
+      }.map { it.getOrNull().orEmpty() }
+      .stateIn(cs, SharingStarted.Lazily, emptyList())
+  override val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
+    unorderedCompactThreads.combineState(threadOrder) { threads, threadOrder -> threads to threadOrder }
+      .combineState(threadPositionsById) { (threads, threadOrder), threadPositionsById ->
+        // if order is not ready, do not expose the list yet
+        val threadOrder = threadOrder?.getOrNull() ?: return@combineState emptyList()
+        val threadPositionsById = threadPositionsById?.getOrNull() ?: return@combineState emptyList()
+        if (threads.size != threadOrder.size || threadOrder.size != threadPositionsById.size) return@combineState emptyList()
+
+        threads.sortedBy {
+          val position = threadPositionsById[it.id] ?: return@sortedBy Int.MAX_VALUE
+          val index = threadOrder.indexOf(position)
+          if (index == -1) Int.MAX_VALUE else index
+        }
+      }
+
+  private fun CoroutineScope.createThread(initialData: GHPullRequestReviewThread) =
+    UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData)
 
   override val threadMappingData: StateFlow<Map<String, GHPRThreadsViewModels.ThreadMappingData>> =
     dataProvider.reviewData.threadsComputationFlow
