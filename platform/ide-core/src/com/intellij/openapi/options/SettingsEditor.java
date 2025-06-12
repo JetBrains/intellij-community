@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.Disposable;
@@ -25,12 +25,22 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   private final Factory<? extends Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
+  private final boolean myMaximizeEditorHeight;
+
+  /**
+   * @see SettingsEditor#SettingsEditor(Factory, boolean)
+   */
+  @ApiStatus.Internal
+  public final boolean isMaximizeEditorHeight() {
+    return myMaximizeEditorHeight;
+  }
 
   protected abstract void resetEditorFrom(@NotNull Settings s);
+
   protected abstract void applyEditorTo(@NotNull Settings s) throws ConfigurationException;
 
   protected abstract @NotNull JComponent createEditor();
-  
+
   @ApiStatus.Internal
   public static @NotNull JComponent createEditorComponent(@NotNull SettingsEditor<?> editor) {
     return editor.createEditor();
@@ -43,8 +53,20 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     this(null);
   }
 
+
   public SettingsEditor(@Nullable Factory<? extends Settings> settingsFactory) {
+    this(settingsFactory, false);
+  }
+
+  /**
+   * @param maximizeEditorHeight settings are edited in a view. This view might be configured to occupy max possible height, so
+   *                             settings might be centralized vertically
+   * @see #isMaximizeEditorHeight()
+   */
+  @ApiStatus.Internal
+  protected SettingsEditor(@Nullable Factory<? extends Settings> settingsFactory, boolean maximizeEditorHeight) {
     mySettingsFactory = settingsFactory;
+    myMaximizeEditorHeight = maximizeEditorHeight;
     Disposer.register(this, new Disposable() {
       @Override
       public void dispose() {
