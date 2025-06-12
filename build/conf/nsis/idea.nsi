@@ -1189,33 +1189,24 @@ FunctionEnd
 
 Function un.getRegKey
   ReadRegStr $R2 HKCU "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
-  StrCpy $R2 "$R2\bin"
-  StrCmp $R2 $INSTDIR HKCU admin
-HKCU:
-  StrCpy $baseRegKey "HKCU"
-  Goto Done
-admin:
-  ReadRegStr $R2 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
-  StrCpy $R2 "$R2\bin"
-  StrCmp $R2 $INSTDIR HKLM cant_find_installation
-HKLM:
-  StrCpy $baseRegKey "HKLM"
-  Goto Done
-
-cant_find_installation:
-; compare installdir with default user location
-  ${UnStrStr} $R0 $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}"
-  StrCmp $R0 $INSTDIR HKCU 0
-
-; compare installdir with default admin location
-  ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
-  StrCmp $R0 $INSTDIR HKLM undefined_location
-
-; installdir does not contain known default locations
-undefined_location:
-  Goto HKLM
-
-Done:
+  ${If} "$R2\bin" == $INSTDIR
+    StrCpy $baseRegKey "HKCU"
+  ${Else}
+    ReadRegStr $R2 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
+    ${If} "$R2\bin" == $INSTDIR
+      StrCpy $baseRegKey "HKLM"
+    ${Else}
+      ; registry key is missing; compare $INSTDIR with default user locations
+      ${UnStrStr} $R0 $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}"
+      ${UnStrStr} $R1 $INSTDIR "$LOCALAPPDATA\Programs"
+      ${If} $R0 == $INSTDIR
+      ${OrIf} $R1 == $INSTDIR
+        StrCpy $baseRegKey "HKCU"
+      ${Else}
+        StrCpy $baseRegKey "HKLM"  ; undefined location
+      ${EndIf}
+    ${EndIf}
+  ${EndIf}
 FunctionEnd
 
 
@@ -1224,83 +1215,68 @@ Function un.onUninstSuccess
 FunctionEnd
 
 
+; do not ask user for uninstall feedback if started from another installation
 Function un.UninstallFeedback
-; do not ask user about UNINSTALL FEEDBACK if uninstallation was run from another installation
-  Push $R0
-  Push $R1
   ${GetParameters} $R0
   ClearErrors
   ${GetOptions} $R0 /NO_UNINSTALL_FEEDBACK= $R1
-  IfErrors done
-  !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 6" "State" "0"
-done:
-  Pop $R1
-  Pop $R0
-  ClearErrors
+  ${IfNot} ${Errors}
+    !insertmacro INSTALLOPTIONS_WRITE "DeleteSettings.ini" "Field 6" "State" "0"
+  ${EndIf}
 FunctionEnd
 
 
 Function un.onInit
   SetRegView 64
 
-  !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
-  Call un.UninstallFeedback
-
-; Uninstallation was run from installation dir?
-  IfFileExists "$INSTDIR\fsnotifier.exe" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
+  ; checking that the uninstaller is in the expected location ("...\bin" subdirectory)
+  ${IfNot} ${FileExists} "$INSTDIR\fsnotifier.exe"
+  ${OrIfNot} ${FileExists} "$INSTDIR\${PRODUCT_EXE_FILE}"
+    MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
+    Abort
+  ${EndIf}
 
   Call un.getRegKey
-  StrCmp $baseRegKey "HKLM" uninstall_location UAC_Done
+  ${If} $baseRegKey == "HKLM"
+    ; checking that the uninstaller is running from the product location
+    IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate required_admin_perm
 
-uninstall_location:
-  ;check if the uninstallation is running from the product location
-  IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate required_admin_perm
+  required_admin_perm:
+    ; does the user have admin rights?
+    UserInfo::GetAccountType
+    Pop $R2
+    StrCmp $R2 "Admin" UAC_Admin
 
-required_admin_perm:
-  ;the user has admin rights?
-  UserInfo::GetAccountType
-  Pop $R2
-  StrCmp $R2 "Admin" UAC_Admin copy_uninstall
+    StrCpy $R0 "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+    CopyFiles "$OUTDIR\Uninstall.exe" "$R0"
+    ${If} ${Silent}
+      ExecWait '$R0 /S _?=$INSTDIR'
+    ${Else}
+      ExecWait '$R0 _?=$INSTDIR'
+    ${EndIf}
+    Delete "$R0"
+    RMDir "$INSTDIR\bin"
+    RMDir "$INSTDIR"
+    Quit
 
-copy_uninstall:
-  ;do copy for unistall.exe
-  CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
-  IfSilent uninstall_silent_mode uninstall_gui_mode
+  UAC_Elevate:
+    !insertmacro UAC_RunElevated
+    StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
+    StrCmp 0 $0 0 UAC_Err ; Error?
+    StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
+    Quit
+  UAC_ElevationAborted:
+  UAC_Err:
+    Abort
+  UAC_Success:
+    StrCmp 1 $3 UAC_Admin ;Admin?
+    StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
+    goto UAC_Elevate
+  UAC_Admin:
+    SetShellVarContext all
+    StrCpy $baseRegKey "HKLM"
+  ${EndIf}
 
-uninstall_silent_mode:
-  ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$INSTDIR'
-  Goto delete_uninstaller_itself
-uninstall_gui_mode:
-  ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
-
-delete_uninstaller_itself:
-  Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
-  RMDir "$INSTDIR\bin"
-  RMDir "$INSTDIR"
-  Quit
-
-UAC_Elevate:
-  !insertmacro UAC_RunElevated
-  StrCmp 1223 $0 UAC_ElevationAborted ; UAC dialog aborted by user? - continue install under user
-  StrCmp 0 $0 0 UAC_Err ; Error?
-  StrCmp 1 $1 0 UAC_Success ;Are we the real deal or just the wrapper?
-  Quit
-UAC_ElevationAborted:
-UAC_Err:
-  Abort
-UAC_Success:
-  StrCmp 1 $3 UAC_Admin ;Admin?
-  StrCmp 3 $1 0 UAC_ElevationAborted ;Try again?
-  goto UAC_Elevate
-UAC_Admin:
-  SetShellVarContext all
-  StrCpy $baseRegKey "HKLM"
-  Goto UAC_Done
-end_of_uninstall:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
-  Abort
-UAC_Done:
   ${If} $Language == ${LANG_SIMPCHINESE}
     System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
     ${If} $R0 != ${LANG_SIMPCHINESE}
@@ -1308,6 +1284,9 @@ UAC_Done:
     ${EndIf}
   ${EndIf}
   ;!insertmacro MUI_UNGETLANGUAGE
+
+  !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
+  Call un.UninstallFeedback
 FunctionEnd
 
 
