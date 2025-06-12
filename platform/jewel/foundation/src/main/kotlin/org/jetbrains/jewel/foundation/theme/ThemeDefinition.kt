@@ -6,6 +6,7 @@ import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
+import org.jetbrains.jewel.foundation.GrayFilterValues
 
 @Immutable
 @GenerateDataFunctions
@@ -20,7 +21,9 @@ public class ThemeDefinition(
     public val contentColor: Color,
     public val colorPalette: ThemeColorPalette,
     public val iconData: ThemeIconData,
+    public val grayFilterValues: GrayFilterValues,
 ) {
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -37,6 +40,7 @@ public class ThemeDefinition(
         if (contentColor != other.contentColor) return false
         if (colorPalette != other.colorPalette) return false
         if (iconData != other.iconData) return false
+        if (grayFilterValues != other.grayFilterValues) return false
 
         return true
     }
@@ -52,21 +56,11 @@ public class ThemeDefinition(
         result = 31 * result + contentColor.hashCode()
         result = 31 * result + colorPalette.hashCode()
         result = 31 * result + iconData.hashCode()
+        result = 31 * result + grayFilterValues.hashCode()
         return result
     }
 
     override fun toString(): String {
-        return "ThemeDefinition(" +
-            "name='$name', " +
-            "isDark=$isDark, " +
-            "globalColors=$globalColors, " +
-            "globalMetrics=$globalMetrics, " +
-            "defaultTextStyle=$defaultTextStyle, " +
-            "editorTextStyle=$editorTextStyle, " +
-            "consoleTextStyle=$consoleTextStyle, " +
-            "contentColor=$contentColor, " +
-            "colorPalette=$colorPalette, " +
-            "iconData=$iconData" +
-            ")"
+        return "ThemeDefinition(name='$name', isDark=$isDark, globalColors=$globalColors, globalMetrics=$globalMetrics, defaultTextStyle=$defaultTextStyle, editorTextStyle=$editorTextStyle, consoleTextStyle=$consoleTextStyle, contentColor=$contentColor, colorPalette=$colorPalette, iconData=$iconData, grayFilterValues=$grayFilterValues)"
     }
 }

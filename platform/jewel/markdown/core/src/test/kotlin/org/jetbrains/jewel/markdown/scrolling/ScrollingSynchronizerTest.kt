@@ -29,6 +29,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.jewel.foundation.BorderColors
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
+import org.jetbrains.jewel.foundation.GrayFilterValues
 import org.jetbrains.jewel.foundation.OutlineColors
 import org.jetbrains.jewel.foundation.TextColors
 import org.jetbrains.jewel.foundation.code.highlighting.LocalCodeHighlighter
@@ -797,6 +798,7 @@ public class ScrollingSynchronizerTest {
             contentColor = Color.Black,
             colorPalette = ThemeColorPalette.Empty,
             iconData = ThemeIconData.Empty,
+            grayFilterValues = GrayFilterValues(brightness = 33, contrast = -35, alpha = 100),
         )
     }
 
