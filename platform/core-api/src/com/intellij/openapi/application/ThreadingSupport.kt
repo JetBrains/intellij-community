@@ -2,7 +2,6 @@
 package com.intellij.openapi.application
 
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.TestOnly
@@ -184,12 +183,6 @@ interface ThreadingSupport {
    * Disable write actions till token will be released.
    */
   fun prohibitWriteActionsInside(): CleanupAction
-
-  @ApiStatus.Internal
-  fun setLockAcquisitionInterceptor(consumer: (Deferred<*>) -> Unit)
-
-  @ApiStatus.Internal
-  fun removeLockAcquisitionInterceptor()
 
   @ApiStatus.Internal
   fun setWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)

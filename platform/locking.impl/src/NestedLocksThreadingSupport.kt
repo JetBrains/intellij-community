@@ -819,13 +819,8 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @ApiStatus.Internal
-  override fun setLockAcquisitionInterceptor(consumer: (Deferred<*>) -> Unit) {
+  fun setLockAcquisitionInterceptor(consumer: (Deferred<*>) -> Unit) {
     myLockInterceptor.set(PermitWaitingInterceptor(consumer))
-  }
-
-  @ApiStatus.Internal
-  override fun removeLockAcquisitionInterceptor() {
-    myLockInterceptor.remove()
   }
 
   @ApiStatus.Internal
