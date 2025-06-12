@@ -50,7 +50,8 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByNam
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
-import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
+import org.jetbrains.kotlin.idea.searching.inheritors.hasAnyInheritors
+import org.jetbrains.kotlin.idea.searching.inheritors.hasAnyOverridings
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
@@ -290,7 +291,7 @@ object K2UnusedSymbolUtil {
                         || declarationContainingClass.hasModifier(KtTokens.ABSTRACT_KEYWORD)
                         || declarationContainingClass.hasModifier(KtTokens.SEALED_KEYWORD)
                         || declarationContainingClass.hasModifier(KtTokens.OPEN_KEYWORD)
-                if (isOpenClass && hasOverrides(declarationContainingClass, restrictedScope)) return true
+                if (isOpenClass && hasOverrides(declarationContainingClass)) return true
 
                 val containingClassSearchScope = GlobalSearchScope.projectScope(project)
                 val isRequiredToCallFunction =
@@ -318,8 +319,8 @@ object K2UnusedSymbolUtil {
 
         return (declaration is KtObjectDeclaration && declaration.isCompanion() &&
                 declaration.body?.declarations?.isNotEmpty() == true) ||
+                hasOverrides(declaration) ||
                 hasReferences(project, declaration, declarationContainingClass, symbol, restrictedScope) ||
-                hasOverrides(declaration, restrictedScope) ||
                 hasFakeOverrides(declaration, restrictedScope) ||
                 hasPlatformImplementations(declaration)
     }
@@ -637,15 +638,15 @@ object K2UnusedSymbolUtil {
         }
     }
 
-    private fun hasOverrides(declaration: KtNamedDeclaration, useScope: SearchScope): Boolean {
+    private fun hasOverrides(declaration: KtNamedDeclaration): Boolean {
         // don't search for functional expressions to check if function is used
         val overrides = when (declaration) {
-            is KtCallableDeclaration -> declaration.findAllOverridings(useScope)
-            is KtClass -> declaration.findAllInheritors(useScope)
-            else -> null
+            is KtCallableDeclaration -> declaration.hasAnyOverridings()
+            is KtClass -> declaration.hasAnyInheritors()
+            else -> false
         }
 
-        return overrides?.firstOrNull() != null
+        return overrides
     }
 
     private fun hasFakeOverrides(declaration: KtNamedDeclaration, useScope: SearchScope): Boolean {
