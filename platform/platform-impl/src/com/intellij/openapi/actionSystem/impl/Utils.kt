@@ -457,7 +457,7 @@ object Utils {
         else null
       })
     }
-    if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
+    if (shallAbortActionUpdateDueToProhibitingWriteAction()) {
       throw ProcessCanceledException()
     }
     val menuComponent = (uiKind as? ActualActionUiKind)?.component
@@ -928,9 +928,14 @@ object Utils {
     }
   }
 
-  private fun <R> runWithPotemkinOverlayProgress(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
+  private fun shallAbortActionUpdateDueToProhibitingWriteAction(): Boolean {
     val applicationEx = ApplicationManagerEx.getApplicationEx()
-    if (ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx) && !applicationEx.isBackgroundWriteActionRunningOrPending) {
+    return ProgressIndicatorUtils.isWriteActionRunningOrPending(applicationEx) &&
+           !applicationEx.isBackgroundWriteActionRunningOrPending
+  }
+
+  private fun <R> runWithPotemkinOverlayProgress(contextComponent: Component?, block: suspend CoroutineScope.() -> R): R? {
+    if (shallAbortActionUpdateDueToProhibitingWriteAction()) {
       LOG.error("Actions cannot be updated when write-action is running or pending on EDT")
       return null
     }
