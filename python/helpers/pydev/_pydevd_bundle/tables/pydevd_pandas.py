@@ -3,11 +3,14 @@ import numpy as np
 import pandas as pd
 import typing
 from collections import OrderedDict
+from collections.abc import Iterable
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
 CSV_FORMAT_SEPARATOR = '~'
 DASH_SYMBOL = '\u2014'
+UNSUPPORTED_KINDS = {"c", "V"}  # complex, void/raw
+OBJECT_SAMPLE_LIMIT = 10
 
 
 class ColumnVisualisationType:
@@ -165,27 +168,6 @@ def __define_format_function(format):
     return None
 
 
-def __get_describe(table):
-    # type: (Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series, None]
-    try:
-        described_ = table.describe(percentiles=[.05, .25, .5, .75, .95],
-                                    exclude=[np.complex64, np.complex128, np.complexfloating])
-    except (TypeError, OverflowError, ValueError) as e:
-        return
-
-    try:
-        import geopandas
-        if type(table) is geopandas.GeoSeries:
-            return described_
-    except ImportError as e:
-        pass
-
-    if type(table) is pd.Series:
-        return described_
-    else:
-        return described_.reindex(columns=table.columns, copy=False)
-
-
 def __analyze_column(column):
     col_type = column.dtype
 
@@ -316,3 +298,77 @@ def __get_tables_display_options():
     except ImportError:
         pass
     return None, None, None
+
+
+def __is_iterable(element):
+    # type: (any) -> bool
+    return isinstance(element, Iterable)
+
+
+def __is_string(element):
+    # type: (any) -> bool
+    return isinstance(element, str)
+
+
+def __should_skip_describe(element):
+    # type: (any) -> bool
+    if __is_string(element):
+        return False
+    if __is_iterable(element):
+        return True
+    return False
+
+def __is_summarizable(series):
+    # type: (pd.Series) -> bool
+    kind = series.dtype.kind
+
+    if kind in UNSUPPORTED_KINDS:
+        return False
+
+    # For object dtype, sample some values to check for lists or unstructured types
+    if kind == "O":
+        sample = series.dropna().head(OBJECT_SAMPLE_LIMIT)
+        if sample.map(lambda x: __should_skip_describe(x)).any():
+            return False
+
+    return True
+
+def __get_describe_dataframe(table):
+    # type: (pd.DataFrame) -> pd.DataFrame
+    describe_results = []
+    for column_name in table.columns:
+        series = table[column_name]
+        if __is_summarizable(series):
+            describe_results.append(__get_describe_series(series))
+        else:
+            describe_results.append(__get_dummy_describe_series(series))
+
+    return pd.concat(describe_results, axis=1)
+
+
+def __get_describe_series(series):
+    # type: (pd.Series) -> pd.Series
+    try:
+        return series.describe(percentiles=[.05, .25, .5, .75, .95])
+    except:
+        return __get_dummy_describe_series(series)
+
+
+def __get_dummy_describe_series(series):
+    # type: (pd.Series) -> pd.Series
+    manual_data = {"count": series.notna().count()}
+    return pd.Series(data = manual_data, index=["count"], name=series.name)
+
+
+def __get_describe(table):
+    # type: (Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series, None]
+    try:
+        if isinstance(table, pd.DataFrame):
+            return __get_describe_dataframe(table)
+        else:
+            if __is_summarizable(table):
+                return __get_describe_series(table)
+            else:
+                return __get_dummy_describe_series(table)
+    except:
+        return None
