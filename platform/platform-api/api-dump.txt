@@ -93,6 +93,13 @@ com.intellij.ide.TreeExpander
 - isCollapseAllVisible():Z
 - isExpandAllEnabled():Z
 - isExpandAllVisible():Z
+f:com.intellij.ide.browsers.chrome.ChromeSettings
+- sf:DISABLE_FIRST_RUN_EXPERIENCE_ARG:java.lang.String
+- sf:NO_DEFAULT_BROWSER_CHECK_ARG:java.lang.String
+- sf:NO_FIRST_RUN_ARG:java.lang.String
+- sf:REMOTE_DEBUGGING_PIPE_ARG:java.lang.String
+- sf:REMOTE_DEBUGGING_PORT_ARG:java.lang.String
+- sf:USER_DATA_DIR_ARG:java.lang.String
 com.intellij.ide.dnd.DnDNativeTarget
 - com.intellij.ide.dnd.DnDTarget
 - sf:EVENT_KEY:java.lang.String

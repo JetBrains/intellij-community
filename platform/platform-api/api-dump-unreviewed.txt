@@ -740,10 +740,6 @@ f:com.intellij.ide.browsers.WebBrowserUrlProvider$BrowserException
 - <init>(java.lang.String):V
 f:com.intellij.ide.browsers.chrome.ChromeSettings
 - com.intellij.ide.browsers.BrowserSpecificSettings
-- sf:DISABLE_FIRST_RUN_EXPERIENCE_ARG:java.lang.String
-- sf:NO_DEFAULT_BROWSER_CHECK_ARG:java.lang.String
-- sf:NO_FIRST_RUN_ARG:java.lang.String
-- sf:USER_DATA_DIR_ARG:java.lang.String
 - <init>():V
 - clone():com.intellij.ide.browsers.chrome.ChromeSettings
 - createConfigurable():com.intellij.ide.browsers.chrome.ChromeSettingsConfigurable
