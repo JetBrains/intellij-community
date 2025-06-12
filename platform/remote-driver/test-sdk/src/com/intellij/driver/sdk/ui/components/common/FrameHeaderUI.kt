@@ -22,20 +22,24 @@ class FrameHeaderUI(data: ComponentData) : UiComponent(data) {
 }
 
 fun Finder.openMenuItem(vararg items: String) {
-  openMenuItem(true, *items)
+  openMenuItem(false, true, *items)
 }
 
-fun Finder.openMenuItem(fullMatch: Boolean = true, vararg items: String) {
+fun Finder.openMenuItem(clickOnFirst: Boolean = false, fullMatch: Boolean = true, vararg items: String) {
   if (isLinux) {
     x("//div[@tooltiptext='Main Menu']").click()
   } else {
     toolbarHeader.burgerMenuButton.click()
   }
 
-
   if (xx(xQuery { or(byClass("LinuxIdeMenuBar"), byClass("IdeJMenuBar")) }).list().isNotEmpty()) {
-    actionMenuButtonByText(items.first()).click(point = Point(10, 10))
-    items.drop(1).dropLast(1).forEach { path ->
+    if(clickOnFirst) {
+      actionMenuButtonByText(items.first()).apply {
+        waitFound(5.seconds)
+        click(point = Point(10, 10))
+      }
+    }
+    items.dropLast(1).forEach { path ->
       actionMenuButtonByText(path).apply {
         waitFound(5.seconds)
         moveMouse(point = Point(10, 10))
