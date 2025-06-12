@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -267,6 +268,14 @@ public class PersistentFSTreeAccessor {
       //    have rootNameId here -- we have only rootUrlId. So, rootNameId is assigned to the root
       //    in a PersistentFSImpl.findRoot() method, up the stack
       return newRootFileId;
+    }
+    catch (FileTooBigException e) {
+      //expect FileTooBigException to be thrown from AttributeStorage
+      throw new FileTooBigException(
+        "Can't add new root (#" + newRootFileId + ", url=[" + rootUrl + "], urlId=" + newRootUrlId + ") to the VFS: " +
+        "too many roots already (= " + rootsIds.length + ")",
+        e
+      );
     }
   }
 

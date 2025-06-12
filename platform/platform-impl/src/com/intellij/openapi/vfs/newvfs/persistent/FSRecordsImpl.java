@@ -133,8 +133,8 @@ public final class FSRecordsImpl implements Closeable {
     else {
       error.addSuppressed(records.alreadyClosedException());
     }
-    if (error instanceof IOException) {
-      throw new UncheckedIOException((IOException)error);
+    if (error instanceof IOException ioException) {
+      throw new UncheckedIOException(ioException);
     }
     ExceptionUtil.rethrow(error);
   };
