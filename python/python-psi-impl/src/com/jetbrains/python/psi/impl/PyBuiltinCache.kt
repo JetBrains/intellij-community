@@ -338,7 +338,7 @@ private class CachedFile(
   }
 
   fun resolveTopLevel(name: @NonNls String): PyClassType? {
-    return PyClassTypeImpl((file.findTopLevelClass(name) ?: return null), false)
+    return file.findTopLevelClass(name)?.let { pyClass -> PyClassTypeImpl(pyClass, false) }
   }
 }
 
