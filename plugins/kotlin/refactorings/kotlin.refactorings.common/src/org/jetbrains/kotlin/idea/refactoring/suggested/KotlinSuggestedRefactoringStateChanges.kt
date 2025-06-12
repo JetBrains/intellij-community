@@ -78,8 +78,8 @@ class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefact
     }
 
     override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
-        if (anchor !is KtFunction) return emptyList()
-        return (anchor.modifierList?.contextReceiverList?.contextParameters().orEmpty() + anchor.valueParameters).map { it.colon?.textRange }
+        if (anchor !is KtCallableDeclaration) return emptyList()
+        return (anchor.modifierList?.contextReceiverList?.contextParameters().orEmpty() + (anchor as? KtFunction)?.valueParameters.orEmpty()).map { it.colon?.textRange }
     }
 
     private fun KtParameter.extractParameterData(): Parameter? {
