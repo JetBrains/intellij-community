@@ -6,7 +6,7 @@ fun C1.fn() {}
 
 fun fn2(c: C1) {
     myWithContext(c) {
-        contextOf().fn()
+        contextOf<C1>().fn()
     }
 }
 
