@@ -104,7 +104,7 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
           ep.groupWeight = 70
         }
         "debugger.dataViews.python.type.renderers" -> {
-          ep.groupId = PythonMainConfigurable.ID
+          ep.groupId = "reference.idesettings.debugger.python"
           ep.key = "configurable.PyUserTypeRenderersConfigurable.pycharm.display.name"
           ep.bundle="messages.PyBundle"
           ep.groupWeight = 30
