@@ -43,7 +43,7 @@ class SeEmptyResultInfoProvider(
                                                           " " + StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
                                                    onNewLine = true,
                                                    attrs = SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                                   listener = { toggleEverywhere() }))
+                                                   listener = { resetScope() }))
       }
       return SeEmptyResultInfo(emptyInfoChunks)
     }
@@ -55,7 +55,7 @@ class SeEmptyResultInfoProvider(
     var firstPartAdded = false
     var actionsPrinted = 0
     if (showResetScope) {
-      val resetScopeListener = ActionListener { toggleEverywhere() }
+      val resetScopeListener = ActionListener { resetScope() }
       emptyInfoChunks.add(SeEmptyResultInfoChunk(IdeBundle.message("searcheverywhere.try.to.reset.scope")))
       emptyInfoChunks.add(SeEmptyResultInfoChunk(text = " " + StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
                                                  attrs = SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
@@ -116,7 +116,7 @@ class SeEmptyResultInfoProvider(
 
   private fun showResetScope(): Boolean = toggleAction?.isEverywhere == false
 
-  private fun toggleEverywhere() {
+  private fun resetScope() {
     val action = toggleAction ?: return
     action.isEverywhere = !action.isEverywhere
   }
