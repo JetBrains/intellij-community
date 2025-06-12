@@ -7,7 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.git.shared.isRdBranchWidgetEnabled
 import com.intellij.vcs.git.shared.widget.GitToolbarWidgetActionBase
 
-internal class GitToolbarWidgetAction : GitToolbarWidgetActionBase() {
+internal class GitBackendToolbarWidgetAction : GitToolbarWidgetActionBase() {
   override fun doUpdate(e: AnActionEvent, project: Project) {
     if (Registry.isRdBranchWidgetEnabled()) {
       e.presentation.isEnabledAndVisible = false

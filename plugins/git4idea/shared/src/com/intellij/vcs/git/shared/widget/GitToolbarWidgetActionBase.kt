@@ -32,6 +32,10 @@ import javax.swing.JComponent
  */
 @ApiStatus.Internal
 abstract class GitToolbarWidgetActionBase : ExpandableComboAction(), DumbAware {
+  init {
+    templatePresentation.text = GitBundle.message("action.main.toolbar.git.Branches.text")
+  }
+
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   final override fun update(e: AnActionEvent) {

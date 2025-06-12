@@ -20,7 +20,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.vcs.git.shared.rpc.GitWidgetState
 import git4idea.i18n.GitBundle
 import git4idea.remoteApi.GitWidgetApiImpl
-import git4idea.ui.toolbar.GitToolbarWidgetAction
+import git4idea.ui.toolbar.GitBackendToolbarWidgetAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.Point
@@ -32,10 +32,10 @@ open class GitWidgetStep : NewUiOnboardingStep {
 
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val button = UiComponentsSearchUtil.findUiComponent(project) { button: ToolbarComboButton ->
-      ClientProperty.get(button, CustomComponentAction.ACTION_KEY) is GitToolbarWidgetAction
+      ClientProperty.get(button, CustomComponentAction.ACTION_KEY) is GitBackendToolbarWidgetAction
     } ?: return null
 
-    val action = ClientProperty.get(button, CustomComponentAction.ACTION_KEY) as GitToolbarWidgetAction
+    val action = ClientProperty.get(button, CustomComponentAction.ACTION_KEY) as GitBackendToolbarWidgetAction
     val popup = NewUiOnboardingUtil.showToolbarComboButtonPopup(button, action, disposable) ?: return null
 
     val dataContext = DataManager.getInstance().getDataContext(button)
