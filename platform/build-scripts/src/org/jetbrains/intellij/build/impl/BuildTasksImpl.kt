@@ -75,7 +75,6 @@ import java.util.EnumSet
 import java.util.SortedSet
 import java.util.concurrent.TimeUnit
 import java.util.zip.Deflater
-import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.relativeTo
 
 internal const val PROPERTIES_FILE_NAME: String = "idea.properties"
@@ -821,7 +820,7 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
     context,
   )
 
-  val runtimeModuleRepositoryDirPath = if (context.generateRuntimeModuleRepository) {
+  val runtimeModuleRepositoryPath = if (context.generateRuntimeModuleRepository) {
     spanBuilder("generate runtime repository for cross-platform distribution").use {
       generateCrossPlatformRepository(context.paths.distAllDir, distResults.filter { it.arch == JvmArchitecture.x64 && it.libc != LinuxLibcImpl.MUSL }.map { it.outDir }, context)
     }
@@ -832,13 +831,8 @@ private suspend fun buildCrossPlatformZip(distResults: List<DistributionForOsTas
 
   val zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
   val targetFile = context.paths.artifactDir.resolve(zipFileName)
-  val extraFiles = mutableMapOf(
-    "dependencies.txt" to copyDependenciesFile(context),
-  )
-  runtimeModuleRepositoryDirPath?.listDirectoryEntries()?.forEach { file ->
-    extraFiles["$RUNTIME_REPOSITORY_MODULES_DIR_NAME/${file.fileName}"] = file
-  }
-  crossPlatformZip(context, distResults.filter { it.libc != LinuxLibcImpl.MUSL }, targetFile, executableName, productJson, extraFiles)
+  val extraFiles = mapOf("dependencies.txt" to copyDependenciesFile(context))
+  crossPlatformZip(context, distResults.filter { it.libc != LinuxLibcImpl.MUSL } , targetFile, executableName, productJson, extraFiles, runtimeModuleRepositoryPath)
 
   validateProductJson(targetFile, pathInArchive = "", context)
 
@@ -914,6 +908,7 @@ private fun crossPlatformZip(
   executableName: String,
   productJson: String,
   extraFiles: Map<String, Path>,
+  runtimeModuleRepositoryPath: Path?,
 ) {
   val winX64DistDir = distResults.first { it.builder.targetOs == OsFamily.WINDOWS && it.arch == JvmArchitecture.x64 }.outDir
   val macArm64DistDir = distResults.first { it.builder.targetOs == OsFamily.MACOS && it.arch == JvmArchitecture.aarch64 }.outDir
@@ -1031,6 +1026,10 @@ private fun crossPlatformZip(
       }
 
       out.entry(PRODUCT_INFO_FILE_NAME, productJson.encodeToByteArray())
+
+      if (runtimeModuleRepositoryPath != null) {
+        out.entry(MODULE_DESCRIPTORS_JAR_PATH, runtimeModuleRepositoryPath)
+      }
     }
   }
 }
