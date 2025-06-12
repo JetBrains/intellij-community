@@ -10,7 +10,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 private fun disabledColorMatrixGammaEncoded(isSystemInDarkMode: Boolean = false) =
     ColorMatrix().apply {
         val saturation = .5f
-        val brightness = if (isSystemInDarkMode) .125f else .25f
+        val brightness = if (isSystemInDarkMode) 0f else .25f
 
         // We use NTSC luminance weights like Swing does as it's gamma-encoded RGB,
         // and add some brightness to emulate Swing's "brighter" approach, which is
