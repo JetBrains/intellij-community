@@ -76,7 +76,7 @@ class PyBuiltinCache private constructor(
     return builtinsFile?.findTopLevelClass(name)
   }
 
-  fun getObjectType(name: @NonNls String): PyClassTypeImpl? {
+  fun getObjectType(name: @NonNls String): PyClassType? {
     return myBuiltinsFile?.getClassType(name) {
       getClass(name)
         ?.let { pyClass ->
@@ -318,9 +318,9 @@ private class CachedFile(
   /**
    * Stores the most often used types, returned by nNNType.
    */
-  private val myTypeCache: MutableMap<String, PyClassTypeImpl?> = mutableMapOf(),
+  private val myTypeCache: MutableMap<String, PyClassType?> = mutableMapOf(),
 ) {
-  fun getClassType(name: @NonNls String, typeResolver: (@NonNls String) -> PyClassTypeImpl? = ::resolveTopLevel): PyClassTypeImpl? {
+  fun getClassType(name: @NonNls String, typeResolver: (@NonNls String) -> PyClassType? = ::resolveTopLevel): PyClassType? {
     return synchronized(this) {
       if (myModificationStamp != file.modificationStamp) {
         myTypeCache.clear()
@@ -335,7 +335,7 @@ private class CachedFile(
     }
   }
 
-  fun resolveNested(name: @NonNls String): PyClassTypeImpl? {
+  fun resolveNested(name: @NonNls String): PyClassType? {
       val pyClass = ResolveImportUtil.resolveChildren(
         file, name, file, false, true, false, false
       ).getOrNull(0)?.element as? PyClass? ?: return null
@@ -343,7 +343,7 @@ private class CachedFile(
         .also { it.assertValid(name) }
   }
 
-  fun resolveTopLevel(name: @NonNls String): PyClassTypeImpl? {
+  fun resolveTopLevel(name: @NonNls String): PyClassType? {
     return PyClassTypeImpl((file.findTopLevelClass(name) ?: return null), false)
   }
 }
