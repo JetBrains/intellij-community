@@ -194,7 +194,8 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       List<ResolveResult[]> qualifiers = resolveAllQualifiers(expression, containingFile);
       JavaResolveResult[] result = expression.resolve(parentType, containingFile);
 
-      if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION) {
+      if (result.length == 0 && incompleteCode && parentType != JavaElementType.REFERENCE_EXPRESSION &&
+          !PsiUtil.isAccessedForWriting(expression)) {
         result = expression.resolve(JavaElementType.REFERENCE_EXPRESSION, containingFile);
       }
 

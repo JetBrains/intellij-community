@@ -19,9 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
@@ -88,6 +90,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     final SmartTypePointer defaultType = SmartTypePointerManager.getInstance(project).createSmartTypePointer(expectedTypes[0]);
     final PsiType preferredType = TypeSelectorManagerImpl.getPreferredType(expectedTypes, expectedTypes[0]);
     PsiType type = preferredType != null ? preferredType : expectedTypes[0];
+    type = PsiTypesUtil.removeExternalAnnotations(type);
     if (LambdaUtil.notInferredType(type)) {
       type = PsiType.getJavaLangObject(element.getManager(), psiFile.getResolveScope());
     }
@@ -122,6 +125,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     }
 
     PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
+    var = (PsiVariable)JavaCodeStyleManager.getInstance(project).shortenClassReferences(var);
     boolean isFinal =
       JavaCodeStyleSettings.getInstance(psiFile).GENERATE_FINAL_LOCALS &&
       !CreateFromUsageUtils.isAccessedForWriting(expressions);
