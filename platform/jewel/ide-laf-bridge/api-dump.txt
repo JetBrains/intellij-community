@@ -140,6 +140,8 @@ f:org.jetbrains.jewel.bridge.theme.IntUiBridgeSliderKt
 f:org.jetbrains.jewel.bridge.theme.IntUiBridgeSplitButtonKt
 - sf:readDefaultSplitButtonStyle():org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 - sf:readOutlinedSplitButtonStyle():org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
+f:org.jetbrains.jewel.bridge.theme.BridgeGrayFilterValuesKt
+- sf:readFromLaF(org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion):org.jetbrains.jewel.foundation.DisabledAppearanceValues
 f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt
 - sf:retrieveConsoleTextStyle():androidx.compose.ui.text.TextStyle
 - sf:retrieveDefaultTextStyle():androidx.compose.ui.text.TextStyle

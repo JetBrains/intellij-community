@@ -68,6 +68,10 @@ public final class org/jetbrains/jewel/ui/DefaultComponentStyling : org/jetbrain
 	public fun with (Lorg/jetbrains/jewel/ui/ComponentStyling;)Lorg/jetbrains/jewel/ui/ComponentStyling;
 }
 
+public final class org/jetbrains/jewel/ui/DisabledAppearanceKt {
+	public static final fun disabledAppearance (Landroidx/compose/ui/Modifier;IIILandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+}
+
 public final class org/jetbrains/jewel/ui/DisabledColorFilterKt {
 	public static final fun disabled (Landroidx/compose/ui/graphics/ColorFilter$Companion;)Landroidx/compose/ui/graphics/ColorFilter;
 }
