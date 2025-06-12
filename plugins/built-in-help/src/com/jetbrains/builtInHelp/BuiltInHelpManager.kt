@@ -4,87 +4,71 @@ package com.jetbrains.builtInHelp
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.WebBrowserManager
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PlatformUtils
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import java.io.IOException
-import java.lang.String.*
-import java.net.InetAddress
-import java.net.URI
-import java.net.URISyntaxException
-import java.net.URLEncoder
+import java.lang.String.valueOf
+import java.net.*
 import java.nio.charset.StandardCharsets
 
 private val LOG = Logger.getInstance(BuiltInHelpManager::class.java)
 
 class BuiltInHelpManager : HelpManager() {
 
+  private fun isOnline(): Boolean {
+    return try {
+      val connection = URL("https://www.jetbrains.com/")
+        .openConnection() as HttpURLConnection
+      connection.connectTimeout = 1500
+      connection.readTimeout = 1500
+      connection.requestMethod = "GET"
+      connection.connect()
+      println("Response code: ${connection.responseCode}")
+      connection.responseCode < 400
+    }
+    catch (e: IOException) {
+      e.printStackTrace()
+      false
+    }
+  }
+
   override fun invokeHelp(helpId: String?) {
 
     val helpIdToUse = URLEncoder.encode(helpId, StandardCharsets.UTF_8) ?: "top"
     logWillOpenHelpId(helpIdToUse)
 
+    var activeKeymap: Keymap? = KeymapManagerEx.getInstanceEx().getActiveKeymap()
+    if (true == activeKeymap?.canModify())
+      activeKeymap = activeKeymap.parent
+
     try {
-      var activeKeymap: Keymap? = KeymapManagerEx.getInstanceEx().getActiveKeymap()
-      if (true == activeKeymap?.canModify())
-        activeKeymap = activeKeymap.parent
-
-      val activeKeymapParam = if (activeKeymap == null) "" else "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
-
-      var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
-        helpIdToUse
-      }$activeKeymapParam"
-
       val tryOpenWebSite = java.lang.Boolean.valueOf(Utils.getStoredValue(
         SettingsPage.OPEN_HELP_FROM_WEB, "true"))
 
-      var online = false
-      if (tryOpenWebSite) {
-        online = try {
-          InetAddress.getByName("www.jetbrains.com").isReachable(100)
-        }
-        catch (e: Exception) {
-          false
-        }
+      val url = if (tryOpenWebSite && isOnline()) {
+        val helpUrl =
+          ExternalProductResourceUrls.getInstance().helpPageUrl?.let { it(helpIdToUse) }
+
+        if (activeKeymap != null)
+          helpUrl?.addParameters(
+            mapOf(Pair("keymap", activeKeymap.presentableName))
+          )
+        IdeUrlTrackingParametersProvider.getInstance().augmentUrl(helpUrl.toString())
+
       }
+      else {
 
-      if (online) {
+        val activeKeymapParam = if (activeKeymap == null) "" else "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
 
-        val nameInfo = ApplicationNamesInfo.getInstance()
-        val editionName = nameInfo.editionName
-
-        val productWebPath = when (val productName = StringUtil.toLowerCase(nameInfo.productName)) {
-          "rubymine", "ruby" -> "ruby"
-          "intellij idea", "idea" -> "idea"
-          "goland" -> "go"
-          "appcode" -> "objc"
-          "pycharm" -> if (editionName != null && StringUtil.toLowerCase(editionName) == "edu") "pycharm-edu" else "pycharm"
-          else -> productName
-        }
-
-        val info = ApplicationInfo.getInstance()
-        val productVersion = info.shortVersion
-
-        var baseUrl = Utils.getStoredValue(SettingsPage.OPEN_HELP_BASE_URL,
-                                           Utils.BASE_HELP_URL)
-
-        if (!baseUrl.endsWith("/")) baseUrl += "/"
-
-        url = "${baseUrl}help/$productWebPath/$productVersion/?${helpIdToUse}"
-
-        if (PlatformUtils.isJetBrainsProduct() && baseUrl == Utils.BASE_HELP_URL) {
-          val productCode = info.build.productCode
-          if (!StringUtil.isEmpty(productCode)) {
-            url += "&utm_source=from_product&utm_medium=help_link&utm_campaign=$productCode&utm_content=$productVersion$activeKeymapParam"
-          }
-        }
+        "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${
+          helpIdToUse
+        }$activeKeymapParam"
       }
 
       val browserName = valueOf(

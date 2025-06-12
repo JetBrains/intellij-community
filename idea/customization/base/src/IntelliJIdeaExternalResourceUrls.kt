@@ -9,10 +9,10 @@ import com.intellij.util.Urls
 class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrls() {
   override val basePatchDownloadUrl: Url
     get() = Urls.newFromEncoded("https://download.jetbrains.com/idea/")
-  
+
   override val productPageUrl: Url
-    get() = Urls.newFromEncoded("https://www.jetbrains.com/idea/")
-  
+    get() = baseWebSiteUrl.resolve("idea/")
+
   override val youtrackProjectId: String
     get() = "IDEA"
 
@@ -31,12 +31,12 @@ class IntelliJIdeaExternalResourceUrls : BaseJetBrainsExternalProductResourceUrl
   override val keyboardShortcutsPdfUrl: Url
     get() {
       val suffix = if (SystemInfoRt.isMac) "_Mac" else ""
-      return Urls.newFromEncoded("https://www.jetbrains.com/idea/docs/IntelliJIDEA_ReferenceCard$suffix.pdf")
+      return baseWebSiteUrl.resolve("idea/docs/IntelliJIDEA_ReferenceCard$suffix.pdf")
     }
 
   override val gettingStartedPageUrl: Url
-    get() = Urls.newFromEncoded("https://www.jetbrains.com/idea/resources/")
-  
+    get() = baseWebSiteUrl.resolve("idea/resources/")
+
   override val baseWebHelpUrl: Url
-    get() = Urls.newFromEncoded("https://www.jetbrains.com/help/idea/")
+    get() = baseWebSiteUrl.resolve("help/idea/")
 }
