@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.openapi.fileEditor.impl.EditorSkeleton.Companion.ANIMATION_DURATION_MS
+import com.intellij.openapi.fileEditor.impl.EditorSkeleton.Companion.TICK_MS
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
@@ -30,15 +33,18 @@ import kotlin.time.Duration.Companion.milliseconds
  * Animation lasts while [cs] is active.
  */
 internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
+  private val withAnimation = Registry.`is`("editor.skeleton.animation.enabled", true)
   private val currentTime = AtomicLong(System.currentTimeMillis())
   private val initialTime = currentTime.get()
 
   init {
-    cs.launch {
-      while (isActive) {
-        delay(TICK_MS)
-        currentTime.set(System.currentTimeMillis())
-        repaint()
+    if (withAnimation) {
+      cs.launch {
+        while (isActive) {
+          delay(TICK_MS)
+          currentTime.set(System.currentTimeMillis())
+          repaint()
+        }
       }
     }
 
@@ -177,6 +183,10 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
    * @see ANIMATION_DURATION_MS
    */
   private fun currentColor(): Color {
+    if (!withAnimation) {
+      return BACKGROUND_COLOR
+    }
+
     val elapsed = currentTime.get() - initialTime
     val t = (elapsed % ANIMATION_DURATION_MS).toDouble() / ANIMATION_DURATION_MS.toDouble()
     val opacity = 0.5 + 0.5 * sin(2 * Math.PI * t)
@@ -219,7 +229,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
     private val BLOCKS_GAP
       get() = 6
     private val ANIMATION_DURATION_MS
-      get() = 1500L
+      get() = Registry.intValue("editor.skeleton.animation.duration.ms", 1500).toLong()
     private val BACKGROUND_COLOR
       get() = JBUI.CurrentTheme.Editor.BORDER_COLOR
   }

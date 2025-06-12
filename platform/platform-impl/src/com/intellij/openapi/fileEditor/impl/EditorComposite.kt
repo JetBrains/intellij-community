@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Weighted
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
@@ -872,12 +873,17 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     }
     isFocusCycleRoot = true
 
-    skeletonScope.launch(Dispatchers.EDT) {
-      delay(SKELETON_DELAY)
-      // show skeleton if editor is not added after [SKELETON_DELAY]
-      if (components.isEmpty()) {
-        add(EditorSkeleton(skeletonScope), BorderLayout.CENTER)
+    if (Registry.`is`("editor.skeleton.enabled", true)) {
+      skeletonScope.launch(Dispatchers.EDT) {
+        delay(SKELETON_DELAY)
+        // show skeleton if editor is not added after [SKELETON_DELAY]
+        if (components.isEmpty()) {
+          add(EditorSkeleton(skeletonScope), BorderLayout.CENTER)
+        }
       }
+    }
+    else {
+      skeletonScope.cancel()
     }
   }
 
@@ -892,12 +898,12 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     skeletonScope.cancel()
     removeAll()
 
-    val scrollPanes = UIUtil.uiTraverser(newComponent)
-      .expand { o -> o === newComponent || o is JPanel || o is JLayeredPane }
-      .filter(JScrollPane::class.java)
-    for (scrollPane in scrollPanes) {
-      scrollPane.border = SideBorder(JBColor.border(), SideBorder.NONE)
-    }
+      val scrollPanes = UIUtil.uiTraverser(newComponent)
+        .expand { o -> o === newComponent || o is JPanel || o is JLayeredPane }
+        .filter(JScrollPane::class.java)
+      for (scrollPane in scrollPanes) {
+        scrollPane.border = SideBorder(JBColor.border(), SideBorder.NONE)
+      }
 
     add(newComponent, BorderLayout.CENTER)
     this.focusComponent = focusComponent
@@ -925,7 +931,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
 
   companion object {
     private val SKELETON_DELAY
-      get() = 300.milliseconds
+      get() = Registry.intValue("editor.skeleton.delay.ms", 300).toLong()
   }
 }
 
