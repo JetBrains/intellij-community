@@ -17,11 +17,15 @@ public final class LombokTestUtil {
   public static final String LOMBOK_MAVEN_COORDINATES = "org.projectlombok:lombok:" + Version.LAST_LOMBOK_VERSION;
   private static final String JACKSON_MAVEN_COORDINATES = "com.fasterxml.jackson.core:jackson-databind:2.12.7.1";
 
+  public static void addLombokDependency(@NotNull ModifiableRootModel model) {
+    MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES, true, DependencyScope.PROVIDED);
+  }
+
   public static final DefaultLightProjectDescriptor LOMBOK_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       DefaultLightProjectDescriptor.addJetBrainsAnnotationsWithTypeUse(model);
-      MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES, true, DependencyScope.PROVIDED);
+      addLombokDependency(model);
       MavenDependencyUtil.addFromMaven(model, JACKSON_MAVEN_COORDINATES);
       MavenDependencyUtil.addFromMaven(model, "com.google.guava:guava:27.0.1-jre");
       MavenDependencyUtil.addFromMaven(model, "org.slf4j:slf4j-api:1.7.30");
@@ -53,7 +57,7 @@ public final class LombokTestUtil {
   public static final DefaultLightProjectDescriptor LOMBOK_NEW_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      MavenDependencyUtil.addFromMaven(model, LOMBOK_MAVEN_COORDINATES, true, DependencyScope.PROVIDED);
+      addLombokDependency(model);
       MavenDependencyUtil.addFromMaven(model, JACKSON_MAVEN_COORDINATES);
       MavenDependencyUtil.addFromMaven(model, "com.google.code.findbugs:jsr305:3.0.2");
       MavenDependencyUtil.addFromMaven(model, "org.slf4j:slf4j-api:1.7.30");

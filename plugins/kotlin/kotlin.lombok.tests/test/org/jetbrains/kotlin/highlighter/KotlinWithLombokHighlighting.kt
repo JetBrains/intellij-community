@@ -3,11 +3,9 @@ package org.jetbrains.kotlin.highlighter
 
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MavenDependencyUtil
 import de.plushnikov.intellij.plugin.LombokTestUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -61,12 +59,7 @@ internal class KotlinWithLombokHighlighting : JavaCodeInsightFixtureTestCase(), 
 
         ConfigLibraryUtil.configureSdk(javaWithLombokModule, sdk)
         ModuleRootModificationUtil.modifyModel(javaWithLombokModule) { model ->
-            MavenDependencyUtil.addFromMaven(
-                model,
-                LombokTestUtil.LOMBOK_MAVEN_COORDINATES,
-                /* includeTransitiveDependencies = */ true,
-                DependencyScope.PROVIDED,
-            )
+            LombokTestUtil.addLombokDependency(model)
             true
         }
 
