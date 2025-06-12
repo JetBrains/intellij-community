@@ -75,6 +75,7 @@ interface UiPluginManagerController {
   fun getAllPluginsTags(): Set<String>
   fun getAllVendors(): Set<String>
   fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
+  fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean
 
   suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
 

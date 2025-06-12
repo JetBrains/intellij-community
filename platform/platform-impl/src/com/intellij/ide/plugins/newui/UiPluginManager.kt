@@ -243,6 +243,10 @@ class UiPluginManager {
     return getController().getPluginInstallationState(pluginId)
   }
 
+  fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
+    return getController().checkPluginCanBeDownloaded(pluginUiModel, progressIndicator)
+  }
+
   fun getController(): UiPluginManagerController {
     if (Registry.`is`("reworked.plugin.manager.enabled")) {
       return UiPluginManagerController.EP_NAME.extensionList.firstOrNull() ?: DefaultUiPluginManagerController

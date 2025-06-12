@@ -198,4 +198,8 @@ class BackendPluginManagerApi : PluginManagerApi {
     PluginManagerSessionService.getInstance().getSession(sessionId)?.updateService?.finishUpdate()
   }
 
+  override suspend fun checkPluginCanBeDownloaded(plugin: PluginDto): Boolean {
+    return DefaultUiPluginManagerController.checkPluginCanBeDownloaded(plugin, null)
+  }
+
 }

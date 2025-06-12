@@ -312,6 +312,12 @@ public final class PluginDownloader {
            downloader.downloadPlugin(myPluginUrl, indicator);
   }
 
+  @ApiStatus.Internal
+  public boolean checkPluginCanBeDownloaded(@Nullable ProgressIndicator indicator) {
+    MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();
+    return downloader.checkPluginCanBeDownloaded(myPluginUrl, indicator);
+  }
+
   public @NotNull PluginNode toPluginNode() {
     var descriptor = getDescriptor();
     if (descriptor instanceof PluginNode) {
@@ -338,7 +344,8 @@ public final class PluginDownloader {
 
   public static String getMarketplaceDownloadsUUID() {
     try {
-      return DeviceIdManager.getOrGenerateId(new DeviceIdManager.DeviceIdToken() { }, "MarketplaceDownloads");
+      return DeviceIdManager.getOrGenerateId(new DeviceIdManager.DeviceIdToken() {
+      }, "MarketplaceDownloads");
     }
     catch (DeviceIdManager.InvalidDeviceIdTokenException e) {
       return "";
