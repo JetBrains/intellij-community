@@ -83,7 +83,7 @@ internal abstract class InlineSessionWiseCaretListener : CaretListener {
           // In such a case, the actual caret position does not change, only 'leansForward'
           cancel()
         }
-        else if (!handler.typingSessionTracker.isAlive(event.editor)) {
+        else if (!handler.typingSessionTracker.isAlive(event.editor) || newOffset != completionOffset) {
           cancel()
         }
       }

@@ -4,7 +4,6 @@ package com.intellij.codeInsight.inline.completion.listeners.typing
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate
 import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
-import com.intellij.codeInsight.inline.completion.TypingEvent
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionHandlerUtils.hideInlineCompletion
 import com.intellij.codeInsight.template.Template
@@ -30,28 +29,25 @@ internal class InlineCompletionDocumentListener(private val editor: Editor) : Bu
       return
     }
     val typingSessionService = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
-    typingSessionService?.collectCharIfSessionActive(editor, event)
+    typingSessionService?.collectCharIfSessionActive(event, editor)
   }
 }
 
 internal class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
 
   override fun beforeClosingParenInserted(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    allowTyping(editor, c.toString())
+    allowTyping(editor)
     return super.beforeClosingParenInserted(c, project, editor, file)
   }
 
   override fun beforeClosingQuoteInserted(quote: CharSequence, project: Project, editor: Editor, file: PsiFile): Result {
-    allowTyping(editor, quote.toString())
+    allowTyping(editor)
     return super.beforeClosingQuoteInserted(quote, project, editor, file)
   }
 
-  private fun allowTyping(editor: Editor, typed: String) {
+  private fun allowTyping(editor: Editor) {
     val handler = InlineCompletion.getHandlerOrNull(editor)
-    if (handler != null) {
-      val offset = editor.caretModel.offset
-      handler.documentChangesTracker.allowTyping(TypingEvent.PairedEnclosureInsertion(typed, offset))
-    }
+    handler?.typingSessionTracker?.markNextEventAsClosingBracket(editor)
   }
 }
 
