@@ -2592,6 +2592,14 @@
         <constraint name="expr" within="" contains="" />
         <constraint name="findAll" regexp="findAll" within="" contains="" _kotlinMatchCallSemantics="enabled" />
       </replaceConfiguration>
+      <searchConfiguration name="Use native Path API instead of Path.toFile()" description="&lt;h3&gt;Use native &lt;code&gt;Path&lt;/code&gt; API instead of &lt;code&gt;Path.toFile()&lt;/code&gt;&lt;/h3&gt;&#10;&#10;&lt;p&gt;&#10;  During the migration to &lt;code&gt;com.intellij.platform.eel.EelApi&lt;/code&gt;&#10;  every file-system operation should stay on&#10;  &lt;code&gt;java.nio.file.Path&lt;/code&gt;.&#10;  Invoking &lt;code&gt;Path.toFile()&lt;/code&gt; drops back to the legacy&#10;  &lt;code&gt;java.io.File&lt;/code&gt; API, which&#10;&lt;/p&gt;&#10;&#10;&lt;ul&gt;&#10;  &lt;li&gt;bypasses &lt;code&gt;com.intellij.platform.core.nio.fs.MultiRoutingFileSystem&lt;/code&gt; routing,&lt;/li&gt;&#10;  &lt;li&gt;locks the code to the default OS file-system, and&lt;/li&gt;&#10;  &lt;li&gt;hides the richer error information provided by NIO.&lt;/li&gt;&#10;&lt;/ul&gt;&#10;&#10;&lt;p&gt;&#10;  Replace the conversion with the equivalent&#10;  &lt;code&gt;Path&lt;/code&gt;/&lt;code&gt;Files&lt;/code&gt; calls&#10;  (&lt;code&gt;readAttributes&lt;/code&gt;, &lt;code&gt;deleteIfExists&lt;/code&gt;, etc.)&#10;  to keep the code routable, safer, and more portable.&#10;&lt;/p&gt;&#10;" suppressId="IO_FILE_USAGE" text="$Instance$.toFile()" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="java\.nio\.file\.Path" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="Use native Path API instead of Path.toFile()" text="$Instance$.toFile()" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="Instance" nameOfExprType="java\.nio\.file\.Path" within="" contains="" />
+      </searchConfiguration>
       <searchConfiguration name="Use nio.Path instead of io.File" description="As part of the migration to com.intellij.platform.eel.EelApi, it is necessary to use nio.Path instead of io.File. This is required to route file operations via com.intellij.platform.core.nio.fs.MultiRoutingFileSystem. Moreover, the NIO API is more modern and offers better error handling and improved portability, making it the recommended choice for file system interactions." suppressId="IO_FILE_USAGE" text="java.io.File" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
       </searchConfiguration>
