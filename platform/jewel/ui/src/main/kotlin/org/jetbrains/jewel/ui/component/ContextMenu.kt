@@ -96,7 +96,7 @@ private fun MenuScope.contextItems(items: () -> List<ContextMenuItem>) {
                 submenu(submenu = { contextItems(item.submenu) }) { Text(item.label) }
             }
             is ContextMenuOption -> {
-                selectableItem(
+                selectableItemWithActionType(
                     selected = false,
                     onClick = item.onClick,
                     iconKey = item.icon,

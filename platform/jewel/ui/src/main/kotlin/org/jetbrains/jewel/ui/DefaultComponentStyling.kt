@@ -113,7 +113,6 @@ public class DefaultComponentStyling(
             LocalCircularProgressStyle provides circularProgressStyle,
             LocalContextMenuRepresentation provides ContextMenuRepresentation,
             LocalTextContextMenu provides TextContextMenu,
-            LocalMenuItemShortcut provides CommonShortcutHintProvider,
             LocalDefaultBannerStyle provides defaultBannerStyle,
             LocalDefaultComboBoxStyle provides comboBoxStyle,
             LocalDefaultButtonStyle provides defaultButtonStyle,
