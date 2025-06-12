@@ -285,7 +285,7 @@ object Utils {
     ThreadingAssertions.assertEventDispatchThread()
     val asyncDataContext = createAsyncDataContext(dataContext)
     checkAsyncDataContext(asyncDataContext, place)
-    val fastTrackTime = getFastTrackMaxTime(fastTrack, group, place, asyncDataContext, uiKind is ActionUiKind.Toolbar, true)
+    val fastTrackTime = getFastTrackMaxTime(fastTrack, place, uiKind is ActionUiKind.Toolbar, true)
     val edtDispatcher =
       if (fastTrackTime > 0) AltEdtDispatcher.apply { switchToQueue() }
       else Dispatchers.ui(UiDispatcherKind.RELAX)[CoroutineDispatcher]!!
@@ -351,7 +351,7 @@ object Utils {
     if (uiKind is ActionUiKind.Popup) {
       cancelAllUpdates("context menu requested")
     }
-    val fastTrackTime = getFastTrackMaxTime(true, group, place, asyncDataContext, false, false)
+    val fastTrackTime = getFastTrackMaxTime(true, place, false, false)
     val mainJob = coroutineContext.job
     val loopJob = if (isUnitTestMode) null else launch {
       val start = System.nanoTime()
@@ -452,9 +452,11 @@ object Utils {
   ) {
     if (LOG.isDebugEnabled) {
       LOG.debug("fillMenu: " + operationName(group, "", place) {
-        if (it is ActionIdProvider) it.id
-        else if (it is AnAction) ActionManager.getInstance().getId(it)
-        else null
+        when (it) {
+          is ActionIdProvider -> it.id
+          is AnAction -> ActionManager.getInstance().getId(it)
+          else -> null
+        }
       })
     }
     if (shallAbortActionUpdateDueToProhibitingWriteAction()) {
@@ -548,18 +550,15 @@ object Utils {
     val children = ArrayList<Component>()
     for (action in filtered) {
       val presentation = presentationFactory.getPresentation(action)
-      var childComponent: JComponent
-      if (action is Separator) {
-        childComponent = createSeparator(action.text, children.isEmpty())
-      }
-      else if (action is ActionGroup && !isSubmenuSuppressed(presentation)) {
-        val menu = ActionMenu(context, place, action, presentationFactory, enableMnemonics, useDarkIcons)
-        childComponent = menu
-      }
-      else {
-        val each = ActionMenuItem(action, context, place, uiKind, enableMnemonics, checked, useDarkIcons)
-        each.updateFromPresentation(presentation)
-        childComponent = each
+      val childComponent = when (action) {
+        is Separator ->
+          createSeparator(action.text, children.isEmpty())
+        is ActionGroup if !isSubmenuSuppressed(presentation) ->
+          ActionMenu(context, place, action, presentationFactory, enableMnemonics, useDarkIcons)
+        else ->
+          ActionMenuItem(action, context, place, uiKind, enableMnemonics, checked, useDarkIcons).apply {
+            updateFromPresentation(presentation)
+          }
       }
       component.add(childComponent)
       children.add(childComponent)
@@ -1124,12 +1123,12 @@ fun rearrangeByPromotersImpl(actions: List<AnAction>,
   return result
 }
 
-private fun getFastTrackMaxTime(useFastTrack: Boolean,
-                                group: ActionGroup,
-                                place: String,
-                                context: DataContext,
-                                checkLastFailedFastTrackTime: Boolean,
-                                checkMainMenuOrToolbarFirstTime: Boolean): Int {
+private fun getFastTrackMaxTime(
+  useFastTrack: Boolean,
+  place: String,
+  checkLastFailedFastTrackTime: Boolean,
+  checkMainMenuOrToolbarFirstTime: Boolean
+): Int {
   if (!useFastTrack) return 0
   val mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime &&
                                    (ActionPlaces.MAIN_MENU == place || (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR == place))
@@ -1171,9 +1170,11 @@ private class PotemkinElement(val potemkin: PotemkinOverlayProgress) : ThreadCon
 }
 
 private fun updaterContext(place: String, fastTrackTime: Int, uiKind: ActionUiKind): CoroutineContext {
-  val dispatcher = if (uiKind is ActionUiKind.Popup) contextMenuDispatcher
-  else if (uiKind is ActionUiKind.Toolbar && fastTrackTime > 0) toolbarFastDispatcher
-  else toolbarDispatcher
+  val dispatcher = when (uiKind) {
+    is ActionUiKind.Popup -> contextMenuDispatcher
+    is ActionUiKind.Toolbar if fastTrackTime > 0 -> toolbarFastDispatcher
+    else -> toolbarDispatcher
+  }
   return dispatcher + CoroutineName("ActionUpdater ($place)")
 }
 
@@ -1314,6 +1315,7 @@ internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline b
     return readActionUndispatched(block)
   }
   else {
+    @Suppress("ForbiddenInSuspectContextMethod")
     return ApplicationManager.getApplication().runReadAction<R, Throwable> { block() }
   }
 }
