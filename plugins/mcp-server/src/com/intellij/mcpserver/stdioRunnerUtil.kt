@@ -92,3 +92,23 @@ fun createSseServerJsonEntry(port: Int): JsonObject {
     put("url", "http://localhost:$port/sse")
   }
 }
+
+/**
+ * Creates a JSON configuration entry for a MCP server that uses stdio transport based on createStdioMcpServerCommandLine()
+ *
+ * Returns an object like
+ * ``` json
+ * {
+ *   "command": "<mcp runner>",
+ *   "args": ["<mcp runner args>"],
+ *   "env": {
+ *     "IJ_MCP_SERVER_PORT": "<ide server port>",
+ *     "IJ_MCP_SERVER_PROJECT_PATH": "<project path>"
+ *   }
+ * }
+ * ```
+ */
+fun createStdioMcpServerJsonConfiguration(ideServerPort: Int, projectBasePath: String?): JsonObject {
+  val commandLine = createStdioMcpServerCommandLine(ideServerPort, projectBasePath)
+  return createStdioServerJsonEntry(commandLine)
+}
