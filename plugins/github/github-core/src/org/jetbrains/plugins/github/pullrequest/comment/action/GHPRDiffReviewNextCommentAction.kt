@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.comment.action
 
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -15,9 +16,10 @@ internal class GHPRDiffReviewNextCommentAction : AnAction() {
 
     val editor = e.getData(DiffDataKeys.CURRENT_EDITOR)
 
-    val editorModel = editor?.getUserData(GHPRReviewDiffEditorModel.KEY)
+    val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
+                      ?: editor?.getUserData(GHPRReviewDiffEditorModel.KEY)
     e.presentation.isVisible = editorModel != null
-    if (editorModel == null) return
+    if (editor == null || editorModel == null) return
 
     val focused = findFocusedThreadId(project)
     e.presentation.isEnabled = if (focused != null) {
@@ -33,8 +35,9 @@ internal class GHPRDiffReviewNextCommentAction : AnAction() {
     val project = e.project ?: return
 
     val editor = e.getData(DiffDataKeys.CURRENT_EDITOR)
-    val editorModel = editor?.getUserData(GHPRReviewDiffEditorModel.KEY)
-    if (editorModel == null) return
+    val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
+                      ?: editor?.getUserData(GHPRReviewDiffEditorModel.KEY)
+    if (editor == null || editorModel == null) return
 
     val focused = findFocusedThreadId(project)
     if (focused != null) {

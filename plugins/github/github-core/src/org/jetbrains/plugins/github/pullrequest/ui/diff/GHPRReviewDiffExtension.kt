@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.diff.viewer.showCodeReview
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorModel
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewNavigableEditorViewModel
 import com.intellij.collaboration.util.Hideable
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.syncOrToggleAll
@@ -87,29 +88,10 @@ internal class GHPRReviewDiffExtension : DiffExtension() {
 }
 
 internal interface GHPRReviewDiffEditorModel : CodeReviewEditorModel<GHPREditorMappedComponentModel>,
-                                               CodeReviewCommentableEditorModel.WithMultilineComments {
-  @RequiresEdt
-  fun canGotoNextComment(focused: String): Boolean
-  @RequiresEdt
-  fun canGotoNextComment(line: Int): Boolean
-
-  @RequiresEdt
-  fun canGotoPreviousComment(focused: String): Boolean
-  @RequiresEdt
-  fun canGotoPreviousComment(line: Int): Boolean
-
-  @RequiresEdt
-  fun gotoNextComment(focused: String)
-  @RequiresEdt
-  fun gotoNextComment(line: Int)
-
-  @RequiresEdt
-  fun gotoPreviousComment(focused: String)
-  @RequiresEdt
-  fun gotoPreviousComment(line: Int)
-
+                                               CodeReviewCommentableEditorModel.WithMultilineComments,
+                                               CodeReviewNavigableEditorViewModel {
   companion object {
-    val KEY = Key.create<GHPRReviewDiffEditorModel>("org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRDiffEditorModel")
+    val KEY: Key<GHPRReviewDiffEditorModel> = Key.create("GitHub.PullRequest.Diff.Editor.Model")
   }
 }
 
@@ -194,18 +176,18 @@ private class DiffEditorModel(
   }
 
   @RequiresEdt
-  override fun canGotoNextComment(focused: String): Boolean = reviewVm.nextComment(focused) != null
+  override fun canGotoNextComment(focusedThreadId: String): Boolean = reviewVm.nextComment(focusedThreadId) != null
   @RequiresEdt
   override fun canGotoNextComment(line: Int): Boolean = reviewVm.nextComment(lineToUnified(line)) != null
 
   @RequiresEdt
-  override fun canGotoPreviousComment(focused: String): Boolean = reviewVm.previousComment(focused) != null
+  override fun canGotoPreviousComment(focusedThreadId: String): Boolean = reviewVm.previousComment(focusedThreadId) != null
   @RequiresEdt
   override fun canGotoPreviousComment(line: Int): Boolean = reviewVm.previousComment(lineToUnified(line)) != null
 
   @RequiresEdt
-  override fun gotoNextComment(focused: String) {
-    val commentId = reviewVm.nextComment(focused) ?: return
+  override fun gotoNextComment(focusedThreadId: String) {
+    val commentId = reviewVm.nextComment(focusedThreadId) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 
@@ -216,8 +198,8 @@ private class DiffEditorModel(
   }
 
   @RequiresEdt
-  override fun gotoPreviousComment(focused: String) {
-    val commentId = reviewVm.previousComment(focused) ?: return
+  override fun gotoPreviousComment(focusedThreadId: String) {
+    val commentId = reviewVm.previousComment(focusedThreadId) ?: return
     reviewVm.showDiffAtComment(commentId)
   }
 
