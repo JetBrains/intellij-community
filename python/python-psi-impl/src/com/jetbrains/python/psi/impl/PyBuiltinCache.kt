@@ -77,13 +77,7 @@ class PyBuiltinCache private constructor(
   }
 
   fun getObjectType(name: @NonNls String): PyClassType? {
-    return myBuiltinsFile?.getClassType(name) {
-      getClass(name)
-        ?.let { pyClass ->
-          PyClassTypeImpl(pyClass, false)
-            .also { it.assertValid(name) }
-        }
-    }
+    return myBuiltinsFile?.getClassType(name)
   }
 
   val objectType: PyClassType?
