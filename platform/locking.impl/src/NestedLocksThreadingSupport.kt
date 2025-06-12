@@ -9,6 +9,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
 import com.intellij.util.ReflectionUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
@@ -146,7 +147,7 @@ private data class ExposedWritePermitData(
  * It actually helps to resolve certain kind of deadlocks.
  */
 @ApiStatus.Internal
-internal class NestedLocksThreadingSupport : ThreadingSupport {
+class NestedLocksThreadingSupport : ThreadingSupport {
   companion object {
     private const val SPIN_TO_WAIT_FOR_LOCK: Int = 100
     private val logger = Logger.getInstance(NestedLocksThreadingSupport::class.java)
@@ -810,8 +811,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     myWriteActionListener = null
   }
 
-  @ApiStatus.Internal
-  override fun setLockAcquisitionListener(listener: LockAcquisitionListener) {
+  fun setLockAcquisitionListener(listener: LockAcquisitionListener) {
     if (myLockAcquisitionListener != null)
       error("LockAcquisitionListener already registered")
     myLockAcquisitionListener = listener
@@ -855,8 +855,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     myLegacyProgressIndicatorProvider = null
   }
 
-  @ApiStatus.Internal
-  override fun removeLockAcquisitionListener(listener: LockAcquisitionListener) {
+  fun removeLockAcquisitionListener(listener: LockAcquisitionListener) {
     if (myLockAcquisitionListener != listener)
       error("LockAcquisitionListener is not registered")
     myLockAcquisitionListener = null

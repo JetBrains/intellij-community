@@ -16,3 +16,8 @@ fun newLockingSupport(): ThreadingSupport =
 fun getGlobalThreadingSupport(): ThreadingSupport {
   return instance
 }
+
+@ApiStatus.Internal
+fun getGlobalNestedLockingThreadingSupport(): NestedLocksThreadingSupport {
+  return instance
+}

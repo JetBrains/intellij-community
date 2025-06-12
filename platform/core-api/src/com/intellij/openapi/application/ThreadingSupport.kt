@@ -185,16 +185,6 @@ interface ThreadingSupport {
    */
   fun prohibitWriteActionsInside(): CleanupAction
 
-  /**
-   * Adds a [LockAcquisitionListener].
-   *
-   * Only one listener can be set. It is an error to set the second listener.
-   *
-   * @param listener the listener to set
-   */
-  @ApiStatus.Internal
-  fun setLockAcquisitionListener(listener: LockAcquisitionListener)
-
   @ApiStatus.Internal
   fun setLockAcquisitionInterceptor(consumer: (Deferred<*>) -> Unit)
 
@@ -212,17 +202,6 @@ interface ThreadingSupport {
 
   @ApiStatus.Internal
   fun removeLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider)
-
-
-  /**
-   * Removes a [LockAcquisitionListener].
-   *
-   * It is error to remove listener which was not set early.
-   *
-   * @param listener the listener to remove
-   */
-  @ApiStatus.Internal
-  fun removeLockAcquisitionListener(listener: LockAcquisitionListener)
 
   /**
    * Prevents any attempt to use R/W locks inside [action].

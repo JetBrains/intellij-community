@@ -228,9 +228,6 @@ public interface ApplicationEx extends Application {
   default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
 
   @ApiStatus.Internal
-  default void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) { }
-
-  @ApiStatus.Internal
   @ApiStatus.Obsolete
   default void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) { }
 

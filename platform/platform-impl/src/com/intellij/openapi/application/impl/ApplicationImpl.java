@@ -45,6 +45,8 @@ import com.intellij.platform.diagnostic.telemetry.PlatformScopesKt;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.platform.locking.impl.IntelliJLockingUtil;
+import com.intellij.platform.locking.impl.NestedLocksThreadingSupport;
+import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -111,6 +113,8 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   // contents modified in write action, read in read action
   private final TransactionGuardImpl myTransactionGuard = new TransactionGuardImpl();
+
+  private final NestedLocksThreadingSupport lock = IntelliJLockingUtil.getGlobalNestedLockingThreadingSupport();
 
   private final ReadActionCacheImpl myReadActionCacheImpl = new ReadActionCacheImpl();
 
@@ -388,7 +392,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     getThreadingSupport().removeReadActionListener(myLockDispatcherListener);
     getThreadingSupport().removeWriteActionListener(myLockDispatcherListener);
     getThreadingSupport().removeWriteIntentReadActionListener(myLockDispatcherListener);
-    getThreadingSupport().removeLockAcquisitionListener(myLockDispatcherListener);
+    lock.removeLockAcquisitionListener(myLockDispatcherListener);
     getThreadingSupport().removeWriteLockReacquisitionListener(myLockDispatcherListener);
     getThreadingSupport().removeLegacyIndicatorProvider(myLegacyIndicatorProvider);
 
@@ -1005,14 +1009,14 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
-  private static boolean runEdtProgressWriteAction(
+  private boolean runEdtProgressWriteAction(
     @NlsContexts.ProgressTitle String title,
     @Nullable Project project,
     @Nullable JComponent parentComponent,
     @Nls(capitalization = Nls.Capitalization.Title) @Nullable String cancelText,
     @NotNull Consumer<? super @Nullable ProgressIndicator> action
   ) {
-    return IntelliJLockingUtil.getGlobalThreadingSupport().runWriteAction(action.getClass(), () -> {
+    return lock.runWriteAction(action.getClass(), () -> {
       var indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
       indicator.runInSwingThread(() -> {
         action.accept(indicator);
@@ -1377,16 +1381,16 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
       return true;
     }, app.getCoroutineScope());
 
-    app.getThreadingSupport().setReadActionListener(app.myLockDispatcherListener);
-    app.getThreadingSupport().setWriteActionListener(app.myLockDispatcherListener);
-    app.getThreadingSupport().setWriteIntentReadActionListener(app.myLockDispatcherListener);
-    app.getThreadingSupport().setLockAcquisitionListener(app.myLockDispatcherListener);
-    app.getThreadingSupport().setWriteLockReacquisitionListener(app.myLockDispatcherListener);
-    app.getThreadingSupport().setLegacyIndicatorProvider(myLegacyIndicatorProvider);
+    app.lock.setReadActionListener(app.myLockDispatcherListener);
+    app.lock.setWriteActionListener(app.myLockDispatcherListener);
+    app.lock.setWriteIntentReadActionListener(app.myLockDispatcherListener);
+    app.lock.setLockAcquisitionListener(app.myLockDispatcherListener);
+    app.lock.setWriteLockReacquisitionListener(app.myLockDispatcherListener);
+    app.lock.setLegacyIndicatorProvider(myLegacyIndicatorProvider);
     if (ThreadingRuntimeFlagsKt.getInstallSuvorovProgress()) {
       SwingUtilities.invokeLater(() -> {
         SuvorovProgress.INSTANCE.init(app);
-        app.getThreadingSupport().setLockAcquisitionInterceptor((deferred) -> {
+        app.lock.setLockAcquisitionInterceptor((deferred) -> {
           SuvorovProgress.dispatchEventsUntilComputationCompletes(deferred);
           return Unit.INSTANCE;
         });
@@ -1425,7 +1429,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     myLockDispatcherListener.addWriteIntentReadActionListener(listener, parentDisposable);
   }
 
-  @Override
   public void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) {
     myLockDispatcherListener.addLockAcquisitionListener(listener, parentDisposable);
   }
