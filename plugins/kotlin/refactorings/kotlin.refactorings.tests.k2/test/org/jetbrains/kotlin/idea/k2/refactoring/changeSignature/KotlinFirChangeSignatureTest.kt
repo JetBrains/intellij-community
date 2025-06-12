@@ -270,6 +270,11 @@ class KotlinFirChangeSignatureTest :
         receiverParameterInfo = parameterInfo
     }
 
+    fun testFromContextParameterToParameter() = doTest {
+        val parameterInfo = newParameters[0]
+        parameterInfo.isContextParameter = false
+    }
+
     fun testDeleteUsedContextParameter() = doTestConflict {
         removeContextParameter(0)
     }
