@@ -143,13 +143,15 @@ class XLineBreakpointManager(private val project: Project, coroutineScope: Corou
     if (initUI) {
       updateBreakpointNow(breakpoint)
     }
-    log.info("Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}")
-    myBreakpoints.putValue(breakpoint.getFile()?.url ?: breakpoint.getFileUrl(), breakpoint)
+    val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
+    log.info("Register line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}: $fileUrl")
+    myBreakpoints.putValue(fileUrl, breakpoint)
   }
 
   fun unregisterBreakpoint(breakpoint: XLineBreakpointProxy) {
-    log.info("Unregister line breakpoint ${breakpoint.id} ${breakpoint.javaClass.simpleName}")
-    myBreakpoints.remove(breakpoint.getFile()?.url ?: breakpoint.getFileUrl(), breakpoint)
+    val fileUrl = breakpoint.getFile()?.url ?: breakpoint.getFileUrl()
+    val removed = myBreakpoints.remove(fileUrl, breakpoint)
+    log.info("Unregister line breakpoint ${breakpoint.id} [removed=$removed] ${breakpoint.javaClass.simpleName}: $fileUrl")
   }
 
   fun getDocumentBreakpointProxies(document: Document): Collection<XLineBreakpointProxy> {

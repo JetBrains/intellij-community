@@ -105,9 +105,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
       log.info("Breakpoint creation skipped for ${breakpointDto.id}, because it is already created")
       return previousBreakpoint
     }
-    if (newBreakpoint is XLineBreakpointProxy) {
-      lineBreakpointManager.registerBreakpoint(newBreakpoint, true)
-    }
+    (newBreakpoint as? FrontendXLineBreakpointProxy)?.registerInManager()
     log.info("Breakpoint created for ${breakpointDto.id}")
     breakpointsChanged.tryEmit(Unit)
     return newBreakpoint
@@ -182,9 +180,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     else {
       log.info("Breakpoint removed for $breakpointId")
     }
-    if (removedBreakpoint is XLineBreakpointProxy) {
-      lineBreakpointManager.unregisterBreakpoint(removedBreakpoint)
-    }
+    (removedBreakpoint as? FrontendXLineBreakpointProxy)?.unregisterInManager()
     breakpointsChanged.tryEmit(Unit)
   }
 
@@ -255,4 +251,29 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   private data class LightBreakpointPosition(val file: VirtualFile, val line: Int)
+
+  private fun FrontendXLineBreakpointProxy.registerInManager() {
+    while (true) {
+      val status = registrationInLineManagerStatus.get()
+      when (status) {
+        RegistrationStatus.DEREGISTERED -> return
+        RegistrationStatus.IN_PROGRESS, RegistrationStatus.REGISTERED -> error("Breakpoint $id is already registered")
+        RegistrationStatus.NOT_STARTED -> {
+          if (!registrationInLineManagerStatus.compareAndSet(RegistrationStatus.NOT_STARTED, RegistrationStatus.IN_PROGRESS)) continue
+          lineBreakpointManager.registerBreakpoint(this, true)
+          if (!registrationInLineManagerStatus.compareAndSet(RegistrationStatus.IN_PROGRESS, RegistrationStatus.REGISTERED)) {
+            val newStatus = registrationInLineManagerStatus.get()
+            check(newStatus == RegistrationStatus.DEREGISTERED) { "Unexpected status: $newStatus" }
+            unregisterInManager()
+          }
+          return
+        }
+      }
+    }
+  }
+
+  private fun FrontendXLineBreakpointProxy.unregisterInManager() {
+    registrationInLineManagerStatus.set(RegistrationStatus.DEREGISTERED)
+    lineBreakpointManager.unregisterBreakpoint(this)
+  }
 }

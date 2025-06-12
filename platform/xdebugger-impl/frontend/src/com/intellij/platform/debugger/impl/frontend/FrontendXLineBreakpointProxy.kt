@@ -21,6 +21,11 @@ import com.intellij.xdebugger.impl.rpc.toTextRange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicReference
+
+internal enum class RegistrationStatus {
+  NOT_STARTED, IN_PROGRESS, REGISTERED, DEREGISTERED
+}
 
 internal class FrontendXLineBreakpointProxy(
   project: Project,
@@ -36,6 +41,8 @@ internal class FrontendXLineBreakpointProxy(
 
   private val lineBreakpointInfo: XLineBreakpointInfo
     get() = _state.value.lineBreakpointInfo!!
+
+  internal val registrationInLineManagerStatus = AtomicReference(RegistrationStatus.NOT_STARTED)
 
   override fun isTemporary(): Boolean {
     return lineBreakpointInfo.isTemporary
