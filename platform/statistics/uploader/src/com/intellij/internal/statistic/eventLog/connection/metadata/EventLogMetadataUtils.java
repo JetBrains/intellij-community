@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMeta
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestResult;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsResponseException;
-import com.jetbrains.fus.reporting.model.http.StatsConnectionSettings;
 import com.jetbrains.fus.reporting.model.dictionaries.RemoteDictionaryList;
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +117,7 @@ public final class EventLogMetadataUtils {
     }
   }
 
-  public static Map<String, Long> dictionariesLastModified(@Nullable String serviceUrl, @NotNull String recorderId, @NotNull EventLogConnectionSettings settings) {
+  public static Map<String, Long> dictionariesLastModified(@Nullable String serviceUrl, @NotNull String recorderId, @NotNull StatsConnectionSettings settings) {
     if (isEmptyOrSpaces(serviceUrl)) return Map.of();
 
     String baseUrl = serviceUrl + recorderId + "/";
@@ -148,7 +147,7 @@ public final class EventLogMetadataUtils {
     @Nullable String serviceUrl,
     @NotNull String recorderId,
     @NotNull String dictionaryName,
-    @NotNull EventLogConnectionSettings settings
+    @NotNull StatsConnectionSettings settings
   ) throws EventLogMetadataLoadException {
     return loadMetadataFromServer(serviceUrl + recorderId + "/" + dictionaryName, settings);
   }

@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.fus
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.ConfigurationClient
 import com.google.gson.JsonParser
+import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -76,9 +77,10 @@ private suspend fun serviceUri(featureUsageStatisticsProperties: FeatureUsageSta
   Span.current().addEvent("parsing", Attributes.of(AttributeKey.stringKey("url"), providerUri))
   val appInfo = context.applicationInfo
   val configurationClient = ConfigurationClientFactory.create(
-    download(providerUri).inputStream().reader(),
-    context.applicationInfo.productCode,
-    "${appInfo.majorVersion}.${appInfo.minorVersion}"
+    reader = download(providerUri).inputStream().reader(),
+    productCode = context.applicationInfo.productCode,
+    productVersion = "${appInfo.majorVersion}.${appInfo.minorVersion}",
+    serializer = FusKotlinSerializer()
   )
   return configurationClient
 }

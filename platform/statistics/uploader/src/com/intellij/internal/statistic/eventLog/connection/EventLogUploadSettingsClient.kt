@@ -5,8 +5,13 @@ import com.intellij.internal.statistic.eventLog.EventLogApplicationInfo
 import com.jetbrains.fus.reporting.configuration.ConfigurationClient
 import com.jetbrains.fus.reporting.configuration.ConfigurationClientFactory
 import com.jetbrains.fus.reporting.configuration.RegionCode
+import com.jetbrains.fus.reporting.connection.JavaHttpClientBuilder
+import com.jetbrains.fus.reporting.connection.JavaHttpRequestBuilder
+import com.jetbrains.fus.reporting.connection.ProxyInfo
+import com.jetbrains.fus.reporting.serialization.FusKotlinSerializer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.time.Duration
 import java.util.concurrent.TimeUnit
 
 /**
@@ -25,12 +30,29 @@ open class EventLogUploadSettingsClient(
     @VisibleForTesting
     val chinaRegion: String = "china" //com.intellij.ide.Region.CHINA
   }
-  override var configurationClient: ConfigurationClient = ConfigurationClientFactory.create(recorderId,
-                                                                                            applicationInfo.productCode,
-                                                                                            applicationInfo.productVersion,
-                                                                                            applicationInfo.isTestConfig,
-                                                                                            applicationInfo.connectionSettings,
-                                                                                            if (applicationInfo.regionalCode == chinaRegion)
-                                                                                             RegionCode.CN else RegionCode.ALL,
-                                                                                            cacheTimeoutMs)
+  override var configurationClient: ConfigurationClient = ConfigurationClientFactory.create(
+    recorderId = recorderId,
+    productCode = applicationInfo.productCode,
+    productVersion = applicationInfo.productVersion,
+    isTestConfig = applicationInfo.isTestConfig,
+    httpClientBuilder = JavaHttpClientBuilder()
+      .configureProxy(ProxyInfo(
+        applicationInfo.connectionSettings.provideProxy(configurationUrl()).proxy
+      )).setSSLContext(applicationInfo.connectionSettings.provideSSLContext()),
+    httpRequestBuilder = JavaHttpRequestBuilder()
+      .setExtraHeaders(applicationInfo.connectionSettings.provideExtraHeaders())
+      .setUserAgent(applicationInfo.connectionSettings.provideUserAgent())
+      .setTimeout(Duration.ofMillis(cacheTimeoutMs)),
+    regionCode = if (applicationInfo.regionalCode == chinaRegion) RegionCode.CN else RegionCode.ALL,
+    serializer = FusKotlinSerializer()
+  )
+
+  private fun configurationUrl(): String {
+    val regionCode = if (applicationInfo.regionalCode == chinaRegion) RegionCode.CN else RegionCode.ALL
+    return if (applicationInfo.isTestConfig) {
+      String.format(regionCode.eventLogSettingsURLTemplate, "test/$recorderId", applicationInfo.productCode)
+    } else {
+      String.format(regionCode.eventLogSettingsURLTemplate, recorderId, applicationInfo.productCode)
+    }
+  }
 }

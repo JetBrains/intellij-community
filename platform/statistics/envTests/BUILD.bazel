@@ -28,6 +28,8 @@ jvm_library(
     "//platform/statistics/uploader",
     "@lib//:jackson",
     "@lib//:jackson-databind",
+    "@lib//:com-jetbrains-fus-reporting-connection-client",
+    "@lib//:com-jetbrains-fus-reporting-serialization-kotlin",
   ]
 )
 ### auto-generated section `build intellij.platform.statistics.envTests` end
