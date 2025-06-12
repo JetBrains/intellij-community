@@ -971,6 +971,7 @@ object DynamicPlugins {
         listenerCallbacks.forEach(Runnable::run)
 
         DynamicPluginsUsagesCollector.logDescriptorLoad(pluginDescriptor)
+        PluginManagerCore.clearLoadingErrorsFor(pluginDescriptor.pluginId)
         LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
       }
       finally {

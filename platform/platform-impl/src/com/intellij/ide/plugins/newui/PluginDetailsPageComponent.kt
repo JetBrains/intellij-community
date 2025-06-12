@@ -48,6 +48,7 @@ import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.*
 import com.intellij.util.ui.AsyncProcessIcon.BigCentered
 import com.intellij.util.ui.StartupUiUtil.labelFont
@@ -388,7 +389,14 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun createEnableDisableAction(action: PluginEnableDisableAction): SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> {
     return SelectionBasedPluginModelAction.EnableDisableAction(
-      pluginModel,
+      object : PluginModelFacade(pluginModel.getModel()) {
+        override fun getState(model: PluginUiModel): PluginEnabledState {
+          if (model.pluginId == plugin?.pluginId && showComponent?.isNotFreeInFreeMode == true) {
+            return PluginEnabledState.DISABLED
+          }
+          return super.getState(model)
+        }
+      },
       action,
       false,
       java.util.List.of(this),
@@ -830,7 +838,22 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myVersion2!!.isVisible = isVersion
     }
 
-    tagPanel!!.setTags(plugin.calculateTags())
+    val isNotFreeInFreeMode = showComponent?.isNotFreeInFreeMode == true
+    var tags = plugin.calculateTags()
+
+    if (isNotFreeInFreeMode) {
+      tags = buildList {
+        addAll(tags)
+        if (PlatformUtils.isPyCharmPro()) {
+          add(Tags.Pro.name)
+        }
+        else {
+          add(Tags.Ultimate.name)
+        }
+      }
+    }
+
+    tagPanel!!.setTags(tags)
 
     if (isMarketplace) {
       showMarketplaceData(plugin)
@@ -864,9 +887,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     showLicensePanel()
 
-    unavailableWithoutSubscriptionBanner?.isVisible = showComponent?.isNotFreeInFreeMode == true
-    partiallyAvailableBanner?.isVisible = showComponent?.isNotFreeInFreeMode != true &&
-                                          PluginManagerCore.dependsOnUltimateOptionally(showComponent?.pluginDescriptor)
+    unavailableWithoutSubscriptionBanner?.isVisible = isNotFreeInFreeMode
+    partiallyAvailableBanner?.isVisible = !isNotFreeInFreeMode && PluginManagerCore.dependsOnUltimateOptionally(showComponent?.pluginDescriptor)
 
     val homepage = getPluginHomepage(plugin.pluginId)
 
@@ -1186,6 +1208,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         gearButton!!.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode != true
         myUninstallButton?.isVisible = !uninstalled && !bundled && showComponent?.isNotFreeInFreeMode == true
         myEnableDisableButton!!.isVisible = bundled
+        myEnableDisableButton!!.isEnabled = showComponent?.isNotFreeInFreeMode != true
         updateButton!!.isVisible = !uninstalled && updateDescriptor != null && !installedWithoutRestart
         updateEnableForNameAndIcon()
         updateErrors()
@@ -1239,7 +1262,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     val hasErrors = !isMarketplace && !errors.isEmpty()
 
-    iconLabel!!.isEnabled = isMarketplace || pluginModel.isEnabled(plugin!!)
+    val isNotFreeInFreeMode = showComponent?.isNotFreeInFreeMode == true
+    iconLabel!!.isEnabled = isMarketplace || (pluginModel.isEnabled(plugin!!) && !isNotFreeInFreeMode)
     iconLabel!!.icon = pluginModel.getIcon(plugin!!, true, hasErrors, false)
     iconLabel!!.disabledIcon = pluginModel.getIcon(plugin!!, true, hasErrors, true)
   }
@@ -1311,7 +1335,8 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun updateEnableForNameAndIcon() {
-    val enabled = pluginModel.isEnabled(descriptorForActions!!)
+    val isNotFreeInFreeMode = showComponent?.isNotFreeInFreeMode == true
+    val enabled = pluginModel.isEnabled(descriptorForActions!!) && !isNotFreeInFreeMode
     nameComponent.foreground = if (enabled) null else ListPluginComponent.DisabledColor
     if (iconLabel != null) {
       iconLabel!!.isEnabled = enabled

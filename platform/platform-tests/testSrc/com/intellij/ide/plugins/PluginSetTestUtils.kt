@@ -1,12 +1,25 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import org.assertj.core.api.InstanceOfAssertFactories
 import org.assertj.core.api.ObjectAssert
 
 fun ObjectAssert<PluginSet>.hasExactlyEnabledPlugins(vararg ids: String) = apply {
   extracting { it.enabledPlugins.map { plugin -> plugin.pluginId.idString } }
     .asList()
     .containsExactlyInAnyOrder(*ids)
+}
+
+fun ObjectAssert<PluginSet>.hasEnabledPlugins(vararg ids: String) = apply {
+  extracting { it.enabledPlugins.map { plugin -> plugin.pluginId.idString } }
+    .asInstanceOf(InstanceOfAssertFactories.LIST)
+    .containsAll(ids.asList())
+}
+
+fun ObjectAssert<PluginSet>.doesNotHaveEnabledPlugins(firstId: String, vararg otherIds: String) = apply {
+  extracting { it.enabledPlugins.map { plugin -> plugin.pluginId.idString } }
+    .asInstanceOf(InstanceOfAssertFactories.LIST)
+    .doesNotContain(firstId, *otherIds)
 }
 
 fun ObjectAssert<PluginSet>.doesNotHaveEnabledPlugins() = hasExactlyEnabledPlugins()

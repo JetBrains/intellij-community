@@ -14,6 +14,8 @@
   <vendor>JetBrains</vendor>
 
   <content>
+    <module name="intellij.groovy.duplicates"/>
+    <module name="intellij.groovy.duplicatesDetection"/>
     <module name="intellij.groovy.git"/>
     <module name="intellij.groovy/ant"/>
     <module name="intellij.groovy/byte-code-viewer"/>
@@ -29,10 +31,6 @@
 
   <depends optional="true" config-file="groovy-copyright.xml">com.intellij.copyright</depends>
   <depends optional="true" config-file="intellilang-groovy-support.xml">org.intellij.intelliLang</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="duplicates-groovy.xml">com.intellij.modules.ultimate</depends>
-  <!--suppress PluginXmlValidity -->
-  <depends optional="true" config-file="duplicates-detection-groovy.xml">com.intellij.modules.duplicatesDetector</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="groovy-structural-search.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="spock-support.xml">JUnit</depends>

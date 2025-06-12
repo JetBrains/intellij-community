@@ -123,6 +123,15 @@ public interface JBAccountInfoService {
   @NotNull CompletableFuture<@NotNull LicenseListResult> getAvailableLicenses(@NotNull String productCode);
 
   /**
+   * Returns the list of licenses available in the current user's account matching the specified productCode
+   * including licenses that have been expired for less than the specified expiredLicenseDays.
+   * <p>
+   * The returned future never completes exceptionally, other than in case of cancellation that
+   * may happen in case of remote dev when the controlling client handling the request is disconnected.
+   */
+  @NotNull CompletableFuture<@NotNull LicenseListResult> getLicenses(@NotNull String productCode, int expiredLicenseDays);
+
+  /**
    * Attempts to start a new trial for the specified productCode on the current user's behalf,
    * or returns the existing trial license on repeated invocations when called during an ongoing trial (until it expires).
    * <p>

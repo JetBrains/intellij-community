@@ -11,13 +11,13 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PluginModelFacade(private val pluginModel: MyPluginModel) {
+open class PluginModelFacade(private val pluginModel: MyPluginModel) {
 
   fun isPluginInstallingOrUpdating(model: PluginUiModel): Boolean {
     return MyPluginModel.isInstallingOrUpdate(model.pluginId)
   }
 
-  fun getState(model: PluginUiModel): PluginEnabledState {
+  open fun getState(model: PluginUiModel): PluginEnabledState {
     return pluginModel.getState(model.pluginId)
   }
 

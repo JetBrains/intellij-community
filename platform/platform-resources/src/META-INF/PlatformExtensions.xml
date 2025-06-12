@@ -586,6 +586,8 @@
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.FileNavigator"
                         serviceImplementation="com.intellij.openapi.fileEditor.FileNavigatorImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.platform.ProjectGeneratorManager" preload="notHeadless"/>
+
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.startup.StartupManager"

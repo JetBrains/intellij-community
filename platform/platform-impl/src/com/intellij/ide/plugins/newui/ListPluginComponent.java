@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.newui;
 
 import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.internal.inspector.PropertyBean;
@@ -31,6 +30,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -125,7 +125,6 @@ public final class ListPluginComponent extends JPanel {
     myLayout.setIconComponent(myIconComponent);
 
     myNameComponent.setText(pluginUiModel.getName());
-    updateNameComponentIcon();
     myLayout.setNameComponent(RelativeFont.BOLD.install(myNameComponent));
 
     createTag();
@@ -424,8 +423,22 @@ public final class ListPluginComponent extends JPanel {
 
   private void createTag() {
     List<String> tags = PluginUiModelKt.calculateTags(myPlugin);
+    String tooltip = null;
+
+    if (myIsNotFreeInFreeMode) {
+      if (PlatformUtils.isPyCharmPro()) {
+        tags = Collections.singletonList(Tags.Pro.name());
+      }
+      else {
+        tags = Collections.singletonList(Tags.Ultimate.name());
+      }
+      tooltip = UnavailableWithoutSubscriptionComponent.getHelpTooltip();
+    }
     if (!tags.isEmpty()) {
       TagComponent tagComponent = createTagComponent(tags.get(0));
+      if (tooltip != null) {
+        tagComponent.setToolTipText(tooltip);
+      }
       myLayout.setTagComponent(PluginManagerConfigurable.setTinyFont(tagComponent));
     }
   }
@@ -654,14 +667,13 @@ public final class ListPluginComponent extends JPanel {
     List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myModelFacade.getErrors(plugin);
     boolean hasErrors = !errors.isEmpty() && !myIsNotFreeInFreeMode;
     updateIcon(hasErrors,
-               myModelFacade.isUninstalled(plugin.getPluginId()) || !isEnabledState() || !myIsAvailable || myIsNotFreeInFreeMode);
-    updateNameComponentIcon();
+               myModelFacade.isUninstalled(plugin.getPluginId()) || !isEnabledState() || !myIsAvailable);
 
     if (myAlignButton != null) {
       myAlignButton.setVisible(myRestartButton != null || myAfterUpdate);
     }
 
-    if (hasErrors || myIsNotFreeInFreeMode) {
+    if (hasErrors) {
       boolean addListeners = myErrorComponent == null && myEventHandler != null;
 
       if (myErrorPanel == null) {
@@ -674,15 +686,9 @@ public final class ListPluginComponent extends JPanel {
         myErrorComponent.setBorder(JBUI.Borders.emptyTop(5));
         myErrorPanel.add(myErrorComponent, BorderLayout.CENTER);
       }
-      if (!myIsNotFreeInFreeMode) {
-        myErrorComponent.setErrors(errors, () -> myModelFacade.enableRequiredPlugins(plugin));
-      }
-      else {
-        HelpTooltip helpTooltip = UnavailableWithoutSubscriptionComponent.getHelpTooltip();
-        if (helpTooltip != null) {
-          helpTooltip.installOn(this);
-        }
-      }
+
+      myErrorComponent.setErrors(errors, () -> myModelFacade.enableRequiredPlugins(plugin));
+
       if (addListeners) {
         myEventHandler.addAll(myErrorPanel);
       }
@@ -699,11 +705,6 @@ public final class ListPluginComponent extends JPanel {
     if (myUpdateLicensePanel != null) {
       myUpdateLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
-  }
-
-  private void updateNameComponentIcon() {
-    Icon icon = myIsNotFreeInFreeMode ? AllIcons.Nodes.Padlock : null;
-    myNameComponent.setIcon(icon);
   }
 
   private void updateIcon(boolean errors, boolean disabled) {
@@ -860,7 +861,7 @@ public final class ListPluginComponent extends JPanel {
   private void updateEnabledStateUI() {
     if (myEnableDisableButton instanceof JCheckBox) {
       ((JCheckBox)myEnableDisableButton).setSelected(
-        myModelFacade.isEnabled(getDescriptorForActions()));
+        myModelFacade.isEnabled(getDescriptorForActions()) && !myIsNotFreeInFreeMode);
     }
   }
 
@@ -884,7 +885,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private boolean isEnabledState() {
-    return myModelFacade.isEnabled(getDescriptorForActions());
+    return myModelFacade.isEnabled(getDescriptorForActions()) && !myIsNotFreeInFreeMode;
   }
 
   public boolean isMarketplace() {
@@ -1198,7 +1199,20 @@ public final class ListPluginComponent extends JPanel {
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
                                                                                                                       @NotNull List<? extends ListPluginComponent> selection,
                                                                                                                       @NotNull Function<? super ListPluginComponent, PluginUiModel> function) {
-    return new SelectionBasedPluginModelAction.EnableDisableAction<>(myModelFacade, action, true, selection, function, () -> {
+    PluginModelFacade model = myModelFacade;
+    if (myIsNotFreeInFreeMode) {
+      model = new PluginModelFacade(model.getModel()) {
+        @Override
+        public @NotNull PluginEnabledState getState(@NotNull PluginUiModel model) {
+          if (model == function.apply(ListPluginComponent.this)) {
+            return PluginEnabledState.DISABLED;
+          }
+          return super.getState(model);
+        }
+      };
+    }
+
+    return new SelectionBasedPluginModelAction.EnableDisableAction<>(model, action, true, selection, function, () -> {
     });
   }
 

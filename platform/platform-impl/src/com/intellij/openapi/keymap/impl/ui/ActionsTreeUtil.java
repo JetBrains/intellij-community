@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
+import com.intellij.ide.ui.customization.NonCustomizableAction;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.idea.ActionsBundle;
@@ -375,6 +376,9 @@ public final class ActionsTreeUtil {
     }
 
     for (AnAction action : children) {
+      if (action instanceof NonCustomizableAction) {
+        continue;
+      }
       if (action instanceof ActionGroup) {
         group.addGroup(createCorrectedGroup((ActionGroup)action, getName(action), path, actionUrls));
       }

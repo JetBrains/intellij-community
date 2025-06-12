@@ -293,6 +293,11 @@ object PluginManagerCore {
   fun getLoadingError(pluginId: PluginId): PluginNonLoadReason? = pluginLoadingErrors!![pluginId]
 
   @ApiStatus.Internal
+  fun clearLoadingErrorsFor(pluginId: PluginId) {
+    pluginLoadingErrors = pluginLoadingErrors?.minus(pluginId)
+  }
+
+  @ApiStatus.Internal
   @Synchronized
   @JvmStatic
   fun onEnable(enabled: Boolean): Boolean {
@@ -931,6 +936,11 @@ fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId): Boolean {
 @ApiStatus.Internal
 fun pluginRequiresUltimatePluginButItsDisabled(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>): Boolean {
   if (!isDisabled(ULTIMATE_PLUGIN_ID)) return false
+  return pluginRequiresUltimatePlugin(plugin, pluginMap)
+}
+
+@ApiStatus.Internal
+fun pluginRequiresUltimatePlugin(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl> = PluginManagerCore.buildPluginIdMap()): Boolean {
   val rootDescriptor = pluginMap[plugin]
   if (rootDescriptor == null) return false
   return !processAllNonOptionalDependencies(rootDescriptor, pluginMap) { descriptorImpl ->

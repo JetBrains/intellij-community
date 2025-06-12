@@ -349,7 +349,15 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
       AnActionEvent event = AnActionEvent.createFromDataContext("", presentation, DataContext.EMPTY_CONTEXT);
 
       myEnableAction.update(event);
-      myCurrentAction = presentation.isEnabledAndVisible() ? myEnableAction : myDisableAction;
+      boolean isEnableAction = presentation.isEnabledAndVisible();
+      myCurrentAction = isEnableAction ? myEnableAction : myDisableAction;
+
+      if (!isEnableAction) {
+        myDisableAction.update(event);
+        if (!presentation.isEnabledAndVisible()) {
+          myCurrentAction = myEnableAction;
+        }
+      }
 
       String text = myCurrentAction.getTemplateText();
       button.getAction().putValue(Action.NAME, text);

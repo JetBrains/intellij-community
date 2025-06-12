@@ -528,6 +528,11 @@
 
     <extensionPoint name="framework.detector" interface="com.intellij.framework.detection.FrameworkDetector" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.frameworkSupport"
+                    interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"
+                    dynamic="true"/>
+
+
     <extensionPoint name="methodNavigationOffsetProvider" interface="com.intellij.codeInsight.navigation.MethodNavigationOffsetProvider" dynamic="true"/>
 
     <extensionPoint name="filePasteProvider" interface="com.intellij.ide.PasteProvider" dynamic="true"/>

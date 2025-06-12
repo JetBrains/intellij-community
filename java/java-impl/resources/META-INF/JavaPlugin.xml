@@ -186,9 +186,6 @@
     <extensionPoint qualifiedName="com.intellij.packaging.artifactType" interface="com.intellij.packaging.artifacts.ArtifactType"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.frameworkSupport"
-                    interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.frameworkSupportCommunicator"
                     interface="com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportCommunicator" dynamic="true"/>
 

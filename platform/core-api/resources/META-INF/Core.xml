@@ -16,6 +16,9 @@
     <extensionPoint name="backgroundPostStartupActivity" interface="com.intellij.openapi.startup.ProjectActivity" dynamic="true"/>
     <extensionPoint name="requiredForSmartModeStartupActivity" interface="com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode" dynamic="true"/>
 
+    <!-- only bundled plugin can define initProjectGeneratorActivity -->
+    <extensionPoint name="initProjectGeneratorActivity" interface="com.intellij.openapi.project.InitProjectGeneratorActivity" dynamic="false"/>
+
     <extensionPoint name="multiverseEnabler" interface="com.intellij.codeInsight.multiverse.MultiverseEnabler" dynamic="false"/>
     <extensionPoint name="multiverse.codeInsightContextProvider" interface="com.intellij.codeInsight.multiverse.CodeInsightContextProvider" dynamic="true"/>
     <extensionPoint name="multiverse.codeInsightContextPresentationProvider" interface="com.intellij.codeInsight.multiverse.CodeInsightContextPresentationProvider" dynamic="true"/>

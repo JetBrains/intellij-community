@@ -48,6 +48,7 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.platform.plugins.testFramework.PluginSetTestBuilder
 import com.intellij.platform.testFramework.loadDescriptorInTest
 import com.intellij.platform.testFramework.loadExtensionWithText
 import com.intellij.platform.testFramework.plugins.*
@@ -55,6 +56,7 @@ import com.intellij.platform.testFramework.setPluginClassLoaderForMainAndSubPlug
 import com.intellij.platform.testFramework.unloadAndUninstallPlugin
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -68,6 +70,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
@@ -1043,6 +1046,41 @@ class DynamicPluginsTest {
     // we will fail to load it on the next start, this is required to make a simultaneous Update possible
     assertThat(PluginEnabler.getInstance().isDisabled(PluginId.getId(incompatiblePlugin.id!!))).isFalse()
   }
+
+  @Test
+  @TestFor(issues = ["IJPL-183884"])
+  fun `initial loading errors are cleared after successful dynamic plugin loading`() {
+    PluginManagerCore.getAndClearPluginLoadingErrors() // clear errors which may be registered by other tests
+
+    val barPluginPath = pluginsDir.resolve("bar")
+    val fooPluginPath = pluginsDir.resolve("foo")
+
+    // initial descriptor loading
+    plugin("bar") {}.buildDir(barPluginPath)
+    plugin("foo") { depends("bar") }.buildDir(fooPluginPath)
+    PluginSetTestBuilder.fromPath(pluginsDir).withDisabledPlugins("bar").build()
+
+    val barPluginId = PluginId.getId("bar")
+    val fooPluginId = PluginId.getId("foo")
+    assertNoLoadingErrors(barPluginId)
+    assertDisabledDependencyLoadingError(pluginId = fooPluginId, dependencyId = barPluginId)
+    assertThat(PluginManagerCore.getPluginSet()).doesNotHaveEnabledPlugins("foo", "bar")
+
+    // enable dependency
+    loadPluginInTest(barPluginPath) {
+      assertThat(PluginManagerCore.getPluginSet()).hasEnabledPlugins("bar")
+      assertThat(PluginManagerCore.getPluginSet()).doesNotHaveEnabledPlugins("foo")
+      assertNoLoadingErrors(barPluginId)
+      assertDisabledDependencyLoadingError(pluginId = fooPluginId, dependencyId = barPluginId)
+
+      // enable dependent with dependency enabled beforehand
+      loadPluginInTest(fooPluginPath) {
+        assertThat(PluginManagerCore.getPluginSet()).hasEnabledPlugins("foo", "bar")
+        assertNoLoadingErrors(barPluginId)
+        assertNoLoadingErrors(fooPluginId)
+      }
+    }
+  }
 }
 
 @InternalIgnoreDependencyViolation
@@ -1183,4 +1221,28 @@ private fun assertModuleIsNotLoaded(moduleName: String) {
 
 private fun assertModuleIsLoaded(moduleName: String) {
   assertThat(findEnabledModuleByName(moduleName)?.pluginClassLoader).isNotNull()
+}
+
+private fun loadPluginInTest(pluginPath: Path, actionWithPluginLoaded: () -> Unit) {
+  val descriptor = loadDescriptorInTest(pluginPath)
+  try {
+    assertThat(DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)).isTrue()
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+    actionWithPluginLoaded()
+  }
+  finally {
+    unloadAndUninstallPlugin(descriptor)
+  }
+}
+
+private fun assertNoLoadingErrors(pluginId: PluginId) {
+  val error = PluginManagerCore.getLoadingError(pluginId)
+  assertThat(error).isNull()
+}
+
+private fun assertDisabledDependencyLoadingError(pluginId: PluginId, dependencyId: PluginId) {
+  val error = PluginManagerCore.getLoadingError(pluginId)
+  assertThat(error).isNotNull().isInstanceOf(PluginDependencyIsDisabled::class.java)
+  val disabledDependency = (error as PluginDependencyIsDisabled).dependencyId
+  assertThat(disabledDependency).isNotNull().isEqualTo(dependencyId)
 }
