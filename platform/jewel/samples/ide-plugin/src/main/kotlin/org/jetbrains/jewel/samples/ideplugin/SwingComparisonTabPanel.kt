@@ -1,42 +1,27 @@
 package org.jetbrains.jewel.samples.ideplugin
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.BrowserLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.dsl.builder.AlignY
-import com.intellij.ui.dsl.builder.COLUMNS_SHORT
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -50,15 +35,9 @@ import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.medium
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.ui.component.DefaultButton
-import org.jetbrains.jewel.ui.component.EditableListComboBox
-import org.jetbrains.jewel.ui.component.Icon
-import org.jetbrains.jewel.ui.component.ListComboBox
-import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.component.TextArea
-import org.jetbrains.jewel.ui.component.TextField
-import org.jetbrains.jewel.ui.component.Typography
+import org.jetbrains.jewel.ui.component.*
+import org.jetbrains.jewel.ui.disabledThemeAware
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.textAreaStyle
 
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
@@ -71,6 +50,8 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                 separator()
                 iconsRow()
                 separator()
+                linksRow()
+                separator()
                 textFieldsRow()
                 separator()
                 textAreasRow()
@@ -82,6 +63,28 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                 border = JBUI.Borders.empty(0, 10)
                 isOpaque = false
             }
+
+    private fun Panel.linksRow() {
+        row("Links:") {
+                browserLink("Enabled link", "")
+
+                compose { ExternalLink(text = "Enabled link", enabled = true, onClick = {}) }
+
+                cell(
+                        component =
+                            BrowserLink(
+                                icon = IconLoader.getDisabledIcon(AllIcons.Ide.External_link_arrow),
+                                text = "Disabled link",
+                                tooltip = null,
+                                url = "",
+                            )
+                    )
+                    .applyToComponent { foreground = JBUI.CurrentTheme.Link.Foreground.DISABLED }
+
+                compose { ExternalLink(text = "Disabled Link", enabled = false, onClick = {}) }
+            }
+            .layout(RowLayout.PARENT_GRID)
+    }
 
     private val scrollingContainer =
         JBScrollPane(
@@ -204,6 +207,59 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                         contentDescription = "Jewel Tool Window Icon",
                         modifier = Modifier.border(1.dp, Color.Red),
                     )
+                }
+
+                panel {
+                    row {
+                        label("Swing").widthGroup("swing disabled")
+                        label("Compose").widthGroup("compose disabled")
+                        label("Swing").widthGroup("swing enabled")
+                        label("Compose").widthGroup("compose enabled")
+
+                        label("Swing").widthGroup("swing disabled")
+                        label("Compose").widthGroup("compose disabled")
+                        label("Swing").widthGroup("swing enabled")
+                        label("Compose").widthGroup("compose enabled")
+                    }
+                    row {
+                        icon(icon = IconLoader.getDisabledIcon(AllIcons.Actions.CheckOut)).widthGroup("swing disabled")
+                        compose {
+                                Icon(
+                                    key = AllIconsKeys.Actions.CheckOut,
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.disabledThemeAware(),
+                                )
+                            }
+                            .widthGroup("compose disabled")
+                        icon(icon = AllIcons.Actions.CheckOut).widthGroup("swing enabled")
+                        compose {
+                                Icon(
+                                    key = AllIconsKeys.Actions.CheckOut,
+                                    contentDescription = null,
+                                    colorFilter = null, // Not disabled
+                                )
+                            }
+                            .widthGroup("compose enabled")
+
+                        icon(icon = IconLoader.getDisabledIcon(AllIcons.Actions.Close)).widthGroup("swing disabled")
+                        compose {
+                                Icon(
+                                    key = AllIconsKeys.Actions.Close,
+                                    contentDescription = null,
+                                    colorFilter = ColorFilter.disabledThemeAware(),
+                                )
+                            }
+                            .widthGroup("compose disabled")
+                        icon(icon = AllIcons.Actions.Close).widthGroup("swing enabled")
+                        compose {
+                                Icon(
+                                    key = AllIconsKeys.Actions.Close,
+                                    contentDescription = null,
+                                    colorFilter = null, // Not disabled
+                                )
+                            }
+                            .widthGroup("compose enabled")
+                    }
                 }
             }
             .layout(RowLayout.PARENT_GRID)

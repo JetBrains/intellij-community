@@ -48,7 +48,7 @@ import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
-import org.jetbrains.jewel.ui.disabled
+import org.jetbrains.jewel.ui.disabledThemeAware
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
@@ -138,7 +138,7 @@ public fun Dropdown(
                 contentAlignment = Alignment.Center,
             ) {
                 val alpha = if (dropdownState.isEnabled) 1f else 0.5f
-                val colorFilter = if (dropdownState.isEnabled) null else ColorFilter.disabled()
+                val colorFilter = if (dropdownState.isEnabled) null else ColorFilter.disabledThemeAware()
                 Icon(
                     modifier = Modifier.alpha(alpha),
                     key = style.icons.chevronDown,
