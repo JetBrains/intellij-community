@@ -61,7 +61,10 @@ object RepositoryBrowser {
       }
     }
 
-    val contentPanel = RepositoryBrowserPanel(project, root, localRoot)
+    val actionGroup = DefaultActionGroup()
+    actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE))
+    actionGroup.add(ActionManager.getInstance().getAction(VcsActions.DIFF_AFTER_WITH_LOCAL))
+    val contentPanel = RepositoryBrowserPanel(project, root, localRoot, actionGroup)
 
     val content = ContentFactory.getInstance().createContent(contentPanel, title, true)
     repoToolWindow.contentManager.addContent(content)
@@ -88,7 +91,8 @@ object RepositoryBrowser {
 class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
-  private val localRoot: VirtualFile
+  private val localRoot: VirtualFile,
+  actionGroup: ActionGroup
 ) : JPanel(BorderLayout()), UiDataProvider, Disposable {
   companion object {
     val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
@@ -128,9 +132,6 @@ class RepositoryBrowserPanel(
       }
     }
 
-    val actionGroup = DefaultActionGroup()
-    actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE))
-    actionGroup.add(ActionManager.getInstance().getAction(VcsActions.DIFF_AFTER_WITH_LOCAL))
     fileSystemTree.registerMouseListener(actionGroup)
 
     val scrollPane = ScrollPaneFactory.createScrollPane(fileSystemTree.tree, true)
