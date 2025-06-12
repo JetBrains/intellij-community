@@ -18,6 +18,7 @@ import com.intellij.platform.util.io.storages.enumerator.DurableStringEnumerator
 import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
@@ -73,35 +74,39 @@ public final class PersistentFSLoader {
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
 
   /**
-   * We want the 'main exception' to be 1) IOException 2) with +/- descriptive message.
+   * We want the 'main exception' to be
+   * 1) an IOException
+   * 2) with a +/- descriptive message.
    * So:
-   * => We look for such an exception among .exceptions, and if there is one -> use it as the main one
-   * => Otherwise we create IOException with the first non-empty error message among .exceptions
-   * In both cases, we attach all other exceptions to .suppressed list of the main exception
+   * => We look for such an exception among all exceptions reported, and if there is one -> use it as the _main_ exception
+   * => Otherwise we create IOException with the first non-empty error message among all exceptions reported
+   * And in both cases, we attach all the exceptions (but main) to the main exception's .suppressed list
    */
   private static final @NotNull Function<List<? extends Throwable>, IOException> ASYNC_EXCEPTIONS_REPORTER = exceptions -> {
-    IOException mainIoException = (IOException)exceptions.stream()
-      .map(ex -> {
-        //unwrap CompletionException from async processing
-        return ex instanceof CompletionException ? ex.getCause() : ex;
-      })
-      .filter(e -> e instanceof IOException)
-      .findFirst().orElse(null);
+    List<Throwable> unwrappedExceptions = ContainerUtil.map(
+      exceptions,
+      //unwrap CompletionException from async processing:
+      ex -> (ex instanceof CompletionException ? ex.getCause() : ex)
+    );
+    IOException mainIoException = (IOException)ContainerUtil.find(
+      unwrappedExceptions,
+      e -> e instanceof IOException
+    );
 
     if (mainIoException != null && !mainIoException.getMessage().isEmpty()) {
-      for (Throwable exception : exceptions) {
+      for (Throwable exception : unwrappedExceptions) {
         if (exception != mainIoException) {
           mainIoException.addSuppressed(exception);
         }
       }
     }
     else {
-      String nonEmptyErrorMessage = exceptions.stream()
+      String nonEmptyErrorMessage = unwrappedExceptions.stream()
         .map(e -> ExceptionUtil.getNonEmptyMessage(e, ""))
         .filter(message -> !message.isBlank())
         .findFirst().orElse("<Error message not found>");
       mainIoException = new IOException(nonEmptyErrorMessage);
-      for (Throwable exception : exceptions) {
+      for (Throwable exception : unwrappedExceptions) {
         mainIoException.addSuppressed(exception);
       }
     }
@@ -755,7 +760,9 @@ public final class PersistentFSLoader {
     VFSInitException recoveryFailed = (cause == null) ?
                                       new VFSInitException(category, message) :
                                       new VFSInitException(category, message, cause);
-    triedToRecover.forEach(recoveryFailed::addSuppressed);
+    for (VFSInitException attemptedToRecover : triedToRecover) {
+      recoveryFailed.addSuppressed(attemptedToRecover);
+    }
     problemsDuringLoad.add(recoveryFailed);
 
     LOG.warn("[VFS load problem]: " +
