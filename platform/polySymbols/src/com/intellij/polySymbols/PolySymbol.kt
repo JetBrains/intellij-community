@@ -116,12 +116,6 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
     get() = PolySymbolApiStatus.Stable
 
   /**
-   * A special property to support symbols representing HTML attributes.
-   */
-  val attributeValue: PolySymbolHtmlAttributeValue?
-    get() = null
-
-  /**
    * The pattern to match names against. As a result of pattern matching a [PolySymbolMatch] will be created.
    * A pattern may specify that a reference to other Poly Symbols is expected in some part of it.
    * For such places, appropriate segments with referenced Poly Symbols will be created and navigation,

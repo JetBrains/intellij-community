@@ -214,9 +214,6 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
     get() = reversedSegments().flatMap { it.symbols }
       .mapNotNull { it.type }.firstOrNull()
 
-  override val attributeValue: PolySymbolHtmlAttributeValue?
-    get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.attributeValue }.merge()
-
   override val modifiers: Set<PolySymbolModifier>
     get() = nameSegments.asSequence().flatMap { segment -> segment.symbols.flatMap { it.modifiers } }.toSet()
 

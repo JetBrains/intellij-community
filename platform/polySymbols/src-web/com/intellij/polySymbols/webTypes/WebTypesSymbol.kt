@@ -7,6 +7,7 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
+import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.js.JS_PROPERTIES
 import com.intellij.polySymbols.js.JS_STRING_LITERALS
 import com.intellij.polySymbols.js.JsSymbolSymbolKind
@@ -59,6 +60,13 @@ interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolWithDocumentation {
      **/
     @JvmField
     val PROP_JS_SYMBOL_KIND: PolySymbolProperty<String> = PolySymbolProperty["js-symbol-kind"]
+
+    /**
+     * Name of [JsSymbolSymbolKind] property used by other symbols to specify kind of the JS symbol.
+     * By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
+     **/
+    @JvmField
+    val PROP_HTML_ATTRIBUTE_VALUE: PolySymbolProperty<PolySymbolHtmlAttributeValue> = PolySymbolProperty["html-attribute-value"]
   }
 
   sealed interface Location

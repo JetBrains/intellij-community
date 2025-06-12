@@ -56,8 +56,6 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol {
     get() = delegate.priority
   override val type: Any?
     get() = delegate.type
-  override val attributeValue: PolySymbolHtmlAttributeValue?
-    get() = delegate.attributeValue
   override val pattern: PolySymbolsPattern?
     get() = delegate.pattern
 

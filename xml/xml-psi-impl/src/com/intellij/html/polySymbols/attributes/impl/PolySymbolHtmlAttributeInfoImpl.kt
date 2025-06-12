@@ -8,6 +8,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
@@ -93,7 +94,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
       context: PsiElement,
     ): PolySymbolHtmlAttributeInfo {
       val typeSupport = symbol.origin.typeSupport as? PolySymbolHtmlAttributeValueTypeSupport
-      val attrValue = symbol.attributeValue
+      val attrValue = symbol.htmlAttributeValue
       val kind = attrValue?.kind ?: PolySymbolHtmlAttributeValue.Kind.PLAIN
       val type = attrValue?.type ?: PolySymbolHtmlAttributeValue.Type.STRING
 

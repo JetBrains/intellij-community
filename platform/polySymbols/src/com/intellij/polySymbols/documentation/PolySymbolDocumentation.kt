@@ -149,7 +149,7 @@ interface PolySymbolDocumentation {
       docUrl: String? = symbol.docUrl,
       apiStatus: PolySymbolApiStatus? = symbol.apiStatus,
       required: Boolean = symbol.required ?: false,
-      defaultValue: String? = symbol.defaultValue ?: symbol.attributeValue?.default,
+      defaultValue: String? = symbol.defaultValue,
       library: String? = symbol.origin.takeIf { it.library != null }
         ?.let { context ->
           context.library +

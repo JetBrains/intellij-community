@@ -8,12 +8,14 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.utils.merge
+import com.intellij.polySymbols.webTypes.WebTypesSymbol.Companion.PROP_HTML_ATTRIBUTE_VALUE
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.wrap
 import com.intellij.polySymbols.webTypes.json.*
@@ -43,8 +45,18 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     base.contribution.genericProperties
   }
 
+  private val attributeValue by lazy {
+    (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
+      .plus(superContributions.asSequence().map { it.htmlAttributeValue })
+      .merge()
+  }
+
+  @Suppress("UNCHECKED_CAST")
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
-    property.tryCast(contributionProperties[property.name])
+    when (property) {
+      PROP_HTML_ATTRIBUTE_VALUE -> attributeValue as T?
+      else -> property.tryCast(contributionProperties[property.name])
+    }
 
   override fun isEquivalentTo(symbol: Symbol): Boolean =
     (symbol is WebTypesSymbolBase && symbol.base == this.base)
@@ -152,11 +164,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
         base.jsonOrigin.resolveSourceSymbol(it, base.cacheHolder)
       }
 
-  final override val attributeValue: PolySymbolHtmlAttributeValue?
-    get() = (base.contribution.attributeValue?.let { sequenceOf(HtmlAttributeValueImpl(it)) } ?: emptySequence())
-      .plus(superContributions.asSequence().map { it.attributeValue })
-      .merge()
-
   final override val type: Any?
     get() = (base.contribution.type)
               ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
@@ -187,6 +194,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     get() = (base.contribution as? GenericContribution)?.default
             ?: (base.contribution as? HtmlAttribute)?.default
             ?: superContributions.firstNotNullOfOrNull { it.asSafely<PolySymbolWithDocumentation>()?.defaultValue }
+            ?: attributeValue?.default
 
   final override val pattern: PolySymbolsPattern?
     get() = base.jsonPattern?.wrap(base.contribution.name, origin as WebTypesJsonOrigin)

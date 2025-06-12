@@ -13,6 +13,7 @@ import com.intellij.util.asSafely
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
+import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
 class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttributeValue>() {
@@ -28,7 +29,7 @@ class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProv
     val attribute = context.parent as? XmlAttribute ?: return
     val attributeDescriptor = attribute.descriptor.asSafely<PolySymbolAttributeDescriptor>() ?: return
 
-    val type = attributeDescriptor.symbol.attributeValue?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
+    val type = attributeDescriptor.symbol.htmlAttributeValue?.type?.takeIf { it == Type.ENUM || it == Type.SYMBOL }
                ?: return
 
     val providedNames = mutableSetOf(attribute.name)
