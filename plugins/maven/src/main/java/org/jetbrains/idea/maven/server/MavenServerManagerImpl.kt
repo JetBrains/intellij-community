@@ -76,14 +76,14 @@ internal class MavenServerManagerImpl : MavenServerManager {
       override fun onProjectTrusted(project: Project) {
         val manager = MavenProjectsManager.getInstance(project)
         if (manager.isMavenizedProject) {
-          MavenUtil.restartMavenConnectors(project, true, Predicate { it.isDummy() })
+          MavenUtil.shutdownMavenConnectors(project, Predicate { it.isDummy() })
         }
       }
 
       override fun onProjectUntrusted(project: Project) {
         val manager = MavenProjectsManager.getInstance(project)
         if (manager.isMavenizedProject) {
-          MavenUtil.restartMavenConnectors(project, true) { it.isDummy() }
+          MavenUtil.shutdownMavenConnectors(project) { it.isDummy() }
         }
       }
 
@@ -108,7 +108,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return set
   }
 
-  override fun restartMavenConnectors(project: Project, wait: Boolean, condition: Predicate<MavenServerConnector>) {
+  override fun shutdownMavenConnectors(project: Project, condition: Predicate<MavenServerConnector>) {
     val connectorsToShutDown: MutableList<MavenServerConnector> = ArrayList()
     synchronized(myMultimoduleDirToConnectorMap) {
       getAllConnectors().forEach(
@@ -122,16 +122,11 @@ internal class MavenServerManagerImpl : MavenServerManager {
         })
     }
     MavenProjectsManager.getInstance(project).embeddersManager.reset()
-    stopConnectors(project, wait, connectorsToShutDown)
+    stopConnectors(project, connectorsToShutDown)
   }
 
-  private fun stopConnectors(project: Project, wait: Boolean, connectors: List<MavenServerConnector>) {
-    runBlockingMaybeCancellable{
-      val taskCancellation = TaskCancellation.nonCancellable()
-      withBackgroundProgress(project, SyncBundle.message("maven.sync.restarting"), taskCancellation) {
-        connectors.forEach(Consumer { it: MavenServerConnector -> it.stop(wait) })
-      }
-    }
+  private fun stopConnectors(project: Project, connectors: List<MavenServerConnector>) {
+    connectors.forEach(Consumer { it: MavenServerConnector -> it.stop(false) })
   }
 
   private fun doGetConnector(project: Project, workingDirectory: String, jdk: Sdk): MavenServerConnector {

@@ -229,7 +229,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (!Objects.equals(this.overriddenLocalRepository, overriddenLocalRepository)) {
       this.overriddenLocalRepository = overriddenLocalRepository;
       if (myProject != null) {
-        MavenUtil.restartMavenConnectors(myProject, false);
+        MavenUtil.shutdownMavenConnectors(myProject);
       }
       changed();
     }

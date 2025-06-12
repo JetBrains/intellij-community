@@ -1463,18 +1463,17 @@ object MavenUtil {
   }
 
   /**
-   * @param project   Project required to restart connectors
-   * @param wait      if true, then maven server(s) restarted synchronously
-   * @param condition only connectors satisfied for this predicate will be restarted
+   * closes connectors and removes them out of maven server manager. Connector processes will be close asynchronouly
+   * @param project   Project required to shut down connectors
+   * @param condition only connectors satisfied for this predicate will be shut down
    */
   @JvmOverloads
   @JvmStatic
-  fun restartMavenConnectors(
+  fun shutdownMavenConnectors(
     project: Project,
-    wait: Boolean,
     condition: Predicate<MavenServerConnector> = Predicate { c: MavenServerConnector -> java.lang.Boolean.TRUE },
   ) {
-    getInstance().restartMavenConnectors(project, wait, condition)
+    getInstance().shutdownMavenConnectors(project, condition)
   }
 
   @JvmStatic
