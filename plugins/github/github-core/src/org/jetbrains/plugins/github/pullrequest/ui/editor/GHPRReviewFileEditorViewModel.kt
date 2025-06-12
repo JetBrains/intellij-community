@@ -27,10 +27,13 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentLocation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewCommentPosition
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewUnifiedPosition
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 
 interface GHPRReviewFileEditorViewModel {
+  val change: RefComparisonChange
+
   val iconProvider: GHAvatarIconsProvider
   val currentUser: GHUser
 
@@ -47,6 +50,14 @@ interface GHPRReviewFileEditorViewModel {
 
   val linesWithComments: StateFlow<Set<Int>>
 
+  fun lookupNextComment(focusedThreadId: String): String?
+  fun lookupNextComment(line: Int): String?
+  fun lookupPreviousComment(focusedThreadId: String): String?
+  fun lookupPreviousComment(line: Int): String?
+
+  fun getThreadPosition(threadId: String): Pair<RefComparisonChange, Int>?
+  fun requestThreadFocus(threadId: String)
+
   fun requestNewComment(lineIdx: Int, focus: Boolean)
   fun cancelNewComment(lineIdx: Int)
 
@@ -60,7 +71,7 @@ internal class GHPRReviewFileEditorViewModelImpl(
   parentCs: CoroutineScope,
   dataContext: GHPRDataContext,
   dataProvider: GHPRDataProvider,
-  private val change: RefComparisonChange,
+  override val change: RefComparisonChange,
   private val diffData: GitTextFilePatchWithHistory,
   private val threadsVm: GHPRThreadsViewModels,
   private val allMappedThreads: StateFlow<Map<String, MappedGHPRReviewEditorThreadViewModel.MappingData>>,
@@ -123,6 +134,37 @@ internal class GHPRReviewFileEditorViewModelImpl(
       }
     }
   }
+
+  override fun lookupNextComment(focusedThreadId: String): String? =
+    threadsVm.lookupNextComment(focusedThreadId, this::threadIsVisible)
+
+  override fun lookupNextComment(line: Int): String? =
+    threadsVm.lookupNextComment(lineToUnified(line), this::threadIsVisible)
+
+  override fun lookupPreviousComment(focusedThreadId: String): String? =
+    threadsVm.lookupPreviousComment(focusedThreadId, this::threadIsVisible)
+
+  override fun lookupPreviousComment(line: Int): String? =
+    threadsVm.lookupPreviousComment(lineToUnified(line), this::threadIsVisible)
+
+  override fun getThreadPosition(threadId: String): Pair<RefComparisonChange, Int>? {
+    val position = allMappedThreads.value[threadId] ?: return null
+    return (position.change ?: return null) to (position.line ?: return null)
+  }
+
+  override fun requestThreadFocus(threadId: String) {
+    threadsVm.compactThreads.value.find { it.id == threadId }?.requestFocus()
+  }
+
+  /**
+   * We don't really care about the left-sided line number. It needs to be at the beginning to make sure
+   * the first comment on the line is picked though.
+   */
+  private fun lineToUnified(line: Int): GHPRReviewUnifiedPosition =
+    GHPRReviewUnifiedPosition(change, leftLine = -1, rightLine = line)
+
+  private fun threadIsVisible(threadId: String): Boolean =
+    allMappedThreads.value[threadId]?.let { it.isVisible && it.line != null && it.change?.filePathAfter != null } ?: false
 
   override fun requestNewComment(lineIdx: Int, focus: Boolean) {
     val position = GHPRReviewCommentPosition(change, GHPRReviewCommentLocation.SingleLine(Side.RIGHT, lineIdx))

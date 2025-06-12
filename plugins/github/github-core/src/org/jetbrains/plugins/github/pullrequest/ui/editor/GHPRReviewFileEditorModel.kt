@@ -8,12 +8,14 @@ import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.collaboration.util.Hideable
+import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
 import com.intellij.util.cancelOnDispose
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,10 +27,12 @@ internal class GHPRReviewFileEditorModel internal constructor(
   private val cs: CoroutineScope,
   private val settings: GithubPullRequestsProjectUISettings,
   private val fileVm: GHPRReviewFileEditorViewModel,
-  private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel()
+  private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
+  @RequiresEdt private val showEditor: (RefComparisonChange, Int) -> Unit
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
-    CodeReviewEditorModel<GHPREditorMappedComponentModel> {
+    CodeReviewEditorModel<GHPREditorMappedComponentModel>,
+    CodeReviewNavigableEditorViewModel {
 
   private val postReviewRanges = MutableStateFlow<List<Range>?>(null)
 
@@ -96,6 +100,49 @@ internal class GHPRReviewFileEditorModel internal constructor(
     changesModel.setChanges(ExcludingApproximateChangedRangesShifter.shift(fileVm.changedRanges, changedRanges).map(Range::asLst))
   }
 
+  override fun canGotoNextComment(focusedThreadId: String): Boolean = fileVm.lookupNextComment(focusedThreadId) != null
+  override fun canGotoNextComment(line: Int): Boolean = fileVm.lookupNextComment(line.shiftLineToBefore()) != null
+  override fun canGotoPreviousComment(focusedThreadId: String): Boolean = fileVm.lookupPreviousComment(focusedThreadId) != null
+  override fun canGotoPreviousComment(line: Int): Boolean = fileVm.lookupPreviousComment(line.shiftLineToBefore()) != null
+
+  @RequiresEdt
+  override fun gotoNextComment(focusedThreadId: String) {
+    val commentId = fileVm.lookupNextComment(focusedThreadId) ?: return
+    gotoComment(commentId)
+  }
+
+  @RequiresEdt
+  override fun gotoNextComment(line: Int) {
+    val commentId = fileVm.lookupNextComment(line.shiftLineToBefore()) ?: return
+    gotoComment(commentId)
+  }
+
+  @RequiresEdt
+  override fun gotoPreviousComment(focusedThreadId: String) {
+    val commentId = fileVm.lookupPreviousComment(focusedThreadId) ?: return
+    gotoComment(commentId)
+  }
+
+  @RequiresEdt
+  override fun gotoPreviousComment(line: Int) {
+    val commentId = fileVm.lookupPreviousComment(line.shiftLineToBefore()) ?: return
+    gotoComment(commentId)
+  }
+
+  @RequiresEdt
+  private fun gotoComment(threadId: String) {
+    val (change, unmappedLine) = fileVm.getThreadPosition(threadId) ?: return
+    val line = if (change == fileVm.change) {
+      // Only shift the line if it comes from this file
+      unmappedLine.shiftLineToAfter()
+      // if the line number is from a different file, we can't currently easily access outside changes to shift with
+      // the current line would be a best-guess estimate
+    } else unmappedLine
+
+    showEditor(change, line)
+    fileVm.requestThreadFocus(threadId)
+  }
+
   private fun StateFlow<Int?>.shiftLine(): StateFlow<Int?> =
     combineState(postReviewRanges) { line, ranges ->
       if (ranges != null && line != null) {
@@ -103,6 +150,16 @@ internal class GHPRReviewFileEditorModel internal constructor(
       }
       else null
     }
+
+  private fun Int.shiftLineToAfter(): Int {
+    val ranges = postReviewRanges.value ?: return this
+    return ReviewInEditorUtil.transferLineToAfter(ranges, this)
+  }
+
+  private fun Int.shiftLineToBefore(): Int {
+    val ranges = postReviewRanges.value ?: return this
+    return ReviewInEditorUtil.transferLineFromAfter(ranges, this, approximate = true) ?: 0
+  }
 
   private inner class ShiftedThread(vm: GHPRReviewFileEditorThreadViewModel)
     : GHPREditorMappedComponentModel.Thread<GHPRReviewFileEditorThreadViewModel>(vm) {

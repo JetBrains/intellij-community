@@ -1049,6 +1049,7 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:getREVIEW_CHANGES_STATUS_COLOR():com.intellij.ui.JBColor
 - f:getREVIEW_STATUS_MARKER_COLOR_SCHEME():com.intellij.openapi.diff.LineStatusMarkerColorScheme
 - f:showReviewToolbar(com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
+- f:showReviewToolbarWithActions(com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel,com.intellij.openapi.editor.Editor,com.intellij.openapi.actionSystem.AnAction[],kotlin.coroutines.Continuation):java.lang.Object
 - f:trackDocumentDiffSync(com.intellij.openapi.editor.Document,com.intellij.openapi.editor.Document,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - f:trackDocumentDiffSync(java.lang.CharSequence,com.intellij.openapi.editor.Document,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 - f:transferLineFromAfter(java.util.List,I,Z):java.lang.Integer

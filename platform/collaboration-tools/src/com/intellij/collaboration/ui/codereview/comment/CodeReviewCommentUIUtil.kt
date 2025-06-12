@@ -49,12 +49,13 @@ import javax.swing.*
 
 object CodeReviewCommentUIUtil {
 
-  const val INLAY_PADDING = 10
+  const val INLAY_PADDING: Int = 10
   private const val EDITOR_INLAY_PANEL_ARC = 10
 
-  val COMMENT_BUBBLE_BORDER_COLOR: Color = JBColor.namedColor("Review.ChatItem.BubblePanel.Border",
-                                                              JBColor.namedColor("EditorTabs.underTabsBorderColor",
-                                                                          JBColor.border()))
+  val COMMENT_BUBBLE_BORDER_COLOR: Color = JBColor.namedColor(
+    "Review.ChatItem.BubblePanel.Border",
+    JBColor.namedColor("EditorTabs.underTabsBorderColor", JBColor.border())
+  )
 
   fun getInlayPadding(componentType: CodeReviewChatItemUIUtil.ComponentType): Insets {
     val paddingInsets = componentType.paddingInsets
@@ -100,14 +101,22 @@ object CodeReviewCommentUIUtil {
     return roundedPanel
   }
 
+  /**
+   * We suppress the outer editor context because this will cause registered editor actions not to be usable.
+   * This means they don't steal key events from this component.
+   * Specifically; the TAB key tends to escape the focused component if Editor is registered.
+   */
   private fun suppressOuterEditorData(sink: DataSink) {
-    arrayOf(CommonDataKeys.EDITOR, CommonDataKeys.HOST_EDITOR, CommonDataKeys.EDITOR_EVEN_IF_INACTIVE,
-            CommonDataKeys.CARET,
-            CommonDataKeys.VIRTUAL_FILE, CommonDataKeys.VIRTUAL_FILE_ARRAY,
-            CommonDataKeys.LANGUAGE,
-            CommonDataKeys.PSI_FILE, CommonDataKeys.PSI_ELEMENT,
-            PlatformCoreDataKeys.FILE_EDITOR,
-            PlatformCoreDataKeys.PSI_ELEMENT_ARRAY).forEach {
+    arrayOf(
+      CommonDataKeys.EDITOR,
+      CommonDataKeys.HOST_EDITOR,
+      CommonDataKeys.CARET,
+      CommonDataKeys.VIRTUAL_FILE, CommonDataKeys.VIRTUAL_FILE_ARRAY,
+      CommonDataKeys.LANGUAGE,
+      CommonDataKeys.PSI_FILE, CommonDataKeys.PSI_ELEMENT,
+      PlatformCoreDataKeys.FILE_EDITOR,
+      PlatformCoreDataKeys.PSI_ELEMENT_ARRAY
+    ).forEach {
       sink.setNull(it)
     }
   }
@@ -152,9 +161,11 @@ object CodeReviewCommentUIUtil {
     return button
   }
 
-  fun createFoldedThreadControlsIn(cs: CoroutineScope,
-                                   vm: CodeReviewFoldableThreadViewModel,
-                                   avatarIconsProvider: IconsProvider<CodeReviewUser>): JComponent {
+  fun createFoldedThreadControlsIn(
+    cs: CoroutineScope,
+    vm: CodeReviewFoldableThreadViewModel,
+    avatarIconsProvider: IconsProvider<CodeReviewUser>,
+  ): JComponent {
     val authorsLabel = JLabel().apply {
       bindVisibilityIn(cs, vm.repliesState.map { it.repliesCount > 0 })
       bindIconIn(cs, vm.repliesState.map {

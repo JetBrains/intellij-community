@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.editor
 
 import com.intellij.collaboration.ui.codereview.editor.action.CodeReviewInEditorToolbarActionGroup
 import com.intellij.diff.util.Range
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
@@ -100,8 +101,13 @@ object ReviewInEditorUtil {
    * @throws IllegalStateException when the actions were not set up
    */
   suspend fun showReviewToolbar(vm: CodeReviewInEditorViewModel, editor: Editor): Nothing {
+    showReviewToolbarWithActions(vm, editor)
+  }
+
+  suspend fun showReviewToolbarWithActions(vm: CodeReviewInEditorViewModel, editor: Editor, vararg additionalActions: AnAction): Nothing {
     withContext(Dispatchers.EDT) {
       val toolbarActionGroup = DefaultActionGroup(
+        *additionalActions,
         CodeReviewInEditorToolbarActionGroup(vm),
         Separator.getInstance()
       )

@@ -6,6 +6,7 @@ import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewDiffEditorModel
 
 internal class GHPRDiffReviewNextCommentAction : AnAction() {
@@ -14,7 +15,7 @@ internal class GHPRDiffReviewNextCommentAction : AnAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val editor = e.getData(DiffDataKeys.CURRENT_EDITOR)
+    val editor = e.getData(DiffDataKeys.CURRENT_EDITOR) ?: e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
 
     val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
                       ?: editor?.getUserData(GHPRReviewDiffEditorModel.KEY)
@@ -34,7 +35,7 @@ internal class GHPRDiffReviewNextCommentAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
 
-    val editor = e.getData(DiffDataKeys.CURRENT_EDITOR)
+    val editor = e.getData(DiffDataKeys.CURRENT_EDITOR) ?: e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
     val editorModel = editor?.getUserData(CodeReviewNavigableEditorViewModel.KEY)
                       ?: editor?.getUserData(GHPRReviewDiffEditorModel.KEY)
     if (editor == null || editorModel == null) return
