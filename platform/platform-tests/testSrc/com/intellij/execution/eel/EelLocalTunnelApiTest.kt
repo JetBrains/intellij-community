@@ -2,8 +2,8 @@
 package com.intellij.execution.eel
 
 import com.intellij.platform.eel.*
-import com.intellij.platform.eel.EelTunnelsApi.CreateFilePath
 import com.intellij.platform.eel.channels.sendWholeBuffer
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.eel.provider.utils.sendWholeText
@@ -26,7 +26,6 @@ import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
 import java.nio.file.Path
-import kotlin.io.path.pathString
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -87,14 +86,15 @@ class EelLocalTunnelApiTest {
   @ParameterizedTest
   @ValueSource(booleans = [true, false])
   fun testUnixSocket(explicitSocket: Boolean, @TempDir tempDir: Path): Unit = timeoutRunBlocking {
-    val path = if (explicitSocket) {
-      CreateFilePath.Fixed(tempDir.resolve("file.sock").pathString)
-    }
-    else {
-      CreateFilePath.MkTemp()
-    }
     repeat(5) {
-      val (socketPathStr, tx, rx) = localEel.tunnels.listenOnUnixSocket(path)
+      val unixSocketResult =
+        if (explicitSocket)
+          localEel.tunnels.listenOnUnixSocket(tempDir.resolve("file.sock").asEelPath())
+        else
+          localEel.tunnels.listenOnUnixSocket().eelIt()
+      val socketPathStr = unixSocketResult.unixSocketPath.toString()
+      val tx = unixSocketResult.tx
+      val rx = unixSocketResult.rx
       val socketPath = Path.of(socketPathStr)
       val helloFromClient = "fromClient".encodeToByteArray()
       val helloFromServer = "fromServer".encodeToByteArray()

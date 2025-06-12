@@ -195,38 +195,29 @@ f:com.intellij.platform.eel.EelPlatformKt
 - com.intellij.platform.eel.EelProcess$ResizePtyError
 - <init>():V
 *:com.intellij.platform.eel.EelTunnelsApi
-- a:listenOnUnixSocket(com.intellij.platform.eel.EelTunnelsApi$CreateFilePath,kotlin.coroutines.Continuation):java.lang.Object
-- bs:listenOnUnixSocket$default(com.intellij.platform.eel.EelTunnelsApi,com.intellij.platform.eel.EelTunnelsApi$CreateFilePath,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-*:com.intellij.platform.eel.EelTunnelsApi$CreateFilePath
-*f:com.intellij.platform.eel.EelTunnelsApi$CreateFilePath$Fixed
-- com.intellij.platform.eel.EelTunnelsApi$CreateFilePath
-- <init>(java.lang.String):V
-- f:component1():java.lang.String
-- f:copy(java.lang.String):com.intellij.platform.eel.EelTunnelsApi$CreateFilePath$Fixed
-- bs:copy$default(com.intellij.platform.eel.EelTunnelsApi$CreateFilePath$Fixed,java.lang.String,I,java.lang.Object):com.intellij.platform.eel.EelTunnelsApi$CreateFilePath$Fixed
-- equals(java.lang.Object):Z
-- f:getPath():java.lang.String
-- hashCode():I
-*f:com.intellij.platform.eel.EelTunnelsApi$CreateFilePath$MkTemp
-- com.intellij.platform.eel.EelTunnelsApi$CreateFilePath
-- <init>():V
-- <init>(java.lang.String,java.lang.String):V
-- <init>(java.lang.String,java.lang.String,java.lang.String):V
-- f:getDirectory():java.lang.String
-- f:getPrefix():java.lang.String
-- f:getSuffix():java.lang.String
-*f:com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketResult
-- <init>(java.lang.String,com.intellij.platform.eel.channels.EelSendChannel,com.intellij.platform.eel.channels.EelReceiveChannel):V
-- f:component1():java.lang.String
-- f:component2():com.intellij.platform.eel.channels.EelSendChannel
-- f:component3():com.intellij.platform.eel.channels.EelReceiveChannel
-- f:copy(java.lang.String,com.intellij.platform.eel.channels.EelSendChannel,com.intellij.platform.eel.channels.EelReceiveChannel):com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketResult
-- bs:copy$default(com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketResult,java.lang.String,com.intellij.platform.eel.channels.EelSendChannel,com.intellij.platform.eel.channels.EelReceiveChannel,I,java.lang.Object):com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketResult
-- equals(java.lang.Object):Z
-- f:getRx():com.intellij.platform.eel.channels.EelReceiveChannel
-- f:getTx():com.intellij.platform.eel.channels.EelSendChannel
-- f:getUnixSocketPath():java.lang.String
-- hashCode():I
+- *a:listenOnUnixSocket(com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketTemporaryPathOptions,kotlin.coroutines.Continuation):java.lang.Object
+- *a:listenOnUnixSocket(com.intellij.platform.eel.path.EelPath,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketResult
+- component1():com.intellij.platform.eel.path.EelPath
+- component2():com.intellij.platform.eel.channels.EelSendChannel
+- component3():com.intellij.platform.eel.channels.EelReceiveChannel
+- a:getRx():com.intellij.platform.eel.channels.EelReceiveChannel
+- a:getTx():com.intellij.platform.eel.channels.EelSendChannel
+- a:getUnixSocketPath():com.intellij.platform.eel.path.EelPath
+*:com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketTemporaryPathOptions
+- getParentDirectory():com.intellij.platform.eel.path.EelPath
+- getPrefix():java.lang.String
+- getSuffix():java.lang.String
+*f:com.intellij.platform.eel.EelTunnelsApiHelpers
+- sf:INSTANCE:com.intellij.platform.eel.EelTunnelsApiHelpers
+*f:com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+- <init>(com.intellij.platform.eel.EelTunnelsApi):V
+- eelIt(kotlin.coroutines.Continuation):java.lang.Object
+- f:parentDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+- f:prefix(java.lang.String):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+- f:suffix(java.lang.String):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
+f:com.intellij.platform.eel.EelTunnelsApiHelpersKt
+- *sf:listenOnUnixSocket(com.intellij.platform.eel.EelTunnelsApi):com.intellij.platform.eel.EelTunnelsApiHelpers$ListenOnUnixSocket
 *:com.intellij.platform.eel.EelTunnelsPosixApi
 - com.intellij.platform.eel.EelTunnelsApi
 *:com.intellij.platform.eel.EelTunnelsWindowsApi
@@ -254,6 +245,12 @@ f:com.intellij.platform.eel.EelPlatformKt
 - *f:exe(java.lang.String):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+*f:com.intellij.platform.eel.ListenOnUnixSocketTemporaryPathOptionsBuilder
+- <init>():V
+- f:build():com.intellij.platform.eel.EelTunnelsApi$ListenOnUnixSocketTemporaryPathOptions
+- f:parentDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ListenOnUnixSocketTemporaryPathOptionsBuilder
+- f:prefix(java.lang.String):com.intellij.platform.eel.ListenOnUnixSocketTemporaryPathOptionsBuilder
+- f:suffix(java.lang.String):com.intellij.platform.eel.ListenOnUnixSocketTemporaryPathOptionsBuilder
 *:com.intellij.platform.eel.LocalEelApi
 - com.intellij.platform.eel.EelApi
 *:com.intellij.platform.eel.channels.EelReceiveChannel

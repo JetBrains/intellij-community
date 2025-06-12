@@ -5,11 +5,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.platform.eel.*
+import com.intellij.platform.eel.EelConnectionError
+import com.intellij.platform.eel.EelIpPreference
 import com.intellij.platform.eel.EelTunnelsApi.*
+import com.intellij.platform.eel.EelTunnelsPosixApi
+import com.intellij.platform.eel.EelTunnelsWindowsApi
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.impl.asResolvedSocketAddress
+import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -29,12 +34,14 @@ import kotlin.io.path.pathString
 private val logger = fileLogger()
 
 internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsApi {
-  override suspend fun listenOnUnixSocket(path: CreateFilePath): ListenOnUnixSocketResult = withContext(Dispatchers.IO) {
-    val socketFile = when (path) {
-      is CreateFilePath.Fixed -> Path(path.path)
-      is CreateFilePath.MkTemp -> with(path) {
+  override suspend fun listenOnUnixSocket(fixedPath: EelPath): ListenOnUnixSocketResult =
+    listenOnUnixSocket(Path(fixedPath.toString()))
+
+  override suspend fun listenOnUnixSocket(temporaryPathOptions: ListenOnUnixSocketTemporaryPathOptions): ListenOnUnixSocketResult {
+    val socketFile: Path = withContext(Dispatchers.IO) {
+      with(temporaryPathOptions) {
         createTempFile(
-          directory = if (directory.isEmpty()) null else Path(directory),
+          directory = parentDirectory?.toString()?.let(::Path),
           prefix = prefix,
           suffix = suffix,
         ).also {
@@ -44,7 +51,10 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
         }
       }
     }
+    return listenOnUnixSocket(socketFile)
+  }
 
+  private suspend fun listenOnUnixSocket(socketFile: Path): ListenOnUnixSocketResult = withContext(Dispatchers.IO) {
     val tx = EelPipe()
     val rx = EelPipe()
     val serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX)
@@ -63,17 +73,17 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
       deleteFileSilently(socketFile)
       bind()
     }
-    ApplicationManager.getApplication().service<MyService>().scope.launch(Dispatchers.IO + CoroutineName("UDS for $path")) {
+    ApplicationManager.getApplication().service<MyService>().scope.launch(Dispatchers.IO + CoroutineName("UDS for $socketFile")) {
       val client = serverChannel.accept()
       serverChannel.close()
       client.use {
         val fromClient = launch {
-          copyWithLoggingAndErrorHandling(client.consumeAsEelChannel(), rx.sink, "fromClient $path") {
+          copyWithLoggingAndErrorHandling(client.consumeAsEelChannel(), rx.sink, "fromClient $socketFile") {
             rx.closePipe(it)
           }
         }
         val toClient = launch {
-          copyWithLoggingAndErrorHandling(tx.source, client.asEelChannel(), "toClient $path") {
+          copyWithLoggingAndErrorHandling(tx.source, client.asEelChannel(), "toClient $socketFile") {
             tx.closePipe(it)
           }
         }
@@ -82,11 +92,11 @@ internal object EelLocalTunnelsApiImpl : EelTunnelsPosixApi, EelTunnelsWindowsAp
         tx.closePipe()
       }
     }
-    ListenOnUnixSocketResult(
-      unixSocketPath = socketFile.pathString,
-      tx = tx.sink,
-      rx = rx.source
-    )
+    object : ListenOnUnixSocketResult {
+      override val unixSocketPath = EelPath.parse(socketFile.pathString, LocalEelDescriptor)
+      override val tx = tx.sink
+      override val rx = rx.source
+    }
 
   }
 

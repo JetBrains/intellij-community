@@ -6,6 +6,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelTunnelsApi.Connection
+import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.channels.SendChannel
 import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration
@@ -73,7 +74,17 @@ fun EelTunnelsApi.getConnectionToRemotePort(): EelTunnelsApiHelpers.GetConnectio
     owner = this,
   )
 
-@ApiStatus.Internal
+/**
+ * See [listenOnUnixSocket] that accepts [EelPath] parameter for full documentation.
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Experimental
+fun EelTunnelsApi.listenOnUnixSocket(): EelTunnelsApiHelpers.ListenOnUnixSocket =
+  EelTunnelsApiHelpers.ListenOnUnixSocket(
+    owner = this,
+  )
+
+@ApiStatus.Experimental
 object EelTunnelsApiHelpers {
   /**
    * Create it via [com.intellij.platform.eel.EelTunnelsApi.getAcceptorForRemotePort].
@@ -214,6 +225,46 @@ object EelTunnelsApiHelpers {
           port = port,
           protocolPreference = protocolPreference,
           timeout = timeout,
+        )
+      )
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.EelTunnelsApi.listenOnUnixSocket].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Experimental
+  class ListenOnUnixSocket(
+    private val owner: EelTunnelsApi,
+  ) : OwnedBuilder<EelTunnelsApi.ListenOnUnixSocketResult> {
+    private var parentDirectory: EelPath? = null
+
+    private var prefix: String = ""
+
+    private var suffix: String = ""
+
+    fun parentDirectory(arg: EelPath?): ListenOnUnixSocket = apply {
+      this.parentDirectory = arg
+    }
+
+    fun prefix(arg: String): ListenOnUnixSocket = apply {
+      this.prefix = arg
+    }
+
+    fun suffix(arg: String): ListenOnUnixSocket = apply {
+      this.suffix = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.EelTunnelsApi.listenOnUnixSocket]
+     * with an instance of [com.intellij.platform.eel.EelTunnelsApi.ListenOnUnixSocketTemporaryPathOptions].
+     */
+    override suspend fun eelIt(): EelTunnelsApi.ListenOnUnixSocketResult =
+      owner.listenOnUnixSocket(
+        ListenOnUnixSocketTemporaryPathOptionsImpl(
+          parentDirectory = parentDirectory,
+          prefix = prefix,
+          suffix = suffix,
         )
       )
   }

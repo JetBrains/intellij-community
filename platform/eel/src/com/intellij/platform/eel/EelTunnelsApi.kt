@@ -4,6 +4,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
+import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -31,35 +32,44 @@ sealed interface EelTunnelsApi {
    * ```kotlin
    * val ijent: IjentApi = ijentApiFactory()
    *
-   * val (socketPath, tx, rx) = listenOnUnixSocket(CreateFilePath.MkTemp(prefix = "ijent-", suffix = ".sock"))
+   * val (socketPath, tx, rx) = listenOnUnixSocket().prefix("ijent-").suffix(".sock").eelIt()
    * println(socketPath) // /tmp/ijent-12345678.sock
    * launch {
    *   handleConnection(tx, rx)
    * }
    * while (true) {
-   *   val (_, tx, rx) = listenOnUnixSocket(CreateFilePath.Fixed(socketPath))
+   *   val (_, tx, rx) = listenOnUnixSocket(socketPath)
    *   launch {
    *     handleConnection(tx, rx)
    *   }
    * }
    * ```
    */
-  suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
+  @ApiStatus.Experimental
+  suspend fun listenOnUnixSocket(fixedPath: EelPath): ListenOnUnixSocketResult
 
-  data class ListenOnUnixSocketResult(
-    val unixSocketPath: String,
-    val tx: EelSendChannel,
-    val rx: EelReceiveChannel,
-  )
+  /**
+   * See [listenOnUnixSocket] that accepts [EelPath] parameter for full documentation.
+   */
+  @ApiStatus.Experimental
+  suspend fun listenOnUnixSocket(@GeneratedBuilder temporaryPathOptions: ListenOnUnixSocketTemporaryPathOptions): ListenOnUnixSocketResult
 
-  sealed interface CreateFilePath {
-    data class Fixed(val path: String) : CreateFilePath
+  @ApiStatus.Experimental
+  interface ListenOnUnixSocketTemporaryPathOptions {
+    val prefix: String get() = ""
+    val suffix: String get() = ""
+    val parentDirectory: EelPath? get() = null
+  }
 
-    /** When [directory] is empty, the usual tmpdir is used. */
-    class MkTemp(val directory: String, val prefix: String, val suffix: String) : CreateFilePath {
-      constructor(prefix: String, suffix: String) : this(directory = "", prefix = prefix, suffix = suffix)
-      constructor() : this("", "", "")
-    }
+  @ApiStatus.Experimental
+  interface ListenOnUnixSocketResult {
+    val unixSocketPath: EelPath
+    val tx: EelSendChannel
+    val rx: EelReceiveChannel
+
+    operator fun component1(): EelPath = unixSocketPath
+    operator fun component2(): EelSendChannel = tx
+    operator fun component3(): EelReceiveChannel = rx
   }
 
   /**
