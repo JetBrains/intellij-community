@@ -144,7 +144,7 @@ interface BuildContext : CompilationContext {
   fun findApplicationInfoModule(): JpsModule
 
   suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
-    proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
+    proprietaryBuildTools.signTool.signFiles(files, context = this, options)
   }
 
   suspend fun getFrontendModuleFilter(): FrontendModuleFilter
@@ -170,8 +170,8 @@ interface BuildContext : CompilationContext {
   /**
    * Creates an instance of [IntellijProductRunner] which can be used to run the IDE being built with some command.
    * @param additionalPluginModules main modules of non-bundled plugins, which should be loaded inside the IDE process
-   * @param forceUseDevBuild if `true`, the 'dev build' approach will be used to run the IDE even if it uses the module-based loader which supports running the IDE without running
-   *        the build scripts.
+   * @param forceUseDevBuild if `true`, the 'dev build' approach will be used to run the IDE even if it uses the module-based loader
+   * which supports running the IDE without running the build scripts.
    */
   suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList(), forceUseDevBuild: Boolean = false): IntellijProductRunner
 
@@ -211,7 +211,7 @@ suspend inline fun <T> BuildContext.executeStep(
     }
     catch (e: Throwable) {
       span.recordException(e)
-      options.buildStepListener.onFailure(stepId = stepId, failure = e, messages = messages)
+      options.buildStepListener.onFailure(stepId, e, messages)
       null
     }
     finally {
@@ -240,14 +240,7 @@ data class LocalDistFileContent(@JvmField val file: Path, val isExecutable: Bool
 data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
   override fun readAsStringForDebug(): String = String(data, 0, data.size.coerceAtMost(1024), Charsets.UTF_8)
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is InMemoryDistFileContent) return false
-
-    if (!data.contentEquals(other.data)) return false
-
-    return true
-  }
+  override fun equals(other: Any?): Boolean = this === other || other is InMemoryDistFileContent && data.contentEquals(other.data)
 
   override fun hashCode(): Int = data.contentHashCode()
 
