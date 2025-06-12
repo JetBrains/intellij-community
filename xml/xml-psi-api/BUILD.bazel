@@ -21,9 +21,6 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "@lib//:kotlin-stdlib",
   ],
-  runtime_deps = [
-    ":psi_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = [":psi_resources"]
 )
 ### auto-generated section `build intellij.xml.psi` end

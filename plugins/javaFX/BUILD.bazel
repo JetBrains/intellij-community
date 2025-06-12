@@ -120,6 +120,7 @@ jvm_library(
   deps = [
     "//platform/platform-impl:ide-impl",
     "//xml/xml-psi-api:psi",
+    "//xml/xml-analysis-api:analysis",
     "//xml/xml-psi-impl:psi-impl",
     "//plugins/properties/properties-psi-impl:backend-psi",
     "//plugins/javaFX",

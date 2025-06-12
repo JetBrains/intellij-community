@@ -1,14 +1,9 @@
 <idea-plugin>
-  <dependencies>
-    <module name="intellij.platform.backend"/>
-  </dependencies>
-
   <extensionPoints>
     <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
     <extensionPoint name="xml.xmlTypedHandlersAdditionalSupport" interface="com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport" dynamic="true"/>
     <extensionPoint name="xml.xmlCustomTagHighlightingStrategy" interface="com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy" dynamic="true"/>
     <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
-    <extensionPoint name="xml.xmlSuppressionProvider" interface="com.intellij.codeInspection.XmlSuppressionProvider" dynamic="true"/>
     <extensionPoint name="standardResourceProvider" interface="com.intellij.javaee.StandardResourceProvider" dynamic="true"/>
     <extensionPoint name="standardResource" beanClass="com.intellij.javaee.StandardResourceEP" dynamic="true"/>
     <extensionPoint name="xml.namedReferenceProvider"
@@ -26,8 +21,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <patterns.patternClass className="com.intellij.patterns.XmlPatterns" alias="xml"/>
     <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
-    <xml.xmlSuppressionProvider implementation="com.intellij.codeInspection.DefaultXmlSuppressionProvider" order="last"/>
-    <lang.inspectionSuppressor language="XML" implementationClass="com.intellij.codeInspection.XmlInspectionSuppressor"/>
 
     <polySymbols.enableInLanguage language="HtmlCompatible"/>
   </extensions>

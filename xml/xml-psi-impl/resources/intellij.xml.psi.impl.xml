@@ -84,8 +84,6 @@
     <multiHostInjector implementation="com.intellij.psi.impl.source.html.HtmlConditionalCommentInjector"/>
     <html.scriptContentProvider language="HTML" implementationClass="com.intellij.psi.impl.source.html.TemplateHtmlScriptContentProvider"/>
 
-    <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
-
     <xml.psiPolicy language="HTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.HtmlPsiPolicy"/>
     <xml.psiPolicy language="XHTML" implementationClass="com.intellij.psi.impl.source.xml.behavior.EncodeEachSymbolPolicy"/>
 
