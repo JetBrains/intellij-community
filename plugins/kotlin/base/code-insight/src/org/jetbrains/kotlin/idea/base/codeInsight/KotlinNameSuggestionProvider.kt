@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.SuggestedNameInfo
+import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.statistics.JavaStatisticsManager
@@ -58,12 +59,14 @@ abstract class KotlinNameSuggestionProvider : NameSuggestionProvider {
                 }
             }
 
+            val elementPointer = element.createSmartPointer()
             return object : SuggestedNameInfo(names.toTypedArray()) {
                 override fun nameChosen(name: String?) {
-                    val psiVariable = element.toLightElements().firstIsInstanceOrNull<PsiVariable>() ?: return
+                    val el = elementPointer.element ?: return
+                    val psiVariable = el.toLightElements().firstIsInstanceOrNull<PsiVariable>() ?: return
                     JavaStatisticsManager.incVariableNameUseCount(
                         name,
-                        JavaCodeStyleManager.getInstance(element.project).getVariableKind(psiVariable),
+                        JavaCodeStyleManager.getInstance(el.project).getVariableKind(psiVariable),
                         psiVariable.name,
                         psiVariable.type
                     )
