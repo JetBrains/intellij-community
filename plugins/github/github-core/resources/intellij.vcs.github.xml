@@ -116,9 +116,11 @@
   <actions>
     <action id="GitHub.Diff.Review.PreviousComment"
             class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewPreviousCommentAction"
+            icon="com.intellij.icons.AllIcons.Actions.PreviousOccurence"
             use-shortcut-of="PreviousOccurence"/>
     <action id="GitHub.Diff.Review.NextComment"
             class="org.jetbrains.plugins.github.pullrequest.comment.action.GHPRDiffReviewNextCommentAction"
+            icon="com.intellij.icons.AllIcons.Actions.NextOccurence"
             use-shortcut-of="NextOccurence"/>
 
     <action id="Github.Sync.Fork"

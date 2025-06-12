@@ -2,18 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.comment.action
 
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.diff.GHPRReviewDiffEditorModel
 
-internal class GHPRDiffReviewNextCommentAction : AnAction(
-  GithubBundle.messagePointer("pull.request.review.next.comment"),
-  GithubBundle.messagePointer("pull.request.review.next.comment.description"),
-  AllIcons.Actions.NextOccurence,
-) {
+internal class GHPRDiffReviewNextCommentAction : AnAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
