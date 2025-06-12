@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -21,9 +22,8 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.application
 import com.intellij.util.asDisposable
 import io.ktor.server.cio.CIO
@@ -94,11 +94,12 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun documentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
+    val originalDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
     if (file != null) {
-      trackedDocuments[document] = file
+      trackedDocuments[originalDocument] = file
     }
     else {
-      trackedDocuments.remove(document)
+      trackedDocuments.remove(originalDocument)
     }
   }
 
@@ -204,16 +205,14 @@ class McpServerService(val cs: CoroutineScope) {
         getLastFocusedOrOpenedProject()
       }
 
-
-      class FileAndContent(val file: VirtualFile, val content: String)
       val contentBefore = ConcurrentMap<Document, String>()
 
       val callResult = coroutineScope {
 
-        VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
-          return@AsyncFileListener object : AsyncFileListener.ChangeApplier {}
-          //events.first().
-        })
+        // TODO support file move/delete events
+        //VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
+        //  return@AsyncFileListener object : AsyncFileListener.ChangeApplier {}
+        //})
 
         val documentListener = object : DocumentListener {
           // record content before any change
@@ -238,10 +237,11 @@ class McpServerService(val cs: CoroutineScope) {
 
         @Suppress("IncorrectCancellationExceptionHandling")
         try {
+          logger.trace { "Start calling tool '${this@mcpToolToRegisteredTool.descriptor.name}'" }
           val result = withContext(ProjectContextElement(project)) {
             this@mcpToolToRegisteredTool.call(request.arguments)
           }
-
+          logger.trace { "Tool call successful '${this@mcpToolToRegisteredTool.descriptor.name}'" }
           try {
             val events = contentBefore.mapNotNull { entry ->
               val virtualFile = trackedDocuments[entry.key] ?: return@mapNotNull null
