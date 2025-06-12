@@ -325,7 +325,7 @@ internal class KotlinFunctionCallUsage(
         var firstNamedIndex = newArgumentInfos.firstOrNull {
             !canMixArguments && it.wasNamed ||
                     it.parameter.isNewParameter && it.parameter.defaultValue != null ||
-                    it.resolvedArgument is KtValueArgument && it.parameterIndex < lastParameterIndex //todo varargs
+                    it.shouldSkip()
         }?.parameterIndex
 
         if (firstNamedIndex == null) {

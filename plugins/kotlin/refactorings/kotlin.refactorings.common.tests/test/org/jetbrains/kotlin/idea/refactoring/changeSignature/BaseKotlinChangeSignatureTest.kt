@@ -582,6 +582,10 @@ public @interface NotNull {
         addNewIntParameterWithValue(true)
     }
 
+    fun testAddNewLastParameterWithDefaultValueSkipFirstDefaultValue() = doTest {
+        addNewIntParameterWithValue(true)
+    }
+
     fun testAddNewLastParameterWithDefaultValue2() = doTest {
         addNewIntParameterWithValue(true)
     }
