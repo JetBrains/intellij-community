@@ -53,7 +53,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
    */
   private fun createGutterComponent(): JComponent {
     return JPanel().apply {
-      layout = HorizontalLayout(4)
+      layout = HorizontalLayout(GUTTER_LINE_NUMBERS_AND_ICONS_GAP)
       isOpaque = false
       add(createLineNumbersComponent())
       add(createGutterIconsComponent())
@@ -67,7 +67,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
   private fun createLineNumbersComponent(): JComponent {
     return JPanel().apply {
       layout = VerticalLayout(LINES_GAP, SwingConstants.RIGHT)
-      border = JBUI.Borders.empty(2, 16, 0, 2)
+      border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, LINE_NUMBERS_LEFT_PADDING, 0, 0)
       isOpaque = false
       repeat(9) {
         add(EditorSkeletonBlock(GUTTER_SMALL, color = { currentColor() }))
@@ -84,7 +84,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
   private fun createGutterIconsComponent(): JComponent {
     return JPanel().apply {
       layout = VerticalLayout(LINES_GAP, SwingConstants.RIGHT)
-      border = JBUI.Borders.empty(2, 0, 2, 22)
+      border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, 0, SKELETON_OUTER_PADDING, GUTTER_ICONS_RIGHT_PADDING)
       isOpaque = false
       repeat(100) {
         if (it in GUTTER_ICON_LINES) {
@@ -100,7 +100,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
   private fun createEditorComponent(): JComponent {
     return JPanel().apply {
       layout = VerticalLayout(LINES_GAP)
-      border = JBUI.Borders.empty(2, 6)
+      border = JBUI.Borders.empty(SKELETON_OUTER_PADDING, EDITOR_LEFT_GAP)
       isOpaque = false
       addEditorBlocks()
     }
@@ -147,7 +147,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
     val blocksLine = JPanel().apply {
       isOpaque = false
       layout = HorizontalLayout(BLOCKS_GAP)
-      border = JBUI.Borders.emptyLeft(30 * indents)
+      border = JBUI.Borders.emptyLeft(INDENT_WIDTH * indents)
     }
     for (block in blocks) {
       val blockPanel = BorderLayoutPanel().apply {
@@ -186,6 +186,32 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
   companion object {
     private val GUTTER_ICON_LINES
       get() = listOf(2, 4, 15, 25, 30)
+
+    private val GUTTER_ICONS_RIGHT_PADDING
+      get() = 22
+
+    private val LINE_NUMBERS_LEFT_PADDING
+      get() = 20
+
+    private val GUTTER_LINE_NUMBERS_AND_ICONS_GAP
+      get() = 4
+
+    /**
+     * Padding of skeleton on the top, left, bottom.
+     *
+     * But this padding shouldn't affect border between gutter and editor skeletons.
+     */
+    private val SKELETON_OUTER_PADDING
+      get() = 2
+
+    /**
+     * Gap between gutter border and editor
+     */
+    private val EDITOR_LEFT_GAP
+      get() = 6
+
+    private val INDENT_WIDTH
+      get() = 30
     private val TICK_MS
       get() = 40.milliseconds
     private val LINES_GAP
@@ -224,7 +250,8 @@ private class EditorSkeletonBlock(
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
 
       g2.color = color()
-      g2.fillRoundRect(0, 0, width, height, 2 * RADIUS, 2 * RADIUS)
+      val radius = JBUI.scale(RADIUS)
+      g2.fillRoundRect(0, 0, width, height, 2 * radius, 2 * radius)
     }
     finally {
       g2.dispose()
@@ -241,9 +268,10 @@ private class EditorSkeletonBlock(
   }
 
   companion object {
+    // TODO: take HEIGHT from editor line height not constant
     val HEIGHT
       get() = 16
     private val RADIUS
-      get() = JBUI.scale(4)
+      get() = 4
   }
 }
