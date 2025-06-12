@@ -22,8 +22,10 @@ interface PolySymbolProperty<T : Any> {
 }
 
 private class PolySymbolPropertyData<T : Any>(override val name: String, private val type: Class<T>) : PolySymbolProperty<T> {
+
+  @Suppress("UNCHECKED_CAST")
   override fun tryCast(value: Any?): T? =
-    if (value != null && this.type.isInstance(value)) this.type.cast(value) else null
+    if (value != null && this.type.isInstance(value)) value as T? else null
 
   override fun equals(other: Any?): Boolean =
     other === this ||

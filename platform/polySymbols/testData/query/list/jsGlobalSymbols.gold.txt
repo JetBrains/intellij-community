@@ -5,7 +5,7 @@
   complete: true,
   priority: NORMAL,
   properties: {
-   kind: Module,
+   js-symbol-kind: Module,
   },
   segments: [
    {
@@ -20,7 +20,7 @@
   complete: true,
   priority: NORMAL,
   properties: {
-   kind: Interface,
+   js-symbol-kind: Interface,
   },
   segments: [
    {

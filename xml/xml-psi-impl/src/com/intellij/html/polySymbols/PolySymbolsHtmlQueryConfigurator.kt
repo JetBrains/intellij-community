@@ -8,13 +8,10 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.*
-import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.html.HTML_ATTRIBUTES
-import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
+import com.intellij.polySymbols.html.*
 import com.intellij.polySymbols.js.JS_EVENTS
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
@@ -242,7 +239,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     val descriptor: XmlAttributeDescriptor,
     private val tag: XmlTag?,
     private val tagName: String,
-  ) : PolySymbol, StandardHtmlSymbol() {
+  ) : StandardHtmlSymbol() {
 
     constructor(descriptor: XmlAttributeDescriptor, tag: XmlTag) : this(descriptor, tag, tag.name)
 
@@ -272,7 +269,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     override val source: PsiElement?
       get() = descriptor.declaration
 
-    override val attributeValue: PolySymbolHtmlAttributeValue
+    val attributeValue: PolySymbolHtmlAttributeValue
       get() {
         val isBooleanAttribute = HtmlUtil.isBooleanAttribute(descriptor, null)
         return PolySymbolHtmlAttributeValue.create(
@@ -286,6 +283,12 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
           descriptor.defaultValue,
           null,
         )
+      }
+
+    override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
+      when (property) {
+        PROP_HTML_ATTRIBUTE_VALUE -> property.tryCast(attributeValue)
+        else -> super.get(property)
       }
 
     override fun getSymbols(

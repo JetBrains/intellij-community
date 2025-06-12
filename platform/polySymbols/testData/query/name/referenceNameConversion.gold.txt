@@ -8,10 +8,8 @@
    langType: "any",
   },
   complete: true,
+  modifiers: [readonly],
   priority: NORMAL,
-  properties: {
-   read-only: true,
-  },
   segments: [
    {
     name-part: "",
@@ -43,10 +41,8 @@
      matchedName: "js/properties/fooBaz",
      origin: "web-components@1.0.0 (<none>)",
      complete: true,
+     modifiers: [readonly],
      priority: NORMAL,
-     properties: {
-      read-only: true,
-     },
      segments: [
       {
        name-part: "fooBaz",

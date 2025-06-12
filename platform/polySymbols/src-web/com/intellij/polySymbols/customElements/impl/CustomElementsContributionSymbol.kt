@@ -5,6 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.CustomElementsSymbol
@@ -34,8 +35,14 @@ abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> 
     get() = (contribution.description?.takeIf { it.isNotBlank() } ?: contribution.summary)
       ?.let { origin.renderDescription(it) }
 
-  override val type: Any?
+  open val type: Any?
     get() = contribution.type?.let { origin.typeSupport?.resolve(it.mapToReferenceList()) }
+
+  override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
+    when (property) {
+      origin.typeSupport?.typeProperty -> property.tryCast(type)
+      else -> super<CustomElementsSymbol>.get(property)
+    }
 
   final override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
     this

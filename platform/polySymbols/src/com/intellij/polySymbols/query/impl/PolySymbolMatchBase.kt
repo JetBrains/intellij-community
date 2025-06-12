@@ -12,14 +12,12 @@ import com.intellij.polySymbols.PolySymbol.Priority
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
-import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolMatchBuilder
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.utils.coalesceApiStatus
-import com.intellij.polySymbols.utils.merge
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import javax.swing.Icon
@@ -209,10 +207,6 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
       .flatMap { it.symbols }
       .flatMap { it.queryScope }
       .toList()
-
-  override val type: Any?
-    get() = reversedSegments().flatMap { it.symbols }
-      .mapNotNull { it.type }.firstOrNull()
 
   override val modifiers: Set<PolySymbolModifier>
     get() = nameSegments.asSequence().flatMap { segment -> segment.symbols.flatMap { it.modifiers } }.toSet()

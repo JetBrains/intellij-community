@@ -79,7 +79,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       }
       printProperty(level, "origin", "${source.origin.library}@${source.origin.version} (${source.origin.framework ?: "<none>"})")
       printProperty(level, "source", (source as? PsiSourcedPolySymbol)?.source)
-      printProperty(level, "type", source.type)
+      printProperty(level, "type", source.origin.typeSupport?.typeProperty?.let { source[it] })
       printProperty(level, "attrValue", source.htmlAttributeValue)
       printProperty(level, "complete", source.completeMatch)
       if (source is PolySymbolWithDocumentation) {

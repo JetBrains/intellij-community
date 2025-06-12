@@ -55,6 +55,13 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     when (property) {
       PROP_HTML_ATTRIBUTE_VALUE -> attributeValue as T?
+      origin.typeSupport?.typeProperty -> {
+        property.tryCast(
+          (base.contribution.type)
+            ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
+          ?: superContributions.asSequence().mapNotNull { it[property] }.firstOrNull()
+        )
+      }
       else -> property.tryCast(contributionProperties[property.name])
     }
 
@@ -163,11 +170,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       ?.let {
         base.jsonOrigin.resolveSourceSymbol(it, base.cacheHolder)
       }
-
-  final override val type: Any?
-    get() = (base.contribution.type)
-              ?.let { base.jsonOrigin.typeSupport?.resolve(it.mapToTypeReferences()) }
-            ?: superContributions.asSequence().mapNotNull { it.type }.firstOrNull()
 
   final override val apiStatus: PolySymbolApiStatus
     get() = base.contribution.toApiStatus(origin as WebTypesJsonOrigin)

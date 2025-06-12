@@ -3,6 +3,7 @@ package com.intellij.polySymbols.webTypes
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.webTypes.impl.WebTypesSymbolTypeSupportFactoryEP
 import com.intellij.polySymbols.webTypes.json.WebTypes
@@ -32,6 +33,7 @@ interface WebTypesSymbolTypeSupportFactory {
         }
 
     private object EmptySupport : PolySymbolTypeSupport {
+      override val typeProperty: PolySymbolProperty<*>? get() = null
       override fun resolve(types: List<PolySymbolTypeSupport.TypeReference>): Any? = null
     }
 

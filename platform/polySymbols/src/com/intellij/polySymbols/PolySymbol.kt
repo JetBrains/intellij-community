@@ -12,7 +12,6 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
@@ -82,16 +81,6 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
    * a default icon for symbol namespace and kind.
    */
   val icon: Icon?
-    get() = null
-
-  /**
-   * The type of the symbol. The type can be interpreted only within the context of symbol origin
-   * and in regard to its namespace and kind. The type may be a language type,
-   * coming from e.g. Java or TypeScript, or it may be any arbitrary value.
-   * Usually a type would be associated with symbols, which can hold a value,
-   * or represent some language symbol, like class, method, etc.
-   */
-  val type: Any?
     get() = null
 
   /**

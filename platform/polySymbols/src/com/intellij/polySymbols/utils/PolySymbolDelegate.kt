@@ -8,7 +8,6 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
@@ -54,8 +53,6 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol {
     get() = delegate.required
   override val priority: PolySymbol.Priority?
     get() = delegate.priority
-  override val type: Any?
-    get() = delegate.type
   override val pattern: PolySymbolsPattern?
     get() = delegate.pattern
 
