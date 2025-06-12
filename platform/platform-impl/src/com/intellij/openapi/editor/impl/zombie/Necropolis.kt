@@ -21,10 +21,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.FileIdAdapter
-import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -34,19 +32,8 @@ private val LOG: Logger = logger<Necropolis>()
 
 private val NECROMANCER_EP = ExtensionPointName<NecromancerAwaker<Zombie>>("com.intellij.textEditorNecromancerAwaker")
 
-@ApiStatus.Internal
-fun necropolisPath(): Path {
+internal fun necropolisPath(): Path {
   return PathManager.getSystemDir().resolve("editor")
-}
-
-@ApiStatus.Internal
-fun necropolisCacheNameAndPath(graveName: String, project: Project): Pair<String, Path> {
-  // IJPL-157893 the cache should survive project renaming
-  val projectName = project.getProjectCacheFileName(hashSeparator="-")
-  val projectPath = necropolisPath().resolve(projectName)
-  val cacheName = "$graveName-$projectName" // name should be unique across the application
-  val cachePath = projectPath.resolve(graveName).resolve(graveName)
-  return cacheName to cachePath
 }
 
 /**
@@ -73,7 +60,6 @@ class Necropolis(private val project: Project, private val coroutineScope: Corou
       necromancers
     }
   }
-
 
   suspend fun spawnZombies(
     project: Project,

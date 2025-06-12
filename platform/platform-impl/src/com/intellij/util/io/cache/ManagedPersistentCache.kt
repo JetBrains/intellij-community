@@ -45,16 +45,17 @@ class ManagedPersistentCache<K, V> @OptIn(ExperimentalCoroutinesApi::class) cons
     withPersistentMap(opName="put") { map ->
       map.put(key, value)
     }
-
     forceAsync()
   }
 
-  suspend fun entries(): List<Map.Entry<K, V>> = withPersistentMap(opName = "entries") { map ->
+  suspend fun entries(): List<Map.Entry<K, V>> {
+    return withPersistentMap(opName = "entries") { map ->
       val list = buildList {
         map.processExistingKeys { key -> add(Entry<K, V>(key, map.get(key)!!)) }
       }
       list
     }.orEmpty()
+  }
 
   override suspend fun get(key: K): V? {
     return withPersistentMap(opName="get") { map ->

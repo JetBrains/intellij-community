@@ -24,11 +24,6 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/kernel/shared:kernel",
     "//platform/kernel/pasta",
-    "//platform/project/shared:project",
-    "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-serialization-core",
-    "//platform/util/concurrency",
-    "//platform/kernel/backend",
   ],
   runtime_deps = [":backend_resources"]
 )

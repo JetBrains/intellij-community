@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.editor.zombie.rpc
+package com.intellij.util.io.cache
 
 import com.intellij.platform.project.ProjectId
 import kotlinx.serialization.Serializable

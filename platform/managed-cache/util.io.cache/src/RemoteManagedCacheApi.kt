@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.editor.zombie.rpc
+package com.intellij.util.io.cache
 
 import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -10,10 +10,10 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface RemoteManagedCacheApi : RemoteApi<Unit> {
-  suspend fun get(cacheId: CacheId, key: RemoteManagedCacheDto): RemoteManagedCacheDto?
-  suspend fun put(cacheId: CacheId, key: RemoteManagedCacheDto, value: RemoteManagedCacheDto?)
-  // Used for linearization on creation & pre-fetching
-  suspend fun createPrefetchFlow(cacheId: CacheId): List<PrefetchedRemoteCacheValue>
+  suspend fun get(cacheId: CacheId, key: ByteArray): ByteArray?
+  suspend fun put(cacheId: CacheId, key: ByteArray, value: ByteArray?)
+  // Used for linearization on creation and pre-fetching
+  suspend fun createCacheAndProvideEntries(cacheId: CacheId, buildParams: RemoteManagedCacheBuildParams): List<PrefetchedRemoteCacheValue>
 
   companion object {
     suspend fun getInstance(): RemoteManagedCacheApi {
