@@ -406,9 +406,6 @@
 
     <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
 
-    <lang.rearranger language="XML" implementationClass="com.intellij.xml.arrangement.XmlRearranger"/>
-    <lang.rearranger language="HTML" implementationClass="com.intellij.xml.arrangement.HtmlRearranger"/>
-
     <xml.tagNameProvider implementation="com.intellij.psi.impl.source.xml.DefaultXmlTagNameProvider"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider
