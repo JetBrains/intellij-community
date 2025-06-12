@@ -2,12 +2,10 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.editor"/>
-    <module name="intellij.platform.kernel.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <editorFactoryListener implementation="com.intellij.platform.editor.backend.BackendEditorFactoryListener"/>
     <applicationService serviceImplementation="com.intellij.platform.editor.backend.BackendEditors"
                         client="remote"/>
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.editor.backend.zombie.RemoteManagedCacheApiImplProvider"/>
   </extensions>
 </idea-plugin>

@@ -20,7 +20,6 @@ data class EditorEntity(override val eid: EID) : Entity {
   val id: EditorId by idAttr
   val clientId: ClientId by clientIdAttr
 
-  @Internal
   companion object : DurableEntityType<EditorEntity>(
     EditorEntity::class.java.name,
     "com.intellij.platform.editor",

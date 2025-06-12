@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.util.io.cache.backend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "util.io.cache.backend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "util.io.cache.backend",
+  module_name = "intellij.util.io.cache.backend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:jetbrains-annotations",
+    "//platform/kernel/backend",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/project/shared:project",
+    "//platform/util",
+    "//platform/platform-impl:ide-impl",
+    "//platform/managed-cache/util.io.cache",
+    "//platform/util/concurrency",
+  ],
+  runtime_deps = [":util.io.cache.backend_resources"]
+)
+### auto-generated section `build intellij.util.io.cache.backend` end
