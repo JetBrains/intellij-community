@@ -16,7 +16,7 @@ import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.xml.util.HtmlUtil;
+import com.intellij.xml.util.BasicHtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +70,7 @@ public class HtmlRearranger extends XmlRearranger {
                                                    @NotNull XmlElementArrangementEntry xmlTagEntry,
                                                    @Nullable Document document,
                                                    @NotNull Collection<? extends TextRange> ranges) {
-    if (!StringUtil.equals(xmlTag.getName(), HtmlUtil.SCRIPT_TAG_NAME) && !StringUtil.equals(xmlTag.getName(), HtmlUtil.STYLE_TAG_NAME)) {
+    if (!StringUtil.equals(xmlTag.getName(), BasicHtmlUtil.SCRIPT_TAG_NAME) && !StringUtil.equals(xmlTag.getName(), BasicHtmlUtil.STYLE_TAG_NAME)) {
       return;
     }
     for (XmlTagChild child : xmlTag.getValue().getChildren()) {
