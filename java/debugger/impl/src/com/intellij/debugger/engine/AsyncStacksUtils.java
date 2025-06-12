@@ -47,10 +47,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 public final class AsyncStacksUtils {
   private static final Logger LOG = Logger.getInstance(AsyncStacksUtils.class);
@@ -74,15 +71,21 @@ public final class AsyncStacksUtils {
     return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 
+  /**
+   * Returns async stack trace captured by the debugger-agent for the thread corresponding to the given frame or null.
+   *
+   * If `debugger.async.stack.trace.for.all.threads` is true, returns captured async stack trace for any thread;
+   * otherwise only returns captured async stack trace for the current thread and null for other threads.
+   */
   public static @Nullable List<@Nullable StackFrameItem> getAgentRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
-    if (!isAgentEnabled() || !frame.threadProxy().equals(suspendContext.getThread())) { // only for the current thread for now
+    if (!isAgentEnabled()) {
       return null;
     }
     try {
       Method method = DebuggerUtilsEx.getMethod(frame.location());
       // TODO: use com.intellij.rt.debugger.agent.CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX
       if (method != null && method.name().endsWith("$$$capture")) {
-        return getProcessCapturedStack(new EvaluationContextImpl(suspendContext, frame));
+        return getCapturedStackForThread(new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy()), frame.threadProxy().getThreadReference());
       }
     }
     catch (EvaluateException e) {
@@ -103,7 +106,7 @@ public final class AsyncStacksUtils {
   private static final Key<Pair<ClassType, Method>> CAPTURE_STORAGE_METHOD = Key.create("CAPTURE_STORAGE_METHOD");
   private static final Pair<ClassType, Method> NO_CAPTURE_AGENT = Pair.empty();
 
-  private static List<StackFrameItem> getProcessCapturedStack(EvaluationContextImpl evalContext)
+  private static List<StackFrameItem> getCapturedStackForThread(EvaluationContextImpl evalContext, ThreadReference threadReference)
     throws EvaluateException {
     EvaluationContextImpl evaluationContext = evalContext.withAutoLoadClasses(false);
 
@@ -119,7 +122,7 @@ public final class AsyncStacksUtils {
           LOG.debug("Error loading debug agent", "agent class not found");
         }
         else {
-          methodPair = Pair.create(captureClass, DebuggerUtils.findMethod(captureClass, "getCurrentCapturedStack", null));
+          methodPair = Pair.create(captureClass, DebuggerUtils.findMethod(captureClass, "getCapturedStackForThread", null));
         }
       }
       catch (EvaluateException e) {
@@ -133,8 +136,8 @@ public final class AsyncStacksUtils {
       return null;
     }
 
-    List<Value> args = Collections.singletonList(virtualMachineProxy.mirrorOf(getMaxStackLength()));
     Pair<ClassType, Method> finalMethodPair = methodPair;
+    List<Value> args = Arrays.asList(evaluationContext.getVirtualMachineProxy().mirrorOf(getMaxStackLength()), threadReference);
     String value = DebuggerUtils.getInstance().processCollectibleValue(
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
                                  args, ObjectReference.INVOKE_SINGLE_THREADED, true),
