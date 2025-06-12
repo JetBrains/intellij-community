@@ -10,8 +10,9 @@ import org.jetbrains.annotations.ApiStatus
  * Represents some process that was launched via [EelExecApi.spawnProcess].
  *
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface EelProcess {
+  @get:ApiStatus.Experimental
   val pid: EelApi.Pid
 
   /**
@@ -20,9 +21,16 @@ sealed interface EelProcess {
    *
    * Note that each chunk of data is individually and immediately flushed into the process without any intermediate buffer storage.
    */
+  @get:ApiStatus.Experimental
   val stdin: EelSendChannel
+
+  @get:ApiStatus.Experimental
   val stdout: EelReceiveChannel
+
+  @get:ApiStatus.Experimental
   val stderr: EelReceiveChannel
+
+  @get:ApiStatus.Experimental
   val exitCode: Deferred<Int>
 
   /**

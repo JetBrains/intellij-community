@@ -49,9 +49,10 @@ interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
  * TODO: In the future, [EelDescriptor] may also be serializable.
  * If you need to access the remote environment, you can use the method [toEelApi], which can suspend for some time before returning a working instance of [EelApi]
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelDescriptor {
   @Deprecated("Use platform instead", ReplaceWith("platform"))
+  @get:ApiStatus.Internal
   val operatingSystem: OS
     get() = when (platform) {
       is EelPlatform.Windows -> OS.WINDOWS
@@ -62,13 +63,16 @@ interface EelDescriptor {
    * Describes Eel in a user-readable manner, i.e: "Docker: <container_name>" or "Wsl: <distro name>".
    * Format is *not* specified, but guaranteed to be user-readable.
    */
+  @get:ApiStatus.Experimental
   val userReadableDescription: @NonNls String
 
   /**
    * The platform of an environment corresponding to this [EelDescriptor].
    */
+  @get:ApiStatus.Experimental
   val platform: EelPlatform
 
+  @ApiStatus.Experimental
   suspend fun toEelApi(): EelApi
 
   /**
@@ -76,5 +80,6 @@ interface EelDescriptor {
    * This method may run a container, so it could suspend for a long time.
    */
   @Deprecated("Use toEelApi() instead", replaceWith = ReplaceWith("toEelApi()"))
+  @ApiStatus.Internal
   suspend fun upgrade(): EelApi = toEelApi()
 }

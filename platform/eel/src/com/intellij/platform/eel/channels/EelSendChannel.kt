@@ -7,7 +7,7 @@ import java.nio.ByteBuffer
 /**
  * Consumes bytes as buffers. Each [send] writes `0` or more bytes or throws an exception in case of IO error
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelSendChannel {
   /**
    * Writes [src], suspends until written.
@@ -22,18 +22,21 @@ interface EelSendChannel {
    * Throws an exception in case of IO error.
    */
   @EelSendApi
+  @ApiStatus.Experimental
   suspend fun send(src: ByteBuffer)
 
   /**
    * Closes channel for sending. You can't send anything to a closed channel.
    * Receive side will get [com.intellij.platform.eel.ReadResult.EOF]
    */
+  @ApiStatus.Experimental
   suspend fun close()
 
   /**
    * Channel is closed, and any [send] is guaranteed to return an error.
    * This field is set some time after channel is closed, so you might encounter an error with [send] even though this field is `false`.
    */
+  @get:ApiStatus.Experimental
   val closed: Boolean
 }
 
@@ -43,7 +46,7 @@ interface EelSendChannel {
  * This method is *not* thread-safe (i.e. you can't send two buffers and the same time).
  */
 @OptIn(EelSendApi::class)
-@ApiStatus.Internal
+@ApiStatus.Experimental
 suspend fun EelSendChannel.sendWholeBuffer(src: ByteBuffer) {
   if (this is EelSendChannelCustomSendWholeBuffer) {
     return sendWholeBufferCustom(src)

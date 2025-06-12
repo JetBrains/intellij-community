@@ -21,7 +21,7 @@ sealed interface EelResult<out P, out E /*: EelError*//* TODO Uncomment and fix 
 }
 
 @ApiStatus.NonExtendable
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelError {
   object Unknown : EelError
 }

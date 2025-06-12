@@ -47,7 +47,7 @@ fun EelExecApi.execute(
  *  [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
  */
 @GeneratedBuilder.Result
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelExecApi.spawnProcess(
   exe: String,
 ): EelExecApiHelpers.SpawnProcess =
@@ -56,7 +56,7 @@ fun EelExecApi.spawnProcess(
     exe = exe,
   )
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 object EelExecApiHelpers {
   /**
    * Create it via [com.intellij.platform.eel.EelExecApi.execute].
@@ -78,6 +78,7 @@ object EelExecApiHelpers {
 
     private var workingDirectory: EelPath? = null
 
+    @ApiStatus.Experimental
     fun args(arg: List<String>): Execute = apply {
       this.args = arg
     }
@@ -91,6 +92,7 @@ object EelExecApiHelpers {
      * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
      * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
      */
+    @ApiStatus.Experimental
     fun env(arg: Map<String, String>): Execute = apply {
       this.env = arg
     }
@@ -102,6 +104,7 @@ object EelExecApiHelpers {
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
+    @ApiStatus.Experimental
     fun exe(arg: String): Execute = apply {
       this.exe = arg
     }
@@ -113,10 +116,13 @@ object EelExecApiHelpers {
      *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
+    @ApiStatus.Experimental
     fun interactionOptions(arg: InteractionOptions?): Execute = apply {
       this.interactionOptions = arg
     }
 
+    @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
+    @ApiStatus.Internal
     fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): Execute = apply {
       this.ptyOrStdErrSettings = arg
     }
@@ -125,6 +131,7 @@ object EelExecApiHelpers {
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
+    @ApiStatus.Experimental
     fun workingDirectory(arg: EelPath?): Execute = apply {
       this.workingDirectory = arg
     }
@@ -151,7 +158,7 @@ object EelExecApiHelpers {
    * Create it via [com.intellij.platform.eel.EelExecApi.spawnProcess].
    */
   @GeneratedBuilder.Result
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   class SpawnProcess(
     private val owner: EelExecApi,
     private var exe: String,
@@ -166,6 +173,7 @@ object EelExecApiHelpers {
 
     private var workingDirectory: EelPath? = null
 
+    @ApiStatus.Experimental
     fun args(arg: List<String>): SpawnProcess = apply {
       this.args = arg
     }
@@ -179,6 +187,7 @@ object EelExecApiHelpers {
      * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
      * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
      */
+    @ApiStatus.Experimental
     fun env(arg: Map<String, String>): SpawnProcess = apply {
       this.env = arg
     }
@@ -190,6 +199,7 @@ object EelExecApiHelpers {
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
+    @ApiStatus.Experimental
     fun exe(arg: String): SpawnProcess = apply {
       this.exe = arg
     }
@@ -201,10 +211,13 @@ object EelExecApiHelpers {
      *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
+    @ApiStatus.Experimental
     fun interactionOptions(arg: InteractionOptions?): SpawnProcess = apply {
       this.interactionOptions = arg
     }
 
+    @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
+    @ApiStatus.Internal
     fun ptyOrStdErrSettings(arg: PtyOrStdErrSettings?): SpawnProcess = apply {
       this.ptyOrStdErrSettings = arg
     }
@@ -213,6 +226,7 @@ object EelExecApiHelpers {
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
+    @ApiStatus.Experimental
     fun workingDirectory(arg: EelPath?): SpawnProcess = apply {
       this.workingDirectory = arg
     }

@@ -9,5 +9,5 @@ import org.jetbrains.annotations.ApiStatus
   level = RequiresOptIn.Level.WARNING,
   message = "This function might send only part of the buffer. Consider using `sendWholeBuffer` instead"
 )
-@ApiStatus.Internal
+@ApiStatus.Experimental
 annotation class EelSendApi

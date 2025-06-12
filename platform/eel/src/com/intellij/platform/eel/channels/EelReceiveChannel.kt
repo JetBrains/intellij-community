@@ -8,7 +8,7 @@ import java.nio.ByteBuffer
 /**
  * Channel to receive data from
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelReceiveChannel {
   /**
    * Reads data to [dst] but might read less (see buffer position).

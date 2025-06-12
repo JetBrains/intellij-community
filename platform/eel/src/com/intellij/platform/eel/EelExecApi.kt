@@ -11,13 +11,14 @@ import org.jetbrains.annotations.CheckReturnValue
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface EelExecApi {
-
+  @get:ApiStatus.Experimental
   val descriptor: EelDescriptor
 
   @Throws(ExecuteProcessException::class)
   @ThrowsChecked(ExecuteProcessException::class)
+  @ApiStatus.Experimental
   suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelProcess
 
   /**
@@ -31,6 +32,7 @@ sealed interface EelExecApi {
    */
   @CheckReturnValue
   @Deprecated("Use spawnProcess instead")
+  @ApiStatus.Internal
   suspend fun execute(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> {
     data class Ok<P : EelProcess>(override val value: P) : EelResult.Ok<P>
     data class Error(override val error: ExecuteProcessError) : EelResult.Error<ExecuteProcessError>
@@ -43,7 +45,9 @@ sealed interface EelExecApi {
     }
   }
 
+  @ApiStatus.Experimental
   interface ExecuteProcessOptions {
+    @get:ApiStatus.Experimental
     val args: List<String> get() = listOf()
 
     /**
@@ -51,6 +55,7 @@ sealed interface EelExecApi {
      * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
      * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
      */
+    @get:ApiStatus.Experimental
     val env: Map<String, String> get() = mapOf()
 
     /**
@@ -60,15 +65,18 @@ sealed interface EelExecApi {
      *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
+    @get:ApiStatus.Experimental
     val interactionOptions: InteractionOptions? get() = null
 
     @Deprecated("Switch to interactionOptions", replaceWith = ReplaceWith("interactionOptions"))
+    @get:ApiStatus.Internal
     val ptyOrStdErrSettings: PtyOrStdErrSettings? get() = interactionOptions
 
     /**
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
+    @get:ApiStatus.Experimental
     val workingDirectory: EelPath? get() = null
 
     // TODO: Use EelPath as soon as it will be merged
@@ -80,12 +88,14 @@ sealed interface EelExecApi {
      * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
      * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
      */
+    @get:ApiStatus.Experimental
     val exe: String
   }
 
   /**
    * Gets the same environment variables on the remote machine as the user would get if they run the shell.
    */
+  @ApiStatus.Experimental
   suspend fun fetchLoginShellEnvVariables(): Map<String, String>
 
   /**
@@ -111,6 +121,7 @@ sealed interface EelExecApi {
    * all of them are returned so that the preferable one can be chosen later.
    *
    */
+  @ApiStatus.Experimental
   suspend fun findExeFilesInPath(binaryName: String): List<EelPath>
 
   /**
@@ -120,6 +131,7 @@ sealed interface EelExecApi {
    * It's important to call [ExternalCliEntrypoint.delete] after the process which could call the script finishes
    * to avoid resource leak.
    */
+  @ApiStatus.Internal
   interface ExternalCliEntrypoint {
     /**
      * Path to the callback script which can be passed to the tools like git.
@@ -133,6 +145,7 @@ sealed interface EelExecApi {
     suspend fun consumeInvocations(processor: suspend (ExternalCliProcess) -> Int): Nothing
   }
 
+  @ApiStatus.Internal
   interface ExternalCliProcess {
     val workingDir: EelPath
     val executableName: EelPath
@@ -159,6 +172,7 @@ sealed interface EelExecApi {
     fun exit(exitCode: Int)
   }
 
+  @ApiStatus.Experimental
   interface ExternalCliOptions {
     val filePrefix: String
     val envVariablesToCapture: List<String>
@@ -173,17 +187,21 @@ sealed interface EelExecApi {
 
   // TODO Generate builder?
   @CheckReturnValue
+  @ApiStatus.Internal
   suspend fun createExternalCli(options: ExternalCliOptions): ExternalCliEntrypoint
 
   @Deprecated("Use spawnProcess instead")
+  @ApiStatus.Internal
   interface ExecuteProcessError : EelError {
     val errno: Int
     val message: String
   }
 
   @Deprecated("Switch to InteractionOptions", replaceWith = ReplaceWith("InteractionOptions"))
+  @ApiStatus.Internal
   sealed interface PtyOrStdErrSettings
 
+  @ApiStatus.Experimental
   sealed interface InteractionOptions : PtyOrStdErrSettings
 
   /**
@@ -192,40 +210,58 @@ sealed interface EelExecApi {
    *
    * Both `stderr` and `stdout` will be connected to this terminal, so `stderr` will be closed and merged with `stdout`
    * */
-  data class Pty(val columns: Int, val rows: Int, val echo: Boolean) : InteractionOptions
+  @ApiStatus.Experimental
+  class Pty : InteractionOptions {
+    val columns: Int
+    val rows: Int
+    val echo: Boolean
+
+    @ApiStatus.Experimental
+    constructor(columns: Int, rows: Int) : this(columns, rows, true)
+
+    @ApiStatus.Internal
+    constructor(columns: Int, rows: Int, echo: Boolean) {
+      this.columns = columns
+      this.rows = rows
+      this.echo = echo
+    }
+  }
 
   /**
    * Do not use pty, but redirect `stderr` to `stdout` much like `redirectErrorStream` in JVM
    */
+  @ApiStatus.Experimental
   data object RedirectStdErr : InteractionOptions
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelExecPosixApi : EelExecApi {
   @ThrowsChecked(ExecuteProcessException::class)
+  @ApiStatus.Experimental
   override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelPosixProcess
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelExecWindowsApi : EelExecApi {
   @ThrowsChecked(ExecuteProcessException::class)
+  @ApiStatus.Experimental
   override suspend fun spawnProcess(@GeneratedBuilder generatedBuilder: ExecuteProcessOptions): EelWindowsProcess
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 suspend fun EelExecApi.where(exe: String): EelPath? {
   return this.findExeFilesInPath(exe).firstOrNull()
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelExecApi.spawnProcess(exe: String, vararg args: String): EelExecApiHelpers.SpawnProcess =
   spawnProcess(exe).args(*args)
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelExecPosixApi.spawnProcess(exe: String, vararg args: String): EelExecPosixApiHelpers.SpawnProcess =
   spawnProcess(exe).args(*args)
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelExecWindowsApi.spawnProcess(exe: String, vararg args: String): EelExecWindowsApiHelpers.SpawnProcess =
   spawnProcess(exe).args(*args)
 

@@ -5,14 +5,15 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 @ApiStatus.NonExtendable
-@ApiStatus.Internal
-abstract class EelException @JvmOverloads constructor(
-  open val error: EelError,
-  cause: Throwable? = null,
-) : IOException(error.toString()), EelError by error {
-  init {
-    cause?.let(::initCause)
+@ApiStatus.Experimental
+abstract class EelException(open val error: EelError) : IOException(error.toString()), EelError by error {
+  constructor(error: EelError, cause: Throwable): this(error) {
+    initCause(cause)
   }
 
-  class Unknown @JvmOverloads constructor(cause: Throwable? = null): EelException(EelError.Unknown, cause)
+  @ApiStatus.Experimental
+  class Unknown : EelException {
+    constructor() : super(EelError.Unknown)
+    constructor(cause: Throwable): super(EelError.Unknown, cause)
+  }
 }

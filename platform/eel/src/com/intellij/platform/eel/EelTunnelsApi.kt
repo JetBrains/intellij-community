@@ -16,7 +16,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * API for sockets. Use [hostAddressBuilder] to create arguments.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface EelTunnelsApi {
   /**
    * Creates a remote UNIX socket forwarding. IJent listens for a connection on the remote machine, and when the connection
@@ -56,7 +56,10 @@ sealed interface EelTunnelsApi {
     data class Fixed(val path: String) : CreateFilePath
 
     /** When [directory] is empty, the usual tmpdir is used. */
-    data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
+    class MkTemp(val directory: String, val prefix: String, val suffix: String) : CreateFilePath {
+      constructor(prefix: String, suffix: String) : this(directory = "", prefix = prefix, suffix = suffix)
+      constructor() : this("", "", "")
+    }
   }
 
   /**
@@ -86,13 +89,16 @@ sealed interface EelTunnelsApi {
    */
   @Throws(EelConnectionError::class)
   @ThrowsChecked(EelConnectionError::class)
+  @ApiStatus.Internal
   suspend fun getConnectionToRemotePort(@GeneratedBuilder args: GetConnectionToRemotePortArgs): Connection
 
+  @ApiStatus.Internal
   interface GetConnectionToRemotePortArgs : HostAddress {
     val configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit get() = {}
   }
 
 
+  @ApiStatus.Internal
   sealed interface ResolvedSocketAddress {
     val port: UShort
 
@@ -109,6 +115,7 @@ sealed interface EelTunnelsApi {
   /**
    * Represents an address to a remote host.
    */
+  @ApiStatus.Internal
   interface HostAddress {
     val port: UShort get() = 0u  // TODO Split into two interfaces
     val hostname: String get() = "localhost"
@@ -187,6 +194,7 @@ sealed interface EelTunnelsApi {
   /**
    * Represents a controller for a TCP connection
    */
+  @ApiStatus.Internal
   interface Connection {
 
     /**
@@ -210,6 +218,7 @@ sealed interface EelTunnelsApi {
     suspend fun close()
   }
 
+  @ApiStatus.Internal
   sealed class RemoteNetworkException(message: String) : IOException(message) {
     constructor() : this("")
 
@@ -241,8 +250,10 @@ sealed interface EelTunnelsApi {
    */
   @Throws(EelConnectionError::class)
   @ThrowsChecked(EelConnectionError::class)
+  @ApiStatus.Internal
   suspend fun getAcceptorForRemotePort(@GeneratedBuilder args: GetAcceptorForRemotePort): ConnectionAcceptor
 
+  @ApiStatus.Internal
   interface GetAcceptorForRemotePort : HostAddress {
     // TODO Make it look and feel like all other builders.
     val configureServerSocket: ConfigurableSocket.() -> Unit get() = {}
@@ -251,6 +262,7 @@ sealed interface EelTunnelsApi {
   /**
    * This is a representation of a remote server bound to [boundAddress].
    */
+  @ApiStatus.Internal
   interface ConnectionAcceptor {
     /**
      * A channel of incoming connections to the remote server.
@@ -309,12 +321,12 @@ operator fun Connection.component1(): EelSendChannel = sendChannel
 @ApiStatus.Internal
 operator fun Connection.component2(): EelReceiveChannel = receiveChannel
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelTunnelsPosixApi : EelTunnelsApi {
 
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelTunnelsWindowsApi : EelTunnelsApi
 
 /**

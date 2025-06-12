@@ -18,7 +18,7 @@ val EelPath.platform: EelPlatform get() = descriptor.platform
  *
  * All operations listed here do not require I/O.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface EelPath {
   companion object {
     @Throws(EelPathException::class)
@@ -162,5 +162,5 @@ sealed interface EelPath {
 @ApiStatus.Internal
 operator fun EelPath.div(part: String): EelPath = resolve(part)
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class EelPathException(val raw: String, val reason: String) : RuntimeException("`$raw`: $reason")
