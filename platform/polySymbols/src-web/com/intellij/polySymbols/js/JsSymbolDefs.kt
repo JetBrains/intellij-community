@@ -24,8 +24,7 @@ val JS_SYMBOLS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, 
 val JS_STRING_LITERALS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "string-literals"]
 
 /**
- * Name of [JsSymbolSymbolKind] property used by other symbols to specify kind of the JS symbol.
- * By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
+ * One of [JsSymbolSymbolKind] enum values. By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
  **/
 @JvmField
-val PROP_JS_SYMBOL_KIND: PolySymbolProperty<String> = PolySymbolProperty.Companion["js-symbol-kind"]
+val PROP_JS_SYMBOL_KIND: PolySymbolProperty<JsSymbolSymbolKind> = PolySymbolProperty.Companion["js-symbol-kind"]

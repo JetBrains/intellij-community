@@ -3,6 +3,7 @@
 
 package com.intellij.polySymbols.css
 
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 
 const val NAMESPACE_CSS: String = "css"
@@ -24,3 +25,10 @@ val CSS_CLASSES: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS
 
 @JvmField
 val CSS_PARTS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_CSS, "parts"]
+
+/**
+ * Name of boolean property used by `css/pseudo-elements` and `css/pseudo-classes` symbols
+ * to specify whether they require arguments. Defaults to false.
+ **/
+@JvmField
+val PROP_CSS_ARGUMENTS: PolySymbolProperty<Any> = PolySymbolProperty.Companion["arguments"]

@@ -29,9 +29,6 @@ import com.intellij.polySymbols.utils.lastPolySymbol
 import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.webTypes.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
-import com.intellij.polySymbols.webTypes.WebTypesSymbol.Companion.PROP_ARGUMENTS
-import com.intellij.polySymbols.webTypes.WebTypesSymbol.Companion.PROP_KIND
-import com.intellij.polySymbols.webTypes.WebTypesSymbol.Companion.PROP_READ_ONLY
 import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
 import com.intellij.polySymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import com.intellij.util.applyIf
@@ -153,11 +150,10 @@ internal val GenericContributionsHost.genericProperties: Map<String, Any>
       }
       .plus(
         when (this) {
-          is CssPseudoClass -> sequenceOf(Pair(PROP_ARGUMENTS.name, this.arguments ?: false))
-          is CssPseudoElement -> sequenceOf(Pair(PROP_ARGUMENTS.name, this.arguments ?: false))
-          is JsProperty -> if (this.readOnly == true) sequenceOf(Pair(PROP_READ_ONLY.name, true)) else emptySequence()
+          is CssPseudoClass -> sequenceOf(Pair(PROP_CSS_ARGUMENTS.name, this.arguments ?: false))
+          is CssPseudoElement -> sequenceOf(Pair(PROP_CSS_ARGUMENTS.name, this.arguments ?: false))
           is JsSymbol -> this.kind?.let { kind -> JsSymbolSymbolKind.entries.firstOrNull { it.name.equals(kind.value(), true) } }
-                           ?.let { sequenceOf(Pair(PROP_KIND.name, it)) }
+                           ?.let { sequenceOf(Pair(PROP_JS_SYMBOL_KIND.name, it)) }
                          ?: emptySequence()
           else -> emptySequence()
         }
