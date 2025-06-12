@@ -22,6 +22,10 @@ class FrameHeaderUI(data: ComponentData) : UiComponent(data) {
 }
 
 fun Finder.openMenuItem(vararg items: String) {
+  openMenuItem(true, *items)
+}
+
+fun Finder.openMenuItem(fullMatch: Boolean = true, vararg items: String) {
   if (isLinux) {
     x("//div[@tooltiptext='Main Menu']").click()
   } else {
@@ -30,7 +34,8 @@ fun Finder.openMenuItem(vararg items: String) {
 
 
   if (xx(xQuery { or(byClass("LinuxIdeMenuBar"), byClass("IdeJMenuBar")) }).list().isNotEmpty()) {
-    items.dropLast(1).forEach { path ->
+    actionMenuButtonByText(items.first()).click(point = Point(10, 10))
+    items.drop(1).dropLast(1).forEach { path ->
       actionMenuButtonByText(path).apply {
         waitFound(5.seconds)
         moveMouse(point = Point(10, 10))
@@ -41,9 +46,9 @@ fun Finder.openMenuItem(vararg items: String) {
   }
   else {
     items.dropLast(1).forEach { path ->
-      jBlist(xQuery { and(contains(byVisibleText(path)), byClass("MyList")) }).hoverItem(path, offset = Point(10, 10))
+      jBlist(xQuery { and(contains(byVisibleText(path)), byClass("MyList")) }).hoverItem(path, fullMatch, offset = Point(10, 10))
     }
-    jBlist(xQuery { contains(byVisibleText(items.last())) }).clickItem(items.last(), offset = Point(10, 10))
+    jBlist(xQuery { contains(byVisibleText(items.last())) }).clickItem(items.last(), fullMatch, offset = Point(10, 10))
   }
 }
 
