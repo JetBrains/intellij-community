@@ -6,4 +6,4 @@ fun test() {
     ba<caret>r
 }
 
-// REF: (KTIJ_32930.kt in foo).bar
+// REF: (TopLevelPropertyNameCollision.kt in foo).bar
