@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.OverlaidOffsetIconsIcon
@@ -42,14 +43,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Insets
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.LayoutFocusTraversalPolicy
+import java.awt.KeyboardFocusManager
+import java.awt.event.*
+import javax.swing.*
 
 object CodeReviewCommentUIUtil {
 
@@ -72,7 +68,8 @@ object CodeReviewCommentUIUtil {
   @ApiStatus.Internal
   fun createEditorInlayPanel(component: JComponent, tint: Color? = null): JPanel {
     val borderColor = JBColor.lazy {
-      if (component.hasFocus()) return@lazy JBUI.CurrentTheme.Focus.focusColor()
+      if (UIUtil.isFocusAncestor(component))
+        return@lazy JBUI.CurrentTheme.Focus.focusColor()
 
       val scheme = EditorColorsManager.getInstance().globalScheme
       scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
