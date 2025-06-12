@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.fileEditor.impl.EditorSkeleton.Companion.ANIMATION_DURATION_MS
 import com.intellij.openapi.fileEditor.impl.EditorSkeleton.Companion.TICK_MS
 import com.intellij.openapi.fileEditor.impl.EditorSkeletonBlock.SkeletonBlockWidth
@@ -14,10 +15,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.awt.*
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JComponent
@@ -39,7 +37,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
 
   init {
     if (withAnimation) {
-      cs.launch {
+      cs.launch(Dispatchers.UI) {
         while (isActive) {
           delay(TICK_MS)
           currentTime.set(System.currentTimeMillis())

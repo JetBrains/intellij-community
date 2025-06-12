@@ -60,7 +60,6 @@ import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.concurrent.TimeUnit
 import javax.swing.*
-import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<EditorComposite>()
 
@@ -874,7 +873,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     isFocusCycleRoot = true
 
     if (Registry.`is`("editor.skeleton.enabled", true)) {
-      skeletonScope.launch(Dispatchers.EDT) {
+      skeletonScope.launch(Dispatchers.UI) {
         delay(SKELETON_DELAY)
         // show skeleton if editor is not added after [SKELETON_DELAY]
         if (components.isEmpty()) {
