@@ -87,7 +87,7 @@ object BranchesDashboardTreeComponent {
 
     val uiController = BranchesDashboardTreeController(project, selectionHandler, model, tree)
 
-    return simplePanel().withBorder(createBorder(SideBorder.LEFT))
+    return simplePanel()
       .addToTop(branchesSearchFieldPanel)
       .addToCenter(progressStripe)
       .apply {

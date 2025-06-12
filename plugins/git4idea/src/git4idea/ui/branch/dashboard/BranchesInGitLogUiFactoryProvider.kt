@@ -120,7 +120,9 @@ internal class BranchesVcsLogUi(
                                                           model,
                                                           selectionHandler,
                                                           mainFrame.toolbar
-    )
+    ).apply {
+      border = createBorder(SideBorder.LEFT)
+    }
     val actionManager = ActionManager.getInstance()
     val actions = DefaultActionGroup().apply {
       val hideBranchesAction = actionManager.getAction("Git.Log.Hide.Branches")
