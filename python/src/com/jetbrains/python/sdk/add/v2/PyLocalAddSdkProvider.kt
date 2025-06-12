@@ -2,14 +2,17 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.ui.launchOnShow
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.icons.PythonIcons
@@ -19,7 +22,9 @@ import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction
 import com.jetbrains.python.sdk.add.PyAddSdkProvider
 import com.jetbrains.python.sdk.add.PyAddSdkStateListener
 import com.jetbrains.python.sdk.add.PyAddSdkView
+import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.util.ShowingMessageErrorSync
+import kotlinx.coroutines.supervisorScope
 import java.awt.Component
 import java.nio.file.Path
 import javax.swing.Icon
@@ -51,21 +56,30 @@ class V3AddSdkPanel(val project: Project, val module: Module?, val projectPath: 
 
   private val errorSink: ErrorSink = ShowingMessageErrorSync
 
-  private val sdkPanelBuilderAndSdkCreator: PythonSdkPanelBuilderAndSdkCreator = PythonSdkPanelBuilderAndSdkCreator(
-    onlyAllowedInterpreterTypes = null,
-    errorSink = ShowingMessageErrorSync,
-    module = module,
-    limitExistingEnvironments = false,
-  )
+  private lateinit var mainPanel: PythonAddCustomInterpreter
+  private lateinit var model: PythonLocalAddInterpreterModel
 
   private val dialogPanel: DialogPanel = panel {
-    sdkPanelBuilderAndSdkCreator.buildPanel(this, ProjectPathFlows.create((projectPath)))
+    model = PythonLocalAddInterpreterModel(ProjectPathFlows.create((projectPath)))
+    model.navigator.selectionMode = AtomicProperty(PythonInterpreterSelectionMode.CUSTOM)
+    mainPanel = PythonAddCustomInterpreter(
+      model = model,
+      module = module,
+      errorSink = errorSink,
+      limitExistingEnvironments = false
+    )
+    mainPanel.setupUI(this, WHEN_PROPERTY_CHANGED(AtomicProperty(projectPath)))
   }
 
   private var validationInfos: List<ValidationInfo> = emptyList()
 
   init {
-    sdkPanelBuilderAndSdkCreator.onShownInitialization(dialogPanel)
+    dialogPanel.launchOnShow("V3AddSdkPanel launchOnShow") {
+      supervisorScope {
+        model.initialize(this@supervisorScope)
+        mainPanel.onShown(this@supervisorScope)
+      }
+    }
 
     dialogPanel.registerValidators(dialogWrapper.disposable) { compInfos ->
       validationInfos = compInfos.values.toList()
@@ -77,12 +91,16 @@ class V3AddSdkPanel(val project: Project, val module: Module?, val projectPath: 
     val moduleOrProject = if (module != null) ModuleOrProject.ModuleAndProject(module) else ModuleOrProject.ProjectOnly(project)
     val sdk = runWithModalProgressBlocking(project, PyBundle.message("python.sdk.creating.python.sdk")) {
       dialogPanel.apply()
-      sdkPanelBuilderAndSdkCreator.getSdk(moduleOrProject).getOr {
+      val sdkManager = mainPanel.currentSdkManager
+      sdkManager.getOrCreateSdk(moduleOrProject).getOr {
         errorSink.emit(it.error)
         return@runWithModalProgressBlocking null
+      }.also {
+        val isPreviouslyConfigured = sdkManager.createStatisticsInfo(PythonInterpreterCreationTargets.LOCAL_MACHINE).previouslyConfigured
+        PythonNewInterpreterAddedCollector.logPythonNewInterpreterAdded(it, isPreviouslyConfigured)
       }
     }
-    return sdk?.first
+    return sdk
   }
 
   override fun onSelected() {
