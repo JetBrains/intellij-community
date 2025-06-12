@@ -29,7 +29,7 @@ class CustomizeDialog(data: ComponentData) : DialogUiComponent(data) {
       if (customIcon != null) {
         if (customIcon.contains("/")) {
           val arrowButton = x(xQuery { byClass("BasicArrowButton") })
-          arrowButton.click(Point(-arrowButton.component.width / 2, arrowButton.component.height / 2))
+          arrowButton.click(point = Point(-arrowButton.component.width / 2, arrowButton.component.height / 2))
           dialog(title = "Browse Icon") {
             textField().text = customIcon
             okButton.click()
