@@ -228,7 +228,7 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
     private val stageMetadataLoadFailedField = EventFields.Enum<EventLogMetadataUpdateStage>("stage",
                                                                                              STAGE_METADATA_LOAD_FAILED_DESCRIPTION)
     private val errorMetadataLoadFailedField = EventFields.String("error",
-                                                                  EventLogMetadataParseException.EventLogMetadataParseErrorType.entries.map { x -> x.name }.toList(),
+                                                                  EventLogMetadataParseException.EventLogMetadataParseErrorType.entries.plus(EventLogMetadataLoadException.EventLogMetadataLoadErrorType.entries).map { x -> x.name }.toList(),
                                                                   ERROR_METADATA_LOAD_FAILED_DESCRIPTION)
     private val codeMetadataLoadFailedField = EventFields.Int("code")
     private val stageMetadataUpdateFailedField = EventFields.Enum<EventLogMetadataUpdateStage>("stage", STAGE_METADATA_UPDATE_FAILED_DESCRIPTION)
