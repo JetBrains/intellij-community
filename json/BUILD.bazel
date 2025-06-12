@@ -31,6 +31,7 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//platform/syntax/syntax-util:util",
   ],
+  exports = ["//json/syntax"],
   runtime_deps = [":json_resources"]
 )
 ### auto-generated section `build intellij.json` end
