@@ -409,13 +409,13 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   // Mouse
-  fun click(point: Point? = null) {
+  fun click(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
     LOG.info("Click at $this${point?.let { ": $it" } ?: ""}")
     if (point != null) {
-      withComponent { robot.click(it, point) }
+      withComponent { robot.click(it, point,  mouseButton) }
     }
     else {
-      withComponent { robot.click(it) }
+      withComponent { robot.click(it, mouseButton) }
     }
   }
 
