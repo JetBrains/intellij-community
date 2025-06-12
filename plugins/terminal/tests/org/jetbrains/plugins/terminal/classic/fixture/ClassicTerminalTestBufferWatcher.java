@@ -16,12 +16,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 
-public class TestTerminalBufferWatcher {
-  private static final Logger LOG = Logger.getInstance(TestTerminalBufferWatcher.class);
+public class ClassicTerminalTestBufferWatcher {
+  private static final Logger LOG = Logger.getInstance(ClassicTerminalTestBufferWatcher.class);
   private final TerminalTextBuffer myBuffer;
   private final Terminal myTerminal;
 
-  public TestTerminalBufferWatcher(@NotNull TerminalTextBuffer buffer, @NotNull Terminal terminal) {
+  public ClassicTerminalTestBufferWatcher(@NotNull TerminalTextBuffer buffer, @NotNull Terminal terminal) {
     myBuffer = buffer;
     myTerminal = terminal;
   }

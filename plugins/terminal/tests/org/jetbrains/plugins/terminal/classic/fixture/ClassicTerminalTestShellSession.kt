@@ -22,15 +22,14 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.util.function.BooleanSupplier
 
-class TestShellSession(project: Project, parentDisposable: Disposable) {
-  private val widget: ShellTerminalWidget
-  private val watcher: TestTerminalBufferWatcher
+class ClassicTerminalTestShellSession(shellCommand: List<String>?, val widget: ShellTerminalWidget) {
+
+  constructor(project: Project, parentDisposable: Disposable): this(null, ShellTerminalWidget(project, JBTerminalSystemSettingsProvider(), parentDisposable))
+
+  private val watcher: ClassicTerminalTestBufferWatcher = ClassicTerminalTestBufferWatcher(widget.terminalTextBuffer, widget.terminal)
 
   init {
-    val settingsProvider = JBTerminalSystemSettingsProvider()
-    widget = ShellTerminalWidget(project, settingsProvider, parentDisposable)
-    watcher = TestTerminalBufferWatcher(widget.terminalTextBuffer, widget.terminal)
-    start(widget)
+    start(shellCommand, widget)
   }
 
   @Throws(IOException::class)
@@ -54,10 +53,12 @@ class TestShellSession(project: Project, parentDisposable: Disposable) {
     get() = watcher.screenLines
 
   companion object {
-    fun start(terminalWidget: JBTerminalWidget) {
+    fun start(shellCommand: List<String>?, terminalWidget: JBTerminalWidget) {
       val runner = LocalTerminalDirectRunner.createTerminalRunner(terminalWidget.project)
-      val baseOptions = shellStartupOptions(terminalWidget.project.basePath)
-      val initialTermSize = TermSize(80, 24)
+      val baseOptions = shellStartupOptions(terminalWidget.project.basePath) {
+        it.shellCommand = shellCommand
+      }
+      val initialTermSize = TermSize(80, 50)
       val workingDirectory = Files.createTempDirectory("intellij-terminal-working-dir")
       val configuredOptions = runner.configureStartupOptions(baseOptions).builder().modify {
         it.initialTermSize = initialTermSize
@@ -72,7 +73,7 @@ class TestShellSession(project: Project, parentDisposable: Disposable) {
           connector.close()
         }
         catch (t: Throwable) {
-          logger<TestShellSession>().error("Error closing TtyConnector", t)
+          logger<ClassicTerminalTestShellSession>().error("Error closing TtyConnector", t)
         }
         workingDirectory.delete()
       }
