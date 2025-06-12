@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ui.UISettings;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyProgressComponent;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.JBIterable;
@@ -38,7 +39,11 @@ public final class PresentationModeProgressPanel {
     textLabel.setText(" ");
     additionalTextLabel.setText(" ");
     myEastButtons = this.progress.createPresentationButtons();
-    myButtonPanel.add(ProgressComponent.createButtonPanel(myEastButtons.map(b -> b.button)));
+    myButtonPanel.add(ProgressComponent.createButtonPanel(myEastButtons.map(progressButton -> {
+      InplaceButton button = progressButton.button;
+      button.setMinimumSize(button.getPreferredSize());
+      return button;
+    })));
     myRootPanel.setPreferredSize(new JBDimension(250, 60));
     myProgressBar.setPreferredSize(new Dimension(JBUIScale.scale(250), myProgressBar.getPreferredSize().height));
   }
