@@ -1823,6 +1823,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/namedArguments/CompactTypeNames.kt");
             }
 
+            @TestMetadata("CompanionObjectInvoke.kt")
+            public void testCompanionObjectInvoke() throws Exception {
+                runTest("../testData/basic/common/namedArguments/CompanionObjectInvoke.kt");
+            }
+
             @TestMetadata("ForEmptyParametersFunction.kt")
             public void testForEmptyParametersFunction() throws Exception {
                 runTest("../testData/basic/common/namedArguments/ForEmptyParametersFunction.kt");
