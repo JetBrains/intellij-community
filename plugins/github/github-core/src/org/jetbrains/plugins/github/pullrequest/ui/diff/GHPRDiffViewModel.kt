@@ -204,67 +204,22 @@ internal class GHPRDiffViewModelImpl(
   }
 
   override fun nextComment(focused: String): String? =
-    lookupAdjacentComment(focused, isNext = true)
+    threadsVm.lookupNextComment(focused, this::threadIsVisible)
 
   override fun nextComment(cursorLocation: GHPRReviewUnifiedPosition): String? =
-    lookupAdjacentComment(cursorLocation, isNext = true)
+    threadsVm.lookupNextComment(cursorLocation, this::threadIsVisible)
 
   override fun previousComment(focused: String): String? =
-    lookupAdjacentComment(focused, isNext = false)
+    threadsVm.lookupPreviousComment(focused, this::threadIsVisible)
 
   override fun previousComment(cursorLocation: GHPRReviewUnifiedPosition): String? =
-    lookupAdjacentComment(cursorLocation, isNext = false)
+    threadsVm.lookupPreviousComment(cursorLocation, this::threadIsVisible)
 
   override fun showDiffAtComment(commentId: String) {
     val mapping = threadMappings.value[commentId] ?: return
     if (mapping.change == null) return
     showChange(mapping.change, mapping.location?.let(DiffViewerScrollRequest::toLine))
     mappedThreads.value.find { it.id == commentId }?.requestFocus()
-  }
-
-  private fun lookupAdjacentComment(cursorLocation: GHPRReviewUnifiedPosition, isNext: Boolean): String? {
-    // Fetch stuff
-    val threads = threadsVm.threadOrder.value?.getOrNull() ?: return null
-    if (threads.isEmpty()) return null
-
-    // Search from before the first comment on the selected line
-    var location: ThreadIdAndPosition? = ThreadIdAndPosition(null, Date.from(EPOCH), cursorLocation)
-
-    // Find the next or previous comment
-    location = when (isNext) {
-      true -> threads.ceiling(location)
-      false -> threads.floor(location)
-    }
-
-    return if (location?.id == null || threadIsVisible(location.id)) {
-      return location?.id
-    }
-    else {
-      lookupAdjacentComment(location.id, isNext)
-    }
-  }
-
-  private fun lookupAdjacentComment(currentThreadId: String, isNext: Boolean): String? {
-    // Fetch stuff
-    val threads = threadsVm.threadOrder.value?.getOrNull() ?: return null
-    if (threads.isEmpty()) return null
-
-    // Find the current position
-    val threadPositionsById = threadsVm.threadPositionsById.value?.getOrNull() ?: return null
-    if (threadPositionsById.isEmpty()) return null
-
-    var location: ThreadIdAndPosition? = threadPositionsById[currentThreadId] ?: return null
-
-    // Find the next or previous comment
-    do {
-      location = when (isNext) {
-        true -> threads.higher(location)
-        false -> threads.lower(location)
-      }
-    }
-    while (location?.id != null && !threadIsVisible(location.id))
-
-    return location?.id
   }
 
   private fun threadIsVisible(threadId: String): Boolean =

@@ -21,6 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputation
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRThreadsViewModels.ThreadIdAndPosition
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.editor.GHPRReviewNewCommentEditorViewModelImpl
+import java.time.Instant.EPOCH
 import java.util.*
 
 internal interface GHPRThreadsViewModels {
@@ -29,9 +30,10 @@ internal interface GHPRThreadsViewModels {
   val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>>
   val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>>
 
-  // Ordered by the appearance in the review (file, then position inside file)
-  val threadOrder: StateFlow<ComputedResult<TreeSet<ThreadIdAndPosition>>?>
-  val threadPositionsById: StateFlow<ComputedResult<Map<String, ThreadIdAndPosition>>?>
+  fun lookupNextComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String?
+  fun lookupNextComment(currentThreadId: String, isVisible: (String) -> Boolean): String?
+  fun lookupPreviousComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String?
+  fun lookupPreviousComment(currentThreadId: String, isVisible: (String) -> Boolean): String?
 
   fun requestNewComment(location: GHPRReviewCommentPosition): GHPRReviewNewCommentEditorViewModel
   fun cancelNewComment(location: GHPRReviewCommentPosition)
@@ -72,7 +74,7 @@ internal class GHPRThreadsViewModelsImpl(
   private fun CoroutineScope.createThread(initialData: GHPullRequestReviewThread) =
     UpdateableGHPRCompactReviewThreadViewModel(project, this, dataContext, dataProvider, initialData)
 
-  override val threadOrder: StateFlow<ComputedResult<TreeSet<ThreadIdAndPosition>>?> =
+  private val threadOrder: StateFlow<ComputedResult<TreeSet<ThreadIdAndPosition>>?> =
     combine(changesFetchFlow, dataProvider.reviewData.threadsComputationFlow) { allChangesResult, allThreadsResult ->
       val allChanges = allChangesResult.getOrNull() ?: return@combine ComputedResult.loading()
       val allThreads = allThreadsResult.getOrNull() ?: return@combine ComputedResult.loading()
@@ -82,7 +84,7 @@ internal class GHPRThreadsViewModelsImpl(
       }
     }.stateInNow(cs, ComputedResult.loading())
 
-  override val threadPositionsById: StateFlow<ComputedResult<Map<String, ThreadIdAndPosition>>?> =
+  private val threadPositionsById: StateFlow<ComputedResult<Map<String, ThreadIdAndPosition>>?> =
     threadOrder.mapState { result ->
       result?.map { order ->
         order
@@ -121,6 +123,63 @@ internal class GHPRThreadsViewModelsImpl(
                                             position) {
       cancelNewComment(position)
     }
+
+  override fun lookupNextComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String? =
+    lookupAdjacentComment(cursorLocation, isNext = true, isVisible)
+
+  override fun lookupNextComment(currentThreadId: String, isVisible: (String) -> Boolean): String? =
+    lookupAdjacentComment(currentThreadId, isNext = true, isVisible)
+
+  override fun lookupPreviousComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String? =
+    lookupAdjacentComment(cursorLocation, isNext = false, isVisible)
+
+  override fun lookupPreviousComment(currentThreadId: String, isVisible: (String) -> Boolean): String? =
+    lookupAdjacentComment(currentThreadId, isNext = false, isVisible)
+
+  private fun lookupAdjacentComment(cursorLocation: GHPRReviewUnifiedPosition, isNext: Boolean, isVisible: (String) -> Boolean): String? {
+    // Fetch stuff
+    val threads = threadOrder.value?.getOrNull() ?: return null
+    if (threads.isEmpty()) return null
+
+    // Search from before the first comment on the selected line
+    var location: ThreadIdAndPosition? = ThreadIdAndPosition(null, Date.from(EPOCH), cursorLocation)
+
+    // Find the next or previous comment
+    location = when (isNext) {
+      true -> threads.ceiling(location)
+      false -> threads.floor(location)
+    }
+
+    return if (location?.id == null || isVisible(location.id)) {
+      return location?.id
+    }
+    else {
+      lookupAdjacentComment(location.id, isNext, isVisible)
+    }
+  }
+
+  private fun lookupAdjacentComment(currentThreadId: String, isNext: Boolean, isVisible: (String) -> Boolean): String? {
+    // Fetch stuff
+    val threads = threadOrder.value?.getOrNull() ?: return null
+    if (threads.isEmpty()) return null
+
+    // Find the current position
+    val threadPositionsById = threadPositionsById.value?.getOrNull() ?: return null
+    if (threadPositionsById.isEmpty()) return null
+
+    var location: ThreadIdAndPosition? = threadPositionsById[currentThreadId] ?: return null
+
+    // Find the next or previous comment
+    do {
+      location = when (isNext) {
+        true -> threads.higher(location)
+        false -> threads.lower(location)
+      }
+    }
+    while (location?.id != null && !isVisible(location.id))
+
+    return location?.id
+  }
 
   companion object {
     private fun positionComparator(changeIndexLookup: (RefComparisonChange) -> Int?): Comparator<GHPRReviewUnifiedPosition> =
