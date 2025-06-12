@@ -48,6 +48,9 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "@lib//:kotlin-reflect",
+    "//platform/syntax/syntax-psi:psi",
+    "//json/syntax",
+    "//platform/syntax/syntax-util:util",
   ],
   runtime_deps = [":tests_test_resources"]
 )
