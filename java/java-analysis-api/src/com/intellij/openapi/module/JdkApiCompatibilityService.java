@@ -50,7 +50,7 @@ public final class JdkApiCompatibilityService {
    *   <li>if {@code member} is method annotated as {@code @since 9} and the context language level is {@link LanguageLevel#JDK_1_8}, but
    *   its super method is annotated as {@code @since 8} this method will return null.
    *
-   *   <li>if {@code member} is method annotated as {@code @since 9} and the context language level is {@link LanguageLevel#JDK_11}, but
+   *   <li>if {@code member} is method annotated as {@code @since 9} and the context language level is {@link LanguageLevel#JDK_1_7}, but
    *   its super method is annotated as {@code @since 8} this method will return {@link LanguageLevel#JDK_1_8}.
    *
    *   <li>if {@code member} is not annotated with a {@code @since} tag this method will return null.
