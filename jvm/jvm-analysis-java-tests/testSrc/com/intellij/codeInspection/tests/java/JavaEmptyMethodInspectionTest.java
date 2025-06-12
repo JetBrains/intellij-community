@@ -29,6 +29,10 @@ public class JavaEmptyMethodInspectionTest extends JavaInspectionTestCase {
     doTest(getTestName(true), tool, checkRange);
   }
 
+  public void testDefaultOverride() {
+    doTest();
+  }
+
   public void testSuperCall() {
     doTest();
   }
@@ -65,7 +69,7 @@ public class JavaEmptyMethodInspectionTest extends JavaInspectionTestCase {
     doTest();
   }
 
-  public void testNonEmptyInLambda() {
+  public void testEmptyInLambdaSuper() {
     doTest();
   }
 }

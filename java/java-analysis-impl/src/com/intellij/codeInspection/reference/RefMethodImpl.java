@@ -294,15 +294,8 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     refUtil.addReferencesTo(method, this, method);
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
-
-    boolean isBodyEmpty = isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(method.getUastBody());
-    setBodyEmpty(isBodyEmpty);
-    if (!isAbstract() && (ownerClass == null || !ownerClass.isInterface())) {
-      setHasBody(method.getUastBody() != null);
-    } else {
-      setHasBody(!isBodyEmpty);
-    }
-
+    setHasBody(method.getUastBody() != null);
+    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && isEmptyExpression(method.getUastBody()));
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
   }
 
@@ -619,7 +612,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
     setFlag(bodyEmpty, IS_BODY_EMPTY_MASK);
   }
 
-  public void setHasBody(boolean hasBody) {
+  private void setHasBody(boolean hasBody) {
     setFlag(hasBody, HAS_BODY_MASK);
   }
 
