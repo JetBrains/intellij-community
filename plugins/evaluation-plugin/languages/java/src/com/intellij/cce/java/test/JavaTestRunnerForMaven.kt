@@ -29,7 +29,7 @@ internal class JavaTestRunnerForMaven: TestRunner {
   override fun runTests(request: TestRunRequest): TestRunResult {
     LOG.info("Running tests: ${request.tests.joinToString()}")
     if (request.tests.isEmpty()) {
-      return TestRunResult(emptyList(), emptyList(), "")
+      return TestRunResult(emptyList(), emptyList(), true, "")
     }
 
     val project = request.project
@@ -87,8 +87,12 @@ internal class JavaTestRunnerForMaven: TestRunner {
 }
 
 class MavenOutputParser {
+  private val testPrefixes = mutableListOf(" -- in ", " - in ")
   fun parse(text: String): TestRunResult {
-    val linesWithTests = text.lines().filter { it.contains("Tests run") && it.contains("-- in") }
+    val linesWithTests = text.lines().filter { line ->
+      line.contains("Tests run") &&
+      testPrefixes.any { line.contains(it) }
+    }
     val passed = linesWithTests
       .filter { !it.contains("FAILURE") }
       .map { trimTestLinePrefix(it) }
@@ -97,10 +101,17 @@ class MavenOutputParser {
       .filter { it.contains("FAILURE") }
       .map { trimTestLinePrefix(it) }
       .sorted()
-    return TestRunResult(passed, failed, text)
+    val compilationSuccessful = !text.contains("COMPILATION ERROR")
+    return TestRunResult(passed, failed, compilationSuccessful, text)
   }
 
   private fun trimTestLinePrefix(source: String): String {
-    return source.substring(source.indexOf("-- in ")).removePrefix("-- in ")
+    var res = source
+    testPrefixes.forEach { prefix ->
+      if (res.contains(prefix)) {
+        res = res.substring(res.indexOf(prefix)).removePrefix(prefix)
+      }
+    }
+    return res
   }
 }

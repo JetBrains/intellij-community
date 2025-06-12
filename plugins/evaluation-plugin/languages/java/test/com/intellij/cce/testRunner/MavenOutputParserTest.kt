@@ -15,7 +15,11 @@ class MavenOutputParserTest(private val fileName: String) : BasePlatformTestCase
   companion object {
     @JvmStatic
     @Parameterized.Parameters(name = "Test file \"{0}\"")
-    fun data() = arrayOf("test1")
+    fun data() = arrayOf(
+      "test1",
+      "fasterxml__jackson-core-370",
+      "fasterxml__jackson-core-380",
+      )
   }
 
   override fun getTestDataPath(): String? {
@@ -50,6 +54,7 @@ class MavenOutputParserTest(private val fileName: String) : BasePlatformTestCase
 
 private fun dump(result: TestRunResult): String {
   val sb = StringBuilder()
+  sb.appendLine("compilationSuccessful: ${result.compilationSuccessful}")
   sb.appendLine("passed: ${result.passed.size}")
   result.passed.forEach {
     sb.appendLine("\t$it")
