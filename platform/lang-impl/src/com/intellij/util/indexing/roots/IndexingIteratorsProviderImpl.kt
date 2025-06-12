@@ -44,7 +44,7 @@ class IndexingIteratorsProviderImpl(
   }
 
   override fun shouldBeIndexed(file: VirtualFile): Boolean {
-    if (WorkspaceFileIndex.getInstance(project).isInWorkspace(file)) return true
+    if (WorkspaceFileIndex.getInstance(project).isIndexable(file)) return true
     return filesFromIndexableSetContributors.isInSet(file)
   }
 

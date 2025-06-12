@@ -410,6 +410,8 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
                       entity: E,
                       customData: WorkspaceFileSetData?,
                       recursive: Boolean) {
+    if (!kind.isIndexable) return
+
     val entityReference = entity.createPointer<E>()
 
     fun <K> addRoot(map: MutableMap<K, MutableIndexingUrlRootHolder>, key: K) {
@@ -453,6 +455,8 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
                       kind: WorkspaceFileKind,
                       entity: WorkspaceEntity,
                       recursive: Boolean) {
+    if (!kind.isIndexable) return
+
     thisLogger().assertTrue(contributor is LibraryRootFileIndexContributor,
                             "Registering VirtualFile roots is not supported, register VirtualFileUrl from $contributor instead")
     if (contributor !is LibraryRootFileIndexContributor) {
