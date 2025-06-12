@@ -693,18 +693,13 @@ public class ExpressionParsing extends Parsing {
 
   private boolean parseSubscriptionIndexArgument() {
     SyntaxTreeBuilder.Marker sliceItem = myBuilder.mark();
-    if (!parseSingleExpression(false)) {
-      myBuilder.mark().done(PyElementTypes.EMPTY_EXPRESSION);
-    }
+    parseSingleExpression(false);
     if (!matchToken(PyTokenTypes.COLON)) {
       sliceItem.rollbackTo();
       return parseNamedTestExpression(false, false);
     }
-    boolean exprParseResult = parseSingleExpression(false);
+    parseSingleExpression(false);
     if (myBuilder.getTokenType() == PyTokenTypes.COLON) {
-      if (!exprParseResult) {
-        myBuilder.mark().done(PyElementTypes.EMPTY_EXPRESSION);
-      }
       myBuilder.advanceLexer();
       parseSingleExpression(false);
     }

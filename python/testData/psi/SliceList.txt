@@ -9,7 +9,5 @@ PyFile:SliceList.py
           PsiElement(Py:IDENTIFIER)('b1')
         PsiElement(Py:COMMA)(',')
         PySliceItem
-          PyEmptyExpression
-            <empty list>
           PsiElement(Py:COLON)(':')
       PsiElement(Py:RBRACKET)(']')
