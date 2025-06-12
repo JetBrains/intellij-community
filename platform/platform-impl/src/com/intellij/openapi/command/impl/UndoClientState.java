@@ -22,7 +22,6 @@ import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ExternalChangeAction;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -105,7 +104,7 @@ final class UndoClientState implements Disposable {
     return refs != null && isUndoRedoAvailable(refs, isUndo);
   }
 
-  boolean isUndoRedoAvailable(@NotNull Collection<? extends DocumentReference> docRefs, boolean isUndo) {
+  boolean isUndoRedoAvailable(@NotNull Collection<DocumentReference> docRefs, boolean isUndo) {
     if (isUndo && commandMerger.isUndoAvailable(docRefs)) {
       return true;
     }
@@ -379,20 +378,12 @@ final class UndoClientState implements Disposable {
     return clientId;
   }
 
-  @NotNull Collection<@NotNull UndoRedoStackSize> getUndoRedoStackSizes(@NotNull FileEditor editor) {
-    Collection<DocumentReference> refs = UndoDocumentUtil.getDocRefs(editor);
-    if (refs != null) {
-      return ContainerUtil.map(refs, ref -> new UndoRedoStackSize(
-        ref,
-        undoStacksHolder.getStack(ref).size(),
-        redoStacksHolder.getStack(ref).size()
-      ));
-    } else {
-      return Collections.emptyList();
-    }
+  int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
+    UndoRedoStacksHolder stacks = isUndo ? undoStacksHolder : redoStacksHolder;
+    return stacks.getStackSize(docRef);
   }
 
-  void clearStacks(@NotNull FileEditor editor) {
+  void clearStacks(@Nullable FileEditor editor) {
     var refs = UndoDocumentUtil.getDocRefs(editor);
     if (refs != null) {
       flushCurrentCommand(UndoCommandFlushReason.CLEAR_STACKS);

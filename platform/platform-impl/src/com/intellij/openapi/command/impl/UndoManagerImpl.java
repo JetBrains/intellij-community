@@ -312,13 +312,9 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  protected @NotNull Collection<@NotNull UndoRedoStackSize> getUndoRedoStackSizes(@NotNull FileEditor editor) {
-    UndoClientState state = getClientState(editor);
-    if (state != null) {
-      return state.getUndoRedoStackSizes(editor);
-    } else {
-      return Collections.emptyList();
-    }
+  protected final int getStackSize(@Nullable DocumentReference docRef, boolean isUndo) {
+    UndoClientState state = Objects.requireNonNull(getClientState(), "undo/redo is not available");
+    return state.getStackSize(docRef, isUndo);
   }
 
   void trimSharedStacks(@NotNull DocumentReference docRef) {

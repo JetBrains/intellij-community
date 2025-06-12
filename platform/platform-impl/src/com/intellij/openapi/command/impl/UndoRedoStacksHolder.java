@@ -37,7 +37,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     );
   }
 
-  boolean canBeUndoneOrRedone(@NotNull Collection<? extends DocumentReference> refs) {
+  boolean canBeUndoneOrRedone(@NotNull Collection<DocumentReference> refs) {
     if (refs.isEmpty()) {
       return !globalStack.isEmpty() && globalStack.getLast().isValid();
     }
@@ -50,7 +50,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     return false;
   }
 
-  @Nullable UndoableGroup getLastAction(@NotNull Collection<? extends DocumentReference> refs) {
+  @Nullable UndoableGroup getLastAction(@NotNull Collection<DocumentReference> refs) {
     if (refs.isEmpty()) {
       return globalStack.getLast();
     }
@@ -134,7 +134,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     return hasAffectedItems;
   }
 
-  void clearStacks(@NotNull Set<? extends DocumentReference> refs, boolean clearGlobal) {
+  void clearStacks(@NotNull Collection<DocumentReference> refs, boolean clearGlobal) {
     for (UndoRedoList<UndoableGroup> stack : getAffectedStacks(refs, clearGlobal)) {
       while(!stack.isEmpty()) {
         clearStacksFrom(stack.getLast());
@@ -169,7 +169,14 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     }
   }
 
-  @NotNull String dump(@NotNull Collection<? extends DocumentReference> refs) {
+  int getStackSize(@Nullable DocumentReference docRef) {
+    if (docRef == null) {
+      return globalStack.size();
+    }
+    return getStack(docRef).size();
+  }
+
+  @NotNull String dump(@NotNull Collection<DocumentReference> refs) {
     String name = isUndo() ? "UndoStack" : "RedoStack";
     if (refs.isEmpty()) {
       return name + " for global\n" + dumpStack(globalStack);
@@ -229,7 +236,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     return getAffectedStacks(group.getAffectedDocuments(), group.isGlobal());
   }
 
-  private @NotNull List<UndoRedoList<UndoableGroup>> getAffectedStacks(@NotNull Collection<? extends DocumentReference> refs, boolean global) {
+  private @NotNull List<UndoRedoList<UndoableGroup>> getAffectedStacks(@NotNull Collection<DocumentReference> refs, boolean global) {
     List<UndoRedoList<UndoableGroup>> result = new ArrayList<>(refs.size() + 1);
     if (global) {
       result.add(globalStack);

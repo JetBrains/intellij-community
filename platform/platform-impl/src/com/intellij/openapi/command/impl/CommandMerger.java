@@ -50,7 +50,7 @@ public final class CommandMerger {
     this.isTransparent = isTransparent;
   }
 
-  boolean isUndoAvailable(@NotNull Collection<? extends DocumentReference> refs) {
+  boolean isUndoAvailable(@NotNull Collection<DocumentReference> refs) {
     if (hasNonUndoableActions()) {
       return false;
     }
@@ -162,7 +162,7 @@ public final class CommandMerger {
     editorStateAfter = state;
   }
 
-  void addAdditionalAffectedDocuments(@NotNull Collection<? extends DocumentReference> refs) {
+  void addAdditionalAffectedDocuments(@NotNull Collection<DocumentReference> refs) {
     allAffectedDocuments.addAll(refs);
     additionalAffectedDocuments.addAll(refs);
   }

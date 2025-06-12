@@ -2,8 +2,6 @@
 package com.intellij.openapi.command.impl
 
 import com.intellij.openapi.command.undo.DocumentReference
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileEditor
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -21,10 +19,5 @@ class ResetUndoHistoryToken internal constructor(
 
   fun refresh() {
     snapshot = undoManager.getUndoRedoSnapshotForDocument(reference)
-  }
-
-  fun clearHistory(editor: FileEditor) {
-    undoManager.clearStacks(editor)
-    logger<ResetUndoHistoryToken>().warn(undoManager.dumpState(editor))
   }
 }

@@ -32,6 +32,7 @@ interface UndoSpy {
     isTransparent: Boolean,
   )
 
+  // TODO: sync FE commands instead of flush
   fun flushCommand(project: Project?)
 
   companion object {

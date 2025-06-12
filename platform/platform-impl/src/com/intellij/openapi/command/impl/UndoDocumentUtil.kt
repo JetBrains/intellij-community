@@ -18,9 +18,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.ApiStatus
 
 
-internal object UndoDocumentUtil {
+@ApiStatus.Internal
+object UndoDocumentUtil {
 
   @JvmStatic
   fun getDocRefs(editor: FileEditor?): Collection<DocumentReference>? {
