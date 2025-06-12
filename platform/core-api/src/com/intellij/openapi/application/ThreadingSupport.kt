@@ -197,12 +197,6 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun removeWriteLockReacquisitionListener(listener: WriteLockReacquisitionListener)
 
-  @ApiStatus.Internal
-  fun setLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider)
-
-  @ApiStatus.Internal
-  fun removeLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider)
-
   /**
    * Prevents any attempt to use R/W locks inside [action].
    */

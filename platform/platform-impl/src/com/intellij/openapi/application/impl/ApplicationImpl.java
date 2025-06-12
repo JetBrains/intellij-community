@@ -46,6 +46,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.platform.locking.impl.IntelliJLockingUtil;
 import com.intellij.platform.locking.impl.NestedLocksThreadingSupport;
+import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider;
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
@@ -394,7 +395,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     getThreadingSupport().removeWriteIntentReadActionListener(myLockDispatcherListener);
     lock.removeLockAcquisitionListener(myLockDispatcherListener);
     getThreadingSupport().removeWriteLockReacquisitionListener(myLockDispatcherListener);
-    getThreadingSupport().removeLegacyIndicatorProvider(myLegacyIndicatorProvider);
+    lock.removeLegacyIndicatorProvider(myLegacyIndicatorProvider);
 
     //noinspection deprecation
     myDispatcher.getMulticaster().applicationExiting();

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
 import com.intellij.util.ReflectionUtil
 import kotlinx.coroutines.*
@@ -842,14 +843,14 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @ApiStatus.Internal
-  override fun setLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider) {
+  fun setLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider) {
     if (myLegacyProgressIndicatorProvider != null)
       error("LegacyProgressIndicatorProvider already registered")
     myLegacyProgressIndicatorProvider = provider
   }
 
   @ApiStatus.Internal
-  override fun removeLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider) {
+  fun removeLegacyIndicatorProvider(provider: LegacyProgressIndicatorProvider) {
     if (myLegacyProgressIndicatorProvider != provider)
       error("LegacyProgressIndicatorProvider is not registered")
     myLegacyProgressIndicatorProvider = null
