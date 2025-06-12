@@ -12,6 +12,7 @@ class EvaluationProcess private constructor (
 ) {
   companion object {
     fun build(environment: EvaluationEnvironment, stepFactory: StepFactory, init: Builder.() -> Unit): EvaluationProcess {
+      environment.initialize(stepFactory.datasetContext)
       val builder = Builder()
       builder.init()
       return builder.build(environment, stepFactory)

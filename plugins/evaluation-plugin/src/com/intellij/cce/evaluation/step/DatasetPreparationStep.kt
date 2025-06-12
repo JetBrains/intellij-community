@@ -14,7 +14,7 @@ class DatasetPreparationStep(
   override val description: String = environment.preparationDescription
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
-    environment.prepare(datasetContext, progress)
+    environment.prepareDataset(datasetContext, progress)
     return workspace
   }
 }

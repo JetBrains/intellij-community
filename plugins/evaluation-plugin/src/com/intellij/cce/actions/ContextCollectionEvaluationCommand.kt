@@ -73,7 +73,7 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
         feature.name,
         environment.featureInvoker
       ) {
-        override fun prepare(datasetContext: DatasetContext, progress: Progress) {
+        override fun prepareDataset(datasetContext: DatasetContext, progress: Progress) {
           val files = runReadAction {
             FilesHelper.getFilesOfLanguage(project, actions.evaluationRoots, actions.ignoreFileNames, actions.language)
           }.sortedBy { it.name }

@@ -14,7 +14,7 @@ class BackgroundStepFactory(
   private val config: Config,
   private val environment: EvaluationEnvironment,
   private val inputWorkspacePaths: List<String>?,
-  private val datasetContext: DatasetContext
+  override val datasetContext: DatasetContext
 ) : StepFactory {
 
   override fun generateActionsStep(): EvaluationStep = DatasetPreparationStep(environment, datasetContext)

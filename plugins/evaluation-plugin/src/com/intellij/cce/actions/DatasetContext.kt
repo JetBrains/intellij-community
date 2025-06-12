@@ -46,6 +46,8 @@ class DatasetContext(
 
   val errorsStorage: FileErrorsStorage = outputWorkspace.errorsStorage
 
+  val outputDir: Path = outputWorkspace.path()
+
   fun saveAdditionalStats(name: String, stats: Map<String, Any>) {
     outputWorkspace.saveAdditionalStats(name, stats)
   }
