@@ -79,9 +79,14 @@ object CodeReviewCommentUIUtil {
         val scheme = EditorColorsManager.getInstance().globalScheme
         tint?.let { ColorUtil.blendColorsInRgb(scheme.defaultBackground, it, 0.1) } ?: scheme.defaultBackground
       }
+
       isFocusCycleRoot = true
       isFocusTraversalPolicyProvider = true
       focusTraversalPolicy = LayoutFocusTraversalPolicy()
+
+      // Escape to the editor / diff
+      setFocusTraversalKeys(KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS,
+                            setOf(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)))
 
       add(UiDataProvider.wrapComponent(component) { sink ->
         suppressOuterEditorData(sink)
