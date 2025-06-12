@@ -2,6 +2,12 @@ package com.intellij.polySymbols.utils
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.query.PolySymbolsCompoundScope
+import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.CachedValueProvider
@@ -10,12 +16,6 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.takeWhileInclusive
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.PolySymbolsScope
-import com.intellij.polySymbols.query.PolySymbolsCompoundScope
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
 abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : PolySymbolsCompoundScope() {
 
@@ -200,7 +200,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolsListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
-    ): List<PolySymbolsScope> =
+    ): List<PolySymbol> =
       getAllSymbols(qualifiedKind)
 
     override fun getAllSymbols(qualifiedKind: PolySymbolQualifiedKind): List<PolySymbol> =

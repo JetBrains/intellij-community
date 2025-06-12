@@ -2,11 +2,9 @@
 package com.intellij.polySymbols.customElements.impl
 
 import com.intellij.model.Pointer
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.CustomElementsManifestScopeBase
@@ -14,7 +12,8 @@ import com.intellij.polySymbols.customElements.json.CustomElementsContribution
 import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-import java.util.*
+import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.util.containers.Stack
 
 abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContribution> protected constructor(
   name: String,
@@ -23,23 +22,29 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
   private val rootScope: CustomElementsManifestScopeBase,
 ) : CustomElementsContributionSymbol<Container>(name, container, origin) {
 
-  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                  params: PolySymbolsNameMatchQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+  override fun getMatchingSymbols(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsNameMatchQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     rootScope
       .getMatchingSymbols(contribution, this.origin, qualifiedName, params, scope)
       .toList()
 
-  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                          params: PolySymbolsListSymbolsQueryParams,
-                          scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+  override fun getSymbols(
+    qualifiedKind: PolySymbolQualifiedKind,
+    params: PolySymbolsListSymbolsQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     rootScope
       .getSymbols(contribution, this.origin, qualifiedKind, params)
       .toList()
 
-  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                  params: PolySymbolsCodeCompletionQueryParams,
-                                  scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+  override fun getCodeCompletions(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsCodeCompletionQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolCodeCompletionItem> =
     rootScope
       .getCodeCompletions(contribution, this.origin, qualifiedName, params, scope)
       .toList()

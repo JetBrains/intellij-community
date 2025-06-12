@@ -20,6 +20,7 @@ import com.intellij.polySymbols.utils.match
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.xml.XmlAttribute
@@ -64,21 +65,28 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     override fun build(queryExecutor: PolySymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
       val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
-      val elementScope = element.takeIf { queryExecutor.allowResolve }
-                           ?.descriptor?.asSafely<PolySymbolElementDescriptor>()?.symbol?.let { listOf(it) }
-                         ?: queryExecutor.nameMatchQuery(HTML_ELEMENTS, element.name)
-                           .exclude(PolySymbolModifier.ABSTRACT)
-                           .run()
+      val elementScope =
+        element.takeIf { queryExecutor.allowResolve }
+          ?.descriptor?.asSafely<PolySymbolElementDescriptor>()?.symbol?.queryScope
+        ?: queryExecutor.nameMatchQuery(HTML_ELEMENTS, element.name)
+          .exclude(PolySymbolModifier.ABSTRACT)
+          .run()
+          .flatMap { it.queryScope }
 
       elementScope.forEach(consumer)
 
       val attribute = context as? XmlAttribute ?: return
       attribute.takeIf { queryExecutor.allowResolve }
-        ?.descriptor?.asSafely<PolySymbolAttributeDescriptor>()?.symbol?.let(consumer)
+        ?.descriptor
+        ?.asSafely<PolySymbolAttributeDescriptor>()
+        ?.symbol
+        ?.queryScope
+        ?.forEach(consumer)
       ?: queryExecutor.nameMatchQuery(HTML_ATTRIBUTES, attribute.name)
         .additionalScope(elementScope)
         .exclude(PolySymbolModifier.ABSTRACT)
         .run()
+        .flatMap { it.queryScope }
         .forEach(consumer)
     }
 
@@ -134,7 +142,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolsListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
-    ): List<PolySymbolsScope> =
+    ): List<PolySymbol> =
       if (params.queryExecutor.allowResolve) {
         when (qualifiedKind) {
           HTML_ELEMENTS ->
@@ -186,7 +194,9 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     }
   }
 
-  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol {
+  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol, PolySymbolsScope {
+    abstract val project: Project?
+    override fun getModificationCount(): Long = project?.let { PsiModificationTracker.getInstance(it).modificationCount } ?: 0
     abstract override fun createPointer(): Pointer<out StandardHtmlSymbol>
   }
 
@@ -194,6 +204,9 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     val descriptor: XmlElementDescriptor,
     private val tag: XmlTag?,
   ) : PolySymbol, StandardHtmlSymbol() {
+
+    override val project: Project?
+      get() = tag?.project ?: descriptor.declaration?.project
 
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
       getHtmlMdnTagDocumentation(getHtmlApiNamespace(descriptor.nsDescriptor?.name, tag, name),
@@ -249,6 +262,9 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       getHtmlMdnAttributeDocumentation(getHtmlApiNamespace(tag?.namespace, tag, tagName),
                                        tagName, name)
 
+    override val project: Project?
+      get() = tag?.project ?: descriptor.declaration?.project
+
     override val qualifiedKind: PolySymbolQualifiedKind
       get() = HTML_ATTRIBUTES
 
@@ -295,7 +311,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolsListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
-    ): List<PolySymbolsScope> =
+    ): List<PolySymbol> =
       if (qualifiedKind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)
         descriptor.enumeratedValues?.map { HtmlAttributeValueSymbol(it) } ?: emptyList()
       else
@@ -328,10 +344,13 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
 
   }
 
-  private class HtmlEventDescriptorBasedSymbol(descriptor: XmlAttributeDescriptor) : PolySymbol, StandardHtmlSymbol() {
+  private class HtmlEventDescriptorBasedSymbol(private val descriptor: XmlAttributeDescriptor) : PolySymbol, StandardHtmlSymbol() {
 
     override fun getMdnDocumentation(): MdnSymbolDocumentation? =
       getDomEventDocumentation(name)
+
+    override val project: Project?
+      get() = descriptor.declaration?.project
 
     override val qualifiedKind: PolySymbolQualifiedKind
       get() = JS_EVENTS

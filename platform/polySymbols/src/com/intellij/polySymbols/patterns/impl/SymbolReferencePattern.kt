@@ -2,19 +2,19 @@
 package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.applyIf
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolNameSegment
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.impl.selectBest
 import com.intellij.polySymbols.impl.withDisplayName
 import com.intellij.polySymbols.impl.withOffset
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.utils.lastPolySymbol
 import com.intellij.polySymbols.utils.nameSegments
+import com.intellij.util.applyIf
+import com.intellij.util.containers.Stack
 import kotlin.math.max
 
 internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPattern() {
@@ -22,12 +22,14 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun isStaticAndRequired(): Boolean = false
 
-  override fun match(owner: PolySymbol?,
-                     scopeStack: Stack<PolySymbolsScope>,
-                     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
-                     params: MatchParameters,
-                     start: Int,
-                     end: Int): List<MatchResult> {
+  override fun match(
+    owner: PolySymbol?,
+    scopeStack: Stack<PolySymbolsScope>,
+    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    params: MatchParameters,
+    start: Int,
+    end: Int,
+  ): List<MatchResult> {
     if (start == end) {
       // TODO should be "missing required part", but needs improvements in sequence pattern code completion
       return listOf(MatchResult(listOf(PolySymbolNameSegment.create(
@@ -67,10 +69,12 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
     ))
   }
 
-  override fun list(owner: PolySymbol?,
-                    scopeStack: Stack<PolySymbolsScope>,
-                    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
-                    params: ListParameters): List<ListResult> =
+  override fun list(
+    owner: PolySymbol?,
+    scopeStack: Stack<PolySymbolsScope>,
+    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    params: ListParameters,
+  ): List<ListResult> =
     symbolsResolver
       ?.listSymbols(scopeStack, params.queryExecutor, params.expandPatterns)
       ?.groupBy { it.name }
@@ -92,12 +96,14 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
       }
     ?: emptyList()
 
-  override fun complete(owner: PolySymbol?,
-                        scopeStack: Stack<PolySymbolsScope>,
-                        symbolsResolver: PolySymbolsPatternSymbolsResolver?,
-                        params: CompletionParameters,
-                        start: Int,
-                        end: Int): CompletionResults =
+  override fun complete(
+    owner: PolySymbol?,
+    scopeStack: Stack<PolySymbolsScope>,
+    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    params: CompletionParameters,
+    start: Int,
+    end: Int,
+  ): CompletionResults =
     symbolsResolver
       ?.codeCompletion(params.name.substring(start, end), max(params.position - start, 0), scopeStack, params.queryExecutor)
       ?.let { results ->

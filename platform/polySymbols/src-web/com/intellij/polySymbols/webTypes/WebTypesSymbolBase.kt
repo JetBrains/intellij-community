@@ -11,10 +11,7 @@ import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.merge
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.wrap
@@ -72,6 +69,8 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   override fun toString(): String =
     base.toString()
 
+  override fun getModificationCount(): Long = 0
+
   override fun equals(other: Any?): Boolean =
     other === this
     || other is WebTypesSymbolBase
@@ -110,7 +109,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolsListSymbolsQueryParams,
     scope: Stack<PolySymbolsScope>,
-  ): List<PolySymbolsScope> =
+  ): List<PolySymbol> =
     base.rootScope
       .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, qualifiedKind, params)
       .toList()
@@ -210,7 +209,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
     base.isExclusiveFor(qualifiedKind)
-    || superContributions.any { it.isExclusiveFor(qualifiedKind) }
+    || superContributions.flatMap { it.queryScope }.any { it.isExclusiveFor(qualifiedKind) }
 
   override fun matchContext(context: PolyContext): Boolean =
     super.matchContext(context) && base.contribution.requiredContext.evaluate(context)

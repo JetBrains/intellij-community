@@ -2,13 +2,17 @@
 package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolNameSegment
+import com.intellij.polySymbols.PolySymbolOrigin
+import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.impl.CompoundInsertHandler
 import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
+import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.coalesceWith
 import com.intellij.polySymbols.utils.nameSegments

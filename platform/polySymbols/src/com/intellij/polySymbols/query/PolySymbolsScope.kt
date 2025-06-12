@@ -1,15 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.polySymbols
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.utils.getDefaultCodeCompletions
 import com.intellij.polySymbols.utils.match
-import com.intellij.polySymbols.utils.toCodeCompletionItems
 import com.intellij.util.containers.Stack
 
 /**
@@ -34,7 +33,7 @@ interface PolySymbolsScope : ModificationTracker {
 
   /**
    * Returns symbols within the scope, which matches provided namespace, kind and name.
-   * Use [PolySymbol.match] to match Poly Symbols in the scope against provided name.
+   * Use [match] to match Poly Symbols in the scope against provided name.
    *
    * If the scope contains many symbols, or results should be cached consider extending [com.intellij.polySymbols.utils.PolySymbolsScopeWithCache].
    *
@@ -50,7 +49,6 @@ interface PolySymbolsScope : ModificationTracker {
                  strictScope(params.strictScope)
                  copyFiltersFrom(params)
                }, scope)
-      .filterIsInstance<PolySymbol>()
       .flatMap { it.match(qualifiedName.name, params, scope) }
 
   /**
@@ -63,17 +61,17 @@ interface PolySymbolsScope : ModificationTracker {
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolsListSymbolsQueryParams,
     scope: Stack<PolySymbolsScope>,
-  ): List<PolySymbolsScope> =
+  ): List<PolySymbol> =
     emptyList()
 
   /**
    * Returns code completions for symbols within the scope.
    *
-   * Use [PolySymbol.toCodeCompletionItems] to create code completions from `PolySymbol`s in the scope.
+   * Use [com.intellij.polySymbols.utils.toCodeCompletionItems] to create code completions from `PolySymbol`s in the scope.
    *
    * If the scope contains many symbols, or results should be cached consider extending [com.intellij.polySymbols.utils.PolySymbolsScopeWithCache].
    *
-   * Default implementation calls `getSymbols` and runs [PolySymbol.toCodeCompletionItems] on each symbol.
+   * Default implementation calls `getSymbols` and runs [com.intellij.polySymbols.utils.toCodeCompletionItems] on each symbol.
    */
   fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,

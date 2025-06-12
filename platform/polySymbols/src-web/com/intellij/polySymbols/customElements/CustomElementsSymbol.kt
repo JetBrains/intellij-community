@@ -1,11 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.customElements
 
+import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
+import com.intellij.polySymbols.query.PolySymbolsScope
 
-interface CustomElementsSymbol : PolySymbolWithDocumentation {
+interface CustomElementsSymbol : PolySymbolWithDocumentation, PolySymbolsScope {
 
+  override fun createPointer(): Pointer<out CustomElementsSymbol>
+
+  override fun getModificationCount(): Long = 0
 
   companion object {
 

@@ -7,6 +7,7 @@ import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
@@ -15,6 +16,7 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.utils.*
@@ -43,7 +45,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsPrioritizedScope {
+interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolsPrioritizedScope {
 
   /**
    * Specifies where this symbol comes from. Besides descriptive information like
@@ -115,10 +117,10 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
 
   /**
    * When pattern is being evaluated, matched symbols can provide additional scope for further resolution in the pattern.
-   * By default, the `queryScope` returns the symbol itself
+   * By default, the `queryScope` returns the symbol itself if it is a [PolySymbolsScope]
    */
   val queryScope: List<PolySymbolsScope>
-    get() = listOf(this)
+    get() = listOfNotNull(this as? PolySymbolsScope)
 
   /**
    * Specifies whether the symbol is an extension.
@@ -217,12 +219,6 @@ interface PolySymbol : PolySymbolsScope, Symbol, NavigatableSymbol, PolySymbolsP
 
   override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
     emptyList()
-
-  /**
-   * Symbols can be used in [CachedValue]s as dependencies.
-   * If a symbol instance can mutate over time, it should properly implement this method.
-   */
-  override fun getModificationCount(): Long = 0
 
   /**
    * Returns the pointer to the symbol, which can survive between read actions.

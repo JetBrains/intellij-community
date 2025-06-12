@@ -6,7 +6,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.RecursionManager
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.impl.filterByQueryParams
@@ -22,7 +25,6 @@ import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -462,7 +464,8 @@ class PolySymbolsQueryExecutorImpl(
     params: PolySymbolsListSymbolsQueryParams,
   ): List<PolySymbol> =
     pattern?.let { pattern ->
-      context.push(this)
+      val additionalScope = this.queryScope
+      additionalScope.forEach { context.push(it) }
       try {
         return pattern
           .list(this, context, params)
@@ -471,7 +474,7 @@ class PolySymbolsQueryExecutorImpl(
           }
       }
       finally {
-        context.pop()
+        additionalScope.forEach { _ -> context.pop() }
       }
     } ?: listOf(this)
 
@@ -483,12 +486,13 @@ class PolySymbolsQueryExecutorImpl(
       resultsCustomizer.apply(this, strict, qualifiedName)
     }
 
-  private val PolySymbolsQueryParams.recursionKey: List<Any> get() {
-    val result = SmartList<Any>()
-    result.add(requiredModifiers)
-    result.add(excludeModifiers)
-    result.add(excludeAccessModifiers)
-    requiredAccessModifier?.let { result.add(it) }
-    return result
-  }
+  private val PolySymbolsQueryParams.recursionKey: List<Any>
+    get() {
+      val result = SmartList<Any>()
+      result.add(requiredModifiers)
+      result.add(excludeModifiers)
+      result.add(excludeAccessModifiers)
+      requiredAccessModifier?.let { result.add(it) }
+      return result
+    }
 }

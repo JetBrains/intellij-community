@@ -2,12 +2,11 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.util.containers.Stack
 
 /**
  * A special purpose scope, which provides other scopes, possibly calling a [PolySymbolsQueryExecutor] to retrieve them.
@@ -18,8 +17,10 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
  */
 abstract class PolySymbolsCompoundScope : PolySymbolsScope {
 
-  protected abstract fun build(queryExecutor: PolySymbolsQueryExecutor,
-                               consumer: (PolySymbolsScope) -> Unit)
+  protected abstract fun build(
+    queryExecutor: PolySymbolsQueryExecutor,
+    consumer: (PolySymbolsScope) -> Unit,
+  )
 
   fun getScopes(queryExecutor: PolySymbolsQueryExecutor): List<PolySymbolsScope> {
     if (requiresResolve() && !queryExecutor.allowResolve) return emptyList()
@@ -37,19 +38,25 @@ abstract class PolySymbolsCompoundScope : PolySymbolsScope {
 
   protected open fun requiresResolve(): Boolean = true
 
-  final override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName,
-                                        params: PolySymbolsNameMatchQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<PolySymbol> =
+  final override fun getMatchingSymbols(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsNameMatchQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
 
-  final override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind,
-                                params: PolySymbolsListSymbolsQueryParams,
-                                scope: Stack<PolySymbolsScope>): List<PolySymbolsScope> =
+  final override fun getSymbols(
+    qualifiedKind: PolySymbolQualifiedKind,
+    params: PolySymbolsListSymbolsQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbol> =
     throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
 
-  final override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName,
-                                        params: PolySymbolsCodeCompletionQueryParams,
-                                        scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> =
+  final override fun getCodeCompletions(
+    qualifiedName: PolySymbolQualifiedName,
+    params: PolySymbolsCodeCompletionQueryParams,
+    scope: Stack<PolySymbolsScope>,
+  ): List<PolySymbolCodeCompletionItem> =
     throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =

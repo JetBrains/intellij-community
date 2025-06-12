@@ -2,14 +2,14 @@
 package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolNameSegment
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.impl.PolySymbolCodeCompletionItemImpl
 import com.intellij.polySymbols.impl.copy
+import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.util.containers.Stack
 
 internal fun PolySymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): PolySymbolCodeCompletionItem =
   if ((this as PolySymbolCodeCompletionItemImpl).stopSequencePatternEvaluation != stop)

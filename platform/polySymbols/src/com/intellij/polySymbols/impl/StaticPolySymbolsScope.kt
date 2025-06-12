@@ -3,9 +3,9 @@ package com.intellij.polySymbols.impl
 
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
+import com.intellij.polySymbols.query.PolySymbolsScope
 
 interface StaticPolySymbolsScope : PolySymbolsScope, PolyContextRulesProvider {
 

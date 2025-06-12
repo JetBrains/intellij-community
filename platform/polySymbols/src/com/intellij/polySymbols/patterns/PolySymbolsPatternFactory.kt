@@ -1,19 +1,21 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.patterns
 
-import com.intellij.util.containers.Stack
 import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.patterns.impl.*
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 object PolySymbolsPatternFactory {
 
-  fun createComplexPattern(optionsProvider: (queryExecutor: PolySymbolsQueryExecutor, contextStack: Stack<PolySymbolsScope>) -> ComplexPatternOptions,
-                           isStaticAndRequiredProvider: () -> Boolean,
-                           patternsProvider: () -> List<PolySymbolsPattern>): PolySymbolsPattern =
+  fun createComplexPattern(
+    optionsProvider: (queryExecutor: PolySymbolsQueryExecutor, contextStack: Stack<PolySymbolsScope>) -> ComplexPatternOptions,
+    isStaticAndRequiredProvider: () -> Boolean,
+    patternsProvider: () -> List<PolySymbolsPattern>,
+  ): PolySymbolsPattern =
     ComplexPattern(object : ComplexPatternConfigProvider {
       override fun getPatterns(): List<PolySymbolsPattern> =
         patternsProvider()
@@ -26,9 +28,11 @@ object PolySymbolsPatternFactory {
 
     })
 
-  fun createComplexPattern(options: ComplexPatternOptions,
-                           isStaticAndRequired: Boolean,
-                           vararg patterns: PolySymbolsPattern): PolySymbolsPattern =
+  fun createComplexPattern(
+    options: ComplexPatternOptions,
+    isStaticAndRequired: Boolean,
+    vararg patterns: PolySymbolsPattern,
+  ): PolySymbolsPattern =
 
     ComplexPattern(object : ComplexPatternConfigProvider {
       override fun getPatterns(): List<PolySymbolsPattern> =

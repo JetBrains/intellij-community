@@ -14,10 +14,7 @@ import com.intellij.polySymbols.customElements.json.toApiStatus
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.Stack
@@ -70,6 +67,8 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
                 .toList()
                 .also { contributions -> _superContributions = contributions }
 
+    override fun getModificationCount(): Long = 0
+
     override val origin: CustomElementsJsonOrigin
       get() = base.origin
 
@@ -121,7 +120,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolsListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
-    ): List<PolySymbolsScope> =
+    ): List<PolySymbol> =
       base.rootScope
         .getSymbols(base.declaration, this.origin, qualifiedKind, params)
         .toList()

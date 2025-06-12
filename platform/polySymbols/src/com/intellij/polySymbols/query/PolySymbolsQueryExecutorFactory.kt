@@ -5,11 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.query.impl.PolySymbolsQueryExecutorBuilderImpl
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
 /**

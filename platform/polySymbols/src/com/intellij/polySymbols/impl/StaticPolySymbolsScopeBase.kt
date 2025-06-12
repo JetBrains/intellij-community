@@ -7,7 +7,6 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.*
-import com.intellij.polySymbols.impl.SearchMap
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -45,7 +44,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolsListSymbolsQueryParams,
     scope: Stack<PolySymbolsScope>,
-  ): List<PolySymbolsScope> =
+  ): List<PolySymbol> =
     getMaps(params).flatMap {
       it.getSymbols(qualifiedKind, params)
     }.toList()
@@ -75,7 +74,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     origin: Origin,
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolsListSymbolsQueryParams,
-  ): List<PolySymbolsScope> =
+  ): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
       .getSymbols(qualifiedKind, params)
       .toList()

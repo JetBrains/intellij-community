@@ -111,7 +111,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
             val valuesSymbols = queryExecutor.codeCompletionQuery(
               HTML_ATTRIBUTE_VALUES, "", 0)
               .exclude(PolySymbolModifier.VIRTUAL, PolySymbolModifier.ABSTRACT)
-              .additionalScope(symbol)
+              .additionalScope(symbol.queryScope)
               .run()
             typeSupport.createEnumType(symbol, valuesSymbols)
           }
@@ -141,7 +141,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
             PolySymbolHtmlAttributeValue.Type.ENUM -> {
               queryExecutor.codeCompletionQuery(HTML_ATTRIBUTE_VALUES, "", 0)
                 .exclude(PolySymbolModifier.ABSTRACT)
-                .additionalScope(symbol)
+                .additionalScope(symbol.queryScope)
                 .run()
                 .filter { !it.completeAfterInsert }
             }

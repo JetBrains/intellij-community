@@ -13,10 +13,10 @@ import com.intellij.openapi.util.getAndUpdateUserData
 import com.intellij.patterns.StandardPatterns
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
@@ -72,6 +72,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
     fun isFurtherCodeCompletionPreventedFor(parameters: CompletionParameters, vararg qualifiedKind: PolySymbolQualifiedKind): Boolean =
       (parameters.process as CompletionProcessEx).getUserData(preventedCodeCompletionsKey)
         ?.let { prevented -> qualifiedKind.any { prevented.contains(it) } } == true
+
     @JvmStatic
     fun processCompletionQueryResults(
       queryExecutor: PolySymbolsQueryExecutor,

@@ -4,10 +4,9 @@ package com.intellij.polySymbols.query
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextRulesProvider
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
@@ -19,9 +18,11 @@ interface PolySymbolsQueryConfigurator {
   fun getContextRulesProviders(project: Project, dir: VirtualFile): List<PolyContextRulesProvider> =
     emptyList()
 
-  fun getNameConversionRulesProviders(project: Project,
-                                      element: PsiElement?,
-                                      context: PolyContext): List<PolySymbolNameConversionRulesProvider> =
+  fun getNameConversionRulesProviders(
+    project: Project,
+    element: PsiElement?,
+    context: PolyContext,
+  ): List<PolySymbolNameConversionRulesProvider> =
     emptyList()
 
   fun beforeQueryExecutorCreation(project: Project) {

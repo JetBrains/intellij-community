@@ -2,22 +2,26 @@
 package com.intellij.polySymbols.webTypes.filters
 
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.webTypes.impl.PolySymbolsFilterEP
 
 interface PolySymbolsFilter {
 
-  fun filterCodeCompletions(codeCompletions: List<PolySymbolCodeCompletionItem>,
-                            queryExecutor: PolySymbolsQueryExecutor,
-                            scope: List<PolySymbolsScope>,
-                            properties: Map<String, Any>): List<PolySymbolCodeCompletionItem>
+  fun filterCodeCompletions(
+    codeCompletions: List<PolySymbolCodeCompletionItem>,
+    queryExecutor: PolySymbolsQueryExecutor,
+    scope: List<PolySymbolsScope>,
+    properties: Map<String, Any>,
+  ): List<PolySymbolCodeCompletionItem>
 
-  fun filterNameMatches(matches: List<PolySymbol>,
-                        queryExecutor: PolySymbolsQueryExecutor,
-                        scope: List<PolySymbolsScope>,
-                        properties: Map<String, Any>): List<PolySymbol>
+  fun filterNameMatches(
+    matches: List<PolySymbol>,
+    queryExecutor: PolySymbolsQueryExecutor,
+    scope: List<PolySymbolsScope>,
+    properties: Map<String, Any>,
+  ): List<PolySymbol>
 
 
   companion object {

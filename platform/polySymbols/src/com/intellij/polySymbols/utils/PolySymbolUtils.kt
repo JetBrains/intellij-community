@@ -86,7 +86,7 @@ fun PolySymbol.withMatchedKind(qualifiedKind: PolySymbolQualifiedKind): PolySymb
   }
   else this
 
-fun PolySymbol.withNavigationTarget(target: PsiElement): PolySymbol =
+fun PolySymbol.withNavigationTarget(target: PsiElement): PolySymbolDelegate<PolySymbol> =
   object : PolySymbolDelegate<PolySymbol> {
     override val delegate: PolySymbol
       get() = this@withNavigationTarget
@@ -94,7 +94,7 @@ fun PolySymbol.withNavigationTarget(target: PsiElement): PolySymbol =
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
       listOf(SymbolNavigationService.getInstance().psiElementNavigationTarget(target))
 
-    override fun createPointer(): Pointer<out PolySymbol> {
+    override fun createPointer(): Pointer<out PolySymbolDelegate<PolySymbol>> {
       val symbolPtr = delegate.createPointer()
       val targetPtr = target.createSmartPointer()
       return Pointer {
@@ -153,7 +153,8 @@ fun PolySymbol.match(
   context: Stack<PolySymbolsScope>,
 ): List<PolySymbol> {
   pattern?.let { pattern ->
-    context.push(this)
+    val additionalScope = this.queryScope
+    additionalScope.forEach { context.push(it) }
     try {
       return pattern
         .match(this, context, nameToMatch, params)
@@ -167,7 +168,7 @@ fun PolySymbol.match(
         }
     }
     finally {
-      context.pop()
+      additionalScope.forEach { _ -> context.pop() }
     }
   }
 
@@ -185,13 +186,14 @@ fun PolySymbol.toCodeCompletionItems(
   context: Stack<PolySymbolsScope>,
 ): List<PolySymbolCodeCompletionItem> =
   pattern?.let { pattern ->
-    context.push(this)
+    val additionalScope = this.queryScope
+    additionalScope.forEach { context.push(it) }
     try {
       pattern.complete(this, context, name, params)
         .applyIcons(this)
     }
     finally {
-      context.pop()
+      additionalScope.forEach { _ -> context.pop() }
     }
   }
   ?: params.queryExecutor.namesProvider

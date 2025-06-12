@@ -9,10 +9,11 @@ import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.polySymbols.js.JS_PROPERTIES
 import com.intellij.polySymbols.js.JS_STRING_LITERALS
+import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
 
-interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolWithDocumentation {
+interface WebTypesSymbol : PsiSourcedPolySymbol, PolySymbolWithDocumentation, PolySymbolsScope {
 
   val location: Location?
 

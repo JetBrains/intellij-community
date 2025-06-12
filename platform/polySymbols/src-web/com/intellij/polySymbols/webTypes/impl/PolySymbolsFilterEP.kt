@@ -3,12 +3,12 @@ package com.intellij.polySymbols.webTypes.impl
 
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
+import com.intellij.util.xmlb.annotations.Attribute
 
 class PolySymbolsFilterEP() : CustomLoadingExtensionPointBean<PolySymbolsFilter>() {
 

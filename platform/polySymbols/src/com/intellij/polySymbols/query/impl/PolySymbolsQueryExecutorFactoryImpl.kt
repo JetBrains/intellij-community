@@ -10,20 +10,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.util.asSafely
-import com.intellij.util.containers.MultiMap
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.polySymbols.context.impl.buildPolyContext
 import com.intellij.polySymbols.query.*
+import com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
 import com.intellij.polySymbols.utils.createModificationTracker
 import com.intellij.polySymbols.utils.findOriginalFile
+import com.intellij.psi.PsiElement
+import com.intellij.util.asSafely
+import com.intellij.util.containers.MultiMap
 
 class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySymbolsQueryExecutorFactory, Disposable {
 
@@ -71,9 +70,11 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
                                         allowResolve)
   }
 
-  override fun addScope(scope: PolySymbolsScope,
-                        contextDirectory: VirtualFile?,
-                        disposable: Disposable) {
+  override fun addScope(
+    scope: PolySymbolsScope,
+    contextDirectory: VirtualFile?,
+    disposable: Disposable,
+  ) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     modificationCount++
     customScope.putValue(contextDirectory, scope)
@@ -85,8 +86,10 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
   override fun dispose() {
   }
 
-  internal fun getContextRules(project: Project,
-                               dir: VirtualFile): Pair<MultiMap<PolyContextKind, PolyContextKindRules>, ModificationTracker> {
+  internal fun getContextRules(
+    project: Project,
+    dir: VirtualFile,
+  ): Pair<MultiMap<PolyContextKind, PolyContextKindRules>, ModificationTracker> {
     val result = MultiMap<PolyContextKind, PolyContextKindRules>()
 
     getCustomScope(dir)

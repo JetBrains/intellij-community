@@ -7,13 +7,6 @@ import com.intellij.html.polySymbols.PolySymbolsFrameworkHtmlSupport
 import com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator.HtmlElementDescriptorBasedSymbol
 import com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator.StandardHtmlSymbol
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbolsOrExtensions
-import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
-import com.intellij.psi.impl.source.xml.XmlDescriptorUtil
-import com.intellij.psi.impl.source.xml.XmlDescriptorUtil.wrapInDelegating
-import com.intellij.psi.xml.XmlAttribute
-import com.intellij.psi.xml.XmlTag
-import com.intellij.util.asSafely
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolQualifiedKind
@@ -21,15 +14,23 @@ import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
 import com.intellij.polySymbols.utils.nameSegments
+import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
+import com.intellij.psi.impl.source.xml.XmlDescriptorUtil
+import com.intellij.psi.impl.source.xml.XmlDescriptorUtil.wrapInDelegating
+import com.intellij.psi.xml.XmlAttribute
+import com.intellij.psi.xml.XmlTag
+import com.intellij.util.asSafely
 import com.intellij.xml.*
 import com.intellij.xml.impl.XmlElementDescriptorEx
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import org.jetbrains.annotations.NonNls
 
-open class PolySymbolElementDescriptor private constructor(private val tag: XmlTag,
-                                                           private val name: String,
-                                                           val symbol: PolySymbol)
-  : XmlElementDescriptorEx, XmlElementDescriptorAwareAboutChildren, XmlCustomElementDescriptor {
+open class PolySymbolElementDescriptor private constructor(
+  private val tag: XmlTag,
+  private val name: String,
+  val symbol: PolySymbol,
+) : XmlElementDescriptorEx, XmlElementDescriptorAwareAboutChildren, XmlCustomElementDescriptor {
 
   constructor(info: PolySymbolHtmlElementInfo, tag: XmlTag) : this(tag, info.name, info.symbol)
 
@@ -37,41 +38,47 @@ open class PolySymbolElementDescriptor private constructor(private val tag: XmlT
 
   }
 
-  fun runNameMatchQuery(qualifiedName: PolySymbolQualifiedName,
-                        virtualSymbols: Boolean = true,
-                        abstractSymbols: Boolean = false,
-                        strictScope: Boolean = false): List<PolySymbol> =
+  fun runNameMatchQuery(
+    qualifiedName: PolySymbolQualifiedName,
+    virtualSymbols: Boolean = true,
+    abstractSymbols: Boolean = false,
+    strictScope: Boolean = false,
+  ): List<PolySymbol> =
     PolySymbolsQueryExecutorFactory.create(tag)
       .nameMatchQuery(listOf(qualifiedName)) {
         strictScope(strictScope)
         if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
         if (!abstractSymbols) exclude(PolySymbolModifier.ABSTRACT)
-        additionalScope(symbol)
+        additionalScope(symbol.queryScope)
       }
 
-  fun runListSymbolsQuery(qualifiedKind: PolySymbolQualifiedKind,
-                          expandPatterns: Boolean,
-                          virtualSymbols: Boolean = true,
-                          abstractSymbols: Boolean = false,
-                          strictScope: Boolean = false): List<PolySymbol> =
+  fun runListSymbolsQuery(
+    qualifiedKind: PolySymbolQualifiedKind,
+    expandPatterns: Boolean,
+    virtualSymbols: Boolean = true,
+    abstractSymbols: Boolean = false,
+    strictScope: Boolean = false,
+  ): List<PolySymbol> =
     PolySymbolsQueryExecutorFactory.create(tag)
       .listSymbolsQuery(qualifiedKind, expandPatterns) {
         strictScope(strictScope)
         if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
         if (!abstractSymbols) exclude(PolySymbolModifier.ABSTRACT)
-        additionalScope(symbol)
+        additionalScope(symbol.queryScope)
       }
 
-  fun runCodeCompletionQuery(qualifiedKind: PolySymbolQualifiedKind,
-                             name: String,
-                             /** Position to complete at in the last segment of the path **/
-                             position: Int,
-                             virtualSymbols: Boolean = true): List<PolySymbolCodeCompletionItem> =
+  fun runCodeCompletionQuery(
+    qualifiedKind: PolySymbolQualifiedKind,
+    name: String,
+    /** Position to complete at in the last segment of the path **/
+    position: Int,
+    virtualSymbols: Boolean = true,
+  ): List<PolySymbolCodeCompletionItem> =
     PolySymbolsQueryExecutorFactory.create(tag)
       .codeCompletionQuery(qualifiedKind, name, position) {
         if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
         exclude(PolySymbolModifier.ABSTRACT)
-        additionalScope(symbol)
+        additionalScope(symbol.queryScope)
       }
 
   override fun getQualifiedName(): String {

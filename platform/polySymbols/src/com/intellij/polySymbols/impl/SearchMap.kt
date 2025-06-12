@@ -2,28 +2,17 @@
 package com.intellij.polySymbols.impl
 
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolKind
-import com.intellij.polySymbols.PolySymbolNamespace
-import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.PolySymbolsScope
+import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolNamesProvider
-import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolsQueryParams
+import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.match
 import com.intellij.polySymbols.utils.toCodeCompletionItems
 import com.intellij.polySymbols.utils.withMatchedName
 import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
-import java.util.TreeMap
-import kotlin.sequences.flatMap
-import kotlin.sequences.plus
+import java.util.*
 
 internal abstract class SearchMap<T> internal constructor(
   private val namesProvider: PolySymbolNamesProvider,
@@ -71,7 +60,7 @@ internal abstract class SearchMap<T> internal constructor(
       .map { it.withMatchedName(qualifiedName.name) }
       .plus(collectPatternContributions(qualifiedName, params, scope))
 
-  internal fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolsListSymbolsQueryParams): Sequence<PolySymbolsScope> =
+  internal fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolsListSymbolsQueryParams): Sequence<PolySymbol> =
     statics.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true))
       .values.asSequence()
       .plus(patterns.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true)).values)

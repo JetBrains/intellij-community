@@ -4,13 +4,13 @@ package com.intellij.polySymbols.query.impl
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
-import com.intellij.polySymbols.PolySymbolsScope
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory.PolySymbolsQueryExecutorBuilder
 import com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
+import com.intellij.polySymbols.query.PolySymbolsScope
 
 class PolySymbolsQueryExecutorBuilderImpl() : PolySymbolsQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolsScope>()
