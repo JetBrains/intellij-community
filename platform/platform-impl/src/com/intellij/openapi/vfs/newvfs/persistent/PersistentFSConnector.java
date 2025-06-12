@@ -98,8 +98,8 @@ public final class PersistentFSConnector {
 
   @VisibleForTesting
   public static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
-                                                 int currentImplVersion,
-                                                 @NotNull List<VFSRecoverer> recoverers) throws IOException {
+                                                        int currentImplVersion,
+                                                        @NotNull List<VFSRecoverer> recoverers) throws IOException {
     //RC: Mental model behind VFS initialization:
     //   VFS consists of few different storages: records, attributes, content... Each storage has its own on-disk
     //   data format. Each storage also has a writeable header field .version, which is (must be) 0 by default.
@@ -108,11 +108,11 @@ public final class PersistentFSConnector {
     //
     //   When VFS is initialized from scratch, this 'VFS impl version' is stamped into each storage .version header field.
     //   When VFS is loaded (from already existing on-disk representation), we load each storage from apt file(s), collect
-    //   all the storage.versions and check them against currentImplVersion -- and if all the versions are equal to
+    //   all the storage.versions and check them against currentImplVersion -- and if _all_ the versions are equal to
     //   currentImplVersion => VFS is OK and ready to use ('success path')
     //
-    //   If not all versions are equal to currentImplVersion => we assume VFS is outdated, drop all the VFS files, and throw
-    //   exception, which most likely triggers VFS rebuild from 0 somewhere above.
+    //   If not all versions are equal to currentImplVersion => we assume whole VFS is outdated, drop all the VFS files, and
+    //   throw exception, which most likely triggers VFS rebuild from 0 somewhere above.
     //   Now, versions could be != currentImplVersion for different reasons:
     //   1) On-disk VFS are of an ancient version -- the most obvious reason
     //   2) Some of the VFS storages are missed on disk, and initialized from 0, thus having their .version=0
@@ -144,10 +144,10 @@ public final class PersistentFSConnector {
     Files.createDirectories(basePath);
 
     //MAYBE RC: looks like it all could be much easier with coroutines
-    VFSAsyncTaskExecutor pool = PersistentFsConnectorHelper.INSTANCE.executor();
+    VFSAsyncTaskExecutor asyncExecutor = PersistentFsConnectorHelper.INSTANCE.executor();
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
-    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, pool);
+    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, asyncExecutor);
     try {
       vfsLoader.failIfCorruptionMarkerPresent();
 
@@ -194,7 +194,8 @@ public final class PersistentFSConnector {
       try {
         vfsLoader.closeEverything();
 
-        List<StorageAlreadyInUseException> storageAlreadyInUseExceptions = ExceptionUtil.findCauseAndSuppressed(e, StorageAlreadyInUseException.class);
+        List<StorageAlreadyInUseException> storageAlreadyInUseExceptions =
+          ExceptionUtil.findCauseAndSuppressed(e, StorageAlreadyInUseException.class);
         if (!storageAlreadyInUseExceptions.isEmpty()) {
           //some of the storages are used by another process: don't clean VFS (it doesn't help), interrupt startup instead
           throw new IOException("Some of VFS storages are already in use: is an IDE process already running?", e);
