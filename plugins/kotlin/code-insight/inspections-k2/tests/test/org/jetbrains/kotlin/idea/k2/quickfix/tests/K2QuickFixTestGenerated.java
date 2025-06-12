@@ -2273,6 +2273,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/MultiDollarInterpolation_2_2.kt");
         }
 
+        @TestMetadata("NestedTypeAlias_2_1.kt")
+        public void testNestedTypeAlias_2_1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/NestedTypeAlias_2_1.kt");
+        }
+
+        @TestMetadata("NestedTypeAlias_2_2.kt")
+        public void testNestedTypeAlias_2_2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/NestedTypeAlias_2_2.kt");
+        }
+
         @TestMetadata("WhenGuards_2_0.kt")
         public void testWhenGuards_2_0() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/unsupportedFeature/WhenGuards_2_0.kt");
