@@ -5,8 +5,9 @@ import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
+import com.intellij.openapi.vcs.changes.ui.CommitToolWindowUtil
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
-import com.intellij.openapi.wm.IdeFocusManager
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.lang.ref.WeakReference
@@ -15,7 +16,7 @@ import java.lang.ref.WeakReference
 class SavedPatchesEditorDiffPreview(
   private val changesBrowser: SavedPatchesChangesBrowser,
   private val focusMainComponent: (Component?) -> Unit,
-  private val isShowDiffWithLocal: () -> Boolean
+  private val isShowDiffWithLocal: () -> Boolean,
 ) : TreeHandlerEditorDiffPreview(changesBrowser.viewer, SavedPatchesDiffPreviewHandler(isShowDiffWithLocal)) {
 
   private var lastFocusOwner: WeakReference<Component>? = null
@@ -36,8 +37,7 @@ class SavedPatchesEditorDiffPreview(
   }
 
   override fun openPreview(requestFocus: Boolean): Boolean {
-    lastFocusOwner = WeakReference(IdeFocusManager.getInstance(project).focusOwner)
-    return super.openPreview(requestFocus)
+    return CommitToolWindowUtil.openDiff(ChangesViewContentManager.SHELF, this, requestFocus)
   }
 
   override fun returnFocusToTree() {

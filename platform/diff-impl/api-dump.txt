@@ -237,7 +237,8 @@ com.intellij.diff.editor.DiffEditorTabFilesManager
 - s:isDiffInWindow():Z
 - a:isDiffOpenedInWindow(com.intellij.openapi.vfs.VirtualFile):Z
 - s:setDiffInEditor(Z):V
-- a:showDiffFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.FileEditor[]
+- showDiffFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.openapi.fileEditor.FileEditor[]
+- a:showDiffFile(com.intellij.openapi.vfs.VirtualFile,Z,Z):com.intellij.openapi.fileEditor.FileEditor[]
 f:com.intellij.diff.editor.DiffEditorTabFilesManager$Companion
 - sf:SHOW_DIFF_IN_EDITOR_SETTING:java.lang.String
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.diff.editor.DiffEditorTabFilesManager

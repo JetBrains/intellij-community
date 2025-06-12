@@ -9,7 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile
 
 interface DiffEditorTabFilesManager {
 
-  fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor>
+  fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
+    DiffEditorTabFilesUtil.setForceOpeningsInNewWindow(diffFile, null)
+    return showDiffFile(diffFile, focusEditor, isDiffInEditor)
+  }
+
+  fun showDiffFile(diffFile: VirtualFile, focusEditor: Boolean, openInEditor: Boolean): Array<out FileEditor>
 
   /**
    * Returns true for diff files that are opened in their own window using
@@ -40,4 +45,3 @@ interface DiffEditorTabFilesManager {
     fun getInstance(project: Project): DiffEditorTabFilesManager = project.service()
   }
 }
-
