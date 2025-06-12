@@ -150,8 +150,8 @@ private suspend fun prepareNsis(context: BuildContext, tempDir: Path): Pair<Path
 
 private fun prepareConfigurationFiles(nsiConfDir: Path, customizer: WindowsDistributionCustomizer, context: BuildContext, arch: JvmArchitecture) {
   val expectedArch = when (arch) {  // https://learn.microsoft.com/en-us/windows/win32/sysinfo/image-file-machine-constants
-    JvmArchitecture.x64 -> 34404  // IMAGE_FILE_MACHINE_AMD64
-    JvmArchitecture.aarch64 -> 43620  // IMAGE_FILE_MACHINE_ARM64
+    JvmArchitecture.x64 -> 0x8664  // IMAGE_FILE_MACHINE_AMD64
+    JvmArchitecture.aarch64 -> 0xAA64  // IMAGE_FILE_MACHINE_ARM64
   }
   val fileAssociations =
     if (customizer.fileAssociations.isEmpty()) "NoAssociation"
@@ -177,10 +177,6 @@ private fun prepareConfigurationFiles(nsiConfDir: Path, customizer: WindowsDistr
     !define PRODUCT_HEADER_FILE "headerlogo.bmp"
     !define ASSOCIATION "$${fileAssociations}"
     !define UNINSTALL_WEB_PAGE "$${uninstallFeedbackPage ?: ""}"
-
-    ; if SHOULD_SET_DEFAULT_INSTDIR != 0 then default installation directory will be directory where highest-numbered IDE build has been installed
-    ; set to 1 for release build
-    !define SHOULD_SET_DEFAULT_INSTDIR "0"
 
     !define MUI_VERSION_MAJOR "$${appInfo.majorVersion}"
     !define MUI_VERSION_MINOR "$${appInfo.minorVersion}"
