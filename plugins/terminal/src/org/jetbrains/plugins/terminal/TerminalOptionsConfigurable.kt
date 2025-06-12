@@ -17,6 +17,7 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.colors.pages.ANSIColoredConsoleColorsPage
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
@@ -35,6 +36,7 @@ import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.selectedValueIs
 import com.intellij.ui.layout.selectedValueMatches
+import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.launchOnceOnShow
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +51,9 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import java.awt.Color
 import java.awt.Component
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JComponent
 import javax.swing.JTextField
@@ -264,6 +269,18 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         row {
           checkBox(message("settings.override.ide.shortcuts"))
             .bindSelected(optionsProvider::overrideIdeShortcuts)
+          cell(ActionLink(message("settings.configure.terminal.keybindings"), ActionListener { e ->
+            val settings = DataManager.getInstance().getDataContext(e.getSource() as ActionLink?).getData(Settings.KEY)
+            if (settings != null) {
+              val configurable = settings.find("preferences.keymap")
+              settings.select(configurable, "Terminal").doWhenDone(Runnable {
+                // Remove once https://youtrack.jetbrains.com/issue/IDEA-212247 is fixed
+                EdtExecutorService.getScheduledExecutorInstance().schedule(Runnable {
+                  settings.select(configurable, "Terminal")
+                }, 100, TimeUnit.MILLISECONDS)
+              })
+            }
+          }).apply { toolTipText = message("settings.keymap.plugins.terminal") })
         }
         row {
           checkBox(message("settings.shell.integration"))
