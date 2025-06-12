@@ -9,6 +9,7 @@ import com.intellij.collaboration.util.map
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
+import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.findCumulativeChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
@@ -30,6 +31,8 @@ internal interface GHPRThreadsViewModels {
   val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>>
   val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>>
 
+  val threadMappingData: StateFlow<Map<String, ThreadMappingData>>
+
   fun lookupNextComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String?
   fun lookupNextComment(currentThreadId: String, isVisible: (String) -> Boolean): String?
   fun lookupPreviousComment(cursorLocation: GHPRReviewUnifiedPosition, isVisible: (String) -> Boolean): String?
@@ -42,6 +45,12 @@ internal interface GHPRThreadsViewModels {
     val id: String?,
     val createdAt: Date,
     val positionInDiff: GHPRReviewUnifiedPosition,
+  )
+
+  data class ThreadMappingData(
+    val threadData: GHPullRequestReviewThread,
+    val change: RefComparisonChange?,
+    val diffData: GitTextFilePatchWithHistory?,
   )
 }
 
@@ -92,6 +101,25 @@ internal class GHPRThreadsViewModelsImpl(
           .toMap()
       }
     }
+
+  override val threadMappingData: StateFlow<Map<String, GHPRThreadsViewModels.ThreadMappingData>> =
+    dataProvider.reviewData.threadsComputationFlow
+      .transformConsecutiveSuccesses(false) {
+        combine(this, changesFetchFlow) { threads, allChangesOrNull ->
+          val allChanges = allChangesOrNull.getOrNull() ?: return@combine null
+
+          threads.associateBy(GHPullRequestReviewThread::id) { threadData ->
+            val commitOid = threadData.commit?.oid
+                            ?: return@associateBy GHPRThreadsViewModels.ThreadMappingData(threadData, null, null)
+            val change = allChanges.findCumulativeChange(commitOid, threadData.path)
+                         ?: return@associateBy GHPRThreadsViewModels.ThreadMappingData(threadData, null, null)
+            val diffData = allChanges.patchesByChange[change]
+                           ?: return@associateBy GHPRThreadsViewModels.ThreadMappingData(threadData, change, null)
+
+            GHPRThreadsViewModels.ThreadMappingData(threadData, change, diffData)
+          }
+        }
+      }.map { it.getOrNull().orEmpty() }.stateInNow(cs, emptyMap())
 
   private val _newComments = MutableStateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModelImpl>>(emptyMap())
   override val newComments: StateFlow<Map<GHPRReviewCommentPosition, GHPRReviewNewCommentEditorViewModel>> = _newComments.asStateFlow()
