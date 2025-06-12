@@ -129,8 +129,8 @@ class MavenCommandLineSetup(
     if (targetJavaHome != null) {
       return targetJavaHome
     }
-    val jdk = ProjectRootManager.getInstance(project).getProjectSdk() ?: getJdkForImporter(project)
-    return jdk.homePath?.asTargetPathString()
+    val jdk = ProjectRootManager.getInstance(project).getProjectSdk()
+    return jdk?.homePath?.asTargetPathString()
   }
 
   private fun setupMavenExtClassPath() {

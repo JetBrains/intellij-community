@@ -18,6 +18,7 @@ import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -70,11 +71,23 @@ public class MavenImportingSettingsForm {
 
     myImporterJdkValidator = new ComponentValidator(disposable)
       .withValidator(() -> {
-        if (JavaSdkVersionUtil.isAtLeast(myJdkForImporterComboBox.getSelectedJdk(), JavaSdkVersion.JDK_1_8)) {
+        if (JavaSdkVersionUtil.isAtLeast(myJdkForImporterComboBox.getSelectedJdk(), JavaSdkVersion.JDK_17)) {
           return null;
-        } else {
-          return new ValidationInfo(MavenConfigurableBundle.message("maven.settings.importing.jdk.too.old.error"), myJdkForImporterComboBox);
         }
+        var settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
+        MavenHomeType type = settings.getGeneralSettings().getMavenHomeType();
+        if (type instanceof StaticResolvedMavenHomeType staticResolvedMavenHomeType) {
+          var version = MavenUtil.getMavenVersion(staticResolvedMavenHomeType);
+          if (version != null && version.startsWith("4")) {
+            return new ValidationInfo(MavenConfigurableBundle.message("maven.settings.importing.jdk.too.old.error.4"),
+                                      myJdkForImporterComboBox);
+          }
+        }
+        if (!JavaSdkVersionUtil.isAtLeast(myJdkForImporterComboBox.getSelectedJdk(), JavaSdkVersion.JDK_1_8)) {
+          return new ValidationInfo(MavenConfigurableBundle.message("maven.settings.importing.jdk.too.old.error"),
+                                    myJdkForImporterComboBox);
+        }
+        return null;
       })
       .installOn(myJdkForImporterComboBox);
 
