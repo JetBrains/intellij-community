@@ -124,4 +124,9 @@ public class KotlinFirFileStructureTestGenerated extends AbstractKotlinFirFileSt
     public void testSimple() throws Exception {
         runTest("../../idea/tests/testData/structureView/fileStructure/Simple.kt");
     }
+
+    @TestMetadata("Varargs.kt")
+    public void testVarargs() throws Exception {
+        runTest("../../idea/tests/testData/structureView/fileStructure/Varargs.kt");
+    }
 }

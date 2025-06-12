@@ -124,4 +124,9 @@ public class KotlinFileStructureTestGenerated extends AbstractKotlinFileStructur
     public void testSimple() throws Exception {
         runTest("testData/structureView/fileStructure/Simple.kt");
     }
+
+    @TestMetadata("Varargs.kt")
+    public void testVarargs() throws Exception {
+        runTest("testData/structureView/fileStructure/Varargs.kt");
+    }
 }
