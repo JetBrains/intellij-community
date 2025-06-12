@@ -32,7 +32,6 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
-import com.jetbrains.python.psi.resolve.ResolveImportUtil
 import com.jetbrains.python.psi.resolve.fromSdk
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.*
@@ -54,7 +53,7 @@ class PyBuiltinCache private constructor(
     myBuiltinsFile = getBuiltinsForSdk(project, sdk).toCachedFile(),
     myTypesFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(TYPES_MODULE)).toCachedFile(),
     myTypeshedFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(TYPESHED_MODULE)).toCachedFile(),
-    myExceptionsFile = getExceptionsForSdk(project, sdk).toCachedFile(),
+    myExceptionsFile = getFileForSdk(project, sdk, QualifiedName.fromDottedString(EXCEPTIONS_MODULE)).toCachedFile(),
   )
 
   val isValid: Boolean
@@ -255,7 +254,8 @@ class PyBuiltinCache private constructor(
 
     @JvmStatic
     fun getBuiltinsForSdk(project: Project, sdk: Sdk): PyFile? {
-      return getFileForSdk(project, sdk, QualifiedName.fromDottedString(getBuiltinsModuleName(PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk))))
+      val moduleName = getBuiltinsModuleName(PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk))
+      return getFileForSdk(project, sdk, QualifiedName.fromDottedString(moduleName))
     }
 
     @JvmStatic
@@ -266,10 +266,6 @@ class PyBuiltinCache private constructor(
     @JvmStatic
     fun getBuiltinsModuleName(level: LanguageLevel): String {
       return if (level.isPython2) BUILTIN_MODULE else BUILTIN_MODULE_3K
-    }
-
-    fun getExceptionsForSdk(project: Project, sdk: Sdk): PyFile? {
-      return getFileForSdk(project, sdk, QualifiedName.fromDottedString(EXCEPTIONS_MODULE))
     }
 
     private fun getFileForSdk(project: Project, sdk: Sdk, moduleName: QualifiedName): PyFile? {
