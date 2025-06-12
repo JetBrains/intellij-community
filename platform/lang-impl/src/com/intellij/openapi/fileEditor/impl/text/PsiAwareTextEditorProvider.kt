@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl.text
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
+import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.writeIntentReadAction
@@ -133,7 +134,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val highlighterReady = suspend { highlighterDeferred.join() }
 
       val necropolis = project.serviceAsync<Necropolis>()
-      necropolis.spawnZombies(project, file, document, editorSupplier, highlighterReady)
+      if (!AppModeAssertions.isBackend()) {
+        necropolis.spawnZombies(project, file, document, editorSupplier, highlighterReady)
+      }
 
       val editor = editorSupplier()
       span("editor languageSupplier set", Dispatchers.EDT) {
