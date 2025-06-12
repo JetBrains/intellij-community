@@ -141,25 +141,30 @@ public final class AsyncStacksUtils {
       result -> result instanceof StringReference ? ((StringReference)result).value() : null,
       evaluationContext);
     if (value != null) {
-      List<StackFrameItem> res = new ArrayList<>();
-      try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
-        while (dis.available() > 0) {
-          StackFrameItem item = null;
-          if (dis.readBoolean()) {
-            String className = dis.readUTF();
-            String methodName = dis.readUTF();
-            int line = dis.readInt();
-            Location location =
-              DebuggerUtilsEx.findOrCreateLocation(virtualMachineProxy.getVirtualMachine(), className, methodName, line);
-            item = new StackFrameItem(location, null);
-          }
-          res.add(item);
+      return parseAgentAsyncStackTrace(value, virtualMachineProxy);
+    }
+    return null;
+  }
+
+  @ApiStatus.Internal
+  public static List<StackFrameItem> parseAgentAsyncStackTrace(String value, VirtualMachineProxyImpl vm) {
+    List<StackFrameItem> res = new ArrayList<>();
+    try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(value.getBytes(StandardCharsets.ISO_8859_1)))) {
+      while (dis.available() > 0) {
+        StackFrameItem item = null;
+        if (dis.readBoolean()) {
+          String className = dis.readUTF();
+          String methodName = dis.readUTF();
+          int line = dis.readInt();
+          Location location = DebuggerUtilsEx.findOrCreateLocation(vm.getVirtualMachine(), className, methodName, line);
+          item = new StackFrameItem(location, null);
         }
-        return res;
+        res.add(item);
       }
-      catch (Exception e) {
-        DebuggerUtilsImpl.logError(e);
-      }
+      return res;
+    }
+    catch (Exception e) {
+      DebuggerUtilsImpl.logError(e);
     }
     return null;
   }
@@ -362,6 +367,9 @@ public final class AsyncStacksUtils {
             }
             if (!Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
               parametersList.addProperty("debugger.agent.support.throwable", "false");
+            }
+            if (Registry.is("debugger.async.stack.trace.for.all.threads")) {
+              parametersList.addProperty("debugger.async.stack.trace.for.all.threads", "true");
             }
           }
         }

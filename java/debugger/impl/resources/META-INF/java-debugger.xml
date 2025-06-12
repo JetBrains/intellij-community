@@ -205,6 +205,8 @@
                  description="Allow to compile the code before evaluation if needed"/>
     <registryKey key="debugger.compiling.evaluator.force" defaultValue="false"
                  description="Always compile the code before evaluation"/>
+    <registryKey key="debugger.async.stack.trace.for.all.threads" defaultValue="true"
+                 description="Get async stack trace for any thread using the same evaluationContext. By default debugger-agent only returns async stack trace for the current suspended thread."/>
   </extensions>
 
   <actions>

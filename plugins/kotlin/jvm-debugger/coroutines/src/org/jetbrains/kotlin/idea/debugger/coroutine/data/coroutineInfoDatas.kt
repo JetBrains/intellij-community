@@ -29,7 +29,8 @@ open class CoroutineInfoData(
     val lastObservedThread: ThreadReference?,
     val debugCoroutineInfoRef: ObjectReference?,
     private val stackFrameProvider: CoroutineStackFramesProvider?,
-    val lastObservedStackTrace: List<Location> = emptyList()
+    val lastObservedStackTrace: List<Location> = emptyList(),
+    val asyncStackTrace: List<Location> = emptyList()
 ) {
     val name: String = name ?: DEFAULT_COROUTINE_NAME
 

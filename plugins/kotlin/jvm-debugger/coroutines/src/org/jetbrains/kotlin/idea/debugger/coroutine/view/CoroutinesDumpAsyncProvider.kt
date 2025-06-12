@@ -61,12 +61,22 @@ private class CoroutineDumpItem(info: CoroutineInfoData) : MergeableDumpItem {
 
     private val dispatcher = info.dispatcher
 
+    private val lastObservedStackTrace: String = info.lastObservedStackTrace.joinToString(prefix = "\t", separator = "\n\t") {
+        ThreadDumpAction.renderLocation(it)
+    }
+
     override val stackTrace: String =
-        info.coroutineDescriptor + "\n" +
-                info.lastObservedStackTrace.joinToString(prefix = "\t", separator = "\n\t") { ThreadDumpAction.renderLocation(it) }
+        buildString {
+            appendLine(info.coroutineDescriptor)
+            appendLine(lastObservedStackTrace)
+            if (info.asyncStackTrace.isNotEmpty()) {
+                appendLine("\t--------- Async Stack Trace ---------")
+                appendLine(info.asyncStackTrace.joinToString(prefix = "\t", separator = "\n\t") { ThreadDumpAction.renderLocation(it) })
+            }
+        }
 
     override val interestLevel: Int = when {
-        info.lastObservedStackTrace.isEmpty() -> -10
+        stackTrace.isEmpty() -> -10
         else -> stackTrace.count { it == '\n' }
     }
 

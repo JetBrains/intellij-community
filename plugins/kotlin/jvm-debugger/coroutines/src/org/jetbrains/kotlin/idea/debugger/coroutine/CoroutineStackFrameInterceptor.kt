@@ -84,17 +84,18 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         if (continuationFilter != null) return continuationFilter
         // If continuation could not be extracted or the root continuation was not an instance of BaseContinuationImpl,
         // dump coroutines running on the current thread and compute [CoroutineIdFilter].
-        val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
-        return if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
-            // first try the helper, it is the fastest way, then try the mirror
-            val currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext, debugProbesImpl)
-                ?: debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
-
-            if (currentCoroutines.isNotEmpty()) CoroutineIdFilter(currentCoroutines)
-            else null
+        val currentCoroutines = getCoroutinesRunningOnCurrentThreadFromHelper(defaultExecutionContext)
+            ?: run {
+                val debugProbesImpl = DebugProbesImpl.instance(defaultExecutionContext)
+                if (debugProbesImpl != null && debugProbesImpl.isInstalled) {
+                    debugProbesImpl.getCoroutinesRunningOnCurrentThread(defaultExecutionContext)
+                } else null
+            }
+        return if (currentCoroutines != null) {
+            if (currentCoroutines.isNotEmpty()) CoroutineIdFilter(currentCoroutines) else null
         } else {
             //TODO: IDEA-341142 show nice notification about this
-            thisLogger().warn("[coroutine filter]: kotlinx-coroutines debug agent was not enabled, DebugProbesImpl class is not found.")
+            thisLogger().warn("[coroutine filter]: kotlinx-coroutines debug agent was not enabled or DebugProbesImpl class is not found.")
             null
         }
     }
@@ -181,11 +182,11 @@ private class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     }
 
     private fun getCoroutinesRunningOnCurrentThreadFromHelper(
-        context: DefaultExecutionContext,
-        debugProbesImpl: DebugProbesImpl
+        context: DefaultExecutionContext
     ): Set<Long>? {
         val threadReferenceProxyImpl = context.suspendContext.thread ?: return null
-        val args = listOf(debugProbesImpl.getObject(), threadReferenceProxyImpl.threadReference)
+        val debugProbesImplClass = context.vm.findDebugProbesImplClass() ?: return null
+        val args = listOf(debugProbesImplClass, threadReferenceProxyImpl.threadReference)
         val result = callMethodFromHelper(CoroutinesDebugHelper::class.java, context, "getCoroutinesRunningOnCurrentThread", args)
         result ?: return null
         return (result as ArrayReference).values.asSequence().map { (it as LongValue).value() }.toHashSet()
