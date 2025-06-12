@@ -36,7 +36,7 @@ internal class NioWriteToEelAdapter(
   private val flushable: Flushable? = null,
 ) : EelSendChannel {
 
-  override val closed: Boolean get() = !writableByteChannel.isOpen
+  override val isClosed: Boolean get() = !writableByteChannel.isOpen
 
   override suspend fun send(src: ByteBuffer): Unit = withContext(Dispatchers.IO) {
     writableByteChannel.write(src)

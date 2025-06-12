@@ -134,7 +134,7 @@ private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int
     copy(
       socket.consumeAsEelChannel(), channelToIJent,
       onReadError = {
-        if (it is SocketTimeoutException && channelToIJent.closed) {
+        if (it is SocketTimeoutException && channelToIJent.isClosed) {
           this@launch.cancel("Channel is closed normally")
           OnError.EXIT
         }

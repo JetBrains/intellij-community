@@ -23,7 +23,7 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel, EelSendChannelCustomS
   }
 
   @Volatile
-  override var closed: Boolean = false
+  override var isClosed: Boolean = false
     private set
 
   private val channel = Channel<Triple<ByteBuffer, CompletableDeferred<Unit>, Boolean>>()
@@ -128,7 +128,7 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel, EelSendChannelCustomS
       deferred.complete(Unit)
     }
     sendLocks.clear()
-    closed = true
+    isClosed = true
   }
 }
 

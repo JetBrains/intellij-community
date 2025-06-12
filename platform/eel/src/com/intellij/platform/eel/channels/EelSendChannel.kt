@@ -37,7 +37,7 @@ interface EelSendChannel {
    * This field is set some time after channel is closed, so you might encounter an error with [send] even though this field is `false`.
    */
   @get:ApiStatus.Experimental
-  val closed: Boolean
+  val isClosed: Boolean
 }
 
 /**

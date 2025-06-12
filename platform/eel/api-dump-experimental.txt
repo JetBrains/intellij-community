@@ -263,7 +263,7 @@ f:com.intellij.platform.eel.EelPlatformKt
 - java.lang.annotation.Annotation
 *:com.intellij.platform.eel.channels.EelSendChannel
 - *a:close(kotlin.coroutines.Continuation):java.lang.Object
-- *a:getClosed():Z
+- *a:isClosed():Z
 - *a:send(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.eel.channels.EelSendChannelKt
 - *sf:sendWholeBuffer(com.intellij.platform.eel.channels.EelSendChannel,java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object

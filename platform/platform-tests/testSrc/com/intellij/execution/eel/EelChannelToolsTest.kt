@@ -188,7 +188,7 @@ class EelChannelToolsTest {
 
     val result = mutableListOf<Byte>()
     val dst = object : EelSendChannel {
-      override val closed: Boolean = false
+      override val isClosed: Boolean = false
       var error = false
 
       @Suppress("OPT_IN_OVERRIDE")
@@ -340,9 +340,9 @@ class EelChannelToolsTest {
       repeat(repeatText) {
         input.sendWholeBuffer(wrap(data))
       }
-      assertFalse(input.closed)
+      assertFalse(input.isClosed)
       input.close()
-      assertTrue(input.closed)
+      assertTrue(input.isClosed)
     }
 
     val buffer = allocate(blockSize)
@@ -457,11 +457,11 @@ class EelChannelToolsTest {
     val readJob = async {
       pipe.source.readWholeText()
     }
-    assertFalse(pipe.sink.closed)
+    assertFalse(pipe.sink.isClosed)
     sendJob1.join()
     sendJob2.join()
     pipe.sink.close()
-    assertTrue(pipe.sink.closed)
+    assertTrue(pipe.sink.isClosed)
     val text = readJob.await()
     assertThat("Some litters missing", text.toCharArray().toList(), containsInAnyOrder(*lettersSent.toTypedArray()))
 
