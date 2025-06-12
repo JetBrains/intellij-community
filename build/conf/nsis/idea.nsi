@@ -263,7 +263,6 @@ FunctionEnd
 
 BrandingText " "
 
-!define MUI_BRANDINGTEXT " "
 !define MUI_ABORTWARNING
 
 !insertmacro MUI_PAGE_WELCOME
