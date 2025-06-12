@@ -45,13 +45,13 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.getItems(params, allTabFilter.disabledProviderIds)
   }
 
-  override suspend fun getFilterEditor(): SeFilterEditor? = filterEditor.getValue()
+  override suspend fun getFilterEditor(): SeFilterEditor = filterEditor.getValue()
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
-  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
+  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo {
     return SeEmptyResultInfoProvider(getFilterEditor(),
                                      delegate.getProvidersIds(),
                                      delegate.canBeShownInFindResults()).getEmptyResultInfo(delegate.project, context)
@@ -88,11 +88,10 @@ private class SeAllFilterEditor(private val providersIdToName: Map<SeProviderId,
     }
 
     override fun autoToggle(everywhere: Boolean): Boolean {
-      if (isAutoToggleEnabled && isEverywhere != everywhere) {
-        filterValue = filterValue.cloneWith(everywhere)
-        return true
-      }
-      return false
+      if (!canToggleEverywhere() || !isAutoToggleEnabled || isEverywhere == everywhere) return false
+
+      filterValue = filterValue.cloneWith(everywhere)
+      return true
     }
   }
 
@@ -104,7 +103,7 @@ private class SeAllFilterEditor(private val providersIdToName: Map<SeProviderId,
       PersistentSearchEverywhereContributorFilter(namesMap.keys.toList().sortedWith { a, b -> namesMap[a]!!.compareTo(namesMap[b]!!) },
                                                   configuration,
                                                   Function { key: String? -> namesMap[key] },
-                                                  Function { c: String? -> null })
+                                                  Function { null })
 
     return SearchEverywhereFiltersAction(persistentFilter) {
       filterValue = filterValue.cloneWith(disabledProviders)

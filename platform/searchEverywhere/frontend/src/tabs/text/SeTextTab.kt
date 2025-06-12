@@ -29,7 +29,7 @@ class SeTextTab(private val delegate: SeTabDelegate) : SeTab {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
-  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
+  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo {
     return SeEmptyResultInfoProvider(getFilterEditor(),
                                      delegate.getProvidersIds(),
                                      delegate.canBeShownInFindResults()).getEmptyResultInfo(delegate.project, context)

@@ -43,7 +43,6 @@ class SeScopeChooserActionProvider(val scopesInfo: SeSearchScopesInfo, private v
     }
 
   private val action = object : ScopeChooserAction(), AutoToggleAction {
-    val canToggleEverywhere = scopesInfo.canToggleEverywhere
     private var isAutoToggleEnabled: Boolean = true
 
     override fun onScopeSelected(o: ScopeDescriptor) {
@@ -77,17 +76,16 @@ class SeScopeChooserActionProvider(val scopesInfo: SeSearchScopesInfo, private v
     }
 
     override fun canToggleEverywhere(): Boolean {
-      if (!canToggleEverywhere) return false
-      return selectedScopeId != scopesInfo.everywhereScopeId ||
-             selectedScopeId != scopesInfo.projectScopeId
+      return scopesInfo.everywhereScopeId != scopesInfo.projectScopeId &&
+             (selectedScopeId == scopesInfo.everywhereScopeId ||
+              selectedScopeId == scopesInfo.projectScopeId)
     }
 
     override fun autoToggle(everywhere: Boolean): Boolean {
-      if (isAutoToggleEnabled && isEverywhere != everywhere) {
-        updateScope(everywhere)
-        return true
-      }
-      return false
+      if (!canToggleEverywhere() || !isAutoToggleEnabled || isEverywhere == everywhere) return false
+
+      updateScope(everywhere)
+      return true
     }
   }
 

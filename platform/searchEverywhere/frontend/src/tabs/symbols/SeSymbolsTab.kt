@@ -29,13 +29,13 @@ class SeSymbolsTab(private val delegate: SeTabDelegate) : SeTab {
 
   override fun getItems(params: SeParams): Flow<SeResultEvent> = delegate.getItems(params)
 
-  override suspend fun getFilterEditor(): SeFilterEditor? = filterEditor.getValue()
+  override suspend fun getFilterEditor(): SeFilterEditor = filterEditor.getValue()
 
   override suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean {
     return delegate.itemSelected(item, modifiers, searchText)
   }
 
-  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
+  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo {
     return SeEmptyResultInfoProvider(getFilterEditor(),
                                      delegate.getProvidersIds(),
                                      delegate.canBeShownInFindResults()).getEmptyResultInfo(delegate.project, context)

@@ -36,7 +36,7 @@ class SeActionsTab(private val delegate: SeTabDelegate) : SeTab {
     }
   }
 
-  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? {
+  override suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo {
     return SeEmptyResultInfoProvider(getFilterEditor(),
                                      delegate.getProvidersIds(),
                                      delegate.canBeShownInFindResults()).getEmptyResultInfo(delegate.project, context)
@@ -67,11 +67,10 @@ private class SeActionsFilterEditor : SeFilterEditorBase<SeActionsFilter>(SeActi
       }
 
       override fun autoToggle(everywhere: Boolean): Boolean {
-        if (isAutoToggleEnabled && isEverywhere != everywhere) {
-          filterValue = SeActionsFilter(everywhere)
-          return true
-        }
-        return false
+        if (!canToggleEverywhere() || !isAutoToggleEnabled || (isEverywhere == everywhere)) return false
+
+        filterValue = SeActionsFilter(everywhere)
+        return true
       }
     })
 

@@ -17,7 +17,6 @@ import com.intellij.platform.searchEverywhere.isWildcard
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
-import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 
 @ApiStatus.Internal
@@ -44,7 +43,7 @@ class SeEmptyResultInfoProvider(
                                                           " " + StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
                                                    onNewLine = true,
                                                    attrs = SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                                                   listener = { e: ActionEvent? -> toggleEverywhere() }))
+                                                   listener = { toggleEverywhere() }))
       }
       return SeEmptyResultInfo(emptyInfoChunks)
     }
@@ -56,7 +55,7 @@ class SeEmptyResultInfoProvider(
     var firstPartAdded = false
     var actionsPrinted = 0
     if (showResetScope) {
-      val resetScopeListener = ActionListener { e: ActionEvent? -> toggleEverywhere() }
+      val resetScopeListener = ActionListener { toggleEverywhere() }
       emptyInfoChunks.add(SeEmptyResultInfoChunk(IdeBundle.message("searcheverywhere.try.to.reset.scope")))
       emptyInfoChunks.add(SeEmptyResultInfoChunk(text = " " + StringUtil.toLowerCase(EverythingGlobalScope.getNameText()),
                                                  attrs = SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
@@ -66,7 +65,7 @@ class SeEmptyResultInfoProvider(
     }
 
     if (showResetFilter) {
-      val clearFiltersAction = ActionListener { e: ActionEvent? -> selectAllFilterElements() }
+      val clearFiltersAction = ActionListener { selectAllFilterElements() }
       if (firstPartAdded) emptyInfoChunks.add(SeEmptyResultInfoChunk(", "))
       val resetFilterMessage = IdeBundle.message("searcheverywhere.reset.filters")
       emptyInfoChunks.add(SeEmptyResultInfoChunk(text = if (firstPartAdded) Strings.toLowerCase(resetFilterMessage) else resetFilterMessage,
@@ -84,9 +83,7 @@ class SeEmptyResultInfoProvider(
     if (showFindInFilesAction) {
       val manager = FindInProjectManager.getInstance(project)
       if (manager != null && manager.isEnabled) {
-        val findInFilesAction = ActionListener { e: ActionEvent? ->
-          manager.findInProject(context, null)
-        }
+        val findInFilesAction = ActionListener { manager.findInProject(context, null) }
         emptyInfoChunks.add(SeEmptyResultInfoChunk((if (firstPartAdded) " " + IdeBundle.message("searcheverywhere.use.optional")
         else IdeBundle.message("searcheverywhere.use.main")) + " "))
         emptyInfoChunks.add(SeEmptyResultInfoChunk(text = IdeBundle.message("searcheverywhere.try.to.find.in.files"),
@@ -121,9 +118,7 @@ class SeEmptyResultInfoProvider(
 
   private fun toggleEverywhere() {
     val action = toggleAction ?: return
-    if (action.canToggleEverywhere()) {
-      action.isEverywhere = !action.isEverywhere
-    }
+    action.isEverywhere = !action.isEverywhere
   }
 
   private val filtersAction: SearchEverywhereFiltersAction<*>? =

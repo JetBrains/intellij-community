@@ -153,7 +153,6 @@ class SeTargetsProviderDelegate(private val contributorWrapper: SeAsyncWeightedC
 
     return SeSearchScopesInfo(scopeDataList,
                               selectedScopeId,
-                              scopeChooserAction.canToggleEverywhere(),
                               projectScopeId,
                               everywhereScopeId)
   }

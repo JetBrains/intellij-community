@@ -30,6 +30,5 @@ class SeSearchScopeData(val scopeId: String, val name: @Nls String, val iconId: 
 @Serializable
 class SeSearchScopesInfo(val scopes: List<SeSearchScopeData>,
                          val selectedScopeId: String?,
-                         val canToggleEverywhere: Boolean,
                          val projectScopeId: String?,
                          val everywhereScopeId: String?)
