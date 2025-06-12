@@ -5,11 +5,8 @@ import com.intellij.ide.plugins.DataLoader
 import com.intellij.ide.plugins.PathResolver
 import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.toXIncludeLoader
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorFromXmlStreamConsumer
-import com.intellij.platform.plugins.parser.impl.PluginDescriptorReaderContext
-import com.intellij.platform.plugins.parser.impl.XIncludeLoader
-import com.intellij.platform.plugins.parser.impl.consume
+import com.intellij.platform.plugins.parser.impl.*
+import com.intellij.platform.plugins.parser.impl.elements.DependenciesElement
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import java.nio.file.Path
@@ -41,7 +38,11 @@ internal class ModuleBasedPluginXmlPathResolver(
       return reader.getBuilder()
     }
     else if (RuntimeModuleId.module(moduleName) in optionalModuleIds) {
-      return PluginDescriptorBuilder.builder().apply { `package` = "unresolved.$moduleName" }
+      // TODO here we should restore the actual content module "header" with dependency information
+      return PluginDescriptorBuilder.builder().apply {
+        `package` = "unresolved.$moduleName"
+        addDependency(DependenciesElement.ModuleDependency("incompatible.with.product.mode.or.unresolved"))
+      }
     }
     return fallbackResolver.resolveModuleFile(readContext = readContext, dataLoader = dataLoader, path = path)
   }
