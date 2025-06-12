@@ -50,26 +50,6 @@ interface ThreadingSupport {
   @ApiStatus.Internal
   fun <T> runUnlockingIntendedWrite(action: () -> T): T
 
-  /**
-   * Set a [ReadActionListener].
-   *
-   * Only one listener can be set. It is error to set second listener.
-   *
-   * @param listener the listener to set
-   */
-  @ApiStatus.Internal
-  fun setReadActionListener(listener: ReadActionListener)
-
-  /**
-   * Removes a [ReadActionListener].
-   *
-   * It is error to remove listener which was not set early.
-   *
-   * @param listener the listener to remove
-   */
-  @ApiStatus.Internal
-  fun removeReadActionListener(listener: ReadActionListener)
-
   @RequiresBlockingContext
   fun <T> runReadAction(clazz: Class<*>, action: () -> T): T
 
@@ -97,39 +77,50 @@ interface ThreadingSupport {
   /**
    * Adds a [WriteActionListener].
    *
-   * Only one listener can be set. It is error to set second listener.
-   *
    * @param listener the listener to set
    */
-  fun setWriteActionListener(listener: WriteActionListener)
+  fun addWriteActionListener(listener: WriteActionListener)
+
+  /**
+   * Removes a [WriteActionListener].
+   *
+   * It is error to remove listener which was not added early.
+   *
+   * @param listener the listener to remove
+   */
+  @ApiStatus.Internal
+  fun removeWriteActionListener(listener: WriteActionListener)
 
   /**
    * Adds a [WriteIntentReadActionListener].
    *
-   * Only one listener can be set. It is an error to set the second listener.
-   *
    * @param listener the listener to set
    */
-  fun setWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
+  fun addWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
 
   /**
    * Removes a [WriteIntentReadActionListener].
    *
-   * It is an error to remove the listener which was not set early.
+   * It is an error to remove the listener which was not added early.
    *
    * @param listener the listener to remove
    */
   fun removeWriteIntentReadActionListener(listener: WriteIntentReadActionListener)
 
   /**
-   * Removes a [WriteActionListener].
+   * Set a [ReadActionListener].
    *
-   * It is error to remove listener which was not set early.
+   * @param listener the listener to set
+   */
+  fun addReadActionListener(listener: ReadActionListener)
+
+  /**
+   * Removes a [ReadActionListener].
    *
    * @param listener the listener to remove
    */
   @ApiStatus.Internal
-  fun removeWriteActionListener(listener: WriteActionListener)
+  fun removeReadActionListener(listener: ReadActionListener)
 
   @RequiresBlockingContext
   fun <T> runWriteAction(clazz: Class<*>, action: () -> T): T

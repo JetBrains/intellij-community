@@ -9,6 +9,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.locking.impl.listeners.ErrorHandler
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
 import com.intellij.util.ReflectionUtil
@@ -16,6 +17,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.Result
@@ -194,12 +196,15 @@ class NestedLocksThreadingSupport : ThreadingSupport {
    */
   private val statesOfWIThread: ThreadLocal<MutableList<ComputationState>?> = ThreadLocal.withInitial { null }
 
-  private var myReadActionListener: ReadActionListener? = null
-  private var myWriteActionListener: WriteActionListener? = null
-  private var myWriteIntentActionListener: WriteIntentReadActionListener? = null
+  private val readActionListeners: CopyOnWriteArrayList<ReadActionListener> = CopyOnWriteArrayList()
+  private val myWriteActionListeners: CopyOnWriteArrayList<WriteActionListener> = CopyOnWriteArrayList()
+  private val myWriteIntentActionListeners: CopyOnWriteArrayList<WriteIntentReadActionListener> = CopyOnWriteArrayList()
   private var myLockAcquisitionListener: LockAcquisitionListener? = null
   private var myWriteLockReacquisitionListener: WriteLockReacquisitionListener? = null
   private var myLegacyProgressIndicatorProvider: LegacyProgressIndicatorProvider? = null
+
+  @Volatile
+  private var errorHandler: ErrorHandler? = null
 
   private val myWriteActionsStack = Collections.synchronizedList(ArrayList<Class<*>>())
   private var myWriteStackBase = 0
@@ -250,6 +255,62 @@ class NestedLocksThreadingSupport : ThreadingSupport {
    */
   private val pendingWriteActionFollowup: MutableList<Runnable> = ArrayList()
 
+  private inline fun <T> List<T>.traverse(action: (T) -> Unit) {
+    var index = 0
+    while (index < size) {
+      try {
+        action(this[index++])
+      }
+      catch (_: CancellationException) {
+        // ignored
+      }
+      catch (e: Throwable) {
+        try {
+          errorHandler?.handleError(e)
+        }
+        catch (e: Throwable) {
+          // swallowing error :(
+        }
+      }
+    }
+  }
+
+  private inline fun <T> List<T>.traverseBackwards(action: (T) -> Unit) {
+    var index = lastIndex
+    while (index >= 0) {
+      try {
+        action(this[index--])
+      }
+      catch (_: CancellationException) {
+        // ignored
+      }
+      catch (e: Throwable) {
+        try {
+          errorHandler?.handleError(e)
+        }
+        catch (e: Throwable) {
+          // swallowing error :(
+        }
+      }
+    }
+  }
+
+  /**
+   * Shallow clone of [CopyOnWriteArrayList] that wraps the underlying array.
+   * I swear that I will not modify the array further
+   */
+  private fun <T> CopyOnWriteArrayList<T>.doClone(): List<T> {
+    @Suppress("UNCHECKED_CAST")
+    return clone() as List<T>
+  }
+
+  fun setErrorHandler(handler: ErrorHandler) {
+    errorHandler = handler
+  }
+
+  fun removeErrorHandler() {
+    errorHandler = null
+  }
 
   /**
    * The locking state that is shared by all computations belonging to the same level.
@@ -581,8 +642,8 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   fun <T> doRunWriteIntentReadAction(computation: () -> T): T {
-    val listener = myWriteIntentActionListener
-    fireBeforeWriteIntentReadActionStart(listener, computation.javaClass)
+    val frozenListeners = myWriteIntentActionListeners.doClone()
+    fireBeforeWriteIntentReadActionStart(frozenListeners, computation.javaClass)
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(false)
     val currentWriteIntentState = myWriteIntentAcquired.get()
@@ -601,11 +662,11 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         is ParallelizablePermit.WriteIntent, is ParallelizablePermit.Write -> {}
       }
       try {
-        fireWriteIntentActionStarted(listener, computation.javaClass)
+        fireWriteIntentActionStarted(frozenListeners, computation.javaClass)
         return computation()
       }
       finally {
-        fireWriteIntentActionFinished(listener, computation.javaClass)
+        fireWriteIntentActionFinished(frozenListeners, computation.javaClass)
         if (permitToRelease != null) {
           /**
            * The permit to release can be changed because of [releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack] inside
@@ -618,7 +679,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     finally {
       myWriteIntentAcquired.set(currentWriteIntentState)
       myTopmostReadAction.set(currentReadState)
-      afterWriteIntentReadActionFinished(listener, computation.javaClass)
+      afterWriteIntentReadActionFinished(frozenListeners, computation.javaClass)
     }
   }
 
@@ -638,17 +699,15 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @ApiStatus.Internal
-  override fun setReadActionListener(listener: ReadActionListener) {
-    if (myReadActionListener != null)
-      error("ReadActionListener already registered")
-    myReadActionListener = listener
+  override fun addReadActionListener(listener: ReadActionListener) {
+    readActionListeners.add(listener)
   }
 
   @ApiStatus.Internal
   override fun removeReadActionListener(listener: ReadActionListener) {
-    if (myReadActionListener != listener)
-      error("ReadActionListener is not registered")
-    myReadActionListener = null
+    check(readActionListeners.remove(listener)) {
+      "ReadActionListener $listener is not registered"
+    }
   }
 
   private fun smartAcquireReadPermit(state: ComputationState): ReadPermit {
@@ -657,7 +716,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       return permit
     }
 
-    myReadActionListener?.fastPathAcquisitionFailed()
+    readActionListeners.forEach {
+      it.fastPathAcquisitionFailed()
+    }
 
     // Check for cancellation
     val indicator = myLegacyProgressIndicatorProvider?.obtainProgressIndicator()
@@ -698,8 +759,8 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   override fun <T> runReadAction(clazz: Class<*>, action: () -> T): T {
     handleLockAccess("read lock")
 
-    val listener = myReadActionListener
-    fireBeforeReadActionStart(listener, clazz)
+    val frozenListeners = readActionListeners.doClone()
+    fireBeforeReadActionStart(frozenListeners, clazz)
 
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(true)
@@ -719,27 +780,27 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
     try {
-      fireReadActionStarted(listener, clazz)
+      fireReadActionStarted(frozenListeners, clazz)
       val rv = action()
       return rv
     }
     finally {
-      fireReadActionFinished(listener, clazz)
+      fireReadActionFinished(frozenListeners, clazz)
 
       myReadActionsInThread.set(myReadActionsInThread.get() - 1)
       if (readPermitToRelease != null) {
         computationState.releaseReadPermit(readPermitToRelease)
       }
       myTopmostReadAction.set(currentReadState)
-      fireAfterReadActionFinished(listener, clazz)
+      fireAfterReadActionFinished(frozenListeners, clazz)
     }
   }
 
   override fun tryRunReadAction(action: Runnable): Boolean {
     handleLockAccess("fail-fast read lock")
 
-    val listener = myReadActionListener
-    fireBeforeReadActionStart(listener, action.javaClass)
+    val frozenListeners = readActionListeners.doClone()
+    fireBeforeReadActionStart(frozenListeners, action.javaClass)
 
     val currentReadState = myTopmostReadAction.get()
     myTopmostReadAction.set(true)
@@ -761,12 +822,12 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       myReadActionsInThread.set(myReadActionsInThread.get() + 1)
 
       try {
-        fireReadActionStarted(listener, action.javaClass)
+        fireReadActionStarted(frozenListeners, action.javaClass)
         action.run()
         return true
       }
       finally {
-        fireReadActionFinished(listener, action.javaClass)
+        fireReadActionFinished(frozenListeners, action.javaClass)
 
         myReadActionsInThread.set(myReadActionsInThread.get() - 1)
         if (readPermitToRelease != null) {
@@ -776,7 +837,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
     finally {
       myTopmostReadAction.set(currentReadState)
-      fireAfterReadActionFinished(listener, action.javaClass)
+      fireAfterReadActionFinished(frozenListeners, action.javaClass)
     }
 
   }
@@ -786,30 +847,26 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @ApiStatus.Internal
-  override fun setWriteActionListener(listener: WriteActionListener) {
-    if (myWriteActionListener != null)
-      error("WriteActionListener already registered")
-    myWriteActionListener = listener
+  override fun addWriteActionListener(listener: WriteActionListener) {
+    myWriteActionListeners.add(listener)
   }
 
   @ApiStatus.Internal
-  override fun setWriteIntentReadActionListener(listener: WriteIntentReadActionListener) {
-    if (myWriteIntentActionListener != null)
-      error("WriteIntentReadActionListener already registered")
-    myWriteIntentActionListener = listener
+  override fun addWriteIntentReadActionListener(listener: WriteIntentReadActionListener) {
+    myWriteIntentActionListeners.add(listener)
   }
 
   override fun removeWriteIntentReadActionListener(listener: WriteIntentReadActionListener) {
-    if (myWriteIntentActionListener != listener)
-      error("WriteIntentReadActionListener is not registered")
-    myWriteIntentActionListener = null
+    check(myWriteIntentActionListeners.remove(listener)) {
+      "WriteIntentReadActionListener $listener is not registered"
+    }
   }
 
   @ApiStatus.Internal
   override fun removeWriteActionListener(listener: WriteActionListener) {
-    if (myWriteActionListener != listener)
-      error("WriteActionListener is not registered")
-    myWriteActionListener = null
+    check(myWriteActionListeners.remove(listener)) {
+      "WriteActionListener $listener is not registered"
+    }
   }
 
   fun setLockAcquisitionListener(listener: LockAcquisitionListener) {
@@ -884,7 +941,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
    * This is needed for code that temporarily releases the write lock.
    * Since we still want to preserve the atomicity of write action, we pre-acquire the write-intent lock before write.
    */
-  private data class PreparatoryWriteIntent(val permit: Permit, val needRelease: Boolean, val state: ComputationState, val listener: WriteActionListener?) {
+  private data class PreparatoryWriteIntent(val permit: Permit, val needRelease: Boolean, val state: ComputationState, val listeners: List<WriteActionListener>) {
     fun release() {
       if (!(needRelease && permit is WriteIntentPermit)) {
         return
@@ -894,7 +951,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   private fun prepareWriteIntentAcquiredBeforeWrite(computationState: ComputationState, clazz: Class<*>): PreparatoryWriteIntent {
-    val listener = myWriteActionListener
+    val frozenListeners = myWriteActionListeners.doClone()
     // Read permit is incompatible
     check(computationState.getThisThreadPermit() !is ParallelizablePermit.Read) { "WriteAction can not be called from ReadAction" }
 
@@ -910,7 +967,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     startPendingWriteAction(computationState)
 
     if (myWriteActionsStack.isEmpty()) {
-      fireBeforeWriteActionStart(listener, clazz)
+      fireBeforeWriteActionStart(frozenListeners, clazz)
     }
 
     val permit = computationState.getThisThreadPermit()
@@ -919,18 +976,18 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       when (permit) {
         null -> {
           val writeIntent = computationState.acquireWriteIntentPermit()
-          return PreparatoryWriteIntent(writeIntent, true, computationState, listener)
+          return PreparatoryWriteIntent(writeIntent, true, computationState, frozenListeners)
         }
         is ParallelizablePermit.Read -> {
           error("WriteAction can not be called from ReadAction")
         }
         is ParallelizablePermit.WriteIntent -> {
           checkWriteFromRead("Write", "Write Intent")
-          return PreparatoryWriteIntent(permit.writeIntentPermit, false, computationState, listener)
+          return PreparatoryWriteIntent(permit.writeIntentPermit, false, computationState, frozenListeners)
         }
         is ParallelizablePermit.Write -> {
           checkWriteFromRead("Write", "Write")
-          return PreparatoryWriteIntent(permit.writePermit, false, computationState, listener)
+          return PreparatoryWriteIntent(permit.writePermit, false, computationState, frozenListeners)
         }
       }
     } catch (e : Throwable) {
@@ -965,9 +1022,9 @@ class NestedLocksThreadingSupport : ThreadingSupport {
 
 
     myWriteActionsStack.add(clazz)
-    fireWriteActionStarted(preparatoryWriteIntent.listener, clazz)
+    fireWriteActionStarted(preparatoryWriteIntent.listeners, clazz)
 
-    return WriteLockInitResult(shouldRelease, currentReadState, preparatoryWriteIntent.listener, state, clazz, this)
+    return WriteLockInitResult(shouldRelease, currentReadState, preparatoryWriteIntent.listeners, state, clazz, this)
   }
 
   private fun startPendingWriteAction(state: ComputationState) {
@@ -983,13 +1040,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private data class WriteLockInitResult(
     val shouldRelease: Boolean,
     val currentReadState: Boolean,
-    val listener: WriteActionListener?,
+    val listeners: List<WriteActionListener>,
     val state: ComputationState,
     val clazz: Class<*>,
     val support: NestedLocksThreadingSupport,
   ) {
     fun release() {
-      support.fireWriteActionFinished(listener, clazz)
+      support.fireWriteActionFinished(listeners, clazz)
       support.myWriteActionsStack.removeLast()
       if (shouldRelease) {
         support.myWriteAcquired = null
@@ -997,7 +1054,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       }
       support.myTopmostReadAction.set(currentReadState)
       if (shouldRelease) {
-        support.fireAfterWriteActionFinished(listener, clazz)
+        support.fireAfterWriteActionFinished(listeners, clazz)
         support.drainWriteActionFollowups()
       }
     }
@@ -1098,7 +1155,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     if (currentPermit is ReadPermit || currentPermit is WriteIntentPermit) {
       return { }
     }
-    val capturedListener = myReadActionListener
+    val capturedListener = readActionListeners
     val capturedPermit = run {
       fireBeforeReadActionStart(capturedListener, javaClass)
       val p = computationState.acquireReadPermit()
@@ -1167,99 +1224,76 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  private fun fireBeforeReadActionStart(listener: ReadActionListener?, clazz: Class<*>) {
-    try {
-      listener?.beforeReadActionStart(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireBeforeReadActionStart(list: List<ReadActionListener>, clazz: Class<*>) {
+    list.traverse {
+      it.beforeReadActionStart(clazz)
     }
   }
 
-  private fun fireReadActionStarted(listener: ReadActionListener?, clazz: Class<*>) {
-    try {
-      listener?.readActionStarted(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireReadActionStarted(list: List<ReadActionListener>, clazz: Class<*>) {
+    list.traverse {
+      it.readActionStarted(clazz)
     }
   }
 
-  private fun fireReadActionFinished(listener: ReadActionListener?, clazz: Class<*>) {
-    try {
-      listener?.readActionFinished(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireReadActionFinished(list: List<ReadActionListener>, clazz: Class<*>) {
+    list.traverseBackwards {
+      it.readActionFinished(clazz)
     }
   }
 
-  private fun fireAfterReadActionFinished(listener: ReadActionListener?, clazz: Class<*>) {
-    try {
-      listener?.afterReadActionFinished(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireAfterReadActionFinished(list: List<ReadActionListener>, clazz: Class<*>) {
+    list.traverseBackwards {
+      it.afterReadActionFinished(clazz)
     }
   }
 
-  private fun fireBeforeWriteActionStart(listener: WriteActionListener?, clazz: Class<*>) {
-    try {
-      listener?.beforeWriteActionStart(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireBeforeWriteActionStart(listeners: List<WriteActionListener>, clazz: Class<*>) {
+    listeners.traverse {
+      it.beforeWriteActionStart(clazz)
     }
   }
 
-  private fun fireWriteActionStarted(listener: WriteActionListener?, clazz: Class<*>) {
-    try {
-      listener?.writeActionStarted(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireWriteActionStarted(listeners: List<WriteActionListener>, clazz: Class<*>) {
+    listeners.traverse {
+      it.writeActionStarted(clazz)
     }
   }
 
-  private fun fireWriteActionFinished(listener: WriteActionListener?, clazz: Class<*>) {
-    try {
-      listener?.writeActionFinished(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireWriteActionFinished(listeners: List<WriteActionListener>, clazz: Class<*>) {
+    listeners.traverseBackwards {
+      it.writeActionFinished(clazz)
     }
   }
 
-  private fun fireAfterWriteActionFinished(listener: WriteActionListener?, clazz: Class<*>) {
-    try {
-      listener?.afterWriteActionFinished(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireAfterWriteActionFinished(listeners: List<WriteActionListener>, clazz: Class<*>) {
+    listeners.traverseBackwards {
+      it.afterWriteActionFinished(clazz)
     }
   }
 
-  private fun fireBeforeWriteIntentReadActionStart(listener: WriteIntentReadActionListener?, clazz: Class<*>) {
-    try {
-      listener?.beforeWriteIntentReadActionStart(clazz)
-    }
-    catch (_: Throwable) {
+  private fun fireBeforeWriteIntentReadActionStart(listeners: List<WriteIntentReadActionListener>, clazz: Class<*>) {
+    listeners.traverse {
+      it.beforeWriteIntentReadActionStart(clazz)
     }
   }
 
-  private fun fireWriteIntentActionStarted(listener: WriteIntentReadActionListener?, clazz: Class<*>) {
-    try {
-      listener?.writeIntentReadActionStarted(clazz)
+  private fun fireWriteIntentActionStarted(listeners: List<WriteIntentReadActionListener>, clazz: Class<*>) {
+    listeners.traverse {
+      it.writeIntentReadActionStarted(clazz)
     }
-    catch (_: Throwable) {
+
+  }
+
+  private fun fireWriteIntentActionFinished(listeners: List<WriteIntentReadActionListener>, clazz: Class<*>) {
+    listeners.traverseBackwards {
+      it.writeIntentReadActionFinished(clazz)
     }
   }
 
-  private fun fireWriteIntentActionFinished(listener: WriteIntentReadActionListener?, clazz: Class<*>) {
-    try {
-      listener?.writeIntentReadActionFinished(clazz)
-    }
-    catch (_: Throwable) {
-    }
-  }
-
-  private fun afterWriteIntentReadActionFinished(listener: WriteIntentReadActionListener?, clazz: Class<*>) {
-    try {
-      listener?.afterWriteIntentReadActionFinished(clazz)
-    }
-    catch (_: Throwable) {
+  private fun afterWriteIntentReadActionFinished(listeners: List<WriteIntentReadActionListener>, clazz: Class<*>) {
+    listeners.traverseBackwards {
+      it.afterWriteIntentReadActionFinished(clazz)
     }
   }
 
