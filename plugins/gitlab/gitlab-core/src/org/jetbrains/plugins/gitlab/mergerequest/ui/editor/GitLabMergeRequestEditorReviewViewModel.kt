@@ -129,14 +129,8 @@ class GitLabMergeRequestEditorReviewViewModel internal constructor(
     }
   }
 
-  fun toggleReviewMode() {
-    val currentOption = discussionsViewOption.value
-    val newOption = if (currentOption != DiscussionsViewOption.DONT_SHOW) {
-      DiscussionsViewOption.DONT_SHOW
-    }
-    else {
-      DiscussionsViewOption.UNRESOLVED_ONLY
-    }
+  fun toggleReviewMode(enabled: Boolean) {
+    val newOption = if (enabled) DiscussionsViewOption.UNRESOLVED_ONLY else DiscussionsViewOption.DONT_SHOW
     setDiscussionsViewOption(newOption)
   }
 

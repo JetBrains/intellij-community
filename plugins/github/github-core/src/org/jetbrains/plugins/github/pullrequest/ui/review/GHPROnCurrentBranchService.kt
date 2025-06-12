@@ -6,10 +6,10 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
@@ -125,17 +125,21 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
     }
   }
 
-  class ToggleReviewAction : DumbAwareAction(), Toggleable {
+  class ToggleReviewAction : DumbAwareToggleAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-      val vm = e.project?.getCurrentVm()
-      e.presentation.isEnabledAndVisible = vm?.updateRequired?.value == false
-      Toggleable.setSelected(e.presentation, vm?.editorReviewEnabled?.value ?: false)
+      val enabledAndVisible = e.project?.getCurrentVm()?.updateRequired?.value == false
+      e.presentation.isEnabledAndVisible = enabledAndVisible
+      if (enabledAndVisible) {
+        super.update(e)
+      }
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-      e.project?.getCurrentVm()?.toggleEditorReview()
+    override fun isSelected(e: AnActionEvent): Boolean = e.project?.getCurrentVm()?.editorReviewEnabled?.value ?: false
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      e.project?.getCurrentVm()?.toggleEditorReview(state)
     }
   }
 

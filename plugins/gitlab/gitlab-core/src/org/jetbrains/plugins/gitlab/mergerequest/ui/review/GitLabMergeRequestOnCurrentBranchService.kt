@@ -6,11 +6,11 @@ import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.vcs.gitlab.icons.GitlabIcons
@@ -103,21 +103,25 @@ class GitLabMergeRequestOnCurrentBranchService(project: Project, cs: CoroutineSc
     }
   }
 
-  class ToggleReviewAction : DumbAwareAction(), Toggleable {
+  class ToggleReviewAction : DumbAwareToggleAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
       val vm = e.project?.let(::getCurrentVm)
-      if (vm == null || vm.localRepositorySyncStatus.value?.getOrNull()?.incoming == true) {
-        e.presentation.isEnabledAndVisible = false
-        return
+      val enabledAndVisible = vm != null && vm.localRepositorySyncStatus.value?.getOrNull()?.incoming != true
+      e.presentation.isEnabledAndVisible = enabledAndVisible
+      if (enabledAndVisible) {
+        super.update(e)
       }
-
-      Toggleable.setSelected(e.presentation, vm.discussionsViewOption.value != DiscussionsViewOption.DONT_SHOW)
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-      e.project?.let(::getCurrentVm)?.toggleReviewMode()
+    override fun isSelected(e: AnActionEvent): Boolean {
+      val viewOption = e.project?.let(::getCurrentVm)?.discussionsViewOption?.value
+      return viewOption != null && viewOption != DiscussionsViewOption.DONT_SHOW
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      e.project?.let(::getCurrentVm)?.toggleReviewMode(state)
     }
   }
 }

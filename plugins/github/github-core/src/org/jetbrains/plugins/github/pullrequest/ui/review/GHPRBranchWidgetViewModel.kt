@@ -27,7 +27,7 @@ interface GHPRBranchWidgetViewModel : GHPRReviewViewModel {
 
   fun showPullRequest()
   fun updateBranch()
-  fun toggleEditorReview()
+  fun toggleEditorReview(enabled: Boolean)
 }
 
 internal class GHPRBranchWidgetViewModelImpl(
@@ -65,7 +65,7 @@ internal class GHPRBranchWidgetViewModelImpl(
 
   override fun updateBranch() = sharedBranchVm.updateBranch()
 
-  override fun toggleEditorReview() {
-    settings.editorReviewEnabled = !settings.editorReviewEnabled
+  override fun toggleEditorReview(enabled: Boolean) {
+    settings.editorReviewEnabled = enabled
   }
 }
