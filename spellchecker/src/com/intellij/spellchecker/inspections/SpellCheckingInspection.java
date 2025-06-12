@@ -249,7 +249,7 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       }
 
       boolean keyword = myNamesValidator.isKeyword(word, myElement.getProject());
-      if (keyword || !hasProblem(word) || hasSameNamedReferenceInFile(word)) {
+      if (keyword || !myManager.hasProblem(word) || hasSameNamedReferenceInFile(word)) {
         return;
       }
 
@@ -269,41 +269,6 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
         myAlreadyChecked.add(word);
         addBatchDescriptor(myElement, range, word, myHolder);
       }
-    }
-
-    private boolean hasProblem(String word) {
-      if (!myManager.hasProblem(word)) {
-        return false;
-      }
-      Language language = myElement.getLanguage();
-      SpellcheckingStrategy strategy = getSpellcheckingStrategy(myElement, language);
-      if (strategy == null || !strategy.elementFitsScope(myElement, Set.of(SpellCheckingScope.Code))) {
-        return true;
-      }
-
-      Project project = myElement.getProject();
-      return SpellCheckerManager.getInstance(project).getSuggestions(word)
-        .stream()
-        .filter(suggestion -> RenameUtil.isValidName(project, myElement, suggestion))
-        .map(suggestion -> Normalizer.normalize(suggestion, Normalizer.Form.NFC))
-        .map(suggestion -> replaceNonAsciiCharacters(suggestion))
-        .noneMatch(suggestion -> suggestion.equalsIgnoreCase(word));
-    }
-
-    private String replaceNonAsciiCharacters(String suggestion) {
-      if (IOUtil.isAscii(suggestion)) {
-        return suggestion;
-      }
-      //ü→ue, ö→oe, ä→ae, ß→ss
-      return suggestion
-        .replaceAll("ü", "ue")
-        .replaceAll("ö", "oe")
-        .replaceAll("ä", "ae")
-        .replaceAll("ß", "ss")
-        .replaceAll("Ü", "Ue")
-        .replaceAll("Ö", "Oe")
-        .replaceAll("Ä", "Ae")
-        .replaceAll("ẞ", "SS");
     }
 
     private boolean hasSameNamedReferenceInFile(String word) {
