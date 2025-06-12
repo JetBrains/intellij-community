@@ -2,33 +2,33 @@
 package com.intellij.debugger.impl
 
 import com.intellij.build.BuildView
-import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.memory.ui.StackFramePopup
+import com.intellij.debugger.memory.utils.StackFrameItem
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.debugger.ui.breakpoints.SyntheticLineBreakpoint
 import com.intellij.execution.filters.ConsoleDependentFilterProvider
 import com.intellij.execution.filters.Filter
-import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.execution.filters.HyperlinkInfoFactory
+import com.intellij.execution.filters.HyperlinkInfoBase
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.isLineBreak
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.JBColor
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.NamedColorUtil
 import com.sun.jdi.*
 import com.sun.jdi.event.LocatableEvent
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 // FIXME: introduce some registry
 private val isEnabled: Boolean
@@ -37,20 +37,12 @@ private val isEnabled: Boolean
 
 private data class SessionData(val session: DebuggerSession, val consoleView: ConsoleView) {
   // TODO: synchronize ops with this list
-  val toBePrinted = mutableListOf<Pair<String, SourcePosition>>()
+  val toBePrinted = mutableListOf<Pair<String, List<Location>>>()
 }
 
 // TODO: synchronize ops with this list
 private val bySession = mutableMapOf<DebuggerSession, SessionData>()
 private val byConsole = mutableMapOf<ConsoleView, SessionData>()
-
-private val ONLY_FILTERED_POSITION = object : SourcePosition() {
-  override fun getFile() = throw UnsupportedOperationException()
-  override fun getElementAt() = throw UnsupportedOperationException()
-  override fun getLine() = throw UnsupportedOperationException()
-  override fun getOffset() = throw UnsupportedOperationException()
-  override fun openEditor(requestFocus: Boolean) = throw UnsupportedOperationException()
-}
 
 private class ConsolePrintingDebuggerListener : DebuggerManagerListener {
 
@@ -130,10 +122,10 @@ private class FileOutputStreamWriteBreakpoint(project: Project, private val data
     }
 
     val suspendContext = action.suspendContext!!
-    val position = findPositionToNavigate(suspendContext, suspendContext.thread!!.frames()) ?: ONLY_FILTERED_POSITION
+    val locations = collectNavigatableLocations(suspendContext, suspendContext.thread!!.frames())
 
     content.lines().forEach {
-      data.toBePrinted += Pair(it, position)
+      data.toBePrinted += Pair(it, locations)
     }
 
     return false
@@ -172,41 +164,41 @@ private fun runOnDebugManagerThread(javaDebuggerSession: DebuggerSession, runnab
   }
 }
 
-private fun getNonFilteredPosition(debugProcess: DebugProcessImpl, location: Location): SourcePosition? {
+private fun isFilteredLocation(debugProcess: DebugProcessImpl, location: Location): Boolean {
   if (DebugProcessImpl.isPositionFiltered(location)) {
-    return null
+    return true
   }
 
-  val position = debugProcess.positionManager.getSourcePosition(location) ?: return null
+  val position = debugProcess.positionManager.getSourcePosition(location) ?: return true
   if (DebuggerUtilsEx.isInLibraryContent(position.file.virtualFile, debugProcess.project)) {
-    return null
+    return true
   }
 
-  val className = location.declaringType()?.name()
-  // FIXME: how can we ignore them better?
-  if (className != null && (className.startsWith("com.intellij.openapi.diagnostic.") || className == "com.intellij.idea.IdeaLogger")) {
-    return null
-  }
-
-  return position
+  return false
 }
 
-private fun findPositionToNavigate(suspendContext: SuspendContextImpl, frames: List<StackFrameProxyImpl>): SourcePosition? {
+private fun collectNavigatableLocations(suspendContext: SuspendContextImpl, frames: List<StackFrameProxyImpl>): List<Location> = buildList {
   val debugProcess = suspendContext.debugProcess
 
   for (frame in frames) {
-    AsyncStacksUtils.getAgentRelatedStack(frame, suspendContext)?.let { asyncStack ->
-      for (frame in asyncStack) {
-        if (frame != null) {
-          getNonFilteredPosition(debugProcess, frame.location())?.let { return it }
-        }
-      }
+    val location = frame.location()
+    if (!isFilteredLocation(debugProcess, location)) {
+      add(location)
     }
 
-    getNonFilteredPosition(debugProcess, frame.location())?.let { return it }
+    val relatedStack = AsyncStacksUtils.getAgentRelatedStack(frame, suspendContext)
+    if (relatedStack != null) {
+      for (rFrame in relatedStack) {
+        if (rFrame != null) {
+          val rLocation = rFrame.location()
+          if (!isFilteredLocation(debugProcess, rLocation)) {
+            add(rLocation)
+          }
+        }
+      }
+      break
+    }
   }
-
-  return null
 }
 
 
@@ -228,12 +220,6 @@ private class ConsolePrintingFilter(private val project: Project, val sessionDat
       effectColor = NamedColorUtil.getInactiveTextColor()
     }
 
-  private val brokenHyperlinkAttributes =
-    TextAttributes().apply {
-      effectType = EffectType.WAVE_UNDERSCORE
-      effectColor = JBColor.RED
-    }
-
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     val idx =
       line.trimEnd { it.isLineBreak() }.let { lineTrimmed ->
@@ -242,28 +228,31 @@ private class ConsolePrintingFilter(private val project: Project, val sessionDat
     if (idx == -1) return null
 
     // TODO: optimize these ops
-    val position = sessionData.toBePrinted.removeAt(idx).second
+    val locations = sessionData.toBePrinted.removeAt(idx).second
 
-    if (position === ONLY_FILTERED_POSITION) {
-      return Filter.Result(
-        entireLength - line.length, entireLength,
-        HyperlinkInfoFactory.getInstance()
-          .createMultipleFilesHyperlinkInfo(emptyList(), 10, project),
-        brokenHyperlinkAttributes,
-        brokenHyperlinkAttributes,
-      )
+    val hyperlinkInfo = object : HyperlinkInfoBase() {
+      override fun navigate(project: Project, hyperlinkLocationPoint: RelativePoint?) {
+        val items = locations.map { StackFrameItem(it, emptyList())  }
+        val debugProcess = sessionData.session.process
+        val selected = locations.indexOfFirst { location ->
+          val p = debugProcess.positionManager.getSourcePosition(location) ?: return@indexOfFirst false
+          val line = p.line
+          val document = p.file.fileDocument
+          (0 <= line && line < document.lineCount) &&
+          document.getText(TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line))).contains('"')
+        }
+        StackFramePopup.show(items, debugProcess, hyperlinkLocationPoint, selected)
+
+        // FIXME: nothing to show
+        // FIXME: no overllaping in stack trace highlighting, it should still be shown
+      }
     }
 
     return Filter.Result(
       entireLength - line.length, entireLength,
-      getHyperlinkInfo(project, position),
+      hyperlinkInfo,
       hyperLinkAttributes,
       hyperLinkAttributes,
     )
-  }
-
-  private fun getHyperlinkInfo(project: Project, position: SourcePosition): HyperlinkInfo {
-    return HyperlinkInfoFactory.getInstance().createMultipleFilesHyperlinkInfo(
-      position.file.virtualFile.let(::listOf), position.line, project, null)
   }
 }
