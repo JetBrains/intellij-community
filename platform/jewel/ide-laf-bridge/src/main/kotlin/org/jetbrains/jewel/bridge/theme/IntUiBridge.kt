@@ -12,6 +12,7 @@ import org.jetbrains.jewel.bridge.readFromLaF
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
+import org.jetbrains.jewel.foundation.GrayFilterValues
 import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
@@ -55,6 +56,7 @@ internal fun createBridgeThemeDefinition(
         contentColor = JBColor.foreground().toComposeColor(),
         colorPalette = ThemeColorPalette.readFromLaF(),
         iconData = ThemeIconData.readFromLaF(),
+        grayFilterValues = GrayFilterValues.readFromLaF(isDark),
     )
 }
 
