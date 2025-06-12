@@ -5,6 +5,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import org.jetbrains.jewel.foundation.DisabledAppearanceValues
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
 import org.jetbrains.jewel.foundation.theme.JewelTheme
@@ -66,6 +67,7 @@ import org.jetbrains.jewel.ui.theme.BaseJewelTheme
  * @param editorTextStyle The editor text style for this theme definition.
  * @param consoleTextStyle The console text style for this theme definition. Same as [editorTextStyle] by default.
  * @param contentColor The default content (text) color for this theme definition.
+ * @param disabledAppearanceValues The [DisabledAppearanceValues] for this theme definition.
  */
 public fun JewelTheme.Companion.lightThemeDefinition(
     colors: GlobalColors = GlobalColors.light(),
@@ -76,6 +78,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
     editorTextStyle: TextStyle = JewelTheme.createEditorTextStyle(),
     consoleTextStyle: TextStyle = editorTextStyle,
     contentColor: Color = colors.text.normal,
+    disabledAppearanceValues: DisabledAppearanceValues = DisabledAppearanceValues.light(),
 ): ThemeDefinition =
     ThemeDefinition(
         name = "IntUI Light",
@@ -88,6 +91,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
         contentColor,
         palette,
         iconData,
+        disabledAppearanceValues,
     )
 
 /**
@@ -101,6 +105,7 @@ public fun JewelTheme.Companion.lightThemeDefinition(
  * @param editorTextStyle The editor text style for this theme definition.
  * @param consoleTextStyle The console text style for this theme definition. Same as [editorTextStyle] by default.
  * @param contentColor The default content (text) color for this theme definition.
+ * @param disabledAppearanceValues The [DisabledAppearanceValues] for this theme definition.
  */
 public fun JewelTheme.Companion.darkThemeDefinition(
     colors: GlobalColors = GlobalColors.dark(),
@@ -111,6 +116,7 @@ public fun JewelTheme.Companion.darkThemeDefinition(
     editorTextStyle: TextStyle = JewelTheme.createEditorTextStyle(),
     consoleTextStyle: TextStyle = editorTextStyle,
     contentColor: Color = colors.text.normal,
+    disabledAppearanceValues: DisabledAppearanceValues = DisabledAppearanceValues.dark(),
 ): ThemeDefinition =
     ThemeDefinition(
         name = "IntUI Dark",
@@ -123,6 +129,7 @@ public fun JewelTheme.Companion.darkThemeDefinition(
         contentColor,
         palette,
         iconData,
+        disabledAppearanceValues,
     )
 
 @Composable

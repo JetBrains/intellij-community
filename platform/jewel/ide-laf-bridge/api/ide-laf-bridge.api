@@ -150,6 +150,10 @@ public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalMetricsKt {
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalMetrics$Companion;)Lorg/jetbrains/jewel/foundation/GlobalMetrics;
 }
 
+public final class org/jetbrains/jewel/bridge/theme/BridgeGrayFilterValuesKt {
+	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/DisabledAppearanceValues$Companion;)Lorg/jetbrains/jewel/foundation/DisabledAppearanceValues;
+}
+
 public final class org/jetbrains/jewel/bridge/theme/BridgeThemeColorPaletteKt {
 	public static final fun getWindowsPopupBorder (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;)Landroidx/compose/ui/graphics/Color;
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette$Companion;)Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;

@@ -17,6 +17,25 @@ public final class org/jetbrains/jewel/foundation/CompatibilityKt {
 	public static final fun enableNewSwingCompositing ()V
 }
 
+public final class org/jetbrains/jewel/foundation/DisabledAppearanceValues {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/foundation/DisabledAppearanceValues$Companion;
+	public fun <init> (III)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getAlpha ()I
+	public final fun getBrightness ()I
+	public final fun getContrast ()I
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/foundation/DisabledAppearanceValues$Companion {
+}
+
+public final class org/jetbrains/jewel/foundation/DisabledAppearanceValuesKt {
+	public static final fun getLocalDisabledAppearanceValues ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public abstract interface annotation class org/jetbrains/jewel/foundation/ExperimentalJewelApi : java/lang/annotation/Annotation {
 }
 
@@ -969,12 +988,13 @@ public final class org/jetbrains/jewel/foundation/theme/ThemeColorPalette$Compan
 
 public final class org/jetbrains/jewel/foundation/theme/ThemeDefinition {
 	public static final field $stable I
-	public synthetic fun <init> (Ljava/lang/String;ZLorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;JLorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Ljava/lang/String;ZLorg/jetbrains/jewel/foundation/GlobalColors;Lorg/jetbrains/jewel/foundation/GlobalMetrics;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/ui/text/TextStyle;JLorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;Lorg/jetbrains/jewel/foundation/theme/ThemeIconData;Lorg/jetbrains/jewel/foundation/DisabledAppearanceValues;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColorPalette ()Lorg/jetbrains/jewel/foundation/theme/ThemeColorPalette;
 	public final fun getConsoleTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public final fun getContentColor-0d7_KjU ()J
 	public final fun getDefaultTextStyle ()Landroidx/compose/ui/text/TextStyle;
+	public final fun getDisabledAppearanceValues ()Lorg/jetbrains/jewel/foundation/DisabledAppearanceValues;
 	public final fun getEditorTextStyle ()Landroidx/compose/ui/text/TextStyle;
 	public final fun getGlobalColors ()Lorg/jetbrains/jewel/foundation/GlobalColors;
 	public final fun getGlobalMetrics ()Lorg/jetbrains/jewel/foundation/GlobalMetrics;

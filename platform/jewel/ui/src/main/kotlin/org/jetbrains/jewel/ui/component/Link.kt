@@ -20,7 +20,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -47,7 +46,7 @@ import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior.ShowOnHove
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
-import org.jetbrains.jewel.ui.disabled
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
@@ -303,8 +302,7 @@ private fun LinkImpl(
             Icon(
                 key = icon,
                 contentDescription = null,
-                modifier = Modifier.size(style.metrics.iconSize),
-                colorFilter = if (!linkState.isEnabled) ColorFilter.disabled() else null,
+                modifier = Modifier.size(style.metrics.iconSize).thenIf(!linkState.isEnabled) { disabledAppearance() },
                 hint = Stateful(linkState),
             )
         }

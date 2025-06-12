@@ -12,6 +12,7 @@ import org.jetbrains.jewel.bridge.lafName
 import org.jetbrains.jewel.bridge.readFromLaF
 import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toComposeColor
+import org.jetbrains.jewel.foundation.DisabledAppearanceValues
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
 import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
@@ -57,6 +58,7 @@ internal fun createBridgeThemeDefinition(
         contentColor = JBColor.foreground().toComposeColor(),
         colorPalette = ThemeColorPalette.readFromLaF(),
         iconData = ThemeIconData.readFromLaF(),
+        disabledAppearanceValues = DisabledAppearanceValues.readFromLaF(),
     )
 }
 

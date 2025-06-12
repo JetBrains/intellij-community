@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.intellij.lang.annotations.Language
 import org.jetbrains.jewel.foundation.BorderColors
+import org.jetbrains.jewel.foundation.DisabledAppearanceValues
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
 import org.jetbrains.jewel.foundation.OutlineColors
@@ -797,6 +798,7 @@ public class ScrollingSynchronizerTest {
             contentColor = Color.Black,
             colorPalette = ThemeColorPalette.Empty,
             iconData = ThemeIconData.Empty,
+            disabledAppearanceValues = DisabledAppearanceValues(brightness = 33, contrast = -35, alpha = 100),
         )
     }
 
