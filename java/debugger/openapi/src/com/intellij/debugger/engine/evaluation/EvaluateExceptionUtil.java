@@ -75,7 +75,12 @@ public final class EvaluateExceptionUtil {
       return JavaDebuggerBundle.message("evaluation.error.object.collected");
     }
     else if (th instanceof InvocationException invocationException) {
-      return JavaDebuggerBundle.message("evaluation.error.method.exception", invocationException.exception().referenceType().name());
+      try {
+        return JavaDebuggerBundle.message("evaluation.error.method.exception", invocationException.exception().referenceType().name());
+      }
+      catch (ObjectCollectedException e) {
+        return JavaDebuggerBundle.message("evaluation.error.exception.collected");
+      }
     }
     else if (th instanceof EvaluateException) {
       return th.getMessage();
