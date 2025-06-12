@@ -14,6 +14,7 @@ import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.polySymbols.utils.completeMatch
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.polySymbols.js.PROP_JS_SYMBOL_KIND
 import com.intellij.polySymbols.webTypes.WebTypesSymbol
 import com.intellij.util.applyIf
 import java.util.*
@@ -25,7 +26,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
   protected open val propertiesToPrint: List<PolySymbolProperty<*>> =
     listOf(
       PolySymbol.PROP_HIDE_FROM_COMPLETION, PolySymbol.PROP_DOC_HIDE_PATTERN, PolySymbol.PROP_INJECT_LANGUAGE,
-      WebTypesSymbol.PROP_ARGUMENTS, WebTypesSymbol.PROP_JS_SYMBOL_KIND, WebTypesSymbol.PROP_KIND,
+      WebTypesSymbol.PROP_ARGUMENTS, PROP_JS_SYMBOL_KIND, WebTypesSymbol.PROP_KIND,
       WebTypesSymbol.PROP_NO_DOC, WebTypesSymbol.PROP_READ_ONLY
     )
 

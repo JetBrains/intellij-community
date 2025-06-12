@@ -3,6 +3,7 @@
 
 package com.intellij.polySymbols.js
 
+import com.intellij.polySymbols.PolySymbolProperty
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 
 const val NAMESPACE_JS: String = "js"
@@ -21,3 +22,10 @@ val JS_SYMBOLS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, 
 
 @JvmField
 val JS_STRING_LITERALS: PolySymbolQualifiedKind = PolySymbolQualifiedKind[NAMESPACE_JS, "string-literals"]
+
+/**
+ * Name of [JsSymbolSymbolKind] property used by other symbols to specify kind of the JS symbol.
+ * By default, JS symbol is treated as [JsSymbolSymbolKind.Variable].
+ **/
+@JvmField
+val PROP_JS_SYMBOL_KIND: PolySymbolProperty<String> = PolySymbolProperty.Companion["js-symbol-kind"]

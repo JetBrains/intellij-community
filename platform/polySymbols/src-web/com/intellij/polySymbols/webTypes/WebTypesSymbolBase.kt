@@ -7,6 +7,7 @@ import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
+import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
@@ -15,7 +16,6 @@ import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.utils.merge
-import com.intellij.polySymbols.webTypes.WebTypesSymbol.Companion.PROP_HTML_ATTRIBUTE_VALUE
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
 import com.intellij.polySymbols.webTypes.impl.wrap
 import com.intellij.polySymbols.webTypes.json.*
