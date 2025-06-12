@@ -1289,7 +1289,7 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
     // sometimes, this code runs under read action, so the parallelization here may just grant read access to the whole `block`
     // without a new parallelization layer
     val (lockContextElement, cleanup) = getGlobalThreadingSupport().getPermitAsContextElement(ctx, true)
-    cleanup.use {
+    try {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(ctx +
                   context +
@@ -1299,6 +1299,9 @@ internal inline fun <R> runBlockingForActionExpand(context: CoroutineContext = E
                   SafeForRunBlockingUnderReadAction +
                   Context.current().asContextElement(),
                   block)
+    }
+    finally {
+      cleanup()
     }
   }
   catch (pce : ProcessCanceledException) {

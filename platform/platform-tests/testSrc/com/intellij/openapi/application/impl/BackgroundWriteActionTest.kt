@@ -471,13 +471,17 @@ class BackgroundWriteActionTest {
   @Test
   fun `prevention of WA is thread-local`(): Unit = concurrencyTest {
     launch {
-      getGlobalThreadingSupport().prohibitWriteActionsInside().use {
+      val cleanup = getGlobalThreadingSupport().prohibitWriteActionsInside()
+      try {
         checkpoint(1)
         checkpoint(4)
         assertThrows<IllegalStateException> {
           application.runWriteAction { }
         }
         checkpoint(5)
+      }
+      finally {
+        cleanup()
       }
     }
     launch {

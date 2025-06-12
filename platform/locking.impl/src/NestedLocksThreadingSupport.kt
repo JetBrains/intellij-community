@@ -412,8 +412,8 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
      * Starts parallelization of the write-intent permit.
      * We simply grant the read access to all computations.
      */
-    fun parallelizeRead(): Pair<ComputationState, AccessToken> {
-      return ComputationState(lowerLevelPermits, thisLevelLock, true) to AccessToken.EMPTY_ACCESS_TOKEN
+    fun parallelizeRead(): Pair<ComputationState, () -> Unit> {
+      return ComputationState(lowerLevelPermits, thisLevelLock, true) to {}
     }
 
     override fun toString(): String {
@@ -432,7 +432,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
     }
   }
 
-  override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken> {
+  override fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, () -> Unit> {
     val currentComputationStateElement = baseContext[ComputationStateContextElement]
     // we suppose that the caller passes `baseContext` that is actually correct
     val currentComputationState = currentComputationStateElement?.computationState
@@ -440,7 +440,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
                                   ?: zeroLevelComputationState
 
     if (!shared) {
-      return (currentComputationStateElement ?: ComputationStateContextElement(currentComputationState)) to AccessToken.EMPTY_ACCESS_TOKEN
+      return (currentComputationStateElement ?: ComputationStateContextElement(currentComputationState)) to { }
     }
 
     // now we need to parallelize the existing permit
@@ -458,7 +458,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
         // we can simply share the current lock
 
         // here we do elvis expression to save an allocation
-        return (currentComputationStateElement ?: ComputationStateContextElement(currentComputationState)) to AccessToken.EMPTY_ACCESS_TOKEN
+        return (currentComputationStateElement ?: ComputationStateContextElement(currentComputationState)) to { }
       }
       is ParallelizablePermit.Read -> {
         // This is equivalent to `runBlockingCancellable` under `readAction`.
@@ -485,29 +485,27 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
         }
         while (!myWriteActionPending.compareAndSet(currentPendingWaArray, newArray))
 
-        return ComputationStateContextElement(newComputationState) to object : AccessToken() {
-          override fun finish() {
-            var isWriteActionPendingOnCurrentLevel: Boolean
-            do {
-              val currentPendingWaArray = myWriteActionPending.get()
+        return ComputationStateContextElement(newComputationState) to {
+          var isWriteActionPendingOnCurrentLevel: Boolean
+          do {
+            val currentPendingWaArray = myWriteActionPending.get()
 
-              @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog") // the suggested method adds useless nullability
-              val newArray = Arrays.copyOf(currentPendingWaArray, currentPendingWaArray.size - 1)
+            @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog") // the suggested method adds useless nullability
+            val newArray = Arrays.copyOf(currentPendingWaArray, currentPendingWaArray.size - 1)
 
-              isWriteActionPendingOnCurrentLevel = newArray.last().get() > 0
-            }
-            while (!myWriteActionPending.compareAndSet(currentPendingWaArray, newArray))
-
-            /**
-             * We need to cancel read actions because after the change of level we might get a pending WA which needs to run asap.
-             * See the comment in [isWriteActionPending]
-             */
-            if (isWriteActionPendingOnCurrentLevel) {
-              myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
-            }
-            statesOfWIThread.get()?.removeLast()
-            cleanup.finish()
+            isWriteActionPendingOnCurrentLevel = newArray.last().get() > 0
           }
+          while (!myWriteActionPending.compareAndSet(currentPendingWaArray, newArray))
+
+          /**
+           * We need to cancel read actions because after the change of level we might get a pending WA which needs to run asap.
+           * See the comment in [isWriteActionPending]
+           */
+          if (isWriteActionPendingOnCurrentLevel) {
+            myWriteLockReacquisitionListener?.beforeWriteLockReacquired()
+          }
+          statesOfWIThread.get()?.removeLast()
+          cleanup.finish()
         }
       }
       is ParallelizablePermit.Write -> {
@@ -523,17 +521,15 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
         currentPermit.writePermit.release()
         val newPermit = currentComputationState.acquireReadPermit()
         val (newState, cleanup) = currentComputationState.parallelizeRead()
-        return ComputationStateContextElement(newState) to object : AccessToken() {
-          override fun finish() {
-            cleanup.finish()
-            currentComputationState.releaseReadPermit(newPermit)
-            // we need to reacquire the previously released write permit
-            val newWritePermit = runSuspendMaybeConsuming(false) {
-              currentWriteIntentPermit.acquireWritePermit()
-            }
-            hack_setThisLevelPermit(newWritePermit)
-            hack_setPublishedPermitData(currentPermits.copy(finalWritePermit = newWritePermit))
+        return ComputationStateContextElement(newState) to {
+          cleanup()
+          currentComputationState.releaseReadPermit(newPermit)
+          // we need to reacquire the previously released write permit
+          val newWritePermit = runSuspendMaybeConsuming(false) {
+            currentWriteIntentPermit.acquireWritePermit()
           }
+          hack_setThisLevelPermit(newWritePermit)
+          hack_setPublishedPermitData(currentPermits.copy(finalWritePermit = newWritePermit))
         }
       }
     }
@@ -1097,7 +1093,7 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
   }
 
   @Deprecated("Use `runReadAction` instead")
-  override fun acquireReadActionLock(): AccessToken {
+  override fun acquireReadActionLock(): CleanupAction {
     logger.error("`ThreadingSupport.acquireReadActionLock` is deprecated and going to be removed soon. Use `runReadAction()` instead")
     val computationState = getComputationState()
     val currentPermit = computationState.getThisThreadPermit()
@@ -1105,37 +1101,33 @@ internal class NestedLocksThreadingSupport : ThreadingSupport {
       throw IllegalStateException("Write Action can not request Read Access Token")
     }
     if (currentPermit is ReadPermit || currentPermit is WriteIntentPermit) {
-      return AccessToken.EMPTY_ACCESS_TOKEN
+      return { }
     }
-    return object : AccessToken() {
-      private val capturedListener = myReadActionListener
-      private val myPermit = run {
-        fireBeforeReadActionStart(capturedListener, javaClass)
-        val p = computationState.acquireReadPermit()
-        fireReadActionStarted(capturedListener, javaClass)
-        p
-      }
-
-      override fun finish() {
-        fireReadActionFinished(capturedListener, javaClass)
-        computationState.releaseReadPermit(myPermit)
-        fireAfterReadActionFinished(capturedListener, javaClass)
-      }
+    val capturedListener = myReadActionListener
+    val capturedPermit = run {
+      fireBeforeReadActionStart(capturedListener, javaClass)
+      val p = computationState.acquireReadPermit()
+      fireReadActionStarted(capturedListener, javaClass)
+      p
+    }
+    return {
+      fireReadActionFinished(capturedListener, javaClass)
+      computationState.releaseReadPermit(capturedPermit)
+      fireAfterReadActionFinished(capturedListener, javaClass)
     }
   }
 
   @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
-  override fun acquireWriteActionLock(marker: Class<*>): AccessToken {
+  override fun acquireWriteActionLock(marker: Class<*>): () -> Unit {
     logger.error("`ThreadingSupport.acquireWriteActionLock` is deprecated and going to be removed soon. Use `runWriteAction()` instead")
-    return WriteAccessToken(marker)
+    val token = WriteAccessToken(marker)
+    return token::finish
   }
 
-  override fun prohibitWriteActionsInside(): AccessToken {
+  override fun prohibitWriteActionsInside(): () -> Unit {
     myNoWriteActionCounter.set(myNoWriteActionCounter.get() + 1)
-    return object : AccessToken() {
-      override fun finish() {
-        myNoWriteActionCounter.set(myNoWriteActionCounter.get() - 1)
-      }
+    return {
+      myNoWriteActionCounter.set(myNoWriteActionCounter.get() - 1)
     }
   }
 

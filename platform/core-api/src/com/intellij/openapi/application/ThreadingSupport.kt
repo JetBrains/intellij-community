@@ -175,15 +175,15 @@ interface ThreadingSupport {
   fun isWriteAccessAllowed(): Boolean
 
   @Deprecated("Use `runReadAction` instead")
-  fun acquireReadActionLock(): AccessToken
+  fun acquireReadActionLock(): CleanupAction
 
   @Deprecated("Use `runWriteAction`, `WriteAction.run`, or `WriteAction.compute` instead")
-  fun acquireWriteActionLock(marker: Class<*>): AccessToken
+  fun acquireWriteActionLock(marker: Class<*>): CleanupAction
 
   /**
    * Disable write actions till token will be released.
    */
-  fun prohibitWriteActionsInside(): AccessToken
+  fun prohibitWriteActionsInside(): CleanupAction
 
   /**
    * Adds a [LockAcquisitionListener].
@@ -252,7 +252,7 @@ interface ThreadingSupport {
   fun isInsideUnlockedWriteIntentLock(): Boolean
 
   @ApiStatus.Internal
-  fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, AccessToken>
+  fun getPermitAsContextElement(baseContext: CoroutineContext, shared: Boolean): Pair<CoroutineContext, CleanupAction>
 
   @ApiStatus.Internal
   fun isParallelizedReadAction(context: CoroutineContext): Boolean
@@ -301,3 +301,5 @@ interface ThreadingSupport {
    */
   fun runWhenWriteActionIsCompleted(action: () -> Unit)
 }
+
+typealias CleanupAction = () -> Unit

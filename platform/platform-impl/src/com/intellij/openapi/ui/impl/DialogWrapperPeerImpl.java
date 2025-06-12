@@ -56,6 +56,7 @@ import com.intellij.util.ui.*;
 import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -432,21 +433,21 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     Project project = myProject;
 
     AccessToken lockContextCleanup;
-    AccessToken lockCleanup;
+    Function0<Unit> lockCleanup;
 
     if (changeModalityState) {
       commandProcessor.enterModal();
       LaterInvocator.enterModal(myDialog);
 
       var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
-                 ? new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN)
+                 ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
                  : IntelliJLockingUtil.getGlobalThreadingSupport().getPermitAsContextElement(ThreadContext.currentThreadContext(), true);
       lockContextCleanup = ThreadContext.installThreadContext(pair.getFirst(), true);
       lockCleanup = pair.getSecond();
     }
     else {
       lockContextCleanup = ThreadContext.resetThreadContext();
-      lockCleanup = AccessToken.EMPTY_ACCESS_TOKEN;
+      lockCleanup = emptyFunction;
     }
 
     if (appStarted) {
@@ -471,7 +472,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     SplashManagerKt.hideSplash();
     try (
       AccessToken ignore = SlowOperations.startSection(SlowOperations.RESET);
-      AccessToken ignore2 = lockCleanup;
       AccessToken ignore3 = lockContextCleanup
     ) {
       if (!isProgressDialog() && !ApplicationManager.getApplication().isReadAccessAllowed()) {
@@ -483,6 +483,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       }
     }
     finally {
+      lockCleanup.invoke();
       if (changeModalityState) {
         commandProcessor.leaveModal();
         LaterInvocator.leaveModal(myDialog);
@@ -497,6 +498,8 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     return result;
   }
+
+  private static final Function0<Unit> emptyFunction = () -> Unit.INSTANCE;
 
   //hopefully this whole code will go away
   private void hidePopupsIfNeeded() {

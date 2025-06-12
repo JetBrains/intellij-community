@@ -43,7 +43,6 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Unmodifiable
 import java.awt.AWTEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -177,7 +176,10 @@ internal class ActionUpdater @JvmOverloads constructor(
           var traceCookie: ThreadDumpService.Cookie? = null
           try {
             Triple({ ProhibitAWTEvents.start(operationName) },
-                   { IdeEventQueue.getInstance().threadingSupport.prohibitWriteActionsInside() },
+                   {
+                     val result = IdeEventQueue.getInstance().threadingSupport.prohibitWriteActionsInside()
+                     AutoCloseable { result() }
+                   },
                    { threadDumpService.start(100, 50, 5, Thread.currentThread()) }).use { _, _, cookie ->
               traceCookie = cookie
               ourInEDTActionOperationStack = prevStack.prepend(operationName)

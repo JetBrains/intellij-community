@@ -1180,7 +1180,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @SuppressWarnings("deprecation")
   public @NotNull AccessToken acquireReadActionLock() {
     PluginException.reportDeprecatedUsage("Application.acquireReadActionLock", "Use `runReadAction()` instead");
-    return getThreadingSupport().acquireReadActionLock();
+    var cleanup = getThreadingSupport().acquireReadActionLock();
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        cleanup.invoke();
+      }
+    };
   }
 
   @Override
@@ -1202,7 +1208,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @SuppressWarnings("deprecation")
   public @NotNull AccessToken acquireWriteActionLock(@NotNull Class<?> clazz) {
     PluginException.reportDeprecatedUsage("Application#acquireWriteActionLock", "Use `runWriteAction()` instead");
-    return getThreadingSupport().acquireWriteActionLock(clazz);
+    var cleanup = getThreadingSupport().acquireWriteActionLock(clazz);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        cleanup.invoke();
+      }
+    };
   }
 
   @Override
@@ -1604,7 +1616,13 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public kotlin.Pair<CoroutineContext, AccessToken> getLockStateAsCoroutineContext(CoroutineContext baseContext, boolean shared) {
-    return getThreadingSupport().getPermitAsContextElement(baseContext, shared);
+    var pair = getThreadingSupport().getPermitAsContextElement(baseContext, shared);
+    return new kotlin.Pair<>(pair.getFirst(), new AccessToken() {
+      @Override
+      public void finish() {
+        pair.getSecond().invoke();
+      }
+    });
   }
 
   @Override
