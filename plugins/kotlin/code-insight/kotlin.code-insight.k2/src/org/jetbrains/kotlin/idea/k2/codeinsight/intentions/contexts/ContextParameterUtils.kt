@@ -2,48 +2,45 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts
 
+import com.intellij.refactoring.RefactoringBundle
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
-import org.jetbrains.kotlin.idea.refactoring.isAbstract
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 object ContextParameterUtils {
     /**
-     * Checks if the given [KtParameter] is a context parameter that can be converted to another kind of parameter.
+     * Checks if the given [KtParameter] is a context parameter that can be converted into a value parameter or receiver.
      */
     fun isConvertibleContextParameter(ktParameter: KtParameter): Boolean {
         if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
         val contextParameterList = ktParameter.parent as? KtContextReceiverList ?: return false
         val contextParameterListOwner = contextParameterList.ownerDeclaration
-        if (contextParameterListOwner !is KtCallableDeclaration) return false
-        if (contextParameterListOwner.isOpenAbstractOrOverride()) return false
-
-        return true
-    }
-
-    fun isValueParameterConvertibleToContext(ktParameter: KtParameter): Boolean {
-        if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
-        val valueParameterList = ktParameter.parent as? KtParameterList ?: return false
-        val owner = valueParameterList.ownerFunction as? KtCallableDeclaration ?: return false
-        if (owner.isOpenAbstractOrOverride()) return false
-
-        return true
+        return contextParameterListOwner is KtCallableDeclaration
     }
 
     /**
-     * Creates and configures [KotlinChangeInfo] using the owner function of the [element] for conversion intentions.
+     * Checks if the given [KtParameter] is a value parameter that can be converted into a context parameter.
+     */
+    fun isValueParameterConvertibleToContext(ktParameter: KtParameter): Boolean {
+        if (!ktParameter.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) return false
+        val valueParameterList = ktParameter.parent as? KtParameterList ?: return false
+        return valueParameterList.ownerFunction != null
+    }
+
+    /**
+     * Creates and configures [KotlinChangeInfo] using the owner callable of the [element] or the base overridden declaration for overrides.
      * The Change Signature refactoring runs with this info if [configureChangeInfo] returns `true`.
      */
     fun runChangeSignatureForParameter(element: KtParameter, configureChangeInfo: (KotlinChangeInfo) -> Boolean) {
         val ktCallable = element.getStrictParentOfType<KtCallableDeclaration>() ?: return
-        val methodDescriptor = KotlinMethodDescriptor(ktCallable)
-        val changeInfo = KotlinChangeInfo(methodDescriptor)
+        val changeInfo = createChangeInfo(ktCallable) ?: return
         if (!configureChangeInfo(changeInfo)) return
         KotlinChangeSignatureProcessor(element.project, changeInfo).also {
             it.prepareSuccessfulSwingThreadCallback = Runnable { }
@@ -80,7 +77,15 @@ object ContextParameterUtils {
         }
     }
 
-    // to avoid overrides and overridable declarations KTIJ-34463
-    private fun KtDeclaration.isOpenAbstractOrOverride(): Boolean =
-        isAbstract() || hasModifier(KtTokens.OPEN_KEYWORD) || hasModifier(KtTokens.OVERRIDE_KEYWORD)
+    /**
+     * Creates a new unconfigured [KotlinChangeInfo] for the given [ktCallable] for running the Change Signature refactoring.
+     * Returns the info for the base overridden declaration for overrides, or the declaration itself for non-overrides.
+     * Returns `null` if the declaration is an override and the user cancels the action after the warning.
+     */
+    fun createChangeInfo(ktCallable: KtCallableDeclaration): KotlinChangeInfo? {
+        val callableWithOverridden = checkSuperMethods(ktCallable, emptyList(), RefactoringBundle.message("to.refactor"))
+        val rootOverriddenOrSelf = callableWithOverridden.lastIsInstanceOrNull<KtCallableDeclaration>() ?: return null
+        val methodDescriptor = KotlinMethodDescriptor(rootOverriddenOrSelf)
+        return KotlinChangeInfo(methodDescriptor)
+    }
 }

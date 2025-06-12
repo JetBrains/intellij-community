@@ -14198,6 +14198,36 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("classHierarchy1.kt")
+            public void testClassHierarchy1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy1.kt");
+            }
+
+            @TestMetadata("classHierarchy2.kt")
+            public void testClassHierarchy2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy2.kt");
+            }
+
+            @TestMetadata("classHierarchy3.kt")
+            public void testClassHierarchy3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy3.kt");
+            }
+
+            @TestMetadata("classHierarchy4.kt")
+            public void testClassHierarchy4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy4.kt");
+            }
+
+            @TestMetadata("classHierarchy5.kt")
+            public void testClassHierarchy5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy5.kt");
+            }
+
+            @TestMetadata("classHierarchy6.kt")
+            public void testClassHierarchy6() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/classHierarchy6.kt");
+            }
+
             @TestMetadata("contextProperty.kt")
             public void testContextProperty() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToReceiver/contextProperty.kt");
@@ -14292,6 +14322,36 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/abstractOverride3.kt");
             }
 
+            @TestMetadata("classHierarchy1.kt")
+            public void testClassHierarchy1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/classHierarchy1.kt");
+            }
+
+            @TestMetadata("classHierarchy2.kt")
+            public void testClassHierarchy2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/classHierarchy2.kt");
+            }
+
+            @TestMetadata("classHierarchy3.kt")
+            public void testClassHierarchy3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/classHierarchy3.kt");
+            }
+
+            @TestMetadata("classHierarchy4.kt")
+            public void testClassHierarchy4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/classHierarchy4.kt");
+            }
+
+            @TestMetadata("classHierarchy5.kt")
+            public void testClassHierarchy5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/classHierarchy5.kt");
+            }
+
+            @TestMetadata("classHierarchy6.kt")
+            public void testClassHierarchy6() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/classHierarchy6.kt");
+            }
+
             @TestMetadata("contextDeclarationContextUsage1.kt")
             public void testContextDeclarationContextUsage1() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/contextParameterToRegularParameter/contextDeclarationContextUsage1.kt");
@@ -14379,6 +14439,36 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("classHierarchy1.kt")
+            public void testClassHierarchy1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/classHierarchy1.kt");
+            }
+
+            @TestMetadata("classHierarchy2.kt")
+            public void testClassHierarchy2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/classHierarchy2.kt");
+            }
+
+            @TestMetadata("classHierarchy3.kt")
+            public void testClassHierarchy3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/classHierarchy3.kt");
+            }
+
+            @TestMetadata("classHierarchy4.kt")
+            public void testClassHierarchy4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/classHierarchy4.kt");
+            }
+
+            @TestMetadata("classHierarchy5.kt")
+            public void testClassHierarchy5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/classHierarchy5.kt");
+            }
+
+            @TestMetadata("classHierarchy6.kt")
+            public void testClassHierarchy6() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/receiverToContextParameter/classHierarchy6.kt");
             }
 
             @TestMetadata("classScopeExtensionArgument.kt")
@@ -14473,6 +14563,36 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             @TestMetadata("abstractOverride.kt")
             public void testAbstractOverride() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/abstractOverride.kt");
+            }
+
+            @TestMetadata("classHierarchy1.kt")
+            public void testClassHierarchy1() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/classHierarchy1.kt");
+            }
+
+            @TestMetadata("classHierarchy2.kt")
+            public void testClassHierarchy2() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/classHierarchy2.kt");
+            }
+
+            @TestMetadata("classHierarchy3.kt")
+            public void testClassHierarchy3() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/classHierarchy3.kt");
+            }
+
+            @TestMetadata("classHierarchy4.kt")
+            public void testClassHierarchy4() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/classHierarchy4.kt");
+            }
+
+            @TestMetadata("classHierarchy5.kt")
+            public void testClassHierarchy5() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/classHierarchy5.kt");
+            }
+
+            @TestMetadata("classHierarchy6.kt")
+            public void testClassHierarchy6() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/classHierarchy6.kt");
             }
 
             @TestMetadata("doubleReceiver.kt")

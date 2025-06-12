@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.createChangeInfo
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.contexts.ContextParameterUtils.getContextParameters
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.refactoring.rename.KotlinMemberInplaceRenameHandler
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -35,8 +35,7 @@ class ConvertReceiverParameterToContextParameterIntention : SelfTargetingIntenti
 
     override fun applyTo(element: KtTypeReference, editor: Editor?) {
         val ktCallable = element.getStrictParentOfType<KtCallableDeclaration>() ?: return
-        val methodDescriptor = KotlinMethodDescriptor(ktCallable)
-        val changeInfo = KotlinChangeInfo(methodDescriptor)
+        val changeInfo = createChangeInfo(ktCallable) ?: return
         if (!configureChangeInfo(changeInfo)) return
         object : KotlinChangeSignatureProcessor(element.project, changeInfo) {
             override fun performRefactoring(usages: Array<out UsageInfo?>) {
