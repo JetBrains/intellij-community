@@ -35,6 +35,11 @@ public class MultiModuleNavigationTestGenerated extends AbstractMultiModuleNavig
         runTest("testData/multimodule/classFromCommon/");
     }
 
+    @TestMetadata("commonLibraryInJvmModule")
+    public void testCommonLibraryInJvmModule() throws Exception {
+        runTest("testData/multimodule/commonLibraryInJvmModule/");
+    }
+
     @TestMetadata("extFunctionFromCommon")
     public void testExtFunctionFromCommon() throws Exception {
         runTest("testData/multimodule/extFunctionFromCommon/");
