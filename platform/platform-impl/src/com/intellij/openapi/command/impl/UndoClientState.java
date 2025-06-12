@@ -175,7 +175,9 @@ final class UndoClientState implements Disposable {
     @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
     boolean recordOriginalReference
   ) {
-    undoSpy.commandStarted(commandProject, undoConfirmationPolicy);
+    if (!isUndoOrRedoInProgress()) {
+      undoSpy.commandStarted(commandProject, undoConfirmationPolicy);
+    }
     if (!isInsideCommand()) {
       boolean isTransparent = CommandProcessor.getInstance().isUndoTransparentActionInProgress();
       currentCommandMerger = new CommandMerger(project, isTransparent, isTransparentSupported);
@@ -227,14 +229,16 @@ final class UndoClientState implements Disposable {
       compactIfNeeded();
     }
     commandMerger.commandFinished(commandName, groupId, currentCommandMerger);
-    undoSpy.commandFinished(currentProject, commandName, groupId, currentCommandMerger.isTransparent());
+    if (!isUndoOrRedoInProgress()) {
+      undoSpy.commandFinished(currentProject, commandName, groupId, currentCommandMerger.isTransparent());
+    }
     currentProject = DummyProject.getInstance();
     this.currentCommandMerger = null;
   }
 
   void flushCurrentCommand(@NotNull UndoCommandFlushReason flushReason) {
-    if (currentCommandMerger != null && !currentCommandMerger.hasActions() && commandMerger.hasActions()) {
-      undoSpy.flushCommand(project);
+    if (currentCommandMerger != null && !currentCommandMerger.hasActions() && commandMerger.hasActions() && !isUndoOrRedoInProgress()) {
+      undoSpy.commandMergerFlushed(project);
     }
     commandMerger.flushCurrentCommand(undoStacksHolder, flushReason, nextCommandTimestamp());
   }
@@ -535,8 +539,8 @@ final class UndoClientState implements Disposable {
   private void addUndoableAction(@NotNull UndoableAction action) {
     addActionToSharedStack(action);
     currentCommandMerger.addAction(action);
-    if (!(currentProject instanceof DummyProject)) {
-      undoSpy.addUndoableAction(currentProject, action, UndoableActionType.forAction(action));
+    if (!(currentProject instanceof DummyProject) && !isUndoOrRedoInProgress()) {
+      undoSpy.undoableActionAdded(currentProject, action, UndoableActionType.forAction(action));
     }
   }
 

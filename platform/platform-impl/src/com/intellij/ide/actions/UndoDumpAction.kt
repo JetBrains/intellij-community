@@ -12,11 +12,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.annotations.ApiStatus.Experimental
-import org.jetbrains.annotations.ApiStatus.Internal
 
 
 @Experimental
-@Internal
 private class UndoDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Duplicated {
 
   companion object {
@@ -37,7 +35,7 @@ private class UndoDumpAction : DumbAwareAction(), ActionRemoteBehaviorSpecificat
     val undoManager = UndoRedoAction.getUndoManager(editor, dataContext, false, false)
     LOG.warn("${undoManager ?: "null undo manager"}")
     if (undoManager is UndoManagerImpl) {
-      LOG.warn(undoManager.dumpState(editor))
+      LOG.warn(undoManager.dumpState(editor, "triggered by UndoDumpAction"))
     }
   }
 

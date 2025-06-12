@@ -239,7 +239,7 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
-  public @NotNull String dumpState(@Nullable FileEditor editor) {
+  public @NotNull String dumpState(@Nullable FileEditor editor, @NotNull String title) {
     boolean undoAvailable = isUndoAvailable(editor);
     boolean redoAvailable = isRedoAvailable(editor);
     Pair<String, String> undoDescription = getUndoActionNameAndDescription(editor);
@@ -264,8 +264,9 @@ public class UndoManagerImpl extends UndoManager {
       %s
       %s
       %s
+      %s
       _____________________________________________________________________________________________________________________
-      """.formatted(undoStatus, redoStatus, stacks);
+      """.formatted(title, undoStatus, redoStatus, stacks);
   }
 
   @ApiStatus.Internal
@@ -503,7 +504,8 @@ public class UndoManagerImpl extends UndoManager {
     return getComponentManager().getService(UndoClientState.class);
   }
 
-  private void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
+  @ApiStatus.Internal
+  protected void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
     UndoClientState state = getClientState(editor);
     if (state != null) {
       String commandName = getUndoOrRedoActionNameAndDescription(editor, isUndo).getSecond();
@@ -513,6 +515,9 @@ public class UndoManagerImpl extends UndoManager {
         state.undoOrRedo(editor, commandName, beforeUndoRedoStarted, isUndo);
       } finally {
         Disposer.dispose(disposable);
+      }
+      if (myProject != null) {
+        getUndoSpy().undoRedoPerformed(myProject, editor, isUndo);
       }
     }
   }
