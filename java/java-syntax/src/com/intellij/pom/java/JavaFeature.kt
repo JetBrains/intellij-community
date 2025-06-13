@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
+import kotlin.jvm.JvmStatic
 
 /**
  * Represents Java language, JVM, or standard library features and provides information
