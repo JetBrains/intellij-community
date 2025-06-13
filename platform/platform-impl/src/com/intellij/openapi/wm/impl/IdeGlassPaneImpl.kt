@@ -13,7 +13,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.impl.ProjectLoadingCancelled
@@ -31,6 +30,7 @@ import com.intellij.platform.ide.bootstrap.hideSplash
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
+import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
@@ -59,7 +59,8 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   private var prevPressEvent: MouseEvent? = null
 
   @Suppress("MemberVisibilityCanBePrivate")
-  internal @JvmField var windowShadowPainter: AbstractPainter? = null
+  @JvmField
+  internal var windowShadowPainter: AbstractPainter? = null
   private var paintersInstalled = false
   private var loadingIndicator: IdePaneLoadingLayer? = null
 
@@ -578,6 +579,7 @@ internal interface FrameLoadingState {
   val done: Job
 }
 
+@OptIn(AwaitCancellationAndInvoke::class)
 internal fun executeOnCancelInEdt(coroutineScope: CoroutineScope, task: () -> Unit) {
   coroutineScope.awaitCancellationAndInvoke {
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {

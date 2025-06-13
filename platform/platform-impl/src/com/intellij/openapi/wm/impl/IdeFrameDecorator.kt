@@ -5,7 +5,6 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
@@ -15,6 +14,7 @@ import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.JBR

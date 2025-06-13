@@ -13,7 +13,6 @@ import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.ui.localization.statistics.EventSource
 import com.intellij.ide.ui.localization.statistics.LocalizationActionsStatistics
 import com.intellij.l10n.LocalizationStateService
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory

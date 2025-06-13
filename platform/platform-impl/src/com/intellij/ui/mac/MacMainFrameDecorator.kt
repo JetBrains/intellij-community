@@ -8,7 +8,6 @@ import com.apple.eawt.FullScreenUtilities
 import com.apple.eawt.event.FullScreenEvent
 import com.intellij.ide.ActiveWindowsWatcher
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -22,6 +21,7 @@ import com.intellij.ui.ToolbarService.Companion.getInstance
 import com.intellij.ui.mac.MacFullScreenControlsManager.configureForEmptyToolbarHeader
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.util.EventDispatcher
+import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.UIUtil
 import com.sun.jna.Native
 import com.sun.jna.platform.mac.CoreFoundation

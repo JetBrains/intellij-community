@@ -2,9 +2,9 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.ide.GeneralSettings
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

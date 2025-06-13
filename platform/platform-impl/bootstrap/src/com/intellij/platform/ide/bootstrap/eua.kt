@@ -6,8 +6,8 @@ import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
 import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.openapi.application.ex.ApplicationInfoEx
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
 
 // On startup 2 dialogs must be shown:

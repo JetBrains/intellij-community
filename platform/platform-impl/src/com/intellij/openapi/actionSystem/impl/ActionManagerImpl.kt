@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.ex.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getActionUnavailableMessage
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
@@ -68,6 +67,7 @@ import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.with
 import com.intellij.util.containers.without
+import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xml.dom.XmlElement

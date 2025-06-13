@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.impl.ApplicationImpl
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -20,6 +19,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 

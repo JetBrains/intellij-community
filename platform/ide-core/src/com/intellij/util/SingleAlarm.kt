@@ -6,11 +6,7 @@ package com.intellij.util
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.CoroutineSupport
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.UiDispatcherKind
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
@@ -20,13 +16,13 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.TestOnly
-import java.awt.EventQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import kotlin.coroutines.CoroutineContext
@@ -243,13 +239,7 @@ class SingleAlarm @Internal constructor(
       if (edtDispatcher == null) {
         // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
         LOG.warn("Do not use an alarm in an early executing code")
-        return object : CoroutineDispatcher() {
-          override fun dispatch(context: CoroutineContext, block: Runnable) {
-            EventQueue.invokeLater(block)
-          }
-
-          override fun toString() = "Swing"
-        }
+        return RawSwingDispatcher
       }
       else {
         return edtDispatcher

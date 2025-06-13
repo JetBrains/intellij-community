@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -185,7 +184,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     isFirstSetup = false
 
     if (EDT.isCurrentThreadEdt()) {
-      initInEdt()
+      initInEdt(ExperimentalUI.getInstance())
       addListeners()
     }
     else {
@@ -196,12 +195,12 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   @Internal
   suspend fun applyInitState() {
     span("laf initialization in EDT", RawSwingDispatcher) {
-      initInEdt()
+      initInEdt(serviceAsync<ExperimentalUI>())
     }
     addListeners()
   }
 
-  private fun initInEdt() {
+  private fun initInEdt(experimentalUi: ExperimentalUI) {
     val theme = currentTheme!!
     if (!theme.isInitialized) {
       doSetLaF(theme = theme, installEditorScheme = false)
@@ -209,7 +208,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     selectComboboxModel()
 
     runActivity("new ui configuration") {
-      ExperimentalUI.getInstance().lookAndFeelChanged()
+      experimentalUi.lookAndFeelChanged()
     }
 
     updateUI(isFirstSetup = true)
@@ -989,7 +988,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  private inner class GetMoreLafAction : DumbAwareAction(IdeBundle.message("link.get.more.themes")) {
+  private class GetMoreLafAction : DumbAwareAction(IdeBundle.message("link.get.more.themes")) {
     override fun actionPerformed(e: AnActionEvent) {
       val themeTag = "/tag:Theme"
       val settings = Settings.KEY.getData(e.dataContext)
