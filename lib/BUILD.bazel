@@ -7127,38 +7127,12 @@ jvm_import(
 )
 
 java_library(
-  name = "netty",
+  name = "netty-buffer",
   exports = [
-    ":netty-all-4_2_0_RC2_http_import",
     ":netty-buffer-4_2_0_RC2_http_import",
-    ":netty-codec-base-4_2_0_RC2_http_import",
-    ":netty-codec-4_2_0_RC2_http_import",
-    ":netty-codec-http-4_2_0_RC2_http_import",
-    ":netty-codec-http2-4_2_0_RC2_http_import",
     ":netty-common-4_2_0_RC2_http_import",
-    ":netty-handler-4_2_0_RC2_http_import",
-    ":netty-transport-native-unix-common-4_2_0_RC2_http_import",
-    ":netty-handler-ssl-ocsp-4_2_0_RC2_http_import",
-    ":netty-resolver-4_2_0_RC2_http_import",
-    ":netty-transport-4_2_0_RC2_http_import",
-    ":netty-pkitesting-4_2_0_RC2_http_import",
-    ":bcpkix-jdk18on-1_79_http_import",
-    ":bcutil-jdk18on-1_79_http_import",
-    ":bcprov-jdk18on-1_79_http_import",
-    ":netty-transport-classes-epoll-4_2_0_RC2_http_import",
-    ":netty-transport-classes-kqueue-4_2_0_RC2_http_import",
-    ":netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http_import",
-    ":netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http_import",
-    ":netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http_import",
-    ":netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http_import",
-    ":netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http_import",
   ],
   visibility = ["//visibility:public"]
-)
-
-jvm_import(
-  name = "netty-all-4_2_0_RC2_http_import",
-  jar = "@netty-all-4_2_0_RC2_http//file"
 )
 
 jvm_import(
@@ -7168,133 +7142,9 @@ jvm_import(
 )
 
 jvm_import(
-  name = "netty-codec-base-4_2_0_RC2_http_import",
-  jar = "@netty-codec-base-4_2_0_RC2_http//file",
-  source_jar = "@netty-codec-base-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-codec-4_2_0_RC2_http_import",
-  jar = "@netty-codec-4_2_0_RC2_http//file",
-  source_jar = "@netty-codec-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-codec-http-4_2_0_RC2_http_import",
-  jar = "@netty-codec-http-4_2_0_RC2_http//file",
-  source_jar = "@netty-codec-http-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-codec-http2-4_2_0_RC2_http_import",
-  jar = "@netty-codec-http2-4_2_0_RC2_http//file",
-  source_jar = "@netty-codec-http2-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
   name = "netty-common-4_2_0_RC2_http_import",
   jar = "@netty-common-4_2_0_RC2_http//file",
   source_jar = "@netty-common-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-handler-4_2_0_RC2_http_import",
-  jar = "@netty-handler-4_2_0_RC2_http//file",
-  source_jar = "@netty-handler-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-native-unix-common-4_2_0_RC2_http_import",
-  jar = "@netty-transport-native-unix-common-4_2_0_RC2_http//file",
-  source_jar = "@netty-transport-native-unix-common-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-handler-ssl-ocsp-4_2_0_RC2_http_import",
-  jar = "@netty-handler-ssl-ocsp-4_2_0_RC2_http//file",
-  source_jar = "@netty-handler-ssl-ocsp-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-resolver-4_2_0_RC2_http_import",
-  jar = "@netty-resolver-4_2_0_RC2_http//file",
-  source_jar = "@netty-resolver-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-4_2_0_RC2_http_import",
-  jar = "@netty-transport-4_2_0_RC2_http//file",
-  source_jar = "@netty-transport-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-pkitesting-4_2_0_RC2_http_import",
-  jar = "@netty-pkitesting-4_2_0_RC2_http//file",
-  source_jar = "@netty-pkitesting-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "bcpkix-jdk18on-1_79_http_import",
-  jar = "@bcpkix-jdk18on-1_79_http//file",
-  source_jar = "@bcpkix-jdk18on-1_79-sources_http//file"
-)
-
-jvm_import(
-  name = "bcutil-jdk18on-1_79_http_import",
-  jar = "@bcutil-jdk18on-1_79_http//file",
-  source_jar = "@bcutil-jdk18on-1_79-sources_http//file"
-)
-
-jvm_import(
-  name = "bcprov-jdk18on-1_79_http_import",
-  jar = "@bcprov-jdk18on-1_79_http//file",
-  source_jar = "@bcprov-jdk18on-1_79-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-classes-epoll-4_2_0_RC2_http_import",
-  jar = "@netty-transport-classes-epoll-4_2_0_RC2_http//file",
-  source_jar = "@netty-transport-classes-epoll-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-classes-kqueue-4_2_0_RC2_http_import",
-  jar = "@netty-transport-classes-kqueue-4_2_0_RC2_http//file",
-  source_jar = "@netty-transport-classes-kqueue-4_2_0_RC2-sources_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http_import",
-  jar = "@netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http_import",
-  jar = "@netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http_import",
-  jar = "@netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http_import",
-  jar = "@netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http//file"
-)
-
-jvm_import(
-  name = "netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http_import",
-  jar = "@netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http//file"
-)
-
-java_library(
-  name = "netty-buffer",
-  exports = [
-    ":netty-buffer-4_2_0_RC2_http_import",
-    ":netty-common-4_2_0_RC2_http_import",
-  ],
-  visibility = ["//visibility:public"]
 )
 
 jvm_import(
@@ -7317,6 +7167,54 @@ java_library(
     ":netty-codec-http-4_2_0_RC2_http_import",
   ],
   visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "netty-codec-http2-4_2_0_RC2_http_import",
+  jar = "@netty-codec-http2-4_2_0_RC2_http//file",
+  source_jar = "@netty-codec-http2-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-4_2_0_RC2_http_import",
+  jar = "@netty-transport-4_2_0_RC2_http//file",
+  source_jar = "@netty-transport-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-resolver-4_2_0_RC2_http_import",
+  jar = "@netty-resolver-4_2_0_RC2_http//file",
+  source_jar = "@netty-resolver-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-codec-4_2_0_RC2_http_import",
+  jar = "@netty-codec-4_2_0_RC2_http//file",
+  source_jar = "@netty-codec-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-codec-base-4_2_0_RC2_http_import",
+  jar = "@netty-codec-base-4_2_0_RC2_http//file",
+  source_jar = "@netty-codec-base-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-handler-4_2_0_RC2_http_import",
+  jar = "@netty-handler-4_2_0_RC2_http//file",
+  source_jar = "@netty-handler-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-native-unix-common-4_2_0_RC2_http_import",
+  jar = "@netty-transport-native-unix-common-4_2_0_RC2_http//file",
+  source_jar = "@netty-transport-native-unix-common-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-codec-http-4_2_0_RC2_http_import",
+  jar = "@netty-codec-http-4_2_0_RC2_http//file",
+  source_jar = "@netty-codec-http-4_2_0_RC2-sources_http//file"
 )
 
 jvm_import(
@@ -7835,6 +7733,108 @@ jvm_import(
   jar = "@format-ripper-1_1_1_http//file",
   source_jar = "@format-ripper-1_1_1-sources_http//file",
   visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "platform-build_scripts-netty",
+  exports = [
+    ":netty-all-4_2_0_RC2_http_import",
+    ":netty-buffer-4_2_0_RC2_http_import",
+    ":netty-codec-base-4_2_0_RC2_http_import",
+    ":netty-codec-4_2_0_RC2_http_import",
+    ":netty-codec-http-4_2_0_RC2_http_import",
+    ":netty-codec-http2-4_2_0_RC2_http_import",
+    ":netty-common-4_2_0_RC2_http_import",
+    ":netty-handler-4_2_0_RC2_http_import",
+    ":netty-transport-native-unix-common-4_2_0_RC2_http_import",
+    ":netty-handler-ssl-ocsp-4_2_0_RC2_http_import",
+    ":netty-resolver-4_2_0_RC2_http_import",
+    ":netty-transport-4_2_0_RC2_http_import",
+    ":netty-pkitesting-4_2_0_RC2_http_import",
+    ":bcpkix-jdk18on-1_79_http_import",
+    ":bcutil-jdk18on-1_79_http_import",
+    ":bcprov-jdk18on-1_79_http_import",
+    ":netty-transport-classes-epoll-4_2_0_RC2_http_import",
+    ":netty-transport-classes-kqueue-4_2_0_RC2_http_import",
+    ":netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http_import",
+    ":netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http_import",
+    ":netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http_import",
+    ":netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http_import",
+    ":netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "netty-all-4_2_0_RC2_http_import",
+  jar = "@netty-all-4_2_0_RC2_http//file"
+)
+
+jvm_import(
+  name = "netty-handler-ssl-ocsp-4_2_0_RC2_http_import",
+  jar = "@netty-handler-ssl-ocsp-4_2_0_RC2_http//file",
+  source_jar = "@netty-handler-ssl-ocsp-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-pkitesting-4_2_0_RC2_http_import",
+  jar = "@netty-pkitesting-4_2_0_RC2_http//file",
+  source_jar = "@netty-pkitesting-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "bcpkix-jdk18on-1_79_http_import",
+  jar = "@bcpkix-jdk18on-1_79_http//file",
+  source_jar = "@bcpkix-jdk18on-1_79-sources_http//file"
+)
+
+jvm_import(
+  name = "bcutil-jdk18on-1_79_http_import",
+  jar = "@bcutil-jdk18on-1_79_http//file",
+  source_jar = "@bcutil-jdk18on-1_79-sources_http//file"
+)
+
+jvm_import(
+  name = "bcprov-jdk18on-1_79_http_import",
+  jar = "@bcprov-jdk18on-1_79_http//file",
+  source_jar = "@bcprov-jdk18on-1_79-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-classes-epoll-4_2_0_RC2_http_import",
+  jar = "@netty-transport-classes-epoll-4_2_0_RC2_http//file",
+  source_jar = "@netty-transport-classes-epoll-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-classes-kqueue-4_2_0_RC2_http_import",
+  jar = "@netty-transport-classes-kqueue-4_2_0_RC2_http//file",
+  source_jar = "@netty-transport-classes-kqueue-4_2_0_RC2-sources_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http_import",
+  jar = "@netty-transport-native-epoll-4_2_0_RC2-linux-x86_64_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http_import",
+  jar = "@netty-transport-native-epoll-4_2_0_RC2-linux-aarch_64_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http_import",
+  jar = "@netty-transport-native-epoll-4_2_0_RC2-linux-riscv64_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http_import",
+  jar = "@netty-transport-native-kqueue-4_2_0_RC2-osx-x86_64_http//file"
+)
+
+jvm_import(
+  name = "netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http_import",
+  jar = "@netty-transport-native-kqueue-4_2_0_RC2-osx-aarch_64_http//file"
 )
 
 java_library(
