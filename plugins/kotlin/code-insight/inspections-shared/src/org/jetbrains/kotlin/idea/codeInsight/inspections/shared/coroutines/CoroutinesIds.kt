@@ -8,6 +8,8 @@ import org.jetbrains.kotlin.name.Name
 
 internal object CoroutinesIds {
     val COROUTINES_PACKAGE: FqName = FqName("kotlinx.coroutines")
+
+    val CURRENT_COROUTINE_CONTEXT_ID: CallableId = CallableId(COROUTINES_PACKAGE, Name.identifier("currentCoroutineContext"))
     
     val JOB_CLASS_ID: ClassId = ClassId(COROUTINES_PACKAGE, Name.identifier("Job"))
     val JOB_JOIN_ID: CallableId = CallableId(JOB_CLASS_ID, Name.identifier("join"))
