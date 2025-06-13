@@ -15,6 +15,7 @@ import com.intellij.driver.sdk.ui.components.elements.NotebookTableOutputUi
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitForCodeAnalysis
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -31,6 +32,10 @@ fun Finder.notebookEditor(@Language("xpath") xpath: String? = null): NotebookEdi
 
 fun Finder.notebookEditor(action: NotebookEditorUiComponent.() -> Unit) {
   return notebookEditor().action()
+}
+
+fun NotebookEditorUiComponent.waitForHighlighting() {
+  driver.waitForCodeAnalysis(file = editor.getVirtualFile())
 }
 
 typealias CellSelector = (List<UiComponent>) -> UiComponent
