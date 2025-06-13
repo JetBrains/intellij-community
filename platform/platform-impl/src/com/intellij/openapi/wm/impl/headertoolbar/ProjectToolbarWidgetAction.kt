@@ -380,6 +380,19 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
               }
             }
           }
+
+          val hasSubstep = value.isEnabled && action is ActionGroup && !value.isSubstepSuppressed
+          if (hasSubstep) {
+            panel {
+              row {
+                val arrow = if (isSelected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
+                icon(arrow)
+                  .customize(rowGaps.copy(left = 6))
+              }
+            }
+              .align(AlignX.RIGHT)
+              .align(AlignY.TOP)
+          }
         }
       }
     }.apply {

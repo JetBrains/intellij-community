@@ -2,10 +2,13 @@
 package com.intellij.ide
 
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -19,6 +22,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupIt
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
+import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -220,6 +224,7 @@ open class RecentProjectListActionProvider {
   private fun createActionsFromProvider(provider: RecentProjectProvider): List<AnAction> {
     return provider.getRecentProjects().map { project ->
       val projectId = getProviderProjectId(provider, project)
+
       RemoteRecentProjectAction(projectId, project)
     }
   }
@@ -301,12 +306,33 @@ private class ProjectGroupComparator(private val projectPaths: Set<String>) : Co
   }
 }
 
-private class RemoteRecentProjectAction(val projectId: String, val project: RecentProject) : DumbAwareAction(), ProjectToolbarWidgetPresentable {
+private class RemoteRecentProjectAction(val projectId: String, val project: RecentProject) : ActionGroup(), DumbAware, ProjectToolbarWidgetPresentable {
   init {
     var text = project.displayName
     if (project.providerName != null) text += " [${project.providerName}]"
     if (project.branchName != null) text += " [${project.branchName}]"
     templatePresentation.text = text
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isPerformGroup = project.additionalActions.isEmpty()
+    e.presentation.isPopupGroup = true
+  }
+
+  override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+    val additionalActions = project.additionalActions
+    if (additionalActions.isEmpty()) return EMPTY_ARRAY
+
+    val result = mutableListOf<AnAction>()
+    if (project.canOpenProject()) {
+      result += DumbAwareAction.create(UIBundle.message("project.widget.opening.project.group.child.action.text")) { event ->
+        project.openProject(event)
+      }
+    }
+    result += additionalActions
+    return result.toTypedArray()
   }
 
   override fun actionPerformed(e: AnActionEvent) {

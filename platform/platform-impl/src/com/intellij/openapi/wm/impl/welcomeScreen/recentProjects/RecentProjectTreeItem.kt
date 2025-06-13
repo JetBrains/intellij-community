@@ -7,6 +7,7 @@ import com.intellij.ide.*
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.components.service
@@ -155,6 +156,7 @@ internal data class ProviderRecentProjectItem(
   val activationTimestamp: Long? get() = recentProject.activationTimestamp
   val statusText: String? get() = recentProject.status.statusText
   val progressText: String? get() = recentProject.status.progressText
+  val additionalActions: List<AnAction> get() = recentProject.additionalActions
 
   fun openProject(actionEvent: AnActionEvent) {
     recentProject.openProject(actionEvent)

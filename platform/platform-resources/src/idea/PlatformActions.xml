@@ -1170,6 +1170,9 @@
       <action id="WelcomeScreen.ChangeProjectIcon"
               class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.ChangeProjectIconAction"/>
       <separator/>
+      <group id="WelcomeScreen.CustomRecentProjectActions"
+             class="com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderProjectAdditionalActionsGroup"/>
+      <separator/>
       <action id="WelcomeScreen.RemoveSelected"
               class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RemoveSelectedProjectsAction"
               use-shortcut-of="$Delete"/>

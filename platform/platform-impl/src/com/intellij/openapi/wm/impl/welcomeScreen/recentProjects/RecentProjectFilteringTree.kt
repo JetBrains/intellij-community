@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
@@ -911,3 +912,11 @@ private class ActionsButton : SelectablePanel() {
 private val MouseEvent.isMultipleSelectionInProgress: Boolean
   get() =
     UIUtil.isControlKeyDown(this) || isShiftDown
+
+internal class ProviderProjectAdditionalActionsGroup : ActionGroup(), DumbAware {
+  override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+    val item = e?.getData(RecentProjectsWelcomeScreenActionBase.RECENT_PROJECT_SELECTED_ITEM_KEY) as? ProviderRecentProjectItem
+               ?: return EMPTY_ARRAY
+    return item.additionalActions.toTypedArray()
+  }
+}

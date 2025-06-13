@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
@@ -54,6 +55,9 @@ interface RecentProject {
 
   val status: RecentProjectStatus
 
+  val additionalActions: List<AnAction>
+
+  fun canOpenProject(): Boolean
   fun openProject(actionEvent: AnActionEvent)
   fun removeFromRecent()
 }
