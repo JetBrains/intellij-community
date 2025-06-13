@@ -80,16 +80,6 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolsPrioritizedScope {
     get() = null
 
   /**
-   * Whether this symbol is required. What "is required" means, depends on the symbol.
-   * For instance, for an HTML attribute it would mean that the attribute is required to be present
-   * for the particular HTML element. For JavaScript property is would mean that it is not optional,
-   * so it cannot be undefined.
-   */
-  @get:JvmName("isRequired")
-  val required: Boolean?
-    get() = null
-
-  /**
    * Documents API status of the symbol. It is one of the sub-interfaces of [PolySymbolApiStatus]:
    * [PolySymbolApiStatus.Stable], [PolySymbolApiStatus.Experimental], [PolySymbolApiStatus.Deprecated]
    * or [PolySymbolApiStatus.Obsolete].

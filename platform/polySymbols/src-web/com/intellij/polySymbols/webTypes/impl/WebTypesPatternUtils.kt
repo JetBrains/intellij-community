@@ -93,7 +93,14 @@ private class WebTypesComplexPatternConfigProvider(
     // Allow delegate pattern to override settings
     val apiStatus = delegate?.apiStatus?.takeIf { it.isDeprecatedOrObsolete() }
                     ?: pattern.toApiStatus(origin)?.takeIf { it.isDeprecatedOrObsolete() }
-    val isRequired = (delegate?.required ?: pattern.required) != false
+    val delegateRequired = delegate?.modifiers?.let {modifiers ->
+      when {
+        modifiers.contains(PolySymbolModifier.REQUIRED) -> true
+        modifiers.contains(PolySymbolModifier.OPTIONAL) -> false
+        else -> null
+      }
+    }
+    val isRequired = (delegateRequired ?: pattern.required) != false
     val priority = delegate?.priority ?: pattern.priority?.wrap()
     val repeats = pattern.repeat == true
     val unique = pattern.unique != false

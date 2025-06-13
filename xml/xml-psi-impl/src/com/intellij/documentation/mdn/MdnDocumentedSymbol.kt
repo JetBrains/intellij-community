@@ -30,8 +30,9 @@ abstract class MdnDocumentedSymbol : PolySymbolWithDocumentation {
   override fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
     this.mdnDoc?.let { mdnDoc ->
       val documentation = super.createDocumentation(location)
-      return documentation?.with(
-        apiStatus = null, // already contained in MDN documentation sections
+      return documentation
+        ?.withApiStatus(null)// already contained in MDN documentation sections
+        ?.withFootnote(
         footnote = mdnDoc.footnote
                      ?.let { it + (documentation.footnote?.let { prev -> "<br>$prev" } ?: "") }
                    ?: documentation.footnote,

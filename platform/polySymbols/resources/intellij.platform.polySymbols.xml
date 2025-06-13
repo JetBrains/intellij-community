@@ -71,6 +71,9 @@
     <polySymbols.documentationCustomizer
       id="web-types"
       implementation="com.intellij.polySymbols.webTypes.WebTypesDocumentationCustomizer"/>
+    <polySymbols.documentationCustomizer
+      id="html"
+      implementation="com.intellij.polySymbols.html.HtmlPolySymbolDocumentationCustomizer"/>
     <polySymbols.matchCustomizerFactory
       implementation="com.intellij.polySymbols.html.HtmlPolySymbolMatchCustomizer$Factory"/>
   </extensions>

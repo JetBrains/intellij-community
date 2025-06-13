@@ -51,12 +51,6 @@ interface PolySymbolDocumentation {
   val apiStatus: PolySymbolApiStatus?
 
   /**
-   * Whether the symbol is required
-   */
-  @get:JvmName("isRequired")
-  val required: Boolean
-
-  /**
    * Default value
    */
   val defaultValue: @NlsSafe String?
@@ -100,8 +94,6 @@ interface PolySymbolDocumentation {
 
   fun withApiStatus(apiStatus: PolySymbolApiStatus?): PolySymbolDocumentation
 
-  fun withRequired(required: Boolean): PolySymbolDocumentation
-
   fun withDefault(defaultValue: @NlsSafe String?): PolySymbolDocumentation
 
   fun withLibrary(library: @NlsSafe String?): PolySymbolDocumentation
@@ -110,24 +102,11 @@ interface PolySymbolDocumentation {
 
   fun withDescriptionSection(name: @Nls String, contents: @Nls String): PolySymbolDocumentation
 
+  fun withDescriptionSections(sections: Map<@Nls String, @Nls String>): PolySymbolDocumentation
+
   fun withFootnote(footnote: @Nls String?): PolySymbolDocumentation
 
   fun withHeader(header: @Nls String?): PolySymbolDocumentation
-
-  fun with(
-    name: @NlsSafe String = this.name,
-    definition: @NlsSafe String = this.definition,
-    definitionDetails: @Nls String? = this.definitionDetails,
-    description: @Nls String? = this.description,
-    docUrl: @NlsSafe String? = this.docUrl,
-    apiStatus: PolySymbolApiStatus? = this.apiStatus,
-    required: Boolean = this.required,
-    defaultValue: @NlsSafe String? = this.defaultValue,
-    library: @NlsSafe String? = this.library,
-    icon: Icon? = this.icon,
-    additionalSections: Map<@Nls String, @Nls String> = emptyMap(),
-    footnote: @Nls String? = this.footnote,
-  ): PolySymbolDocumentation
 
   fun appendFootnote(footnote: @Nls String?): PolySymbolDocumentation =
     if (footnote != null)
@@ -148,7 +127,6 @@ interface PolySymbolDocumentation {
       description: @Nls String? = symbol.description,
       docUrl: String? = symbol.docUrl,
       apiStatus: PolySymbolApiStatus? = symbol.apiStatus,
-      required: Boolean = symbol.required ?: false,
       defaultValue: String? = symbol.defaultValue,
       library: String? = symbol.origin.takeIf { it.library != null }
         ?.let { context ->
@@ -159,7 +137,7 @@ interface PolySymbolDocumentation {
       descriptionSections: Map<@Nls String, @Nls String> = symbol.descriptionSections,
       footnote: @Nls String? = null,
     ): PolySymbolDocumentation =
-      PolySymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, required, defaultValue, library, icon,
+      PolySymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, defaultValue, library, icon,
                                   descriptionSections, footnote, null)
         .let { doc: PolySymbolDocumentation ->
           PolySymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->

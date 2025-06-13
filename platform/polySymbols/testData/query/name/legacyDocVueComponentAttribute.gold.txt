@@ -10,7 +10,7 @@
    default: "'foo'",
   },
   complete: true,
-  modifiers: [virtual],
+  modifiers: [required, virtual],
   priority: HIGH,
   segments: [
    {
@@ -110,6 +110,7 @@
      },
      complete: true,
      description: "<p>My input",
+     modifiers: [required],
      priority: NORMAL,
      segments: [
       {

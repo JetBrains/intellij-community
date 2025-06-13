@@ -98,7 +98,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
       val kind = attrValue?.kind ?: PolySymbolHtmlAttributeValue.Kind.PLAIN
       val type = attrValue?.type ?: PolySymbolHtmlAttributeValue.Type.STRING
 
-      val isRequired = symbol.required ?: false
+      val isRequired = symbol.modifiers.contains(PolySymbolModifier.REQUIRED)
       val priority = symbol.priority ?: PolySymbol.Priority.NORMAL
       val icon = symbol.icon
       val defaultValue = attrValue?.default

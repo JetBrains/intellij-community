@@ -45,8 +45,6 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolsScope {
     get() = delegate.modifiers
   override val extension: Boolean
     get() = delegate.extension
-  override val required: Boolean?
-    get() = delegate.required
   override val priority: PolySymbol.Priority?
     get() = delegate.priority
   override val pattern: PolySymbolsPattern?

@@ -226,9 +226,6 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
       .flatMap { it.queryScope }
       .toList()
 
-  override val required: Boolean?
-    get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.required }.firstOrNull()
-
   override val apiStatus: PolySymbolApiStatus
     get() = coalesceApiStatus(reversedSegments().flatMap { it.symbols }) { it.apiStatus }
 

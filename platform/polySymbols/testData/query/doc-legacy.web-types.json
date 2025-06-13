@@ -47,7 +47,6 @@
             "description": "Cool argument"
           },
           "default": "foo",
-          "required": true,
           "description": "The cool directive",
           "value": {
             "kind": "expression",

@@ -184,13 +184,17 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     get() = setOfNotNull(
       PolySymbolModifier.VIRTUAL.takeIf { base.contribution.virtual == true },
       PolySymbolModifier.ABSTRACT.takeIf { base.contribution.abstract == true },
-      PolySymbolModifier.READONLY.takeIf { (base.contribution as? JsProperty)?.readOnly == true }
+      PolySymbolModifier.READONLY.takeIf { (base.contribution as? JsProperty)?.readOnly == true },
+      when(required) {
+        true -> PolySymbolModifier.REQUIRED
+        false -> PolySymbolModifier.OPTIONAL
+        null -> null
+      }
     )
 
-  final override val required: Boolean?
+  private val required: Boolean?
     get() = (base.contribution as? GenericContribution)?.required
             ?: (base.contribution as? HtmlAttribute)?.required
-            ?: superContributions.firstOrNull()?.required
 
   final override val defaultValue: String?
     get() = (base.contribution as? GenericContribution)?.default

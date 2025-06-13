@@ -12,9 +12,21 @@ import org.jetbrains.annotations.ApiStatus
 object HtmlPolySymbolMatchCustomizer : PolySymbolMatchCustomizer {
 
   override fun mergeModifiers(current: Set<PolySymbolModifier>?, toMerge: Set<PolySymbolModifier>, symbol: PolySymbol): Set<PolySymbolModifier>? {
-    return setOfNotNull(
-      PolySymbolModifier.VIRTUAL.takeIf { (current != null && PolySymbolModifier.VIRTUAL in current) || PolySymbolModifier.VIRTUAL in toMerge },
-    )
+    val result = HashSet<PolySymbolModifier>()
+
+    // If any of the matched symbols are virtual, the whole symbol match is also virtual
+    if ((current != null && PolySymbolModifier.VIRTUAL in current) || PolySymbolModifier.VIRTUAL in toMerge)
+      result.add(PolySymbolModifier.VIRTUAL)
+
+    // The last of the matched symbols, which specifies either REQUIRED or OPTIONAL, takes precedence
+    if (current != null && PolySymbolModifier.OPTIONAL in current)
+      result.add(PolySymbolModifier.OPTIONAL)
+    else if ((current != null && PolySymbolModifier.REQUIRED in current) || PolySymbolModifier.REQUIRED in toMerge)
+      result.add(PolySymbolModifier.REQUIRED)
+    else if (PolySymbolModifier.OPTIONAL in toMerge)
+      result.add(PolySymbolModifier.OPTIONAL)
+
+    return result
   }
 
   class Factory : PolySymbolMatchCustomizerFactory {

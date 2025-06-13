@@ -276,8 +276,10 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
     override val priority: PolySymbol.Priority
       get() = PolySymbol.Priority.LOW
 
-    override val required: Boolean
-      get() = descriptor.isRequired
+    override val modifiers: Set<PolySymbolModifier>
+      get() = setOf(
+        if (descriptor.isRequired) PolySymbolModifier.REQUIRED else PolySymbolModifier.OPTIONAL,
+      )
 
     override val defaultValue: String?
       get() = descriptor.defaultValue

@@ -24,7 +24,6 @@ internal data class PolySymbolDocumentationImpl(
   override val description: @Nls String?,
   override val docUrl: String?,
   override val apiStatus: PolySymbolApiStatus?,
-  override val required: Boolean,
   override val defaultValue: String?,
   override val library: String?,
   override val icon: Icon?,
@@ -34,7 +33,7 @@ internal data class PolySymbolDocumentationImpl(
 ) : PolySymbolDocumentation {
   override fun isNotEmpty(): Boolean =
     name != definition || description != null || docUrl != null || (apiStatus != null && apiStatus != PolySymbolApiStatus.Stable)
-    || required || defaultValue != null || library != null || descriptionSections.isNotEmpty() || footnote != null
+    || defaultValue != null || library != null || descriptionSections.isNotEmpty() || footnote != null
     || header != null
 
   override fun withName(name: String): PolySymbolDocumentation =
@@ -55,9 +54,6 @@ internal data class PolySymbolDocumentationImpl(
   override fun withApiStatus(apiStatus: PolySymbolApiStatus?): PolySymbolDocumentation =
     copy(apiStatus = apiStatus)
 
-  override fun withRequired(required: Boolean): PolySymbolDocumentation =
-    copy(required = required)
-
   override fun withDefault(defaultValue: String?): PolySymbolDocumentation =
     copy(defaultValue = defaultValue)
 
@@ -70,29 +66,14 @@ internal data class PolySymbolDocumentationImpl(
   override fun withDescriptionSection(@Nls name: String, @Nls contents: String): PolySymbolDocumentation =
     copy(descriptionSections = descriptionSections + Pair(name, contents))
 
+  override fun withDescriptionSections(sections: Map<@Nls String, @Nls String>): PolySymbolDocumentation =
+    copy(descriptionSections = descriptionSections + sections)
+
   override fun withFootnote(@Nls footnote: String?): PolySymbolDocumentation =
     copy(footnote = footnote)
 
   override fun withHeader(header: @Nls String?): PolySymbolDocumentation =
     copy(header = header)
-
-  override fun with(
-    name: String,
-    definition: String,
-    definitionDetails: String?,
-    description: @Nls String?,
-    docUrl: String?,
-    apiStatus: PolySymbolApiStatus?,
-    required: Boolean,
-    defaultValue: String?,
-    library: String?,
-    icon: Icon?,
-    additionalSections: Map<@Nls String, @Nls String>,
-    footnote: @Nls String?,
-  ): PolySymbolDocumentation =
-    copy(name = name, definition = definition, definitionDetails = definitionDetails, description = description,
-         docUrl = docUrl, apiStatus = apiStatus, required = required, defaultValue = defaultValue, library = library, icon = icon,
-         descriptionSections = descriptionSections + additionalSections, footnote = footnote)
 
   override fun build(origin: PolySymbolOrigin): DocumentationResult {
     val url2ImageMap = mutableMapOf<String, Image>()
@@ -167,7 +148,6 @@ internal data class PolySymbolDocumentationImpl(
 
   private fun buildSections(): Map<String, String> =
     LinkedHashMap(descriptionSections).also { sections ->
-      if (required) sections[PolySymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
       apiStatus?.let { status ->
         when (status) {
           is PolySymbolApiStatus.Deprecated -> {
