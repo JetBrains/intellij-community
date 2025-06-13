@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.lvcs.impl.actions.isShowSystemLabelsEnabled
 import com.intellij.platform.lvcs.impl.diff.createDiffData
 import com.intellij.platform.lvcs.impl.diff.createSingleFileDiffRequestProducer
 import kotlinx.coroutines.channels.awaitClose
@@ -29,47 +30,49 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return facade.onChangeSetFinished(project, gateway, scope)
   }
 
-  override fun loadActivityList(scope: ActivityScope, fileFilter: String?, showSystemLabels: Boolean): ActivityData {
+  override fun loadActivityList(scope: ActivityScope, filter: ActivityFilter?): ActivityData {
     gateway.registerUnsavedDocuments(facade)
 
-    val filter = HistoryPathFilter.create(fileFilter, project)
     val projectId = project.locationHash
     if (scope is ActivityScope.File) {
-      return loadFileActivityList(projectId, scope, filter, showSystemLabels)
+      return loadFileActivityList(projectId, scope, filter)
     } else if (scope is ActivityScope.Files) {
-      return loadFilesActivityList(projectId, scope, filter, showSystemLabels)
+      return loadFilesActivityList(projectId, scope, filter)
     }
-    return loadRecentActivityList(projectId, scope, filter, showSystemLabels)
+    return loadRecentActivityList(projectId, scope, filter)
   }
 
-  private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, scopeFilter: HistoryPathFilter?, showSystemLabels: Boolean): ActivityData {
+  private fun loadFileActivityList(projectId: String, scope: ActivityScope.File, filter: ActivityFilter?): ActivityData {
     val path = gateway.getPathOrUrl(scope.file)
     val activityItems = mutableListOf<ActivityItem>()
     val affectedPaths = mutableSetOf(path)
 
-    doLoadPathActivityList(projectId, scope, path, scopeFilter, affectedPaths, activityItems, showSystemLabels)
+    doLoadPathActivityList(projectId, scope, path, affectedPaths, activityItems, filter)
 
     return ActivityData(activityItems).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
   }
 
-  private fun loadFilesActivityList(projectId: String, scope: ActivityScope.Files, scopeFilter: HistoryPathFilter?, showSystemLabels: Boolean): ActivityData {
+  private fun loadFilesActivityList(projectId: String, scope: ActivityScope.Files, filter: ActivityFilter?): ActivityData {
     val paths = scope.files.map { gateway.getPathOrUrl(it) }
     val activityItems = mutableListOf<ActivityItem>()
     val affectedPaths = paths.toMutableSet()
 
     for (path in paths) {
-      doLoadPathActivityList(projectId, scope, path, scopeFilter, affectedPaths, activityItems, showSystemLabels)
+      doLoadPathActivityList(projectId, scope, path,  affectedPaths, activityItems, filter)
     }
 
     return ActivityData(activityItems.toSet().sortedByDescending { it.timestamp }).also { it.putUserData(AFFECTED_PATHS, affectedPaths) }
   }
 
-  private fun doLoadPathActivityList(projectId: String, scope: ActivityScope, path: String, scopeFilter: HistoryPathFilter?,
-                                     affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>, showSystemLabels: Boolean) {
+  private fun doLoadPathActivityList(
+    projectId: String, scope: ActivityScope, path: String,
+    affectedPaths: MutableSet<String>, activityItems: MutableList<ActivityItem>, filter: ActivityFilter?,
+  ) {
     var lastEventLabel: ChangeSet? = null
     val userLabels = mutableListOf<ChangeSet>()
+    val showSystemLabels = filter.showSystemLabels()
 
-    facade.collectChanges(path, ChangeAndPathProcessor(projectId, scopeFilter, affectedPaths::add) { changeSet ->
+    facade.collectChanges(path, ChangeAndPathProcessor(projectId, filter?.filePathFilter, affectedPaths::add) { changeSet ->
       if (!showSystemLabels && changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
       if (changeSet.isLabelOnly) {
         if (changeSet.activityId == CommonActivity.UserLabel) {
@@ -93,9 +96,11 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     })
   }
 
-  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, fileFilter: HistoryPathFilter?, showSystemLabels: Boolean): ActivityData {
+  private fun loadRecentActivityList(projectId: String, scope: ActivityScope, filter: ActivityFilter?): ActivityData {
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
+    val fileFilter = filter?.filePathFilter
+    val showSystemLabels = filter.showSystemLabels()
 
     for (changeSet in facade.changes) {
       if (!showSystemLabels && changeSet.isSystemLabelOnly) continue
@@ -112,10 +117,12 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     return ActivityData(result).also { it.putUserData(AFFECTED_PATHS, paths) }
   }
 
-  override fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?, showSystemLabels: Boolean): Set<ActivityItem>? {
+  override fun filterActivityList(scope: ActivityScope, data: ActivityData, filter: ActivityFilter?): Set<ActivityItem>? {
     val changeSets = data.getChangeSets()
     if (changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
+    val contentFilter = filter?.contentFilter
+    val showSystemLabels = filter.showSystemLabels()
 
     val filteredIds = mutableSetOf<Long>()
     val processor: (Long, String?) -> Boolean = { changeSetId, content ->
@@ -170,6 +177,8 @@ internal class LocalHistoryActivityProvider(val project: Project, private val ga
     }
   }
 }
+
+private fun ActivityFilter?.showSystemLabels(): Boolean = this?.showSystemLabels ?: isShowSystemLabelsEnabled()
 
 private fun LocalHistoryFacade.onChangeSetFinished(project: Project, gateway: IdeaGateway, scope: ActivityScope): Flow<Unit> {
   val condition: (ChangeSet) -> Boolean

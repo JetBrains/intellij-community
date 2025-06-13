@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
+import com.intellij.history.core.HistoryPathFilter
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -45,7 +46,8 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
           val activityData = withContext(Dispatchers.Default) {
             LocalHistoryCounter.logLoadItems(project, activityScope) {
-              activityProvider.loadActivityList(activityScope, filter, showSystemLabels)
+              val pathFilter = HistoryPathFilter.create(filter, project)
+              activityProvider.loadActivityList(activityScope, ActivityFilter(pathFilter, null, showSystemLabels))
             }
           }
           withContext(Dispatchers.EDT) {
@@ -84,7 +86,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
             thisLogger<ActivityViewModel>().debug("Filtering activity items for $activityScope by $filter")
             withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStarted() }
             val result = LocalHistoryCounter.logFilter(project, activityScope) {
-              activityProvider.filterActivityList(activityScope, data, filter, showSystemLabels)
+              activityProvider.filterActivityList(activityScope, data, ActivityFilter(null, filter, showSystemLabels))
             }
             withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(result) }
           }
