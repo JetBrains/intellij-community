@@ -742,7 +742,7 @@ class NetCommandFactory:
                 else:
                     my_file = abs_path_real_path_and_base[0]
 
-                if is_real_file(my_file) and not is_jup_cell:
+                if not is_jup_cell and is_real_file(my_file):
                     # if filename is Jupyter cell id
                     my_file = pydevd_file_utils.norm_file_to_client(abs_path_real_path_and_base[0])
 

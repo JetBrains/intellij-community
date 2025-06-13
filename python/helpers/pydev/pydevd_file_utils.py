@@ -556,7 +556,7 @@ def _is_int(filename):
 
 def is_real_file(filename):
     # Check for Jupyter cells
-    return not _is_int(filename) and not filename.startswith("<ipython-input")
+    return not _is_int(filename) and (isinstance(filename, str) and not filename.startswith("<ipython-input"))
 
 
 def is_jupyter_cell(frame):
