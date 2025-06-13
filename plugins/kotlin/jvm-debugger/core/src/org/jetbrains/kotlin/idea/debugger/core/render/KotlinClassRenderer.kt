@@ -18,6 +18,7 @@ import com.intellij.debugger.ui.tree.ValueDescriptor
 import com.intellij.debugger.ui.tree.render.ChildrenBuilder
 import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
 import org.jetbrains.kotlin.idea.debugger.base.util.isLateinitVariableGetter
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSourcesAsync
 import org.jetbrains.kotlin.idea.debugger.core.render.GetterDescriptor
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
+import kotlin.metadata.ExperimentalContextReceivers
 import kotlin.metadata.KmProperty
 import kotlin.metadata.isNotDefault
 import kotlin.metadata.jvm.JvmMethodSignature
@@ -122,8 +124,9 @@ class KotlinClassRenderer : ClassRenderer() {
         return gettersToShow
     }
 
+    @OptIn(ExperimentalContextReceivers::class)
     private fun KmProperty.shouldBeVisibleInVariablesView(): Boolean {
-        return getter.isNotDefault
+        return getter.isNotDefault && receiverParameterType == null && contextReceiverTypes.isEmpty()
     }
 
     override fun calcLabel(
@@ -183,7 +186,15 @@ class KotlinClassRenderer : ClassRenderer() {
         project: Project,
         evaluationContext: EvaluationContext,
         nodeManager: NodeManager
-    ) = map { nodeManager.createNode(GetterDescriptor(parentObject, it, project), evaluationContext) }
+    ) = mapNotNull { method ->
+        if (method.argumentTypeNames().isEmpty()) {
+            nodeManager.createNode(GetterDescriptor(parentObject, method, project), evaluationContext)
+        }
+        else {
+            thisLogger().error("Getter with parameters is not expected: $method")
+            null
+        }
+    }
 
     private fun ReferenceType.isKotlinObjectType() =
         containsInstanceField() && hasPrivateConstructor()
