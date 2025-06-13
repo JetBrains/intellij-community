@@ -67,7 +67,7 @@ internal class JavaTestRunnerForMaven: TestRunner {
     val runnerSettings = MavenRunnerSettings().also {
       if (request.tests.any()) {
         //todo check
-        it.setVmOptions("-Dtest=${request.tests.joinToString(separator = ",")}")
+        it.setVmOptions("-Dtest=${request.tests.joinToString(separator = ",") { it.split(":").last() }}")
       }
     }
 
