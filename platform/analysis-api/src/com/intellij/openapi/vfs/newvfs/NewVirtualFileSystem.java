@@ -13,9 +13,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 'New' virtual file systems are managed and centered around {@link ManagingFS}.
+ * These are file systems that are really data-providers ({@link FileSystemInterface}) for {@link ManagingFS},
+ * while {@link ManagingFS} caches ({@link CachingVirtualFileSystem}) and manages the data provided.
+ */
 public abstract class NewVirtualFileSystem extends VirtualFileSystem implements FileSystemInterface, CachingVirtualFileSystem {
   private static final Logger LOG = Logger.getInstance(NewVirtualFileSystem.class);
 
@@ -83,6 +90,8 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
     }
   }
 
+  /** Provides a way to sort file systems */
+  //TODO it seems this method is never really used -- maybe drop it (deprecate-for-removal?)
   public abstract int getRank();
 
   @Override

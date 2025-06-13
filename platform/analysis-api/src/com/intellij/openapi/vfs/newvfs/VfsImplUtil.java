@@ -113,11 +113,11 @@ public final class VfsImplUtil {
       refreshAndFindFileByPath(root, pathSegments, consumer);
     }
     else if ("..".equals(pathSegment)) {
-      if (root.is(VFileProperty.SYMLINK)) {//resolve symlink then:
-        String canonicalPath = root.getCanonicalPath();
-        if (canonicalPath != null) {
-          //TODO RC: shouldn't we use canonicalPath.getParent() here? Because we already cut 1st segment from pathSegments.
-          refreshAndFindFileByPath(root.getFileSystem(), canonicalPath,
+      if (root.is(VFileProperty.SYMLINK)) {//resolve the symlink then:
+        String rootPathCanonicalized = root.getCanonicalPath();
+        if (rootPathCanonicalized != null) {
+          //TODO RC: shouldn't we use rootPathCanonicalized.getParent() here? Because we already cut 1st segment from pathSegments.
+          refreshAndFindFileByPath(root.getFileSystem(), rootPathCanonicalized,
                                    canonicalFile -> refreshAndFindFileByPath(canonicalFile, pathSegments, consumer));
         }
         else {//symlink unresolved -- broken link?
