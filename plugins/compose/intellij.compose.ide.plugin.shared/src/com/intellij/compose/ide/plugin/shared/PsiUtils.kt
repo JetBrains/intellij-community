@@ -124,7 +124,7 @@ internal fun KtDeclaration.returnTypeFqName(): FqName? =
     if (this !is KtCallableDeclaration) null
     else analyze(this) { this@returnTypeFqName.returnType.expandedSymbol?.classId?.asSingleFqName() }
 
-internal fun KtElement.callReturnTypeFqName() =
+internal fun KtElement.callReturnTypeFqName(): FqName? =
   analyze(this) {
     val call = resolveToCall()?.calls?.firstOrNull() as? KaCallableMemberCall<*, *>
     call?.let { it.symbol.returnType.expandedSymbol?.classId?.asSingleFqName() }

@@ -84,10 +84,9 @@ abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
 
   private fun UCallExpression.isColorCall() =
     kind == UastCallKind.METHOD_CALL &&
-    returnType == PsiTypes.longType() &&
     COLOR_METHOD == methodName &&
     // Resolve the MethodCall expression after the faster checks
-    resolve()?.containingClass?.qualifiedName == COMPOSE_COLOR_CLASS
+    (sourcePsi as? KtCallExpression)?.callReturnTypeFqName()?.asString() == COMPOSE_COLOR_CLASS
 
   private fun getColor(uElement: UCallExpression): Color? {
     val arguments = (uElement.sourcePsi as? KtCallExpression)?.valueArguments ?: return null
@@ -316,7 +315,7 @@ data class ColorIconRenderer(val element: UCallExpression, val color: Color) :
 }
 
 private const val COLOR_METHOD = "Color"
-private const val COMPOSE_COLOR_CLASS = "androidx.compose.ui.graphics.ColorKt"
+private const val COMPOSE_COLOR_CLASS = "androidx.compose.ui.graphics.Color"
 
 private const val ARG_NAME_RED = "red"
 private const val ARG_NAME_GREEN = "green"
