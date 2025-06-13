@@ -118,15 +118,24 @@ internal class HelperClassCache(debugProcess: DebugProcessImpl, managerThread: D
     evaluationContext: EvaluationContextImpl,
     className: String, vararg additionalClassesToLoad: String,
   ): ClassType? {
-    val companionClassLoader = currentInfo?.classLoader
-                               ?: ClassLoadingUtils.getClassLoader(evaluationContext, evaluationContext.debugProcess)
-    val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader,
-                                        className, *additionalClassesToLoad) ?: return null
-    if (currentInfo == null) {
-      DebuggerUtilsImpl.disableCollection(companionClassLoader)
-      evaluationClassLoaderMapping[evaluationContext.classLoader] = DefinedInCompanionClassLoader(companionClassLoader)
+    try {
+      val companionClassLoader = currentInfo?.classLoader
+                                 ?: ClassLoadingUtils.getClassLoader(evaluationContext, evaluationContext.debugProcess)
+      val type = tryToDefineInClassLoader(evaluationContext, companionClassLoader, companionClassLoader,
+                                          className, *additionalClassesToLoad) ?: return null
+      if (currentInfo == null) {
+        DebuggerUtilsImpl.disableCollection(companionClassLoader)
+        evaluationClassLoaderMapping[evaluationContext.classLoader] = DefinedInCompanionClassLoader(companionClassLoader)
+      }
+      return type
     }
-    return type
+    catch (e: Throwable) {
+      val isLoadingFailed = e is EvaluateException || e is ClassDefineTrialException
+      if (isLoadingFailed && currentInfo == null) {
+        evaluationClassLoaderMapping[evaluationContext.classLoader] = LoadFailedMarker
+      }
+      throw e
+    }
   }
 
   /**
