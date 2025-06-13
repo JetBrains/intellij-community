@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.github.git.share
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -17,6 +18,8 @@ import git4idea.i18n.GitBundle
 import git4idea.remote.hosting.GitShareProjectService
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.GHShareProjectCompatibilityExtension
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
@@ -131,7 +134,9 @@ object GHShareProjectUtil {
         }
       }
       catch (mte: GithubMissingTokenException) {
-        GHAccountsUtil.requestNewToken(account, project, comp) ?: throw mte
+        withContext(Dispatchers.EDT) {
+          GHAccountsUtil.requestNewToken(account, project, comp) ?: throw mte
+        }
       }
     }
   }
