@@ -23,8 +23,6 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.getExternalConfigurationDir
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -165,19 +163,33 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       || it is DummyParentEntitySource
     }
 
-    applyLoadedEntities(affectedEntityFilter, reloadingResult.builder, reloadingResult.unloadedEntityBuilder, reloadingResult.orphanageBuilder,
-                        description) {
+    applyLoadedEntities(
+      sourcesFilter = affectedEntityFilter,
+      builder = reloadingResult.builder,
+      unloadedEntityBuilder = reloadingResult.unloadedEntityBuilder,
+      orphanageBuilder = reloadingResult.orphanageBuilder,
+      description = description,
+    ) {
       sourcesToSave.removeAll(reloadingResult.affectedSources)
     }
   }
 
   @OptIn(EntityStorageInstrumentationApi::class)
-  private suspend fun applyLoadedEntities(sourcesFilter: (EntitySource) -> Boolean, builder: MutableEntityStorage,
-                                          unloadedEntityBuilder: MutableEntityStorage, orphanageBuilder: MutableEntityStorage,
-                                          description: String, onSuccessCallback: () -> Unit) {
-
-    class CalculationResult(val builderSnapshot: BuilderSnapshot, val unloadBuilderSnapshot: BuilderSnapshot, val unloadedBuilderCopy: MutableEntityStorage,
-                            val modulesToLoad: List<String>, val modulesToUnload: List<String>)
+  private suspend fun applyLoadedEntities(
+    sourcesFilter: (EntitySource) -> Boolean,
+    builder: MutableEntityStorage,
+    unloadedEntityBuilder: MutableEntityStorage,
+    orphanageBuilder: MutableEntityStorage,
+    description: String,
+    onSuccessCallback: () -> Unit,
+  ) {
+    class CalculationResult(
+      val builderSnapshot: BuilderSnapshot,
+      val unloadBuilderSnapshot: BuilderSnapshot,
+      val unloadedBuilderCopy: MutableEntityStorage,
+      val modulesToLoad: List<String>,
+      val modulesToUnload: List<String>,
+    )
 
     @OptIn(EntityStorageInstrumentationApi::class)
     fun calculateChanges(workspaceModel: WorkspaceModelImpl): CalculationResult {
@@ -374,7 +386,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       workspaceModel.entityTracer.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("applying entities from global storage")
       val mutableStorage = MutableEntityStorage.create()
-      GlobalWorkspaceModel.getInstance(project.getEelDescriptor()).applyStateToProjectBuilder(project, mutableStorage)
+      GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor()).applyStateToProjectBuilder(project, mutableStorage)
       builder.applyChangesFrom(mutableStorage)
       childActivity = childActivity?.endAndStart("applying loaded changes (in queue)")
       LoadedProjectEntities(builder, orphanage, unloadedEntitiesBuilder, sourcesToUpdate)
@@ -382,7 +394,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     else {
       childActivity = childActivity?.endAndStart("loading untrusted project")
 
-      NotificationGroupManager.getInstance()
+      serviceAsync<NotificationGroupManager>()
         .getNotificationGroup("Project Loading Error")
         .createNotification(ProjectBundle.message("notification.title.error.loading.project"),
                             IdeBundle.message("untrusted.jps.project.not.loaded.notification"),
@@ -432,7 +444,13 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       || entitySource is LegacyCustomLibraryEntitySource // covers custom libraries
     }
     childActivity = childActivity?.endAndStart("applying loaded changes")
-    applyLoadedEntities(sourceFilter, projectEntities.builder, projectEntities.unloadedEntitiesBuilder, projectEntities.orphanageBuilder, description) {
+    applyLoadedEntities(
+      sourcesFilter = sourceFilter,
+      builder = projectEntities.builder,
+      unloadedEntityBuilder = projectEntities.unloadedEntitiesBuilder,
+      orphanageBuilder = projectEntities.orphanageBuilder,
+      description = description,
+    ) {
       sourcesToSave.clear()
       sourcesToSave.addAll(projectEntities.sourcesToUpdate)
     }
