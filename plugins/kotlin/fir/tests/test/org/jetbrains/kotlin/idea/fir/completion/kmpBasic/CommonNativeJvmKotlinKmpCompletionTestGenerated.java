@@ -758,6 +758,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/constructor/PreferConstructorInReturn.kt");
         }
 
+        @TestMetadata("PrivateConstructor.kt")
+        public void testPrivateConstructor() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/PrivateConstructor.kt");
+        }
+
         @TestMetadata("SingleConstructor.kt")
         public void testSingleConstructor() throws Exception {
             runTest("../../completion/testData/basic/common/constructor/SingleConstructor.kt");

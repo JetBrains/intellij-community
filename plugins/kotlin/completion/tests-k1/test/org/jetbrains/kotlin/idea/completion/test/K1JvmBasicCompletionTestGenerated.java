@@ -724,6 +724,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/constructor/PreferConstructorInReturn.kt");
             }
 
+            @TestMetadata("PrivateConstructor.kt")
+            public void testPrivateConstructor() throws Exception {
+                runTest("../testData/basic/common/constructor/PrivateConstructor.kt");
+            }
+
             @TestMetadata("SingleConstructor.kt")
             public void testSingleConstructor() throws Exception {
                 runTest("../testData/basic/common/constructor/SingleConstructor.kt");

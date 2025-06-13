@@ -30,11 +30,12 @@ object KotlinFirLookupElementFactory {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createConstructorCallLookupElement(
-        symbol: KaNamedClassSymbol,
+        containingSymbol: KaNamedClassSymbol,
+        visibleConstructorSymbols: List<KaConstructorSymbol>,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
     ): LookupElementBuilder? {
-        val constructorSymbols = symbol.memberScope.constructors.toList().takeIf { it.isNotEmpty() } ?: return null
-        return ClassLookupElementFactory.createConstructorLookup(symbol, constructorSymbols, importingStrategy)
+        if (visibleConstructorSymbols.isEmpty()) return null
+        return ClassLookupElementFactory.createConstructorLookup(containingSymbol, visibleConstructorSymbols, importingStrategy)
     }
 
     context(KaSession)
