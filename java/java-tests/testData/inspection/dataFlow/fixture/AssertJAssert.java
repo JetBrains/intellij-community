@@ -102,4 +102,12 @@ class MarkedAsNull {
 
   public enum UserType { TYPE_1, TYPE_2 }
   public record Person (String name, @Nullable UserType userType) {}
+
+  public @Nullable Object get() {
+    return new Object();
+  }
+
+  void test2() {
+    Assertions.assertThat(get()).isNotNull(); 
+  }
 }
