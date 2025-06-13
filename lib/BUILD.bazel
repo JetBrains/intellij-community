@@ -3909,6 +3909,13 @@ jvm_import(
 )
 
 java_library(
+  name = "kotlinx-datetime-jvm-provided",
+  exports = [":kotlinx-datetime-jvm"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)
+
+java_library(
   name = "kotlinx-document-store-mvstore",
   exports = [
     ":kotlinx-document-store-mvstore-0_0_4_http_import",
