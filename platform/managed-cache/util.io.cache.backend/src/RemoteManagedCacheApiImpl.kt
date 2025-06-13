@@ -33,7 +33,10 @@ private class RemoteManagedCacheManager(private val project: Project, private va
     val cache = ManagedCacheFactory.getInstance().createCache(
       project,
       remoteCacheLocation(),
-      cacheId.name,
+      // "-remote" here is needed, since otherwise we will register two caches with the same name:
+      // The first from here and the second from the backend's Necropolis.
+      // Necropolis if the caches are ever disabled, will load caches
+      "${cacheId.name}-remote",
       MyKeyDescriptor(),
       Externalizer(),
       buildParams.serdeVersion,
