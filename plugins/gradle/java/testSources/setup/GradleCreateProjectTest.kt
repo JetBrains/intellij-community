@@ -45,18 +45,15 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     createProjectByWizard(projectInfo)
       .useProjectAsync(save = true) { project ->
         assertProjectState(project, projectInfo)
-        assertBuildFiles(projectInfo)
       }
     createProjectByWizard(projectInfo)
       .useProjectAsync(save = true) { project ->
         assertProjectState(project, projectInfo)
-        assertBuildFiles(projectInfo)
       }
     deleteProject(projectInfo)
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->
         assertProjectState(project, projectInfo)
-        assertBuildFiles(projectInfo)
       }
   }
 
@@ -71,7 +68,6 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->
         assertProjectState(project, projectInfo)
-        assertBuildFiles(projectInfo)
       }
   }
 
@@ -86,7 +82,6 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->
         assertProjectState(project, projectInfo)
-        assertBuildFiles(projectInfo)
       }
   }
 
@@ -109,7 +104,6 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->
         assertProjectState(project, projectInfo)
-        assertBuildFiles(projectInfo)
       }
   }
 
@@ -132,7 +126,6 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->
         assertProjectState(project, projectInfo)
-        assertBuildFiles(projectInfo)
       }
   }
 
@@ -153,7 +146,6 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     createProjectByWizard(projectInfo)
       .useProjectAsync { project ->
         assertProjectState(project, projectInfo)
-        assertBuildFiles(projectInfo)
         assertDaemonJvmProperties(project)
       }
   }

@@ -169,6 +169,13 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
     filesConfiguration.withBuildFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 
+  override fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
+    for (projectInfo in projectsInfo) {
+      assertBuildFiles(projectInfo)
+    }
+    super.assertProjectState(project, *projectsInfo)
+  }
+
   fun assertBuildFiles(projectInfo: ProjectInfo) {
     for (compositeInfo in projectInfo.composites) {
       assertBuildFiles(compositeInfo)
