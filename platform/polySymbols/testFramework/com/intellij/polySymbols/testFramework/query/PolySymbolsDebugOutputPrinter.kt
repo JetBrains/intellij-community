@@ -87,7 +87,6 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
         printProperty(level, "docUrl", source.docUrl)
         printProperty(level, "descriptionSections", source.descriptionSections.takeIf { it.isNotEmpty() })
       }
-      printProperty(level, "accessModifier", source.accessModifier)
       printProperty(level, "modifiers", source.modifiers.takeIf { it.isNotEmpty() })
       printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is PolySymbolApiStatus.Stable || it.since != null })
       printProperty(level, "priority", source.priority ?: PolySymbol.Priority.NORMAL)

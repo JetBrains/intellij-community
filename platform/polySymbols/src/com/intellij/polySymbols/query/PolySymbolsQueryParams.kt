@@ -2,7 +2,6 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolAccessModifier
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.query.impl.AbstractQueryParamsBuilderImpl
 
@@ -14,19 +13,12 @@ sealed interface PolySymbolsQueryParams {
   val queryExecutor: PolySymbolsQueryExecutor
 
   val requiredModifiers: List<PolySymbolModifier>
-  val requiredAccessModifier: PolySymbolAccessModifier?
   val excludeModifiers: List<PolySymbolModifier>
-  val excludeAccessModifiers: List<PolySymbolAccessModifier>
 
   fun accept(symbol: PolySymbol): Boolean {
     if (requiredModifiers.isNotEmpty() || excludeModifiers.isNotEmpty()) {
       val symbolModifiers = symbol.modifiers
       if (!requiredModifiers.all { symbolModifiers.contains(it) } || excludeModifiers.any { symbolModifiers.contains(it) })
-        return false
-    }
-    if (requiredAccessModifier != null || excludeAccessModifiers.isNotEmpty()) {
-      val symbolAccessModifier = symbol.accessModifier
-      if ((requiredAccessModifier != null && symbolAccessModifier != requiredAccessModifier) || excludeAccessModifiers.contains(symbolAccessModifier))
         return false
     }
     return true
@@ -37,21 +29,13 @@ sealed interface PolySymbolsQueryParams {
     fun require(vararg modifiers: PolySymbolModifier): T
     fun require(modifiers: Collection<PolySymbolModifier>): T
 
-    fun requireAccess(modifier: PolySymbolAccessModifier): T
-
     fun exclude(modifier: PolySymbolModifier): T
     fun exclude(vararg modifiers: PolySymbolModifier): T
     fun exclude(modifiers: Collection<PolySymbolModifier>): T
 
-    fun excludeAccess(modifier: PolySymbolAccessModifier): T
-    fun excludeAccess(vararg modifiers: PolySymbolAccessModifier): T
-    fun excludeAccess(modifiers: Collection<PolySymbolAccessModifier>): T
-
     fun copyFiltersFrom(params: PolySymbolsQueryParams) {
       require(params.requiredModifiers)
-      params.requiredAccessModifier?.let { requireAccess(it) }
       exclude(params.excludeModifiers)
-      excludeAccess(params.excludeAccessModifiers)
     }
   }
 }
@@ -139,8 +123,8 @@ private class PolySymbolsListSymbolsQueryParamsBuilderImpl(
   }
 
   fun build(): PolySymbolsListSymbolsQueryParams =
-    PolySymbolsListSymbolsQueryParamsData(queryExecutor, expandPatterns, strictScope, requiredModifiers.toList(), requiredAccessModifier,
-                                          excludeModifiers.toList(), excludeAccessModifiers.toList())
+    PolySymbolsListSymbolsQueryParamsData(queryExecutor, expandPatterns, strictScope, requiredModifiers.toList(),
+                                          excludeModifiers.toList())
 
 }
 
@@ -154,8 +138,8 @@ private class PolySymbolsNameMatchQueryParamsBuilderImpl(
   }
 
   fun build(): PolySymbolsNameMatchQueryParams =
-    PolySymbolsNameMatchQueryParamsData(queryExecutor, strictScope, requiredModifiers.toList(), requiredAccessModifier,
-                                        excludeModifiers.toList(), excludeAccessModifiers.toList())
+    PolySymbolsNameMatchQueryParamsData(queryExecutor, strictScope, requiredModifiers.toList(),
+                                        excludeModifiers.toList())
 
 }
 
@@ -165,8 +149,7 @@ private class PolySymbolsCodeCompletionQueryParamsBuilderImpl(
 ) : PolySymbolsCodeCompletionQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolsCodeCompletionQueryParams.Builder>() {
 
   fun build(): PolySymbolsCodeCompletionQueryParams =
-    PolySymbolsCodeCompletionQueryParamsData(queryExecutor, position, requiredModifiers.toList(), requiredAccessModifier,
-                                             excludeModifiers.toList(), excludeAccessModifiers.toList())
+    PolySymbolsCodeCompletionQueryParamsData(queryExecutor, position, requiredModifiers.toList(), excludeModifiers.toList())
 
 }
 
@@ -174,9 +157,7 @@ internal data class PolySymbolsCodeCompletionQueryParamsData(
   override val queryExecutor: PolySymbolsQueryExecutor,
   override val position: Int,
   override val requiredModifiers: List<PolySymbolModifier>,
-  override val requiredAccessModifier: PolySymbolAccessModifier?,
   override val excludeModifiers: List<PolySymbolModifier>,
-  override val excludeAccessModifiers: List<PolySymbolAccessModifier>,
 ) : PolySymbolsCodeCompletionQueryParams
 
 internal data class PolySymbolsListSymbolsQueryParamsData(
@@ -184,17 +165,12 @@ internal data class PolySymbolsListSymbolsQueryParamsData(
   override val expandPatterns: Boolean,
   override val strictScope: Boolean,
   override val requiredModifiers: List<PolySymbolModifier>,
-  override val requiredAccessModifier: PolySymbolAccessModifier?,
   override val excludeModifiers: List<PolySymbolModifier>,
-  override val excludeAccessModifiers: List<PolySymbolAccessModifier>,
-) : PolySymbolsListSymbolsQueryParams {
-}
+) : PolySymbolsListSymbolsQueryParams
 
 internal data class PolySymbolsNameMatchQueryParamsData(
   override val queryExecutor: PolySymbolsQueryExecutor,
   override val strictScope: Boolean,
   override val requiredModifiers: List<PolySymbolModifier>,
-  override val requiredAccessModifier: PolySymbolAccessModifier?,
   override val excludeModifiers: List<PolySymbolModifier>,
-  override val excludeAccessModifiers: List<PolySymbolAccessModifier>,
 ) : PolySymbolsNameMatchQueryParams

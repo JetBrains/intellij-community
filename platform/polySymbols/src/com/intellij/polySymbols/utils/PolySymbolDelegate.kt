@@ -43,8 +43,6 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolsScope {
     get() = delegate.apiStatus
   override val modifiers: Set<PolySymbolModifier>
     get() = delegate.modifiers
-  override val accessModifier: PolySymbolAccessModifier?
-    get() = delegate.accessModifier
   override val extension: Boolean
     get() = delegate.extension
   override val required: Boolean?

@@ -7,6 +7,7 @@ interface PolySymbolModifier {
 
   val name: String
 
+  @Suppress("unused")
   companion object {
 
     operator fun get(name: String): PolySymbolModifier =
@@ -88,6 +89,9 @@ interface PolySymbolModifier {
     val EXTERNAL: PolySymbolModifier = create("external")
 
     @JvmField
+    val FILEPRIVATE: PolySymbolModifier = create("fileprivate")
+
+    @JvmField
     val FINAL: PolySymbolModifier = create("final")
 
     @JvmField
@@ -113,6 +117,9 @@ interface PolySymbolModifier {
 
     @JvmField
     val INLINE: PolySymbolModifier = create("inline")
+
+    @JvmField
+    val INTERNAL: PolySymbolModifier = create("internal")
 
     @JvmField
     val LATEINIT: PolySymbolModifier = create("lateinit")
@@ -154,10 +161,49 @@ interface PolySymbolModifier {
     val OUT: PolySymbolModifier = create("out")
 
     @JvmField
+    val PACKAGE_PRIVATE: PolySymbolModifier = create("package-private")
+
+    @JvmField
     val PARTIAL: PolySymbolModifier = create("partial")
 
     @JvmField
+    val PRIVATE: PolySymbolModifier = create("private")
+
+    @JvmField
+    val PRIVATE_PACKAGE: PolySymbolModifier = create("private[package]")
+
+    @JvmField
+    val PRIVATE_PROTECTED: PolySymbolModifier = create("private protected")
+
+    @JvmField
+    val PRIVATE_THIS: PolySymbolModifier = create("private[this]")
+
+    @JvmField
+    val PROTECTED: PolySymbolModifier = create("protected")
+
+    @JvmField
+    val PROTECTED_INTERNAL: PolySymbolModifier = create("protected internal")
+
+    @JvmField
+    val PROTECTED_PACKAGE: PolySymbolModifier = create("protected[package]")
+
+    @JvmField
+    val PROTECTED_THIS: PolySymbolModifier = create("protected[this]")
+
+    @JvmField
     val PROTO: PolySymbolModifier = create("proto")
+
+    @JvmField
+    val PUB: PolySymbolModifier = create("pub")
+
+    @JvmField
+    val PUB_CRATE: PolySymbolModifier = create("pub(crate)")
+
+    @JvmField
+    val PUB_SUPER: PolySymbolModifier = create("pub(super)")
+
+    @JvmField
+    val PUBLIC: PolySymbolModifier = create("public")
 
     @JvmField
     val REIFIED: PolySymbolModifier = create("reified")

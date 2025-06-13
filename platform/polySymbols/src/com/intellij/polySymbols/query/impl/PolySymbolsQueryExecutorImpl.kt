@@ -145,9 +145,7 @@ class PolySymbolsQueryExecutorImpl(
                             expandPatterns = expandPatterns,
                             strictScope = strictScope,
                             requiredModifiers = requiredModifiers.toList(),
-                            requiredAccessModifier = requiredAccessModifier,
                             excludeModifiers = excludeModifiers.toList(),
-                            excludeAccessModifiers = excludeAccessModifiers.toList(),
                           ), additionalScope.toList())
   }
 
@@ -168,9 +166,7 @@ class PolySymbolsQueryExecutorImpl(
                           this@PolySymbolsQueryExecutorImpl,
                           strictScope = strictScope,
                           requiredModifiers = requiredModifiers.toList(),
-                          requiredAccessModifier = requiredAccessModifier,
                           excludeModifiers = excludeModifiers.toList(),
-                          excludeAccessModifiers = excludeAccessModifiers.toList(),
                         ), additionalScope.toList())
   }
 
@@ -185,9 +181,7 @@ class PolySymbolsQueryExecutorImpl(
                                this@PolySymbolsQueryExecutorImpl,
                                position = position,
                                requiredModifiers = requiredModifiers.toList(),
-                               requiredAccessModifier = requiredAccessModifier,
                                excludeModifiers = excludeModifiers.toList(),
-                               excludeAccessModifiers = excludeAccessModifiers.toList(),
                              ), additionalScope.toList())
   }
 
@@ -283,7 +277,6 @@ class PolySymbolsQueryExecutorImpl(
           ProgressManager.checkCanceled()
           scope.getSymbols(qualifiedName.qualifiedKind, params, Stack(finalContext))
         }
-        .filterIsInstance<PolySymbol>()
         .distinct()
         .filterByQueryParams(params)
         .applyIf(params.expandPatterns) {
@@ -491,8 +484,6 @@ class PolySymbolsQueryExecutorImpl(
       val result = SmartList<Any>()
       result.add(requiredModifiers)
       result.add(excludeModifiers)
-      result.add(excludeAccessModifiers)
-      requiredAccessModifier?.let { result.add(it) }
       return result
     }
 }

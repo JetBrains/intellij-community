@@ -72,12 +72,6 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolsPrioritizedScope {
     get() = emptySet()
 
   /**
-   * Symbol's access modifier
-   */
-  val accessModifier: PolySymbolAccessModifier?
-    get() = null
-
-  /**
    * An optional icon associated with the symbol, which is going to be used across the IDE.
    * If none is specified, a default icon of the origin will be used and if that’s not available,
    * a default icon for symbol namespace and kind.
