@@ -44,6 +44,7 @@ import com.intellij.util.indexing.roots.IndexableFileScanner.ScanSession
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.kind.ModuleContentOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
 import io.opentelemetry.api.trace.Span
@@ -426,7 +427,12 @@ class UnindexedFilesScanner (
        * because of `indexableFilesDeduplicateFilter`, and therefore the `FilePropertyPusher`s will not run for that file.
        */
       val (genericContentEntityProviders, otherProviders) = providers.partition { provider -> provider.origin is GenericContentEntityOrigin }
-      collectIndexableFilesConcurrently(otherProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+      /**
+       * Module providers typically contain more files, so they take more time to scan.
+       * We place module providers at the end of the provider list, such that other providers have a chance to "steal" files from module providers.
+       */
+      val (moduleProviders, otherNonModuleProviders) = otherProviders.partition { it.origin is ModuleContentOrigin }
+      collectIndexableFilesConcurrently(otherNonModuleProviders.plus(moduleProviders), sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
       collectIndexableFilesConcurrently(genericContentEntityProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
     }
 
