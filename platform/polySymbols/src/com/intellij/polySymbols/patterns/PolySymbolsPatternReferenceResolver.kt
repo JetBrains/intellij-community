@@ -54,7 +54,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
     val location: List<PolySymbolQualifiedName> = emptyList(),
     val qualifiedKind: PolySymbolQualifiedKind,
     val filter: PolySymbolsFilter? = null,
-    val excludeModifiers: List<PolySymbolModifier> = listOf(PolySymbolModifier.ABSTRACT),
+    val excludeModifiers: List<PolySymbolModifier> = listOf(PolySymbolModifier.Companion.ABSTRACT),
     val nameConversionRules: List<PolySymbolNameConversionRules> = emptyList(),
   ) {
     fun resolve(

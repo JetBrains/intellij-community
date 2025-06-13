@@ -30,6 +30,3 @@ internal class PolySymbolSearchTargetImpl(override val symbol: PolySymbol) : Pol
     symbol.hashCode()
 
 }
-
-fun PolySymbolSearchTarget.Companion.create(symbol: PolySymbol): PolySymbolSearchTarget =
-  PolySymbolSearchTargetImpl(symbol)
