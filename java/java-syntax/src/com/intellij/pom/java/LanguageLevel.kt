@@ -66,7 +66,9 @@ enum class LanguageLevel {
   JDK_23_PREVIEW(messagePointer("jdk.23.preview.language.level.description"), 23),
   JDK_24(messagePointer("jdk.24.language.level.description"), 24),
   JDK_24_PREVIEW(messagePointer("jdk.24.preview.language.level.description"), 24),
-  JDK_X(messagePointer("jdk.X.language.level.description"), 25),
+  JDK_25(messagePointer("jdk.25.language.level.description"), 25),
+  JDK_25_PREVIEW(messagePointer("jdk.25.preview.language.level.description"), 25),
+  JDK_X(messagePointer("jdk.X.language.level.description"), 26),
   ;
 
   private val myPresentableText: () -> @Nls String
@@ -195,7 +197,7 @@ enum class LanguageLevel {
      * The highest language level supported by the analyzer.
      */
     @JvmField
-    val HIGHEST: LanguageLevel = JDK_24
+    val HIGHEST: LanguageLevel = JDK_25
 
     private val ourStandardVersions: Map<Int, LanguageLevel> = LanguageLevel.entries.asSequence()
       .filterNot { ver -> ver.isPreview }

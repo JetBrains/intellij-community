@@ -37,7 +37,8 @@ enum class JavaSdkVersion(val maxLanguageLevel: LanguageLevel) {
   JDK_22(LanguageLevel.JDK_22),
   JDK_23(LanguageLevel.JDK_23),
   JDK_24(LanguageLevel.JDK_24),
-  JDK_25(LanguageLevel.JDK_X);
+  JDK_25(LanguageLevel.JDK_25),
+  JDK_26(LanguageLevel.JDK_X);
 
   val description: @NlsSafe String
     get() {
