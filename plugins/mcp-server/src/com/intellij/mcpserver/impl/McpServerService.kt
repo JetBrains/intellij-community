@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.application
@@ -95,7 +96,8 @@ class McpServerService(val cs: CoroutineScope) {
 
   private fun documentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
     val originalDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
-    if (file != null) {
+    if (originalDocument != document) return // the document is a wrapper, the real one will be processed in another event
+    if (file != null && file.fileSystem is LocalFileSystem) {
       trackedDocuments[originalDocument] = file
     }
     else {
@@ -229,7 +231,7 @@ class McpServerService(val cs: CoroutineScope) {
 
         application.messageBus.connect(this).subscribe(FileDocumentBindingListener.TOPIC, object : FileDocumentBindingListener {
           override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
-            if (file != null) {
+            if (file != null && file.fileSystem is LocalFileSystem) {
               document.addDocumentListener(documentListener, this@coroutineScope.asDisposable())
             }
           }
