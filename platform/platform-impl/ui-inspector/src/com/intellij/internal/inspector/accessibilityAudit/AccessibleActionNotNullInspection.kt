@@ -10,6 +10,7 @@ import javax.accessibility.AccessibleRole
 class AccessibleActionNotNullInspection : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleAction"
   override val severity: Severity = Severity.WARNING
+  override var accessibleRole: AccessibleRole? = null
 
   override fun passesInspection(accessible: Accessible?): Boolean {
     val context = accessible?.accessibleContext ?: return true
@@ -19,7 +20,9 @@ class AccessibleActionNotNullInspection : UiInspectorAccessibilityInspection {
                                           AccessibleRole.RADIO_BUTTON,
                                           AccessibleRole.COMBO_BOX,
                                           AccessibleRole.HYPERLINK)) {
-      return context.accessibleAction != null
+      val result = context.accessibleAction != null
+      if (!result) accessibleRole = context.accessibleRole
+      return result
     }
     return true
   }

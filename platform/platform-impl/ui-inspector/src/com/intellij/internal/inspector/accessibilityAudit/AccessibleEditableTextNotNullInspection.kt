@@ -11,12 +11,15 @@ import javax.accessibility.AccessibleState
 class AccessibleEditableTextNotNullInspection : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleEditableText"
   override val severity: Severity = Severity.WARNING
+  override var accessibleRole: AccessibleRole? = null
 
   override fun passesInspection(accessible: Accessible?): Boolean {
     val context = accessible?.accessibleContext ?: return true
     if ((context.accessibleRole == AccessibleRole.TEXT || context.accessibleRole == AccessibleRole.PASSWORD_TEXT) &&
         context.accessibleStateSet.contains(AccessibleState.EDITABLE)) {
-      return context.accessibleEditableText != null
+      val result = context.accessibleEditableText != null
+      if (!result) accessibleRole = context.accessibleRole
+      return result
     }
     return true
   }

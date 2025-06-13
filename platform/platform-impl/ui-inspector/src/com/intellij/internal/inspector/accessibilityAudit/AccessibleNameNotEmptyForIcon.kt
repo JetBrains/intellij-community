@@ -10,11 +10,14 @@ import javax.accessibility.AccessibleRole
 class AccessibleNameNotEmptyForIcon : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleName"
   override val severity: Severity = Severity.WARNING
+  override var accessibleRole: AccessibleRole? = null
 
   override fun passesInspection(accessible: Accessible?): Boolean {
     val context = accessible?.accessibleContext ?: return true
     if (context.accessibleRole == AccessibleRole.ICON) {
-      return !context.accessibleName.isNullOrEmpty()
+      val result = !context.accessibleName.isNullOrEmpty()
+      if (!result) accessibleRole = context.accessibleRole
+      return result
     }
     return true
   }

@@ -10,6 +10,7 @@ import javax.accessibility.AccessibleRole
 class AccessibleValueNotNullInspection : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleValue"
   override val severity: Severity = Severity.WARNING
+  override var accessibleRole: AccessibleRole? = null
 
   override fun passesInspection(accessible: Accessible?): Boolean {
     val context = accessible?.accessibleContext ?: return true
@@ -18,7 +19,9 @@ class AccessibleValueNotNullInspection : UiInspectorAccessibilityInspection {
                                           AccessibleRole.SLIDER,
                                           AccessibleRole.SCROLL_BAR)
     ) {
-      return context.accessibleValue != null
+      val result = context.accessibleValue != null
+      if (!result) accessibleRole = context.accessibleRole
+      return result
     }
     return true
   }

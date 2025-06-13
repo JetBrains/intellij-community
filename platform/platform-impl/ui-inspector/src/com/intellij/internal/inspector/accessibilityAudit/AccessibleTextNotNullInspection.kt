@@ -10,11 +10,14 @@ import javax.accessibility.AccessibleRole
 class AccessibleTextNotNullInspection : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleText"
   override val severity: Severity = Severity.WARNING
+  override var accessibleRole: AccessibleRole? = null
 
   override fun passesInspection(accessible: Accessible?): Boolean {
     val context = accessible?.accessibleContext ?: return true
     if (context.accessibleRole == AccessibleRole.TEXT || context.accessibleRole == AccessibleRole.PASSWORD_TEXT) {
-      return context.accessibleText != null
+      val result = context.accessibleText != null
+      if (!result) accessibleRole = context.accessibleRole
+      return result
     }
     return true
   }
