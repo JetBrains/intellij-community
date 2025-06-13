@@ -14,6 +14,7 @@ import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTargetImpl
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolMatchBuilder
+import com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory
 import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
@@ -33,6 +34,10 @@ internal open class PolySymbolMatchBase internal constructor(
   override val additionalProperties: Map<String, Any>,
 ) : PolySymbolMatchMixin {
 
+  private val customizer by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    PolySymbolMatchCustomizerFactory.getPolySymbolMatchCustomizer(this)
+  }
+
   init {
     require(nameSegments.isNotEmpty()) { "nameSegments must not be empty" }
   }
@@ -40,6 +45,18 @@ internal open class PolySymbolMatchBase internal constructor(
   internal fun withSegments(segments: List<PolySymbolNameSegment>): PolySymbolMatch =
     create(matchedName, segments, qualifiedKind, origin, explicitPriority, explicitProximity, additionalProperties)
 
+
+  override val modifiers: Set<PolySymbolModifier>
+    get() {
+      var result: Set<PolySymbolModifier>? = null
+      for (symbol in reversedSegments().flatMap { it.symbols.asSequence() }) {
+        if (symbol != this) {
+          result = customizer.mergeModifiers(result, symbol.modifiers, symbol)
+                   ?: break
+        }
+      }
+      return result ?: emptySet()
+    }
 
   override fun equals(other: Any?): Boolean =
     other is PolySymbolMatch
@@ -208,9 +225,6 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
       .flatMap { it.symbols }
       .flatMap { it.queryScope }
       .toList()
-
-  override val modifiers: Set<PolySymbolModifier>
-    get() = nameSegments.asSequence().flatMap { segment -> segment.symbols.flatMap { it.modifiers } }.toSet()
 
   override val required: Boolean?
     get() = reversedSegments().flatMap { it.symbols }.mapNotNull { it.required }.firstOrNull()

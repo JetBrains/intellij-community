@@ -54,6 +54,9 @@
     <extensionPoint qualifiedName="com.intellij.polySymbols.highlightingCustomizer"
                     interface="com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.polySymbols.matchCustomizerFactory"
+                    interface="com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -68,5 +71,7 @@
     <polySymbols.documentationCustomizer
       id="web-types"
       implementation="com.intellij.polySymbols.webTypes.WebTypesDocumentationCustomizer"/>
+    <polySymbols.matchCustomizerFactory
+      implementation="com.intellij.polySymbols.html.HtmlPolySymbolMatchCustomizer$Factory"/>
   </extensions>
 </idea-plugin>

@@ -624,6 +624,15 @@
 - a:explicitPriority(com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.query.PolySymbolMatchBuilder
 - a:explicitProximity(I):com.intellij.polySymbols.query.PolySymbolMatchBuilder
 - a:setProperty(java.lang.String,java.lang.Object):com.intellij.polySymbols.query.PolySymbolMatchBuilder
+*:com.intellij.polySymbols.query.PolySymbolMatchCustomizer
+- mergeModifiers(java.util.Set,java.util.Set,com.intellij.polySymbols.PolySymbol):java.util.Set
+*:com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory
+- *sf:Companion:com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:create(com.intellij.polySymbols.query.PolySymbolMatch):com.intellij.polySymbols.query.PolySymbolMatchCustomizer
+- s:getPolySymbolMatchCustomizer(com.intellij.polySymbols.query.PolySymbolMatch):com.intellij.polySymbols.query.PolySymbolMatchCustomizer
+*f:com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory$Companion
+- f:getPolySymbolMatchCustomizer(com.intellij.polySymbols.query.PolySymbolMatch):com.intellij.polySymbols.query.PolySymbolMatchCustomizer
 *:com.intellij.polySymbols.query.PolySymbolNameConversionRules
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolNameConversionRules$Companion
 - s:builder():com.intellij.polySymbols.query.PolySymbolNameConversionRulesBuilder

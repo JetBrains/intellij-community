@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionPoint
+import com.intellij.polySymbols.html.HtmlPolySymbolMatchCustomizer
 import com.intellij.polySymbols.query.impl.CustomElementsManifestMockScopeImpl
 import com.intellij.polySymbols.query.impl.PolySymbolsMockQueryExecutorFactory
 import com.intellij.polySymbols.query.impl.WebTypesMockScopeImpl
@@ -47,6 +48,12 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       ExtensionPoint.Kind.BEAN_CLASS,
       true
     )
+    application.extensionArea.registerExtensionPoint(
+      "com.intellij.polySymbols.matchCustomizerFactory",
+      PolySymbolMatchCustomizerFactory::class.java.name,
+      ExtensionPoint.Kind.INTERFACE,
+      true
+    )
     val mockPluginDescriptor = DefaultPluginDescriptor(PluginId.getId("mock"),
                                                        PolySymbolsMatchPrefixFilter::class.java.classLoader)
     application.extensionArea.getExtensionPoint<PolySymbolsFilterEP>("com.intellij.polySymbols.webTypes.filter")
@@ -57,6 +64,9 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
           it.pluginDescriptor = mockPluginDescriptor
         },
         mockPluginDescriptor, testRootDisposable)
+
+    application.extensionArea.getExtensionPoint<PolySymbolMatchCustomizerFactory>("com.intellij.polySymbols.matchCustomizerFactory")
+      .registerExtension(HtmlPolySymbolMatchCustomizer.Factory(), testRootDisposable)
 
   }
 
