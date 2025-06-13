@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.util
 
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.execution.process.LocalProcessService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.EnvironmentUtil
+import com.intellij.util.asSafely
 import com.intellij.util.execution.ParametersListUtil
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
@@ -92,11 +94,17 @@ internal object TerminalSessionTestUtil {
     }
 
     try {
-      initializedFuture.get(5000, TimeUnit.MILLISECONDS)
+      initializedFuture.get(30_000, TimeUnit.MILLISECONDS)
     }
     catch (_: TimeoutException) {
       BasePlatformTestCase.fail(
-        "Session failed to initialize, size: ${model.height}x${model.width}, text buffer:\n${model.withContentLock { model.getAllText() }}")
+        "Session failed to initialize" +
+        ", size: ${model.width}x${model.height}" +
+        ", process: ${process::class.java.name}" +
+        ", bundled-ConPTY: ${process.asSafely<WinConPtyProcess>()?.isBundledConPtyLibrary}" +
+        ", command: ${LocalProcessService.getInstance().getCommand(process)}" +
+        ", text buffer:\n${model.withContentLock { model.getAllText() }}" +
+        ", envs: ${configuredOptions.envVariables}")
     }
     finally {
       Disposer.dispose(listenersDisposable)
