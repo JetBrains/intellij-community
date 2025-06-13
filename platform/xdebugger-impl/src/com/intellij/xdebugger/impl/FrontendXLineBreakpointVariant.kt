@@ -146,12 +146,12 @@ private fun responseWithVariantChoice(
   }
 }
 
-private fun createBreakpoint(
+private suspend fun createBreakpoint(
   project: Project,
   breakpointDto: XBreakpointDto,
 ): XLineBreakpointProxy? {
   val breakpointManagerProxy = XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project)
-  return breakpointManagerProxy.addBreakpoint(breakpointDto) as? XLineBreakpointProxy
+  return breakpointManagerProxy.awaitBreakpointCreation(breakpointDto) as? XLineBreakpointProxy
 }
 
 @ApiStatus.Internal

@@ -144,7 +144,7 @@ private open class FrontendXBreakpointType(
 
   override suspend fun addBreakpoint(project: Project): XBreakpointProxy? {
     val breakpointDto = XBreakpointTypeApi.getInstance().addBreakpointThroughLux(project.projectId(), dto.id).await() ?: return null
-    return XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).addBreakpoint(breakpointDto)
+    return XDebugManagerProxy.getInstance().getBreakpointManagerProxy(project).awaitBreakpointCreation(breakpointDto)
   }
 
   override fun equals(other: Any?): Boolean {

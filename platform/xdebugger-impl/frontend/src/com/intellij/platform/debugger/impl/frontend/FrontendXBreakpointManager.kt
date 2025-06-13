@@ -24,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
+import kotlin.time.Duration.Companion.seconds
 
 private val log = logger<FrontendXBreakpointManager>()
 
@@ -81,7 +82,58 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     }
   }
 
-  override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
+  /**
+   * Waits for breakpoint creation from [XBreakpointEvent.BreakpointAdded] event from backend.
+   *
+   * [addBreakpoint] is not called in parallel, to have only one source of truth and avoid races.
+   */
+  override suspend fun awaitBreakpointCreation(breakpointDto: XBreakpointDto): XBreakpointProxy? {
+    val breakpointId = breakpointDto.id
+    // check now
+    val currentBreakpoint = breakpoints[breakpointDto.id]
+    if (currentBreakpoint != null) return currentBreakpoint
+    if (breakpointId in breakpointIdsRemovedLocally) return null
+
+    // await creation
+    val flow = MutableSharedFlow<Unit>(replay = 1)
+    val result = CompletableDeferred<XBreakpointProxy?>()
+    val job = cs.launch {
+      launch {
+        breakpointsChanged.collect {
+          flow.emit(Unit)
+        }
+      }
+      flow.collect {
+        log.info("Breakpoint creation flow for ${breakpointId} is triggered")
+        val currentBreakpoint = breakpoints[breakpointId]
+        if (currentBreakpoint != null) {
+          result.complete(currentBreakpoint)
+        }
+        if (breakpointId in breakpointIdsRemovedLocally) {
+          result.complete(null)
+        }
+      }
+    }
+
+    log.info("Waiting for breakpoint creation $breakpointId")
+    // ensure creation event is not lost during adding listener, trigger it at least once
+    flow.emit(Unit)
+    val timeout = 60
+    try {
+      return withTimeout(timeout.seconds) {
+        result.await()
+      }
+    }
+    catch (_: TimeoutCancellationException) {
+      log.error("Failed to await breakpoint from backend in $timeout seconds. Skipped breakpoint creation $breakpointId")
+      return null
+    }
+    finally {
+      job.cancel()
+    }
+  }
+
+  private fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
     val currentBreakpoint = breakpoints[breakpointDto.id]
     if (currentBreakpoint != null) {
       log.info("Breakpoint creation skipped for ${breakpointDto.id}, because it already exists")

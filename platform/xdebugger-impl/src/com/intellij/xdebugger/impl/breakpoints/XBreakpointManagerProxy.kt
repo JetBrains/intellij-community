@@ -28,7 +28,7 @@ interface XBreakpointManagerProxy {
 
   fun setDefaultGroup(group: String)
 
-  fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy?
+  suspend fun awaitBreakpointCreation(breakpointDto: XBreakpointDto): XBreakpointProxy?
 
   fun getAllBreakpointItems(): List<BreakpointItem>
 
@@ -72,7 +72,7 @@ interface XBreakpointManagerProxy {
      *
      * Breakpoint installation is performed by the breakpoint manager.
      */
-    override fun addBreakpoint(breakpointDto: XBreakpointDto): XBreakpointProxy? {
+    override suspend fun awaitBreakpointCreation(breakpointDto: XBreakpointDto): XBreakpointProxy? {
       val type = XBreakpointUtil.breakpointTypes().firstOrNull { it.id == breakpointDto.typeId.id } ?: return null
       if (type !is XLineBreakpointType<*>) {
         LOG.error("Unsupported breakpoint type: ${type::class.java}")
