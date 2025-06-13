@@ -44,7 +44,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                 private val externalStorageMapping: JpsExternalStorageMapping,
                                 private val enableExternalStorage: Boolean) : JpsProjectSerializers {
   private val lock = Any()
-  val moduleSerializers = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsModuleListSerializer>()
+  val moduleSerializers: BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsModuleListSerializer> = BidirectionalMap()
   internal val serializerToDirectoryFactory = BidirectionalMap<JpsFileEntitiesSerializer<*>, JpsDirectoryEntitiesSerializerFactory<*>>()
   private val internalSourceToExternal = HashMap<JpsFileEntitySource, JpsFileEntitySource>()
   internal val fileSerializersByUrl = BidirectionalMultiMap<String, JpsFileEntitiesSerializer<*>>()
@@ -90,7 +90,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   internal val directorySerializerFactoriesByUrl = directorySerializersFactories.associateBy { it.directoryUrl }
-  val moduleListSerializersByUrl = moduleListSerializers.associateBy { it.fileUrl }
+  val moduleListSerializersByUrl: Map<String, JpsModuleListSerializer> = moduleListSerializers.associateBy { it.fileUrl }
 
   private fun createFileInDirectorySource(directoryUrl: VirtualFileUrl, fileName: String): JpsProjectFileEntitySource.FileInDirectory {
     val source = JpsProjectFileEntitySource.FileInDirectory(directoryUrl, configLocation)
@@ -594,11 +594,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
   }
 
-
-  override fun saveEntities(storage: EntityStorage,
-                            unloadedEntityStorage: EntityStorage,
-                            affectedSources: Set<EntitySource>,
-                            writer: JpsFileContentWriter) = saveEntitiesTimeMs.addMeasuredTime {
+  override fun saveEntities(
+    storage: EntityStorage,
+    unloadedEntityStorage: EntityStorage,
+    affectedSources: Set<EntitySource>,
+    writer: JpsFileContentWriter,
+  ): Unit = saveEntitiesTimeMs.addMeasuredTime {
     val affectedModuleListSerializers = HashSet<JpsModuleListSerializer>()
     val serializersToRun = HashMap<JpsFileEntitiesSerializer<*>, MutableMap<Class<out WorkspaceEntity>, MutableSet<WorkspaceEntity>>>()
 
