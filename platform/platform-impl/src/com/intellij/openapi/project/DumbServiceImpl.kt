@@ -267,6 +267,9 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       })
       if (enteredDumb) {
         LOG.info("enter dumb mode [${project.name}]")
+        if (LOG.isDebugEnabled) {
+          LOG.debug("dumb mode [${project.name}] trace", trace)
+        }
         dumbModeStartTrace = trace
         try {
           publishDumbModeChangedEvent()
