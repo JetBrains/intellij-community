@@ -56,7 +56,7 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
 
   @Test
   fun `test project groovy setting generation`(): Unit = runBlocking {
-    val projectInfo = projectInfo("project", useKotlinDsl = false) {
+    val projectInfo = projectInfo("project", GradleDsl.GROOVY) {
       withJavaBuildFile()
       withSettingsFile {
         setProjectName("project")
@@ -70,7 +70,7 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
 
   @Test
   fun `test project kotlin dsl setting generation`(): Unit = runBlocking {
-    val projectInfo = projectInfo("project", useKotlinDsl = true) {
+    val projectInfo = projectInfo("project", GradleDsl.KOTLIN) {
       withJavaBuildFile()
       withSettingsFile {
         setProjectName("project")
@@ -84,17 +84,17 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
 
   @Test
   fun `test project groovy setting generation with groovy-kotlin scripts`(): Unit = runBlocking {
-    val projectInfo = projectInfo("project", useKotlinDsl = false) {
+    val projectInfo = projectInfo("project", GradleDsl.GROOVY) {
       withJavaBuildFile()
       withSettingsFile {
         setProjectName("project")
         include("module1")
         include("module2")
       }
-      moduleInfo("project.module1", "module1", useKotlinDsl = true) {
+      moduleInfo("project.module1", "module1", GradleDsl.KOTLIN) {
         withJavaBuildFile()
       }
-      moduleInfo("project.module2", "module2", useKotlinDsl = false) {
+      moduleInfo("project.module2", "module2", GradleDsl.GROOVY) {
         withJavaBuildFile()
       }
     }
@@ -106,17 +106,17 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
 
   @Test
   fun `test project kotlin dsl setting generation with groovy-kotlin scripts`(): Unit = runBlocking {
-    val projectInfo = projectInfo("project", useKotlinDsl = true) {
+    val projectInfo = projectInfo("project", GradleDsl.KOTLIN) {
       withJavaBuildFile()
       withSettingsFile {
         setProjectName("project")
         include("module1")
         include("module2")
       }
-      moduleInfo("project.module1", "module1", useKotlinDsl = true) {
+      moduleInfo("project.module1", "module1", GradleDsl.KOTLIN) {
         withJavaBuildFile()
       }
-      moduleInfo("project.module2", "module2", useKotlinDsl = false) {
+      moduleInfo("project.module2", "module2", GradleDsl.GROOVY) {
         withJavaBuildFile()
       }
     }

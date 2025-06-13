@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.testFramework.junit5.RegistryKey
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -148,7 +149,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
         }
     }
 
-    private fun simpleJavaProject(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
+    private fun simpleJavaProject(gradleDsl: GradleDsl) = projectInfo("project", gradleDsl) {
         withJavaBuildFile()
         withSettingsFile {
             withFoojayPlugin()
@@ -160,7 +161,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testNewModuleInJavaProject() {
         runNewModuleTestCase(
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleJavaProject(false),
+            projectInfo = simpleJavaProject(GradleDsl.GROOVY),
             addSampleCode = true
         ) { project ->
             val propertiesExist = project.findRelativeFile("module/gradle.properties")?.exists() == true
@@ -172,7 +173,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testNewModuleInJavaProjectKts() {
         runNewModuleTestCase(
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleJavaProject(true),
+            projectInfo = simpleJavaProject(GradleDsl.KOTLIN),
             addSampleCode = true,
             useKotlinDsl = true
         ) { project ->
@@ -185,11 +186,11 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testNewModuleInJavaProjectMixed() {
         runNewModuleTestCase(
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleJavaProject(true)
+            projectInfo = simpleJavaProject(GradleDsl.KOTLIN)
         )
     }
 
-    private fun simpleKotlinProject(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
+    private fun simpleKotlinProject(gradleDsl: GradleDsl) = projectInfo("project", gradleDsl) {
         withBuildFile {
             addGroup(groupId)
             addVersion(version)
@@ -205,7 +206,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testNewModuleInKotlinProject() {
         runNewModuleTestCase(
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleKotlinProject(false)
+            projectInfo = simpleKotlinProject(GradleDsl.GROOVY)
         )
     }
 
@@ -213,7 +214,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testNewModuleInKotlinProjectKts() {
         runNewModuleTestCase(
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleKotlinProject(true),
+            projectInfo = simpleKotlinProject(GradleDsl.KOTLIN),
             useKotlinDsl = true
         )
     }
@@ -222,7 +223,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testNewModuleInKotlinProjectIndependentHierarchy() {
         runNewModuleTestCase(
             expectedNewModules = listOf("module", "module.main", "module.test"),
-            projectInfo = simpleKotlinProject(false),
+            projectInfo = simpleKotlinProject(GradleDsl.GROOVY),
             independentHierarchy = true
         )
     }
@@ -231,7 +232,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testNewModuleInKotlinProjectIndependentHierarchyKts() {
         runNewModuleTestCase(
             expectedNewModules = listOf("module", "module.main", "module.test"),
-            projectInfo = simpleKotlinProject(true),
+            projectInfo = simpleKotlinProject(GradleDsl.KOTLIN),
             useKotlinDsl = true,
             independentHierarchy = true
         )
@@ -241,14 +242,14 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testNoMultiModuleProjectForNewModulesKts() {
         runNewModuleTestCase(
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = simpleKotlinProject(true),
+            projectInfo = simpleKotlinProject(GradleDsl.KOTLIN),
             useKotlinDsl = true,
         )
     }
 
-    private fun javaProjectWithKotlinSubmodule(useKotlinDsl: Boolean) = projectInfo("project", useKotlinDsl) {
+    private fun javaProjectWithKotlinSubmodule(gradleDsl: GradleDsl) = projectInfo("project", gradleDsl) {
         withJavaBuildFile()
-        moduleInfo("othermodule", "othermodule", useKotlinDsl) {
+        moduleInfo("othermodule", "othermodule", gradleDsl) {
             withBuildFile {
                 addGroup(groupId)
                 addVersion(version)
@@ -266,7 +267,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testOtherKotlinModule() {
         runNewModuleTestCase(
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = javaProjectWithKotlinSubmodule(false)
+            projectInfo = javaProjectWithKotlinSubmodule(GradleDsl.GROOVY)
         ) { project ->
             project.assertKotlinVersion("1.8.0", false, "module")
         }
@@ -276,7 +277,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     fun testOtherKotlinModuleKts() {
         runNewModuleTestCase(
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
-            projectInfo = javaProjectWithKotlinSubmodule(true),
+            projectInfo = javaProjectWithKotlinSubmodule(GradleDsl.KOTLIN),
             useKotlinDsl = true
         ) { project ->
             project.assertKotlinVersion("1.8.0", true, "module")
