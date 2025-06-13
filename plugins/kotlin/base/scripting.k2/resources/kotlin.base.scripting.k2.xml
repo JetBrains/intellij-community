@@ -18,6 +18,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <psi.implicitReferenceProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.codeInsight.MainKtsReferenceProvider"/>
+
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.KotlinScriptResolveScopeProvider"/>
     <resolveScopeProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ScriptDependenciesResolveScopeProvider"/>
 

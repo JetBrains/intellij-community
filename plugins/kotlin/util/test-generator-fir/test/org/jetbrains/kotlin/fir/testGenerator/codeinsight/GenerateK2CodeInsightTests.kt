@@ -4,10 +4,7 @@ package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinBinariesCheckerTest
 import org.jetbrains.kotlin.checkers.AbstractJavaAgainstKotlinSourceCheckerTest
 import org.jetbrains.kotlin.idea.codeInsight.codevision.AbstractKotlinCodeVisionProviderTest
-import org.jetbrains.kotlin.idea.k2.AbstractK2ExpressionTypeTest
-import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirBreadcrumbsTest
-import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirJoinLinesTest
-import org.jetbrains.kotlin.idea.k2.AbstractKotlinFirPairMatcherTest
+import org.jetbrains.kotlin.idea.k2.*
 import org.jetbrains.kotlin.idea.k2.copyPaste.AbstractK2InsertImportOnPasteTest
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.k2.generate.AbstractFirGenerateSecondaryConstructorActionTest
@@ -229,6 +226,10 @@ internal fun MutableTWorkspace.generateK2CodeInsightTests() {
 
         testClass<AbstractJavaAgainstKotlinBinariesCheckerTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.K2JavaAgainstKotlinBinariesCheckerTestGenerated") {
             model("../../../idea/tests/testData/kotlinAndJavaChecker/javaAgainstKotlin")
+        }
+
+        testClass<AbstractScriptGotoDeclarationMultifileTest>(generatedClassName = "org.jetbrains.kotlin.idea.k2.navigation.K2MainKtsGotoDeclarationTestGenerated") {
+            model("../../../idea/tests/testData/mainKts/navigation/gotoDeclaration", pattern = TEST)
         }
     }
 }
