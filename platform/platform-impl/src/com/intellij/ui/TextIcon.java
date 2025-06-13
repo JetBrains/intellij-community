@@ -228,9 +228,9 @@ public final class TextIcon implements Icon {
     Rectangle bounds = getTextBounds();
     Rectangle currentTextBounds = myCurrentTextBounds;
     if (myForeground != null && bounds != null) {
-      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x + (bounds.width - currentTextBounds.width) / 2,
-                                            myInsets.top + y + (bounds.height - currentTextBounds.height) / 2,
-                                            currentTextBounds.width, currentTextBounds.height);
+      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x - 1 + (bounds.width - currentTextBounds.width) / 2,
+                                            myInsets.top + y - 1 + (bounds.height - currentTextBounds.height) / 2,
+                                            currentTextBounds.width + 2, currentTextBounds.height + 2);
       try {
         Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
         if (textLcdContrast == null) textLcdContrast = getLcdContrastValue(); // L&F is not properly updated
@@ -239,7 +239,7 @@ public final class TextIcon implements Icon {
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myContext.getFractionalMetricsHint());
         g2d.setColor(myForeground);
         g2d.setFont(myFont);
-        g2d.drawString(myText, -bounds.x, -bounds.y);
+        g2d.drawString(myText, -bounds.x + 1, -bounds.y + 1);
         if (LOG.isDebugEnabled()) {
           LOG.debug("Drawing \"" + myText + "\" at " + x + ", " + y + ", insets " + myInsets + "," +
                     " with bounds " + bounds + " and currentTextBounds " + currentTextBounds);
