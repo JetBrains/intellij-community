@@ -29,9 +29,11 @@ import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.projectId
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -170,8 +172,12 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginInstallerApi.getInstance().resetSession(sessionId, removeSession)
   }
 
-  override fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
-    awaitForResult { PluginManagerApi.getInstance().setEnabledState(sessionId, pluginIds, enable) }
+  override suspend fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
+    withContext(Dispatchers.IO) {
+      launch {
+        PluginManagerApi.getInstance().setEnabledState(sessionId, pluginIds, enable)
+      }
+    }
   }
 
   override fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {

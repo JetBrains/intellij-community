@@ -352,7 +352,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return PrepareToUninstallResult(dependentsMap, bundledPlugins)
   }
 
-  override fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
+  override suspend fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
     val session = findSession(sessionId) ?: return
     setEnabledState(session, pluginIds, enable)
   }

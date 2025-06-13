@@ -46,7 +46,6 @@ interface UiPluginManagerController {
   fun allowLoadUnloadSynchronously(pluginId: PluginId): Boolean
   fun performUninstall(sessionId: String, pluginId: PluginId): Boolean
   fun performInstallOperation(installPluginRequest: InstallPluginRequest, parentComponent: JComponent?, modalityState: ModalityState?, progressIndicator: ProgressIndicator?, pluginEnabler: PluginEnabler, installCallback: (InstallPluginResult) -> Unit)
-  fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult
   fun updatePluginDependencies(sessionId: String): Set<PluginId>
   fun isModified(sessionId: String): Boolean
@@ -77,6 +76,7 @@ interface UiPluginManagerController {
   fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
   fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean
 
+  suspend fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean)
   suspend fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null): Map<PluginId, Boolean>
 
   companion object {

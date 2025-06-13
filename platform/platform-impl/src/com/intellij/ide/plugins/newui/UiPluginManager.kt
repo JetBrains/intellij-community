@@ -121,26 +121,10 @@ class UiPluginManager {
     return getController().hasPluginsAvailableForEnableDisable(pluginIds)
   }
 
-  fun performInstallOperation(
-    request: InstallPluginRequest,
-    parentComponent: JComponent? = null,
-    modalityState: ModalityState? = null,
-    progressIndicator: ProgressIndicator? = null,
-    pluginEnabler: PluginEnabler,
-    installCallback: (InstallPluginResult) -> Unit,
-  ) {
-    getController().performInstallOperation(
-      request,
-      parentComponent,
-      modalityState,
-      progressIndicator,
-      pluginEnabler,
-      installCallback
-    )
-  }
-
   fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
-    getController().setPluginStatus(sessionId, pluginIds, enable)
+    service<FrontendRpcCoroutineContext>().coroutineScope.launch {
+      getController().setPluginStatus(sessionId, pluginIds, enable)
+    }
   }
 
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
