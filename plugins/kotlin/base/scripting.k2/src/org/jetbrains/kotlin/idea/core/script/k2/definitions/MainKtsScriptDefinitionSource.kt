@@ -27,7 +27,7 @@ class MainKtsScriptDefinitionSource(val project: Project) : ScriptDefinitionsSou
                 ::loggingReporter
             ).definitions
 
-            val mainKtsScriptConfigurationProvider = MainKtsScriptConfigurationProvider.Companion.getInstance(project)
+            val mainKtsScriptConfigurationProvider = MainKtsScriptConfigurationProvider.getInstance(project)
 
             return discoveredDefinitions.map { definition ->
                 val compilationConfiguration = definition.compilationConfiguration.withTransformedResolvers {

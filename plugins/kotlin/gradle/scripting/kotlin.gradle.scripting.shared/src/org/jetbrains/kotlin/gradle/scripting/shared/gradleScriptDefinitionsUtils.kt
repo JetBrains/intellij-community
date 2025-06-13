@@ -43,7 +43,6 @@ fun loadGradleDefinitions(
         val gradleLibDir = gradleHome.toGradleHomePath()
 
         val templateClasspath = getFullDefinitionsClasspath(gradleLibDir)
-        scriptingDebugLog { "Gradle definitions additional classpath: $templateClasspath" }
 
         val kotlinLibsClassPath = kotlinStdlibAndCompiler(gradleLibDir)
 
