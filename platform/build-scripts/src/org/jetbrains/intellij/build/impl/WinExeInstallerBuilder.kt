@@ -121,13 +121,14 @@ internal suspend fun buildNsisInstaller(
   }
 
   val installerFile = context.paths.artifactDir.resolve("$outFileName.exe")
-  check(Files.exists(installerFile)) {
-    "Windows installer wasn't created."
-  }
+  val uninstallerFile = uninstallerPath(context, arch)
+  check(Files.exists(installerFile)) { "Windows installer wasn't created." }
+  check(Files.exists(uninstallerFile)) { "Windows uninstaller is missing." }
   context.executeStep(spanBuilder("sign").setAttribute("file", installerFile.toString()), BuildOptions.WIN_SIGN_STEP) {
     context.signFiles(listOf(installerFile))
   }
   context.notifyArtifactBuilt(installerFile)
+  context.notifyArtifactBuilt(uninstallerFile)
   return installerFile
 }
 
@@ -163,9 +164,18 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
   val productVersionNum = amendVersionNumber(appInfo.majorVersion + '.' + appInfo.minorVersion)
   val versionString = if (appInfo.isEAP) context.buildNumber else "${appInfo.majorVersion}.${appInfo.minorVersion}"
 
-  val uninstallerSignCmd = if (context.options.isInDevelopmentMode) "echo uninstaller: %1" else {
-    val signTool = downloadSignTool(context, nsiConfDir)
-    "'${signTool}' '%1'"
+  val uninstallerFile = context.paths.artifactDir.resolve("Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe")
+  val uninstallerSignCmd = when {
+    !context.options.isInDevelopmentMode -> {
+      val signTool = prepareSignTool(nsiConfDir, context, uninstallerFile)
+      "'${signTool}' '%1'"
+    }
+    OsFamily.currentOs == OsFamily.WINDOWS -> {
+      "COPY /B /Y '%1' '${uninstallerFile}'"
+    }
+    else -> {
+      "cp -f '%1' '${uninstallerFile}'"
+    }
   }
 
   Files.writeString(nsiConfDir.resolve("config.nsi"), $$"""
@@ -198,7 +208,7 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
 
 private fun amendVersionNumber(base: String): String = base + ".0".repeat(3 - base.count { it == '.' })
 
-private suspend fun downloadSignTool(context: BuildContext, nsiConfDir: Path): Path {
+private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uninstallerFile: Path): Path {
   val toolName = "codesign-client-${OsFamily.currentOs.osId}-${JvmArchitecture.currentJvmArch.casualName}${OsFamily.currentOs.binaryExt}"
   val toolUrl = "https://codesign-distribution.labs.jb.gg/${toolName}"
   val toolFile = downloadFileToCacheLocation(toolUrl, context.paths.communityHomeDirRoot)
@@ -210,12 +220,14 @@ private suspend fun downloadSignTool(context: BuildContext, nsiConfDir: Path): P
       @ECHO OFF
       MOVE /Y "%1" "${nsiConfDir}\\Uninstall.exe"
       "${toolFile}" -denoted-content-type application/x-exe -signed-files-dir "${nsiConfDir}\\_signed" "${nsiConfDir}\\Uninstall.exe"
+      COPY /B /Y "${nsiConfDir}\\_signed\\Uninstall.exe" "${uninstallerFile}"
       MOVE /Y "${nsiConfDir}\\_signed\\Uninstall.exe" "%1"
       """.trimIndent()
     else -> $$"""
       #!/bin/sh
       mv -f "$1" "$${nsiConfDir}/Uninstall.exe"
       "$${toolFile}" -denoted-content-type application/x-exe -signed-files-dir "$${nsiConfDir}/_signed" "$${nsiConfDir}/Uninstall.exe"
+      cp -f "$${nsiConfDir}/_signed/Uninstall.exe" "$${uninstallerFile}"
       mv -f "$${nsiConfDir}/_signed/Uninstall.exe" "$1"
       """.trimIndent()
   })
@@ -223,3 +235,6 @@ private suspend fun downloadSignTool(context: BuildContext, nsiConfDir: Path): P
 
   return scriptFile
 }
+
+private fun uninstallerPath(context: BuildContext, arch: JvmArchitecture): Path =
+  context.paths.artifactDir.resolve("Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe")
