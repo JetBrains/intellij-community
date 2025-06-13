@@ -303,7 +303,7 @@ class GitShareProjectService(
     }
     catch (e: VcsException) {
       LOG.warn(e)
-      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED, hostServiceName, name, url,
+      notifyProjectCreationFailure(hostServiceName, VcsNotificationIdsHolder.SHARE_PROJECT_INIT_COMMIT_FAILED, name, url,
                                    GitBundle.message("share.error.init.commit.failed", hostServiceName) + getErrorTextFromException(e))
       return false
     }
@@ -328,13 +328,13 @@ class GitShareProjectService(
   ): Boolean {
     val currentBranch = repository.currentBranch
     if (currentBranch == null) {
-      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, hostServiceName, name, url,
+      notifyProjectCreationFailure(hostServiceName, VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, name, url,
                                    GitBundle.message("share.error.push.no.current.branch", hostServiceName))
       return false
     }
     val result = Git.getInstance().push(repository, remoteName, remoteUrl, currentBranch.name, true)
     if (!result.success()) {
-      notifyProjectCreationFailure(VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, hostServiceName, name, url,
+      notifyProjectCreationFailure(hostServiceName, VcsNotificationIdsHolder.SHARE_PROJECT_INIT_PUSH_FAILED, name, url,
                                    GitBundle.message("share.error.push.failed", hostServiceName, result.errorOutputAsHtmlString))
       return false
     }
