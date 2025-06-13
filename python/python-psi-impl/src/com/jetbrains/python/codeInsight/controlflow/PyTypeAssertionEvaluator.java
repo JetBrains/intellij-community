@@ -236,7 +236,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (diff != null) {
         members.add(diff.get());
       }
-      else if (!PyTypeChecker.match(type, m, context)) {
+      else if (!match(type, m, context)) {
         members.add(m);
       }
     }
