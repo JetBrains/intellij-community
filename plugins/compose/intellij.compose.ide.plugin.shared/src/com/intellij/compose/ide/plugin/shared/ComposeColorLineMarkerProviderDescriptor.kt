@@ -25,7 +25,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.elementType
 import com.intellij.ui.colorpicker.ColorPickerBuilder
 import com.intellij.ui.colorpicker.LightCalloutPopup
@@ -34,15 +33,10 @@ import com.intellij.ui.picker.ColorListener
 import com.intellij.util.ui.ColorIcon
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UastCallKind
-import org.jetbrains.uast.toUElement
+import org.jetbrains.kotlin.parsing.parseNumericLiteral
+import org.jetbrains.kotlin.psi.*
 import java.awt.Color
 import java.awt.MouseInfo
 import java.awt.event.MouseEvent
@@ -64,13 +58,11 @@ abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
     // i.e., Android modules with Android SDK configured, so with Android being a single target
     if (isAndroidJetpackComposePluginLoaded() && isAndroidSdkConfiguredInModule(module)) return null
 
-    val uElement =
-      (element.parent.parent as? KtCallExpression)?.toUElement(UCallExpression::class.java)
-      ?: return null
-    if (!uElement.isColorCall()) return null
+    val callExpression = element.parent.parent as? KtCallExpression ?: return null
+    if (!callExpression.isColorCall()) return null
 
-    val color = getColor(uElement) ?: return null
-    val iconRenderer = ColorIconRenderer(uElement, color)
+    val color = getColor(callExpression) ?: return null
+    val iconRenderer = ColorIconRenderer(callExpression, color)
     return LineMarkerInfo(
       element,
       element.textRange,
@@ -82,15 +74,17 @@ abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
     )
   }
 
-  private fun UCallExpression.isColorCall() =
-    kind == UastCallKind.METHOD_CALL &&
-    COLOR_METHOD == methodName &&
+  private fun KtCallExpression.isColorCall() =
+    COLOR_METHOD == (calleeExpression as? KtNameReferenceExpression)?.getReferencedName() &&
     // Resolve the MethodCall expression after the faster checks
-    (sourcePsi as? KtCallExpression)?.callReturnTypeFqName()?.asString() == COMPOSE_COLOR_CLASS
+    run {
+      val returnTypeFqName = callReturnTypeFqName()
+      returnTypeFqName?.asString() == COMPOSE_COLOR_CLASS
+    }
 
-  private fun getColor(uElement: UCallExpression): Color? {
-    val arguments = (uElement.sourcePsi as? KtCallExpression)?.valueArguments ?: return null
-    return when (getConstructorType(uElement.valueArguments)) {
+  private fun getColor(callExpression: KtCallExpression): Color? {
+    val arguments = callExpression.valueArguments
+    return when (getConstructorType(callExpression.valueArguments)) {
       ComposeColorConstructor.INT -> getColorInt(arguments)
       ComposeColorConstructor.LONG -> getColorLong(arguments)
       ComposeColorConstructor.INT_X3 -> getColorIntX3(arguments)
@@ -195,13 +189,13 @@ abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
  *
  * TODO(lukeegan): Implement for ComposeColorConstructor.FLOAT_X4_COLORSPACE Color parameter
  */
-data class ColorIconRenderer(val element: UCallExpression, val color: Color) :
+data class ColorIconRenderer(val ktCallExpression: KtCallExpression, val color: Color) :
   GutterIconNavigationHandler<PsiElement> {
 
   val icon: ColorIcon = ColorIcon(ICON_SIZE, color)
 
   override fun navigate(e: MouseEvent?, elt: PsiElement?) {
-    val project = element.sourcePsi?.project ?: return
+    val project = ktCallExpression.project
     val setColorTask: (Color) -> Unit = getSetColorTask() ?: return
 
     val pickerListener = ColorListener { color, _ ->
@@ -236,8 +230,7 @@ data class ColorIconRenderer(val element: UCallExpression, val color: Color) :
 
   @VisibleForTesting
   fun getSetColorTask(): ((Color) -> Unit)? {
-    val ktCallExpression = element.sourcePsi as? KtCallExpression ?: return null
-    val constructorType = getConstructorType(element.valueArguments) ?: return null
+    val constructorType = getConstructorType(ktCallExpression.valueArguments) ?: return null
     // No matter what the original format is, we make the format become one of:
     // - (0xAARRGGBB)
     // - (color = 0xAARRGGBB)
@@ -362,19 +355,54 @@ private fun floatColorMapToColor(floatColorMap: FloatColorMap): Color? {
   return if (alpha == null) Color(red, green, blue) else Color(red, green, blue, alpha)
 }
 
-private fun getConstructorType(arguments: List<UExpression>): ComposeColorConstructor? {
-  val paramType = arguments.firstOrNull()?.getExpressionType() ?: return null
+private enum class ComposeColorParamType {
+  FLOAT, INT, LONG
+}
+
+private fun KtConstantExpression.colorParamTypeOrNull(): ComposeColorParamType? {
+  val type = node.elementType
+  if (type == KtNodeTypes.FLOAT_CONSTANT) return ComposeColorParamType.FLOAT
+  if (type != KtNodeTypes.INTEGER_CONSTANT) return null
+  if (text.endsWith("L")) return ComposeColorParamType.LONG
+
+  val numericalValue = parseNumericLiteral(text, type)
+  return when {
+    numericalValue !is Long -> ComposeColorParamType.INT
+    numericalValue > Integer.MAX_VALUE -> ComposeColorParamType.LONG
+    numericalValue < Integer.MIN_VALUE -> ComposeColorParamType.LONG
+    else -> ComposeColorParamType.INT
+  }
+}
+
+private fun List<KtValueArgument>.singleColorParamTypeOrNull(): ComposeColorParamType? {
+  val elementsTypes = map { (it.children.singleOrNull() as? KtConstantExpression)?.colorParamTypeOrNull() }
+  return when {
+    elementsTypes.all { it == ComposeColorParamType.FLOAT } -> ComposeColorParamType.FLOAT
+    elementsTypes.all { it == ComposeColorParamType.INT } -> ComposeColorParamType.INT
+    elementsTypes.all { it == ComposeColorParamType.LONG } -> ComposeColorParamType.LONG
+    else -> null
+  }
+}
+
+private fun getConstructorType(arguments: List<KtValueArgument>): ComposeColorConstructor? {
+  val paramType = arguments.singleColorParamTypeOrNull() ?: return null
   return when (arguments.size) {
-    1 ->
-      if (PsiTypes.intType() == paramType) ComposeColorConstructor.INT
-      else ComposeColorConstructor.LONG
-    3 ->
-      if (PsiTypes.intType() == paramType) ComposeColorConstructor.INT_X3
-      else ComposeColorConstructor.FLOAT_X3
-    4 ->
-      if (PsiTypes.intType() == paramType) ComposeColorConstructor.INT_X4
-      else ComposeColorConstructor.FLOAT_X4
-    5 -> ComposeColorConstructor.FLOAT_X4_COLORSPACE
+    1 -> when (paramType) {
+      ComposeColorParamType.INT -> ComposeColorConstructor.INT
+      ComposeColorParamType.LONG -> ComposeColorConstructor.LONG
+      else -> null
+    }
+    3 -> when (paramType) {
+      ComposeColorParamType.INT -> ComposeColorConstructor.INT_X3
+      ComposeColorParamType.FLOAT -> ComposeColorConstructor.FLOAT_X3
+      else -> null
+    }
+    4 -> when (paramType) {
+      ComposeColorParamType.INT -> ComposeColorConstructor.INT_X4
+      ComposeColorParamType.FLOAT -> ComposeColorConstructor.FLOAT_X4
+      else -> null
+    }
+    5 ->  ComposeColorConstructor.FLOAT_X4_COLORSPACE
     else -> null
   }
 }
