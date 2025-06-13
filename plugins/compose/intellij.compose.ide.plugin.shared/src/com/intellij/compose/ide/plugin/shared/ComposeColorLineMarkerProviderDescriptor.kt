@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.util.elementType
@@ -54,7 +55,14 @@ abstract class ComposeColorLineMarkerProviderDescriptor : LineMarkerProviderDesc
   override fun getName(): String = ComposeIdeBundle.message("compose.color.picker.name")
 
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
-    if (element.elementType != KtTokens.IDENTIFIER || !isComposeEnabledInModule(element)) return null
+    if (element.elementType != KtTokens.IDENTIFIER) return null
+
+    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return null
+    if (!isComposeEnabledInModule(module)) return null
+
+    // don't provide line markers for the places where Android Jetpack Compose plugin is supposed to work
+    // i.e., Android modules with Android SDK configured, so with Android being a single target
+    if (isAndroidJetpackComposePluginLoaded() && isAndroidSdkConfiguredInModule(module)) return null
 
     val uElement =
       (element.parent.parent as? KtCallExpression)?.toUElement(UCallExpression::class.java)
