@@ -699,6 +699,7 @@ public final class AllIconsKeys {
     /** 14x14 */ public static final @NotNull IntelliJIconKey ExternalLinkArrowWhite = new IntelliJIconKey("ide/externalLinkArrowWhite.svg", "expui/ide/externalLinkWhite.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey FatalErrorRead = new IntelliJIconKey("ide/fatalError-read.svg", "expui/status/errorOutline.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey FatalError = new IntelliJIconKey("ide/fatalError.svg", "expui/status/error.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey Feedback = new IntelliJIconKey("ide/feedback.svg", "ide/feedback.svg", AllIconsKeys.class);
     /** 32x32 */ public static final @NotNull IntelliJIconKey FeedbackRating = new IntelliJIconKey("ide/feedbackRating.svg", "expui/ide/feedbackRating.svg", AllIconsKeys.class);
     /** 32x32 */ public static final @NotNull IntelliJIconKey FeedbackRatingFocused = new IntelliJIconKey("ide/feedbackRatingFocused.svg", "expui/ide/feedbackRatingFocused.svg", AllIconsKeys.class);
     /** 32x32 */ public static final @NotNull IntelliJIconKey FeedbackRatingFocusedOn = new IntelliJIconKey("ide/feedbackRatingFocusedOn.svg", "expui/ide/feedbackRatingFocusedOn.svg", AllIconsKeys.class);

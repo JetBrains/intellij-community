@@ -15,6 +15,9 @@
     <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
                        key="notification.group.feedback"/>
 
+    <notificationGroup displayType="STICKY_BALLOON" id="STICKY:Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
+                       key="notification.group.feedback.sticky"/>
+
     <typedHandler implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
     <editorFactoryMouseListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
     <editorFactoryMouseMotionListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
