@@ -1,23 +1,24 @@
 0(1) element: null
 1(2) element: PyMatchStatement
-2(3,19) refutable pattern: [x1, x2, x3]
-3(4) WRITE ACCESS: x1
-4(5) WRITE ACCESS: x2
-5(6) WRITE ACCESS: x3
+2(3,20) refutable pattern: [x1, x2, x3]
+3(4,20) WRITE ACCESS: x1
+4(5,20) WRITE ACCESS: x2
+5(6,20) WRITE ACCESS: x3
 6(7) matched pattern: [x1, x2, x3]
 7(8) element: PyBinaryExpression
 8(9,10) READ ACCESS: x1
 9(11) element: null. Condition: x1:false
 10(17) element: null. Condition: x1:true
 11(12,13,14) READ ACCESS: x2
-12(19) element: null. Condition: x2:false
+12(20) element: null. Condition: x2:false
 13(17) element: null. Condition: x2:true
 14(15,16) READ ACCESS: x3
-15(19) element: null. Condition: (x1 or x2) > x3:false
+15(20) element: null. Condition: (x1 or x2) > x3:false
 16(17) element: null. Condition: (x1 or x2) > x3:true
-17(18) element: PyExpressionStatement
-18(20) READ ACCESS: y
-19(20) ASSERTTYPE ACCESS: null
-20(21) element: PyExpressionStatement
-21(22) READ ACCESS: z
-22() element: null
+17(18) element: PyStatementList
+18(19) element: PyExpressionStatement
+19(21) READ ACCESS: y
+20(21) ASSERTTYPE ACCESS: null
+21(22) element: PyExpressionStatement
+22(23) READ ACCESS: z
+23() element: null

@@ -1,21 +1,22 @@
 0(1) element: null
 1(2) element: PyIfStatement
 2(3,4) READ ACCESS: True
-3() element: null. Condition: True:false
+3(13) element: null. Condition: True:false
 4(5) element: null. Condition: True:true
 5(6) ASSERTTYPE ACCESS: True
 6(7) element: PyStatementList
 7(8) element: PyForStatement
 8(9) READ ACCESS: range
-9(10,18) element: PyCallExpression: range
+9(10,19) element: PyCallExpression: range
 10(11) element: PyTargetExpression: _
 11(12) WRITE ACCESS: _
-12(10,18) element: PyPrintStatement
-13(14) element: PyStatementList
-14(15) element: PyRaiseStatement
-15(16) READ ACCESS: Exception
-16(17) element: PyCallExpression: Exception
-17(20) raise: PyRaiseStatement
-18(19) element: PyReturnStatement
-19(20) READ ACCESS: True
-20() element: null
+12(10,19) element: PyPrintStatement
+13(14) ASSERTTYPE ACCESS: null
+14(15) element: PyStatementList
+15(16) element: PyRaiseStatement
+16(17) READ ACCESS: Exception
+17(18) element: PyCallExpression: Exception
+18(21) raise: PyRaiseStatement
+19(20) element: PyReturnStatement
+20(21) READ ACCESS: True
+21() element: null

@@ -1,20 +1,21 @@
 0(1) element: null
 1(2) element: PyMatchStatement
-2(3) WRITE ACCESS: x
+2(3,17) WRITE ACCESS: x
 3(4) element: PyBinaryExpression
 4(5,6) READ ACCESS: x
-5(16) element: null. Condition: x % 4 == 0:false
+5(17) element: null. Condition: x % 4 == 0:false
 6(7) element: null. Condition: x % 4 == 0:true
 7(8) element: PyBinaryExpression
 8(9,10) READ ACCESS: x
 9(11) element: null. Condition: x % 400 == 0:false
 10(14) element: null. Condition: x % 400 == 0:true
 11(12,13) READ ACCESS: x
-12(16) element: null. Condition: x % 100 != 0:false
+12(17) element: null. Condition: x % 100 != 0:false
 13(14) element: null. Condition: x % 100 != 0:true
-14(15) element: PyExpressionStatement
-15(17) READ ACCESS: y
-16(17) ASSERTTYPE ACCESS: null
-17(18) element: PyExpressionStatement
-18(19) READ ACCESS: z
-19() element: null
+14(15) element: PyStatementList
+15(16) element: PyExpressionStatement
+16(18) READ ACCESS: y
+17(18) ASSERTTYPE ACCESS: null
+18(19) element: PyExpressionStatement
+19(20) READ ACCESS: z
+20() element: null
