@@ -60,9 +60,19 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
     getPatternCompletablePrefix(regex)
       .takeIf { it.isNotBlank() }
       ?.let {
-        CompletionResults(PolySymbolCodeCompletionItem.create(it, start, true, displayName = "$it…", symbol = owner))
+        CompletionResults(
+          PolySymbolCodeCompletionItem.builder(it, start, owner)
+            .completeAfterInsert(true)
+            .displayName("$it…")
+            .build()
+        )
       }
-    ?: CompletionResults(PolySymbolCodeCompletionItem.create("", start, true, displayName = "…", symbol = owner))
+    ?: CompletionResults(
+      PolySymbolCodeCompletionItem.builder("", start, owner)
+        .completeAfterInsert(true)
+        .displayName("…")
+        .build()
+    )
 
 
   override fun toString(): String =

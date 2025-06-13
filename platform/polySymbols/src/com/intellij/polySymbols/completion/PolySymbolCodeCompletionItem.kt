@@ -6,12 +6,11 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.model.Pointer
-import com.intellij.psi.PsiElement
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.completion.impl.PolySymbolCodeCompletionItemImpl
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 import javax.swing.Icon
 
@@ -90,55 +89,10 @@ interface PolySymbolCodeCompletionItem {
 
   fun withInsertHandlerAdded(insertHandler: PolySymbolCodeCompletionItemInsertHandler): PolySymbolCodeCompletionItem
 
-  fun with(
-    name: String = this.name,
-    offset: Int = this.offset,
-    completeAfterInsert: Boolean = this.completeAfterInsert,
-    completeAfterChars: Set<Char> = this.completeAfterChars,
-    displayName: String? = this.displayName,
-    symbol: PolySymbol? = this.symbol,
-    priority: PolySymbol.Priority? = this.priority,
-    proximity: Int? = this.proximity,
-    apiStatus: PolySymbolApiStatus = this.apiStatus,
-    icon: Icon? = this.icon,
-    typeText: String? = null,
-    tailText: String? = this.tailText,
-  ): PolySymbolCodeCompletionItem
-
   companion object {
 
-    @ApiStatus.Internal
-    fun create(
-      name: String,
-      offset: Int = 0,
-      completeAfterInsert: Boolean = false,
-      completeAfterChars: Set<Char>? = null,
-      displayName: String? = null,
-      symbol: PolySymbol? = null,
-      priority: PolySymbol.Priority? = null,
-      proximity: Int? = null,
-      apiStatus: PolySymbolApiStatus? = null,
-      aliases: Set<String>? = null,
-      icon: Icon? = null,
-      typeText: String? = null,
-      tailText: String? = null,
-      insertHandler: PolySymbolCodeCompletionItemInsertHandler? = null,
-    ): PolySymbolCodeCompletionItem =
-      create(name, offset, symbol) {
-        completeAfterInsert(completeAfterInsert)
-        completeAfterChars?.let { completeAfterChars(it) }
-        displayName(displayName)
-        priority?.let { priority(it) }
-        proximity?.let { proximity(it) }
-        apiStatus?.let { apiStatus(it) }
-        aliases?.let { aliases(it) }
-        icon?.let { icon(it) }
-        typeText?.let { typeText(it) }
-        tailText?.let { tailText(it) }
-        insertHandler?.let { insertHandler(it) }
-      }
-
     @JvmStatic
+    @JvmOverloads
     fun create(
       name: String,
       offset: Int = 0,
@@ -148,6 +102,15 @@ interface PolySymbolCodeCompletionItem {
       PolySymbolCodeCompletionItemImpl.BuilderImpl(name, offset, symbol)
         .also { builder?.invoke(it) }
         .build()
+
+    @JvmStatic
+    @JvmOverloads
+    fun builder(
+      name: String,
+      offset: Int = 0,
+      symbol: PolySymbol? = null,
+    ): PolySymbolCodeCompletionItemBuilder =
+      PolySymbolCodeCompletionItemImpl.BuilderImpl(name, offset, symbol)
 
     @JvmStatic
     fun getPsiElement(lookupElement: LookupElement): PsiElement? =

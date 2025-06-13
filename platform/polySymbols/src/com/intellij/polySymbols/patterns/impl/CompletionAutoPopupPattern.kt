@@ -44,7 +44,13 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolsPa
       CompletionResults(emptyList(), true)
     }
     else {
-      CompletionResults(PolySymbolCodeCompletionItem.create("", start, true, displayName = "…"))
+      CompletionResults(
+        PolySymbolCodeCompletionItem
+          .builder("", start)
+          .completeAfterInsert(true)
+          .displayName("…")
+          .build()
+      )
     }
 
   override fun toString(): String {

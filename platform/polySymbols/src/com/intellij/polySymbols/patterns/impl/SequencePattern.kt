@@ -329,10 +329,11 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
                 offset >= 0 && it.name.length > offset
                 && StringUtil.equals(CharSequenceSubSequence(it.name, offset, it.name.length), matchedName)
               }) {
-          completionResults.copy(items = completionResults.items + PolySymbolCodeCompletionItem.create(
-            matchedName.toString(), lastMatchedSegment.start, false,
-            symbol = lastMatchedSegment.symbols.asSingleSymbol()
-          ))
+          completionResults.copy(items = completionResults.items + PolySymbolCodeCompletionItem.builder(
+            matchedName.toString(), lastMatchedSegment.start, lastMatchedSegment.symbols.asSingleSymbol())
+            .completeAfterInsert(false)
+            .build()
+          )
         }
         else completionResults
       }
@@ -377,31 +378,27 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
       minOf(required.priority!!, new.priority!!)
 
     return if (required.completeAfterInsert)
-      PolySymbolCodeCompletionItem.create(
-        name = name,
-        displayName = displayName,
-        offset = required.offset,
-        completeAfterInsert = true,
-        symbol = symbol,
-        proximity = proximity,
-        priority = priority,
-        apiStatus = required.apiStatus.coalesceWith(new.apiStatus),
-        icon = new.icon ?: required.icon
-      )
+      PolySymbolCodeCompletionItem
+        .builder(name, required.offset, symbol)
+        .displayName(displayName)
+        .completeAfterInsert(true)
+        .proximity(proximity)
+        .priority(priority)
+        .apiStatus(required.apiStatus.coalesceWith(new.apiStatus))
+        .icon(new.icon ?: required.icon)
+        .build()
     else
-      PolySymbolCodeCompletionItem.create(
-        name = name,
-        displayName = displayName,
-        offset = required.offset,
-        completeAfterInsert = new.completeAfterInsert,
-        completeAfterChars = new.completeAfterChars + completeAfterChars,
-        symbol = symbol,
-        proximity = proximity,
-        priority = priority,
-        apiStatus = required.apiStatus.coalesceWith(new.apiStatus),
-        icon = new.icon ?: required.icon,
-        insertHandler = CompoundInsertHandler.merge(required.insertHandler, new.insertHandler)
-      )
+      PolySymbolCodeCompletionItem
+        .builder(name, required.offset, symbol)
+        .displayName(displayName)
+        .completeAfterInsert(new.completeAfterInsert)
+        .completeAfterChars(new.completeAfterChars + completeAfterChars)
+        .proximity(proximity)
+        .priority(priority)
+        .apiStatus(required.apiStatus.coalesceWith(new.apiStatus))
+        .icon(new.icon ?: required.icon)
+        .insertHandler(CompoundInsertHandler.merge(required.insertHandler, new.insertHandler))
+        .build()
   }
 
   private fun concatSymbols(name: String, firstNameLength: Int, first: PolySymbol?, second: PolySymbol?): PolySymbol? {

@@ -54,7 +54,7 @@ interface PolySymbolWithDocumentation : PolySymbol {
    * `with*` methods return a copy of the documentation with customized fields.
    */
   fun createDocumentation(location: PsiElement?): PolySymbolDocumentation? =
-    PolySymbolDocumentation.create(this, location)
+    PolySymbolDocumentation.create(this, location).build()
 
   override fun createPointer(): Pointer<out PolySymbolWithDocumentation>
 

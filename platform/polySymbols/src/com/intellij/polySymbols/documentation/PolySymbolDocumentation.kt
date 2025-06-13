@@ -2,11 +2,10 @@
 package com.intellij.polySymbols.documentation
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolOrigin
-import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationImpl
+import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationBuilderImpl
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -118,32 +117,22 @@ interface PolySymbolDocumentation {
 
   companion object {
 
+    @JvmStatic
     fun create(
       symbol: PolySymbolWithDocumentation,
       location: PsiElement?,
-      name: String = symbol.name,
-      definition: String = Strings.escapeXmlEntities(symbol.name),
-      definitionDetails: String? = null,
-      description: @Nls String? = symbol.description,
-      docUrl: String? = symbol.docUrl,
-      apiStatus: PolySymbolApiStatus? = symbol.apiStatus,
-      defaultValue: String? = symbol.defaultValue,
-      library: String? = symbol.origin.takeIf { it.library != null }
-        ?.let { context ->
-          context.library +
-          if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
-        },
-      icon: Icon? = symbol.icon,
-      descriptionSections: Map<@Nls String, @Nls String> = symbol.descriptionSections,
-      footnote: @Nls String? = null,
+      builder: (PolySymbolDocumentationBuilder.() -> Unit),
     ): PolySymbolDocumentation =
-      PolySymbolDocumentationImpl(name, definition, definitionDetails, description, docUrl, apiStatus, defaultValue, library, icon,
-                                  descriptionSections, footnote, null)
-        .let { doc: PolySymbolDocumentation ->
-          PolySymbolDocumentationCustomizer.EP_NAME.extensionList.fold(doc) { documentation, customizer ->
-            customizer.customize(symbol, location, documentation)
-          }
-        }
+      PolySymbolDocumentationBuilderImpl(symbol, location)
+        .also { builder.invoke(it) }
+        .build()
+
+    @JvmStatic
+    fun create(
+      symbol: PolySymbolWithDocumentation,
+      location: PsiElement?,
+    ): PolySymbolDocumentationBuilder =
+      PolySymbolDocumentationBuilderImpl(symbol, location)
 
   }
 

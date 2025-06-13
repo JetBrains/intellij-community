@@ -6,6 +6,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.polySymbols.PolySymbolNameSegment
+import com.intellij.polySymbols.completion.impl.PolySymbolCodeCompletionItemImpl
 import com.intellij.polySymbols.impl.copy
 import com.intellij.polySymbols.impl.selectBest
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
@@ -144,7 +145,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
               }
               .let { items ->
                 items.map { item ->
-                  item.with(
+                  (item as PolySymbolCodeCompletionItemImpl).with(
                     priority = priority ?: item.priority,
                     apiStatus = apiStatus.coalesceWith(item.apiStatus),
                     symbol = item.symbol ?: defaultSource,
