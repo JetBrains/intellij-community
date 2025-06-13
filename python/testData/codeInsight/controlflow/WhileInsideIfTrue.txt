@@ -1,16 +1,17 @@
 0(1) element: null
 1(2) element: PyIfStatement
 2(3,4) READ ACCESS: True
-3() element: null. Condition: True:false
+3(13) element: null. Condition: True:false
 4(5) element: null. Condition: True:true
 5(6) ASSERTTYPE ACCESS: True
 6(7) element: PyStatementList
 7(8) element: PyWhileStatement
 8(9,10) READ ACCESS: expr
-9(15) element: null. Condition: expr:false
+9(16) element: null. Condition: expr:false
 10(11) element: null. Condition: expr:true
 11(12) element: PyStatementList
-12(15) element: PyBreakStatement
-13(14) element: PyStatementList
-14(15) element: PyPrintStatement
-15() element: null
+12(16) element: PyBreakStatement
+13(14) ASSERTTYPE ACCESS: null
+14(15) element: PyStatementList
+15(16) element: PyPrintStatement
+16() element: null
