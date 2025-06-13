@@ -17,6 +17,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 
+/**
+ * Runtime module repository is stored in two formats: a JAR file containing XML files describing modules, and a compact binary file.
+ * Currently, files in both formats are generated. The compact binary file is used inside the IDE process to speed up loading, whereas
+ * the JAR file is used by other tools like IntelliJ Platform Gradle Plugin, so it's kept for compatibility reasons.
+ */
 public final class RuntimeModuleRepositorySerialization {
   private RuntimeModuleRepositorySerialization() {}
 
@@ -80,7 +85,11 @@ public final class RuntimeModuleRepositorySerialization {
     }
     return null;
   }
-  
+
+  /**
+   * Loads lists of relative paths composing the classpath for the bootstrap module {@code bootstrapModuleName}.
+   * If the bootstrap classpath wasn't stored explicitly, {@code null} is returned.
+   */
   public static @NotNull String @Nullable [] loadBootstrapClasspath(@NotNull Path descriptorsFilePath, @NotNull String bootstrapModuleName)
     throws IOException {
     Path fallbackJarPath = getFallbackJarPath(descriptorsFilePath);
