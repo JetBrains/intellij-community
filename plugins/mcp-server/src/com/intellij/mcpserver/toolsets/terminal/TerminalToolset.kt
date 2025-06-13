@@ -2,6 +2,7 @@
 
 package com.intellij.mcpserver.toolsets.terminal
 
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
@@ -71,16 +72,16 @@ class TerminalToolset : McpToolset {
                 val confirmationDialog = object : DialogWrapper(project, true) {
                     init {
                         init()
-                        title = "Confirm Command Execution"
+                        title = McpServerBundle.message("dialog.title.confirm.command.execution")
                     }
 
                     override fun createCenterPanel(): JComponent? {
                         return panel {
                             row {
-                                label("Do you want to run command `${command.take(100)}` in the terminal?")
+                                label(McpServerBundle.message("label.do.you.want.to.run.command.in.terminal", command.take(100)))
                             }
                             row {
-                                comment("Note: You can enable 'Brave Mode' in settings to skip this confirmation.")
+                                comment(McpServerBundle.message("text.note.you.can.enable.brave.mode.in.settings.to.skip.this.confirmation"))
                             }
                         }
                     }
@@ -94,7 +95,7 @@ class TerminalToolset : McpToolset {
                 return@invokeAndWait
             }
 
-            val terminalWidget = ShTerminalRunner.run(project, command, project.basePath ?: "", "MCP Command", true)
+            val terminalWidget = ShTerminalRunner.run(project, command, project.basePath ?: "", McpServerBundle.message("tab.title.mcp.command"), true)
             val shellWidget = if (terminalWidget != null) ShellTerminalWidget.asShellJediTermWidget(terminalWidget) else null
 
             if (shellWidget == null) {

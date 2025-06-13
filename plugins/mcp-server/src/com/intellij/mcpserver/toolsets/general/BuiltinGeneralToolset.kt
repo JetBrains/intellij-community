@@ -13,6 +13,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.find.FindManager
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.ide.DataManager
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
@@ -36,11 +37,11 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usages.FindUsagesProcessPresentation
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.util.Processor
-import kotlin.coroutines.coroutineContext
-import kotlin.io.path.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
+import kotlin.coroutines.coroutineContext
+import kotlin.io.path.Path
 
 class BuiltinGeneralToolset : McpToolset {
     @McpTool
@@ -141,7 +142,7 @@ class BuiltinGeneralToolset : McpToolset {
                 val runner: ProgramRunner<*>? = ProgramRunner.getRunner(executor.id, settings.configuration)
                 if (runner == null) {
                     future.completeExceptionally(
-                        ExecutionException("No suitable runner found for configuration '${settings.name}' and executor '${executor.id}'")
+                        ExecutionException(McpServerBundle.message("dialog.message.no.suitable.runner.found.for.configuration.executor", settings.name, executor.id))
                     )
                     return@invokeLater
                 }
@@ -153,7 +154,7 @@ class BuiltinGeneralToolset : McpToolset {
                         if (descriptor == null) {
                             if (!future.isDone) {
                                 future.completeExceptionally(
-                                    ExecutionException("Run configuration doesn't support catching output")
+                                    ExecutionException(McpServerBundle.message("dialog.message.run.configuration.doesn.t.support.catching.output"))
                                 )
                             }
                             return
@@ -195,7 +196,7 @@ class BuiltinGeneralToolset : McpToolset {
             } catch (e: Throwable) {
                 if (!future.isDone) {
                     future.completeExceptionally(
-                        ExecutionException("Failed to prepare or start run configuration: ${e.message}", e)
+                        ExecutionException(McpServerBundle.message("dialog.message.failed.to.prepare.or.start.run.configuration", e.message.orEmpty()), e)
                     )
                 }
             }

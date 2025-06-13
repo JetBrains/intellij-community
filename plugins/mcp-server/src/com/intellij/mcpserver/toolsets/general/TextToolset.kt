@@ -2,6 +2,7 @@
 
 package com.intellij.mcpserver.toolsets.general
 
+import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
@@ -94,7 +95,7 @@ class TextToolset : McpToolset {
         var response: String? = null
 
         application.invokeAndWait {
-            WriteCommandAction.runWriteCommandAction(project, "Replace Selected Text", null, {
+            WriteCommandAction.runWriteCommandAction(project, McpServerBundle.message("command.name.replace.selected.text"), null, {
                 val editor = FileEditorManager.getInstance(project).selectedTextEditor
                 val document = editor?.document
                 val selectionModel = editor?.selectionModel
@@ -128,7 +129,7 @@ class TextToolset : McpToolset {
         val project = coroutineContext.project
         var response: String? = null
         application.invokeAndWait {
-            WriteCommandAction.runWriteCommandAction(project, "Replace File Text", null, {
+            WriteCommandAction.runWriteCommandAction(project, McpServerBundle.message("command.name.replace.file.text"), null, {
                 val editor = FileEditorManager.getInstance(project).selectedTextEditor
                 val document = editor?.document
                 if (document != null) {
