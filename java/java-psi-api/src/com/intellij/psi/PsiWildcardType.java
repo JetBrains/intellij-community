@@ -26,18 +26,18 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
   private final PsiManager myManager;
   private final boolean myIsExtending;
   private final PsiType myBound;
-  private final TypeNullability myBaseNullability;
+  private final @Nullable TypeNullability myBaseNullability;
 
   private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound) {
     this(manager, isExtending, bound, TypeAnnotationProvider.EMPTY);
   }
 
   private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound, @NotNull TypeAnnotationProvider provider) {
-    this(manager, isExtending, bound, provider, JavaTypeNullabilityUtil.getNullabilityFromAnnotations(provider.getAnnotations()));
+    this(manager, isExtending, bound, provider, null);
   }
 
   private PsiWildcardType(@NotNull PsiManager manager, boolean isExtending, @Nullable PsiType bound, 
-                          @NotNull TypeAnnotationProvider provider, @NotNull TypeNullability nullability) {
+                          @NotNull TypeAnnotationProvider provider, @Nullable TypeNullability nullability) {
     super(provider);
     myManager = manager;
     myIsExtending = isExtending;
@@ -61,7 +61,11 @@ public final class PsiWildcardType extends PsiType.Stub implements JvmWildcardTy
 
   @Override
   public @NotNull TypeNullability getNullability() {
-    if (!myBaseNullability.equals(TypeNullability.UNKNOWN)) return myBaseNullability;
+    TypeNullability baseNullability = myBaseNullability;
+    if (baseNullability == null) {
+      baseNullability = JavaTypeNullabilityUtil.getNullabilityFromAnnotations(getAnnotations());
+    }
+    if (!baseNullability.equals(TypeNullability.UNKNOWN)) return baseNullability;
     if (myBound != null && myIsExtending) {
       return myBound.getNullability().inherited();
     }
