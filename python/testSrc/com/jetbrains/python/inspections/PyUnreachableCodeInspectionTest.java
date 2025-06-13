@@ -24,6 +24,19 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
+
+  // PY-81936
+  public void testUnreachableWithLangLevel() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> doTestByText("""
+import sys
+
+if sys.version_info < (2, 7):
+    <warning descr="This code is unreachable">print("Unreachable")</warning>
+
+if sys.version_info > (3, 11):
+    <warning descr="This code is unreachable">print("Unreachable")</warning>
+                   """));
+  }
   
   // PY-81947
   public void testAnyOrNoneAfterIsNotNoneCast(){
