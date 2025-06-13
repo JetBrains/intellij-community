@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
-import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -10,6 +9,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -24,7 +24,6 @@ import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaMatchUtil;
 import com.intellij.structuralsearch.impl.matcher.filters.*;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
-import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ExprTypePredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.util.SmartList;
@@ -197,12 +196,12 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitDocTag(@NotNull PsiDocTag psiDocTag) {
     super.visitDocTag(psiDocTag);
+  }
 
-    final NodeIterator nodes = new DocValuesIterator(psiDocTag.getFirstChild());
-    while (nodes.hasNext()) {
-      myCompilingVisitor.setHandler(nodes.current(), new DocDataHandler());
-      nodes.advance();
-    }
+  @Override
+  public void visitDocTagValue(@NotNull PsiDocTagValue value) {
+    super.visitDocTagValue(value);
+    myCompilingVisitor.setFilterSimple(value, JavaDocTagDataFilter.getInstance());
   }
 
   @Override
