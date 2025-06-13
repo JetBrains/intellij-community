@@ -132,6 +132,18 @@ suspend fun collectPluginDescriptors(
       "Module '$moduleName': '$pluginXml' is empty"
     }
 
+    if (xml.getChildTextTrim("id") == "com.intellij") {
+      Span.current().addEvent(
+        "skip module",
+        Attributes.of(
+          AttributeKey.stringKey("name"), moduleName,
+          AttributeKey.stringKey("reason"), "product descriptor",
+          AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+        ),
+      )
+      continue
+    }
+
     if (skipImplementationDetails && xml.getAttributeValue("implementation-detail") == "true") {
       Span.current().addEvent(
         "skip module",
