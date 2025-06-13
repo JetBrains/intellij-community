@@ -13,10 +13,11 @@ import com.intellij.testFramework.registerServiceInstance
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
+import com.jetbrains.python.sdk.PythonSdkAdditionalDataUtils
+import com.jetbrains.python.sdk.PythonSdkUtil
 import org.easymock.EasyMock
 
 class PyRequirementsGenerationTest : PyTestCase() {
-
   private var oldPackageManagers: PyPackageManagers? = null
   private val installedPackages = mapOf("Django" to "3.0.0",
                                         "requests" to "2.22.0",
@@ -54,8 +55,11 @@ class PyRequirementsGenerationTest : PyTestCase() {
     modifyBaseFiles: Boolean = false,
     packages: Map<String, String> = installedPackages,
   ) {
+    val module = myFixture.getModule()
+    val sdk = PythonSdkUtil.findPythonSdk(module)
+    PythonSdkAdditionalDataUtils.associateSdkWithModulePath(sdk!!, module)
     val settings = PyPackageRequirementsSettings.getInstance(myFixture.module)
-    val oldRequirementsPath = settings.requirementsPath
+
     val oldVersionSpecifier = settings.versionSpecifier
     val oldRemoveUnused = settings.removeUnused
     val oldModifyBaseFiles = settings.modifyBaseFiles
@@ -63,27 +67,25 @@ class PyRequirementsGenerationTest : PyTestCase() {
     try {
       overrideInstalledPackages(packages)
 
-      settings.requirementsPath = "requirements.txt"
       settings.versionSpecifier = versionSpecifier
       settings.removeUnused = removeUnused
       settings.modifyBaseFiles = modifyBaseFiles
 
       val testName = getTestName(true)
       myFixture.copyDirectoryToProject(testName, "")
-      myFixture.configureFromTempProjectFile(settings.requirementsPath)
+      myFixture.configureFromTempProjectFile("requirements.txt")
 
       val action = ActionManager.getInstance().getAction("PySyncPythonRequirements")
       val context = SimpleDataContext.getSimpleContext(PlatformCoreDataKeys.MODULE, myFixture.module, (myFixture.editor as EditorEx).dataContext)
       val event = AnActionEvent.createFromAnAction(action, null, "", context)
       action.actionPerformed(event)
-      myFixture.checkResultByFile("$testName/new_${settings.requirementsPath}", true)
+      myFixture.checkResultByFile("$testName/new_requirements.txt", true)
       if (modifyBaseFiles) {
-        myFixture.checkResultByFile("base_${settings.requirementsPath}", "$testName/new_base_${settings.requirementsPath}", true)
+        myFixture.checkResultByFile("base_requirements.txt", "$testName/new_base_requirements.txt", true)
       }
       assertProjectFilesNotParsed(myFixture.file)
     }
     finally {
-      settings.requirementsPath = oldRequirementsPath
       settings.versionSpecifier = oldVersionSpecifier
       settings.removeUnused = oldRemoveUnused
       settings.modifyBaseFiles = oldModifyBaseFiles

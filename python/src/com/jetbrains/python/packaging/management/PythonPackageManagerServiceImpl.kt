@@ -6,10 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
+import com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import kotlinx.coroutines.CoroutineScope
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 internal class PythonPackageManagerServiceImpl(private val serviceScope: CoroutineScope) : PythonPackageManagerService, Disposable {
@@ -24,8 +25,9 @@ internal class PythonPackageManagerServiceImpl(private val serviceScope: Corouti
     val cacheKey = (sdk.getOrCreateAdditionalData()).uuid
 
     return cache.computeIfAbsent(cacheKey) {
-      PythonPackageManagerProvider.EP_NAME.extensionList
-        .firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
+      val createdSdk = PythonPackageManagerProvider.EP_NAME.extensionList.firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
+      PythonRequirementTxtUtils.migrateRequirementsTxtPathFromModuleToSdk(project, sdk)
+      createdSdk
     }
   }
 

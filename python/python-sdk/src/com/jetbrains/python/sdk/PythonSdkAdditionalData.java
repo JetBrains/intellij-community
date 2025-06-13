@@ -2,6 +2,7 @@
 package com.jetbrains.python.sdk;
 
 import com.google.gson.Gson;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.JDOMExternalizer;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -29,6 +31,9 @@ import java.util.*;
  */
 // TODO: Use new annotation-based API to save data instead of legacy manual save
 public class PythonSdkAdditionalData implements SdkAdditionalData {
+  @ApiStatus.Internal
+  public static final @NonNls String REQUIREMENT_TXT_DEFAULT = "requirements.txt";
+
   private static final @NonNls String PATHS_ADDED_BY_USER_ROOT = "PATHS_ADDED_BY_USER_ROOT";
   private static final @NonNls String PATH_ADDED_BY_USER = "PATH_ADDED_BY_USER";
   private static final @NonNls String PATHS_REMOVED_BY_USER_ROOT = "PATHS_REMOVED_BY_USER_ROOT";
@@ -36,6 +41,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private static final @NonNls String PATHS_TO_TRANSFER_ROOT = "PATHS_TO_TRANSFER_ROOT";
   private static final @NonNls String PATH_TO_TRANSFER = "PATH_TO_TRANSFER";
   private static final @NonNls String ASSOCIATED_PROJECT_PATH = "ASSOCIATED_PROJECT_PATH";
+  private static final @NonNls String ASSOCIATED_REQUIRED_TXT_PATH = "ASSOCIATED_REQUIRED_TXT_PATH";
   private static final @NonNls String SDK_UUID_FIELD_NAME = "SDK_UUID";
 
   private static final @NonNls String FLAVOR_ID = "FLAVOR_ID";
@@ -48,6 +54,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   private PyFlavorAndData<?, ?> myFlavorAndData;
   private String myAssociatedModulePath;
+  private Path myRequiredTxtPath;
 
   private final Gson myGson = new Gson();
 
@@ -86,6 +93,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myExcludedPaths = from.myExcludedPaths.clone(PythonPluginDisposable.getInstance());
     myPathsToTransfer = from.myPathsToTransfer.clone(PythonPluginDisposable.getInstance());
     myAssociatedModulePath = from.myAssociatedModulePath;
+    myRequiredTxtPath = from.myRequiredTxtPath;
     myFlavorAndData = from.myFlavorAndData;
     myUUID = from.myUUID;
   }
@@ -138,13 +146,33 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     return myAssociatedModulePath;
   }
 
-
   /**
    * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
    */
   @ApiStatus.Internal
   public final void setAssociatedModulePath(@Nullable String modulePath) {
     myAssociatedModulePath = modulePath == null ? null : FileUtil.toSystemIndependentName(modulePath);
+  }
+
+  /**
+   * ONLY FOR INTERNAL USE!
+   * For external usage use {@link com.jetbrains.python.packaging.requirements.PyRequirementTxtUtils#findRequirementsTxt(Sdk)}
+   * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
+   */
+  @ApiStatus.Internal
+  public final Path getRequiredTxtPath() {
+    return myRequiredTxtPath;
+  }
+
+  /**
+   * ONLY FOR INTERNAL USE!
+   * For external usage use {@link com.jetbrains.python.packaging.requirements.PyRequirementTxtUtils#saveRequirementsTxtPath(Project, Sdk, Path)}
+   * Be sure to use {@link com.intellij.openapi.projectRoots.SdkModificator} to save changes
+   */
+  @ApiStatus.Internal
+  public final void setRequiredTxtPath(@Nullable Path requiredTxtPath) {
+    boolean isNotDefault = requiredTxtPath == null;
+    myRequiredTxtPath = isNotDefault ? null : requiredTxtPath;
   }
 
   public void save(final @NotNull Element rootElement) {
@@ -155,6 +183,11 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     if (myAssociatedModulePath != null) {
       rootElement.setAttribute(ASSOCIATED_PROJECT_PATH, myAssociatedModulePath);
     }
+
+    if (myRequiredTxtPath != null) {
+      rootElement.setAttribute(ASSOCIATED_REQUIRED_TXT_PATH, myRequiredTxtPath.toString());
+    }
+
     rootElement.setAttribute(SDK_UUID_FIELD_NAME, myUUID.toString());
     JDOMExternalizer.write(rootElement, FLAVOR_ID, myFlavorAndData.getFlavor().getUniqueId());
     JDOMExternalizer.write(rootElement, FLAVOR_DATA, myGson.toJson(myFlavorAndData.getData(), myFlavorAndData.getDataClass()));
@@ -192,6 +225,15 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     collectPaths(JDOMExternalizer.loadStringsList(element, PATHS_TO_TRANSFER_ROOT, PATH_TO_TRANSFER), myPathsToTransfer);
     if (element != null) {
       myAssociatedModulePath = element.getAttributeValue(ASSOCIATED_PROJECT_PATH);
+
+      String storedRequiredTxtPath = element.getAttributeValue(ASSOCIATED_REQUIRED_TXT_PATH);
+      if (storedRequiredTxtPath != null) {
+        myRequiredTxtPath = Path.of(storedRequiredTxtPath);
+      }
+      else {
+        myRequiredTxtPath = null;
+      }
+
       var uuidStr = element.getAttributeValue(SDK_UUID_FIELD_NAME);
       if (uuidStr != null) {
         myUUID = UUID.fromString(uuidStr);

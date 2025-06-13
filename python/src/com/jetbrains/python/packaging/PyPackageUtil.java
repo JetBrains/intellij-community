@@ -41,6 +41,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
+import com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -111,21 +112,11 @@ public final class PyPackageUtil {
   }
 
   public static @Nullable VirtualFile findRequirementsTxt(@NotNull Module module) {
-    final String requirementsPath = PyPackageRequirementsSettings.getInstance(module).getRequirementsPath();
-    if (!requirementsPath.isEmpty()) {
-      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(requirementsPath);
-      if (file != null) {
-        return file;
-      }
-      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-      for (VirtualFile root : manager.getContentRoots()) {
-        final VirtualFile fileInRoot = root.findFileByRelativePath(requirementsPath);
-        if (fileInRoot != null) {
-          return fileInRoot;
-        }
-      }
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) {
+      return null;
     }
-    return null;
+    return PythonRequirementTxtUtils.findRequirementsTxt(sdk);
   }
 
   private static @Nullable PsiElement findSetupPyInstallRequires(@Nullable PyCallExpression setupCall) {
