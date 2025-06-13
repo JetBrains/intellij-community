@@ -9,7 +9,7 @@ import javax.accessibility.AccessibleRole
 @ApiStatus.Experimental
 class AccessibleNameNotEmptyForIcon : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleName"
-  override val severity: Severity = Severity.WARNING
+  override val severity: Severity = Severity.RECOMMENDATION
   override var accessibleRole: AccessibleRole? = null
 
   override fun passesInspection(accessible: Accessible?): Boolean {

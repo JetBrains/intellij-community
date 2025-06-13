@@ -479,8 +479,6 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
           for (UiInspectorAccessibilityInspection failedInspection : myFailedInspections) {
             if (failedInspection.getPropertyName().equalsIgnoreCase(selectedProperty.trim())) {
               inspectionCount++;
-              JPanel inspectionPanel = new JPanel(new BorderLayout());
-              inspectionPanel.setBorder(BorderFactory.createLineBorder(JBColor.border()));
               JTextArea textArea = new JTextArea(failedInspection.getDescription());
               textArea.setEditable(false);
               textArea.setLineWrap(true);
@@ -491,9 +489,13 @@ final class InspectorTable extends JBSplitter implements UiDataProvider, Disposa
               // Set the color similar to the preview component, which is a console view
               textArea.setBackground(
                 EditorColorsManager.getInstance().getGlobalScheme().getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY));
-              inspectionPanel.add(textArea, BorderLayout.CENTER);
+
+              JScrollPane scrollPane = new JBScrollPane(textArea);
+              scrollPane.setBorder(BorderFactory.createLineBorder(JBColor.border()));
+              scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
               myAccessibilityInspectionTabs.addTab(
-                InternalActionsBundle.message("ui.inspector.accessibility.audit.inspection.tab.text", inspectionCount), inspectionPanel);
+                InternalActionsBundle.message("ui.inspector.accessibility.audit.inspection.tab.text", inspectionCount), scrollPane);
             }
           }
           if (inspectionCount > 0) {

@@ -17,6 +17,8 @@ class AccessibleValueNotNullInspection : UiInspectorAccessibilityInspection {
     if (context.accessibleRole in arrayOf(AccessibleRole.PROGRESS_BAR,
                                           AccessibleRole.SPIN_BOX,
                                           AccessibleRole.SLIDER,
+                                          AccessibleRole.CHECK_BOX,
+                                          AccessibleRole.RADIO_BUTTON,
                                           AccessibleRole.SCROLL_BAR)
     ) {
       val result = context.accessibleValue != null

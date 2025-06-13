@@ -4,7 +4,6 @@ package com.intellij.internal.inspector.accessibilityAudit
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.accessibility.AccessibleText
 import javax.swing.JButton
 import javax.swing.JPasswordField
@@ -22,8 +21,7 @@ class AccessibleTextNotNullInspectionTest {
   fun `valid role and text null`() {
     val button = object : JPasswordField() {
       override fun getAccessibleContext(): AccessibleContext {
-        return object : AccessibleJComponent() {
-          override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PASSWORD_TEXT
+        return object : AccessibleJPasswordField() {
           override fun getAccessibleText(): AccessibleText? = null
         }
       }

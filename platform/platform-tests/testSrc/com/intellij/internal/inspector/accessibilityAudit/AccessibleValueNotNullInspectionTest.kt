@@ -4,7 +4,6 @@ package com.intellij.internal.inspector.accessibilityAudit
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import javax.accessibility.AccessibleContext
-import javax.accessibility.AccessibleRole
 import javax.accessibility.AccessibleValue
 import javax.swing.JButton
 import javax.swing.JProgressBar
@@ -28,8 +27,7 @@ class AccessibleValueNotNullInspectionTest {
   fun `valid role and null value`() {
     val bar = object : JProgressBar() {
       override fun getAccessibleContext(): AccessibleContext {
-        return object : AccessibleJComponent() {
-          override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PROGRESS_BAR
+        return object : AccessibleJProgressBar() {
           override fun getAccessibleValue(): AccessibleValue? = null
         }
       }

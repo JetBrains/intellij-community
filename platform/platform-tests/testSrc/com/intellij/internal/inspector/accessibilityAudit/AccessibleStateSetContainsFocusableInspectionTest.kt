@@ -12,10 +12,7 @@ class AccessibleStateSetContainsFocusableInspectionTest {
   fun `valid role and no focusable in state set`() {
     val button = object : JButton() {
       override fun isShowing(): Boolean = true
-      override fun isVisible(): Boolean = true
-      override fun isEnabled(): Boolean = true
     }
-
     button.isFocusable = false
     val result = AccessibleStateSetContainsFocusableInspection().passesInspection(button)
 
@@ -27,8 +24,6 @@ class AccessibleStateSetContainsFocusableInspectionTest {
     val button = object : JButton() {
       override fun isShowing(): Boolean = true
     }
-    button.isEnabled = true
-    button.isVisible = true
     button.isFocusable = true
     val result = AccessibleStateSetContainsFocusableInspection().passesInspection(button)
 

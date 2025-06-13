@@ -5,37 +5,29 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleEditableText
-import javax.accessibility.AccessibleRole
 import javax.accessibility.AccessibleState
 import javax.accessibility.AccessibleStateSet
 import javax.swing.JButton
 import javax.swing.JPasswordField
 import javax.swing.JSlider
+import javax.swing.JTextField
 
 class AccessibleEditableTextNotNullInspectionTest {
 
   @Test
   fun `valid role, valid stateSet and editableText not null`() {
     val text = JPasswordField()
-    println(text.accessibleContext.accessibleStateSet)
     val result = AccessibleEditableTextNotNullInspection().passesInspection(text)
     Assertions.assertTrue(result)
   }
 
   @Test
   fun `valid role, valid stateSet and editableText null`() {
-    val component = object : JButton() {
+    val component = object : JTextField() {
       override fun getAccessibleContext(): AccessibleContext {
-        if (accessibleContext == null) {
-          accessibleContext = object : AccessibleJComponent() {
-            override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PASSWORD_TEXT
-            override fun getAccessibleEditableText(): AccessibleEditableText? = null
-            override fun getAccessibleStateSet(): AccessibleStateSet = super.getAccessibleStateSet().also {
-              it.add(AccessibleState.EDITABLE)
-            }
-          }
+        return object : AccessibleJTextField() {
+          override fun getAccessibleEditableText(): AccessibleEditableText? = null
         }
-        return accessibleContext
       }
     }
 

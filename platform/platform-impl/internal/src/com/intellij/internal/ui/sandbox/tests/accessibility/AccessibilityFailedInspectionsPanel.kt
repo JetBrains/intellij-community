@@ -21,62 +21,70 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
       text("This page shows examples of components with accessibility problems and is intended to test the accessibility audit feature in the UI Inspector.")
     }
     group("Accessible state set contains focusable") {
-      twoColumnsRow({
-        cell(JButton("Not focusable button").apply {
-          isFocusable = false
+      twoColumnsRow(
+        {
+          button("Not focusable button") {}.applyToComponent {
+            isFocusable = false
+          }
+        }, {
+          button("Normal button") {}
         })
-      }, {
-        button("Normal button") {}
-      })
     }
 
-    group("Accessible action is not null") {
-      twoColumnsRow({
-        cell(object : JCheckBox("Broken checkbox") {
-          override fun getAccessibleContext() = object : AccessibleJCheckBox() {
-            override fun getAccessibleAction(): AccessibleAction? = null
-          }
+    group("Accessible action and value are not null") {
+      twoColumnsRow(
+        {
+          cell(object : JCheckBox("Broken checkbox") {
+            override fun getAccessibleContext() = object : AccessibleJCheckBox() {
+              override fun getAccessibleAction(): AccessibleAction? = null
+              override fun getAccessibleValue(): AccessibleValue? = null
+            }
+          })
+        }, {
+          checkBox("Normal checkbox")
         })
-      }, {
-        checkBox("Normal checkbox")
-      })
     }
 
     group("Accessible name and description are not equal") {
-      twoColumnsRow({
-        cell(JButton("Broken button").apply {
-          accessibleContext.accessibleDescription = "button"
-          accessibleContext.accessibleName = "button"
+      twoColumnsRow(
+        {
+          button("Broken button") {}.applyToComponent {
+            accessibleContext.accessibleDescription = "button"
+            accessibleContext.accessibleName = "button"
+          }
+        }, {
+          button("Normal Button") {}
         })
-      }, {
-        button("Normal Button") {}
-      })
     }
 
     group("Accessible value is not null") {
-      twoColumnsRow({
-        cell(object : JProgressBar() {
-          override fun getAccessibleContext() = object : AccessibleJProgressBar() {
-            override fun getAccessibleValue(): AccessibleValue? = null
-          }
-        }).label("Broken progress bar", LabelPosition.TOP)
-      }, {
-        cell(JProgressBar())
-          .label("Normal progress bar", LabelPosition.TOP)
-      })
+      twoColumnsRow(
+        {
+          cell(object : JProgressBar() {
+            override fun getAccessibleContext() = object : AccessibleJProgressBar() {
+              override fun getAccessibleValue(): AccessibleValue? = null
+            }
+          }).label("Broken progress bar", LabelPosition.TOP)
+        }, {
+          cell(JProgressBar())
+            .label("Normal progress bar", LabelPosition.TOP)
+        })
     }
 
-    group("2 Failed Inspections") {
-      twoColumnsRow({
-        cell(object : JTextField() {
-          override fun getAccessibleContext() = object : AccessibleJTextField() {
-            override fun getAccessibleText(): AccessibleText? = null
-            override fun getAccessibleName(): String? = null
-          }
-        }).label("Broken text field", LabelPosition.TOP)
-      }, {
-        textField().label("Normal text field", LabelPosition.TOP)
-      })
+    group("Multiple Failed Inspections") {
+      twoColumnsRow(
+        {
+          cell(object : JTextField() {
+            override fun getAccessibleContext() = object : AccessibleJTextField() {
+              override fun getAccessibleText(): AccessibleText? = null
+              override fun getAccessibleEditableText(): AccessibleEditableText? = null
+              override fun getAccessibleName(): String? = null
+            }
+
+          }).label("Broken text field", LabelPosition.TOP)
+        }, {
+          textField().label("Normal text field", LabelPosition.TOP)
+        })
     }
 
 
@@ -112,33 +120,34 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
     }
 
     group("Implements Accessible") {
-      twoColumnsRow({
-        cell(object : JComponent() {
-          override fun paintComponent(g: Graphics) {
-            super.paintComponent(g)
-            g.color = background
-            g.fillRect(0, 0, width, height)
-          }
-        }.apply {
-          preferredSize = Dimension(100, 50)
-          background = JBColor.RED
-        }).label("Not Accessible component", LabelPosition.TOP)
-      }, {
-        cell(object : JComponent(), Accessible {
-          override fun getAccessibleContext() = object : AccessibleJComponent() {
-            override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PANEL
-          }
+      twoColumnsRow(
+        {
+          cell(object : JComponent() {
+            override fun paintComponent(g: Graphics) {
+              super.paintComponent(g)
+              g.color = background
+              g.fillRect(0, 0, width, height)
+            }
+          }.apply {
+            preferredSize = Dimension(100, 50)
+            background = JBColor.RED
+          }).label("Not Accessible component", LabelPosition.TOP)
+        }, {
+          cell(object : JComponent(), Accessible {
+            override fun getAccessibleContext() = object : AccessibleJComponent() {
+              override fun getAccessibleRole(): AccessibleRole = AccessibleRole.PANEL
+            }
 
-          override fun paintComponent(g: Graphics) {
-            super.paintComponent(g)
-            g.color = background
-            g.fillRect(0, 0, width, height)
-          }
-        }.apply {
-          preferredSize = Dimension(100, 50)
-          background = JBColor.GREEN
-        }).label("Accessible component", LabelPosition.TOP)
-      })
+            override fun paintComponent(g: Graphics) {
+              super.paintComponent(g)
+              g.color = background
+              g.fillRect(0, 0, width, height)
+            }
+          }.apply {
+            preferredSize = Dimension(100, 50)
+            background = JBColor.GREEN
+          }).label("Accessible component", LabelPosition.TOP)
+        })
     }
   }
 }
