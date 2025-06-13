@@ -730,7 +730,7 @@
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RunBlockingInSuspendFunctionInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="false"
+                     enabledByDefault="true"
                      level="WARNING"
                      language="kotlin"
                      key="inspection.run.blocking.in.suspend.function.display.name" bundle="messages.KotlinBundle"/>
