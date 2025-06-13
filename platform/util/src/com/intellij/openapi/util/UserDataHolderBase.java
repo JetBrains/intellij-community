@@ -9,6 +9,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 @ReviseWhenPortedToJDK("11") // rewrite to VarHandles to avoid smelling AtomicREference inheritance
 @Transient
@@ -16,11 +17,16 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   private static final Key<KeyFMap> COPYABLE_USER_MAP_KEY = Key.create("COPYABLE_USER_MAP_KEY");
 
   @Nullable
-  private static ExternalUserDataStorage ourExternalUserDataStorage = null;
+  private static Supplier<ExternalUserDataStorage> ourExternalUserDataStorage = null;
 
   @ApiStatus.Internal
-  public static void setExternalUserDataStorage(@Nullable ExternalUserDataStorage externalUserDataStorage) {
-    ourExternalUserDataStorage = externalUserDataStorage;
+  public static void setExternalUserDataStorage(@Nullable Supplier<ExternalUserDataStorage> supplier) {
+    ourExternalUserDataStorage = supplier;
+  }
+
+  private static @Nullable ExternalUserDataStorage externalStorage() {
+    Supplier<ExternalUserDataStorage> supplier = ourExternalUserDataStorage;
+    return supplier == null ? null : supplier.get();
   }
 
   public UserDataHolderBase() {
@@ -53,7 +59,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
 
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
-    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    ExternalUserDataStorage external = externalStorage();
     if (external != null) {
       return external.getUserData(this, key);
     }
@@ -67,7 +73,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   protected @NotNull KeyFMap getUserMap() {
-    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    ExternalUserDataStorage external = externalStorage();
     if (external != null) {
       return external.getUserMap(this);
     }
@@ -78,7 +84,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    ExternalUserDataStorage external = externalStorage();
     if (external != null) {
       external.putUserData(this, key, value);
     }
@@ -103,7 +109,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
-    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    ExternalUserDataStorage external = externalStorage();
     if (external != null) {
       while (true) {
         KeyFMap oldCopyableMap = getUserData(COPYABLE_USER_MAP_KEY);
@@ -150,7 +156,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
 
   @Override
   public <T> boolean replace(@NotNull Key<T> key, @Nullable T oldValue, @Nullable T newValue) {
-    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    ExternalUserDataStorage external = externalStorage();
     if (external != null) {
       return external.compareAndPutUserData(this, key, oldValue, newValue);
     }
@@ -170,7 +176,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
 
   @Override
   public @NotNull <T> T putUserDataIfAbsent(final @NotNull Key<T> key, final @NotNull T value) {
-    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    ExternalUserDataStorage external = externalStorage();
     if (external != null) {
       return external.putUserDataIfAbsent(this, key, value);
     }
@@ -203,7 +209,7 @@ public class UserDataHolderBase extends AtomicReference<KeyFMap> implements User
   }
 
   protected void setUserMap(@NotNull KeyFMap map) {
-    ExternalUserDataStorage external = ourExternalUserDataStorage;
+    ExternalUserDataStorage external = externalStorage();
     if (external != null) {
       external.setUserMap(this, map);
     }
