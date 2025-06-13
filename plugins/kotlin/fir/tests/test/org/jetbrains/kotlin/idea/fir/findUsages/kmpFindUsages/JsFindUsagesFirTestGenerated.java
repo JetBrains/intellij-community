@@ -883,6 +883,11 @@ public abstract class JsFindUsagesFirTestGenerated extends AbstractFindUsagesFir
             runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinNestedClassMethodUsages.0.kt");
         }
 
+        @TestMetadata("kotlinNoBaseMethodUsages.0.kt")
+        public void testKotlinNoBaseMethodUsages() throws Exception {
+            runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinNoBaseMethodUsages.0.kt");
+        }
+
         @TestMetadata("kotlinOverloadAndExtensionUsages.0.kt")
         public void testKotlinOverloadAndExtensionUsages() throws Exception {
             runTest("../../idea/tests/testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages.0.kt");
