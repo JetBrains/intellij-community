@@ -960,8 +960,8 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
         return;
       }
 
-      TransparentInstruction trueNode = addTransparentInstruction();
-      TransparentInstruction falseNode = addTransparentInstruction();
+      TransparentInstruction trueNode = addTransparentInstruction(node);
+      TransparentInstruction falseNode = addTransparentInstruction(node);
       visitCondition(args[0], trueNode, falseNode);
 
       PyRaiseInstruction raiseInstruction = new PyRaiseInstruction(myBuilder, node);
@@ -1113,7 +1113,11 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   private TransparentInstruction addTransparentInstruction() {
-    TransparentInstructionImpl instruction = new TransparentInstructionImpl(myBuilder, null, "");
+    return addTransparentInstruction(null);
+  }
+  
+  private TransparentInstruction addTransparentInstruction(@Nullable PsiElement element) {
+    TransparentInstructionImpl instruction = new TransparentInstructionImpl(myBuilder, element, "");
     myBuilder.instructions.add(instruction);
     return instruction;
   }

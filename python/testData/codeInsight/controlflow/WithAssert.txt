@@ -7,8 +7,8 @@
 6(7,3) READ ACCESS: f
 7(8,3) element: PyCallExpression: f
 8(9,10,3) READ ACCESS: True
-9(11) element: null. Condition: True:false
-10(12) element: null. Condition: True:true
+9(11,3) element: null. Condition: True:false
+10(12,3) element: null. Condition: True:true
 11(14,3) raise: PyAssertStatement
 12(13,3) element: PyPrintStatement
 13(14) element: PyPrintStatement
