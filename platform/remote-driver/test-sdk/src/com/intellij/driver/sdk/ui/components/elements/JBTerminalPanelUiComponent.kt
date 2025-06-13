@@ -1,23 +1,24 @@
 package com.intellij.driver.sdk.ui.components.elements
 
 import com.intellij.driver.client.Remote
-import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.xQuery
 
-fun Finder.jbTerminalPanel() =
+fun IdeaFrameUI.jbTerminalPanel(): JBTerminalPanelUiComponent =
   x(xQuery { byClass("JBTerminalPanel") }, JBTerminalPanelUiComponent::class.java)
 
 class JBTerminalPanelUiComponent(data: ComponentData) : UiComponent(data) {
   private val terminal by lazy { driver.cast(component, JBTerminalPanelRef::class) }
   val text: String
     get() {
-      var result = ""
+      val builder = StringBuilder()
       for (i in 0 until terminal.getTerminalTextBuffer().historyLinesStorage.size) {
-        result += terminal.getTerminalTextBuffer().historyLinesStorage.get(i).getText() + "\n"
+        builder.append(terminal.getTerminalTextBuffer().historyLinesStorage.get(i).getText())
+        builder.append('\n')
       }
-      return result
+      return builder.toString()
     }
 }
 
@@ -36,7 +37,6 @@ interface TerminalTextBufferRef {
 interface LinesStorage {
   val size: Int
   fun get(index: Int): TerminalLine
-  fun getLinesAsString(): String
 }
 
 @Remote("com.jediterm.terminal.model.TerminalLine")
