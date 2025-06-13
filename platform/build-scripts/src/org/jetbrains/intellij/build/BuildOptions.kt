@@ -172,6 +172,9 @@ data class BuildOptions(
     /** Build Linux tar.gz artifact without bundled Runtime. */
     const val LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP: String = "linux_tar_gz_without_jre"
 
+    /** Build Windows artifacts: .zip archive and .exe installer. */
+    const val WINDOWS_ARTIFACTS_STEP: String = "windows_artifacts"
+
     /** Build *.exe installer for Windows distribution. If skipped, only the .zip archive will be produced. */
     const val WINDOWS_EXE_INSTALLER_STEP: String = "windows_exe_installer"
 

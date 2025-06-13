@@ -13,7 +13,6 @@ import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -144,7 +143,7 @@ internal class WindowsDistributionBuilder(
     }
     copyFileToDir(vcRtDll, osAndArchSpecificDistPath.resolve("bin"))
 
-    val (zipWithJbrPath, exePath) = coroutineScope {
+    val (zipWithJbrPath, exePath) = context.executeStep(spanBuilder("build Windows artefacts"), stepId = BuildOptions.WINDOWS_ARTIFACTS_STEP) {
       var zipWithJbrPath: Path? = null
       var exePath: Path? = null
 
@@ -175,7 +174,7 @@ internal class WindowsDistributionBuilder(
       }
 
       zipWithJbrPath to exePath
-    }
+    } ?: (null to null)
 
     if (zipWithJbrPath != null && exePath != null) {
       if (context.options.isInDevelopmentMode) {

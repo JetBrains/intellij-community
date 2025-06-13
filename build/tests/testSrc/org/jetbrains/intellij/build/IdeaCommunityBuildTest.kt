@@ -11,7 +11,6 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
-import kotlin.io.path.Path
 
 class IdeaCommunityBuildTest {
   @Test
@@ -22,6 +21,7 @@ class IdeaCommunityBuildTest {
       homeDir = COMMUNITY_ROOT.communityRoot,
       testInfo = testInfo,
       productProperties = productProperties,
+      buildCrossPlatformDistribution = true,
     ) {
       it.classOutDir = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY) ?: "$homePath/out/classes"
     }
@@ -33,7 +33,7 @@ class IdeaCommunityBuildTest {
     runBlocking(Dispatchers.Default) {
       runTestBuild(testInfo, context = {
         val productProperties = IdeaCommunityProperties(COMMUNITY_ROOT.communityRoot)
-        val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath, skipDependencySetup = true, testInfo)
+        val options = createBuildOptionsForTest(productProperties = productProperties, homeDir = homePath, skipDependencySetup = true, testInfo = testInfo)
         BuildContextImpl.createContext(
           projectHome = homePath,
           productProperties = productProperties,
