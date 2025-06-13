@@ -2,6 +2,8 @@
 package com.intellij.platform.recentFiles.backend
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -25,11 +27,13 @@ internal class RecentFilesVfsListener : AsyncFileListener {
         for (project in ProjectManager.getInstance().openProjects) {
           val projectFilesToRemove = filterProjectFiles(removedFiles, project)
           if (projectFilesToRemove.isNotEmpty()) {
+            thisLogger().trace { "Removed files to apply changes for: ${projectFilesToRemove.joinToString { it.name }}" }
             BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRemove, FileChangeKind.REMOVED, project)
           }
 
           val projectFilesToRename = filterProjectFiles(renamedFiles, project)
           if (projectFilesToRename.isNotEmpty()) {
+            thisLogger().trace { "Renamed files to apply changes for: ${projectFilesToRename.joinToString { it.name }}" }
             BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRename, FileChangeKind.ADDED, project)
           }
 
@@ -37,6 +41,8 @@ internal class RecentFilesVfsListener : AsyncFileListener {
           val projectFilesWithChangedContents = filterProjectFiles(filesWithChangedContents, project)
           val projectFilesToUpdate = (projectFilesToMove + projectFilesWithChangedContents).distinct()
           if (projectFilesToUpdate.isNotEmpty()) {
+            thisLogger().trace { "Moved files to apply changes for: ${projectFilesToMove.joinToString { it.name }}" }
+            thisLogger().trace { "Changed content files to apply changes for: ${projectFilesWithChangedContents.joinToString { it.name }}" }
             BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToUpdate, FileChangeKind.UPDATED, project)
           }
         }

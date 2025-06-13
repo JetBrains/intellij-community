@@ -2,6 +2,7 @@
 package com.intellij.platform.recentFiles.backend
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.recentFiles.shared.FileChangeKind
@@ -18,6 +19,7 @@ internal object BackendRecentFileEventsController {
   fun applyRelevantEventsToModel(files: List<VirtualFile>, changeKind: FileChangeKind, project: Project) {
     val filesWithoutDirectories = files.filter { !it.isDirectory }
     thisLogger().debug("Trying to apply changes for ${filesWithoutDirectories.size} files out of total ${files.size} virtual files to the model, change kind: $changeKind")
+    thisLogger().trace { "Files to apply changes for: ${filesWithoutDirectories.joinToString { it.name }}" }
     when (changeKind) {
       FileChangeKind.ADDED, FileChangeKind.REMOVED -> {
         BackendRecentFileEventsModel.getInstance(project).scheduleApplyBackendChangesToAllFileKinds(changeKind, filesWithoutDirectories)
