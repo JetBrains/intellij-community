@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.identifiers.highlighting.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker.xml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.find.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.util.io.cache.backend" scope="RUNTIME" />
   </component>
 </module>

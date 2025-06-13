@@ -21,6 +21,7 @@ java_library(
     "//platform/identifiers/backend",
     "//spellchecker/xml",
     "//platform/find/backend",
+    "//platform/managed-cache/util.io.cache.backend",
   ]
 )
 ### auto-generated section `build intellij.platform.backend.main` end
