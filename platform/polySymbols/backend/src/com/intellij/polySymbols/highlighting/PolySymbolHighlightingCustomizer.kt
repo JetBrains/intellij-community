@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 interface PolySymbolHighlightingCustomizer {
 
@@ -16,9 +17,12 @@ interface PolySymbolHighlightingCustomizer {
 
   fun getSymbolTextAttributes(host: PsiExternalReferenceHost, symbol: PolySymbol, level: Int): TextAttributesKey? = null
 
+  @Suppress("TestOnlyProblems")
   companion object {
 
-    internal val EP_NAME: ExtensionPointName<PolySymbolHighlightingCustomizer> =
+    @TestOnly
+    @JvmField
+    val EP_NAME: ExtensionPointName<PolySymbolHighlightingCustomizer> =
       ExtensionPointName<PolySymbolHighlightingCustomizer>("com.intellij.polySymbols.highlightingCustomizer")
 
     @ApiStatus.Internal

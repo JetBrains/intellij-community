@@ -4,21 +4,27 @@ package com.intellij.polySymbols.query
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.psi.PsiElement
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.query.impl.PolySymbolsCompoundQueryResultsCustomizer
+import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.TestOnly
 
 interface PolySymbolsQueryResultsCustomizerFactory {
 
   fun create(location: PsiElement, context: PolyContext): PolySymbolsQueryResultsCustomizer?
 
+  @Suppress("TestOnlyProblems")
   companion object {
-    private val EP_NAME = ExtensionPointName.create<PolySymbolsQueryResultsCustomizerFactory>(
-      "com.intellij.polySymbols.queryResultsCustomizerFactory")
+    @TestOnly
+    @JvmField
+    val EP_NAME: ExtensionPointName<PolySymbolsQueryResultsCustomizerFactory> =
+      ExtensionPointName.create<PolySymbolsQueryResultsCustomizerFactory>("com.intellij.polySymbols.queryResultsCustomizerFactory")
 
     @JvmStatic
-    fun getQueryResultsCustomizer(location: PsiElement?,
-                                  context: PolyContext): PolySymbolsQueryResultsCustomizer =
+    fun getQueryResultsCustomizer(
+      location: PsiElement?,
+      context: PolyContext,
+    ): PolySymbolsQueryResultsCustomizer =
       if (location == null) {
         PolySymbolsCompoundQueryResultsCustomizer(emptyList())
       }

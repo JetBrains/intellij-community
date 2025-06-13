@@ -2,8 +2,9 @@
 package com.intellij.polySymbols.declarations
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.psi.PsiElement
 import com.intellij.polySymbols.PolySymbol
+import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.TestOnly
 
 interface PolySymbolDeclarationProvider {
   /**
@@ -17,8 +18,12 @@ interface PolySymbolDeclarationProvider {
     getDeclarations(element, offsetInElement)
       .filter { it.symbol.isEquivalentTo(target) }
 
+  @Suppress("TestOnlyProblems")
   companion object {
-    private val EP_NAME = ExtensionPointName<PolySymbolDeclarationProvider>("com.intellij.polySymbols.declarationProvider")
+    @TestOnly
+    @JvmField
+    val EP_NAME: ExtensionPointName<PolySymbolDeclarationProvider> =
+      ExtensionPointName<PolySymbolDeclarationProvider>("com.intellij.polySymbols.declarationProvider")
 
     @JvmStatic
     fun getAllEquivalentDeclarations(element: PsiElement, offsetInElement: Int, target: PolySymbol): Collection<PolySymbolDeclaration> {

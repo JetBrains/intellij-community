@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 
 interface PolySymbolsQueryConfigurator {
@@ -31,7 +30,7 @@ interface PolySymbolsQueryConfigurator {
   companion object {
 
     @TestOnly
-    @Internal
+    @JvmField
     val EP_NAME: ExtensionPointName<PolySymbolsQueryConfigurator> = ExtensionPointName<PolySymbolsQueryConfigurator>("com.intellij.polySymbols.queryConfigurator")
 
   }

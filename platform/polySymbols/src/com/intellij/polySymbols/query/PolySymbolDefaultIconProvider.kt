@@ -3,12 +3,13 @@ package com.intellij.polySymbols.query
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.js.JS_PROPERTIES
-import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.ui.IconManager
 import com.intellij.ui.PlatformIcons
+import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
 
 interface PolySymbolDefaultIconProvider {
@@ -17,8 +18,12 @@ interface PolySymbolDefaultIconProvider {
 
   companion object {
 
-    private val EP_NAME = ExtensionPointName<PolySymbolDefaultIconProvider>("com.intellij.polySymbols.defaultIconProvider")
+    @TestOnly
+    @JvmField
+    val EP_NAME: ExtensionPointName<PolySymbolDefaultIconProvider> =
+      ExtensionPointName<PolySymbolDefaultIconProvider>("com.intellij.polySymbols.defaultIconProvider")
 
+    @Suppress("TestOnlyProblems")
     fun get(qualifiedKind: PolySymbolQualifiedKind): Icon? =
       EP_NAME.extensionList.firstNotNullOfOrNull { it.getDefaultIcon(qualifiedKind) }
       ?: when (qualifiedKind) {

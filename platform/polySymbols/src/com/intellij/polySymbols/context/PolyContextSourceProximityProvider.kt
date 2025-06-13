@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.TestOnly
 
 interface PolyContextSourceProximityProvider {
 
@@ -33,18 +34,23 @@ interface PolyContextSourceProximityProvider {
     data class PackageManagerDependency internal constructor(val name: String) : SourceKind
   }
 
+  @Suppress("TestOnlyProblems")
   companion object {
     @JvmStatic
     fun mergeProximity(a: Double?, b: Double): Double =
       a?.coerceAtMost(b) ?: b
 
-    private val EP_NAME = ExtensionPointName<PolyContextSourceProximityProvider>(
-      "com.intellij.polySymbols.contextSourceProximityProvider")
+    @TestOnly
+    @JvmField
+    val EP_NAME: ExtensionPointName<PolyContextSourceProximityProvider> =
+      ExtensionPointName<PolyContextSourceProximityProvider>("com.intellij.polySymbols.contextSourceProximityProvider")
 
-    internal fun calculateProximity(project: Project,
-                                    dir: VirtualFile,
-                                    sourceNames: Set<String>,
-                                    sourceKind: SourceKind): Result {
+    internal fun calculateProximity(
+      project: Project,
+      dir: VirtualFile,
+      sourceNames: Set<String>,
+      sourceKind: SourceKind,
+    ): Result {
       val dependency2proximity = mutableMapOf<String, Double>()
       val trackers = mutableSetOf<ModificationTracker>()
       EP_NAME.extensionList
@@ -64,5 +70,5 @@ interface PolyContextSourceProximityProvider {
 
 private data class PolyContextSourceProximityProviderResultData(
   override val dependency2proximity: Map<String, Double>,
-  override val modificationTrackers: Collection<ModificationTracker>
+  override val modificationTrackers: Collection<ModificationTracker>,
 ) : PolyContextSourceProximityProvider.Result
