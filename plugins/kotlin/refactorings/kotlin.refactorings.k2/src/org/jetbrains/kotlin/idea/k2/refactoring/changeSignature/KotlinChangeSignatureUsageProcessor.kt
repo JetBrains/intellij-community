@@ -311,6 +311,10 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         changeReturnTypeIfNeeded(changeInfo, element)
 
+        // when it's required to retrieve parameter name from inherited method, it's better when parameter list is not modified yet
+        val contextParams = changeInfo.newParameters.filter { it.isContextParameter }
+        val contextParametersSignature = contextParams.joinToString { it.getDeclarationSignature(element, changeInfo.method, isInherited).text }
+
         if (changeInfo.isParameterSetOrOrderChanged) {
             processParameterListWithStructuralChanges(changeInfo, element, (element as? KtCallableDeclaration)?.valueParameterList, psiFactory, changeInfo.method, isInherited, isCaller)
         }
@@ -345,8 +349,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         }
 
         if (!isCaller && element !is KtFunctionLiteral) {
-            val contextParams = changeInfo.newParameters.filter { it.isContextParameter }
-            updateContextParametersList(contextParams, element, changeInfo.method, isInherited, psiFactory)
+            updateContextParametersList(contextParams, element, contextParametersSignature, psiFactory)
         }
 
         if (changeInfo.isReceiverTypeChanged()) {
@@ -494,13 +497,11 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
     private fun updateContextParametersList(
         contextParams: List<KotlinParameterInfo>,
         element: KtDeclaration,
-        baseFunction: PsiElement,
-        isInherited: Boolean,
+        contextParametersSignature: String,
         psiFactory: KtPsiFactory
     ) {
         if (contextParams.isNotEmpty()) {
-            val list = contextParams.joinToString { it.getDeclarationSignature(element, baseFunction, isInherited).text }
-            val newModifierList = psiFactory.createFunction("context($list) fun test() {}").modifierList!!
+            val newModifierList = psiFactory.createFunction("context($contextParametersSignature) fun test() {}").modifierList!!
             val modifierList = element.modifierList
             if (modifierList != null) {
                 val contextReceiverList = modifierList.contextReceiverList
