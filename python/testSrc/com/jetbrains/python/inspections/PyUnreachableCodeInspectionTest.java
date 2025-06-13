@@ -24,6 +24,25 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
   public void testUnreachable() {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
+  
+  // PY-81947
+  public void testAnyOrNoneAfterIsNotNoneCast(){
+    doTestByText("""
+def func(x: Any | None = None):
+    if x is not None:
+        print("foo")
+                   """);
+  }
+
+  // PY-81729
+  public void testTypeVarOrNoneAfterIsNotNoneCast(){
+    doTestByText("""
+def func[T](x: T | None = None) -> T | None:
+    if x is not None:
+        print("foo")
+    return x
+                   """);
+  }
 
   // PY-81674
   public void testFinallyEarlyExit() {
