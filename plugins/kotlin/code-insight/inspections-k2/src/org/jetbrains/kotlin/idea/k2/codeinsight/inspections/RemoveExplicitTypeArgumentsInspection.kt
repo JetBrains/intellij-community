@@ -9,7 +9,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
@@ -33,20 +32,6 @@ internal class RemoveExplicitTypeArgumentsInspection : KotlinApplicableInspectio
 
     override fun isApplicableByPsi(element: KtTypeArgumentList): Boolean {
         val callExpression = element.parent as? KtCallExpression ?: return false
-
-        if (callExpression.valueArguments.isEmpty()) {
-            // no reasons to check cases like `val list = emptyList<T>()`
-            val property = PsiTreeUtil.getParentOfType(
-                callExpression,
-                KtProperty::class.java,
-                false, /* strict */
-                KtBlockExpression::class.java, KtClassBody::class.java /* Stop at */
-            )
-            if (property != null && property.typeReference == null) {
-                return false
-            }
-        }
-
         return RemoveExplicitTypeArgumentsUtils.isApplicableByPsi(callExpression)
     }
 
