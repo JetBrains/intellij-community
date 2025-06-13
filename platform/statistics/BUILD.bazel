@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//platform/core-impl",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
@@ -57,6 +58,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":statistics"],
   deps = [
+    "//platform/core-api:core",
     "//platform/core-impl",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",

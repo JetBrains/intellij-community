@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core",

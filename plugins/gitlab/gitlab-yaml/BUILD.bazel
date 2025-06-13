@@ -30,6 +30,7 @@ jvm_library(
   associates = [":vcs-gitlab-yaml"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
     "//plugins/yaml/backend",

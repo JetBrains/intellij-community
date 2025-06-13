@@ -15,6 +15,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "//java/java-frontback-psi-api:frontback-psi",
+    "//platform/core-api:core",
     "//platform/core-impl",
     "@lib//:asm",
     "@lib//:stream_ex",

@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/testFramework",
     "//python/python-psi-api:psi",
     "//python:python-community-impl",

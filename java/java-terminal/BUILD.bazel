@@ -41,6 +41,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//java/testFramework",
     "//java/java-terminal:terminal",
+    "//platform/core-api:core",
     "//platform/platform-tests:tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

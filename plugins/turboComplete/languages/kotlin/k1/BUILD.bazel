@@ -19,6 +19,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
     "//platform/ml-impl",
     "@lib//:turbo_complete-languages-kotlin-k1-completion-performance-kotlin",
     "//plugins/turboComplete",

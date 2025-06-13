@@ -71,6 +71,7 @@ jvm_library(
     "@lib//:gradle-tooling_extension-tests-io-github-classgraph-classgraph-4-8-87",
     "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
     "@lib//:ion",
+    "//platform/core-api:core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/openapi:java",

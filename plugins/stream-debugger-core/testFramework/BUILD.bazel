@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:stream_ex",
     "//plugins/stream-debugger-core:debugger-streams-core",
+    "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",
   ],
   runtime_deps = [":testFramework_resources"]

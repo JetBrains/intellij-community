@@ -122,6 +122,7 @@ jvm_library(
     "//plugins/gradle:gradle-common",
     "//platform/analysis-api:analysis",
     "//platform/backend/workspace",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api/dependency-updater",
     "//platform/external-system-impl:externalSystem-impl",

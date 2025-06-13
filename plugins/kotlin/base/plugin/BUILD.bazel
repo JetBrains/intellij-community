@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:jetbrains-annotations",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlin-stdlib",
@@ -54,6 +55,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:commons-compress",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

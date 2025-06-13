@@ -41,6 +41,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//platform/external-system-api/dependency-updater",
     "//java/openapi:java",
     "//plugins/groovy/groovy-psi:psi",

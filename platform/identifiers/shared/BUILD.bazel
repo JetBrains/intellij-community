@@ -22,6 +22,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
     "//platform/platform-impl/rpc",
+    "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/core-ui",
     "//platform/util:util-ui",

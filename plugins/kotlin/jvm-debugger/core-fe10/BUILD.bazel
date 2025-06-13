@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//java/debugger/openapi:java-debugger",
     "@lib//:kotlinc-analysis-api",
+    "//platform/core-api:core",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/plugin",

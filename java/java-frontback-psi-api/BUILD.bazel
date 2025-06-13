@@ -19,10 +19,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//java/java-syntax:syntax",
   ],
-  exports = [
-    "//platform/core-api:core",
-    "//java/java-syntax:syntax",
-  ],
+  exports = ["//java/java-syntax:syntax"],
   runtime_deps = [":frontback-psi_resources"]
 )
 ### auto-generated section `build intellij.java.frontback.psi` end

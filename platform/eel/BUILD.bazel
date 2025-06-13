@@ -32,6 +32,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/java-impl:impl",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//platform/testFramework",

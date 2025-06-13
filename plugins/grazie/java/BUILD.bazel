@@ -18,6 +18,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
+    "//platform/core-api:core",
     "//platform/util-ex",
   ],
   runtime_deps = [":java_resources"]

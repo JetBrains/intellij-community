@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
+    "//platform/core-api:core",
     "//platform/lang-api:lang",
     "//plugins/groovy/groovy-psi:psi",
     "//uast/testFramework",

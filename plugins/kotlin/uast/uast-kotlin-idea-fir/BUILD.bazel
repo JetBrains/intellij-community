@@ -27,6 +27,7 @@ jvm_library(
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/uast/uast-kotlin-idea-base",
     "//platform/util-ex",
+    "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/projectModel-api:projectModel",
     "//uast/uast-common:uast",

@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-jvm",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
+    "//platform/core-api:core",
     "//plugins/kotlin/base/util",
     "//platform/platform-impl:ide-impl",
     "//plugins/kotlin/base/plugin",

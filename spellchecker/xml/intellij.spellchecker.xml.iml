@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.xml.dom" />
     <orderEntry type="module" module-name="intellij.xml.parser" />

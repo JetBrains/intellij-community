@@ -14,6 +14,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
+    "//platform/core-api:core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:testcontainers",

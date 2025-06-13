@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

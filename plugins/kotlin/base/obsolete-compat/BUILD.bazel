@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/project-structure",

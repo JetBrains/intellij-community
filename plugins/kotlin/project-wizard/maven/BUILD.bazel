@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/external-system-impl:externalSystem-impl",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",

@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+    "//platform/core-api:core",
     "//platform/util",
     "//platform/ide-core-impl",
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",

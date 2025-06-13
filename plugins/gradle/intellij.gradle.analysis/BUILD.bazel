@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/gradle/java",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
+    "//platform/core-api:core",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
   ],

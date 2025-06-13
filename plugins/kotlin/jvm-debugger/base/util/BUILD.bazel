@@ -11,6 +11,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:asm",
+    "//platform/core-api:core",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",

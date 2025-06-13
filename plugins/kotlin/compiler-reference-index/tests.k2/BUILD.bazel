@@ -20,6 +20,7 @@ jvm_library(
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/compiler-reference-index/tests:tests_test_lib",
     "//java/java-tests:tests_test_lib",
+    "//platform/core-api:core",
     "//java/testFramework",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

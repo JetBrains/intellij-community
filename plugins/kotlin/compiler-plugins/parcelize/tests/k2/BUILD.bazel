@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-parcelize-compiler-plugin",
+    "//platform/core-api:core",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/code-insight/inspections-k2/tests:tests_test_lib",
     "//platform/testFramework",

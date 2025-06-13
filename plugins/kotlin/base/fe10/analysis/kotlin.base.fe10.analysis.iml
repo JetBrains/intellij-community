@@ -36,6 +36,7 @@
     <orderEntry type="library" name="javax-inject" level="project" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="kotlin.base.util" />

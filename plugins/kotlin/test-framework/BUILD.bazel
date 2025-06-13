@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/idea-ui:ui",
+    "//platform/core-api:core",
     "@lib//:test_n_g",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
@@ -63,8 +64,7 @@ jvm_library(
     "//plugins/kotlin/base/project-structure:project-structure_test_lib",
     "@lib//:junit5Pioneer",
     "//platform/statistics/testFramework",
-  ],
-  runtime_deps = ["//platform/core-api:core"]
+  ]
 )
 
 jvm_test(

@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//plugins/kotlin/base/scripting",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
@@ -70,6 +71,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":scripting.k1"],
   deps = [
+    "//platform/core-api:core",
     "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/scripting:scripting_test_lib",
     "@lib//:kotlin-stdlib",

@@ -20,6 +20,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/code-insight/api",
     "@lib//:kotlinc-analysis-api-k2",

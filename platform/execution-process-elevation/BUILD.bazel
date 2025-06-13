@@ -18,6 +18,7 @@ jvm_library(
     "//platform/execution-process-mediator/client",
     "//platform/execution-process-mediator/daemon",
     "//platform/execution-process-mediator/common",
+    "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",

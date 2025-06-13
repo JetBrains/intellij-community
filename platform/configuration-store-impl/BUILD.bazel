@@ -74,6 +74,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/ide-core/plugins",
     "@lib//:assert_j",
     "//jps/model-api:model",

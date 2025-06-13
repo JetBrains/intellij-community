@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
@@ -55,6 +56,7 @@ jvm_library(
   associates = [":javaFX"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
@@ -118,6 +120,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["properties/src/**/*.kt", "properties/src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "//xml/xml-psi-api:psi",
     "//xml/xml-analysis-api:analysis",

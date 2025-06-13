@@ -23,6 +23,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/core-api:core",
     "//plugins/kotlin/injection/base:kotlin-base-injection",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/analysis",

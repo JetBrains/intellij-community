@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = ["//platform/indexing-impl"],
   deps = [
+    "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-api:analysis",
     "//platform/indexing-api:indexing",

@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlinc-noarg-compiler-plugin",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:junit4",
+    "//platform/core-api:core",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/base/plugin",

@@ -20,6 +20,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlinc-analysis-api",

@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/testFramework/common",
     "//platform/testFramework/junit5",
@@ -25,6 +26,7 @@ jvm_library(
   associates = [":projectStructure"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/testFramework/common",
     "//platform/testFramework/junit5",

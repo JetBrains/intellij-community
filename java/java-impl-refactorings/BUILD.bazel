@@ -10,6 +10,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
+    "//platform/core-api:core",
     "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",

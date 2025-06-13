@@ -20,6 +20,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/indexing-api:indexing",
@@ -58,6 +59,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/indexing-api:indexing",

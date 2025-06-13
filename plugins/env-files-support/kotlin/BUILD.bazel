@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/env-files-support:dotenv",
+    "//platform/core-api:core",
     "//platform/util",
     "//plugins/env-files-support/java",
     "//platform/editor-ui-api:editor-ui",

@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-platform-interface",
+    "//platform/core-api:core",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/analysis",

@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:javax-inject",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//plugins/kotlin/base/util",

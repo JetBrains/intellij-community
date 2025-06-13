@@ -75,6 +75,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="ion" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />

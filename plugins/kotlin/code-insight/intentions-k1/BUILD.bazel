@@ -10,6 +10,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
+    "//platform/core-api:core",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/base/fe10/analysis",

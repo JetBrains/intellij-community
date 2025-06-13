@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
     "@lib//:kotlin-reflect",

@@ -26,6 +26,7 @@ jvm_library(
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/credential-store",
     "//platform/diff-api:diff",
     "//platform/lvcs-api:lvcs",
@@ -90,6 +91,7 @@ jvm_library(
   associates = [":vcs-github"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/credential-store",
     "//platform/diff-api:diff",
     "//platform/lvcs-api:lvcs",

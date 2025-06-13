@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//plugins/kotlin/code-insight/inspections-k2:kotlin-code-insight-inspections-k2",
     "//java/debugger/impl",
     "@lib//:kotlinc-kotlin-compiler-common",

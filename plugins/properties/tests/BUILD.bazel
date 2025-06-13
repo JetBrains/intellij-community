@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/diff-api:diff",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",

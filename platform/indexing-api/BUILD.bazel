@@ -31,7 +31,6 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
   ],
-  exports = ["//platform/core-api:core"],
   runtime_deps = [":indexing_resources"]
 )
 ### auto-generated section `build intellij.platform.indexing` end

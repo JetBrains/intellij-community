@@ -29,6 +29,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = ["//platform/workspace/storage"],
   deps = [
+    "//platform/core-api:core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/workspace/storage/testEntities:testEntities_test_lib",

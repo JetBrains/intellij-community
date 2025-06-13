@@ -360,6 +360,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",
     "//platform/indexing-api:indexing",
@@ -529,6 +530,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["pydevSrc/src/**/*.kt", "pydevSrc/src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//platform/xdebugger-api:debugger",
     "@lib//:xml_r_p_c",
     "@lib//:guava",

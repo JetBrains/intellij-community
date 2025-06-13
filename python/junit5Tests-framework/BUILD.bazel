@@ -33,6 +33,7 @@ jvm_library(
     "//wintools:wintools_test_lib",
     "//libraries/testcontainers",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/eel-provider",
     "//platform/execution",
     "//platform/execution-impl",

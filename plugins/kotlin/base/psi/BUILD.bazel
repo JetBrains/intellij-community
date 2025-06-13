@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:guava",
+    "//platform/core-api:core",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//platform/util",

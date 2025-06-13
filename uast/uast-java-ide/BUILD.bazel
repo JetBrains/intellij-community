@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//java/java-impl:impl",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//uast/uast-java:java-uast",
   ],

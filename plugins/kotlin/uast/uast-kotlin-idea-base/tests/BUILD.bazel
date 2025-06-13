@@ -15,6 +15,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlin-test",
+    "//platform/core-api:core",
     "//uast/uast-common:uast",
     "//uast/testFramework",
     "//plugins/kotlin/tests-common:tests-common_test_lib",

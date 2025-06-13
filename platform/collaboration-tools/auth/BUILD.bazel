@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-api:ide",
     "@lib//:netty-codec-http",

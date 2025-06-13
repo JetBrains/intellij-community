@@ -30,6 +30,7 @@ jvm_library(
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/core-impl",
     "//platform/lang-api:lang",
@@ -63,6 +64,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = [":repository-search"],
   deps = [
+    "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/core-impl",

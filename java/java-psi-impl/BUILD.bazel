@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "//java/java-psi-api:psi",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
+    "//platform/core-api:core",
     "//platform/core-impl",
     "@lib//:asm",
     "//platform/util",

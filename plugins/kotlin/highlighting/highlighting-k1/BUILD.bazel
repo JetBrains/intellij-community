@@ -24,6 +24,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",

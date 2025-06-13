@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/kernel/shared:kernel",
     "//platform/xdebugger-api:debugger",
     "@lib//:kotlinx-serialization-core",

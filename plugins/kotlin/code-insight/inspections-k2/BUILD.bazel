@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//platform/refactoring",
     "//plugins/kotlin/base/util",

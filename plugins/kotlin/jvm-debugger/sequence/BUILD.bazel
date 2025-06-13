@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/core-api:core",
     "//platform/util",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "//plugins/kotlin/base/fe10/analysis",

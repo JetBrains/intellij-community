@@ -12,6 +12,7 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/testFramework",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/testFramework",
     "//platform/projectModel-api:projectModel",

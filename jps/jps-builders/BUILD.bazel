@@ -79,6 +79,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//jps/jps-builders:build",
     "@rules_jvm//dependency-graph",
     "//java/testFramework",

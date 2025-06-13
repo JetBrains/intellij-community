@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:junit4",
     "//java/testFramework",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//plugins/kotlin/frontend-independent",
     "//plugins/kotlin/i18n",
     "//platform/testFramework",

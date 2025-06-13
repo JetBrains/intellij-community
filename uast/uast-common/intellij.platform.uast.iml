@@ -27,6 +27,7 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

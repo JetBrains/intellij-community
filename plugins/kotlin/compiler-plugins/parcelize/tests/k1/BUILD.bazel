@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlinc-kotlin-compiler-tests",
+    "//platform/core-api:core",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/compiler-plugins/parcelize/tests:tests_test_lib",
     "//plugins/kotlin/idea/tests:tests_test_lib",

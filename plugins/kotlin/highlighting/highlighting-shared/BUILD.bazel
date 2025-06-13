@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-scripting-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/refactoring",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",

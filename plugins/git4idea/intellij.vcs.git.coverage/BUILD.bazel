@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//plugins/coverage-common:coverage",
@@ -35,6 +36,7 @@ jvm_library(
   deps = [
     "@lib//:junit5",
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/ide-core",
     "//plugins/coverage-common:coverage",

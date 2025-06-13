@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/structuralsearch:structuralSearch",
     "//platform/lang-api:lang",
     "//plugins/groovy",
@@ -32,6 +33,7 @@ jvm_library(
   associates = [":structuralSearch"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/structuralsearch:structuralSearch",
     "//platform/lang-api:lang",
     "//plugins/groovy",

@@ -84,6 +84,7 @@ jvm_library(
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   associates = ["//platform/execution-impl"],
   deps = [
+    "//platform/core-api:core",
     "//platform/platform-util-io:ide-util-io",
     "//jps/model-api:model",
     "//platform/testFramework",

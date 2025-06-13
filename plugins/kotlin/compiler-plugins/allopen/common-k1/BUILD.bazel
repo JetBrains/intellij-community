@@ -11,6 +11,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-allopen-compiler-plugin",
+    "//platform/core-api:core",
     "//plugins/kotlin/core",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
     "//platform/util",

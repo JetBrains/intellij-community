@@ -19,6 +19,7 @@ jvm_library(
     "//libraries/io",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",

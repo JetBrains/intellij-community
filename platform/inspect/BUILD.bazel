@@ -41,10 +41,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//platform/backend/observation",
   ],
-  exports = [
-    "//platform/core-api:core",
-    "//platform/extensions",
-  ],
+  exports = ["//platform/extensions"],
   runtime_deps = [":inspect_resources"]
 )
 

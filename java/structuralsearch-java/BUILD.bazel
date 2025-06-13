@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/structuralsearch:structuralSearch",
     "//platform/lang-impl",
     "//java/openapi:java",
@@ -32,6 +33,7 @@ jvm_library(
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/structuralsearch:structuralSearch",
     "//platform/lang-impl",

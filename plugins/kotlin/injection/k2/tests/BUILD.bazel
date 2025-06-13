@@ -19,6 +19,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/core-api:core",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//plugins/kotlin/injection/base/tests:tests_test_lib",

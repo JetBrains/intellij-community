@@ -8,6 +8,7 @@ jvm_library(
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/maven",
+    "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
   ]
 )

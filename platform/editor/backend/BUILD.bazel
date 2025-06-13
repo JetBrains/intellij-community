@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/core-api:core",
     "//platform/editor/shared:editor",
     "//platform/editor-ui-api:editor-ui",
     "//fleet/kernel",

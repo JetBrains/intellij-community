@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//plugins/markdown/core:markdown",
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
     "//platform/core-ui",
     "@lib//:kotlinx-coroutines-core",
     "//platform/indexing-api:indexing",

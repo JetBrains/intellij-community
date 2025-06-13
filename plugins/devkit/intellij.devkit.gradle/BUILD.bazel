@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/idea-ui:ui",
+    "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-impl:externalSystem-impl",
@@ -44,6 +45,7 @@ jvm_library(
   associates = [":gradle"],
   deps = [
     "//java/idea-ui:ui",
+    "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-impl:externalSystem-impl",
