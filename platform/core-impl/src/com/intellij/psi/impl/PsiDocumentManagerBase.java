@@ -1017,7 +1017,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       !ContainerUtil.exists(files, file -> PsiToDocumentSynchronizer.isInsideAtomicChange(file) || !(file instanceof PsiFileImpl));
 
     Application application = ApplicationManager.getApplication();
-    boolean forceCommit = application.hasWriteAction(ExternalChangeAction.class) &&
+    boolean forceCommit = ExternalChangeActionUtil.isExternalChangeInProgress() &&
                           (SystemProperties.getBooleanProperty("idea.force.commit.on.external.change", false) ||
                            application.isHeadlessEnvironment() && !application.isUnitTestMode());
 
@@ -1103,12 +1103,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       FileViewProvider viewProvider = fileManager.findCachedViewProvider(virtualFile);
       if (viewProvider != null) {
         // we can end up outside write action here if the document has forUseInNonAWTThread=true
-        ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() ->
-          ((AbstractFileViewProvider)viewProvider).onContentReload());
+        ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction(() ->
+                                                                                                           ((AbstractFileViewProvider)viewProvider).onContentReload()));
       }
       else if (FileIndexFacade.getInstance(myProject).isInContent(virtualFile)) {
-        ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() ->
-          ((FileManagerEx)fileManager).firePropertyChangedForUnloadedPsi());
+        ApplicationManager.getApplication().runWriteAction(ExternalChangeActionUtil.externalChangeAction(() ->
+                                                                                                           ((FileManagerEx)fileManager).firePropertyChangedForUnloadedPsi()));
       }
     }
 

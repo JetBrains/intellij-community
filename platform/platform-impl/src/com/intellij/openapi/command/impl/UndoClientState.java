@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.ExternalChangeAction;
+import com.intellij.psi.ExternalChangeActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -589,7 +589,7 @@ final class UndoClientState implements Disposable {
   }
 
   private static boolean isRefresh() {
-    return ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
+    return ExternalChangeActionUtil.isExternalChangeInProgress();
   }
 
   private static @NotNull UndoManagerImpl getUndoManager(@NotNull ComponentManager manager) {

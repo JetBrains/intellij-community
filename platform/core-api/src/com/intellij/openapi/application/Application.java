@@ -200,7 +200,11 @@ public interface Application extends ComponentManager {
    *
    * @param actionClass the class of the write action to return.
    * @return {@code true} if the action is running, or {@code false} if no action of the specified class is currently executing.
+   * @deprecated Consider using {@link com.intellij.psi.ExternalChangeActionUtil}.
+   *  This method is used only in the Document subsystem to detect if external changes are in progress.
+   *  The logic based on runtime information about classes is fragile.
    */
+  @Deprecated
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
   /**

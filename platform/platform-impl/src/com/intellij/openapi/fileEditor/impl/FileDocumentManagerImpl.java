@@ -211,7 +211,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @ApiStatus.Internal
   public void markDocumentUnsaved(Document document, boolean force) {
-    if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
+    if (!ExternalChangeActionUtil.isExternalDocumentChangeInProgress()) {
       myUnsavedDocuments.add(document);
       if (force) {
         document.putUserData(FORCE_SAVE_DOCUMENT_KEY, Boolean.TRUE);
@@ -582,7 +582,8 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       VirtualFile file = event.getFile();
       Document document = getCachedDocument(file);
       if (document != null) {
-        ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> document.setReadOnly(!file.isWritable()));
+        ApplicationManager.getApplication()
+          .runWriteAction(ExternalChangeActionUtil.externalChangeAction(() -> document.setReadOnly(!file.isWritable())));
       }
     }
     else if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
@@ -740,26 +741,23 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       boolean[] isReloadable = {isReloadable(file, document, project)};
       if (isReloadable[0]) {
         CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(
-          new ExternalChangeAction.ExternalDocumentChange() {
-            @Override
-            public void run() {
-              if (!isBinaryWithoutDecompiler(file)) {
-                LoadTextUtil.clearCharsetAutoDetectionReason(file);
-                file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
-                file.setCharset(null, null, false);
-                boolean wasWritable = document.isWritable();
-                document.setReadOnly(false);
-                boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
-                isReloadable[0] = isReloadable(file, document, project);
-                if (isReloadable[0]) {
-                  CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
-                  ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
-                  setDocumentTooLarge(document, tooLarge);
-                }
-                document.setReadOnly(!wasWritable);
+          ExternalChangeActionUtil.externalDocumentChangeAction(() -> {
+            if (!isBinaryWithoutDecompiler(file)) {
+              LoadTextUtil.clearCharsetAutoDetectionReason(file);
+              file.setBOM(null); // reset BOM in case we had one and the external change stripped it away
+              file.setCharset(null, null, false);
+              boolean wasWritable = document.isWritable();
+              document.setReadOnly(false);
+              boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+              isReloadable[0] = isReloadable(file, document, project);
+              if (isReloadable[0]) {
+                CharSequence reloaded = tooLarge ? LoadTextUtil.loadText(file, getPreviewCharCount(file)) : LoadTextUtil.loadText(file);
+                ((DocumentEx)document).replaceText(reloaded, file.getModificationStamp());
+                setDocumentTooLarge(document, tooLarge);
               }
+              document.setReadOnly(!wasWritable);
             }
-          }
+          })
         ), UIBundle.message("file.cache.conflict.action"), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
       }
       if (isReloadable[0]) {

@@ -4,7 +4,6 @@ package com.intellij.psi.impl;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -18,7 +17,7 @@ import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.pom.tree.events.impl.TreeChangeImpl;
-import com.intellij.psi.IgnorePsiEventsMarker;
+import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiTreeChangeEvent;
@@ -35,7 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PsiToDocumentSynchronizer {
@@ -135,7 +137,7 @@ public class PsiToDocumentSynchronizer {
   }
 
   public boolean toProcessPsiEvent() {
-    return !myIgnorePsiEvents && !myPsiDocumentManager.isCommitInProgress() && !ApplicationManager.getApplication().hasWriteAction(IgnorePsiEventsMarker.class);
+    return !myIgnorePsiEvents && !myPsiDocumentManager.isCommitInProgress() && !ExternalChangeActionUtil.isExternalChangeInProgress();
   }
 
   @TestOnly

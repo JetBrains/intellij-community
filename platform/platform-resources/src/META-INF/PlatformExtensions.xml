@@ -454,6 +454,10 @@
     <editorActionHandler action="EditorPageDown" id="combinedDiffPageDown" order="last"
                          implementationClass="com.intellij.diff.tools.combined.CombinedDiffEditorPageDownHandler"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.application.impl.WriteActionPresenceService"
+                        serviceImplementation="com.intellij.openapi.application.impl.WriteActionPresenceServiceImpl"/>
+
+
     <applicationService serviceInterface="com.intellij.openapi.editor.ScrollPositionCalculator"
                         serviceImplementation="com.intellij.openapi.editor.impl.ScrollPositionCalculatorImpl"/>
 

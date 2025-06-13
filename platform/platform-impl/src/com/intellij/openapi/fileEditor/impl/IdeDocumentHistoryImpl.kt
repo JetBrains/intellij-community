@@ -43,7 +43,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.psi.ExternalChangeAction
+import com.intellij.psi.ExternalChangeActionUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -126,7 +126,7 @@ open class IdeDocumentHistoryImpl(
         val file = getFileDocumentManager().getFile(e.document)
         if (file != null &&
             file !is LightVirtualFile &&
-            !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction::class.java)) {
+            !ExternalChangeActionUtil.isExternalChangeInProgress()) {
           ThreadingAssertions.assertEventDispatchThread()
           currentCommandHasChanges = true
           changedFilesInCurrentCommand.add(file)

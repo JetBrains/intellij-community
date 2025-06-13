@@ -6,24 +6,32 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.client.*;
+import com.intellij.openapi.client.ClientKind;
+import com.intellij.openapi.client.ClientSession;
+import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.DocumentReference;
+import com.intellij.openapi.command.undo.DocumentReferenceManager;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.ClientFileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsActions.ActionDescription;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts.Command;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.ExternalChangeAction;
+import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -40,7 +48,7 @@ public class UndoManagerImpl extends UndoManager {
   public static boolean ourNeverAskUser = false;
 
   public static boolean isRefresh() {
-    return ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
+    return ExternalChangeActionUtil.isExternalChangeInProgress();
   }
 
   public static int getGlobalUndoLimit() {

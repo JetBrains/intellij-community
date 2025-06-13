@@ -1100,7 +1100,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   @Override
   public boolean hasWriteAction(@NotNull Class<?> actionClass) {
     ThreadingAssertions.softAssertReadAccess();
-    return getThreadingSupport().hasWriteAction(actionClass);
+    return Objects.requireNonNull(this.getService(WriteActionPresenceService.class)).hasWriteAction(actionClass);
   }
 
   @Override

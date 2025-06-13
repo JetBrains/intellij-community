@@ -146,7 +146,12 @@ com.intellij.psi.CustomHighlighterTokenType
 - sf:STRING:com.intellij.psi.tree.IElementType
 - sf:WHITESPACE:com.intellij.psi.tree.IElementType
 com.intellij.psi.ExternalChangeAction
-- java.lang.Runnable
+f:com.intellij.psi.ExternalChangeActionUtil
+- sf:INSTANCE:com.intellij.psi.ExternalChangeActionUtil
+- sf:externalChangeAction(java.lang.Runnable):java.lang.Runnable
+- sf:externalDocumentChangeAction(java.lang.Runnable):java.lang.Runnable
+- sf:isExternalChangeInProgress():Z
+- sf:isExternalDocumentChangeInProgress():Z
 com.intellij.psi.impl.AnyPsiChangeListener
 - afterPsiChanged(Z):V
 - beforePsiChanged(Z):V
