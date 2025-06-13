@@ -146,7 +146,7 @@ internal class GitLabShareProjectDialogViewModel(
   //region: validation util
   @OptIn(FlowPreview::class)
   private val isExistingRepository: StateFlow<Boolean> =
-    combine(_repositoryName.debounce(250), _namespace, _account, api) { name, namespace, account, api ->
+    combine(_repositoryName.debounce(500), _namespace, _account, api) { name, namespace, account, api ->
       if (account == null || api == null || namespace == null) return@combine false
 
       LOG.info("Checking for existing repositories at coordinates: ${account.server}/${namespace.fullPath}/$name")
