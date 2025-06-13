@@ -168,10 +168,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitPyPattern(@NotNull PyPattern node) {
-    final PsiElement parent = PsiTreeUtil.skipParentsOfType(node, PyCaseClause.class, PyGroupPattern.class, PyAsPattern.class, PyOrPattern.class);
-    if (parent instanceof PyMatchStatement matchStatement) {
-      pushAssertion(matchStatement.getSubject(), myPositive, context -> context.getType(node));
+  public void visitPyCaseClause(@NotNull PyCaseClause node) {
+    var pattern = node.getPattern();
+    if (pattern == null) return;
+    if (node.getParent() instanceof PyMatchStatement matchStatement) {
+      pushAssertion(matchStatement.getSubject(), myPositive, context -> context.getType(pattern));
     }
   }
 
@@ -189,6 +190,10 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       for (PyCaseClause cs : matchStatement.getCaseClauses()) {
         if (cs.getPattern() == null) continue;
         if (cs.getGuardCondition() != null) continue;
+        if (cs.getPattern().isIrrefutable()) {
+          subjectType = PyNeverType.NEVER;
+          break;
+        }
         subjectType = Ref.deref(createAssertionType(subjectType, context.getType(cs.getPattern()), false, context));
       }
 
@@ -355,6 +360,19 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         myStack.push(new Assertion(null, typeCallback));
       }
     }
+  }
+
+  public static @Nullable String getAssertionTargetName(@Nullable PyExpression expression) {
+    PyExpression target = PyPsiUtils.flattenParens(expression);
+    if (target instanceof PyAssignmentExpression walrus) {
+      return getAssertionTargetName(walrus.getTarget());
+    }
+    if (target instanceof PyReferenceExpression || target instanceof PyTargetExpression) {
+      if (!((PyQualifiedExpression)target).isQualified()) {
+        return target.getName();
+      }
+    }
+    return null;
   }
 
   private static boolean isIfReferenceStatement(@NotNull PyExpression node) {

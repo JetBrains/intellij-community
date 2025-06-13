@@ -6,13 +6,14 @@
 5(6) refutable pattern: 2 | 3
 6(7,8) refutable pattern: 2
 7(10) matched pattern: 2
-8(9,14) refutable pattern: 3
+8(9,15) refutable pattern: 3
 9(10) matched pattern: 3
 10(11) matched pattern: 2 | 3
 11(12) matched pattern: 1 | (2 | 3)
-12(13) element: PyExpressionStatement
-13(15) READ ACCESS: x
-14(15) ASSERTTYPE ACCESS: null
-15(16) element: PyExpressionStatement
-16(17) READ ACCESS: y
-17() element: null
+12(13) element: PyStatementList
+13(14) element: PyExpressionStatement
+14(16) READ ACCESS: x
+15(16) ASSERTTYPE ACCESS: null
+16(17) element: PyExpressionStatement
+17(18) READ ACCESS: y
+18() element: null
