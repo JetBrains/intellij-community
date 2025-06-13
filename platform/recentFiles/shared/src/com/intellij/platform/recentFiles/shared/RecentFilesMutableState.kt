@@ -1,13 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.recentFiles.frontend.model
+package com.intellij.platform.recentFiles.shared
 
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.recentFiles.shared.RecentFileKind
-import com.intellij.platform.recentFiles.shared.RecentFilesEvent
-import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
@@ -26,6 +23,7 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
   abstract fun convertDtoToModel(rpcDto: SwitcherRpcDto): T?
   abstract suspend fun convertVirtualFileIdToModel(virtualFileId: VirtualFileId): T?
   abstract fun convertModelToVirtualFile(model: T): VirtualFile?
+  abstract fun checkValidity(model: T): Boolean
 
   fun chooseStateToWriteTo(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState<T>> {
     return when (filesKind) {
@@ -42,7 +40,8 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
         val toAdd = change.batch.mapNotNull(::convertDtoToModel)
         LOG.debug("Adding ${change.batch.size} items to $targetFilesKind frontend model")
         targetModel.update { oldList ->
-          RecentFilesState(toAdd + (oldList.entries - toAdd.toSet()))
+          val updatedState = toAdd + (oldList.entries - toAdd.toSet())
+          RecentFilesState(updatedState.filter(::checkValidity))
         }
       }
       is RecentFilesEvent.ItemsUpdated -> {
@@ -52,11 +51,12 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
           if (change.putOnTop) {
             val newValuesToPutIntoFirstPosition = oldList.entries.mapNotNull { oldItem -> itemsToMergeWithExisting[oldItem] }
             val restOfExistingValues = oldList.entries - newValuesToPutIntoFirstPosition.toSet()
-            RecentFilesState(newValuesToPutIntoFirstPosition + restOfExistingValues)
+            val updatedState = newValuesToPutIntoFirstPosition + restOfExistingValues
+            RecentFilesState(updatedState.filter(::checkValidity))
           }
           else {
             val effectiveModelsToInsert = oldList.entries.map { oldItem -> itemsToMergeWithExisting[oldItem] ?: oldItem }
-            RecentFilesState(effectiveModelsToInsert)
+            RecentFilesState(effectiveModelsToInsert.filter(::checkValidity))
           }
         }
       }
@@ -64,7 +64,8 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
         LOG.debug("Removing ${change.batch.size} items from $targetFilesKind frontend model")
         val toRemove = change.batch.mapNotNull { virtualFileId -> convertVirtualFileIdToModel(virtualFileId) }
         targetModel.update { oldList ->
-          RecentFilesState(oldList.entries - toRemove.toSet())
+          val updatedState = oldList.entries - toRemove.toSet()
+          RecentFilesState(updatedState.filter(::checkValidity))
         }
       }
       is RecentFilesEvent.AllItemsRemoved -> {

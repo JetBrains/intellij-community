@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.recentFiles.frontend.SwitcherVirtualFile
 import com.intellij.platform.recentFiles.shared.RecentFileKind
+import com.intellij.platform.recentFiles.shared.RecentFilesMutableState
+import com.intellij.platform.recentFiles.shared.RecentFilesState
 import com.intellij.platform.recentFiles.shared.SwitcherRpcDto
 import com.intellij.util.IconUtil
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +28,10 @@ internal class FrontendRecentFilesMutableState(project: Project): RecentFilesMut
 
   override fun convertModelToVirtualFile(model: SwitcherVirtualFile): VirtualFile? {
     return model.virtualFile
+  }
+
+  override fun checkValidity(model: SwitcherVirtualFile): Boolean {
+    return model.virtualFile?.isValid != false
   }
 
   fun chooseStateToReadFrom(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState<SwitcherVirtualFile>> {

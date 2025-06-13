@@ -14,6 +14,7 @@ import com.intellij.platform.recentFiles.shared.FileChangeKind
 import com.intellij.platform.recentFiles.shared.FileSwitcherApi
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesCoroutineScopeProvider
+import com.intellij.platform.recentFiles.shared.RecentFilesState
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
