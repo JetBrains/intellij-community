@@ -6,16 +6,18 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.getProjectCacheFileName
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.KeyDescriptor
-import com.intellij.util.io.PersistentMapBuilder
 import com.intellij.util.io.cache.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import java.io.DataInput
 import java.io.DataOutput
 import java.nio.file.Path
+
+private typealias EntriesFlow = Flow<Pair<ByteArray, ByteArray>>
 
 private fun remoteCacheLocation(): Path {
   return PathManager.getSystemDir().resolve("remote-cache")
@@ -27,21 +29,18 @@ private class RemoteManagedCacheManager(private val project: Project, private va
   fun get(cacheId: CacheId): ManagedCache<ByteArray, ByteArray> {
     return storage[cacheId.name]!!
   }
-  suspend fun create(cacheId: CacheId, buildParams: RemoteManagedCacheBuildParams): List<PrefetchedRemoteCacheValue> {
-    val path = getCacheDir(cacheId.name, project)
-    val builder = PersistentMapBuilder.newBuilder(
-      path,
+  suspend fun create(cacheId: CacheId, buildParams: RemoteManagedCacheBuildParams): EntriesFlow {
+    val cache = ManagedCacheFactory.getInstance().createCache(
+      project,
+      remoteCacheLocation(),
+      cacheId.name,
       MyKeyDescriptor(),
       Externalizer(),
-    ).withVersion(buildParams.serdeVersion)
-    val cache = ManagedPersistentCache(cacheId.name, builder, coroutineScope)
+      buildParams.serdeVersion,
+      coroutineScope
+    )
     storage[cacheId.name] = cache
-    return cache.entries().map { (key, value) -> PrefetchedRemoteCacheValue(key, value) }
-  }
-
-  private fun getCacheDir(cacheName: String, project: Project): Path {
-    val projectPart = project.getProjectCacheFileName(hashSeparator = "")
-    return remoteCacheLocation().resolve("$cacheName-$projectPart").resolve(cacheName)
+    return cache.entries()
   }
 
   private open class Externalizer : DataExternalizer<ByteArray> {
@@ -82,8 +81,8 @@ internal class RemoteManagedCacheApiImpl: RemoteManagedCacheApi {
     }
   }
 
-  override suspend fun createCacheAndProvideEntries(cacheId: CacheId, buildParams: RemoteManagedCacheBuildParams): List<PrefetchedRemoteCacheValue> {
-    val project = cacheId.projectId.findProjectOrNull() ?: return emptyList()
+  override suspend fun createCacheAndProvideEntries(cacheId: CacheId, buildParams: RemoteManagedCacheBuildParams): EntriesFlow {
+    val project = cacheId.projectId.findProjectOrNull() ?: return emptyFlow()
     return project.serviceAsync<RemoteManagedCacheManager>().create(cacheId, buildParams)
   }
 }
