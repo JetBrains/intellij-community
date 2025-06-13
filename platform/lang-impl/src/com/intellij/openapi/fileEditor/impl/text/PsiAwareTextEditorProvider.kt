@@ -58,7 +58,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val effectiveDocument = document!!
 
       // trigger opening of persistent maps in advance
-      project.serviceAsync<Necropolis>()
+      if (!AppModeAssertions.isBackend()) {
+        project.serviceAsync<Necropolis>()
+      }
 
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
         val scheme = serviceAsync<EditorColorsManager>().globalScheme
@@ -133,8 +135,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       val editorSupplier = suspend { editorDeferred.await() }
       val highlighterReady = suspend { highlighterDeferred.join() }
 
-      val necropolis = project.serviceAsync<Necropolis>()
       if (!AppModeAssertions.isBackend()) {
+        val necropolis = project.serviceAsync<Necropolis>()
         necropolis.spawnZombies(project, file, document, editorSupplier, highlighterReady)
       }
 
