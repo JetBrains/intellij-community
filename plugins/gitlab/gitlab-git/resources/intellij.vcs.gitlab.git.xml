@@ -9,6 +9,9 @@
     <action id="GitLab.Share" class="com.intellij.vcs.gitlab.git.GitLabShareProjectAction"
             icon="com.intellij.vcs.gitlab.icons.GitlabIcons.GitLabLogo">
       <add-to-group group-id="GitLab.Main.Group"/>
+      <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.ToolbarWidget.ShareProject" relative-to-action="Start.Use.Vcs" anchor="before"/>
+      <override-text place="Vcs.Toolbar.Widget"/>
     </action>
   </actions>
 
