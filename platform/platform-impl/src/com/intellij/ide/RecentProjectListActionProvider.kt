@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
+import com.intellij.openapi.wm.impl.headertoolbar.ProjectStatus
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetPresentable
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
@@ -322,7 +323,11 @@ private class RemoteRecentProjectAction(val projectId: String, val project: Rece
   override val providerIcon: Icon? get() = project.providerIcon
   override val activationTimestamp: Long? get() = project.activationTimestamp
 
-  override val isProjectOpening: Boolean get() = project.projectOpenState == OpenRecentProjectStatus.Progress
+  override val status: ProjectStatus?
+    get() {
+      val status = project.status
+      return ProjectStatus(status.statusText, status.progressText)
+    }
 }
 
 private fun getProviderProjectId(provider: RecentProjectProvider, project: RecentProject): String {

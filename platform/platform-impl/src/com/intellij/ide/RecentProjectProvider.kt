@@ -4,6 +4,7 @@ package com.intellij.ide
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -51,14 +52,14 @@ interface RecentProject {
 
   val providerIcon: Icon?
 
-  val projectOpenState: OpenRecentProjectStatus
+  val status: RecentProjectStatus
 
   fun openProject(actionEvent: AnActionEvent)
   fun removeFromRecent()
 }
 
 @ApiStatus.Internal
-sealed interface OpenRecentProjectStatus {
-  object None : OpenRecentProjectStatus
-  object Progress : OpenRecentProjectStatus
-}
+class RecentProjectStatus(
+  val statusText: @Nls String?,
+  val progressText: @Nls String?,
+)

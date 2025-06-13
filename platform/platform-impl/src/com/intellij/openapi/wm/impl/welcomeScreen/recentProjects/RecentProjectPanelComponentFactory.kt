@@ -131,7 +131,7 @@ object RecentProjectPanelComponentFactory {
       .filter { node ->
         val userObject = TreeUtil.getUserObject(node)
         return@filter userObject is CloneableProjectItem && isCloneActive ||
-                      userObject is ProviderRecentProjectItem && userObject.isProjectOpening
+                      userObject is ProviderRecentProjectItem && userObject.progressText != null
       }.toList()
   }
 }
