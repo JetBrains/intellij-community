@@ -428,7 +428,7 @@ internal class StorageJpsConfigurationReader(private val project: Project, priva
       return@addMeasuredTime component
     }
     if (filePath.endsWith(".iml") || isExternalModuleFile(filePath)) {
-      //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
+      //todo fetch data from ModuleStore (IJPL-15992)
       val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
       return@addMeasuredTime component
     }
