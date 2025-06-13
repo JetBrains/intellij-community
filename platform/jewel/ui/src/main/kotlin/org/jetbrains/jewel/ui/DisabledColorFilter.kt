@@ -7,10 +7,10 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 
 // Implements javax.swing.GrayFilter's behaviour with percent = 50, brighter = true
 // to match the GrayFilter#createDisabledImage behavior, used by Swing.
-private fun disabledColorMatrixGammaEncoded(isSystemInDarkMode: Boolean = false) =
+private fun disabledColorMatrixGammaEncoded(isDark: Boolean = false) =
     ColorMatrix().apply {
         val saturation = .5f
-        val brightness = if (isSystemInDarkMode) 0f else .25f
+        val brightness = if (isDark) 0f else .25f
 
         // We use NTSC luminance weights like Swing does as it's gamma-encoded RGB,
         // and add some brightness to emulate Swing's "brighter" approach, which is
@@ -29,9 +29,12 @@ private fun disabledColorMatrixGammaEncoded(isSystemInDarkMode: Boolean = false)
         this[2, 2] = blueFactor
     }
 
-@Deprecated("Use disabledThemeAware instead. This way you get nice colors on dark theme too!")
+@Deprecated(
+    message = "Use disabledIcon() instead to get correct behaviour in dark themes too.",
+    replaceWith = ReplaceWith("ColorFilter.disabledIcon()")
+)
 public fun ColorFilter.Companion.disabled(): ColorFilter = colorMatrix(disabledColorMatrixGammaEncoded())
 
 @Composable
-public fun ColorFilter.Companion.disabledThemeAware(): ColorFilter =
+public fun ColorFilter.Companion.disabledIcon(): ColorFilter =
     colorMatrix(disabledColorMatrixGammaEncoded(JewelTheme.isDark))
