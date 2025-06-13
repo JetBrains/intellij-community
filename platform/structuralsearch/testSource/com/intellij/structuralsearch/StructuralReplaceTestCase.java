@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
-import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.search.LocalSearchScope;
@@ -9,11 +8,12 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
 import java.io.File;
 import java.io.IOException;
 
-public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
+public abstract class StructuralReplaceTestCase extends LightPlatformCodeInsightTestCase {
   protected ReplaceOptions options;
 
   @Override

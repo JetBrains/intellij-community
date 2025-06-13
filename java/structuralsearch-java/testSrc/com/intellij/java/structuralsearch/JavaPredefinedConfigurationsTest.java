@@ -1,10 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.structuralsearch;
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.java.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
+import com.intellij.structuralsearch.JavaPredefinedConfigurations;
+import com.intellij.structuralsearch.PredefinedConfigurationsTestCase;
+import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.intellij.lang.annotations.Language;
 
 import java.util.Map;
@@ -15,6 +22,32 @@ import java.util.stream.Stream;
  * @author Bas Leijdekkers
  */
 public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTestCase {
+  private final Disposable myBeforeParentDisposeDisposable = Disposer.newDisposable();
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_16, myBeforeParentDisposeDisposable);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      Disposer.dispose(myBeforeParentDisposeDisposable);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
+  }
+
   public void testAll() {
     final Configuration[] templates = JavaPredefinedConfigurations.createPredefinedTemplates();
     final Map<String, Configuration> configurationMap = Stream.of(templates).collect(Collectors.toMap(Configuration::getName, x -> x));
@@ -559,10 +592,5 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
 
   protected void doTest(Configuration template, @Language("JAVA") String source, String... results) {
     doTest(template, source, JavaFileType.INSTANCE, results);
-  }
-
-  @Override
-  protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_16;
   }
 }

@@ -1,11 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.structuralsearch;
+package com.intellij.java.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -18,12 +23,31 @@ import java.util.List;
  * @author Maxim.Mossienko
  */
 @SuppressWarnings("ALL")
-public class StructuralSearchTest extends StructuralSearchTestCase {
+public class JavaStructuralSearchTest extends StructuralSearchTestCase {
+  private final Disposable myBeforeParentDisposeDisposable = Disposer.newDisposable();
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    setLanguageLevel(LanguageLevel.JDK_16);
+    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_16, myBeforeParentDisposeDisposable);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    try {
+      Disposer.dispose(myBeforeParentDisposeDisposable);
+    }
+    catch (Throwable e) {
+      addSuppressedException(e);
+    }
+    finally {
+      super.tearDown();
+    }
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk18();
   }
 
   protected List<MatchResult> findMatches(@Language("JAVA") String in, String pattern) {

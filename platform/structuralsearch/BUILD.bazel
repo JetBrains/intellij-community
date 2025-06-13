@@ -66,13 +66,12 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/structuralsearch:structuralSearch",
-    "//java/testFramework",
     "//xml/impl",
-    "//java/structuralsearch-java:structuralSearch",
-    "//java/structuralsearch-java:structuralSearch_test_lib",
     "//platform/util/jdom",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/testRunner",
+    "//platform/testRunner:testRunner_test_lib",
   ]
 )
 

@@ -44,6 +44,13 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/duplicates-analysis",
     "//java/testFramework",
+    "//platform/structuralsearch:structuralSearch-tests_test_lib",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//platform/core-ui",
+    "//platform/util/jdom",
+    "//platform/projectModel-api:projectModel",
+    "//platform/code-style-api:codeStyle",
   ],
   runtime_deps = [":structuralSearch_resources"]
 )
