@@ -18,31 +18,27 @@ internal class NsisFileListGenerator {
   fun generateInstallerFile(outputFile: Path) {
     Files.newBufferedWriter(outputFile).use { out ->
       for ((relativePath, files) in directoryToFiles) {
-        if (files.isEmpty()) {
-          continue
-        }
+        if (files.isEmpty()) continue
 
-        out.write("\n")
+        out.newLine()
 
-        val installDir = $$"$INSTDIR"
-        scriptWithLongPathSupport(out, installDir, relativePath, files.map { it.fileName.toString() }) {
-          out.write("SetOutPath \"$installDir${if (relativePath.isEmpty()) "" else "\\"}${escapeWinPath(relativePath)}\"\n")
-
+        scriptWithLongPathSupport(out, relativePath, files.map { it.fileName.toString() }) {
+          out.write($$"SetOutPath \"$INSTDIR" + (if (relativePath.isEmpty()) "" else "\\") + escapeWinPath(relativePath) + "\"\n")
           for (file in files) {
-            out.write("File \"${file.toAbsolutePath().normalize()}\"\n")
+            out.write("File \"" + file.toAbsolutePath().normalize() + "\"\n")
           }
         }
       }
     }
   }
 
-  fun generateUninstallerFile(outputFile: Path, installDir: String = $$"$INSTDIR") {
+  fun generateUninstallerFile(outputFile: Path) {
     Files.newBufferedWriter(outputFile).use { out ->
       filesRelativePaths.sorted().forEach {
-        scriptWithLongPathSupport(out, installDir, relativePath = null, listOf(it)) {
-          out.write("Delete \"${installDir}\\${escapeWinPath(it)}\"\n")
+        scriptWithLongPathSupport(out, relativePath = null, listOf(it)) {
+          out.write($$"Delete \"$INSTDIR\\" + escapeWinPath(it) + "\"\n")
           if (it.endsWith(".py")) {
-            out.write("Delete \"${installDir}\\${escapeWinPath(it)}c\"\n") //.pyc
+            out.write($$"Delete \"$INSTDIR\\" + escapeWinPath(it) + "c\"\n") //.pyc
           }
         }
       }
@@ -51,13 +47,14 @@ internal class NsisFileListGenerator {
 
       for (it in directoryToFiles.keys.sorted().asReversed()) {
         if (!it.isEmpty()) {
-          scriptWithLongPathSupport(out, installDir, relativePath = null, listOf(it)) {
-            out.write("RmDir /r \"${installDir}\\${escapeWinPath(it)}\\__pycache__\"\n")
-            out.write("RmDir \"${installDir}\\${escapeWinPath(it)}\"\n")
+          scriptWithLongPathSupport(out, relativePath = null, listOf(it)) {
+            out.write($$"RMDir /R \"$INSTDIR\\" + escapeWinPath(it) + "\\__pycache__\"\n")
+            out.write($$"RMDir \"$INSTDIR\\" + escapeWinPath(it) + "\"\n")
           }
         }
       }
-      out.write("RmDir \"${installDir}\"\n")
+
+      out.write($$"RMDir \"$INSTDIR\"\n")
     }
   }
 
@@ -79,33 +76,25 @@ internal class NsisFileListGenerator {
     }
   }
 
-  private fun escapeWinPath(dir: String): String = dir.replace('/', '\\').replace("\\$", "\\$\\$")
+  private fun escapeWinPath(dir: String): String = dir.replace('/', '\\').replace("$", "$$")
 
-  private fun scriptWithLongPathSupport(
-    writer: BufferedWriter,
-    instDirVariable: String,
-    relativePath: String?,
-    files: List<String>,
-    actionWithOutPath: () -> Unit
-  ) {
-    assert(instDirVariable.startsWith("$"))
-
+  private fun scriptWithLongPathSupport(writer: BufferedWriter, relativePath: String?, files: List<String>, actionWithOutPath: () -> Unit) {
     val areLongPathsPresent = guessMaxPathLength(relativePath, files) > MAX_PATH
     if (areLongPathsPresent) {
       // For long paths in the installer, we perform a special maneuver.
       // Prepend the INSTDIR with "\\?\" so that WinAPI functions won't check its length and will allow working with the file.
-      writer.write("""
-          Push $instDirVariable
-          GetFullPathName $instDirVariable $instDirVariable
-          StrCpy $instDirVariable "\\?\$instDirVariable"
+      writer.write($$"""
+        Push $INSTDIR
+        GetFullPathName $INSTDIR "$INSTDIR"
+        StrCpy $INSTDIR "\\?\$INSTDIR"
         """.trimIndent() + "\n")
     }
 
     actionWithOutPath()
 
     if (areLongPathsPresent) {
-      // Clean up:
-      writer.write("Pop $instDirVariable\n")
+      // Clean up.
+      writer.write($$"Pop $INSTDIR\n")
     }
   }
 
