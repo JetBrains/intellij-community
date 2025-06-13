@@ -22,6 +22,7 @@ class AccessibilityAuditManager : AccessibilityAudit {
       AccessibleTextNotNullInspection(),
       AccessibleValueNotNullInspection(),
       ImplementsAccessibleInterfaceInspection(),
+      ComponentWithIconHasNonDefaultAccessibleNameInspection(),
     )
   }
 

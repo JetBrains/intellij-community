@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.sandbox.tests.accessibility
 
+import com.intellij.icons.AllIcons
 import com.intellij.internal.ui.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
 import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import java.awt.Dimension
@@ -75,6 +77,38 @@ internal class AccessibilityFailedInspectionsPanel : UISandboxPanel {
       }, {
         textField().label("Normal text field", LabelPosition.TOP)
       })
+    }
+
+
+    group("Component with icon has non-default accessible name") {
+      twoColumnsRow(
+        {
+          cell(JLabel("Some info").apply {
+            icon = AllIcons.General.Error
+          }).label("JLabel with default accessible name", LabelPosition.TOP)
+        }, {
+          cell(JLabel("Some info").apply {
+            icon = AllIcons.General.Error
+            accessibleContext.accessibleName = "Error: Some info"
+          }).label("JLabel with custom accessible name", LabelPosition.TOP)
+        })
+
+      twoColumnsRow(
+        {
+          cell(SimpleColoredComponent().apply {
+            icon = AllIcons.General.Error
+            append("Some info")
+          }).label("SimpleColoredComponent with default name", LabelPosition.TOP)
+        }, {
+          cell(object : SimpleColoredComponent() {
+            override fun getAccessibleContext() = object : AccessibleSimpleColoredComponent() {
+              override fun getAccessibleName(): String = "Error: Some info"
+            }
+          }.apply {
+            icon = AllIcons.General.Error
+            append("Some info")
+          }).label("SimpleColoredComponent with custom name", LabelPosition.TOP)
+        })
     }
 
     group("Implements Accessible") {
