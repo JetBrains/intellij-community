@@ -15,7 +15,9 @@ import com.intellij.openapi.editor.colors.impl.AppFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 import com.intellij.openapi.editor.impl.FontFamilyService
 import com.intellij.openapi.util.Disposer
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.pow
@@ -26,7 +28,7 @@ import kotlin.math.roundToInt
   storages = [Storage("terminal-font.xml")],
 )
 @ApiStatus.Internal
-class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() {
+class TerminalFontSettingsService(private val coroutineScope: CoroutineScope) : AppFontOptions<TerminalFontSettingsState>() {
   companion object {
     @JvmStatic fun getInstance(): TerminalFontSettingsService = service<TerminalFontSettingsService>()
 
@@ -121,15 +123,17 @@ class TerminalFontSettingsService : AppFontOptions<TerminalFontSettingsState>() 
    */
   fun resetNonMonospacedFontsOnce(storedState: TerminalFontSettingsState): Boolean {
     return RunOnceUtil.runOnceForApp("TerminalFontSettingsService.fixStoredNonMonospacedFonts") {
-      val adjustedState = if (!FontFamilyService.isMonospaced(storedState.FONT_FAMILY)) {
-        val newState = TerminalFontSettingsState(getConsoleFontPreferences())
-        newState.FONT_SIZE_2D = storedState.FONT_SIZE_2D
-        newState.LINE_SPACING = storedState.LINE_SPACING
-        newState
-      }
-      else storedState
+      updateFrontendSettingsAndSync(coroutineScope) {
+        val adjustedState = if (!FontFamilyService.isMonospaced(storedState.FONT_FAMILY)) {
+          val newState = TerminalFontSettingsState(getConsoleFontPreferences())
+          newState.FONT_SIZE_2D = storedState.FONT_SIZE_2D
+          newState.LINE_SPACING = storedState.LINE_SPACING
+          newState
+        }
+        else storedState
 
-      super.loadState(adjustedState)
+        super.loadState(adjustedState)
+      }
     }
   }
 

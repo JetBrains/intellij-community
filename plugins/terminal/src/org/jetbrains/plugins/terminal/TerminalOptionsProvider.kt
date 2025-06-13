@@ -1,22 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
-import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.ide.util.RunOnceUtil
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.withCurrentThreadCoroutineScope
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.TerminalUiSettingsManager.CursorShape
 import com.intellij.util.PlatformUtils
-import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.plugins.terminal.block.ui.updateFrontendSettingsAndSync
 import org.jetbrains.plugins.terminal.settings.TerminalLocalOptions
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -235,24 +232,11 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
 
   private fun performSettingsInitializationOnce() {
     RunOnceUtil.runOnceForApp("TerminalOptionsProvider.migration.2025.1.1") {
-      // If the settings update is happened in IDE backend, let's skip it.
-      // Because we should receive the values from the frontend and use it.
-      // Otherwise, there can be a race when updating is performed both on backend and frontend simultaneously.
-      if (AppMode.isRemoteDevHost()) return@runOnceForApp
-
-      try {
+      updateFrontendSettingsAndSync(coroutineScope) {
         migrateCursorShape()
         // Disable the terminal engine migration.
         // Now it is Reworked by default, not depending on the previously set settings.
         //initializeTerminalEngine()
-      }
-      finally {
-        // Trigger sending the updated values to the backend
-        coroutineScope.launch {
-          withCurrentThreadCoroutineScope {
-            saveSettingsForRemoteDevelopment(application)
-          }
-        }
       }
     }
   }
