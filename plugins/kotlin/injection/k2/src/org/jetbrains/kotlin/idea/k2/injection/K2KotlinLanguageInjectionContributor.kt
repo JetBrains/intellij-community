@@ -29,7 +29,7 @@ import org.intellij.lang.annotations.Language as LanguageAnnotation
 
 internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionContributorBase() {
     override val kotlinSupport: K2KotlinLanguageInjectionSupport? by lazy {
-        ArrayList(InjectorUtils.getActiveInjectionSupports()).filterIsInstance(K2KotlinLanguageInjectionSupport::class.java).firstOrNull()
+        InjectorUtils.getActiveInjectionSupports().filterIsInstance<K2KotlinLanguageInjectionSupport>().firstOrNull()
     }
 
     override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean = analyze(this) {
