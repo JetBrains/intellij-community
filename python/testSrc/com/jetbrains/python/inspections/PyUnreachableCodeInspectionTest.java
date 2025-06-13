@@ -25,6 +25,17 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
+  // PY-81482
+  public void testTryAssertFinally() {
+    doTestByText("""
+try:
+    assert True
+finally:
+    pass
+print('Reachable')
+                   """);
+  }
+
   // PY-81936
   public void testUnreachableWithLangLevel() {
     runWithLanguageLevel(LanguageLevel.PYTHON310, () -> doTestByText("""
