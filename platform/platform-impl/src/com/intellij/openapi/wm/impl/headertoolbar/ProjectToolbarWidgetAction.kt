@@ -42,6 +42,8 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import kotlinx.coroutines.awaitCancellation
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.event.ComponentAdapter
@@ -60,8 +62,14 @@ private val projectKey = Key.create<Project>("project-widget-project")
 internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelectionPredicateSupplier {
   override fun getPredicate(): Predicate<AnAction> {
     val openProjects = ProjectUtilCore.getOpenProjects()
-    val paths = openProjects.map { it.basePath }
-    return Predicate { action -> (action as? ReopenProjectAction)?.projectPath in paths }
+    val paths: List<@SystemIndependent @NonNls String?> = openProjects.map { it.basePath }
+    return Predicate { action ->
+      when (action) {
+        is ReopenProjectAction -> action.projectPath in paths
+        is ProjectToolbarWidgetPresentable -> action.status?.isOpened == true
+        else -> false
+      }
+    }
   }
 }
 
@@ -456,6 +464,7 @@ interface ProjectToolbarWidgetPresentable {
 
 @ApiStatus.Internal
 class ProjectStatus(
+  val isOpened: Boolean,
   val statusText: @Nls String?,
   val progressText: @Nls String?,
 )

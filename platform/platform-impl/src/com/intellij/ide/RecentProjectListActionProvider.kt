@@ -352,7 +352,7 @@ private class RemoteRecentProjectAction(val projectId: String, val project: Rece
   override val status: ProjectStatus?
     get() {
       val status = project.status
-      return ProjectStatus(status.statusText, status.progressText)
+      return ProjectStatus(status.isOpened, status.statusText, status.progressText)
     }
 }
 

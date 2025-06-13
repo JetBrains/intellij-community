@@ -64,6 +64,7 @@ interface RecentProject {
 
 @ApiStatus.Internal
 class RecentProjectStatus(
+  val isOpened: Boolean,
   val statusText: @Nls String?,
   val progressText: @Nls String?,
 )
