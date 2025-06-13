@@ -68,7 +68,7 @@ public final class ControlFlowCache {
   public static @NotNull PyDataFlow getDataFlow(@NotNull ScopeOwner element, @NotNull TypeEvalContext context) {
     // Cache will reset on psi modification, same as TypeEvalContext
     return PyUtil.getParameterizedCachedValue(element, context, (ctx) -> {
-      return new PyDataFlow(getControlFlow(element), context);
+      return new PyDataFlow(element, getControlFlow(element), context);
     });
   }
 }
