@@ -18,6 +18,8 @@ import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectW
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 
 class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
 
@@ -54,9 +56,10 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
       }
   }
 
-  @Test
-  fun `test project groovy setting generation`(): Unit = runBlocking {
-    val projectInfo = projectInfo("project", GradleDsl.GROOVY) {
+  @ParameterizedTest
+  @EnumSource(GradleDsl::class)
+  fun `test project setting generation`(gradleDsl: GradleDsl): Unit = runBlocking {
+    val projectInfo = projectInfo("project", gradleDsl) {
       withJavaBuildFile()
       withSettingsFile {
         setProjectName("project")
@@ -68,45 +71,10 @@ class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
       }
   }
 
-  @Test
-  fun `test project kotlin dsl setting generation`(): Unit = runBlocking {
-    val projectInfo = projectInfo("project", GradleDsl.KOTLIN) {
-      withJavaBuildFile()
-      withSettingsFile {
-        setProjectName("project")
-      }
-    }
-    createProjectByWizard(projectInfo)
-      .useProjectAsync { project ->
-        assertProjectState(project, projectInfo)
-      }
-  }
-
-  @Test
-  fun `test project groovy setting generation with groovy-kotlin scripts`(): Unit = runBlocking {
-    val projectInfo = projectInfo("project", GradleDsl.GROOVY) {
-      withJavaBuildFile()
-      withSettingsFile {
-        setProjectName("project")
-        include("module1")
-        include("module2")
-      }
-      moduleInfo("project.module1", "module1", GradleDsl.KOTLIN) {
-        withJavaBuildFile()
-      }
-      moduleInfo("project.module2", "module2", GradleDsl.GROOVY) {
-        withJavaBuildFile()
-      }
-    }
-    createProjectByWizard(projectInfo)
-      .useProjectAsync { project ->
-        assertProjectState(project, projectInfo)
-      }
-  }
-
-  @Test
-  fun `test project kotlin dsl setting generation with groovy-kotlin scripts`(): Unit = runBlocking {
-    val projectInfo = projectInfo("project", GradleDsl.KOTLIN) {
+  @ParameterizedTest
+  @EnumSource(GradleDsl::class)
+  fun `test project setting generation with groovy-kotlin scripts`(gradleDsl: GradleDsl): Unit = runBlocking {
+    val projectInfo = projectInfo("project", gradleDsl) {
       withJavaBuildFile()
       withSettingsFile {
         setProjectName("project")
