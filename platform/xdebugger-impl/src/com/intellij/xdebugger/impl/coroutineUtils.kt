@@ -7,10 +7,11 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.project.Project
-import com.intellij.platform.project.projectId
 import com.intellij.platform.debugger.impl.rpc.XValueApi
+import com.intellij.platform.project.projectId
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XInlineDebuggerDataCallback
 import com.intellij.xdebugger.frame.XValue
@@ -18,6 +19,7 @@ import com.intellij.xdebugger.impl.frame.XDebugManagerProxy
 import com.intellij.xdebugger.impl.frame.XDebugSessionProxy
 import com.intellij.xdebugger.impl.rpc.XDebuggerManagerApi
 import com.intellij.xdebugger.impl.rpc.sourcePosition
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -91,13 +93,24 @@ internal fun updateInlineDebuggerData(session: XDebugSessionProxy, xValue: XValu
   if (!manager.canUpdateInlineDebuggerFrames()) {
     return
   }
-  session.currentSuspendContextCoroutineScope?.launch {
+
+  val log = logger<XValueNodeImpl>()
+  val scope = session.currentSuspendContextCoroutineScope
+  log.info("Inline debugger: update for $xValue")
+  if (scope == null) {
+    log.info("Inline debugger: updateInlineDebuggerData skipped, current scope is null")
+    return
+  }
+  scope.launch {
     manager.withId(xValue, session) { xValueId ->
       val (canCompute, positionFlow) = XValueApi.getInstance().computeInlineData(xValueId) ?: return@withId
+      log.info("Inline debugger: computeInlineData returned $canCompute")
       if (canCompute != ThreeState.UNSURE) {
         positionFlow.toFlow().collect {
           withContext(Dispatchers.EDT) {
-            callback.computed(it.sourcePosition())
+            val sourcePosition = it.sourcePosition()
+            log.info("Inline debugger: updateInlineDebuggerData position is $sourcePosition")
+            callback.computed(sourcePosition)
           }
         }
       }

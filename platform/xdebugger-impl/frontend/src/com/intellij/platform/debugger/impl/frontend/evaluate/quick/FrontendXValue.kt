@@ -194,6 +194,10 @@ class FrontendXValue private constructor(
     return deferred.asCompletableFuture().asPromise()
   }
 
+  override fun toString(): String {
+    return "FrontendXValue(id=${xValueDto.id}, value=${presentation.value.rawText()})"
+  }
+
   private class FrontendXValuePresentation(private val advancedPresentation: XValueSerializedPresentation.AdvancedPresentation) : XValuePresentation() {
     override fun renderValue(renderer: XValueTextRenderer) {
       renderAdvancedPresentation(renderer, advancedPresentation)
@@ -321,4 +325,10 @@ private class FrontendXValueDisposer(project: Project, val cs: CoroutineScope) {
       XValueApi.getInstance().disposeXValue(xValueDto.id)
     }
   }
+}
+
+private fun XValueSerializedPresentation.rawText(): String = when (this) {
+  is XValueSerializedPresentation.AdvancedPresentation -> parts.joinToString("")
+  is XValueSerializedPresentation.ExtendedPresentation -> presentation.rawText()
+  is XValueSerializedPresentation.SimplePresentation -> value
 }

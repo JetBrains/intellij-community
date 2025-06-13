@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
@@ -43,6 +44,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNodeEx, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
+  private static final Logger LOG = Logger.getInstance(XValueNodeImpl.class);
+
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   private static final int MAX_NAME_LENGTH = 100;
@@ -123,13 +126,11 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private void updateInlineDebuggerData() {
     try {
       XDebugSessionProxy session = XDebugView.getSessionProxy(getTree());
-      final XSourcePosition mainPosition;
-      final XSourcePosition altPosition;
       if (session == null) return;
       XStackFrame currentFrame = session.getCurrentStackFrame();
       if (currentFrame == null) return;
-      mainPosition = session.getFrameSourcePosition(currentFrame, XSourceKind.MAIN);
-      altPosition = session.getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
+      final XSourcePosition mainPosition = session.getFrameSourcePosition(currentFrame, XSourceKind.MAIN);
+      final XSourcePosition altPosition = session.getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
       if (mainPosition == null && altPosition == null) {
         return;
       }
@@ -138,6 +139,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         @Override
         public void computed(XSourcePosition position) {
           if (isObsolete() || position == null) return;
+          LOG.info("Inline debugger data computed: " + position.getLine() + " " + position.getFile());
           VirtualFile file = position.getFile();
           // filter out values from other files
           VirtualFile mainFile = mainPosition != null ? mainPosition.getFile() : null;
