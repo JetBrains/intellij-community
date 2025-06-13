@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.components.service
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -51,7 +52,7 @@ class DeferredIconRepaintScheduler {
     val modality = ModalityState.current()
     return service<IconCalculatingService>().coroutineScope.launch {
       delay(50.milliseconds)
-      withContext(Dispatchers.EDT + modality.asContextElement()) {
+      withContext(Dispatchers.ui(UiDispatcherKind.STRICT) + modality.asContextElement()) {
         while (!queue.isEmpty()) {
           ensureActive()
           val request = queue.removeFirst()
