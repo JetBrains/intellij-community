@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -17,6 +18,7 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -32,7 +34,9 @@ import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.intellij.workspaceModel.ide.toPath
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledOnOs
 import org.junit.jupiter.api.condition.OS
@@ -63,9 +67,11 @@ class NonIndexableFileNavigationContributorTest {
 
   private suspend fun processNames(): Collection<String?> {
     val contributor = NonIndexableFileNavigationContributor()
-    val processor = CommonProcessors.CollectProcessor<String>()
-    readAction { contributor.processNames(processor, GlobalSearchScope.projectScope(project), null) }
-    return processor.results
+    return readAction {
+      val processor = CommonProcessors.CollectProcessor<String>()
+      contributor.processNames(processor, GlobalSearchScope.projectScope(project), null)
+      processor.results
+    }
   }
 
   @Test
@@ -174,29 +180,30 @@ class NonIndexableFileNavigationContributorTest {
   }
 
   @Test
+  @RegistryKey("search.in.non.indexable", "false")
   fun `default search everywhere doesn't work`(): Unit = runBlocking {
-    ChooseByNameContributor.FILE_EP_NAME.point.unregisterExtension(NonIndexableFileNavigationContributor::class.java)
-
     val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
+    baseDir.newVirtualFile("dir1/file1")
     workspaceModel.update { storage ->
       storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
     }
-    baseDir.newVirtualFile("dir1/file1")
+    VfsTestUtil.syncRefresh()
 
     val contributor = FileSearchEverywhereContributor(createEvent(project))
     Disposer.register(disposable, contributor)
 
-    val items = contributor.search("file1", MockProgressIndicator()).toSet()
+    val items = contributor.search("file1", MockProgressIndicator())
     assertThat(items).isEmpty()
   }
 
   @Test
   fun `search everywhere`(): Unit = runBlocking {
     val unindexed1 = baseDir.newVirtualDirectory("dir1").toVirtualFileUrl(urlManager)
+    baseDir.newVirtualFile("dir1/file1")
     workspaceModel.update { storage ->
       storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
     }
-    baseDir.newVirtualFile("dir1/file1")
+    VfsTestUtil.syncRefresh()
 
     val contributor = FileSearchEverywhereContributor(createEvent(project))
     Disposer.register(disposable, contributor)
@@ -215,6 +222,7 @@ class NonIndexableFileNavigationContributorTest {
     workspaceModel.update { storage ->
       storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
     }
+    VfsTestUtil.syncRefresh()
 
     val contributor = FileSearchEverywhereContributor(createEvent(project))
     Disposer.register(disposable, contributor)
@@ -233,6 +241,7 @@ class NonIndexableFileNavigationContributorTest {
     workspaceModel.update { storage ->
       storage.addEntity(NonIndexableTestEntity(unindexed1, NonPersistentEntitySource))
     }
+    VfsTestUtil.syncRefresh()
 
     val contributor = FileSearchEverywhereContributor(createEvent(project))
     Disposer.register(disposable, contributor)
