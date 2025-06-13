@@ -8,6 +8,8 @@ internal class McpServerSettings : SimplePersistentStateComponent<McpServerSetti
   companion object {
     @JvmStatic
     fun getInstance(): McpServerSettings = service()
+
+    const val DEFAULT_MCP_PORT: Int = 64342
   }
 
   override fun loadState(state: MyState) {
@@ -18,5 +20,6 @@ internal class McpServerSettings : SimplePersistentStateComponent<McpServerSetti
   internal class MyState : BaseState() {
     var enableBraveMode: Boolean by property(false)
     var enableMcpServer: Boolean by property(false)
+    var mcpServerPort: Int by property(DEFAULT_MCP_PORT)
   }
 }

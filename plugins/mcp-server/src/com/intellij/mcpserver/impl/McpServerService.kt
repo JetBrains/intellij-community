@@ -35,7 +35,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import kotlin.coroutines.cancellation.CancellationException
 
-const val DEFAULT_MCP_PORT: Int = 64342
 
 private val logger = logger<McpServerService>()
 
@@ -83,7 +82,7 @@ class McpServerService(val cs: CoroutineScope) {
   class MyProjectListener: ProjectActivity {
     override suspend fun execute(project: Project) {
       // TODO: consider start on app startup
-      project.serviceAsync<McpServerService>() // initialize service
+      serviceAsync<McpServerService>() // initialize service
     }
   }
 
@@ -92,8 +91,10 @@ class McpServerService(val cs: CoroutineScope) {
     return startServer()
   }
 
-  private fun startServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
-    val freePort = findFirstFreePort(DEFAULT_MCP_PORT)
+  private fun startServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration> {
+    val serverSavedPort = McpServerSettings.getInstance().state.mcpServerPort
+    val freePort = findFirstFreePort(serverSavedPort)
+    McpServerSettings.getInstance().state.mcpServerPort = freePort
 
     val mcpTools = MutableStateFlow(getMcpTools())
 
