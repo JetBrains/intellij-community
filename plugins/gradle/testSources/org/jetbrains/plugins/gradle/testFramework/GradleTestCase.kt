@@ -175,7 +175,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     filesConfiguration.withSettingsFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 
-  open fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
+  fun ModuleInfo.Builder.withBuildFile(configure: GradleBuildScriptBuilder<*>.() -> Unit) {
     filesConfiguration.withBuildFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)
   }
 }

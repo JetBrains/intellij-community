@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test
 
 @RegistryKey("ide.activity.tracking.enable.debug", "true")
 @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
-class GradleCreateProjectTest : GradleCreateProjectTestCase() {
+class GradleJavaNewProjectWizardTest : GradleJavaNewProjectWizardTestCase() {
 
   @Test
   fun `test project re-create`(): Unit = runBlocking {
