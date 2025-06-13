@@ -8,6 +8,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "mcpserver_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "mcpserver",
   module_name = "intellij.mcpserver",
@@ -142,7 +148,10 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
   ],
-  runtime_deps = [":mcpserver_resources"]
+  runtime_deps = [
+    ":mcpserver_resources",
+    ":mcpserver_test_resources",
+  ]
 )
 
 jps_test(
