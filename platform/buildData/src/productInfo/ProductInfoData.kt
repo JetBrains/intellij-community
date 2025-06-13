@@ -1,8 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.buildData.productInfo
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.jetbrains.annotations.ApiStatus
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * Describes the product-info file containing meta-information about a product installation.
@@ -27,6 +33,8 @@ class ProductInfoData private constructor(
   val dataDirectoryName: String? = null,
   val svgIconPath: String? = null,
   val productVendor: String? = null,
+  @Serializable(with = LocalDateSerializer::class)
+  val majorVersionReleaseDate: LocalDate? = null,
   val launch: List<ProductInfoLaunchData>,
   val customProperties: List<CustomProperty> = emptyList(),
   val bundledPlugins: List<String> = emptyList(),
@@ -56,6 +64,7 @@ class ProductInfoData private constructor(
       dataDirectoryName: String,
       svgIconPath: String?,
       productVendor: String,
+      majorVersionReleaseDate: LocalDate?,
       launch: List<ProductInfoLaunchData>,
       customProperties: List<CustomProperty>,
       bundledPlugins: List<String>,
@@ -64,7 +73,8 @@ class ProductInfoData private constructor(
       flavors: List<ProductFlavorData>,
       layout: List<ProductInfoLayoutItem>,
     ): ProductInfoData = ProductInfoData(
-      name, version, versionSuffix, buildNumber, productCode, envVarBaseName, dataDirectoryName, svgIconPath, productVendor, launch,
+      name, version, versionSuffix, buildNumber, productCode, envVarBaseName, dataDirectoryName, svgIconPath, productVendor,
+      majorVersionReleaseDate, launch,
       customProperties, bundledPlugins, modules, fileExtensions, flavors, layout
     )
   }
@@ -131,3 +141,16 @@ class CustomProperty @ApiStatus.Internal constructor(
   val key: String,
   val value: String,
 )
+
+@Serializer(forClass = LocalDate::class)
+private object LocalDateSerializer : KSerializer<LocalDate> {
+  private val formatter = DateTimeFormatter.ofPattern("yyyyMMdd")
+
+  override fun serialize(encoder: Encoder, value: LocalDate) {
+    encoder.encodeString(value.format(formatter))
+  }
+
+  override fun deserialize(decoder: Decoder): LocalDate {
+    return LocalDate.parse(decoder.decodeString(), formatter)
+  }
+}

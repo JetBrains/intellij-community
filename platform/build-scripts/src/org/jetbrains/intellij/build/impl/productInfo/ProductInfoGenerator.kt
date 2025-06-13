@@ -1,10 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.productInfo
 
-import com.intellij.platform.buildData.productInfo.*
+import com.intellij.platform.buildData.productInfo.CustomCommandLaunchData
+import com.intellij.platform.buildData.productInfo.CustomProperty
+import com.intellij.platform.buildData.productInfo.CustomPropertyNames
+import com.intellij.platform.buildData.productInfo.ProductFlavorData
+import com.intellij.platform.buildData.productInfo.ProductInfoData
+import com.intellij.platform.buildData.productInfo.ProductInfoLaunchData
+import com.intellij.platform.buildData.productInfo.ProductInfoLayoutItemKind
 import com.jetbrains.plugin.structure.base.utils.exists
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuiltinModulesFileData
@@ -16,6 +21,8 @@ import org.jetbrains.intellij.build.impl.client.createFrontendContextForLauncher
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
 
 const val PRODUCT_INFO_FILE_NAME: String = "product-info.json"
@@ -58,6 +65,7 @@ internal fun generateProductInfoJson(
     dataDirectoryName = context.systemSelector,
     svgIconPath = if (appInfo.svgRelativePath == null) null else "${relativePathToBin}/${productProperties.baseFileName}.svg",
     productVendor = appInfo.shortCompanyName,
+    majorVersionReleaseDate = LocalDate.parse(appInfo.majorReleaseDate, DateTimeFormatter.ofPattern("yyyyMMdd")),
     launch = launch,
     customProperties = listOfNotNull(generateGitRevisionProperty(context)) + productProperties.generateCustomPropertiesForProductInfo(),
     bundledPlugins = builtinModules?.plugins ?: emptyList(),

@@ -54,6 +54,7 @@ f:com.intellij.platform.buildData.productInfo.ProductInfoData
 - f:getFileExtensions():java.util.List
 - f:getFlavors():java.util.List
 - f:getLaunch():java.util.List
+- f:getMajorVersionReleaseDate():java.time.LocalDate
 - f:getModules():java.util.List
 - f:getName():java.lang.String
 - f:getProductCode():java.lang.String

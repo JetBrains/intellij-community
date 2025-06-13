@@ -6,14 +6,24 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.buildData.productInfo.ProductInfoData
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
+import java.time.LocalDate
 
 @TestApplication
 class IdeProductInfoTest {
   private val basePath = PathManagerEx.findFileUnderCommunityHome("platform/platform-tests/testData/productInfo").toPath()
-  
+
+  @Test
+  fun `idea 2025_2_EAP`() {
+    assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)
+    val productInfo = loadProductInfo("idea-2025.2-EAP-Linux")
+    assertEquals("2025.2", productInfo.version)
+    assertEquals("EAP", productInfo.versionSuffix)
+    assertEquals(LocalDate.of(2025, 6, 13), productInfo.majorVersionReleaseDate)
+  }
+
   @Test
   fun `idea 2024_3_1`() {
     assumeTrue(SystemInfo.isLinux || SystemInfo.isWindows)

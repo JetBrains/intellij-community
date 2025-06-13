@@ -1,0 +1,116 @@
+{
+  "name": "IntelliJ IDEA",
+  "version": "2025.2",
+  "versionSuffix": "EAP",
+  "buildNumber": "252.SNAPSHOT",
+  "productCode": "IU",
+  "envVarBaseName": "IDEA",
+  "dataDirectoryName": "IntelliJIdea2025.2",
+  "svgIconPath": "bin/idea.svg",
+  "productVendor": "JetBrains",
+  "majorVersionReleaseDate": "20250613",
+  "launch": [
+    {
+      "os": "Linux",
+      "arch": "amd64",
+      "launcherPath": "bin/idea",
+      "javaExecutablePath": "jbr/bin/java",
+      "vmOptionsFilePath": "bin/idea64.vmoptions",
+      "startupWmClass": "jetbrains-idea",
+      "bootClassPathJarNames": [
+        "platform-loader.jar",
+        "util-8.jar",
+        "app-client.jar",
+        "util.jar",
+        "product.jar",
+        "app.jar",
+        "util_rt.jar"
+      ],
+      "additionalJvmArguments": [
+        "-Xbootclasspath/a:$IDE_HOME/lib/nio-fs.jar",
+        "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+        "-Didea.vendor.name=JetBrains",
+        "-Didea.paths.selector=IntelliJIdea2025.2",
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+        "--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED"
+      ],
+      "mainClass": "com.intellij.idea.Main",
+      "customCommands": [
+        {
+          "commands": [
+            "thinClient",
+            "thinClient-headless",
+            "installFrontendPlugins"
+          ],
+          "vmOptionsFilePath": "bin/jetbrains_client64.vmoptions",
+          "bootClassPathJarNames": [
+            "platform-loader.jar"
+          ],
+          "additionalJvmArguments": [
+            "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+            "-Didea.vendor.name=JetBrains",
+            "-Didea.paths.selector=IntelliJIdea2025.2",
+            "-Dintellij.platform.load.app.info.from.resources=true"
+          ],
+          "mainClass": "com.intellij.platform.runtime.loader.IntellijLoader",
+          "envVarBaseName": "JETBRAINS_CLIENT",
+          "dataDirectoryName": "IntelliJIdea2025.2"
+        },
+        {
+          "commands": [
+            "qodana"
+          ],
+          "bootClassPathJarNames": [
+            "platform-loader.jar",
+            "util-8.jar",
+            "app-client.jar",
+            "util.jar",
+            "product.jar",
+            "app.jar",
+            "nio-fs.jar"
+          ],
+          "additionalJvmArguments": [
+            "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",
+            "-Didea.vendor.name=JetBrains",
+            "-Didea.paths.selector=IntelliJIdea2025.2",
+            "-Dqodana.eap=true"
+          ]
+        }
+      ]
+    }
+  ],
+  "customProperties": [
+    {
+      "key": "source.git.revision",
+      "value": "7bca95294c562"
+    }
+  ],
+  "bundledPlugins": [
+    "AngularJS",
+    "tslint"
+  ],
+  "modules": [
+    "com.intellij.java.frontback.impl",
+    "org.jetbrains.plugins.gradle.java"
+  ],
+  "fileExtensions": [
+    "*.ane",
+    "yarn.lock"
+  ],
+  "layout": [
+    {
+      "name": "AngularJS",
+      "kind": "plugin",
+      "classPath": [
+        "plugins/angular/lib/angular.jar"
+      ]
+    },
+   {
+      "name": "tslint",
+      "kind": "plugin",
+      "classPath": [
+        "plugins/tslint/lib/tslint.jar"
+      ]
+    }
+  ]
+}

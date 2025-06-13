@@ -14,11 +14,8 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.exists
-import kotlin.io.path.inputStream
-import kotlin.io.path.isDirectory
-import kotlin.io.path.name
+import java.time.ZoneId
+import kotlin.io.path.*
 
 internal class IdeProductInfoImpl : IdeProductInfo {
   private val json = Json { ignoreUnknownKeys = true }
@@ -71,6 +68,7 @@ internal class IdeProductInfoImpl : IdeProductInfo {
       dataDirectoryName = "UNKNOWN",
       svgIconPath = null,
       productVendor = appInfo.shortCompanyName,
+      majorVersionReleaseDate = appInfo.majorReleaseBuildDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate(),
       launch = emptyList(),
       customProperties = emptyList(),
       bundledPlugins = emptyList(),
