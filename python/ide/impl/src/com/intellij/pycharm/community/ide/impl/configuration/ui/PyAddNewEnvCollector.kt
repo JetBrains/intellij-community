@@ -44,7 +44,7 @@ internal object PyAddNewEnvCollector : CounterUsagesCollector() {
     condaEnvFromFileDataEvent.log(project, condaPath, environmentYmlPath)
   }
 
-  private val GROUP = EventLogGroup("python.sdk.addNewEnv", 1)
+  private val GROUP = EventLogGroup("python.sdk.addNewEnv", 4)
 
   private val venvFromFileDataEvent = GROUP.registerEvent(
     "venvFromFile.data.confirmed",
