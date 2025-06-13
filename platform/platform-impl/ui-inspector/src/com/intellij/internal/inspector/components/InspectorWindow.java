@@ -537,7 +537,7 @@ public final class InspectorWindow extends JDialog implements Disposable {
   }
 
   private final class ToggleShowAccessibilityIssuesAction extends MyTextAction implements Toggleable {
-    private final boolean isAccessibilityAuditEnabled = Registry.is("ui.inspector.accessibility.audit", false);
+    private final boolean isAccessibilityAuditEnabled = Registry.is("ui.inspector.accessibility.audit", true);
     public static final String SHOW_ACCESSIBILITY_ISSUES_KEY = "ui.inspector.show.accessibility.issues.key";
     private boolean showAccessibilityIssues;
 
