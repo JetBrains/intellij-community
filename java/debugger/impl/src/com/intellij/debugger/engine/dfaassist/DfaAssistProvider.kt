@@ -56,7 +56,7 @@ interface DfaAssistProvider {
 
   /**
    * @param proxy  proxy to create JDI values
-   * @param var    DfaVariableValue to find value for
+   * @param dfaVar DfaVariableValue to find value for
    * @param anchor anchor previously returned by [.getAnchor] call, where analysis takes place
    * @return JDI value for a variable; null if value is not known; NullConst if value is known to be null
    * (use [.wrap] utility method for this purpose).
@@ -65,7 +65,7 @@ interface DfaAssistProvider {
   @Throws(EvaluateException::class)
   fun getJdiValueForDfaVariable(
     proxy: StackFrameProxyEx,
-    `var`: DfaVariableValue,
+    dfaVar: DfaVariableValue,
     anchor: PsiElement,
   ): Value?
 
