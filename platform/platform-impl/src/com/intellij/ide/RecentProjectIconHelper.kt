@@ -35,7 +35,8 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 
-internal fun unscaledProjectIconSize() = Registry.intValue("ide.project.icon.size", 20)
+@Internal
+fun unscaledProjectIconSize(): Int = Registry.intValue("ide.project.icon.size", 20)
 
 internal fun userScaledProjectIconSize() = JBUIScale.scale(unscaledProjectIconSize())
 
