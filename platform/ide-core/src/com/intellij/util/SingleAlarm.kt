@@ -39,18 +39,15 @@ private val LOG: Logger = logger<SingleAlarm>()
  * [cancelAndRequest] cancels the current request and schedules a new one instead, i.e., it delays execution of the request.
  */
 @Obsolete
-class SingleAlarm @Internal constructor(
+class SingleAlarm private constructor(
   private val task: Runnable,
   private val delay: Int,
   parentDisposable: Disposable?,
-  threadToUse: ThreadToUse,
-  modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null,
-  coroutineScope: CoroutineScope? = null,
+  coroutineScope: CoroutineScope?,
+  private val taskContext: CoroutineContext,
 ) : Disposable {
   // it is a supervisor coroutine scope
   private val taskCoroutineScope: CoroutineScope
-
-  private val taskContext: CoroutineContext
 
   private val LOCK = Any()
 
@@ -145,23 +142,28 @@ class SingleAlarm @Internal constructor(
     modalityState = ModalityState.nonModal(),
   )
 
+  @Internal
+  constructor(
+    task: Runnable,
+    delay: Int,
+    parentDisposable: Disposable?,
+    threadToUse: ThreadToUse,
+    modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null,
+    coroutineScope: CoroutineScope? = null,
+  ) : this(
+    task = task,
+    delay = delay,
+    parentDisposable = parentDisposable,
+    coroutineScope = coroutineScope,
+    taskContext = createContext(threadToUse, modalityState),
+  )
+
   init {
-    var context = ClientId.currentOrNull?.asContextElement() ?: EmptyCoroutineContext
-    if (threadToUse == ThreadToUse.SWING_THREAD) {
-      // maybe not defined in tests
-      context += getEdtDispatcher()
-      if (modalityState != null) {
-        context += modalityState.asContextElement()
-      }
-    }
-
-    taskContext = context
-
     if (coroutineScope == null) {
       val app = ApplicationManager.getApplication()
       if (app == null) {
         LOG.error("Do not use an alarm in an early executing code")
-        @file:OptIn(DelicateCoroutinesApi::class)
+        @OptIn(DelicateCoroutinesApi::class)
         taskCoroutineScope = GlobalScope
       }
       else {
@@ -233,8 +235,7 @@ class SingleAlarm @Internal constructor(
       )
     }
 
-    @Internal
-    fun getEdtDispatcher(): CoroutineContext {
+    internal fun getEdtDispatcher(): CoroutineContext {
       val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(UiDispatcherKind.LEGACY, false)
       if (edtDispatcher == null) {
         // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
@@ -462,6 +463,20 @@ class SingleAlarm @Internal constructor(
   }
 }
 
-@Internal
+private fun createContext(
+  threadToUse: ThreadToUse,
+  modalityState: ModalityState?,
+): CoroutineContext {
+  var context = ClientId.currentOrNull?.asContextElement() ?: EmptyCoroutineContext
+  if (threadToUse == ThreadToUse.SWING_THREAD) {
+    // maybe not defined in tests
+    context += SingleAlarm.getEdtDispatcher()
+    if (modalityState != null) {
+      context += modalityState.asContextElement()
+    }
+  }
+  return context
+}
+
 @Service
 private class SingleAlarmSharedCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
