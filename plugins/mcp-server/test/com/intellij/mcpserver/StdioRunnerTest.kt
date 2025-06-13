@@ -81,7 +81,8 @@ class StdioRunnerTest {
     Assertions.assertNotNull(jsonConfig["command"])
     Assertions.assertNotNull(jsonConfig["args"])
     Assertions.assertNotNull(jsonConfig["env"])
-    
+    Assertions.assertEquals("stdio", jsonConfig["type"]?.jsonPrimitive?.content)
+
     // Verify environment variables
     val env = jsonConfig["env"]?.jsonObject!!
     Assertions.assertNotNull(env)

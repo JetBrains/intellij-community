@@ -58,6 +58,7 @@ fun createStdioMcpServerCommandLine(ideServerPort: Int, projectBasePath: String?
  */
 fun createStdioServerJsonEntry(cmd: GeneralCommandLine): JsonObject {
   return buildJsonObject {
+    put("type", "stdio")
     put("env", buildJsonObject {
       for ((k, v) in cmd.environment) {
         put(k, v)
