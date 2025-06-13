@@ -112,7 +112,7 @@ internal class SwingComparisonTabPanel : BorderLayoutPanel() {
                         autoHideOnDisable = false
                     }
 
-                compose { ExternalLink(text = "Disabled Link", enabled = false, onClick = {}) }
+                compose { ExternalLink(text = "Disabled link", enabled = false, onClick = {}) }
             }
             .layout(RowLayout.PARENT_GRID)
     }
