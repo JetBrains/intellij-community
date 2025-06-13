@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.UndoableAction
 
 
 internal class UndoDumpUnit(
+  private val id: String,
   private val command: String,
   private val actions: Collection<UndoableAction>,
   private val isGlobal: Boolean,
@@ -24,6 +25,7 @@ internal class UndoDumpUnit(
     @JvmStatic
     fun fromGroup(group: UndoableGroup): UndoDumpUnit {
       return UndoDumpUnit(
+        "@" + Integer.toHexString(System.identityHashCode(group)),
         command(group.commandName),
         ArrayList(group.actions),
         group.isGlobal,
@@ -40,6 +42,7 @@ internal class UndoDumpUnit(
     @JvmStatic
     fun fromMerger(merger: CommandMerger): UndoDumpUnit {
       return UndoDumpUnit(
+        "",
         command(merger.commandName),
         ArrayList(merger.currentActions),
         merger.isGlobal,
@@ -73,8 +76,7 @@ internal class UndoDumpUnit(
     val confirmationPolicyStr = if (confirmationPolicy != UndoConfirmationPolicy.DEFAULT) " $confirmationPolicy" else ""
     val docs = if (affectedDocuments.size > 1) " affected: ${printDocs(affectedDocuments)}" else ""
     val addDocs = if (additionalAffectedDocuments.size > 1) " additional: ${printDocs(additionalAffectedDocuments)}" else ""
-    return "{$command with ${actions.size} ${if (actions.size == 1) "action" else "actions"} $flushReason: $actionsStr" +
-           "$isGlobalStr$isTransparentStr$isTemporaryStr$isValidStr$confirmationPolicyStr$docs$addDocs}"
+    return "{$command $id$isGlobalStr$isTransparentStr$isTemporaryStr$isValidStr with ${actions.size} ${if (actions.size == 1) "action" else "actions"} $flushReason: $actionsStr$confirmationPolicyStr$docs$addDocs}"
   }
 
   private fun printDocs(docs: Collection<DocumentReference>): String {

@@ -13,7 +13,7 @@ import java.util.Collection;
 final class MockUndoableAction extends BasicUndoableAction {
   private final boolean isGlobal;
 
-  MockUndoableAction(@NotNull Collection<? extends DocumentReference> docRefs, boolean isGlobal) {
+  MockUndoableAction(@NotNull Collection<DocumentReference> docRefs, boolean isGlobal) {
     super(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
     this.isGlobal = isGlobal;
   }

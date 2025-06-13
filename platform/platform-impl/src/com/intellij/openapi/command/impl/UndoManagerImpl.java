@@ -240,23 +240,19 @@ public class UndoManagerImpl extends UndoManager {
 
   @ApiStatus.Internal
   public @NotNull String dumpState(@Nullable FileEditor editor, @NotNull String title) {
-    boolean undoAvailable = isUndoAvailable(editor);
-    boolean redoAvailable = isRedoAvailable(editor);
+    String editorString = "dump for " + (editor == null ? "GLOBAL" : editor.toString());
+    String undoAvailable = String.valueOf(isUndoAvailable(editor)).toUpperCase(Locale.ROOT);
+    String redoAvailable = String.valueOf(isRedoAvailable(editor)).toUpperCase(Locale.ROOT);
     Pair<String, String> undoDescription = getUndoActionNameAndDescription(editor);
     Pair<String, String> redoDescription = getRedoActionNameAndDescription(editor);
     String undoStatus = "undo: %s, %s, %s".formatted(undoAvailable, undoDescription.getFirst(), undoDescription.getSecond());
     String redoStatus = "redo: %s, %s, %s".formatted(redoAvailable, redoDescription.getFirst(), redoDescription.getSecond());
     String stacks;
     UndoClientState state = getClientState(editor);
-    Collection<DocumentReference> docRefs = UndoDocumentUtil.getDocRefs(editor);
-    if (state == null && docRefs == null) {
-      stacks = "no state, no docs";
-    } else if (state != null && docRefs == null) {
-      stacks = "no docs";
-    } else if (state == null /* && docRefs != null */) {
+    if (state == null) {
       stacks = "no state";
     } else {
-      stacks = state.dump(docRefs);
+      stacks = state.dump(editor);
     }
     return """
 
@@ -265,8 +261,9 @@ public class UndoManagerImpl extends UndoManager {
       %s
       %s
       %s
+      %s
       _____________________________________________________________________________________________________________________
-      """.formatted(title, undoStatus, redoStatus, stacks);
+      """.formatted(title, editorString, undoStatus, redoStatus, stacks);
   }
 
   @ApiStatus.Internal

@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup> {
@@ -143,7 +144,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     removeEmptyStacks();
   }
 
-  void collectAllAffectedDocuments(@NotNull Collection<? super DocumentReference> result) {
+  void collectAllAffectedDocuments(@NotNull Collection<DocumentReference> result) {
     for (UndoableGroup undoableGroup : globalStack) {
       result.addAll(undoableGroup.getAffectedDocuments());
     }
@@ -176,22 +177,32 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     return getStack(docRef).size();
   }
 
-  @NotNull String dump(@NotNull Collection<DocumentReference> refs) {
-    String name = isUndo() ? "UndoStack" : "RedoStack";
-    if (refs.isEmpty()) {
-      return name + " for global\n" + dumpStack(globalStack);
+  @NotNull Collection<DocumentReference> getAffectedDocuments(@Nullable Collection<DocumentReference> docRefs) {
+    if (docRefs == null) {
+      return getAffectedDocuments();
+    } else {
+      var result = new HashSet<>(docRefs);
+      var stacks = getAffectedStacks(docRefs, true);
+      for (UndoRedoList<UndoableGroup> stack : stacks) {
+        for (UndoableGroup group : stack) {
+          result.addAll(group.getAffectedDocuments());
+        }
+      }
+      return result;
     }
-    StringBuilder sb = new StringBuilder();
-    for (DocumentReference doc : refs) {
-      UndoRedoList<UndoableGroup> stack = getStack(doc);
-      sb.append(name)
-        .append(" for ")
-        .append(doc)
-        .append("\n")
-        .append(dumpStack(stack))
-        .append("\n");
-    }
-    return sb.toString();
+  }
+
+  @NotNull String dump(@Nullable DocumentReference docRef) {
+    String stackName = isUndo() ? "UndoStack" : "RedoStack";
+    UndoRedoList<UndoableGroup> stack = docRef == null ? globalStack : getStack(docRef);
+    var affected = stack.stream()
+      .flatMap(group -> group.getAffectedDocuments().stream())
+      .distinct()
+      .map(Objects::toString)
+      .collect(Collectors.joining(", ", "[", "]"));
+    return """
+      %s affected %s
+      %s""".formatted(stackName, affected, dumpStack(stack));
   }
 
   @TestOnly
@@ -247,7 +258,7 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
     return result;
   }
 
-  private void collectLocalAffectedDocuments(@NotNull Collection<? super DocumentReference> result) {
+  private void collectLocalAffectedDocuments(@NotNull Collection<DocumentReference> result) {
     result.addAll(myDocumentStacks.keySet());
     DocumentReferenceManager documentReferenceManager = DocumentReferenceManager.getInstance();
 
@@ -279,13 +290,17 @@ final class UndoRedoStacksHolder extends UndoRedoStacksHolderBase<UndoableGroup>
   }
 
   private static @NotNull String dumpStack(@NotNull UndoRedoList<UndoableGroup> stack) {
-    ArrayList<String> reversed = new ArrayList<>();
-    Iterator<UndoableGroup> it = stack.descendingIterator();
-    int i = 0;
-    while (it.hasNext()) {
-      reversed.add("  %s %s".formatted(i, it.next().dumpState0()));
-      i++;
+    if (stack.isEmpty()) {
+      return "  empty";
     }
-    return String.join("\n", reversed);
+    StringBuilder rows = new StringBuilder();
+    for (int i = stack.size() - 1; i >= 0; i--) {
+      String row = "  " + i + " " + stack.get(i).dumpState0();
+      rows.append(row);
+      if (i != 0) {
+        rows.append("\n");
+      }
+    }
+    return rows.toString();
   }
 }

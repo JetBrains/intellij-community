@@ -2,19 +2,17 @@
 package com.intellij.openapi.command.impl;
 
 
+import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.DocumentReference;
-import com.intellij.openapi.command.undo.GlobalUndoableAction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-
 
 @ApiStatus.Experimental
-final class MockGlobalUndoableAction extends GlobalUndoableAction {
+final class MockEditorChangeAction extends BasicUndoableAction {
 
-  MockGlobalUndoableAction(@NotNull Collection<DocumentReference> docRefs) {
-    super(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
+  MockEditorChangeAction(@NotNull DocumentReference docRef) {
+    super(docRef);
   }
 
   @Override
