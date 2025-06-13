@@ -260,11 +260,10 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
   }
 
   private suspend fun executeOnIdle() {
-    withContext(Dispatchers.EDT) {
-      val fileDocumentManager = serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl
-      writeIntentReadAction {
-        fileDocumentManager.saveAllDocuments(false)
-      }
+    val fileDocumentManager = serviceAsync<FileDocumentManager>() as FileDocumentManagerImpl
+    @Suppress("UsagesOfObsoleteApi")
+    withContext(Dispatchers.ui(UiDispatcherKind.LEGACY)) {
+      fileDocumentManager.saveAllDocuments(false)
     }
   }
 
