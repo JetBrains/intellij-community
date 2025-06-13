@@ -1,5 +1,7 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
+  <module value="com.intellij.modules.execution"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.execution.RunManager"
                     serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>

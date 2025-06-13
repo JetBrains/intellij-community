@@ -1,6 +1,8 @@
 <idea-plugin>
   <dependencies>
     <module name="intellij.platform.vcs.impl"/>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.todo"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"

@@ -1,5 +1,7 @@
 <!--suppress PluginXmlRegistrationCheck -->
 <idea-plugin>
+  <module value="com.intellij.modules.lang.actions"/>
+
   <actions>
     <action id="IncrementalSearch" class="com.intellij.codeInsight.navigation.actions.IncrementalSearchAction"/>
 
