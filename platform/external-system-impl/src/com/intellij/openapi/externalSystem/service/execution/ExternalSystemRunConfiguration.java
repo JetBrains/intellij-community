@@ -74,9 +74,17 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
   private static final String DEBUG_SERVER_PROCESS_NAME = "ExternalSystemDebugServerProcess";
   private static final String REATTACH_DEBUG_PROCESS_NAME = "ExternalSystemReattachDebugProcess";
+  private static final String DEBUG_SUPPORTED = "ExternalSystemDebugSupported";
 
   private boolean isDebugServerProcess = true;
   private boolean isReattachDebugProcess = false;
+
+  /**
+   * Determines if ExternalSystemTaskDebugRunner should support this run configuration.
+   * @see com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner
+   * This will cause the debug action to be hidden in the IDE unless another debug runner accepts the run configuration.
+   */
+  private boolean isDebuggingSupported = true;
 
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
                                         Project project,
@@ -106,6 +114,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   public void setDebugServerProcess(boolean debugServerProcess) {
     isDebugServerProcess = debugServerProcess;
     putUserData(DEBUG_SERVER_PROCESS_KEY, debugServerProcess);
+  }
+
+  public boolean isDebuggingSupported() {
+    return isDebuggingSupported;
+  }
+
+  public void setDebuggingSupported(boolean debuggingSupported) {
+    this.isDebuggingSupported = debuggingSupported;
   }
 
   @Override
@@ -156,6 +172,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
       readExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, this::setDebugServerProcess);
       readExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, this::setReattachDebugProcess);
+      readExternalBoolean(element, DEBUG_SUPPORTED, this::setDebuggingSupported);
     }
     ExternalSystemRunConfigurationExtensionManager.getInstance().readExternal(this, element);
   }
@@ -176,6 +193,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }));
     writeExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, isDebugServerProcess());
     writeExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, isReattachDebugProcess());
+    writeExternalBoolean(element, DEBUG_SUPPORTED, isDebuggingSupported());
     ExternalSystemRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
   }
 

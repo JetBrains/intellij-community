@@ -249,10 +249,12 @@ c:com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigu
 - getSettings():com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 - getState(com.intellij.execution.Executor,com.intellij.execution.runners.ExecutionEnvironment):com.intellij.execution.configurations.RunProfileState
 - isDebugServerProcess():Z
+- isDebuggingSupported():Z
 - isReattachDebugProcess():Z
 - readExternal(org.jdom.Element):V
 - ps:readExternalBoolean(org.jdom.Element,java.lang.String,java.util.function.Consumer):Z
 - setDebugServerProcess(Z):V
+- setDebuggingSupported(Z):V
 - setReattachDebugProcess(Z):V
 - suggestedName():java.lang.String
 - writeExternal(org.jdom.Element):V
