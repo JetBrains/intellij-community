@@ -45,3 +45,5 @@ public class MyJavaClass {
         public final int prop = 1;
     }
 }
+
+// IGNORE_K2
