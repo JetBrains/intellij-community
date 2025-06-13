@@ -518,6 +518,9 @@
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.debugger.statistics.PyDataViewerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.python.community.impl.installer.BinaryInstallerUsagesCollector"/>
 
+    <notificationGroup id="Python Stub Packages Advertiser" displayType="STICKY_BALLOON" bundle="messages.PyBundle"
+                       key="code.insight.stub.package.advertiser.notifications.group.title"/>
+
     <!-- Code-insight IDE bridge -->
     <applicationService serviceInterface="com.jetbrains.python.PythonRuntimeService"
                         serviceImplementation="com.jetbrains.python.PythonRuntimeServiceImpl"/>
