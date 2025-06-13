@@ -20,6 +20,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.mapWithProgress
+import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDirectory
@@ -84,7 +86,9 @@ class ExtractModuleService(
         return@make
       }
       coroutineScope.launch {
-        analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRootPath)
+        withBackgroundProgress(project, JavaUiBundle.message("progress.title.extract.module.from.package", directory.name)) {
+          analyzeDependenciesAndCreateModule(directory, module, moduleName, targetSourceRootPath)
+        }
       }
     }
   }
@@ -96,16 +100,17 @@ class ExtractModuleService(
     moduleName: @NlsSafe String,
     targetSourceRootPath: String?,
   ) {
-    withBackgroundProgress(project, JavaUiBundle.message("progress.title.extract.module.analyzing.dependencies", directory.name)) {
+    reportSequentialProgress(6) { progressReporter ->
       val usedModules = LinkedHashSet<Module>()
       val usedLibraries = LinkedHashSet<Library>()
-      val compilerOutputPath = compilerOutputPath(module) ?: return@withBackgroundProgress
+      val compilerOutputPath = compilerOutputPath(module) ?: return@reportSequentialProgress
 
       val packageName = readAction {
         JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName
-      } ?: return@withBackgroundProgress
+      } ?: return@reportSequentialProgress
       val compiledPackagePath = packageName.replace('.', '/').let { compilerOutputPath.resolve(it) }
 
+      progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.collecting.used.classes", directory.name))
       val packageFileProcessor = ExtractModuleFileProcessor()
       compiledPackagePath.forEachClassfile { path ->
         packageFileProcessor.processFile(path)
@@ -117,6 +122,7 @@ class ExtractModuleService(
         }
       }
 
+      progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.building.dependencies"))
       readAction {
         val fileIndex = ProjectFileIndex.getInstance(module.project)
         packageFileProcessor.referencedClasses.forEach { className ->
@@ -137,16 +143,20 @@ class ExtractModuleService(
       }
 
       try {
+        progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.collecting.dependent.modules", module.name))
         val allDependentModules = readAction {
           collectDependentModules(module)
         }
         val packageClasses = packageFileProcessor.gatheredClassLinks.keys.filterTo(HashSet()) { it.startsWith("$packageName.") }
         val moduleClasses = moduleFileProcessor.gatheredClassLinks.keys.filterTo(HashSet()) { it !in packageClasses }
 
+        progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.analyzing.dependent.modules"))
         val packageDependentModules = filterDependentModules(allDependentModules, packageClasses, moduleClasses)
 
+        progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.preparing.to.extract"))
         val dependencyCleaner = ModuleDependenciesCleaner(module, usedModules)
         val dependenciesToRemove = dependencyCleaner.findDependenciesToRemove(moduleFileProcessor)
+        progressReporter.itemStep(JavaUiBundle.message("progress.step.extract.module.extracting"))
         writeAction {
           extractModule(directory, module, moduleName, usedModules, usedLibraries, targetSourceRootPath, packageDependentModules)
           dependencyCleaner.removeDependencies(dependenciesToRemove)
@@ -165,21 +175,21 @@ class ExtractModuleService(
 
   @OptIn(ExperimentalPathApi::class)
   private suspend fun filterDependentModules(dependentModules: Set<Module>, packageClasses: Set<String>, moduleClasses: Set<String>) =
-    dependentModules.mapNotNull { dependentModule ->
+    dependentModules.mapWithProgress { dependentModule ->
       val compilerOutputPath = compilerOutputPath(dependentModule)
       val compilerOutputPathForTests = compilerOutputPathForTests(dependentModule)
-      if (compilerOutputPath == null && compilerOutputPathForTests == null) return@mapNotNull null
+      if (compilerOutputPath == null && compilerOutputPathForTests == null) return@mapWithProgress null
 
       val (prodDependsOnPackage, prodDependsOnModule) = rootDependsOnPackageAndModule(compilerOutputPath, packageClasses, moduleClasses)
       if (prodDependsOnPackage && prodDependsOnModule) { // no need to check tests
-        return@mapNotNull DependentModule(dependentModule, ModuleDependencyScope.PRODUCTION, ModuleDependencyScope.PRODUCTION)
+        return@mapWithProgress DependentModule(dependentModule, ModuleDependencyScope.PRODUCTION, ModuleDependencyScope.PRODUCTION)
       }
 
       val (testDependsOnPackage, testDependsOnModule) = rootDependsOnPackageAndModule(compilerOutputPathForTests, packageClasses, moduleClasses)
       if (!prodDependsOnPackage && !testDependsOnPackage) { // no need to do anything
-        return@mapNotNull null
+        return@mapWithProgress null
       }
-      
+
       val extractedPackageDependencyScope = when {
         prodDependsOnPackage -> ModuleDependencyScope.PRODUCTION
         else -> ModuleDependencyScope.TEST
@@ -191,7 +201,7 @@ class ExtractModuleService(
       }
 
       DependentModule(dependentModule, extractedPackageDependencyScope, oldModuleDependencyScope)
-    }
+    }.filterNotNull()
 
   private suspend fun rootDependsOnPackageAndModule(
     path: Path?, packageClasses: Set<String>, moduleClasses: Set<String>,
