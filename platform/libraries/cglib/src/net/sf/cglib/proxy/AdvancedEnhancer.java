@@ -170,7 +170,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
    * @param superclass class to extend or interface to implement
    * @see #setInterfaces(Class[])
    */
-  public void setSuperclass(Class superclass) {
+  public void setSuperclass(Class<?> superclass) {
     if (superclass != null && superclass.isInterface()) {
       setInterfaces(new Class[]{ superclass });
     } else if (superclass != null && superclass.equals(Object.class)) {
@@ -187,14 +187,14 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
    * @param interfaces array of interfaces to implement, or null
    * @see Factory
    */
-  public void setInterfaces(Class[] interfaces) {
+  public void setInterfaces(Class<?>[] interfaces) {
     this.interfaces = interfaces;
   }
 
   /**
    * Set the {@link CallbackFilter} used to map the generated class' methods
    * to a particular callback index.
-   * New object instances will always use the same mapping, but may use different
+   * New object instances will always use the same mapping but may use different
    * actual callback objects.
    * @param filter the callback filter to use when generating a new class
    * @see #setCallbacks
@@ -262,7 +262,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
    * array for each method in the proxied class.
    * @param callbackTypes the array of callback types
    */
-  public void setCallbackTypes(Class[] callbackTypes) {
+  public void setCallbackTypes(Class<?>[] callbackTypes) {
     if (callbackTypes != null && callbackTypes.length == 0) {
       throw new IllegalArgumentException("Array cannot be empty");
     }
@@ -290,7 +290,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
    * @param arguments compatible wrapped arguments to pass to constructor
    * @return a new instance
    */
-  public Object create(Class[] argumentTypes, Object[] arguments) {
+  public Object create(Class<?>[] argumentTypes, Object[] arguments) {
     classOnly = false;
     if (argumentTypes == null || arguments == null || argumentTypes.length != arguments.length) {
       throw new IllegalArgumentException("Arguments must be non-null and of equal length");
@@ -338,7 +338,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
       filter = ALL_ZERO;
     }
     if (interfaces != null) {
-      for (Class anInterface : interfaces) {
+      for (Class<?> anInterface : interfaces) {
         if (anInterface == null) {
           throw new IllegalStateException("Interfaces cannot be null");
         }
@@ -375,7 +375,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
     PluginClassLoader bestLoader = null;
     ClassLoader nonPluginLoader = null;
 
-    Predicate<PluginClassLoader> isBetter = new java.util.function.Predicate<>() {
+    Predicate<PluginClassLoader> isBetter = new Predicate<>() {
 
       private int myMaxIndex = -1;
       private Object2IntMap<ClassLoader> myMap = null;
@@ -383,7 +383,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
       @Override
       public boolean test(@NotNull PluginClassLoader loader) {
         if (myMap == null) {
-          List<? extends IdeaPluginDescriptorImpl> plugins = PluginManagerCore.INSTANCE.getPluginSet().getEnabledModules();
+          List<? extends IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getPluginSet().getEnabledModules();
 
           int count = 0;
           myMap = new Object2IntOpenHashMap<>(plugins.size());
@@ -459,7 +459,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
     List<Constructor<?>> constructors = new ArrayList<>(Arrays.asList(sc.getDeclaredConstructors()));
     filterConstructors(sc, constructors);
 
-    // Order is very important: must add superclass, then
+    // Order is very important: must add a superclass, then
     // its superclass chain, then each interface and
     // its superinterfaces.
     final Set forcePublic = new HashSet<>();
@@ -469,7 +469,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
 
     //Changes by Peter Gromov & Gregory Shrago
 
-    for(Class aClass = sc; aClass != null; aClass = aClass.getSuperclass()) {
+    for(Class<?> aClass = sc; aClass != null; aClass = aClass.getSuperclass()) {
       for (final Method method : aClass.getDeclaredMethods()) {
         if (actualMethods.contains(method)) {
           removeAllCovariantMethods(actualMethods, method, covariantMethods);

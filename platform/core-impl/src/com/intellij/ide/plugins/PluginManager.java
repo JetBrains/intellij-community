@@ -152,7 +152,7 @@ public final class PluginManager {
   }
 
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
-    return PluginManagerCore.INSTANCE.getPluginSet().findEnabledPlugin(id);
+    return PluginManagerCore.getPluginSet().findEnabledPlugin(id);
   }
 
   /**
@@ -171,7 +171,7 @@ public final class PluginManager {
 
   @ApiStatus.Internal
   public static @NotNull Stream<PluginMainDescriptor> getVisiblePlugins(boolean showImplementationDetails) {
-    return filterVisiblePlugins(PluginManagerCore.INSTANCE.getPluginSet().allPlugins, showImplementationDetails);
+    return filterVisiblePlugins(PluginManagerCore.getPluginSet().allPlugins, showImplementationDetails);
   }
 
   @ApiStatus.Internal

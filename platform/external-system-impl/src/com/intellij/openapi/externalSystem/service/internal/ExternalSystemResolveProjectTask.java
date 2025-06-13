@@ -62,7 +62,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     myIsPreviewMode = importSpec.isPreviewMode();
     myVmOptions = importSpec.getVmOptions();
     myArguments = importSpec.getArguments();
-    myResolverPolicy = importSpec instanceof ImportSpecImpl ? ((ImportSpecImpl)importSpec).getProjectResolverPolicy() : null;
+    myResolverPolicy = importSpec instanceof ImportSpecImpl ? importSpec.getProjectResolverPolicy() : null;
     UserDataHolderBase userData = importSpec.getUserData();
     if (userData != null) {
       userData.copyUserDataTo(this);

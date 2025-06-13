@@ -329,7 +329,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       for (WorkspaceDataService<?> service : workspaceServices) {
         final long importStartTime = System.currentTimeMillis();
         if (modifiableModelsProvider instanceof IdeModifiableModelsProviderImpl) {
-          MutableEntityStorage mutableStorage = ((IdeModifiableModelsProviderImpl)modifiableModelsProvider).getActualStorageBuilder();
+          MutableEntityStorage mutableStorage = modifiableModelsProvider.getActualStorageBuilder();
           ((WorkspaceDataService)service).importData(toImport, projectData, project, mutableStorage);
         }
         else {
