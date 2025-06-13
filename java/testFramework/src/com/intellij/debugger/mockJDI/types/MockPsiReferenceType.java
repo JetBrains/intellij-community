@@ -4,6 +4,7 @@ package com.intellij.debugger.mockJDI.types;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
 import com.intellij.debugger.mockJDI.members.MockPsiMethod;
 import com.intellij.debugger.mockJDI.values.MockClassLoaderReference;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.ClassUtil;
@@ -28,7 +29,7 @@ public class MockPsiReferenceType extends MockType implements ReferenceType {
 
   @Override
   public String name() {
-    return ClassUtil.getJVMClassName(myClass);
+    return ReadAction.compute(() -> ClassUtil.getJVMClassName(myClass));
   }
 
   @Override

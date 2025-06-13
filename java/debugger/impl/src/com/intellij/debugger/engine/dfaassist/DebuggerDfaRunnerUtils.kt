@@ -14,10 +14,8 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
@@ -30,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.ExecutionException
 
 
 @Throws(EvaluateException::class)
@@ -96,7 +93,7 @@ private suspend fun resolveJdiValue(
     // Assume that assertions are enabled if we cannot fetch the status
     return location.virtualMachine().mirrorOf(status == ThreeState.NO)
   }
-  return syncReadAction { provider.getJdiValueForDfaVariable(proxy, variableValue, anchor) }
+  return provider.getJdiValueForDfaVariable(proxy, variableValue, anchor)
 }
 
 private suspend fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementPointer<PsiElement?>): Pupa? {
@@ -195,12 +192,3 @@ private data class LarvaData(
   val offset: Int,
   val dfaVariableValues: List<DfaVariableValue>,
 )
-
-private suspend fun <T> syncReadAction(action: () -> T): T =
-  try {
-    ReadAction.nonBlocking(action).executeSynchronously()
-  }
-  catch (e: ExecutionException) {
-    throw e.cause ?: e
-  }
-

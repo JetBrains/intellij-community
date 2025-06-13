@@ -102,7 +102,7 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
   }
 
   @Throws(EvaluateException::class)
-  override fun getJdiValueForDfaVariable(
+  override suspend fun getJdiValueForDfaVariable(
     proxy: StackFrameProxyEx,
     dfaVar: DfaVariableValue,
     anchor: PsiElement,
@@ -116,12 +116,12 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
       }
       val qualifierValue = getJdiValueForDfaVariable(proxy, qualifier, anchor)
       if (qualifierValue == null) return null
-      val element = descriptor.psiElement
+      val element = readAction { descriptor.psiElement }
       if (element is PsiField && qualifierValue is ObjectReference) {
         val type = qualifierValue.referenceType()
-        val psiClass = element.getContainingClass()
-        if (psiClass != null && type.name() == JVMNameUtil.getClassVMName(psiClass)) {
-          val field = DebuggerUtils.findField(type, element.getName())
+        val psiClass = readAction { element.getContainingClass() }
+        if (psiClass != null && type.name() == readAction { JVMNameUtil.getClassVMName(psiClass) }) {
+          val field = DebuggerUtils.findField(type, readAction { element.getName() })
           if (field != null) {
             return wrap(qualifierValue.getValue(field))
           }
@@ -136,15 +136,19 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
       }
       return null
     }
-    val psi = dfaVar.psiVariable
+    val psi = readAction { dfaVar.psiVariable }
     if (psi is PsiClass) {
       // this; probably qualified
-      val currentClass = PsiTreeUtil.getParentOfType(anchor, PsiClass::class.java)
-      return CaptureTraverser.create(psi, currentClass, true).traverse(proxy.thisObject())
+      val captureTraverser = readAction {
+        val currentClass = PsiTreeUtil.getParentOfType(anchor, PsiClass::class.java)
+        CaptureTraverser.create(psi, currentClass, true)
+      }
+      return captureTraverser.traverse(proxy.thisObject())
     }
     if (psi is PsiLocalVariable || psi is PsiParameter) {
-      val varName: String = psi.getName()!!
-      if (PsiResolveHelper.getInstance(psi.getProject()).resolveReferencedVariable(varName, anchor) !== psi) {
+      val varName: String = readAction { psi.getName()!! }
+      val resolveVariable = readAction { PsiResolveHelper.getInstance(psi.getProject()).resolveReferencedVariable(varName, anchor) }
+      if (resolveVariable !== psi) {
         // Another variable with the same name could be tracked by DFA in different code branch but not visible at current code location
         return null
       }
@@ -152,10 +156,12 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
       if (variable != null) {
         return wrap(proxy.getVariableValue(variable))
       }
-      val currentClass = PsiTreeUtil.getParentOfType(anchor, PsiClass::class.java)
-      val varClass = PsiTreeUtil.getParentOfType(psi, PsiClass::class.java)
-      val thisRef = CaptureTraverser.create(varClass, currentClass, false)
-        .oneLevelLess().traverse(proxy.thisObject())
+      val captureTraverser = readAction {
+        val currentClass = PsiTreeUtil.getParentOfType(anchor, PsiClass::class.java)
+        val varClass = PsiTreeUtil.getParentOfType(psi, PsiClass::class.java)
+        CaptureTraverser.create(varClass, currentClass, false).oneLevelLess()
+      }
+      val thisRef = captureTraverser.traverse(proxy.thisObject())
       if (thisRef != null) {
         val type = thisRef.referenceType()
         if (type is ClassType && type.isPrepared) {
@@ -166,10 +172,10 @@ private class JavaDfaAssistProvider : DfaAssistProvider {
         }
       }
     }
-    if (psi is PsiField && psi.hasModifierProperty(PsiModifier.STATIC)) {
-      val psiClass = psi.getContainingClass()
+    if (psi is PsiField && readAction { psi.hasModifierProperty(PsiModifier.STATIC) }) {
+      val psiClass = readAction { psi.getContainingClass() }
       if (psiClass != null) {
-        val name = psiClass.getQualifiedName()
+        val name = readAction { psiClass.getQualifiedName() }
         if (name != null) {
           val type = ContainerUtil.getOnlyItem(proxy.getVirtualMachine().classesByName(name))
           if (type != null && type.isPrepared) {

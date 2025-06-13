@@ -86,14 +86,14 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         }
     }
 
-    override fun getJdiValueForDfaVariable(
+    override suspend fun getJdiValueForDfaVariable(
         proxy: StackFrameProxyEx,
         dfaVar: DfaVariableValue,
         anchor: PsiElement
     ): Value? {
         if (anchor !is KtElement) return null
-        if ((dfaVar.descriptor as? KtBaseDescriptor)?.isInlineClassReference() == true) return null
-        return runDumbAction(anchor.project, null) {
+        if (readAction { (dfaVar.descriptor as? KtBaseDescriptor)?.isInlineClassReference() == true }) return null
+        return runDumbAction(readAction { anchor.project }, null) {
             getJdiValueInner(proxy, dfaVar, anchor)
         }
     }
@@ -124,7 +124,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         }
     }
 
-    private fun getJdiValueInner(
+    private suspend fun getJdiValueInner(
         proxy: StackFrameProxyEx,
         dfaVar: DfaVariableValue,
         anchor: KtElement
@@ -136,10 +136,12 @@ private class K2DfaAssistProvider : DfaAssistProvider {
         val inlineSuffix = KotlinDebuggerConstants.INLINE_FUN_VAR_SUFFIX.repeat(inlineDepth)
         if (qualifier == null) {
             if (descriptor is KtLambdaThisVariableDescriptor) {
-                val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
-                val scopePart = scopeName?.replace(Regex("[^\\p{L}\\d]"), "_")?.let(Regex::escape) ?: ".+"
-                val inlinedPart = Regex.escape(inlineSuffix)
-                val regex = Regex("\\\$this\\$${scopePart}(_\\w+)?_u\\d+lambda_u\\d+$inlinedPart")
+                val regex = readAction {
+                    val scopeName = (descriptor.lambda.parentOfType<KtFunction>() as? KtNamedFunction)?.name
+                    val scopePart = scopeName?.replace(Regex("[^\\p{L}\\d]"), "_")?.let(Regex::escape) ?: ".+"
+                    val inlinedPart = Regex.escape(inlineSuffix)
+                    Regex("\\\$this\\$${scopePart}(_\\w+)?_u\\d+lambda_u\\d+$inlinedPart")
+                }
                 val lambdaThis = proxy.stackFrame.visibleVariables().filter { it.name().matches(regex) }
                 if (lambdaThis.size == 1) {
                     return postprocess(proxy.stackFrame.getValue(lambdaThis.first()))
@@ -155,7 +157,9 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                         return postprocess(proxy.getVariableValue(thisVar))
                     }
                 }
-                val nameString = analyze(anchor) { (pointer?.restoreSymbol() as? KaNamedClassSymbol)?.classId?.asSingleFqName() }
+                val nameString = readAction {
+                    analyze(anchor) { (pointer?.restoreSymbol() as? KaNamedClassSymbol)?.classId?.asSingleFqName() }
+                }
                 if (nameString != null) {
                     if (inlineDepth > 0) {
                         val thisName = AsmUtil.INLINE_DECLARATION_SITE_THIS + inlineSuffix
@@ -187,32 +191,50 @@ private class K2DfaAssistProvider : DfaAssistProvider {
             }
             if (descriptor is KtVariableDescriptor) {
                 val pointer = descriptor.pointer
-                analyze(anchor) {
-                    val symbol = pointer.restoreSymbol()
-                    if (symbol is KaJavaFieldSymbol && symbol.isStatic) {
-                        val classId = (symbol.containingDeclaration as? KaNamedClassSymbol)?.classId
-                        if (classId != null) {
-                            val declaringClasses = proxy.virtualMachine.classesByName(JvmClassName.byClassId(classId).internalName.replace("/", "."))
-                            if (declaringClasses.size == 1) {
-                                val declaringClass = declaringClasses.first()
-                                val field = DebuggerUtils.findField(declaringClass, symbol.name.identifier)
-                                if (field != null && field.isStatic) {
-                                    return postprocess(declaringClass.getValue(field))
-                                }
+                val result = readAction {
+                    analyze(anchor) {
+                        val symbol = pointer.restoreSymbol()
+                        if (symbol is KaJavaFieldSymbol && symbol.isStatic) {
+                            val classId = (symbol.containingDeclaration as? KaNamedClassSymbol)?.classId
+                            if (classId != null) {
+                                val className = JvmClassName.byClassId(classId).internalName.replace("/", ".")
+                                val fieldName = symbol.name.identifier
+                                return@readAction VariableResult.JavaField(className, fieldName)
+                            }
+                            return@readAction null
+                        }
+                        if (symbol is KaVariableSymbol) {
+                            val name = symbol.name.asString() + inlineSuffix
+                            val expectedType = symbol.returnType
+                            val isNonNullPrimitiveType = expectedType.isPrimitive && !expectedType.canBeNull
+                            return@readAction VariableResult.Variable(name, symbol.psi, isNonNullPrimitiveType)
+                        }
+                    }
+                    null
+                }
+                when (result) {
+                    is VariableResult.JavaField -> {
+                        val declaringClasses = proxy.virtualMachine.classesByName(result.className)
+                        if (declaringClasses.size == 1) {
+                            val declaringClass = declaringClasses.first()
+                            val field = DebuggerUtils.findField(declaringClass, result.fieldName)
+                            if (field != null && field.isStatic) {
+                                return postprocess(declaringClass.getValue(field))
                             }
                         }
-                        return null
                     }
-                    if (symbol is KaVariableSymbol) {
-                        val name = symbol.name.asString() + inlineSuffix
-                        var variable = proxy.visibleVariableByName(name)
+
+                    is VariableResult.Variable -> {
+                        var variable = proxy.visibleVariableByName(result.name)
                         var value: Value? = null
                         if (variable == null) {
-                            val psi = symbol.psi
-                            val scope = anchor.getScope()
-                            if (psi != null && scope != null && psi.containingFile == scope.containingFile && !scope.isAncestor(psi)) {
+                            val psi = result.psi
+                            val scope = readAction { anchor.getScope() }
+                            if (psi != null && scope != null
+                                && readAction { psi.containingFile == scope.containingFile && !scope.isAncestor(psi) }
+                            ) {
                                 // Captured variable
-                                val capturedName = AsmUtil.CAPTURED_PREFIX + name
+                                val capturedName = AsmUtil.CAPTURED_PREFIX + result.name
                                 variable = proxy.visibleVariableByName(capturedName)
                                 if (variable == null) {
                                     // Captured variable in Kotlin 1.x
@@ -232,8 +254,7 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                             value = postprocess(proxy.getVariableValue(variable))
                         }
                         if (value != null) {
-                            val expectedType = symbol.returnType
-                            if (inlineDepth > 0 && value.type() is PrimitiveType && !(expectedType.isPrimitive && !expectedType.canBeNull)) {
+                            if (inlineDepth > 0 && value.type() is PrimitiveType && !result.isNonNullPrimitiveReturnType) {
                                 val typeKind = JvmPrimitiveTypeKind.getKindByName(value.type().name())
                                 if (typeKind != null) {
                                     val referenceType = proxy.virtualMachine.classesByName(typeKind.boxedFqn).firstOrNull()
@@ -242,35 +263,60 @@ private class K2DfaAssistProvider : DfaAssistProvider {
                                     }
                                 }
                             }
+                            return value
                         }
-                        return value
-                    }
+                }
+
+                    null -> {}
                 }
             }
         } else {
             val jdiQualifier = getJdiValueInner(proxy, qualifier, anchor)
             if (descriptor is KtVariableDescriptor) {
-                val type = (jdiQualifier as? ObjectReference)?.referenceType()
                 val pointer = descriptor.pointer
-                analyze(anchor) {
-                    val symbol = pointer.restoreSymbol()
-                    if (symbol is KaPropertySymbol) {
-                        val parent = symbol.containingDeclaration
-                        if (parent is KaNamedClassSymbol && parent.isInline) {
-                            // Inline class sole property is represented by inline class itself
-                            return jdiQualifier
+                val result = readAction {
+                    analyze(anchor) {
+                        val symbol = pointer.restoreSymbol()
+                        if (symbol is KaPropertySymbol) {
+                            val parent = symbol.containingDeclaration
+                            if (parent is KaNamedClassSymbol && parent.isInline) {
+                                // Inline class sole property is represented by inline class itself
+                                return@readAction QualifierVariableResult.InlineClassProperty
+                            }
+                        }
+                        if (symbol is KaVariableSymbol) {
+                            return@readAction QualifierVariableResult.NamedVariable(symbol.name.asString())
+                        }
+                        null
+                    }
+                }
+                when (result) {
+                    QualifierVariableResult.InlineClassProperty -> return jdiQualifier
+                    is QualifierVariableResult.NamedVariable -> {
+                        val type = (jdiQualifier as? ObjectReference)?.referenceType()
+                        if (type != null) {
+                            val field = DebuggerUtils.findField(type, result.name)
+                            if (field != null) {
+                                return postprocess(jdiQualifier.getValue(field))
+                            }
                         }
                     }
-                    if (symbol is KaVariableSymbol && type != null) {
-                        val field = DebuggerUtils.findField(type, symbol.name.asString())
-                        if (field != null) {
-                            return postprocess(jdiQualifier.getValue(field))
-                        }
-                    }
+
+                    else -> {}
                 }
             }
         }
         return null
+    }
+
+    private sealed interface VariableResult {
+        data class JavaField(val className: String, val fieldName: String) : VariableResult
+        data class Variable(val name: String, val psi: PsiElement?, val isNonNullPrimitiveReturnType: Boolean) : VariableResult
+    }
+
+    private sealed interface QualifierVariableResult {
+        object InlineClassProperty : QualifierVariableResult
+        data class NamedVariable(val name: String) : QualifierVariableResult
     }
 
     private fun postprocess(value: Value?): Value {
