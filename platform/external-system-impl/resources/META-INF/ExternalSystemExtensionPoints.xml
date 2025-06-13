@@ -10,7 +10,7 @@
                     interface="com.intellij.openapi.externalSystem.debugger.DebuggerBackendExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.dependencySubstitutionCoordinateContributor"
-                    interface="com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionCoordinateContributor"
+                    interface="com.intellij.platform.externalSystem.impl.dependencySubstitution.DependencySubstitutionExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalProjectDataService"
                     interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService"

@@ -9,7 +9,6 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import org.jetbrains.annotations.ApiStatus
-import kotlin.collections.iterator
 
 @ApiStatus.Internal
 object DependencySubstitutionUtil {
@@ -110,48 +109,25 @@ object DependencySubstitutionUtil {
     return moduleDependency
   }
 
-  private fun buildLibraryToCoordinateMap(storage: EntityStorage): Map<LibraryId, Any> {
-    TELEMETRY.spanBuilder("buildLibraryToCoordinateMap").use {
-      val result = HashMap<LibraryId, Any>()
-      DependencySubstitutionCoordinateContributor.EP_NAME.forEachExtensionSafe { contributor ->
-        TELEMETRY.spanBuilder("findLibraryCoordinate").use { span ->
-          span.setAttribute("contributor", contributor.javaClass.name)
-          for (library in storage.entities<LibraryEntity>()) {
-            val libraryCoordinate = contributor.findLibraryCoordinate(library) ?: continue
-            result[library.symbolicId] = libraryCoordinate
-          }
-        }
-      }
-      return result
-    }
-  }
-
-  private fun buildCoordinateToModuleMap(storage: EntityStorage): Map<Any, ModuleId> {
-    TELEMETRY.spanBuilder("buildCoordinateToModuleMap").use {
-      val result = HashMap<Any, ModuleId>()
-      DependencySubstitutionCoordinateContributor.EP_NAME.forEachExtensionSafe { contributor ->
-        TELEMETRY.spanBuilder("findModuleCoordinate").use { span ->
-          span.setAttribute("contributor", contributor.javaClass.name)
-          for (module in storage.entities<ModuleEntity>()) {
-            val moduleCoordinate = contributor.findModuleCoordinate(module) ?: continue
-            result[moduleCoordinate] = module.symbolicId
-          }
-        }
-      }
-      return result
-    }
-  }
-
   private fun buildLibraryToModuleMap(storage: EntityStorage): Map<LibraryId, ModuleId> {
     TELEMETRY.spanBuilder("buildLibraryToModuleMap").use {
-      val libraryToCoordinateMap = buildLibraryToCoordinateMap(storage)
-      val coordinateToModuleMap = buildCoordinateToModuleMap(storage)
       val result = HashMap<LibraryId, ModuleId>()
-      for ((libraryId, libraryCoordinate) in libraryToCoordinateMap) {
-        val moduleId = coordinateToModuleMap[libraryCoordinate] ?: continue
-        result[libraryId] = moduleId
+      DependencySubstitutionExtension.EP_NAME.forEachExtensionSafe { contributor ->
+        TELEMETRY.spanBuilder("buildDependencyMap").use { span ->
+          span.setAttribute("contributor", contributor.javaClass.name)
+          result.putAll(contributor.buildLibraryToModuleMap(storage))
+        }
       }
       return result
     }
+  }
+
+  @ApiStatus.Internal
+  fun <K: Any?, V1, V2> Map<K, V1>.intersect(other: Map<K, V2>): Map<V1, V2> {
+    val result = HashMap<V1, V2>()
+    for ((key, value1) in this) {
+      result[value1] = other[key ?: continue] ?: continue
+    }
+    return result
   }
 }
