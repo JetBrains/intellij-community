@@ -3,6 +3,7 @@ package com.intellij.ui.mac
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.RemoteRecentProjectAction
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -40,6 +41,7 @@ internal class MacDockDelegate private constructor(private val recentProjectsMen
     recentProjectsMenu.removeAll()
     for (action in RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false)) {
       if (action !is ProjectToolbarWidgetPresentable) continue
+      if (action is RemoteRecentProjectAction && !action.canOpenProject()) continue // AnAction.update is ignored for dock actions
 
       val menuItem = MenuItem(action.nameToDisplayAsText)
       menuItem.addActionListener {

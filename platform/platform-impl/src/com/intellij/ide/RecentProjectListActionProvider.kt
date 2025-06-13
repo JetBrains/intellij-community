@@ -306,7 +306,7 @@ private class ProjectGroupComparator(private val projectPaths: Set<String>) : Co
   }
 }
 
-private class RemoteRecentProjectAction(val projectId: String, val project: RecentProject) : ActionGroup(), DumbAware, ProjectToolbarWidgetPresentable {
+internal class RemoteRecentProjectAction(val projectId: String, val project: RecentProject) : ActionGroup(), DumbAware, ProjectToolbarWidgetPresentable {
   init {
     templatePresentation.text = nameToDisplayAsText
   }
@@ -335,6 +335,8 @@ private class RemoteRecentProjectAction(val projectId: String, val project: Rece
   override fun actionPerformed(e: AnActionEvent) {
     project.openProject(e)
   }
+
+  fun canOpenProject() : Boolean = project.canOpenProject()
 
   override val projectNameToDisplay: @NlsSafe String = project.displayName
   override val providerPathToDisplay: @NlsSafe String? get() = project.providerPath
