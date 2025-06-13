@@ -10,8 +10,6 @@ import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -1983,6 +1981,6 @@ object MavenUtil {
 
   @JvmStatic
   fun isRunningFromSources(): Boolean {
-    return PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()
+    return path != null && (path.endsWith("production") || path.parent.endsWith("production"))
   }
 }
