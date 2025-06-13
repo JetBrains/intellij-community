@@ -205,7 +205,7 @@ public final class MarkdownDocumentationCommentsMigrationInspection extends Base
         else {
           if (context == Context.PRE) {
             if (c == '<' && match(html, "</pre>", i)) tag = i;
-            else result.append(c);
+            else if (c != '\u0000') result.append(c);
           }
           else if (c == '\u0000') { // NUL marks part where text should be taken raw
             int end = html.indexOf('\u0000', i + 1);

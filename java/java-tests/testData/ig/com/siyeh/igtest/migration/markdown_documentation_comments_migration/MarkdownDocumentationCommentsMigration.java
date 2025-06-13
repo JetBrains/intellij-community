@@ -408,4 +408,10 @@ interface Foo<T, B, P, I>
  * </Pre>
  * end
  */
-class Preformatted {}
+class Preformatted {
+
+  <warning descr="Javadoc comment can be Markdown documentation comment">/**</warning>
+   * <pre>{@code x}</pre>
+   */
+  protected void beginParsing() {}
+}

@@ -383,4 +383,8 @@ interface Foo<T, B, P, I>
 ///
 /// </Pre>
 /// end
-class Preformatted {}
+class Preformatted {
+
+  /// <pre>`x`</pre>
+  protected void beginParsing() {}
+}
