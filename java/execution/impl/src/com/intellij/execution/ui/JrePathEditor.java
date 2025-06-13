@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -55,6 +56,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   private final JreComboboxEditor myComboboxEditor;
   private final DefaultJreItem myDefaultJreItem;
   private DefaultJreSelector myDefaultJreSelector;
+  private @Nls String myDefaultJreDescription;
   private final SortedComboBoxModel<JreComboBoxItem> myComboBoxModel;
   private String myPreviousCustomJrePath;
   private boolean myRemoteTarget;
@@ -148,6 +150,13 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     updateUI();
 
     updateModel(items -> myComboBoxModel.setAll(items));
+
+    addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorAdded(AncestorEvent event) {
+        updateDefaultJrePresentation();
+      }
+    });
   }
 
   private void updateModel(Consumer<List<JreComboBoxItem>> consumer) {
@@ -270,6 +279,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
   }
 
   private void updateDefaultJrePresentation() {
+    myDefaultJreDescription = null;
     updateDefaultJrePresentation((@Nls String description) -> {
       StatusText text = myComboboxEditor.getEmptyText();
       text.clear();
@@ -435,9 +445,15 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     public void render(SimpleColoredComponent component, boolean selected) {
       component.append(ExecutionBundle.message("default.jre.name"));
       component.setIcon(EmptyIcon.ICON_16);
+      if (myDefaultJreDescription != null) {
+        component.append(myDefaultJreDescription, SimpleTextAttributes.GRAY_ATTRIBUTES);
+      }
       //may be null if JrePathEditor is added to a GUI Form where the default constructor is used and setDefaultJreSelector isn't called
-      if (myDefaultJreSelector != null) {
-        updateDefaultJrePresentation((@Nls String description) -> component.append(description, SimpleTextAttributes.GRAY_ATTRIBUTES));
+      else if (myDefaultJreSelector != null) {
+        updateDefaultJrePresentation((@Nls String description) -> {
+          myDefaultJreDescription = description;
+          myComboBoxModel.update(this);
+        });
       }
     }
 

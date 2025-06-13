@@ -2737,6 +2737,7 @@ c:com.intellij.ui.SortedListModel
 - remove(java.lang.Object):V
 - setAll(java.util.Collection):V
 - setAll(java.lang.Object[]):V
+- update(java.lang.Object):V
 f:com.intellij.ui.TableUtil
 - s:doRemoveSelectedItems(javax.swing.JTable,com.intellij.util.ui.ItemRemovable,com.intellij.ui.TableUtil$ItemChecker):Z
 - s:editCellAt(javax.swing.JTable,I,I):V
