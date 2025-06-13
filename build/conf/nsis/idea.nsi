@@ -132,6 +132,16 @@ ReserveFile "UninstallOldVersions.ini"
     IntOp $3 $3 + 1
     Goto loop
   FunctionEnd
+
+  Function ${un}adjustLanguage
+    ${If} $Language == ${LANG_SIMPCHINESE}
+      System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
+      ${If} $R0 != ${LANG_SIMPCHINESE}
+        ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
+        StrCpy $Language ${LANG_ENGLISH}
+      ${EndIf}
+    ${EndIf}
+  FunctionEnd
 !macroend
 
 !insertmacro INST_UNINST_SWITCH ""
@@ -291,8 +301,9 @@ OutFile "${OUT_DIR}\${OUT_FILE}.exe"
 InstallDir "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 
 Function PageFinishRun
-  IfSilent +2 +1
-  !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
+  ${IfNot} ${Silent}
+    !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
+  ${EndIf}
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -337,88 +348,79 @@ FunctionEnd
 
 
 Function silentConfigReader
-  ; read Desktop.ini
   ${LogText} ""
   ${LogText} "Silent installation, options"
-  Call getInstallationOptionsPositions
   ${GetParameters} $R0
-  ClearErrors
 
+  ClearErrors
   ${GetOptions} $R0 /CONFIG= $R1
-  IfErrors no_silent_config
+  ${If} ${Errors}
+    ${LogText} "  config file was not provided"
+    ${LogText} "  defaulting to admin mode"
+    StrCpy $silentMode "admin"
+    Return
+  ${EndIf}
   ${LogText} "  config file: $R1"
 
+  ClearErrors
   ${ConfigRead} "$R1" "mode=" $R0
-  IfErrors bad_silent_config
+  ${If} ${Errors}
+    !define msg1 "How to run installation in silent mode:$\n"
+    !define msg2 "<installation> /S /CONFIG=<path to silent config with file name> /D=<install dir>$\n$\n"
+    !define msg3 "Examples:$\n"
+    !define msg4 "Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\n"
+    !define msg5 "Run installation in silent mode with logging:$\n"
+    !define msg6 "Installation.exe /S /CONFIG=d:\download\silent.config /LOG=d:\JetBrains\install.log /D=d:\JetBrains\Product$\n"
+    MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}"
+    ${LogText} "ERROR: silent installation: incorrect parameters."
+    Abort
+  ${EndIf}
   ${LogText} "  mode: $R0"
-  StrCpy $silentMode "user"
-  IfErrors launcher
   StrCpy $silentMode $R0
 
-launcher:
   ClearErrors
   ${ConfigRead} "$R1" "launcher64=" $R3
-  IfErrors update_PATH
-  ${LogText} "  shortcut for launcher64: $R3"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
+  ${IfNot} ${Errors}
+    ${LogText} "  shortcut for launcher64: $R3"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
+  ${EndIf}
 
-update_PATH:
   ClearErrors
   ${ConfigRead} "$R1" "updatePATH=" $R3
-  IfErrors update_context_menu
-  ${LogText} "  update PATH env var: $R3"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
+  ${IfNot} ${Errors}
+    ${LogText} "  update PATH env var: $R3"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
+  ${EndIf}
 
-update_context_menu:
   ClearErrors
   ${ConfigRead} "$R1" "updateContextMenu=" $R3
-  IfErrors associations
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "State" $R3
+  ${IfNot} ${Errors}
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "Type" "checkbox"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "State" $R3
+  ${EndIf}
 
-associations:
-  ClearErrors
-  StrCmp "${ASSOCIATION}" "NoAssociation" done
-  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Settings" "NumFields"
-  push "${ASSOCIATION}"
-loop:
-  call SplitStr
-  Pop $0
-  StrCmp $0 "" update_settings
-  ClearErrors
-  ${ConfigRead} "$R1" "$0=" $R3
-  IfErrors update_settings
-  IntOp $R0 $R0 + 1
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "State" $R3
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
-  ${LogText} "  association: $0, state: $R3"
-  goto loop
-
-update_settings:
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
-  goto done
-no_silent_config:
-  ${LogText} "  config file was not provided"
-  ${LogText} "  defaulting to admin mode"
-  StrCpy $silentMode "admin"
-  goto done
-bad_silent_config:
-  Call IncorrectSilentInstallParameters
-done:
-FunctionEnd
-
-
-Function IncorrectSilentInstallParameters
-  !define msg1 "How to run installation in silent mode:$\n"
-  !define msg2 "<installation> /S /CONFIG=<path to silent config with file name> /D=<install dir>$\n$\n"
-  !define msg3 "Examples:$\n"
-  !define msg4 "Installation.exe /S /CONFIG=d:\download\silent.config /D=d:\JetBrains\Product$\n"
-  !define msg5 "Run installation in silent mode with logging:$\n"
-  !define msg6 "Installation.exe /S /CONFIG=d:\download\silent.config /LOG=d:\JetBrains\install.log /D=d:\JetBrains\Product$\n"
-  MessageBox MB_OK|MB_ICONSTOP "${msg1}${msg2}${msg3}${msg4}${msg5}${msg6}"
-  ${LogText} "ERROR: silent installation: incorrect parameters."
-  Abort
+  ${If} "${ASSOCIATION}" != "NoAssociation"
+    !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Settings" "NumFields"
+    Push "${ASSOCIATION}"
+    ${Do}
+      Call SplitStr
+      Pop $0
+      ${If} $0 == ""
+        ${Break}
+      ${EndIf}
+      ClearErrors
+      ${ConfigRead} "$R1" "$0=" $R3
+      ${If} ${Errors}
+        ${Break}
+      ${EndIf}
+      IntOp $R0 $R0 + 1
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "State" $R3
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $R0" "Text" "$0"
+      ${LogText} "  association: $0, state: $R3"
+    ${Loop}
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Settings" "NumFields" "$R0"
+  ${EndIf}
 FunctionEnd
 
 
@@ -1027,14 +1029,10 @@ installdir_is_empty:
   ${EndIf}
   ${LogText} "Installation dir: $INSTDIR"
 
-  ${If} $Language == ${LANG_SIMPCHINESE}
-    System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
-    ${If} $R0 != ${LANG_SIMPCHINESE}
-      ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
-      StrCpy $Language ${LANG_ENGLISH}
-    ${EndIf}
+  ${IfNot} ${Silent}
+    Call adjustLanguage
+    ;!insertmacro MUI_LANGDLL_DISPLAY
   ${EndIf}
-  ;!insertmacro MUI_LANGDLL_DISPLAY
 FunctionEnd
 
 
@@ -1164,13 +1162,10 @@ Function un.onInit
     StrCpy $baseRegKey "HKLM"
   ${EndIf}
 
-  ${If} $Language == ${LANG_SIMPCHINESE}
-    System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
-    ${If} $R0 != ${LANG_SIMPCHINESE}
-      StrCpy $Language ${LANG_ENGLISH}
-    ${EndIf}
+  ${IfNot} ${Silent}
+    Call un.adjustLanguage
+    ;!insertmacro MUI_UNGETLANGUAGE
   ${EndIf}
-  ;!insertmacro MUI_UNGETLANGUAGE
 
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
   Call un.UninstallFeedback
@@ -1305,7 +1300,7 @@ FunctionEnd
 
 
 Section "Uninstall"
-  DetailPrint "baseRegKey: $baseRegKey"
+  DetailPrint "Root registry key: $baseRegKey"
 
   ; the uninstaller is in the "...\bin" subdirectory; correcting
   ${GetParent} "$INSTDIR" $INSTDIR
