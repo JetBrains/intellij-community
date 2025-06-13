@@ -16,6 +16,7 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.module.impl.ModuleManagerEx
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
@@ -192,7 +193,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     )
 
     @OptIn(EntityStorageInstrumentationApi::class)
-    fun calculateChanges(workspaceModel: WorkspaceModelImpl): CalculationResult {
+    fun calculateChanges(workspaceModel: WorkspaceModelImpl, moduleManager: ModuleManagerEx): CalculationResult {
       val unloadBuilderSnapshot = workspaceModel.getUnloadBuilderSnapshot()
       // Update builder of unloaded entities
       if ((unloadedEntityBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
@@ -204,14 +205,16 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       builderSnapshot.builder.replaceBySource(sourcesFilter, builder.toSnapshot())
 
       val unloadedBuilderCopy = MutableEntityStorage.from(unloadBuilderSnapshot.builder.toSnapshot())
-      val moduleManagerEx = ModuleManagerEx.getInstanceEx(project)
-      val (modulesToLoad, modulesToUnload) = moduleManagerEx.calculateUnloadModules(builderSnapshot.builder, unloadedBuilderCopy)
+      val (modulesToLoad, modulesToUnload) = moduleManager.calculateUnloadModules(builderSnapshot.builder, unloadedBuilderCopy)
       return CalculationResult(builderSnapshot, unloadBuilderSnapshot, unloadedBuilderCopy, modulesToLoad, modulesToUnload)
     }
 
     @OptIn(EntityStorageInstrumentationApi::class)
-    fun applyLoadedChanges(calculationResult: CalculationResult, workspaceModel: WorkspaceModelImpl): Boolean {
-      val moduleManagerEx = ModuleManagerEx.getInstanceEx(project)
+    fun applyLoadedChanges(
+      calculationResult: CalculationResult,
+      workspaceModel: WorkspaceModelImpl,
+      moduleManager: ModuleManagerEx,
+    ): Boolean {
       // TODO If we don't have changes in [UNLOAD] part, it doesn't make sense to use this method
       val isSuccessful = workspaceModel.replaceProjectModel(
         mainStorageReplacement = calculationResult.builderSnapshot.getStorageReplacement(),
@@ -221,23 +224,25 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
         return false
       }
 
-      moduleManagerEx.updateUnloadedStorage(calculationResult.modulesToLoad, calculationResult.modulesToUnload)
+      moduleManager.updateUnloadedStorage(calculationResult.modulesToLoad, calculationResult.modulesToUnload)
       addUnloadedModuleEntities(calculationResult.unloadedBuilderCopy, workspaceModel)
 
       if ((orphanageBuilder as MutableEntityStorageInstrumentation).hasChanges()) {
-        EntitiesOrphanage.getInstance(project).update { it.applyChangesFrom(orphanageBuilder) }
+        project.service<EntitiesOrphanage>().update { it.applyChangesFrom(orphanageBuilder) }
       }
 
       onSuccessCallback()
       return true
     }
 
+    val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
+    val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerEx
+
     suspend fun applyChangesWithRetry(retryCount: Int): Boolean {
-      val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
       for (i in 1..retryCount) {
         LOG.info("Attempt $i: $description")
-        val calculationResult = calculateChanges(workspaceModel)
-        val isSuccessful = backgroundWriteAction { applyLoadedChanges(calculationResult, workspaceModel) }
+        val calculationResult = calculateChanges(workspaceModel, moduleManager)
+        val isSuccessful = backgroundWriteAction { applyLoadedChanges(calculationResult, workspaceModel, moduleManager) }
         if (isSuccessful) {
           LOG.info("Attempt $i: Changes were successfully applied")
           return true
@@ -251,12 +256,11 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return
     }
 
-    val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
     // Fallback strategy after the two unsuccessful attempts to apply the changes
     backgroundWriteAction {
       LOG.info("Fallback strategy after the unsuccessful attempts to apply the changes from BGT")
-      val calculationResult = calculateChanges(workspaceModel)
-      applyLoadedChanges(calculationResult, workspaceModel)
+      val calculationResult = calculateChanges(workspaceModel, moduleManager)
+      applyLoadedChanges(calculationResult, workspaceModel, moduleManager)
     }
   }
 

@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.ide
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -311,7 +312,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     Benchmark.newBenchmark(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
-          EntitiesOrphanage.getInstance(projectModel.project).update {
+          projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = listOf(ContentRootEntity(manager.getOrCreateFromUrl(VfsUtilCore.pathToUrl("$newFolder/data$counter")), emptyList(), MySource))
@@ -347,7 +348,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     Benchmark.newBenchmark(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
-          EntitiesOrphanage.getInstance(projectModel.project).update {
+          projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = listOf(
@@ -394,7 +395,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     Benchmark.newBenchmark(testInfo.displayName) {
       runWriteActionAndWait {
         measureTimeMillis {
-          EntitiesOrphanage.getInstance(projectModel.project).update {
+          projectModel.project.service<EntitiesOrphanage>().update {
             repeat(10_000) { counter ->
               it addEntity ModuleEntity("Module$counter", emptyList(), OrphanageWorkerEntitySource) {
                 contentRoots = List(10) { contentCounter ->
