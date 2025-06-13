@@ -19,6 +19,8 @@ import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.ui.UIBundle
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +33,8 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import java.nio.file.Path
 
+@RegistryKey("ide.activity.tracking.enable.debug", "true")
+@SystemProperty("intellij.progress.task.ignoreHeadless", "true")
 abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
 
   @BeforeEach
