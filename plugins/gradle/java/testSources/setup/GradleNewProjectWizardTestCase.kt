@@ -13,7 +13,6 @@ import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GROUP_ID_PROPERTY_NAME
 import com.intellij.ide.wizard.Step
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider
@@ -66,7 +65,7 @@ abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
   ): Module? {
     val wizard = createAndConfigureWizard(group, project, configure)
     return awaitProjectConfiguration(project, numProjectSyncs) {
-      invokeAndWaitIfNeeded {
+      withContext(Dispatchers.EDT) {
         val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         module
@@ -79,7 +78,7 @@ abstract class GradleNewProjectWizardTestCase : GradleTestCase() {
     project: Project?,
     configure: NewProjectWizardStep.() -> Unit
   ): AbstractProjectWizard {
-    return invokeAndWaitIfNeeded {
+    return withContext(Dispatchers.EDT) {
       val modulesProvider = DefaultModulesProvider.createForProject(project)
       val wizard = NewProjectWizard(project, modulesProvider, null)
       try {
