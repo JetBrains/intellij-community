@@ -170,6 +170,19 @@ object Analysis {
     )
   )
 
+  val CODE_IS_COMPILABLE: TrivialEvalData<Boolean> = EvalDataDescription(
+    name = "Code is compilable",
+    description = "Generated code is compiling successfully",
+    DataPlacement.AdditionalBoolean(AIA_CODE_IS_COMPILABLE),
+    presentation = EvalDataPresentation(
+      PresentationCategory.ANALYSIS,
+      DataRenderer.InlineBoolean,
+    ),
+    problemIndicators = listOf(
+      ProblemIndicator.FromMetric { Metrics.WITHOUT_SYNTAX_ERRORS }
+    )
+  )
+
   val HIGHLIGHT_ERRORS: TrivialEvalData<List<String>> = EvalDataDescription(
     name = "Highlight errors and warnings",
     description = "Bind with the list of appeared highlights in format `[ERROR] error_description` or `[WARNING] warning_description]`",
