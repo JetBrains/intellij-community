@@ -956,8 +956,8 @@
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.IncompleteDestructuringInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="false"
-                     level="WARNING"
+                     enabledByDefault="true"
+                     level="INFORMATION"
                      language="kotlin"
                      key="inspection.incomplete.destructuring.declaration.display.name" bundle="messages.KotlinBundle"/>
 
