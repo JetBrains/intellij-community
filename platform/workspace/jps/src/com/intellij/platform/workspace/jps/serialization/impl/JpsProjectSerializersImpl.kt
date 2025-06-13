@@ -8,6 +8,7 @@ import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.util.coroutines.mapConcurrent
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
@@ -21,9 +22,6 @@ import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.text.UniqueNameGenerator
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
@@ -257,19 +255,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                                unloadedModuleNames: UnloadedModulesNameHolder,
                                errorReporter: ErrorReporter
   ): List<EntitySource> = loadEntitiesTimeMs.addMeasuredTime {
-
     val serializers = synchronized(lock) { fileSerializersByUrl.values.toList() }
-    val buildersWithLoadedState = coroutineScope {
-      serializers.map { serializer ->
-        async {
-          val result = MutableEntityStorage.create()
-          val orphanage = MutableEntityStorage.create()
-          loadEntitiesAndReportExceptions(serializer, result, orphanage, reader, errorReporter)
-          val unloaded = serializer is ModuleImlFileEntitiesSerializer && unloadedModuleNames.isUnloaded(serializer.modulePath.moduleName)
-          BuilderWithLoadedState(result, orphanage, unloaded)
-        }
-      }
-    }.awaitAll()
+    val buildersWithLoadedState = serializers.mapConcurrent { serializer ->
+      val result = MutableEntityStorage.create()
+      val orphanage = MutableEntityStorage.create()
+      loadEntitiesAndReportExceptions(serializer, result, orphanage, reader, errorReporter)
+      val unloaded = serializer is ModuleImlFileEntitiesSerializer && unloadedModuleNames.isUnloaded(serializer.modulePath.moduleName)
+      BuilderWithLoadedState(result, orphanage, unloaded)
+    }
 
     val sourcesToUpdate = removeDuplicatingEntities(buildersWithLoadedState, serializers)
     val loadedBuilders = buildersWithLoadedState.mapNotNull { if (!it.unloaded) it.builder else null }
@@ -306,8 +299,10 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   // Check if the same module is loaded from different source. This may happen in case of two `modules.xml` with the same module.
   // See IDEA-257175
   // This code may be removed if we'll get rid of storing modules.xml and friends in external storage (cache/external_build_system)
-  private fun removeDuplicatingEntities(builders: List<BuilderWithLoadedState>,
-                                        serializers: List<JpsFileEntitiesSerializer<*>>): List<EntitySource> {
+  private fun removeDuplicatingEntities(
+    builders: Collection<BuilderWithLoadedState>,
+    serializers: List<JpsFileEntitiesSerializer<*>>,
+  ): List<EntitySource> {
     val modules = mutableMapOf<String, MutableList<Triple<ModuleId, MutableEntityStorage, JpsFileEntitiesSerializer<*>>>>()
     val libraries = mutableMapOf<LibraryId, MutableList<Pair<MutableEntityStorage, JpsFileEntitiesSerializer<*>>>>()
     val artifacts = mutableMapOf<ArtifactId, MutableList<Pair<MutableEntityStorage, JpsFileEntitiesSerializer<*>>>>()
