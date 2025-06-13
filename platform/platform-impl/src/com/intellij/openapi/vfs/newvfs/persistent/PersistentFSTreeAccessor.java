@@ -220,11 +220,19 @@ public class PersistentFSTreeAccessor {
       int[] rootsUrlIds = ArrayUtil.newIntArray(rootsCount);
       int[] rootsIds = ArrayUtil.newIntArray(rootsCount);
 
-      int prevRootId = 0;
       int prevUrlId = 0;
+      int prevRootId = 0;
       for (int i = 0; i < rootsCount; i++) {
-        int urlId = DataInputOutputUtil.readINT(input) + prevUrlId;
-        int rootId = DataInputOutputUtil.readINT(input) + prevRootId;
+        int diffUrlId = DataInputOutputUtil.readINT(input);
+        if (diffUrlId <= 0) {
+          throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: diffUrlId[" + i + "](=" + diffUrlId + ") must be >0");
+        }
+        int diffRootId = DataInputOutputUtil.readINT(input);
+        if (diffRootId <= 0) {
+          throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: diffRootId[" + i + "](=" + diffRootId + ") must be >0");
+        }
+        int urlId = diffUrlId + prevUrlId;
+        int rootId = diffRootId + prevRootId;
 
         checkChildIdValid(SUPER_ROOT_ID, rootId, i, maxAllocatedID);
 
@@ -263,7 +271,7 @@ public class PersistentFSTreeAccessor {
     rootsUrlIds = ArrayUtil.insert(rootsUrlIds, -index - 1, newRootUrlId);
 
     try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-      saveNameIdSequenceWithDeltas(rootsUrlIds, rootsIds, output);
+      saveUrlAndFileIdsAsDiffCompressed(rootsUrlIds, rootsIds, output);
       //RC: we should assign connection.records.setNameId(newRootFileId, root_Name_Id), but we don't
       //    have rootNameId here -- we have only rootUrlId. So, rootNameId is assigned to the root
       //    in a PersistentFSImpl.findRoot() method, up the stack
@@ -300,7 +308,7 @@ public class PersistentFSTreeAccessor {
     rootsIds = ArrayUtil.remove(rootsIds, index);
 
     try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
-      saveNameIdSequenceWithDeltas(rootsUrlIds, rootsIds, output);
+      saveUrlAndFileIdsAsDiffCompressed(rootsUrlIds, rootsIds, output);
     }
   }
 
@@ -349,15 +357,43 @@ public class PersistentFSTreeAccessor {
     connection.enumerateAttributeId(CHILDREN_ATTR.getId()); // trigger writing / loading of vfs attribute ids in top level write action
   }
 
-  static void saveNameIdSequenceWithDeltas(int[] names, int[] ids, DataOutputStream output) throws IOException {
-    DataInputOutputUtil.writeINT(output, names.length);
-    int prevId = 0;
-    int prevNameId = 0;
-    for (int i = 0; i < names.length; i++) {
-      DataInputOutputUtil.writeINT(output, names[i] - prevNameId);
-      DataInputOutputUtil.writeINT(output, ids[i] - prevId);
-      prevId = ids[i];
-      prevNameId = names[i];
+  /**
+   * Serializes urlIds and fileIds sorted arrays into output stream, in diff-compressed format:
+   * <pre>
+   * {urlIds.length: varint} ({urlId[i]-urlId[i-1]: varint}, {fileId[i]-fileId[i-1]: varint})*
+   * </pre>
+   * Both urlIds and fileIds must be sorted, same length, and without duplicates -- otherwise {@link IllegalStateException} is thrown
+   */
+  private static void saveUrlAndFileIdsAsDiffCompressed(int[] urlIds,
+                                                        int[] fileIds,
+                                                        @NotNull DataOutputStream output) throws IOException {
+    if (urlIds.length != fileIds.length) {
+      throw new IllegalArgumentException("urlIds.length(=" + urlIds.length + ") != fileIds.length(=" + fileIds.length + ")");
+    }
+    DataInputOutputUtil.writeINT(output, urlIds.length);
+    int prevUrlId = 0;
+    int prevFileId = 0;
+    for (int i = 0; i < urlIds.length; i++) {
+      int urlId = urlIds[i];
+      int fileId = fileIds[i];
+      int diffUrlId = urlId - prevUrlId;
+      int diffFileId = fileId - prevFileId;
+      if (diffUrlId <= 0) {
+        throw new IllegalStateException(
+          "urlIds are not sorted: urlIds[" + i + "](=" + urlId + ") <= urlIds[" + (i - 1) + "](=" + prevUrlId + "), " +
+          "urlIds: " + Arrays.toString(urlIds)
+        );
+      }
+      if (diffFileId <= 0) {
+        throw new IllegalStateException(
+          "fileIds are not sorted: fileIds[" + i + "](=" + fileId + ") <= fileIds[" + (i - 1) + "](=" + prevFileId + "), " +
+          "fileIds: " + Arrays.toString(fileIds)
+        );
+      }
+      DataInputOutputUtil.writeINT(output, diffUrlId);
+      DataInputOutputUtil.writeINT(output, diffFileId);
+      prevFileId = fileId;
+      prevUrlId = urlId;
     }
   }
 

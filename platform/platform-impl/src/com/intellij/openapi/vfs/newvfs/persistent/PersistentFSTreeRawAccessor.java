@@ -151,11 +151,19 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
       int[] rootsUrlIds = ArrayUtil.newIntArray(rootsCount);
       int[] rootsIds = ArrayUtil.newIntArray(rootsCount);
 
-      int prevRootId = 0;
       int prevUrlId = 0;
+      int prevRootId = 0;
       for (int i = 0; i < rootsCount; i++) {
-        int urlId = DataInputOutputUtil.readINT(recordBuffer) + prevUrlId;
-        int rootId = DataInputOutputUtil.readINT(recordBuffer) + prevRootId;
+        int diffUrlId = DataInputOutputUtil.readINT(recordBuffer);
+        if (diffUrlId <= 0) {
+          throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: diffUrlId[" + i + "](=" + diffUrlId + ") must be >0");
+        }
+        int diffRootId = DataInputOutputUtil.readINT(recordBuffer);
+        if (diffRootId <= 0) {
+          throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: diffRootId[" + i + "](=" + diffRootId + ") must be >0");
+        }
+        int urlId = diffUrlId + prevUrlId;
+        int rootId = diffRootId + prevRootId;
 
         checkChildIdValid(SUPER_ROOT_ID, rootId, i, maxAllocatedID);
 
