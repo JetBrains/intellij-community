@@ -45,7 +45,7 @@ private suspend fun hatch(proxy: StackFrameProxyEx, pointer: SmartPsiElementPoin
   } ?: return null
 
   try {
-    val match = syncReadAction { provider.locationMatches(e, proxy.location()) }
+    val match = provider.locationMatches(e, proxy.location())
     if (!match) return null
   }
   catch (iea: IllegalArgumentException) {

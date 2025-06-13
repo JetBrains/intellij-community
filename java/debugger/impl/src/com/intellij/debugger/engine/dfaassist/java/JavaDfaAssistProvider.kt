@@ -15,26 +15,30 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.expression.CaptureTraverser
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyEx
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import com.sun.jdi.*
 
-class JavaDfaAssistProvider : DfaAssistProvider {
-  override fun locationMatches(element: PsiElement, location: Location): Boolean {
+private class JavaDfaAssistProvider : DfaAssistProvider {
+  override suspend fun locationMatches(element: PsiElement, location: Location): Boolean {
     val method = location.method()
-    val context = DebuggerUtilsEx.getContainingMethod(element)
+    val methodName = method.name()
+    val methodArgumentsSize = method.argumentTypeNames().size
+    val context = readAction { DebuggerUtilsEx.getContainingMethod(element) }
     if (context is PsiMethod) {
-      val name = if (context.isConstructor()) "<init>" else context.getName()
-      return name == method.name() && context.getParameterList().getParametersCount() == method.argumentTypeNames().size
+      return readAction {
+        val name = if (context.isConstructor()) "<init>" else context.getName()
+        name == methodName && context.getParameterList().getParametersCount() == methodArgumentsSize
+      }
     }
     if (context is PsiLambdaExpression) {
-      return DebuggerUtilsEx.isLambda(method) &&
-             method.argumentTypeNames().size >= context.getParameterList().getParametersCount()
+      return DebuggerUtilsEx.isLambda(method) && readAction { methodArgumentsSize >= context.getParameterList().getParametersCount() }
     }
     if (context is PsiClassInitializer) {
-      val expectedMethod = if (context.hasModifierProperty(PsiModifier.STATIC)) "<clinit>" else "<init>"
-      return method.name() == expectedMethod
+      val expectedMethod = readAction { if (context.hasModifierProperty(PsiModifier.STATIC)) "<clinit>" else "<init>" }
+      return methodName == expectedMethod
     }
     return false
   }

@@ -18,6 +18,7 @@ import com.intellij.debugger.engine.dfaassist.DfaAssistProvider
 import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
+import com.intellij.openapi.application.readAction
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -51,12 +52,14 @@ import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
 private class K2DfaAssistProvider : DfaAssistProvider {
-    override fun locationMatches(element: PsiElement, location: Location): Boolean {
+    override suspend fun locationMatches(element: PsiElement, location: Location): Boolean {
         val jdiClassName = location.method().declaringType().name()
-        val file = element.containingFile
-        if (file !is KtFile) return false
-        val classNames = ClassNameCalculator.getClassNames(file)
-        return element.parentsWithSelf.any { e -> classNames[e] == jdiClassName }
+        return readAction {
+            val file = element.containingFile
+            if (file !is KtFile) return@readAction false
+            val classNames = ClassNameCalculator.getClassNames(file)
+            element.parentsWithSelf.any { e -> classNames[e] == jdiClassName }
+        }
     }
 
     override fun getAnchor(element: PsiElement): PsiElement? {

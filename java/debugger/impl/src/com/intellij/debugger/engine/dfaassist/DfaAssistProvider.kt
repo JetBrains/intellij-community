@@ -8,10 +8,12 @@ import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Language specific helpers to implement DFAAssist (for JVM languages only)
  */
+@ApiStatus.Internal
 interface DfaAssistProvider {
   /**
    * Represents a 'virtual' boxed value which in fact does not exist in the VM memory.
@@ -38,7 +40,7 @@ interface DfaAssistProvider {
    * @return true if debugger location likely matches to the editor location;
    * false if definitely doesn't match (in this case, DFA Assist will be turned off)
    */
-  fun locationMatches(element: PsiElement, location: Location): Boolean
+  suspend fun locationMatches(element: PsiElement, location: Location): Boolean
 
   /**
    * @param element psi element the debugger state points at
