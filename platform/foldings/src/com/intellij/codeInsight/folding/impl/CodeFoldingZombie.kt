@@ -12,10 +12,10 @@ import com.intellij.openapi.editor.impl.FoldingKeys.AUTO_CREATED_ZOMBIE
 import com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.impl.zombie.Zombie
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.text.BreakIterator
+
 internal class CodeFoldingZombie(
   val regions: List<CodeFoldingRegion>,
   val groupedRegions: Map<Long, List<CodeFoldingRegion>>,
@@ -28,10 +28,10 @@ internal class CodeFoldingZombie(
       val regions = ArrayList<CodeFoldingRegion>()
       val groupedRegions = HashMap<Long, MutableList<CodeFoldingRegion>>()
       for (foldRegion in foldRegions) {
-        val regionState = CodeFoldingRegion.create(
+        val regionState = CodeFoldingRegion(
           foldRegion.startOffset,
           foldRegion.endOffset,
-          foldRegion.placeholderText,
+          createPlaceholderText(foldRegion.placeholderText),
           foldRegion.group?.id,
           foldRegion.shouldNeverExpand(),
           foldRegion.isExpanded,
@@ -40,6 +40,15 @@ internal class CodeFoldingZombie(
         putRegion(regionState, regions, groupedRegions)
       }
       return CodeFoldingZombie(regions, groupedRegions)
+    }
+
+    private fun createPlaceholderText(text: String): String {
+      return if (Registry.`is`("cache.folding.model.hide.placeholder")) {
+        CodeFoldingRegion.PLACEHOLDER_SYMBOL.repeat(text.graphemeCount())
+      }
+      else {
+        text
+      }
     }
 
     fun putRegion(
@@ -128,103 +137,25 @@ internal class CodeFoldingZombie(
   }
 }
 
-internal sealed class CodeFoldingRegion {
-  abstract val startOffset: Int
-  abstract val endOffset: Int
-  abstract val placeholderText: String
-  abstract val groupId: Long?
-  abstract val neverExpands: Boolean
-  abstract val isExpanded: Boolean
-  abstract val isAutoCreated: Boolean
-  abstract val saveType: SaveType
-
-  operator fun component1(): Int = startOffset
-  operator fun component2(): Int = endOffset
-  operator fun component3(): String = placeholderText
-  operator fun component4(): Long? = groupId
-  operator fun component5(): Boolean = neverExpands
-  operator fun component6(): Boolean = isExpanded
-  operator fun component7(): Boolean = isAutoCreated
-
-
-  class PlainTextCodeFoldingRegion(
-    override val startOffset: Int,
-    override val endOffset: Int,
-    override val groupId: Long?,
-    override val neverExpands: Boolean,
-    override val isExpanded: Boolean,
-    override val isAutoCreated: Boolean,
-    override val placeholderText: String,
-  ) : CodeFoldingRegion() {
-    override val saveType: SaveType
-      get() = SaveType.PlainText
-  }
-
-  class SecretPlaceholderCodeFoldingRegion(
-    override val startOffset: Int,
-    override val endOffset: Int,
-    override val groupId: Long?,
-    override val neverExpands: Boolean,
-    override val isExpanded: Boolean,
-    override val isAutoCreated: Boolean,
-    val placeholderLength: Int,
-  ) : CodeFoldingRegion() {
+internal data class CodeFoldingRegion(
+  val startOffset: Int,
+  val endOffset: Int,
+  val placeholderText: String,
+  val groupId: Long?,
+  val neverExpands: Boolean,
+  val isExpanded: Boolean,
+  val isAutoCreated: Boolean,
+) {
     companion object {
       const val PLACEHOLDER_SYMBOL = " "
     }
-
-    override val placeholderText: String
-      get() = PLACEHOLDER_SYMBOL.repeat(placeholderLength)
-
-    override val saveType: SaveType
-      get() = SaveType.SecretPlaceholder
-  }
-
   override fun toString(): String {
     val groupStr = if (groupId == null) "" else " $groupId,"
     return "($startOffset-$endOffset,$groupStr '$placeholderText', ${(if (isExpanded) "-" else "+")}, ${if (isAutoCreated) "AUTO" else "MANUAL"})"
   }
-
-  companion object {
-    fun create(
-      startOffset: Int,
-      endOffset: Int,
-      @NlsSafe placeholderText: String,
-      id: Long?,
-      shouldNeverExpand: Boolean,
-      expanded: Boolean,
-      autoCreated: Boolean,
-    ) = if (Registry.`is`("cache.folding.model.hide.placeholder")) {
-      SecretPlaceholderCodeFoldingRegion(
-        startOffset,
-        endOffset,
-        id,
-        shouldNeverExpand,
-        expanded,
-        autoCreated,
-        placeholderText.graphemeCount()
-      )
-    }
-    else {
-      PlainTextCodeFoldingRegion(
-        startOffset,
-        endOffset,
-        id,
-        shouldNeverExpand,
-        expanded,
-        autoCreated,
-        placeholderText
-      )
-    }
-  }
-
-  enum class SaveType(val value: Byte) {
-    PlainText(0),
-    SecretPlaceholder(1)
-  }
 }
 
-internal fun String.graphemeCount(): Int {
+private fun String.graphemeCount(): Int {
   val iterator = BreakIterator.getCharacterInstance()
   iterator.setText(this)
 
