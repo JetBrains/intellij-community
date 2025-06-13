@@ -98,6 +98,8 @@ org.jetbrains.rpc.MessageProcessor
 - a:closed():V
 - a:send(org.jetbrains.jsonProtocol.Request):org.jetbrains.concurrency.Promise
 org.jetbrains.rpc.RequestCallback
+- onCancel():V
+- a:onCancel(java.lang.Throwable):V
 - onError(java.lang.String):V
 - a:onError(java.lang.Throwable):V
 - a:onSuccess(java.lang.Object,org.jetbrains.rpc.ResultReader):V
