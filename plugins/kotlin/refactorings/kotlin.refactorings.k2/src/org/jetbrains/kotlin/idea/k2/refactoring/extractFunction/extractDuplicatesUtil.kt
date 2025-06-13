@@ -19,11 +19,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo<KaType>> {
     val scopeElement = getOccurrenceContainer() as? KtElement ?: return emptyList()
     val originalTextRange = extractionData.originalRange.getPhysicalTextRange()
-
-    // FIXME: KTIJ-34280
-    @OptIn(KaImplementationDetail::class)
-    return KaBaseIllegalPsiException.allowIllegalPsiAccess {
-        analyze(scopeElement) {
+    return analyze(scopeElement) {
             extractionData.originalRange.match(scopeElement) { targetRange, patternRange ->
                 matchRanges(targetRange, patternRange, parameters.map { it.originalDescriptor })
             }.filter { !(it.range.getPhysicalTextRange().intersects(originalTextRange)) }
@@ -43,5 +39,5 @@ fun ExtractableCodeDescriptor.findDuplicates(): List<DuplicateInfo<KaType>> {
                 }
                 .toList()
         }
-    }
+
 }
