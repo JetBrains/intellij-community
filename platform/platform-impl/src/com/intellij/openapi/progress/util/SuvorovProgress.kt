@@ -223,7 +223,7 @@ private class EternalEventStealer(disposable: Disposable) {
   init {
     IdeEventQueue.getInstance().addPostEventListener(
       { event ->
-        if (enabled && EventStealer.isUrgentInvocationEvent(event)) {
+        if (enabled && event.toString().contains(",runnable=ForcedWriteActionRunnable")) {
           val specialDispatchEvent = SpecialDispatchEvent(event)
           specialEvents.add(specialDispatchEvent)
           IdeEventQueue.getInstance().doPostEvent(specialDispatchEvent, true)
