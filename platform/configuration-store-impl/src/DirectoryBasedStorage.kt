@@ -361,7 +361,7 @@ private fun loadComponentsAndDetectLineSeparator(dir: Path, pathMacroSubstitutor
 
           val name = file.fileName.toString()
           fileToState.put(name, state)
-          if (separator != null) {
+          if (separator != null && separator != LineSeparator.getSystemLineSeparator()) {
             fileToSeparator.put(name, separator)
           }
         }
