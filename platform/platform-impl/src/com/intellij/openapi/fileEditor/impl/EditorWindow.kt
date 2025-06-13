@@ -45,6 +45,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
@@ -465,7 +466,9 @@ class EditorWindow internal constructor(
         windowAdded()
         // wait for the file editor
         composite.waitForAvailable()
-        if (withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        // In the case of the JetBrains client, the project is opened under a modal dialog, and closing it removes the focus from the editor
+        val modalityState = if (PlatformUtils.isJetBrainsClient()) ModalityState.nonModal() else ModalityState.any()
+        if (withContext(Dispatchers.EDT + modalityState.asContextElement()) {
             focusEditorOnComposite(composite = composite, splitters = owner, toFront = false)
           }) {
           // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
