@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
-import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.scripting.definitions.ScriptCompilationConfigurationFromDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
@@ -30,6 +29,8 @@ import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.util.PropertiesCollection
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
+
+private const val GRADLE_WITH_NEW_SCRIPTING_TEMPLATES = "9.1"
 
 fun loadGradleDefinitions(
     workingDir: String,
@@ -48,7 +49,7 @@ fun loadGradleDefinitions(
 
         val languageVersionCompilerOptions = findStdLibLanguageVersion(kotlinLibsClassPath)
 
-        val templateClasses = if (gradleVersion != null && isGradleAtLeast(gradleVersion, "9.5")) {
+        val templateClasses = if (gradleVersion != null && isGradleAtLeast(gradleVersion, GRADLE_WITH_NEW_SCRIPTING_TEMPLATES)) {
             listOf(
                 "org.gradle.kotlin.dsl.KotlinGradleScriptTemplate",
                 "org.gradle.kotlin.dsl.KotlinSettingsScriptTemplate",
