@@ -4,7 +4,7 @@ package com.intellij.xml.impl;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.psi.xml.XmlDocument;
 
-public class ExternalDocumentValidatorHelperImpl implements ExternalDocumentValidatorHelper {
+public class ExternalDocumentValidatorServiceImpl implements ExternalDocumentValidatorService {
   @Override
   public void doValidation(XmlDocument document, Validator.ValidationHost host) {
     ExternalDocumentValidator.doValidation(document, host);

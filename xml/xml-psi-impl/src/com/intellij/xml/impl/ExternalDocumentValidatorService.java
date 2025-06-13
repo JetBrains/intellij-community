@@ -7,9 +7,9 @@ import com.intellij.psi.xml.XmlDocument;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-public interface ExternalDocumentValidatorHelper {
-  static ExternalDocumentValidatorHelper getInstance() {
-    return ApplicationManager.getApplication().getService(ExternalDocumentValidatorHelper.class);
+public interface ExternalDocumentValidatorService {
+  static ExternalDocumentValidatorService getInstance() {
+    return ApplicationManager.getApplication().getService(ExternalDocumentValidatorService.class);
   }
 
   void doValidation(final XmlDocument document, final Validator.ValidationHost host);

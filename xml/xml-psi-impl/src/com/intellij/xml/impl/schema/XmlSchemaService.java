@@ -14,9 +14,9 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 
 @ApiStatus.Internal
-public interface XmlSchemaHelper {
-  static XmlSchemaHelper getInstance() {
-    return ApplicationManager.getApplication().getService(XmlSchemaHelper.class);
+public interface XmlSchemaService {
+  static XmlSchemaService getInstance() {
+    return ApplicationManager.getApplication().getService(XmlSchemaService.class);
   }
 
   @Nullable XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile);

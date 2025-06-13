@@ -8,7 +8,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.impl.schema.XmlSchemaHelper;
+import com.intellij.xml.impl.schema.XmlSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.List;
 
-public class XmlSchemaHelperImpl implements XmlSchemaHelper {
+public class XmlSchemaServiceImpl implements XmlSchemaService {
   @Override
   public @Nullable XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile) {
     return XmlNamespaceIndex.guessDtd(dtdUri, baseFile);

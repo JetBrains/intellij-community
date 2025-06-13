@@ -125,10 +125,10 @@
       <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
     </intentionAction>
 
-    <applicationService serviceImplementation="com.intellij.xml.index.XmlSchemaHelperImpl"
-                        serviceInterface="com.intellij.xml.impl.schema.XmlSchemaHelper"/>
-    <applicationService serviceImplementation="com.intellij.xml.impl.ExternalDocumentValidatorHelperImpl"
-                        serviceInterface="com.intellij.xml.impl.ExternalDocumentValidatorHelper"/>
+    <applicationService serviceImplementation="com.intellij.xml.index.XmlSchemaServiceImpl"
+                        serviceInterface="com.intellij.xml.impl.schema.XmlSchemaService"/>
+    <applicationService serviceImplementation="com.intellij.xml.impl.ExternalDocumentValidatorServiceImpl"
+                        serviceInterface="com.intellij.xml.impl.ExternalDocumentValidatorService"/>
 
     <idIndexer filetype="XML" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>
     <idIndexer filetype="DTD" implementationClass="com.intellij.psi.impl.cache.impl.idCache.XmlIdIndexer"/>

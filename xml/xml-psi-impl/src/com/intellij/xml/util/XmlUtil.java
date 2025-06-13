@@ -209,7 +209,7 @@ public final class XmlUtil {
   }
 
   public static @Unmodifiable @NotNull Collection<XmlFile> findNSFilesByURI(@NotNull String namespace, @NotNull Project project, @Nullable Module module) {
-    return XmlSchemaHelper.getInstance().findNSFilesByURI(namespace, project, module);
+    return XmlSchemaService.getInstance().findNSFilesByURI(namespace, project, module);
   }
 
   public static @Nullable XmlFile findXmlFile(@NotNull PsiFile base, @NotNull String uri) {
