@@ -31,7 +31,7 @@ private fun disabledColorMatrixGammaEncoded(isDark: Boolean = false) =
 
 @Deprecated(
     message = "Use disabledIcon() instead to get correct behaviour in dark themes too.",
-    replaceWith = ReplaceWith("ColorFilter.disabledIcon()")
+    replaceWith = ReplaceWith("ColorFilter.disabledIcon()"),
 )
 public fun ColorFilter.Companion.disabled(): ColorFilter = colorMatrix(disabledColorMatrixGammaEncoded())
 

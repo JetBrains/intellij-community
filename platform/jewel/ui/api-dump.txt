@@ -6,7 +6,7 @@ org.jetbrains.jewel.ui.ComponentStyling
 - with(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
 - with(org.jetbrains.jewel.ui.ComponentStyling):org.jetbrains.jewel.ui.ComponentStyling
 f:org.jetbrains.jewel.ui.DisabledColorFilterKt
-- sf:disabledThemeAware(androidx.compose.ui.graphics.ColorFilter$Companion,androidx.compose.runtime.Composer,I):androidx.compose.ui.graphics.ColorFilter
+- sf:disabledIcon(androidx.compose.ui.graphics.ColorFilter$Companion,androidx.compose.runtime.Composer,I):androidx.compose.ui.graphics.ColorFilter
 e:org.jetbrains.jewel.ui.component.AutoHideBehavior
 - java.lang.Enum
 - sf:Long:org.jetbrains.jewel.ui.component.AutoHideBehavior
