@@ -98,9 +98,14 @@ internal class GitLabShareProjectDialogViewModel(
         return@transformLatest
       }
 
+      // no valid token!
+      if (api == null) {
+        emit(ComputedResult.failure(NoTokenAvailableException(account)))
+        return@transformLatest
+      }
+
       // cache miss -> start loading
       emit(ComputedResult.loading())
-      if (api == null) return@transformLatest
 
       runCatching {
         val glMetadata = serviceAsync<GitLabServersManager>().getMetadata(api)
@@ -129,12 +134,12 @@ internal class GitLabShareProjectDialogViewModel(
     it.fold(
       onInProgress = { false },
       onSuccess = { false },
-      onFailure = { it is HttpStatusErrorException && it.statusCode == 401 }
+      onFailure = { (it is HttpStatusErrorException && it.statusCode == 401) || it is NoTokenAvailableException }
     )
   }
 
-  val hasValidAccount: StateFlow<Boolean> = _account.combineState(reloginRequired) {
-    account, reloginRequired -> account != null && !reloginRequired
+  val hasValidAccount: StateFlow<Boolean> = _account.combineState(reloginRequired) { account, reloginRequired ->
+    account != null && !reloginRequired
   }
   //endregion
 
@@ -236,3 +241,6 @@ internal data class GitLabShareProjectDialogResult(
   val isPrivate: Boolean,
   val description: @NlsSafe String,
 )
+
+private class NoTokenAvailableException(account: GitLabAccount)
+  : RuntimeException("No token for account ${account.name}")
