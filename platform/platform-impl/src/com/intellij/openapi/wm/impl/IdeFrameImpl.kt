@@ -36,8 +36,10 @@ import java.awt.event.WindowEvent
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
 import javax.swing.JFrame
+import javax.swing.JPanel
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
+import javax.swing.ToolTipManager
 import kotlin.math.abs
 
 @ApiStatus.Internal
@@ -172,7 +174,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   fun doDispose() {
     EdtInvocationManager.invokeLaterIfNeeded {
       Disposer.dispose(mouseActivationWatcher)
-      fixDragRecognitionSupportLeak()
+      fixSwingLeaks()
       // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
       isVisible = false
       super.dispose()
@@ -309,6 +311,11 @@ private class EventLogger(private val frame: IdeFrameImpl, private val log: Logg
   }
 }
 
+private fun fixSwingLeaks() {
+  fixDragRecognitionSupportLeak()
+  fixTooltipManagerLeak()
+}
+
 private fun fixDragRecognitionSupportLeak() {
   // sending a "mouse release" event to any DnD-supporting component indirectly calls javax.swing.plaf.basic.DragRecognitionSupport.clearState,
   // cleaning up the potential leak (that can happen if the user started dragging something and released the mouse outside the component)
@@ -329,4 +336,19 @@ private fun fixDragRecognitionSupportLeak() {
   }
   fakeTree.dragEnabled = true
   fakeTree.releaseDND()
+}
+
+private fun fixTooltipManagerLeak() {
+  val fakeComponent = JPanel()
+  ToolTipManager.sharedInstance().mousePressed(MouseEvent(
+    fakeComponent,
+    MouseEvent.MOUSE_PRESSED,
+    System.currentTimeMillis(),
+    0,
+    0,
+    0,
+    1,
+    false,
+    MouseEvent.BUTTON1
+  ))
 }
