@@ -173,7 +173,7 @@ fun Path.asEelPath(): EelPath {
   val descriptor = service.tryGetEelDescriptor(this) ?: return EelPath.parse(toString(), LocalEelDescriptor)
   val root = service.tryGetNioRoots(descriptor)?.firstOrNull { this.startsWith(it) } ?: error("unreachable") // since the descriptor is not null, the root should be as well
   val relative = root.relativize(this)
-  if (descriptor.platform.isPosix) {
+  if (descriptor.osFamily.isPosix) {
     return relative.fold(EelPath.parse("/", descriptor), { path, part -> path.resolve(part.toString()) })
   }
   else {

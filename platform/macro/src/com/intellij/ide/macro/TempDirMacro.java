@@ -40,7 +40,7 @@
      if (contextPath != null) {
        var eelPath = JEelUtils.toEelPath(contextPath);
        if (eelPath != null) {
-         return eelPath.getDescriptor().getPlatform() == EelOsFamily.Windows;
+         return eelPath.getDescriptor().getOsFamily() == EelOsFamily.Windows;
        }
      }
      return SystemInfo.isWindows;

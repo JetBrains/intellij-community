@@ -71,7 +71,7 @@ class IjentNioFileSystem internal constructor(
       more.fold(EelPath.parse(first, ijentFs.descriptor)) { path, newPart -> path.resolve(newPart) }.toNioPath()
     }
     catch (_: EelPathException) {
-      RelativeIjentNioPath(first.split(*ijentFs.descriptor.platform.directorySeparators) + more, this)
+      RelativeIjentNioPath(first.split(*ijentFs.descriptor.osFamily.directorySeparators) + more, this)
     }
   }
 

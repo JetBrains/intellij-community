@@ -216,7 +216,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
                                               @NotNull EelDescriptor eelDescriptor) {
     systemDependentPath = convertPathUsingEel(systemDependentPath, eelDescriptor);
 
-    return switch (eelDescriptor.getPlatform()) {
+    return switch (eelDescriptor.getOsFamily()) {
       case Windows ->
         ShStringUtil.quote(systemDependentPath);
       case Posix -> {

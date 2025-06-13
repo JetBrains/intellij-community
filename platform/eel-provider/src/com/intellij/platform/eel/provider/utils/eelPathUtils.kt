@@ -131,7 +131,7 @@ object EelPathUtils {
     }
     val root = eelPath.root.toString().replace('\\', '/')
     // see sun.nio.fs.WindowsUriSupport#toUri(java.lang.String, boolean, boolean)
-    val trailing = if (eelPath.descriptor.platform.isWindows) "/" else ""
+    val trailing = if (eelPath.descriptor.osFamily.isWindows) "/" else ""
     return URI("file", null, trailing + root + eelPath.parts.joinToString("/"), null, null)
   }
 

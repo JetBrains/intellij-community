@@ -54,7 +54,7 @@ interface EelDescriptor {
   @Deprecated("Use platform instead", ReplaceWith("platform"))
   @get:ApiStatus.Internal
   val operatingSystem: OS
-    get() = when (platform) {
+    get() = when (osFamily) {
       EelOsFamily.Windows -> OS.WINDOWS
       EelOsFamily.Posix -> OS.UNIX
     }
@@ -70,7 +70,7 @@ interface EelDescriptor {
    * The platform of an environment corresponding to this [EelDescriptor].
    */
   @get:ApiStatus.Experimental
-  val platform: EelOsFamily
+  val osFamily: EelOsFamily
 
   @ApiStatus.Experimental
   suspend fun toEelApi(): EelApi

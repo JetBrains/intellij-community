@@ -11,7 +11,7 @@ import kotlin.io.path.name
 
 @RequiresBackgroundThread
 @ApiStatus.Internal
-fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().platform) {
+fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().osFamily) {
   EelOsFamily.Windows -> parent.takeIf { it.name.lowercase() != "scripts" } ?: parent.parent
   EelOsFamily.Posix -> parent.takeIf { it.name != "bin" } ?: parent.parent
 }
@@ -19,5 +19,5 @@ fun PythonBinary.resolvePythonHome(): PythonHomePath = when (getEelDescriptor().
 @RequiresBackgroundThread
 @ApiStatus.Internal
 fun PythonHomePath.resolvePythonBinary(): PythonBinary? {
-  return VirtualEnvReader(isWindows = getEelDescriptor().platform.isWindows).findPythonInPythonRoot(this)
+  return VirtualEnvReader(isWindows = getEelDescriptor().osFamily.isWindows).findPythonInPythonRoot(this)
 }

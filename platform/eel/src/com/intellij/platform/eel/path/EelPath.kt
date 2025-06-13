@@ -6,7 +6,7 @@ import com.intellij.platform.eel.EelOsFamily
 import org.jetbrains.annotations.ApiStatus
 
 @get:ApiStatus.Internal
-val EelPath.platform: EelOsFamily get() = descriptor.platform
+val EelPath.platform: EelOsFamily get() = descriptor.osFamily
 
 /**
  * An interface for **absolute** paths on some environment.

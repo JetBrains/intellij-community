@@ -581,7 +581,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
   override fun readSymbolicLink(link: Path): Path {
     val fs = ensureAbsoluteIjentNioPath(link).nioFs
     val absolutePath = link.eelPath
-    val os = fs.ijentFs.descriptor.platform
+    val os = fs.ijentFs.descriptor.osFamily
     return fsBlocking {
       when (val ijentFs = fs.ijentFs) {
         is IjentFileSystemPosixApi -> when (val type = ijentFs.stat(absolutePath).justResolve().getOrThrowFileSystemException().type) {

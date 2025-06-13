@@ -33,7 +33,7 @@ suspend fun waitNoError(delay: Duration = 100.milliseconds, repeat: Int = 50, ch
 }
 
 @RequiresBackgroundThread
-fun PythonHomePath.resolvePythonTool(name: String): Path = when (getEelDescriptor().platform) {
+fun PythonHomePath.resolvePythonTool(name: String): Path = when (getEelDescriptor().osFamily) {
   EelOsFamily.Windows -> resolve("Scripts/$name.exe")
   EelOsFamily.Posix-> resolve("bin/$name")
 }
@@ -53,7 +53,7 @@ private class PathMatcher(private val parent: Path) : TypeSafeMatcher<Path>(Path
 
   private fun Path.expandWinPath(): Path =
     try {
-      when (getEelDescriptor().platform) {
+      when (getEelDescriptor().osFamily) {
         // On Windows we change 8.3 problem (c:\users\William.~1 -> c:\users\William.Gates)
         // But you are encountered to disable 8.3 with `fsutil 8dot3name set 1`
         EelOsFamily.Windows -> toRealPath()

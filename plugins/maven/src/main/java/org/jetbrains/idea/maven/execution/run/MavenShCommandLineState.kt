@@ -407,7 +407,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   }
 
   private fun isWindows() =
-    when (myConfiguration.project.getEelDescriptor().platform) {
+    when (myConfiguration.project.getEelDescriptor().osFamily) {
       EelOsFamily.Posix -> false
       EelOsFamily.Windows -> true
     }

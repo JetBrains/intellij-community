@@ -98,7 +98,7 @@ data object LocalEelDescriptor : EelDescriptor {
   private val LOG = logger<LocalEelDescriptor>()
   override val userReadableDescription: @NonNls String = "Local: ${System.getProperty("os.name")}"
 
-  override val platform: EelOsFamily by lazy {
+  override val osFamily: EelOsFamily by lazy {
     when {
       SystemInfo.isWindows -> EelOsFamily.Windows
       SystemInfo.isMac || SystemInfo.isLinux || SystemInfo.isFreeBSD -> EelOsFamily.Posix

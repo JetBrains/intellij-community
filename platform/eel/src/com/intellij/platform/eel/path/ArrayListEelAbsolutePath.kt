@@ -136,7 +136,7 @@ internal class ArrayListEelAbsolutePath private constructor(
     fun build(parts: List<String>, descriptor: EelDescriptor): EelPath {
       require(parts.isNotEmpty()) { "Can't build an absolute path from no path parts" }
 
-      val windowsRoot = when (descriptor.platform) {
+      val windowsRoot = when (descriptor.osFamily) {
         EelOsFamily.Windows -> findAbsoluteUncPath(parts.first(), descriptor) ?: findAbsoluteTraditionalDosPath(parts.first(), descriptor)
         EelOsFamily.Posix -> null
       }
@@ -170,7 +170,7 @@ internal class ArrayListEelAbsolutePath private constructor(
 
     @Throws(EelPathException::class)
     fun parseOrNull(raw: String, descriptor: EelDescriptor): ArrayListEelAbsolutePath? =
-      when (descriptor.platform) {
+      when (descriptor.osFamily) {
         EelOsFamily.Windows -> findAbsoluteUncPath(raw, descriptor) ?: findAbsoluteTraditionalDosPath(raw, descriptor)
         EelOsFamily.Posix -> findAbsoluteUnixPath(raw, descriptor)
       }

@@ -112,7 +112,7 @@ internal class MavenWrapperSupport {
       throw IllegalStateException(SyncBundle.message("zip.is.not.correct", zipFile.toAbsolutePath()))
     }
     val mavenHome = dirs[0]
-    if (mavenHome.getEelDescriptor().platform.isPosix) {
+    if (mavenHome.getEelDescriptor().osFamily.isPosix) {
       makeMavenBinRunnable(mavenHome)
     }
     return mavenHome

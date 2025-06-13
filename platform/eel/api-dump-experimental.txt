@@ -7,7 +7,7 @@
 *:com.intellij.platform.eel.EelApi$Pid
 - a:getValue():J
 *:com.intellij.platform.eel.EelDescriptor
-- *a:getPlatform():com.intellij.platform.eel.EelOsFamily
+- *a:getOsFamily():com.intellij.platform.eel.EelOsFamily
 - *a:getUserReadableDescription():java.lang.String
 - *a:toEelApi(kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelError

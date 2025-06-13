@@ -153,7 +153,7 @@ class WslEelProvider(private val coroutineScope: CoroutineScope) : EelProvider {
 }
 
 data class WslEelDescriptor(val distribution: WSLDistribution) : EelDescriptor {
-  override val platform: EelOsFamily = EelOsFamily.Posix
+  override val osFamily: EelOsFamily = EelOsFamily.Posix
 
   override val userReadableDescription: @NonNls String = "WSL: ${distribution.presentableName}"
 

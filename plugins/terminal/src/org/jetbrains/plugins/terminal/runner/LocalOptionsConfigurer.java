@@ -119,7 +119,7 @@ public final class LocalOptionsConfigurer {
     final var isWindows =
       eelDescriptor == null
       ? SystemInfo.isWindows
-      : switch (eelDescriptor.getPlatform()) {
+      : switch (eelDescriptor.getOsFamily()) {
         case Posix -> false;
         case Windows -> true;
       };

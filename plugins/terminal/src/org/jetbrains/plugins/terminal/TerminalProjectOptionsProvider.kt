@@ -157,7 +157,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
   }
 
   private suspend fun findDefaultShellPath(eelDescriptor: EelDescriptor): String {
-    if (eelDescriptor.platform.isWindows) {
+    if (eelDescriptor.osFamily.isWindows) {
       return "powershell.exe"
     }
     val eelApi = eelDescriptor.toEelApi()

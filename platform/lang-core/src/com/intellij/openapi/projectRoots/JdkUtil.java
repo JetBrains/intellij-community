@@ -205,7 +205,7 @@ public final class JdkUtil {
   }
 
   private static boolean isCompatibleWithOs(@NotNull EelDescriptor descriptor) {
-    EelOsFamily os = descriptor.getPlatform();
+    EelOsFamily os = descriptor.getOsFamily();
     return switch (os) {
       case Windows -> SystemInfo.isWindows;
       case Posix -> SystemInfo.isUnix;

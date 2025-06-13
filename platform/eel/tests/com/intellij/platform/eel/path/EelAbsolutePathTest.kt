@@ -69,7 +69,7 @@ class EelAbsolutePathTest {
     path.endsWith(listOf("C:", "foo", "bar", "bax")) shouldBe false
   }
 
-  class DummyEelDescriptor(override val platform: EelOsFamily) : EelDescriptor {
+  class DummyEelDescriptor(override val osFamily: EelOsFamily) : EelDescriptor {
     override val userReadableDescription: String = "mock"
 
     override suspend fun toEelApi(): EelApi {

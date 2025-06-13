@@ -100,7 +100,7 @@ internal class ShDocumentationProvider(private val scope: CoroutineScope) : Docu
         val path = eel.exec.fetchLoginShellEnvVariables()["PATH"]
 
         if (path != null) {
-          for (dir in StringUtil.tokenize(path, eelDescriptor.platform.pathSeparator)) {
+          for (dir in StringUtil.tokenize(path, eelDescriptor.osFamily.pathSeparator)) {
             val eelDir = runCatching { parse(dir, eelDescriptor) }.getOrNull() ?: continue
             val file = eelDir.resolve("info").asNioPath()
 

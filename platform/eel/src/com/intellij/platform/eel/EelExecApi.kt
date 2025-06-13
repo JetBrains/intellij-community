@@ -271,7 +271,7 @@ fun EelExecWindowsApi.spawnProcess(exe: String, vararg args: String): EelExecWin
  */
 @ApiStatus.Internal
 suspend fun EelExecApi.getShell(): Pair<EelPath, String> {
-  val (shell, cmdArg) = when (this.descriptor.platform) {
+  val (shell, cmdArg) = when (this.descriptor.osFamily) {
     EelOsFamily.Windows -> {
       val envs = fetchLoginShellEnvVariables()
       Pair(envs["ComSpec"] ?: run {
