@@ -8646,7 +8646,89 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/addForLoopIndices")
+    public static class AddForLoopIndices extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("explicitParamType.kt")
+        public void testExplicitParamType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/explicitParamType.kt");
+        }
+
+        @TestMetadata("inapplicableDestructuringDeclaration.kt")
+        public void testInapplicableDestructuringDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/inapplicableDestructuringDeclaration.kt");
+        }
+
+        @TestMetadata("inapplicableExistingIndices.kt")
+        public void testInapplicableExistingIndices() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/inapplicableExistingIndices.kt");
+        }
+
+        @TestMetadata("inapplicableInBody.kt")
+        public void testInapplicableInBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/inapplicableInBody.kt");
+        }
+
+        @TestMetadata("inapplicableOnMap.kt")
+        public void testInapplicableOnMap() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/inapplicableOnMap.kt");
+        }
+
+        @TestMetadata("inapplicableOverridenFunction.kt")
+        public void testInapplicableOverridenFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/inapplicableOverridenFunction.kt");
+        }
+
+        @TestMetadata("inapplicableUnresolved.kt")
+        public void testInapplicableUnresolved() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/inapplicableUnresolved.kt");
+        }
+
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/intArray.kt");
+        }
+
+        @TestMetadata("iterable.kt")
+        public void testIterable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/iterable.kt");
+        }
+
+        @TestMetadata("noBody.kt")
+        public void testNoBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/noBody.kt");
+        }
+
+        @TestMetadata("objectArray.kt")
+        public void testObjectArray() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/objectArray.kt");
+        }
+
+        @TestMetadata("sequence.kt")
+        public void testSequence() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/sequence.kt");
+        }
+
+        @TestMetadata("simpleIntList.kt")
+        public void testSimpleIntList() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/simpleIntList.kt");
+        }
+
+        @TestMetadata("string.kt")
+        public void testString() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/string.kt");
+        }
+    }
 
 
 
