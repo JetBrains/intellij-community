@@ -507,6 +507,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:HideToolWindow:javax.swing.Icon
 - sf:History:javax.swing.Icon
 - sf:ImplementingMethod:javax.swing.Icon
+- sf:IndentDetected:javax.swing.Icon
 - sf:Information:javax.swing.Icon
 - sf:InformationDialog:javax.swing.Icon
 - sf:InheritedMethod:javax.swing.Icon

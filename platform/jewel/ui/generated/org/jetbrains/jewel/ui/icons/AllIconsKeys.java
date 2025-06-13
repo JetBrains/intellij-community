@@ -534,6 +534,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey HideToolWindow = new IntelliJIconKey("general/hideToolWindow.svg", "expui/general/hide.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey History = new IntelliJIconKey("expui/general/history.svg", "expui/general/history.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ImplementingMethod = new IntelliJIconKey("general/implementingMethod.svg", "expui/general/showToImplement.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey IndentDetected = new IntelliJIconKey("expui/general/indentDetected.svg", "expui/general/indentDetected.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Information = new IntelliJIconKey("general/information.svg", "expui/status/info.svg", AllIconsKeys.class);
     /** 32x32 */ public static final @NotNull IntelliJIconKey InformationDialog = new IntelliJIconKey("general/informationDialog.svg", "expui/general/informationDialog.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey InheritedMethod = new IntelliJIconKey("general/inheritedMethod.svg", "expui/hierarchy/classHierarchy.svg", AllIconsKeys.class);
