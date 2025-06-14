@@ -6,6 +6,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.dp
+import org.jetbrains.jewel.bridge.safeValue
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlColors
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlMetrics
@@ -32,8 +33,8 @@ internal fun readSegmentedControlStyle(): SegmentedControlStyle {
         colors = colors,
         metrics =
             SegmentedControlMetrics(
-                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
-                borderWidth = DarculaUIUtil.LW.dp,
+                cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp.safeValue() / 2),
+                borderWidth = borderWidth,
             ),
     )
 }

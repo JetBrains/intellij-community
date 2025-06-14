@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.takeOrElse
 import com.intellij.util.ui.JBUI
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.retrieveColorOrUnspecified
-import org.jetbrains.jewel.bridge.retrieveIntAsDpOrUnspecified
+import org.jetbrains.jewel.bridge.retrieveIntAsNonNegativeDpOrUnspecified
 import org.jetbrains.jewel.ui.component.styling.LazyTreeIcons
 import org.jetbrains.jewel.ui.component.styling.LazyTreeMetrics
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
@@ -34,8 +34,8 @@ internal fun readLazyTreeStyle(): LazyTreeStyle {
             backgroundSelectedActive = selectedElementBackground,
         )
 
-    val leftIndent = retrieveIntAsDpOrUnspecified("Tree.leftChildIndent").takeOrElse { 7.dp }
-    val rightIndent = retrieveIntAsDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp }
+    val leftIndent = retrieveIntAsNonNegativeDpOrUnspecified("Tree.leftChildIndent").takeOrElse { 7.dp }
+    val rightIndent = retrieveIntAsNonNegativeDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp }
 
     return LazyTreeStyle(
         colors = itemColors,
@@ -49,7 +49,7 @@ internal fun readLazyTreeStyle(): LazyTreeStyle {
                         selectionBackgroundCornerSize = CornerSize(JBUI.CurrentTheme.Tree.ARC.dp / 2),
                         iconTextGap = 2.dp,
                     ),
-                elementMinHeight = retrieveIntAsDpOrUnspecified("Tree.rowHeight").takeOrElse { 24.dp },
+                elementMinHeight = retrieveIntAsNonNegativeDpOrUnspecified("Tree.rowHeight").takeOrElse { 24.dp },
                 chevronContentGap = 2.dp, // See com.intellij.ui.tree.ui.ClassicPainter.GAP
             ),
         icons =

@@ -240,11 +240,12 @@ private fun Color.updateTransparency(isDark: Boolean): Color {
     if (!useContrastScrollbars) return this
 
     var alpha = intValue("contrast.scrollbars.alpha.level")
-    if (alpha > 0) {
-        alpha = Integer.min(alpha, 255)
-    } else {
-        alpha = if (!isDark) LIGHT_ALPHA else DARK_ALPHA
-    }
+    alpha =
+        if (alpha > 0) {
+            Integer.min(alpha, 255)
+        } else {
+            if (!isDark) LIGHT_ALPHA else DARK_ALPHA
+        }
     return ColorUtil.toAlpha(this.toAwtColor(), alpha).toComposeColor()
 }
 
