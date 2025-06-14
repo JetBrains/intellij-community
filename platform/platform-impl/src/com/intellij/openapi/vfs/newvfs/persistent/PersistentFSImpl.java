@@ -1871,12 +1871,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (rootUrl.endsWith(":")) {
       if (OSAgnosticPathUtil.startsWithWindowsDrive(rootUrl) && rootUrl.length() == 2) {
         //Workaround for IDEA-331415: it shouldn't happen: rootUrl must be an url (even though sometimes not
-        // fully correct URL), not a win-path -- but it sometimes happens, even though shouldn't:
-        LOG.warn("detectFileSystem[root url='" + rootUrl + "', path='" + rootPath + "']: root URL is not an URL, but Win drive path");
-        return LocalFileSystem.getInstance();
-        //TODO RC: I hope this was just a fluck -- i.e. some VFS instances somehow got 'infected' by these wrong
-        // root urls, but they wash off with time -- and the need for this branch disappears. Lets replace the
-        // workaround with an AssertionError in v24.1, and see.
+        // fully correct URL), not a win-path -- but it sometimes happens, even though shouldn't.
+        // I hope this was just a temporary fluck -- i.e. some VFS instances somehow got 'infected' by these
+        // wrong root urls, but they wash off with time -- and the need for this branch disappears.
+        throw new IllegalArgumentException("detectFileSystem[root url='" + rootUrl + "', path='" + rootPath + "']: root URL is not an URL, but Win drive path");
       }
 
       //We truncated all trailing '/' in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
