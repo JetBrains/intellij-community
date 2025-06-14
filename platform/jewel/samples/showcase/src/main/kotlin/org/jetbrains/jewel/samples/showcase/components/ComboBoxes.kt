@@ -29,7 +29,7 @@ import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.PopupManager
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.disabled
+import org.jetbrains.jewel.ui.disabledIcon
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
@@ -149,7 +149,7 @@ private fun ListComboBoxes() {
                         active = isActive,
                         iconContentDescription = item.name,
                         icon = item.icon,
-                        colorFilter = ColorFilter.disabled(),
+                        colorFilter = ColorFilter.disabledIcon(),
                     )
                 },
             )

@@ -40,7 +40,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
-import org.jetbrains.jewel.ui.disabled
+import org.jetbrains.jewel.ui.disabledIcon
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
 /**
@@ -335,7 +335,7 @@ public fun ListComboBox(
                     selected = isSelected,
                     active = isActive,
                     iconContentDescription = item,
-                    colorFilter = if (enabled) null else ColorFilter.disabled(),
+                    colorFilter = if (enabled) null else ColorFilter.disabledIcon(),
                 )
             },
         )
