@@ -1,6 +1,10 @@
 package com.intellij.driver.sdk.ui.components.kotlin
 
+import com.intellij.driver.client.service
+import com.intellij.driver.sdk.PsiFile
+import com.intellij.driver.sdk.PsiManager
 import com.intellij.driver.sdk.invokeActionWithRetries
+import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -63,6 +67,11 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
         EditorComponentImpl::class
       )
       else -> super.editorComponent
+    }
+
+  val psiFile: PsiFile?
+    get() = with(driver) {
+      service<PsiManager>(singleProject()).findFile(editor.getVirtualFile())
     }
 
   fun addEmptyCodeCell(): Unit = addCellBelow.click()
