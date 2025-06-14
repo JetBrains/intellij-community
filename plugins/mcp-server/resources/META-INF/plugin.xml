@@ -23,6 +23,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
+    <postStartupActivity implementation="com.intellij.mcpserver.impl.McpClientDetectionActivity" />
+    <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"/>
 
     <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
 
@@ -32,6 +34,10 @@
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
     <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.TextToolset" />
+
+    <registryKey defaultValue="false"
+                 description="Detect MCP clients to suggest enable MCP server on project startup"
+                 key="mcp.server.detect.mcp.clients"/>
 
     <applicationConfigurable
       instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"
