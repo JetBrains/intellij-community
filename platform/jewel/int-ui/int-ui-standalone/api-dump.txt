@@ -1,0 +1,10 @@
+f:org.jetbrains.jewel.intui.standalone.shortcut.StandaloneMenuItemShortcutHintProvider
+- org.jetbrains.jewel.ui.MenuItemShortcutHintProvider
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.shortcut.StandaloneMenuItemShortcutHintProvider
+- getShortcutHint(org.jetbrains.jewel.ui.component.ContextMenuItemActionType):java.lang.String
+f:org.jetbrains.jewel.intui.standalone.shortcut.StandaloneShortcutProvider
+- org.jetbrains.jewel.ui.MenuItemShortcutProvider
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.intui.standalone.shortcut.StandaloneShortcutProvider
+- getShortcutKeyStroke(org.jetbrains.jewel.ui.component.ContextMenuItemActionType):javax.swing.KeyStroke

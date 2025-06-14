@@ -28,5 +28,15 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:toDpSize(java.awt.Dimension):J
 - sf:toPaddingValues(com.intellij.util.ui.JBInsets):androidx.compose.foundation.layout.PaddingValues
 - sf:toPaddingValues(java.awt.Insets):androidx.compose.foundation.layout.PaddingValues
+f:org.jetbrains.jewel.bridge.shortcut.BridgeMenuItemShortcutHintProvider
+- org.jetbrains.jewel.ui.MenuItemShortcutHintProvider
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.bridge.shortcut.BridgeMenuItemShortcutHintProvider
+- getShortcutHint(org.jetbrains.jewel.ui.component.ContextMenuItemActionType):java.lang.String
+f:org.jetbrains.jewel.bridge.shortcut.BridgeMenuItemShortcutProvider
+- org.jetbrains.jewel.ui.MenuItemShortcutProvider
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.bridge.shortcut.BridgeMenuItemShortcutProvider
+- getShortcutKeyStroke(org.jetbrains.jewel.ui.component.ContextMenuItemActionType):javax.swing.KeyStroke
 f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt
 - sf:retrieveDefaultTextStyle(F):androidx.compose.ui.text.TextStyle

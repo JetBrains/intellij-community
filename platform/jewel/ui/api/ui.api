@@ -72,6 +72,22 @@ public final class org/jetbrains/jewel/ui/DisabledColorFilterKt {
 	public static final fun disabled (Landroidx/compose/ui/graphics/ColorFilter$Companion;)Landroidx/compose/ui/graphics/ColorFilter;
 }
 
+public abstract interface class org/jetbrains/jewel/ui/MenuItemShortcutHintProvider {
+	public abstract fun getShortcutHint (Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;)Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/ui/MenuItemShortcutHintProviderKt {
+	public static final fun getLocalMenuItemShortcutHintProvider ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
+public abstract interface class org/jetbrains/jewel/ui/MenuItemShortcutProvider {
+	public abstract fun getShortcutKeyStroke (Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;)Ljavax/swing/KeyStroke;
+}
+
+public final class org/jetbrains/jewel/ui/MenuItemShortcutProviderKt {
+	public static final fun getLocalMenuItemShortcutProvider ()Landroidx/compose/runtime/ProvidableCompositionLocal;
+}
+
 public final class org/jetbrains/jewel/ui/Orientation : java/lang/Enum {
 	public static final field Horizontal Lorg/jetbrains/jewel/ui/Orientation;
 	public static final field Vertical Lorg/jetbrains/jewel/ui/Orientation;
@@ -335,6 +351,24 @@ public final class org/jetbrains/jewel/ui/component/ComposableSingletons$MenuKt 
 public final class org/jetbrains/jewel/ui/component/ContextMenuDivider : androidx/compose/foundation/ContextMenuItem {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ContextMenuDivider;
+}
+
+public final class org/jetbrains/jewel/ui/component/ContextMenuItemActionType : java/lang/Enum {
+	public static final field COPY Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;
+	public static final field CUT Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;
+	public static final field PASTE Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;
+	public static final field SELECT_ALL Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;
+	public static fun values ()[Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;
+}
+
+public final class org/jetbrains/jewel/ui/component/ContextMenuOption : androidx/compose/foundation/ContextMenuItem {
+	public static final field $stable I
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;Ljava/lang/String;Lkotlin/jvm/functions/Function0;)V
+	public synthetic fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;Ljava/lang/String;Lkotlin/jvm/functions/Function0;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getActionType ()Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;
+	public final fun getIcon ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 }
 
 public final class org/jetbrains/jewel/ui/component/ContextMenuRepresentation : androidx/compose/foundation/ContextMenuRepresentation {
@@ -646,11 +680,13 @@ public final class org/jetbrains/jewel/ui/component/MenuManagerKt {
 public abstract interface class org/jetbrains/jewel/ui/component/MenuScope {
 	public abstract fun passiveItem (Lkotlin/jvm/functions/Function2;)V
 	public abstract fun selectableItem (ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
+	public abstract fun selectableItemWithActionType (ZLorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
 	public abstract fun submenu (ZLorg/jetbrains/jewel/ui/icon/IconKey;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
 }
 
 public final class org/jetbrains/jewel/ui/component/MenuScope$DefaultImpls {
 	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun selectableItemWithActionType$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun submenu$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
@@ -1045,6 +1081,12 @@ public final class org/jetbrains/jewel/ui/component/TabsKt {
 public final class org/jetbrains/jewel/ui/component/TextAreaKt {
 	public static final fun TextArea (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/foundation/text/input/InputTransformation;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/input/KeyboardActionHandler;Landroidx/compose/foundation/text/input/TextFieldLineLimits;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/text/input/OutputTransformation;ZLandroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;III)V
 	public static final fun TextArea (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;ILkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;III)V
+}
+
+public final class org/jetbrains/jewel/ui/component/TextContextMenu : androidx/compose/foundation/text/TextContextMenu {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/TextContextMenu;
+	public fun Area (Landroidx/compose/foundation/text/TextContextMenu$TextManager;Landroidx/compose/foundation/ContextMenuState;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;I)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TextFieldKt {

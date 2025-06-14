@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import kotlin.collections.forEach
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.modifier.border
 import org.jetbrains.jewel.foundation.modifier.onHover
@@ -76,6 +77,8 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.foundation.theme.OverrideDarkMode
+import org.jetbrains.jewel.ui.LocalMenuItemShortcutHintProvider
+import org.jetbrains.jewel.ui.LocalMenuItemShortcutProvider
 import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
@@ -160,12 +163,29 @@ internal fun MenuContent(
     val selectableItems = remember { items.filterIsInstance<MenuSelectableItem>() }
 
     val anyItemHasIcon = remember { selectableItems.any { it.iconKey != null } }
-    val anyItemHasKeybinding = remember { selectableItems.any { it.keybinding != null } }
+    val anyItemHasKeybinding = remember { selectableItems.any { it.keybinding != null || it.actionType != null } }
 
     val localMenuManager = LocalMenuManager.current
+    val localInputModeManager = LocalInputModeManager.current
+    val localMenuItemShortcutProvider = LocalMenuItemShortcutProvider.current
     val scrollState = rememberScrollState()
     val colors = style.colors
     val menuShape = RoundedCornerShape(style.metrics.cornerSize)
+
+    DisposableEffect(items, localMenuManager, localMenuItemShortcutProvider) {
+        localMenuManager.clearShortcutActions()
+        selectableItems.forEach { item ->
+            if (item.isEnabled && item.actionType != null) {
+                localMenuItemShortcutProvider.getShortcutKeyStroke(item.actionType)?.let { keyStroke ->
+                    localMenuManager.registerShortcutAction(keyStroke) {
+                        item.onClick()
+                        localMenuManager.closeAll(localInputModeManager.inputMode, true)
+                    }
+                }
+            }
+        }
+        onDispose { localMenuManager.clearShortcutActions() }
+    }
 
     Box(
         modifier =
@@ -198,16 +218,29 @@ internal fun MenuContent(
 private fun ShowMenuItem(item: MenuItem, canShowIcon: Boolean = false, canShowKeybinding: Boolean = false) {
     when (item) {
         is MenuSelectableItem ->
-            MenuItem(
-                selected = item.isSelected,
-                onClick = item.onClick,
-                enabled = item.isEnabled,
-                canShowIcon = canShowIcon,
-                canShowKeybinding = canShowKeybinding,
-                iconKey = item.iconKey,
-                keybinding = item.keybinding,
-                content = item.content,
-            )
+            if (item.actionType != null) {
+                MenuItem(
+                    selected = item.isSelected,
+                    onClick = item.onClick,
+                    enabled = item.isEnabled,
+                    canShowIcon = canShowIcon,
+                    canShowKeybinding = canShowKeybinding,
+                    iconKey = item.iconKey,
+                    actionType = item.actionType,
+                    content = item.content,
+                )
+            } else {
+                MenuItem(
+                    selected = item.isSelected,
+                    onClick = item.onClick,
+                    enabled = item.isEnabled,
+                    canShowIcon = canShowIcon,
+                    canShowKeybinding = canShowKeybinding,
+                    iconKey = item.iconKey,
+                    keybinding = item.keybinding,
+                    content = item.content,
+                )
+            }
 
         is SubmenuItem ->
             MenuSubmenuItem(
@@ -265,6 +298,29 @@ public interface MenuScope {
         selected: Boolean,
         iconKey: IconKey? = null,
         keybinding: Set<String>? = null,
+        onClick: () -> Unit,
+        enabled: Boolean = true,
+        content: @Composable () -> Unit,
+    )
+
+    /**
+     * Adds a selectable menu item with optional icon and keybinding.
+     *
+     * Creates a menu item that can be selected and clicked. The item supports an optional icon and keybinding display,
+     * and can be enabled or disabled. When clicked, the provided onClick handler is called.
+     *
+     * @param selected Whether this item is currently selected
+     * @param iconKey Optional icon key for displaying an icon before the content
+     * @param actionType Optional action type that will be mapped to a shortcut hint and used to handle shortcut key
+     *   events
+     * @param onClick Called when the item is clicked
+     * @param enabled Controls whether the item can be interacted with
+     * @param content The content to be displayed in the menu item
+     */
+    public fun selectableItemWithActionType(
+        selected: Boolean,
+        iconKey: IconKey? = null,
+        actionType: ContextMenuItemActionType? = null,
         onClick: () -> Unit,
         enabled: Boolean = true,
         content: @Composable () -> Unit,
@@ -353,6 +409,26 @@ private fun (MenuScope.() -> Unit).asList() = buildList {
                 )
             }
 
+            override fun selectableItemWithActionType(
+                selected: Boolean,
+                iconKey: IconKey?,
+                actionType: ContextMenuItemActionType?,
+                onClick: () -> Unit,
+                enabled: Boolean,
+                content: @Composable () -> Unit,
+            ) {
+                add(
+                    MenuSelectableItem(
+                        isSelected = selected,
+                        isEnabled = enabled,
+                        iconKey = iconKey,
+                        actionType = actionType,
+                        onClick = onClick,
+                        content = content,
+                    )
+                )
+            }
+
             override fun passiveItem(content: @Composable () -> Unit) {
                 add(MenuPassiveItem(content))
             }
@@ -377,7 +453,8 @@ private data class MenuSelectableItem(
     val isSelected: Boolean,
     val isEnabled: Boolean,
     val iconKey: IconKey?,
-    val keybinding: Set<String>?,
+    val actionType: ContextMenuItemActionType? = null,
+    val keybinding: Set<String>? = emptySet(),
     val onClick: () -> Unit = {},
     override val content: @Composable () -> Unit,
 ) : MenuItem
@@ -414,11 +491,76 @@ internal fun MenuItem(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     iconKey: IconKey?,
+    actionType: ContextMenuItemActionType,
+    canShowIcon: Boolean,
+    canShowKeybinding: Boolean,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: MenuStyle = JewelTheme.menuStyle,
+    content: @Composable () -> Unit,
+) {
+    val shortcutHintProvider = LocalMenuItemShortcutHintProvider.current
+
+    MenuItemBase(
+        selected = selected,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        iconKey = iconKey,
+        canShowIcon = canShowIcon,
+        canShowKeybinding = canShowKeybinding,
+        interactionSource = interactionSource,
+        style = style,
+        content = content,
+        keybindingHint = if (canShowKeybinding) shortcutHintProvider.getShortcutHint(actionType) else "",
+    )
+}
+
+@Composable
+internal fun MenuItem(
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    iconKey: IconKey?,
     keybinding: Set<String>?,
     canShowIcon: Boolean,
     canShowKeybinding: Boolean,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: MenuStyle = JewelTheme.menuStyle,
+    content: @Composable () -> Unit,
+) {
+    MenuItemBase(
+        selected = selected,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        iconKey = iconKey,
+        canShowIcon = canShowIcon,
+        canShowKeybinding = canShowKeybinding,
+        interactionSource = interactionSource,
+        style = style,
+        content = content,
+        keybindingHint =
+            if (hostOs.isMacOS) {
+                keybinding?.joinToString("") { it }.orEmpty()
+            } else {
+                keybinding?.joinToString("+") { it }.orEmpty()
+            },
+    )
+}
+
+@Composable
+internal fun MenuItemBase(
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    iconKey: IconKey?,
+    canShowIcon: Boolean,
+    canShowKeybinding: Boolean,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: MenuStyle = JewelTheme.menuStyle,
+    keybindingHint: String,
     content: @Composable () -> Unit,
 ) {
     var itemState by
@@ -434,7 +576,6 @@ internal fun MenuItem(
                 is PressInteraction.Press -> itemState = itemState.copy(pressed = true)
                 is PressInteraction.Cancel,
                 is PressInteraction.Release -> itemState = itemState.copy(pressed = false)
-
                 is HoverInteraction.Enter -> {
                     itemState = itemState.copy(hovered = true)
                     focusRequester.requestFocus()
@@ -467,10 +608,7 @@ internal fun MenuItem(
                 .fillMaxWidth()
     ) {
         DisposableEffect(Unit) {
-            if (selected) {
-                focusRequester.requestFocus()
-            }
-
+            if (selected) focusRequester.requestFocus()
             onDispose {}
         }
 
@@ -505,17 +643,9 @@ internal fun MenuItem(
                 Box(modifier = Modifier.weight(1f, true)) { content() }
 
                 if (canShowKeybinding) {
-                    val keybindingText =
-                        remember(keybinding) {
-                            if (hostOs.isMacOS) {
-                                keybinding?.joinToString(" ") { it }.orEmpty()
-                            } else {
-                                keybinding?.joinToString(" + ") { it }.orEmpty()
-                            }
-                        }
                     Text(
                         modifier = Modifier.padding(style.metrics.itemMetrics.keybindingsPadding),
-                        text = keybindingText,
+                        text = keybindingHint,
                         color = itemColors.keybindingTintFor(itemState).value,
                     )
                 }

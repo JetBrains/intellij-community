@@ -5,6 +5,14 @@ org.jetbrains.jewel.ui.ComponentStyling
 - a:styles(androidx.compose.runtime.Composer,I):androidx.compose.runtime.ProvidedValue[]
 - with(kotlin.jvm.functions.Function2):org.jetbrains.jewel.ui.ComponentStyling
 - with(org.jetbrains.jewel.ui.ComponentStyling):org.jetbrains.jewel.ui.ComponentStyling
+org.jetbrains.jewel.ui.MenuItemShortcutHintProvider
+- a:getShortcutHint(org.jetbrains.jewel.ui.component.ContextMenuItemActionType):java.lang.String
+f:org.jetbrains.jewel.ui.MenuItemShortcutHintProviderKt
+- sf:getLocalMenuItemShortcutHintProvider():androidx.compose.runtime.ProvidableCompositionLocal
+org.jetbrains.jewel.ui.MenuItemShortcutProvider
+- a:getShortcutKeyStroke(org.jetbrains.jewel.ui.component.ContextMenuItemActionType):javax.swing.KeyStroke
+f:org.jetbrains.jewel.ui.MenuItemShortcutProviderKt
+- sf:getLocalMenuItemShortcutProvider():androidx.compose.runtime.ProvidableCompositionLocal
 e:org.jetbrains.jewel.ui.component.AutoHideBehavior
 - java.lang.Enum
 - sf:Long:org.jetbrains.jewel.ui.component.AutoHideBehavior
@@ -13,14 +21,37 @@ e:org.jetbrains.jewel.ui.component.AutoHideBehavior
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.AutoHideBehavior
 - s:values():org.jetbrains.jewel.ui.component.AutoHideBehavior[]
+e:org.jetbrains.jewel.ui.component.ContextMenuItemActionType
+- java.lang.Enum
+- sf:COPY:org.jetbrains.jewel.ui.component.ContextMenuItemActionType
+- sf:CUT:org.jetbrains.jewel.ui.component.ContextMenuItemActionType
+- sf:PASTE:org.jetbrains.jewel.ui.component.ContextMenuItemActionType
+- sf:SELECT_ALL:org.jetbrains.jewel.ui.component.ContextMenuItemActionType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):org.jetbrains.jewel.ui.component.ContextMenuItemActionType
+- s:values():org.jetbrains.jewel.ui.component.ContextMenuItemActionType[]
+f:org.jetbrains.jewel.ui.component.ContextMenuOption
+- androidx.compose.foundation.ContextMenuItem
+- sf:$stable:I
+- <init>(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemActionType,java.lang.String,kotlin.jvm.functions.Function0):V
+- b:<init>(org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemActionType,java.lang.String,kotlin.jvm.functions.Function0,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getActionType():org.jetbrains.jewel.ui.component.ContextMenuItemActionType
+- f:getIcon():org.jetbrains.jewel.ui.icon.IconKey
 org.jetbrains.jewel.ui.component.MenuScope
 - a:passiveItem(kotlin.jvm.functions.Function2):V
 - a:selectableItem(Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
 - bs:selectableItem$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,java.util.Set,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):V
+- a:selectableItemWithActionType(Z,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemActionType,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2):V
+- bs:selectableItemWithActionType$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,org.jetbrains.jewel.ui.component.ContextMenuItemActionType,kotlin.jvm.functions.Function0,Z,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 - a:submenu(Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
 - bs:submenu$default(org.jetbrains.jewel.ui.component.MenuScope,Z,org.jetbrains.jewel.ui.icon.IconKey,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2,I,java.lang.Object):V
 org.jetbrains.jewel.ui.component.TabContentScope
 - tabContentAlpha-A_ZS63w(androidx.compose.ui.Modifier,J,androidx.compose.runtime.Composer,I):androidx.compose.ui.Modifier
+f:org.jetbrains.jewel.ui.component.TextContextMenu
+- androidx.compose.foundation.text.TextContextMenu
+- sf:$stable:I
+- sf:INSTANCE:org.jetbrains.jewel.ui.component.TextContextMenu
+- Area(androidx.compose.foundation.text.TextContextMenu$TextManager,androidx.compose.foundation.ContextMenuState,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I):V
 f:org.jetbrains.jewel.ui.component.TooltipKt
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V
 - sf:Tooltip(kotlin.jvm.functions.Function2,androidx.compose.ui.Modifier,Z,org.jetbrains.jewel.ui.component.styling.TooltipStyle,androidx.compose.foundation.TooltipPlacement,org.jetbrains.jewel.ui.component.AutoHideBehavior,kotlin.jvm.functions.Function2,androidx.compose.runtime.Composer,I,I):V

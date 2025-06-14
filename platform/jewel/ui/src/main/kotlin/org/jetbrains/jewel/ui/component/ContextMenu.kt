@@ -13,13 +13,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.InputModeManager
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.nativeKeyCode
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.window.rememberCursorPositionProvider
+import java.awt.event.InputEvent
+import javax.swing.KeyStroke
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.theme.menuStyle
 
 public object ContextMenuRepresentation : ContextMenuRepresentation {
@@ -61,7 +71,10 @@ internal fun ContextMenu(
         onKeyEvent = {
             val currentFocusManager = checkNotNull(focusManager) { "FocusManager must not be null" }
             val currentInputModeManager = checkNotNull(inputModeManager) { "InputModeManager must not be null" }
-            handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
+            val swingKeyStroke = composeKeyEventToSwingKeyStroke(it)
+
+            menuManager.findAndExecuteShortcut(swingKeyStroke)
+                ?: handlePopupMenuOnKeyEvent(it, currentFocusManager, currentInputModeManager, menuManager)
         },
     ) {
         focusManager = LocalFocusManager.current
@@ -82,6 +95,16 @@ private fun MenuScope.contextItems(items: () -> List<ContextMenuItem>) {
             is ContextSubmenu -> {
                 submenu(submenu = { contextItems(item.submenu) }) { Text(item.label) }
             }
+            is ContextMenuOption -> {
+                selectableItemWithActionType(
+                    selected = false,
+                    onClick = item.onClick,
+                    iconKey = item.icon,
+                    actionType = item.actionType,
+                ) {
+                    Text(item.label)
+                }
+            }
             else -> {
                 selectableItem(selected = false, onClick = item.onClick) { Text(item.label) }
             }
@@ -93,3 +116,29 @@ public object ContextMenuDivider : ContextMenuItem("---", {})
 
 public class ContextSubmenu(label: String, public val submenu: () -> List<ContextMenuItem>) :
     ContextMenuItem(label, {})
+
+public class ContextMenuOption(
+    public val icon: IconKey? = null,
+    public val actionType: ContextMenuItemActionType,
+    label: String,
+    action: () -> Unit,
+) : ContextMenuItem(label, action)
+
+public enum class ContextMenuItemActionType {
+    COPY,
+    PASTE,
+    CUT,
+    SELECT_ALL,
+}
+
+internal fun composeKeyEventToSwingKeyStroke(event: KeyEvent): KeyStroke? {
+    val awtKeyCode = event.key.nativeKeyCode
+    var modifiers = 0
+
+    if (event.isCtrlPressed) modifiers = modifiers or InputEvent.CTRL_DOWN_MASK
+    if (event.isMetaPressed) modifiers = modifiers or InputEvent.META_DOWN_MASK
+    if (event.isAltPressed) modifiers = modifiers or InputEvent.ALT_DOWN_MASK
+    if (event.isShiftPressed) modifiers = modifiers or InputEvent.SHIFT_DOWN_MASK
+
+    return KeyStroke.getKeyStroke(awtKeyCode, modifiers, false)
+}

@@ -3,12 +3,14 @@ package org.jetbrains.jewel.ui.component
 import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.input.InputMode
+import javax.swing.KeyStroke
 
 public class MenuManager(
     public val onDismissRequest: (InputMode) -> Boolean,
     private val parentMenuManager: MenuManager? = null,
 ) {
     private var isHovered: Boolean = false
+    private val currentMenuShortcutActions = mutableListOf<MenuShortcutAction>()
 
     /**
      * Called when the hovered state of the menu changes. This is used to abort parent menu closing in unforced mode
@@ -43,8 +45,27 @@ public class MenuManager(
 
     public fun submenuManager(onDismissRequest: (InputMode) -> Boolean): MenuManager =
         MenuManager(onDismissRequest = onDismissRequest, parentMenuManager = this)
+
+    internal fun registerShortcutAction(keyStroke: KeyStroke, action: () -> Unit) {
+        currentMenuShortcutActions.add(MenuShortcutAction(keyStroke, action))
+    }
+
+    internal fun clearShortcutActions() {
+        currentMenuShortcutActions.clear()
+    }
+
+    internal fun findAndExecuteShortcut(keyStroke: KeyStroke?): Boolean? {
+        val actionToExecute = currentMenuShortcutActions.firstOrNull { it.keyStroke == keyStroke }
+        if (actionToExecute != null) {
+            actionToExecute.action.invoke()
+            return true
+        }
+        return null
+    }
 }
 
 public val LocalMenuManager: ProvidableCompositionLocal<MenuManager> = staticCompositionLocalOf {
     error("No MenuManager provided. Have you forgotten the theme?")
 }
+
+internal data class MenuShortcutAction(val keyStroke: KeyStroke, val action: () -> Unit)

@@ -1,11 +1,13 @@
 package org.jetbrains.jewel.ui
 
 import androidx.compose.foundation.LocalContextMenuRepresentation
+import androidx.compose.foundation.text.LocalTextContextMenu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.Stable
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.ContextMenuRepresentation
+import org.jetbrains.jewel.ui.component.TextContextMenu
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -110,6 +112,7 @@ public class DefaultComponentStyling(
             LocalChipStyle provides chipStyle,
             LocalCircularProgressStyle provides circularProgressStyle,
             LocalContextMenuRepresentation provides ContextMenuRepresentation,
+            LocalTextContextMenu provides TextContextMenu,
             LocalDefaultBannerStyle provides defaultBannerStyle,
             LocalDefaultComboBoxStyle provides comboBoxStyle,
             LocalDefaultButtonStyle provides defaultButtonStyle,

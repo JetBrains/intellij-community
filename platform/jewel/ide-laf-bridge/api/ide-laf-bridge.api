@@ -127,6 +127,18 @@ public final class org/jetbrains/jewel/bridge/icon/IntelliJIconKeyKt {
 	public static synthetic fun fromPlatformIcon$default (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey$Companion;Ljavax/swing/Icon;Ljava/lang/Class;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/icon/IconKey;
 }
 
+public final class org/jetbrains/jewel/bridge/shortcut/BridgeMenuItemShortcutHintProvider : org/jetbrains/jewel/ui/MenuItemShortcutHintProvider {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/bridge/shortcut/BridgeMenuItemShortcutHintProvider;
+	public fun getShortcutHint (Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;)Ljava/lang/String;
+}
+
+public final class org/jetbrains/jewel/bridge/shortcut/BridgeMenuItemShortcutProvider : org/jetbrains/jewel/ui/MenuItemShortcutProvider {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/bridge/shortcut/BridgeMenuItemShortcutProvider;
+	public fun getShortcutKeyStroke (Lorg/jetbrains/jewel/ui/component/ContextMenuItemActionType;)Ljavax/swing/KeyStroke;
+}
+
 public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalColorsKt {
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/BorderColors$Companion;)Lorg/jetbrains/jewel/foundation/BorderColors;
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;)Lorg/jetbrains/jewel/foundation/GlobalColors;
