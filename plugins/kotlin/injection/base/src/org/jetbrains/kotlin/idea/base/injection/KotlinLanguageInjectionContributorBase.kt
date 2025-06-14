@@ -99,13 +99,14 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 
         val project = ktHost.project
         val modificationCount = PsiManager.getInstance(project).modificationTracker.modificationCount
-        val configuration = Configuration.getProjectInstance(project)
 
         return when {
             kotlinCachedInjection != null && (modificationCount == kotlinCachedInjection.modificationCount) ->
                 // Cache is up-to-date
                 kotlinCachedInjection.baseInjection
             else -> {
+                val configuration = Configuration.getProjectInstance(project)
+
                 fun computeAndCache(): BaseInjection {
                     val computedInjection = computeBaseInjection(ktHost, containingFile, configuration, support) ?: absentKotlinInjection
                     ktHost.cachedInjectionWithModification = KotlinCachedInjection(modificationCount, computedInjection)
