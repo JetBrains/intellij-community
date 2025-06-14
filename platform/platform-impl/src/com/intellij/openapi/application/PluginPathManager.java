@@ -50,7 +50,7 @@ public final class PluginPathManager {
       Set<File> result = new HashSet<>();
       for (String root : ROOT_NAMES) {
         var subRepo = new File(dir, root);
-        if (subRepo.exists() && subRepo.isDirectory()) {
+        if (subRepo.isDirectory()) {
           result.add(subRepo.toPath().normalize().toFile());
         }
       }
