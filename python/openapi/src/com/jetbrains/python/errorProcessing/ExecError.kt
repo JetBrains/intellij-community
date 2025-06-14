@@ -25,7 +25,7 @@ class ExecError(
   /**
    * optional message to be displayed to the user: Why did we run this process. I.e "running pip to install package".
    */
-  additionalMessageToUser: @NlsContexts.DialogTitle String? = null,
+  val additionalMessageToUser: @NlsContexts.DialogTitle String? = null,
 ) : PyError(getExecErrorMessage(exe.toString(), args, additionalMessageToUser, errorReason)) {
   val asCommand: String get() = (arrayOf(exe.toString()) + args).joinToString(" ")
 }

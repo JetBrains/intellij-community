@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 sealed class PyError(message: @NlsSafe String) {
   private val _messages = CopyOnWriteArrayList<@Nls String>(listOf(message))
-  val message: @Nls String get() = _messages.reversed().joinToString(": ")
+  val message: @Nls String get() = _messages.reversed().joinToString("\n")
 
   /**
    * To be used by [getOr], see it for more info
