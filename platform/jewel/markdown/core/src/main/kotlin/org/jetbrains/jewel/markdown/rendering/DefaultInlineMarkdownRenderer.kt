@@ -1,5 +1,6 @@
 package org.jetbrains.jewel.markdown.rendering
 
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.AnnotatedString
@@ -166,7 +167,8 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         enabled: Boolean,
         currentTextStyle: TextStyle,
     ) {
-        // Not supported yet — see JEWEL-746
+        // Each image source corresponds to one rendered image.
+        appendInlineContent(node.source, "![${node.title}](${node.source})")
     }
 
     // The T type parameter is needed to avoid issues with capturing lambdas
