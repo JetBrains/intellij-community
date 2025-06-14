@@ -140,7 +140,7 @@ ReserveFile "UninstallOldVersions.ini"
 
   Function ${un}adjustLanguage
     ${If} $Language == ${LANG_SIMPCHINESE}
-      System::Call "kernel32::GetUserDefaultUILanguage() h .r10"
+      System::Call 'kernel32::GetUserDefaultUILanguage() h .r10'
       ${If} $R0 != ${LANG_SIMPCHINESE}
         ${LogText} "Language override: $R0 != ${LANG_SIMPCHINESE}"
         StrCpy $Language ${LANG_ENGLISH}
@@ -897,7 +897,7 @@ skip_ipr:
   ${EndIf}
 
   ; enabling Java assistive technologies if a screen reader is active (0x0046 = SPI_GETSCREENREADER)
-  System::Call "User32::SystemParametersInfo(i 0x0046, i 0, *i .r1, i 0) i .r0"
+  System::Call 'user32::SystemParametersInfo(i 0x0046, i 0, *i .r1, i 0) i .r0'
   ${LogText} "SystemParametersInfo(SPI_GETSCREENREADER): $0, value=$1"
   ${If} $0 <> 0
   ${AndIf} $1 == 1
@@ -939,7 +939,7 @@ skip_ipr:
 
   ; reset icon cache
   ${LogText} "Reset icon cache"
-  System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
+  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, i 0, i 0) v'
 SectionEnd
 
 
@@ -1044,12 +1044,12 @@ FunctionEnd
 
 ; returns the amount of free space on a disk $0, in MiBs, in $1
 Function getFreeDiskSpace
-  System::Call 'Kernel32::GetDiskFreeSpaceEx(t "$0", *l.r1, *l.r2, *l.r3) i.r0'
+  System::Call 'kernel32::GetDiskFreeSpaceEx(t "$0", *l .r1, *l .r2, *l .r3) i .r0'
   ${If} $0 <> 0
     System::Int64Op $1 >>> 20  ; converting bytes to MiBs
     Pop $1
   ${Else}
-    System::Call 'Kernel32::GetLastError() i() .r0'
+    System::Call 'kernel32::GetLastError() i .r0'
     ${LogText} "GetDiskFreeSpaceEx: $0"
     StrCpy $1 -1
   ${EndIf}
