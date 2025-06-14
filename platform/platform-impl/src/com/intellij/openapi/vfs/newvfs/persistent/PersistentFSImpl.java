@@ -115,9 +115,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   public PersistentFSImpl(@NotNull Application app) {
     this.app = app;
     rootsByUrl = SystemInfoRt.isFileSystemCaseSensitive
-              ? new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount())
-              : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
-                                                                HashingStrategy.caseInsensitive());
+                 ? new ConcurrentHashMap<>(10, 0.4f, JobSchedulerImpl.getCPUCoresCount())
+                 : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
+                                                                   HashingStrategy.caseInsensitive());
 
     AsyncEventSupport.startListening();
 
@@ -270,7 +270,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     catch (ProcessCanceledException e) {
       // Application may be closed before `LocalFileSystem` gets initialized()
       //noinspection IncorrectCancellationExceptionHandling
-      LOG.warn("Detected cancellation during dispose of PersistentFS. Application was likely closed before VFS got completely initialized", e);
+      LOG.warn("Detected cancellation during dispose of PersistentFS. Application was likely closed before VFS got completely initialized",
+               e);
     }
   }
 
@@ -1564,7 +1565,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (!(vf instanceof VirtualDirectoryImpl)) {
       return;
     }
-    parent = (VirtualDirectoryImpl)vf;  // retain in `myIdToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
+    parent = (VirtualDirectoryImpl)vf;  // retain in `idToDirCache` at least for the duration of this block, so that subsequent `findFileById` won't crash
     NewVirtualFileSystem fs = getFileSystem(parent);
 
     List<ChildInfo> childrenAdded = new ArrayList<>(createEvents.size());
@@ -1809,9 +1810,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     NewVirtualFile root = ensureRootCached(rootPath, rootUrl);
     if (root != null) {
       if (root.getId() != rootId) {
-        //Diogen reports like 49432216: rootId is found among existing roots -> ensureRootCached(rootPath, rootUrl) ->
-        // -> leads to insertion of a new root.
-        //I suspect this is a bug, this check is to provide more diagnostics for it:
+        //Diogen reports like 49432216: rootId is _found_ among existing roots, but somehow ensureRootCached(rootPath, rootUrl)
+        // leads to insertion of a _new_ root.
+        // I suspect this is a bug, and this check is to provide more diagnostics for it:
         throw new IllegalStateException(
           "root[#" + rootId + "]{rootName:'" + rootName + "', rootPath:'" + rootPath + "'} cached to something else: " +
           "cached [#" + root.getId() + "]" +
@@ -1828,7 +1829,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * Path should not end with '!' because then '!' won't be stripped and file won't be found (see {@link ArchiveFileSystem#findLocalByRootPath})
    */
   private static @NotNull String getRootPath(@NotNull String rootUrl, @NotNull String rootName) {
-    NewVirtualFileSystem fs = detectFileSystem(rootUrl, rootName);
+    NewVirtualFileSystem fs = detectFileSystem(rootUrl);
     if (fs instanceof ArchiveFileSystem) {
       String path = VirtualFileManager.extractPath(rootUrl);
       return StringUtil.trimEnd(path, "!");
@@ -1838,7 +1839,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @VisibleForTesting
   NewVirtualFile ensureRootCached(@NotNull String missedRootPath, @NotNull String missedRootUrl) {
-    NewVirtualFileSystem fs = detectFileSystem(missedRootUrl, missedRootPath);
+    NewVirtualFileSystem fs = detectFileSystem(missedRootUrl);
     if (fs == null) {
       return null;
     }
@@ -1866,15 +1867,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @VisibleForTesting
   @ApiStatus.Internal
-  public static @Nullable NewVirtualFileSystem detectFileSystem(@NotNull String rootUrl,
-                                                                @NotNull String rootPath) {
+  public static @Nullable NewVirtualFileSystem detectFileSystem(@NotNull String rootUrl) {
     if (rootUrl.endsWith(":")) {
       if (OSAgnosticPathUtil.startsWithWindowsDrive(rootUrl) && rootUrl.length() == 2) {
-        //Workaround for IDEA-331415: it shouldn't happen: rootUrl must be an url (even though sometimes not
-        // fully correct URL), not a win-path -- but it sometimes happens, even though shouldn't.
-        // I hope this was just a temporary fluck -- i.e. some VFS instances somehow got 'infected' by these
-        // wrong root urls, but they wash off with time -- and the need for this branch disappears.
-        throw new IllegalArgumentException("detectFileSystem[root url='" + rootUrl + "', path='" + rootPath + "']: root URL is not an URL, but Win drive path");
+        //It shouldn't happen: rootUrl must be an url (even though sometimes not fully correct URL), not a win-path
+        // -- but it did happen (IDEA-331415) even though shouldn't.
+        // I hope this was just a temporary fluck: i.e. some VFS instances somehow got 'infected' by these wrong root
+        // urls, but they washed off with time -- so the exception here is justified
+        throw new IllegalArgumentException("detectFileSystem(rootUrl='" + rootUrl + "'): root URL is not an URL, but Win drive path");
       }
 
       //We truncated all trailing '/' in the .findRoot(), before putting rootUrl into FSRecords.findOrCreateRoot()
@@ -1890,12 +1890,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     if (fs == null) {
-      LOG.warn("\tcan't force caching " + rootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
-               "-> protocol:'" + protocol + "' is not registered (yet?)");
+      LOG.warn("\tdetectFileSystem(" + rootUrl + ") -> protocol [" + protocol + "] is not registered (yet?)");
     }
     else {
-      LOG.warn("\tcan't force caching " + rootUrl + " (protocol: " + protocol + ", path: " + rootPath + ") " +
-               "-> " + fs + " is not NewVirtualFileSystem");
+      LOG.warn("\tdetectFileSystem(" + rootUrl + ") -> protocol [" + protocol + "] -> " + fs + " is not NewVirtualFileSystem");
     }
     return null;
   }
@@ -2576,15 +2574,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     var caseSensitivityReadsCounter = meter.counterBuilder("VFS.folderCaseSensitivityReads").buildObserver();
     var invertedFileNameIndexRequestsCount = meter.counterBuilder("VFS.invertedFileNameIndex.requests").buildObserver();
     meter.batchCallback(() -> {
-      fileByIdCacheHitsCounter.record(fileByIdCacheHits.get());
-      fileByIdCacheMissesCounter.record(fileByIdCacheMisses.get());
-      fileChildByNameCounter.record(childByName.get());
-      caseSensitivityReadsCounter.record(caseSensitivityReads.get());
-      FSRecordsImpl vfs = vfsPeer;
-      if (vfs != null) {
-        invertedFileNameIndexRequestsCount.record(vfs.invertedNameIndexRequestsServed());
-      }
-    }, fileByIdCacheHitsCounter, fileByIdCacheMissesCounter, fileChildByNameCounter, caseSensitivityReadsCounter, invertedFileNameIndexRequestsCount);
+                          fileByIdCacheHitsCounter.record(fileByIdCacheHits.get());
+                          fileByIdCacheMissesCounter.record(fileByIdCacheMisses.get());
+                          fileChildByNameCounter.record(childByName.get());
+                          caseSensitivityReadsCounter.record(caseSensitivityReads.get());
+                          FSRecordsImpl vfs = vfsPeer;
+                          if (vfs != null) {
+                            invertedFileNameIndexRequestsCount.record(vfs.invertedNameIndexRequestsServed());
+                          }
+                        }, fileByIdCacheHitsCounter, fileByIdCacheMissesCounter, fileChildByNameCounter, caseSensitivityReadsCounter,
+                        invertedFileNameIndexRequestsCount);
   }
 
   private static final Hash.Strategy<VFileCreateEvent> CASE_INSENSITIVE_STRATEGY = new Hash.Strategy<>() {

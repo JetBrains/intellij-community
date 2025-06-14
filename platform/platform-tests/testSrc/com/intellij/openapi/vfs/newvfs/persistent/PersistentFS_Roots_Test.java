@@ -18,25 +18,25 @@ public class PersistentFS_Roots_Test {
   @Test
   void detectFileSystem_CorrectlyDetectsFileSystems_ForFewCommonlyUsedUrls() {
     assertSame(
-      PersistentFSImpl.detectFileSystem("file://Z:", "Z:"),
+      PersistentFSImpl.detectFileSystem("file://Z:"),
       LocalFileSystem.getInstance()
     );
     assertSame(
-      PersistentFSImpl.detectFileSystem("file://Z:/", "Z:/"),
+      PersistentFSImpl.detectFileSystem("file://Z:/"),
       LocalFileSystem.getInstance()
     );
 
     assertSame(
-      PersistentFSImpl.detectFileSystem("file:", "/"),
+      PersistentFSImpl.detectFileSystem("file:"),
       LocalFileSystem.getInstance()
     );
     assertSame(
-      PersistentFSImpl.detectFileSystem("temp:", "/"),
+      PersistentFSImpl.detectFileSystem("temp:"),
       TempFileSystem.getInstance()
     );
 
     assertSame(
-      PersistentFSImpl.detectFileSystem("jar://a/b/c.jar!", "/"),
+      PersistentFSImpl.detectFileSystem("jar://a/b/c.jar!"),
       JarFileSystem.getInstance()
     );
   }
@@ -45,7 +45,7 @@ public class PersistentFS_Roots_Test {
   @Test//IDEA-331415
   void detectFileSystem_FailsOnIncorrectUrl() {
     try {
-      PersistentFSImpl.detectFileSystem("Z:", "Z:");
+      PersistentFSImpl.detectFileSystem("Z:");
       fail("Windows drive is not a valid URL -> should fail");
     }
     catch (IllegalArgumentException e) {
