@@ -46,7 +46,7 @@ import kotlin.io.path.Path
 class BuiltinGeneralToolset : McpToolset {
     @McpTool
     @McpDescription("""
-        Searches for a text substring within all files in the project using IntelliJ's search engine.
+        Searches for a text substring within all files in the project using IntelliJ's search engine. It skips internal files like *.iml, *.ipr and files in .idea directory.
         Use this tool to find files containing specific text content.
         Requires a searchText parameter specifying the text to find.
         Returns a JSON array of objects containing file information:
@@ -72,6 +72,7 @@ class BuiltinGeneralToolset : McpToolset {
         findModel.isWholeWordsOnly = false
         findModel.isRegularExpressions = false
         findModel.isProjectScope = true
+        findModel.isSearchInProjectFiles = false
 
         val results = mutableSetOf<String>()
 
