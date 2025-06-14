@@ -50,6 +50,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
   class HighLevelRunToAddressStartedLowRun : State
   class HighLevelSetStatementStarted(val low : XSuspendContext) : State
   class HighLevelSetStatementHighRunning(val low : XSuspendContext) : State
+  class WaitingForLowLevelProcessResumeForStep(val low: XSuspendContext, val high: XSuspendContext, val stepType: StepType) : State
   object Exited : State
 
   interface Event
@@ -228,6 +229,20 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
 
       is LowRun -> {
         when (currentState) {
+          is WaitingForLowLevelProcessResumeForStep -> {
+            changeState(ManagedStepStarted(currentState.low))
+            when (currentState.stepType) {
+              StepType.Over -> {
+                high.startStepOver(currentState.high)
+              }
+              StepType.Into -> {
+                high.startStepInto(currentState.high)
+              }
+              StepType.Out -> {
+                high.startStepOut(currentState.high)
+              }
+            }
+          }
           is ResumeLowResumeStarted, is LowLevelRunToAddressStarted -> {
             if (currentState.high == nullObjectHighLevelSuspendContext) {
               // The high-level debug process was unable to stop there, and we used null object suspend context,
@@ -258,19 +273,10 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
       is HighLevelDebuggerStepRequested -> {
         when (currentState) {
           is BothStopped -> {
-            changeState(ManagedStepStarted(currentState.low))
-            lowExtension.continueAllThreads(exceptThreads = emptySet(), silent = true)
-            when (event.stepType) {
-              StepType.Over -> {
-                high.startStepOver(event.highSuspendContext)
-              }
-              StepType.Into -> {
-                high.startStepInto(event.highSuspendContext)
-              }
-              StepType.Out -> {
-                high.startStepOut(event.highSuspendContext)
-              }
-            }
+            //changeState(ManagedStepStarted(currentState.low))
+            changeState(WaitingForLowLevelProcessResumeForStep(currentState.low, event.highSuspendContext, event.stepType))
+            //lowExtension.continueAllThreads(exceptThreads = emptySet(), silent = true)
+            low.resume(currentState.low)
           }
           else -> throwTransitionIsNotImplemented(event)
         }
