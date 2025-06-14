@@ -147,6 +147,14 @@ ReserveFile "UninstallOldVersions.ini"
       ${EndIf}
     ${EndIf}
   FunctionEnd
+
+  Function ${un}postEnvChangeEvent
+    DetailPrint "Notifying applications about environment changes..."
+    ; SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, (LPARAM)"Environment", SMTO_ABORTIFHUNG, 5000, &dwResult)
+    System::Call 'user32::SendMessageTimeout(i 0xFFFF, i 0x1A, i 0, t "Environment", i 0x2, i 1000, *i .r1) i .r0'
+    IntFmt $0 "0x%x" $0
+    DetailPrint "  SendMessageTimeout(): $0, $1"
+  FunctionEnd
 !macroend
 
 !insertmacro INST_UNINST_SWITCH ""
@@ -292,7 +300,6 @@ Page custom ConfirmDesktopShortcut
 !else
 !define MUI_FINISHPAGE_RUN_NOTCHECKED
 !endif
-!define MUI_FINISHPAGE_REBOOTLATER_DEFAULT
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION PageFinishRun
 !insertmacro MUI_PAGE_FINISH
@@ -791,7 +798,7 @@ Function updatePathEnvVar
     Return
   ${EndIf}
 
-  SetRebootFlag true
+  Call postEnvChangeEvent
 FunctionEnd
 
 
@@ -1315,10 +1322,10 @@ Section "Uninstall"
     ${AndIf} $R2 != ""
       DetailPrint "Updating the 'Path' environment variable."
       WriteRegExpandStr HKCU "Environment" "Path" "$R2"
-      SetRebootFlag true
     ${EndIf}
     DetailPrint "Deleting the '${MUI_PRODUCT}' environment variable."
     DeleteRegValue HKCU "Environment" "${MUI_PRODUCT}"
+    Call un.postEnvChangeEvent
   ${EndIf}
 
   ; setting the context for `$APPDATA` and `$LOCALAPPDATA`
