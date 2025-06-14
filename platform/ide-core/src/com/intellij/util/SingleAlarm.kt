@@ -39,7 +39,7 @@ private val LOG: Logger = logger<SingleAlarm>()
  * [cancelAndRequest] cancels the current request and schedules a new one instead, i.e., it delays execution of the request.
  */
 @Obsolete
-class SingleAlarm private constructor(
+class SingleAlarm internal constructor(
   private val task: Runnable,
   private val delay: Int,
   parentDisposable: Disposable?,
@@ -235,8 +235,8 @@ class SingleAlarm private constructor(
       )
     }
 
-    internal fun getEdtDispatcher(): CoroutineContext {
-      val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(UiDispatcherKind.LEGACY, false)
+    internal fun getEdtDispatcher(kind: UiDispatcherKind): CoroutineContext {
+      val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(kind, false)
       if (edtDispatcher == null) {
         // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
         LOG.warn("Do not use an alarm in an early executing code")
@@ -470,7 +470,8 @@ private fun createContext(
   var context = ClientId.currentOrNull?.asContextElement() ?: EmptyCoroutineContext
   if (threadToUse == ThreadToUse.SWING_THREAD) {
     // maybe not defined in tests
-    context += SingleAlarm.getEdtDispatcher()
+    @Suppress("UsagesOfObsoleteApi")
+    context += SingleAlarm.getEdtDispatcher(UiDispatcherKind.LEGACY)
     if (modalityState != null) {
       context += modalityState.asContextElement()
     }

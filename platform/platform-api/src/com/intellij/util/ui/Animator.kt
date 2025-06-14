@@ -3,14 +3,10 @@ package com.intellij.util.ui
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.Application
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -144,9 +140,11 @@ abstract class Animator @JvmOverloads constructor(
       animationDone()
     }
     else if (ticker == null) {
-      var context = SingleAlarm.getEdtDispatcher()
-      if (ApplicationManager.getApplication() != null) {
-        context += ModalityState.any().asContextElement()
+      val context = if (ApplicationManager.getApplication() == null) {
+        RawSwingDispatcher
+      }
+      else {
+        Dispatchers.ui(uiKind()) + ModalityState.any().asContextElement()
       }
       ticker = coroutineScope.launch(context) {
         while (true) {
@@ -156,6 +154,9 @@ abstract class Animator @JvmOverloads constructor(
       }
     }
   }
+
+  @ApiStatus.Internal
+  protected open fun uiKind(): UiDispatcherKind = UiDispatcherKind.RELAX
 
   abstract fun paintNow(frame: Int, totalFrames: Int, cycle: Int)
 

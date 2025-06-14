@@ -1,19 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
-import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.time.Duration
 
 @ApiStatus.Internal
-class SingleEdtTaskScheduler private constructor() {
+class SingleEdtTaskScheduler private constructor(kind: UiDispatcherKind) {
   companion object {
     @JvmStatic
-    fun createSingleEdtTaskScheduler(): SingleEdtTaskScheduler = SingleEdtTaskScheduler()
+    @JvmOverloads
+    fun createSingleEdtTaskScheduler(kind: UiDispatcherKind = UiDispatcherKind.LEGACY): SingleEdtTaskScheduler = SingleEdtTaskScheduler(kind)
   }
 
   @Suppress("UsagesOfObsoleteApi")
@@ -21,8 +25,8 @@ class SingleEdtTaskScheduler private constructor() {
     task = {},
     delay = 0,
     parentDisposable = null,
-    threadToUse = ThreadToUse.SWING_THREAD,
     coroutineScope = null,
+    taskContext = (ClientId.currentOrNull?.asContextElement() ?: EmptyCoroutineContext) + SingleAlarm.getEdtDispatcher(kind),
   )
 
   val isEmpty: Boolean

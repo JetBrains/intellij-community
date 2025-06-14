@@ -137,7 +137,8 @@ open class Alarm @Internal constructor(
     }
 
     taskContext = if (threadToUse == ThreadToUse.SWING_THREAD) {
-      SingleAlarm.getEdtDispatcher()
+      @Suppress("UsagesOfObsoleteApi")
+      SingleAlarm.getEdtDispatcher(UiDispatcherKind.LEGACY)
     }
     else {
       EmptyCoroutineContext
