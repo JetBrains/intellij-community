@@ -79,6 +79,91 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       myFixture.testHighlighting(JvmLanguage.JAVA, text)
     }
 
+    fun `test inherited method source annotation`() {
+      myFixture.addClass("""
+        package org.example;
+        
+        import org.junit.jupiter.params.ParameterizedTest;
+        import org.junit.jupiter.params.provider.MethodSource;
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        
+        @ParameterizedTest(name = "jdk {0}")
+        @MethodSource("allJdks")
+        @Retention(RetentionPolicy.RUNTIME)
+        @interface TestAllJdks {}
+      """.trimIndent())
+
+      myFixture.addClass("""
+        package org.example;
+        
+        import org.example.TestAllJdks;
+        import java.lang.annotation.Retention;
+        import java.lang.annotation.RetentionPolicy;
+        
+        @TestAllJdks
+        @Retention(RetentionPolicy.RUNTIME)
+        public @interface TestInterface {}
+      """.trimIndent())
+
+      val base = myFixture.addClass("""
+        package org.tests;
+        
+        import org.example.TestInterface;
+        import org.junit.jupiter.params.provider.Arguments;
+        import java.util.stream.Stream;
+
+        abstract class MyAbstractTests {
+            @TestInterface
+            public void my(int jdk) {
+                System.out.println("testing with " + jdk);
+            }
+        }
+      """.trimIndent())
+      myFixture.configureFromExistingVirtualFile(base.containingFile.virtualFile)
+      myFixture.checkHighlighting()
+
+      val first = myFixture.addClass("""
+        package org.tests;
+        
+        import org.example.TestInterface;
+        import org.junit.jupiter.params.provider.Arguments;
+        import java.util.stream.Stream;
+
+        class <error descr="Cannot resolve target method source: 'allJdks'">MyFirstTest</error> extends MyAbstractTests {
+        }
+      """.trimIndent())
+      myFixture.configureFromExistingVirtualFile(first.containingFile.virtualFile)
+      myFixture.checkHighlighting()
+
+      myFixture.addClass("""
+        package org.tests;
+        
+        import org.example.TestInterface;
+        import org.junit.jupiter.params.provider.Arguments;
+        import java.util.stream.Stream;
+
+        interface MyInterface {
+            static Stream<Arguments> allJdks() {
+                return Stream.of(Arguments.of(8), Arguments.of(11), Arguments.of(17));
+            }
+        }
+      """.trimIndent())
+
+      val second = myFixture.addClass("""
+        package org.tests;
+        
+        import org.example.TestInterface;
+        import org.junit.jupiter.params.provider.Arguments;
+        import java.util.stream.Stream;
+
+        class MySecondTest extends MyAbstractTests implements MyInterface {
+        }
+      """.trimIndent())
+      myFixture.configureFromExistingVirtualFile(second.containingFile.virtualFile)
+      myFixture.checkHighlighting()
+    }
+
     fun `test malformed extension no highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
       class A {
@@ -676,6 +761,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent(), "Annotate class 'Test' as '@TestInstance'", testPreview = true)
     }
+
     fun `test malformed parameterized introduce method source quickfix`() {
       myFixture.testQuickFix(JvmLanguage.JAVA, """
       import org.junit.jupiter.params.ParameterizedTest;

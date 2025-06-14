@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.kotlin.codeInspection
 
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
@@ -262,11 +262,11 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         fun simpleIterable(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
 
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource(value = ["stream", "iterator", "iterable"])
+        @org.junit.jupiter.params.provider.MethodSource(value = ["stream", <error descr="Cannot resolve target method source: 'iterator'">"iterator"</error>, "iterable"])
         fun parametersArray(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
 
         @org.junit.jupiter.params.ParameterizedTest
-        @org.junit.jupiter.params.provider.MethodSource(value = ["stream", "iterator"])
+        @org.junit.jupiter.params.provider.MethodSource(value = ["stream", <error descr="Cannot resolve target method source: 'iterator'">"iterator"</error>])
         fun implicitValueArray(x: Int, y: Int) { System.out.println("${'$'}x, ${'$'}y") }
 
         @org.junit.jupiter.params.ParameterizedTest
@@ -560,6 +560,26 @@ abstract class KotlinJUnitMalformedDeclarationInspectionTestLatest : KotlinJUnit
         @org.junit.jupiter.params.provider.MethodSource(<error descr="Cannot resolve target method source: 'a'">"a"</error>)
         fun foo(param: String) { }
       }        
+    """.trimIndent())
+  }
+  fun `test inherited malformed parameterized method source not found`() {
+    myFixture.testHighlighting(
+      JvmLanguage.KOTLIN, """
+      abstract class ValueSourcesBaseTest {
+        @org.junit.jupiter.params.ParameterizedTest
+        @org.junit.jupiter.params.provider.MethodSource("a")
+        fun <warning descr="Found problems related to 'foo'">foo</warning>(param: String) { }
+      }
+      interface InternalInterface {}
+      class <error descr="Cannot resolve target method source: 'a'">ErrorValueSourcesTest</error>: ValueSourcesBaseTest(), InternalInterface {       
+      }
+      class OkValueSourcesTest: ValueSourcesBaseTest(), InternalInterface {
+        companion object {
+          @JvmStatic
+          fun a(): java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> = 
+          java.util.stream.Stream.of(org.junit.jupiter.params.provider.Arguments.of("a", "b"))
+        }
+      }
     """.trimIndent())
   }
   fun `test malformed parameterized enum source unresolvable entry`() {
