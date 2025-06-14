@@ -218,8 +218,10 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
       }
     }
 
-    coroutineScope.launch(Dispatchers.EDT) {
-      updateSystemDockMenu()
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      coroutineScope.launch(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+        updateSystemDockMenu()
+      }
     }
   }
 
