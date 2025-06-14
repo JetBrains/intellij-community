@@ -6,10 +6,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.focusable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.ScrollableDefaults
-import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.HoverInteraction
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -29,12 +30,14 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.util.fastRoundToInt
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
-import org.jetbrains.jewel.foundation.modifier.onHover
 import org.jetbrains.jewel.foundation.state.CommonStateBitMask
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.ui.component.styling.TabStyle
@@ -56,75 +59,124 @@ import org.jetbrains.jewel.ui.component.styling.TabStyle
  * @param style The visual styling configuration for the tab strip and its tabs
  * @param modifier Modifier to be applied to the tab strip container
  * @param enabled Controls the enabled state of the tab strip. When false, no tabs can be interacted with
+ * @param interactionSource The [MutableInteractionSource] that will be used to handle interactions with the tab strip
  * @see javax.swing.JTabbedPane
  * @see com.intellij.ui.components.JBTabbedPane
  */
 @Composable
-public fun TabStrip(tabs: List<TabData>, style: TabStyle, modifier: Modifier = Modifier, enabled: Boolean = true) {
+public fun TabStrip(
+    tabs: List<TabData>,
+    style: TabStyle,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+) {
     var tabStripState: TabStripState by remember { mutableStateOf(TabStripState.of(enabled = true)) }
-    var selectedIndex by remember { mutableStateOf(tabs.indexOfFirst { it.selected }) }
+    val selectedIndex = remember(tabs) { tabs.indexOfFirst { it.selected } }
+    val tabCount = tabs.size
 
     remember(enabled) { tabStripState = tabStripState.copy(enabled) }
 
     val scrollState = rememberScrollState()
+
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is FocusInteraction ->
+                    tabStripState = tabStripState.copy(focused = interaction is FocusInteraction.Focus)
+
+                is HoverInteraction ->
+                    tabStripState = tabStripState.copy(hovered = interaction is HoverInteraction.Enter)
+            }
+        }
+    }
+
     Box(
         modifier
-            .focusable(true, remember { MutableInteractionSource() })
-            .onHover { tabStripState = tabStripState.copy(hovered = it) }
             .onPreviewKeyEvent { event ->
-                if (!enabled) return@onPreviewKeyEvent false
-                if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                if (!enabled || tabs.isEmpty()) return@onPreviewKeyEvent false
 
-                when (event.key) {
-                    Key.Enter -> {
-                        tabs[selectedIndex].onClick()
-                        true
-                    }
+                when (event.type) {
+                    KeyEventType.KeyDown ->
+                        when (event.key) {
+                            Key.DirectionLeft -> {
+                                tabs[if (selectedIndex > 0) (selectedIndex - 1) else tabs.lastIndex].onClick()
+                                true
+                            }
 
-                    Key.DirectionLeft -> {
-                        if (selectedIndex > 0) {
-                            selectedIndex--
-                            tabs[selectedIndex].onClick()
-                            true
-                        } else {
-                            false
+                            Key.DirectionRight -> {
+                                tabs[(selectedIndex + 1) % tabCount].onClick()
+                                true
+                            }
+
+                            else -> false
                         }
-                    }
 
-                    Key.DirectionRight -> {
-                        if (selectedIndex < tabs.size - 1) {
-                            selectedIndex++
-                            tabs[selectedIndex].onClick()
-                            true
-                        } else {
-                            false
+                    KeyEventType.KeyUp ->
+                        when (event.key) {
+                            Key.MoveHome -> {
+                                tabs.first().onClick()
+                                true
+                            }
+
+                            Key.MoveEnd -> {
+                                tabs.last().onClick()
+                                true
+                            }
+
+                            else -> false
                         }
-                    }
 
                     else -> false
                 }
             }
+            .focusable(enabled, interactionSource)
+            .hoverable(interactionSource, enabled)
     ) {
         Row(
             modifier =
-                Modifier.horizontalScroll(scrollState)
-                    .scrollable(
-                        orientation = Orientation.Vertical,
-                        reverseDirection =
-                            ScrollableDefaults.reverseDirection(
-                                LocalLayoutDirection.current,
-                                Orientation.Vertical,
-                                false,
-                            ),
-                        state = scrollState,
-                        interactionSource = remember { MutableInteractionSource() },
-                    )
-                    .selectableGroup()
-                    .semantics { collectionInfo = CollectionInfo(rowCount = 1, columnCount = tabs.size) }
+                Modifier.horizontalScroll(scrollState).selectableGroup().semantics {
+                    collectionInfo = CollectionInfo(rowCount = 1, columnCount = tabCount)
+                }
         ) {
-            LaunchedEffect(tabs) { selectedIndex = tabs.indexOfFirst { it.selected } }
+            var selectedCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
             tabs.forEachIndexed { index, tab ->
-                TabImpl(isActive = tabStripState.isActive, tabData = tab, tabStyle = style, tabIndex = index)
+                TabImpl(
+                    isActive = tabStripState.isActive,
+                    tabData = tab,
+                    tabStyle = style,
+                    tabIndex = index,
+                    tabCount = tabCount,
+                    modifier =
+                        Modifier.onPlaced {
+                            if (tab.selected) {
+                                selectedCoordinates = it
+                            }
+                        },
+                )
+            }
+
+            LaunchedEffect(selectedCoordinates) {
+                val coordinates = selectedCoordinates ?: return@LaunchedEffect
+
+                val initialBound = scrollState.value
+                val tabStartPosition = coordinates.positionInParent().x.fastRoundToInt()
+
+                if (tabStartPosition < initialBound) {
+                    // If navigating back, scroll to the start of the tab
+                    scrollState.animateScrollTo(tabStartPosition)
+                    return@LaunchedEffect
+                }
+
+                val finalBound = initialBound + scrollState.viewportSize
+                val tabEndPosition = tabStartPosition + coordinates.size.width
+
+                if (tabEndPosition > finalBound) {
+                    // If navigating forward, move the scroll just enough to show the tab
+                    scrollState.animateScrollBy((tabEndPosition - finalBound).toFloat())
+                    return@LaunchedEffect
+                }
             }
         }
 
