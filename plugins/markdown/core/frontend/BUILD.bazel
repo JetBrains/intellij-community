@@ -22,6 +22,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/project/shared:project",
     "//platform/platform-util-netty:ide-util-netty",
+    "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/kernel/shared:kernel",
     "//platform/platform-impl/rpc",

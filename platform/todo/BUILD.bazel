@@ -23,6 +23,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:stream_ex",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView",
     "//platform/indexing-impl",

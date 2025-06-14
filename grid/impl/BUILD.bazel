@@ -35,6 +35,7 @@ jvm_library(
     "//platform/core-ui",
     "@lib//:fastutil-min",
     "//platform/diff-api:diff",
+    "//platform/projectModel-api:projectModel",
     "//platform/structure-view-impl:structureView-impl",
     "//xml/xml-parser:parser",
     "//platform/ide-core-impl",

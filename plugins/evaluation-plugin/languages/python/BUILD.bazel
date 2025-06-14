@@ -19,6 +19,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//python:python-community-impl",
     "//plugins/evaluation-plugin/languages",
     "//plugins/evaluation-plugin/core",

@@ -21,6 +21,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//java/idea-ui:ui",
@@ -43,6 +44,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/testFramework",

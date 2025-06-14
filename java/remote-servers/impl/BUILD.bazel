@@ -22,6 +22,7 @@ jvm_library(
     "//java/execution/openapi:java-execution",
     "//platform/lang-impl",
     "//java/debugger/openapi:java-debugger",
+    "//platform/projectModel-api:projectModel",
     "//platform/remote-servers/api:remoteServers",
     "//platform/remote-servers/impl",
     "//java/java-impl:impl",

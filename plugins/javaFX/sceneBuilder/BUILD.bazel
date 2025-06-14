@@ -14,6 +14,7 @@ jvm_library(
     "//plugins/javaFX",
     "//platform/core-api:core",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/nanoxml",
     "@lib//:java_f_x-scene_builder-_scene_builder_kit11-provided",
     "//platform/indexing-impl",

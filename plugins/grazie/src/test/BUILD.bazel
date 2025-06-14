@@ -22,6 +22,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//spellchecker",
     "//spellchecker:spellchecker_test_lib",
     "//plugins/grazie",

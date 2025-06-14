@@ -72,6 +72,7 @@ jvm_library(
     "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
     "@lib//:ion",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/openapi:java",

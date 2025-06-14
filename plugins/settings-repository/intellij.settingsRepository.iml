@@ -54,6 +54,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="library" exported="" name="jzlib" level="project" />

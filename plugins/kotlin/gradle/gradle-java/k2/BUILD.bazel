@@ -33,6 +33,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",

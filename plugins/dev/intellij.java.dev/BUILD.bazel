@@ -24,6 +24,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",

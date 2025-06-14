@@ -23,6 +23,7 @@ jvm_library(
     "//platform/execution-impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "@lib//:jcef",
   ],

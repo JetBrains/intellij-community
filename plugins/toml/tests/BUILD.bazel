@@ -22,6 +22,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//plugins/toml",
     "//plugins/toml/core",
     "//plugins/toml/backend",

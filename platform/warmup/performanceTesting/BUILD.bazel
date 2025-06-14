@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/projectModel-api:projectModel",
     "//platform/warmup",
     "//plugins/performanceTesting/core:performanceTesting",
     "//platform/platform-impl:ide-impl",

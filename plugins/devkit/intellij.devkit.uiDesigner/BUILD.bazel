@@ -23,6 +23,7 @@ jvm_library(
     "//plugins/devkit/devkit-core:core",
     "//platform/core-ui",
     "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/text-matching",
     "//platform/platform-impl/designer",
   ],

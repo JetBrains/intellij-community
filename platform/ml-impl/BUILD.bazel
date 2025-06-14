@@ -21,6 +21,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ngram-slp",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util-ex",
     "//platform/core-api:core",
@@ -59,6 +60,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ngram-slp",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util-ex",
     "//platform/core-api:core",

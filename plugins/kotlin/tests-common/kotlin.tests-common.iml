@@ -21,6 +21,7 @@
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />

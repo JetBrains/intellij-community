@@ -30,6 +30,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-impl",
     "//platform/boot",
+    "//platform/projectModel-api:projectModel",
     "//platform/util-class-loader:util-classLoader",
     "//platform/platform-impl/bootstrap",
     "//platform/util",

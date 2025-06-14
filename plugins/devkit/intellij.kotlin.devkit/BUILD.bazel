@@ -26,6 +26,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/util",
     "//platform/core-api:core",

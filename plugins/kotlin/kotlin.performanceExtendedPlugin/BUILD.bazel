@@ -20,6 +20,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//plugins/kotlin/frontend-independent",
     "//platform/ide-core-impl",

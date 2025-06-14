@@ -20,6 +20,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/platforms",
     "//plugins/kotlin/base/facet",

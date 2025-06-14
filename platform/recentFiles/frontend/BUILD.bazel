@@ -22,6 +22,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//platform/util/concurrency",
     "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/analysis-impl",
     "//platform/recentFiles/shared:recentFiles",

@@ -28,6 +28,7 @@ jvm_library(
     "@lib//:commons-compress",
     "@lib//:jetbrains-markdown",
     "@lib//:gson",
+    "//platform/projectModel-api:projectModel",
     "//platform/markdown-utils",
   ],
   runtime_deps = [":polySymbols_resources"]
@@ -52,6 +53,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:junit4",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/usageView",
     "//platform/refactoring",
     "@lib//:jackson-databind",

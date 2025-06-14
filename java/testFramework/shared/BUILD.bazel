@@ -10,6 +10,7 @@ jvm_library(
     "//java/openapi:java",
     "//platform/core-api:core",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "@lib//:junit4",
     "//platform/util/jdom",

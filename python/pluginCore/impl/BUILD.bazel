@@ -21,6 +21,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//python:python-community-impl",
     "//python/python-sdk:sdk",
     "@lib//:guava",

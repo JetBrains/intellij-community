@@ -17,6 +17,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//plugins/IntelliLang:langInjection",
+    "//platform/projectModel-api:projectModel",
     "//plugins/IntelliLang/xml-support:xml-langInjection",
     "//xml/impl",
     "//plugins/yaml/backend",

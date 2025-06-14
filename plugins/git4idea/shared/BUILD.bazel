@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/vcs-impl/shared",
     "//platform/platform-api:ide",
     "//platform/kernel/shared:kernel",

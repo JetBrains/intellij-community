@@ -22,6 +22,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinc-analysis-api",
     "@lib//:guava",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/project-structure",
     "//plugins/kotlin/base/psi",

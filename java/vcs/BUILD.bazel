@@ -18,6 +18,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/execution",
     "//platform/lang-api:lang",
+    "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//uast/uast-common:uast",
     "//platform/diff-api:diff",

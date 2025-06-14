@@ -17,6 +17,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
     "//platform/tracing:tracing-rt",
     "//platform/lang-api:lang",
     "//java/compiler/impl",

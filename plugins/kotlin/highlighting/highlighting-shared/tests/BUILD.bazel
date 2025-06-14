@@ -15,6 +15,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/idea/tests:tests_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

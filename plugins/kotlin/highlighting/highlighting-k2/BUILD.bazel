@@ -26,6 +26,7 @@ jvm_library(
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
@@ -74,6 +75,7 @@ jvm_library(
     "//java/java-indexing-api:indexing",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//plugins/kotlin/plugin/k2",
     "@lib//:kotlin-stdlib",

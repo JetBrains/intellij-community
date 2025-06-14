@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-kotlin-scripting-compiler-impl",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/facet",
     "//plugins/kotlin/gradle/gradle-java",
     "//platform/lang-api:lang",

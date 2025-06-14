@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:jcef",
     "//platform/credential-store",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/util:util-ui",
     "//platform/util",

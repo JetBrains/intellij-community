@@ -25,6 +25,7 @@ jvm_library(
     "//plugins/evaluation-plugin/core",
     "//plugins/gradle:gradle-common",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
   ],
   runtime_deps = [":java_resources"]
@@ -48,6 +49,7 @@ jvm_library(
     "//plugins/evaluation-plugin/core",
     "//plugins/gradle:gradle-common",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

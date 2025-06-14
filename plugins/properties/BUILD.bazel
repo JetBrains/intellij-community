@@ -22,6 +22,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/diff",
     "//spellchecker",
     "//xml/impl",

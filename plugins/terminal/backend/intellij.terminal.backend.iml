@@ -39,6 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="library" name="jediterm-core" level="project" />
     <orderEntry type="library" name="jediterm-ui" level="project" />

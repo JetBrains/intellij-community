@@ -35,6 +35,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",

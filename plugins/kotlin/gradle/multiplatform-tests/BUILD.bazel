@@ -11,6 +11,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//plugins/kotlin/base/plugin",

@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "//platform/core-api:core",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/compiler-configuration",

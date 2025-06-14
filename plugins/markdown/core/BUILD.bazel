@@ -28,6 +28,7 @@ jvm_library(
     "//platform/observable",
     "@lib//:netty-codec-http",
     "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/built-in-server:builtInServer-impl",
     "//platform/editor-ui-ex:editor-ex",

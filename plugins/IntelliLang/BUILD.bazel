@@ -17,6 +17,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
     "//RegExpSupport:regexp",
     "//platform/platform-api:ide",
     "@lib//:stream_ex",

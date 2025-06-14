@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:jmock",
     "//platform/observable",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",

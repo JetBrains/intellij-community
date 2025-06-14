@@ -20,6 +20,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
     "//platform/lang-impl",
   ],
   runtime_deps = [":ml-models-local_resources"]

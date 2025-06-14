@@ -42,6 +42,7 @@ jvm_library(
     "@lib//:guava",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/workspace/storage",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",

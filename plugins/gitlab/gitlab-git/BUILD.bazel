@@ -24,6 +24,7 @@ jvm_library(
     "//platform/ide-core",
     "//platform/ide-core-impl",
     "//platform/observable",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util/coroutines",
     "//platform/util/progress",

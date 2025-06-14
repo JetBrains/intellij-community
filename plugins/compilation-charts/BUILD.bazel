@@ -29,6 +29,7 @@ jvm_library(
     "@lib//:rd-core",
     "@lib//:rd-swing",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/projectModel-api:projectModel",
     "//platform/rd-platform-community:rd-community",
     "@lib//:kotlinx-collections-immutable",
     "//platform/core-ui",

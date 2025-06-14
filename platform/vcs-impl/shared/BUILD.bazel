@@ -19,6 +19,7 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/platform-api:ide",
     "//platform/diff-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",

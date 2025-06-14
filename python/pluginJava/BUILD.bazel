@@ -19,6 +19,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
     "//python/python-sdk:sdk",
     "//python/python-psi-api:psi",
     "//python:python-community-impl",

@@ -24,6 +24,7 @@
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" name="rd-swing" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

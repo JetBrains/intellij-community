@@ -23,6 +23,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
     "//xml/xml-frontback-impl:frontback-impl",
     "//xml/xml-psi-api:psi",
     "//platform/core-api:core",

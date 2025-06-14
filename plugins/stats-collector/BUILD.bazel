@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:guava",
     "@lib//:gson",
     "@lib//:stats_collector-completion-log-events",
+    "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/core-ui",
   ],

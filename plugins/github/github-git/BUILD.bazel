@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:caffeine",
     "//platform/core-api:core",
     "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//plugins/github/github-core:vcs-github",
     "//platform/platform-impl:ide-impl",

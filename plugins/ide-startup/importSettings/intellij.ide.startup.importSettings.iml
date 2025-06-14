@@ -42,6 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.plugins" />
     <orderEntry type="library" name="rd-core" level="project" />
     <orderEntry type="library" name="rd-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />

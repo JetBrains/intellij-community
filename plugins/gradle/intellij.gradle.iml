@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="library" exported="" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />

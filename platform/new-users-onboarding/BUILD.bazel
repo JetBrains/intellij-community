@@ -19,6 +19,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/new-ui-onboarding",
     "//platform/core-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/coroutines",
     "//platform/statistics",
     "//platform/lang-impl",

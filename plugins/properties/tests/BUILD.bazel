@@ -23,6 +23,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",

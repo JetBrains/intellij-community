@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-tests",
     "@lib//:junit4",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "//plugins/kotlin/copyright",

@@ -47,6 +47,7 @@ jvm_library(
     "//android/android-test-framework:testFramework_test_lib",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//android/app-inspection/inspectors/database:android-app-inspection-inspectors-database-tests_test_lib",
     "//platform/external-system-impl:externalSystem-impl",

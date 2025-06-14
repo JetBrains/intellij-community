@@ -23,6 +23,7 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",
     "@lib//:jna",
+    "//platform/projectModel-api:projectModel",
     "//libraries/grpc",
   ],
   runtime_deps = [":execution-process-elevation_resources"]

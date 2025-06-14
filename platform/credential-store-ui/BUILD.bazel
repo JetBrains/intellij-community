@@ -13,6 +13,7 @@ jvm_library(
     "//platform/credential-store-impl:credentialStore-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",

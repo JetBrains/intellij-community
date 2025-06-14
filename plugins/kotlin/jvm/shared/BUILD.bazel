@@ -28,6 +28,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//jps/model-api:model",
     "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "@lib//:gson",
     "@lib//:kotlinc-kotlin-compiler-common",

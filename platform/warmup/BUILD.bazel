@@ -17,6 +17,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/ide-core",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/indexing-api:indexing",
     "//platform/ide-core-impl",

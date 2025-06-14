@@ -21,6 +21,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/platform-impl/rpc",
     "//platform/kernel/shared:kernel",
+    "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/kernel/backend",

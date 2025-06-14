@@ -18,6 +18,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.analysis" exported="" />
     <orderEntry type="module" module-name="intellij.java.resources.en" />

@@ -12,6 +12,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:asm",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",

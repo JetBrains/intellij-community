@@ -17,6 +17,7 @@ jvm_library(
     "//plugins/gradle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared:kotlin-gradle-scripting-shared",
     "//platform/workspace/storage",
     "//platform/util",

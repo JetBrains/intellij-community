@@ -26,6 +26,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "@lib//:guava",
     "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/boot",
     "//platform/core-ui",

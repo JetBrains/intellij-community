@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:junit4",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",

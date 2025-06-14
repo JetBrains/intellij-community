@@ -18,6 +18,7 @@ jvm_library(
     "@lib//:kotlinc-allopen-compiler-plugin",
     "@lib//:junit4",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",

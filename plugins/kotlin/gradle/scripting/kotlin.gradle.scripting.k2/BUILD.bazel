@@ -31,6 +31,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/projectModel-api:projectModel",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//java/java-frontback-psi-impl:frontback-psi-impl",
@@ -78,6 +79,7 @@ jvm_library(
   associates = [":kotlin-gradle-scripting-k2"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/plugin/k2",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",

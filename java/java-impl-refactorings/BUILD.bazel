@@ -22,6 +22,7 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/statistics",
     "//java/openapi:java",

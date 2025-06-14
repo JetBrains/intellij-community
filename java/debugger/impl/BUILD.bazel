@@ -34,6 +34,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//jps/jps-builders:build",
     "//java/debugger/memory-agent:java-debugger-memory-agent",

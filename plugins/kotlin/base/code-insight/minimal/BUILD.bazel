@@ -19,6 +19,7 @@ jvm_library(
     "//platform/lang-impl",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/util/jdom",

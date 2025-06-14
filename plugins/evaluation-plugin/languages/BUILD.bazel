@@ -15,6 +15,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//plugins/evaluation-plugin/core",
+    "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/statistics/uploader",
   ]

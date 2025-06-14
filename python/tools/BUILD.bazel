@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//python/python-psi-api:psi",
     "//python:python-community-impl",

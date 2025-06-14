@@ -28,6 +28,7 @@ jvm_library(
     "//platform/favoritesTreeView",
     "//platform/core-ui",
     "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/editor-ui-ex:editor-ex",
   ],

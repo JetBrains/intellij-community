@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/project-wizard/core",
     "//plugins/kotlin/project-wizard/idea",
     "//plugins/kotlin/idea",

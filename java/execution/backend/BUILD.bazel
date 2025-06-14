@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-impl/rpc",
     "//platform/project/shared:project",
     "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/smRunner",
     "//platform/core-ui",
   ],
