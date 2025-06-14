@@ -35,6 +35,11 @@ ${UnStrRep}
 
 Name "${MUI_PRODUCT}"
 
+OutFile "${OUT_DIR}\${OUT_FILE}.exe"
+
+!define DEFAULT_INST_DIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
+InstallDir "${DEFAULT_INST_DIR}"
+
 !define /date CURRENT_YEAR "%Y"
 VIAddVersionKey /LANG=0 "CompanyName" "JetBrains s.r.o."
 VIAddVersionKey /LANG=0 "FileDescription" "${MUI_PRODUCT} Windows Installer"
@@ -296,10 +301,6 @@ Page custom ConfirmDesktopShortcut
 UninstPage custom un.ConfirmDeleteSettings
 !insertmacro MUI_UNPAGE_INSTFILES
 
-OutFile "${OUT_DIR}\${OUT_FILE}.exe"
-
-InstallDir "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
-
 Function PageFinishRun
   ${IfNot} ${Silent}
     !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
@@ -322,28 +323,6 @@ FunctionEnd
 Function .onInstSuccess
   SetErrorLevel 0
   ${LogText} "Installation has been finished successfully."
-FunctionEnd
-
-
-function silentInstallDirValidate
-  ${If} $silentMode == "user"
-    ${StrLoc} $R0 $INSTDIR "$PROGRAMFILES\${MANUFACTURER}" ">"
-    ${If} $R0 == ""
-      ${StrLoc} $R0 $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}" ">"
-      ${If} $R0 == ""
-        ${LogText} "Silent installation dir: $INSTDIR"
-        Return
-      ${EndIf}
-    ${EndIf}
-
-    ${LogText} ""
-    ${LogText} "  NOTE: Specified directory '$INSTDIR' requires administrative rights."
-    ${LogText} "  It is corresponding to the 'admin' mode in the silent config file."
-    ${LogText} "  But installation has been run in the 'user' mode. So the directory has been changed to the default: "
-    StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${PRODUCT_WITH_VER}"
-    ${LogText} "  $INSTDIR "
-    ${LogText} ""
-  ${EndIf}
 FunctionEnd
 
 
@@ -983,6 +962,9 @@ Function .onInit
   !insertmacro INSTALLOPTIONS_EXTRACT "UninstallOldVersions.ini"
   Call getUninstallOldVersionVars
 
+  SetShellVarContext current
+  StrCpy $baseRegKey "HKCU"
+
   IfSilent silent_mode uac_elevate
 silent_mode:
   Call checkAvailableDiskSpace
@@ -993,9 +975,7 @@ silent_mode:
     Call customSilentConfigReader
   ${EndIf}
 
-  Call silentInstallDirValidate
-  StrCpy $baseRegKey "HKCU"
-  StrCmp $silentMode "admin" uac_elevate installdir_is_empty
+  StrCmp $silentMode "admin" uac_elevate check_install_dir
 
 uac_elevate:
   !insertmacro UAC_RunElevated
@@ -1007,26 +987,26 @@ uac_err:
   Abort
 uac_elevation_aborted:
   ${LogText} ""
-  ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir will be changed."
+  ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir might be changed."
   ${LogText} ""
-  StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${INSTALL_DIR_AND_SHORTCUT_NAME}"
-  goto installdir_is_empty
+  goto check_install_dir
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
   StrCmp 3 $1 0 uac_elevation_aborted ;Try again?
   goto uac_elevate
 uac_admin:
-  IfSilent uac_all_users set_install_dir_admin_mode
-set_install_dir_admin_mode:
-  StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
-uac_all_users:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
 
-installdir_is_empty:
+check_install_dir:
+  ${If} $baseRegKey == "HKCU"
+  ${AndIf} "$INSTDIR" == "${DEFAULT_INST_DIR}"
+    StrCpy $INSTDIR "$LOCALAPPDATA\Programs\${INSTALL_DIR_AND_SHORTCUT_NAME}"
+  ${EndIf}
   ${If} ${Silent}
     Call OnDirectoryPageLeave ; in the silent mode, check if the installation folder is not empty
   ${EndIf}
+  ${LogText} "Root registry key: $baseRegKey"
   ${LogText} "Installation dir: $INSTDIR"
 
   ${IfNot} ${Silent}
