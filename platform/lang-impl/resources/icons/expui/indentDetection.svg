@@ -1,7 +1,21 @@
 <!-- Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="hole-mask">
+      <rect width="16" height="16" fill="white"/>
+      <circle cx="10" cy="11" r="4" fill="black"/>
+    </mask>
+  </defs>
+
   <g>
-    <text xml:space="preserve" text-anchor="start" font-family="Sans" font-size="12" y="12" x="2" stroke-width="1" stroke="#6E6E6E"
-          fill="#6E6E6E">ID</text>
+    <g mask="url(#hole-mask)">
+      <rect x="1" y="1" width="10" height="12" rx="1.5" stroke="#6C707E" fill="none"/>
+      <rect x="3" y="4" width="6" height="1" rx="0.5" fill="#6C707E"/>
+      <rect x="3" y="6.5" width="6" height="1" rx="0.5" fill="#6C707E"/>
+      <rect x="3" y="9" width="6" height="1" rx="0.5" fill="#6C707E"/>
+    </g>
+    <path fill-rule="evenodd" clip-rule="evenodd"
+          d="M11.7383 13.4454C11.2479 13.7946 10.6479 14 10 14C8.3431 14 7 12.6569 7 11C7 9.34315 8.3431 8 10 8C11.6569 8 13 9.34315 13 11C13 11.6479 12.7946 12.2479 12.4454 12.7383L13.8536 14.1464C14.0488 14.3417 14.0488 14.6583 13.8536 14.8536C13.6583 15.0488 13.3417 15.0488 13.1464 14.8536L11.7383 13.4454ZM12 11C12 12.1046 11.1046 13 10 13C8.8954 13 8 12.1046 8 11C8 9.89543 8.8954 9 10 9C11.1046 9 12 9.89543 12 11Z"
+          fill="#6C707E"/>
   </g>
 </svg>
