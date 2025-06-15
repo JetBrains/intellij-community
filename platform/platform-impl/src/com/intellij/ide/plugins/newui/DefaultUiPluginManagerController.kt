@@ -43,7 +43,6 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 object DefaultUiPluginManagerController : UiPluginManagerController {
   private val LOG = Logger.getInstance(DefaultUiPluginManagerController::class.java)
-  private val objectMapper: ObjectMapper by lazy { ObjectMapper() }
 
   override fun getTarget(): PluginSource = PluginSource.LOCAL
 
@@ -229,19 +228,24 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
-    val plugin = PluginManagerCore.getPlugin(pluginId)
     val pluginsState = InstalledPluginsState.getInstance()
+    val plugin = PluginManagerCore.getPlugin(pluginId)
     val isDeleted = (plugin as? IdeaPluginDescriptorImpl)?.isDeleted ?: false
     val status = when {
       pluginsState.wasInstalledWithoutRestart(pluginId) -> PluginStatus.INSTALLED_WITHOUT_RESTART
       pluginsState.wasUninstalledWithoutRestart(pluginId) || isDeleted -> PluginStatus.UNINSTALLED_WITHOUT_RESTART
       pluginsState.wasUpdatedWithRestart(pluginId) -> PluginStatus.UPDATED_WITH_RESTART
-      pluginsState.wasUpdated(pluginId)  -> PluginStatus.UPDATED
+      pluginsState.wasUpdated(pluginId) -> PluginStatus.UPDATED
       pluginsState.wasInstalled(pluginId) -> PluginStatus.INSTALLED_AND_REQUIRED_RESTART
       else -> null
     }
     return PluginInstallationState(plugin != null, status)
+  }
 
+  override fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState> {
+    return pluginIds.associateWith { pluginId ->
+      return@associateWith getPluginInstallationState(pluginId)
+    }
   }
 
   override fun performInstallOperation(

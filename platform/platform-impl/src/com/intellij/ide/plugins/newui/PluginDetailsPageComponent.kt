@@ -79,7 +79,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private val pluginModel: PluginModelFacade,
   private val searchListener: LinkListener<Any>,
   private val isMarketplace: Boolean,
-  private val pluginManagerCustomizer: PluginManagerCustomizer? = null,
 ) : MultiPanel() {
   @Suppress("OPT_IN_USAGE")
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(2)
@@ -163,9 +162,15 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private var enableDisableController: OptionButtonController<PluginDetailsPageComponent>? = null
 
+  private val pluginManagerCustomizer: PluginManagerCustomizer?
+
   init {
     nameAndButtons = BaselinePanel(12, false)
     customizer = getPluginsViewCustomizer().getPluginDetailsCustomizer(pluginModel.getModel())
+    pluginManagerCustomizer = if (Registry.`is`("reworked.plugin.manager.enabled")) {
+      PluginManagerCustomizer.EP_NAME.extensionList.first()
+    }
+    else null
 
     createPluginPanel()
     select(1, true)
@@ -511,7 +516,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (uiModel.isBundled) return
     val component = gearButton ?: return
     val modalityState = ModalityState.stateForComponent(component)
-    val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, modalityState)
+    val customizationModel = pluginManagerCustomizer.getDisableButtonCustomizationModel(pluginModel, uiModel, modalityState) ?: return
     enableDisableController?.setOptions(customizationModel.additionalActions)
     val visible = customizationModel.isVisible && customizationModel.text == null
     component.isVisible = visible

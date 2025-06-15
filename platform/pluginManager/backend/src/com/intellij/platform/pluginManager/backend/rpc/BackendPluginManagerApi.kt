@@ -84,6 +84,10 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.getPluginInstallationState(pluginId)
   }
 
+  override suspend fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState> {
+    return DefaultUiPluginManagerController.getPluginInstallationStates(pluginIds)
+  }
+
   override suspend fun getCustomRepoPlugins(): List<PluginDto> {
     return DefaultUiPluginManagerController.getCustomRepoPlugins().map { PluginDto.fromModel(it) }
   }

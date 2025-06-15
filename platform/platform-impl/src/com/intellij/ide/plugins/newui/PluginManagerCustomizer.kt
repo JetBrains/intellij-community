@@ -21,7 +21,7 @@ interface PluginManagerCustomizer {
     pluginModelFacade: PluginModelFacade,
     pluginModel: PluginUiModel,
     modalityState: ModalityState,
-  ): OptionsButonCustomizationModel
+  ): OptionsButonCustomizationModel?
 
   fun getUpdateButtonCustomizationModel(
     pluginModelFacade: PluginModelFacade,
@@ -29,6 +29,8 @@ interface PluginManagerCustomizer {
     updateModel: PluginUiModel?,
     modalityState: ModalityState,
   ): UpdateButtonCustomizationModel?
+
+  fun updateAfterModification(updateUi: () -> Unit)
 
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?

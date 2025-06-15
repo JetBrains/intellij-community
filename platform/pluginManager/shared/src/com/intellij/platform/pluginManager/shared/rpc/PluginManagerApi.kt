@@ -61,6 +61,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun disposeUpdaterService(sessionId: String)
   suspend fun notifyUpdateFinished(sessionId: String)
   suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
+  suspend fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(plugin: PluginDto): Boolean
 
   companion object {

@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -80,6 +81,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   private final Map<PluginId, Boolean> myRequiredPluginsForProject = new HashMap<>();
   private final Set<PluginId> myUninstalled = new HashSet<>();
+  private final PluginManagerCustomizer myPluginManagerCustomizer;
 
   private @Nullable FUSEventSource myInstallSource;
 
@@ -90,6 +92,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myStatusBar = statusBar != null || window == null ?
                   statusBar :
                   getStatusBar(window.getOwner());
+    if (Registry.is("reworked.plugin.manager.enabled")) {
+      List<PluginManagerCustomizer> list = PluginManagerCustomizer.EP_NAME.getExtensionList();
+      myPluginManagerCustomizer = list.isEmpty() ? null : list.get(0);
+    }
+    else {
+      myPluginManagerCustomizer = null;
+    }
 
     updatePluginDependencies(null);
   }
@@ -334,7 +343,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
             }
           }
           disableById(result.getPluginsToDisable());
-          info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired());
+          if (myPluginManagerCustomizer != null) {
+            myPluginManagerCustomizer.updateAfterModification(() -> {
+              info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired());
+              return null;
+            });
+          } else {
+            info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired());
+          }
         }
 
 
@@ -931,7 +947,18 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   public void uninstallAndUpdateUi(@NotNull PluginUiModel descriptor, UiPluginManagerController controller) {
     boolean needRestartForUninstall = performUninstall(descriptor, controller);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
+    if (myPluginManagerCustomizer != null) {
+      myPluginManagerCustomizer.updateAfterModification(() -> {
+        updateUiAfterUninstall(descriptor, needRestartForUninstall);
+        return null;
+      });
+    }
+    else {
+      updateUiAfterUninstall(descriptor, needRestartForUninstall);
+    }
+  }
 
+  private void updateUiAfterUninstall(@NotNull PluginUiModel descriptor, boolean needRestartForUninstall) {
     PluginId pluginId = descriptor.getPluginId();
 
     List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(pluginId);

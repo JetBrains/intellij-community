@@ -227,6 +227,10 @@ class UiPluginManager {
     return getController().getPluginInstallationState(pluginId)
   }
 
+  fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState> {
+    return getController().getPluginInstallationStates(pluginIds)
+  }
+
   fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
     return getController().checkPluginCanBeDownloaded(pluginUiModel, progressIndicator)
   }
