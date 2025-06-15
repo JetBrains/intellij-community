@@ -6,6 +6,7 @@ import com.intellij.openapi.command.undo.*;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -24,11 +25,11 @@ public enum UndoableActionType {
 
   public static @NotNull UndoableAction getAction(
     @NotNull String actionType,
-    @NotNull Collection<DocumentReference> docRefs,
+    @Nullable Collection<DocumentReference> docRefs,
     boolean isGlobal
   ) {
-    if (docRefs.isEmpty()) {
-      throw new IllegalArgumentException("cannot create undoable action type without doc refs");
+    if (docRefs == null) {
+      return new MockUndoableAction(docRefs, isGlobal);
     }
     UndoableActionType type = valueOf(actionType);
     return switch (type) {
