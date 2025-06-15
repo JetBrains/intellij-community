@@ -164,17 +164,17 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
   val productVersionNum = amendVersionNumber(appInfo.majorVersion + '.' + appInfo.minorVersion)
   val versionString = if (appInfo.isEAP) context.buildNumber else "${appInfo.majorVersion}.${appInfo.minorVersion}"
 
-  val uninstallerFile = context.paths.artifactDir.resolve("Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe")
+  val uninstallerCopy = context.paths.artifactDir.resolve("Uninstall-${context.applicationInfo.productCode}-${arch.dirName}.exe")
   val uninstallerSignCmd = when {
     !context.options.isInDevelopmentMode -> {
-      val signTool = prepareSignTool(nsiConfDir, context, uninstallerFile)
+      val signTool = prepareSignTool(nsiConfDir, context, uninstallerCopy)
       "'${signTool}' '%1'"
     }
     OsFamily.currentOs == OsFamily.WINDOWS -> {
-      "COPY /B /Y '%1' '${uninstallerFile}'"
+      "COPY /B /Y '%1' '${uninstallerCopy}'"
     }
     else -> {
-      "cp -f '%1' '${uninstallerFile}'"
+      "cp -f '%1' '${uninstallerCopy}'"
     }
   }
 
@@ -208,31 +208,26 @@ private suspend fun prepareConfigurationFiles(nsiConfDir: Path, customizer: Wind
 
 private fun amendVersionNumber(base: String): String = base + ".0".repeat(3 - base.count { it == '.' })
 
-private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uninstallerFile: Path): Path {
-  val toolName = "codesign-client-${OsFamily.currentOs.osId}-${JvmArchitecture.currentJvmArch.casualName}${OsFamily.currentOs.binaryExt}"
-  val toolUrl = "https://codesign-distribution.labs.jb.gg/${toolName}"
-  val toolFile = downloadFileToCacheLocation(toolUrl, context.paths.communityHomeDirRoot)
-  NioFiles.setExecutable(toolFile)
-
+private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uninstallerCopy: Path): Path {
+  val toolFile = context.proprietaryBuildTools.signTool.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)!!
   val scriptFile = Files.writeString(nsiConfDir.resolve("sign-tool${OsFamily.currentOs.scriptExt}"), when (OsFamily.currentOs) {
     // moving the file back and forth is required for NSIS to fail if signing didn't happen
     OsFamily.WINDOWS -> """
       @ECHO OFF
       MOVE /Y "%1" "${nsiConfDir}\\Uninstall.exe"
       "${toolFile}" -denoted-content-type application/x-exe -signed-files-dir "${nsiConfDir}\\_signed" "${nsiConfDir}\\Uninstall.exe"
-      COPY /B /Y "${nsiConfDir}\\_signed\\Uninstall.exe" "${uninstallerFile}"
+      COPY /B /Y "${nsiConfDir}\\_signed\\Uninstall.exe" "${uninstallerCopy}"
       MOVE /Y "${nsiConfDir}\\_signed\\Uninstall.exe" "%1"
       """.trimIndent()
     else -> $$"""
       #!/bin/sh
       mv -f "$1" "$${nsiConfDir}/Uninstall.exe"
       "$${toolFile}" -denoted-content-type application/x-exe -signed-files-dir "$${nsiConfDir}/_signed" "$${nsiConfDir}/Uninstall.exe"
-      cp -f "$${nsiConfDir}/_signed/Uninstall.exe" "$${uninstallerFile}"
+      cp -f "$${nsiConfDir}/_signed/Uninstall.exe" "$${uninstallerCopy}"
       mv -f "$${nsiConfDir}/_signed/Uninstall.exe" "$1"
       """.trimIndent()
   })
   NioFiles.setExecutable(scriptFile)
-
   return scriptFile
 }
 
