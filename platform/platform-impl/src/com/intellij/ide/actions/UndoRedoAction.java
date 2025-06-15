@@ -92,7 +92,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements ActionRe
   @Override
   public @NotNull ActionRemoteBehavior getBehavior() {
     return UndoRemoteBehaviorService.isExperimentalFrontendUndoEnabled()
-      ? ActionRemoteBehavior.FrontendOtherwiseBackend // see `com.jetbrains.rdclient.command.FrontendUndoManager`
+      ? ActionRemoteBehavior.FrontendOnly // see `com.jetbrains.rdclient.command.FrontendUndoManager`
       : ActionRemoteBehavior.BackendOnly;
   }
 

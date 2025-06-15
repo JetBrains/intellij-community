@@ -278,7 +278,7 @@ public class UndoManagerImpl extends UndoManager {
 
   // TODO: remove public
   @ApiStatus.Internal
-  public void clearStacks(@NotNull FileEditor editor) {
+  public void clearStacks(@Nullable FileEditor editor) {
     for (UndoClientState state : getAllClientStates()) {
       state.clearStacks(editor);
     }
@@ -481,7 +481,8 @@ public class UndoManagerImpl extends UndoManager {
     return Pair.create(name.trim(), description.trim());
   }
 
-  private boolean isUndoRedoAvailable(@Nullable FileEditor editor, boolean undo) {
+  @ApiStatus.Internal
+  protected boolean isUndoRedoAvailable(@Nullable FileEditor editor, boolean undo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     UndoClientState state = getClientState(editor);
     return state != null && state.isUndoRedoAvailable(editor, undo);

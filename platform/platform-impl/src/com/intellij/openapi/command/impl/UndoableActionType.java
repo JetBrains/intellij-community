@@ -6,7 +6,6 @@ import com.intellij.openapi.command.undo.*;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -23,22 +22,21 @@ public enum UndoableActionType {
   OTHER,
   ;
 
-  public static @Nullable UndoableAction getAction(
+  public static @NotNull UndoableAction getAction(
     @NotNull String actionType,
     @NotNull Collection<DocumentReference> docRefs,
     boolean isGlobal
   ) {
+    if (docRefs.isEmpty()) {
+      throw new IllegalArgumentException("cannot create undoable action type without doc refs");
+    }
     UndoableActionType type = valueOf(actionType);
     return switch (type) {
       case START_MARK -> new StartMarkAction(first(docRefs), "", isGlobal);
       case FINISH_MARK -> new FinishMarkAction(first(docRefs), isGlobal);
       case MENTION_ONLY -> new MentionOnlyUndoableAction(docRefs.toArray(DocumentReference.EMPTY_ARRAY));
       case EDITOR_CHANGE -> new MockEditorChangeAction(first(docRefs));
-      case NON_UNDOABLE -> {
-        yield docRefs.isEmpty()
-              ? null // TODO: possibly outdated, docRefs.isEmpty() is still the case?
-              : new NonUndoableAction(first(docRefs), isGlobal);
-      }
+      case NON_UNDOABLE -> new NonUndoableAction(first(docRefs), isGlobal);
       case GLOBAL -> new MockGlobalUndoableAction(docRefs);
       case OTHER -> new MockUndoableAction(docRefs, isGlobal);
     };

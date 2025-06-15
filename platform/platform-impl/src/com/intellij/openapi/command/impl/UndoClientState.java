@@ -176,9 +176,7 @@ final class UndoClientState implements Disposable {
     @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
     boolean recordOriginalReference
   ) {
-    if (!isUndoOrRedoInProgress()) {
-      undoSpy.commandStarted(commandProject, undoConfirmationPolicy);
-    }
+    undoSpy.commandStarted(commandProject, undoConfirmationPolicy);
     if (!isInsideCommand()) {
       boolean isTransparent = CommandProcessor.getInstance().isUndoTransparentActionInProgress();
       currentCommandMerger = new CommandMerger(project, isTransparent, isTransparentSupported);
@@ -230,9 +228,7 @@ final class UndoClientState implements Disposable {
       compactIfNeeded();
     }
     commandMerger.commandFinished(commandName, groupId, currentCommandMerger);
-    if (!isUndoOrRedoInProgress()) {
-      undoSpy.commandFinished(currentProject, commandName, groupId, currentCommandMerger.isTransparent());
-    }
+    undoSpy.commandFinished(currentProject, commandName, groupId, currentCommandMerger.isTransparent());
     currentProject = DummyProject.getInstance();
     this.currentCommandMerger = null;
   }
@@ -553,7 +549,7 @@ final class UndoClientState implements Disposable {
   private void addUndoableAction(@NotNull UndoableAction action) {
     addActionToSharedStack(action);
     currentCommandMerger.addAction(action);
-    if (!(currentProject instanceof DummyProject) && !isUndoOrRedoInProgress()) {
+    if (!(currentProject instanceof DummyProject)) {
       undoSpy.undoableActionAdded(currentProject, action, UndoableActionType.forAction(action));
     }
   }
