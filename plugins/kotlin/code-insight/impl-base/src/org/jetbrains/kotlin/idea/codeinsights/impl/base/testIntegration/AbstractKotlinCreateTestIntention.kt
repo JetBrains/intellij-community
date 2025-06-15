@@ -165,7 +165,7 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
                     }
 
                 val generatedClass = project.executeCommand(CodeInsightBundle.message("intention.create.test"), this) {
-                    TestGenerators.allForLanguageWithDefault(dialog.selectedTestFrameworkDescriptor.language)
+                    TestGenerators.INSTANCE.allForLanguageWithDefault(dialog.selectedTestFrameworkDescriptor.language)
                         .firstNotNullOfOrNull { generator ->
                             project.runWithAlternativeResolveEnabled {
                                 if (existingClass != null) {

@@ -17,6 +17,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private final T defaultImplementation;
   private final /* non static!!! */ Key<T> cacheKey;
   private final /* non static!!! */ Key<PersistentList<T>> allCacheKey;
+  private final /* non static!!! */ Key<PersistentList<T>> allCacheWithDefaultKey;
 
   public LanguageExtension(final @NotNull ExtensionPointName<? extends KeyedLazyInstance<T>> epName) {
     this(epName.getName(), null);
@@ -35,6 +36,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     this.defaultImplementation = defaultImplementation;
     cacheKey = Key.create("EXTENSIONS_IN_LANGUAGE_" + epName);
     allCacheKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName);
+    allCacheWithDefaultKey = Key.create("ALL_EXTENSIONS_IN_LANGUAGE_" + epName + "_WITH_DEFAULT");
   }
 
   @Override
@@ -104,6 +106,9 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   }
 
   /**
+   * Returns all extensions registered for the language and basic dialects.
+   * Note: It does not include {@link #defaultImplementation}, if you need use {@link #allForLanguageWithDefault(Language)} instead.
+   *
    *  @see #allForLanguageOrAny(Language)
    */
   public @NotNull @Unmodifiable List<T> allForLanguage(@NotNull Language language) {
@@ -122,6 +127,24 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
       result = result.addAll(forKey(l));
     }
     return result;
+  }
+
+  /**
+   * Returns all extensions registered for the language and basic dialects, including the default implementation when it is available.
+   *  @see #allForLanguage(Language)
+   */
+  public @NotNull @Unmodifiable List<T> allForLanguageWithDefault(@NotNull Language language) {
+    if (defaultImplementation == null) {
+      return allForLanguage(language);
+    }
+    List<T> cached = language.getUserData(allCacheWithDefaultKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    PersistentList<T> result = collectAllForLanguage(language);
+    result = result.add(defaultImplementation);
+    return language.putUserDataIfAbsent(allCacheWithDefaultKey, result);
   }
 
   @Override

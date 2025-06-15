@@ -122,7 +122,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     CommandProcessor.getInstance().executeCommand(project, () -> {
       TestFramework framework = d.getSelectedTestFrameworkDescriptor();
-      Collection<TestGenerator> generators = TestGenerators.allForLanguageWithDefault(framework.getLanguage());
+      Collection<TestGenerator> generators = TestGenerators.INSTANCE.allForLanguageWithDefault(framework.getLanguage());
       for (TestGenerator generator : generators) {
         PsiElement psiElement = DumbService.getInstance(project).withAlternativeResolveEnabled(() -> generator.generateTest(project, d));
         if (psiElement != null) break;
