@@ -46,6 +46,7 @@ import org.jetbrains.jewel.markdown.extensions.github.strikethrough.GitHubStrike
 import org.jetbrains.jewel.markdown.extensions.github.tables.GfmTableStyling
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableProcessorExtension
 import org.jetbrains.jewel.markdown.extensions.github.tables.GitHubTableRendererExtension
+import org.jetbrains.jewel.markdown.extensions.images.Coil3ImagesRendererExtension
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.jetbrains.jewel.markdown.scrolling.ScrollSyncMarkdownBlockRenderer
@@ -57,7 +58,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class MarkdownComposePanel(
   private val project: Project?,
   private val virtualFile: VirtualFile?,
-  private val updateHandler: MarkdownUpdateHandler = MarkdownUpdateHandler.Debounced()
+  private val updateHandler: MarkdownUpdateHandler = MarkdownUpdateHandler.Debounced(),
 ) : MarkdownHtmlPanelEx, UserDataHolder by UserDataHolderBase() {
 
   constructor() : this(null, null)
@@ -95,7 +96,7 @@ internal class MarkdownComposePanel(
     val tableRenderer = remember(markdownStyling) {
       GitHubTableRendererExtension(GfmTableStyling.create(), markdownStyling)
     }
-    val allRenderingExtensions = listOf(tableRenderer, GitHubStrikethroughRendererExtension)
+    val allRenderingExtensions = listOf(tableRenderer, GitHubStrikethroughRendererExtension, Coil3ImagesRendererExtension.withDefaultLoader())
     val blockRenderer = remember(markdownStyling) {
       ScrollSyncMarkdownBlockRenderer(
         markdownStyling,
@@ -132,10 +133,11 @@ internal class MarkdownComposePanel(
   @OptIn(FlowPreview::class)
   @Suppress("FunctionName")
   @Composable
-  private fun MarkdownPreviewPanel(scrollState: ScrollState,
-                                   scrollingSynchronizer: ScrollingSynchronizer?,
-                                   blockRenderer: ScrollSyncMarkdownBlockRenderer,
-                                   animationSpec: AnimationSpec<Float> = TweenSpec(easing = LinearEasing)
+  private fun MarkdownPreviewPanel(
+    scrollState: ScrollState,
+    scrollingSynchronizer: ScrollingSynchronizer?,
+    blockRenderer: ScrollSyncMarkdownBlockRenderer,
+    animationSpec: AnimationSpec<Float> = TweenSpec(easing = LinearEasing),
   ) {
     val request by updateHandler.requests.collectAsState(null)
     (request as? PreviewRequest.Update)?.let {
@@ -170,7 +172,7 @@ internal class MarkdownComposePanel(
             MarkdownLinkOpener.getInstance().openLink(project, url)
           else
             MarkdownLinkOpener.getInstance().openLink(project, url, virtualFile)
-                     },
+        },
         blockRenderer = blockRenderer,
       )
     }

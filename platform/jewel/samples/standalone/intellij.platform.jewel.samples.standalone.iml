@@ -79,6 +79,7 @@
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmAlerts" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmTables" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.markdown.extensions.images" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.lwjgl.lwjgl.tinyfd" type="repository">
         <properties include-transitive-deps="false" maven-id="org.lwjgl:lwjgl-tinyfd:3.3.1">
