@@ -420,11 +420,21 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
     nameAndButtons.addButtonComponent(UpdateButton().also { updateButton = it })
     updateButton!!.addActionListener {
-      pluginModel.installOrUpdatePlugin(
-        this,
-        descriptorForActions!!, updateDescriptor,
-        ModalityState.stateForComponent(updateButton!!),
-      )
+      val modalityState = ModalityState.stateForComponent(updateButton!!)
+      val customizedAction = pluginManagerCustomizer?.getUpdateButtonCustomizationModel(pluginModel,
+                                                                                        descriptorForActions!!,
+                                                                                        updateDescriptor,
+                                                                                        modalityState)?.action
+      if (customizedAction != null) {
+        customizedAction()
+      }
+      else {
+        pluginModel.installOrUpdatePlugin(
+          this,
+          descriptorForActions!!, updateDescriptor,
+          modalityState,
+        )
+      }
     }
 
     nameAndButtons.addButtonComponent(createInstallButton().also { installButton = it }.getComponent())
@@ -467,7 +477,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   private fun customizeInstallButton() {
     val pluginToInstall = plugin ?: return
-    if (gearButton!!.isVisible) {
+    if (gearButton!!.isEnabled) {
       installButton?.setVisible(false)
       return
     }
@@ -489,6 +499,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       installButton?.setVisible(customizationModel.isVisible)
     }
 
+    if (installButton?.isVisible() == true) {
+      gearButton?.isVisible = false
+    }
+
   }
 
   private fun customizeEnableDisableButton() {
@@ -506,9 +520,23 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       enableDisableController?.setText(customizationModel.text)
       gearButton?.isVisible = true
       gearButton?.isEnabled = false
-    } else {
+    }
+    else {
       enableDisableController?.update()
     }
+  }
+
+  private fun customizeUpdateAction() {
+    if (pluginManagerCustomizer == null) return
+    val uiModel = descriptorForActions ?: return
+    val updateModel = updateDescriptor ?: return
+    val component = updateButton ?: return
+    val modalityState = ModalityState.stateForComponent(component)
+    val customizationModel = pluginManagerCustomizer.getUpdateButtonCustomizationModel(pluginModel,
+                                                                                       uiModel,
+                                                                                       updateModel,
+                                                                                       modalityState) ?: return
+
   }
 
   private fun updateAdditionalText() {
@@ -1234,9 +1262,9 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       return
     }
 
-    val installedWithoutRestart = InstalledPluginsState.getInstance().wasInstalledWithoutRestart(plugin!!.pluginId)
+    val pluginState = UiPluginManager.getInstance().getPluginInstallationState(plugin!!.pluginId)
+    val installedWithoutRestart = pluginState.status == PluginStatus.INSTALLED_WITHOUT_RESTART
     if (isMarketplace) {
-      val pluginState = UiPluginManager.getInstance().getPluginInstallationState(plugin!!.pluginId)
       val installed = pluginState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART
       restartButton!!.isVisible = pluginState.status == PluginStatus.INSTALLED_AND_REQUIRED_RESTART
 
@@ -1577,7 +1605,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
 @ApiStatus.Internal
 fun loadPluginDetails(model: PluginUiModel): PluginUiModel? {
-  return UiPluginManager.getInstance().loadPluginDetails(model)
+
+
+  return UiPluginManager.getInstance().loadPluginDetails(
+    model)
 }
 
 @ApiStatus.Internal

@@ -21,6 +21,13 @@ interface PluginManagerCustomizer {
     modalityState: ModalityState,
   ): OptionsButonCustomizationModel
 
+  fun getUpdateButtonCustomizationModel(
+    pluginModelFacade: PluginModelFacade,
+    pluginModel: PluginUiModel,
+    updateModel: PluginUiModel?,
+    modalityState: ModalityState,
+  ): UpdateButtonCustomizationModel?
+
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
@@ -35,4 +42,8 @@ data class OptionsButonCustomizationModel(
   val isVisible: Boolean = true,
   val mainAction: Action? = null,
   @param:NlsSafe val text: String? = null,
+)
+
+data class UpdateButtonCustomizationModel(
+  val action: () -> Unit,
 )
