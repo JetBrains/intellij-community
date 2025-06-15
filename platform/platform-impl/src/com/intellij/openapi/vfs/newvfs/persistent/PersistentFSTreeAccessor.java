@@ -11,10 +11,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.io.CorruptedException;
-import com.intellij.util.io.DataEnumerator;
-import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,8 +175,11 @@ public class PersistentFSTreeAccessor {
   // The fields could be updated in cacheRoots() while being called under _read_ lock -- but this is fine, since
   // the underlying source of truth is the attribute, which could be modified only under write lock, so concurrent
   // execution of cacheRoots() is harmless -- it just creates few useless duplicated arrays.
-  protected int[] rootsIds = null;
+
+  /** sorted (target for binary search) */
   protected int[] rootsUrlIds = null;
+  /** not sorted */
+  protected int[] rootsIds = null;
 
   final int @NotNull [] listRoots() throws IOException {
     ensureRootsCached();
@@ -224,13 +224,12 @@ public class PersistentFSTreeAccessor {
       int prevRootId = 0;
       for (int i = 0; i < rootsCount; i++) {
         int diffUrlId = DataInputOutputUtil.readINT(input);
-        if (diffUrlId <= 0) {
-          throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: diffUrlId[" + i + "](=" + diffUrlId + ") must be >0");
-        }
         int diffRootId = DataInputOutputUtil.readINT(input);
-        if (diffRootId <= 0) {
-          throw new IOException("SUPER_ROOT.CHILDREN attribute is corrupted: diffRootId[" + i + "](=" + diffRootId + ") must be >0");
+
+        if (diffUrlId <= 0) {//'cos urlIds array must be sorted
+          throw new CorruptedException("SUPER_ROOT.CHILDREN attribute is corrupted: diffUrlId[" + i + "](=" + diffUrlId + ") must be >0");
         }
+
         int urlId = diffUrlId + prevUrlId;
         int rootId = diffRootId + prevRootId;
 
@@ -248,27 +247,20 @@ public class PersistentFSTreeAccessor {
   }
 
   final int findOrCreateRootRecord(@NotNull String rootUrl) throws IOException {
-    PersistentFSConnection connection = this.connection;
-
-    int rootUrlId = connection.names().tryEnumerate(rootUrl);
-
     ensureRootsCached();
 
-    int alreadyExistingRootIndex = Arrays.binarySearch(rootsUrlIds, rootUrlId);
-    if (alreadyExistingRootIndex >= 0) {
-      return rootsIds[alreadyExistingRootIndex];
-    }
+    PersistentFSConnection connection = this.connection;
+    DataEnumeratorEx<String> names = connection.names();
 
-    int newRootUrlId = connection.names().enumerate(rootUrl);
-    int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
-    int index = Arrays.binarySearch(rootsIds, newRootFileId);
-    if (index >= 0) {//sanity check:
-      throw new AssertionError("Newly allocated newRootFileId(=" + newRootFileId + ") already exists in root record: " +
-                               "rootIds(=" + Arrays.toString(rootsIds) + "), rootUrls(=" + Arrays.toString(rootsUrlIds) + "), " +
-                               "rootUrl(=" + rootUrl + "), rootUrlId(=" + rootUrlId + ")");
+    int rootUrlId = names.enumerate(rootUrl);
+    int rootIndex = Arrays.binarySearch(rootsUrlIds, rootUrlId);
+    if (rootIndex >= 0) {
+      return rootsIds[rootIndex];
     }
-    rootsIds = ArrayUtil.insert(rootsIds, -index - 1, newRootFileId);
-    rootsUrlIds = ArrayUtil.insert(rootsUrlIds, -index - 1, newRootUrlId);
+    int insertionIndex = -rootIndex - 1;
+    int newRootFileId = recordAccessor.createRecord(Collections.emptyList());
+    rootsUrlIds = ArrayUtil.insert(rootsUrlIds, insertionIndex, rootUrlId);
+    rootsIds = ArrayUtil.insert(rootsIds, insertionIndex, newRootFileId);
 
     try (DataOutputStream output = attributeAccessor.writeAttribute(SUPER_ROOT_ID, CHILDREN_ATTR)) {
       saveUrlAndFileIdsAsDiffCompressed(rootsUrlIds, rootsIds, output);
@@ -280,7 +272,7 @@ public class PersistentFSTreeAccessor {
     catch (FileTooBigException e) {
       //expect FileTooBigException to be thrown from AttributeStorage
       throw new FileTooBigException(
-        "Can't add new root (#" + newRootFileId + ", url=[" + rootUrl + "], urlId=" + newRootUrlId + ") to the VFS: " +
+        "Can't add new root (#" + newRootFileId + ", url=[" + rootUrl + "], urlId=" + rootUrlId + ") to the VFS: " +
         "too many roots already (= " + rootsIds.length + ")",
         e
       );
@@ -382,12 +374,6 @@ public class PersistentFSTreeAccessor {
         throw new IllegalStateException(
           "urlIds are not sorted: urlIds[" + i + "](=" + urlId + ") <= urlIds[" + (i - 1) + "](=" + prevUrlId + "), " +
           "urlIds: " + Arrays.toString(urlIds)
-        );
-      }
-      if (diffFileId <= 0) {
-        throw new IllegalStateException(
-          "fileIds are not sorted: fileIds[" + i + "](=" + fileId + ") <= fileIds[" + (i - 1) + "](=" + prevFileId + "), " +
-          "fileIds: " + Arrays.toString(fileIds)
         );
       }
       DataInputOutputUtil.writeINT(output, diffUrlId);

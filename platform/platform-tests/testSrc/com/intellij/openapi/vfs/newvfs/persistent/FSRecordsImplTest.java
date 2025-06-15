@@ -31,8 +31,19 @@ public class FSRecordsImplTest {
   public void insertedRoots_CouldBeReadBack() throws Exception {
     int totalRoots = 100_000;               //too many roots could exceed attribute storage max record size
     int[] rootIds = new int[totalRoots];
+
+    //shuffle roots to make sure rootUrlIds are not sequential:
     for (int i = 0; i < totalRoots; i++) {
       String rootUrl = "file:///root/" + i;
+      rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
+    }
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + (totalRoots - i - 1);
+      vfs.connection().names().enumerate(rootUrl);
+    }
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + i;
+      vfs.connection().names().enumerate(rootUrl);
       rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
     }
 
@@ -48,9 +59,14 @@ public class FSRecordsImplTest {
   public void insertedRoots_CouldBeReadBack_AfterReinitialization() throws Exception {
     int totalRoots = 100_000;               //too many roots could exceed attribute storage max record size
     int[] rootIds = new int[totalRoots];
+    //shuffle roots to make sure rootUrlIds are not sequential:
     for (int i = 0; i < totalRoots; i++) {
       String rootUrl = "file:///root/" + i;
       rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
+    }
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + (totalRoots - i - 1);
+      vfs.connection().names().enumerate(rootUrl);
     }
 
     vfs = reloadVFS();
