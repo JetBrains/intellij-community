@@ -27,7 +27,6 @@ enum class OsFamily(
   LINUX(osId = BuildOptions.OS_LINUX, osName = "Linux", dirName = "linux", distSuffix = "unix", jbrArchiveSuffix = "linux");
 
   val binaryExt: String get() = if (this == WINDOWS) ".exe" else ""
-  val scriptExt: String get() = if (this == WINDOWS) ".cmd" else ".sh"
 
   companion object {
     @JvmField

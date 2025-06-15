@@ -210,7 +210,7 @@ private fun amendVersionNumber(base: String): String = base + ".0".repeat(3 - ba
 
 private suspend fun prepareSignTool(nsiConfDir: Path, context: BuildContext, uninstallerCopy: Path): Path {
   val toolFile = context.proprietaryBuildTools.signTool.commandLineClient(context, OsFamily.currentOs, JvmArchitecture.currentJvmArch)!!
-  val scriptFile = Files.writeString(nsiConfDir.resolve("sign-tool${OsFamily.currentOs.scriptExt}"), when (OsFamily.currentOs) {
+  val scriptFile = Files.writeString(nsiConfDir.resolve("sign-tool.cmd"), when (OsFamily.currentOs) {
     // moving the file back and forth is required for NSIS to fail if signing didn't happen
     OsFamily.WINDOWS -> """
       @ECHO OFF
