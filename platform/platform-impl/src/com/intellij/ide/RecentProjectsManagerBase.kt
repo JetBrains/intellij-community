@@ -673,7 +673,12 @@ open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope)
   fun setProjectHidden(project: Project, hidden: Boolean) {
     val path = getProjectPath(project) ?: return
     synchronized(stateLock) {
-      val info = state.additionalInfo.get(path) ?: return
+      val info = state.additionalInfo.computeIfAbsent(path) {
+        // A new unopened project isn't in `state.additionalInfo` yet, because it will be
+        // added there on frame activation in `setActivationTimestamp` a bit later.
+        // Add it to `state.additionalInfo` now to support new projects which are not opened yet.
+        RecentProjectMetaInfo()
+      }
       if (info.hidden == hidden) return
 
       info.hidden = hidden
