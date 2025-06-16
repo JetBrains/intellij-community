@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.foldings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.indexing" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" scope="TEST" />

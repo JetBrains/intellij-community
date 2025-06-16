@@ -21,6 +21,7 @@ jvm_library(
     "//platform/platform-api:ide",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//jps/model-serialization",
     "//platform/lang-api:lang",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/projectModel-api:projectModel",

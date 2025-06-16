@@ -26,6 +26,7 @@ jvm_library(
     "//platform/foldings",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//jps/model-serialization",
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
