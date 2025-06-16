@@ -4,13 +4,15 @@ package com.intellij.polySymbols.query
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.StackOverflowPreventedException
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.PolySymbolModifier
+import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.PolySymbolsTestsDebugOutputPrinter
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
+import com.intellij.polySymbols.polySymbolsTestsDataPath
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printCodeCompletionItems
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
-import com.intellij.util.containers.Stack
 
 class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
@@ -235,7 +237,7 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
         override fun getCodeCompletions(
           qualifiedName: PolySymbolQualifiedName,
           params: PolySymbolCodeCompletionQueryParams,
-          scope: Stack<PolySymbolScope>,
+          stack: PolySymbolQueryStack,
         ): List<PolySymbolCodeCompletionItem> {
           return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
             listOf(PolySymbolCodeCompletionItem.create("bar"))

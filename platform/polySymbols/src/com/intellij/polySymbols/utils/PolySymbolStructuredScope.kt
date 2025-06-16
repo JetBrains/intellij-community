@@ -4,10 +4,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.query.PolySymbolCompoundScope
-import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.query.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.CachedValueProvider
@@ -199,7 +196,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolListSymbolsQueryParams,
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
       getAllSymbols(qualifiedKind)
 

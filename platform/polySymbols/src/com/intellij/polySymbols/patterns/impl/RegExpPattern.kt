@@ -6,8 +6,7 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
-import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.util.containers.Stack
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.util.text.CharSequenceSubSequence
 import java.util.regex.Pattern
 
@@ -25,7 +24,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -43,7 +42,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
@@ -51,7 +50,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,

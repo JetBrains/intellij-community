@@ -3,7 +3,10 @@ package com.intellij.polySymbols.query
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.polySymbols.*
+import com.intellij.polySymbols.FrameworkId
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolQualifiedKind
+import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
@@ -123,10 +126,11 @@ interface PolySymbolQueryExecutor : ModificationTracker {
 
   fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolScope> = emptyList()): Boolean
 
-  interface QueryBuilder<T>: PolySymbolQueryParams.Builder<T> {
+  interface QueryBuilder<T> : PolySymbolQueryParams.Builder<T> {
     fun additionalScope(scope: PolySymbolScope): T
     fun additionalScope(vararg scopes: PolySymbolScope): T
     fun additionalScope(scopes: Collection<PolySymbolScope>): T
+    fun additionalScope(stack: PolySymbolQueryStack): T
   }
 
   interface NameMatchQueryBuilder : QueryBuilder<NameMatchQueryBuilder>, PolySymbolNameMatchQueryParams.BuilderMixin<NameMatchQueryBuilder> {

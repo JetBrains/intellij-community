@@ -27,7 +27,6 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
-import com.intellij.util.containers.Stack
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
@@ -141,7 +140,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolListSymbolsQueryParams,
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
       if (params.queryExecutor.allowResolve) {
         when (qualifiedKind) {
@@ -168,24 +167,24 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
     override fun getMatchingSymbols(
       qualifiedName: PolySymbolQualifiedName,
       params: PolySymbolNameMatchQueryParams,
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbol> {
       if (params.queryExecutor.allowResolve) {
         when (qualifiedName.qualifiedKind) {
           HTML_ELEMENTS ->
             HtmlDescriptorUtils.getStandardHtmlElementDescriptor(tag, qualifiedName.name)
               ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
-              ?.match(qualifiedName.name, params, scope)
+              ?.match(qualifiedName.name, params, stack)
               ?.let { return it }
           HTML_ATTRIBUTES ->
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptor(tag, qualifiedName.name)
               ?.let { HtmlAttributeDescriptorBasedSymbol(it, tag) }
-              ?.match(qualifiedName.name, params, scope)
+              ?.match(qualifiedName.name, params, stack)
               ?.let { return it }
           JS_EVENTS -> {
             HtmlDescriptorUtils.getStandardHtmlAttributeDescriptor(tag, "on${qualifiedName.name}")
               ?.let { HtmlEventDescriptorBasedSymbol(it) }
-              ?.match(qualifiedName.name, params, scope)
+              ?.match(qualifiedName.name, params, stack)
               ?.let { return it }
           }
         }
@@ -312,7 +311,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolListSymbolsQueryParams,
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
       if (qualifiedKind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)
         descriptor.enumeratedValues?.map { HtmlAttributeValueSymbol(it) } ?: emptyList()

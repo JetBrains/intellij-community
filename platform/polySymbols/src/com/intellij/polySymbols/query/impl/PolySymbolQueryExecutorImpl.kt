@@ -23,7 +23,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 import kotlin.math.min
@@ -120,6 +119,11 @@ class PolySymbolQueryExecutorImpl(
 
     override fun additionalScope(scopes: Collection<PolySymbolScope>): T {
       additionalScope.addAll(scopes)
+      return this as T
+    }
+
+    override fun additionalScope(stack: PolySymbolQueryStack): T {
+      additionalScope.addAll(stack.toList())
       return this as T
     }
 
@@ -232,9 +236,9 @@ class PolySymbolQueryExecutorImpl(
     additionalScope: List<PolySymbolScope>,
   ): List<PolySymbol> =
     runQuery(path, queryParams, additionalScope) {
-        finalContext: Collection<PolySymbolScope>,
-        qualifiedName: PolySymbolQualifiedName,
-        params: PolySymbolNameMatchQueryParams,
+      finalContext: Collection<PolySymbolScope>,
+      qualifiedName: PolySymbolQualifiedName,
+      params: PolySymbolNameMatchQueryParams,
       ->
       val result = finalContext
         .takeLastUntilExclusiveScopeFor(qualifiedName.qualifiedKind)
@@ -244,7 +248,7 @@ class PolySymbolQueryExecutorImpl(
           val prev = keepUnresolvedTopLevelReferences
           keepUnresolvedTopLevelReferences = false
           try {
-            scope.getMatchingSymbols(qualifiedName, params, Stack(finalContext))
+            scope.getMatchingSymbols(qualifiedName, params, PolySymbolQueryStack(finalContext))
           }
           finally {
             keepUnresolvedTopLevelReferences = prev
@@ -266,16 +270,16 @@ class PolySymbolQueryExecutorImpl(
     additionalScope: List<PolySymbolScope>,
   ): List<PolySymbol> =
     runQuery(path, queryParams, additionalScope) {
-        finalContext: Collection<PolySymbolScope>,
-        qualifiedName: PolySymbolQualifiedName,
-        params: PolySymbolListSymbolsQueryParams,
+      finalContext: Collection<PolySymbolScope>,
+      qualifiedName: PolySymbolQualifiedName,
+      params: PolySymbolListSymbolsQueryParams,
       ->
       val result = finalContext
         .takeLastUntilExclusiveScopeFor(qualifiedName.qualifiedKind)
         .asSequence()
         .flatMap { scope ->
           ProgressManager.checkCanceled()
-          scope.getSymbols(qualifiedName.qualifiedKind, params, Stack(finalContext))
+          scope.getSymbols(qualifiedName.qualifiedKind, params, PolySymbolQueryStack(finalContext))
         }
         .distinct()
         .filterByQueryParams(params)
@@ -311,9 +315,9 @@ class PolySymbolQueryExecutorImpl(
     additionalScope: List<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     runQuery(path, queryParams, additionalScope) {
-        finalContext: Collection<PolySymbolScope>,
-        pathSection: PolySymbolQualifiedName,
-        params: PolySymbolCodeCompletionQueryParams,
+      finalContext: Collection<PolySymbolScope>,
+      pathSection: PolySymbolQualifiedName,
+      params: PolySymbolCodeCompletionQueryParams,
       ->
       var proximityBase = 0
       var nextProximityBase = 0
@@ -328,7 +332,7 @@ class PolySymbolQueryExecutorImpl(
             proximityBase = nextProximityBase
           }
           ProgressManager.checkCanceled()
-          scope.getCodeCompletions(pathSection, params, Stack(finalContext))
+          scope.getCodeCompletions(pathSection, params, PolySymbolQueryStack(finalContext))
             .mapNotNull { item ->
               if (item.offset > pos || item.symbol?.hideFromCompletion == true)
                 return@mapNotNull null
@@ -389,7 +393,7 @@ class PolySymbolQueryExecutorImpl(
               val prev = keepUnresolvedTopLevelReferences
               keepUnresolvedTopLevelReferences = false
               try {
-                it.getMatchingSymbols(qName, contextQueryParams, Stack(scope))
+                it.getMatchingSymbols(qName, contextQueryParams, PolySymbolQueryStack(scope))
               }
               finally {
                 keepUnresolvedTopLevelReferences = prev
@@ -453,7 +457,7 @@ class PolySymbolQueryExecutorImpl(
   ): List<PolySymbol> =
     if (this is PolySymbolWithPattern)
       pattern
-        .list(this, Stack(context).apply { addAll(queryScope) }, params)
+        .list(this, PolySymbolQueryStack(context + queryScope), params)
         .map {
           PolySymbolMatch.create(it.name, it.segments, qualifiedKind, origin)
         }

@@ -123,19 +123,19 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {
-      getMap(params.queryExecutor).getMatchingSymbols(qualifiedName, params, Stack(scope)).toList()
+      getMap(params.queryExecutor).getMatchingSymbols(qualifiedName, params, stack.copy()).toList()
     }
     else emptyList()
 
   override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
@@ -147,12 +147,12 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(qualifiedName.qualifiedKind)) {
-      getMap(params.queryExecutor).getCodeCompletions(qualifiedName, params, Stack(scope)).toList()
+      getMap(params.queryExecutor).getCodeCompletions(qualifiedName, params, stack.copy()).toList()
     }
     else emptyList()
 

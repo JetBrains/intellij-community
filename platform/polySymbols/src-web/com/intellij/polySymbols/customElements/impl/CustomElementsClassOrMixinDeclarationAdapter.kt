@@ -17,7 +17,6 @@ import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
-import com.intellij.util.containers.Stack
 
 class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val name: String,
@@ -110,16 +109,16 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override fun getMatchingSymbols(
       qualifiedName: PolySymbolQualifiedName,
       params: PolySymbolNameMatchQueryParams,
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
       base.rootScope
-        .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
+        .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, stack)
         .toList()
 
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolListSymbolsQueryParams,
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbol> =
       base.rootScope
         .getSymbols(base.declaration, this.origin, qualifiedKind, params)
@@ -128,10 +127,10 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override fun getCodeCompletions(
       qualifiedName: PolySymbolQualifiedName,
       params: PolySymbolCodeCompletionQueryParams,
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
     ): List<PolySymbolCodeCompletionItem> =
       base.rootScope
-        .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, scope)
+        .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, stack)
         .toList()
   }
 

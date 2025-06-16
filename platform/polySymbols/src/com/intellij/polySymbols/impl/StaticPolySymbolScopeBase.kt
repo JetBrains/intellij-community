@@ -8,7 +8,6 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
@@ -34,16 +33,16 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     getMaps(params).flatMap {
-      it.getMatchingSymbols(qualifiedName, params, Stack(scope))
+      it.getMatchingSymbols(qualifiedName, params, stack.copy())
     }.toList()
 
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     getMaps(params).flatMap {
       it.getSymbols(qualifiedKind, params)
@@ -52,10 +51,10 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
     getMaps(params).flatMap {
-      it.getCodeCompletions(qualifiedName, params, Stack(scope))
+      it.getCodeCompletions(qualifiedName, params, stack.copy())
     }.toList()
 
   internal fun getMatchingSymbols(
@@ -63,10 +62,10 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
     origin: Origin,
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
-      .getMatchingSymbols(qualifiedName, params, scopeStack)
+      .getMatchingSymbols(qualifiedName, params, stack)
       .toList()
 
   internal fun getSymbols(
@@ -84,10 +83,10 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
     origin: Origin,
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)
-      .getCodeCompletions(qualifiedName, params, scopeStack)
+      .getCodeCompletions(qualifiedName, params, stack)
       .toList()
 
 

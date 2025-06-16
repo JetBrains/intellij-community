@@ -9,7 +9,6 @@ import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.utils.getDefaultCodeCompletions
 import com.intellij.polySymbols.utils.match
-import com.intellij.util.containers.Stack
 
 /**
  * Poly Symbols are contained within a loose model built from Poly Symbols scopes, each time anew for a particular context.
@@ -41,15 +40,15 @@ interface PolySymbolScope : ModificationTracker {
   fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     getSymbols(qualifiedName.qualifiedKind,
                PolySymbolListSymbolsQueryParams.create(
                  params.queryExecutor, expandPatterns = false) {
                  strictScope(params.strictScope)
                  copyFiltersFrom(params)
-               }, scope)
-      .flatMap { it.match(qualifiedName.name, params, scope) }
+               }, stack)
+      .flatMap { it.match(qualifiedName.name, params, stack) }
 
   /**
    * Returns symbols of a particular kind and from particular namespace within the scope, including symbols with patterns.
@@ -60,7 +59,7 @@ interface PolySymbolScope : ModificationTracker {
   fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     emptyList()
 
@@ -76,9 +75,9 @@ interface PolySymbolScope : ModificationTracker {
   fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
-    getDefaultCodeCompletions(qualifiedName, params, scope)
+    getDefaultCodeCompletions(qualifiedName, params, stack)
 
   /**
    * When scope is exclusive for a particular namespace and kind, resolve will not continue down the stack during pattern matching.

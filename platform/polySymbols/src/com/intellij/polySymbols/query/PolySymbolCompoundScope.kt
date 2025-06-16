@@ -6,7 +6,6 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.util.containers.Stack
 
 /**
  * A special purpose scope, which provides other scopes, possibly calling a [PolySymbolQueryExecutor] to retrieve them.
@@ -41,21 +40,21 @@ abstract class PolySymbolCompoundScope : PolySymbolScope {
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
     throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 

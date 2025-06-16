@@ -9,11 +9,10 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
-import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.nameMatches
 import com.intellij.polySymbols.utils.qualifiedName
-import com.intellij.util.containers.Stack
 
 class SingleSymbolReferencePattern(
   private val path: List<PolySymbolQualifiedName>,
@@ -24,7 +23,7 @@ class SingleSymbolReferencePattern(
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -33,7 +32,7 @@ class SingleSymbolReferencePattern(
     if (owner?.nameMatches(params.name.substring(start, end), params.queryExecutor) == true)
       params.queryExecutor.nameMatchQuery(path) {
         exclude(excludeModifiers)
-        additionalScope(scopeStack)
+        additionalScope(stack)
       }
         .asSingleSymbol()
         ?.let { listOf(MatchResult(PolySymbolNameSegment.create(start, end, it))) }
@@ -43,14 +42,14 @@ class SingleSymbolReferencePattern(
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     if (owner != null) {
       params.queryExecutor.nameMatchQuery(path) {
         exclude(excludeModifiers)
-        additionalScope(scopeStack)
+        additionalScope(stack)
       }
         .asSingleSymbol()
         ?.let { listOf(ListResult(owner.name, PolySymbolNameSegment.create(0, owner.name.length, it))) }
@@ -60,7 +59,7 @@ class SingleSymbolReferencePattern(
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
@@ -69,7 +68,7 @@ class SingleSymbolReferencePattern(
     if (owner != null
         && params.queryExecutor.nameMatchQuery(path) {
         exclude(excludeModifiers)
-        additionalScope(scopeStack)
+        additionalScope(stack)
       }.isNotEmpty()) {
       CompletionResults(params.queryExecutor.namesProvider
                           .getNames(owner.qualifiedName, PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)

@@ -7,7 +7,6 @@ import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.testFramework.query.doTest
 import com.intellij.polySymbols.testFramework.query.printMatches
 import com.intellij.polySymbols.webTypes.json.parseWebTypesPath
-import com.intellij.util.containers.Stack
 
 class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
@@ -393,7 +392,7 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
         override fun getMatchingSymbols(
           qualifiedName: PolySymbolQualifiedName,
           params: PolySymbolNameMatchQueryParams,
-          scope: Stack<PolySymbolScope>,
+          stack: PolySymbolQueryStack,
         ): List<PolySymbol> {
           return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {

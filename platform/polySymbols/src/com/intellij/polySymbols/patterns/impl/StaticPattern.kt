@@ -6,15 +6,14 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
-import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.util.containers.Stack
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 
 internal class StaticPattern(val content: String) : PolySymbolPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf(content)
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -26,7 +25,7 @@ internal class StaticPattern(val content: String) : PolySymbolPattern() {
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
@@ -34,7 +33,7 @@ internal class StaticPattern(val content: String) : PolySymbolPattern() {
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,

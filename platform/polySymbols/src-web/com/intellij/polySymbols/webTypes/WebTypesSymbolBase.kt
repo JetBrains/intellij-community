@@ -18,7 +18,6 @@ import com.intellij.polySymbols.webTypes.impl.wrap
 import com.intellij.polySymbols.webTypes.json.*
 import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
-import com.intellij.util.containers.Stack
 import javax.swing.Icon
 
 open class WebTypesSymbolBase : WebTypesSymbol {
@@ -33,7 +32,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     get() = _superContributions
             ?: base.contribution.extends
               .also { _superContributions = emptyList() }
-              ?.resolve(listOf(), queryExecutor, true, true)
+              ?.resolve(PolySymbolQueryStack(), queryExecutor, true, true)
               ?.toList()
               ?.also { contributions -> _superContributions = contributions }
             ?: emptyList()
@@ -99,16 +98,16 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     base.rootScope
-      .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
+      .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, stack)
       .toList()
 
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
     base.rootScope
       .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, qualifiedKind, params)
@@ -117,10 +116,10 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
     base.rootScope
-      .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
+      .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, stack)
       .toList()
 
   final override val qualifiedKind: PolySymbolQualifiedKind

@@ -13,7 +13,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.applyIf
-import com.intellij.util.containers.Stack
 
 abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
   protected val mappings: Map<PolySymbolQualifiedKind, PolySymbolQualifiedKind>,
@@ -32,7 +31,7 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
 
   protected abstract val subScopeBuilder: (PolySymbolQueryExecutor, T) -> List<PolySymbolScope>
 
-  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: PolySymbolCodeCompletionQueryParams, scope: Stack<PolySymbolScope>): List<PolySymbolCodeCompletionItem> {
+  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: PolySymbolCodeCompletionQueryParams, stack: PolySymbolQueryStack): List<PolySymbolCodeCompletionItem> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
@@ -47,7 +46,7 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName, params: PolySymbolNameMatchQueryParams, scope: Stack<PolySymbolScope>): List<PolySymbol> {
+  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName, params: PolySymbolNameMatchQueryParams, stack: PolySymbolQueryStack): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
@@ -64,7 +63,7 @@ abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolListSymbolsQueryParams, scope: Stack<PolySymbolScope>): List<PolySymbol> {
+  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolListSymbolsQueryParams, stack: PolySymbolQueryStack): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedKind] ?: return emptyList()

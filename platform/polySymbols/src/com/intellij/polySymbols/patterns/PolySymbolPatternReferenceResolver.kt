@@ -7,12 +7,8 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.canUnwrapSymbols
-import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolNameConversionRules
-import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
-import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -26,14 +22,14 @@ class PolySymbolPatternReferenceResolver(private vararg val items: Reference) : 
   override fun codeCompletion(
     name: String,
     position: Int,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     queryExecutor: PolySymbolQueryExecutor,
   ): List<PolySymbolCodeCompletionItem> =
-    items.flatMap { it.codeCompletion(name, scopeStack, queryExecutor, position) }
+    items.flatMap { it.codeCompletion(name, stack, queryExecutor, position) }
 
-  override fun matchName(name: String, scopeStack: Stack<PolySymbolScope>, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
+  override fun matchName(name: String, stack: PolySymbolQueryStack, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
     items.asSequence()
-      .flatMap { it.resolve(name, scopeStack, queryExecutor) }
+      .flatMap { it.resolve(name, stack, queryExecutor) }
       .flatMap {
         if (it is PolySymbolMatch
             && it.nameSegments.size == 1
@@ -44,11 +40,11 @@ class PolySymbolPatternReferenceResolver(private vararg val items: Reference) : 
       .toList()
 
   override fun listSymbols(
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     queryExecutor: PolySymbolQueryExecutor,
     expandPatterns: Boolean,
   ): List<PolySymbol> =
-    items.flatMap { it.listSymbols(scopeStack, queryExecutor, expandPatterns) }
+    items.flatMap { it.listSymbols(stack, queryExecutor, expandPatterns) }
 
   data class Reference(
     val location: List<PolySymbolQualifiedName> = emptyList(),
@@ -59,45 +55,45 @@ class PolySymbolPatternReferenceResolver(private vararg val items: Reference) : 
   ) {
     fun resolve(
       name: String,
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
       queryExecutor: PolySymbolQueryExecutor,
     ): List<PolySymbol> {
       val matches = queryExecutor.withNameConversionRules(nameConversionRules)
         .nameMatchQuery(location + qualifiedKind.withName(name)) {
           exclude(excludeModifiers)
-          additionalScope(scope)
+          additionalScope(stack)
         }
       if (filter == null) return matches
-      return filter.filterNameMatches(matches, queryExecutor, scope, emptyMap())
+      return filter.filterNameMatches(matches, queryExecutor, stack, emptyMap())
     }
 
     fun listSymbols(
-      scope: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
       queryExecutor: PolySymbolQueryExecutor,
       expandPatterns: Boolean,
     ): List<PolySymbol> {
       val symbols = queryExecutor.withNameConversionRules(nameConversionRules)
         .listSymbolsQuery(location, qualifiedKind, expandPatterns) {
           exclude(excludeModifiers)
-          additionalScope(scope)
+          additionalScope(stack)
         }
       if (filter == null) return symbols
-      return filter.filterNameMatches(symbols, queryExecutor, scope, emptyMap())
+      return filter.filterNameMatches(symbols, queryExecutor, stack, emptyMap())
     }
 
     fun codeCompletion(
       name: String,
-      scopeStack: Stack<PolySymbolScope>,
+      stack: PolySymbolQueryStack,
       queryExecutor: PolySymbolQueryExecutor,
       position: Int,
     ): List<PolySymbolCodeCompletionItem> {
       val codeCompletions = queryExecutor.withNameConversionRules(nameConversionRules)
         .codeCompletionQuery(location + qualifiedKind.withName(name), position) {
           exclude(excludeModifiers)
-          additionalScope(scopeStack)
+          additionalScope(stack)
         }
       if (filter == null) return codeCompletions
-      return filter.filterCodeCompletions(codeCompletions, queryExecutor, scopeStack, emptyMap())
+      return filter.filterCodeCompletions(codeCompletions, queryExecutor, stack, emptyMap())
     }
 
   }

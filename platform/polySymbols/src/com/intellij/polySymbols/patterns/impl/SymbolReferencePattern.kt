@@ -10,11 +10,9 @@ import com.intellij.polySymbols.impl.withOffset
 import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.utils.lastPolySymbol
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.util.applyIf
-import com.intellij.util.containers.Stack
 import kotlin.math.max
 
 internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPattern() {
@@ -24,7 +22,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPatt
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -36,13 +34,13 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPatt
         start, end, emptyList(),
         problem = PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
         displayName = displayName,
-        symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: scopeStack.lastPolySymbol) ?: emptySet()
+        symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: stack.lastPolySymbol) ?: emptySet()
       ))))
     }
 
     ProgressManager.checkCanceled()
     val hits = symbolsResolver
-                 ?.matchName(params.name.substring(start, end), scopeStack, params.queryExecutor)
+                 ?.matchName(params.name.substring(start, end), stack, params.queryExecutor)
                  ?.selectBest(PolySymbol::nameSegments, PolySymbol::priority, PolySymbol::extension)
                ?: emptyList()
 
@@ -63,7 +61,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPatt
           emptyList(),
           problem = PolySymbolNameSegment.MatchProblem.UNKNOWN_SYMBOL,
           displayName = displayName,
-          symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: scopeStack.lastPolySymbol) ?: emptySet(),
+          symbolKinds = symbolsResolver?.getSymbolKinds(owner ?: stack.lastPolySymbol) ?: emptySet(),
         ))
       }
     ))
@@ -71,12 +69,12 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPatt
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     symbolsResolver
-      ?.listSymbols(scopeStack, params.queryExecutor, params.expandPatterns)
+      ?.listSymbols(stack, params.queryExecutor, params.expandPatterns)
       ?.groupBy { it.name }
       ?.flatMap { (name, rawList) ->
         val list = rawList.selectBest(PolySymbol::nameSegments, PolySymbol::priority, PolySymbol::extension)
@@ -98,14 +96,14 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPatt
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,
   ): CompletionResults =
     symbolsResolver
-      ?.codeCompletion(params.name.substring(start, end), max(params.position - start, 0), scopeStack, params.queryExecutor)
+      ?.codeCompletion(params.name.substring(start, end), max(params.position - start, 0), stack, params.queryExecutor)
       ?.let { results ->
         val stop = start == end && start == params.position
         CompletionResults(results.map { it.withOffset(it.offset + start).withStopSequencePatternEvaluation(stop) }, true)

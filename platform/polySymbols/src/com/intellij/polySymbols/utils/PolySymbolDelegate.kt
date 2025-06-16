@@ -9,17 +9,13 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
-import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.refactoring.impl.PolySymbolDelegatedRenameTargetImpl
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.search.impl.PolySymbolDelegatedSearchTargetImpl
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.util.containers.Stack
 import javax.swing.Icon
 
 interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
@@ -59,25 +55,25 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolScope {
   override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
-    (delegate as? PolySymbolScope)?.getMatchingSymbols(qualifiedName, params, scope)
+    (delegate as? PolySymbolScope)?.getMatchingSymbols(qualifiedName, params, stack)
     ?: emptyList()
 
   override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbol> =
-    (delegate as? PolySymbolScope)?.getSymbols(qualifiedKind, params, scope)
+    (delegate as? PolySymbolScope)?.getSymbols(qualifiedKind, params, stack)
     ?: emptyList()
 
   override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
   ): List<PolySymbolCodeCompletionItem> =
-    (delegate as? PolySymbolScope)?.getCodeCompletions(qualifiedName, params, scope)
+    (delegate as? PolySymbolScope)?.getCodeCompletions(qualifiedName, params, stack)
     ?: emptyList()
 
   override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =

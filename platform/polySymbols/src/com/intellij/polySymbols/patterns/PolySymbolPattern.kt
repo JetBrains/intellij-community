@@ -7,8 +7,7 @@ import com.intellij.polySymbols.patterns.impl.*
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.util.containers.Stack
+import com.intellij.polySymbols.query.PolySymbolQueryStack
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
@@ -20,47 +19,47 @@ abstract class PolySymbolPattern internal constructor() {
 
   internal fun match(
     owner: PolySymbol?,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     name: String,
     params: PolySymbolNameMatchQueryParams,
   ): List<MatchResult> =
-    match(owner, scope, null, MatchParameters(name, params), 0, name.length)
+    match(owner, stack, null, MatchParameters(name, params), 0, name.length)
       .map { it.removeEmptySegments() }
 
   internal fun list(
     owner: PolySymbol?,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     params: PolySymbolListSymbolsQueryParams,
   ): List<ListResult> =
-    list(owner, scope, null, ListParameters(params))
+    list(owner, stack, null, ListParameters(params))
       .map { it.removeEmptySegments() }
 
   internal fun complete(
     owner: PolySymbol?,
-    scope: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     name: String,
     params: PolySymbolCodeCompletionQueryParams,
   ): List<PolySymbolCodeCompletionItem> =
-    complete(owner, Stack(scope), null,
+    complete(owner, stack.copy(), null,
              CompletionParameters(name, params), 0, name.length).items
 
   internal abstract fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters, start: Int, end: Int,
   ): List<MatchResult>
 
   internal abstract fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult>
 
   internal abstract fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolScope>,
+    stack: PolySymbolQueryStack,
     symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters, start: Int, end: Int,
   ): CompletionResults
