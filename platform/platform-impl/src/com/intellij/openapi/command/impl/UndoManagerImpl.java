@@ -285,6 +285,24 @@ public class UndoManagerImpl extends UndoManager {
   }
 
   @ApiStatus.Internal
+  protected void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
+    UndoClientState state = getClientState(editor);
+    if (state != null) {
+      String commandName = getUndoOrRedoActionNameAndDescription(editor, isUndo).getSecond();
+      Disposable disposable = Disposer.newDisposable();
+      Runnable beforeUndoRedoStarted = () -> notifyUndoRedoStarted(editor, disposable, isUndo);
+      try {
+        state.undoOrRedo(editor, commandName, beforeUndoRedoStarted, isUndo);
+      } finally {
+        Disposer.dispose(disposable);
+      }
+      if (myProject != null) {
+        getUndoSpy().undoRedoPerformed(myProject, editor, isUndo);
+      }
+    }
+  }
+
+  @ApiStatus.Internal
   protected void notifyUndoRedoStarted(@Nullable FileEditor editor, @NotNull Disposable disposable, boolean isUndo) {
     ApplicationManager.getApplication()
       .getMessageBus()
@@ -500,24 +518,6 @@ public class UndoManagerImpl extends UndoManager {
       }
     }
     return getComponentManager().getService(UndoClientState.class);
-  }
-
-  @ApiStatus.Internal
-  protected void undoOrRedo(@Nullable FileEditor editor, boolean isUndo) {
-    UndoClientState state = getClientState(editor);
-    if (state != null) {
-      String commandName = getUndoOrRedoActionNameAndDescription(editor, isUndo).getSecond();
-      Disposable disposable = Disposer.newDisposable();
-      Runnable beforeUndoRedoStarted = () -> notifyUndoRedoStarted(editor, disposable, isUndo);
-      try {
-        state.undoOrRedo(editor, commandName, beforeUndoRedoStarted, isUndo);
-      } finally {
-        Disposer.dispose(disposable);
-      }
-      if (myProject != null) {
-        getUndoSpy().undoRedoPerformed(myProject, editor, isUndo);
-      }
-    }
   }
 
   private @Nullable UndoClientState getClientState(@Nullable FileEditor editor) {
