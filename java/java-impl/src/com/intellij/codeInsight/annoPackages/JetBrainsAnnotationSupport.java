@@ -2,39 +2,34 @@
 package com.intellij.codeInsight.annoPackages;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ContextNullabilityInfo;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
 final class JetBrainsAnnotationSupport implements AnnotationPackageSupport {
   @Override
-  public @Nullable NullabilityAnnotationInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
-                                                                                 @NotNull PsiElement context,
-                                                                                 PsiAnnotation.TargetType @NotNull [] types,
-                                                                                 boolean superPackage) {
-    if (superPackage) return null;
-    if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return null;
-    if (!anno.hasQualifiedName(AnnotationUtil.NOT_NULL_BY_DEFAULT)) return null;
-    PsiExpression parentExpression = PsiTreeUtil.getParentOfType(context, PsiExpression.class);
-    if (parentExpression instanceof PsiTypeCastExpression cast && PsiTreeUtil.isAncestor(cast.getCastType(), context, false)) {
-      return null;
-    }
+  public @NotNull ContextNullabilityInfo getNullabilityByContainerAnnotation(@NotNull PsiAnnotation anno,
+                                                                             PsiAnnotation.TargetType @NotNull [] types,
+                                                                             boolean superPackage) {
+    if (superPackage) return ContextNullabilityInfo.EMPTY;
+    if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return ContextNullabilityInfo.EMPTY;
+    if (!anno.hasQualifiedName(AnnotationUtil.NOT_NULL_BY_DEFAULT)) return ContextNullabilityInfo.EMPTY;
     if (ArrayUtil.contains(PsiAnnotation.TargetType.TYPE_PARAMETER, types)) {
-      if (context instanceof PsiTypeParameter typeParameter && typeParameter.getExtendsListTypes().length == 0) {
+      return ContextNullabilityInfo.constant(new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true))
+        .disableInCast()
         // Declared type parameter without a bound like <T> is equal to <T extends Object>, and the Object is implicitly annotated as NotNull
-        return new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true);
-      }
-      return null;
+        .filtering(context -> context instanceof PsiTypeParameter typeParameter && typeParameter.getExtendsListTypes().length == 0);
     }
-    if (JSpecifyAnnotationSupport.resolvesToTypeParameter(context)) return null;
-    return new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true);
+    return ContextNullabilityInfo.constant(new NullabilityAnnotationInfo(anno, Nullability.NOT_NULL, true))
+      .disableInCast()
+      .filtering(context -> !JSpecifyAnnotationSupport.resolvesToTypeParameter(context));
   }
 
   @Override

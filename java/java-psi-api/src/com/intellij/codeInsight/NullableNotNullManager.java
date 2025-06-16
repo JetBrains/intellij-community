@@ -5,8 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.*;
 
@@ -20,6 +19,8 @@ import static com.intellij.codeInsight.AnnotationUtil.*;
  */
 public abstract class NullableNotNullManager {
   protected static final Logger LOG = Logger.getInstance(NullableNotNullManager.class);
+  private static final PsiAnnotation.@NotNull TargetType[] TYPE_USE_TARGET =
+    new PsiAnnotation.TargetType[]{PsiAnnotation.TargetType.TYPE_USE};
   protected final Project myProject;
 
   protected NullableNotNullManager(Project project) {
@@ -272,6 +273,10 @@ public abstract class NullableNotNullManager {
     return nullability;
   }
 
+  protected abstract @NotNull ContextNullabilityInfo getNullityDefault(@NotNull PsiModifierListOwner container,
+                                                                       PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                                                       boolean superPackage);
+
   @ApiStatus.Internal
   @NotNull
   public List<String> getNullablesWithNickNames() {
@@ -306,7 +311,33 @@ public abstract class NullableNotNullManager {
    */
   public @Nullable NullabilityAnnotationInfo findDefaultTypeUseNullability(@Nullable PsiElement context) {
     if (context == null) return null;
-    return findNullabilityDefault(context, PsiAnnotation.TargetType.TYPE_USE);
+    PsiElement element = context.getContext();
+    while (element != null) {
+      if (element instanceof PsiModifierListOwner) {
+        PsiModifierListOwner listOwner = (PsiModifierListOwner)element;
+        NullabilityAnnotationInfo result = CachedValuesManager.getCachedValue(listOwner, () -> {
+          return CachedValueProvider.Result.create(getNullityDefault(listOwner, TYPE_USE_TARGET, false),
+                                                   PsiModificationTracker.MODIFICATION_COUNT);
+        }).forContext(context);
+        if (result != null) {
+          return result;
+        }
+      }
+
+      if (element instanceof PsiClassOwner) {
+        PsiClassOwner classOwner = (PsiClassOwner)element;
+        return CachedValuesManager.getCachedValue(classOwner, () -> {
+          String packageName = classOwner.getPackageName();
+          PsiPackage psiPackage = JavaPsiFacade.getInstance(classOwner.getProject()).findPackage(packageName);
+          ContextNullabilityInfo fromPackage = findNullityDefaultOnPackage(TYPE_USE_TARGET, psiPackage);
+          return CachedValueProvider.Result.create(fromPackage.orElse(findNullityDefaultOnModule(TYPE_USE_TARGET, classOwner)),
+                                                   PsiModificationTracker.MODIFICATION_COUNT);
+        }).forContext(context);
+      }
+
+      element = element.getContext();
+    }
+    return null;
   }
 
   /**
@@ -326,7 +357,7 @@ public abstract class NullableNotNullManager {
     PsiElement element = place.getContext();
     while (element != null) {
       if (element instanceof PsiModifierListOwner) {
-        NullabilityAnnotationInfo result = getNullityDefault((PsiModifierListOwner)element, placeTargetTypes, place, false);
+        NullabilityAnnotationInfo result = getNullityDefault((PsiModifierListOwner)element, placeTargetTypes, false).forContext(place);
         if (result != null) {
           return result;
         }
@@ -335,11 +366,11 @@ public abstract class NullableNotNullManager {
       if (element instanceof PsiClassOwner) {
         String packageName = ((PsiClassOwner)element).getPackageName();
         PsiPackage psiPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
-        NullabilityAnnotationInfo fromPackage = findNullityDefaultOnPackage(placeTargetTypes, psiPackage, place);
+        NullabilityAnnotationInfo fromPackage = findNullityDefaultOnPackage(placeTargetTypes, psiPackage).forContext(place);
         if (fromPackage != null) {
           return fromPackage;
         }
-        return findNullityDefaultOnModule(placeTargetTypes, element);
+        return findNullityDefaultOnModule(placeTargetTypes, element).forContext(place);
       }
 
       element = element.getContext();
@@ -347,27 +378,22 @@ public abstract class NullableNotNullManager {
     return null;
   }
 
-  protected @Nullable NullabilityAnnotationInfo findNullityDefaultOnModule(PsiAnnotation.@NotNull TargetType @NotNull [] types,
-                                                                           @NotNull PsiElement element) {
-    return null;
+  protected @NotNull ContextNullabilityInfo findNullityDefaultOnModule(PsiAnnotation.@NotNull TargetType @NotNull [] types, 
+                                                                       @NotNull PsiElement element) {
+    return ContextNullabilityInfo.EMPTY;
   }
 
-  private @Nullable NullabilityAnnotationInfo findNullityDefaultOnPackage(PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                                                          @Nullable PsiPackage psiPackage,
-                                                                          PsiElement context) {
+  private @NotNull ContextNullabilityInfo findNullityDefaultOnPackage(PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
+                                                                      @Nullable PsiPackage psiPackage) {
     boolean superPackage = false;
+    ContextNullabilityInfo info = ContextNullabilityInfo.EMPTY;
     while (psiPackage != null) {
-      NullabilityAnnotationInfo onPkg = getNullityDefault(psiPackage, placeTargetTypes, context, superPackage);
-      if (onPkg != null) return onPkg;
+      info = info.orElse(getNullityDefault(psiPackage, placeTargetTypes, superPackage));
       superPackage = true;
       psiPackage = psiPackage.getParentPackage();
     }
-    return null;
+    return info;
   }
-
-  protected abstract @Nullable NullabilityAnnotationInfo getNullityDefault(@NotNull PsiModifierListOwner container,
-                                                                           PsiAnnotation.TargetType @NotNull [] placeTargetTypes,
-                                                                           @NotNull PsiElement context, boolean superPackage);
 
   public abstract @NotNull List<String> getNullables();
 
