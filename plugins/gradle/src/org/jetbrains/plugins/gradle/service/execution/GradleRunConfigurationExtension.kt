@@ -1,7 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.openapi.externalSystem.service.execution.configuration.*
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemReifiedRunConfigurationExtension
+import com.intellij.openapi.externalSystem.service.execution.configuration.addBeforeRunFragment
+import com.intellij.openapi.externalSystem.service.execution.configuration.addCommandLineFragment
+import com.intellij.openapi.externalSystem.service.execution.configuration.addWorkingDirectoryFragment
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.SettingsEditorFragmentContainer
 import com.intellij.openapi.externalSystem.service.execution.configuration.fragments.addTag
 import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalSystemWorkingDirectoryInfo
@@ -50,6 +53,30 @@ class GradleRunConfigurationExtension
       GradleBundle.message("gradle.tasks.tests.force.comment"),
       GradleRunConfiguration::isRunAsTest,
       GradleRunConfiguration::setRunAsTest
+    )
+    addTag(
+      "gradle.tasks.debug_disabled.fragment",
+      GradleBundle.message("gradle.tasks.debugging.disabled"),
+      GradleBundle.message("gradle.settings.title"),
+      GradleBundle.message("gradle.tasks.debugging.disabled.hint"),
+      GradleRunConfiguration::isDebuggingDisabled,
+      GradleRunConfiguration::setDebuggingDisabled
+    )
+    addTag(
+      "gradle.tasks.profiling_disabled.fragment",
+      GradleBundle.message("gradle.tasks.profiling.disabled"),
+      GradleBundle.message("gradle.settings.title"),
+      GradleBundle.message("gradle.tasks.profiling.disabled.hint"),
+      GradleRunConfiguration::isProfilingDisabled,
+      GradleRunConfiguration::setProfilingDisabled
+    )
+    addTag(
+      "gradle.tasks.coverage_disabled.fragment",
+      GradleBundle.message("gradle.tasks.coverage.disabled"),
+      GradleBundle.message("gradle.settings.title"),
+      GradleBundle.message("gradle.tasks.coverage.disabled.hint"),
+      GradleRunConfiguration::isCoverageDisabled,
+      GradleRunConfiguration::setCoverageDisabled
     )
   }
 
