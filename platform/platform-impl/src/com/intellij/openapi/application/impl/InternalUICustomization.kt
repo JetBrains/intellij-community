@@ -100,6 +100,8 @@ open class InternalUICustomization {
 
   open fun createCustomToolWindowPaneHolder(): JPanel = JPanel()
 
+  open fun configureRendererComponent(component: JComponent) {}
+
   open val isCustomPaintersAllowed: Boolean = false
 
   open fun attachIdeFrameBackgroundPainter(frame: IdeFrame, glassPane: IdeGlassPane): Unit = Unit

@@ -178,6 +178,12 @@ internal class IslandsUICustomization : InternalUICustomization() {
     return null
   }
 
+  override fun configureRendererComponent(component: JComponent) {
+    if (isIslandsEnabled) {
+      ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
+    }
+  }
+
   override fun installEditorBackground(component: JComponent) {
     if (isManyIslandEnabled) {
       ClientProperty.putRecursive(component, IdeBackgroundUtil.NO_BACKGROUND, true)
