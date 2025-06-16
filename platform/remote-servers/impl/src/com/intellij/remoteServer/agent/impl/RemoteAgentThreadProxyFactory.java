@@ -1,15 +1,17 @@
 package com.intellij.remoteServer.agent.impl;
 
 import com.intellij.remoteServer.agent.RemoteAgentProxyFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
  * @author michael.golubev
  */
+@ApiStatus.Internal
 public class RemoteAgentThreadProxyFactory implements RemoteAgentProxyFactory {
 
   private final RemoteAgentThreadProxyCreator myCreator;
@@ -22,7 +24,7 @@ public class RemoteAgentThreadProxyFactory implements RemoteAgentProxyFactory {
   }
 
   @Override
-  public <T> T createProxy(List<File> libraries, Class<T> agentInterface, String agentClassName) throws Exception {
+  public <T> T createProxy(List<Path> libraries, Class<T> agentInterface, String agentClassName) throws Exception {
     T agentDelegate = myDelegate.createProxy(libraries, agentInterface, agentClassName);
     return myCreator.createProxy(agentInterface, agentDelegate);
   }

@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static java.nio.file.attribute.PosixFilePermission.*;
 
@@ -1168,6 +1169,16 @@ public class FileUtil {
     return null;
   }
 
+  public static @Nullable Path findFirstPathThatExist(String @NotNull ... paths) {
+    for (String path : paths) {
+      if (!Strings.isEmptyOrSpaces(path)) {
+        Path file = Paths.get(toSystemDependentName(path));
+        if (Files.exists(file)) return file;
+      }
+    }
+    return null;
+  }
+
   public static @NotNull List<File> findFilesByMask(@NotNull Pattern pattern, @NotNull File dir) {
     List<File> found = new ArrayList<>();
     File[] files = dir.listFiles();
@@ -1180,6 +1191,23 @@ public class FileUtil {
           found.add(file);
         }
       }
+    }
+    return found;
+  }
+
+  public static @NotNull List<Path> findPathsByMask(@NotNull Pattern pattern, @NotNull Path dir) {
+    List<Path> found = new ArrayList<>();
+    try (Stream<Path> files = Files.list(dir)) {
+      files.forEach(path -> {
+        if (Files.isDirectory(path)) {
+          found.addAll(findPathsByMask(pattern, path));
+        }
+        else if (pattern.matcher(path.getFileName().toString()).matches()) {
+          found.add(path);
+        }
+      });
+    }
+    catch (IOException ignored) {
     }
     return found;
   }
