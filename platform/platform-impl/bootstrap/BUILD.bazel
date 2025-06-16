@@ -43,6 +43,8 @@ jvm_library(
     "@lib//:jbr-api",
     "@lib//:googlecode-plist-dd",
     "@lib//:netty-codec-http",
+    "//platform/eel-impl",
+    "//platform/eel-provider",
   ]
 )
 ### auto-generated section `build intellij.platform.ide.bootstrap` end

@@ -16,7 +16,7 @@ import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.eel.EelDescriptor
-import com.intellij.platform.eel.provider.EelNioBridgeService
+import com.intellij.platform.eel.provider.EelProvider
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.workspace.jps.GlobalStorageEntitySource
@@ -413,7 +413,9 @@ class GlobalWorkspaceModelRegistry {
       GLOBAL_WORKSPACE_MODEL_LOCAL_CACHE_ID
     }
     else {
-      EelNioBridgeService.getInstanceSync().tryGetId(protectedDescriptor)
+      EelProvider.EP_NAME.extensionList.firstNotNullOfOrNull { eelProvider ->
+        eelProvider.getInternalName(protectedDescriptor)
+      }
       ?: throw IllegalArgumentException("Descriptor $protectedDescriptor must be registered before using in Workspace Model")
     }
     return environmentToModel.computeIfAbsent(protectedDescriptor) { GlobalWorkspaceModel(protectedDescriptor, InternalEnvironmentNameImpl(internalName)) }
@@ -425,8 +427,7 @@ class GlobalWorkspaceModelRegistry {
       LocalEelDescriptor
     }
     else {
-      EelNioBridgeService.getInstanceSync().tryGetDescriptorByName(protectedName)
-      ?: throw IllegalArgumentException("Descriptor $protectedName must be registered in ${EelNioBridgeService::class.qualifiedName} before using in Workspace Model")
+      EelProvider.EP_NAME.extensionList.firstNotNullOf { eelProvider -> eelProvider.getEelDescriptorByInternalName(protectedName) }
     }
     val model = getGlobalModel(descriptor)
     return model

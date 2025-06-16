@@ -27,6 +27,8 @@ jvm_library(
     "//platform/execution",
     "//platform/util-ex",
     "//platform/util/coroutines",
+    "//platform/eel-impl",
+    "//platform/projectModel-api:projectModel",
   ],
   runtime_deps = [":ide-impl-wsl_resources"]
 )
