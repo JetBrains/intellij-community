@@ -13,6 +13,7 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",
     "//platform/util/coroutines",
+    "@lib//:hash4j",
     "//platform/core-nio-fs",
   ],
   exports = ["//platform/eel"]

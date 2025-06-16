@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.fs
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
@@ -13,6 +14,8 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.ByteBuffer
@@ -23,7 +26,10 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.io.path.exists
+import kotlin.io.path.fileAttributesView
 import kotlin.io.path.fileStore
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.pathString
 import kotlin.streams.asSequence
 
 abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) : EelFileSystemApi {
@@ -398,6 +404,26 @@ abstract class PosixNioBasedEelFileSystemApi(
     TODO("Not yet implemented")
   }
 
+  override suspend fun directoryHash(path: EelPath): Flow<EelFileSystemApi.DirectoryHashEntry> = flow {
+    val q = ArrayDeque<Path>()
+    q.add(path.toNioPath())
+
+    while (q.isNotEmpty()) {
+      val currentItem = q.removeFirst();
+      val sourceAttrs = currentItem.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+      if (sourceAttrs.isDirectory) {
+        q.addAll(currentItem.listDirectoryEntries().sortedByDescending { it.pathString })
+      } else if (sourceAttrs.isRegularFile) {
+        // TODO: buffered read?
+        val data = Files.newInputStream(currentItem, StandardOpenOption.READ).readAllBytes()
+        val hash = Hashing.xxh3_64().hashBytesToLong(data)
+        val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
+        emit(EelFileSystemApi.DirectoryHashEntry.Hash(currentPathAsEel, hash))
+      } else {
+        //LOG.info("found a file other than directory or a regular file when doing local directory hash")
+      }
+    }
+  }
 }
 
 abstract class WindowsNioBasedEelFileSystemApi(
@@ -437,6 +463,26 @@ abstract class WindowsNioBasedEelFileSystemApi(
     TODO("Not yet implemented")
   }
 
+  override suspend fun directoryHash(path: EelPath): Flow<EelFileSystemApi.DirectoryHashEntry> = flow {
+    val q = ArrayDeque<Path>()
+    q.add(path.toNioPath())
+
+    while (q.isNotEmpty()) {
+      val currentItem = q.removeFirst();
+      val sourceAttrs = currentItem.fileAttributesView<BasicFileAttributeView>(LinkOption.NOFOLLOW_LINKS).readAttributes()
+      if (sourceAttrs.isDirectory) {
+        q.addAll(currentItem.listDirectoryEntries().sortedByDescending { it.pathString })
+      } else if (sourceAttrs.isRegularFile) {
+        // TODO: buffered read?
+        val data = Files.newInputStream(currentItem, StandardOpenOption.READ).readAllBytes()
+        val hash = Hashing.xxh3_64().hashBytesToLong(data)
+        val currentPathAsEel = EelPath.parse(currentItem.toString(), descriptor)
+        emit(EelFileSystemApi.DirectoryHashEntry.Hash(currentPathAsEel, hash))
+      } else {
+        //LOG.info("found a file other than directory or a regular file when doing local directory hash")
+      }
+    }
+  }
 }
 
 private fun copyTimes(

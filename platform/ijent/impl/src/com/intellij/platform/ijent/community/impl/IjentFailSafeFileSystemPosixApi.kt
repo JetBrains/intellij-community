@@ -15,6 +15,7 @@ import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -108,6 +109,10 @@ private class IjentFailSafeFileSystemPosixApiImpl(
     runBlocking {
       holder.withDelegateRetrying { user }
     }
+  }
+
+  override suspend fun directoryHash(path: EelPath): Flow<EelFileSystemApi.DirectoryHashEntry> {
+    return holder.withDelegateRetrying { directoryHash(path) }
   }
 
   override suspend fun listDirectory(

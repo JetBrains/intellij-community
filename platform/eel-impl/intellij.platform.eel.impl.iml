@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="library" name="hash4j" level="project" />
   </component>
 </module>

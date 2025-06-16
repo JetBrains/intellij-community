@@ -1,14 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.createTemporaryDirectory
 import com.intellij.platform.eel.fs.createTemporaryFile
 import com.intellij.platform.eel.fs.getPath
@@ -17,7 +23,14 @@ import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.produceIn
+import kotlinx.coroutines.sync.Semaphore
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.URI
@@ -282,32 +295,36 @@ object EelPathUtils {
       is TransferTarget.Explicit -> {
         val sink = target.path
 
-        if (source.isDirectory()) { // todo: use checksums for directories?
-          if (!Files.exists(sink)) {
-            walkingTransfer(source, sink, false, fileAttributesStrategy)
-          }
+        //if (Files.exists(sink)) {
+        walkingTransfer(source, sink, false, fileAttributesStrategy)
+        //}
+        sink
 
-          sink
-        }
-        else {
-          val remoteHash = if (Files.exists(sink)) calculateFileHashUsingPartialContent(sink) else ""
-          val sourceHash = calculateFileHashUsingPartialContent(source)
-
-          if (sourceHash != remoteHash) {
-            val tempSink = sink.resolveSibling(sink.fileName.toString() + ".part")
-
-            try {
-              walkingTransfer(source, tempSink, false, fileAttributesStrategy)
-              Files.move(tempSink, sink, StandardCopyOption.REPLACE_EXISTING)
-            }
-            finally {
-              // This file can only exist if `Files.move` hasn't been called
-              Files.deleteIfExists(tempSink)
-            }
-          }
-
-          sink
-        }
+        //if (source.isDirectory()) { // todo: use checksums for directories?
+        //  if (!Files.exists(sink)) {
+        //    walkingTransfer(source, sink, false, fileAttributesStrategy)
+        //  }
+        //
+        //  sink
+        //}
+        //else {
+        //  val remoteHash = if (Files.exists(sink)) calculateFileHashUsingPartialContent(sink) else ""
+        //  val sourceHash = calculateFileHashUsingPartialContent(source)
+        //
+        //  if (sourceHash != remoteHash) {
+        //    val tempSink = sink.resolveSibling(sink.fileName.toString() + ".part")
+        //
+        //    try {
+        //      walkingTransfer(source, tempSink, false, fileAttributesStrategy)
+        //      Files.move(tempSink, sink, StandardCopyOption.REPLACE_EXISTING)
+        //    }
+        //    finally {
+        //      // This file can only exist if `Files.move` hasn't been called
+        //      Files.deleteIfExists(tempSink)
+        //    }
+        //  }
+        //
+        //  sink
       }
     }
   }
@@ -538,7 +555,16 @@ object EelPathUtils {
   }
 
   @RequiresBackgroundThread
+  @RequiresBlockingContext
   private fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean, fileAttributesStrategy: FileTransferAttributesStrategy) {
+    if (Registry.`is`("ijent.incremental.walking.transfer") && !removeSource) {
+      // TODO:
+      runBlockingMaybeCancellable {
+        incrementalWalkingTransfer(sourceRoot, targetRoot, fileAttributesStrategy)
+      }
+      return
+    }
+
     val shouldObtainExtendedAttributes = when (fileAttributesStrategy) {
       FileTransferAttributesStrategy.Skip -> false
       is FileTransferAttributesStrategy.SourceAware -> true
@@ -621,6 +647,171 @@ object EelPathUtils {
               Files.delete(currentTraverseItem.sourcePath)
             }
             processFileAttributesOrSkip(currentTraverseItem.sourcePath, currentTraverseItem.targetPath, currentTraverseItem.sourceAttrs)
+          }
+        }
+      }
+    }
+  }
+
+
+  sealed class DiffOperation {
+    data class Create(val localPath: EelPath) : DiffOperation()
+    data class Delete(val remotePath: EelPath) : DiffOperation()
+    data class Update(val localPath: EelPath, val remotePath: EelPath) : DiffOperation()
+  }
+
+  /**
+   * Function that creates a flow which combines local and remote hashes of file.
+   * Flow emits [DiffOperation]s that indicate what has to be done to the remote and local file to make them in sync
+   **/
+  fun mergeHashByPath(
+    scope: CoroutineScope,
+    localEntryPoint: Path,
+    remoteEntryPoint: Path,
+    localHashFlow: Flow<EelFileSystemApi.DirectoryHashEntry>,
+    remoteHashFlow: Flow<EelFileSystemApi.DirectoryHashEntry>,
+  ): Flow<DiffOperation> = flow {
+    val localHashChan = localHashFlow.produceIn(scope)
+    val remoteHashChan = remoteHashFlow.produceIn(scope)
+
+    var localHashResult: EelFileSystemApi.DirectoryHashEntry? = null;
+    var localHash: Pair<EelPath, Long>? = null;
+    var remoteHashResult: EelFileSystemApi.DirectoryHashEntry? = null
+    var remoteHash: Pair<EelPath, Long>? = null;
+
+    while (true) {
+      if (localHashResult == null) {
+        try {
+          localHashResult = localHashChan.receive()
+        }
+        catch (_: ClosedReceiveChannelException) {
+        }
+      }
+
+      if (remoteHashResult == null) {
+        try {
+          remoteHashResult = remoteHashChan.receive()
+        }
+        catch (_: ClosedReceiveChannelException) {
+        }
+      }
+
+      if (remoteHashResult != null) {
+        remoteHash = when (remoteHashResult) {
+          is EelFileSystemApi.DirectoryHashEntry.Hash -> Pair(remoteHashResult.path, remoteHashResult.hash)
+          is EelFileSystemApi.DirectoryHashEntry.Error -> {
+            LOG.info("Error processing hash on the remote side: ${remoteHashResult.error}")
+            break
+          }
+        }
+      }
+
+      if (localHashResult != null) {
+        localHash = when (localHashResult) {
+          is EelFileSystemApi.DirectoryHashEntry.Hash -> Pair(localHashResult.path, localHashResult.hash)
+          is EelFileSystemApi.DirectoryHashEntry.Error -> {
+            LOG.info("Error processing hash on the local side: ${localHashResult.error}")
+            break
+          }
+        }
+      }
+
+      if (localHash == null && remoteHash == null) {
+        break
+      }
+
+      // if there is no file locally but there is a file on the remote side - the file was deleted
+      if (localHash == null && remoteHash != null) {
+        emit(DiffOperation.Delete(remoteHash.first))
+        remoteHash = null
+        remoteHashResult = null
+        continue
+      }
+
+      // if there is a file locally but not on the remote side - the file was created
+      if (localHash != null && remoteHash == null) {
+        emit(DiffOperation.Create(localHash.first))
+        localHash = null
+        localHashResult = null
+        continue
+      }
+
+      val relativeLocalPath = localHash!!.first.asNioPath().relativeTo(localEntryPoint)
+      val relativeRemotePath = remoteHash!!.first.asNioPath().relativeTo(remoteEntryPoint)
+
+      val pathComparison = relativeLocalPath.compareTo(relativeRemotePath)
+
+      // if the same file is present on both sides, and if the hash is different, sync them
+      if (pathComparison == 0) {
+        if (localHash.second != remoteHash.second) {
+          emit(DiffOperation.Update(localHash.first, remoteHash.first))
+        }
+        localHash = null
+        localHashResult = null
+        remoteHash = null
+        remoteHashResult = null
+      }
+      // if the remote path is higher in lexicographical order than the local path, it means that the local file was created
+      else if (pathComparison < 0) {
+        emit(DiffOperation.Create(localHash.first))
+        localHash = null
+        localHashResult = null
+      }
+      // if the local path is higher in lexicographical order than the remote path, it means that the remote file was deleted
+      else {
+        emit(DiffOperation.Delete(remoteHash.first))
+        remoteHash = null
+        remoteHashResult = null
+      }
+    }
+  }
+
+  @RequiresBackgroundThread
+  private suspend fun incrementalWalkingTransfer(sourceRoot: Path, targetRoot: Path, fileAttributesStrategy: FileTransferAttributesStrategy) {
+    coroutineScope {
+      val remoteDescriptor = targetRoot.asEelPath().descriptor
+      val localPathEel = sourceRoot.asEelPath()
+      val localHashes = async { localPathEel.descriptor.toEelApi().fs.directoryHash(localPathEel) }
+      val remoteHashes = async { remoteDescriptor.toEelApi().fs.directoryHash(targetRoot.asEelPath()) }
+
+      val semaphore = Semaphore(4) // TODO: fine tune
+      // the buffer size was chosen to be 10k because most of the files being transferred are code files
+      // that are unlikely to be bigger than that
+      val bufferSize = 10 * 1024;
+      mergeHashByPath(this, sourceRoot, targetRoot,localHashes.await(), remoteHashes.await()).collect { diffOp ->
+        // semaphore is used to limit how many files are being synced at any given moment
+        semaphore.acquire()
+        launch (Dispatchers.IO) {
+          try {
+            when (diffOp) {
+              is DiffOperation.Create -> {
+                val relativePath = diffOp.localPath.asNioPath().relativeTo(sourceRoot)
+                val remoteAbsolutePath = targetRoot.resolve(relativePath)
+                remoteAbsolutePath.parent.createDirectories()
+                Files.createFile(remoteAbsolutePath)
+                Files.newInputStream(diffOp.localPath.asNioPath(), READ).use { localFile ->
+                  Files.newOutputStream(remoteAbsolutePath, WRITE).use { remoteFile ->
+                    localFile.copyToAsync(remoteFile, 10*1024)
+                  }
+                }
+              }
+              is DiffOperation.Delete -> {
+                Files.delete(diffOp.remotePath.asNioPath())
+              }
+              is DiffOperation.Update -> {
+                Files.newInputStream(diffOp.localPath.asNioPath(), READ).use { localFile ->
+                  Files.newOutputStream(diffOp.remotePath.asNioPath(), WRITE, TRUNCATE_EXISTING).use { remoteFile ->
+                    localFile.copyToAsync(remoteFile, bufferSize)
+                  }
+                }
+              }
+            }
+          }
+          catch (e: Exception) {
+            throw e
+          }
+          finally {
+            semaphore.release()
           }
         }
       }

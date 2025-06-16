@@ -7,6 +7,11 @@
 
     <applicationService serviceInterface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend$InitializationService"
                         serviceImplementation="com.intellij.platform.eel.impl.fs.EelMultiRoutingFileSystemBackendInitializationService"/>
+    <registryKey
+      description="Using incremental walking transfer for IJent"
+      key="ijent.incremental.walking.transfer"
+      restartRequired="false"
+      defaultValue="false"/>
   </extensions>
   <extensionPoints>
     <extensionPoint name="multiRoutingFileSystemBackend" interface="com.intellij.platform.eel.provider.MultiRoutingFileSystemBackend"

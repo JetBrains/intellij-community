@@ -28,6 +28,7 @@ jvm_library(
     "//platform/eel-provider",
     "//platform/core-nio-fs",
     "//platform/core-impl",
+    "@lib//:hash4j",
   ],
   runtime_deps = [":eel-impl_resources"]
 )

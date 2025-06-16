@@ -40,7 +40,8 @@ object EelFsResultImpl {
     EelFileSystemPosixApi.CreateSymbolicLinkError.Other,
     EelOpenedFile.CloseError.Other,
     EelOpenedFile.Writer.TruncateError.Other,
-    EelFileSystemApi.FullReadError.Other
+    EelFileSystemApi.FullReadError.Other,
+    EelFileSystemApi.DirectoryHashError.Other
 
   data class DoesNotExist(override val where: EelPath, override val message: String) :
     EelFileSystemApi.ChangeAttributesError.SourceDoesNotExist,
@@ -53,10 +54,10 @@ object EelFsResultImpl {
     EelFileSystemApi.FullReadError.DoesNotExist,
     EelFileSystemApi.DiskInfoError.PathDoesNotExists,
     EelFileSystemPosixApi.CreateDirectoryError.ParentNotFound,
-    EelFileSystemApi.DeleteError.DoesNotExist,
     EelFileSystemApi.CopyError.SourceDoesNotExist,
     EelFileSystemApi.MoveError.SourceDoesNotExist,
-    EelFileSystemPosixApi.CreateSymbolicLinkError.DoesNotExist
+    EelFileSystemPosixApi.CreateSymbolicLinkError.DoesNotExist,
+    EelFileSystemApi.DeleteError.DoesNotExist
 
   data class AlreadyExists(override val where: EelPath, override val message: String) :
     EelFileSystemApi.FileReaderError.AlreadyExists,
