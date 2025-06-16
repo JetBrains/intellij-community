@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer
 
-class PolySymbolsHtmlHighlightingCustomizer: PolySymbolHighlightingCustomizer {
+class HtmlSymbolHighlightingCustomizer: PolySymbolHighlightingCustomizer {
   override fun getSymbolKindTextAttributes(qualifiedKind: PolySymbolQualifiedKind): TextAttributesKey? =
     when(qualifiedKind) {
       HTML_ATTRIBUTES -> XmlHighlighterColors.HTML_ATTRIBUTE_NAME

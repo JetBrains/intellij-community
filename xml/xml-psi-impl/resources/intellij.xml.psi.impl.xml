@@ -103,7 +103,7 @@
 
     <polySymbols.highlightingCustomizer
       id="html"
-      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlHighlightingCustomizer"/>
+      implementation="com.intellij.html.polySymbols.HtmlSymbolHighlightingCustomizer"/>
     <polySymbols.queryConfigurator
       implementation="com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator"/>
     <polySymbols.codeCompletionItemCustomizer
