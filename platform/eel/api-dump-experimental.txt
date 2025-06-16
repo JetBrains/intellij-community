@@ -387,7 +387,7 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - s:values():com.intellij.platform.eel.ReadResult[]
 *f:com.intellij.platform.eel.ReadResult$Companion
 *:com.intellij.platform.eel.channels.EelReceiveChannel
-- a:close(kotlin.coroutines.Continuation):java.lang.Object
+- a:closeForReceive(kotlin.coroutines.Continuation):java.lang.Object
 - a:receive(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.channels.EelSendChannel
 - *a:close(kotlin.coroutines.Continuation):java.lang.Object

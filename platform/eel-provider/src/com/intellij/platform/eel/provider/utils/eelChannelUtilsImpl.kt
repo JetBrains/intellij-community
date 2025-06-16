@@ -24,7 +24,7 @@ internal class NioReadToEelAdapter(private val readableByteChannel: ReadableByte
     ReadResult.fromNumberOfReadBytes(read)
   }
 
-  override suspend fun close() {
+  override suspend fun closeForReceive() {
     withContext(Dispatchers.IO + NonCancellable) {
       readableByteChannel.close()
     }
@@ -74,7 +74,7 @@ internal class InputStreamAdapterImpl(
 
   override fun close() {
     runBlocking(blockingContext) {
-      receiveChannel.close()
+      receiveChannel.closeForReceive()
     }
   }
 

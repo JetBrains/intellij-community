@@ -183,7 +183,7 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
-      override suspend fun close() = Unit
+      override suspend fun closeForReceive() = Unit
     }
 
     val result = mutableListOf<Byte>()
@@ -235,7 +235,7 @@ class EelChannelToolsTest {
         return NOT_EOF
       }
 
-      override suspend fun close() = Unit
+      override suspend fun closeForReceive() = Unit
     }
     val stream = channel.consumeAsInputStream()
     while (true) {
@@ -403,7 +403,7 @@ class EelChannelToolsTest {
   @Test
   fun testPipeWithErrorClosed(): Unit = timeoutRunBlocking {
     val pipe = EelPipe()
-    pipe.source.close()
+    pipe.source.closeForReceive()
     try {
       pipe.sink.send(ByteBuffer.wrap("D".toByteArray()))
       fail("Writing into closed channel must be an error")

@@ -116,6 +116,9 @@ internal class EelPipeImpl() : EelPipe, EelReceiveChannel, EelSendChannelCustomS
     closePipe()
   }
 
+  override suspend fun closeForReceive() {
+    closePipe()
+  }
 
   override fun closePipe(error: Throwable?) {
     if (_bytesInQueue.get() > 0) {
