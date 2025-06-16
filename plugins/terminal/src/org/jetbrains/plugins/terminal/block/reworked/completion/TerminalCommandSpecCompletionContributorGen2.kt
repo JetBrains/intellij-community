@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.block.completion
+package org.jetbrains.plugins.terminal.block.reworked.completion
 
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
@@ -18,13 +18,13 @@ import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
-import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.BLOCK_TERMINAL_AUTOCOMPLETION
-import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.findIconForSuggestion
-import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.getNextSuggestionsString
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.availableCommandsGenerator
-import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators.fileSuggestionsGenerator
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
+import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionScope
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
+import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorReworkedImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators.aliasesGenerator
+import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderReworkedImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
@@ -34,7 +34,7 @@ import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.io.File
 
-class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), DumbAware {
+internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), DumbAware {
   val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
 
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -49,7 +49,7 @@ class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), Du
       return
     }
 
-    if (parameters.isAutoPopup && !Registry.`is`(BLOCK_TERMINAL_AUTOCOMPLETION)) {
+    if (parameters.isAutoPopup && !Registry.`is`(LocalBlockTerminalRunner.BLOCK_TERMINAL_AUTOCOMPLETION)) {
       result.stopHere()
       return
     }
@@ -110,11 +110,13 @@ class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), Du
     }
 
     val runtimeContext = context.runtimeContextProvider.getContext(tokens.last())
-    val completion = ShellCommandSpecCompletion(ShellCommandSpecsManagerImpl.getInstance(), context.generatorsExecutor, context.runtimeContextProvider)
+    val completion = ShellCommandSpecCompletion(ShellCommandSpecsManagerImpl.getInstance(), context.generatorsExecutor,
+                                                context.runtimeContextProvider)
     val commandExecutable = tokens.first()
     val commandArguments = tokens.subList(1, tokens.size)
-    val availableCommandsProvider = suspend { context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator()) }
-    val fileProducer = suspend { context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator()) }
+    val availableCommandsProvider = suspend { context.generatorsExecutor.execute(runtimeContext,
+                                                                                 ShellDataGenerators.availableCommandsGenerator()) }
+    val fileProducer = suspend { context.generatorsExecutor.execute(runtimeContext, ShellDataGenerators.fileSuggestionsGenerator()) }
     val specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>? = { commandName ->
       tracer.spanBuilder("terminal-completion-compute-completion-items").useWithScope {
         completion.computeCompletionItems(commandName, commandArguments)
@@ -191,7 +193,7 @@ class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), Du
     }
     // aliases generator does not requires actual typed prefix
     val dummyRuntimeContext = context.runtimeContextProvider.getContext("")
-    val aliases: Map<String, String> = context.generatorsExecutor.execute(dummyRuntimeContext, aliasesGenerator())
+    val aliases: Map<String, String> = context.generatorsExecutor.execute(dummyRuntimeContext, ShellEnvBasedGenerators.aliasesGenerator())
     val expandedTokens = expandAliases(tokens, aliases, context)
     return expandedTokens
   }
@@ -224,9 +226,9 @@ class TerminalCommandSpecCompletionContributorGen2 : CompletionContributor(), Du
   }
 
   private fun ShellCompletionSuggestion.toLookupElement(shellType: ShellType): LookupElement {
-    val actualIcon = icon ?: findIconForSuggestion(name, type)
+    val actualIcon = icon ?: TerminalCompletionUtil.findIconForSuggestion(name, type)
     val realInsertValue = insertValue?.replace("{cursor}", "")
-    val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
+    val nextSuggestions = TerminalCompletionUtil.getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
     val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
 
     // Remove path separator from insert value, so there will be an exact match
