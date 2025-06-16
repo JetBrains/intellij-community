@@ -39,9 +39,9 @@ import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeUtil
 import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import com.intellij.vcs.git.shared.ui.GitIncomingOutgoingUi
 import com.intellij.vcsUtil.VcsImplUtil
+import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -79,7 +79,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
   private inner class BranchTreeCellRenderer(project: Project) : ColoredTreeCellRenderer() {
     private val repositoryManager = GitRepositoryManager.getInstance(project)
-    private val branchManager = project.service<GitBranchManager>()
+    private val settings = GitVcsSettings.getInstance(project)
 
     private val incomingLabel = GitIncomingOutgoingUi.createIncomingLabel()
     private val outgoingLabel = GitIncomingOutgoingUi.createOutgoingLabel()
@@ -113,7 +113,7 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
 
       val refInfo = (descriptor as? BranchNodeDescriptor.Ref)?.refInfo
       if (refInfo != null) {
-        val repositoryGrouping = branchManager.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+        val repositoryGrouping = settings.branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
         if (!repositoryGrouping && refInfo.repositories.size < repositoryManager.repositories.size) {
           append(" (${DvcsUtil.getShortNames(refInfo.repositories)})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
         }

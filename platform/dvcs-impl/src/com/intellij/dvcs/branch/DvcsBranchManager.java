@@ -175,28 +175,6 @@ public abstract class DvcsBranchManager<T extends Repository> {
     });
   }
 
-  public boolean isGroupingEnabled(@NotNull GroupingKey key) {
-    return myBranchSettings.isGroupingEnabled(key);
-  }
-
-  public void setGrouping(@NotNull GroupingKey key, boolean state) {
-    if (state) {
-      myBranchSettings.getGroupingKeyIds().add(key.getId());
-    }
-    else {
-      myBranchSettings.getGroupingKeyIds().remove(key.getId());
-    }
-
-    myBranchSettings.intIncrementModificationCount();
-    notifyGroupingSettingsChanged(key, state);
-  }
-
-  private void notifyGroupingSettingsChanged(@NotNull GroupingKey key, boolean state) {
-    BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-      myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchGroupingSettingsChanged(key, state);
-    });
-  }
-
   public interface DvcsBranchManagerListener {
     default void branchFavoriteSettingsChanged() { }
 

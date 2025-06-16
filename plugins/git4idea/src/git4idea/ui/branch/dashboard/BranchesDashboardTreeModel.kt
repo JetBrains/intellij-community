@@ -22,6 +22,7 @@ import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
+import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchInProgressListener
 import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepositoryManager
@@ -104,10 +105,10 @@ abstract class BranchesDashboardTreeModelBase(
 
   internal val refs: RefsCollection = RefsCollection(hashSetOf<BranchInfo>(), hashSetOf<BranchInfo>(), hashSetOf<RefInfo>())
 
-  override val groupingConfig: MutableMap<GroupingKey, Boolean> = with(project.service<GitBranchManager>()) {
+  override val groupingConfig: MutableMap<GroupingKey, Boolean> = with(GitVcsSettings.getInstance(project)) {
     hashMapOf(
-      GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
-      GroupingKey.GROUPING_BY_REPOSITORY to isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
+      GroupingKey.GROUPING_BY_DIRECTORY to branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
+      GroupingKey.GROUPING_BY_REPOSITORY to branchSettings.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
     )
   }.toMutableMap()
 

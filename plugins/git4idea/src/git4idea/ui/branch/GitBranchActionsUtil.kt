@@ -5,7 +5,6 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsNotifier
@@ -111,11 +110,13 @@ internal abstract class BranchGroupingAction(private val key: GroupingKey,
     return ActionUpdateThread.EDT
   }
 
-  override fun isSelected(e: AnActionEvent) =
-    e.project?.service<GitBranchManager>()?.isGroupingEnabled(key) ?: false
+  override fun isSelected(e: AnActionEvent): Boolean {
+    val project = e.project ?: return false
+    return GitVcsSettings.getInstance(project).branchSettings.isGroupingEnabled(key)
+  }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
-    project.service<GitBranchManager>().setGrouping(key, state)
+    GitVcsSettings.getInstance(project).setBranchGroupingSettings(key, state)
   }
 }

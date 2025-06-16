@@ -2,6 +2,7 @@
 package com.intellij.vcs.git.shared.branch.popup
 
 import com.intellij.dvcs.branch.DvcsSyncSettings
+import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -13,14 +14,10 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.platform.project.projectId
 import com.intellij.ui.ExperimentalUI
 import com.intellij.vcs.git.shared.branch.tree.GitBranchesTreeFilters
-import com.intellij.vcs.git.shared.rpc.GitUiSettingsApi
-import git4idea.GitDisposable
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
-import kotlinx.coroutines.launch
 
 internal class GitBranchesTreePopupSettings : DefaultActionGroup(), DumbAware, ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   init {
@@ -92,9 +89,7 @@ internal class GitBranchesTreePopupGroupByPrefixAction :
     val project = e.project ?: return
     val widgetPopup = e.getData(GitBranchesPopupKeys.POPUP) ?: return
 
-    GitDisposable.getInstance(project).coroutineScope.launch {
-      GitUiSettingsApi.getInstance().setGroupingByPrefix(project.projectId(), state)
-    }
+    GitVcsSettings.getInstance(project).setBranchGroupingSettings(GroupingKey.GROUPING_BY_DIRECTORY, state)
     widgetPopup.groupByPrefix = state
   }
 }
