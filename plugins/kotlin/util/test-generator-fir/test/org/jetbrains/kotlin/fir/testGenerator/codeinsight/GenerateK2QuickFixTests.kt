@@ -267,6 +267,11 @@ internal fun MutableTWorkspace.generateK2FixTests() {
                 pattern = pattern,
                 testMethodName = testMethodName
             )
+            model(
+                "$idea/quickfix/addTypeAnnotationToValueParameter",
+                pattern = pattern,
+                testMethodName = testMethodName
+            )
         }
 
         testClass<AbstractHighLevelQuickFixMultiModuleTest> {
