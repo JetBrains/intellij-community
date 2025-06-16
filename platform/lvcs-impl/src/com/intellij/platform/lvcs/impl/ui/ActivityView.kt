@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
-import com.intellij.diff.editor.DiffEditorTabFilesManager
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
@@ -323,7 +323,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       }
 
       val activityView = ActivityView(project, gateway, activityScope)
-      if (Registry.`is`("lvcs.open.diff.automatically") && DiffEditorTabFilesManager.isDiffInEditor) {
+      if (Registry.`is`("lvcs.open.diff.automatically") && DiffEditorTabFilesUtil.isDiffInEditor) {
         activityView.openDiffWhenLoaded()
       }
 

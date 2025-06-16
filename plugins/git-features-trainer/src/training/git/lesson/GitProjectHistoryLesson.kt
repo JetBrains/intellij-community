@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.git.lesson
 
-import com.intellij.diff.editor.DiffEditorTabFilesManager
+import com.intellij.diff.editor.DiffEditorTabFilesUtil
 import com.intellij.diff.tools.util.SimpleDiffPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
@@ -204,7 +204,7 @@ internal class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLess
       }
     }
 
-    if (DiffEditorTabFilesManager.isDiffInWindow) {
+    if (DiffEditorTabFilesUtil.isDiffInWindow) {
       task("EditorEscape") {
         text(GitLessonsBundle.message("git.project.history.close.diff", action(it)))
         stateCheck { previous.ui?.isShowing != true }

@@ -66,7 +66,7 @@ internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolea
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    DiffEditorTabFilesManager.isDiffInEditor = !openInNewWindow
+    DiffEditorTabFilesUtil.isDiffInEditor = !openInNewWindow
   }
 
   internal class ToEditor : MoveDiffEditorAction(false)
@@ -75,7 +75,7 @@ internal abstract class MoveDiffEditorAction(private val openInNewWindow: Boolea
 
 internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsChangeListener {
   override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-    if (id == DiffEditorTabFilesManager.SHOW_DIFF_IN_EDITOR_SETTING) {
+    if (id == DiffEditorTabFilesUtil.SHOW_DIFF_IN_EDITOR_SETTING) {
       for (project in ProjectManager.getInstance().openProjects) {
         reopenDiffEditorsForFiles(project)
       }
@@ -87,7 +87,7 @@ internal class EditorTabDiffPreviewAdvancedSettingsListener : AdvancedSettingsCh
      * Unlike [com.intellij.diff.editor.DiffEditorViewerFileEditor.reloadDiffEditorsForFiles], should not try to reopen tabs in-place.
      */
     private fun reopenDiffEditorsForFiles(project: Project) {
-      val isOpenInNewWindow = DiffEditorTabFilesManager.isDiffInWindow
+      val isOpenInNewWindow = DiffEditorTabFilesUtil.isDiffInWindow
 
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
       val diffEditorManager = DiffEditorTabFilesManager.getInstance(project)
@@ -136,9 +136,9 @@ internal class DiffInWindowDndListener : FileOpenedSyncListener {
     } ?: return
 
     val isFileInEditor = !isSingletonEditorInWindow(window)
-    if (DiffEditorTabFilesManager.isDiffInEditor != isFileInEditor) {
+    if (DiffEditorTabFilesUtil.isDiffInEditor != isFileInEditor) {
       invokeLater(ModalityState.nonModal()) {
-        DiffEditorTabFilesManager.isDiffInEditor = isFileInEditor
+        DiffEditorTabFilesUtil.isDiffInEditor = isFileInEditor
       }
     }
   }
