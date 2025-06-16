@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
  * &nbsp;&nbsp;&lt;moduleConfigurationEditorProvider implementation="qualified-class-name"/&gt;
  * &lt;/extensions&gt;
  * </pre>
+ * 
+ * The implementation must have a no-arg constructor. The {@link com.intellij.openapi.module.Module} instance can be taken from 
+ * {@code state} parameter of {@link #createEditors} ({@code state.getCurrentRootModel().getModule()}). 
  */
 public interface ModuleConfigurationEditorProvider {
   @NotNull ModuleConfigurationEditor @NotNull [] createEditors(@NotNull ModuleConfigurationState state);

@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.impl.ModuleConfigurationEditorProviderEp;
 import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
@@ -43,7 +44,7 @@ import java.util.List;
  * @author Eugene Zhuravlev
  */
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
-  private static final ExtensionPointName<ModuleConfigurationEditorProvider> EP_NAME =
+  private static final ExtensionPointName<ModuleConfigurationEditorProviderEp> EP_NAME =
     new ExtensionPointName<>("com.intellij.moduleConfigurationEditorProvider");
 
   private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
@@ -160,7 +161,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   private void createEditors(@NotNull Module module) {
     ModuleConfigurationState state = createModuleConfigurationState();
-    for (ModuleConfigurationEditorProvider provider : EP_NAME.getExtensionList(module)) {
+    for (ModuleConfigurationEditorProviderEp providerEp : EP_NAME.getExtensionList()) {
+      ModuleConfigurationEditorProvider provider = providerEp.getOrCreateInstance(module);
       ModuleConfigurationEditor[] editors = provider.createEditors(state);
       if (editors.length > 0 && provider instanceof ModuleConfigurationEditorProviderEx &&
           ((ModuleConfigurationEditorProviderEx)provider).isCompleteEditorSet()) {
