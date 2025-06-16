@@ -2,6 +2,7 @@
 package com.intellij.debugger.statistics
 
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler
+import com.intellij.debugger.engine.AsyncStacksUtils
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.SteppingAction
@@ -150,7 +151,7 @@ object DebuggerStatistics : CounterUsagesCollector() {
 
   private fun logEvaluatablePauseStatus(project: Project?, isDebuggerAgentAvailable: Boolean, isSuccess: Boolean) {
     val status = if (isDebuggerAgentAvailable) {
-      if (Registry.`is`("debugger.run.suspend.helper"))
+      if (AsyncStacksUtils.isSuspendHelperEnabled())
         if (isSuccess) DEBUGGER_AGENT_HELPER_THREAD_ENABLED_SUCCESS else DEBUGGER_AGENT_HELPER_THREAD_ENABLED_FAILURE
       else
         if (isSuccess) DEBUGGER_AGENT_HELPER_THREAD_DISABLED_SUCCESS else DEBUGGER_AGENT_HELPER_THREAD_DISABLED_FAILURE
