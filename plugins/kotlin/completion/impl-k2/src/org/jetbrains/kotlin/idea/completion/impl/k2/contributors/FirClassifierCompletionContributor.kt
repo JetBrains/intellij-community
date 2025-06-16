@@ -194,6 +194,8 @@ internal open class FirClassifierCompletionContributor(
     ): Sequence<LookupElementBuilder> = sequence {
         if (classifierSymbol is KaNamedClassSymbol
             && expectedType?.symbol == classifierSymbol
+            && classifierSymbol.modality != KaSymbolModality.SEALED
+            && classifierSymbol.modality != KaSymbolModality.ABSTRACT
         ) {
             val constructorSymbols = classifierSymbol.memberScope.constructors
                 .filter { visibilityChecker.isVisible(it, positionContext) }

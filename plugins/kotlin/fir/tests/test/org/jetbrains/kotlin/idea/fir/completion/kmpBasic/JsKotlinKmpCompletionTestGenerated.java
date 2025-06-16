@@ -723,6 +723,11 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("AbstractConstructor.kt")
+        public void testAbstractConstructor() throws Exception {
+            runTest("../../completion/testData/basic/common/constructor/AbstractConstructor.kt");
+        }
+
         @TestMetadata("DoNotOfferConstructorForClassifier.kt")
         public void testDoNotOfferConstructorForClassifier() throws Exception {
             runTest("../../completion/testData/basic/common/constructor/DoNotOfferConstructorForClassifier.kt");
