@@ -16,7 +16,7 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
 import com.intellij.util.ProcessingContext
@@ -81,7 +81,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
       name: String,
       position: Int,
       location: PsiElement,
-      queryContext: List<PolySymbolsScope> = emptyList(),
+      queryContext: List<PolySymbolScope> = emptyList(),
       providedNames: MutableSet<String>? = null,
       filter: ((PolySymbolCodeCompletionItem) -> Boolean)? = null,
       consumer: (PolySymbolCodeCompletionItem) -> Unit,

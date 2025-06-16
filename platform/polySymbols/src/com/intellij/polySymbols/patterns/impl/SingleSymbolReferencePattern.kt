@@ -9,7 +9,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.nameMatches
 import com.intellij.polySymbols.utils.qualifiedName
@@ -24,7 +24,7 @@ class SingleSymbolReferencePattern(
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -43,7 +43,7 @@ class SingleSymbolReferencePattern(
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
@@ -60,7 +60,7 @@ class SingleSymbolReferencePattern(
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,

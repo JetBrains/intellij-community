@@ -15,16 +15,16 @@ import com.intellij.util.containers.Stack
  * just to encompass logic related to building a list of scopes. [PolySymbolCompoundScope] cannot be nested within each
  * other to prevent any recursive inclusion problems.
  */
-abstract class PolySymbolCompoundScope : PolySymbolsScope {
+abstract class PolySymbolCompoundScope : PolySymbolScope {
 
   protected abstract fun build(
     queryExecutor: PolySymbolQueryExecutor,
-    consumer: (PolySymbolsScope) -> Unit,
+    consumer: (PolySymbolScope) -> Unit,
   )
 
-  fun getScopes(queryExecutor: PolySymbolQueryExecutor): List<PolySymbolsScope> {
+  fun getScopes(queryExecutor: PolySymbolQueryExecutor): List<PolySymbolScope> {
     if (requiresResolve() && !queryExecutor.allowResolve) return emptyList()
-    val list = mutableListOf<PolySymbolsScope>()
+    val list = mutableListOf<PolySymbolScope>()
     build(queryExecutor) {
       if (it is PolySymbolCompoundScope)
         throw IllegalArgumentException("PolySymbolsCompoundScope cannot be nested: $it")
@@ -41,21 +41,21 @@ abstract class PolySymbolCompoundScope : PolySymbolsScope {
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
 

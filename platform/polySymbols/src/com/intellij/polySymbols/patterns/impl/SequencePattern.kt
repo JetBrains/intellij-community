@@ -12,7 +12,7 @@ import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.coalesceWith
 import com.intellij.polySymbols.utils.nameSegments
@@ -36,7 +36,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -62,7 +62,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
@@ -82,7 +82,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
@@ -303,7 +303,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   private fun getCompletionResultsOnPattern(
     pattern: PolySymbolsPattern,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     matchResult: MatchResult?,
     params: CompletionParameters,

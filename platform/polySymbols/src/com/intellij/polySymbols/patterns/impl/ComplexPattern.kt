@@ -12,7 +12,7 @@ import com.intellij.polySymbols.impl.selectBest
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.coalesceWith
 import com.intellij.polySymbols.utils.isCritical
 import com.intellij.util.SmartList
@@ -40,7 +40,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -73,7 +73,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
@@ -103,7 +103,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
@@ -161,7 +161,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     }
 
   private fun <T> process(
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     queryExecutor: PolySymbolQueryExecutor,
     action: (
       patterns: List<PolySymbolsPattern>,
@@ -225,7 +225,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     patterns: List<PolySymbolsPattern>,
     repeats: Boolean,
     unique: Boolean,
-    contextStack: Stack<PolySymbolsScope>,
+    contextStack: Stack<PolySymbolScope>,
     newSymbolsResolver: PolySymbolsPatternSymbolsResolver?,
   ): List<MatchResult> {
     // shortcut
@@ -256,7 +256,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
     end: Int,
     params: MatchParameters,
     staticPrefixes: Set<String>,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     patterns: List<PolySymbolsPattern>,
     newSymbolsResolver: PolySymbolsPatternSymbolsResolver?,
     unique: Boolean,

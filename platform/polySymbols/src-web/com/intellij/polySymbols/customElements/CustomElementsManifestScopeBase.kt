@@ -13,14 +13,14 @@ import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.customElements.json.*
-import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
+import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConversionRulesProvider
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 abstract class CustomElementsManifestScopeBase :
-  StaticPolySymbolsScopeBase<CustomElementsManifest, Any, CustomElementsJsonOrigin>() {
+  StaticPolySymbolScopeBase<CustomElementsManifest, Any, CustomElementsJsonOrigin>() {
 
   private val registeredContexts = mutableSetOf<String>()
 

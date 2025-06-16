@@ -10,20 +10,20 @@ import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory.PolySymbolsQueryExecutorBuilder
 import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 
 class PolySymbolsQueryExecutorBuilderImpl() : PolySymbolsQueryExecutorBuilder {
-  private val rootScopes = mutableListOf<PolySymbolsScope>()
+  private val rootScopes = mutableListOf<PolySymbolScope>()
   private val customizers = mutableListOf<PolySymbolQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
   private val context = mutableMapOf<PolyContextKind, PolyContextName>()
   private var allowResolve = true
 
-  override fun addRootScope(scope: PolySymbolsScope): PolySymbolsQueryExecutorBuilder = apply {
+  override fun addRootScope(scope: PolySymbolScope): PolySymbolsQueryExecutorBuilder = apply {
     rootScopes.add(scope)
   }
 
-  override fun addRootScopes(scope: List<PolySymbolsScope>): PolySymbolsQueryExecutorBuilder = apply {
+  override fun addRootScopes(scope: List<PolySymbolScope>): PolySymbolsQueryExecutorBuilder = apply {
     rootScopes.addAll(scope)
   }
 

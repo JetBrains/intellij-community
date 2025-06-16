@@ -10,7 +10,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
-import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
+import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
@@ -27,7 +27,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
   internal val rootScope: WebTypesScopeBase,
   override val qualifiedKind: PolySymbolQualifiedKind,
 ) :
-  StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
+  StaticPolySymbolScopeBase.StaticSymbolContributionAdapter {
 
 
   companion object {

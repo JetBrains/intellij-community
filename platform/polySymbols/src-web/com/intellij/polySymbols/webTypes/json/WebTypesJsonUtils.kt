@@ -169,7 +169,7 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedK
 
 internal fun Reference.resolve(
   name: String,
-  scope: List<PolySymbolsScope>,
+  scope: List<PolySymbolScope>,
   queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean = true,
   abstractSymbols: Boolean = false,
@@ -183,7 +183,7 @@ internal fun Reference.resolve(
   }
 
 internal fun Reference.resolve(
-  scope: List<PolySymbolsScope>,
+  scope: List<PolySymbolScope>,
   queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean = true,
   abstractSymbols: Boolean = false,
@@ -207,7 +207,7 @@ internal fun Reference.resolve(
   }
 
 internal fun Reference.list(
-  scope: List<PolySymbolsScope>,
+  scope: List<PolySymbolScope>,
   queryExecutor: PolySymbolQueryExecutor,
   expandPatterns: Boolean,
   virtualSymbols: Boolean = true,
@@ -226,7 +226,7 @@ internal fun Reference.list(
 
 private fun Reference.processPolySymbols(
   name: String?,
-  scope: List<PolySymbolsScope>,
+  scope: List<PolySymbolScope>,
   queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean,
   abstractSymbols: Boolean,
@@ -263,7 +263,7 @@ private fun Reference.processPolySymbols(
 
 internal fun Reference.codeCompletion(
   name: String,
-  scope: List<PolySymbolsScope>,
+  scope: List<PolySymbolScope>,
   queryExecutor: PolySymbolQueryExecutor,
   position: Int = 0,
   virtualSymbols: Boolean = true,

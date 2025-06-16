@@ -121,12 +121,12 @@ interface PolySymbolQueryExecutor : ModificationTracker {
 
   fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolQueryExecutor
 
-  fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolsScope> = emptyList()): Boolean
+  fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolScope> = emptyList()): Boolean
 
   interface QueryBuilder<T>: PolySymbolQueryParams.Builder<T> {
-    fun additionalScope(scope: PolySymbolsScope): T
-    fun additionalScope(vararg scopes: PolySymbolsScope): T
-    fun additionalScope(scopes: Collection<PolySymbolsScope>): T
+    fun additionalScope(scope: PolySymbolScope): T
+    fun additionalScope(vararg scopes: PolySymbolScope): T
+    fun additionalScope(scopes: Collection<PolySymbolScope>): T
   }
 
   interface NameMatchQueryBuilder : QueryBuilder<NameMatchQueryBuilder>, PolySymbolNameMatchQueryParams.BuilderMixin<NameMatchQueryBuilder> {

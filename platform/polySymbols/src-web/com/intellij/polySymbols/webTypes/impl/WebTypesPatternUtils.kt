@@ -80,7 +80,7 @@ private class WebTypesComplexPatternConfigProvider(
 
   override fun getOptions(
     queryExecutor: PolySymbolQueryExecutor,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
   ): ComplexPatternOptions {
     val queryParams = PolySymbolNameMatchQueryParams.create(queryExecutor) {
       exclude(PolySymbolModifier.ABSTRACT)
@@ -127,7 +127,7 @@ private class WebTypesComplexPatternConfigProvider(
     override fun codeCompletion(
       name: String,
       position: Int,
-      scopeStack: Stack<PolySymbolsScope>,
+      scopeStack: Stack<PolySymbolScope>,
       queryExecutor: PolySymbolQueryExecutor,
     ): List<PolySymbolCodeCompletionItem> =
       (delegate as? PolySymbolWithPattern)
@@ -139,7 +139,7 @@ private class WebTypesComplexPatternConfigProvider(
       ?: emptyList()
 
     override fun listSymbols(
-      scopeStack: Stack<PolySymbolsScope>,
+      scopeStack: Stack<PolySymbolScope>,
       queryExecutor: PolySymbolQueryExecutor,
       expandPatterns: Boolean,
     ): List<PolySymbol> =
@@ -160,7 +160,7 @@ private class WebTypesComplexPatternConfigProvider(
         }
       ?: emptyList()
 
-    override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
+    override fun matchName(name: String, scopeStack: Stack<PolySymbolScope>, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
       (delegate as? PolySymbolWithPattern)
         ?.pattern
         ?.match(delegate, scopeStack, null,
@@ -194,19 +194,19 @@ private class WebTypesComplexPatternConfigProvider(
     override fun codeCompletion(
       name: String,
       position: Int,
-      scopeStack: Stack<PolySymbolsScope>,
+      scopeStack: Stack<PolySymbolScope>,
       queryExecutor: PolySymbolQueryExecutor,
     ): List<PolySymbolCodeCompletionItem> =
       items.flatMap { it.codeCompletion(name, scopeStack, queryExecutor, position) }
 
     override fun listSymbols(
-      scopeStack: Stack<PolySymbolsScope>,
+      scopeStack: Stack<PolySymbolScope>,
       queryExecutor: PolySymbolQueryExecutor,
       expandPatterns: Boolean,
     ): List<PolySymbol> =
       items.flatMap { it.list(scopeStack, queryExecutor, expandPatterns) }
 
-    override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
+    override fun matchName(name: String, scopeStack: Stack<PolySymbolScope>, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
       items.flatMap { it.resolve(name, scopeStack, queryExecutor) }
 
   }

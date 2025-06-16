@@ -389,11 +389,11 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
   fun testNestedPattern1() {
     polySymbolQueryExecutorFactory.addScope(
-      object : PolySymbolsScope {
+      object : PolySymbolScope {
         override fun getMatchingSymbols(
           qualifiedName: PolySymbolQualifiedName,
           params: PolySymbolNameMatchQueryParams,
-          scope: Stack<PolySymbolsScope>,
+          scope: Stack<PolySymbolScope>,
         ): List<PolySymbol> {
           return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
             listOf(object : PolySymbol {
@@ -413,7 +413,7 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
           else emptyList()
         }
 
-        override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
+        override fun createPointer(): Pointer<out PolySymbolScope> = Pointer.hardPointer(this)
 
         override fun getModificationCount(): Long = 0
       }, null, testRootDisposable)

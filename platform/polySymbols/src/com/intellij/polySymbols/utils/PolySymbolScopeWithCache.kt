@@ -22,12 +22,12 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 /**
- * Used when implementing a [PolySymbolsScope], which contains many elements.
+ * Used when implementing a [PolySymbolScope], which contains many elements.
  *
  * Caches the list of symbols and uses efficient cache to speed up queries. When extending the class,
  * you only need to override the initialize method and provide parameters to the super constructor to specify how results should be cached.
  */
-abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
+abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
   /**
    * Allows to optimize for symbols with a particular [com.intellij.polySymbols.PolySymbolOrigin.framework].
    * If `null` all symbols will be accepted and scope will be queried in all contexts.
@@ -43,7 +43,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
    * You can provide `Unit`, which would mean that there is only one scope of particular class.
    */
   protected val key: K,
-) : PolySymbolsScope {
+) : PolySymbolScope {
 
   /**
    * Called within a read action to initialize the scope's cache. Call [consumer] with all the
@@ -62,7 +62,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
    */
   protected abstract fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean
 
-  abstract override fun createPointer(): Pointer<out PolySymbolsScopeWithCache<T, K>>
+  abstract override fun createPointer(): Pointer<out PolySymbolScopeWithCache<T, K>>
 
   private val requiresResolve: Boolean get() = true
 
@@ -72,7 +72,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
   override fun equals(other: Any?): Boolean =
     other === this
     || (other != null
-        && other is PolySymbolsScopeWithCache<*, *>
+        && other is PolySymbolScopeWithCache<*, *>
         && other::class.java == this::class.java
         && other.framework == framework
         && other.key == key
@@ -123,7 +123,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
   override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
@@ -135,7 +135,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
   override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
@@ -147,7 +147,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
   override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)

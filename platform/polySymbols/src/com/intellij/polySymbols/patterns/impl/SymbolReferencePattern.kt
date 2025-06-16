@@ -10,7 +10,7 @@ import com.intellij.polySymbols.impl.withOffset
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.lastPolySymbol
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.util.applyIf
@@ -24,7 +24,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -71,7 +71,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
@@ -98,7 +98,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,

@@ -15,7 +15,7 @@ import com.intellij.polySymbols.documentation.impl.PolySymbolDocumentationTarget
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolMatchBuilder
 import com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
@@ -220,7 +220,7 @@ private interface PolySymbolMatchMixin : PolySymbolMatch {
   override val priority: Priority?
     get() = explicitPriority ?: reversedSegments().mapNotNull { it.priority }.firstOrNull()
 
-  override val queryScope: List<PolySymbolsScope>
+  override val queryScope: List<PolySymbolScope>
     get() = nameSegments.asSequence()
       .flatMap { it.symbols }
       .flatMap { it.queryScope }

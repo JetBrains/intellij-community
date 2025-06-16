@@ -10,7 +10,7 @@ import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
@@ -26,12 +26,12 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
   override fun codeCompletion(
     name: String,
     position: Int,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     queryExecutor: PolySymbolQueryExecutor,
   ): List<PolySymbolCodeCompletionItem> =
     items.flatMap { it.codeCompletion(name, scopeStack, queryExecutor, position) }
 
-  override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
+  override fun matchName(name: String, scopeStack: Stack<PolySymbolScope>, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
     items.asSequence()
       .flatMap { it.resolve(name, scopeStack, queryExecutor) }
       .flatMap {
@@ -44,7 +44,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
       .toList()
 
   override fun listSymbols(
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     queryExecutor: PolySymbolQueryExecutor,
     expandPatterns: Boolean,
   ): List<PolySymbol> =
@@ -59,7 +59,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
   ) {
     fun resolve(
       name: String,
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
       queryExecutor: PolySymbolQueryExecutor,
     ): List<PolySymbol> {
       val matches = queryExecutor.withNameConversionRules(nameConversionRules)
@@ -72,7 +72,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
     }
 
     fun listSymbols(
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
       queryExecutor: PolySymbolQueryExecutor,
       expandPatterns: Boolean,
     ): List<PolySymbol> {
@@ -87,7 +87,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
 
     fun codeCompletion(
       name: String,
-      scopeStack: Stack<PolySymbolsScope>,
+      scopeStack: Stack<PolySymbolScope>,
       queryExecutor: PolySymbolQueryExecutor,
       position: Int,
     ): List<PolySymbolCodeCompletionItem> {

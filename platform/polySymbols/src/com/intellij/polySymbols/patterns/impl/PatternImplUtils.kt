@@ -8,7 +8,7 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.impl.PolySymbolCodeCompletionItemImpl
 import com.intellij.polySymbols.impl.copy
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.util.containers.Stack
 
 internal fun PolySymbolCodeCompletionItem.withStopSequencePatternEvaluation(stop: Boolean): PolySymbolCodeCompletionItem =
@@ -88,7 +88,7 @@ internal fun getPatternCompletablePrefix(pattern: String?): String {
 }
 
 internal fun <T> withPrevMatchScope(
-  scopeStack: Stack<PolySymbolsScope>,
+  scopeStack: Stack<PolySymbolScope>,
   prevResult: List<PolySymbolNameSegment>?,
   action: () -> T,
 ): T =

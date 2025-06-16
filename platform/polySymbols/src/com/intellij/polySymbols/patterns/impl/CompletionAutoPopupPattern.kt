@@ -6,7 +6,7 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.hideFromCompletion
 import com.intellij.util.containers.Stack
 
@@ -16,7 +16,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolsPa
 
   override fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
@@ -26,7 +26,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolsPa
 
   override fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
@@ -34,7 +34,7 @@ internal class CompletionAutoPopupPattern(val isSticky: Boolean) : PolySymbolsPa
 
   override fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,

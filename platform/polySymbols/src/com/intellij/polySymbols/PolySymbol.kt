@@ -13,7 +13,7 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.utils.*
@@ -88,10 +88,10 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolsPrioritizedScope {
 
   /**
    * When pattern is being evaluated, matched symbols can provide additional scope for further resolution in the pattern.
-   * By default, the `queryScope` returns the symbol itself if it is a [PolySymbolsScope]
+   * By default, the `queryScope` returns the symbol itself if it is a [PolySymbolScope]
    */
-  val queryScope: List<PolySymbolsScope>
-    get() = listOfNotNull(this as? PolySymbolsScope)
+  val queryScope: List<PolySymbolScope>
+    get() = listOfNotNull(this as? PolySymbolScope)
 
   /**
    * Specifies whether the symbol is an extension.

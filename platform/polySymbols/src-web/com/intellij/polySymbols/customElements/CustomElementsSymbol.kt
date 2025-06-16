@@ -4,9 +4,9 @@ package com.intellij.polySymbols.customElements
 import com.intellij.model.Pointer
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 
-interface CustomElementsSymbol : PolySymbolWithDocumentation, PolySymbolsScope {
+interface CustomElementsSymbol : PolySymbolWithDocumentation, PolySymbolScope {
 
   override fun createPointer(): Pointer<out CustomElementsSymbol>
 

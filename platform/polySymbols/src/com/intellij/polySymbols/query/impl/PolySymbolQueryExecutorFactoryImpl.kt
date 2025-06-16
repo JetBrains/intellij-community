@@ -26,7 +26,7 @@ import com.intellij.util.containers.MultiMap
 
 class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySymbolQueryExecutorFactory, Disposable {
 
-  private val customScope = MultiMap<VirtualFile?, PolySymbolsScope>()
+  private val customScope = MultiMap<VirtualFile?, PolySymbolScope>()
   private var modificationCount = 0L
 
   override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolQueryExecutor {
@@ -38,7 +38,7 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
 
     val context = location?.let { buildPolyContext(it) } ?: PolyContext.empty()
 
-    val scopeList = mutableListOf<PolySymbolsScope>()
+    val scopeList = mutableListOf<PolySymbolScope>()
     getCustomScope(location).forEach(scopeList::add)
     val internalMode = ApplicationManager.getApplication().isInternal
     val originalLocation = location?.originalElement
@@ -71,7 +71,7 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
   }
 
   override fun addScope(
-    scope: PolySymbolsScope,
+    scope: PolySymbolScope,
     contextDirectory: VirtualFile?,
     disposable: Disposable,
   ) {
@@ -122,7 +122,7 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
     return PolySymbolNamesProviderImpl(context.framework, nameConversionRules, createModificationTracker(providers))
   }
 
-  private fun getCustomScope(context: PsiElement?): List<PolySymbolsScope> =
+  private fun getCustomScope(context: PsiElement?): List<PolySymbolScope> =
     context
       ?.let { InjectedLanguageManager.getInstance(it.project).getTopLevelFile(it) }
       ?.originalFile
@@ -131,8 +131,8 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
       ?.let { getCustomScope(it) }
     ?: emptyList()
 
-  private fun getCustomScope(context: VirtualFile): List<PolySymbolsScope> {
-    val result = mutableListOf<PolySymbolsScope>()
+  private fun getCustomScope(context: VirtualFile): List<PolySymbolScope> {
+    val result = mutableListOf<PolySymbolScope>()
     if (!customScope.isEmpty) {
       result.addAll(customScope.get(null))
       var f: VirtualFile? = context

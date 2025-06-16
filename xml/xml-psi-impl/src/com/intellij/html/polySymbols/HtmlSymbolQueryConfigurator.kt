@@ -40,11 +40,11 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
     location: PsiElement?,
     context: PolyContext,
     allowResolve: Boolean,
-  ): List<PolySymbolsScope> =
+  ): List<PolySymbolScope> =
     if (location is XmlElement) {
       listOfNotNull(
         location.takeIf { it !is XmlTag }?.let { HtmlContextualSymbolScope(it) },
-        location.parentOfType<XmlTag>(withSelf = true)?.let { StandardHtmlSymbolsScope(it) },
+        location.parentOfType<XmlTag>(withSelf = true)?.let { StandardHtmlSymbolScope(it) },
       )
     }
     else emptyList()
@@ -62,7 +62,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
 
     override fun requiresResolve(): Boolean = false
 
-    override fun build(queryExecutor: PolySymbolQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
+    override fun build(queryExecutor: PolySymbolQueryExecutor, consumer: (PolySymbolScope) -> Unit) {
       val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope =
@@ -119,21 +119,21 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
       }
   }
 
-  private class StandardHtmlSymbolsScope(private val tag: XmlTag) : PolySymbolsScope {
+  private class StandardHtmlSymbolScope(private val tag: XmlTag) : PolySymbolScope {
 
     override fun equals(other: Any?): Boolean =
-      other is StandardHtmlSymbolsScope
+      other is StandardHtmlSymbolScope
       && other.tag == tag
 
     override fun hashCode(): Int = tag.hashCode()
 
     override fun getModificationCount(): Long = 0
 
-    override fun createPointer(): Pointer<StandardHtmlSymbolsScope> {
+    override fun createPointer(): Pointer<StandardHtmlSymbolScope> {
       val tag = SmartPointerManager.createPointer(this.tag)
       return Pointer {
         tag.dereference()?.let {
-          StandardHtmlSymbolsScope(it)
+          StandardHtmlSymbolScope(it)
         }
       }
     }
@@ -141,7 +141,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolListSymbolsQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
     ): List<PolySymbol> =
       if (params.queryExecutor.allowResolve) {
         when (qualifiedKind) {
@@ -168,7 +168,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
     override fun getMatchingSymbols(
       qualifiedName: PolySymbolQualifiedName,
       params: PolySymbolNameMatchQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
     ): List<PolySymbol> {
       if (params.queryExecutor.allowResolve) {
         when (qualifiedName.qualifiedKind) {
@@ -194,7 +194,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
     }
   }
 
-  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol, PolySymbolsScope {
+  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol, PolySymbolScope {
     abstract val project: Project?
     override fun getModificationCount(): Long = project?.let { PsiModificationTracker.getInstance(it).modificationCount } ?: 0
     abstract override fun createPointer(): Pointer<out StandardHtmlSymbol>
@@ -312,7 +312,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolListSymbolsQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
     ): List<PolySymbol> =
       if (qualifiedKind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)
         descriptor.enumeratedValues?.map { HtmlAttributeValueSymbol(it) } ?: emptyList()

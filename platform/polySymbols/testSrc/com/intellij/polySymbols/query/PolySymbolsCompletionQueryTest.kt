@@ -229,13 +229,13 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
 
   fun testNestedPattern1() {
     polySymbolQueryExecutorFactory.addScope(
-      object : PolySymbolsScope {
-        override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
+      object : PolySymbolScope {
+        override fun createPointer(): Pointer<out PolySymbolScope> = Pointer.hardPointer(this)
 
         override fun getCodeCompletions(
           qualifiedName: PolySymbolQualifiedName,
           params: PolySymbolCodeCompletionQueryParams,
-          scope: Stack<PolySymbolsScope>,
+          scope: Stack<PolySymbolScope>,
         ): List<PolySymbolCodeCompletionItem> {
           return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
             listOf(PolySymbolCodeCompletionItem.create("bar"))

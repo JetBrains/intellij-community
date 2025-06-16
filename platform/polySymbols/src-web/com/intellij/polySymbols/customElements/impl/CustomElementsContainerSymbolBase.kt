@@ -12,7 +12,7 @@ import com.intellij.polySymbols.customElements.json.CustomElementsContribution
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.util.containers.Stack
 
 abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContribution> protected constructor(
@@ -25,7 +25,7 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
   override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     rootScope
       .getMatchingSymbols(contribution, this.origin, qualifiedName, params, scope)
@@ -34,7 +34,7 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
   override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     rootScope
       .getSymbols(contribution, this.origin, qualifiedKind, params)
@@ -43,7 +43,7 @@ abstract class CustomElementsContainerSymbolBase<Container : CustomElementsContr
   override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     rootScope
       .getCodeCompletions(contribution, this.origin, qualifiedName, params, scope)

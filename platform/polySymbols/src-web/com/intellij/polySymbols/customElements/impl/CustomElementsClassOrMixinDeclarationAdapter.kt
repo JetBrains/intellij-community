@@ -12,7 +12,7 @@ import com.intellij.polySymbols.customElements.json.CustomElementClassOrMixinDec
 import com.intellij.polySymbols.customElements.json.resolve
 import com.intellij.polySymbols.customElements.json.toApiStatus
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
+import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
@@ -24,7 +24,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   private val declaration: CustomElementClassOrMixinDeclaration,
   private val origin: CustomElementsJsonOrigin,
   private val rootScope: CustomElementsManifestScopeBase,
-) : StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
+) : StaticPolySymbolScopeBase.StaticSymbolContributionAdapter {
 
   private val cacheHolder = UserDataHolderBase()
 
@@ -88,7 +88,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override val apiStatus: PolySymbolApiStatus
       get() = base.declaration.deprecated.toApiStatus(origin) ?: PolySymbolApiStatus.Stable
 
-    override val queryScope: List<PolySymbolsScope>
+    override val queryScope: List<PolySymbolScope>
       get() = superContributions.asSequence()
         .flatMap { it.queryScope }
         .plus(this)
@@ -110,7 +110,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override fun getMatchingSymbols(
       qualifiedName: PolySymbolQualifiedName,
       params: PolySymbolNameMatchQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
     ): List<PolySymbol> =
       base.rootScope
         .getMatchingSymbols(base.declaration, this.origin, qualifiedName, params, scope)
@@ -119,7 +119,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolListSymbolsQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
     ): List<PolySymbol> =
       base.rootScope
         .getSymbols(base.declaration, this.origin, qualifiedKind, params)
@@ -128,7 +128,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
     override fun getCodeCompletions(
       qualifiedName: PolySymbolQualifiedName,
       params: PolySymbolCodeCompletionQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
     ): List<PolySymbolCodeCompletionItem> =
       base.rootScope
         .getCodeCompletions(base.declaration, this.origin, qualifiedName, params, scope)

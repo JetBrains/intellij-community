@@ -7,7 +7,7 @@ import com.intellij.polySymbols.patterns.impl.*
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,7 +20,7 @@ abstract class PolySymbolsPattern internal constructor() {
 
   internal fun match(
     owner: PolySymbol?,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
     name: String,
     params: PolySymbolNameMatchQueryParams,
   ): List<MatchResult> =
@@ -29,7 +29,7 @@ abstract class PolySymbolsPattern internal constructor() {
 
   internal fun list(
     owner: PolySymbol?,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
     params: PolySymbolListSymbolsQueryParams,
   ): List<ListResult> =
     list(owner, scope, null, ListParameters(params))
@@ -37,7 +37,7 @@ abstract class PolySymbolsPattern internal constructor() {
 
   internal fun complete(
     owner: PolySymbol?,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
     name: String,
     params: PolySymbolCodeCompletionQueryParams,
   ): List<PolySymbolCodeCompletionItem> =
@@ -46,21 +46,21 @@ abstract class PolySymbolsPattern internal constructor() {
 
   internal abstract fun match(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: MatchParameters, start: Int, end: Int,
   ): List<MatchResult>
 
   internal abstract fun list(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult>
 
   internal abstract fun complete(
     owner: PolySymbol?,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
     symbolsResolver: PolySymbolsPatternSymbolsResolver?,
     params: CompletionParameters, start: Int, end: Int,
   ): CompletionResults

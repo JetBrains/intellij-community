@@ -4,7 +4,7 @@ package com.intellij.polySymbols.webTypes.filters
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.webTypes.impl.PolySymbolsFilterEP
 
 interface PolySymbolsFilter {
@@ -12,14 +12,14 @@ interface PolySymbolsFilter {
   fun filterCodeCompletions(
     codeCompletions: List<PolySymbolCodeCompletionItem>,
     queryExecutor: PolySymbolQueryExecutor,
-    scope: List<PolySymbolsScope>,
+    scope: List<PolySymbolScope>,
     properties: Map<String, Any>,
   ): List<PolySymbolCodeCompletionItem>
 
   fun filterNameMatches(
     matches: List<PolySymbol>,
     queryExecutor: PolySymbolQueryExecutor,
-    scope: List<PolySymbolsScope>,
+    scope: List<PolySymbolScope>,
     properties: Map<String, Any>,
   ): List<PolySymbol>
 

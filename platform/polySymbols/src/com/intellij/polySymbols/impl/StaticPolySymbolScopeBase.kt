@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 
 @Internal
-abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin : PolySymbolOrigin> : StaticPolySymbolsScope {
+abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin : PolySymbolOrigin> : StaticPolySymbolScope {
 
   private val namesProviderCache: MutableMap<PolySymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0
@@ -26,7 +26,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   @JvmField
   protected var modCount: Long = 0
 
-  abstract override fun createPointer(): Pointer<out StaticPolySymbolsScopeBase<Root, Contribution, Origin>>
+  abstract override fun createPointer(): Pointer<out StaticPolySymbolScopeBase<Root, Contribution, Origin>>
 
   final override fun getModificationCount(): Long =
     modCount
@@ -34,7 +34,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     getMaps(params).flatMap {
       it.getMatchingSymbols(qualifiedName, params, Stack(scope))
@@ -43,7 +43,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     getMaps(params).flatMap {
       it.getSymbols(qualifiedKind, params)
@@ -52,7 +52,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     getMaps(params).flatMap {
       it.getCodeCompletions(qualifiedName, params, Stack(scope))
@@ -63,7 +63,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     origin: Origin,
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
       .getMatchingSymbols(qualifiedName, params, scopeStack)
@@ -84,7 +84,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     origin: Origin,
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scopeStack: Stack<PolySymbolsScope>,
+    scopeStack: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)
       .getCodeCompletions(qualifiedName, params, scopeStack)

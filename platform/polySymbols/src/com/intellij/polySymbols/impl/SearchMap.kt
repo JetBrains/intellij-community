@@ -51,7 +51,7 @@ internal abstract class SearchMap<T> internal constructor(
   internal fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): Sequence<PolySymbol> =
     namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY)
       .asSequence()
@@ -70,7 +70,7 @@ internal abstract class SearchMap<T> internal constructor(
   internal fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): Sequence<PolySymbolCodeCompletionItem> =
     collectStaticCompletionResults(qualifiedName, params, scope)
       .asSequence()
@@ -80,7 +80,7 @@ internal abstract class SearchMap<T> internal constructor(
   private fun collectStaticCompletionResults(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     statics.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values
@@ -93,7 +93,7 @@ internal abstract class SearchMap<T> internal constructor(
   private fun collectPatternCompletionResults(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     patterns.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
       .values.asSequence()
@@ -107,7 +107,7 @@ internal abstract class SearchMap<T> internal constructor(
   private fun collectPatternContributions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     collectPatternsToProcess(qualifiedName)
       .let {

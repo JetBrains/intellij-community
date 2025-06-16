@@ -7,7 +7,7 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.query.PolySymbolCompoundScope
 import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.CachedValueProvider
@@ -25,7 +25,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
 
   protected abstract val providedSymbolKinds: Set<PolySymbolQualifiedKind>
 
-  override fun build(queryExecutor: PolySymbolQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
+  override fun build(queryExecutor: PolySymbolQueryExecutor, consumer: (PolySymbolScope) -> Unit) {
     getCurrentScope()
       ?.let { consumer(it) }
   }
@@ -129,7 +129,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
     }
   }
 
-  protected interface PolySymbolsPsiScope : PolySymbolsScope {
+  protected interface PolySymbolsPsiScope : PolySymbolScope {
     val source: PsiElement
     val parent: PolySymbolsPsiScope?
     val properties: Map<String, Any>
@@ -199,7 +199,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
       params: PolySymbolListSymbolsQueryParams,
-      scope: Stack<PolySymbolsScope>,
+      scope: Stack<PolySymbolScope>,
     ): List<PolySymbol> =
       getAllSymbols(qualifiedKind)
 
@@ -231,7 +231,7 @@ abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protect
     override fun hashCode(): Int =
       source.hashCode()
 
-    override fun createPointer(): Pointer<out PolySymbolsScope> =
+    override fun createPointer(): Pointer<out PolySymbolScope> =
       throw IllegalStateException("PolySymbolsPsiScopeImpl cannot be pointed to. It should be wrapped with PolySymbolsPsiScopeWithPointer.")
 
     override fun getModificationCount(): Long = 0

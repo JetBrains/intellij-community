@@ -99,7 +99,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolNameMatchQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     base.rootScope
       .getMatchingSymbols(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
@@ -108,7 +108,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
     base.rootScope
       .getSymbols(base.contributionForQuery, this.origin as WebTypesJsonOrigin, qualifiedKind, params)
@@ -117,7 +117,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
-    scope: Stack<PolySymbolsScope>,
+    scope: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
     base.rootScope
       .getCodeCompletions(base.contributionForQuery, base.jsonOrigin, qualifiedName, params, scope)
@@ -202,7 +202,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
             ?: superContributions.firstNotNullOfOrNull { it.asSafely<PolySymbolWithDocumentation>()?.defaultValue }
             ?: attributeValue?.default
 
-  final override val queryScope: List<PolySymbolsScope>
+  final override val queryScope: List<PolySymbolScope>
     get() = superContributions.asSequence()
       .flatMap { it.queryScope }
       .plus(this)

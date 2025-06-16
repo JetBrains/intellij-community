@@ -19,12 +19,12 @@ interface PolySymbolQueryExecutorFactory : Disposable {
   fun create(location: PsiElement?, allowResolve: Boolean = true): PolySymbolQueryExecutor
 
   @TestOnly
-  fun addScope(scope: PolySymbolsScope, contextDirectory: VirtualFile?, disposable: Disposable)
+  fun addScope(scope: PolySymbolScope, contextDirectory: VirtualFile?, disposable: Disposable)
 
   interface PolySymbolsQueryExecutorBuilder {
-    fun addRootScope(scope: PolySymbolsScope): PolySymbolsQueryExecutorBuilder
+    fun addRootScope(scope: PolySymbolScope): PolySymbolsQueryExecutorBuilder
 
-    fun addRootScopes(scope: List<PolySymbolsScope>): PolySymbolsQueryExecutorBuilder
+    fun addRootScopes(scope: List<PolySymbolScope>): PolySymbolsQueryExecutorBuilder
 
     fun addCustomizer(customizer: PolySymbolQueryResultsCustomizer): PolySymbolsQueryExecutorBuilder
 

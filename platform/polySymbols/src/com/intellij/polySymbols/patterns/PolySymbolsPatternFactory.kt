@@ -4,7 +4,7 @@ package com.intellij.polySymbols.patterns
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.patterns.impl.*
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 object PolySymbolsPatternFactory {
 
   fun createComplexPattern(
-    optionsProvider: (queryExecutor: PolySymbolQueryExecutor, contextStack: Stack<PolySymbolsScope>) -> ComplexPatternOptions,
+    optionsProvider: (queryExecutor: PolySymbolQueryExecutor, contextStack: Stack<PolySymbolScope>) -> ComplexPatternOptions,
     isStaticAndRequiredProvider: () -> Boolean,
     patternsProvider: () -> List<PolySymbolsPattern>,
   ): PolySymbolsPattern =
@@ -20,7 +20,7 @@ object PolySymbolsPatternFactory {
       override fun getPatterns(): List<PolySymbolsPattern> =
         patternsProvider()
 
-      override fun getOptions(queryExecutor: PolySymbolQueryExecutor, scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions =
+      override fun getOptions(queryExecutor: PolySymbolQueryExecutor, scopeStack: Stack<PolySymbolScope>): ComplexPatternOptions =
         optionsProvider(queryExecutor, scopeStack)
 
       override val isStaticAndRequired: Boolean
@@ -38,7 +38,7 @@ object PolySymbolsPatternFactory {
       override fun getPatterns(): List<PolySymbolsPattern> =
         patterns.toList()
 
-      override fun getOptions(queryExecutor: PolySymbolQueryExecutor, scopeStack: Stack<PolySymbolsScope>): ComplexPatternOptions =
+      override fun getOptions(queryExecutor: PolySymbolQueryExecutor, scopeStack: Stack<PolySymbolScope>): ComplexPatternOptions =
         options
 
       override val isStaticAndRequired: Boolean

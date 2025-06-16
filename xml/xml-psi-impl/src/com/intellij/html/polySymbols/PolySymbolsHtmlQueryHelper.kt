@@ -11,8 +11,8 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.query.PolySymbolsScope
-import com.intellij.polySymbols.utils.PolySymbolsScopeWithCache
+import com.intellij.polySymbols.query.PolySymbolScope
+import com.intellij.polySymbols.utils.PolySymbolScopeWithCache
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -21,17 +21,17 @@ object PolySymbolsHtmlQueryHelper {
   @JvmStatic
   fun getStandardHtmlElementSymbolsScope(
     project: Project,
-  ): PolySymbolsScope =
-    StandardHtmlElementSymbolsScope(project)
+  ): PolySymbolScope =
+    StandardHtmlElementsScope(project)
 
   @JvmStatic
   fun getStandardHtmlAttributeSymbolsScopeForTag(
     project: Project,
     tagName: String,
-  ): PolySymbolsScope =
-    StandardHtmlAttributeSymbolsScope(project, tagName)
+  ): PolySymbolScope =
+    StandardHtmlAttributesScope(project, tagName)
 
-  private class StandardHtmlElementSymbolsScope(project: Project) : PolySymbolsScopeWithCache<Project, Unit>(null, project, project, Unit) {
+  private class StandardHtmlElementsScope(project: Project) : PolySymbolScopeWithCache<Project, Unit>(null, project, project, Unit) {
 
     override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       HtmlDescriptorUtils.getHtmlNSDescriptor(project)
@@ -45,12 +45,12 @@ object PolySymbolsHtmlQueryHelper {
     override fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean =
       qualifiedKind == HTML_ELEMENTS
 
-    override fun createPointer(): Pointer<StandardHtmlElementSymbolsScope> =
+    override fun createPointer(): Pointer<StandardHtmlElementsScope> =
       hardPointer(this)
 
   }
 
-  private class StandardHtmlAttributeSymbolsScope(project: Project, tagName: String) : PolySymbolsScopeWithCache<Project, String>(null, project, project, tagName) {
+  private class StandardHtmlAttributesScope(project: Project, tagName: String) : PolySymbolScopeWithCache<Project, String>(null, project, project, tagName) {
 
     override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       (HtmlDescriptorUtils.getStandardHtmlElementDescriptor(project, key)
@@ -67,7 +67,7 @@ object PolySymbolsHtmlQueryHelper {
     override fun provides(qualifiedKind: PolySymbolQualifiedKind): Boolean =
       qualifiedKind == HTML_ATTRIBUTES
 
-    override fun createPointer(): Pointer<StandardHtmlAttributeSymbolsScope> =
+    override fun createPointer(): Pointer<StandardHtmlAttributesScope> =
       hardPointer(this)
 
   }

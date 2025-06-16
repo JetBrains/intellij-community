@@ -10,7 +10,7 @@ import com.intellij.polySymbols.customElements.CustomElementsJsonOrigin
 import com.intellij.polySymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.polySymbols.customElements.CustomElementsSymbol
 import com.intellij.polySymbols.customElements.impl.*
-import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
+import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
@@ -38,7 +38,7 @@ fun Deprecated?.toApiStatus(origin: CustomElementsJsonOrigin): PolySymbolApiStat
   this?.value?.let { msg -> PolySymbolApiStatus.Deprecated((msg as? String)?.let { origin.renderDescription(it) }) }
 
 fun CustomElementsManifest.adaptAllContributions(origin: CustomElementsJsonOrigin, rootScope: CustomElementsManifestScopeBase)
-  : Sequence<StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter> =
+  : Sequence<StaticPolySymbolScopeBase.StaticSymbolContributionAdapter> =
   modules.asSequence().flatMap { module ->
     module.exports.asSequence()
       .filterIsInstance<CustomElementExport>()
@@ -56,7 +56,7 @@ fun JavaScriptModule.adaptAllContributions(origin: CustomElementsJsonOrigin, roo
     .mapNotNull { CustomElementsClassOrMixinDeclarationAdapter.create(it, origin, rootScope) }
 
 fun CustomElementClassOrMixinDeclaration.adaptAllContributions(origin: CustomElementsJsonOrigin):
-  Sequence<StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter> =
+  Sequence<StaticPolySymbolScopeBase.StaticSymbolContributionAdapter> =
   (attributes.asSequence().mapNotNull { CustomElementsAttributeSymbol.create(it, origin) }
    + cssParts.asSequence().mapNotNull { CustomElementsCssPartSymbol.create(it, origin) }
    + cssProperties.asSequence().mapNotNull { CustomElementsCssCustomPropertySymbol.create(it, origin) }
