@@ -3,72 +3,51 @@ package com.intellij.ui.win
 
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.ReopenProjectAction
+import com.intellij.ide.SystemDock
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.SystemDock
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.ui.win.WinShellIntegration.VoidShellTask
 import com.intellij.util.PathUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
-import java.util.concurrent.Callable
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 
 private val LOG = logger<WinDockDelegate>()
 
-internal class WinDockDelegate private constructor(private val wsiFuture: Future<WinShellIntegration?>) : SystemDock.Delegate {
-  companion object {
-    @JvmField val instance: WinDockDelegate
+internal suspend fun createWinDockDelegate(): SystemDock? {
+  val stackTraceHolder = Throwable("Asynchronously launched from here")
 
-    init {
-      val stackTraceHolder = Throwable("Asynchronously launched from here")
-
-      // Not AppExecutorUtil.getAppExecutorService() for class loading optimization
-      val wsiFuture = ApplicationManager.getApplication().executeOnPooledThread(Callable {
-        try {
-          @Suppress("SpellCheckingInspection")
-          if (!Registry.`is`("windows.jumplist")) {
-            return@Callable null
-          }
-
-          return@Callable WinShellIntegration.getInstance()
-        }
-        catch (err: Throwable) {
-          err.addSuppressed(stackTraceHolder)
-          LOG.error("Failed to initialize com.intellij.ui.win.WinShellIntegration instance", err)
-          return@Callable null
-        }
-      })
-      instance = WinDockDelegate(wsiFuture)
+  try {
+    @Suppress("SpellCheckingInspection")
+    if (RegistryManager.getInstanceAsync().`is`("windows.jumplist")) {
+      return WinDockDelegate(WinShellIntegration.getInstance() ?: return null)
+    }
+    else {
+      return null
     }
   }
+  catch (err: Throwable) {
+    err.addSuppressed(stackTraceHolder)
+    LOG.error("Failed to initialize com.intellij.ui.win.WinShellIntegration instance", err)
+    return null
+  }
+}
 
-  override fun updateRecentProjectsMenu() {
-    val stackTraceHolder = Throwable("Asynchronously launched from here")
-
-    ApplicationManager.getApplication().executeOnPooledThread {
-      try {
-        val wsi = wsiFuture.get(30, TimeUnit.SECONDS) ?: return@executeOnPooledThread
-
-        val recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false)
-        val jumpTasks = convertToJumpTasks(recentProjectActions)
-        wsi.postShellTask(VoidShellTask {
-          it.clearRecentTasksList()
-          it.setRecentTasksList(jumpTasks.toTypedArray())
-        }).get()
-      }
-      catch (e: InterruptedException) {
-        e.addSuppressed(stackTraceHolder)
-        LOG.warn(e)
-      }
-      catch (e: Throwable) {
-        e.addSuppressed(stackTraceHolder)
-        LOG.error(e)
-      }
+private class WinDockDelegate(private val wsi: WinShellIntegration) : SystemDock {
+  override suspend fun updateRecentProjectsMenu() {
+    val recentProjectActions = serviceAsync<RecentProjectListActionProvider>().getActions()
+    val jumpTasks = convertToJumpTasks(recentProjectActions)
+    // todo WinShellIntegration should use coroutines
+    withContext(Dispatchers.IO) {
+      wsi.postShellTask(VoidShellTask {
+        it.clearRecentTasksList()
+        it.setRecentTasksList(jumpTasks.toTypedArray())
+      }).get()
     }
   }
 }
