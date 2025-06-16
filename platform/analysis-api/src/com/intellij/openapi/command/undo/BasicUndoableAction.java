@@ -56,11 +56,10 @@ public abstract class BasicUndoableAction implements UndoableAction {
 
   @Override
   public String toString() {
-    return "%s{refs=%s%s, performed=%sms}".formatted(
+    return "%s{refs=%s%s}".formatted(
       getClass().getName().replace(getClass().getPackageName() + ".", ""),
       Arrays.toString(getAffectedDocuments()),
-      isGlobal() ? ", global" : "",
-      getPerformedNanoTime() / 1000
+      isGlobal() ? ", global" : ""
     );
   }
 }
