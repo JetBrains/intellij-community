@@ -29,6 +29,6 @@ f:org.jetbrains.jewel.bridge.BridgeUtilsKt
 - sf:toPaddingValues(com.intellij.util.ui.JBInsets):androidx.compose.foundation.layout.PaddingValues
 - sf:toPaddingValues(java.awt.Insets):androidx.compose.foundation.layout.PaddingValues
 f:org.jetbrains.jewel.bridge.theme.BridgeGrayFilterValuesKt
-- sf:readFromLaF(org.jetbrains.jewel.foundation.GrayFilterValues$Companion,Z):org.jetbrains.jewel.foundation.GrayFilterValues
+- sf:readFromLaF(org.jetbrains.jewel.foundation.DisabledAppearanceValues$Companion):org.jetbrains.jewel.foundation.DisabledAppearanceValues
 f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt
 - sf:retrieveDefaultTextStyle(F):androidx.compose.ui.text.TextStyle
