@@ -3607,9 +3607,39 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/InsideAnonymousClass.kt");
             }
 
-            @TestMetadata("InsideAnonymousObject.kt")
-            public void testInsideAnonymousObject() throws Exception {
-                runTest("../testData/basic/common/InsideAnonymousObject.kt");
+            @TestMetadata("InsideAnonymousObjectPrivate.kt")
+            public void testInsideAnonymousObjectPrivate() throws Exception {
+                runTest("../testData/basic/common/InsideAnonymousObjectPrivate.kt");
+            }
+
+            @TestMetadata("InsideAnonymousObjectProtected.kt")
+            public void testInsideAnonymousObjectProtected() throws Exception {
+                runTest("../testData/basic/common/InsideAnonymousObjectProtected.kt");
+            }
+
+            @TestMetadata("InsideAnonymousObjectPublic.kt")
+            public void testInsideAnonymousObjectPublic() throws Exception {
+                runTest("../testData/basic/common/InsideAnonymousObjectPublic.kt");
+            }
+
+            @TestMetadata("InsideLocalClassAndAnonymousObject.kt")
+            public void testInsideLocalClassAndAnonymousObject() throws Exception {
+                runTest("../testData/basic/common/InsideLocalClassAndAnonymousObject.kt");
+            }
+
+            @TestMetadata("InsideLocalClassPrivate.kt")
+            public void testInsideLocalClassPrivate() throws Exception {
+                runTest("../testData/basic/common/InsideLocalClassPrivate.kt");
+            }
+
+            @TestMetadata("InsideLocalClassProtected.kt")
+            public void testInsideLocalClassProtected() throws Exception {
+                runTest("../testData/basic/common/InsideLocalClassProtected.kt");
+            }
+
+            @TestMetadata("InsideLocalClassPublic.kt")
+            public void testInsideLocalClassPublic() throws Exception {
+                runTest("../testData/basic/common/InsideLocalClassPublic.kt");
             }
 
             @TestMetadata("InterfaceNameBeforeRunBug.kt")

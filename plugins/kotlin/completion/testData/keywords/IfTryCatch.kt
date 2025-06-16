@@ -31,4 +31,5 @@ fun foo(p: Int) {
 // EXIST: while
 // EXIST: typealias
 // EXIST: as
+// EXIST: as?
 // NOTHING_ELSE

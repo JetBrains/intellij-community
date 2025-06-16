@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 interface Foo {
 
     fun foo() {}
@@ -11,7 +9,7 @@ fun foo(): Foo = object : Foo {
         bar<caret>
     }
 
-    private fun bar() {}
+    fun bar() {}
 }
 
 // INVOCATION_COUNT: 0

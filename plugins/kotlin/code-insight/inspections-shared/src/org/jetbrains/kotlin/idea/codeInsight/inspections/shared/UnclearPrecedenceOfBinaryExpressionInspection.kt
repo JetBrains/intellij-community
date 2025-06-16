@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenc
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.toUnified
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.Precedence
+import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.BinaryOperationPrecedence
 import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
@@ -162,11 +162,11 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
         fun KtExpression.flattenParentheses(): KtExpression? =
             generateSequence(this) { (it as? KtParenthesizedExpression)?.expression }.firstOrNull { it !is KtParenthesizedExpression }
 
-        val childToUnclearPrecedenceParentsMapping: List<Pair<Precedence, List<IElementType>>> = listOf(
-            Precedence.ELVIS to listOf(Precedence.EQUALITY, Precedence.COMPARISON, Precedence.IN_OR_IS),
-            Precedence.SIMPLE_NAME to listOf(Precedence.ELVIS),
-            Precedence.ADDITIVE to listOf(Precedence.ELVIS),
-            Precedence.MULTIPLICATIVE to listOf(Precedence.ELVIS)
+        val childToUnclearPrecedenceParentsMapping: List<Pair<BinaryOperationPrecedence, List<IElementType>>> = listOf(
+            BinaryOperationPrecedence.ELVIS to listOf(BinaryOperationPrecedence.EQUALITY, BinaryOperationPrecedence.COMPARISON, BinaryOperationPrecedence.IN_OR_IS),
+            BinaryOperationPrecedence.INFIX to listOf(BinaryOperationPrecedence.ELVIS),
+            BinaryOperationPrecedence.ADDITIVE to listOf(BinaryOperationPrecedence.ELVIS),
+            BinaryOperationPrecedence.MULTIPLICATIVE to listOf(BinaryOperationPrecedence.ELVIS)
         ).onEach { (key, value) ->
             value.forEach { check(key < it) }
         }.map { item -> Pair(item.first, item.second.flatMap { it.operations.types.toList() }) }

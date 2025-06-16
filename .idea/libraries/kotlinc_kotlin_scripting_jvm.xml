@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.2.20-dev-5287">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.2.20-dev-5812">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-5287/kotlin-scripting-jvm-2.2.20-dev-5287.jar">
-          <sha256sum>770ebda62e78ef4d2f5796a8416f53522448f1b6979acc0d5f42a41239d2cda2</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-5812/kotlin-scripting-jvm-2.2.20-dev-5812.jar">
+          <sha256sum>6023a5555d942942495c698ea7f071d1738e93db3f1f9c6764b4bf60d682e955</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-5287/kotlin-scripting-jvm-2.2.20-dev-5287.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-5812/kotlin-scripting-jvm-2.2.20-dev-5812.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-5287/kotlin-scripting-jvm-2.2.20-dev-5287-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.2.20-dev-5812/kotlin-scripting-jvm-2.2.20-dev-5812-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
