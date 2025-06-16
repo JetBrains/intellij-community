@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 public abstract class ModuleRootManagerEx extends ModuleRootManager {
+  @ApiStatus.Internal
   public static final ExtensionPointName<ModuleExtension> MODULE_EXTENSION_NAME = new ExtensionPointName<>("com.intellij.moduleExtension");
 
   @ApiStatus.Internal
