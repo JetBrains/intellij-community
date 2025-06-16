@@ -226,7 +226,7 @@ class PluginUiModelAdapter(
 
   override fun addDependency(id: PluginId, optional: Boolean) {
     if (pluginDescriptor is PluginNode) {
-      pluginDescriptor.addDepends(pluginId, optional)
+      pluginDescriptor.addDepends(id, optional)
     }
   }
 
