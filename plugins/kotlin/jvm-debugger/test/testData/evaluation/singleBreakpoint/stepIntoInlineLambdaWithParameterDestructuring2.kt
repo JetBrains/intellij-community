@@ -22,4 +22,4 @@ fun main() {
 
 // EXPRESSION: x + w
 // RESULT: Unresolved reference: x
-// RESULT_K2: 2: I
+// RESULT_K2_COMPILER: 2: I

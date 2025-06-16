@@ -25,4 +25,4 @@ fun main() {
 
 // EXPRESSION: a + b + c + d + e + f + g
 // RESULT: 'a' is not captured
-// RESULT_K2: 7: I
+// RESULT_K2_COMPILER: 7: I
