@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.application
 import com.intellij.util.asDisposable
+import com.intellij.util.containers.CollectionFactory
 import io.ktor.server.cio.CIO
 import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
@@ -59,7 +60,7 @@ class McpServerService(val cs: CoroutineScope) {
 
   private val server = MutableStateFlow(startServerIfEnabled())
 
-  private val trackedDocuments = ConcurrentMap<Document, VirtualFile>()
+  private val trackedDocuments = CollectionFactory.createConcurrentWeakKeyWeakValueMap<Document, VirtualFile>()
 
   val isRunning: Boolean
     get() = server.value != null
