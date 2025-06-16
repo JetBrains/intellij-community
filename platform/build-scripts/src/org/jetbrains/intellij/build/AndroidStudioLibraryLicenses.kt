@@ -18,6 +18,7 @@ package org.jetbrains.intellij.build
 object AndroidStudioLibraryLicenses {
   @JvmStatic
   val LICENSES_LIST: List<LibraryLicense> = listOf(
+    LibraryLicense(name = "ANTLR v4 Runtime", libraryName = "antlr4-runtime", url = "https://github.com/antlr/antlr4").newBsd("https://github.com/antlr/antlr4/blob/dev/LICENSE.txt"),
     LibraryLicense(name = "Eclipse LSP4J", libraryName = "eclipse.lsp4j", url = "https://github.com/eclipse/lsp4j").eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE"),
     LibraryLicense(name = "Eclipse LSP4J Debug", libraryName = "eclipse.lsp4j.debug", url = "https://github.com/eclipse/lsp4j").eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE"),
     LibraryLicense(name = "Eclipse LSP4J JSON RPC", libraryName = "eclipse.lsp4j.jsonrpc", url = "https://github.com/eclipse/lsp4j").eplV2("https://github.com/eclipse-lsp4j/lsp4j/blob/main/LICENSE"),

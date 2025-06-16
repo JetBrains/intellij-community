@@ -1,16 +1,18 @@
 <component name="libraryTable">
   <library name="eclipse.lsp4j.debug" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.eclipse.lsp4j:org.eclipse.lsp4j.debug:0.19.0">
+    <properties include-transitive-deps="false" maven-id="org.eclipse.lsp4j:org.eclipse.lsp4j.debug:0.21.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.19.0/org.eclipse.lsp4j.debug-0.19.0.jar">
-          <sha256sum>75062979a4fab947317f7730d3f10cb2b7b42bfae6b20432f61fa09978033adb</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.21.2/org.eclipse.lsp4j.debug-0.21.2.jar">
+          <sha256sum>f714616c80f399f4d6aad09f279071db156e65c6e4d425731a4162118c7a2fe3</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.19.0/org.eclipse.lsp4j.debug-0.19.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.21.2/org.eclipse.lsp4j.debug-0.21.2.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.debug/0.21.2/org.eclipse.lsp4j.debug-0.21.2-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
