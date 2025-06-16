@@ -24,7 +24,7 @@ fun Finder.structureToolWindowButton(@Language("xpath") xpath: String? = null): 
   StripeButtonUi::class.java
 )
 
-class StructureToolWindowUi(data: ComponentData) : UiComponent(data) {
+class StructureToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   fun waitAndGetStructureTree(message: String? = null, waitForText: ((UiText) -> Boolean)? = null): JTreeUiComponent {
     val structureTree = structureTree.waitFound(10.seconds)
     structureTree.expandAll()

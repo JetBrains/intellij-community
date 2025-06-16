@@ -9,7 +9,7 @@ import com.intellij.driver.sdk.ui.components.elements.button
 fun IdeaFrameUI.servicesToolWindow(action: ServicesToolWindowUi.() -> Unit = {}): ServicesToolWindowUi =
   x(ServicesToolWindowUi::class.java) { byAccessibleName("Services Tool Window") }.apply(action)
 
-class ServicesToolWindowUi(data: ComponentData): UiComponent(data) {
+class ServicesToolWindowUi(data: ComponentData): ToolWindowUiComponent(data) {
 
   val servicesTree = accessibleTree { byJavaClass("com.intellij.platform.execution.serviceView.ServiceViewTree") }
   val addServiceButton = x("//div[@tooltiptext='Add Service' and @class='ActionButton']")
