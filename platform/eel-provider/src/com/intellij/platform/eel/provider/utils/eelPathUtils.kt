@@ -19,7 +19,6 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalConten
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.net.URI
 import java.nio.ByteBuffer
@@ -410,7 +409,7 @@ object EelPathUtils {
     return someEelPath.asNioPath()
   }
 
-  @Internal
+  @ApiStatus.Internal
   @RequiresBackgroundThread
   fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean, copyAttributes: Boolean) {
     val fileAttributesStrategy = if (copyAttributes) FileTransferAttributesStrategy.Copy else FileTransferAttributesStrategy.Skip
