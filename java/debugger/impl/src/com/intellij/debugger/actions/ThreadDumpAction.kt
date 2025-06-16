@@ -10,6 +10,8 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.suspendAllAndEvaluate
 import com.intellij.debugger.impl.*
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
+import com.intellij.debugger.statistics.DebuggerStatistics
+import com.intellij.debugger.statistics.ThreadDumpStatus
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -67,6 +69,9 @@ class ThreadDumpAction {
 
       if (onlyPlatformThreads || !Registry.`is`("debugger.thread.dump.extended")) {
         sendJavaPlatformThreads()
+        DebuggerStatistics.logPlatformThreadDumpFallback(
+          context.project, if (onlyPlatformThreads) ThreadDumpStatus.PLATFORM_DUMP_ALT_CLICK else ThreadDumpStatus.PLATFORM_DUMP_EXTENDED_DUMP_DISABLED
+        )
         return
       }
 
@@ -102,6 +107,7 @@ class ThreadDumpAction {
           // If the previous dump is still being evaluated, only show the Java platform thread dump and do not start a new evaluation.
           if (vm.getUserData(EVALUATION_IN_PROGRESS) == true) {
             sendJavaPlatformThreads()
+            DebuggerStatistics.logPlatformThreadDumpFallback(context.project, ThreadDumpStatus.PLATFORM_DUMP_FALLBACK_DURING_EVALUATION)
             XDebuggerManagerImpl.getNotificationGroup()
               .createNotification(JavaDebuggerBundle.message("thread.dump.during.previous.dump.evaluation.warning"), NotificationType.INFORMATION)
               .notify(context.project)
@@ -118,6 +124,7 @@ class ThreadDumpAction {
           catch (_: TimeoutCancellationException) {
             thisLogger().warn("timeout while waiting for evaluatable context ($timeout)")
             sendJavaPlatformThreads()
+            DebuggerStatistics.logPlatformThreadDumpFallback(context.project, ThreadDumpStatus.PLATFORM_DUMP_FALLBACK_TIMEOUT)
           } finally {
             vm.removeUserData(EVALUATION_IN_PROGRESS)
           }
@@ -139,6 +146,7 @@ class ThreadDumpAction {
           else -> {
             thisLogger().error(e)
             sendJavaPlatformThreads()
+            DebuggerStatistics.logPlatformThreadDumpFallback(context.project, ThreadDumpStatus.PLATFORM_DUMP_FALLBACK_ERROR)
           }
         }
       }
@@ -481,10 +489,13 @@ private class JavaVirtualThreadsProvider : ThreadDumpItemsProviderFactory() {
     override val requiresEvaluation get() = enabled
 
     override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
-      if (!enabled) return emptyList()
-
-      val virtualThreads = evaluateAndGetAllVirtualThreads(suspendContext!!)
-      return buildThreadStates(vm, platformThreads = emptyList(), virtualThreads).toDumpItems()
+      return (
+        if (!enabled) emptyList()
+        else {
+          val virtualThreads = evaluateAndGetAllVirtualThreads(suspendContext!!)
+          buildThreadStates(vm, platformThreads = emptyList(), virtualThreads).toDumpItems()
+        })
+        .also { DebuggerStatistics.logVirtualThreadsDump(context.project, it.size) }
     }
 
     private fun evaluateAndGetAllVirtualThreads(suspendContext: SuspendContextImpl): List<Triple<ThreadReference, String, Long>> {

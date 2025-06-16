@@ -7,13 +7,11 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.ThreadDumpItemsProvider
 import com.intellij.debugger.impl.ThreadDumpItemsProviderFactory
+import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.unscramble.DumpItem
-import com.intellij.unscramble.IconsCache
-import com.intellij.unscramble.MergeableDumpItem
-import com.intellij.unscramble.MergeableToken
+import com.intellij.unscramble.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.debugger.coroutine.KotlinDebuggerCoroutinesBundle
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineInfoData
@@ -39,10 +37,15 @@ class CoroutinesDumpAsyncProvider : ThreadDumpItemsProviderFactory() {
         override val requiresEvaluation get() = enabled
 
         override fun getItems(suspendContext: SuspendContextImpl?): List<MergeableDumpItem> {
-            if (!enabled) return emptyList()
-
-            val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutines()
-            return if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+            return (
+              if (!enabled) emptyList()
+              else {
+                val coroutinesCache = CoroutineDebugProbesProxy(suspendContext!!).dumpCoroutines()
+                if (coroutinesCache.isOk()) coroutinesCache.cache.map { CoroutineDumpItem(it) } else emptyList()
+              })
+              .also {
+                DebuggerStatistics.logCoroutineDump(context.project, it.size)
+              }
         }
     }
 }
