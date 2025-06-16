@@ -231,10 +231,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     }
   }
 
-  override fun unloadDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().unloadDynamicPlugin(pluginId, isUpdate) }
-  }
-
   override fun uninstallDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
     return awaitForResult { PluginInstallerApi.getInstance().uninstallDynamicPlugin(pluginId, isUpdate) }
   }

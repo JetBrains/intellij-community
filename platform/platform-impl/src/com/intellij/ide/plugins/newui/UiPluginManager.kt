@@ -80,10 +80,6 @@ class UiPluginManager {
     return getController().allowLoadUnloadWithoutRestart(pluginId)
   }
 
-  fun unloadDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return getController().unloadDynamicPlugin(parentComponent, pluginId, isUpdate)
-  }
-
   fun resetSession(sessionId: String, removeSession: Boolean, parentComponent: JComponent? = null, callback: (Map<PluginId, Boolean>) -> Unit = {}) {
     service<FrontendRpcCoroutineContext>().coroutineScope.launch {
       callback(getController().resetSession(sessionId, removeSession, parentComponent))
@@ -225,14 +221,6 @@ class UiPluginManager {
 
   fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState {
     return getController().getPluginInstallationState(pluginId)
-  }
-
-  fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState> {
-    return getController().getPluginInstallationStates(pluginIds)
-  }
-
-  fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean {
-    return getController().checkPluginCanBeDownloaded(pluginUiModel, progressIndicator)
   }
 
   fun getController(): UiPluginManagerController {

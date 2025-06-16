@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.DynamicPlugins.allowLoadUnloadWithoutRestart
@@ -314,11 +313,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       }
     }
     return uninstalledPlugin != null
-  }
-
-  override fun unloadDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return false
-    return PluginInstaller.unloadDynamicPlugin(parentComponent, descriptorImpl, isUpdate)
   }
 
   override fun uninstallDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
