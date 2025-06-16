@@ -104,7 +104,11 @@ enum class JavaFeature {
   IMPLICIT_CLASS_NAME_OUT_OF_SCOPE(LanguageLevel.JDK_22_PREVIEW, "feature.implicit.class.name.out.of.scope"),
   CLASSFILE_API(LanguageLevel.JDK_22_PREVIEW, "feature.classfile.api"),
   STREAM_GATHERERS(LanguageLevel.JDK_22_PREVIEW, "feature.stream.gatherers"),
-  STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super"),
+  STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) || useSiteLevel.isAtLeast(LanguageLevel.JDK_25)
+    }
+  },
   /**
    * Was a preview feature in Java 20 Preview.
    * Keep the implementation, as it could reappear in the future.
