@@ -97,29 +97,37 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun setLine(line: Int) {
-    if (getLine() != line) {
-      // TODO IJPL-185322 support type.lineShouldBeChanged()
+    return setLine(line, visualLineMightBeChanged = true)
+  }
 
-      visualRepresentation.removeHighlighter()
-      onLineChanged(line)
+  private fun setLine(line: Int, visualLineMightBeChanged: Boolean) {
+    val oldLine = getLine()
+    if (oldLine != line) {
+      // TODO IJPL-185322 support type.lineShouldBeChanged()
+      updateLineBreakpointState { it.copy(line = line) }
+      lineSourcePosition = null
+      if (visualLineMightBeChanged) {
+        visualRepresentation.removeHighlighter()
+      }
+
+      // We try to redraw inlays every time,
+      // due to lack of synchronization between inlay redrawing and breakpoint changes.
+      visualRepresentation.redrawInlineInlays(getFile(), oldLine)
+      visualRepresentation.redrawInlineInlays(getFile(), line)
+
+      onBreakpointChange()
 
       project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
         XBreakpointApi.getInstance().setLine(id, line)
       }
     }
-  }
-
-  private fun onLineChanged(line: Int) {
-    val oldLine = getLine()
-    updateLineBreakpointState { it.copy(line = line) }
-    lineSourcePosition = null
-
-    // We try to redraw inlays every time,
-    // due to lack of synchronization between inlay redrawing and breakpoint changes.
-    visualRepresentation.redrawInlineInlays(getFile(), oldLine)
-    visualRepresentation.redrawInlineInlays(getFile(), line)
-
-    onBreakpointChange()
+    else {
+      // offset in file might change, pass reset to backend
+      lineSourcePosition = null
+      project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
+        XBreakpointApi.getInstance().updatePosition(id)
+      }
+    }
   }
 
   override fun getHighlightRange(): TextRange? {
@@ -130,13 +138,7 @@ internal class FrontendXLineBreakpointProxy(
     val highlighter: RangeMarker? = visualRepresentation.rangeMarker
     if (highlighter != null && highlighter.isValid()) {
       lineSourcePosition = null // reset the source position even if the line number has not changed, as the offset may be cached inside
-      project.service<FrontendXBreakpointProjectCoroutineService>().cs.launch {
-        XBreakpointApi.getInstance().updatePosition(id)
-      }
-      val newLine = highlighter.getDocument().getLineNumber(highlighter.getStartOffset())
-      if (getLine() != newLine) {
-        onLineChanged(newLine)
-      }
+      setLine(highlighter.getDocument().getLineNumber(highlighter.getStartOffset()), visualLineMightBeChanged = false)
     }
   }
 
