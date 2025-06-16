@@ -8,10 +8,12 @@ import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.HintMarginPadding
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil
+import com.intellij.codeInsight.hints.declarative.impl.util.DeclarativeHintsDumpUtil.ExtractedHintInfo.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.collections.emptyList
 
 class ExtractDeclarativeHintsTest {
   @Test
@@ -127,6 +129,43 @@ class ExtractDeclarativeHintsTest {
     DeclarativeHintsDumpUtil.extractHints("""/*<# shhh\[ #>*/""").let {
       assertSize(1, it)
       assertEquals("shhh[", it.single().text)
+    }
+  }
+
+  @Test
+  fun `extract hints with option directives`() {
+    val source = """
+      123/*<# unguarded #>*/
+      /*<# block opt:start=opt.foo #>*/
+      456/*<# foo #>*/
+      /*<# block opt:end,start=opt.bar #>*/
+      789/*<# bar #>*/
+    """.trimIndent()
+    val extracted = DeclarativeHintsDumpUtil.extractHints(source)
+
+    assertSize(3, extracted )
+    val (unguarded, foo, bar) = extracted
+
+    assertEquals("unguarded", unguarded.text)
+    assertEquals(emptyList<ActiveOptionDiff>(), unguarded.activeOptionDiff)
+
+    assertEquals("foo", foo.text)
+    assertEquals(listOf(ActiveOptionDiff.Start("opt.foo")), foo.activeOptionDiff)
+
+    assertEquals("bar", bar.text)
+    assertEquals(listOf(ActiveOptionDiff.End, ActiveOptionDiff.Start("opt.bar")), bar.activeOptionDiff)
+  }
+
+  @Test
+  fun `extracting option end directive fails if a value is provided`() {
+    assertThrows<DeclarativeHintsDumpUtil.ParserException> {
+      DeclarativeHintsDumpUtil.extractHints("""
+        /*<# block opt:start=opt.foo #>*/
+        123/*<# foo #>*/
+        /*<# block opt:end=opt.foo #>*/
+        456/*<# bar #>*/
+      """.trimIndent()
+      )
     }
   }
 

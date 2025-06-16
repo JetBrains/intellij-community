@@ -393,6 +393,9 @@
 - f:getOffset():I
 - f:getPriority():I
 - f:getVerticalPriority():I
+f:com.intellij.codeInsight.hints.declarative.InlayProviderOption
+- *f:getShowInTree():Z
+- *f:setShowInTree(Z):V
 *:com.intellij.codeInsight.hints.presentation.InlayPresentation
 - com.intellij.codeInsight.hints.presentation.InputHandler
 - a:addListener(com.intellij.codeInsight.hints.presentation.PresentationListener):V
