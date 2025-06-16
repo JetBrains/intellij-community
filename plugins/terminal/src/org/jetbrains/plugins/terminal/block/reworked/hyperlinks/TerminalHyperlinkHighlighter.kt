@@ -13,6 +13,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.SystemProperties
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -145,6 +147,9 @@ class TerminalHyperlinkHighlighter private constructor(
           hyperlinkHighlighter.highlightHyperlinks(startOffset)
         }
       })
+      if (Registry.`is`("terminal.generic.hyperlinks", false)) {
+        hyperlinkHighlighter.addFilter(GenericFileFilter(project, LocalFileSystem.getInstance()))
+      }
       return hyperlinkHighlighter
     }
 
