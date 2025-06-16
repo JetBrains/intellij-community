@@ -35,7 +35,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.toolWindow.ToolWindowHeader
 import com.intellij.ui.*
 import com.intellij.ui.docking.DockContainer
@@ -220,11 +219,12 @@ class EditorTabbedContainer internal constructor(
       parentDisposable = parentDisposable,
       window = window,
       editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup"),
+      coroutineScope = coroutineScope,
       customizer = {
         it.setText(file.presentableName)
         it.setTooltipText(tooltip)
         if (UISettings.getInstance().showFileIconInTabs) {
-          it.setIcon(icon)
+          it.setIconImmediately(icon)
         }
         InternalUICustomization.getInstance()?.aiComponentMarker?.markAiComponent(it.component, file)
       }
@@ -487,9 +487,10 @@ internal fun createTabInfo(
   parentDisposable: Disposable,
   window: EditorWindow,
   editorActionGroup: AnAction,
+  coroutineScope: CoroutineScope,
   customizer: (TabInfo) -> Unit,
 ): TabInfo {
-  val tab = TabInfo(component).setObject(file)
+  val tab = TabInfo(component, coroutineScope).setObject(file)
   customizer(tab)
   tab.setTestableUi { it.put("editorTab", tab.text) }
 

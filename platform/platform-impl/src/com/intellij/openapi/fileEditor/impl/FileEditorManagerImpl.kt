@@ -2214,15 +2214,17 @@ open class FileEditorManagerImpl(
           composite.isPreview = true
         }
       }
-
-      tabs.add(createTabInfo(
+      val tab = createTabInfo(
         component = composite.component,
         file = file,
         parentDisposable = composite,
         window = window,
         editorActionGroup = editorActionGroup,
         customizer = item.customizer,
-      ))
+        coroutineScope = coroutineScope,
+      )
+      tab.setupLoadingIcon(composite)
+      tabs.add(tab)
 
       val editorCompositeEntry = EditorCompositeEntry(composite = composite, delayedState = fileEntry)
       openedCompositeEntries.add(editorCompositeEntry)
@@ -2532,6 +2534,24 @@ fun navigateAndSelectEditor(editor: NavigatableFileEditor, descriptor: Navigatab
 
 private fun getEditorTypeIds(composite: EditorComposite): Set<String> {
   return composite.providerSequence.mapTo(HashSet()) { it.editorTypeId }
+}
+
+internal fun TabInfo.setupLoadingIcon(composite: EditorComposite) {
+  composite.coroutineScope.launch {
+    coroutineScope {
+      launch(CoroutineName("EditorComposite(file=${composite.file.name}).setLoadingSpinner")) {
+        delay(300.milliseconds)
+        withContext(Dispatchers.EDT) {
+          this@setupLoadingIcon.setupAsyncIconLoading()
+        }
+      }
+      launch(CoroutineName("EditorComposite(file=${composite.file.name}).disableLoadingSpinner")) {
+        composite.waitForAvailable()
+        this@setupLoadingIcon.setLoaded()
+        this@coroutineScope.cancel()
+      }
+    }
+  }
 }
 
 private data class ProviderChange(

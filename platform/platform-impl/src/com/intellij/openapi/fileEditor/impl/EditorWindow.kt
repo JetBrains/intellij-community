@@ -358,6 +358,7 @@ class EditorWindow internal constructor(
         selectedEditor = composite.selectedEditor,
         parentDisposable = composite,
       )
+      tab.setupLoadingIcon(composite)
 
       watchForTabActions(composite = composite, tab = tab)
 

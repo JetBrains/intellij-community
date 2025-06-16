@@ -410,6 +410,11 @@ open class EditorsSplitters internal constructor(
   }
 
   internal fun updateFileIconImmediately(file: VirtualFile, icon: Icon) {
+    if (icon is DeferredIconImpl<*>) {
+      // Since `DeferredIcon.retrieveIcon` does not run,
+      // asyncEvaluator evaluation should be triggered manually to avoid blinking when loading spinner is done
+      icon.triggerEvaluation()
+    }
     val uiSettings = UISettings.getInstance()
     for (window in windows) {
       val (composite, tab) = window.findCompositeAndTab(file) ?: continue
@@ -1132,7 +1137,11 @@ private fun computeFileEntry(
       val file = fileProvider()
       readAction {
         computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = fileEditorManager.project)
+      }.also {
+        if (it is DeferredIconImpl<*>)
+          it.triggerEvaluation()
       }
+
     }
   }
   else {
