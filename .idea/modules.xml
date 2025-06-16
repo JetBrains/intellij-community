@@ -866,6 +866,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/macro/intellij.platform.macro.iml" filepath="$PROJECT_DIR$/platform/macro/intellij.platform.macro.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/main/intellij.platform.main/intellij.platform.main.iml" filepath="$PROJECT_DIR$/platform/main/intellij.platform.main/intellij.platform.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/managed-cache/managed.cache/intellij.platform.managed.cache.iml" filepath="$PROJECT_DIR$/platform/managed-cache/managed.cache/intellij.platform.managed.cache.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/managed-cache/managed.cache.backend/intellij.platform.managed.cache.backend.iml" filepath="$PROJECT_DIR$/platform/managed-cache/managed.cache.backend/intellij.platform.managed.cache.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" filepath="$PROJECT_DIR$/platform/markdown-utils/intellij.platform.markdown.utils.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" filepath="$PROJECT_DIR$/platform/ml-api/intellij.platform.ml.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" filepath="$PROJECT_DIR$/platform/ml-impl/intellij.platform.ml.impl.iml" />
@@ -1164,8 +1166,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/languages/kotlin/k1/intellij.turboComplete.languages.kotlin.k1.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/languages/kotlin/k1/intellij.turboComplete.languages.kotlin.k1.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.tests.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ui-designer-core/intellij.uiDesigner.iml" filepath="$PROJECT_DIR$/plugins/ui-designer-core/intellij.uiDesigner.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/managed-cache/util.io.cache/intellij.util.io.cache.iml" filepath="$PROJECT_DIR$/platform/managed-cache/util.io.cache/intellij.util.io.cache.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/managed-cache/util.io.cache.backend/intellij.util.io.cache.backend.iml" filepath="$PROJECT_DIR$/platform/managed-cache/util.io.cache.backend/intellij.util.io.cache.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/changeReminder/intellij.vcs.changeReminder.iml" filepath="$PROJECT_DIR$/plugins/changeReminder/intellij.vcs.changeReminder.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git4idea/intellij.vcs.git.iml" filepath="$PROJECT_DIR$/plugins/git4idea/intellij.vcs.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/git-modal-commit/intellij.vcs.git.commit.modal.iml" filepath="$PROJECT_DIR$/plugins/git-modal-commit/intellij.vcs.git.commit.modal.iml" />

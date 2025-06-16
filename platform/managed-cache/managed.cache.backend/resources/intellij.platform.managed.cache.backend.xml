@@ -4,6 +4,6 @@
     <module name="intellij.platform.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.util.io.cache.backend.RemoteManagedCacheApiImplProvider"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.managed.cache.backend.RemoteManagedCacheApiImplProvider"/>
   </extensions>
 </idea-plugin>

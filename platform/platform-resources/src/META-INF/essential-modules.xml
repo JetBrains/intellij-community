@@ -41,8 +41,8 @@
     <module name="intellij.platform.editor"/>
     <module name="intellij.platform.editor.backend"/>
     <module name="intellij.platform.editor.frontend"/>
-    <module name="intellij.util.io.cache" loading="embedded"/>
-    <module name="intellij.util.io.cache.backend"/>
+    <module name="intellij.platform.managed.cache" loading="embedded"/>
+    <module name="intellij.platform.managed.cache.backend"/>
 
     <module name="intellij.platform.debugger.impl.frontend"/>
     <module name="intellij.platform.debugger.impl.backend"/>
