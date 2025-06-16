@@ -46,8 +46,8 @@ import org.jetbrains.jewel.ui.component.styling.LinkUnderlineBehavior.ShowOnHove
 import org.jetbrains.jewel.ui.component.styling.LocalLinkStyle
 import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.focusOutline
-import org.jetbrains.jewel.ui.grayFilter
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 
@@ -302,7 +302,7 @@ private fun LinkImpl(
             Icon(
                 key = icon,
                 contentDescription = null,
-                modifier = Modifier.size(style.metrics.iconSize).thenIf(!linkState.isEnabled) { grayFilter() },
+                modifier = Modifier.size(style.metrics.iconSize).thenIf(!linkState.isEnabled) { disabledAppearance() },
                 hint = Stateful(linkState),
             )
         }

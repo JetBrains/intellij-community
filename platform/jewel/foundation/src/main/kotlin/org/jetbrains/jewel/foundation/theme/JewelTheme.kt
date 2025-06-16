@@ -12,9 +12,9 @@ import java.util.UUID
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
+import org.jetbrains.jewel.foundation.LocalDisabledAppearanceValues
 import org.jetbrains.jewel.foundation.LocalGlobalColors
 import org.jetbrains.jewel.foundation.LocalGlobalMetrics
-import org.jetbrains.jewel.foundation.LocalGrayFilterValues
 
 public interface JewelTheme {
     public companion object {
@@ -69,7 +69,7 @@ public fun JewelTheme(theme: ThemeDefinition, content: @Composable () -> Unit) {
         LocalConsoleTextStyle provides theme.consoleTextStyle,
         LocalGlobalColors provides theme.globalColors,
         LocalGlobalMetrics provides theme.globalMetrics,
-        LocalGrayFilterValues provides theme.grayFilterValues,
+        LocalDisabledAppearanceValues provides theme.disabledAppearanceValues,
         content = content,
     )
 }

@@ -39,7 +39,7 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.ComboBoxStyle
-import org.jetbrains.jewel.ui.grayFilter
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.theme.comboBoxStyle
 
 /**
@@ -330,7 +330,7 @@ public fun ListComboBox(
             itemKeys = itemKeys,
             itemContent = { item, isSelected, isActive ->
                 SimpleListItem(
-                    modifier = Modifier.thenIf(enabled) { grayFilter() },
+                    modifier = Modifier.thenIf(!enabled) { disabledAppearance() },
                     text = item,
                     selected = isSelected,
                     active = isActive,

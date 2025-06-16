@@ -47,8 +47,8 @@ import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.focusOutline
-import org.jetbrains.jewel.ui.grayFilter
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.dropdownStyle
@@ -139,7 +139,7 @@ public fun Dropdown(
             ) {
                 val alpha = if (dropdownState.isEnabled) 1f else 0.5f
                 Icon(
-                    modifier = Modifier.alpha(alpha).thenIf(dropdownState.isEnabled) { grayFilter() },
+                    modifier = Modifier.alpha(alpha).thenIf(!dropdownState.isEnabled) { disabledAppearance() },
                     key = style.icons.chevronDown,
                     contentDescription = "Dropdown Chevron",
                     hint = Stateful(dropdownState),

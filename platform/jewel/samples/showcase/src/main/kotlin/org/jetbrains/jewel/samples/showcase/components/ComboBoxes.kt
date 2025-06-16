@@ -28,7 +28,7 @@ import org.jetbrains.jewel.ui.component.PopupContainer
 import org.jetbrains.jewel.ui.component.PopupManager
 import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
-import org.jetbrains.jewel.ui.grayFilter
+import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
@@ -143,7 +143,7 @@ private fun ListComboBoxes() {
                 itemKeys = { index, _ -> index },
                 itemContent = { item, isSelected, isActive ->
                     SimpleListItem(
-                        modifier = Modifier.grayFilter(),
+                        modifier = Modifier.disabledAppearance(),
                         text = item.name,
                         selected = isSelected,
                         active = isActive,
