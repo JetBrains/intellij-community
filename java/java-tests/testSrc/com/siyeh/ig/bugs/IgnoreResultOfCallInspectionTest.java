@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -9,7 +9,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings({"ResultOfMethodCallIgnored", "UnusedReturnValue"})
+@SuppressWarnings("ALL")
 public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected LocalInspectionTool getInspection() {
@@ -53,8 +53,7 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         import javax.annotation.meta.When;
         
         @Documented
-        @Target( { ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE,
-                ElementType.PACKAGE })
+        @Target({ ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE, ElementType.PACKAGE })
         @Retention(RetentionPolicy.RUNTIME)
         public @interface CheckReturnValue {
             When when() default When.ALWAYS;
@@ -62,22 +61,45 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """,
       """
         package com.google.errorprone.annotations;
+        import static java.lang.annotation.ElementType.CONSTRUCTOR;
+        import static java.lang.annotation.ElementType.METHOD;
+        import static java.lang.annotation.ElementType.PACKAGE;
+        import static java.lang.annotation.ElementType.TYPE;
+        import static java.lang.annotation.RetentionPolicy.RUNTIME;
         import java.lang.annotation.Documented;
-        import java.lang.annotation.ElementType;
         import java.lang.annotation.Retention;
-        import java.lang.annotation.RetentionPolicy;
         import java.lang.annotation.Target;
         @Documented
-         @Target({METHOD,CONSTRUCTOR,TYPE,PACKAGE})
-         @Retention(value=RUNTIME)
+        @Target({METHOD,CONSTRUCTOR,TYPE,PACKAGE})
+        @Retention(value=RUNTIME)
+        public @interface CheckReturnValue {}
+        """,
+      """
+        package org.jetbrains.annotations;
+        import java.lang.annotation.Documented;
+        import java.lang.annotation.ElementType;
+        import java.lang.annotation.Target;
+        @Documented
+        @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE, ElementType.PACKAGE})
+        public @interface CheckReturnValue {}
+        """,
+      """
+        package org.springframework.lang;
+        import java.lang.annotation.Documented;
+        import java.lang.annotation.ElementType;
+        import java.lang.annotation.Target;
+        @Documented
+        @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.TYPE, ElementType.PACKAGE})
         public @interface CheckReturnValue {}
         """,
       """
         package org.assertj.core.util;
-        import java.lang.annotation.Documented;
-        import java.lang.annotation.ElementType;
+        import static java.lang.annotation.ElementType.CONSTRUCTOR;
+        import static java.lang.annotation.ElementType.METHOD;
+        import static java.lang.annotation.ElementType.PACKAGE;
+        import static java.lang.annotation.ElementType.TYPE;
+        import static java.lang.annotation.RetentionPolicy.RUNTIME;
         import java.lang.annotation.Retention;
-        import java.lang.annotation.RetentionPolicy;
         import java.lang.annotation.Target;
         @Target({CONSTRUCTOR,METHOD,PACKAGE,TYPE})
         @Retention(value=CLASS)
@@ -164,6 +186,42 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         public abstract int write(ByteBuffer src) throws IOException;
       }
       """};
+  }
+
+  public void testJetbrainsAnnotationOnClass() {
+    doTest("""
+             import org.jetbrains.annotations.CheckReturnValue;
+             
+             @CheckReturnValue
+             class Test {
+             
+                 String foo() {
+                    return "foo";
+                 }
+             
+                 public static void main(String[] args){
+                   new Test()./*Result of 'Test.foo()' is ignored*/foo/**/();
+                 }
+             }
+             """);
+  }
+
+  public void testSpringAnnotationOnClass() {
+    doTest("""
+             import org.springframework.lang.CheckReturnValue;
+             
+             @CheckReturnValue
+             class Test {
+             
+                 String foo() {
+                    return "foo";
+                 }
+             
+                 public static void main(String[] args){
+                   new Test()./*Result of 'Test.foo()' is ignored*/foo/**/();
+                 }
+             }
+             """);
   }
 
   public void testCanIgnoreReturnValue() {
@@ -277,7 +335,7 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
                 ignoreMe(); // <- also inspection
             }
         }
-         """);
+        """);
   }
 
   public void testCustomCheckReturnValue() {
@@ -716,29 +774,28 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
   }
 
   public void testArgumentSideEffects() {
-    doTest(
-        """
-      import java.nio.channels.FileChannel;
-      import java.nio.ByteBuffer;
-      import java.io.IOException;
-      class X {
-        public static void withoutSideEffects(FileChannel fch, ByteBuffer[] srcs) throws IOException {
-          fch./*Result of 'FileChannel.write()' is ignored*/write/**/(srcs);
-        }
-        public static long useResult(FileChannel fch, ByteBuffer[] srcs) throws IOException {
-          return fch.write(srcs);
-        }
-        public static void hasSideEffect(FileChannel fch, ByteBuffer[] srcs) throws IOException {
-          do{
-            fch.write(srcs);
-          } while (test(srcs));
-        }
-        
-        public static boolean test(ByteBuffer[] srcs){
-          return srcs[0].hasRemaining();
-        }
-      }
-    """);
+    doTest("""
+             import java.nio.channels.FileChannel;
+             import java.nio.ByteBuffer;
+             import java.io.IOException;
+             class X {
+               public static void withoutSideEffects(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+                 fch./*Result of 'FileChannel.write()' is ignored*/write/**/(srcs);
+               }
+               public static long useResult(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+                 return fch.write(srcs);
+               }
+               public static void hasSideEffect(FileChannel fch, ByteBuffer[] srcs) throws IOException {
+                 do{
+                   fch.write(srcs);
+                 } while (test(srcs));
+               }
+             
+               public static boolean test(ByteBuffer[] srcs){
+                 return srcs[0].hasRemaining();
+               }
+             }
+             """);
   }
   
   public void testFragment() {
