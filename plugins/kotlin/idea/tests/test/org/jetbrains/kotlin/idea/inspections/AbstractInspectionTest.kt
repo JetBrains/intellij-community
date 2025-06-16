@@ -12,6 +12,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.jdom.Document
 import org.jdom.input.SAXBuilder
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.test.*
@@ -94,6 +95,11 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
                         file.isDirectory -> null
                         file.extension == "kt" -> {
                             val text = FileUtil.loadFile(file, true)
+
+                            val shouldBeIgnored =
+                                InTextDirectivesUtils.isDirectiveDefined(text, IgnoreTests.DIRECTIVES.of(pluginMode))
+                            if (shouldBeIgnored) return@mapNotNull null
+
                             val fileText =
                                 if (text.lines().any { it.startsWith("package") })
                                     text

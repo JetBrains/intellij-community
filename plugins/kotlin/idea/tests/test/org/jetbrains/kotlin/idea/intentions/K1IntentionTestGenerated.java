@@ -16101,6 +16101,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/removeExplicitTypeArguments/unnecessaryDefinitelyNonNullableTypeArg.kt");
         }
 
+        @TestMetadata("valueDeclaration.kt")
+        public void testValueDeclaration() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclaration.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiver.kt")
+        public void testValueDeclarationWithReceiver() throws Exception {
+            runTest("testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiver.kt");
+        }
+
         @TestMetadata("variableString.kt")
         public void testVariableString() throws Exception {
             runTest("testData/intentions/removeExplicitTypeArguments/variableString.kt");

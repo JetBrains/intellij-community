@@ -17147,6 +17147,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/unnecessaryDefinitelyNonNullableTypeArg.kt");
         }
 
+        @TestMetadata("valueDeclaration.kt")
+        public void testValueDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/valueDeclaration.kt");
+        }
+
+        @TestMetadata("valueDeclarationWithReceiver.kt")
+        public void testValueDeclarationWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/valueDeclarationWithReceiver.kt");
+        }
+
         @TestMetadata("variableString.kt")
         public void testVariableString() throws Exception {
             runTest("../../../idea/tests/testData/intentions/removeExplicitTypeArguments/variableString.kt");
