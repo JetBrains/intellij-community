@@ -16,5 +16,5 @@ class GradleCoverageExtension: JavaCoverageEngineExtension() {
   override fun isApplicableTo(conf: RunConfigurationBase<*>?) =
     conf is ExternalSystemRunConfiguration &&
     GradleConstants.SYSTEM_ID == conf.settings.externalSystemId &&
-    (conf as? GradleRunConfiguration)?.isCoverageSupported == true
+    (conf as? GradleRunConfiguration)?.isCoverageDisabled == false
 }

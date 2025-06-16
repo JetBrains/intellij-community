@@ -47,7 +47,7 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     return profile instanceof ExternalSystemRunConfiguration &&
            DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) &&
-           ((ExternalSystemRunConfiguration)profile).isDebuggingSupported();
+           !((ExternalSystemRunConfiguration)profile).isDebuggingDisabled();
   }
 
   @Override

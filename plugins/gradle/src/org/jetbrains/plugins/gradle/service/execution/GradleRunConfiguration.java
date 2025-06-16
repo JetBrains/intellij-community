@@ -37,8 +37,8 @@ public class GradleRunConfiguration
   private static final String DEBUG_ALL_NAME = "DebugAllEnabled";
   private static final String RUN_AS_TEST_NAME = "RunAsTest";
 
-  private static final String PROFILING_SUPPORTED_NAME = "GradleProfilingSupported";
-  private static final String COVERAGE_SUPPORTED_NAME = "GradleCoverageSupported";
+  private static final String PROFILING_DISABLED_NAME = "GradleProfilingDisabled";
+  private static final String COVERAGE_DISABLED_NAME = "GradleCoverageDisabled";
 
   public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
   public static final Key<Boolean> RUN_AS_TEST_KEY = Key.create("RUN_AS_TEST");
@@ -48,17 +48,17 @@ public class GradleRunConfiguration
   private boolean isRunAsTest = false;
 
   /**
-   * Determines if the profiler should support this run configuration.
+   * Determines if the profiler should be disabled for this run configuration.
    * @see com.intellij.gradle.profiler.GradleProfilerStarterExtension
-   * This will cause the profiling action to be hidden in the IDE unless another JavaProfilerStarterExtension accepts the run configuration.
+   * When true, this will cause the profiling action to be hidden in the IDE unless another JavaProfilerStarterExtension accepts the run configuration.
    */
-  private boolean isProfilingSupported = true;
+  private boolean isProfilingDisabled = false;
   /**
-   * Determines if the CoverageEngine should support this run configuration.
+   * Determines if the CoverageEngine should be disabled for this run configuration.
    * @see org.jetbrains.plugins.gradle.execution.test.runner.GradleCoverageExtension
-   * This will cause the coverage action to be hidden in the IDE unless another JavaCoverageEngineExtension accepts the run configuration.
+   * When true, this will cause the coverage action to be hidden in the IDE unless another JavaCoverageEngineExtension accepts the run configuration.
    */
-  private boolean isCoverageSupported = true;
+  private boolean isCoverageDisabled = false;
 
   public GradleRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(GradleConstants.SYSTEM_ID, project, factory, name);
@@ -86,20 +86,20 @@ public class GradleRunConfiguration
   }
 
 
-  public boolean isProfilingSupported() {
-    return isProfilingSupported;
+  public boolean isProfilingDisabled() {
+    return isProfilingDisabled;
   }
 
-  public void setProfilingSupported(boolean profilingSupported) {
-    this.isProfilingSupported = profilingSupported;
+  public void setProfilingDisabled(boolean profilingDisabled) {
+    this.isProfilingDisabled = profilingDisabled;
   }
 
-  public boolean isCoverageSupported() {
-    return isCoverageSupported;
+  public boolean isCoverageDisabled() {
+    return isCoverageDisabled;
   }
 
-  public void setCoverageSupported(boolean coverageSupported) {
-    this.isCoverageSupported = coverageSupported;
+  public void setCoverageDisabled(boolean coverageDisabled) {
+    this.isCoverageDisabled = coverageDisabled;
   }
 
   public @NotNull String getRawCommandLine() {
@@ -143,8 +143,8 @@ public class GradleRunConfiguration
       setRunAsTest(isRunAsTest);
     }
 
-    readExternalBoolean(element, PROFILING_SUPPORTED_NAME, this::setProfilingSupported);
-    readExternalBoolean(element, COVERAGE_SUPPORTED_NAME, this::setCoverageSupported);
+    readExternalBoolean(element, PROFILING_DISABLED_NAME, this::setProfilingDisabled);
+    readExternalBoolean(element, COVERAGE_DISABLED_NAME, this::setCoverageDisabled);
   }
 
   @Override
@@ -152,8 +152,8 @@ public class GradleRunConfiguration
     super.writeExternal(element);
     writeExternalBoolean(element, DEBUG_ALL_NAME, isDebugAllEnabled());
     writeExternalBoolean(element, RUN_AS_TEST_NAME, isRunAsTest());
-    writeExternalBoolean(element, PROFILING_SUPPORTED_NAME, isProfilingSupported());
-    writeExternalBoolean(element, COVERAGE_SUPPORTED_NAME, isCoverageSupported());
+    writeExternalBoolean(element, PROFILING_DISABLED_NAME, isProfilingDisabled());
+    writeExternalBoolean(element, COVERAGE_DISABLED_NAME, isCoverageDisabled());
   }
 
   @Override
