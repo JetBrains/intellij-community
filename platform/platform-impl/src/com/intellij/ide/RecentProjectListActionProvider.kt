@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -23,12 +24,14 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentP
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.ui.UIBundle
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 open class RecentProjectListActionProvider {
   companion object {
     @JvmStatic
+    @RequiresBlockingContext
     fun getInstance(): RecentProjectListActionProvider = service<RecentProjectListActionProvider>()
 
     private val EP = ExtensionPointName.create<RecentProjectProvider>("com.intellij.recentProjectsProvider")
@@ -133,10 +136,12 @@ open class RecentProjectListActionProvider {
       emptyList()
     }
 
-    val actionsFromEP = if (Registry.`is`("ide.recent.projects.query.ep.providers")) {
+    val actionsFromEP = if (LoadingState.COMPONENTS_LOADED.isOccurred && Registry.`is` ("ide.recent.projects.query.ep.providers")) {
       EP.extensionList.flatMap { createActionsFromProvider(it) }
     }
-    else emptyList()
+    else {
+      emptyList()
+    }
 
     val mergedProjectsWithoutGroups = insertProjectsFromProvider(actionsWithoutGroup, actionsFromEP) { it.activationTimestamp }
     return (topGroups + mergedProjectsWithoutGroups + bottomGroups)
@@ -265,7 +270,7 @@ open class RecentProjectListActionProvider {
   }
 
   /**
-   * Returns true if action corresponds to a specified project
+   * Returns true if the action corresponds to a specified project
    */
   open fun isCurrentProjectAction(project: Project, action: ReopenProjectAction): Boolean = action.projectPath == project.basePath
 }
@@ -348,7 +353,7 @@ internal class RemoteRecentProjectAction(val projectId: String, val project: Rec
   override val providerIcon: Icon? get() = project.providerIcon
   override val activationTimestamp: Long? get() = project.activationTimestamp
 
-  override val status: ProjectStatus?
+  override val status: ProjectStatus
     get() {
       val status = project.status
       return ProjectStatus(status.isOpened, status.statusText, status.progressText)
