@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenc
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.doNeedToPutParentheses
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.UnclearPrecedenceOfBinaryExpressionInspection.Holder.toUnified
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.lang.BinaryOperationPrecedence
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.parsing.KotlinExpressionParsing.BinaryOperationPrecedence
 import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
@@ -169,13 +169,13 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
             BinaryOperationPrecedence.MULTIPLICATIVE to listOf(BinaryOperationPrecedence.ELVIS)
         ).onEach { (key, value) ->
             value.forEach { check(key < it) }
-        }.map { item -> Pair(item.first, item.second.flatMap { it.operations.types.toList() }) }
+        }.map { item -> Pair(item.first, item.second.flatMap { it.tokens.toList() }) }
 
         fun isRecommendedToPutParentheses(unifiedBinaryExpression: UnifiedBinaryExpression): Boolean {
             val parent = unifiedBinaryExpression.expression.parent?.toUnified() ?: return false
 
             return childToUnclearPrecedenceParentsMapping.any { mappingItem ->
-                unifiedBinaryExpression.operation.getReferencedNameElementType() in mappingItem.first.operations &&
+                unifiedBinaryExpression.operation.getReferencedNameElementType() in mappingItem.first.tokenSet &&
                         parent.operation.getReferencedNameElementType() in mappingItem.second
             }
         }
