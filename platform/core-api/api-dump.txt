@@ -178,7 +178,7 @@ com.intellij.lang.ITokenTypeRemapper
 - a:filter(com.intellij.psi.tree.IElementType,I,I,java.lang.CharSequence):com.intellij.psi.tree.IElementType
 com.intellij.lang.InjectableLanguage
 c:com.intellij.lang.LanguageExtension
-- allForLanguageWithDefault(com.intellij.lang.Language):java.util.List
+- f:allForLanguageWithDefault(com.intellij.lang.Language):java.util.List
 com.intellij.lang.LightPsiParser
 - a:parseLight(com.intellij.psi.tree.IElementType,com.intellij.lang.PsiBuilder):V
 com.intellij.lang.LighterASTNode

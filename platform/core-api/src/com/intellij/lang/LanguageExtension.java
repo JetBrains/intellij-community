@@ -72,6 +72,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private void clearCacheForLanguage(@NotNull Language language) {
     language.putUserData(cacheKey, null);
     language.putUserData(allCacheKey, null);
+    language.putUserData(allCacheWithDefaultKey, null);
     super.invalidateCacheForExtension(language.getID());
   }
 
@@ -133,7 +134,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
    * Returns all extensions registered for the language and basic dialects, including the default implementation when it is available.
    *  @see #allForLanguage(Language)
    */
-  public @NotNull @Unmodifiable List<T> allForLanguageWithDefault(@NotNull Language language) {
+  public final @NotNull @Unmodifiable List<T> allForLanguageWithDefault(@NotNull Language language) {
     if (defaultImplementation == null) {
       return allForLanguage(language);
     }
