@@ -86,6 +86,11 @@ open class TestingOptions {
   var mainModule: String? = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true) ?: OLD_MAIN_MODULE
 
   /**
+   * Abort tests execution if [mainModule] does not match the module specified in the Run Configuration from [testConfigurations].
+   */
+  var validateMainModule: Boolean = System.getProperty("intellij.build.test.main.module.validate")?.toBooleanStrict() ?: false
+
+  /**
    * Specifies a custom test suite, [BOOTSTRAP_SUITE_DEFAULT] is using by default.
    */
   var bootstrapSuite: String = System.getProperty("intellij.build.test.bootstrap.suite", BOOTSTRAP_SUITE_DEFAULT)
