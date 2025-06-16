@@ -211,7 +211,7 @@ fun checkVisibilityConflictsForInternalUsages(
                 val usageElement = usageInfo.element as? KtElement ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
                 val isVisible = if (referencedDeclaration is KtNamedDeclaration) {
-                    analyze(referencedDeclaration) {
+                    analyze(usageElement) {
                         val referencedDeclarationKaModule = referencedDeclaration.module?.toKaSourceModuleForProductionOrTest()
                         val symbol = referencedDeclaration.symbol
                         val visibility = if (symbol is KaConstructorSymbol) {
