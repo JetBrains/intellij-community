@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import kotlinx.coroutines.*
@@ -39,22 +36,39 @@ class EdtScheduler(@JvmField val coroutineScope: CoroutineScope) {
     }
   }
 
+  fun schedule(delayMillis: Int, kind: UiDispatcherKind, task: Runnable): Job {
+    return schedule(delay = delayMillis.milliseconds, task = task, modality = ModalityState.defaultModalityState(), kind = kind)
+  }
+
   fun schedule(delayMillis: Int, task: Runnable): Job {
-    return schedule(delay = delayMillis.milliseconds, task = task, modality = ModalityState.defaultModalityState())
+    @Suppress("UsagesOfObsoleteApi")
+    return schedule(delay = delayMillis.milliseconds, task = task, modality = ModalityState.defaultModalityState(), kind = UiDispatcherKind.LEGACY)
   }
 
   fun schedule(delay: Duration, task: Runnable): Job {
-    return schedule(delay = delay, task = task, modality = ModalityState.defaultModalityState())
+    @Suppress("UsagesOfObsoleteApi")
+    return schedule(delay = delay, task = task, modality = ModalityState.defaultModalityState(), kind = UiDispatcherKind.LEGACY)
   }
 
-  fun schedule(delay: Int, modality: ModalityState, task: Runnable): Job {
-    return schedule(delay = delay.milliseconds, modality = modality, task = task)
+  @JvmOverloads
+  fun schedule(
+    delay: Int,
+    modality: ModalityState,
+    @Suppress("UsagesOfObsoleteApi") kind: UiDispatcherKind = UiDispatcherKind.LEGACY,
+    task: Runnable,
+  ): Job {
+    return schedule(delay = delay.milliseconds, modality = modality, task = task, kind = kind)
   }
 
-  fun schedule(delay: Duration, modality: ModalityState, task: Runnable): Job {
+  fun schedule(
+    delay: Duration,
+    modality: ModalityState,
+    @Suppress("UsagesOfObsoleteApi") kind: UiDispatcherKind = UiDispatcherKind.LEGACY,
+    task: Runnable,
+  ): Job {
     return coroutineScope.launch {
       delay(delay)
-      withContext(Dispatchers.EDT + modality.asContextElement()) {
+      withContext(Dispatchers.ui(kind) + modality.asContextElement()) {
         task.run()
       }
     }
