@@ -180,6 +180,8 @@ public interface EditorEx extends Editor {
   void setEmbeddedIntoDialogWrapper(boolean b);
 
   @Override
+  @Nullable
+  @ApiStatus.Obsolete
   VirtualFile getVirtualFile();
 
   @NotNull
