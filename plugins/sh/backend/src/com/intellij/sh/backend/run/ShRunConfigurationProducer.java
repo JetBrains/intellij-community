@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.run;
+package com.intellij.sh.backend.run;
 
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
@@ -13,10 +13,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.run.ShRunConfiguration;
+import com.intellij.sh.run.ShConfigurationType;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.sh.run.ShRunFileAction.parseInterpreterAndOptions;
+import static com.intellij.sh.backend.run.ShRunFileAction.parseInterpreterAndOptions;
 
 final class ShRunConfigurationProducer extends LazyRunConfigurationProducer<ShRunConfiguration> {
   @Override

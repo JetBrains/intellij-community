@@ -4,12 +4,28 @@
     <module name="intellij.platform.backend"/>
   </dependencies>
 
+  <resource-bundle>messages.ShBundle</resource-bundle>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.runMarkerContributionAdditionalCondition"
+                    interface="com.intellij.sh.run.ShRunnerAdditionalCondition"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.sh.codeInsight.ShPsiReferenceSupport"
                         serviceImplementation="com.intellij.sh.backend.codeInsight.ShBackendPsiReferenceSupport" />
 
     <lang.findUsagesProvider language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShFindUsagesProvider"/>
     <targetElementEvaluator language="Shell Script" implementationClass="com.intellij.sh.backend.codeInsight.ShTargetElementEvaluator"/>
+    <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
+    <runConfigurationProducer implementation="com.intellij.sh.backend.run.ShRunConfigurationProducer"/>
+    <programRunner implementation="com.intellij.sh.backend.run.ShRunProgramRunner"/>
+    <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
+    <runLineMarkerContributor language="" implementationClass="com.intellij.sh.backend.run.ShRunLineMarkerContributor"/>
   </extensions>
 
+  <actions>
+    <action id="runShellFileAction" class="com.intellij.sh.backend.run.ShRunFileAction" use-shortcut-of="RunClass"/>
+  </actions>
 </idea-plugin>

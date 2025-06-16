@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.sh.run;
+package com.intellij.sh.backend.run;
 
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.RunManager;
@@ -21,6 +21,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.sh.parser.ShShebangParserUtil;
 import com.intellij.sh.psi.ShFile;
+import com.intellij.sh.run.ShRunConfiguration;
+import com.intellij.sh.run.ShConfigurationType;
+import com.intellij.sh.run.ShRunnerAdditionalCondition;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 

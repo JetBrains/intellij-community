@@ -2,9 +2,6 @@
   <resource-bundle>messages.ShBundle</resource-bundle>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.runMarkerContributionAdditionalCondition"
-                    interface="com.intellij.sh.run.ShRunnerAdditionalCondition"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.shellOccurrencesHighlightingSuppressor"
                     interface="com.intellij.sh.highlighting.ShOccurrencesHighlightingSuppressor"
                     dynamic="true"/>
@@ -46,12 +43,6 @@
                             order="after shCommand"/>
     <lang.braceMatcher language="Shell Script" implementationClass="com.intellij.sh.ShBraceMatcher"/>
     <lang.documentationProvider language="Shell Script" implementationClass="com.intellij.sh.ShDocumentationProvider"/>
-
-    <configurationType implementation="com.intellij.sh.run.ShConfigurationType"/>
-    <runConfigurationProducer implementation="com.intellij.sh.run.ShRunConfigurationProducer"/>
-    <programRunner implementation="com.intellij.sh.run.ShRunProgramRunner"/>
-    <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
-    <runLineMarkerContributor language="" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
 
     <defaultLiveTemplates file="liveTemplates/ShellScript.xml"/>
     <defaultLiveTemplates file="liveTemplates/ShellScriptArray.xml"/>
@@ -97,8 +88,6 @@
     <lang.floatingToolbar language="Shell Script" minimal="true"/>
   </extensions>
   <actions>
-    <action id="runShellFileAction" class="com.intellij.sh.run.ShRunFileAction" use-shortcut-of="RunClass"/>
-
     <group id="ShGenerateGroup">
       <action id="ShGenerateForLoop" class="com.intellij.sh.actions.ShGenerateForLoop"/>
       <action id="ShGenerateWhileLoop" class="com.intellij.sh.actions.ShGenerateWhileLoop"/>
