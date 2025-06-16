@@ -26,13 +26,13 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.application
 import com.intellij.util.asDisposable
 import io.ktor.server.cio.CIO
 import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
-import io.ktor.util.collections.ConcurrentMap
 import io.modelcontextprotocol.kotlin.sdk.*
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -47,6 +47,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.cancellation.CancellationException
 
 
@@ -189,48 +191,83 @@ class McpServerService(val cs: CoroutineScope) {
         getLastFocusedOrOpenedProject()
       }
 
-      class DocumentContent(val document: Document, val content: String)
-
-      val contentBefore = ConcurrentMap<VirtualFile, DocumentContent>()
+      val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
+      val initialDocumentContents = ConcurrentHashMap<Document, String>()
 
       val callResult = coroutineScope {
 
-        // TODO support file move/delete events
         VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
-          for (event in events) {
-
-          }
-          return@AsyncFileListener object : AsyncFileListener.ChangeApplier {
-            override fun afterVfsChange() {
-
-            }
-          }
+          vfsEvent.addAll(events)
+          // probably we have to read initial contents here
+          // see comment below near `is VFileContentChangeEvent`
+          return@AsyncFileListener object : AsyncFileListener.ChangeApplier {}
         })
 
         val documentListener = object : DocumentListener {
           // record content before any change
           override fun beforeDocumentChange(event: DocumentEvent) {
-            val virtualFile = FileDocumentManager.getInstance().getFile(event.document) ?: return
-            contentBefore.putIfAbsent(virtualFile, DocumentContent(event.document, event.document.text))
+            initialDocumentContents.computeIfAbsent(event.document) { event.document.text }
           }
-
-          override fun documentChanged(event: DocumentEvent) = Unit
         }
 
         EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener, this.asDisposable())
 
         @Suppress("IncorrectCancellationExceptionHandling")
         try {
+          application.messageBus.syncPublisher(ToolCallListener.TOPIC).beforeMcpToolCall(this@mcpToolToRegisteredTool.descriptor)
+
           logger.trace { "Start calling tool '${this@mcpToolToRegisteredTool.descriptor.name}'" }
           val result = withContext(ProjectContextElement(project)) {
             this@mcpToolToRegisteredTool.call(request.arguments)
           }
+
           logger.trace { "Tool call successful '${this@mcpToolToRegisteredTool.descriptor.name}'" }
           try {
-            val events = contentBefore.mapNotNull { entry ->
-              DocumentChangeEvent(entry.value.document, entry.key,entry.value.content, readAction { entry.value.document.text })
+            val processedChangedFiles = mutableSetOf<VirtualFile>()
+            val events = mutableListOf<McpToolSideEffectEvent>()
+
+            for ((doc, oldContent) in initialDocumentContents) {
+              val virtualFile = FileDocumentManager.getInstance().getFile(doc) ?: continue
+              val newContent = readAction { doc.text }
+              events.add(FileContentChangeEvent(virtualFile, oldContent, newContent))
+              processedChangedFiles.add(virtualFile)
             }
-            application.messageBus.syncPublisher(ToolCallDocumentChangeListener.TOPIC).documentsChanged(this@mcpToolToRegisteredTool.descriptor, events)
+
+            for (event in vfsEvent) {
+              when (event) {
+                is VFileMoveEvent -> {
+                  events.add(FileMovedEvent(event.file, event.oldParent, event.newParent))
+                }
+                is VFileCreateEvent -> {
+                  val virtualFile = event.file ?: continue
+                  val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
+                  events.add(FileCreatedEvent(virtualFile, newContent))
+                }
+                is VFileDeleteEvent -> {
+                  val virtualFile = event.file
+                  val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile) } ?: continue
+                  val oldContent = initialDocumentContents[document]
+                  events.add(FileDeletedEvent(virtualFile, oldContent))
+                }
+                is VFileCopyEvent -> {
+                  val createdFile = event.findCreatedFile() ?: continue
+                  val newContent = readAction { FileDocumentManager.getInstance().getDocument(createdFile)?.text } ?: continue
+                  events.add(FileCreatedEvent(createdFile, newContent))
+                }
+                is VFileContentChangeEvent -> {
+                  // reported in documents loop
+                  if (processedChangedFiles.contains(event.file)) continue
+                  val virtualFile = event.file
+                  val newContent = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)?.text } ?: continue
+                  // Important: there may be a case when file is changed via low level change (like File.replaceText).
+                  // in this case we don't track the old content, because it may be heavy, it requires loading the file in
+                  // AsyncFileListener above and decoding with encoding etc. The file can be binary etc.
+                  events.add(FileContentChangeEvent(virtualFile, oldContent = null, newContent = newContent))
+                }
+              }
+            }
+
+            application.messageBus.syncPublisher(ToolCallListener.TOPIC).afterMcpToolCall(this@mcpToolToRegisteredTool.descriptor, events)
           }
           catch (ce: CancellationException) {
             throw ce
