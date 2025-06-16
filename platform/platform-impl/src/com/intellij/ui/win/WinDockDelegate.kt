@@ -1,153 +1,117 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.win;
+package com.intellij.ui.win
 
-import com.intellij.ide.RecentProjectListActionProvider;
-import com.intellij.ide.ReopenProjectAction;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.impl.SystemDock;
-import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
-import org.jetbrains.annotations.SystemIndependent;
+import com.intellij.ide.RecentProjectListActionProvider
+import com.intellij.ide.ReopenProjectAction
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.SystemDock
+import com.intellij.ui.win.WinShellIntegration.VoidShellTask
+import com.intellij.util.PathUtil
+import java.nio.file.Path
+import java.util.concurrent.Callable
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+private val LOG = logger<WinDockDelegate>()
 
+internal class WinDockDelegate private constructor(private val wsiFuture: Future<WinShellIntegration?>) : SystemDock.Delegate {
+  companion object {
+    @JvmField val instance: WinDockDelegate
 
-/**
- * @author Nikita Provotorov
- */
-public final class WinDockDelegate implements SystemDock.Delegate {
-  public static @Nullable WinDockDelegate getInstance() {
-    return instance;
+    init {
+      val stackTraceHolder = Throwable("Asynchronously launched from here")
+
+      // Not AppExecutorUtil.getAppExecutorService() for class loading optimization
+      val wsiFuture = ApplicationManager.getApplication().executeOnPooledThread(Callable {
+        try {
+          @Suppress("SpellCheckingInspection")
+          if (!Registry.`is`("windows.jumplist")) {
+            return@Callable null
+          }
+
+          return@Callable WinShellIntegration.getInstance()
+        }
+        catch (err: Throwable) {
+          err.addSuppressed(stackTraceHolder)
+          LOG.error("Failed to initialize com.intellij.ui.win.WinShellIntegration instance", err)
+          return@Callable null
+        }
+      })
+      instance = WinDockDelegate(wsiFuture)
+    }
   }
 
-  @Override
-  public void updateRecentProjectsMenu() {
-    final var stackTraceHolder = new Throwable("Asynchronously launched from here");
+  override fun updateRecentProjectsMenu() {
+    val stackTraceHolder = Throwable("Asynchronously launched from here")
 
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread {
       try {
-        final var wsi = wsiFuture.get(30, TimeUnit.SECONDS);
-        if (wsi == null) {
-          return;
-        }
+        val wsi = wsiFuture.get(30, TimeUnit.SECONDS) ?: return@executeOnPooledThread
 
-        final List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
-        final @NotNull JumpTask @NotNull [] jumpTasks = convertToJumpTasks(recentProjectActions);
-
-        wsi.postShellTask((final @NotNull WinShellIntegration.ShellContext ctx) -> {
-          ctx.clearRecentTasksList();
-          ctx.setRecentTasksList(jumpTasks);
-        }).get();
+        val recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(addClearListItem = false)
+        val jumpTasks = convertToJumpTasks(recentProjectActions)
+        wsi.postShellTask(VoidShellTask {
+          it.clearRecentTasksList()
+          it.setRecentTasksList(jumpTasks.toTypedArray())
+        }).get()
       }
-      catch (final InterruptedException e) {
-        e.addSuppressed(stackTraceHolder);
-        LOG.warn(e);
+      catch (e: InterruptedException) {
+        e.addSuppressed(stackTraceHolder)
+        LOG.warn(e)
       }
-      catch (final Throwable e) {
-        e.addSuppressed(stackTraceHolder);
-        LOG.error(e);
+      catch (e: Throwable) {
+        e.addSuppressed(stackTraceHolder)
+        LOG.error(e)
       }
-    });
+    }
   }
+}
 
+private fun convertToJumpTasks(actions: List<AnAction>): List<JumpTask> {
+  val launcherFileName = ApplicationNamesInfo.getInstance().scriptName + "64.exe"
+  val launcherPath = Path.of(PathManager.getBinPath(), launcherFileName).toString()
 
-  private WinDockDelegate(final @NotNull Future<@Nullable WinShellIntegration> wsiFuture) {
-    this.wsiFuture = wsiFuture;
-  }
-
-
-  private static @NotNull JumpTask @NotNull [] convertToJumpTasks(final @NotNull List<AnAction> actions) {
-    final String launcherFileName = ApplicationNamesInfo.getInstance().getScriptName() + "64.exe";
-    final String launcherPath = Paths.get(PathManager.getBinPath(), launcherFileName).toString();
-
-    final @NotNull JumpTask @NotNull [] result = new JumpTask[actions.size()];
-
-    int i = 0;
-    for (final var action : actions) {
-      if (!(action instanceof ReopenProjectAction reopenProjectAction)) {
-        LOG.debug("Failed to convert an action \"" + action + "\" to Jump Task: the action is not ReopenProjectAction");
-        continue;
-      }
-
-      final @SystemIndependent String projectPath = reopenProjectAction.getProjectPath();
-      final @SystemDependent String projectPathSystem = PathUtil.toSystemDependentName(projectPath);
-
-      if (Strings.isEmptyOrSpaces(projectPathSystem)) {
-        LOG.debug("Failed to convert a ReopenProjectAction \"" + reopenProjectAction +
-                  "\" to Jump Task: path to the project is empty (\"" + projectPathSystem + "\")");
-        continue;
-      }
-
-      final @NotNull String taskTitle;
-      final @NotNull String taskTooltip;
-      {
-        final @Nullable String presentationText;
-        final @Nullable String projectName;
-
-        if (!Strings.isEmptyOrSpaces(presentationText = reopenProjectAction.getProjectDisplayName())) {
-          taskTitle = presentationText;
-          taskTooltip = presentationText + " (" + projectPathSystem + ")";
-        }
-        else if (!Strings.isEmptyOrSpaces(projectName = reopenProjectAction.getProjectNameToDisplay())) {
-          taskTitle = projectName;
-          taskTooltip = projectName + " (" + projectPathSystem + ")";
-        }
-        else {
-          taskTitle = projectPathSystem;
-          taskTooltip = projectPathSystem;
-        }
-      }
-
-      final String taskArgs = "\"" + projectPathSystem + "\"";
-
-      result[i++] = new JumpTask(taskTitle, launcherPath, taskArgs, taskTooltip);
+  val result = ArrayList<JumpTask>(actions.size)
+  for (action in actions) {
+    if (action !is ReopenProjectAction) {
+      LOG.debug { "Failed to convert an action \"$action\" to Jump Task: the action is not ReopenProjectAction" }
+      continue
     }
 
-    if (i < result.length) {
-      return Arrays.copyOf(result, i);
+    val projectPath = action.projectPath
+    val projectPathSystem = PathUtil.toSystemDependentName(projectPath)
+    if (projectPathSystem.isBlank()) {
+      LOG.debug("Failed to convert a ReopenProjectAction \"$action\" to Jump Task: path to the project is empty (\"$projectPathSystem\")")
+      continue
     }
 
-    return result;
-  }
-
-
-  private final @NotNull Future<@Nullable WinShellIntegration> wsiFuture;
-
-
-  private static final Logger LOG = Logger.getInstance(WinDockDelegate.class);
-  private static final @Nullable WinDockDelegate instance;
-
-  static {
-    final var stackTraceHolder = new Throwable("Asynchronously launched from here");
-
-    //                                                          Not AppExecutorUtil.getAppExecutorService() for class loading optimization
-    final @NotNull Future<@Nullable WinShellIntegration> wsiFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        if (!Registry.is("windows.jumplist")) {
-          return null;
-        }
-
-        return WinShellIntegration.getInstance();
+    val taskTitle: String
+    val taskTooltip: String
+    val presentationText = action.projectDisplayName
+    if (!presentationText.isNullOrBlank()) {
+      taskTitle = presentationText
+      taskTooltip = "$presentationText ($projectPathSystem)"
+    }
+    else {
+      val projectName = action.projectNameToDisplay
+      if (!projectName.isBlank()) {
+        taskTitle = projectName
+        taskTooltip = "$projectName ($projectPathSystem)"
       }
-      catch (final Throwable err) {
-        err.addSuppressed(stackTraceHolder);
-        LOG.error("Failed to initialize com.intellij.ui.win.WinShellIntegration instance", err);
-        return null;
+      else {
+        taskTitle = projectPathSystem
+        taskTooltip = projectPathSystem
       }
-    });
+    }
 
-    instance = new WinDockDelegate(wsiFuture);
+    val taskArgs = "\"" + projectPathSystem + "\""
+    result.add(JumpTask(taskTitle, launcherPath, taskArgs, taskTooltip))
   }
+  return result
 }

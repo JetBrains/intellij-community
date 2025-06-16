@@ -30,7 +30,7 @@ public final class SystemDock {
         delegate = MacDockDelegate.Companion.getInstance();
       }
       else if (SystemInfoRt.isWindows) {
-        delegate = WinDockDelegate.getInstance();
+        delegate = WinDockDelegate.instance;
       }
     }
 
