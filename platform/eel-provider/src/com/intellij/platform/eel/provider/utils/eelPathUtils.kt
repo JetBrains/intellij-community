@@ -38,13 +38,30 @@ object EelPathUtils {
   private val LOG = com.intellij.openapi.diagnostic.logger<EelPathUtils>()
 
   /**
-   * Determines whether [path] correponds to the local Eel
+   * **Obsolete – avoid it in new code.**
+   *
+   * Exposes an implementation detail (whether a given *[Path]* is stored on a _local_ or _remote_ Eel),
+   * encouraging code that behaves differently for the two cases and therefore becomes **machine-dependent**.
+   * New APIs are designed so that callers do **not** have to know where a file physically resides.
+   *
+   * @return `true` if *path* is located in the local Eel.
    */
+  @ApiStatus.Obsolete
   @JvmStatic
   fun isPathLocal(path: Path): Boolean {
     return path.getEelDescriptor() == LocalEelDescriptor
   }
 
+  /**
+   * **Obsolete – avoid it in new code.**
+   *
+   * Although positioned one level higher than *isPathLocal*, this helper still bakes in the same
+   * local-vs-remote distinction, tying callers to a specific execution environment and reducing the
+   * portability of higher-level logic.
+   *
+   * @return `true` when the project's default Eel target is local.
+   */
+  @ApiStatus.Obsolete
   @JvmStatic
   fun isProjectLocal(project: Project): Boolean {
     val projectFilePath = project.projectFilePath ?: return true
