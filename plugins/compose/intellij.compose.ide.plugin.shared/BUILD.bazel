@@ -31,6 +31,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
     "//java/java-psi-api:psi",
+    "//plugins/kotlin/code-insight/api",
   ],
   runtime_deps = [":ide-plugin-shared_resources"]
 )
@@ -71,6 +72,8 @@ jvm_library(
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
     "@lib//:kotlin-test",
+    "//plugins/kotlin/code-insight/api",
+    "//platform/editor-ui-ex:editor-ex",
   ]
 )
 

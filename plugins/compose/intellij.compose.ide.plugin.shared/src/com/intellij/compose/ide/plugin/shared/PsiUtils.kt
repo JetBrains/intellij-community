@@ -108,11 +108,11 @@ private fun KtAnnotated.getAnnotationWithCaching(
   CachedValueProvider.Result.create(annotationEntry, containingKtFile, ProjectRootModificationTracker.getInstance(project))
 }
 
-private fun KtAnnotationEntry.isComposableAnnotation(): Boolean = analyze(this) {
+internal fun KtAnnotationEntry.isComposableAnnotation(): Boolean = analyze(this) {
   classIdMatches(this@isComposableAnnotation, COMPOSABLE_ANNOTATION_CLASS_ID)
 }
 
-private fun KaSession.classIdMatches(element: KtAnnotationEntry, classId: ClassId): Boolean {
+internal fun KaSession.classIdMatches(element: KtAnnotationEntry, classId: ClassId): Boolean {
   val shortName = element.shortName ?: return false
   if (classId.shortClassName != shortName) return false
 
