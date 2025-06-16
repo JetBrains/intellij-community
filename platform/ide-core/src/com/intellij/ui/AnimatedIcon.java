@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.UiDispatcherKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.icons.IconUtilKt;
@@ -282,7 +283,7 @@ public class AnimatedIcon implements Icon {
     int delay = frame.getDelay();
     if (delay > 0) {
       requested.add(c);
-      EdtScheduler.getInstance().schedule(delay, () -> {
+      EdtScheduler.getInstance().schedule(delay, UiDispatcherKind.RELAX, () -> {
         requested.remove(c);
         if (canRefresh(c)) {
           doRefresh(c);
