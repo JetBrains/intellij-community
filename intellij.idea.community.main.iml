@@ -253,5 +253,8 @@
     <orderEntry type="module" module-name="intellij.platform.indexing.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.monorepo" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.eventListener" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.maven.server.m3.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.maven.server.m36.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.maven.server.m40" scope="RUNTIME" />
   </component>
 </module>

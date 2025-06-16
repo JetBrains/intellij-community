@@ -253,6 +253,9 @@ java_library(
     "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
     "//plugins/git-modal-commit:vcs-git-commit-modal",
     "//plugins/maven/maven-event-listener:server-eventListener",
+    "//plugins/maven/maven3-server-impl:server-m3-impl",
+    "//plugins/maven/maven36-server-impl:server-m36-impl",
+    "//plugins/maven/maven40-server-impl:server-m40",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end
