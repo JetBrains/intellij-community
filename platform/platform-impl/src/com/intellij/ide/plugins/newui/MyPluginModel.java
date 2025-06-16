@@ -92,13 +92,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     myStatusBar = statusBar != null || window == null ?
                   statusBar :
                   getStatusBar(window.getOwner());
-    if (Registry.is("reworked.plugin.manager.enabled")) {
-      List<PluginManagerCustomizer> list = PluginManagerCustomizer.EP_NAME.getExtensionList();
-      myPluginManagerCustomizer = list.isEmpty() ? null : list.get(0);
-    }
-    else {
-      myPluginManagerCustomizer = null;
-    }
+    myPluginManagerCustomizer = PluginManagerCustomizer.getInstance();
 
     updatePluginDependencies(null);
   }

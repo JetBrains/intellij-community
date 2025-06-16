@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
@@ -35,9 +36,19 @@ interface PluginManagerCustomizer {
   @Nls
   fun getAdditionalTitleText(pluginModel: PluginUiModel): String?
 
+  fun ensurePluginStatesLoaded()
+
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<PluginManagerCustomizer> = ExtensionPointName("com.intellij.pluginManagerCustomizer")
+
+    @JvmStatic
+    fun getInstance(): PluginManagerCustomizer? {
+      if (Registry.`is`("reworked.plugin.manager.enabled")) {
+        return EP_NAME.extensionList.first()
+      }
+      return null
+    }
   }
 }
 
