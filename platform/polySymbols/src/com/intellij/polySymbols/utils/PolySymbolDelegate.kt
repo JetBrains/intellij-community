@@ -9,7 +9,6 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
@@ -47,8 +46,6 @@ interface PolySymbolDelegate<T : PolySymbol> : PolySymbol, PolySymbolsScope {
     get() = delegate.extension
   override val priority: PolySymbol.Priority?
     get() = delegate.priority
-  override val pattern: PolySymbolsPattern?
-    get() = delegate.pattern
 
   override fun <T : Any> get(property: PolySymbolProperty<T>): T? =
     delegate[property]

@@ -23,7 +23,7 @@ import javax.swing.Icon
 
 open class WebTypesSymbolBase : WebTypesSymbol {
 
-  private lateinit var base: WebTypesJsonContributionAdapter
+  internal lateinit var base: WebTypesJsonContributionAdapter
 
   protected lateinit var queryExecutor: PolySymbolsQueryExecutor
 
@@ -185,7 +185,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
       PolySymbolModifier.VIRTUAL.takeIf { base.contribution.virtual == true },
       PolySymbolModifier.ABSTRACT.takeIf { base.contribution.abstract == true },
       PolySymbolModifier.READONLY.takeIf { (base.contribution as? JsProperty)?.readOnly == true },
-      when(required) {
+      when (required) {
         true -> PolySymbolModifier.REQUIRED
         false -> PolySymbolModifier.OPTIONAL
         null -> null
@@ -202,9 +202,6 @@ open class WebTypesSymbolBase : WebTypesSymbol {
             ?: superContributions.firstNotNullOfOrNull { it.asSafely<PolySymbolWithDocumentation>()?.defaultValue }
             ?: attributeValue?.default
 
-  final override val pattern: PolySymbolsPattern?
-    get() = base.jsonPattern?.wrap(base.contribution.name, origin as WebTypesJsonOrigin)
-
   final override val queryScope: List<PolySymbolsScope>
     get() = superContributions.asSequence()
       .flatMap { it.queryScope }
@@ -217,6 +214,11 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   override fun matchContext(context: PolyContext): Boolean =
     super.matchContext(context) && base.contribution.requiredContext.evaluate(context)
+
+  internal class WebTypesSymbolWithPattern(private val jsonPattern: NamePatternRoot) : WebTypesSymbolBase(), PolySymbolWithPattern {
+    override val pattern: PolySymbolsPattern
+      get() = jsonPattern.wrap(base.contribution.name, origin as WebTypesJsonOrigin)
+  }
 
   private inner class HtmlAttributeValueImpl(private val value: HtmlAttributeValue) : PolySymbolHtmlAttributeValue {
     override val kind: PolySymbolHtmlAttributeValue.Kind?

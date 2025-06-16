@@ -7,9 +7,9 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.context.PolyContext
+import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
@@ -90,8 +90,10 @@ abstract class WebTypesJsonContributionAdapter private constructor(
     ).contains(qualifiedKind)
 
   override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
-    (WebTypesSymbolFactoryEP.get(qualifiedKind)?.create() ?: WebTypesSymbolBase())
-      .also { it.init(this, queryExecutor) }
+    (this.contribution.pattern?.let { WebTypesSymbolBase.WebTypesSymbolWithPattern(it) }
+     ?: WebTypesSymbolFactoryEP.get(qualifiedKind)?.create()
+     ?: WebTypesSymbolBase()
+    ).also { it.init(this, queryExecutor) }
 
   abstract fun createPointer(): Pointer<out WebTypesJsonContributionAdapter>
 

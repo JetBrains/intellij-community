@@ -11,6 +11,7 @@ import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.js.PROP_JS_SYMBOL_KIND
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.testFramework.DebugOutputPrinter
 import com.intellij.polySymbols.utils.completeMatch
@@ -70,7 +71,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
       return this
     }
     printObject(topLevel) { level ->
-      if (source.pattern != null) {
+      if (source is PolySymbolWithPattern) {
         printProperty(level, "matchedName", source.qualifiedKind.toString() + "/<pattern>")
         printProperty(level, "name", source.name)
       }
@@ -91,7 +92,7 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
         ?.toSortedSet { a, b -> a.name.compareTo(b.name) })
       printProperty(level, "apiStatus", source.apiStatus.takeIf { it !is PolySymbolApiStatus.Stable || it.since != null })
       printProperty(level, "priority", source.priority ?: PolySymbol.Priority.NORMAL)
-      printProperty(level, "has-pattern", if (source.pattern != null) true else null)
+      printProperty(level, "has-pattern", if (source is PolySymbolWithPattern) true else null)
       printProperty(
         level, "properties",
         propertiesToPrint
@@ -113,7 +114,9 @@ open class PolySymbolsDebugOutputPrinter : DebugOutputPrinter() {
     segment: PolySymbolNameSegment,
   ): StringBuilder =
     printObject(topLevel) { level ->
-      printProperty(level, "name-part", parents.peek().let { if (it.pattern == null) segment.getName(parents.peek()) else "" })
+      printProperty(level, "name-part", parents.peek().let {
+        if (it !is PolySymbolWithPattern) segment.getName(parents.peek()) else ""
+      })
       printProperty(level, "display-name", segment.displayName)
       printProperty(level, "apiStatus", segment.apiStatus)
       printProperty(level, "priority", segment.priority?.takeIf { it != PolySymbol.Priority.NORMAL })

@@ -7,21 +7,17 @@ import com.intellij.model.Pointer
 import com.intellij.model.Symbol
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
 import com.intellij.polySymbols.utils.*
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValue
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -89,15 +85,6 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolsPrioritizedScope {
    */
   val apiStatus: PolySymbolApiStatus
     get() = PolySymbolApiStatus.Stable
-
-  /**
-   * The pattern to match names against. As a result of pattern matching a [PolySymbolMatch] will be created.
-   * A pattern may specify that a reference to other Poly Symbols is expected in some part of it.
-   * For such places, appropriate segments with referenced Poly Symbols will be created and navigation,
-   * validation and refactoring support is available out-of-the-box.
-   */
-  val pattern: PolySymbolsPattern?
-    get() = null
 
   /**
    * When pattern is being evaluated, matched symbols can provide additional scope for further resolution in the pattern.

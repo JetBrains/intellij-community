@@ -188,7 +188,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
       assert(framework == null || symbol.origin.framework == framework || symbol.origin.framework == null) {
         "PolySymbolsScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
       }
-      add(symbol.qualifiedName, symbol.pattern, symbol)
+      add(symbol.qualifiedName, (symbol as? PolySymbolWithPattern)?.pattern, symbol)
     }
 
   }

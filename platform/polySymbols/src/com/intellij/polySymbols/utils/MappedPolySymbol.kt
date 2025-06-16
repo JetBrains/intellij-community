@@ -8,6 +8,7 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 
 /**
  * A utility [PolySymbol], which allows to map
@@ -24,7 +25,7 @@ class MappedPolySymbol private constructor(
   override val origin: PolySymbolOrigin,
   vararg mappingPath: PolySymbolQualifiedName,
   override val priority: PolySymbol.Priority? = null,
-) : PolySymbol {
+) : PolySymbolWithPattern {
 
   companion object {
     @JvmOverloads

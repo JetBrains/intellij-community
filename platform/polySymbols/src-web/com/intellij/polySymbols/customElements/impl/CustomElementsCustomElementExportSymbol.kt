@@ -12,6 +12,7 @@ import com.intellij.polySymbols.customElements.json.toApiStatus
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
 class CustomElementsCustomElementExportSymbol private constructor(
@@ -19,7 +20,7 @@ class CustomElementsCustomElementExportSymbol private constructor(
   override val origin: PolySymbolOrigin,
   override val pattern: PolySymbolsPattern,
   override val apiStatus: PolySymbolApiStatus,
-) : CustomElementsSymbol, StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
+) : CustomElementsSymbol, PolySymbolWithPattern, StaticPolySymbolsScopeBase.StaticSymbolContributionAdapter {
 
   override val qualifiedKind: PolySymbolQualifiedKind
     get() = HTML_ELEMENTS

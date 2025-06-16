@@ -10,6 +10,7 @@ import com.intellij.polySymbols.patterns.ComplexPatternOptions
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
 import com.intellij.polySymbols.patterns.PolySymbolsPatternReferenceResolver
+import com.intellij.polySymbols.query.PolySymbolWithPattern
 
 /**
  * A utility [PolySymbol], which allows to reference
@@ -22,7 +23,7 @@ class ReferencingPolySymbol private constructor(
   vararg references: PolySymbolQualifiedKind,
   override val priority: PolySymbol.Priority?,
   private val location: List<PolySymbolQualifiedName> = emptyList(),
-) : PolySymbol {
+) : PolySymbolWithPattern {
 
   companion object {
     @JvmStatic

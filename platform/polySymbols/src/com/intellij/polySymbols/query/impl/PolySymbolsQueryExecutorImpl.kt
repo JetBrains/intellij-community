@@ -18,8 +18,8 @@ import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
-import com.intellij.util.SmartList
 import com.intellij.util.PlatformUtils
+import com.intellij.util.SmartList
 import com.intellij.util.applyIf
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -280,12 +280,7 @@ class PolySymbolsQueryExecutorImpl(
         .distinct()
         .filterByQueryParams(params)
         .applyIf(params.expandPatterns) {
-          flatMap {
-            if (it.pattern != null)
-              it.expandPattern(Stack(finalContext), params)
-            else
-              listOf(it)
-          }
+          flatMap { it.expandPattern(finalContext, params) }
         }
         .groupBy {
           queryParams.queryExecutor.namesProvider
@@ -453,23 +448,17 @@ class PolySymbolsQueryExecutorImpl(
     }
 
   private fun PolySymbol.expandPattern(
-    context: Stack<PolySymbolsScope>,
+    context: Collection<PolySymbolsScope>,
     params: PolySymbolsListSymbolsQueryParams,
   ): List<PolySymbol> =
-    pattern?.let { pattern ->
-      val additionalScope = this.queryScope
-      additionalScope.forEach { context.push(it) }
-      try {
-        return pattern
-          .list(this, context, params)
-          .map {
-            PolySymbolMatch.create(it.name, it.segments, qualifiedKind, origin)
-          }
-      }
-      finally {
-        additionalScope.forEach { _ -> context.pop() }
-      }
-    } ?: listOf(this)
+    if (this is PolySymbolWithPattern)
+      pattern
+        .list(this, Stack(context).apply { addAll(queryScope) }, params)
+        .map {
+          PolySymbolMatch.create(it.name, it.segments, qualifiedKind, origin)
+        }
+    else
+      listOf(this)
 
   private fun List<PolySymbol>.customizeMatches(strict: Boolean, qualifiedName: PolySymbolQualifiedName): List<PolySymbol> =
     if (isEmpty())

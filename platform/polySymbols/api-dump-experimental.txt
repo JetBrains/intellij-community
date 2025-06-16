@@ -20,7 +20,6 @@
 - a:getName():java.lang.String
 - getNavigationTargets(com.intellij.openapi.project.Project):java.util.Collection
 - a:getOrigin():com.intellij.polySymbols.PolySymbolOrigin
-- getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 - getPresentation():com.intellij.platform.backend.presentation.TargetPresentation
 - getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getPsiContext():com.intellij.psi.PsiElement
@@ -727,6 +726,9 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.polySymbols.query.PolySymbolNamesProvider$Target
 - s:values():com.intellij.polySymbols.query.PolySymbolNamesProvider$Target[]
+*:com.intellij.polySymbols.query.PolySymbolWithPattern
+- com.intellij.polySymbols.PolySymbol
+- a:getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 *:com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
 - com.intellij.polySymbols.query.PolySymbolsQueryParams
 - *sf:Companion:com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams$Companion
@@ -925,7 +927,7 @@
 *f:com.intellij.polySymbols.utils.FileUtils
 - sf:findOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 *f:com.intellij.polySymbols.utils.MappedPolySymbol
-- com.intellij.polySymbols.PolySymbol
+- com.intellij.polySymbols.query.PolySymbolWithPattern
 - *sf:Companion:com.intellij.polySymbols.utils.MappedPolySymbol$Companion
 - sf:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedName[]):com.intellij.polySymbols.utils.MappedPolySymbol
 - sf:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedName[],com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.utils.MappedPolySymbol
@@ -987,7 +989,6 @@
 - getName():java.lang.String
 - getNavigationTargets(com.intellij.openapi.project.Project):java.util.Collection
 - getOrigin():com.intellij.polySymbols.PolySymbolOrigin
-- getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 - getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - getPsiContext():com.intellij.psi.PsiElement
 - getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
@@ -1123,7 +1124,7 @@
 - getPsiContext():com.intellij.psi.PsiElement
 - getSource():com.intellij.psi.PsiElement
 *f:com.intellij.polySymbols.utils.ReferencingPolySymbol
-- com.intellij.polySymbols.PolySymbol
+- com.intellij.polySymbols.query.PolySymbolWithPattern
 - *sf:Companion:com.intellij.polySymbols.utils.ReferencingPolySymbol$Companion
 - sf:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedKind[]):com.intellij.polySymbols.utils.ReferencingPolySymbol
 - sf:create(com.intellij.polySymbols.PolySymbolQualifiedKind,java.lang.String,com.intellij.polySymbols.PolySymbolOrigin,com.intellij.polySymbols.PolySymbolQualifiedKind[],com.intellij.polySymbols.PolySymbol$Priority):com.intellij.polySymbols.utils.ReferencingPolySymbol
@@ -1205,7 +1206,6 @@
 - getModifiers():java.util.Set
 - f:getName():java.lang.String
 - f:getOrigin():com.intellij.polySymbols.PolySymbolOrigin
-- f:getPattern():com.intellij.polySymbols.patterns.PolySymbolsPattern
 - f:getPriority():com.intellij.polySymbols.PolySymbol$Priority
 - f:getQualifiedKind():com.intellij.polySymbols.PolySymbolQualifiedKind
 - pf:getQueryExecutor():com.intellij.polySymbols.query.PolySymbolsQueryExecutor

@@ -10,10 +10,7 @@ import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.impl.*
-import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsScope
+import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.json.*
@@ -93,7 +90,7 @@ private class WebTypesComplexPatternConfigProvider(
     // Allow delegate pattern to override settings
     val apiStatus = delegate?.apiStatus?.takeIf { it.isDeprecatedOrObsolete() }
                     ?: pattern.toApiStatus(origin)?.takeIf { it.isDeprecatedOrObsolete() }
-    val delegateRequired = delegate?.modifiers?.let {modifiers ->
+    val delegateRequired = delegate?.modifiers?.let { modifiers ->
       when {
         modifiers.contains(PolySymbolModifier.REQUIRED) -> true
         modifiers.contains(PolySymbolModifier.OPTIONAL) -> false
@@ -133,7 +130,8 @@ private class WebTypesComplexPatternConfigProvider(
       scopeStack: Stack<PolySymbolsScope>,
       queryExecutor: PolySymbolsQueryExecutor,
     ): List<PolySymbolCodeCompletionItem> =
-      delegate.pattern
+      (delegate as? PolySymbolWithPattern)
+        ?.pattern
         ?.complete(delegate, scopeStack,
                    this, CompletionParameters(name, queryExecutor, position), 0, name.length)
         ?.items
@@ -145,7 +143,8 @@ private class WebTypesComplexPatternConfigProvider(
       queryExecutor: PolySymbolsQueryExecutor,
       expandPatterns: Boolean,
     ): List<PolySymbol> =
-      delegate.pattern
+      (delegate as? PolySymbolWithPattern)
+        ?.pattern
         ?.list(delegate, scopeStack, this, ListParameters(queryExecutor, expandPatterns))
         ?.flatMap { listResult ->
           if (listResult.segments.size == 1
@@ -162,7 +161,8 @@ private class WebTypesComplexPatternConfigProvider(
       ?: emptyList()
 
     override fun matchName(name: String, scopeStack: Stack<PolySymbolsScope>, queryExecutor: PolySymbolsQueryExecutor): List<PolySymbol> =
-      delegate.pattern
+      (delegate as? PolySymbolWithPattern)
+        ?.pattern
         ?.match(delegate, scopeStack, null,
                 MatchParameters(name, queryExecutor), 0, name.length)
         ?.flatMap { matchResult ->
