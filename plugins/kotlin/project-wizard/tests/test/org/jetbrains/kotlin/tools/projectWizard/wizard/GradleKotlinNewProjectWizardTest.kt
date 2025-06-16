@@ -18,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.EnumSource
 import kotlin.io.path.exists
 import kotlin.io.path.extension
+import kotlin.io.path.pathString
 import kotlin.io.path.walk
 
 class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() {
@@ -64,7 +65,8 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
                 }
             })
         }.withProjectAsync { project ->
-            val hasKotlinFiles = project.projectRoot.walk().any { it.extension == "kt" }
+            val hasKotlinFiles = project.projectRoot.walk()
+                .any { it.extension == "kt" && !it.pathString.contains("project/buildSrc/build/generated-sources/") }
             if (addSampleCode) {
                 Assertions.assertTrue(hasKotlinFiles) {
                     "Project with sample code should contain Kotlin files"
