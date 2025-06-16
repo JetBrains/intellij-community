@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.XmlAttributeInsertHandler
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
 import com.intellij.html.polySymbols.HtmlDescriptorUtils.getStandardHtmlAttributeDescriptors
 import com.intellij.html.polySymbols.PolySymbolsFrameworkHtmlSupport
-import com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator
+import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
@@ -53,7 +53,7 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
       context,
       providedNames = providedAttributes,
       filter = { item ->
-        if (item.symbol is PolySymbolsHtmlQueryConfigurator.StandardHtmlSymbol
+        if (item.symbol is HtmlSymbolQueryConfigurator.StandardHtmlSymbol
             && item.offset == 0
             && item.symbol?.name == item.name) {
           filteredOutStandardSymbols.remove(item.name)

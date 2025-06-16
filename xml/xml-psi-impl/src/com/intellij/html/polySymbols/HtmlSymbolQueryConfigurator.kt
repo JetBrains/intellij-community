@@ -33,7 +33,7 @@ import com.intellij.xml.XmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
 
-class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
+class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
 
   override fun getScope(
     project: Project,

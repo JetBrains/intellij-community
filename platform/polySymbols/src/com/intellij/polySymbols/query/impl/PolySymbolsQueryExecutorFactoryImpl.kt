@@ -33,7 +33,7 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
     val application = ApplicationManager.getApplication()
     application.assertReadAccessAllowed()
 
-    PolySymbolsQueryConfigurator.EP_NAME.extensionList
+    PolySymbolQueryConfigurator.EP_NAME.extensionList
       .forEach { it.beforeQueryExecutorCreation(project) }
 
     val context = location?.let { buildPolyContext(it) } ?: PolyContext.empty()
@@ -42,7 +42,7 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
     getCustomScope(location).forEach(scopeList::add)
     val internalMode = ApplicationManager.getApplication().isInternal
     val originalLocation = location?.originalElement
-    scopeList.addAll(PolySymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { queryConfigurator ->
+    scopeList.addAll(PolySymbolQueryConfigurator.EP_NAME.extensionList.flatMap { queryConfigurator ->
       queryConfigurator.getScope(project, originalLocation, context, allowResolve)
         .also {
           // check configurator
@@ -100,7 +100,7 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
       }
 
     val providers = mutableListOf<Pointer<out PolyContextRulesProvider>>()
-    for (provider in PolySymbolsQueryConfigurator.EP_NAME.extensionList.flatMap {
+    for (provider in PolySymbolQueryConfigurator.EP_NAME.extensionList.flatMap {
       it.beforeQueryExecutorCreation(project)
       it.getContextRulesProviders(project, dir)
     }) {
@@ -113,7 +113,7 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
   private fun createNamesProvider(project: Project, location: PsiElement?, context: PolyContext): PolySymbolNamesProvider {
     val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
     val providers = mutableListOf<Pointer<out PolySymbolNameConversionRulesProvider>>()
-    PolySymbolsQueryConfigurator.EP_NAME.extensionList.flatMap { provider ->
+    PolySymbolQueryConfigurator.EP_NAME.extensionList.flatMap { provider ->
       provider.getNameConversionRulesProviders(project, location, context)
     }.forEach { provider ->
       nameConversionRules.add(provider.getNameConversionRules())

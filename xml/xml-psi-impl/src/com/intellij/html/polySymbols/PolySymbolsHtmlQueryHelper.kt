@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.polySymbols
 
-import com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol
-import com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator.HtmlElementDescriptorBasedSymbol
+import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator.HtmlAttributeDescriptorBasedSymbol
+import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator.HtmlElementDescriptorBasedSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.project.Project

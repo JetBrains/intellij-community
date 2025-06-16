@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.polySymbols.attributes
 
-import com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator
+import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator
 import com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptor.Companion.toAttributeDescriptor
 import com.intellij.html.polySymbols.elements.PolySymbolElementDescriptor
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbols
@@ -27,7 +27,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       XmlAttributeDescriptor.EMPTY
     else {
       val queryExecutor = PolySymbolsQueryExecutorFactory.create(context)
-      val additionalScope = listOf(PolySymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
+      val additionalScope = listOf(HtmlSymbolQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
       queryExecutor
         .listSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true)
         .exclude(PolySymbolModifier.ABSTRACT, PolySymbolModifier.VIRTUAL)
@@ -50,7 +50,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val additionalScope = if (attribute != null)
         emptyList()
       else
-        listOf(PolySymbolsHtmlQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
+        listOf(HtmlSymbolQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
 
       queryExecutor
         .nameMatchQuery(HTML_ATTRIBUTES, attributeName)
@@ -68,7 +68,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
 
   private fun PolySymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: PolySymbolsQueryExecutor) =
     this
-      .asSafely<PolySymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
+      .asSafely<HtmlSymbolQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor
     ?: PolySymbolHtmlAttributeInfo.create(attributeName, registry, this, context)
       .toAttributeDescriptor(context)

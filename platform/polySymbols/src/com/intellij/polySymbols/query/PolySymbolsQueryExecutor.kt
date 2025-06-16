@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 
 /**
  * To create a query executor use [PolySymbolsQueryExecutorFactory].
- * The query executor will be configured by all the registered [PolySymbolsQueryConfigurator]'s
+ * The query executor will be configured by all the registered [PolySymbolQueryConfigurator]'s
  * based on the provided source code location. Configurators will provide initial Poly Symbol scopes,
  * rules for calculating PolyContext and rules for symbol names conversion.
  */

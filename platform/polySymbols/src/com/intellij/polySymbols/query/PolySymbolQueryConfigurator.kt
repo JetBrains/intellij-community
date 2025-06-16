@@ -9,7 +9,7 @@ import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
-interface PolySymbolsQueryConfigurator {
+interface PolySymbolQueryConfigurator {
 
   fun getScope(project: Project, location: PsiElement?, context: PolyContext, allowResolve: Boolean): List<PolySymbolsScope> =
     emptyList()
@@ -31,7 +31,7 @@ interface PolySymbolsQueryConfigurator {
 
     @TestOnly
     @JvmField
-    val EP_NAME: ExtensionPointName<PolySymbolsQueryConfigurator> = ExtensionPointName<PolySymbolsQueryConfigurator>("com.intellij.polySymbols.queryConfigurator")
+    val EP_NAME: ExtensionPointName<PolySymbolQueryConfigurator> = ExtensionPointName<PolySymbolQueryConfigurator>("com.intellij.polySymbols.queryConfigurator")
 
   }
 
