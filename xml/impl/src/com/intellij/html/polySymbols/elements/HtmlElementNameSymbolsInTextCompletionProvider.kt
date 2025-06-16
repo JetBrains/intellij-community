@@ -15,7 +15,7 @@ import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
-internal class PolySymbolElementNameInTextCompletionProvider : PolySymbolsCompletionProviderBase<XmlElement>() {
+internal class HtmlElementNameSymbolsInTextCompletionProvider : PolySymbolsCompletionProviderBase<XmlElement>() {
 
   override fun getContext(position: PsiElement): XmlElement? =
     position.parent.asSafely<XmlElement>()
@@ -36,7 +36,7 @@ internal class PolySymbolElementNameInTextCompletionProvider : PolySymbolsComple
 
     processCompletionQueryResults(queryExecutor, patchedResultSet, HTML_ELEMENTS,
                                   name, position, context,
-                                  filter = PolySymbolElementNameCompletionProvider.Companion::filterStandardHtmlSymbols) {
+                                  filter = HtmlElementSymbolsCompletionProvider.Companion::filterStandardHtmlSymbols) {
       it.withInsertHandlerAdded(XmlTagInsertHandler.INSTANCE)
         .withName("<" + it.name)
         .withDisplayName("<" + (it.displayName ?: it.name))

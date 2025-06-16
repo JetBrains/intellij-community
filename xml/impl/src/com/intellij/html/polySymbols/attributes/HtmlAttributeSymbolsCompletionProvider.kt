@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 
-class PolySymbolAttributeNameCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
+class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttribute>() {
 
   override fun getContext(position: PsiElement): XmlAttribute? =
     PsiTreeUtil.getParentOfType(position, XmlAttribute::class.java)

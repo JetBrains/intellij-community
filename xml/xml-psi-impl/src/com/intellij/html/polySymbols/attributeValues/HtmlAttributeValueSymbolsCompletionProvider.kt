@@ -16,7 +16,7 @@ import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue.Type
 import com.intellij.polySymbols.html.htmlAttributeValue
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
-class PolySymbolHtmlAttributeValueCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttributeValue>() {
+class HtmlAttributeValueSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<XmlAttributeValue>() {
   override fun getContext(position: PsiElement): XmlAttributeValue? =
     PsiTreeUtil.getParentOfType(position, XmlAttributeValue::class.java, false)
 

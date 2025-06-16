@@ -15,7 +15,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 
-class PolySymbolElementNameCompletionProvider : PolySymbolsCompletionProviderBase<HtmlTag>() {
+class HtmlElementSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<HtmlTag>() {
 
   override fun getContext(position: PsiElement): HtmlTag? =
     PsiTreeUtil.getParentOfType(position, HtmlTag::class.java, false)
