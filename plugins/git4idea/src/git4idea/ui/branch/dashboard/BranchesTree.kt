@@ -6,6 +6,7 @@ import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runInEdt
@@ -73,7 +74,9 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
     isOpaque = false
     isHorizontalAutoScrollingEnabled = false
     SmartExpander.installOn(this)
-    TreeHoverListener.DEFAULT.addTo(this)
+    if (!AppMode.isRemoteDevHost()) {
+      TreeHoverListener.DEFAULT.addTo(this)
+    }
     initDnD()
   }
 
