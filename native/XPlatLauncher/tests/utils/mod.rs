@@ -14,7 +14,7 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};
 
-use xplat_launcher::{DEBUG_MODE_ENV_VAR, PathExt};
+use xplat_launcher::{DEBUG_MODE_ENV_VAR, PathExt, get_caches_home, get_config_home};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -666,4 +666,17 @@ pub fn assert_vm_option_presence(dump: &IntellijMainDumpedLaunchParameters, vm_o
 pub fn assert_vm_option_absence(dump: &IntellijMainDumpedLaunchParameters, vm_option: &str) {
     assert!(!dump.vmOptions.contains(&vm_option.to_string()),
             "{:?} should not be in {:?}", vm_option, dump.vmOptions);
+}
+
+
+pub fn get_standard_config_dir() -> PathBuf {
+    get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
+}
+
+pub fn get_custom_config_dir() -> PathBuf {
+    get_config_home().unwrap().join("JetBrains").join("XPlatLauncherTestCustom")
+}
+
+pub fn get_standard_caches_dir() -> PathBuf {
+    get_caches_home().unwrap().join("JetBrains").join("XPlatLauncherTest")
 }
