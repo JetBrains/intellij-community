@@ -16,7 +16,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.event.CaretEvent
@@ -76,12 +75,8 @@ open class IdeDocumentHistoryImpl(
 
   private val backPlaces = ArrayDeque<PlaceInfo>()
   private val forwardPlaces = ArrayDeque<PlaceInfo>()
-  @ApiStatus.Internal // TODO[khb]: Workaround for IJPL-189399 until IJPL-181928 is fixed
-  var backInProgress: Boolean = false
-    private set
-  @ApiStatus.Internal
-  var forwardInProgress = false
-    private set
+  private var backInProgress = false
+  private var forwardInProgress = false
   // weak reference here is to avoid leaking Document when it's used as a group id
   private var currentCommandGroupId: Reference<Any>? = null
   // weak reference to avoid memory leaks when clients pass some exotic objects as commandId
@@ -369,8 +364,6 @@ open class IdeDocumentHistoryImpl(
     }
 
     val info = backPlaces.removeLast()
-    LOG.trace { "Back to (${info.file.name}, ${info.caretPosition})" }
-    LOG.trace { "Rest of stack is ${backPlaces.map { "(${info.file.name}, ${info.caretPosition}) " }}" }
     project.getMessageBus().syncPublisher(RecentPlacesListener.TOPIC).recentPlaceRemoved(info, false)
 
     val current = getCurrentPlaceInfo()
