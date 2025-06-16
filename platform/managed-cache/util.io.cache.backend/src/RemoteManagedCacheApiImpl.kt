@@ -66,7 +66,11 @@ private class RemoteManagedCacheManager(private val project: Project, private va
 }
 
 internal class RemoteManagedCacheApiImpl: RemoteManagedCacheApi {
-  private suspend fun CacheId.cache() = projectId.findProjectOrNull()?.serviceAsync<RemoteManagedCacheManager>()?.get(this)
+  private suspend fun CacheId.cache():  ManagedCache<ByteArray, ByteArray>? {
+    val project = projectId.findProjectOrNull()?.takeUnless { it.isDisposed } ?: return null
+    val cacheManager = project.serviceAsync<RemoteManagedCacheManager>()
+    return cacheManager.get(this)
+  }
   override suspend fun get(cacheId: CacheId, key: ByteArray): ByteArray? {
     return cacheId.cache()?.get(key)
   }
@@ -82,7 +86,7 @@ internal class RemoteManagedCacheApiImpl: RemoteManagedCacheApi {
   }
 
   override suspend fun createCacheAndProvideEntries(cacheId: CacheId, buildParams: RemoteManagedCacheBuildParams): EntriesFlow {
-    val project = cacheId.projectId.findProjectOrNull() ?: return emptyFlow()
+    val project = cacheId.projectId.findProjectOrNull()?.takeUnless { it.isDisposed } ?: return emptyFlow()
     return project.serviceAsync<RemoteManagedCacheManager>().create(cacheId, buildParams)
   }
 }
