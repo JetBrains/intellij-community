@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.table;
 import com.google.common.primitives.Ints;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.bookmark.BookmarksManager;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -718,7 +719,7 @@ public class VcsLogGraphTable extends TableWithProgress
                           VcsLogHighlighter.TextStyle.BOLD);
     }
 
-    if (!selected && hovered) {
+    if (!selected && hovered && !AppMode.isRemoteDevHost()) {
       Color background = Objects.requireNonNull(style.getBackground());
       VcsCommitStyle lightSelectionBgStyle = VcsCommitStyleFactory.background(getHoveredBackgroundColor(background));
       style = VcsCommitStyleFactory.combine(Arrays.asList(lightSelectionBgStyle, style));
