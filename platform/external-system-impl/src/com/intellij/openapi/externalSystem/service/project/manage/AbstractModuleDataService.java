@@ -157,36 +157,12 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         if (unloadedModuleDescription == null) {
           result.add(node);
         }
-        markExistedModulesWithSameRoot(node, modelsProvider);
       }
       else {
         node.putUserData(MODULE_KEY, module);
       }
     }
     return result;
-  }
-
-  private void markExistedModulesWithSameRoot(DataNode<E> node,
-                                              IdeModifiableModelsProvider modelsProvider) {
-    ModuleData moduleData = node.getData();
-    ProjectSystemId projectSystemId = moduleData.getOwner();
-    Arrays.stream(modelsProvider.getModules())
-      .filter(ideModule -> isModulePointsSameRoot(moduleData, ideModule))
-      .filter(module -> !ExternalSystemApiUtil.isExternalSystemAwareModule(projectSystemId, module))
-      .forEach(module -> {
-        ExternalSystemModulePropertyManager.getInstance(module)
-          .setExternalOptions(projectSystemId, moduleData, node.getData(ProjectKeys.PROJECT));
-      });
-
-  }
-
-  private static boolean isModulePointsSameRoot(ModuleData moduleData, Module ideModule) {
-    for (VirtualFile root: ModuleRootManager.getInstance(ideModule).getContentRoots()) {
-      if (VfsUtilCore.pathEqualsTo(root, moduleData.getLinkedExternalProjectPath())) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static void syncPaths(@NotNull Module module, @NotNull ModifiableRootModel modifiableModel, @NotNull ModuleData data) {
@@ -218,6 +194,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       if (!Objects.equals(externalModuleType, UNDEFINED_MODULE_TYPE)) {
         result.addAll(computeRemovedModules(modelsProvider, externalSystemId, externalRootProjectPath, externalModuleType));
       }
+      result.addAll(computeModulesWithUsedContentRoots(modelsProvider, externalSystemId, toImport));
       return result;
     };
   }
@@ -248,6 +225,39 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       }
     }
 
+    return result;
+  }
+
+  /**
+   * Computes IDE modules that use the defined external system's content locations.
+   * <p>
+   * This is important during miration from one external system to another.
+   * For example, JPS build tool doesn't have unlink operation.
+   * Therefore we need to replace their modules forcibly to apply new project model.
+   *
+   * @param externalSystemId        defines target external system.
+   */
+  private @NotNull List<Module> computeModulesWithUsedContentRoots(
+    @NotNull IdeModifiableModelsProvider modelsProvider,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull Collection<? extends DataNode<E>> moduleNodes
+  ) {
+    var usedContentRoots = new HashSet<>();
+    for (var moduleNode : moduleNodes) {
+      usedContentRoots.add(moduleNode.getData().getLinkedExternalProjectPath());
+    }
+    var result = new SmartList<Module>();
+    for (var module : modelsProvider.getModules()) {
+      if (ExternalSystemApiUtil.isExternalSystemAwareModule(externalSystemId, module)) {
+        continue;
+      }
+      for (var contentRoot : ModuleRootManager.getInstance(module).getContentRoots()) {
+        if (usedContentRoots.contains(contentRoot.getPath())) {
+          result.add(module);
+          break;
+        }
+      }
+    }
     return result;
   }
 
