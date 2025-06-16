@@ -117,6 +117,8 @@ jvm_library(
     "//plugins/kotlin/kotlin.searching:searching-k2",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/workspace/jps",
+    "//platform/backend",
     "//plugins/kotlin/base/analysis",
     "//plugins/kotlin/base/scripting",
     "//plugins/kotlin/base/scripting:scripting_test_lib",
