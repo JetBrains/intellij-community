@@ -55,7 +55,4 @@
       parentId="tools"/>
 
   </extensions>
-  <applicationListeners>
-    <listener topic="com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener" class="com.intellij.mcpserver.impl.McpServerService$MyDocumentBindingListener" />
-  </applicationListeners>
 </idea-plugin>
