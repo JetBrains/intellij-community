@@ -144,7 +144,9 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
     }
 
     PersistentList<T> result = collectAllForLanguage(language);
-    result = result.add(defaultImplementation);
+    if (!result.contains(defaultImplementation)) {
+      result = result.add(defaultImplementation);
+    }
     return language.putUserDataIfAbsent(allCacheWithDefaultKey, result);
   }
 
