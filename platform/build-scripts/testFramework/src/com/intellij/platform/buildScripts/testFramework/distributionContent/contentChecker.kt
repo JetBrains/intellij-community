@@ -62,8 +62,8 @@ fun checkThatContentIsNotChanged(
     "If you are sure that the difference is as expected, ask $suggestedReviewer to approve changes.\n\n" +
     "Please do not push changes without approval.\n" +
     "For more details, please visit https://youtrack.jetbrains.com/articles/IDEA-A-80/Distribution-Content-Approving.\n\n" +
-    "When the patches is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration is up to date.\n\n" +
     "Snapshots for other products may require update, please run 'All Packaging Tests' run configuration to run all packaging tests.\n\n" +
+    "When the patches is applied, please also run PatronusConfigYamlConsistencyTest to ensure the Patronus configuration is up to date.\n\n" +
     "Patch:\n${DiffUtils.generateUnifiedDiff(fileName, fileName, expectedLines, patch, 3).joinToString(separator = "\n")}"
   }
   else {
