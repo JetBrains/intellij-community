@@ -40,13 +40,13 @@ class PointlessBooleanExpression {
 
   class Y extends X {
     Y(int i) {
-      // side-effect cannot be extracted from super call
-      super(sideEffect() && false);
+      // side-effect can be extracted from super call with Flexible Constructor Bodies
+      super(<warning descr="'sideEffect() && false' can be simplified to 'false'">sideEffect() && false</warning>);
     }
 
     Y(long l) {
-      // side-effect cannot be extracted from super call
-      super(false & sideEffect());
+      // side-effect can be extracted from super call with Flexible Constructor Bodies
+      super(<warning descr="'false & sideEffect()' can be simplified to 'false'">false & sideEffect()</warning>);
     }
 
     Y(double d) {
