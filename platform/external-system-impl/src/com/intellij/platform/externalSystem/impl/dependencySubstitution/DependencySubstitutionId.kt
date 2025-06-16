@@ -40,6 +40,6 @@ class DependencySubstitutionId(
   }
 
   override fun toString(): String {
-    return "LibrarySubstitutionId(owner=$owner, substitution=$module, scope=$scope)"
+    return "DependencySubstitutionId(owner=$owner, substitution=$module, scope=$scope)"
   }
 }
