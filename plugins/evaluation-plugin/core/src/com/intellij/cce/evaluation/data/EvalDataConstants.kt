@@ -179,7 +179,7 @@ object Analysis {
       DataRenderer.InlineBoolean,
     ),
     problemIndicators = listOf(
-      ProblemIndicator.FromMetric { Metrics.WITHOUT_SYNTAX_ERRORS }
+      ProblemIndicator.FromValue { !it }
     )
   )
 
