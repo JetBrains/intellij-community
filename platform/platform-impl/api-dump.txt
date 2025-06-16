@@ -161,7 +161,7 @@ com.intellij.ide.actions.CloseAction$CloseTarget
 - sf:KEY:com.intellij.openapi.actionSystem.DataKey
 - a:close():V
 c:com.intellij.ide.actions.OpenFileAction
-- p:doOpenFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.actionSystem.AnActionEvent,kotlin.coroutines.Continuation):java.lang.Object
+- p:doOpenFile(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.ide.actions.SettingsEntryPointAction$ActionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getLastActions(com.intellij.openapi.actionSystem.DataContext):java.util.Collection
