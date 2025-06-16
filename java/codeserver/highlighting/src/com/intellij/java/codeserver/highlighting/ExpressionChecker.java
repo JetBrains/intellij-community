@@ -425,8 +425,18 @@ final class ExpressionChecker {
   void checkConstructorCallProblems(@NotNull PsiMethodCallExpression methodCall) {
     if (!JavaPsiConstructorUtil.isConstructorCall(methodCall)) return;
     PsiMethod method = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
-    if (method == null || !method.isConstructor()) {
+    PsiMethod contextMethod =
+      method != null ? method : PsiTreeUtil.getContextOfType(methodCall, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    if (contextMethod == null || !contextMethod.isConstructor()) {
       myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_ONLY_ALLOWED_IN_CONSTRUCTOR.create(methodCall));
+      return;
+    }
+    if (JavaPsiRecordUtil.isCompactConstructor(contextMethod) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(contextMethod)) {
+      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_RECORD_IN_CANONICAL.create(methodCall));
+      return;
+    }
+    if (method == null) {
+      // Do not report other errors for detached constructor call, as they are likely non-relevant
       return;
     }
     PsiMethodCallExpression constructorCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
@@ -437,10 +447,6 @@ final class ExpressionChecker {
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (!(codeBlock instanceof PsiCodeBlock) || !(codeBlock.getParent() instanceof PsiMethod)) {
       myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_MUST_BE_TOP_LEVEL_STATEMENT.create(methodCall));
-      return;
-    }
-    if (JavaPsiRecordUtil.isCompactConstructor(method) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
-      myVisitor.report(JavaErrorKinds.CALL_CONSTRUCTOR_RECORD_IN_CANONICAL.create(methodCall));
       return;
     }
     PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(methodCall.getParent(), PsiStatement.class);

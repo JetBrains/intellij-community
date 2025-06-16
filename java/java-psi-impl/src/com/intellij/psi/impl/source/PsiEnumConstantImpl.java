@@ -91,6 +91,9 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
   @Override
   public PsiClass getContainingClass() {
     PsiElement parent = getParent();
+    if (parent instanceof DummyHolder) {
+      parent = parent.getContext();
+    }
     return parent instanceof PsiClass ? (PsiClass)parent : null;
   }
 
