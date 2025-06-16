@@ -95,12 +95,6 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
           assertNode("test") {
             assertPsiLocation("DisplayNameGeneratedTestCase", "test")
           }
-          //assertNode("InnerTest") {
-          //  assertPsiLocation("InnerTest")
-          //  assertNode("test") {
-          //    assertPsiLocation("InnerTest", "test")
-          //  }
-          //}
         }
       }
     }
@@ -384,12 +378,6 @@ class GradleTestNavigationTest : GradleTestExecutionTestCase() {
       |            return super.generateDisplayNameForClass(testClass) + "[Gradle '8.1']";
       |        }
       |    }
-      //|    
-      //|    @Nested
-      //|    public class InnerTest {
-      //|      @Test
-      //|      public void test() {}
-      //|    }
       |}
     """.trimMargin()
 
