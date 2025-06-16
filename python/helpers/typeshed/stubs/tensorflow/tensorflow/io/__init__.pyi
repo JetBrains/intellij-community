@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Iterable, Mapping
 from types import TracebackType
 from typing import Literal, NamedTuple
@@ -105,4 +104,4 @@ class RaggedFeature(NamedTuple):
 def parse_example(
     serialized: TensorCompatible, features: _FeatureSpecs, example_names: Iterable[str] | None = None, name: str | None = None
 ) -> dict[str, TensorLike]: ...
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

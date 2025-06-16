@@ -38,15 +38,15 @@ class relativedelta:
         self,
         dt1: date | None = None,
         dt2: date | None = None,
-        years: int | None = 0,
-        months: int | None = 0,
-        days: int | None = 0,
-        leapdays: int | None = 0,
-        weeks: int | None = 0,
-        hours: int | None = 0,
-        minutes: int | None = 0,
-        seconds: int | None = 0,
-        microseconds: int | None = 0,
+        years: int = 0,
+        months: int = 0,
+        days: int = 0,
+        leapdays: int = 0,
+        weeks: int = 0,
+        hours: int = 0,
+        minutes: int = 0,
+        seconds: int = 0,
+        microseconds: int = 0,
         year: int | None = None,
         month: int | None = None,
         day: int | None = None,
@@ -63,24 +63,16 @@ class relativedelta:
     @weeks.setter
     def weeks(self, value: int) -> None: ...
     def normalized(self) -> Self: ...
-    # TODO: use Union when mypy will handle it properly in overloaded operator
-    # methods (#2129, #1442, #1264 in mypy)
     @overload
-    def __add__(self, other: relativedelta) -> Self: ...
-    @overload
-    def __add__(self, other: timedelta) -> Self: ...
+    def __add__(self, other: timedelta | relativedelta) -> Self: ...
     @overload
     def __add__(self, other: _DateT) -> _DateT: ...
     @overload
-    def __radd__(self, other: relativedelta) -> Self: ...
-    @overload
-    def __radd__(self, other: timedelta) -> Self: ...
+    def __radd__(self, other: timedelta | relativedelta) -> Self: ...
     @overload
     def __radd__(self, other: _DateT) -> _DateT: ...
     @overload
-    def __rsub__(self, other: relativedelta) -> Self: ...
-    @overload
-    def __rsub__(self, other: timedelta) -> Self: ...
+    def __rsub__(self, other: timedelta | relativedelta) -> Self: ...
     @overload
     def __rsub__(self, other: _DateT) -> _DateT: ...
     def __sub__(self, other: relativedelta) -> Self: ...

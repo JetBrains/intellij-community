@@ -1,8 +1,9 @@
-from _typeshed import Incomplete
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["min_weighted_dominating_set", "min_edge_dominating_set"]
 
-@_dispatch
-def min_weighted_dominating_set(G, weight: Incomplete | None = None): ...
-@_dispatch
-def min_edge_dominating_set(G): ...
+@_dispatchable
+def min_weighted_dominating_set(G: Graph[_Node], weight: str | None = None): ...
+@_dispatchable
+def min_edge_dominating_set(G: Graph[_Node]): ...

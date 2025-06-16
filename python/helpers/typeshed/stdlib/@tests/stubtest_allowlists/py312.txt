@@ -1,17 +1,77 @@
-# Modules that exist at runtime, but are missing from typeshed
-zipfile._path.glob
+# =========================
+# New errors in Python 3.12
+# =========================
 
-# Errors that also existed on Python 3.11
-_collections_abc.AsyncIterable.__class_getitem__
-_collections_abc.Awaitable.__class_getitem__
-_collections_abc.Container.__class_getitem__
-_collections_abc.Iterable.__class_getitem__
-_collections_abc.MappingView.__class_getitem__
-_csv.Reader
-_csv.Writer
-configparser.LegacyInterpolation.__init__
+
+# =======
+# >= 3.12
+# =======
+
+# Initialized at runtime
+typing_extensions.TypeAliasType.__parameters__
+typing_extensions.TypeAliasType.__value__
+
+# Types that require `__setattr__` and `__delattr__` for typing purposes:
+types.SimpleNamespace.__setattr__
+types.SimpleNamespace.__delattr__
+
+
+# ====================================
+# Pre-existing errors from Python 3.11
+# ====================================
+
+
+# =======
+# >= 3.11
+# =======
+
 enum.Enum.__init__
+typing.NewType.__mro_entries__
+
+
+# =======
+# >= 3.10
+# =======
+
+builtins.ellipsis  # type is not exposed anywhere
 importlib._abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
+
+# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
+_collections_abc.Coroutine.send
+_collections_abc.Coroutine.throw
+_collections_abc.Generator.send
+_collections_abc.Generator.throw
+
+# These are not positional-only at runtime, but we treat them as positional-only to match dict.
+_collections_abc.MutableMapping.pop
+_collections_abc.MutableMapping.setdefault
+
+# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
+os.path.join
+
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing(_extensions)?\.BinaryIO\.write
+typing(_extensions)?\.IO\.read
+typing(_extensions)?\.IO\.readline
+typing(_extensions)?\.IO\.readlines
+typing(_extensions)?\.IO\.seek
+typing(_extensions)?\.IO\.truncate
+typing(_extensions)?\.IO\.write
+typing(_extensions)?\.IO\.writelines
+
+
+# =======
+# <= 3.12
+# =======
+
+# Exists at runtime, but missing from stubs
+lib2to3.btm_utils
+lib2to3.fixer_util
+lib2to3.patcomp
+lib2to3.pgen2.grammar.Grammar.loads
 lib2to3.pygram.pattern_symbols
 lib2to3.pygram.python_symbols
 lib2to3.pytree.Base.__new__
@@ -21,14 +81,7 @@ lib2to3.pytree.BasePattern.__new__
 lib2to3.pytree.BasePattern.type
 lib2to3.pytree.NegatedPattern.match
 lib2to3.pytree.NegatedPattern.match_seq
-lib2to3.btm_utils
-lib2to3.fixer_util
-lib2to3.patcomp
-lib2to3.pgen2.grammar.Grammar.loads
-tkinter._VersionInfoType.__doc__
 tkinter.tix.[A-Z_]+
-tkinter.tix.TclVersion
-tkinter.tix.TkVersion
 tkinter.tix.CObjView
 tkinter.tix.DialogShell
 tkinter.tix.ExFileSelectDialog
@@ -45,58 +98,124 @@ tkinter.tix.ScrolledTList
 tkinter.tix.ScrolledText
 tkinter.tix.ScrolledWindow
 tkinter.tix.Shell
-typing.NewType.__mro_entries__
-builtins.ellipsis  # type is not exposed anywhere
+tkinter.tix.TclVersion
+tkinter.tix.TkVersion
 
-# ==========
-# Related to positional-only arguments
-# ==========
 
-# These are not positional-only at runtime, but we treat them
-# as positional-only to match dict.
-_collections_abc.MutableMapping.pop
-_collections_abc.MutableMapping.setdefault
+# =======
+# <= 3.13
+# =======
 
-# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
-# to mark these as positional-only for compatibility with existing sub-classes.
-typing(_extensions)?\.BinaryIO\.write
-typing(_extensions)?\.IO\.read
-typing(_extensions)?\.IO\.readline
-typing(_extensions)?\.IO\.readlines
-typing(_extensions)?\.IO\.seek
-typing(_extensions)?\.IO\.truncate
-typing(_extensions)?\.IO\.write
-typing(_extensions)?\.IO\.writelines
+# Pretend typing.ByteString is a Union, to better match its documented semantics.
+# As a side effect, this changes the definition of collections.abc.ByteString, which is okay,
+# because it's not an ABC that makes any sense and was deprecated in 3.12
+_collections_abc.ByteString
 
-# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
-_collections_abc.Coroutine.send
-_collections_abc.Coroutine.throw
-_collections_abc.Generator.send
-_collections_abc.Generator.throw
+ast.Bytes.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
+ast.Ellipsis.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
+ast.NameConstant.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
+ast.Num.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
+ast.Str.__new__  # runtime is *args, **kwargs due to a wrapper, but we have more accurate signatures in the stubs
 
-# typing.SupportsRound.__round__  # pos-or-kw at runtime, but we pretend it's pos-only in the stub so that e.g. float.__round__ satisfies the interface
-types.DynamicClassAttribute..*  # In the stub we pretend it's an alias for property, but it has positional-only differences
+_?hashlib.scrypt  # Raises TypeError if salt, n, r or p are None
 
-# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
-posixpath.join
-ntpath.join
-os.path.join
+importlib.abc.Traversable.open  # Problematic protocol signature at runtime, see source code comments.
 
-# Pos-only parameters had different "names" in different Python versions:
-zoneinfo.ZoneInfo.from_file
+typing\.ByteString
 
-# ==========
-# Allowlist entries that cannot or should not be fixed
-# ==========
+# Will always raise. Not included to avoid type checkers inferring that
+# TypeAliasType instances are callable.
+typing_extensions.TypeAliasType.__call__
 
-# Factory function at runtime
-# but that wouldn't let us use it in type hints
-threading.Lock
-multiprocessing.dummy.Lock
 
-# more precise signature in the stubs than at runtime
-multiprocessing.managers.DictProxy.clear
-multiprocessing.managers.DictProxy.popitem
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.12
+# =============================================================
+
+# Runtime AST node runtime constructor behaviour is too loose.
+# For static typing, the loose behaviour is undesirable (https://github.com/python/typeshed/issues/8378).
+# For the runtime, the loose behaviour is deprecated in Python 3.13 (https://github.com/python/cpython/issues/105858)
+_?ast.type_param.__init__
+
+# Deprecation wrapper classes; their methods are just pass-through, so we can ignore them.
+importlib.metadata.DeprecatedNonAbstract.__new__
+
+# Deprecated argument is supported at runtime by renaming it through a decorator.
+importlib.resources._common.files
+importlib.resources.files
+
+sys._monitoring  # Doesn't really exist. See comments in the stub.
+sys.last_exc  # not always defined
+
+# These only exist to give a better error message if you try to subclass an instance
+typing.ParamSpec.__mro_entries__
+typing.ParamSpecArgs.__mro_entries__
+typing.ParamSpecKwargs.__mro_entries__
+typing.TypeVar.__mro_entries__
+typing.TypeVarTuple.__mro_entries__
+
+# These exist at runtime because the protocol uses PEP-695 syntax in CPython
+typing.SupportsAbs.__type_params__
+typing.SupportsRound.__type_params__
+typing_extensions.SupportsAbs.__type_params__
+typing_extensions.SupportsRound.__type_params__
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.11
+# =============================================================
+
+argparse._MutuallyExclusiveGroup.add_mutually_exclusive_group  # deprecated, forwards arguments to super
+enum.auto.__init__  # The stub for enum.auto is nothing like the implementation
+enum.auto.value  # The stub for enum.auto is nothing like the implementation
+http.HTTPMethod.description  # mutable instance attribute at runtime but we pretend it's a property
+importlib.resources.abc.Traversable.open  # Problematic protocol signature at runtime, see source code comments.
+inspect._ParameterKind.description  # Still exists, but stubtest can't see it
+typing\._SpecialForm.*  # Super-special typing primitive
+typing\.LiteralString  # Super-special typing primitive
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.10
+# =============================================================
+
+# Runtime AST node runtime constructor behaviour is too loose.
+# For static typing, the loose behaviour is undesirable (https://github.com/python/typeshed/issues/8378).
+# For the runtime, the loose behaviour is deprecated in Python 3.13 (https://github.com/python/cpython/issues/105858)
+_?ast.pattern.__init__
+
+_collections_abc.AsyncGenerator.athrow  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
+builtins.property.__set_name__  # Doesn't actually exist
+collections\.UserList\.index  # ignoring pos-or-keyword parameter
+dataclasses.KW_ONLY  # white lies around defaults
+importlib.metadata._meta.SimplePath.joinpath  # Runtime definition of protocol is incorrect
+
+
+# ===============================================================
+# Allowlist entries that cannot or should not be fixed; 3.12 only
+# ===============================================================
+
+concurrent.futures.__all__  # Incompatible changes introduced in Python 3.12.5
+ctypes._endian.SIZEOF_TIME_T  # Incorrectly star import.
+
+
+# ==================================================================
+# Allowlist entries that cannot or should not be fixed; 3.11 to 3.12
+# ==================================================================
+
+configparser.LegacyInterpolation.__init__  # runtime is *args, **kwargs, but it's just a passthrough
+
+
+# =================================================================
+# Allowlist entries that cannot or should not be fixed; 3.9 to 3.12
+# =================================================================
+
+typing\.Annotated  # Super-special typing primitive
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
 
 # Undocumented implementation details
 cgi.FieldStorage.bufsize
@@ -108,88 +227,54 @@ cgi.FieldStorage.read_multi
 cgi.FieldStorage.read_single
 cgi.FieldStorage.read_urlencoded
 cgi.FieldStorage.skip_lines
+
+ctypes._endian.DEFAULT_MODE  # Incorrectly star import.
+ctypes._endian.RTLD_GLOBAL  # Incorrectly star import.
+ctypes._endian.RTLD_LOCAL  # Incorrectly star import.
+multiprocessing.dummy.Lock  # Factory function at runtime, but that wouldn't let us use it in type hints
+
+# These multiprocessing proxy methods have *args, **kwargs signatures at runtime,
+# But have more precise (accurate) signatures in the stub
+multiprocessing.managers.DictProxy.__iter__
+multiprocessing.managers.DictProxy.__len__
+multiprocessing.managers.DictProxy.copy
+multiprocessing.managers.DictProxy.items
+multiprocessing.managers.DictProxy.keys
+multiprocessing.managers.DictProxy.values
+
+# Runtime signature is incorrect (https://github.com/python/cpython/issues/93021)
+multiprocessing.managers.DictProxy.clear
+multiprocessing.managers.DictProxy.popitem
+
+# Undocumented implementation details
 pipes.Template.makepipeline
 pipes.Template.open_r
 pipes.Template.open_w
 sunau.Au_read.initfp
 sunau.Au_write.initfp
-typing_extensions\.Annotated
 
-# Runtime AST node runtime constructor behaviour is too loose.
-# For static typing, the loose behaviour is undesirable (https://github.com/python/typeshed/issues/8378).
-# For the runtime, the loose behaviour is deprecated in Python 3.13 (https://github.com/python/cpython/issues/105858)
-_?ast.pattern.__init__
-_?ast.type_param.__init__
+threading.Lock  # Factory function at runtime, but that wouldn't let us use it in type hints
+types.SimpleNamespace.__init__  # class doesn't accept positional arguments but has default C signature
+typing_extensions\.Annotated  # Undocumented implementation details
 
-_ast.ImportFrom.level  # None on the class, but never None on instances
-_collections_abc.AsyncGenerator.athrow  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
-_weakref.ProxyType.__reversed__  # Doesn't really exist
-argparse._MutuallyExclusiveGroup.add_mutually_exclusive_group  # deprecated, forwards arguments to super
-ast.ImportFrom.level  # None on the class, but never None on instances
-builtins.property.__set_name__  # Doesn't actually exist
-collections\.UserList\.index  # ignoring pos-or-keyword parameter
-dataclasses.KW_ONLY  # white lies around defaults
-enum.auto.__init__  # The stub for enum.auto is nothing like the implementation
-enum.auto.value  # The stub for enum.auto is nothing like the implementation
-functools._lru_cache_wrapper.cache_parameters  # Cannot be detected statically
-http.HTTPMethod.description  # mutable instance attribute at runtime but we pretend it's a property
-inspect._ParameterKind.description  # Still exists, but stubtest can't see it
-os.PathLike.__class_getitem__  # PathLike is a protocol; we don't expect all PathLike classes to implement class_getitem
-types.GenericAlias.__call__  # Would be complicated to fix properly, Any could silence problems. #6392
-types.GenericAlias.__getattr__
-types.GenericAlias.__mro_entries__
-sys._monitoring  # Doesn't really exist. See comments in the stub.
-weakref.ProxyType.__reversed__  # Doesn't really exist
-importlib.metadata._meta.SimplePath.joinpath  # Incorrect runtime definition
+# These methods have no default implementation for Python < 3.13.
+_pickle.Pickler.persistent_id
+_pickle.Unpickler.persistent_load
+pickle.Pickler.persistent_id
+pickle.Unpickler.persistent_load
 
-# sys attributes that are not always defined
-sys.last_exc
-
-# C signature is broader than what is actually accepted
-ast.ExtSlice.__new__
-ast.Index.__new__
-contextvars.Context.__init__
-
-# Treated an alias of a typing class in the stubs,
-# they are generic to type checkers anyway.
-contextlib.AbstractAsyncContextManager.__class_getitem__
-contextlib.AbstractContextManager.__class_getitem__
-
-# platform.uname_result's processor field is now dynamically made to exist
-platform.uname_result.__match_args__
-platform.uname_result.__new__
-platform.uname_result.processor
-
-# Runtime has *args, **kwargs, but will error if any are supplied
-unittest.TestCase.__init_subclass__
-unittest.case.TestCase.__init_subclass__
-
-# Problematic protocol signature at runtime, see source code comments.
-importlib.abc.Traversable.open
-importlib.resources.abc.Traversable.open
-
-# Deprecation wrapper classes; their methods are just pass-through, so we can ignore them.
-importlib.metadata.DeprecatedNonAbstract.__new__
-
-# Super-special typing primitives
-typing\._SpecialForm.*
-typing\.NamedTuple
-typing\.LiteralString
-typing\.Annotated
-
-# These only exist to give a better error message if you try to subclass an instance
-typing.ParamSpec.__mro_entries__
-typing.ParamSpecArgs.__mro_entries__
-typing.ParamSpecKwargs.__mro_entries__
-typing.TypeVar.__mro_entries__
-typing.TypeVarTuple.__mro_entries__
-
-# class doesn't accept positional arguments but has default C signature
-types.SimpleNamespace.__init__
-
-# TODO: mypy should infer that this attribute is inherited from builtins.type;
-# why doesn't it infer this?
-typing.SupportsAbs.__type_params__
-typing.SupportsRound.__type_params__
-typing_extensions.SupportsAbs.__type_params__
-typing_extensions.SupportsRound.__type_params__
+# Incompatible changes introduced in Python 3.12.11
+# (Remove once 3.12.11 becomes available for all platforms)
+(genericpath.__all__)?
+(genericpath.ALLOW_MISSING)?
+(ntpath.__all__)?
+(ntpath.ALLOW_MISSING)?
+(os.path.__all__)?
+(os.path.ALLOW_MISSING)?
+(os.path.realpath)?
+(posixpath.__all__)?
+(posixpath.ALLOW_MISSING)?
+(posixpath.realpath)?
+(tarfile.LinkFallbackError)?
+(tarfile.TarFile._extract_member)?
+(tarfile.TarFile.makelink_with_filter)?

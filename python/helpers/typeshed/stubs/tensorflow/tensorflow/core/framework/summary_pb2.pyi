@@ -81,11 +81,7 @@ class SummaryDescription(google.protobuf.message.Message):
     """Hint on how plugins should process the data in this series.
     Supported values include "scalar", "histogram", "image", "audio"
     """
-    def __init__(
-        self,
-        *,
-        type_hint: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, type_hint: builtins.str | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["type_hint", b"type_hint"]) -> None: ...
 
 global___SummaryDescription = SummaryDescription
@@ -110,12 +106,7 @@ class SummaryMetadata(google.protobuf.message.Message):
         """The content to store for the plugin. The best practice is for this to be
         a binary serialized protocol buffer.
         """
-        def __init__(
-            self,
-            *,
-            plugin_name: builtins.str | None = ...,
-            content: builtins.bytes | None = ...,
-        ) -> None: ...
+        def __init__(self, *, plugin_name: builtins.str | None = ..., content: builtins.bytes | None = ...) -> None: ...
         def ClearField(self, field_name: typing.Literal["content", b"content", "plugin_name", b"plugin_name"]) -> None: ...
 
     PLUGIN_DATA_FIELD_NUMBER: builtins.int
@@ -145,7 +136,19 @@ class SummaryMetadata(google.protobuf.message.Message):
         data_class: global___DataClass.ValueType | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["plugin_data", b"plugin_data"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["data_class", b"data_class", "display_name", b"display_name", "plugin_data", b"plugin_data", "summary_description", b"summary_description"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "data_class",
+            b"data_class",
+            "display_name",
+            b"display_name",
+            "plugin_data",
+            b"plugin_data",
+            "summary_description",
+            b"summary_description",
+        ],
+    ) -> None: ...
 
 global___SummaryMetadata = SummaryMetadata
 
@@ -193,7 +196,19 @@ class Summary(google.protobuf.message.Message):
             colorspace: builtins.int | None = ...,
             encoded_image_string: builtins.bytes | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["colorspace", b"colorspace", "encoded_image_string", b"encoded_image_string", "height", b"height", "width", b"width"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "colorspace",
+                b"colorspace",
+                "encoded_image_string",
+                b"encoded_image_string",
+                "height",
+                b"height",
+                "width",
+                b"width",
+            ],
+        ) -> None: ...
 
     @typing.final
     class Audio(google.protobuf.message.Message):
@@ -224,7 +239,21 @@ class Summary(google.protobuf.message.Message):
             encoded_audio_string: builtins.bytes | None = ...,
             content_type: builtins.str | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["content_type", b"content_type", "encoded_audio_string", b"encoded_audio_string", "length_frames", b"length_frames", "num_channels", b"num_channels", "sample_rate", b"sample_rate"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "content_type",
+                b"content_type",
+                "encoded_audio_string",
+                b"encoded_audio_string",
+                "length_frames",
+                b"length_frames",
+                "num_channels",
+                b"num_channels",
+                "sample_rate",
+                b"sample_rate",
+            ],
+        ) -> None: ...
 
     @typing.final
     class Value(google.protobuf.message.Message):
@@ -278,20 +307,62 @@ class Summary(google.protobuf.message.Message):
             audio: global___Summary.Audio | None = ...,
             tensor: tensorflow.core.framework.tensor_pb2.TensorProto | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing.Literal["audio", b"audio", "histo", b"histo", "image", b"image", "metadata", b"metadata", "obsolete_old_style_histogram", b"obsolete_old_style_histogram", "simple_value", b"simple_value", "tensor", b"tensor", "value", b"value"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing.Literal["audio", b"audio", "histo", b"histo", "image", b"image", "metadata", b"metadata", "node_name", b"node_name", "obsolete_old_style_histogram", b"obsolete_old_style_histogram", "simple_value", b"simple_value", "tag", b"tag", "tensor", b"tensor", "value", b"value"]) -> None: ...
-        def WhichOneof(self, oneof_group: typing.Literal["value", b"value"]) -> typing.Literal["simple_value", "obsolete_old_style_histogram", "image", "histo", "audio", "tensor"] | None: ...
+        def HasField(
+            self,
+            field_name: typing.Literal[
+                "audio",
+                b"audio",
+                "histo",
+                b"histo",
+                "image",
+                b"image",
+                "metadata",
+                b"metadata",
+                "obsolete_old_style_histogram",
+                b"obsolete_old_style_histogram",
+                "simple_value",
+                b"simple_value",
+                "tensor",
+                b"tensor",
+                "value",
+                b"value",
+            ],
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "audio",
+                b"audio",
+                "histo",
+                b"histo",
+                "image",
+                b"image",
+                "metadata",
+                b"metadata",
+                "node_name",
+                b"node_name",
+                "obsolete_old_style_histogram",
+                b"obsolete_old_style_histogram",
+                "simple_value",
+                b"simple_value",
+                "tag",
+                b"tag",
+                "tensor",
+                b"tensor",
+                "value",
+                b"value",
+            ],
+        ) -> None: ...
+        def WhichOneof(
+            self, oneof_group: typing.Literal["value", b"value"]
+        ) -> typing.Literal["simple_value", "obsolete_old_style_histogram", "image", "histo", "audio", "tensor"] | None: ...
 
     VALUE_FIELD_NUMBER: builtins.int
     @property
     def value(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Summary.Value]:
         """Set of values for the summary."""
 
-    def __init__(
-        self,
-        *,
-        value: collections.abc.Iterable[global___Summary.Value] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, value: collections.abc.Iterable[global___Summary.Value] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["value", b"value"]) -> None: ...
 
 global___Summary = Summary

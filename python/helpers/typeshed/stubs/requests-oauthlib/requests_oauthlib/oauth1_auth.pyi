@@ -1,5 +1,5 @@
-from _typeshed import Incomplete
 from logging import Logger
+from typing import Any
 
 from oauthlib.oauth1 import Client
 from requests.auth import AuthBase
@@ -15,19 +15,21 @@ class OAuth1(AuthBase):
     def __init__(
         self,
         client_key,
-        client_secret: Incomplete | None = None,
-        resource_owner_key: Incomplete | None = None,
-        resource_owner_secret: Incomplete | None = None,
-        callback_uri: Incomplete | None = None,
+        client_secret=None,
+        resource_owner_key=None,
+        resource_owner_secret=None,
+        callback_uri=None,
         signature_method="HMAC-SHA1",
         signature_type="AUTH_HEADER",
-        rsa_key: Incomplete | None = None,
-        verifier: Incomplete | None = None,
-        decoding: str = "utf-8",
+        rsa_key=None,
+        verifier=None,
+        decoding: str | None = "utf-8",
         client_class: type[Client] | None = None,
         force_include_body: bool = False,
         *,
+        realm=None,
         encoding: str = "utf-8",
-        nonce: Incomplete | None = None,
-        timestamp: Incomplete | None = None,
+        nonce=None,
+        timestamp=None,
+        **kwargs: Any,  # passed to client_class's __init__
     ) -> None: ...

@@ -60,7 +60,9 @@ class RemoteTensorHandle(google.protobuf.message.Message):
     dtype: tensorflow.core.framework.types_pb2.DataType.ValueType
     """Tensor type."""
     @property
-    def resource_dtypes_and_shapes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ResourceDtypeAndShape]:
+    def resource_dtypes_and_shapes(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ResourceDtypeAndShape]:
         """Optional data types and shapes of a remote resource variable."""
 
     def __init__(
@@ -73,6 +75,22 @@ class RemoteTensorHandle(google.protobuf.message.Message):
         dtype: tensorflow.core.framework.types_pb2.DataType.ValueType | None = ...,
         resource_dtypes_and_shapes: collections.abc.Iterable[global___ResourceDtypeAndShape] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["device", b"device", "dtype", b"dtype", "op_device", b"op_device", "op_id", b"op_id", "output_num", b"output_num", "resource_dtypes_and_shapes", b"resource_dtypes_and_shapes"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "device",
+            b"device",
+            "dtype",
+            b"dtype",
+            "op_device",
+            b"op_device",
+            "op_id",
+            b"op_id",
+            "output_num",
+            b"output_num",
+            "resource_dtypes_and_shapes",
+            b"resource_dtypes_and_shapes",
+        ],
+    ) -> None: ...
 
 global___RemoteTensorHandle = RemoteTensorHandle

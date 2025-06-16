@@ -10,17 +10,19 @@ from .constants import CLIENT as CLIENT, COMMAND as COMMAND, FIELD_TYPE as FIELD
 from .cursors import Cursor
 from .util import byte2int as byte2int, int2byte as int2byte
 
-SSL_ENABLED: Any
-DEFAULT_USER: Any
-DEBUG: Any
-DEFAULT_CHARSET: Any
+SSL_ENABLED: bool
+DEFAULT_USER: str | None
+DEBUG: bool
+DEFAULT_CHARSET: str
+TEXT_TYPES: set[int]
+MAX_PACKET_LEN: int
 
 _C = TypeVar("_C", bound=Cursor)
 _C2 = TypeVar("_C2", bound=Cursor)
 
 def dump_packet(data): ...
 def pack_int24(n): ...
-def lenenc_int(i: int) -> bytes: ...
+def _lenenc_int(i: int) -> bytes: ...
 
 class MysqlPacket:
     connection: Any
@@ -84,20 +86,20 @@ class Connection(Generic[_C]):
         self: Connection[Cursor],  # different between overloads
         *,
         host: str | None = None,
-        user: Incomplete | None = None,
+        user=None,
         password: str = "",
-        database: Incomplete | None = None,
+        database=None,
         port: int = 0,
-        unix_socket: Incomplete | None = None,
+        unix_socket=None,
         charset: str = "",
         collation: str | None = None,
-        sql_mode: Incomplete | None = None,
-        read_default_file: Incomplete | None = None,
+        sql_mode=None,
+        read_default_file=None,
         conv=None,
         use_unicode: bool | None = True,
         client_flag: int = 0,
         cursorclass: None = None,  # different between overloads
-        init_command: Incomplete | None = None,
+        init_command=None,
         connect_timeout: int | None = 10,
         ssl: Mapping[Any, Any] | None = None,
         ssl_ca=None,
@@ -107,21 +109,21 @@ class Connection(Generic[_C]):
         ssl_key_password: _PasswordType | None = None,
         ssl_verify_cert=None,
         ssl_verify_identity=None,
-        read_default_group: Incomplete | None = None,
-        compress: Incomplete | None = None,
-        named_pipe: Incomplete | None = None,
+        read_default_group=None,
+        compress=None,
+        named_pipe=None,
         autocommit: bool | None = False,
-        db: Incomplete | None = None,
-        passwd: Incomplete | None = None,
+        db=None,
+        passwd=None,
         local_infile: Incomplete | None = False,
         max_allowed_packet: int = 16777216,
         defer_connect: bool | None = False,
         auth_plugin_map: Mapping[Any, Any] | None = None,
         read_timeout: float | None = None,
         write_timeout: float | None = None,
-        bind_address: Incomplete | None = None,
+        bind_address=None,
         binary_prefix: bool | None = False,
-        program_name: Incomplete | None = None,
+        program_name=None,
         server_public_key: bytes | None = None,
     ) -> None: ...
     @overload
@@ -130,20 +132,20 @@ class Connection(Generic[_C]):
         self: Connection[_C],  # pyright: ignore[reportInvalidTypeVarUse]  #11780
         *,
         host: str | None = None,
-        user: Incomplete | None = None,
+        user=None,
         password: str = "",
-        database: Incomplete | None = None,
+        database=None,
         port: int = 0,
-        unix_socket: Incomplete | None = None,
+        unix_socket=None,
         charset: str = "",
         collation: str | None = None,
-        sql_mode: Incomplete | None = None,
-        read_default_file: Incomplete | None = None,
+        sql_mode=None,
+        read_default_file=None,
         conv=None,
         use_unicode: bool | None = True,
         client_flag: int = 0,
         cursorclass: type[_C] = ...,  # different between overloads
-        init_command: Incomplete | None = None,
+        init_command=None,
         connect_timeout: int | None = 10,
         ssl: Mapping[Any, Any] | None = None,
         ssl_ca=None,
@@ -152,21 +154,21 @@ class Connection(Generic[_C]):
         ssl_key=None,
         ssl_verify_cert=None,
         ssl_verify_identity=None,
-        read_default_group: Incomplete | None = None,
-        compress: Incomplete | None = None,
-        named_pipe: Incomplete | None = None,
+        read_default_group=None,
+        compress=None,
+        named_pipe=None,
         autocommit: bool | None = False,
-        db: Incomplete | None = None,
-        passwd: Incomplete | None = None,
+        db=None,
+        passwd=None,
         local_infile: Incomplete | None = False,
         max_allowed_packet: int = 16777216,
         defer_connect: bool | None = False,
         auth_plugin_map: Mapping[Any, Any] | None = None,
         read_timeout: float | None = None,
         write_timeout: float | None = None,
-        bind_address: Incomplete | None = None,
+        bind_address=None,
         binary_prefix: bool | None = False,
-        program_name: Incomplete | None = None,
+        program_name=None,
         server_public_key: bytes | None = None,
     ) -> None: ...
     socket: Any

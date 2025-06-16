@@ -20,6 +20,8 @@ TYPE_FUNCTION: int
 TYPE_MODULE: int
 USE: int
 
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 class _symtable_entry(object): ...
 
 class symtable(object):

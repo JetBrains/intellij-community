@@ -147,7 +147,7 @@ class VariableAggregation(Enum):
 class _VariableMetaclass(type): ...
 
 # Variable class in intent/documentation is a Tensor. In implementation there's
-# TODO comment to make it Tensor. It is not actually Tensor type wise, but even
+# TODO: comment to make it Tensor. It is not actually Tensor type wise, but even
 # dynamically patches on most methods of tf.Tensor
 # https://github.com/tensorflow/tensorflow/blob/9524a636cae9ae3f0554203c1ba7ee29c85fcf12/tensorflow/python/ops/variables.py#L1086.
 class Variable(Tensor, metaclass=_VariableMetaclass):
@@ -161,7 +161,7 @@ class Variable(Tensor, metaclass=_VariableMetaclass):
         name: str | None = None,
         # Real type is VariableDef protobuf type. Can be added after adding script
         # to generate tensorflow protobuf stubs with mypy-protobuf.
-        variable_def: Incomplete | None = None,
+        variable_def=None,
         dtype: DTypeLike | None = None,
         import_scope: str | None = None,
         constraint: Callable[[Tensor], Tensor] | None = None,
@@ -203,7 +203,7 @@ class Operation:
         control_inputs: Iterable[Tensor | Operation] | None = None,
         input_types: Iterable[DType] | None = None,
         original_op: Operation | None = None,
-        op_def: Incomplete | None = None,
+        op_def=None,
     ) -> None: ...
     @property
     def inputs(self) -> list[Tensor]: ...
@@ -417,7 +417,7 @@ def reshape(tensor: TensorCompatible, shape: ShapeLike | Tensor, name: str | Non
 def pad(
     tensor: TensorCompatible,
     paddings: Tensor | IntArray | Iterable[Iterable[int]],
-    mode: Literal["CONSTANT", "constant", "REFLECT", "reflect", "SYMMETRIC", "symmectric"] = "CONSTANT",
+    mode: Literal["CONSTANT", "constant", "REFLECT", "reflect", "SYMMETRIC", "symmetric"] = "CONSTANT",
     constant_values: ScalarTensorCompatible = 0,
     name: str | None = None,
 ) -> Tensor: ...
@@ -432,4 +432,4 @@ def gather_nd(
     name: str | None = None,
     bad_indices_policy: Literal["", "DEFAULT", "ERROR", "IGNORE"] = "",
 ) -> Tensor: ...
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

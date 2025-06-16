@@ -1,20 +1,19 @@
-webbrowser.MacOSX.__init__
-
-# These entries looks like a `setup-python` bug:
-(dbm.gnu)?
-(_?locale.bind_textdomain_codeset)?
-(_?locale.bindtextdomain)?
-(_?locale.dcgettext)?
-(_?locale.dgettext)?
-(_?locale.gettext)?
-(_?locale.textdomain)?
-
-# Doesn't exist on macos:
-spwd
-msilib(.[a-z]+)?
-ossaudiodev
+# ============
+# 3.11 to 3.12
+# ============
 
 # Not present on all MacOS versions
 fcntl.F_OFD_GETLK
 fcntl.F_OFD_SETLK
 fcntl.F_OFD_SETLKW
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
+
+# Doesn't exist on macos:
+_msi
+msilib(.[a-z]+)?
+ossaudiodev
+spwd

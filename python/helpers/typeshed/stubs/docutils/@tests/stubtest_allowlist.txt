@@ -3,17 +3,18 @@ docutils.frontend.ConfigParser.read
 docutils.frontend.OptionParser.__getattr__
 docutils.io.FileOutput.__getattr__
 docutils.io.FileOutput.__init__
-docutils.languages.LanguageImporter.__getattr__
 docutils.nodes.Element.__iter__ # doesn't exist at runtime, but the class is iterable due to __getitem__
 docutils.nodes.Element.tagname  # class variable is overridden in __init__ method
-docutils.nodes.GenericNodeVisitor.__getattr__
+docutils.nodes.NodeVisitor.depart_\w+  # Methods are discovered dynamically on commonly-used subclasses
+docutils.nodes.NodeVisitor.visit_\w+  # Methods are discovered dynamically on commonly-used subclasses
 # these methods take a rawsource parameter that has been deprecated and is completely ignored, so we omit it from the stub
 docutils.nodes.Text.__new__
 docutils.parsers.recommonmark_wrapper
-docutils.parsers.rst.directives.misc.MetaBody.__getattr__
+docutils.parsers.rst.directives.admonitions.BaseAdmonition.node_class  # must be overridden by base classes (pseudo-abstract)
 docutils.statemachine.State.nested_sm  # is initialised in __init__
 docutils.statemachine.State.nested_sm_kwargs  # is initialised in __init__
 docutils.statemachine.ViewList.__iter__ # doesn't exist at runtime, but the class is iterable due to __getitem__
 docutils.transforms.Transform.__getattr__
 docutils.transforms.Transformer.__getattr__
 docutils.TransformSpec.unknown_reference_resolvers
+docutils.writers.manpage.Translator.__getattr__

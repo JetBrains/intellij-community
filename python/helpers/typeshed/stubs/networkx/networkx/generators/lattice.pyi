@@ -1,18 +1,14 @@
-from _typeshed import Incomplete
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["grid_2d_graph", "grid_graph", "hypercube_graph", "triangular_lattice_graph", "hexagonal_lattice_graph"]
 
-@_dispatch
-def grid_2d_graph(m, n, periodic: bool = False, create_using: Incomplete | None = None): ...
-@_dispatch
+@_dispatchable
+def grid_2d_graph(m, n, periodic: bool = False, create_using=None): ...
+@_dispatchable
 def grid_graph(dim, periodic: bool = False): ...
-@_dispatch
+@_dispatchable
 def hypercube_graph(n): ...
-@_dispatch
-def triangular_lattice_graph(
-    m, n, periodic: bool = False, with_positions: bool = True, create_using: Incomplete | None = None
-): ...
-@_dispatch
-def hexagonal_lattice_graph(
-    m, n, periodic: bool = False, with_positions: bool = True, create_using: Incomplete | None = None
-): ...
+@_dispatchable
+def triangular_lattice_graph(m, n, periodic: bool = False, with_positions: bool = True, create_using=None): ...
+@_dispatchable
+def hexagonal_lattice_graph(m, n, periodic: bool = False, with_positions: bool = True, create_using=None): ...

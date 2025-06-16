@@ -4,6 +4,10 @@ import sys
 from pathlib import Path, PureWindowsPath
 from typing_extensions import assert_type
 
+
+class MyCustomPath(Path): ...
+
+
 if Path("asdf") == Path("asdf"):
     ...
 
@@ -23,8 +27,20 @@ if PureWindowsPath("asdf") == Path("asdf"):  # type: ignore
 
 
 if sys.version_info >= (3, 13):
-
-    class MyCustomPath(Path): ...
-
     pth = MyCustomPath.from_uri("file:///tmp/abc.txt")
     assert_type(pth, MyCustomPath)
+
+
+if sys.version_info >= (3, 14):
+    pth = MyCustomPath("asdf")
+    # With text path, type should be preserved.
+    assert_type(pth.move_into("asdf"), MyCustomPath)
+    assert_type(pth.move("asdf"), MyCustomPath)
+    assert_type(pth.copy("asdf"), MyCustomPath)
+    assert_type(pth.copy_into("asdf"), MyCustomPath)
+
+    # With an actual path type, that type should be preserved.
+    assert_type(pth.move_into(Path("asdf")), Path)
+    assert_type(pth.move(Path("asdf")), Path)
+    assert_type(pth.copy(Path("asdf")), Path)
+    assert_type(pth.copy_into(Path("asdf")), Path)

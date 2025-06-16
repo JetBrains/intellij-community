@@ -11,14 +11,14 @@ class Formatter(EntitySubstitution):
     HTML_DEFAULTS: dict[str, set[str]]
     language: str | None
     entity_substitution: _EntitySubstitution
-    void_element_close_prefix: str
+    void_element_close_prefix: str | None
     cdata_containing_tags: list[str]
     empty_attributes_are_booleans: bool
     def __init__(
         self,
         language: str | None = None,
         entity_substitution: _EntitySubstitution | None = None,
-        void_element_close_prefix: str = "/",
+        void_element_close_prefix: str | None = "/",
         cdata_containing_tags: list[str] | None = None,
         empty_attributes_are_booleans: bool = False,
         indent: int = 1,
@@ -32,7 +32,7 @@ class HTMLFormatter(Formatter):
     def __init__(
         self,
         entity_substitution: _EntitySubstitution | None = ...,
-        void_element_close_prefix: str = ...,
+        void_element_close_prefix: str | None = ...,
         cdata_containing_tags: list[str] | None = ...,
         empty_attributes_are_booleans: bool = False,
         indent: int = 1,
@@ -43,7 +43,7 @@ class XMLFormatter(Formatter):
     def __init__(
         self,
         entity_substitution: _EntitySubstitution | None = ...,
-        void_element_close_prefix: str = ...,
+        void_element_close_prefix: str | None = ...,
         cdata_containing_tags: list[str] | None = ...,
         empty_attributes_are_booleans: bool = False,
         indent: int = 1,

@@ -1,5 +1,5 @@
 import contextlib
-from _typeshed import Incomplete, SupportsWrite
+from _typeshed import Incomplete, SupportsRead, SupportsWrite
 from collections.abc import Callable, Iterable, Iterator, Mapping, MutableMapping
 from types import TracebackType
 from typing import Any, ClassVar, Generic, Literal, NoReturn, TypeVar, overload
@@ -23,13 +23,14 @@ class TqdmTypeError(TypeError): ...
 class TqdmKeyError(KeyError): ...
 
 class TqdmWarning(Warning):
-    def __init__(self, msg, fp_write: Incomplete | None = None, *a, **k) -> None: ...
+    def __init__(self, msg, fp_write=None, *a, **k) -> None: ...
 
 class TqdmExperimentalWarning(TqdmWarning, FutureWarning): ...
 class TqdmDeprecationWarning(TqdmWarning, DeprecationWarning): ...
 class TqdmMonitorWarning(TqdmWarning, RuntimeWarning): ...
 
 _T = TypeVar("_T")
+_U = TypeVar("_U")
 
 class tqdm(Comparable, Generic[_T]):
     monitor_interval: ClassVar[int]
@@ -222,10 +223,16 @@ class tqdm(Comparable, Generic[_T]):
     @property
     def format_dict(self) -> MutableMapping[str, Any]: ...
     def display(self, msg: str | None = None, pos: int | None = None) -> None: ...
+    @overload
     @classmethod
     def wrapattr(
-        cls, stream, method: Literal["read", "write"], total: float | None = None, bytes: bool | None = True, **tqdm_kwargs
-    ) -> contextlib._GeneratorContextManager[Incomplete]: ...
+        cls, stream: SupportsRead[_U], method: Literal["read"], total: float | None = None, bytes: bool = True, **tqdm_kwargs
+    ) -> contextlib._GeneratorContextManager[SupportsRead[_U]]: ...
+    @overload
+    @classmethod
+    def wrapattr(
+        cls, stream: SupportsWrite[_U], method: Literal["write"], total: float | None = None, bytes: bool = True, **tqdm_kwargs
+    ) -> contextlib._GeneratorContextManager[SupportsWrite[_U]]: ...
 
 @overload
 def trange(

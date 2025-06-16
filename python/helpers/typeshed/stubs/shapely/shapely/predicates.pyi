@@ -9,7 +9,21 @@ from .geometry.base import BaseGeometry
 from .lib import Geometry
 
 __all__ = [
+    "contains",
+    "contains_properly",
+    "contains_xy",
+    "covered_by",
+    "covers",
+    "crosses",
+    "disjoint",
+    "dwithin",
+    "equals",
+    "equals_exact",
+    "equals_identical",
+    "has_m",
     "has_z",
+    "intersects",
+    "intersects_xy",
     "is_ccw",
     "is_closed",
     "is_empty",
@@ -21,29 +35,21 @@ __all__ = [
     "is_valid",
     "is_valid_input",
     "is_valid_reason",
-    "crosses",
-    "contains",
-    "contains_xy",
-    "contains_properly",
-    "covered_by",
-    "covers",
-    "disjoint",
-    "dwithin",
-    "equals",
-    "intersects",
-    "intersects_xy",
     "overlaps",
-    "touches",
-    "within",
-    "equals_exact",
     "relate",
     "relate_pattern",
+    "touches",
+    "within",
 ]
 
 @overload
 def has_z(geometry: Geometry | None, **kwargs) -> bool: ...
 @overload
 def has_z(geometry: OptGeoArrayLikeSeq, **kwargs) -> NDArray[np.bool_]: ...
+@overload
+def has_m(geometry: Geometry | None, **kwargs) -> bool: ...
+@overload
+def has_m(geometry: OptGeoArrayLikeSeq, **kwargs) -> NDArray[np.bool_]: ...
 @overload
 def is_ccw(geometry: Geometry | None, **kwargs) -> bool: ...
 @overload
@@ -163,13 +169,27 @@ def within(a: OptGeoArrayLikeSeq, b: OptGeoArrayLike, **kwargs) -> NDArray[np.bo
 @overload
 def within(a: OptGeoArrayLike, b: OptGeoArrayLikeSeq, **kwargs) -> NDArray[np.bool_]: ...
 @overload
-def equals_exact(a: Geometry | None, b: Geometry | None, tolerance: float = 0.0, **kwargs) -> bool: ...
+def equals_exact(
+    a: Geometry | None, b: Geometry | None, tolerance: float = 0.0, *, normalize: bool = False, **kwargs
+) -> bool: ...
 @overload
-def equals_exact(a: OptGeoArrayLike, b: OptGeoArrayLike, tolerance: ArrayLikeSeq[float], **kwargs) -> NDArray[np.bool_]: ...
+def equals_exact(
+    a: OptGeoArrayLike, b: OptGeoArrayLike, tolerance: ArrayLikeSeq[float], *, normalize: bool = False, **kwargs
+) -> NDArray[np.bool_]: ...
 @overload
-def equals_exact(a: OptGeoArrayLikeSeq, b: OptGeoArrayLike, tolerance: ArrayLike[float] = 0.0, **kwargs) -> NDArray[np.bool_]: ...
+def equals_exact(
+    a: OptGeoArrayLikeSeq, b: OptGeoArrayLike, tolerance: ArrayLike[float] = 0.0, *, normalize: bool = False, **kwargs
+) -> NDArray[np.bool_]: ...
 @overload
-def equals_exact(a: OptGeoArrayLike, b: OptGeoArrayLikeSeq, tolerance: ArrayLike[float] = 0.0, **kwargs) -> NDArray[np.bool_]: ...
+def equals_exact(
+    a: OptGeoArrayLike, b: OptGeoArrayLikeSeq, tolerance: ArrayLike[float] = 0.0, *, normalize: bool = False, **kwargs
+) -> NDArray[np.bool_]: ...
+@overload
+def equals_identical(a: Geometry | None, b: Geometry | None, **kwargs) -> bool: ...
+@overload
+def equals_identical(a: OptGeoArrayLikeSeq, b: OptGeoArrayLike, **kwargs) -> NDArray[np.bool_]: ...
+@overload
+def equals_identical(a: OptGeoArrayLike, b: OptGeoArrayLikeSeq, **kwargs) -> NDArray[np.bool_]: ...
 @overload
 def relate(a: Geometry | None, b: None, **kwargs) -> None: ...
 @overload

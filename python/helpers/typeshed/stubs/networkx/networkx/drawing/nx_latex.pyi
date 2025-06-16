@@ -1,4 +1,4 @@
-from _typeshed import Incomplete
+__all__ = ["to_latex_raw", "to_latex", "write_latex"]
 
 def to_latex_raw(
     G,
@@ -25,8 +25,8 @@ def to_latex(
     edge_label_options: str = "edge_label_options",
     caption: str = "",
     latex_label: str = "",
-    sub_captions: Incomplete | None = None,
-    sub_labels: Incomplete | None = None,
+    sub_captions=None,
+    sub_labels=None,
     n_rows: int = 1,
     as_document: bool = True,
     document_wrapper: str = ...,

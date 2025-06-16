@@ -1,13 +1,18 @@
 import dataclasses
-from _typeshed import Incomplete
+from _typeshed import Incomplete, Unused
+from collections import defaultdict
 from collections.abc import Generator
 from dataclasses import dataclass
-from typing import overload
-from typing_extensions import Self
+from logging import Logger
+from typing import Final, overload
+from typing_extensions import Self, deprecated
 
+from ._fonttools_shims import _TTFont
 from .drawing import DeviceGray, DeviceRGB, Number
-from .enums import TextEmphasis
+from .enums import Align, TextEmphasis
 from .syntax import PDFObject
+
+LOGGER: Logger
 
 # Only defined if harfbuzz is installed.
 class HarfBuzzFont(Incomplete):  # derives from uharfbuzz.Font
@@ -24,7 +29,7 @@ class FontFace:
     def __init__(
         self,
         family: str | None = None,
-        emphasis: Incomplete | None = None,
+        emphasis=None,
         size_pt: int | None = None,
         color: int | tuple[Number, Number, Number] | DeviceGray | DeviceRGB | None = None,
         fill_color: int | tuple[Number, Number, Number] | DeviceGray | DeviceRGB | None = None,
@@ -39,37 +44,82 @@ class FontFace:
     @staticmethod
     def combine(default_style: FontFace | None, override_style: FontFace | None) -> FontFace: ...
 
-class _FontMixin:
+class TextStyle(FontFace):
+    t_margin: int
+    l_margin: int | Align
+    b_margin: int
+    def __init__(
+        self,
+        font_family: str | None = None,
+        font_style: str | None = None,
+        font_size_pt: int | None = None,
+        color: int | tuple[int, int, int] | None = None,
+        fill_color: int | tuple[int, int, int] | None = None,
+        underline: bool = False,
+        t_margin: int | None = None,
+        l_margin: int | Align | str | None = None,
+        b_margin: int | None = None,
+    ): ...
+    def replace(  # type: ignore[override]
+        self,
+        /,
+        font_family: str | None = None,
+        emphasis: TextEmphasis | None = None,
+        font_size_pt: int | None = None,
+        color: int | tuple[int, int, int] | None = None,
+        fill_color: int | tuple[int, int, int] | None = None,
+        t_margin: int | None = None,
+        l_margin: int | None = None,
+        b_margin: int | None = None,
+    ) -> TextStyle: ...
+
+@deprecated("fpdf.TitleStyle is deprecated since 2.7.10. It has been replaced by fpdf.TextStyle.")
+class TitleStyle(TextStyle): ...
+
+__pdoc__: Final[dict[str, bool]]
+
+class CoreFont:
     i: int
     type: str
     name: str
     up: int
     ut: int
+    sp: int
+    ss: int
     cw: int
     fontkey: str
     emphasis: TextEmphasis
-    def encode_text(self, text: str): ...
-
-class CoreFont(_FontMixin):
     def __init__(self, fpdf, fontkey: str, style: int) -> None: ...
-    def get_text_width(self, text: str, font_size_pt: int, _): ...
+    def get_text_width(self, text: str, font_size_pt: int, _: Unused) -> float: ...
+    def encode_text(self, text: str) -> str: ...
 
-class TTFFont(_FontMixin):
+class TTFFont:
+    i: int
+    type: str
     ttffile: Incomplete
-    ttfont: Incomplete
-    scale: Incomplete
-    desc: Incomplete
+    fontkey: str
+    ttfont: _TTFont
+    scale: float
+    desc: PDFFontDescriptor
+    cw: defaultdict[str, int]
     cmap: Incomplete
-    glyph_ids: Incomplete
-    missing_glyphs: Incomplete
-    subset: Incomplete
+    glyph_ids: dict[Incomplete, Incomplete]
+    missing_glyphs: list[Incomplete]
+    name: str
+    up: int
+    ut: int
+    sp: int
+    ss: int
+    emphasis: TextEmphasis
+    subset: SubsetMap
     hbfont: HarfBuzzFont | None  # Not always defined.
     def __init__(self, fpdf, font_file_path, fontkey: str, style: int) -> None: ...
     def close(self) -> None: ...
-    def get_text_width(self, text: str, font_size_pt: int, text_shaping_parms): ...
-    def shaped_text_width(self, text: str, font_size_pt: int, text_shaping_parms): ...
-    def perform_harfbuzz_shaping(self, text: str, font_size_pt: int, text_shaping_parms): ...
-    def shape_text(self, text: str, font_size_pt: int, text_shaping_parms): ...
+    def get_text_width(self, text: str, font_size_pt: int, text_shaping_params): ...
+    def shaped_text_width(self, text: str, font_size_pt: int, text_shaping_params): ...
+    def perform_harfbuzz_shaping(self, text: str, font_size_pt: int, text_shaping_params): ...
+    def encode_text(self, text: str) -> str: ...
+    def shape_text(self, text: str, font_size_pt: int, text_shaping_params): ...
 
 class PDFFontDescriptor(PDFObject):
     type: Incomplete
@@ -84,34 +134,22 @@ class PDFFontDescriptor(PDFObject):
     font_name: Incomplete
     def __init__(self, ascent, descent, cap_height, flags, font_b_box, italic_angle, stem_v, missing_width) -> None: ...
 
+@dataclass(order=True)
 class Glyph:
     glyph_id: int
     unicode: tuple[Incomplete, ...]
     glyph_name: str
     glyph_width: int
-    def __hash__(self): ...
-    def __init__(self, glyph_id, unicode, glyph_name, glyph_width) -> None: ...
-    def __lt__(self, other): ...
-    def __gt__(self, other): ...
-    def __le__(self, other): ...
-    def __ge__(self, other): ...
-
-    __match_args__ = ("glyph_id", "unicode", "glyph_name", "glyph_width")
+    def __hash__(self) -> int: ...
 
 class SubsetMap:
     font: TTFFont
-    def __init__(self, font: TTFFont, identities: list[int]) -> None: ...
+    def __init__(self, font: TTFFont) -> None: ...
     def __len__(self) -> int: ...
     def items(self) -> Generator[Incomplete, None, None]: ...
     def pick(self, unicode: int): ...
     def pick_glyph(self, glyph): ...
-    def get_glyph(
-        self,
-        glyph: Incomplete | None = None,
-        unicode: Incomplete | None = None,
-        glyph_name: Incomplete | None = None,
-        glyph_width: Incomplete | None = None,
-    ) -> Glyph: ...
+    def get_glyph(self, glyph=None, unicode=None, glyph_name=None, glyph_width=None) -> Glyph: ...
     def get_all_glyph_names(self): ...
 
 CORE_FONTS: dict[str, str]

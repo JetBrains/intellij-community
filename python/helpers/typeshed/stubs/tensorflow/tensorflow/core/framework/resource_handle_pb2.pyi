@@ -68,7 +68,9 @@ class ResourceHandleProto(google.protobuf.message.Message):
     available.
     """
     @property
-    def dtypes_and_shapes(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ResourceHandleProto.DtypeAndShape]:
+    def dtypes_and_shapes(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ResourceHandleProto.DtypeAndShape]:
         """Data types and shapes for the underlying resource."""
 
     def __init__(
@@ -81,6 +83,22 @@ class ResourceHandleProto(google.protobuf.message.Message):
         maybe_type_name: builtins.str | None = ...,
         dtypes_and_shapes: collections.abc.Iterable[global___ResourceHandleProto.DtypeAndShape] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["container", b"container", "device", b"device", "dtypes_and_shapes", b"dtypes_and_shapes", "hash_code", b"hash_code", "maybe_type_name", b"maybe_type_name", "name", b"name"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "container",
+            b"container",
+            "device",
+            b"device",
+            "dtypes_and_shapes",
+            b"dtypes_and_shapes",
+            "hash_code",
+            b"hash_code",
+            "maybe_type_name",
+            b"maybe_type_name",
+            "name",
+            b"name",
+        ],
+    ) -> None: ...
 
 global___ResourceHandleProto = ResourceHandleProto

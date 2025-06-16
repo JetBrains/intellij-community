@@ -121,7 +121,7 @@ class ChartSpace(Serialisable):
         txPr: RichText | None = None,
         externalData: ExternalData | None = None,
         printSettings: PrintSettings | None = None,
-        userShapes: Incomplete | None = None,
+        userShapes=None,
         extLst: Unused = None,
     ) -> None: ...
     @overload
@@ -139,7 +139,7 @@ class ChartSpace(Serialisable):
         txPr: RichText | None = None,
         externalData: ExternalData | None = None,
         printSettings: PrintSettings | None = None,
-        userShapes: Incomplete | None = None,
+        userShapes=None,
         extLst: Unused = None,
     ) -> None: ...
     def to_tree(self, tagname: Unused = None, idx: Unused = None, namespace: Unused = None) -> Element: ...

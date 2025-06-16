@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Any
 
 from bs4.builder import HTMLTreeBuilder, TreeBuilder
@@ -19,13 +18,9 @@ class LXMLTreeBuilderForXML(TreeBuilder):
     empty_element_tags: Any
     soup: Any
     nsmaps: Any
-    def __init__(self, parser: Incomplete | None = None, empty_element_tags: Incomplete | None = None, **kwargs) -> None: ...
+    def __init__(self, parser=None, empty_element_tags=None, **kwargs) -> None: ...
     def prepare_markup(  # type: ignore[override]  # the order of the parameters is different
-        self,
-        markup,
-        user_specified_encoding: Incomplete | None = None,
-        exclude_encodings: Incomplete | None = None,
-        document_declared_encoding: Incomplete | None = None,
+        self, markup, user_specified_encoding=None, exclude_encodings=None, document_declared_encoding=None
     ) -> None: ...
     parser: Any
     def feed(self, markup) -> None: ...

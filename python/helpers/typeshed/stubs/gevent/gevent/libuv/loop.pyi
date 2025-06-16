@@ -2,9 +2,9 @@ import sys
 from _typeshed import FileDescriptor
 from typing import NamedTuple
 
-import gevent.libuv.watcher as watcher
 from gevent._ffi.loop import AbstractLoop
 from gevent._types import _IoWatcher
+from gevent.libuv import watcher
 
 def get_version() -> str: ...
 def get_header_version() -> str: ...
@@ -40,3 +40,5 @@ class loop(AbstractLoop):
         def fork(self, ref: bool = True, priority: int | None = None) -> watcher.fork: ...
         def child(self, pid: int, trace: int = 0, ref: bool = True) -> watcher.child: ...
     # prepare is not supported on libuv yet, but we need type_error to annotate that
+
+__all__: list[str] = []

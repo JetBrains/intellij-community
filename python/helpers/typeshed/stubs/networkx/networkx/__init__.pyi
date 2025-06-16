@@ -1,3 +1,5 @@
+from typing import Final
+
 from networkx.algorithms import *
 from networkx.classes import *
 from networkx.classes import filters as filters
@@ -10,7 +12,7 @@ from networkx.lazy_imports import _lazy_import as _lazy_import
 from networkx.linalg import *
 from networkx.readwrite import *
 from networkx.relabel import *
-from networkx.utils.backends import _dispatch as _dispatch
+from networkx.utils import _clear_cache as _clear_cache, _dispatchable as _dispatchable, config as config
 
 from . import (
     algorithms as algorithms,
@@ -24,3 +26,5 @@ from . import (
     relabel as relabel,
     utils as utils,
 )
+
+__version__: Final[str]

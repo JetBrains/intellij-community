@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from _typeshed import SupportsGetItem, SupportsItemAccess
 from builtins import list as List, type as _type  # aliases to avoid name clashes with `FieldStorage` attributes
 from typing import IO, Any, AnyStr, Iterable, Iterator, Mapping, Protocol

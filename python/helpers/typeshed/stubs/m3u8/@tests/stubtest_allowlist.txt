@@ -1,0 +1,17 @@
+# type check only
+m3u8.httpclient.HTTPSHandler.__new__
+# internal functions and attributes
+m3u8.M3U8.simple_attributes
+m3u8.model.M3U8.simple_attributes
+m3u8.model.denormalize_attribute
+m3u8.model.find_key
+m3u8.model.number_to_string
+m3u8.model.quoted
+m3u8.parser.cast_date_time
+m3u8.parser.format_date_time
+m3u8.parser.get_segment_custom_value
+m3u8.parser.normalize_attribute
+m3u8.parser.remove_quotes
+m3u8.parser.remove_quotes_parser
+m3u8.parser.save_segment_custom_value
+m3u8.parser.string_to_lines

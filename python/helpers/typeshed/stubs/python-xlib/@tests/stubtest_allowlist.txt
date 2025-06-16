@@ -12,6 +12,9 @@ Xlib.protocol.rq.DictWrapper.__lt__
 Xlib.protocol.rq.Event.__gt__
 Xlib.protocol.rq.Event.__lt__
 
+# should allow setting any attribute
+Xlib.protocol.rq.GetAttrData.__setattr__
+
 # Can be None or str once instantiated
 Xlib.protocol.rq.*.structcode
 # Should only ever be str once instantiated

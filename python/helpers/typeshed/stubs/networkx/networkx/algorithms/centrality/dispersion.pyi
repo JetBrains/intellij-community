@@ -1,7 +1,9 @@
 from networkx.classes.graph import Graph, _Node
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
+__all__ = ["dispersion"]
+
+@_dispatchable
 def dispersion(
     G: Graph[_Node],
     u: _Node | None = None,

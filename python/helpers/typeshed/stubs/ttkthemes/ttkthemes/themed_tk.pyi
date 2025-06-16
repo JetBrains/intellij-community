@@ -1,5 +1,5 @@
 import tkinter
-from _typeshed import Incomplete
+from typing import Any
 
 from ._widget import ThemedWidget
 
@@ -21,10 +21,56 @@ class ThemedTk(tkinter.Tk, ThemedWidget):
         background: bool | None = ...,  # old alias for themebg
         gif_override: bool = ...,
     ) -> None: ...
-    def set_theme(self, theme_name, toplevel: bool | None = None, themebg: bool | None = None) -> None: ...
-    # TODO: currently no good way to say "use the same big list of kwargs as parent class but also add these"
-    def config(self, kw: Incomplete | None = None, **kwargs): ...  # type: ignore[override]
-    def cget(self, k): ...
-    def configure(self, kw: Incomplete | None = None, **kwargs): ...  # type: ignore[override]
-    def __getitem__(self, k): ...
-    def __setitem__(self, k, v) -> None: ...
+    def set_theme(self, theme_name: str, toplevel: bool | None = None, themebg: bool | None = None) -> None: ...
+    # Keep this in sync with tkinter.Tk
+    def config(  # type: ignore[override]
+        self,
+        kw: dict[str, Any] | None = None,
+        *,
+        themebg: bool | None = ...,
+        toplevel: bool | None = ...,
+        theme: str | None = ...,
+        background: str = ...,
+        bd: tkinter._ScreenUnits = ...,
+        bg: str = ...,
+        border: tkinter._ScreenUnits = ...,
+        borderwidth: tkinter._ScreenUnits = ...,
+        cursor: tkinter._Cursor = ...,
+        height: tkinter._ScreenUnits = ...,
+        highlightbackground: str = ...,
+        highlightcolor: str = ...,
+        highlightthickness: tkinter._ScreenUnits = ...,
+        menu: tkinter.Menu = ...,
+        padx: tkinter._ScreenUnits = ...,
+        pady: tkinter._ScreenUnits = ...,
+        relief: tkinter._Relief = ...,
+        takefocus: tkinter._TakeFocusValue = ...,
+        width: tkinter._ScreenUnits = ...,
+    ) -> dict[str, tuple[str, str, str, Any, Any]] | None: ...
+    def cget(self, k: str) -> Any: ...
+    def configure(  # type: ignore[override]
+        self,
+        kw: dict[str, Any] | None = None,
+        *,
+        themebg: bool | None = ...,
+        toplevel: bool | None = ...,
+        theme: str | None = ...,
+        background: str = ...,
+        bd: tkinter._ScreenUnits = ...,
+        bg: str = ...,
+        border: tkinter._ScreenUnits = ...,
+        borderwidth: tkinter._ScreenUnits = ...,
+        cursor: tkinter._Cursor = ...,
+        height: tkinter._ScreenUnits = ...,
+        highlightbackground: str = ...,
+        highlightcolor: str = ...,
+        highlightthickness: tkinter._ScreenUnits = ...,
+        menu: tkinter.Menu = ...,
+        padx: tkinter._ScreenUnits = ...,
+        pady: tkinter._ScreenUnits = ...,
+        relief: tkinter._Relief = ...,
+        takefocus: tkinter._TakeFocusValue = ...,
+        width: tkinter._ScreenUnits = ...,
+    ) -> dict[str, tuple[str, str, str, Any, Any]] | None: ...
+    def __getitem__(self, k: str) -> Any: ...
+    def __setitem__(self, k: str, v: Any) -> None: ...

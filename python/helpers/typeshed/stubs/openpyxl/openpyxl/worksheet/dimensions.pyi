@@ -1,4 +1,4 @@
-from _typeshed import ConvertibleToFloat, ConvertibleToInt, Incomplete, Unused
+from _typeshed import ConvertibleToFloat, ConvertibleToInt, Unused
 from collections.abc import Callable, Iterator
 from typing import ClassVar, Literal, TypeVar
 from typing_extensions import Self
@@ -36,7 +36,7 @@ class Dimension(Strict, StyleableObject):
         collapsed: _ConvertibleToBool,
         worksheet: Worksheet,
         visible: Unused = True,
-        style: Incomplete | None = None,
+        style=None,
     ) -> None: ...
     def __iter__(self) -> Iterator[tuple[str, str]]: ...
     def __copy__(self) -> Self: ...
@@ -54,15 +54,15 @@ class RowDimension(Dimension):
         index: int = 0,
         ht: ConvertibleToFloat | None = None,
         customHeight: Unused = None,
-        s: Incomplete | None = None,
+        s=None,
         customFormat: Unused = None,
         hidden: _ConvertibleToBool = None,
         outlineLevel: ConvertibleToInt | None = 0,
         outline_level: ConvertibleToInt | None = None,
         collapsed: _ConvertibleToBool = None,
-        visible: Incomplete | None = None,
-        height: Incomplete | None = None,
-        r: Incomplete | None = None,
+        visible=None,
+        height=None,
+        r=None,
         spans: Unused = None,
         thickBot: _ConvertibleToBool = None,
         thickTop: _ConvertibleToBool = None,
@@ -92,7 +92,7 @@ class ColumnDimension(Dimension):
         outlineLevel: ConvertibleToInt | None = 0,
         outline_level: ConvertibleToInt | None = None,
         collapsed: _ConvertibleToBool = False,
-        style: Incomplete | None = None,
+        style=None,
         min: ConvertibleToInt | None = None,
         max: ConvertibleToInt | None = None,
         customWidth: Unused = False,

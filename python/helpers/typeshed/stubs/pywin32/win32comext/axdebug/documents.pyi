@@ -1,8 +1,6 @@
 from _typeshed import Incomplete
 
-from win32com.server.exception import Exception as Exception
-from win32comext.axdebug import codecontainer as codecontainer, contexts as contexts, gateways
-from win32comext.axdebug.util import RaiseNotImpl as RaiseNotImpl, trace as trace
+from win32comext.axdebug import gateways
 
 def GetGoodFileName(fname): ...
 
@@ -13,9 +11,7 @@ class DebugDocumentProvider(gateways.DebugDocumentProvider):
     def GetDocumentClassId(self): ...
     def GetDocument(self): ...
 
-# error: Cannot determine consistent method resolution order (MRO) for "DebugDocumentText"
-# pyright doesn't have a specific error code for MRO error!
-class DebugDocumentText(gateways.DebugDocumentInfo, gateways.DebugDocumentText, gateways.DebugDocument):  # type: ignore[misc]  # pyright: ignore
+class DebugDocumentText(gateways.DebugDocumentText):
     codeContainer: Incomplete
     def __init__(self, codeContainer) -> None: ...
     def GetName(self, dnt): ...

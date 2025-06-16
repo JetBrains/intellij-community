@@ -1,8 +1,9 @@
 from re import Pattern
+from typing import Final
 
 from dateparser.conf import Settings
 
-NUMERAL_PATTERN: Pattern[str]
+NUMERAL_PATTERN: Final[Pattern[str]]
 
 class Locale:
     shortname: str

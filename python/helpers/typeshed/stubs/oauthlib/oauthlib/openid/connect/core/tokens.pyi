@@ -1,20 +1,22 @@
-from _typeshed import Incomplete
-from typing import Any
+from collections.abc import Callable
 
+from oauthlib.common import Request
 from oauthlib.oauth2.rfc6749.tokens import TokenBase as TokenBase
 
+from .request_validator import RequestValidator
+
 class JWTToken(TokenBase):
-    request_validator: Any
-    token_generator: Any
-    refresh_token_generator: Any
-    expires_in: Any
+    request_validator: RequestValidator
+    token_generator: Callable[[Request], str] | Callable[[Request, bool], str]
+    refresh_token_generator: Callable[[Request], str] | Callable[[Request, bool], str]
+    expires_in: int | Callable[[Request], int]
     def __init__(
         self,
-        request_validator: Incomplete | None = None,
-        token_generator: Incomplete | None = None,
-        expires_in: Incomplete | None = None,
-        refresh_token_generator: Incomplete | None = None,
+        request_validator: RequestValidator | None = None,
+        token_generator: Callable[[Request], str] | None = None,
+        expires_in: int | Callable[[Request], int] | None = None,
+        refresh_token_generator: Callable[[Request], str] | None = None,
     ) -> None: ...
-    def create_token(self, request, refresh_token: bool = False): ...
-    def validate_request(self, request): ...
-    def estimate_type(self, request): ...
+    def create_token(self, request: Request, refresh_token: bool = False): ...
+    def validate_request(self, request: Request): ...
+    def estimate_type(self, request: Request): ...

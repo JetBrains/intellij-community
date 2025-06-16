@@ -3,15 +3,15 @@
 # (https://sourceware.org/gdb/onlinedocs/gdb/Python-API.html).
 
 import _typeshed
+import threading
+from _typeshed import Incomplete
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractContextManager
-from typing import Any, Generic, Literal, Protocol, TypeVar, final, overload
+from typing import Any, Final, Generic, Literal, Protocol, TypeVar, final, overload, type_check_only
 from typing_extensions import TypeAlias, deprecated
 
 import gdb.FrameDecorator
 import gdb.types
-import gdb.unwinder
-import gdb.xmethod
 
 # The following submodules are automatically imported
 from . import events as events, printing as printing, prompt as prompt, types as types
@@ -136,6 +136,8 @@ class Value:
     def string(self, encoding: str = ..., errors: str = ..., length: int = ...) -> str: ...
     def lazy_string(self, encoding: str = ..., length: int = ...) -> LazyString: ...
     def fetch_lazy(self) -> None: ...
+    def assign(self, val): ...
+    def to_array(self): ...
 
 # Types
 
@@ -193,33 +195,46 @@ class Field:
     type: Type | None
     parent_type: Type
 
-TYPE_CODE_PTR: int
-TYPE_CODE_ARRAY: int
-TYPE_CODE_STRUCT: int
-TYPE_CODE_UNION: int
-TYPE_CODE_ENUM: int
-TYPE_CODE_FLAGS: int
-TYPE_CODE_FUNC: int
-TYPE_CODE_INT: int
-TYPE_CODE_FLT: int
-TYPE_CODE_VOID: int
-TYPE_CODE_SET: int
-TYPE_CODE_RANGE: int
-TYPE_CODE_STRING: int
-TYPE_CODE_BITSTRING: int
-TYPE_CODE_ERROR: int
-TYPE_CODE_METHOD: int
-TYPE_CODE_METHODPTR: int
-TYPE_CODE_MEMBERPTR: int
-TYPE_CODE_REF: int
-TYPE_CODE_RVALUE_REF: int
-TYPE_CODE_CHAR: int
-TYPE_CODE_BOOL: int
-TYPE_CODE_COMPLEX: int
-TYPE_CODE_TYPEDEF: int
-TYPE_CODE_NAMESPACE: int
-TYPE_CODE_DECFLOAT: int
-TYPE_CODE_INTERNAL_FUNCTION: int
+TYPE_CODE_BITSTRING: Final = -1
+TYPE_CODE_PTR: Final = 1
+TYPE_CODE_ARRAY: Final = 2
+TYPE_CODE_STRUCT: Final = 3
+TYPE_CODE_UNION: Final = 4
+TYPE_CODE_ENUM: Final = 5
+TYPE_CODE_FLAGS: Final = 6
+TYPE_CODE_FUNC: Final = 7
+TYPE_CODE_INT: Final = 8
+TYPE_CODE_FLT: Final = 9
+TYPE_CODE_VOID: Final = 10
+TYPE_CODE_SET: Final = 11
+TYPE_CODE_RANGE: Final = 12
+TYPE_CODE_STRING: Final = 13
+TYPE_CODE_ERROR: Final = 14
+TYPE_CODE_METHOD: Final = 15
+TYPE_CODE_METHODPTR: Final = 16
+TYPE_CODE_MEMBERPTR: Final = 17
+TYPE_CODE_REF: Final = 18
+TYPE_CODE_RVALUE_REF: Final = 19
+TYPE_CODE_CHAR: Final = 20
+TYPE_CODE_BOOL: Final = 21
+TYPE_CODE_COMPLEX: Final = 22
+TYPE_CODE_TYPEDEF: Final = 23
+TYPE_CODE_NAMESPACE: Final = 24
+TYPE_CODE_DECFLOAT: Final = 25
+TYPE_CODE_MODULE: Final = 26
+TYPE_CODE_INTERNAL_FUNCTION: Final = 27
+TYPE_CODE_XMETHOD: Final = 28
+TYPE_CODE_FIXED_POINT: Final = 29
+TYPE_CODE_NAMELIST: Final = 30
+
+SEARCH_UNDEF_DOMAIN: Final[int]
+SEARCH_VAR_DOMAIN: Final[int]
+SEARCH_STRUCT_DOMAIN: Final[int]
+SEARCH_MODULE_DOMAIN: Final[int]
+SEARCH_LABEL_DOMAIN: Final[int]
+SEARCH_COMMON_BLOCK_DOMAIN: Final[int]
+SEARCH_TYPE_DOMAIN: Final[int]
+SEARCH_FUNCTION_DOMAIN: Final[int]
 
 # Pretty Printing
 
@@ -259,12 +274,28 @@ class PendingFrame:
     def read_register(self, reg: str | RegisterDescriptor | int, /) -> Value: ...
     def create_unwind_info(self, frame_id: object, /) -> UnwindInfo: ...
     def architecture(self) -> Architecture: ...
+    def language(self): ...
     def level(self) -> int: ...
+    def name(self) -> str: ...
+    def pc(self) -> int: ...
+    def block(self) -> Block: ...
+    def find_sal(self) -> Symtab_and_line: ...
+    def function(self) -> Symbol: ...
+    def is_valid(self) -> bool: ...
 
+@final
 class UnwindInfo:
     def add_saved_register(self, reg: str | RegisterDescriptor | int, value: Value, /) -> None: ...
 
-frame_unwinders: list[gdb.unwinder.Unwinder]
+@type_check_only
+class _Unwinder(Protocol):
+    @property
+    def name(self) -> str: ...
+    enabled: bool
+
+    def __call__(self, pending_frame: PendingFrame) -> UnwindInfo | None: ...
+
+frame_unwinders: list[_Unwinder]
 
 # Inferiors
 
@@ -281,6 +312,8 @@ class Inferior:
     pid: int
     was_attached: bool
     progspace: Progspace
+    main_name: Incomplete
+    arguments: Incomplete
 
     def is_valid(self) -> bool: ...
     def threads(self) -> tuple[InferiorThread, ...]: ...
@@ -291,8 +324,13 @@ class Inferior:
     def thread_from_handle(self, handle: Value) -> InferiorThread: ...
     @deprecated("Use gdb.thread_from_handle() instead.")
     def thread_from_thread_handle(self, handle: Value) -> InferiorThread: ...
+    def set_env(self, name: str, value: str) -> None: ...
+    def unset_env(self, name: str) -> None: ...
+    def clear_env(self) -> None: ...
 
 # Threads
+
+class Thread(threading.Thread): ...
 
 def selected_thread() -> InferiorThread: ...
 @final
@@ -302,6 +340,7 @@ class InferiorThread:
     num: int
     global_num: int
     ptid: tuple[int, int, int]
+    ptid_string: str
     inferior: Inferior
 
     def is_valid(self) -> bool: ...
@@ -429,15 +468,19 @@ def current_progspace() -> Progspace | None: ...
 def progspaces() -> Sequence[Progspace]: ...
 @final
 class Progspace:
-    filename: str
+    executable_filename: str | None
+    filename: str | None
+    symbol_file: Objfile | None
     pretty_printers: list[_PrettyPrinterLookupFunction]
     type_printers: list[gdb.types._TypePrinter]
     frame_filters: dict[str, _FrameFilter]
-    frame_unwinders: list[gdb.unwinder.Unwinder]
+    frame_unwinders: list[_Unwinder]
+    missing_debug_handlers: Incomplete
 
     def block_for_pc(self, pc: int, /) -> Block | None: ...
     def find_pc_line(self, pc: int, /) -> Symtab_and_line: ...
     def is_valid(self) -> bool: ...
+    def objfile_for_address(self, address: int, /) -> Objfile | None: ...
     def objfiles(self) -> Sequence[Objfile]: ...
     def solib_name(self, address: int, /) -> str | None: ...
 
@@ -456,7 +499,8 @@ class Objfile:
     pretty_printers: list[_PrettyPrinterLookupFunction]
     type_printers: list[gdb.types._TypePrinter]
     frame_filters: dict[str, _FrameFilter]
-    frame_unwinders: list[gdb.unwinder.Unwinder]
+    frame_unwinders: list[_Unwinder]
+    is_file: bool
 
     def is_valid(self) -> bool: ...
     def add_separate_debug_file(self, file: str) -> None: ...
@@ -504,6 +548,8 @@ class Frame:
     def read_var(self, variable: str | Symbol, /, block: Block | None = ...) -> Value: ...
     def select(self) -> None: ...
     def level(self) -> int: ...
+    def static_link(self) -> Incomplete | None: ...
+    def language(self): ...
 
 # Blocks
 
@@ -552,34 +598,31 @@ class Symbol:
     def is_valid(self) -> bool: ...
     def value(self, frame: Frame = ..., /) -> Value: ...
 
-SYMBOL_UNDEF_DOMAIN: int
-SYMBOL_VAR_DOMAIN: int
-SYMBOL_STRUCT_DOMAIN: int
-SYMBOL_LABEL_DOMAIN: int
-SYMBOL_MODULE_DOMAIN: int
-SYMBOL_COMMON_BLOCK_DOMAIN: int
+SYMBOL_UNDEF_DOMAIN: Final = 0
+SYMBOL_VAR_DOMAIN: Final = 1
+SYMBOL_STRUCT_DOMAIN: Final = 2
+SYMBOL_MODULE_DOMAIN: Final = 3
+SYMBOL_LABEL_DOMAIN: Final = 4
+SYMBOL_COMMON_BLOCK_DOMAIN: Final = 5
+SYMBOL_TYPE_DOMAIN: Final = 6
+SYMBOL_FUNCTION_DOMAIN: Final = 7
 
-# The constants were never correct. Use gdb.SYMBOL_VAR_DOMAIN instead.
-SYMBOL_VARIABLES_DOMAIN: int
-SYMBOL_FUNCTIONS_DOMAIN: int
-SYMBOL_TYPES_DOMAIN: int
-
-SYMBOL_LOC_UNDEF: int
-SYMBOL_LOC_CONST: int
-SYMBOL_LOC_STATIC: int
-SYMBOL_LOC_REGISTER: int
-SYMBOL_LOC_ARG: int
-SYMBOL_LOC_REF_ARG: int
-SYMBOL_LOC_REGPARM_ADDR: int
-SYMBOL_LOC_LOCAL: int
-SYMBOL_LOC_TYPEDEF: int
-SYMBOL_LOC_LABEL: int
-SYMBOL_LOC_BLOCK: int
-SYMBOL_LOC_CONST_BYTES: int
-SYMBOL_LOC_UNRESOLVED: int
-SYMBOL_LOC_OPTIMIZED_OUT: int
-SYMBOL_LOC_COMPUTED: int
-SYMBOL_LOC_COMMON_BLOCK: int
+SYMBOL_LOC_UNDEF: Final = 0
+SYMBOL_LOC_CONST: Final = 1
+SYMBOL_LOC_STATIC: Final = 2
+SYMBOL_LOC_REGISTER: Final = 3
+SYMBOL_LOC_ARG: Final = 4
+SYMBOL_LOC_REF_ARG: Final = 5
+SYMBOL_LOC_REGPARM_ADDR: Final = 6
+SYMBOL_LOC_LOCAL: Final = 7
+SYMBOL_LOC_TYPEDEF: Final = 8
+SYMBOL_LOC_LABEL: Final = 9
+SYMBOL_LOC_BLOCK: Final = 10
+SYMBOL_LOC_CONST_BYTES: Final = 11
+SYMBOL_LOC_UNRESOLVED: Final = 12
+SYMBOL_LOC_OPTIMIZED_OUT: Final = 13
+SYMBOL_LOC_COMPUTED: Final = 14
+SYMBOL_LOC_COMMON_BLOCK: Final = 15
 
 # Symbol tables
 
@@ -627,21 +670,131 @@ class LineTable:
 # Breakpoints
 
 class Breakpoint:
-    @overload
-    def __init__(
-        self, spec: str, type: int = ..., wp_class: int = ..., internal: bool = ..., temporary: bool = ..., qualified: bool = ...
-    ) -> None: ...
+
+    # The where="spec" form of __init__().  See py-breakpoints.c:bppy_init():keywords for the positional order.
     @overload
     def __init__(
         self,
-        source: str = ...,
-        function: str = ...,
-        label: str = ...,
-        line: int = ...,
+        # where
+        spec: str,
+        # options
+        type: int = ...,
+        wp_class: int = ...,
         internal: bool = ...,
         temporary: bool = ...,
         qualified: bool = ...,
     ) -> None: ...
+
+    # The where="location" form of __init__().  A watchpoint (`type=BP_WATCHPOINT`) cannot be created with this form.
+    #
+    # We exclude the `wp_class` (watchpoint class) option here, even though py-breakpoints.c accepts it.  It doesn't make sense
+    # unless type==BP_WATCHPOINT, and is silently ignored in those cases; allowing it in those cases is likely an oversight, not
+    # an intentional allowance.
+    #
+    # We repeat this 7 times because the type system doesn't have simple a way for us to say "at least one of `function`, `label`,
+    # or `line`", so we must repeat it for each combination of the 3.
+    #
+    # The len=3 combination.
+    @overload
+    def __init__(
+        self,
+        *,
+        # where
+        source: str = ...,
+        function: str,
+        label: str,
+        line: int | str,
+        # options
+        type: int = ...,
+        internal: bool = ...,
+        temporary: bool = ...,
+        qualified: bool = ...,
+    ) -> None: ...
+    # The 3 len=2 combinations.
+    @overload
+    def __init__(
+        self,
+        *,
+        source: str = ...,
+        # where
+        label: str,
+        line: int | str,
+        # options
+        type: int = ...,
+        internal: bool = ...,
+        temporary: bool = ...,
+        qualified: bool = ...,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        *,
+        source: str = ...,
+        # where
+        function: str,
+        line: int | str,
+        # options
+        type: int = ...,
+        internal: bool = ...,
+        temporary: bool = ...,
+        qualified: bool = ...,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        *,
+        source: str = ...,
+        # where
+        function: str,
+        label: str,
+        # options
+        type: int = ...,
+        internal: bool = ...,
+        temporary: bool = ...,
+        qualified: bool = ...,
+    ) -> None: ...
+    # The 3 len=1 combinations.
+    @overload
+    def __init__(
+        self,
+        *,
+        source: str = ...,
+        # where
+        function: str,
+        # options
+        type: int = ...,
+        internal: bool = ...,
+        temporary: bool = ...,
+        qualified: bool = ...,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        *,
+        source: str = ...,
+        # where
+        label: str,
+        # options
+        type: int = ...,
+        internal: bool = ...,
+        temporary: bool = ...,
+        qualified: bool = ...,
+    ) -> None: ...
+    @overload
+    def __init__(
+        self,
+        *,
+        source: str = ...,
+        # where
+        line: int | str,
+        # options
+        type: int = ...,
+        internal: bool = ...,
+        temporary: bool = ...,
+        qualified: bool = ...,
+    ) -> None: ...
+
+    # Methods.
     def stop(self) -> bool: ...
     def is_valid(self) -> bool: ...
     def delete(self) -> None: ...
@@ -658,9 +811,21 @@ class Breakpoint:
     temporary: bool
     hit_count: int
     location: str | None
+    locations: Incomplete
+    inferior: int | None
     expression: str | None
     condition: str | None
     commands: str | None
+
+@final
+class BreakpointLocation:
+    address: Incomplete
+    enabled: bool
+    fullname: str
+    function: Incomplete
+    owner: Incomplete
+    source: Incomplete
+    thread_groups: Incomplete
 
 BP_NONE: int
 BP_BREAKPOINT: int
@@ -768,17 +933,25 @@ class ExitedEvent(Event):
     exit_code: int
     inferior: Inferior
 
+class ThreadExitedEvent(Event): ...
 class StopEvent(ThreadEvent): ...
 
 class BreakpointEvent(StopEvent):
     breakpoints: Sequence[Breakpoint]
     breakpoint: Breakpoint
 
+missing_debug_handlers: list[Incomplete]
+
 class NewObjFileEvent(Event):
     new_objfile: Objfile
 
+class FreeObjFileEvent(Event): ...
+
 class ClearObjFilesEvent(Event):
     progspace: Progspace
+
+class NewProgspaceEvent(Event): ...
+class FreeProgspaceEvent(Event): ...
 
 class SignalEvent(StopEvent):
     stop_signal: str
@@ -815,9 +988,15 @@ class GdbExitingEvent(Event):
 class ConnectionEvent(Event):
     connection: TargetConnection
 
+class ExecutableChangedEvent(Event): ...
+
 _ET = TypeVar("_ET", bound=Event | Breakpoint | None)
 
 @final
 class EventRegistry(Generic[_ET]):
     def connect(self, object: Callable[[_ET], object], /) -> None: ...
     def disconnect(self, object: Callable[[_ET], object], /) -> None: ...
+
+class ValuePrinter: ...
+
+def blocked_signals(): ...

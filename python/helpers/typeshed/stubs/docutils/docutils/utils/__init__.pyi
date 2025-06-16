@@ -2,25 +2,29 @@ import optparse
 from _typeshed import StrPath, SupportsWrite, Unused
 from collections.abc import Callable, Iterable, Mapping
 from re import Pattern
-from typing import Any, Literal, TypeVar
+from typing import Any, Final, Literal, TypeVar
 from typing_extensions import TypeAlias
 
 from docutils import ApplicationError, DataError, nodes
 from docutils.frontend import Values
 from docutils.io import ErrorOutput, FileOutput
-from docutils.nodes import document
+from docutils.nodes import document, unescape as unescape
 
+_T = TypeVar("_T")
 _Observer: TypeAlias = Callable[[nodes.system_message], object]
+_SystemMessageLevel: TypeAlias = Literal[0, 1, 2, 3, 4]
+
+__docformat__: Final = "reStructuredText"
 
 class DependencyList:
     list: list[str]
     file: FileOutput | None
     def __init__(self, output_file: str | None = None, dependencies: Iterable[str] = ()) -> None: ...
     def set_output(self, output_file: str | None) -> None: ...
-    def add(self, *filenames: str) -> None: ...
+    def add(self, *paths: str) -> None: ...
     def close(self) -> None: ...
 
-_SystemMessageLevel: TypeAlias = Literal[0, 1, 2, 3, 4]
+class SystemMessagePropagation(ApplicationError): ...
 
 class Reporter:
     levels: list[str]
@@ -127,13 +131,10 @@ def column_indices(text: str) -> list[int]: ...
 east_asian_widths: dict[str, int]
 
 def column_width(text: str) -> int: ...
-
-_T = TypeVar("_T")
-
 def uniq(L: list[_T]) -> list[_T]: ...
 def normalize_language_tag(tag: str) -> list[str]: ...
+def xml_declaration(encoding: str | None = None) -> str: ...
 
 release_level_abbreviations: dict[str, str]
 
 def version_identifier(version_info: tuple[int, int, int, str, int, bool] | None = None) -> str: ...
-def unescape(text: str, restore_backslashes: bool = False, respect_whitespace: bool = False) -> str: ...

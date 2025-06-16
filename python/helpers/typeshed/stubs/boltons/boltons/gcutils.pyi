@@ -12,3 +12,5 @@ class GCToggler:
 
 toggle_gc: GCToggler
 toggle_gc_postcollect: GCToggler
+
+__all__ = ["get_all", "GCToggler", "toggle_gc", "toggle_gc_postcollect"]

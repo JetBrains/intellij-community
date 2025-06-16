@@ -1,4 +1,4 @@
-from _typeshed import StrPath, SupportsRead
+from _typeshed import StrPath, SupportsRead, SupportsWrite
 from typing import IO, Literal, Protocol
 from typing_extensions import TypeAlias
 
@@ -25,6 +25,7 @@ _VisibilityType: TypeAlias = Literal["visible", "hidden", "veryHidden"]  # noqa:
 # TODO: Use a proper protocol from ZipFile. See: #10880
 # This alias is to minimize false-positives
 _ZipFileFileProtocol: TypeAlias = StrPath | IO[bytes] | SupportsRead[bytes]  # noqa: Y047
+_ZipFileFileWriteProtocol: TypeAlias = StrPath | IO[bytes] | SupportsWrite[bytes]  # noqa: Y047
 
 class _Decodable(Protocol):  # noqa: Y046
     def decode(self, encoding: str, /) -> str: ...

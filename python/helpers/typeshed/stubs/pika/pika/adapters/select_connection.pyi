@@ -1,27 +1,26 @@
 import abc
 from _typeshed import Incomplete
+from logging import Logger
 
 import pika.compat
 from pika.adapters.base_connection import BaseConnection
 from pika.adapters.utils.selector_ioloop_adapter import AbstractSelectorIOLoop
 
-LOGGER: Incomplete
+LOGGER: Logger
 SELECT_TYPE: Incomplete
 
 class SelectConnection(BaseConnection):
     def __init__(
         self,
-        parameters: Incomplete | None = None,
-        on_open_callback: Incomplete | None = None,
-        on_open_error_callback: Incomplete | None = None,
-        on_close_callback: Incomplete | None = None,
-        custom_ioloop: Incomplete | None = None,
+        parameters=None,
+        on_open_callback=None,
+        on_open_error_callback=None,
+        on_close_callback=None,
+        custom_ioloop=None,
         internal_connection_workflow: bool = True,
     ) -> None: ...
     @classmethod
-    def create_connection(
-        cls, connection_configs, on_done, custom_ioloop: Incomplete | None = None, workflow: Incomplete | None = None
-    ): ...
+    def create_connection(cls, connection_configs, on_done, custom_ioloop=None, workflow=None): ...
 
 class _Timeout:
     deadline: Incomplete

@@ -7,7 +7,16 @@ from typing import Literal, overload
 from PIL import Image
 
 from .drawing import DeviceGray, DeviceRGB
-from .enums import Align, TableBordersLayout, TableCellFillMode, TableHeadingsDisplay, TableSpan, VAlign, WrapMode
+from .enums import (
+    Align,
+    CellBordersLayout,
+    TableBordersLayout,
+    TableCellFillMode,
+    TableHeadingsDisplay,
+    TableSpan,
+    VAlign,
+    WrapMode,
+)
 from .fonts import FontFace
 from .fpdf import FPDF
 from .image_datastructures import _TextAlign
@@ -43,15 +52,22 @@ class Table:
         outer_border_width: float | None = None,
         num_heading_rows: int = 1,
         repeat_headings: TableHeadingsDisplay | int = 1,
+        min_row_height=None,
     ) -> None: ...
-    def row(self, cells: Iterable[str] = (), style: FontFace | None = None) -> Row: ...
+    def row(
+        self, cells: Iterable[str] = (), style: FontFace | None = None, v_align: VAlign | str | None = None, min_height=None
+    ) -> Row: ...
     def render(self) -> None: ...
     def get_cell_border(self, i: int, j: int, cell: Cell) -> str | Literal[0, 1]: ...
 
 class Row:
     cells: list[Cell]
     style: FontFace
-    def __init__(self, table: Table, style: FontFace | None = None) -> None: ...
+    v_align: VAlign | None
+    min_height: Incomplete | None
+    def __init__(
+        self, table: Table, style: FontFace | None = None, v_align: VAlign | str | None = None, min_height=None
+    ) -> None: ...
     @property
     def cols_count(self) -> int: ...
     @property
@@ -70,6 +86,7 @@ class Row:
         rowspan: int = 1,
         padding: tuple[float, ...] | None = None,
         link: str | int | None = None,
+        border: CellBordersLayout | int = ...,
     ) -> str: ...
     @overload
     def cell(
@@ -84,6 +101,7 @@ class Row:
         rowspan: int = 1,
         padding: tuple[float, ...] | None = None,
         link: str | int | None = None,
+        border: CellBordersLayout | int = ...,
     ) -> TableSpan: ...
 
 @dataclass
@@ -98,14 +116,15 @@ class Cell:
     rowspan: int
     padding: int | tuple[float, ...] | None
     link: str | int | None
+    border: CellBordersLayout | None
 
-    def write(self, text, align: Incomplete | None = None): ...
+    def write(self, text, align=None): ...
 
 @dataclass(frozen=True)
 class RowLayoutInfo:
     height: int
     pagebreak_height: float
-    rendered_height: dict[Incomplete, Incomplete]
+    rendered_heights: dict[Incomplete, Incomplete]
     merged_heights: list[Incomplete]
 
 @dataclass(frozen=True)
@@ -117,4 +136,4 @@ class RowSpanLayoutInfo:
 
     def row_range(self) -> range: ...
 
-def draw_box_borders(pdf: FPDF, x1, y1, x2, y2, border: str | Literal[0, 1], fill_color: Incomplete | None = None) -> None: ...
+def draw_box_borders(pdf: FPDF, x1, y1, x2, y2, border: str | Literal[0, 1], fill_color=None) -> None: ...

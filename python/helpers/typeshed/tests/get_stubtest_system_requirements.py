@@ -1,15 +1,9 @@
 #!/usr/bin/env python3
-import os
 import sys
 
-from _metadata import read_stubtest_settings
+from ts_utils.requirements import get_stubtest_system_requirements
 
-platform = sys.platform
-distributions = sys.argv[1:]
-if not distributions:
-    distributions = os.listdir("stubs")
-
-for distribution in distributions:
-    stubtest_settings = read_stubtest_settings(distribution)
-    for package in stubtest_settings.system_requirements_for_platform(platform):
-        print(package)
+if __name__ == "__main__":
+    distributions = sys.argv[1:]
+    for requirement in get_stubtest_system_requirements(distributions):
+        print(requirement)

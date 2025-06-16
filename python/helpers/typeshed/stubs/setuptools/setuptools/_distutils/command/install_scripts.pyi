@@ -4,11 +4,11 @@ from typing import ClassVar
 from ..cmd import Command
 
 class install_scripts(Command):
-    description: str
+    description: ClassVar[str]
     user_options: ClassVar[list[tuple[str, str | None, str]]]
     boolean_options: ClassVar[list[str]]
     install_dir: Incomplete
-    force: int
+    force: bool
     build_dir: Incomplete
     skip_build: Incomplete
     def initialize_options(self) -> None: ...

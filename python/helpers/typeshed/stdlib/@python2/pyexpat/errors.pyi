@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 XML_ERROR_ABORTED: str
 XML_ERROR_ASYNC_ENTITY: str
 XML_ERROR_ATTRIBUTE_EXTERNAL_ENTITY_REF: str

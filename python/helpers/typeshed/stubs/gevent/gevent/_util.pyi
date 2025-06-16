@@ -1,5 +1,4 @@
-from _typeshed import Incomplete
-from collections.abc import Callable, MutableMapping, Sequence
+from collections.abc import Callable, Iterable, MutableMapping, Sequence
 from types import ModuleType
 from typing import Any, Generic, TypeVar, overload
 from typing_extensions import Self
@@ -13,7 +12,7 @@ def update_wrapper(wrapper: _T, wrapped: object, assigned: Sequence[str] = ..., 
 def copy_globals(
     source: ModuleType,
     globs: MutableMapping[str, Any],
-    only_names: Incomplete | None = None,
+    only_names: Iterable[str] | None = None,
     ignore_missing_names: bool = False,
     names_to_ignore: Sequence[str] = ...,
     dunder_names_to_keep: Sequence[str] = ...,

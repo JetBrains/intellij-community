@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from distutils.cmd import Command as Command
 from distutils.dist import Distribution as Distribution
 from distutils.extension import Extension as Extension

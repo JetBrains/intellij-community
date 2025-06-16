@@ -72,6 +72,7 @@ class Config:
     ares_udp_port: _SettingDescriptor[str | int | None]
     ares_tcp_port: _SettingDescriptor[str | int | None]
     ares_servers: _SettingDescriptor[Sequence[str] | str | None]
+    print_blocking_reports: _SettingDescriptor[bool]
 
 class ImportableSetting(Generic[_T]):
     default: str | Sequence[str]
@@ -139,6 +140,10 @@ class MonitorThread(BoolSettingMixin, Setting[bool]):
 
 class MaxBlockingTime(FloatSettingMixin, Setting[float]):
     default: float
+    desc: str
+
+class PrintBlockingReports(BoolSettingMixin, Setting[bool]):
+    default: bool
     desc: str
 
 class MonitorMemoryPeriod(FloatSettingMixin, Setting[float]):

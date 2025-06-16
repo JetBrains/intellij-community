@@ -354,6 +354,7 @@ IID_IExtractIconW: _win32typing.PyIID
 IID_IExtractImage: _win32typing.PyIID
 IID_IFileOperation: _win32typing.PyIID
 IID_IFileOperationProgressSink: _win32typing.PyIID
+IID_IFolderView: _win32typing.PyIID
 IID_IIdentityName: _win32typing.PyIID
 IID_IKnownFolder: _win32typing.PyIID
 IID_IKnownFolderManager: _win32typing.PyIID

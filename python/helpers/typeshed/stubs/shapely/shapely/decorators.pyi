@@ -1,4 +1,4 @@
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from typing import TypeVar
 
 _F = TypeVar("_F", bound=Callable[..., object])
@@ -9,3 +9,4 @@ class requires_geos:
     def __call__(self, func: _F) -> _F: ...
 
 def multithreading_enabled(func: _F) -> _F: ...
+def deprecate_positional(should_be_kwargs: Iterable[str], category: type[Warning] = ...) -> Callable[..., object]: ...

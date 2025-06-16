@@ -1,5 +1,3 @@
-from _typeshed import Incomplete
-
 class RenderPMError(Exception): ...
 
 def setFont(gs, fontName, fontSize) -> None: ...
@@ -13,10 +11,12 @@ def text2Path(
     anchor: str = "start",
     truncate: int = 1,
     pathReverse: int = 0,
-    gs: Incomplete | None = None,
+    gs=None,
     **kwds,
 ): ...
 
 # NOTE: This only exists on some render backends
 def processGlyph(G, truncate=1, pathReverse=0): ...
 def text2PathDescription(text, x=0, y=0, fontName=..., fontSize=1000, anchor="start", truncate=1, pathReverse=0, gs=None): ...
+
+__all__ = ("setFont", "pathNumTrunc", "processGlyph", "text2PathDescription", "text2Path", "RenderPMError")

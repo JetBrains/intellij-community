@@ -1,6 +1,6 @@
 from enum import Enum, Flag, IntEnum, IntFlag
 from typing import Literal
-from typing_extensions import Self
+from typing_extensions import Self, TypeAlias
 
 from .syntax import Name
 
@@ -8,15 +8,15 @@ class SignatureFlag(IntEnum):
     SIGNATURES_EXIST = 1
     APPEND_ONLY = 2
 
-class CoerciveEnum(Enum):
+class CoerciveEnum(Enum):  # type: ignore[misc]  # Enum with no members
     @classmethod
-    def coerce(cls, value: Self | str) -> Self: ...
+    def coerce(cls, value: Self | str, case_sensitive: bool = False) -> Self: ...
 
-class CoerciveIntEnum(IntEnum):
+class CoerciveIntEnum(IntEnum):  # type: ignore[misc]  # Enum with no members
     @classmethod
     def coerce(cls, value: Self | str | int) -> Self: ...
 
-class CoerciveIntFlag(IntFlag):
+class CoerciveIntFlag(IntFlag):  # type: ignore[misc]  # Enum with no members
     @classmethod
     def coerce(cls, value: Self | str | int) -> Self: ...
 
@@ -38,19 +38,30 @@ class Align(CoerciveEnum):
     R = "RIGHT"
     J = "JUSTIFY"
 
+    @classmethod
+    def coerce(cls, value: Self | str) -> Self: ...  # type: ignore[override]
+
+_Align: TypeAlias = Align | Literal["CENTER", "X_CENTER", "LEFT", "RIGHT", "JUSTIFY"]  # noqa: Y047
+
 class VAlign(CoerciveEnum):
     M = "MIDDLE"
     T = "TOP"
     B = "BOTTOM"
+
+    @classmethod
+    def coerce(cls, value: Self | str) -> Self: ...  # type: ignore[override]
 
 class TextEmphasis(CoerciveIntFlag):
     NONE = 0
     B = 1
     I = 2
     U = 4
+    S = 8
 
     @property
     def style(self) -> str: ...
+    def add(self, value: TextEmphasis) -> TextEmphasis: ...
+    def remove(self, value: TextEmphasis) -> TextEmphasis: ...
 
 class MethodReturnValue(CoerciveIntFlag):
     PAGE_BREAK = 1
@@ -66,6 +77,15 @@ class TableBordersLayout(CoerciveEnum):
     NO_HORIZONTAL_LINES = "NO_HORIZONTAL_LINES"
     SINGLE_TOP_LINE = "SINGLE_TOP_LINE"
 
+class CellBordersLayout(CoerciveIntFlag):
+    NONE = 0
+    LEFT = 1
+    RIGHT = 2
+    TOP = 4
+    BOTTOM = 8
+    ALL = 15
+    INHERIT = 16
+
 class TableCellFillMode(CoerciveEnum):
     NONE = "NONE"
     ALL = "ALL"
@@ -75,6 +95,8 @@ class TableCellFillMode(CoerciveEnum):
     EVEN_COLUMNS = "EVEN_COLUMNS"
 
     def should_fill_cell(self, i: int, j: int) -> bool: ...
+    @classmethod
+    def coerce(cls, value: Self | str) -> Self: ...  # type: ignore[override]
 
 class TableSpan(CoerciveEnum):
     ROW = "ROW"
@@ -94,6 +116,8 @@ class RenderStyle(CoerciveEnum):
     def is_draw(self) -> bool: ...
     @property
     def is_fill(self) -> bool: ...
+    @classmethod
+    def coerce(cls, value: Self | str) -> Self: ...  # type: ignore[override]
 
 class TextMode(CoerciveIntEnum):
     FILL = 0
@@ -272,3 +296,45 @@ class TextDirection(CoerciveEnum):
     RTL = "RTL"
     TTB = "TTB"
     BTT = "BTT"
+
+class OutputIntentSubType(CoerciveEnum):
+    PDFX = "GTS_PDFX"
+    PDFA = "GTS_PDFA1"
+    ISOPDF = "ISO_PDFE1"
+
+class PageLabelStyle(CoerciveEnum):
+    NUMBER = "D"
+    UPPER_ROMAN = "R"
+    LOWER_ROMAN = "r"
+    UPPER_LETTER = "A"
+    LOWER_LETTER = "a"
+    NONE = None
+
+class Duplex(CoerciveEnum):
+    SIMPLEX = "Simplex"
+    DUPLEX_FLIP_SHORT_EDGE = "DuplexFlipShortEdge"
+    DUPLEX_FLIP_LONG_EDGE = "DuplexFlipLongEdge"
+
+class PageBoundaries(CoerciveEnum):
+    ART_BOX = "ArtBox"
+    BLEED_BOX = "BleedBox"
+    CROP_BOX = "CropBox"
+    MEDIA_BOX = "MediaBox"
+    TRIM_BOX = "TrimBox"
+
+class PageOrientation(CoerciveEnum):
+    PORTRAIT = "P"
+    LANDSCAPE = "L"
+
+    @classmethod
+    def coerce(cls, value: Self | str) -> Self: ...  # type: ignore[override]
+
+class PDFResourceType(Enum):
+    EXT_G_STATE = "ExtGState"
+    COLOR_SPACE = "ColorSpace"
+    PATTERN = "Pattern"
+    SHADDING = "Shading"
+    X_OBJECT = "XObject"
+    FONT = "Font"
+    PROC_SET = "ProcSet"
+    PROPERTIES = "Properties"

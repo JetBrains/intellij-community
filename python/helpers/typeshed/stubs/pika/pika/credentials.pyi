@@ -1,20 +1,23 @@
-from _typeshed import Incomplete
 from logging import Logger
-from typing import ClassVar
-from typing_extensions import TypeAlias
+from typing import ClassVar, Protocol
 
 from .spec import Connection
 
-# TODO: This could be turned into a protocol.
-_Credentials: TypeAlias = Incomplete  # noqa: Y047
+class _Credentials(Protocol):
+    TYPE: ClassVar[str]
+    erase_on_connect: bool
+    def __eq__(self, other: object) -> bool: ...
+    def __ne__(self, other: object) -> bool: ...
+    def response_for(self, start: Connection.Start) -> tuple[str | None, bytes | None]: ...
+    def erase_credentials(self) -> None: ...
 
 LOGGER: Logger
 
 class PlainCredentials:
     TYPE: ClassVar[str]
+    erase_on_connect: bool
     username: str
     password: str
-    erase_on_connect: bool
     def __init__(self, username: str, password: str, erase_on_connect: bool = False) -> None: ...
     def __eq__(self, other: object) -> bool: ...
     def __ne__(self, other: object) -> bool: ...
@@ -30,4 +33,4 @@ class ExternalCredentials:
     def response_for(self, start: Connection.Start) -> tuple[str | None, bytes | None]: ...
     def erase_credentials(self) -> None: ...
 
-VALID_TYPES: Incomplete
+VALID_TYPES: list[_Credentials]

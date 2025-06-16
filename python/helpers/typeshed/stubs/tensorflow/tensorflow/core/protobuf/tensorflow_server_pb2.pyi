@@ -89,7 +89,37 @@ class ServerDef(google.protobuf.message.Message):
         port: builtins.int | None = ...,
         cluster_device_filters: tensorflow.core.protobuf.device_filters_pb2.ClusterDeviceFilters | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["cluster", b"cluster", "cluster_device_filters", b"cluster_device_filters", "default_session_config", b"default_session_config"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["cluster", b"cluster", "cluster_device_filters", b"cluster_device_filters", "default_session_config", b"default_session_config", "job_name", b"job_name", "port", b"port", "protocol", b"protocol", "replica", b"replica", "task_index", b"task_index"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "cluster",
+            b"cluster",
+            "cluster_device_filters",
+            b"cluster_device_filters",
+            "default_session_config",
+            b"default_session_config",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "cluster",
+            b"cluster",
+            "cluster_device_filters",
+            b"cluster_device_filters",
+            "default_session_config",
+            b"default_session_config",
+            "job_name",
+            b"job_name",
+            "port",
+            b"port",
+            "protocol",
+            b"protocol",
+            "replica",
+            b"replica",
+            "task_index",
+            b"task_index",
+        ],
+    ) -> None: ...
 
 global___ServerDef = ServerDef

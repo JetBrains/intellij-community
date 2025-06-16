@@ -1,6 +1,7 @@
-from _typeshed import Incomplete
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["spectral_bipartivity"]
 
-@_dispatch
-def spectral_bipartivity(G, nodes: Incomplete | None = None, weight: str = "weight"): ...
+@_dispatchable
+def spectral_bipartivity(G: Graph[_Node], nodes=None, weight: str = "weight"): ...

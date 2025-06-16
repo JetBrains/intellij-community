@@ -25,7 +25,9 @@ class _CoordinatedTaskState:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _CoordinatedTaskStateEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_CoordinatedTaskState.ValueType], builtins.type):
+class _CoordinatedTaskStateEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_CoordinatedTaskState.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     TASKSTATE_UNSPECIFIED: _CoordinatedTaskState.ValueType  # 0
     """TASKSTATE_UNSPECIFIED is an invalid state such that indicates a bug."""
@@ -63,12 +65,7 @@ class CoordinatedTask(google.protobuf.message.Message):
     TASK_ID_FIELD_NUMBER: builtins.int
     job_name: builtins.str
     task_id: builtins.int
-    def __init__(
-        self,
-        *,
-        job_name: builtins.str | None = ...,
-        task_id: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, job_name: builtins.str | None = ..., task_id: builtins.int | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["job_name", b"job_name", "task_id", b"task_id"]) -> None: ...
 
 global___CoordinatedTask = CoordinatedTask
@@ -95,13 +92,12 @@ class CoordinationServiceError(google.protobuf.message.Message):
         """
 
     def __init__(
-        self,
-        *,
-        is_reported_error: builtins.bool | None = ...,
-        source_task: global___CoordinatedTask | None = ...,
+        self, *, is_reported_error: builtins.bool | None = ..., source_task: global___CoordinatedTask | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["source_task", b"source_task"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["is_reported_error", b"is_reported_error", "source_task", b"source_task"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["is_reported_error", b"is_reported_error", "source_task", b"source_task"]
+    ) -> None: ...
 
 global___CoordinationServiceError = CoordinationServiceError
 
@@ -131,7 +127,21 @@ class CoordinatedTaskStateInfo(google.protobuf.message.Message):
         error_payload: global___CoordinationServiceError | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["error_payload", b"error_payload", "task", b"task"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["error_code", b"error_code", "error_message", b"error_message", "error_payload", b"error_payload", "state", b"state", "task", b"task"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "error_code",
+            b"error_code",
+            "error_message",
+            b"error_message",
+            "error_payload",
+            b"error_payload",
+            "state",
+            b"state",
+            "task",
+            b"task",
+        ],
+    ) -> None: ...
 
 global___CoordinatedTaskStateInfo = CoordinatedTaskStateInfo
 
@@ -144,11 +154,7 @@ class DeviceInfo(google.protobuf.message.Message):
     DEVICE_FIELD_NUMBER: builtins.int
     @property
     def device(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[google.protobuf.any_pb2.Any]: ...
-    def __init__(
-        self,
-        *,
-        device: collections.abc.Iterable[google.protobuf.any_pb2.Any] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, device: collections.abc.Iterable[google.protobuf.any_pb2.Any] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["device", b"device"]) -> None: ...
 
 global___DeviceInfo = DeviceInfo
@@ -168,12 +174,7 @@ class RegisterTaskRequest(google.protobuf.message.Message):
     incarnation: builtins.int
     @property
     def source_task(self) -> global___CoordinatedTask: ...
-    def __init__(
-        self,
-        *,
-        incarnation: builtins.int | None = ...,
-        source_task: global___CoordinatedTask | None = ...,
-    ) -> None: ...
+    def __init__(self, *, incarnation: builtins.int | None = ..., source_task: global___CoordinatedTask | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["source_task", b"source_task"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["incarnation", b"incarnation", "source_task", b"source_task"]) -> None: ...
 
@@ -185,11 +186,7 @@ class RegisterTaskResponse(google.protobuf.message.Message):
 
     LEADER_INCARNATION_FIELD_NUMBER: builtins.int
     leader_incarnation: builtins.int
-    def __init__(
-        self,
-        *,
-        leader_incarnation: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, leader_incarnation: builtins.int | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["leader_incarnation", b"leader_incarnation"]) -> None: ...
 
 global___RegisterTaskResponse = RegisterTaskResponse
@@ -205,12 +202,7 @@ class HeartbeatRequest(google.protobuf.message.Message):
     incarnation: builtins.int
     @property
     def source_task(self) -> global___CoordinatedTask: ...
-    def __init__(
-        self,
-        *,
-        incarnation: builtins.int | None = ...,
-        source_task: global___CoordinatedTask | None = ...,
-    ) -> None: ...
+    def __init__(self, *, incarnation: builtins.int | None = ..., source_task: global___CoordinatedTask | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["source_task", b"source_task"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["incarnation", b"incarnation", "source_task", b"source_task"]) -> None: ...
 
@@ -225,11 +217,7 @@ class HeartbeatResponse(google.protobuf.message.Message):
     """If there are failures in cluster, use additional metadata in response to
     broadcast error code and message to other tasks.
     """
-    def __init__(
-        self,
-        *,
-        leader_incarnation: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, leader_incarnation: builtins.int | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["leader_incarnation", b"leader_incarnation"]) -> None: ...
 
 global___HeartbeatResponse = HeartbeatResponse
@@ -241,11 +229,7 @@ class PollForErrorRequest(google.protobuf.message.Message):
     SOURCE_TASK_FIELD_NUMBER: builtins.int
     @property
     def source_task(self) -> global___CoordinatedTask: ...
-    def __init__(
-        self,
-        *,
-        source_task: global___CoordinatedTask | None = ...,
-    ) -> None: ...
+    def __init__(self, *, source_task: global___CoordinatedTask | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["source_task", b"source_task"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["source_task", b"source_task"]) -> None: ...
 
@@ -255,9 +239,7 @@ global___PollForErrorRequest = PollForErrorRequest
 class PollForErrorResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___PollForErrorResponse = PollForErrorResponse
 
@@ -276,12 +258,11 @@ class WaitForAllTasksRequest(google.protobuf.message.Message):
         """All local device attributes on the request sender;"""
 
     def __init__(
-        self,
-        *,
-        source_task: global___CoordinatedTask | None = ...,
-        device_info: global___DeviceInfo | None = ...,
+        self, *, source_task: global___CoordinatedTask | None = ..., device_info: global___DeviceInfo | None = ...
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["device_info", b"device_info", "source_task", b"source_task"]) -> builtins.bool: ...
+    def HasField(
+        self, field_name: typing.Literal["device_info", b"device_info", "source_task", b"source_task"]
+    ) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["device_info", b"device_info", "source_task", b"source_task"]) -> None: ...
 
 global___WaitForAllTasksRequest = WaitForAllTasksRequest
@@ -298,13 +279,12 @@ class WaitForAllTasksResponse(google.protobuf.message.Message):
         """All devices in the cluster."""
 
     def __init__(
-        self,
-        *,
-        leader_incarnation: builtins.int | None = ...,
-        device_info: global___DeviceInfo | None = ...,
+        self, *, leader_incarnation: builtins.int | None = ..., device_info: global___DeviceInfo | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["device_info", b"device_info"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["device_info", b"device_info", "leader_incarnation", b"leader_incarnation"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["device_info", b"device_info", "leader_incarnation", b"leader_incarnation"]
+    ) -> None: ...
 
 global___WaitForAllTasksResponse = WaitForAllTasksResponse
 
@@ -317,11 +297,7 @@ class ShutdownTaskRequest(google.protobuf.message.Message):
     SOURCE_TASK_FIELD_NUMBER: builtins.int
     @property
     def source_task(self) -> global___CoordinatedTask: ...
-    def __init__(
-        self,
-        *,
-        source_task: global___CoordinatedTask | None = ...,
-    ) -> None: ...
+    def __init__(self, *, source_task: global___CoordinatedTask | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["source_task", b"source_task"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["source_task", b"source_task"]) -> None: ...
 
@@ -331,9 +307,7 @@ global___ShutdownTaskRequest = ShutdownTaskRequest
 class ShutdownTaskResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ShutdownTaskResponse = ShutdownTaskResponse
 
@@ -346,11 +320,7 @@ class ResetTaskRequest(google.protobuf.message.Message):
     SOURCE_TASK_FIELD_NUMBER: builtins.int
     @property
     def source_task(self) -> global___CoordinatedTask: ...
-    def __init__(
-        self,
-        *,
-        source_task: global___CoordinatedTask | None = ...,
-    ) -> None: ...
+    def __init__(self, *, source_task: global___CoordinatedTask | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["source_task", b"source_task"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["source_task", b"source_task"]) -> None: ...
 
@@ -360,9 +330,7 @@ global___ResetTaskRequest = ResetTaskRequest
 class ResetTaskResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ResetTaskResponse = ResetTaskResponse
 
@@ -387,7 +355,12 @@ class ReportErrorToTaskRequest(google.protobuf.message.Message):
         error_payload: global___CoordinationServiceError | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["error_payload", b"error_payload"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["error_code", b"error_code", "error_message", b"error_message", "error_payload", b"error_payload"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "error_code", b"error_code", "error_message", b"error_message", "error_payload", b"error_payload"
+        ],
+    ) -> None: ...
 
 global___ReportErrorToTaskRequest = ReportErrorToTaskRequest
 
@@ -395,9 +368,7 @@ global___ReportErrorToTaskRequest = ReportErrorToTaskRequest
 class ReportErrorToTaskResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ReportErrorToTaskResponse = ReportErrorToTaskResponse
 
@@ -422,7 +393,12 @@ class ReportErrorToServiceRequest(google.protobuf.message.Message):
         error_origin: global___CoordinatedTask | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["error_origin", b"error_origin"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["error_code", b"error_code", "error_message", b"error_message", "error_origin", b"error_origin"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "error_code", b"error_code", "error_message", b"error_message", "error_origin", b"error_origin"
+        ],
+    ) -> None: ...
 
 global___ReportErrorToServiceRequest = ReportErrorToServiceRequest
 
@@ -430,9 +406,7 @@ global___ReportErrorToServiceRequest = ReportErrorToServiceRequest
 class ReportErrorToServiceResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ReportErrorToServiceResponse = ReportErrorToServiceResponse
 
@@ -445,11 +419,7 @@ class GetTaskStateRequest(google.protobuf.message.Message):
     SOURCE_TASK_FIELD_NUMBER: builtins.int
     @property
     def source_task(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CoordinatedTask]: ...
-    def __init__(
-        self,
-        *,
-        source_task: collections.abc.Iterable[global___CoordinatedTask] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, source_task: collections.abc.Iterable[global___CoordinatedTask] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["source_task", b"source_task"]) -> None: ...
 
 global___GetTaskStateRequest = GetTaskStateRequest
@@ -460,12 +430,10 @@ class GetTaskStateResponse(google.protobuf.message.Message):
 
     TASK_STATE_FIELD_NUMBER: builtins.int
     @property
-    def task_state(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CoordinatedTaskStateInfo]: ...
-    def __init__(
+    def task_state(
         self,
-        *,
-        task_state: collections.abc.Iterable[global___CoordinatedTaskStateInfo] | None = ...,
-    ) -> None: ...
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___CoordinatedTaskStateInfo]: ...
+    def __init__(self, *, task_state: collections.abc.Iterable[global___CoordinatedTaskStateInfo] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["task_state", b"task_state"]) -> None: ...
 
 global___GetTaskStateResponse = GetTaskStateResponse
@@ -483,12 +451,7 @@ class KeyValueEntry(google.protobuf.message.Message):
     VALUE_FIELD_NUMBER: builtins.int
     key: builtins.str
     value: builtins.bytes
-    def __init__(
-        self,
-        *,
-        key: builtins.str | None = ...,
-        value: builtins.bytes | None = ...,
-    ) -> None: ...
+    def __init__(self, *, key: builtins.str | None = ..., value: builtins.bytes | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
 global___KeyValueEntry = KeyValueEntry
@@ -504,12 +467,7 @@ class InsertKeyValueRequest(google.protobuf.message.Message):
     allow_overwrite: builtins.bool
     @property
     def kv(self) -> global___KeyValueEntry: ...
-    def __init__(
-        self,
-        *,
-        kv: global___KeyValueEntry | None = ...,
-        allow_overwrite: builtins.bool | None = ...,
-    ) -> None: ...
+    def __init__(self, *, kv: global___KeyValueEntry | None = ..., allow_overwrite: builtins.bool | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["kv", b"kv"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["allow_overwrite", b"allow_overwrite", "kv", b"kv"]) -> None: ...
 
@@ -519,9 +477,7 @@ global___InsertKeyValueRequest = InsertKeyValueRequest
 class InsertKeyValueResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___InsertKeyValueResponse = InsertKeyValueResponse
 
@@ -533,11 +489,7 @@ class GetKeyValueRequest(google.protobuf.message.Message):
 
     KEY_FIELD_NUMBER: builtins.int
     key: builtins.str
-    def __init__(
-        self,
-        *,
-        key: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, key: builtins.str | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["key", b"key"]) -> None: ...
 
 global___GetKeyValueRequest = GetKeyValueRequest
@@ -549,11 +501,7 @@ class GetKeyValueResponse(google.protobuf.message.Message):
     KV_FIELD_NUMBER: builtins.int
     @property
     def kv(self) -> global___KeyValueEntry: ...
-    def __init__(
-        self,
-        *,
-        kv: global___KeyValueEntry | None = ...,
-    ) -> None: ...
+    def __init__(self, *, kv: global___KeyValueEntry | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["kv", b"kv"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["kv", b"kv"]) -> None: ...
 
@@ -565,11 +513,7 @@ class TryGetKeyValueRequest(google.protobuf.message.Message):
 
     KEY_FIELD_NUMBER: builtins.int
     key: builtins.str
-    def __init__(
-        self,
-        *,
-        key: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, key: builtins.str | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["key", b"key"]) -> None: ...
 
 global___TryGetKeyValueRequest = TryGetKeyValueRequest
@@ -581,11 +525,7 @@ class TryGetKeyValueResponse(google.protobuf.message.Message):
     KV_FIELD_NUMBER: builtins.int
     @property
     def kv(self) -> global___KeyValueEntry: ...
-    def __init__(
-        self,
-        *,
-        kv: global___KeyValueEntry | None = ...,
-    ) -> None: ...
+    def __init__(self, *, kv: global___KeyValueEntry | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["kv", b"kv"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["kv", b"kv"]) -> None: ...
 
@@ -597,11 +537,7 @@ class GetKeyValueDirRequest(google.protobuf.message.Message):
 
     DIRECTORY_KEY_FIELD_NUMBER: builtins.int
     directory_key: builtins.str
-    def __init__(
-        self,
-        *,
-        directory_key: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, directory_key: builtins.str | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["directory_key", b"directory_key"]) -> None: ...
 
 global___GetKeyValueDirRequest = GetKeyValueDirRequest
@@ -616,10 +552,7 @@ class GetKeyValueDirResponse(google.protobuf.message.Message):
     @property
     def kv(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___KeyValueEntry]: ...
     def __init__(
-        self,
-        *,
-        directory_key: builtins.str | None = ...,
-        kv: collections.abc.Iterable[global___KeyValueEntry] | None = ...,
+        self, *, directory_key: builtins.str | None = ..., kv: collections.abc.Iterable[global___KeyValueEntry] | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["directory_key", b"directory_key", "kv", b"kv"]) -> None: ...
 
@@ -637,12 +570,7 @@ class DeleteKeyValueRequest(google.protobuf.message.Message):
     IS_DIRECTORY_FIELD_NUMBER: builtins.int
     key: builtins.str
     is_directory: builtins.bool
-    def __init__(
-        self,
-        *,
-        key: builtins.str | None = ...,
-        is_directory: builtins.bool | None = ...,
-    ) -> None: ...
+    def __init__(self, *, key: builtins.str | None = ..., is_directory: builtins.bool | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["is_directory", b"is_directory", "key", b"key"]) -> None: ...
 
 global___DeleteKeyValueRequest = DeleteKeyValueRequest
@@ -651,9 +579,7 @@ global___DeleteKeyValueRequest = DeleteKeyValueRequest
 class DeleteKeyValueResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___DeleteKeyValueResponse = DeleteKeyValueResponse
 
@@ -688,7 +614,19 @@ class BarrierRequest(google.protobuf.message.Message):
         source_task: global___CoordinatedTask | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["source_task", b"source_task"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["barrier_id", b"barrier_id", "barrier_timeout_in_ms", b"barrier_timeout_in_ms", "source_task", b"source_task", "tasks", b"tasks"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "barrier_id",
+            b"barrier_id",
+            "barrier_timeout_in_ms",
+            b"barrier_timeout_in_ms",
+            "source_task",
+            b"source_task",
+            "tasks",
+            b"tasks",
+        ],
+    ) -> None: ...
 
 global___BarrierRequest = BarrierRequest
 
@@ -696,9 +634,7 @@ global___BarrierRequest = BarrierRequest
 class BarrierResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___BarrierResponse = BarrierResponse
 
@@ -715,12 +651,7 @@ class CancelBarrierRequest(google.protobuf.message.Message):
     def source_task(self) -> global___CoordinatedTask:
         """Task that is making the request."""
 
-    def __init__(
-        self,
-        *,
-        barrier_id: builtins.str | None = ...,
-        source_task: global___CoordinatedTask | None = ...,
-    ) -> None: ...
+    def __init__(self, *, barrier_id: builtins.str | None = ..., source_task: global___CoordinatedTask | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["source_task", b"source_task"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["barrier_id", b"barrier_id", "source_task", b"source_task"]) -> None: ...
 
@@ -730,8 +661,6 @@ global___CancelBarrierRequest = CancelBarrierRequest
 class CancelBarrierResponse(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___CancelBarrierResponse = CancelBarrierResponse

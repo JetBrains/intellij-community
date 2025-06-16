@@ -43,6 +43,22 @@ class AllocationDescription(google.protobuf.message.Message):
         has_single_reference: builtins.bool | None = ...,
         ptr: builtins.int | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["allocated_bytes", b"allocated_bytes", "allocation_id", b"allocation_id", "allocator_name", b"allocator_name", "has_single_reference", b"has_single_reference", "ptr", b"ptr", "requested_bytes", b"requested_bytes"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "allocated_bytes",
+            b"allocated_bytes",
+            "allocation_id",
+            b"allocation_id",
+            "allocator_name",
+            b"allocator_name",
+            "has_single_reference",
+            b"has_single_reference",
+            "ptr",
+            b"ptr",
+            "requested_bytes",
+            b"requested_bytes",
+        ],
+    ) -> None: ...
 
 global___AllocationDescription = AllocationDescription

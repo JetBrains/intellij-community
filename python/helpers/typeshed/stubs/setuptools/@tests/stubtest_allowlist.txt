@@ -1,14 +1,9 @@
-# Is always set in __init__
-pkg_resources.PathMetadata.egg_info
-pkg_resources.EggMetadata.loader
-pkg_resources.ZipProvider.loader
-
-# @classmethod alias not handled correctly by stubtest
-pkg_resources.ZipManifests.load
-
 # Is a functools.partial, so stubtest says "is not a function"
 setuptools.modified.newer_pairwise_group
 setuptools._distutils._modified.newer_pairwise_group
+
+# Runtime initializes to None, but this really should never be None when used
+setuptools._distutils.compilers.C.base.Compiler.compiler_type
 
 # Dynamically created in __init__
 setuptools._distutils.dist.Distribution.get_name
@@ -36,43 +31,13 @@ setuptools._distutils.dist.Distribution.get_obsoletes
 # Missing objects from setuptools._distutils
 setuptools._distutils.archive_util.ARCHIVE_FORMATS
 setuptools._distutils.archive_util.check_archive_formats
-setuptools._distutils.ccompiler.CCompiler.EXECUTABLE
-setuptools._distutils.ccompiler.CCompiler.SHARED_LIBRARY
-setuptools._distutils.ccompiler.CCompiler.SHARED_OBJECT
-setuptools._distutils.ccompiler.CCompiler.compiler_type
-setuptools._distutils.ccompiler.CCompiler.out_extensions
-setuptools._distutils.ccompiler.CCompiler.set_executable
-setuptools._distutils.ccompiler.compiler_class
 setuptools._distutils.cmd.Command.dump_options
-setuptools._distutils.command.bdist
-setuptools._distutils.command.bdist_rpm
-setuptools._distutils.command.build
-setuptools._distutils.command.build_clib
-setuptools._distutils.command.build_clib.show_compilers
 setuptools._distutils.command.build_ext.extension_name_re
-setuptools._distutils.command.build_ext.show_compilers
-setuptools._distutils.command.build_ext
-setuptools._distutils.command.build_py
-setuptools._distutils.command.build_scripts
-setuptools._distutils.command.check
-setuptools._distutils.command.clean
-setuptools._distutils.command.install
-setuptools._distutils.command.install_data
-setuptools._distutils.command.install_headers
-setuptools._distutils.command.install_lib
-setuptools._distutils.command.install_scripts
 setuptools._distutils.command.install.HAS_USER_SITE
 setuptools._distutils.command.install.INSTALL_SCHEMES
 setuptools._distutils.command.install.SCHEME_KEYS
 setuptools._distutils.command.install.WINDOWS_SCHEME
 setuptools._distutils.command.install_lib.PYTHON_SOURCE_EXTENSION
-setuptools._distutils.command.sdist
-setuptools._distutils.command.register
-setuptools._distutils.command.upload
-setuptools._distutils.config.DEFAULT_PYPIRC
-setuptools._distutils.dist.DistributionMetadata.set_classifiers
-setuptools._distutils.dist.DistributionMetadata.set_keywords
-setuptools._distutils.dist.DistributionMetadata.set_platforms
 setuptools._distutils.dist.fix_help_options
 setuptools._distutils.extension.read_setup_file
 setuptools._distutils.filelist.findall
@@ -88,21 +53,21 @@ setuptools._distutils.sysconfig.parse_config_h
 setuptools._distutils.sysconfig.parse_makefile
 setuptools._distutils.sysconfig.project_base
 setuptools._distutils.sysconfig.python_build
+setuptools._distutils.util.is_freethreaded
 setuptools._distutils.util.MACOSX_VERSION_VAR
 
 # Missing submodules from setuptools._distutils
 # (Many of these may be implementation details,
 # but they can be added if people ask for them)
-setuptools._distutils.bcppcompiler
+setuptools._distutils.command.__all__
 setuptools._distutils.command.bdist_dumb
 setuptools._distutils.command.build_scripts
 setuptools._distutils.command.check
 setuptools._distutils.command.clean
 setuptools._distutils.command.config
-setuptools._distutils.command.install_data
 setuptools._distutils.command.install_egg_info
 setuptools._distutils.command.install_headers
-setuptools._distutils.compat.py38
+setuptools._distutils.compat.numpy
 setuptools._distutils.compat.py39
 setuptools._distutils.core
 setuptools._distutils.cygwinccompiler
@@ -111,11 +76,7 @@ setuptools._distutils.dir_util
 setuptools._distutils.fancy_getopt
 setuptools._distutils.file_util
 setuptools._distutils.log
-setuptools._distutils.msvc9compiler
-setuptools._distutils.msvccompiler
-setuptools._distutils.spawn
 setuptools._distutils.text_file
-setuptools._distutils.unixccompiler
 setuptools._distutils.version
 setuptools._distutils.versionpredicate
 setuptools._distutils.zosccompiler
@@ -125,6 +86,6 @@ distutils\..+
 
 # Private APIs, tests and other vendored code
 setuptools.config._validate_pyproject.*
+setuptools.compat.*
 setuptools.command.build_py.build_py.existing_egg_info_dir
 .+?\.tests.*
-.+?\._vendor.*

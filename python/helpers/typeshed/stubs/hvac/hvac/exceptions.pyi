@@ -1,9 +1,8 @@
 from collections.abc import Iterable
-from typing import Any
 from typing_extensions import Self
 
 class VaultError(Exception):
-    errors: Iterable[Any] | str | None
+    errors: Iterable[str] | str | None
     method: str | None
     url: str | None
     text: str | None
@@ -11,7 +10,7 @@ class VaultError(Exception):
     def __init__(
         self,
         message: str | None = None,
-        errors: Iterable[Any] | str | None = None,
+        errors: Iterable[str] | str | None = None,
         method: str | None = None,
         url: str | None = None,
         text: str | None = None,
@@ -22,7 +21,7 @@ class VaultError(Exception):
         cls,
         status_code: int,
         message: str | None = ...,
-        errors: Iterable[Any] | str | None = ...,
+        errors: Iterable[str] | str | None = ...,
         method: str | None = ...,
         url: str | None = ...,
         text: str | None = ...,

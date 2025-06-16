@@ -1,8 +1,14 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsGetItem
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
+__all__ = ["percolation_centrality"]
+
+@_dispatchable
 def percolation_centrality(
-    G, attribute: str = "percolation", states: Incomplete | None = None, weight: Incomplete | None = None
+    G: Graph[_Node],
+    attribute: str | None = "percolation",
+    states: SupportsGetItem[Incomplete, Incomplete] | None = None,
+    weight: str | None = None,
 ): ...

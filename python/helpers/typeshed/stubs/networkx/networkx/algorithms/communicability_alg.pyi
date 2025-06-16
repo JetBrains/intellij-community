@@ -1,6 +1,9 @@
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
-def communicability(G): ...
-@_dispatch
-def communicability_exp(G): ...
+__all__ = ["communicability", "communicability_exp"]
+
+@_dispatchable
+def communicability(G: Graph[_Node]): ...
+@_dispatchable
+def communicability_exp(G: Graph[_Node]): ...

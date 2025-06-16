@@ -1,19 +1,24 @@
 from _typeshed import Incomplete
-from collections.abc import Generator
+from collections.abc import Collection, Generator
+from typing import Final
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.digraph import DiGraph
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
-def triadic_census(G, nodelist: Incomplete | None = None): ...
-@_dispatch
-def is_triad(G): ...
-@_dispatch
-def all_triplets(G): ...
-@_dispatch
-def all_triads(G) -> Generator[Incomplete, None, None]: ...
-@_dispatch
-def triads_by_type(G): ...
-@_dispatch
-def triad_type(G): ...
-@_dispatch
-def random_triad(G, seed: Incomplete | None = None): ...
+__all__ = ["triadic_census", "is_triad", "all_triads", "triads_by_type", "triad_type"]
+
+TRICODES: Final[tuple[int, ...]]
+TRIAD_NAMES: Final[tuple[str, ...]]
+TRICODE_TO_NAME: Final[dict[int, str]]
+
+@_dispatchable
+def triadic_census(G: DiGraph[_Node], nodelist: Collection[_Node] | None = None): ...
+@_dispatchable
+def is_triad(G: Graph[_Node]) -> bool: ...
+@_dispatchable
+def all_triads(G: DiGraph[_Node]) -> Generator[Incomplete, None, None]: ...
+@_dispatchable
+def triads_by_type(G: DiGraph[_Node]): ...
+@_dispatchable
+def triad_type(G: DiGraph[_Node]): ...

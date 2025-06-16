@@ -1,8 +1,8 @@
-from _typeshed import Incomplete
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["partial_duplication_graph", "duplication_divergence_graph"]
 
-@_dispatch
-def partial_duplication_graph(N, n, p, q, seed: Incomplete | None = None): ...
-@_dispatch
-def duplication_divergence_graph(n, p, seed: Incomplete | None = None): ...
+@_dispatchable
+def partial_duplication_graph(N, n, p, q, seed=None): ...
+@_dispatchable
+def duplication_divergence_graph(n, p, seed=None): ...

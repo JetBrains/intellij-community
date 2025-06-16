@@ -1,41 +1,6 @@
-# New in py313 (triage these!)
-_msi
-_winapi.BatchedWaitForMultipleObjects
-_winapi.CreateEventW
-_winapi.CreateMutexW
-_winapi.GetLongPathName
-_winapi.GetShortPathName
-_winapi.OpenEventW
-_winapi.OpenMutexW
-_winapi.ReleaseMutex
-_winapi.ResetEvent
-_winapi.STARTF_FORCEOFFFEEDBACK
-_winapi.STARTF_FORCEONFEEDBACK
-_winapi.STARTF_PREVENTPINNING
-_winapi.STARTF_RUNFULLSCREEN
-_winapi.STARTF_TITLEISAPPID
-_winapi.STARTF_TITLEISLINKNAME
-_winapi.STARTF_UNTRUSTEDSOURCE
-_winapi.STARTF_USECOUNTCHARS
-_winapi.STARTF_USEFILLATTRIBUTE
-_winapi.STARTF_USEHOTKEY
-_winapi.STARTF_USEPOSITION
-_winapi.STARTF_USESIZE
-_winapi.SetEvent
-ctypes._endian.oledll
-ctypes._endian.windll
-nt.fchmod
-nt.lchmod
-ntpath.exists
-ntpath.lexists
-ntpath.splitroot
-os.fchmod
-os.lchmod
-os.path.exists
-os.path.lexists
-subprocess.__all__
-subprocess.STARTF_FORCEOFFFEEDBACK
-subprocess.STARTF_FORCEONFEEDBACK
+# =======
+# >= 3.12
+# =======
 
 # Undocumented internal method, not really for public consumption.
 # (Hard to add types for unless we add stubs for the undocumented _overlapped module...)

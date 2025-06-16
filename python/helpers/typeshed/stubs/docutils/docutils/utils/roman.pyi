@@ -1,4 +1,11 @@
+import argparse
 import re
+from typing import Final, Literal
+
+__author__: Final[str]
+__version__: Final[str]
+__date__: Final[str]
+__copyright__: Final[str]
 
 class RomanError(Exception): ...
 class OutOfRangeError(RomanError): ...
@@ -9,6 +16,8 @@ romanNumeralMap: tuple[tuple[str, int], ...]
 
 def toRoman(n: int) -> str: ...
 
-romanNumeralPattern: re.Pattern[str]
+romanNumeralPattern: Final[re.Pattern[str]]
 
 def fromRoman(s: str) -> int: ...
+def parse_args() -> argparse.Namespace: ...
+def main() -> Literal[0]: ...

@@ -1,12 +1,22 @@
-from _typeshed import Incomplete
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["weisfeiler_lehman_graph_hash", "weisfeiler_lehman_subgraph_hashes"]
 
-@_dispatch
+@_dispatchable
 def weisfeiler_lehman_graph_hash(
-    G, edge_attr: Incomplete | None = None, node_attr: Incomplete | None = None, iterations: int = 3, digest_size: int = 16
+    G: Graph[_Node],
+    edge_attr: str | None = None,
+    node_attr: str | None = None,
+    iterations: int | None = 3,
+    digest_size: int | None = 16,
 ): ...
-@_dispatch
+@_dispatchable
 def weisfeiler_lehman_subgraph_hashes(
-    G, edge_attr: Incomplete | None = None, node_attr: Incomplete | None = None, iterations: int = 3, digest_size: int = 16
+    G: Graph[_Node],
+    edge_attr: str | None = None,
+    node_attr: str | None = None,
+    iterations: int | None = 3,
+    digest_size: int | None = 16,
+    include_initial_labels: bool | None = False,
 ): ...

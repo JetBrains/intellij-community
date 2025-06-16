@@ -2,7 +2,7 @@ import datetime as dt
 from _typeshed import ConvertibleToInt, Incomplete, SupportsRead, SupportsReadline, SupportsWrite, Unused
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from types import TracebackType
-from typing import Any, Literal, NoReturn, Protocol, TypeVar, overload, type_check_only
+from typing import Any, Literal, NoReturn, Protocol, TextIO, TypeVar, overload, type_check_only
 from typing_extensions import Self, TypeAlias
 
 from psycopg2.extras import ReplicationCursor as extras_ReplicationCursor
@@ -83,7 +83,9 @@ threadsafety: int
 
 __libpq_version__: int
 
-class _SupportsReadAndReadline(SupportsRead[str], SupportsReadline[str], Protocol): ...
+_T_co = TypeVar("_T_co", covariant=True)
+
+class _SupportsReadAndReadline(SupportsRead[_T_co], SupportsReadline[_T_co], Protocol[_T_co]): ...
 
 class cursor:
     arraysize: int
@@ -120,11 +122,14 @@ class cursor:
     def cast(self, oid: int, s: str | bytes, /) -> Any: ...
     def close(self) -> None: ...
     def copy_expert(
-        self, sql: str | bytes | Composable, file: _SupportsReadAndReadline | SupportsWrite[str], size: int = 8192
+        self,
+        sql: str | bytes | Composable,
+        file: _SupportsReadAndReadline[bytes] | SupportsWrite[bytes] | TextIO,
+        size: int = 8192,
     ) -> None: ...
     def copy_from(
         self,
-        file: _SupportsReadAndReadline,
+        file: _SupportsReadAndReadline[bytes] | _SupportsReadAndReadline[str],
         table: str,
         sep: str = "\t",
         null: str = "\\N",
@@ -132,7 +137,12 @@ class cursor:
         columns: Iterable[str] | None = None,
     ) -> None: ...
     def copy_to(
-        self, file: SupportsWrite[str], table: str, sep: str = "\t", null: str = "\\N", columns: Iterable[str] | None = None
+        self,
+        file: SupportsWrite[bytes] | TextIO,
+        table: str,
+        sep: str = "\t",
+        null: str = "\\N",
+        columns: Iterable[str] | None = None,
     ) -> None: ...
     def execute(self, query: str | bytes | Composable, vars: _Vars = None) -> None: ...
     def executemany(self, query: str | bytes | Composable, vars_list: Iterable[_Vars]) -> None: ...
@@ -217,7 +227,7 @@ class ConnectionInfo:
     # [1]: https://www.psycopg.org/docs/extensions.html#psycopg2.extensions.ConnectionInfo
     # [2]: https://github.com/psycopg/psycopg2/blob/1d3a89a0bba621dc1cc9b32db6d241bd2da85ad1/psycopg/conninfo_type.c#L52 and below
     # [3]: https://www.postgresql.org/docs/current/libpq-status.html
-    # [4]: https://github.com/postgres/postgres/blob/b39838889e76274b107935fa8e8951baf0e8b31b/src/interfaces/libpq/fe-connect.c#L6754 and below
+    # [4]: https://github.com/postgres/postgres/blob/b39838889e76274b107935fa8e8951baf0e8b31b/src/interfaces/libpq/fe-connect.c#L6754 and below  # noqa: E501
     @property
     def backend_pid(self) -> int: ...
     @property
@@ -368,7 +378,7 @@ class ReplicationCursor(cursor):
     wal_end: Any
     def __init__(self, *args, **kwargs) -> None: ...
     def consume_stream(self, consumer, keepalive_interval=...): ...
-    def read_message(self, *args, **kwargs): ...
+    def read_message(self) -> Incomplete | None: ...
     def send_feedback(self, write_lsn=..., flush_lsn=..., apply_lsn=..., reply=..., force=...): ...
     def start_replication_expert(self, command, decode=..., status_interval=...): ...
 
@@ -590,10 +600,7 @@ def get_wait_callback() -> Incomplete | None: ...
 def libpq_version() -> int: ...
 def new_array_type(values: tuple[int, ...], name: str, baseobj: _type) -> _type: ...
 def new_type(
-    values: tuple[int, ...],
-    name: str,
-    castobj: Callable[[str | bytes | None, cursor], Any] | None = None,
-    baseobj: Incomplete | None = None,
+    values: tuple[int, ...], name: str, castobj: Callable[[str | bytes | None, cursor], Any] | None = None, baseobj=None
 ) -> _type: ...
 def parse_dsn(dsn: str | bytes) -> dict[str, Any]: ...
 def quote_ident(ident: str | bytes, scope) -> str: ...

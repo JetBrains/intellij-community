@@ -1,63 +1,186 @@
-from _typeshed import Incomplete
-from collections.abc import Generator
+from _typeshed import Incomplete, SupportsGetItem
+from collections.abc import Callable, Generator
+from typing import Any
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
-def dijkstra_path(G, source, target, weight: str = "weight"): ...
-@_dispatch
-def dijkstra_path_length(G, source, target, weight: str = "weight"): ...
-@_dispatch
-def single_source_dijkstra_path(G, source, cutoff: Incomplete | None = None, weight: str = "weight"): ...
-@_dispatch
-def single_source_dijkstra_path_length(G, source, cutoff: Incomplete | None = None, weight: str = "weight"): ...
-@_dispatch
+__all__ = [
+    "dijkstra_path",
+    "dijkstra_path_length",
+    "bidirectional_dijkstra",
+    "single_source_dijkstra",
+    "single_source_dijkstra_path",
+    "single_source_dijkstra_path_length",
+    "multi_source_dijkstra",
+    "multi_source_dijkstra_path",
+    "multi_source_dijkstra_path_length",
+    "all_pairs_dijkstra",
+    "all_pairs_dijkstra_path",
+    "all_pairs_dijkstra_path_length",
+    "dijkstra_predecessor_and_distance",
+    "bellman_ford_path",
+    "bellman_ford_path_length",
+    "single_source_bellman_ford",
+    "single_source_bellman_ford_path",
+    "single_source_bellman_ford_path_length",
+    "all_pairs_bellman_ford_path",
+    "all_pairs_bellman_ford_path_length",
+    "bellman_ford_predecessor_and_distance",
+    "negative_edge_cycle",
+    "find_negative_cycle",
+    "goldberg_radzik",
+    "johnson",
+]
+
+@_dispatchable
+def dijkstra_path(
+    G: Graph[_Node],
+    source: _Node,
+    target: _Node,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def dijkstra_path_length(
+    G: Graph[_Node],
+    source: _Node,
+    target: _Node,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def single_source_dijkstra_path(
+    G: Graph[_Node],
+    source: _Node,
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def single_source_dijkstra_path_length(
+    G: Graph[_Node],
+    source: _Node,
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
 def single_source_dijkstra(
-    G, source, target: Incomplete | None = None, cutoff: Incomplete | None = None, weight: str = "weight"
+    G: Graph[_Node],
+    source: _Node,
+    target: _Node | None = None,
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
 ): ...
-@_dispatch
-def multi_source_dijkstra_path(G, sources, cutoff: Incomplete | None = None, weight: str = "weight"): ...
-@_dispatch
-def multi_source_dijkstra_path_length(G, sources, cutoff: Incomplete | None = None, weight: str = "weight"): ...
-@_dispatch
+@_dispatchable
+def multi_source_dijkstra_path(
+    G: Graph[_Node],
+    sources,
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def multi_source_dijkstra_path_length(
+    G: Graph[_Node],
+    sources,
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
 def multi_source_dijkstra(
-    G, sources, target: Incomplete | None = None, cutoff: Incomplete | None = None, weight: str = "weight"
+    G: Graph[_Node],
+    sources,
+    target: _Node | None = None,
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
 ): ...
-@_dispatch
-def dijkstra_predecessor_and_distance(G, source, cutoff: Incomplete | None = None, weight: str = "weight"): ...
-@_dispatch
-def all_pairs_dijkstra(G, cutoff: Incomplete | None = None, weight: str = "weight") -> Generator[Incomplete, None, None]: ...
-@_dispatch
-def all_pairs_dijkstra_path_length(
-    G, cutoff: Incomplete | None = None, weight: str = "weight"
+@_dispatchable
+def dijkstra_predecessor_and_distance(
+    G: Graph[_Node],
+    source: _Node,
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def all_pairs_dijkstra(
+    G: Graph[_Node],
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
 ) -> Generator[Incomplete, None, None]: ...
-@_dispatch
-def all_pairs_dijkstra_path(G, cutoff: Incomplete | None = None, weight: str = "weight") -> Generator[Incomplete, None, None]: ...
-@_dispatch
+@_dispatchable
+def all_pairs_dijkstra_path_length(
+    G: Graph[_Node],
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+) -> Generator[Incomplete, None, None]: ...
+@_dispatchable
+def all_pairs_dijkstra_path(
+    G: Graph[_Node],
+    cutoff: float | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+) -> Generator[Incomplete, None, None]: ...
+@_dispatchable
 def bellman_ford_predecessor_and_distance(
-    G, source, target: Incomplete | None = None, weight: str = "weight", heuristic: bool = False
+    G: Graph[_Node],
+    source: _Node,
+    target: _Node | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+    heuristic: bool = False,
 ): ...
-@_dispatch
-def bellman_ford_path(G, source, target, weight: str = "weight"): ...
-@_dispatch
-def bellman_ford_path_length(G, source, target, weight: str = "weight"): ...
-@_dispatch
-def single_source_bellman_ford_path(G, source, weight: str = "weight"): ...
-@_dispatch
-def single_source_bellman_ford_path_length(G, source, weight: str = "weight"): ...
-@_dispatch
-def single_source_bellman_ford(G, source, target: Incomplete | None = None, weight: str = "weight"): ...
-@_dispatch
-def all_pairs_bellman_ford_path_length(G, weight: str = "weight") -> Generator[Incomplete, None, None]: ...
-@_dispatch
-def all_pairs_bellman_ford_path(G, weight: str = "weight") -> Generator[Incomplete, None, None]: ...
-@_dispatch
-def goldberg_radzik(G, source, weight: str = "weight"): ...
-@_dispatch
-def negative_edge_cycle(G, weight: str = "weight", heuristic: bool = True): ...
-@_dispatch
-def find_negative_cycle(G, source, weight: str = "weight"): ...
-@_dispatch
-def bidirectional_dijkstra(G, source, target, weight: str = "weight"): ...
-@_dispatch
-def johnson(G, weight: str = "weight"): ...
+@_dispatchable
+def bellman_ford_path(
+    G: Graph[_Node],
+    source: _Node,
+    target: _Node,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def bellman_ford_path_length(
+    G: Graph[_Node],
+    source: _Node,
+    target: _Node,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def single_source_bellman_ford_path(
+    G: Graph[_Node], source: _Node, weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight"
+): ...
+@_dispatchable
+def single_source_bellman_ford_path_length(
+    G: Graph[_Node], source: _Node, weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight"
+): ...
+@_dispatchable
+def single_source_bellman_ford(
+    G: Graph[_Node],
+    source: _Node,
+    target: _Node | None = None,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def all_pairs_bellman_ford_path_length(
+    G: Graph[_Node], weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight"
+) -> Generator[Incomplete, None, None]: ...
+@_dispatchable
+def all_pairs_bellman_ford_path(
+    G: Graph[_Node], weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight"
+) -> Generator[Incomplete, None, None]: ...
+@_dispatchable
+def goldberg_radzik(
+    G: Graph[_Node], source: _Node, weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight"
+): ...
+@_dispatchable
+def negative_edge_cycle(
+    G: Graph[_Node],
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+    heuristic: bool = True,
+): ...
+@_dispatchable
+def find_negative_cycle(
+    G: Graph[_Node], source: _Node, weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight"
+): ...
+@_dispatchable
+def bidirectional_dijkstra(
+    G: Graph[_Node],
+    source: _Node,
+    target: _Node,
+    weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight",
+): ...
+@_dispatchable
+def johnson(G: Graph[_Node], weight: str | Callable[[Any, Any, SupportsGetItem[str, Any]], float | None] | None = "weight"): ...

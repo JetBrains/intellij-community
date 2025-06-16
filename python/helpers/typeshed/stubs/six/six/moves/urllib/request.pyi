@@ -1,3 +1,5 @@
+import sys
+
 # Stubs for six.moves.urllib.request
 #
 # Note: Commented out items means they weren't implemented at the time.
@@ -8,7 +10,6 @@ from urllib.request import (
     AbstractDigestAuthHandler as AbstractDigestAuthHandler,
     BaseHandler as BaseHandler,
     CacheFTPHandler as CacheFTPHandler,
-    FancyURLopener as FancyURLopener,
     FileHandler as FileHandler,
     FTPHandler as FTPHandler,
     HTTPBasicAuthHandler as HTTPBasicAuthHandler,
@@ -27,7 +28,6 @@ from urllib.request import (
     ProxyHandler as ProxyHandler,
     Request as Request,
     UnknownHandler as UnknownHandler,
-    URLopener as URLopener,
     build_opener as build_opener,
     getproxies as getproxies,
     install_opener as install_opener,
@@ -39,3 +39,6 @@ from urllib.request import (
     urlopen as urlopen,
     urlretrieve as urlretrieve,
 )
+
+if sys.version_info < (3, 14):
+    from urllib.request import FancyURLopener as FancyURLopener, URLopener as URLopener

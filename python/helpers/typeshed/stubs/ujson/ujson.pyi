@@ -1,8 +1,8 @@
-from _typeshed import Incomplete, SupportsRead, SupportsWrite
+from _typeshed import SupportsRead, SupportsWrite
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Final
 
-__version__: str
+__version__: Final[str]
 
 def encode(
     obj: Any,
@@ -14,7 +14,7 @@ def encode(
     indent: int = ...,
     allow_nan: bool = ...,
     reject_bytes: bool = ...,
-    default: Callable[[Incomplete], Incomplete] | None = None,
+    default: Callable[[Any], Any] | None = None,  # Specify how to serialize arbitrary types
     separators: tuple[str, str] | None = None,
 ) -> str: ...
 def dumps(
@@ -27,7 +27,7 @@ def dumps(
     indent: int = ...,
     allow_nan: bool = ...,
     reject_bytes: bool = ...,
-    default: Callable[[Incomplete], Incomplete] | None = None,
+    default: Callable[[Any], Any] | None = None,  # Specify how to serialize arbitrary types
     separators: tuple[str, str] | None = None,
 ) -> str: ...
 def dump(
@@ -42,7 +42,7 @@ def dump(
     indent: int = ...,
     allow_nan: bool = ...,
     reject_bytes: bool = ...,
-    default: Callable[[Incomplete], Incomplete] | None = None,
+    default: Callable[[Any], Any] | None = None,  # Specify how to serialize arbitrary types
     separators: tuple[str, str] | None = None,
 ) -> None: ...
 def decode(s: str | bytes | bytearray, precise_float: bool = ...) -> Any: ...

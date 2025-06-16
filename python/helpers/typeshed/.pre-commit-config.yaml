@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0 # must match requirements-tests.txt
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -11,7 +11,7 @@ repos:
         args: [--fix=lf]
       - id: check-case-conflict
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.5.4 # must match requirements-tests.txt
+    rev: v0.11.4 # must match requirements-tests.txt
     hooks:
       - id: ruff
         name: Run ruff on stubs, tests and scripts
@@ -22,21 +22,21 @@ repos:
         name: Run ruff on the test cases
         args:
           - "--exit-non-zero-on-fix"
-          - "--select=FA,I,RUF100"
+          - "--select=FA,I,ICN001,RUF100"
           - "--no-force-exclude"
           - "--unsafe-fixes"
         files: '.*test_cases/.+\.py$'
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 24.4.2 # must match requirements-tests.txt
+    rev: 25.1.0
     hooks:
       - id: black
   - repo: https://github.com/pycqa/flake8
-    rev: 7.1.0 # must match requirements-tests.txt
+    rev: 7.2.0
     hooks:
       - id: flake8
+        language: python
         additional_dependencies:
-          - "flake8-noqa==1.4.0" # must match requirements-tests.txt
-          - "flake8-pyi==24.6.0" # must match requirements-tests.txt
+          - "flake8-pyi==25.5.0"
         types: [file]
         types_or: [python, pyi]
   - repo: meta

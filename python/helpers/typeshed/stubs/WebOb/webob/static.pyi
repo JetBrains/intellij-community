@@ -1,4 +1,5 @@
-from _typeshed import StrOrBytesPath
+from _typeshed import StrPath
+from _typeshed.wsgi import WSGIApplication
 from collections.abc import Iterator
 from typing import IO, Any
 
@@ -6,14 +7,16 @@ from webob.dec import wsgify
 from webob.request import Request
 from webob.response import Response
 
+__all__ = ["FileApp", "DirectoryApp"]
+
 BLOCK_SIZE: int
 
 class FileApp:
-    filename: StrOrBytesPath
+    filename: StrPath
     kw: dict[str, Any]
-    def __init__(self, filename: StrOrBytesPath, **kw: Any) -> None: ...
+    def __init__(self, filename: StrPath, **kw: Any) -> None: ...
     @wsgify
-    def __call__(self, req: Request) -> Response: ...
+    def __call__(self, req: Request) -> WSGIApplication: ...
 
 class FileIter:
     file: IO[bytes]
@@ -24,14 +27,14 @@ class FileIter:
     __iter__ = app_iter_range
 
 class DirectoryApp:
-    path: str | bytes
-    index_page: str | None
+    path: StrPath
+    index_page: str
     hide_index_with_redirect: bool
     fileapp_kw: dict[str, Any]
     def __init__(
-        self, path: StrOrBytesPath, index_page: str = "index.html", hide_index_with_redirect: bool = False, **kw: Any
+        self, path: StrPath, index_page: str = "index.html", hide_index_with_redirect: bool = False, **kw: Any
     ) -> None: ...
-    def make_fileapp(self, path: StrOrBytesPath) -> FileApp: ...
+    def make_fileapp(self, path: StrPath) -> FileApp: ...
     @wsgify
     def __call__(self, req: Request) -> Response | FileApp: ...
-    def index(self, req: Request, path: StrOrBytesPath) -> Response | FileApp: ...
+    def index(self, req: Request, path: StrPath) -> Response | FileApp: ...

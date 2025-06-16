@@ -1,8 +1,6 @@
 from _typeshed import Incomplete
 
 import _win32typing
-from win32com.server import policy as policy
-from win32com.server.exception import COMException as COMException
 
 def wrap(ob, iid: Incomplete | None = ..., usePolicy: Incomplete | None = ..., useDispatcher: Incomplete | None = ...): ...
 def unwrap(ob): ...

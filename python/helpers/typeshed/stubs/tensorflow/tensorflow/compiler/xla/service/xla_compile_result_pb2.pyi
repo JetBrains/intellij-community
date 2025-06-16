@@ -73,8 +73,36 @@ class CompilerPerfStats(google.protobuf.message.Message):
         compilation_duration: google.protobuf.duration_pb2.Duration | None = ...,
         total_duration: google.protobuf.duration_pb2.Duration | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["compilation_duration", b"compilation_duration", "compilation_prologue_duration", b"compilation_prologue_duration", "hlo_verification_duration", b"hlo_verification_duration", "init_duration", b"init_duration", "total_duration", b"total_duration"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["compilation_duration", b"compilation_duration", "compilation_prologue_duration", b"compilation_prologue_duration", "hlo_verification_duration", b"hlo_verification_duration", "init_duration", b"init_duration", "total_duration", b"total_duration"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "compilation_duration",
+            b"compilation_duration",
+            "compilation_prologue_duration",
+            b"compilation_prologue_duration",
+            "hlo_verification_duration",
+            b"hlo_verification_duration",
+            "init_duration",
+            b"init_duration",
+            "total_duration",
+            b"total_duration",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "compilation_duration",
+            b"compilation_duration",
+            "compilation_prologue_duration",
+            b"compilation_prologue_duration",
+            "hlo_verification_duration",
+            b"hlo_verification_duration",
+            "init_duration",
+            b"init_duration",
+            "total_duration",
+            b"total_duration",
+        ],
+    ) -> None: ...
 
 global___CompilerPerfStats = CompilerPerfStats
 
@@ -90,12 +118,7 @@ class CompilationResult(google.protobuf.message.Message):
         VALUE_FIELD_NUMBER: builtins.int
         key: builtins.str
         value: builtins.int
-        def __init__(
-            self,
-            *,
-            key: builtins.str | None = ...,
-            value: builtins.int | None = ...,
-        ) -> None: ...
+        def __init__(self, *, key: builtins.str | None = ..., value: builtins.int | None = ...) -> None: ...
         def HasField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> builtins.bool: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
@@ -131,7 +154,14 @@ class CompilationResult(google.protobuf.message.Message):
         status: tensorflow.tsl.protobuf.status_pb2.StatusProto | None = ...,
         counters: collections.abc.Mapping[builtins.str, builtins.int] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["hlo_module", b"hlo_module", "perf_stats", b"perf_stats", "status", b"status"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["counters", b"counters", "hlo_module", b"hlo_module", "perf_stats", b"perf_stats", "status", b"status"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["hlo_module", b"hlo_module", "perf_stats", b"perf_stats", "status", b"status"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "counters", b"counters", "hlo_module", b"hlo_module", "perf_stats", b"perf_stats", "status", b"status"
+        ],
+    ) -> None: ...
 
 global___CompilationResult = CompilationResult

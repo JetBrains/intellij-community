@@ -1,0 +1,24 @@
+# Stub missing OK
+geopandas\.conftest
+geopandas\.(.*\.)?tests.*
+geopandas\.array\.(type_mapping|geometry_type_ids|geometry_type_values)
+geopandas\.io\.file\.(FIONA|PYOGRIO)_GE_.*
+geopandas\.io\.file\.(fiona|pyogrio)(_env|_import_error)?
+geopandas\.io\.util
+geopandas\.datasets\.*
+
+# Inconsistent OK
+geopandas\.(geodataframe\.)?GeoDataFrame\.plot
+
+# Failed to import OK (require extra dependencies)
+geopandas\.io\._geoarrow
+geopandas\._exports
+
+# Not present in stub OK (do not work at runtime, to be removed from geopandas)
+geopandas\.(geoseries\.)?GeoSeries\.append # https://github.com/geopandas/geopandas/pull/3460
+geopandas\.(geoseries\.)?GeoSeries\.select # https://github.com/geopandas/geopandas/pull/3394
+
+# Inconsistent (TODO)
+geopandas\.(geoseries\.)?GeoSeries\.apply
+geopandas\.(geoseries\.)?GeoSeries\.fillna
+geopandas\.(geoseries\.)?GeoSeries\.sort_index

@@ -25,3 +25,5 @@ class Loader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
 
 class UnsafeLoader(Reader, Scanner, Parser, Composer, Constructor, Resolver):
     def __init__(self, stream: _ReadStream) -> None: ...
+
+__all__ = ["BaseLoader", "FullLoader", "SafeLoader", "Loader", "UnsafeLoader"]

@@ -1,4 +1,10 @@
-from networkx.utils.backends import _dispatch
+from typing import Final
 
-@_dispatch
+from networkx.utils.backends import _dispatchable
+
+__all__ = ["triad_graph"]
+
+TRIAD_EDGES: Final[dict[str, list[str]]]
+
+@_dispatchable
 def triad_graph(triad_name): ...

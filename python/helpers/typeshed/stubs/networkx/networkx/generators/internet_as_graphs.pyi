@@ -1,8 +1,12 @@
 from _typeshed import Incomplete
+from collections.abc import Mapping
 
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
 
 __all__ = ["random_internet_as_graph"]
+
+def uniform_int_from_avg(a, m, seed): ...
+def choose_pref_attach(degs: Mapping[Incomplete, Incomplete], seed): ...
 
 class AS_graph_generator:
     seed: Incomplete
@@ -37,5 +41,5 @@ class AS_graph_generator:
     nodes: Incomplete
     def generate(self): ...
 
-@_dispatch
-def random_internet_as_graph(n, seed: Incomplete | None = None): ...
+@_dispatchable
+def random_internet_as_graph(n, seed=None): ...

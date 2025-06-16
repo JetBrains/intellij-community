@@ -2,12 +2,17 @@ from typing import Final
 
 class CreditCardNumbers:
     class CardTypeIndicators:
+        Business: Final = "4229989800000003"
         Commercial: Final = "4111111111131010"
+        Consumer: Final = "4229989700000004"
+        Corporate: Final = "4229989100000000"
         DurbinRegulated: Final = "4111161010101010"
         Debit: Final = "4117101010101010"
         Healthcare: Final = "4111111510101010"
         Payroll: Final = "4111111114101010"
         Prepaid: Final = "4111111111111210"
+        PrepaidReloadable: Final = "4229989900000002"
+        Purchase: Final = "4229989500000006"
         IssuingBank: Final = "4111111141010101"
         CountryOfIssuance: Final = "4111111111121102"
         No: Final = "4111111111310101"

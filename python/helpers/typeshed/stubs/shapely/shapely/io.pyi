@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
 from typing import Literal, overload
+from typing_extensions import TypeAlias
 
 import numpy as np
 from numpy.typing import NDArray
@@ -12,6 +13,8 @@ from .lib import Geometry
 
 __all__ = ["from_geojson", "from_ragged_array", "from_wkb", "from_wkt", "to_geojson", "to_ragged_array", "to_wkb", "to_wkt"]
 
+_OutputDimension: TypeAlias = Literal[2, 3, 4]
+
 # Mypy and stubtest aren't happy with the following definition and
 # raise is a reserved keyword, so we cannot use the class syntax of enums
 # DecodingErrorOptions = ParamEnum("DecodingErrorOptions", {"ignore": 0, "warn": 1, "raise": 2})
@@ -23,18 +26,28 @@ class WKBFlavorOptions(ParamEnum):
 
 @overload
 def to_wkt(
-    geometry: None, rounding_precision: int = 6, trim: bool = True, output_dimension: int = 3, old_3d: bool = False, **kwargs
+    geometry: None,
+    rounding_precision: int = 6,
+    trim: bool = True,
+    output_dimension: _OutputDimension | None = None,
+    old_3d: bool = False,
+    **kwargs,
 ) -> None: ...
 @overload
 def to_wkt(
-    geometry: Geometry, rounding_precision: int = 6, trim: bool = True, output_dimension: int = 3, old_3d: bool = False, **kwargs
+    geometry: Geometry,
+    rounding_precision: int = 6,
+    trim: bool = True,
+    output_dimension: _OutputDimension | None = None,
+    old_3d: bool = False,
+    **kwargs,
 ) -> str: ...
 @overload
 def to_wkt(
     geometry: OptGeoArrayLikeSeq,
     rounding_precision: int = 6,
     trim: bool = True,
-    output_dimension: int = 3,
+    output_dimension: _OutputDimension | None = None,
     old_3d: bool = False,
     **kwargs,
 ) -> NDArray[np.str_]: ...
@@ -42,7 +55,7 @@ def to_wkt(
 def to_wkb(
     geometry: None,
     hex: bool = False,
-    output_dimension: int = 3,
+    output_dimension: _OutputDimension | None = None,
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
@@ -52,7 +65,7 @@ def to_wkb(
 def to_wkb(
     geometry: Geometry,
     hex: Literal[False] = False,
-    output_dimension: int = 3,
+    output_dimension: _OutputDimension | None = None,
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
@@ -62,7 +75,7 @@ def to_wkb(
 def to_wkb(
     geometry: Geometry,
     hex: Literal[True],
-    output_dimension: int = 3,
+    output_dimension: _OutputDimension | None = None,
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
@@ -72,7 +85,7 @@ def to_wkb(
 def to_wkb(
     geometry: Geometry,
     hex: bool,
-    output_dimension: int = 3,
+    output_dimension: _OutputDimension | None = None,
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
@@ -82,7 +95,7 @@ def to_wkb(
 def to_wkb(
     geometry: OptGeoArrayLikeSeq,
     hex: Literal[False] = False,
-    output_dimension: int = 3,
+    output_dimension: _OutputDimension | None = None,
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
@@ -92,7 +105,7 @@ def to_wkb(
 def to_wkb(
     geometry: OptGeoArrayLikeSeq,
     hex: Literal[True],
-    output_dimension: int = 3,
+    output_dimension: _OutputDimension | None = None,
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",
@@ -102,7 +115,7 @@ def to_wkb(
 def to_wkb(
     geometry: OptGeoArrayLikeSeq,
     hex: bool,
-    output_dimension: int = 3,
+    output_dimension: _OutputDimension | None = None,
     byte_order: int = -1,
     include_srid: bool = False,
     flavor: Literal["iso", "extended"] = "extended",

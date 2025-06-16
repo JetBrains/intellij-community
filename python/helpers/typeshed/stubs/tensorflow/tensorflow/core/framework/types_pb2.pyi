@@ -214,11 +214,7 @@ class SerializedDType(google.protobuf.message.Message):
 
     DATATYPE_FIELD_NUMBER: builtins.int
     datatype: global___DataType.ValueType
-    def __init__(
-        self,
-        *,
-        datatype: global___DataType.ValueType | None = ...,
-    ) -> None: ...
+    def __init__(self, *, datatype: global___DataType.ValueType | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["datatype", b"datatype"]) -> None: ...
 
 global___SerializedDType = SerializedDType

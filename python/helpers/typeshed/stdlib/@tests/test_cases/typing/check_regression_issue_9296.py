@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import typing as t
+from typing import Any, KeysView, TypeVar
 
-KT = t.TypeVar("KT")
+KT = TypeVar("KT")
 
 
-class MyKeysView(t.KeysView[KT]):
+class MyKeysView(KeysView[KT]):
     pass
 
 
-d: dict[t.Any, t.Any] = {}
+d: dict[Any, Any] = {}
 dict_keys = type(d.keys())
 
 # This should not cause an error like `Member "register" is unknown`:

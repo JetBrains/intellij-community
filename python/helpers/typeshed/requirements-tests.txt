@@ -1,24 +1,30 @@
-# Type checkers and other linters that we test our stubs against. These should always
-# be pinned to a specific version to make failure reproducible. See also the
-# "tool.typeshed" section in pyproject.toml for additional type checkers.
-black==24.4.2            # must match .pre-commit-config.yaml
-flake8==7.1.0            # must match .pre-commit-config.yaml
-flake8-noqa==1.4.0       # must match .pre-commit-config.yaml
-flake8-pyi==24.6.0       # must match .pre-commit-config.yaml
-mypy==1.10.1
-pre-commit-hooks==4.6.0  # must match .pre-commit-config.yaml
-pyright==1.1.373
-pytype==2024.4.11; platform_system != "Windows" and python_version < "3.12"
-ruff==0.5.4              # must match .pre-commit-config.yaml
+# Type checkers that we test our stubs against. These should always
+# be pinned to a specific version to make failure reproducible.
+mypy==1.16.0
+pyright==1.1.400
+# pytype can be installed on Windows, but requires building wheels, let's not do that on the CI
+pytype==2024.10.11; platform_system != "Windows" and python_version >= "3.10" and python_version < "3.13"
 
 # Libraries used by our various scripts.
-aiohttp==3.9.5
-packaging==24.1
+# TODO (2025-05-09): Installing this on Python 3.14 on Windows fails at
+# the moment.
+aiohttp==3.11.15; python_version < "3.14"
+# TODO (2025-05-09): No wheels exist for Python 3.14 yet, slowing down CI
+# considerably and prone to fail.
+grpcio-tools>=1.66.2; python_version < "3.14" # For grpc_tools.protoc
+mypy-protobuf==3.6.0
+packaging==24.2
 pathspec>=0.11.1
 pre-commit
-stubdefaulter==0.1.0
+# Required by create_baseline_stubs.py. Must match .pre-commit-config.yaml.
+ruff==0.11.4
+# TODO (2025-05-07): Dependency libcst doesn't support Python 3.14 yet.
+stubdefaulter==0.1.0; python_version < "3.14"
 termcolor>=2.3
-tomli==2.0.1
-tomlkit==0.13.0
-typing_extensions>=4.12.0rc1
-uv==0.2.27
+tomli==2.2.1
+tomlkit==0.13.2
+typing_extensions>=4.14.0rc1
+uv==0.7.4
+
+# Utilities for typeshed infrastructure scripts.
+ts_utils @ file:lib

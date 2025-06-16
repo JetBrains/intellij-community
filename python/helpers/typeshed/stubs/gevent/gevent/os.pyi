@@ -1,8 +1,10 @@
 import os
 import sys
-from _typeshed import FileDescriptor, Incomplete, ReadableBuffer
+from _typeshed import FileDescriptor, ReadableBuffer
 from collections.abc import Callable
 from typing import Literal
+
+from gevent._types import _ChildWatcher, _Loop
 
 def tp_read(fd: FileDescriptor, n: int) -> bytes: ...
 def tp_write(fd: FileDescriptor, buf: ReadableBuffer) -> int: ...
@@ -17,11 +19,14 @@ if sys.platform != "win32":
     def forkpty_gevent() -> tuple[int, int]: ...
     waitpid = os.waitpid
     def fork_and_watch(
-        callback: Incomplete | None = None, loop: Incomplete | None = None, ref: bool = False, fork: Callable[[], int] = ...
+        callback: Callable[[_ChildWatcher], object] | None = None,
+        loop: _Loop | None = None,
+        ref: bool = False,
+        fork: Callable[[], int] = ...,
     ) -> int: ...
     def forkpty_and_watch(
-        callback: Incomplete | None = None,
-        loop: Incomplete | None = None,
+        callback: Callable[[_ChildWatcher], object] | None = None,
+        loop: _Loop | None = None,
         ref: bool = False,
         forkpty: Callable[[], tuple[int, int]] = ...,
     ) -> tuple[int, int]: ...

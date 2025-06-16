@@ -1,4 +1,4 @@
-version = "4.23.*"
+version = "4.24.*"
 upstream_repository = "https://github.com/python-jsonschema/jsonschema"
 requires = ["referencing"]
 partial_stub = true
@@ -6,5 +6,3 @@ partial_stub = true
 [tool.stubtest]
 ignore_missing_stub = true
 extras = ["format"]
-# see https://github.com/python/typeshed/issues/12107 for the reason for the pin
-stubtest_requirements = ["webcolors<24.6.0"]

@@ -1,6 +1,2 @@
-# Internal compatibility aliases
-boltons.funcutils.make_method
-boltons.deprutils.ModuleType.__dict__
-boltons.deprutils.ModuleType.__getattr__
-boltons.mathutils.unicode
-boltons.urlutils.unicode
+boltons.funcutils.CachedInstancePartial.__partialmethod__
+boltons.funcutils.InstancePartial.__partialmethod__

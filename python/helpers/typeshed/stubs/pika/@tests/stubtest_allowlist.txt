@@ -1,7 +1,3 @@
-# Inherited from stdlib's io module.
-pika.compat.StringIO.seek
-pika.compat.StringIO.truncate
-
 # Stubtest doesn't understand that a property alias is also read-only.
 # https://github.com/python/mypy/issues/6700
 pika(\.adapters)?(\.blocking_connection)?\.BlockingConnection\.basic_nack

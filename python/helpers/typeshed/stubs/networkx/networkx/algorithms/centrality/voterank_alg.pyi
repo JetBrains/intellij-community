@@ -1,6 +1,7 @@
-from _typeshed import Incomplete
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["voterank"]
 
-@_dispatch
-def voterank(G, number_of_nodes: Incomplete | None = None): ...
+@_dispatchable
+def voterank(G: Graph[_Node], number_of_nodes: int | None = None): ...

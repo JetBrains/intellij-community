@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 # Python 2.7 ast
 
 # Rename typing to _typing, as not to conflict with typing imported

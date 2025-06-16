@@ -1,19 +1,26 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsGetItem
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
+__all__ = ["katz_centrality", "katz_centrality_numpy"]
+
+@_dispatchable
 def katz_centrality(
-    G,
-    alpha: float = 0.1,
-    beta: float = 1.0,
-    max_iter: int = 1000,
-    tol: float = 1e-06,
-    nstart: Incomplete | None = None,
-    normalized: bool = True,
-    weight: Incomplete | None = None,
+    G: Graph[_Node],
+    alpha: float | None = 0.1,
+    beta: float | SupportsGetItem[Incomplete, Incomplete] | None = 1.0,
+    max_iter: int | None = 1000,
+    tol: float | None = 1e-06,
+    nstart: SupportsGetItem[Incomplete, Incomplete] | None = None,
+    normalized: bool | None = True,
+    weight: str | None = None,
 ): ...
-@_dispatch
+@_dispatchable
 def katz_centrality_numpy(
-    G, alpha: float = 0.1, beta: float = 1.0, normalized: bool = True, weight: Incomplete | None = None
+    G: Graph[_Node],
+    alpha: float = 0.1,
+    beta: float | SupportsGetItem[Incomplete, Incomplete] | None = 1.0,
+    normalized: bool = True,
+    weight: str | None = None,
 ): ...

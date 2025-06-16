@@ -73,7 +73,27 @@ class HloProfilePrinterData(google.protobuf.message.Message):
             optimal_seconds: builtins.float | None = ...,
             profile_index: builtins.int | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["bytes_accessed", b"bytes_accessed", "category", b"category", "flop_count", b"flop_count", "long_name", b"long_name", "optimal_seconds", b"optimal_seconds", "profile_index", b"profile_index", "short_name", b"short_name", "transcendental_count", b"transcendental_count"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "bytes_accessed",
+                b"bytes_accessed",
+                "category",
+                b"category",
+                "flop_count",
+                b"flop_count",
+                "long_name",
+                b"long_name",
+                "optimal_seconds",
+                b"optimal_seconds",
+                "profile_index",
+                b"profile_index",
+                "short_name",
+                b"short_name",
+                "transcendental_count",
+                b"transcendental_count",
+            ],
+        ) -> None: ...
 
     @typing.final
     class HloComputationInfo(google.protobuf.message.Message):
@@ -90,7 +110,11 @@ class HloProfilePrinterData(google.protobuf.message.Message):
         corresponding to this HloComputationInfo.
         """
         @property
-        def instruction_infos(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___HloProfilePrinterData.HloInstructionInfo]:
+        def instruction_infos(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            global___HloProfilePrinterData.HloInstructionInfo
+        ]:
             """HloInstructionInfos for every HloInstruction in the HloComputation for
             corresponding to this HloComputattionInfo.
             """
@@ -102,7 +126,12 @@ class HloProfilePrinterData(google.protobuf.message.Message):
             profile_index: builtins.int | None = ...,
             instruction_infos: collections.abc.Iterable[global___HloProfilePrinterData.HloInstructionInfo] | None = ...,
         ) -> None: ...
-        def ClearField(self, field_name: typing.Literal["instruction_infos", b"instruction_infos", "name", b"name", "profile_index", b"profile_index"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "instruction_infos", b"instruction_infos", "name", b"name", "profile_index", b"profile_index"
+            ],
+        ) -> None: ...
 
     @typing.final
     class ExtraMetricsEntry(google.protobuf.message.Message):
@@ -112,12 +141,7 @@ class HloProfilePrinterData(google.protobuf.message.Message):
         VALUE_FIELD_NUMBER: builtins.int
         key: builtins.str
         value: builtins.int
-        def __init__(
-            self,
-            *,
-            key: builtins.str | None = ...,
-            value: builtins.int | None = ...,
-        ) -> None: ...
+        def __init__(self, *, key: builtins.str | None = ..., value: builtins.int | None = ...) -> None: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
     COMPUTATION_INFOS_FIELD_NUMBER: builtins.int
@@ -129,7 +153,9 @@ class HloProfilePrinterData(google.protobuf.message.Message):
     entry_computation: builtins.str
     """Name of the entry computation."""
     @property
-    def computation_infos(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___HloProfilePrinterData.HloComputationInfo]:
+    def computation_infos(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___HloProfilePrinterData.HloComputationInfo]:
         """HloComputationInfos for every HloComputation in the HloModule."""
 
     @property
@@ -144,6 +170,18 @@ class HloProfilePrinterData(google.protobuf.message.Message):
         extra_metrics: collections.abc.Mapping[builtins.str, builtins.int] | None = ...,
         entry_computation: builtins.str | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["computation_infos", b"computation_infos", "entry_computation", b"entry_computation", "extra_metrics", b"extra_metrics", "profile_counters_size", b"profile_counters_size"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "computation_infos",
+            b"computation_infos",
+            "entry_computation",
+            b"entry_computation",
+            "extra_metrics",
+            b"extra_metrics",
+            "profile_counters_size",
+            b"profile_counters_size",
+        ],
+    ) -> None: ...
 
 global___HloProfilePrinterData = HloProfilePrinterData

@@ -1,4 +1,4 @@
-from _typeshed import ConvertibleToFloat, Incomplete
+from _typeshed import ConvertibleToFloat
 from collections.abc import Iterator
 from typing import ClassVar, Final, Literal
 from typing_extensions import TypeAlias
@@ -30,8 +30,8 @@ class Alignment(Serialisable):
     readingOrder: Min[float, Literal[False]]
     def __init__(
         self,
-        horizontal: Incomplete | None = None,
-        vertical: Incomplete | None = None,
+        horizontal=None,
+        vertical=None,
         textRotation: int = 0,
         wrapText: _ConvertibleToBool | None = None,
         shrinkToFit: _ConvertibleToBool | None = None,
@@ -39,9 +39,9 @@ class Alignment(Serialisable):
         relativeIndent: ConvertibleToFloat = 0,
         justifyLastLine: _ConvertibleToBool | None = None,
         readingOrder: ConvertibleToFloat = 0,
-        text_rotation: Incomplete | None = None,
-        wrap_text: Incomplete | None = None,
-        shrink_to_fit: Incomplete | None = None,
-        mergeCell: Incomplete | None = None,
+        text_rotation=None,
+        wrap_text=None,
+        shrink_to_fit=None,
+        mergeCell=None,
     ) -> None: ...
     def __iter__(self) -> Iterator[tuple[str, str]]: ...

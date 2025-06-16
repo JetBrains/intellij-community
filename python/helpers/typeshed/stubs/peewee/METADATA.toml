@@ -1,4 +1,4 @@
-version = "3.17.6"
+version = "3.18.1"
 upstream_repository = "https://github.com/coleifer/peewee"
 # We're not providing stubs for all playhouse modules right now
 # https://github.com/python/typeshed/pull/11731#issuecomment-2065729058

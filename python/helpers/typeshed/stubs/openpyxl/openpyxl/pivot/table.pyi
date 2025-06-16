@@ -116,7 +116,7 @@ class ColHierarchiesUsage(Serialisable):
     colHierarchyUsage: Incomplete
     __elements__: ClassVar[tuple[str, ...]]
     __attrs__: ClassVar[tuple[str, ...]]
-    def __init__(self, count: Incomplete | None = None, colHierarchyUsage=()) -> None: ...
+    def __init__(self, count=None, colHierarchyUsage=()) -> None: ...
     @property
     def count(self) -> int: ...
 
@@ -125,7 +125,7 @@ class RowHierarchiesUsage(Serialisable):
     rowHierarchyUsage: Incomplete
     __elements__: ClassVar[tuple[str, ...]]
     __attrs__: ClassVar[tuple[str, ...]]
-    def __init__(self, count: Incomplete | None = None, rowHierarchyUsage=()) -> None: ...
+    def __init__(self, count=None, rowHierarchyUsage=()) -> None: ...
     @property
     def count(self) -> int: ...
 
@@ -210,7 +210,7 @@ class MemberList(Serialisable):
     level: Integer[Literal[True]]
     member: Incomplete
     __elements__: ClassVar[tuple[str, ...]]
-    def __init__(self, count: Incomplete | None = None, level: ConvertibleToInt | None = None, member=()) -> None: ...
+    def __init__(self, count=None, level: ConvertibleToInt | None = None, member=()) -> None: ...
     @property
     def count(self) -> int: ...
 
@@ -859,7 +859,7 @@ class TableDefinition(Serialisable):
         rowHierarchiesUsage: RowHierarchiesUsage | None = None,
         colHierarchiesUsage: ColHierarchiesUsage | None = None,
         extLst: ExtensionList | None = None,
-        id: Incomplete | None = None,
+        id=None,
     ) -> None: ...
     @overload
     def __init__(
@@ -949,7 +949,7 @@ class TableDefinition(Serialisable):
         rowHierarchiesUsage: RowHierarchiesUsage | None = None,
         colHierarchiesUsage: ColHierarchiesUsage | None = None,
         extLst: ExtensionList | None = None,
-        id: Incomplete | None = None,
+        id=None,
     ) -> None: ...
     def to_tree(self) -> Element: ...  # type: ignore[override]
     @property

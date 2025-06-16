@@ -5,6 +5,10 @@
 stdlib/builtins.pyi
 stdlib/typing.pyi
 
+# can't subscript memoryview for some reason
+stdlib/asyncio/sslproto.pyi
+stdlib/asyncio/transports.pyi
+
 # errors about import statements
 stubs/mysqlclient/MySQLdb/__init__.pyi
 stubs/mysqlclient/MySQLdb/connections.pyi
@@ -18,3 +22,7 @@ stubs/openpyxl/openpyxl/descriptors/nested.pyi
 
 # matplotlib not installed during tests
 stubs/shapely/shapely/plotting.pyi
+
+# matplotlib et al not installed during tests
+stubs/geopandas/geopandas/plotting.pyi
+stubs/geopandas/geopandas/explore.pyi

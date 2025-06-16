@@ -1,6 +1,4 @@
-from _typeshed import Incomplete
-
-from oauthlib.oauth2.rfc6749.errors import FatalClientError as FatalClientError, OAuth2Error as OAuth2Error
+from oauthlib.oauth2.rfc6749.errors import FatalClientError, OAuth2Error
 
 class FatalOpenIDClientError(FatalClientError): ...
 class OpenIDClientError(OAuth2Error): ...
@@ -50,4 +48,4 @@ class InsufficientScopeError(OAuth2Error):
     status_code: int
     description: str
 
-def raise_from_error(error, params: Incomplete | None = None) -> None: ...
+def raise_from_error(error: object, params: dict[str, str] | None = None) -> None: ...

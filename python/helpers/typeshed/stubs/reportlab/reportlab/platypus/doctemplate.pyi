@@ -40,18 +40,18 @@ class _CanvasMaker(Protocol):
         filename: str | IO[bytes],
         /,
         *,
-        pagesize: Incomplete | None = None,
-        pageCompression: Incomplete | None = None,
-        invariant: Incomplete | None = None,
-        enforceColorSpace: Incomplete | None = None,
-        initialFontName: Incomplete | None = None,
-        initialFontSize: Incomplete | None = None,
-        initialLeading: Incomplete | None = None,
-        cropBox: Incomplete | None = None,
-        artBox: Incomplete | None = None,
-        trimBox: Incomplete | None = None,
-        bleedBox: Incomplete | None = None,
-        lang: Incomplete | None = None,
+        pagesize=None,
+        pageCompression=None,
+        invariant=None,
+        enforceColorSpace=None,
+        initialFontName=None,
+        initialFontSize=None,
+        initialLeading=None,
+        cropBox=None,
+        artBox=None,
+        trimBox=None,
+        bleedBox=None,
+        lang=None,
     ) -> Canvas: ...
 
 class LayoutError(Exception): ...
@@ -120,7 +120,7 @@ class Indenter(FrameActionFlowable):
 class NotAtTopPageBreak(FrameActionFlowable):
     locChanger: int
     nextTemplate: Incomplete
-    def __init__(self, nextTemplate: Incomplete | None = None) -> None: ...
+    def __init__(self, nextTemplate=None) -> None: ...
     def frameAction(self, frame: Frame) -> None: ...
 
 class NextPageTemplate(ActionFlowable):
@@ -145,11 +145,11 @@ class PageTemplate:
         onPage: _PageCallback = ...,
         onPageEnd: _PageCallback = ...,
         pagesize: tuple[float, float] | None = None,
-        autoNextPageTemplate: Incomplete | None = None,
-        cropBox: Incomplete | None = None,
-        artBox: Incomplete | None = None,
-        trimBox: Incomplete | None = None,
-        bleedBox: Incomplete | None = None,
+        autoNextPageTemplate=None,
+        cropBox=None,
+        artBox=None,
+        trimBox=None,
+        bleedBox=None,
     ) -> None: ...
     def beforeDrawPage(self, canv: Canvas, doc: BaseDocTemplate) -> None: ...
     def checkPageSize(self, canv: Canvas, doc: BaseDocTemplate) -> None: ...
@@ -240,7 +240,7 @@ class BaseDocTemplate:
     def handle_pageBegin(self) -> None: ...
     def handle_pageEnd(self) -> None: ...
     def handle_pageBreak(self, slow: bool | None = None) -> None: ...
-    def handle_frameBegin(self, resume: int = 0, pageTopFlowables: Incomplete | None = None) -> None: ...
+    def handle_frameBegin(self, resume: int = 0, pageTopFlowables=None) -> None: ...
     def handle_frameEnd(self, resume: int = 0) -> None: ...
     def handle_nextPageTemplate(self, pt: str | int | list[str] | tuple[str, ...]) -> None: ...
     def handle_nextFrame(self, fx: str | int, resume: int = 0) -> None: ...
@@ -264,4 +264,10 @@ class BaseDocTemplate:
 
 class SimpleDocTemplate(BaseDocTemplate):
     def handle_pageBegin(self) -> None: ...
-    def build(self, flowables: list[Flowable], onFirstPage: _PageCallback = ..., onLaterPages: _PageCallback = ..., canvasmaker: _CanvasMaker = ...) -> None: ...  # type: ignore[override]
+    def build(  # type: ignore[override]
+        self,
+        flowables: list[Flowable],
+        onFirstPage: _PageCallback = ...,
+        onLaterPages: _PageCallback = ...,
+        canvasmaker: _CanvasMaker = ...,
+    ) -> None: ...

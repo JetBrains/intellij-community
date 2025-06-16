@@ -1,7 +1,7 @@
 from _typeshed import Incomplete
 from typing import Final
 
-from openpyxl.cell import _CellValue
+from openpyxl.cell import _CellGetValue
 from openpyxl.styles.alignment import Alignment
 from openpyxl.styles.borders import Border
 from openpyxl.styles.cell_style import StyleArray
@@ -51,9 +51,9 @@ class ReadOnlyCell:
     @property
     def is_date(self) -> bool: ...
     @property
-    def internal_value(self) -> _CellValue | None: ...
+    def internal_value(self) -> _CellGetValue: ...
     @property
-    def value(self) -> _CellValue | None: ...
+    def value(self) -> _CellGetValue: ...
     @value.setter
     def value(self, value: None) -> None: ...
 

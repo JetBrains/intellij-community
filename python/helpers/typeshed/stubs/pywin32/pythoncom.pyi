@@ -1,6 +1,7 @@
 from _typeshed import Incomplete, Unused
+from abc import abstractmethod
 from collections.abc import Sequence
-from typing import SupportsInt, overload
+from typing import ClassVar, SupportsInt, overload
 from typing_extensions import TypeAlias, deprecated
 
 import _win32typing
@@ -9,6 +10,15 @@ from win32.lib.pywintypes import TimeType, com_error as com_error
 error: TypeAlias = com_error  # noqa: Y042
 
 class internal_error(Exception): ...
+
+class com_record:
+    @abstractmethod
+    def __init__(self, /, *args, **kwargs) -> None: ...
+    TLBID: ClassVar[str]
+    MJVER: ClassVar[int]
+    MNVER: ClassVar[int]
+    LCID: ClassVar[int]
+    GUID: ClassVar[str]
 
 def CoCreateFreeThreadedMarshaler(unk: _win32typing.PyIUnknown, /) -> _win32typing.PyIUnknown: ...
 def CoCreateInstanceEx(
@@ -60,7 +70,13 @@ def GetActiveObject(cls, /) -> _win32typing.PyIUnknown: ...
 def GetClassFile(fileName, /) -> _win32typing.PyIID: ...
 def GetFacilityString(scode, /) -> str: ...
 def GetRecordFromGuids(
-    iid: _win32typing.PyIID, verMajor, verMinor, lcid, infoIID: _win32typing.PyIID, data: Incomplete | None = ..., /
+    iid: str | _win32typing.PyIID,
+    verMajor: int,
+    verMinor: int,
+    lcid: int,
+    infoIID: str | _win32typing.PyIID,
+    data: Incomplete | None = ...,
+    /,
 ): ...
 def GetRecordFromTypeInfo(TypeInfo: _win32typing.PyITypeInfo, /): ...
 def GetRunningObjectTable(reserved: int = ..., /) -> _win32typing.PyIRunningObjectTable: ...
@@ -399,6 +415,7 @@ TYPEFLAG_FPREDECLID: int
 TYPEFLAG_FREPLACEABLE: int
 TYPEFLAG_FRESTRICTED: int
 TYPEFLAG_FREVERSEBIND: int
+RecordClasses: dict[str, com_record]
 TypeIIDs: dict[_win32typing.PyIID, type]
 URL_MK_LEGACY: int
 URL_MK_UNIFORM: int

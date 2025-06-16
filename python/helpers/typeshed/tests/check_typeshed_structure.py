@@ -9,28 +9,27 @@ from __future__ import annotations
 
 import os
 import re
-import sys
 from pathlib import Path
 
-from _metadata import read_metadata
-from _utils import (
-    REQS_FILE,
-    STDLIB_PATH,
-    TEST_CASES_DIR,
-    TESTS_DIR,
+from ts_utils.metadata import read_metadata
+from ts_utils.paths import REQUIREMENTS_PATH, STDLIB_PATH, STUBS_PATH, TEST_CASES_DIR, TESTS_DIR, tests_path
+from ts_utils.utils import (
     get_all_testcase_directories,
     get_gitignore_spec,
     parse_requirements,
     parse_stdlib_versions_file,
     spec_matches_path,
-    tests_path,
 )
 
 extension_descriptions = {".pyi": "stub", ".py": ".py"}
 
 # These type checkers and linters must have exact versions in the requirements file to ensure
 # consistent CI runs.
-linters = {"black", "flake8", "flake8-noqa", "flake8-pyi", "mypy", "pyright", "pytype", "ruff"}
+linters = {"mypy", "pyright", "pytype", "ruff"}
+
+ALLOWED_PY_FILES_IN_TESTS_DIR = {
+    "django_settings.py"  # This file contains Django settings used by the mypy_django_plugin during stubtest execution.
+}
 
 
 def assert_consistent_filetypes(
@@ -66,7 +65,7 @@ def check_stdlib() -> None:
 def check_stubs() -> None:
     """Check that the stubs directory contains only the correct files."""
     gitignore_spec = get_gitignore_spec()
-    for dist in Path("stubs").iterdir():
+    for dist in STUBS_PATH.iterdir():
         if spec_matches_path(gitignore_spec, dist):
             continue
         assert dist.is_dir(), f"Only directories allowed in stubs, got {dist}"
@@ -86,7 +85,9 @@ def check_stubs() -> None:
 
 
 def check_tests_dir(tests_dir: Path) -> None:
-    py_files_present = any(file.suffix == ".py" for file in tests_dir.iterdir())
+    py_files_present = any(
+        file.suffix == ".py" and file.name not in ALLOWED_PY_FILES_IN_TESTS_DIR for file in tests_dir.iterdir()
+    )
     error_message = f"Test-case files must be in an `{TESTS_DIR}/{TEST_CASES_DIR}` directory, not in the `{TESTS_DIR}` directory"
     assert not py_files_present, error_message
 
@@ -97,11 +98,13 @@ def check_distutils() -> None:
     def all_relative_paths_in_directory(path: Path) -> set[Path]:
         return {pyi.relative_to(path) for pyi in path.rglob("*.pyi")}
 
-    all_setuptools_files = all_relative_paths_in_directory(Path("stubs", "setuptools", "setuptools", "_distutils"))
-    all_distutils_files = all_relative_paths_in_directory(Path("stubs", "setuptools", "distutils"))
+    setuptools_path = STUBS_PATH / "setuptools" / "setuptools" / "_distutils"
+    distutils_path = STUBS_PATH / "setuptools" / "distutils"
+    all_setuptools_files = all_relative_paths_in_directory(setuptools_path)
+    all_distutils_files = all_relative_paths_in_directory(distutils_path)
     assert all_setuptools_files and all_distutils_files, "Looks like this test might be out of date!"
     extra_files = all_setuptools_files - all_distutils_files
-    joined = "\n".join(f"  * {f}" for f in extra_files)
+    joined = "\n".join(f"  * {distutils_path / f}" for f in extra_files)
     assert not extra_files, f"Files missing from distutils:\n{joined}"
 
 
@@ -116,11 +119,10 @@ def check_test_cases() -> None:
 
 def check_no_symlinks() -> None:
     """Check that there are no symlinks in the typeshed repository."""
-    files = [os.path.join(root, file) for root, _, files in os.walk(".") for file in files]
+    files = [Path(root, file) for root, _, files in os.walk(".") for file in files]
     no_symlink = "You cannot use symlinks in typeshed, please copy {} to its link."
     for file in files:
-        _, ext = os.path.splitext(file)
-        if ext == ".pyi" and os.path.islink(file):
+        if file.suffix == ".pyi" and file.is_symlink():
             raise ValueError(no_symlink.format(file))
 
 
@@ -144,18 +146,18 @@ def _find_stdlib_modules() -> set[str]:
     modules = set[str]()
     for path, _, files in os.walk(STDLIB_PATH):
         for filename in files:
-            base_module = ".".join(os.path.normpath(path).split(os.sep)[1:])
+            base_module = ".".join(Path(path).parts[1:])
             if filename == "__init__.pyi":
                 modules.add(base_module)
             elif filename.endswith(".pyi"):
-                mod, _ = os.path.splitext(filename)
+                mod = filename[:-4]
                 modules.add(f"{base_module}.{mod}" if base_module else mod)
     return modules
 
 
 def check_metadata() -> None:
     """Check that all METADATA.toml files are valid."""
-    for distribution in os.listdir("stubs"):
+    for distribution in os.listdir(STUBS_PATH):
         # This function does various sanity checks for METADATA.toml files
         read_metadata(distribution)
 
@@ -164,15 +166,14 @@ def check_requirement_pins() -> None:
     """Check that type checkers and linters are pinned to an exact version."""
     requirements = parse_requirements()
     for package in linters:
-        assert package in requirements, f"type checker/linter '{package}' not found in {REQS_FILE}"
+        assert package in requirements, f"type checker/linter '{package}' not found in {REQUIREMENTS_PATH.name}"
         spec = requirements[package].specifier
-        assert len(spec) == 1, f"type checker/linter '{package}' has complex specifier in {REQS_FILE}"
-        msg = f"type checker/linter '{package}' is not pinned to an exact version in {REQS_FILE}"
+        assert len(spec) == 1, f"type checker/linter '{package}' has complex specifier in {REQUIREMENTS_PATH.name}"
+        msg = f"type checker/linter '{package}' is not pinned to an exact version in {REQUIREMENTS_PATH.name}"
         assert str(spec).startswith("=="), msg
 
 
 if __name__ == "__main__":
-    assert sys.version_info >= (3, 9), "Python 3.9+ is required to run this test"
     check_versions_file()
     check_metadata()
     check_requirement_pins()

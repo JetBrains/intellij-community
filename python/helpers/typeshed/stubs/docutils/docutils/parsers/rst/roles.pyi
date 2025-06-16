@@ -1,5 +1,5 @@
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any
+from typing import Any, Final
 from typing_extensions import TypeAlias
 
 import docutils.parsers.rst.states
@@ -9,7 +9,8 @@ from docutils.nodes import Node, system_message
 from docutils.parsers.rst.states import Inliner
 from docutils.utils import Reporter
 
-DEFAULT_INTERPRETED_ROLE: str
+__docformat__: Final = "reStructuredText"
+DEFAULT_INTERPRETED_ROLE: Final = "title-reference"
 
 _RoleFn: TypeAlias = Callable[
     [str, str, str, int, docutils.parsers.rst.states.Inliner, Mapping[str, Any], Sequence[str]],

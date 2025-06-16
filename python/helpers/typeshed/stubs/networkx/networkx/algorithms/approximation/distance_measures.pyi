@@ -1,6 +1,8 @@
-from _typeshed import Incomplete
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
+from numpy.random import RandomState
 
-from networkx.utils.backends import _dispatch
+__all__ = ["diameter"]
 
-@_dispatch
-def diameter(G, seed: Incomplete | None = None): ...
+@_dispatchable
+def diameter(G: Graph[_Node], seed: int | RandomState | None = None): ...

@@ -15,7 +15,7 @@ class AnnotationMixin:
     border: str
     f_t: Name | None
     v: Incomplete | None
-    f: int  # AnnotationFlags
+    f: int  # AnnotationFlags bitmask
     contents: str | None
     a: Action | None
     dest: Destination | None
@@ -35,7 +35,7 @@ class AnnotationMixin:
         y: int,
         width: int,
         height: int,
-        flags: tuple[AnnotationFlag, ...] = ...,
+        flags: tuple[AnnotationFlag | str, ...] = ...,
         contents: str | None = None,
         dest: Destination | None = None,
         action: Action | None = None,
@@ -48,7 +48,7 @@ class AnnotationMixin:
         ink_list: tuple[int, ...] = (),
         file_spec: str | None = None,
         field_type: str | None = None,
-        value: Incomplete | None = None,
+        value=None,
         default_appearance: str | None = None,
     ) -> None: ...
 

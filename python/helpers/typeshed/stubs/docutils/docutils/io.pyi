@@ -44,11 +44,7 @@ class Output(TransformSpec):
     component_type: ClassVar[str]
     default_destination_path: ClassVar[str | None]
     def __init__(
-        self,
-        destination: Incomplete | None = None,
-        destination_path: Incomplete | None = None,
-        encoding: str | None = None,
-        error_handler: str = "strict",
+        self, destination=None, destination_path=None, encoding: str | None = None, error_handler: str = "strict"
     ) -> None: ...
     def write(self, data: str) -> Any: ...  # returns bytes or str
     def encode(self, data: str) -> Any: ...  # returns bytes or str
@@ -68,8 +64,8 @@ class ErrorOutput:
 class FileInput(Input[IO[str]]):
     def __init__(
         self,
-        source: Incomplete | None = None,
-        source_path: Incomplete | None = None,
+        source=None,
+        source_path=None,
         encoding: str | None = None,
         error_handler: str = "strict",
         autoclose: bool = True,

@@ -88,9 +88,7 @@ class Boolean(Integer):
     namedValues: namedval.NamedValues
     typeId: int
 
-SizedIntegerBase = int
-
-class SizedInteger(SizedIntegerBase):
+class SizedInteger(int):
     bitLength: int | None
     leadingZeroBits: int | None
     def setBitLength(self, bitLength): ...

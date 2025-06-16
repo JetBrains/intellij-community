@@ -47,24 +47,12 @@ DEFAULT: _SentinelObject
 
 class _Call(tuple[Any, ...]):
     def __new__(
-        cls,
-        value: Any = (),
-        name: Incomplete | None = "",
-        parent: Incomplete | None = None,
-        two: bool = False,
-        from_kall: bool = True,
+        cls, value: Any = (), name: Incomplete | None = "", parent=None, two: bool = False, from_kall: bool = True
     ) -> Self: ...
     name: Any
     parent: Any
     from_kall: Any
-    def __init__(
-        self,
-        value: Any = (),
-        name: Incomplete | None = None,
-        parent: Incomplete | None = None,
-        two: bool = False,
-        from_kall: bool = True,
-    ) -> None: ...
+    def __init__(self, value: Any = (), name=None, parent=None, two: bool = False, from_kall: bool = True) -> None: ...
     def __eq__(self, other: object) -> bool: ...
     def __ne__(self, other: object, /) -> bool: ...
     def __call__(self, *args: Any, **kwargs: Any) -> _Call: ...
@@ -93,7 +81,7 @@ class NonCallableMock(Base, Any):
         name: str | None = None,
         spec_set: list[str] | object | type[object] | None = None,
         parent: NonCallableMock | None = None,
-        _spec_state: Incomplete | None = None,
+        _spec_state=None,
         _new_name: str = "",
         _new_parent: NonCallableMock | None = None,
         _spec_as_instance: bool = False,
@@ -108,7 +96,7 @@ class NonCallableMock(Base, Any):
         name: str | None = None,
         spec_set: list[str] | object | type[object] | None = None,
         parent: NonCallableMock | None = None,
-        _spec_state: Incomplete | None = None,
+        _spec_state=None,
         _new_name: str = "",
         _new_parent: NonCallableMock | None = None,
         _spec_as_instance: bool = False,
@@ -117,7 +105,7 @@ class NonCallableMock(Base, Any):
         **kwargs: Any,
     ) -> None: ...
     def __getattr__(self, name: str) -> Any: ...
-    def _calls_repr(self, prefix: str = "Calls") -> str: ...
+    def _calls_repr(self) -> str: ...
     def assert_called_with(_mock_self, *args: Any, **kwargs: Any) -> None: ...
     def assert_not_called(_mock_self) -> None: ...
     def assert_called_once_with(_mock_self, *args: Any, **kwargs: Any) -> None: ...
@@ -147,16 +135,16 @@ class CallableMixin(Base):
     side_effect: Any
     def __init__(
         self,
-        spec: Incomplete | None = None,
-        side_effect: Incomplete | None = None,
+        spec=None,
+        side_effect=None,
         return_value: Any = ...,
-        wraps: Incomplete | None = None,
-        name: Incomplete | None = None,
-        spec_set: Incomplete | None = None,
-        parent: Incomplete | None = None,
-        _spec_state: Incomplete | None = None,
+        wraps=None,
+        name=None,
+        spec_set=None,
+        parent=None,
+        _spec_state=None,
         _new_name: Any = "",
-        _new_parent: Incomplete | None = None,
+        _new_parent=None,
         **kwargs: Any,
     ) -> None: ...
     def __call__(_mock_self, *args: Any, **kwargs: Any) -> Any: ...
@@ -341,7 +329,7 @@ class MagicProxy(Base):
     parent: Any
     def __init__(self, name: str, parent: Any) -> None: ...
     def create_mock(self) -> Any: ...
-    def __get__(self, obj: Any, _type: Incomplete | None = None) -> Any: ...
+    def __get__(self, obj: Any, _type=None) -> Any: ...
 
 class _ANY:
     def __eq__(self, other: object) -> Literal[True]: ...
@@ -350,14 +338,7 @@ class _ANY:
 ANY: Any
 
 def create_autospec(
-    spec: Any,
-    spec_set: Any = False,
-    instance: Any = False,
-    _parent: Incomplete | None = None,
-    _name: Incomplete | None = None,
-    *,
-    unsafe: bool = False,
-    **kwargs: Any,
+    spec: Any, spec_set: Any = False, instance: Any = False, _parent=None, _name=None, *, unsafe: bool = False, **kwargs: Any
 ) -> Any: ...
 
 class _SpecState:
@@ -367,17 +348,9 @@ class _SpecState:
     parent: Any
     instance: Any
     name: Any
-    def __init__(
-        self,
-        spec: Any,
-        spec_set: Any = False,
-        parent: Incomplete | None = None,
-        name: Incomplete | None = None,
-        ids: Incomplete | None = None,
-        instance: Any = False,
-    ) -> None: ...
+    def __init__(self, spec: Any, spec_set: Any = False, parent=None, name=None, ids=None, instance: Any = False) -> None: ...
 
-def mock_open(mock: Incomplete | None = None, read_data: Any = "") -> Any: ...
+def mock_open(mock=None, read_data: Any = "") -> Any: ...
 
 class PropertyMock(Mock):
     def __get__(self, obj: _T, obj_type: type[_T] | None = None) -> Self: ...

@@ -6,6 +6,8 @@ from wtforms.csrf.core import CSRF, CSRFTokenField
 from wtforms.form import BaseForm
 from wtforms.meta import DefaultMeta
 
+__all__ = ("SessionCSRF",)
+
 class SessionCSRF(CSRF):
     TIME_FORMAT: str
     form_meta: DefaultMeta

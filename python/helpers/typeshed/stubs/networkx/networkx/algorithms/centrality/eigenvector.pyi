@@ -1,10 +1,19 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsGetItem
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
+__all__ = ["eigenvector_centrality", "eigenvector_centrality_numpy"]
+
+@_dispatchable
 def eigenvector_centrality(
-    G, max_iter: int = 100, tol: float = 1e-06, nstart: Incomplete | None = None, weight: Incomplete | None = None
+    G: Graph[_Node],
+    max_iter: int | None = 100,
+    tol: float | None = 1e-06,
+    nstart: SupportsGetItem[Incomplete, Incomplete] | None = None,
+    weight: str | None = None,
 ): ...
-@_dispatch
-def eigenvector_centrality_numpy(G, weight: Incomplete | None = None, max_iter: int = 50, tol: float = 0): ...
+@_dispatchable
+def eigenvector_centrality_numpy(
+    G: Graph[_Node], weight: str | None = None, max_iter: int | None = 50, tol: float | None = 0
+): ...

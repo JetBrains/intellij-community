@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from lib2to3.pgen2.grammar import _DFAS, Grammar
 from lib2to3.pytree import _NL, _Convert, _RawNode
 from typing import Any, Sequence, Text

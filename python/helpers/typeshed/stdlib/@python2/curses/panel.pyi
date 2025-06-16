@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from _curses import _CursesWindow
 
 class _Curses_Panel:  # type is <class '_curses_panel.curses panel'> (note the space in the class name)

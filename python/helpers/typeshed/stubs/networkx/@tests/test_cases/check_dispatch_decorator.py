@@ -1,9 +1,9 @@
 from typing_extensions import assert_type
 
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
 
 
-@_dispatch
+@_dispatchable
 def some_method(int_p: int, str_p: str) -> float:
     return 0.0
 

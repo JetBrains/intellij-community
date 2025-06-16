@@ -28,6 +28,7 @@ class Input:
     position: int
     chunked_input: bool
     chunk_length: int
+    send_100_continue_enabled: bool
     def __init__(
         self, rfile: BufferedReader, content_length: int | None, socket: _GeventSocket | None = None, chunked_input: bool = False
     ) -> None: ...

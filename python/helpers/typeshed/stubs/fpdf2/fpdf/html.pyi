@@ -1,12 +1,13 @@
-from _typeshed import Incomplete, SupportsItemAccess, SupportsKeysAndGetItem, Unused
+from _typeshed import Incomplete, SupportsKeysAndGetItem
 from collections.abc import Callable, Iterable, Mapping
 from html.parser import HTMLParser
 from logging import Logger
-from typing import ClassVar, Final, Literal, TypedDict, type_check_only
+from typing import ClassVar, Final, Literal
 from typing_extensions import TypeAlias
 
 from fpdf import FPDF
 
+from .enums import TextEmphasis
 from .fonts import FontFace
 from .table import Row, Table
 
@@ -20,17 +21,13 @@ BULLET_WIN1252: Final[str]
 DEGREE_WIN1252: Final[str]
 HEADING_TAGS: Final[tuple[str, ...]]
 DEFAULT_TAG_STYLES: Final[dict[str, FontFace]]
-DEFAULT_TAG_INDENTS: Final[dict[str, int]]
+INLINE_TAGS: Final[tuple[str, ...]]
+BLOCK_TAGS: Final[tuple[str, ...]]
 
 COLOR_DICT: Final[dict[str, str]]
 
 def color_as_decimal(color: str | None = "#000000") -> tuple[int, int, int] | None: ...
-def parse_style(elem_attrs: SupportsItemAccess[str, str]) -> None: ...
-@type_check_only
-class _Emphasis(TypedDict):
-    b: bool
-    i: bool
-    u: bool
+def parse_css_style(style_attr: str) -> dict[str, str]: ...
 
 class HTML2FPDF(HTMLParser):
     HTML_UNCLOSED_TAGS: ClassVar[tuple[str, ...]]
@@ -41,20 +38,24 @@ class HTML2FPDF(HTMLParser):
     ul_bullet_char: str
     li_prefix_color: tuple[int, int, int]
     warn_on_tags_not_matching: bool
-    emphasis: _Emphasis
-    font_size: float
+
+    font_family: str
+    font_size_pt: float
+    font_emphasis: TextEmphasis
+    font_color: tuple[int, int, int]
+
+    style_stack: list[FontFace]
+    h: float
     follows_trailing_space: bool
     follows_heading: bool
     href: str
     align: str
-    style_stack: list[FontFace]
     indent: int
+    line_height_stack: list[Incomplete]
     ol_type: list[_OLType]
     bullet: list[Incomplete]
-    font_color: tuple[int, int, int]
     heading_level: Incomplete | None
-    heading_above: float
-    heading_below: float
+    render_title_tag: bool
     table_line_separators: bool
     table: Table | None
     table_row: Row | None
@@ -63,32 +64,26 @@ class HTML2FPDF(HTMLParser):
     tag_indents: dict[str, int]
     tag_styles: dict[str, FontFace]
 
-    # Not initialized in __init__:
-    font_family: str
-    h: float
-
     def __init__(
         self,
         pdf: FPDF,
         image_map: Callable[[str], str] | None = None,
-        li_tag_indent: int = 5,
-        dd_tag_indent: int = 10,
+        li_tag_indent: int | None = None,
+        dd_tag_indent: int | None = None,
         table_line_separators: bool = False,
         ul_bullet_char: str = "\x95",
         li_prefix_color: tuple[int, int, int] = (190, 0, 0),
         heading_sizes: SupportsKeysAndGetItem[str, int] | Iterable[tuple[str, int]] | None = None,
-        pre_code_font: str = ...,
+        pre_code_font: str | None = None,
         warn_on_tags_not_matching: bool = True,
         tag_indents: dict[str, int] | None = None,
         tag_styles: Mapping[str, FontFace] | None = None,
-        **_: Unused,
-    ): ...
+        font_family: str = "times",
+        render_title_tag: bool = False,
+    ) -> None: ...
     def handle_data(self, data) -> None: ...
     def handle_starttag(self, tag, attrs) -> None: ...
     def handle_endtag(self, tag) -> None: ...
-    def set_font(self, family: str | None = None, size: float | None = None, set_default: bool = False) -> None: ...
-    def set_style(self, tag: Incomplete | None = None, enable: bool = False) -> None: ...
-    def set_text_color(self, r: Incomplete | None = None, g: int = 0, b: int = 0) -> None: ...
     def put_link(self, text) -> None: ...
     def render_toc(self, pdf, outline) -> None: ...
     def error(self, message: str) -> None: ...

@@ -1,41 +1,69 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, SupportsLenAndGetItem
+from collections.abc import Callable, Mapping
+from typing import Any, TypeVar
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.digraph import DiGraph
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
+from numpy.random import RandomState
 
-@_dispatch
-def christofides(G, weight: str = "weight", tree: Incomplete | None = None): ...
-@_dispatch
+__all__ = [
+    "traveling_salesman_problem",
+    "christofides",
+    "asadpour_atsp",
+    "greedy_tsp",
+    "simulated_annealing_tsp",
+    "threshold_accepting_tsp",
+]
+
+_SupportsLenAndGetItemT = TypeVar("_SupportsLenAndGetItemT", bound=SupportsLenAndGetItem[Any])
+
+def swap_two_nodes(soln: _SupportsLenAndGetItemT, seed) -> _SupportsLenAndGetItemT: ...
+def move_one_node(soln: _SupportsLenAndGetItemT, seed) -> _SupportsLenAndGetItemT: ...
+@_dispatchable
+def christofides(G: Graph[_Node], weight: str | None = "weight", tree: Graph[_Node] | None = None): ...
+@_dispatchable
 def traveling_salesman_problem(
-    G, weight: str = "weight", nodes: Incomplete | None = None, cycle: bool = True, method: Incomplete | None = None
+    G: Graph[_Node],
+    weight: str = "weight",
+    nodes=None,
+    cycle: bool = True,
+    method: Callable[..., Incomplete] | None = None,
+    **kwargs,
 ): ...
-@_dispatch
-def asadpour_atsp(G, weight: str = "weight", seed: Incomplete | None = None, source: Incomplete | None = None): ...
-@_dispatch
-def greedy_tsp(G, weight: str = "weight", source: Incomplete | None = None): ...
-@_dispatch
+@_dispatchable
+def asadpour_atsp(
+    G: DiGraph[_Node], weight: str | None = "weight", seed: int | RandomState | None = None, source: str | None = None
+): ...
+@_dispatchable
+def held_karp_ascent(G: Graph[_Node], weight="weight"): ...
+@_dispatchable
+def spanning_tree_distribution(G: Graph[_Node], z: Mapping[Incomplete, Incomplete]) -> dict[Incomplete, Incomplete]: ...
+@_dispatchable
+def greedy_tsp(G: Graph[_Node], weight: str | None = "weight", source=None): ...
+@_dispatchable
 def simulated_annealing_tsp(
-    G,
+    G: Graph[_Node],
     init_cycle,
-    weight: str = "weight",
-    source: Incomplete | None = None,
-    # docstring says int, but it can be a float and does become a float mid-equation if alpha is also a float
-    temp: float = 100,
-    move: str = "1-1",
-    max_iterations: int = 10,
-    N_inner: int = 100,
-    alpha: float = 0.01,
-    seed: Incomplete | None = None,
+    weight: str | None = "weight",
+    source=None,
+    temp: int | None = 100,
+    move="1-1",
+    max_iterations: int | None = 10,
+    N_inner: int | None = 100,
+    alpha=0.01,
+    seed: int | RandomState | None = None,
 ): ...
-@_dispatch
+@_dispatchable
 def threshold_accepting_tsp(
-    G,
+    G: Graph[_Node],
     init_cycle,
-    weight: str = "weight",
-    source: Incomplete | None = None,
-    threshold: float = 1,
-    move: str = "1-1",
-    max_iterations: int = 10,
-    N_inner: int = 100,
-    alpha: float = 0.1,
-    seed: Incomplete | None = None,
+    weight: str | None = "weight",
+    source=None,
+    threshold: int | None = 1,
+    move="1-1",
+    max_iterations: int | None = 10,
+    N_inner: int | None = 100,
+    alpha=0.1,
+    seed: int | RandomState | None = None,
 ): ...

@@ -1,13 +1,10 @@
 [flake8]
-# NQA: Ruff won't warn about redundant `# noqa: Y`
 # Y: Flake8 is only used to run flake8-pyi, everything else is in Ruff
 # F821: Typeshed is a testing ground for flake8-pyi, which monkeypatches F821
-select = NQA, Y, F821
+select = Y, F821
 # Ignore rules normally excluded by default
-extend-ignore = Y090
+extend-ignore = Y090,Y091
 per-file-ignores =
-  # We should only need to noqa Y and F821 codes in .pyi files
-  *.py: NQA
   # Generated protobuf files:
   # Y021: Include docstrings
   # Y023: Alias typing as typing_extensions
@@ -16,4 +13,3 @@ per-file-ignores =
   stubs/*_pb2.pyi: Y021, Y023, Y026, Y053
 
 exclude = .venv*,.git
-noqa_require_code = true

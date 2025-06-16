@@ -6,3 +6,6 @@ yaml._yaml.__test__
 # similar functions, it's safer to treat them as keyword-only arguments.
 yaml.dump_all
 yaml.serialize_all
+
+# Auto-generated methods by Cython
+.*_cython__

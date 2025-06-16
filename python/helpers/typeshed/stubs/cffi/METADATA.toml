@@ -1,5 +1,5 @@
-version = "1.16.*"
-upstream_repository = "https://foss.heptapod.net/pypy/cffi"
+version = "1.17.*"
+upstream_repository = "https://github.com/python-cffi/cffi/"
 requires = ["types-setuptools"]
 
 [tool.stubtest]

@@ -1,3 +1,16 @@
+# TODO: missing from stub
+reportlab.graphics.barcode.dmtx.__all__
+reportlab.rl_config.__all__
+
+# Incorrect __all__ names in runtime
+reportlab.graphics.barcode.eanbc.__all__
+reportlab.graphics.barcode.ecc200datamatrix.__all__
+
+# shapeFragWord has two incompatible definitions, depending on whether
+# uharfbuzz is installed or not. We use the version where uharfbuzz is
+# installed.
+reportlab.pdfbase.ttfonts.shapeFragWord
+
 # Error: is inconsistent
 # ======================
 # The drawOn method violates LSP all over the place and it's usually
@@ -12,7 +25,6 @@ reportlab.graphics.shapes.Drawing.wrap
 reportlab\.platypus\.(doctemplate\.|flowables\.|tableofcontents\.)?[A-Za-z_]+\.split
 reportlab\.platypus\.(doctemplate\.|flowables\.|tableofcontents\.)?[A-Za-z_]+\.wrap
 reportlab.platypus.multicol.MultiCol.split
-reportlab.platypus.multicol.MultiCol.wrap
 reportlab.platypus.para.FastPara.split
 reportlab.platypus.para.FastPara.wrap
 reportlab.platypus.para.Para.split
@@ -41,14 +53,6 @@ reportlab.lib.utils.CIDict.get
 reportlab.lib.utils.CIDict.pop
 reportlab.lib.utils.CIDict.setdefault
 
-# these have a __module__ argument which confuses stubtest
-reportlab.lib.testutils.rlSkip
-reportlab.lib.testutils.rlSkipIf
-reportlab.lib.testutils.rlSkipUnless
-
-# __map__ argument confuses stubtest
-reportlab.lib.styles.str2alignment
-
 # __new__ just forwards the arguments to the super class
 # it doesn't actually accept arbitrary arguments
 reportlab.platypus.doctemplate.PTCycle.__new__
@@ -71,6 +75,10 @@ reportlab.graphics.barcode.qrencoder.i
 reportlab.lib.fonts.k
 reportlab.lib.pdfencrypt.i
 
+# should allow setting any attribute
+reportlab.lib.abag.ABag.__setattr__
+reportlab.lib.styles.PropertySet.__setattr__
+
 # *-imports that cause a mess we don't want to propagate
 reportlab.graphics.charts.lineplots.pi
 reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.EVEN_ODD
@@ -84,23 +92,7 @@ reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.shapeChecking
 reportlab\.graphics\.render(base|PDF|PM|PS|SVG)\.verbose
 
 # messed up __all__ which contains just a string
-reportlab.graphics.barcode.qr.C
-reportlab.graphics.barcode.qr.Q
-reportlab.graphics.barcode.qr.W
 reportlab.graphics.barcode.qr.__all__
-reportlab.graphics.barcode.qr.d
-reportlab.graphics.barcode.qr.e
-reportlab.graphics.barcode.qr.g
-reportlab.graphics.barcode.qr.i
-reportlab.graphics.barcode.qr.o
-reportlab.graphics.barcode.qr.r
-reportlab.graphics.barcode.qr.t
-
-# spelling mistake in __all__
-reportlab.graphics.barcode.ecc200datamatrix.ECC200datamatrix
-
-# wasn't removed from __all__ by accident
-reportlab.graphics.barcode.eanbc.isEanString
 
 
 # Error: is not present at runtime
@@ -119,3 +111,6 @@ reportlab.graphics.utils.processGlyph
 reportlab.graphics.testdrawings
 reportlab.graphics.testshapes
 reportlab.graphics.barcode.test
+
+# named tuple docstring
+reportlab.pdfbase.ttfonts.ShapeData.__doc__

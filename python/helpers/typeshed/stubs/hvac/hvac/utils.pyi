@@ -16,7 +16,7 @@ def raise_for_error(
     url: str,
     status_code: int,
     message: str | None = None,
-    errors: Iterable[Any] | str | None = None,
+    errors: Iterable[str] | str | None = None,
     text: str | None = None,
     json: object | None = None,
 ) -> NoReturn: ...
@@ -42,4 +42,6 @@ def comma_delimited_to_list(list_param: Iterable[_T]) -> Iterable[_T]: ...
 # the docstring states that this function returns a bool, but the code does not return anything
 def validate_pem_format(param_name: str, param_argument: str) -> None: ...
 def remove_nones(params: Mapping[_K, _V | None]) -> Mapping[_K, _V]: ...
-def format_url(format_str: str, *args: Any, **kwargs: Any) -> str: ...
+def format_url(
+    format_str: str, *args: object, **kwargs: object
+) -> str: ...  # values are passed to builtins.str, which takes an object type

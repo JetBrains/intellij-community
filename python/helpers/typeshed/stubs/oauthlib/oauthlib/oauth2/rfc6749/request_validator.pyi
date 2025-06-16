@@ -1,5 +1,6 @@
 from collections.abc import Mapping
-from typing import Any, Literal, TypedDict
+from logging import Logger
+from typing import Literal, TypedDict
 from typing_extensions import NotRequired
 
 from oauthlib.common import Request
@@ -18,7 +19,7 @@ class _AuthorizationCode(TypedDict):
     state: NotRequired[str]
     nonce: NotRequired[str]
 
-log: Any
+log: Logger
 
 class RequestValidator:
     def client_authentication_required(self, request: Request, *args, **kwargs) -> bool: ...

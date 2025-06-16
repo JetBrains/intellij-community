@@ -11,13 +11,30 @@ networkx\.(convert_matrix\.)?from_pandas_edgelist
 networkx\.(generators\.)?(random_clustered\.)?random_clustered_graph
 networkx\.(relabel\.)?relabel_nodes
 
-# Stubtest doesn't understand aliases of class-decorated methods (possibly https://github.com/python/mypy/issues/6700 )
+# Stubtest doesn't understand aliases of class-decorated functions (possibly https://github.com/python/mypy/issues/6700 )
 networkx\.(algorithms\.)?(centrality\.)?(current_flow_closeness\.)?information_centrality
 networkx\.(generators\.)?(random_graphs\.)?binomial_graph
 networkx\.(generators\.)?(random_graphs\.)?erdos_renyi_graph
+networkx\.(algorithms\.(minors\.(contraction\.)?)?)?identified_nodes
+networkx\.algorithms\.flow\.maxflow\.default_flow_func
+networkx\.algorithms\.[a-z_\.]+\.default_flow_func
+networkx\.(algorithms\.(centrality\.(load\.)?)?)?load_centrality
+networkx\.algorithms\.bipartite\.(matching\.)?maximum_matching
+networkx\.algorithms\.bipartite\.(cluster\.)?clustering
 
 # Stubtest says: "runtime argument "backend" has a default value of type None, which is
 #   incompatible with stub argument type builtins.str. This is often caused by overloads
 #   failing to account for explicitly passing in the default value."
 # Which is true, but would require some way of concatenating `backend` to ParamSpec.kwargs
-networkx\.(utils\.backends\.)?_dispatch\.__call__
+networkx\.(utils\.)?(backends\.)?_dispatchable\.__call__
+
+# Tests are excluded
+networkx.conftest
+networkx(\..+?)?\.tests(\..+?)?
+
+# "..._DT is not present at runtime" but we don't set it in stubs, I don't understand this one
+networkx(\.algorithms)?(\.tree)?(\.mst)?\.SpanningTreeIterator\.Partition\._DT
+networkx(\.algorithms)?(\.tree)?(\.branchings)?\.ArborescenceIterator\.Partition\._DT
+
+# variable differs from runtime type abc.ABCMeta
+networkx\.classes\.reportviews\.\w*EdgeView\.dataview

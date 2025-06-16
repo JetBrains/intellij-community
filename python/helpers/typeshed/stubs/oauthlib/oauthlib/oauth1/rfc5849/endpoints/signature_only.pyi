@@ -1,11 +1,8 @@
-from _typeshed import Incomplete
-from typing import Any
+from logging import Logger
 
 from .base import BaseEndpoint as BaseEndpoint
 
-log: Any
+log: Logger
 
 class SignatureOnlyEndpoint(BaseEndpoint):
-    def validate_request(
-        self, uri, http_method: str = "GET", body: Incomplete | None = None, headers: Incomplete | None = None
-    ): ...
+    def validate_request(self, uri, http_method: str = "GET", body=None, headers=None): ...

@@ -1,9 +1,10 @@
 from _typeshed import Incomplete
+from collections.abc import Callable
 
 unicode = str
 long = int
 xrange = range
-bytechr: Incomplete
+bytechr: Callable[[float], bytes]
 
 class CTypesType(type): ...
 
@@ -68,7 +69,7 @@ class CTypesBackend:
     typeof: Incomplete
     def getcname(self, BType, replace_with): ...
     def typeoffsetof(self, BType, fieldname, num: int = 0): ...
-    def rawaddressof(self, BTypePtr, cdata, offset: Incomplete | None = None): ...
+    def rawaddressof(self, BTypePtr, cdata, offset=None): ...
 
 class CTypesLibrary:
     backend: Incomplete

@@ -83,12 +83,7 @@ class JobDef(google.protobuf.message.Message):
         VALUE_FIELD_NUMBER: builtins.int
         key: builtins.int
         value: builtins.str
-        def __init__(
-            self,
-            *,
-            key: builtins.int | None = ...,
-            value: builtins.str | None = ...,
-        ) -> None: ...
+        def __init__(self, *, key: builtins.int | None = ..., value: builtins.str | None = ...) -> None: ...
         def ClearField(self, field_name: typing.Literal["key", b"key", "value", b"value"]) -> None: ...
 
     NAME_FIELD_NUMBER: builtins.int
@@ -108,10 +103,7 @@ class JobDef(google.protobuf.message.Message):
         """
 
     def __init__(
-        self,
-        *,
-        name: builtins.str | None = ...,
-        tasks: collections.abc.Mapping[builtins.int, builtins.str] | None = ...,
+        self, *, name: builtins.str | None = ..., tasks: collections.abc.Mapping[builtins.int, builtins.str] | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["name", b"name", "tasks", b"tasks"]) -> None: ...
 
@@ -128,11 +120,7 @@ class ClusterDef(google.protobuf.message.Message):
     def job(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___JobDef]:
         """The jobs that comprise the cluster."""
 
-    def __init__(
-        self,
-        *,
-        job: collections.abc.Iterable[global___JobDef] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, job: collections.abc.Iterable[global___JobDef] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["job", b"job"]) -> None: ...
 
 global___ClusterDef = ClusterDef

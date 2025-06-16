@@ -1,0 +1,21 @@
+# ====================================================================
+# TODO: New errors in Python 3.14 that need to be fixed or moved below
+# ====================================================================
+
+_winapi.COPY_FILE_DIRECTORY
+compression.zlib.ZLIBNG_VERSION
+encodings.win32_code_page_search_function
+nt.readinto
+pathlib.Path.group
+pathlib.Path.owner
+zlib.ZLIBNG_VERSION
+
+
+# =======
+# >= 3.12
+# =======
+
+# Undocumented internal method, not really for public consumption.
+# (Hard to add types for unless we add stubs for the undocumented _overlapped module...)
+asyncio.IocpProactor.finish_socket_func
+asyncio.windows_events.IocpProactor.finish_socket_func

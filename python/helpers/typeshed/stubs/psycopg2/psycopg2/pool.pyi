@@ -1,4 +1,4 @@
-from _typeshed import ConvertibleToInt, Incomplete
+from _typeshed import ConvertibleToInt
 from collections.abc import Hashable
 
 import psycopg2
@@ -21,4 +21,4 @@ class SimpleConnectionPool(AbstractConnectionPool): ...
 class ThreadedConnectionPool(AbstractConnectionPool):
     # This subclass has a default value for conn which doesn't exist
     # in the SimpleConnectionPool class, nor in the documentation
-    def putconn(self, conn: Incomplete | None = None, key: Hashable | None = None, close: bool = False) -> None: ...
+    def putconn(self, conn=None, key: Hashable | None = None, close: bool = False) -> None: ...

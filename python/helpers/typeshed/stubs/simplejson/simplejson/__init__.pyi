@@ -1,4 +1,5 @@
 from _typeshed import SupportsRichComparison
+from collections import OrderedDict
 from collections.abc import Callable
 from typing import IO, Any, TypeVar, overload
 from typing_extensions import TypeAlias
@@ -22,7 +23,7 @@ def dumps(
     cls: type[JSONEncoder],
     indent: str | int | None = ...,
     separators: tuple[str, str] | None = ...,
-    encoding: str = ...,
+    encoding: str | None = ...,
     default: Callable[[Any], Any] | None = ...,
     use_decimal: bool = ...,
     namedtuple_as_object: bool = ...,
@@ -46,7 +47,7 @@ def dumps(
     cls: type[JSONEncoder] | None = ...,
     indent: str | int | None = ...,
     separators: tuple[str, str] | None = ...,
-    encoding: str = ...,
+    encoding: str | None = ...,
     default: Callable[[Any], Any] | None = ...,
     use_decimal: bool = ...,
     namedtuple_as_object: bool = ...,
@@ -71,7 +72,7 @@ def dump(
     cls: type[JSONEncoder],
     indent: str | int | None = ...,
     separators: tuple[str, str] | None = ...,
-    encoding: str = ...,
+    encoding: str | None = ...,
     default: Callable[[Any], Any] | None = ...,
     use_decimal: bool = ...,
     namedtuple_as_object: bool = ...,
@@ -96,7 +97,7 @@ def dump(
     cls: type[JSONEncoder] | None = ...,
     indent: str | int | None = ...,
     separators: tuple[str, str] | None = ...,
-    encoding: str = ...,
+    encoding: str | None = ...,
     default: Callable[[Any], Any] | None = ...,
     use_decimal: bool = ...,
     namedtuple_as_object: bool = ...,
@@ -166,3 +167,16 @@ def load(
     allow_nan: bool = ...,
 ) -> Any: ...
 def simple_first(kv: tuple[_T, object]) -> tuple[bool, _T]: ...
+
+__all__ = [
+    "dump",
+    "dumps",
+    "load",
+    "loads",
+    "JSONDecoder",
+    "JSONDecodeError",
+    "JSONEncoder",
+    "OrderedDict",
+    "simple_first",
+    "RawJSON",
+]

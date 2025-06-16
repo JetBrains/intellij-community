@@ -1,28 +1,31 @@
 from _typeshed import Incomplete
 from collections.abc import Iterator
+from functools import cached_property
 
 from networkx.classes.coreviews import AdjacencyView
 from networkx.classes.graph import Graph, _Node
-from networkx.classes.reportviews import (
-    InDegreeView,
-    InEdgeView,
-    InMultiDegreeView,
-    OutDegreeView,
-    OutEdgeView,
-    OutMultiDegreeView,
-)
+from networkx.classes.reportviews import DiDegreeView, OutEdgeView
+
+__all__ = ["DiGraph"]
 
 class DiGraph(Graph[_Node]):
-    succ: AdjacencyView[_Node, _Node, dict[str, Incomplete]]
-    pred: AdjacencyView[_Node, _Node, dict[str, Incomplete]]
+    @cached_property
+    def succ(self) -> AdjacencyView[_Node, _Node, dict[str, Incomplete]]: ...
+    @cached_property
+    def pred(self) -> AdjacencyView[_Node, _Node, dict[str, Incomplete]]: ...
     def has_successor(self, u: _Node, v: _Node) -> bool: ...
     def has_predecessor(self, u: _Node, v: _Node) -> bool: ...
     def successors(self, n: _Node) -> Iterator[_Node]: ...
+    neighbors = successors
     def predecessors(self, n: _Node) -> Iterator[_Node]: ...
-    in_edges: InEdgeView[_Node]
-    in_degree: InDegreeView[_Node] | InMultiDegreeView[_Node]  # ugly hack to make MultiDiGraph work
-    out_edges: OutEdgeView[_Node]
-    out_degree: OutDegreeView[_Node] | OutMultiDegreeView[_Node]  # ugly hack to make MultiDiGraph work
+    @cached_property
+    def out_edges(self) -> OutEdgeView[_Node]: ...
+    @cached_property
+    def in_edges(self) -> OutEdgeView[_Node]: ...
+    @cached_property
+    def in_degree(self) -> DiDegreeView[_Node]: ...
+    @cached_property
+    def out_degree(self) -> DiDegreeView[_Node]: ...
     def to_undirected(self, reciprocal: bool = False, as_view: bool = False): ...  # type: ignore[override]  # Has an additional `reciprocal` keyword argument
     def reverse(self, copy: bool = True) -> DiGraph[_Node]: ...
     def copy(self, as_view: bool = False) -> DiGraph[_Node]: ...

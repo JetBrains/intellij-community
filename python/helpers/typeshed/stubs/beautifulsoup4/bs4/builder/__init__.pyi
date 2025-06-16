@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import Any
 
 class TreeBuilderRegistry:
@@ -33,11 +32,7 @@ class TreeBuilder:
     def can_be_empty_element(self, tag_name): ...
     def feed(self, markup) -> None: ...
     def prepare_markup(
-        self,
-        markup,
-        user_specified_encoding: Incomplete | None = None,
-        document_declared_encoding: Incomplete | None = None,
-        exclude_encodings: Incomplete | None = None,
+        self, markup, user_specified_encoding=None, document_declared_encoding=None, exclude_encodings=None
     ) -> None: ...
     def test_fragment_to_document(self, fragment): ...
     def set_up_substitutions(self, tag): ...

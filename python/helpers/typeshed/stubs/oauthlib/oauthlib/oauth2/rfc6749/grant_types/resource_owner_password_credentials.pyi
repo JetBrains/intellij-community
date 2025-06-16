@@ -1,9 +1,12 @@
-from typing import Any
+from logging import Logger
 
-from .base import GrantTypeBase as GrantTypeBase
+from oauthlib.common import Request
 
-log: Any
+from ..tokens import TokenBase
+from .base import GrantTypeBase
+
+log: Logger
 
 class ResourceOwnerPasswordCredentialsGrant(GrantTypeBase):
-    def create_token_response(self, request, token_handler): ...
-    def validate_token_request(self, request) -> None: ...
+    def create_token_response(self, request: Request, token_handler: TokenBase) -> tuple[dict[str, str], str, int | None]: ...
+    def validate_token_request(self, request: Request) -> None: ...

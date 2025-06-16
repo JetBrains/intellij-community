@@ -33,6 +33,8 @@ class Packetizer:
         mac_key: bytes | bytearray,
         sdctr: bool = False,
         etm: bool = False,
+        aead: bool = False,
+        iv_out: bytes | None = None,
     ) -> None: ...
     def set_inbound_cipher(
         self,
@@ -42,6 +44,8 @@ class Packetizer:
         mac_size: int,
         mac_key: bytes | bytearray,
         etm: bool = False,
+        aead: bool = False,
+        iv_in: bytes | None = None,
     ) -> None: ...
     def set_outbound_compressor(self, compressor: ZlibCompressor) -> None: ...
     def set_inbound_compressor(self, compressor: ZlibDecompressor) -> None: ...

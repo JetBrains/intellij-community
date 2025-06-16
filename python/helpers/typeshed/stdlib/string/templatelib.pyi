@@ -1,80 +1,31 @@
-from typing import (
-    ClassVar,
-    Iterator,
-    Literal,
-    Self,
-)
+from collections.abc import Iterator
+from types import GenericAlias
+from typing import Any, Literal, final
 
-__all__: tuple[str, ...] = ("Interpolation", "Template")
+__all__ = ["Interpolation", "Template"]
 
+@final
+class Template:  # TODO: consider making `Template` generic on `TypeVarTuple`
+    strings: tuple[str, ...]
+    interpolations: tuple[Interpolation, ...]
 
+    def __new__(cls, *args: str | Interpolation) -> Template: ...
+    def __iter__(self) -> Iterator[str | Interpolation]: ...
+    def __add__(self, other: Template | str) -> Template: ...
+    def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...
+    @property
+    def values(self) -> tuple[Any, ...]: ...  # Tuple of interpolation values, which can have any type
+
+@final
 class Interpolation:
-    """
-    Represents a single interpolation embedded in an f‑string / template string.
-    """
-
-    value: object
-    """The evaluated result of the interpolation."""
-
+    value: Any  # TODO: consider making `Interpolation` generic in runtime
     expression: str
-    """The original expression text (unparsed)."""
-
     conversion: Literal["a", "r", "s"] | None
-    """Optional conversion character; ``None`` if omitted."""
-
     format_spec: str
-    """The trailing format‑spec (after ``':'``), empty string if none."""
 
-    __match_args__: ClassVar[tuple[str, ...]] = (
-        "value",
-        "expression",
-        "conversion",
-        "format_spec",
-    )
+    __match_args__ = ("value", "expression", "conversion", "format_spec")
 
     def __new__(
-            cls,
-            value: object,
-            expression: str,
-            conversion: Literal["a", "r", "s"] | None = None,
-            format_spec: str = "",
-    ) -> Self: ...
-
-    def __repr__(self) -> str: ...
-
-
-class Template:
-    """
-    Immutable template string object returned by the parser.
-
-    A *template* alternates raw string parts and :class:`Interpolation`
-    objects, preserving exact source‑order.
-    """
-
-    strings: tuple[str, ...]
-    """
-    Tuple of plain string segments.  Always length ``len(interpolations) + 1``.
-    """
-
-    interpolations: tuple[Interpolation, ...]
-    """Tuple of :class:`Interpolation` objects (may be empty)."""
-
-    def __new__(cls, *parts: str | Interpolation) -> Self: ...
-
-    """
-    Build a Template from an arbitrary shuffle of ``str`` and
-    :class:`Interpolation`.  The order is preserved exactly as given.
-    """
-
-    @property
-    def values(self) -> tuple[object, ...]:
-        """Shortcut: ``tuple(i.value for i in self.interpolations)`` ."""
-        ...
-
-    def __iter__(self) -> Iterator[str | Interpolation]: ...
-
-    def __add__(self, other: str | "Template") -> Self: ...
-
-    def __radd__(self, other: str) -> Self: ...
-
-    def __repr__(self) -> str: ...
+        cls, value: Any, expression: str, conversion: Literal["a", "r", "s"] | None = None, format_spec: str = ""
+    ) -> Interpolation: ...
+    def __class_getitem__(cls, item: Any, /) -> GenericAlias: ...

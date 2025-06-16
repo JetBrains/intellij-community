@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from datetime import datetime
 from gzip import GzipFile
 from httplib import HTTPConnection, HTTPResponse, HTTPSConnection

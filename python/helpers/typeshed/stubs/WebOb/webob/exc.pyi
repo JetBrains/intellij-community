@@ -3,12 +3,73 @@ from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 from collections.abc import Iterable
 from string import Template
 from typing import Any, Literal, Protocol
-from typing_extensions import Self
+from typing_extensions import Self, TypeAlias
 
 from webob.response import Response
 
+__all__ = [
+    "HTTPAccepted",
+    "HTTPBadGateway",
+    "HTTPBadRequest",
+    "HTTPClientError",
+    "HTTPConflict",
+    "HTTPCreated",
+    "HTTPError",
+    "HTTPExpectationFailed",
+    "HTTPFailedDependency",
+    "HTTPForbidden",
+    "HTTPFound",
+    "HTTPGatewayTimeout",
+    "HTTPGone",
+    "HTTPInsufficientStorage",
+    "HTTPInternalServerError",
+    "HTTPLengthRequired",
+    "HTTPLocked",
+    "HTTPMethodNotAllowed",
+    "HTTPMovedPermanently",
+    "HTTPMultipleChoices",
+    "HTTPNetworkAuthenticationRequired",
+    "HTTPNoContent",
+    "HTTPNonAuthoritativeInformation",
+    "HTTPNotAcceptable",
+    "HTTPNotFound",
+    "HTTPNotImplemented",
+    "HTTPNotModified",
+    "HTTPOk",
+    "HTTPPartialContent",
+    "HTTPPaymentRequired",
+    "HTTPPermanentRedirect",
+    "HTTPPreconditionFailed",
+    "HTTPPreconditionRequired",
+    "HTTPProxyAuthenticationRequired",
+    "HTTPRedirection",
+    "HTTPRequestEntityTooLarge",
+    "HTTPRequestHeaderFieldsTooLarge",
+    "HTTPRequestRangeNotSatisfiable",
+    "HTTPRequestTimeout",
+    "HTTPRequestURITooLong",
+    "HTTPResetContent",
+    "HTTPSeeOther",
+    "HTTPServerError",
+    "HTTPServiceUnavailable",
+    "HTTPTemporaryRedirect",
+    "HTTPTooManyRequests",
+    "HTTPUnauthorized",
+    "HTTPUnavailableForLegalReasons",
+    "HTTPUnprocessableEntity",
+    "HTTPUnsupportedMediaType",
+    "HTTPUseProxy",
+    "HTTPVersionNotSupported",
+    "WSGIHTTPException",
+    "HTTPException",
+    "HTTPExceptionMiddleware",
+    "status_map",
+]
+
+_Headers: TypeAlias = SupportsItems[str, str] | SupportsKeysAndGetItem[str, str] | Iterable[tuple[str, str]]
+
 class _JSONFormatter(Protocol):
-    def __call__(self, *, body: str, status: str, title: str, environ: WSGIEnvironment) -> str: ...
+    def __call__(self, *, body: str, status: str, title: str, environ: WSGIEnvironment) -> Any: ...
 
 class HTTPException(Exception):
     wsgi_response: Response
@@ -28,7 +89,7 @@ class WSGIHTTPException(Response, HTTPException):
     def __init__(
         self,
         detail: str | None = None,
-        headers: SupportsItems[str, str] | SupportsKeysAndGetItem[str, str] | Iterable[tuple[str, str]] | None = None,
+        headers: _Headers | None = None,
         comment: str | None = None,
         body_template: str | None = None,
         json_formatter: _JSONFormatter | None = None,
@@ -36,9 +97,10 @@ class WSGIHTTPException(Response, HTTPException):
     ) -> None: ...
     def plain_body(self, environ: WSGIEnvironment) -> str: ...
     def html_body(self, environ: WSGIEnvironment) -> str: ...
-    def json_formatter(self, body: str, status: str, title: str, environ: WSGIEnvironment) -> str: ...
-    def json_body(self, environ: WSGIEnvironment) -> str: ...
+    def json_formatter(self, body: str, status: str, title: str, environ: WSGIEnvironment) -> Any: ...
+    def json_body(self, environ: WSGIEnvironment) -> str: ...  # type: ignore[override]
     def generate_response(self, environ: WSGIEnvironment, start_response: StartResponse) -> Iterable[bytes]: ...
+    def __call__(self, environ: WSGIEnvironment, start_response: StartResponse) -> Iterable[bytes]: ...
     @property
     def wsgi_response(self) -> Self: ...  # type: ignore[override]
     def __str__(self) -> str: ...  # type: ignore[override]  # noqa: Y029
@@ -64,12 +126,13 @@ class _HTTPMove(HTTPRedirection):
     def __init__(
         self,
         detail: str | None = None,
-        headers: str | None = None,
+        headers: _Headers | None = None,
         comment: str | None = None,
         body_template: str | None = None,
         location: str | None = None,
         add_slash: bool = False,
     ) -> None: ...
+    def __call__(self, environ: WSGIEnvironment, start_response: StartResponse) -> Iterable[bytes]: ...
 
 class HTTPMultipleChoices(_HTTPMove): ...
 class HTTPMovedPermanently(_HTTPMove): ...
@@ -123,4 +186,4 @@ class HTTPExceptionMiddleware:
     def __init__(self, application: WSGIApplication) -> None: ...
     def __call__(self, environ: WSGIEnvironment, start_response: StartResponse) -> Iterable[bytes]: ...
 
-status_map: dict[int, WSGIHTTPException]
+status_map: dict[int, type[HTTPOk | HTTPRedirection | HTTPClientError | HTTPServerError]]

@@ -1,6 +1,6 @@
 import sys
 from _typeshed import FileDescriptor
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from types import TracebackType
 from typing import Protocol
 from typing_extensions import TypeAlias, TypeVarTuple, Unpack
@@ -16,6 +16,10 @@ class _SupportsHandleError(Protocol):
     handle_error: _ErrorHandlerFunc
 
 _ErrorHandler: TypeAlias = _ErrorHandlerFunc | _SupportsHandleError
+
+def assign_standard_callbacks(
+    ffi: object, lib: object, callbacks_class: Callable[[object], object], extras: Sequence[tuple[object, object]] = ...
+) -> object: ...
 
 class AbstractLoop:
     CALLBACK_CHECK_COUNT: int
@@ -78,3 +82,5 @@ class AbstractLoop:
     def run_callback_threadsafe(self, func: Callable[[Unpack[_Ts]], object], *args: Unpack[_Ts]) -> _Callback: ...
     def callback(self, priority: float | None = ...) -> _Callback: ...
     def fileno(self) -> FileDescriptor | None: ...
+
+__all__ = ["AbstractLoop", "assign_standard_callbacks"]

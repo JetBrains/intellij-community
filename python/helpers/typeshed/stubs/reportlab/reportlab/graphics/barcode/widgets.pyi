@@ -63,3 +63,18 @@ class BarcodePOSTNET(_BarcodeWidget):
 class BarcodeUSPS_4State(_BarcodeWidget):
     codeName: Final = "USPS_4State"
     def __init__(self, **kw) -> None: ...
+
+__all__ = (
+    "BarcodeI2of5",
+    "BarcodeCode128",
+    "BarcodeStandard93",
+    "BarcodeExtended93",
+    "BarcodeStandard39",
+    "BarcodeExtended39",
+    "BarcodeMSI",
+    "BarcodeCodabar",
+    "BarcodeCode11",
+    "BarcodeFIM",
+    "BarcodePOSTNET",
+    "BarcodeUSPS_4State",
+)

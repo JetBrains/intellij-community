@@ -30,7 +30,11 @@ class SavedModel(google.protobuf.message.Message):
     at release will be 1.
     """
     @property
-    def meta_graphs(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.protobuf.meta_graph_pb2.MetaGraphDef]:
+    def meta_graphs(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+        tensorflow.core.protobuf.meta_graph_pb2.MetaGraphDef
+    ]:
         """One or more MetaGraphs."""
 
     def __init__(
@@ -39,6 +43,9 @@ class SavedModel(google.protobuf.message.Message):
         saved_model_schema_version: builtins.int | None = ...,
         meta_graphs: collections.abc.Iterable[tensorflow.core.protobuf.meta_graph_pb2.MetaGraphDef] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["meta_graphs", b"meta_graphs", "saved_model_schema_version", b"saved_model_schema_version"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal["meta_graphs", b"meta_graphs", "saved_model_schema_version", b"saved_model_schema_version"],
+    ) -> None: ...
 
 global___SavedModel = SavedModel

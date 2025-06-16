@@ -1,4 +1,4 @@
-from _typeshed import Incomplete
+from collections.abc import Iterable
 from typing import Any, Literal, TypedDict, type_check_only
 from typing_extensions import TypeAlias
 
@@ -16,7 +16,7 @@ _Network: TypeAlias = _HasId | _HasID | str
 _Container: TypeAlias = _HasId | _HasID | str
 
 class NetworkApiMixin:
-    def networks(self, names: Incomplete | None = None, ids: Incomplete | None = None, filters: Incomplete | None = None): ...
+    def networks(self, names=None, ids=None, filters=None): ...
     def create_network(
         self,
         name: str,
@@ -31,7 +31,7 @@ class NetworkApiMixin:
         scope: Literal["local", "global", "swarm"] | None = None,
         ingress: bool | None = None,
     ) -> dict[str, str]: ...
-    def prune_networks(self, filters: Incomplete | None = None): ...
+    def prune_networks(self, filters=None): ...
     def remove_network(self, net_id: _Network) -> None: ...
     def inspect_network(
         self, net_id: _Network, verbose: bool | None = None, scope: Literal["local", "global", "swarm"] | None = None
@@ -40,12 +40,12 @@ class NetworkApiMixin:
         self,
         container: _Container,
         net_id: str,
-        ipv4_address: Incomplete | None = None,
-        ipv6_address: Incomplete | None = None,
-        aliases: Incomplete | None = None,
-        links: Incomplete | None = None,
-        link_local_ips: Incomplete | None = None,
-        driver_opt: Incomplete | None = None,
-        mac_address: Incomplete | None = None,
+        ipv4_address=None,
+        ipv6_address=None,
+        aliases=None,
+        links: dict[str, str] | dict[str, None] | dict[str, str | None] | Iterable[tuple[str, str | None]] | None = None,
+        link_local_ips=None,
+        driver_opt=None,
+        mac_address=None,
     ) -> None: ...
     def disconnect_container_from_network(self, container: _Container, net_id: str, force: bool = False) -> None: ...

@@ -49,13 +49,15 @@ class IEventLoopBlocked(Interface):
     greenlet: greenlet_t
     blocking_time: float
     info: Sequence[str]
+    hub: Hub | None
 
 @implementer(IEventLoopBlocked)
 class EventLoopBlocked:
     greenlet: greenlet_t
     blocking_time: float
     info: Sequence[str]
-    def __init__(self, greenlet: greenlet_t, blocking_time: float, info: Sequence[str]) -> None: ...
+    hub: Hub | None
+    def __init__(self, greenlet: greenlet_t, blocking_time: float, info: Sequence[str], *, hub: Hub | None = None) -> None: ...
 
 class IMemoryUsageThresholdExceeded(Interface):
     mem_usage: int
@@ -161,3 +163,35 @@ class IGeventDidPatchAllEvent(IGeventDidPatchEvent): ...
 @implementer(IGeventDidPatchAllEvent)
 class GeventDidPatchAllEvent(_PatchAllMixin, GeventDidPatchEvent):
     ENTRY_POINT_NAME: str
+
+__all__ = [
+    "subscribers",
+    # monitor thread
+    "IEventLoopBlocked",
+    "EventLoopBlocked",
+    "IMemoryUsageThresholdExceeded",
+    "MemoryUsageThresholdExceeded",
+    "IMemoryUsageUnderThreshold",
+    "MemoryUsageUnderThreshold",
+    # Hub
+    "IPeriodicMonitorThread",
+    "IPeriodicMonitorThreadStartedEvent",
+    "PeriodicMonitorThreadStartedEvent",
+    # monkey
+    "IGeventPatchEvent",
+    "GeventPatchEvent",
+    "IGeventWillPatchEvent",
+    "DoNotPatch",
+    "GeventWillPatchEvent",
+    "IGeventDidPatchEvent",
+    "IGeventWillPatchModuleEvent",
+    "GeventWillPatchModuleEvent",
+    "IGeventDidPatchModuleEvent",
+    "GeventDidPatchModuleEvent",
+    "IGeventWillPatchAllEvent",
+    "GeventWillPatchAllEvent",
+    "IGeventDidPatchBuiltinModulesEvent",
+    "GeventDidPatchBuiltinModulesEvent",
+    "IGeventDidPatchAllEvent",
+    "GeventDidPatchAllEvent",
+]

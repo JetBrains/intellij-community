@@ -1,6 +1,11 @@
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
+__all__ = ["rooted_tree_isomorphism", "tree_isomorphism"]
+
+@_dispatchable
+def root_trees(t1, root1, t2, root2): ...
+@_dispatchable
 def rooted_tree_isomorphism(t1, root1, t2, root2): ...
-@_dispatch
-def tree_isomorphism(t1, t2): ...
+@_dispatchable
+def tree_isomorphism(t1: Graph[_Node], t2: Graph[_Node]): ...

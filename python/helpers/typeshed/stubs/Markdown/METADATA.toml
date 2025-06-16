@@ -1,4 +1,4 @@
-version = "3.6.*"
+version = "3.8.*"
 upstream_repository = "https://github.com/Python-Markdown/markdown"
 partial_stub = true
 

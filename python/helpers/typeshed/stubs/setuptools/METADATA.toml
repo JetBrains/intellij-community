@@ -1,8 +1,8 @@
-version = "71.1.*"
+version = "80.9.*"
 upstream_repository = "https://github.com/pypa/setuptools"
 extra_description = """\
-If using `setuptools >= 71.1` *only* for `pkg_resources`,
-you don't need `types-setuptools` since `pkg_resources` is now typed.\
+Given that `pkg_resources` is typed since `setuptools >= 71.1`, \
+it is no longer included with `types-setuptools`.
 """
 
 [tool.stubtest]

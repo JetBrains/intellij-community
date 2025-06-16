@@ -1,6 +1,5 @@
 pymysql.connections.byte2int
 pymysql.connections.int2byte
-pymysql.connections.lenenc_int
 pymysql.connections.pack_int24
 pymysql.cursors.Cursor.__del__
 # DictCursorMixin changes method types of inherited classes, but doesn't contain much at runtime

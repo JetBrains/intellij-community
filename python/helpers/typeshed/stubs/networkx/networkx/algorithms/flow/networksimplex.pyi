@@ -1,7 +1,10 @@
 from _typeshed import Incomplete
 from collections.abc import Generator
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
+
+__all__ = ["network_simplex"]
 
 class _DataEssentialsAndFunctions:
     node_list: Incomplete
@@ -22,6 +25,7 @@ class _DataEssentialsAndFunctions:
     next_node_dft: Incomplete
     prev_node_dft: Incomplete
     last_descendent_dft: Incomplete
+
     def __init__(self, G, multigraph, demand: str = "demand", capacity: str = "capacity", weight: str = "weight") -> None: ...
     def initialize_spanning_tree(self, n, faux_inf) -> None: ...
     def find_apex(self, p, q): ...
@@ -38,5 +42,5 @@ class _DataEssentialsAndFunctions:
     def residual_capacity(self, i, p): ...
     def find_leaving_edge(self, Wn, We): ...
 
-@_dispatch
-def network_simplex(G, demand: str = "demand", capacity: str = "capacity", weight: str = "weight"): ...
+@_dispatchable
+def network_simplex(G: Graph[_Node], demand: str = "demand", capacity: str = "capacity", weight: str = "weight"): ...

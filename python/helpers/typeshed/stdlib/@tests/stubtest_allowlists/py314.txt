@@ -1,0 +1,233 @@
+# ====================================================================
+# TODO: New errors in Python 3.14 that need to be fixed or moved below
+# ====================================================================
+
+multiprocessing.managers.BaseListProxy.clear
+multiprocessing.managers.BaseListProxy.copy
+multiprocessing.managers.DictProxy.__ior__
+multiprocessing.managers._BaseDictProxy.__ior__
+multiprocessing.managers._BaseDictProxy.__or__
+multiprocessing.managers._BaseDictProxy.__reversed__
+multiprocessing.managers._BaseDictProxy.__ror__
+multiprocessing.managers._BaseDictProxy.fromkeys
+multiprocessing.process.BaseProcess.interrupt
+multiprocessing.synchronize.SemLock.locked
+tarfile.TarFile.zstopen
+
+# =========================
+# New errors in Python 3.14
+# =========================
+
+
+# Union and UnionType are aliases in 3.14 but type checkers need some changes
+typing_extensions.Union
+typing.Union
+types.UnionType.__class_getitem__
+types.UnionType.__mro_entries__
+types.UnionType.__name__
+types.UnionType.__qualname__
+
+# Assigning `__new__` causes `func` not to get recognized.
+functools.partialmethod.__new__
+
+# ====================================
+# Pre-existing errors from Python 3.13
+# ====================================
+
+
+# =======
+# >= 3.12
+# =======
+
+# Types that require `__setattr__` and `__delattr__` for typing purposes:
+types.SimpleNamespace.__setattr__
+types.SimpleNamespace.__delattr__
+
+
+# =======
+# >= 3.11
+# =======
+
+typing.NewType.__mro_entries__
+
+
+# =======
+# >= 3.10
+# =======
+
+builtins.ellipsis  # type is not exposed anywhere
+importlib._abc.Loader.exec_module  # See Lib/importlib/_abc.py. Might be defined for backwards compatibility
+importlib.util.Loader.exec_module
+
+# positional-only complaints caused by differences between typing aliases and the "real" classes in the stdlib
+_collections_abc.Coroutine.send
+_collections_abc.Coroutine.throw
+_collections_abc.Generator.send
+_collections_abc.Generator.throw
+
+# These are not positional-only at runtime, but we treat them as positional-only to match dict.
+_collections_abc.MutableMapping.pop
+_collections_abc.MutableMapping.setdefault
+
+# These three have a pos-or-keyword first parameter at runtime, but deliberately have a pos-only first parameter in the stub. #6812
+posixpath.join
+ntpath.join
+os.path.join
+
+# typing.IO uses positional-or-keyword arguments, but in the stubs we prefer
+# to mark these as positional-only for compatibility with existing sub-classes.
+typing(_extensions)?\.BinaryIO\.write
+typing(_extensions)?\.IO\.read
+typing(_extensions)?\.IO\.readline
+typing(_extensions)?\.IO\.readlines
+typing(_extensions)?\.IO\.seek
+typing(_extensions)?\.IO\.truncate
+typing(_extensions)?\.IO\.write
+typing(_extensions)?\.IO\.writelines
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.14
+# =============================================================
+
+# Undocumented private attributes
+.*\.ForwardRef\.__arg__
+.*\.ForwardRef\.__ast_node__
+.*\.ForwardRef\.__cell__
+.*\.ForwardRef\.__code__
+.*\.ForwardRef\.__extra_names__
+.*\.ForwardRef\.__globals__
+.*\.ForwardRef\.__init_subclass__
+.*\.ForwardRef\.__owner__
+.*\.ForwardRef\.__stringifier_dict__
+
+# These protocols use ABC hackery at runtime.
+(io|typing_extensions)\.Reader\.__class_getitem__
+(io|typing_extensions)\.Reader\.read
+(io|typing_extensions)\.Writer\.__class_getitem__
+(io|typing_extensions)\.Writer\.write
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.13
+# =============================================================
+
+_pyrepl\..+  # The internal implementation of the REPL on py313+; not for public consumption
+codecs.backslashreplace_errors  # Runtime incorrectly has `self`
+codecs.ignore_errors  # Runtime incorrectly has `self`
+codecs.namereplace_errors  # Runtime incorrectly has `self`
+codecs.replace_errors  # Runtime incorrectly has `self`
+codecs.strict_errors  # Runtime incorrectly has `self`
+codecs.xmlcharrefreplace_errors  # Runtime incorrectly has `self`
+
+# These multiprocessing proxy methods have *args, **kwargs signatures at runtime,
+# But have more precise (accurate) signatures in the stub
+multiprocessing.managers._BaseDictProxy.__iter__
+multiprocessing.managers._BaseDictProxy.__len__
+multiprocessing.managers._BaseDictProxy.clear
+multiprocessing.managers._BaseDictProxy.copy
+multiprocessing.managers._BaseDictProxy.items
+multiprocessing.managers._BaseDictProxy.keys
+multiprocessing.managers._BaseDictProxy.popitem
+multiprocessing.managers._BaseDictProxy.values
+
+multiprocessing.managers._BaseSetProxy.__iter__
+multiprocessing.managers._BaseSetProxy.__len__
+multiprocessing.managers._BaseSetProxy.clear
+multiprocessing.managers._BaseSetProxy.copy
+multiprocessing.managers._BaseSetProxy.pop
+
+# To match `dict`, we lie about the runtime, but use overloads to match the correct behavior
+types.MappingProxyType.get
+
+typing_extensions.Protocol  # Super-special typing primitive
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.12
+# =============================================================
+
+# Runtime AST node runtime constructor behaviour is too loose.
+# For static typing, the loose behaviour is undesirable (https://github.com/python/typeshed/issues/8378).
+# For the runtime, the loose behaviour is deprecated in Python 3.13 (https://github.com/python/cpython/issues/105858)
+_?ast.type_param.__init__
+
+# Deprecation wrapper classes; their methods are just pass-through, so we can ignore them.
+importlib.metadata.DeprecatedNonAbstract.__new__
+
+# Deprecated argument is supported at runtime by renaming it through a decorator.
+importlib.resources._common.files
+importlib.resources.files
+
+sys._monitoring  # Doesn't really exist. See comments in the stub.
+sys.last_exc  # not always defined
+
+# These only exist to give a better error message if you try to subclass an instance
+typing.ParamSpec.__mro_entries__
+typing.ParamSpecArgs.__mro_entries__
+typing.ParamSpecKwargs.__mro_entries__
+typing.TypeVar.__mro_entries__
+typing.TypeVarTuple.__mro_entries__
+
+# These exist at runtime because the protocol uses PEP-695 syntax in CPython
+typing.SupportsAbs.__type_params__
+typing.SupportsRound.__type_params__
+typing_extensions.SupportsAbs.__type_params__
+typing_extensions.SupportsRound.__type_params__
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.11
+# =============================================================
+
+enum.auto.__init__  # The stub for enum.auto is nothing like the implementation
+enum.auto.value  # The stub for enum.auto is nothing like the implementation
+http.HTTPMethod.description  # mutable instance attribute at runtime but we pretend it's a property
+importlib.resources.abc.Traversable.open  # Problematic protocol signature at runtime, see source code comments.
+inspect._ParameterKind.description  # Still exists, but stubtest can't see it
+typing\._SpecialForm.*  # Super-special typing primitive
+typing\.LiteralString  # Super-special typing primitive
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; >= 3.10
+# =============================================================
+
+# Runtime AST node runtime constructor behaviour is too loose.
+# For static typing, the loose behaviour is undesirable (https://github.com/python/typeshed/issues/8378).
+# For the runtime, the loose behaviour is deprecated in Python 3.13 (https://github.com/python/cpython/issues/105858)
+_?ast.pattern.__init__
+
+_collections_abc.AsyncGenerator.athrow  # async at runtime, deliberately not in the stub, see #7491. Pos-only differences also.
+builtins.property.__set_name__  # Doesn't actually exist
+collections\.UserList\.index  # ignoring pos-or-keyword parameter
+dataclasses.KW_ONLY  # white lies around defaults
+importlib.metadata._meta.SimplePath.joinpath  # Runtime definition of protocol is incorrect
+
+# Changes from patch releases to be introduced in Python 3.14.0b3
+# (Remove once 3.14.0b3 becomes available for all platforms)
+(genericpath.__all__)?
+(genericpath.ALLOW_MISSING)?
+(ntpath.__all__)?
+(ntpath.ALLOW_MISSING)?
+(os.path.__all__)?
+(os.path.ALLOW_MISSING)?
+(os.path.realpath)?
+(posixpath.__all__)?
+(posixpath.ALLOW_MISSING)?
+(tarfile.__all__)?
+(tarfile.LinkFallbackError)?
+(tarfile.TarFile._extract_member)?
+(tarfile.TarFile.makelink_with_filter)?
+(_?hashlib.new)?
+(_?hashlib.(openssl_)?md5)?
+(_?hashlib.(openssl_)?sha1)?
+(_?hashlib.(openssl_)?sha224)?
+(_?hashlib.(openssl_)?sha256)?
+(_?hashlib.(openssl_)?sha384)?
+(_?hashlib.(openssl_)?sha3_224)?
+(_?hashlib.(openssl_)?sha3_256)?
+(_?hashlib.(openssl_)?sha3_384)?
+(_?hashlib.(openssl_)?sha3_512)?
+(_?hashlib.(openssl_)?sha512)?
+(_?hashlib.(openssl_)?shake_128)?
+(_?hashlib.(openssl_)?shake_256)?

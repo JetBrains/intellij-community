@@ -1,24 +1,31 @@
+import sys
 from collections.abc import Iterator
 from re import Pattern
-from typing import Any, Generic, TypedDict, TypeVar, overload
+from typing import Final, Generic, TypedDict, TypeVar, overload
 
 from markdown.core import Markdown
 
 _T = TypeVar("_T")
 
-BLOCK_LEVEL_ELEMENTS: list[str]
-STX: str
-ETX: str
-INLINE_PLACEHOLDER_PREFIX: str
-INLINE_PLACEHOLDER: str
-INLINE_PLACEHOLDER_RE: Pattern[str]
-AMP_SUBSTITUTE: str
-HTML_PLACEHOLDER: str
-HTML_PLACEHOLDER_RE: Pattern[str]
-TAG_PLACEHOLDER: str
-RTL_BIDI_RANGES: Any
+BLOCK_LEVEL_ELEMENTS: Final[list[str]]
+STX: Final[str]
+ETX: Final[str]
+INLINE_PLACEHOLDER_PREFIX: Final[str]
+INLINE_PLACEHOLDER: Final[str]
+INLINE_PLACEHOLDER_RE: Final[Pattern[str]]
+AMP_SUBSTITUTE: Final[str]
+HTML_PLACEHOLDER: Final[str]
+HTML_PLACEHOLDER_RE: Final[Pattern[str]]
+TAG_PLACEHOLDER: Final[str]
+RTL_BIDI_RANGES: Final[tuple[tuple[str, str], tuple[str, str]]]
 
-def get_installed_extensions(): ...
+if sys.version_info >= (3, 10):
+    from importlib import metadata
+    def get_installed_extensions() -> metadata.EntryPoints: ...
+
+else:
+    def get_installed_extensions(): ...
+
 def deprecated(message: str, stacklevel: int = 2): ...
 @overload
 def parseBoolValue(value: str) -> bool: ...

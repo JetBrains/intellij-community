@@ -8,6 +8,16 @@ peewee.DQ.__invert__
 peewee.Window.as_groups
 peewee.Window.as_range
 peewee.Window.as_rows
+# Wrapped with @database_required which sometimes injects the database argument
+peewee.BaseQuery.execute
+peewee.CompoundSelectQuery.exists
+peewee.SelectBase.count
+peewee.SelectBase.exists
+peewee.SelectBase.first
+peewee.SelectBase.get
+peewee.SelectBase.peek
+peewee.SelectBase.scalar
+peewee.SelectBase.scalars
 
 # Ignore missing playhouse modules and names we don't currently provide
 playhouse\.\w+?

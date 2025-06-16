@@ -21,10 +21,10 @@ kinfo_proc_map: Any
 pidtaskinfo_map: Any
 
 class scputimes(NamedTuple):
-    user: Any
-    nice: Any
-    system: Any
-    idle: Any
+    user: float
+    nice: float
+    system: float
+    idle: float
 
 class svmem(NamedTuple):
     total: int

@@ -6,6 +6,7 @@ from networkx.classes.graph import Graph
 from networkx.utils.misc import _RandomState
 
 _G = TypeVar("_G", bound=Graph[int])
+__all__ = ["random_clustered_graph"]
 
 @overload
 def random_clustered_graph(

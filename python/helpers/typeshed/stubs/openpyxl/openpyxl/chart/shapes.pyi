@@ -42,7 +42,7 @@ class GraphicalProperties(Serialisable):
         solidFill: str | ColorChoice | None = None,
         gradFill: GradientFillProperties | None = None,
         pattFill: PatternFillProperties | None = None,
-        ln: Incomplete | None = None,
+        ln=None,
         scene3d: Scene3D | None = None,
         custGeom: CustomGeometry2D | None = None,
         prstGeom: PresetGeometry2D | None = None,

@@ -1,3 +1,9 @@
+# TODO: missing from stub
+gevent.os.__all__
+gevent.socket.__all__
+gevent.ssl.__all__
+gevent.subprocess.__all__
+
 # Error: failed to find stubs
 # =============================
 # testing modules are not included in type stubs
@@ -28,7 +34,6 @@ gevent._ffi.ERROR
 gevent._ffi.GEVENT_DEBUG_LEVEL
 gevent._ffi.TRACE
 gevent._ffi.loop.AbstractLoop.async
-gevent._ffi.loop.assign_standard_callbacks
 gevent._fileobjectcommon.UniversalNewlineBytesWrapper
 gevent._waiter.Waiter.switch_args
 
@@ -41,8 +46,6 @@ gevent.libuv.watcher.watcher.feed
 # unnecessary python 2 compatibility stuff
 gevent._config.Config.trace_malloc
 gevent._imap.IMapUnordered.next
-gevent.monkey.patch_builtins
-gevent.monkey.patch_sys
 gevent.pywsgi.Environ.iteritems
 
 # weird method that doesn't work with this being generic, so we removed it
@@ -90,11 +93,8 @@ gevent.subprocess.Popen.__del__
 # we ignore all constants that start with at least one segment of all uppercase
 # letters before the underscore
 gevent\.socket\.[A-Z0-9]+(_\w+)?
-gevent.socket.AddressInfo
-gevent.socket.MsgFlag
 gevent.ssl.PROTOCOL_SSLv2
 gevent.ssl.PROTOCOL_SSLv3
-gevent.ssl.RAND_egd
 
 # Error: differs from runtime type
 # ======================
@@ -178,7 +178,6 @@ gevent.socket.wait_write
 # we have punted on ssl, the gevent version of these functions have an additional
 # argument for timeouts/blocking and there are some with different default values
 # for nbytes/length, for now we ignore that fact
-gevent.ssl.Purpose.__new__
 gevent.ssl.SSLSocket.__init__
 gevent.ssl.SSLSocket.do_handshake
 gevent.ssl.SSLSocket.read
@@ -222,3 +221,7 @@ gevent._types
 # useful way to use it as a keyword argument; we mark it positional-only.
 gevent.pool.GroupMappingMixin.imap
 gevent.pool.GroupMappingMixin.imap_unordered
+
+# Importing gevent.monkey.__main__ leads to issues in stubtest, since gevent will
+# try to monkeypatch stubtest
+gevent.monkey.__main__

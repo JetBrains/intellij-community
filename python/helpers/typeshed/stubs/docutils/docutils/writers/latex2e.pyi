@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from typing import ClassVar
 
 from docutils.utils import Reporter
@@ -17,4 +16,4 @@ class Babel:
     def language_name(self, language_code: str) -> str: ...
     def get_language(self) -> str: ...
 
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

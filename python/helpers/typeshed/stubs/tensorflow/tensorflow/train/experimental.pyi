@@ -1,5 +1,4 @@
 import abc
-from _typeshed import Incomplete
 from typing_extensions import Self
 
 from tensorflow.python.trackable.base import Trackable
@@ -10,4 +9,4 @@ class PythonState(Trackable, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def deserialize(self, string_value: str) -> Self: ...
 
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

@@ -1,11 +1,9 @@
-from _typeshed import Incomplete, Unused
-from collections.abc import Callable, Iterable
-from types import TracebackType
+from _typeshed import Incomplete
+from collections.abc import Iterable
 from typing import ClassVar, Final, Literal
 
 from setuptools import Command
 
-def safe_name(name: str) -> str: ...
 def safe_version(version: str) -> str: ...
 
 setuptools_major_version: Final[int]
@@ -16,12 +14,7 @@ def python_tag() -> str: ...
 def get_platform(archive_root: str | None) -> str: ...
 def get_flag(var: str, fallback: bool, expected: bool = True, warn: bool = True) -> bool: ...
 def get_abi_tag() -> str | None: ...
-def safer_name(name: str) -> str: ...
 def safer_version(version: str) -> str: ...
-def remove_readonly(
-    func: Callable[[str], Unused], path: str, excinfo: tuple[type[Exception], Exception, TracebackType]
-) -> None: ...
-def remove_readonly_exc(func: Callable[[str], Unused], path: str, exc: Exception) -> None: ...
 
 class bdist_wheel(Command):
     description: ClassVar[str]
@@ -30,15 +23,15 @@ class bdist_wheel(Command):
     boolean_options: ClassVar[list[str]]
 
     bdist_dir: str | None
-    data_dir: Incomplete | None
+    data_dir: str
     plat_name: str | None
-    plat_tag: Incomplete | None
+    plat_tag: str | None
     format: str
     keep_temp: bool
     dist_dir: str | None
-    egginfo_dir: Incomplete | None
+    egginfo_dir: str | None
     root_is_pure: bool | None
-    skip_build: Incomplete | None
+    skip_build: bool
     relative: bool
     owner: Incomplete | None
     group: Incomplete | None

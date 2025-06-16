@@ -1,60 +1,142 @@
-from _typeshed import Incomplete
+import random
 from abc import abstractmethod
-from collections.abc import MutableMapping
-from typing import Any
+from collections.abc import Callable, Iterator, MutableMapping, Sequence
+from typing import Any, Final, Literal, overload
+from typing_extensions import Self, TypeAlias
 
 class SequenceGenerator:
-    length: Any
+    length: int | None
     requested_entropy: str
-    rng: Any
+    rng: random.Random
     @property
     @abstractmethod
     def symbol_count(self) -> int: ...
-    def __init__(
-        self, entropy: Incomplete | None = None, length: Incomplete | None = None, rng: Incomplete | None = None, **kwds
-    ) -> None: ...
+    def __init__(self, entropy: int | None = None, length: int | None = None, rng: random.Random | None = None) -> None: ...
     @property
     def entropy_per_symbol(self) -> float: ...
     @property
     def entropy(self) -> float: ...
-    def __next__(self) -> None: ...
-    def __call__(self, returns: Incomplete | None = None): ...
-    def __iter__(self): ...
+    def __next__(self) -> str: ...
+    @overload
+    def __call__(self, returns: None = None) -> str: ...
+    @overload
+    def __call__(self, returns: int) -> list[str]: ...
+    @overload
+    def __call__(self, returns: Callable[[Any], Iterator[Any]]) -> Iterator[str]: ...  # "returns" must be the "iter" builtin
+    def __iter__(self) -> Self: ...
 
-default_charsets: Any
+_Charset: TypeAlias = Literal["ascii_72", "ascii_62", "ascii_50", "hex"]
+default_charsets: Final[dict[_Charset, str]]
 
 class WordGenerator(SequenceGenerator):
-    charset: str
-    chars: Any
-    def __init__(self, chars: Incomplete | None = None, charset: Incomplete | None = None, **kwds) -> None: ...
-    @property
-    def symbol_count(self): ...
-    def __next__(self): ...
-
-def genword(entropy: Incomplete | None = None, length: Incomplete | None = None, returns: Incomplete | None = None, **kwds): ...
-
-class WordsetDict(MutableMapping[Any, Any]):
-    paths: Any
-    def __init__(self, *args, **kwds) -> None: ...
-    def __getitem__(self, key): ...
-    def set_path(self, key, path) -> None: ...
-    def __setitem__(self, key, value) -> None: ...
-    def __delitem__(self, key) -> None: ...
-    def __iter__(self): ...
-    def __len__(self) -> int: ...
-    def __contains__(self, key): ...
-
-default_wordsets: Any
-
-class PhraseGenerator(SequenceGenerator):
-    wordset: str
-    words: Any
-    sep: str
+    charset: _Charset
+    chars: str | bytes | None
     def __init__(
-        self, wordset: Incomplete | None = None, words: Incomplete | None = None, sep: Incomplete | None = None, **kwds
+        self,
+        chars: str | bytes | None = None,
+        charset: _Charset | None = None,
+        *,
+        entropy: int | None = None,
+        length: int | None = None,
+        rng: random.Random | None = None,
     ) -> None: ...
     @property
-    def symbol_count(self): ...
-    def __next__(self): ...
+    def symbol_count(self) -> int: ...
 
-def genphrase(entropy: Incomplete | None = None, length: Incomplete | None = None, returns: Incomplete | None = None, **kwds): ...
+@overload
+def genword(
+    entropy: int | None = None,
+    length: int | None = None,
+    returns: None = None,
+    *,
+    chars: str | None = None,
+    charset: _Charset | None = None,
+    rng: random.Random | None = None,
+) -> str: ...
+@overload
+def genword(
+    returns: int,
+    entropy: int | None = None,
+    length: int | None = None,
+    *,
+    chars: str | None = None,
+    charset: _Charset | None = None,
+    rng: random.Random | None = None,
+) -> list[str]: ...
+@overload
+def genword(
+    returns: Callable[[Any], Iterator[Any]],
+    entropy: int | None = None,
+    length: int | None = None,
+    *,
+    chars: str | None = None,
+    charset: _Charset | None = None,
+    rng: random.Random | None = None,
+) -> Iterator[str]: ...
+
+class WordsetDict(MutableMapping[Any, Any]):
+    paths: dict[str, str] | None
+    def __init__(self, *args, **kwds) -> None: ...
+    def __getitem__(self, key: str) -> tuple[str | bytes, ...]: ...
+    def set_path(self, key: str, path: str) -> None: ...
+    def __setitem__(self, key: str, value: tuple[str | bytes, ...]) -> None: ...
+    def __delitem__(self, key: str) -> None: ...
+    def __iter__(self) -> Iterator[str]: ...
+    def __len__(self) -> int: ...
+    def __contains__(self, key: object) -> bool: ...
+
+default_wordsets: WordsetDict
+_Wordset: TypeAlias = Literal["eff_long", "eff_short", "eff_prefixed", "bip39"]
+
+class PhraseGenerator(SequenceGenerator):
+    wordset: _Wordset
+    words: Sequence[str | bytes] | None
+    sep: str | None
+    def __init__(
+        self,
+        wordset: _Wordset | None = None,
+        words: Sequence[str | bytes] | None = None,
+        sep: str | bytes | None = None,
+        *,
+        entropy: int | None = None,
+        length: int | None = None,
+        rng: random.Random | None = None,
+    ) -> None: ...
+    @property
+    def symbol_count(self) -> int: ...
+
+@overload
+def genphrase(
+    entropy: int | None = None,
+    length: int | None = None,
+    returns: None = None,
+    *,
+    wordset: _Wordset | None = None,
+    words: Sequence[str | bytes] | None = None,
+    sep: str | bytes | None = None,
+    rng: random.Random | None = None,
+) -> str: ...
+@overload
+def genphrase(
+    returns: int,
+    entropy: int | None = None,
+    length: int | None = None,
+    *,
+    wordset: _Wordset | None = None,
+    words: Sequence[str | bytes] | None = None,
+    sep: str | bytes | None = None,
+    rng: random.Random | None = None,
+) -> list[str]: ...
+@overload
+def genphrase(
+    returns: Callable[[Any], Iterator[Any]],
+    entropy: int | None = None,
+    length: int | None = None,
+    *,
+    wordset: _Wordset | None = None,
+    words: Sequence[str | bytes] | None = None,
+    sep: str | bytes | None = None,
+    rng: random.Random | None = None,
+) -> Iterator[str]: ...
+
+__all__ = ["genword", "default_charsets", "genphrase", "default_wordsets"]

@@ -1,4 +1,4 @@
-from _typeshed import _BufferWithLen
+from _typeshed import SizedBuffer
 from socket import socket
 from typing import Literal, TypeVar, overload
 
@@ -16,7 +16,7 @@ class bytesview:
     @overload
     def __init__(self, data: bytes | bytesview, offset: int, size: int) -> None: ...
     @overload
-    def __init__(self, data: _BufferWithLen, offset: int = 0, size: int | None = None) -> None: ...
+    def __init__(self, data: SizedBuffer, offset: int = 0, size: int | None = None) -> None: ...
     @overload
     def __getitem__(self, key: slice) -> bytes: ...
     @overload

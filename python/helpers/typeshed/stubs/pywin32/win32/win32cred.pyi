@@ -5,6 +5,7 @@ def CredUnmarshalCredential(MarshaledCredential: str) -> tuple[Incomplete, str]:
 def CredIsMarshaledCredential(MarshaledCredential: str) -> bool: ...
 def CredEnumerate(Filter: str | None = ..., Flags: int = ...) -> tuple[dict[str, Incomplete], ...]: ...
 def CredGetTargetInfo(TargetName: str, Flags: int = ...): ...
+def CredGetSessionTypes(MaximumPersistCount: int = 7) -> tuple[int, ...]: ...
 def CredWriteDomainCredentials(TargetInfo, Credential, Flags: int = ...) -> None: ...
 def CredReadDomainCredentials(TargetInfo, Flags: int = ...) -> tuple[Incomplete, ...]: ...
 def CredDelete(TargetName: str, Type, Flags: int = ...) -> None: ...
@@ -54,6 +55,7 @@ CREDUI_MAX_PASSWORD_LENGTH: int
 CREDUI_MAX_USERNAME_LENGTH: int
 CRED_ALLOW_NAME_RESOLUTION: int
 CRED_CACHE_TARGET_INFORMATION: int
+CRED_ENUMERATE_ALL_CREDENTIALS: int
 CRED_FLAGS_OWF_CRED_BLOB: int
 CRED_FLAGS_PASSWORD_FOR_CERT: int
 CRED_FLAGS_PROMPT_NOW: int
@@ -78,8 +80,12 @@ CRED_TI_USERNAME_TARGET: int
 CRED_TI_VALID_FLAGS: int
 CRED_TI_WORKGROUP_MEMBER: int
 CRED_TYPE_DOMAIN_CERTIFICATE: int
+CRED_TYPE_DOMAIN_EXTENDED: int
 CRED_TYPE_DOMAIN_PASSWORD: int
 CRED_TYPE_DOMAIN_VISIBLE_PASSWORD: int
 CRED_TYPE_GENERIC: int
+CRED_TYPE_GENERIC_CERTIFICATE: int
+CRED_TYPE_MAXIMUM: int
+CRED_TYPE_MAXIMUM_EX: int
 CertCredential: int
 UsernameTargetCredential: int

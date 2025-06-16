@@ -1,4 +1,4 @@
-version = "1.15.*"
+version = "1.16.*"
 upstream_repository = "https://github.com/asottile/flake8-typing-imports"
 partial_stub = true
 

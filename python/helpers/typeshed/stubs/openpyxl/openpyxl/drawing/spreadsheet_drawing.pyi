@@ -49,7 +49,7 @@ class _AnchorBase(Serialisable):
         graphicFrame: GraphicFrame | None = None,
         cxnSp: Shape | None = None,
         pic: PictureFrame | None = None,
-        contentPart: Incomplete | None = None,
+        contentPart=None,
     ) -> None: ...
 
 class AbsoluteAnchor(_AnchorBase):

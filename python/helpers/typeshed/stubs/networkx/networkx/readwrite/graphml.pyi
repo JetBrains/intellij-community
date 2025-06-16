@@ -2,7 +2,7 @@ from _typeshed import Incomplete
 from collections.abc import Generator
 from typing import Final
 
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
 
 __all__ = [
     "write_graphml",
@@ -22,7 +22,7 @@ def write_graphml_xml(
     prettyprint: bool = True,
     infer_numeric_types: bool = False,
     named_key_ids: bool = False,
-    edge_id_from_attribute: Incomplete | None = None,
+    edge_id_from_attribute=None,
 ) -> None: ...
 def write_graphml_lxml(
     G,
@@ -31,18 +31,14 @@ def write_graphml_lxml(
     prettyprint: bool = True,
     infer_numeric_types: bool = False,
     named_key_ids: bool = False,
-    edge_id_from_attribute: Incomplete | None = None,
+    edge_id_from_attribute=None,
 ): ...
 def generate_graphml(
-    G,
-    encoding: str = "utf-8",
-    prettyprint: bool = True,
-    named_key_ids: bool = False,
-    edge_id_from_attribute: Incomplete | None = None,
+    G, encoding: str = "utf-8", prettyprint: bool = True, named_key_ids: bool = False, edge_id_from_attribute=None
 ) -> Generator[Incomplete, Incomplete, None]: ...
-@_dispatch
+@_dispatchable
 def read_graphml(path, node_type=..., edge_key_type=..., force_multigraph: bool = False): ...
-@_dispatch
+@_dispatchable
 def parse_graphml(graphml_string, node_type=..., edge_key_type=..., force_multigraph: bool = False): ...
 
 class GraphML:
@@ -69,16 +65,16 @@ class GraphMLWriter(GraphML):
     attribute_types: Incomplete
     def __init__(
         self,
-        graph: Incomplete | None = None,
+        graph=None,
         encoding: str = "utf-8",
         prettyprint: bool = True,
         infer_numeric_types: bool = False,
         named_key_ids: bool = False,
-        edge_id_from_attribute: Incomplete | None = None,
+        edge_id_from_attribute=None,
     ) -> None: ...
     def attr_type(self, name, scope, value): ...
     def get_key(self, name, attr_type, scope, default): ...
-    def add_data(self, name, element_type, value, scope: str = "all", default: Incomplete | None = None): ...
+    def add_data(self, name, element_type, value, scope: str = "all", default=None): ...
     def add_attributes(self, scope, xml_obj, data, default) -> None: ...
     def add_nodes(self, G, graph_element) -> None: ...
     def add_edges(self, G, graph_element) -> None: ...
@@ -104,16 +100,16 @@ class GraphMLWriterLxml(GraphMLWriter):
     def __init__(
         self,
         path,
-        graph: Incomplete | None = None,
+        graph=None,
         encoding: str = "utf-8",
         prettyprint: bool = True,
         infer_numeric_types: bool = False,
         named_key_ids: bool = False,
-        edge_id_from_attribute: Incomplete | None = None,
+        edge_id_from_attribute=None,
     ) -> None: ...
     def add_graph_element(self, G) -> None: ...
     def add_attributes(self, scope, xml_obj, data, default) -> None: ...
-    def dump(self) -> None: ...  # type: ignore[override]  # This incompatible signature is an actual issue in networkx
+    def dump(self, stream=None) -> None: ...
 
 write_graphml = write_graphml_lxml
 
@@ -124,8 +120,8 @@ class GraphMLReader(GraphML):
     edge_ids: Incomplete
     def __init__(self, node_type=..., edge_key_type=..., force_multigraph: bool = False) -> None: ...
     xml: Incomplete
-    def __call__(self, path: Incomplete | None = None, string: Incomplete | None = None) -> Generator[Incomplete, None, None]: ...
-    def make_graph(self, graph_xml, graphml_keys, defaults, G: Incomplete | None = None): ...
+    def __call__(self, path=None, string=None) -> Generator[Incomplete, None, None]: ...
+    def make_graph(self, graph_xml, graphml_keys, defaults, G=None): ...
     def add_node(self, G, node_xml, graphml_keys, defaults) -> None: ...
     def add_edge(self, G, edge_element, graphml_keys) -> None: ...
     def decode_data_elements(self, graphml_keys, obj_xml): ...

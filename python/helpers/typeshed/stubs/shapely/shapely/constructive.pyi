@@ -12,30 +12,34 @@ __all__ = [
     "BufferJoinStyle",
     "boundary",
     "buffer",
-    "offset_curve",
+    "build_area",
     "centroid",
     "clip_by_rect",
     "concave_hull",
+    "constrained_delaunay_triangles",
     "convex_hull",
     "delaunay_triangles",
-    "segmentize",
     "envelope",
     "extract_unique_points",
-    "build_area",
     "make_valid",
-    "normalize",
+    "maximum_inscribed_circle",
+    "minimum_bounding_circle",
+    "minimum_clearance_line",
+    "minimum_rotated_rectangle",
     "node",
+    "normalize",
+    "offset_curve",
+    "orient_polygons",
+    "oriented_envelope",
     "point_on_surface",
     "polygonize",
     "polygonize_full",
     "remove_repeated_points",
     "reverse",
+    "segmentize",
     "simplify",
     "snap",
     "voronoi_polygons",
-    "oriented_envelope",
-    "minimum_rotated_rectangle",
-    "minimum_bounding_circle",
 ]
 
 class BufferCapStyle(ParamEnum):
@@ -229,6 +233,14 @@ def delaunay_triangles(
     geometry: OptGeoArrayLikeSeq, tolerance: ArrayLike[float] = 0.0, only_edges: ArrayLike[bool] = False, **kwargs
 ) -> GeoArray: ...
 @overload
+def constrained_delaunay_triangles(geometry: Geometry, **kwargs) -> GeometryCollection: ...
+@overload
+def constrained_delaunay_triangles(geometry: None, **kwargs) -> None: ...
+@overload
+def constrained_delaunay_triangles(geometry: Geometry | None, **kwargs) -> GeometryCollection | None: ...
+@overload
+def constrained_delaunay_triangles(geometry: OptGeoArrayLikeSeq | OptGeoArrayLike, **kwargs) -> GeoArray: ...
+@overload
 def envelope(geometry: Point, **kwargs) -> Point: ...
 @overload
 def envelope(geometry: Geometry, **kwargs) -> BaseGeometry: ...
@@ -254,14 +266,48 @@ def build_area(geometry: None, **kwargs) -> None: ...
 def build_area(geometry: Geometry | None, **kwargs) -> BaseGeometry | None: ...
 @overload
 def build_area(geometry: OptGeoArrayLikeSeq, **kwargs) -> GeoArray: ...
+
+# make_valid with `method="linework"` only accepts `keep_collapsed=True`
 @overload
-def make_valid(geometry: Geometry, **kwargs) -> BaseGeometry: ...
+def make_valid(
+    geometry: Geometry, *, method: Literal["linework"] = "linework", keep_collapsed: Literal[True] = True, **kwargs
+) -> BaseGeometry: ...
 @overload
-def make_valid(geometry: None, **kwargs) -> None: ...
+def make_valid(
+    geometry: None, *, method: Literal["linework"] = "linework", keep_collapsed: Literal[True] = True, **kwargs
+) -> None: ...
 @overload
-def make_valid(geometry: Geometry | None, **kwargs) -> BaseGeometry | None: ...
+def make_valid(
+    geometry: Geometry | None, *, method: Literal["linework"] = "linework", keep_collapsed: Literal[True] = True, **kwargs
+) -> BaseGeometry | None: ...
 @overload
-def make_valid(geometry: OptGeoArrayLikeSeq, **kwargs) -> GeoArray: ...
+def make_valid(
+    geometry: OptGeoArrayLikeSeq, *, method: Literal["linework"] = "linework", keep_collapsed: Literal[True] = True, **kwargs
+) -> GeoArray: ...
+@overload
+def make_valid(geometry: Geometry, *, method: Literal["structure"], keep_collapsed: bool = True, **kwargs) -> BaseGeometry: ...
+@overload
+def make_valid(geometry: None, *, method: Literal["structure"], keep_collapsed: bool = True, **kwargs) -> None: ...
+@overload
+def make_valid(
+    geometry: Geometry | None, *, method: Literal["structure"], keep_collapsed: bool = True, **kwargs
+) -> BaseGeometry | None: ...
+@overload
+def make_valid(
+    geometry: OptGeoArrayLikeSeq, *, method: Literal["structure"], keep_collapsed: bool = True, **kwargs
+) -> GeoArray: ...
+@overload
+def minimum_clearance_line(geometry: Point, **kwargs) -> Point: ...
+@overload
+def minimum_clearance_line(geometry: LineString | Polygon | BaseMultipartGeometry, **kwargs) -> Polygon: ...
+@overload
+def minimum_clearance_line(geometry: Geometry, **kwargs) -> Polygon | Point: ...
+@overload
+def minimum_clearance_line(geometry: None, **kwargs) -> None: ...
+@overload
+def minimum_clearance_line(geometry: Geometry | None, **kwargs) -> Polygon | Point | None: ...
+@overload
+def minimum_clearance_line(geometry: OptGeoArrayLikeSeq, **kwargs) -> GeoArray: ...
 @overload
 def normalize(geometry: OptGeoT, **kwargs) -> OptGeoT: ...
 @overload
@@ -335,27 +381,53 @@ def snap(geometry: OptGeoArrayLike, reference: OptGeoArrayLikeSeq, tolerance: Ar
 def snap(geometry: OptGeoArrayLike, reference: OptGeoArrayLike, tolerance: ArrayLikeSeq[float], **kwargs) -> GeoArray: ...
 @overload
 def voronoi_polygons(
-    geometry: Geometry, tolerance: float = 0.0, extend_to: Geometry | None = None, only_edges: Literal[False] = False, **kwargs
+    geometry: Geometry,
+    tolerance: float = 0.0,
+    extend_to: Geometry | None = None,
+    only_edges: Literal[False] = False,
+    ordered: bool = False,
+    **kwargs,
 ) -> GeometryCollection[Polygon]: ...
 @overload
 def voronoi_polygons(
-    geometry: Geometry, tolerance: float, extend_to: Geometry | None, only_edges: Literal[True], **kwargs
+    geometry: Geometry, tolerance: float, extend_to: Geometry | None, only_edges: Literal[True], ordered: bool = False, **kwargs
 ) -> LineString | MultiLineString: ...
 @overload
 def voronoi_polygons(
-    geometry: Geometry, tolerance: float = 0.0, extend_to: Geometry | None = None, *, only_edges: Literal[True], **kwargs
+    geometry: Geometry,
+    tolerance: float = 0.0,
+    extend_to: Geometry | None = None,
+    *,
+    only_edges: Literal[True],
+    ordered: bool = False,
+    **kwargs,
 ) -> LineString | MultiLineString: ...
 @overload
 def voronoi_polygons(
-    geometry: Geometry, tolerance: float = 0.0, extend_to: Geometry | None = None, only_edges: bool = False, **kwargs
+    geometry: Geometry,
+    tolerance: float = 0.0,
+    extend_to: Geometry | None = None,
+    only_edges: bool = False,
+    ordered: bool = False,
+    **kwargs,
 ) -> GeometryCollection[Polygon] | LineString | MultiLineString: ...
 @overload
 def voronoi_polygons(
-    geometry: None, tolerance: float = 0.0, extend_to: Geometry | None = None, only_edges: bool = False, **kwargs
+    geometry: None,
+    tolerance: float = 0.0,
+    extend_to: Geometry | None = None,
+    only_edges: bool = False,
+    ordered: bool = False,
+    **kwargs,
 ) -> None: ...
 @overload
 def voronoi_polygons(
-    geometry: Geometry | None, tolerance: float = 0.0, extend_to: Geometry | None = None, only_edges: bool = False, **kwargs
+    geometry: Geometry | None,
+    tolerance: float = 0.0,
+    extend_to: Geometry | None = None,
+    only_edges: bool = False,
+    ordered: bool = False,
+    **kwargs,
 ) -> GeometryCollection[Polygon] | LineString | MultiLineString | None: ...
 @overload
 def voronoi_polygons(
@@ -363,6 +435,7 @@ def voronoi_polygons(
     tolerance: ArrayLike[float] = 0.0,
     extend_to: OptGeoArrayLike = None,
     only_edges: ArrayLike[bool] = False,
+    ordered: bool = False,
     **kwargs,
 ) -> GeoArray: ...
 @overload
@@ -371,6 +444,7 @@ def voronoi_polygons(
     tolerance: ArrayLikeSeq[float],
     extend_to: OptGeoArrayLike = None,
     only_edges: ArrayLike[bool] = False,
+    ordered: bool = False,
     **kwargs,
 ) -> GeoArray: ...
 @overload
@@ -379,6 +453,7 @@ def voronoi_polygons(
     tolerance: ArrayLike[float],
     extend_to: OptGeoArrayLikeSeq,
     only_edges: ArrayLike[bool] = False,
+    ordered: bool = False,
     **kwargs,
 ) -> GeoArray: ...
 @overload
@@ -388,11 +463,17 @@ def voronoi_polygons(
     *,
     extend_to: OptGeoArrayLikeSeq,
     only_edges: ArrayLike[bool] = False,
+    ordered: bool = False,
     **kwargs,
 ) -> GeoArray: ...
 @overload
 def voronoi_polygons(
-    geometry: OptGeoArrayLike, tolerance: ArrayLike[float], extend_to: OptGeoArrayLike, only_edges: ArrayLikeSeq[bool], **kwargs
+    geometry: OptGeoArrayLike,
+    tolerance: ArrayLike[float],
+    extend_to: OptGeoArrayLike,
+    only_edges: ArrayLikeSeq[bool],
+    ordered: bool = False,
+    **kwargs,
 ) -> GeoArray: ...
 @overload
 def voronoi_polygons(
@@ -401,6 +482,7 @@ def voronoi_polygons(
     extend_to: OptGeoArrayLike = None,
     *,
     only_edges: ArrayLikeSeq[bool],
+    ordered: bool = False,
     **kwargs,
 ) -> GeoArray: ...
 @overload
@@ -428,3 +510,27 @@ def minimum_bounding_circle(geometry: None, **kwargs) -> None: ...
 def minimum_bounding_circle(geometry: Geometry | None, **kwargs) -> Polygon | Point | None: ...
 @overload
 def minimum_bounding_circle(geometry: OptGeoArrayLikeSeq, **kwargs) -> GeoArray: ...
+@overload
+def maximum_inscribed_circle(geometry: Point, tolerance: float | None = None, **kwargs) -> Point: ...
+@overload
+def maximum_inscribed_circle(
+    geometry: LineString | Polygon | BaseMultipartGeometry, tolerance: float | None = None, **kwargs
+): ...
+@overload
+def maximum_inscribed_circle(geometry: Geometry, tolerance: float | None = None, **kwargs) -> Polygon | Point: ...
+@overload
+def maximum_inscribed_circle(geometry: None, tolerance: float | None = None, **kwargs) -> None: ...
+@overload
+def maximum_inscribed_circle(geometry: Geometry | None, tolerance: float | None = None, **kwargs) -> Polygon | Point | None: ...
+@overload
+def maximum_inscribed_circle(geometry: OptGeoArrayLikeSeq, tolerance: ArrayLike[float] | None = None, **kwargs) -> GeoArray: ...
+@overload
+def orient_polygons(geometry: Point, *, exterior_cw: bool = False, **kwargs) -> Point: ...
+@overload
+def orient_polygons(geometry: Geometry, *, exterior_cw: bool = False, **kwargs) -> BaseGeometry: ...
+@overload
+def orient_polygons(geometry: None, *, exterior_cw: bool = False, **kwargs) -> None: ...
+@overload
+def orient_polygons(geometry: Geometry | None, *, exterior_cw: bool = False, **kwargs) -> BaseGeometry | None: ...
+@overload
+def orient_polygons(geometry: OptGeoArrayLikeSeq, *, exterior_cw: bool = False, **kwargs) -> GeoArray: ...

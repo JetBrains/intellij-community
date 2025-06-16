@@ -1,5 +1,7 @@
-from _typeshed import Incomplete
+from _typeshed import Incomplete, ReadableBuffer, StrOrBytesPath
 from typing import Final, NamedTuple
+from typing_extensions import Self
+from weakref import WeakKeyDictionary
 
 from reportlab.pdfbase import pdfdoc, pdfmetrics
 
@@ -7,25 +9,25 @@ __version__: Final[str]
 
 class TTFError(pdfdoc.PDFError): ...
 
-def SUBSETN(n, table=...): ...
-def makeToUnicodeCMap(fontname, subset): ...
+def SUBSETN(n, table: ReadableBuffer | None = ...) -> bytes: ...
+def makeToUnicodeCMap(fontname: str, subset) -> str: ...
 def splice(stream, offset, value): ...
 
-GF_ARG_1_AND_2_ARE_WORDS: Incomplete
-GF_ARGS_ARE_XY_VALUES: Incomplete
-GF_ROUND_XY_TO_GRID: Incomplete
-GF_WE_HAVE_A_SCALE: Incomplete
-GF_RESERVED: Incomplete
-GF_MORE_COMPONENTS: Incomplete
-GF_WE_HAVE_AN_X_AND_Y_SCALE: Incomplete
-GF_WE_HAVE_A_TWO_BY_TWO: Incomplete
-GF_WE_HAVE_INSTRUCTIONS: Incomplete
-GF_USE_MY_METRICS: Incomplete
-GF_OVERLAP_COMPOUND: Incomplete
-GF_SCALED_COMPONENT_OFFSET: Incomplete
-GF_UNSCALED_COMPONENT_OFFSET: Incomplete
+GF_ARG_1_AND_2_ARE_WORDS: Final = 1
+GF_ARGS_ARE_XY_VALUES: Final = 2
+GF_ROUND_XY_TO_GRID: Final = 4
+GF_WE_HAVE_A_SCALE: Final = 8
+GF_RESERVED: Final = 16
+GF_MORE_COMPONENTS: Final = 32
+GF_WE_HAVE_AN_X_AND_Y_SCALE: Final = 64
+GF_WE_HAVE_A_TWO_BY_TWO: Final = 128
+GF_WE_HAVE_INSTRUCTIONS: Final = 256
+GF_USE_MY_METRICS: Final = 512
+GF_OVERLAP_COMPOUND: Final = 1024
+GF_SCALED_COMPONENT_OFFSET: Final = 2048
+GF_UNSCALED_COMPONENT_OFFSET: Final = 4096
 
-def TTFOpenFile(fn): ...
+def TTFOpenFile(fn: StrOrBytesPath) -> tuple[StrOrBytesPath,]: ...
 
 class TTFontParser:
     ttfVersions: Incomplete
@@ -135,16 +137,50 @@ class TTFont:
         internalName: Incomplete
         frozen: int
         subsets: Incomplete
-        def __init__(self, asciiReadable: Incomplete | None = None, ttf: Incomplete | None = None) -> None: ...
+        def __init__(self, asciiReadable=None, ttf=None) -> None: ...
 
-    fontName: Incomplete
-    face: Incomplete
-    encoding: Incomplete
-    state: Incomplete
+    fontName: str
+    face: TTFontFace
+    encoding: TTEncoding
+    state: WeakKeyDictionary[Incomplete, State]
     def __init__(
-        self, name, filename, validate: int = 0, subfontIndex: int = 0, asciiReadable: Incomplete | None = None
+        self,
+        name: str,
+        filename,
+        validate: int = 0,
+        subfontIndex: int = 0,
+        asciiReadable: int | None = None,
+        shapable: bool = True,
     ) -> None: ...
     def stringWidth(self, text, size, encoding: str = "utf8"): ...
     def splitString(self, text, doc, encoding: str = "utf-8"): ...
     def getSubsetInternalName(self, subset, doc): ...
     def addObjects(self, doc) -> None: ...
+    @property
+    def hbFace(self) -> Incomplete | None: ...
+    def hbFont(self, fontSize: float = 10): ...
+    @property
+    def shapable(self) -> bool: ...
+    @shapable.setter
+    def shapable(self, v) -> None: ...
+    def pdfScale(self, v): ...
+    def unregister(self) -> None: ...
+
+class ShapedFragWord(list[Incomplete]): ...
+
+class ShapeData(NamedTuple):
+    cluster: int
+    x_advance: float
+    y_advance: float
+    x_offset: float
+    y_offset: float
+    width: float
+
+class ShapedStr(str):
+    def __new__(cls, s, shapeData: ShapeData | None = None) -> Self: ...
+    def __radd__(self, other) -> Self: ...
+
+def shapeStr(s: str, fontName: str, fontSize: float, force: bool = False): ...
+def freshTTFont(ttfn, ttfpath, **kwds) -> TTFont: ...
+def makeShapedFragWord(w, K: list[Incomplete] = [], V: list[Incomplete] = []) -> type[ShapedFragWord]: ...
+def shapeFragWord(w, features=..., force: bool = False): ...

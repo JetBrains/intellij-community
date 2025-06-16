@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from _csv import (
     QUOTE_ALL as QUOTE_ALL,
     QUOTE_MINIMAL as QUOTE_MINIMAL,

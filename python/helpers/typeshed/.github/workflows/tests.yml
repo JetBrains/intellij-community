@@ -29,40 +29,40 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - run: uv pip install -r requirements-tests.txt --system
       - run: python ./tests/check_typeshed_structure.py
 
   pytype:
-    name: Run pytype against the stubs
+    name: "pytype: Check stubs"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          # Max supported Python version as of pytype 2024.2.27.
-          python-version: "3.11"
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+          # Max supported Python version as of pytype 2024.10.11
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
       - run: uv pip install -r requirements-tests.txt --system
       - name: Install external dependencies for 3rd-party stubs
         run: |
-          DEPENDENCIES=$(python tests/get_external_stub_requirements.py)
+          DEPENDENCIES=$( python tests/get_external_stub_requirements.py )
           if [ -n "$DEPENDENCIES" ]; then
-            echo "Installing packages: $DEPENDENCIES"
-            uv pip install $DEPENDENCIES --system
+              printf "Installing packages:\n  $(echo $DEPENDENCIES | sed 's/ /\n  /g')\n"
+              uv pip install --system $DEPENDENCIES
           fi
       - run: uv pip freeze
       - run: ./tests/pytype_test.py --print-stderr
 
   mypy:
-    name: Run mypy against the stubs
+    name: "mypy: Check stubs"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         platform: ["linux", "win32", "darwin"]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
+        # TODO (2025-05-10) "3.13.2" should be "3.14-dev", see below.
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.13.2"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -71,30 +71,29 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - run: uv pip install -r requirements-tests.txt --system
-      - run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
-
-  # Run this as a separate job, as the other versions in the matrix are
-  # (and should be) run *using* the Python version we're testing the stubs for,
-  # but we can't install all our non-types dependencies on py313 yet
-  mypy-313:
-    name: Run mypy against the 3.13 stubs
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        platform: ["linux", "win32", "darwin"]
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.12
-          allow-prereleases: true
-      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - run: uv pip install -r requirements-tests.txt --system
-      - run: python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=3.13
+      - name: Install required APT packages
+        run: |
+          sudo apt-get update -qy
+          DEPENDENCIES=$( python tests/get_external_apt_dependencies.py )
+          if [ -n "$DEPENDENCIES" ]; then
+              printf "Installing APT packages:\n  $(echo $DEPENDENCIES | sed 's/ /\n  /g')\n"
+              sudo apt-get install -qy $DEPENDENCIES
+          fi
+      - name: Run mypy_test.py
+        run: |
+          # TODO: (2025-05-10) This is a bad hack to work around mypy crashing
+          # when running on Python 3.14. See https://github.com/python/mypy/pull/19020.
+          if [[ "${{ matrix.python-version }}" == "3.13.2" ]]; then
+              MYPY_PY_VERSION="3.14"
+          else
+            # python-version can sometimes be pinned to a specific version or to "-dev", but
+            # mypy understands only X.Y version numbers.
+            MYPY_PY_VERSION=$(echo ${{ matrix.python-version }} | cut -d - -f 1 | cut -d . -f 1-2)
+          fi
+          python ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${MYPY_PY_VERSION}
 
   regression-tests:
-    name: Run mypy on the test cases
+    name: "mypy: Run test cases"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -108,32 +107,38 @@ jobs:
       - run: python ./tests/regr_test.py --all --verbosity QUIET
 
   pyright:
-    name: Test typeshed with pyright
+    name: "pyright: Run test cases"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-platform: ["Linux", "Windows", "Darwin"]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
       - name: Install typeshed test-suite requirements
         # Install these so we can run `get_external_stub_requirements.py`
         run: uv pip install -r requirements-tests.txt --system
+      - name: Install required APT packages
+        run: |
+          sudo apt-get update -qy
+          DEPENDENCIES=$( python tests/get_external_apt_dependencies.py )
+          if [ -n "$DEPENDENCIES" ]; then
+              printf "Installing APT packages:\n  $(echo $DEPENDENCIES | sed 's/ /\n  /g')\n"
+              sudo apt-get install -qy $DEPENDENCIES
+          fi
       - name: Create an isolated venv for testing
         run: uv venv .venv
       - name: Install 3rd-party stub dependencies
         run: |
-          DEPENDENCIES=$(python tests/get_external_stub_requirements.py)
+          DEPENDENCIES=$( python tests/get_external_stub_requirements.py )
           if [ -n "$DEPENDENCIES" ]; then
-            source .venv/bin/activate
-            echo "Installing packages: $DEPENDENCIES"
-            uv pip install $DEPENDENCIES
+              printf "Installing packages:\n  $(echo $DEPENDENCIES | sed 's/ /\n  /g')\n"
+              uv pip install --python-version ${{ matrix.python-version }} $DEPENDENCIES
           fi
       - name: Activate the isolated venv for the rest of the job
         run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
@@ -145,14 +150,14 @@ jobs:
           version: PATH
           python-platform: ${{ matrix.python-platform }}
           python-version: ${{ matrix.python-version }}
-          annotate: ${{ matrix.python-version == '3.12' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
+          annotate: ${{ matrix.python-version == '3.13' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
       - name: Run pyright with stricter settings on some of the stubs
         uses: jakebailey/pyright-action@v2
         with:
           version: PATH
           python-platform: ${{ matrix.python-platform }}
           python-version: ${{ matrix.python-version }}
-          annotate: ${{ matrix.python-version == '3.12' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
+          annotate: ${{ matrix.python-version == '3.13' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
           project: ./pyrightconfig.stricter.json
       - name: Run pyright on the test cases
         uses: jakebailey/pyright-action@v2
@@ -160,11 +165,11 @@ jobs:
           version: PATH
           python-platform: ${{ matrix.python-platform }}
           python-version: ${{ matrix.python-version }}
-          annotate: ${{ matrix.python-version == '3.12' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
+          annotate: ${{ matrix.python-version == '3.13' && matrix.python-platform == 'Linux' }} # Having each job create the same comment is too noisy.
           project: ./pyrightconfig.testcases.json
 
   stub-uploader:
-    name: Run the stub_uploader tests
+    name: stub_uploader tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout typeshed
@@ -178,9 +183,9 @@ jobs:
           path: stub_uploader
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+          # Keep in sync with stub_uploader's check_scripts.yml workflow.
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v6
       - name: Run tests
         run: |
           cd stub_uploader

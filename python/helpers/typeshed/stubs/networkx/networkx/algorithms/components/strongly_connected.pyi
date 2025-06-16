@@ -1,18 +1,24 @@
-from collections.abc import Generator, Hashable, Iterable
+from collections.abc import Generator
 
 from networkx.classes.digraph import DiGraph
 from networkx.classes.graph import Graph, _Node
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
+__all__ = [
+    "number_strongly_connected_components",
+    "strongly_connected_components",
+    "is_strongly_connected",
+    "kosaraju_strongly_connected_components",
+    "condensation",
+]
+
+@_dispatchable
 def strongly_connected_components(G: Graph[_Node]) -> Generator[set[_Node], None, None]: ...
-@_dispatch
-def kosaraju_strongly_connected_components(G: Graph[_Node], source: _Node | None = None) -> Generator[set[_Node], None, None]: ...
-@_dispatch
-def strongly_connected_components_recursive(G: Graph[_Node]) -> Generator[set[_Node], None, None]: ...
-@_dispatch
-def number_strongly_connected_components(G: Graph[Hashable]) -> int: ...
-@_dispatch
-def is_strongly_connected(G: Graph[Hashable]) -> bool: ...
-@_dispatch
-def condensation(G: DiGraph[_Node], scc: Iterable[Iterable[_Node]] | None = None) -> DiGraph[int]: ...
+@_dispatchable
+def kosaraju_strongly_connected_components(G: Graph[_Node], source=None) -> Generator[set[_Node], None, None]: ...
+@_dispatchable
+def number_strongly_connected_components(G: Graph[_Node]) -> int: ...
+@_dispatchable
+def is_strongly_connected(G: Graph[_Node]) -> bool: ...
+@_dispatchable
+def condensation(G: DiGraph[_Node], scc=None) -> DiGraph[int]: ...

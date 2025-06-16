@@ -1,6 +1,8 @@
 AdpcmState = tuple[int, int]
 RatecvState = tuple[int, tuple[tuple[int, int], ...]]
 
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 class error(Exception): ...
 
 def add(__fragment1: bytes, __fragment2: bytes, __width: int) -> bytes: ...

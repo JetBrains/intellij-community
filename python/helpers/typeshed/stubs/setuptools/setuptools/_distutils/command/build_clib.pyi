@@ -5,7 +5,7 @@ from typing import ClassVar
 from ..cmd import Command
 
 class build_clib(Command):
-    description: str
+    description: ClassVar[str]
     user_options: ClassVar[list[tuple[str, str, str]]]
     boolean_options: ClassVar[list[str]]
     help_options: ClassVar[list[tuple[str, str | None, str, Callable[[], Unused]]]]
@@ -16,7 +16,7 @@ class build_clib(Command):
     define: Incomplete
     undef: Incomplete
     debug: Incomplete
-    force: int
+    force: bool
     compiler: Incomplete
     def initialize_options(self) -> None: ...
     def finalize_options(self) -> None: ...

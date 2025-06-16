@@ -24,11 +24,13 @@ from typing import Annotated, Any, ClassVar, NamedTuple
 from typing_extensions import Self, TypeAlias
 
 import aiohttp
-import packaging.specifiers
 import packaging.version
-import tomli
 import tomlkit
+from packaging.specifiers import Specifier
 from termcolor import colored
+
+from ts_utils.metadata import StubMetadata, read_metadata, update_metadata
+from ts_utils.paths import STUBS_PATH, distribution_path
 
 TYPESHED_OWNER = "python"
 TYPESHED_API_URL = f"https://api.github.com/repos/{TYPESHED_OWNER}/typeshed"
@@ -54,27 +56,6 @@ class ActionLevel(enum.IntEnum):
     local = 1, "make changes that affect local repo"
     fork = 2, "make changes that affect remote repo, but won't open PRs against upstream"
     everything = 3, "do everything, e.g. open PRs"
-
-
-@dataclass
-class StubInfo:
-    distribution: str
-    version_spec: str
-    upstream_repository: str | None
-    obsolete: bool
-    no_longer_updated: bool
-
-
-def read_typeshed_stub_metadata(stub_path: Path) -> StubInfo:
-    with (stub_path / "METADATA.toml").open("rb") as f:
-        meta = tomli.load(f)
-    return StubInfo(
-        distribution=stub_path.name,
-        version_spec=meta["version"],
-        upstream_repository=meta.get("upstream_repository"),
-        obsolete="obsolete_since" in meta,
-        no_longer_updated=meta.get("no_longer_updated", False),
-    )
 
 
 @dataclass
@@ -141,20 +122,25 @@ async def fetch_pypi_info(distribution: str, session: aiohttp.ClientSession) -> 
 @dataclass
 class Update:
     distribution: str
-    stub_path: Path
-    old_version_spec: str
-    new_version_spec: str
+    old_version_spec: Specifier
+    new_version_spec: Specifier
     links: dict[str, str]
     diff_analysis: DiffAnalysis | None
 
     def __str__(self) -> str:
         return f"Updating {self.distribution} from {self.old_version_spec!r} to {self.new_version_spec!r}"
 
+    @property
+    def new_version(self) -> str:
+        if self.new_version_spec.operator == "==":
+            return str(self.new_version_spec)[2:]
+        else:
+            return str(self.new_version_spec)
+
 
 @dataclass
 class Obsolete:
     distribution: str
-    stub_path: Path
     obsolete_since_version: str
     obsolete_since_date: datetime.datetime
     links: dict[str, str]
@@ -261,12 +247,7 @@ async def find_first_release_with_py_typed(pypi_info: PypiInfo, *, session: aioh
     return first_release_with_py_typed
 
 
-def _check_spec(updated_spec: str, version: packaging.version.Version) -> str:
-    assert version in packaging.specifiers.SpecifierSet(f"=={updated_spec}"), f"{version} not in {updated_spec}"
-    return updated_spec
-
-
-def get_updated_version_spec(spec: str, version: packaging.version.Version) -> str:
+def get_updated_version_spec(spec: Specifier, version: packaging.version.Version) -> Specifier:
     """
     Given the old specifier and an updated version, returns an updated specifier that has the
     specificity of the old specifier, but matches the updated version.
@@ -278,15 +259,22 @@ def get_updated_version_spec(spec: str, version: packaging.version.Version) -> s
     spec="1.*", version="2.3.4" -> "2.*"
     spec="1.1.*", version="1.2.3" -> "1.2.*"
     spec="1.1.1.*", version="1.2.3" -> "1.2.3.*"
+    spec="~=1.0.1", version="1.0.3" -> "~=1.0.3"
+    spec="~=1.0.1", version="1.1.0" -> "~=1.1.0"
     """
-    if not spec.endswith(".*"):
-        return _check_spec(str(version), version)
-
-    specificity = spec.count(".") if spec.removesuffix(".*") else 0
-    rounded_version = version.base_version.split(".")[:specificity]
-    rounded_version.extend(["0"] * (specificity - len(rounded_version)))
-
-    return _check_spec(".".join(rounded_version) + ".*", version)
+    if spec.operator == "==" and spec.version.endswith(".*"):
+        specificity = spec.version.count(".") if spec.version.removesuffix(".*") else 0
+        rounded_version = version.base_version.split(".")[:specificity]
+        rounded_version.extend(["0"] * (specificity - len(rounded_version)))
+        updated_spec = Specifier("==" + ".".join(rounded_version) + ".*")
+    elif spec.operator == "==":
+        updated_spec = Specifier(f"=={version}")
+    elif spec.operator == "~=":
+        updated_spec = Specifier(f"~={version}")
+    else:
+        raise ValueError(f"Unsupported version operator: {spec.operator}")
+    assert version in updated_spec, f"{version} not in {updated_spec}"
+    return updated_spec
 
 
 @functools.cache
@@ -304,7 +292,7 @@ class GitHubInfo:
     tags: list[dict[str, Any]] = field(repr=False)
 
 
-async def get_github_repo_info(session: aiohttp.ClientSession, stub_info: StubInfo) -> GitHubInfo | None:
+async def get_github_repo_info(session: aiohttp.ClientSession, stub_info: StubMetadata) -> GitHubInfo | None:
     """
     If the project represented by `stub_info` is hosted on GitHub,
     return information regarding the project as it exists on GitHub.
@@ -312,7 +300,7 @@ async def get_github_repo_info(session: aiohttp.ClientSession, stub_info: StubIn
     Else, return None.
     """
     if stub_info.upstream_repository:
-        # We have various sanity checks for the upstream_repository field in tests/_metadata.py,
+        # We have various sanity checks for the upstream_repository field in ts_utils.metadata,
         # so no need to repeat all of them here
         split_url = urllib.parse.urlsplit(stub_info.upstream_repository)
         if split_url.netloc == "github.com":
@@ -320,7 +308,7 @@ async def get_github_repo_info(session: aiohttp.ClientSession, stub_info: StubIn
             assert len(Path(url_path).parts) == 2
             github_tags_info_url = f"https://api.github.com/repos/{url_path}/tags"
             async with session.get(github_tags_info_url, headers=get_github_api_headers()) as response:
-                if response.status == 200:
+                if response.status == HTTPStatus.OK:
                     tags: list[dict[str, Any]] = await response.json()
                     assert isinstance(tags, list)
                     return GitHubInfo(repo_path=url_path, tags=tags)
@@ -335,7 +323,7 @@ class GitHubDiffInfo(NamedTuple):
 
 
 async def get_diff_info(
-    session: aiohttp.ClientSession, stub_info: StubInfo, pypi_version: packaging.version.Version
+    session: aiohttp.ClientSession, stub_info: StubMetadata, pypi_version: packaging.version.Version
 ) -> GitHubDiffInfo | None:
     """Return a tuple giving info about the diff between two releases, if possible.
 
@@ -355,15 +343,13 @@ async def get_diff_info(
         with contextlib.suppress(packaging.version.InvalidVersion):
             versions_to_tags[packaging.version.Version(tag_name)] = tag_name
 
-    curr_specifier = packaging.specifiers.SpecifierSet(f"=={stub_info.version_spec}")
-
     try:
         new_tag = versions_to_tags[pypi_version]
     except KeyError:
         return None
 
     try:
-        old_version = max(version for version in versions_to_tags if version in curr_specifier and version < pypi_version)
+        old_version = max(version for version in versions_to_tags if version in stub_info.version_spec and version < pypi_version)
     except ValueError:
         return None
     else:
@@ -469,7 +455,7 @@ class DiffAnalysis:
 
 
 async def analyze_diff(
-    github_repo_path: str, stub_path: Path, old_tag: str, new_tag: str, *, session: aiohttp.ClientSession
+    github_repo_path: str, distribution: str, old_tag: str, new_tag: str, *, session: aiohttp.ClientSession
 ) -> DiffAnalysis | None:
     url = f"https://api.github.com/repos/{github_repo_path}/compare/{old_tag}...{new_tag}"
     async with session.get(url, headers=get_github_api_headers()) as response:
@@ -478,14 +464,15 @@ async def analyze_diff(
         assert isinstance(json_resp, dict)
     # https://docs.github.com/en/rest/commits/commits#compare-two-commits
     py_files: list[FileInfo] = [file for file in json_resp["files"] if Path(file["filename"]).suffix == ".py"]
+    stub_path = distribution_path(distribution)
     files_in_typeshed = set(stub_path.rglob("*.pyi"))
     py_files_stubbed_in_typeshed = [file for file in py_files if (stub_path / f"{file['filename']}i") in files_in_typeshed]
     return DiffAnalysis(py_files=py_files, py_files_stubbed_in_typeshed=py_files_stubbed_in_typeshed)
 
 
-async def determine_action(stub_path: Path, session: aiohttp.ClientSession) -> Update | NoUpdate | Obsolete:
-    stub_info = read_typeshed_stub_metadata(stub_path)
-    if stub_info.obsolete:
+async def determine_action(distribution: str, session: aiohttp.ClientSession) -> Update | NoUpdate | Obsolete:
+    stub_info = read_metadata(distribution)
+    if stub_info.is_obsolete:
         return NoUpdate(stub_info.distribution, "obsolete")
     if stub_info.no_longer_updated:
         return NoUpdate(stub_info.distribution, "no longer updated")
@@ -493,9 +480,8 @@ async def determine_action(stub_path: Path, session: aiohttp.ClientSession) -> U
     pypi_info = await fetch_pypi_info(stub_info.distribution, session)
     latest_release = pypi_info.get_latest_release()
     latest_version = latest_release.version
-    spec = packaging.specifiers.SpecifierSet(f"=={stub_info.version_spec}")
     obsolete_since = await find_first_release_with_py_typed(pypi_info, session=session)
-    if obsolete_since is None and latest_version in spec:
+    if obsolete_since is None and latest_version in stub_info.version_spec:
         return NoUpdate(stub_info.distribution, "up to date")
 
     relevant_version = obsolete_since.version if obsolete_since else latest_version
@@ -517,7 +503,6 @@ async def determine_action(stub_path: Path, session: aiohttp.ClientSession) -> U
     if obsolete_since:
         return Obsolete(
             stub_info.distribution,
-            stub_path,
             obsolete_since_version=str(obsolete_since.version),
             obsolete_since_date=obsolete_since.upload_date,
             links=links,
@@ -528,7 +513,7 @@ async def determine_action(stub_path: Path, session: aiohttp.ClientSession) -> U
     else:
         diff_analysis = await analyze_diff(
             github_repo_path=diff_info.repo_path,
-            stub_path=stub_path,
+            distribution=distribution,
             old_tag=diff_info.old_tag,
             new_tag=diff_info.new_tag,
             session=session,
@@ -536,7 +521,6 @@ async def determine_action(stub_path: Path, session: aiohttp.ClientSession) -> U
 
     return Update(
         distribution=stub_info.distribution,
-        stub_path=stub_path,
         old_version_spec=stub_info.version_spec,
         new_version_spec=get_updated_version_spec(stub_info.version_spec, latest_version),
         links=links,
@@ -648,13 +632,13 @@ def latest_commit_is_different_to_last_commit_on_origin(branch: str) -> bool:
         return True
 
 
-class RemoteConflict(Exception):
+class RemoteConflictError(Exception):
     pass
 
 
 def somewhat_safe_force_push(branch: str) -> None:
     if has_non_stubsabot_commits(branch):
-        raise RemoteConflict(f"origin/{branch} has non-stubsabot changes that are not on {branch}!")
+        raise RemoteConflictError(f"origin/{branch} has non-stubsabot changes that are not on {branch}!")
     subprocess.check_call(["git", "push", "origin", branch, "--force"])
 
 
@@ -669,7 +653,7 @@ _repo_lock = asyncio.Lock()
 BRANCH_PREFIX = "stubsabot"
 
 
-def get_update_pr_body(update: Update, metadata: dict[str, Any]) -> str:
+def get_update_pr_body(update: Update, metadata: Mapping[str, Any]) -> str:
     body = "\n".join(f"{k}: {v}" for k, v in update.links.items())
 
     if update.diff_analysis is not None:
@@ -692,7 +676,8 @@ def get_update_pr_body(update: Update, metadata: dict[str, Any]) -> str:
         body += textwrap.dedent(
             f"""
 
-            :warning: Review this PR manually, as stubtest is skipped in CI for {update.distribution}! :warning:
+            :warning: Review this PR manually, as stubtest is skipped in CI for {update.distribution}!
+            Also check whether stubtest can be reenabled. :warning:
             """
         )
     return body
@@ -701,16 +686,11 @@ def get_update_pr_body(update: Update, metadata: dict[str, Any]) -> str:
 async def suggest_typeshed_update(update: Update, session: aiohttp.ClientSession, action_level: ActionLevel) -> None:
     if action_level <= ActionLevel.nothing:
         return
-    title = f"[stubsabot] Bump {update.distribution} to {update.new_version_spec}"
+    title = f"[stubsabot] Bump {update.distribution} to {update.new_version}"
     async with _repo_lock:
         branch_name = f"{BRANCH_PREFIX}/{normalize(update.distribution)}"
         subprocess.check_call(["git", "checkout", "-B", branch_name, "origin/main"])
-        with open(update.stub_path / "METADATA.toml", "rb") as f:
-            meta = tomlkit.load(f)
-        meta["version"] = update.new_version_spec
-        with open(update.stub_path / "METADATA.toml", "w", encoding="UTF-8") as f:
-            # tomlkit.dump has partially unknown IO type
-            tomlkit.dump(meta, f)  # pyright: ignore[reportUnknownMemberType]
+        meta = update_metadata(update.distribution, version=update.new_version)
         body = get_update_pr_body(update, meta)
         subprocess.check_call(["git", "commit", "--all", "-m", f"{title}\n\n{body}"])
         if action_level <= ActionLevel.local:
@@ -732,14 +712,9 @@ async def suggest_typeshed_obsolete(obsolete: Obsolete, session: aiohttp.ClientS
     async with _repo_lock:
         branch_name = f"{BRANCH_PREFIX}/{normalize(obsolete.distribution)}"
         subprocess.check_call(["git", "checkout", "-B", branch_name, "origin/main"])
-        with open(obsolete.stub_path / "METADATA.toml", "rb") as f:
-            meta = tomlkit.load(f)
         obs_string = tomlkit.string(obsolete.obsolete_since_version)
         obs_string.comment(f"Released on {obsolete.obsolete_since_date.date().isoformat()}")
-        meta["obsolete_since"] = obs_string
-        with open(obsolete.stub_path / "METADATA.toml", "w", encoding="UTF-8") as f:
-            # tomlkit.dump has partially unknown Mapping type
-            tomlkit.dump(meta, f)  # pyright: ignore[reportUnknownMemberType]
+        update_metadata(obsolete.distribution, obsolete_since=obs_string)
         body = "\n".join(f"{k}: {v}" for k, v in obsolete.links.items())
         subprocess.check_call(["git", "commit", "--all", "-m", f"{title}\n\n{body}"])
         if action_level <= ActionLevel.local:
@@ -755,8 +730,6 @@ async def suggest_typeshed_obsolete(obsolete: Obsolete, session: aiohttp.ClientS
 
 
 async def main() -> None:
-    assert sys.version_info >= (3, 9)
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--action-level",
@@ -774,13 +747,13 @@ async def main() -> None:
     args = parser.parse_args()
 
     if args.distributions:
-        paths_to_update = [Path("stubs") / distribution for distribution in args.distributions]
+        dists_to_update = args.distributions
     else:
-        paths_to_update = list(Path("stubs").iterdir())
+        dists_to_update = [path.name for path in STUBS_PATH.iterdir()]
 
     if args.action_level > ActionLevel.nothing:
-        subprocess.run(["git", "update-index", "--refresh"], capture_output=True)
-        diff_result = subprocess.run(["git", "diff-index", "HEAD", "--name-only"], text=True, capture_output=True)
+        subprocess.run(["git", "update-index", "--refresh"], capture_output=True, check=False)
+        diff_result = subprocess.run(["git", "diff-index", "HEAD", "--name-only"], text=True, capture_output=True, check=False)
         if diff_result.returncode:
             print("Unexpected exception!")
             print(diff_result.stdout)
@@ -808,9 +781,9 @@ async def main() -> None:
         conn = aiohttp.TCPConnector(limit_per_host=10)
         async with aiohttp.ClientSession(connector=conn) as session:
             tasks = [
-                asyncio.create_task(determine_action(stubs_path, session))
-                for stubs_path in paths_to_update
-                if stubs_path.name not in denylist
+                asyncio.create_task(determine_action(distribution, session))
+                for distribution in dists_to_update
+                if distribution not in denylist
             ]
 
             action_count = 0
@@ -834,7 +807,7 @@ async def main() -> None:
                     if isinstance(update, Obsolete):  # pyright: ignore[reportUnnecessaryIsInstance]
                         await suggest_typeshed_obsolete(update, session, action_level=args.action_level)
                         continue
-                except RemoteConflict as e:
+                except RemoteConflictError as e:
                     print(colored(f"... but ran into {type(e).__qualname__}: {e}", "red"))
                     continue
                 raise AssertionError

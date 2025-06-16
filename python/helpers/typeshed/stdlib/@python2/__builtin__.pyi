@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 # True and False are deliberately omitted because they are keywords in
 # Python 3, and stub files conform to Python 3 syntax.
 

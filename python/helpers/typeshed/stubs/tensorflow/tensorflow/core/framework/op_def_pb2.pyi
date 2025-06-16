@@ -71,7 +71,11 @@ class OpDef(google.protobuf.message.Message):
         For outputs: if true, outputs are refs, otherwise they are not.
         """
         @property
-        def handle_data(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[tensorflow.core.framework.resource_handle_pb2.ResourceHandleProto.DtypeAndShape]:
+        def handle_data(
+            self,
+        ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[
+            tensorflow.core.framework.resource_handle_pb2.ResourceHandleProto.DtypeAndShape
+        ]:
             """The handle data for resource inputs."""
 
         @property
@@ -96,12 +100,36 @@ class OpDef(google.protobuf.message.Message):
             type_attr: builtins.str | None = ...,
             number_attr: builtins.str | None = ...,
             type_list_attr: builtins.str | None = ...,
-            handle_data: collections.abc.Iterable[tensorflow.core.framework.resource_handle_pb2.ResourceHandleProto.DtypeAndShape] | None = ...,
+            handle_data: (
+                collections.abc.Iterable[tensorflow.core.framework.resource_handle_pb2.ResourceHandleProto.DtypeAndShape] | None
+            ) = ...,
             is_ref: builtins.bool | None = ...,
             experimental_full_type: tensorflow.core.framework.full_type_pb2.FullTypeDef | None = ...,
         ) -> None: ...
         def HasField(self, field_name: typing.Literal["experimental_full_type", b"experimental_full_type"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing.Literal["description", b"description", "experimental_full_type", b"experimental_full_type", "handle_data", b"handle_data", "is_ref", b"is_ref", "name", b"name", "number_attr", b"number_attr", "type", b"type", "type_attr", b"type_attr", "type_list_attr", b"type_list_attr"]) -> None: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "description",
+                b"description",
+                "experimental_full_type",
+                b"experimental_full_type",
+                "handle_data",
+                b"handle_data",
+                "is_ref",
+                b"is_ref",
+                "name",
+                b"name",
+                "number_attr",
+                b"number_attr",
+                "type",
+                b"type",
+                "type_attr",
+                b"type_attr",
+                "type_list_attr",
+                b"type_list_attr",
+            ],
+        ) -> None: ...
 
     @typing.final
     class AttrDef(google.protobuf.message.Message):
@@ -166,8 +194,28 @@ class OpDef(google.protobuf.message.Message):
             minimum: builtins.int | None = ...,
             allowed_values: tensorflow.core.framework.attr_value_pb2.AttrValue | None = ...,
         ) -> None: ...
-        def HasField(self, field_name: typing.Literal["allowed_values", b"allowed_values", "default_value", b"default_value"]) -> builtins.bool: ...
-        def ClearField(self, field_name: typing.Literal["allowed_values", b"allowed_values", "default_value", b"default_value", "description", b"description", "has_minimum", b"has_minimum", "minimum", b"minimum", "name", b"name", "type", b"type"]) -> None: ...
+        def HasField(
+            self, field_name: typing.Literal["allowed_values", b"allowed_values", "default_value", b"default_value"]
+        ) -> builtins.bool: ...
+        def ClearField(
+            self,
+            field_name: typing.Literal[
+                "allowed_values",
+                b"allowed_values",
+                "default_value",
+                b"default_value",
+                "description",
+                b"description",
+                "has_minimum",
+                b"has_minimum",
+                "minimum",
+                b"minimum",
+                "name",
+                b"name",
+                "type",
+                b"type",
+            ],
+        ) -> None: ...
 
     NAME_FIELD_NUMBER: builtins.int
     INPUT_ARG_FIELD_NUMBER: builtins.int
@@ -277,7 +325,37 @@ class OpDef(google.protobuf.message.Message):
         is_distributed_communication: builtins.bool | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["deprecation", b"deprecation"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["allows_uninitialized_input", b"allows_uninitialized_input", "attr", b"attr", "control_output", b"control_output", "deprecation", b"deprecation", "description", b"description", "input_arg", b"input_arg", "is_aggregate", b"is_aggregate", "is_commutative", b"is_commutative", "is_distributed_communication", b"is_distributed_communication", "is_stateful", b"is_stateful", "name", b"name", "output_arg", b"output_arg", "summary", b"summary"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "allows_uninitialized_input",
+            b"allows_uninitialized_input",
+            "attr",
+            b"attr",
+            "control_output",
+            b"control_output",
+            "deprecation",
+            b"deprecation",
+            "description",
+            b"description",
+            "input_arg",
+            b"input_arg",
+            "is_aggregate",
+            b"is_aggregate",
+            "is_commutative",
+            b"is_commutative",
+            "is_distributed_communication",
+            b"is_distributed_communication",
+            "is_stateful",
+            b"is_stateful",
+            "name",
+            b"name",
+            "output_arg",
+            b"output_arg",
+            "summary",
+            b"summary",
+        ],
+    ) -> None: ...
 
 global___OpDef = OpDef
 
@@ -293,12 +371,7 @@ class OpDeprecation(google.protobuf.message.Message):
     """First GraphDef version at which the op is disallowed."""
     explanation: builtins.str
     """Explanation of why it was deprecated and what to use instead."""
-    def __init__(
-        self,
-        *,
-        version: builtins.int | None = ...,
-        explanation: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, version: builtins.int | None = ..., explanation: builtins.str | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["explanation", b"explanation", "version", b"version"]) -> None: ...
 
 global___OpDeprecation = OpDeprecation
@@ -312,11 +385,7 @@ class OpList(google.protobuf.message.Message):
     OP_FIELD_NUMBER: builtins.int
     @property
     def op(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___OpDef]: ...
-    def __init__(
-        self,
-        *,
-        op: collections.abc.Iterable[global___OpDef] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, op: collections.abc.Iterable[global___OpDef] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["op", b"op"]) -> None: ...
 
 global___OpList = OpList

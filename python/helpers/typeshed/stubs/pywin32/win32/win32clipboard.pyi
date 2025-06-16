@@ -1,3 +1,5 @@
+from typing import Any, Final
+
 from win32.lib.pywintypes import error as error
 
 def ChangeClipboardChain(hWndRemove: int, hWndNewNext: int, /): ...
@@ -5,7 +7,7 @@ def CloseClipboard(): ...
 def CountClipboardFormats(): ...
 def EmptyClipboard(): ...
 def EnumClipboardFormats(_format: int = ..., /): ...
-def GetClipboardData(_format, /) -> str: ...
+def GetClipboardData(_format, /) -> Any: ...  # str or bytes depending on the dib format
 def GetClipboardDataHandle(_format, /): ...
 def GetClipboardFormatName(_format, /) -> str: ...
 def GetClipboardOwner(): ...
@@ -21,27 +23,27 @@ def SetClipboardData(_format, hMem, /): ...
 def SetClipboardText(text, _format, /): ...
 def SetClipboardViewer(hWndNewViewer: int, /) -> int: ...
 
-CF_BITMAP: int
-CF_DIB: int
-CF_DIBV5: int
-CF_DIF: int
-CF_DSPBITMAP: int
-CF_DSPENHMETAFILE: int
-CF_DSPMETAFILEPICT: int
-CF_DSPTEXT: int
-CF_ENHMETAFILE: int
-CF_HDROP: int
-CF_LOCALE: int
-CF_MAX: int
-CF_METAFILEPICT: int
-CF_OEMTEXT: int
-CF_OWNERDISPLAY: int
-CF_PALETTE: int
-CF_PENDATA: int
-CF_RIFF: int
-CF_SYLK: int
-CF_TEXT: int
-CF_TIFF: int
-CF_UNICODETEXT: int
-CF_WAVE: int
+CF_BITMAP: Final[int]
+CF_DIB: Final[int]
+CF_DIBV5: Final[int]
+CF_DIF: Final[int]
+CF_DSPBITMAP: Final[int]
+CF_DSPENHMETAFILE: Final[int]
+CF_DSPMETAFILEPICT: Final[int]
+CF_DSPTEXT: Final[int]
+CF_ENHMETAFILE: Final[int]
+CF_HDROP: Final[int]
+CF_LOCALE: Final[int]
+CF_MAX: Final[int]
+CF_METAFILEPICT: Final[int]
+CF_OEMTEXT: Final[int]
+CF_OWNERDISPLAY: Final[int]
+CF_PALETTE: Final[int]
+CF_PENDATA: Final[int]
+CF_RIFF: Final[int]
+CF_SYLK: Final[int]
+CF_TEXT: Final[int]
+CF_TIFF: Final[int]
+CF_UNICODETEXT: Final[int]
+CF_WAVE: Final[int]
 UNICODE: bool

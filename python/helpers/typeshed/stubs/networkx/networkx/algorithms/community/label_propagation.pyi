@@ -1,11 +1,17 @@
 from _typeshed import Incomplete
 from collections.abc import Generator
 
-from networkx.utils.backends import _dispatch
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
+from numpy.random import RandomState
 
-@_dispatch
+__all__ = ["label_propagation_communities", "asyn_lpa_communities", "fast_label_propagation_communities"]
+
+@_dispatchable
+def fast_label_propagation_communities(G, *, weight=None, seed=None) -> Generator[Incomplete]: ...
+@_dispatchable
 def asyn_lpa_communities(
-    G, weight: Incomplete | None = None, seed: Incomplete | None = None
+    G: Graph[_Node], weight: str | None = None, seed: int | RandomState | None = None
 ) -> Generator[Incomplete, Incomplete, None]: ...
-@_dispatch
-def label_propagation_communities(G): ...
+@_dispatchable
+def label_propagation_communities(G: Graph[_Node]): ...

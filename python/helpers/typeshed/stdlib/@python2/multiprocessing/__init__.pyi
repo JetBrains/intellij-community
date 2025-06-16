@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from multiprocessing import pool
 from multiprocessing.process import Process as Process, active_children as active_children, current_process as current_process
 from multiprocessing.util import SUBDEBUG as SUBDEBUG, SUBWARNING as SUBWARNING

@@ -5,9 +5,9 @@ from types import TracebackType
 from typing import Any
 from typing_extensions import ParamSpec
 
-import gevent.libev.watcher as watcher
 from gevent._ffi.loop import _ErrorHandler
 from gevent._types import _Callback
+from gevent.libev import watcher
 
 # this c extension is only available on posix
 if sys.platform != "win32":
@@ -90,3 +90,13 @@ if sys.platform != "win32":
         def origflags_int(self) -> int: ...
         @property
         def sigfd(self) -> FileDescriptor: ...
+
+    __all__ = [
+        "get_version",
+        "get_header_version",
+        "supported_backends",
+        "recommended_backends",
+        "embeddable_backends",
+        "time",
+        "loop",
+    ]

@@ -99,5 +99,5 @@ class FileVersion(Serialisable):
         lastEdited: str | None = None,
         lowestEdited: str | None = None,
         rupBuild: str | None = None,
-        codeName: Incomplete | None = None,
+        codeName=None,
     ) -> None: ...

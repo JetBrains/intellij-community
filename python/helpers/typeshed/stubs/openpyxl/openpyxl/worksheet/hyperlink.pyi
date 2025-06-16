@@ -20,7 +20,7 @@ class Hyperlink(Serialisable):
         location: str | None = None,
         tooltip: str | None = None,
         display: str | None = None,
-        id: Incomplete | None = None,
+        id=None,
         target: str | None = None,
     ) -> None: ...
 

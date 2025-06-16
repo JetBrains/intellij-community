@@ -85,7 +85,7 @@ class SheetView(Serialisable):
         zoomScalePageLayoutView: ConvertibleToInt | None = None,
         zoomToFit: _ConvertibleToBool | None = None,
         workbookViewId: ConvertibleToInt | None = 0,
-        selection: Incomplete | None = None,
+        selection=None,
         pane: Pane | None = None,
     ) -> None: ...
 

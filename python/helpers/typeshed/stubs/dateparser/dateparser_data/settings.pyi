@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Final
 
-default_parsers: Any
-settings: Any
+default_parsers: Final[list[str]]
+settings: Final[dict[str, str | bool | list[str] | float | int]]

@@ -6,6 +6,8 @@ from wtforms.fields.core import Field, _Filter, _FormT, _Validator, _Widget
 from wtforms.form import BaseForm
 from wtforms.meta import DefaultMeta, _SupportsGettextAndNgettext
 
+__all__ = ("SelectField", "SelectMultipleField", "RadioField")
+
 # technically this allows a list, but we're more strict for type safety
 _Choice: TypeAlias = tuple[Any, str] | tuple[Any, str, dict[str, Any]]
 # it's too difficult to get type safety here due to to nested partially invariant collections

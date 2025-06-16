@@ -9,9 +9,6 @@ cachetools.LFUCache.__setitem__
 cachetools.LRUCache.__delitem__
 cachetools.LRUCache.__getitem__
 cachetools.LRUCache.__setitem__
-cachetools.MRUCache.__delitem__
-cachetools.MRUCache.__getitem__
-cachetools.MRUCache.__setitem__
 cachetools.TLRUCache.__delitem__
 cachetools.TLRUCache.__getitem__
 cachetools.TLRUCache.__setitem__

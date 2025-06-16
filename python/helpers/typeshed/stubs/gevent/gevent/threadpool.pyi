@@ -53,3 +53,5 @@ class ThreadResult(Generic[_T]):
 
 class ThreadPoolExecutor(concurrent.futures.ThreadPoolExecutor):
     kill = concurrent.futures.ThreadPoolExecutor.shutdown
+
+__all__ = ["ThreadPool", "ThreadResult", "ThreadPoolExecutor"]

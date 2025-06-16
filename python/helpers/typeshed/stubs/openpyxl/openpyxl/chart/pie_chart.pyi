@@ -94,7 +94,7 @@ class ProjectedPieChart(_PieChartBase):
     def __init__(
         self,
         ofPieType: _HasTagAndGet[_ProjectedPieChartOfPieType] | _ProjectedPieChartOfPieType = "pie",
-        gapWidth: Incomplete | None = None,
+        gapWidth=None,
         splitType: _NestedNoneSetParam[_ProjectedPieChartSplitType] = "auto",
         splitPos: _HasTagAndGet[ConvertibleToFloat | None] | ConvertibleToFloat | None = None,
         custSplit: CustomSplit | None = None,

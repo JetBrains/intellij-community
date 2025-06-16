@@ -1,19 +1,22 @@
 from _typeshed import Incomplete
 from collections.abc import Callable, Sequence
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar, Final, Literal
 from typing_extensions import TypeAlias
 
 from docutils import nodes, parsers
 from docutils.parsers.rst.states import Inliner, RSTState, RSTStateMachine
 from docutils.statemachine import StringList
 from docutils.transforms import Transform
+from docutils.utils import Reporter
+
+__docformat__: Final = "reStructuredText"
 
 class Parser(parsers.Parser):
-    settings_spec: ClassVar[Incomplete]
     config_section_dependencies: ClassVar[tuple[str, ...]]
     initial_state: Literal["Body", "RFC2822Body"]
     state_classes: Sequence[type[RSTState]]
     inliner: Inliner | None
+    statemachine: RSTStateMachine
     def __init__(self, rfc2822: bool = False, inliner: Inliner | None = None) -> None: ...
     def get_transforms(self) -> list[type[Transform]]: ...
     def parse(self, inputstring: str, document: nodes.document) -> None: ...
@@ -27,22 +30,23 @@ class Directive:
     required_arguments: ClassVar[int]
     optional_arguments: ClassVar[int]
     final_argument_whitespace: ClassVar[bool]
-    option_spec: ClassVar[dict[str, Callable[[str], Any]] | None]
+    option_spec: ClassVar[dict[str, Callable[[str], Incomplete]] | None]
     has_content: ClassVar[bool]
     name: str
     arguments: list[str]
-    options: dict[str, Any]
+    options: dict[str, Incomplete]
     content: StringList
     lineno: int
     content_offset: int
     block_text: str
     state: RSTState
     state_machine: RSTStateMachine = ...
+    reporter: Reporter
     def __init__(
         self,
         name: str,
         arguments: list[str],
-        options: dict[str, Any],
+        options: dict[str, Incomplete],
         content: StringList,
         lineno: int,
         content_offset: int,

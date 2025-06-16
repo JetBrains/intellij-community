@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Callable, Iterable
 from typing import Any
 from typing_extensions import TypeAlias
@@ -59,4 +58,4 @@ class SGD(Optimizer):
         self, learning_rate: _LearningRate = 0.01, momentum: float = 0.0, nesterov: bool = False, name: str = "SGD", **kwargs: Any
     ) -> None: ...
 
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

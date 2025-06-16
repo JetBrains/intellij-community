@@ -1,23 +1,12 @@
+from codecs import _ReadableStream, _WritableStream
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, ClassVar, Literal, Protocol
+from typing import Any, ClassVar, Literal
 from typing_extensions import Self
 from xml.etree.ElementTree import Element
 
 from . import blockparser, inlinepatterns, postprocessors, preprocessors, treeprocessors
 from .extensions import Extension
 from .util import HtmlStash, Registry
-
-# TODO: The following protocols can be replaced by their counterparts from
-# codecs, once they have been propagated to all type checkers.
-class _WritableStream(Protocol):
-    def write(self, data: bytes, /) -> object: ...
-    def seek(self, offset: int, whence: int, /) -> object: ...
-    def close(self) -> object: ...
-
-class _ReadableStream(Protocol):
-    def read(self, size: int = ..., /) -> bytes: ...
-    def seek(self, offset: int, whence: int, /) -> object: ...
-    def close(self) -> object: ...
 
 class Markdown:
     preprocessors: Registry[preprocessors.Preprocessor]

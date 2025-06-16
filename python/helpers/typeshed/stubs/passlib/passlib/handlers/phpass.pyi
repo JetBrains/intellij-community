@@ -18,3 +18,5 @@ class phpass(uh.HasManyIdents, uh.HasRounds, uh.HasSalt, uh.GenericHandler):  # 
     ident_aliases: ClassVar[dict[str, str]]
     @classmethod
     def from_string(cls, hash: str | bytes) -> Self: ...  # type: ignore[override]
+
+__all__ = ["phpass"]

@@ -1,6 +1,63 @@
-webbrowser.MacOSX.__init__
+# ===========
+# 3.9 to 3.11
+# ===========
+
+# Added in Python 3.9.20
+email._header_value_parser.NLSET
+email._header_value_parser.SPECIALSNL
+email.errors.HeaderWriteError
+email.utils.getaddresses
+email.utils.parseaddr
+
+
+# ========
+# 3.9 only
+# ========
+
+# Added in Python 3.9.14
+sys.set_int_max_str_digits
+sys.get_int_max_str_digits
+
+
+# =======
+# <= 3.10
+# =======
+
+# Incompatible changes introduced in Python 3.9.17
+# (Remove once 3.9.17 becomes available for GitHub Actions)
+shutil.unpack_archive
+tarfile.AbsoluteLinkError
+tarfile.AbsolutePathError
+tarfile.FilterError
+tarfile.LinkOutsideDestinationError
+tarfile.OutsideDestinationError
+tarfile.SpecialFileError
+tarfile.TarFile.extract
+tarfile.TarFile.extractall
+tarfile.TarInfo.replace
+tarfile.data_filter
+tarfile.fully_trusted_filter
+tarfile.tar_filter
+
+# Incompatible changes introduced in Python 3.9.19
+# (Remove once 3.9.19 becomes available for GitHub Actions)
+pyexpat.XMLParserType.GetReparseDeferralEnabled
+pyexpat.XMLParserType.SetReparseDeferralEnabled
+xml.etree.ElementTree.XMLParser.flush
+xml.etree.ElementTree.XMLPullParser.flush
+xml.etree.cElementTree.XMLParser.flush
+xml.etree.cElementTree.XMLPullParser.flush
+xml.parsers.expat.XMLParserType.GetReparseDeferralEnabled
+xml.parsers.expat.XMLParserType.SetReparseDeferralEnabled
+xml.sax.expatreader.ExpatParser.flush
+
+
+# =============================================================
+# Allowlist entries that cannot or should not be fixed; <= 3.12
+# =============================================================
 
 # Doesn't exist on macos:
-spwd
+_msi
 msilib(.[a-z]+)?
 ossaudiodev
+spwd

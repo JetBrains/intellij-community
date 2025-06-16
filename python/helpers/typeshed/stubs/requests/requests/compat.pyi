@@ -16,6 +16,7 @@ from urllib.parse import (
 )
 from urllib.request import getproxies as getproxies, parse_http_list as parse_http_list, proxy_bypass as proxy_bypass
 
+is_urllib3_1: bool
 is_py2: Literal[False]
 is_py3: Literal[True]
 has_simplejson: bool

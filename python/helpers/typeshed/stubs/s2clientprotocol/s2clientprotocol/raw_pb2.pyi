@@ -25,7 +25,9 @@ class _DisplayType:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _DisplayTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_DisplayType.ValueType], builtins.type):
+class _DisplayTypeEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_DisplayType.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     Visible: _DisplayType.ValueType  # 1
     """Fully visible"""
@@ -71,7 +73,9 @@ class _CloakState:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _CloakStateEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_CloakState.ValueType], builtins.type):
+class _CloakStateEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_CloakState.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     CloakedUnknown: _CloakState.ValueType  # 0
     """Under the fog, so unknown whether it's cloaked or not."""
@@ -125,7 +129,9 @@ class StartRaw(google.protobuf.message.Message):
         """The playable cells."""
 
     @property
-    def start_locations(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.common_pb2.Point2D]:
+    def start_locations(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.common_pb2.Point2D]:
         """Possible start locations for players."""
 
     def __init__(
@@ -138,8 +144,38 @@ class StartRaw(google.protobuf.message.Message):
         playable_area: s2clientprotocol.common_pb2.RectangleI | None = ...,
         start_locations: collections.abc.Iterable[s2clientprotocol.common_pb2.Point2D] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["map_size", b"map_size", "pathing_grid", b"pathing_grid", "placement_grid", b"placement_grid", "playable_area", b"playable_area", "terrain_height", b"terrain_height"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["map_size", b"map_size", "pathing_grid", b"pathing_grid", "placement_grid", b"placement_grid", "playable_area", b"playable_area", "start_locations", b"start_locations", "terrain_height", b"terrain_height"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "map_size",
+            b"map_size",
+            "pathing_grid",
+            b"pathing_grid",
+            "placement_grid",
+            b"placement_grid",
+            "playable_area",
+            b"playable_area",
+            "terrain_height",
+            b"terrain_height",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "map_size",
+            b"map_size",
+            "pathing_grid",
+            b"pathing_grid",
+            "placement_grid",
+            b"placement_grid",
+            "playable_area",
+            b"playable_area",
+            "start_locations",
+            b"start_locations",
+            "terrain_height",
+            b"terrain_height",
+        ],
+    ) -> None: ...
 
 global___StartRaw = StartRaw
 
@@ -181,8 +217,26 @@ class ObservationRaw(google.protobuf.message.Message):
         effects: collections.abc.Iterable[global___Effect] | None = ...,
         radar: collections.abc.Iterable[global___RadarRing] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["event", b"event", "map_state", b"map_state", "player", b"player"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["effects", b"effects", "event", b"event", "map_state", b"map_state", "player", b"player", "radar", b"radar", "units", b"units"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["event", b"event", "map_state", b"map_state", "player", b"player"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "effects",
+            b"effects",
+            "event",
+            b"event",
+            "map_state",
+            b"map_state",
+            "player",
+            b"player",
+            "radar",
+            b"radar",
+            "units",
+            b"units",
+        ],
+    ) -> None: ...
 
 global___ObservationRaw = ObservationRaw
 
@@ -195,12 +249,7 @@ class RadarRing(google.protobuf.message.Message):
     radius: builtins.float
     @property
     def pos(self) -> s2clientprotocol.common_pb2.Point: ...
-    def __init__(
-        self,
-        *,
-        pos: s2clientprotocol.common_pb2.Point | None = ...,
-        radius: builtins.float | None = ...,
-    ) -> None: ...
+    def __init__(self, *, pos: s2clientprotocol.common_pb2.Point | None = ..., radius: builtins.float | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["pos", b"pos", "radius", b"radius"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["pos", b"pos", "radius", b"radius"]) -> None: ...
 
@@ -252,7 +301,9 @@ class PlayerRaw(google.protobuf.message.Message):
         upgrade_ids: collections.abc.Iterable[builtins.int] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["camera", b"camera"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["camera", b"camera", "power_sources", b"power_sources", "upgrade_ids", b"upgrade_ids"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["camera", b"camera", "power_sources", b"power_sources", "upgrade_ids", b"upgrade_ids"]
+    ) -> None: ...
 
 global___PlayerRaw = PlayerRaw
 
@@ -278,9 +329,39 @@ class UnitOrder(google.protobuf.message.Message):
         target_unit_tag: builtins.int | None = ...,
         progress: builtins.float | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "progress", b"progress", "target", b"target", "target_unit_tag", b"target_unit_tag", "target_world_space_pos", b"target_world_space_pos"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "progress", b"progress", "target", b"target", "target_unit_tag", b"target_unit_tag", "target_world_space_pos", b"target_world_space_pos"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["target", b"target"]) -> typing.Literal["target_world_space_pos", "target_unit_tag"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "progress",
+            b"progress",
+            "target",
+            b"target",
+            "target_unit_tag",
+            b"target_unit_tag",
+            "target_world_space_pos",
+            b"target_world_space_pos",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "progress",
+            b"progress",
+            "target",
+            b"target",
+            "target_unit_tag",
+            b"target_unit_tag",
+            "target_world_space_pos",
+            b"target_world_space_pos",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["target", b"target"]
+    ) -> typing.Literal["target_world_space_pos", "target_unit_tag"] | None: ...
 
 global___UnitOrder = UnitOrder
 
@@ -316,8 +397,48 @@ class PassengerUnit(google.protobuf.message.Message):
         energy_max: builtins.float | None = ...,
         unit_type: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["energy", b"energy", "energy_max", b"energy_max", "health", b"health", "health_max", b"health_max", "shield", b"shield", "shield_max", b"shield_max", "tag", b"tag", "unit_type", b"unit_type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["energy", b"energy", "energy_max", b"energy_max", "health", b"health", "health_max", b"health_max", "shield", b"shield", "shield_max", b"shield_max", "tag", b"tag", "unit_type", b"unit_type"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "energy",
+            b"energy",
+            "energy_max",
+            b"energy_max",
+            "health",
+            b"health",
+            "health_max",
+            b"health_max",
+            "shield",
+            b"shield",
+            "shield_max",
+            b"shield_max",
+            "tag",
+            b"tag",
+            "unit_type",
+            b"unit_type",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "energy",
+            b"energy",
+            "energy_max",
+            b"energy_max",
+            "health",
+            b"health",
+            "health_max",
+            b"health_max",
+            "shield",
+            b"shield",
+            "shield_max",
+            b"shield_max",
+            "tag",
+            b"tag",
+            "unit_type",
+            b"unit_type",
+        ],
+    ) -> None: ...
 
 global___PassengerUnit = PassengerUnit
 
@@ -333,12 +454,7 @@ class RallyTarget(google.protobuf.message.Message):
     def point(self) -> s2clientprotocol.common_pb2.Point:
         """Will always be filled."""
 
-    def __init__(
-        self,
-        *,
-        point: s2clientprotocol.common_pb2.Point | None = ...,
-        tag: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, point: s2clientprotocol.common_pb2.Point | None = ..., tag: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["point", b"point", "tag", b"tag"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["point", b"point", "tag", b"tag"]) -> None: ...
 
@@ -501,8 +617,184 @@ class Unit(google.protobuf.message.Message):
         buff_duration_max: builtins.int | None = ...,
         rally_targets: collections.abc.Iterable[global___RallyTarget] | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["add_on_tag", b"add_on_tag", "alliance", b"alliance", "armor_upgrade_level", b"armor_upgrade_level", "assigned_harvesters", b"assigned_harvesters", "attack_upgrade_level", b"attack_upgrade_level", "buff_duration_max", b"buff_duration_max", "buff_duration_remain", b"buff_duration_remain", "build_progress", b"build_progress", "cargo_space_max", b"cargo_space_max", "cargo_space_taken", b"cargo_space_taken", "cloak", b"cloak", "detect_range", b"detect_range", "display_type", b"display_type", "energy", b"energy", "energy_max", b"energy_max", "engaged_target_tag", b"engaged_target_tag", "facing", b"facing", "health", b"health", "health_max", b"health_max", "ideal_harvesters", b"ideal_harvesters", "is_active", b"is_active", "is_blip", b"is_blip", "is_burrowed", b"is_burrowed", "is_flying", b"is_flying", "is_hallucination", b"is_hallucination", "is_on_screen", b"is_on_screen", "is_powered", b"is_powered", "is_selected", b"is_selected", "mineral_contents", b"mineral_contents", "owner", b"owner", "pos", b"pos", "radar_range", b"radar_range", "radius", b"radius", "shield", b"shield", "shield_max", b"shield_max", "shield_upgrade_level", b"shield_upgrade_level", "tag", b"tag", "unit_type", b"unit_type", "vespene_contents", b"vespene_contents", "weapon_cooldown", b"weapon_cooldown"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["add_on_tag", b"add_on_tag", "alliance", b"alliance", "armor_upgrade_level", b"armor_upgrade_level", "assigned_harvesters", b"assigned_harvesters", "attack_upgrade_level", b"attack_upgrade_level", "buff_duration_max", b"buff_duration_max", "buff_duration_remain", b"buff_duration_remain", "buff_ids", b"buff_ids", "build_progress", b"build_progress", "cargo_space_max", b"cargo_space_max", "cargo_space_taken", b"cargo_space_taken", "cloak", b"cloak", "detect_range", b"detect_range", "display_type", b"display_type", "energy", b"energy", "energy_max", b"energy_max", "engaged_target_tag", b"engaged_target_tag", "facing", b"facing", "health", b"health", "health_max", b"health_max", "ideal_harvesters", b"ideal_harvesters", "is_active", b"is_active", "is_blip", b"is_blip", "is_burrowed", b"is_burrowed", "is_flying", b"is_flying", "is_hallucination", b"is_hallucination", "is_on_screen", b"is_on_screen", "is_powered", b"is_powered", "is_selected", b"is_selected", "mineral_contents", b"mineral_contents", "orders", b"orders", "owner", b"owner", "passengers", b"passengers", "pos", b"pos", "radar_range", b"radar_range", "radius", b"radius", "rally_targets", b"rally_targets", "shield", b"shield", "shield_max", b"shield_max", "shield_upgrade_level", b"shield_upgrade_level", "tag", b"tag", "unit_type", b"unit_type", "vespene_contents", b"vespene_contents", "weapon_cooldown", b"weapon_cooldown"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "add_on_tag",
+            b"add_on_tag",
+            "alliance",
+            b"alliance",
+            "armor_upgrade_level",
+            b"armor_upgrade_level",
+            "assigned_harvesters",
+            b"assigned_harvesters",
+            "attack_upgrade_level",
+            b"attack_upgrade_level",
+            "buff_duration_max",
+            b"buff_duration_max",
+            "buff_duration_remain",
+            b"buff_duration_remain",
+            "build_progress",
+            b"build_progress",
+            "cargo_space_max",
+            b"cargo_space_max",
+            "cargo_space_taken",
+            b"cargo_space_taken",
+            "cloak",
+            b"cloak",
+            "detect_range",
+            b"detect_range",
+            "display_type",
+            b"display_type",
+            "energy",
+            b"energy",
+            "energy_max",
+            b"energy_max",
+            "engaged_target_tag",
+            b"engaged_target_tag",
+            "facing",
+            b"facing",
+            "health",
+            b"health",
+            "health_max",
+            b"health_max",
+            "ideal_harvesters",
+            b"ideal_harvesters",
+            "is_active",
+            b"is_active",
+            "is_blip",
+            b"is_blip",
+            "is_burrowed",
+            b"is_burrowed",
+            "is_flying",
+            b"is_flying",
+            "is_hallucination",
+            b"is_hallucination",
+            "is_on_screen",
+            b"is_on_screen",
+            "is_powered",
+            b"is_powered",
+            "is_selected",
+            b"is_selected",
+            "mineral_contents",
+            b"mineral_contents",
+            "owner",
+            b"owner",
+            "pos",
+            b"pos",
+            "radar_range",
+            b"radar_range",
+            "radius",
+            b"radius",
+            "shield",
+            b"shield",
+            "shield_max",
+            b"shield_max",
+            "shield_upgrade_level",
+            b"shield_upgrade_level",
+            "tag",
+            b"tag",
+            "unit_type",
+            b"unit_type",
+            "vespene_contents",
+            b"vespene_contents",
+            "weapon_cooldown",
+            b"weapon_cooldown",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "add_on_tag",
+            b"add_on_tag",
+            "alliance",
+            b"alliance",
+            "armor_upgrade_level",
+            b"armor_upgrade_level",
+            "assigned_harvesters",
+            b"assigned_harvesters",
+            "attack_upgrade_level",
+            b"attack_upgrade_level",
+            "buff_duration_max",
+            b"buff_duration_max",
+            "buff_duration_remain",
+            b"buff_duration_remain",
+            "buff_ids",
+            b"buff_ids",
+            "build_progress",
+            b"build_progress",
+            "cargo_space_max",
+            b"cargo_space_max",
+            "cargo_space_taken",
+            b"cargo_space_taken",
+            "cloak",
+            b"cloak",
+            "detect_range",
+            b"detect_range",
+            "display_type",
+            b"display_type",
+            "energy",
+            b"energy",
+            "energy_max",
+            b"energy_max",
+            "engaged_target_tag",
+            b"engaged_target_tag",
+            "facing",
+            b"facing",
+            "health",
+            b"health",
+            "health_max",
+            b"health_max",
+            "ideal_harvesters",
+            b"ideal_harvesters",
+            "is_active",
+            b"is_active",
+            "is_blip",
+            b"is_blip",
+            "is_burrowed",
+            b"is_burrowed",
+            "is_flying",
+            b"is_flying",
+            "is_hallucination",
+            b"is_hallucination",
+            "is_on_screen",
+            b"is_on_screen",
+            "is_powered",
+            b"is_powered",
+            "is_selected",
+            b"is_selected",
+            "mineral_contents",
+            b"mineral_contents",
+            "orders",
+            b"orders",
+            "owner",
+            b"owner",
+            "passengers",
+            b"passengers",
+            "pos",
+            b"pos",
+            "radar_range",
+            b"radar_range",
+            "radius",
+            b"radius",
+            "rally_targets",
+            b"rally_targets",
+            "shield",
+            b"shield",
+            "shield_max",
+            b"shield_max",
+            "shield_upgrade_level",
+            b"shield_upgrade_level",
+            "tag",
+            b"tag",
+            "unit_type",
+            b"unit_type",
+            "vespene_contents",
+            b"vespene_contents",
+            "weapon_cooldown",
+            b"weapon_cooldown",
+        ],
+    ) -> None: ...
 
 global___Unit = Unit
 
@@ -538,11 +830,7 @@ class Event(google.protobuf.message.Message):
     DEAD_UNITS_FIELD_NUMBER: builtins.int
     @property
     def dead_units(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
-    def __init__(
-        self,
-        *,
-        dead_units: collections.abc.Iterable[builtins.int] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, dead_units: collections.abc.Iterable[builtins.int] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["dead_units", b"dead_units"]) -> None: ...
 
 global___Event = Event
@@ -573,8 +861,16 @@ class Effect(google.protobuf.message.Message):
         owner: builtins.int | None = ...,
         radius: builtins.float | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["alliance", b"alliance", "effect_id", b"effect_id", "owner", b"owner", "radius", b"radius"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["alliance", b"alliance", "effect_id", b"effect_id", "owner", b"owner", "pos", b"pos", "radius", b"radius"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal["alliance", b"alliance", "effect_id", b"effect_id", "owner", b"owner", "radius", b"radius"],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "alliance", b"alliance", "effect_id", b"effect_id", "owner", b"owner", "pos", b"pos", "radius", b"radius"
+        ],
+    ) -> None: ...
 
 global___Effect = Effect
 
@@ -602,9 +898,35 @@ class ActionRaw(google.protobuf.message.Message):
         camera_move: global___ActionRawCameraMove | None = ...,
         toggle_autocast: global___ActionRawToggleAutocast | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["action", b"action", "camera_move", b"camera_move", "toggle_autocast", b"toggle_autocast", "unit_command", b"unit_command"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action", b"action", "camera_move", b"camera_move", "toggle_autocast", b"toggle_autocast", "unit_command", b"unit_command"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["action", b"action"]) -> typing.Literal["unit_command", "camera_move", "toggle_autocast"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "camera_move",
+            b"camera_move",
+            "toggle_autocast",
+            b"toggle_autocast",
+            "unit_command",
+            b"unit_command",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "camera_move",
+            b"camera_move",
+            "toggle_autocast",
+            b"toggle_autocast",
+            "unit_command",
+            b"unit_command",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["action", b"action"]
+    ) -> typing.Literal["unit_command", "camera_move", "toggle_autocast"] | None: ...
 
 global___ActionRaw = ActionRaw
 
@@ -633,9 +955,41 @@ class ActionRawUnitCommand(google.protobuf.message.Message):
         unit_tags: collections.abc.Iterable[builtins.int] | None = ...,
         queue_command: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "queue_command", b"queue_command", "target", b"target", "target_unit_tag", b"target_unit_tag", "target_world_space_pos", b"target_world_space_pos"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "queue_command", b"queue_command", "target", b"target", "target_unit_tag", b"target_unit_tag", "target_world_space_pos", b"target_world_space_pos", "unit_tags", b"unit_tags"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["target", b"target"]) -> typing.Literal["target_world_space_pos", "target_unit_tag"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "queue_command",
+            b"queue_command",
+            "target",
+            b"target",
+            "target_unit_tag",
+            b"target_unit_tag",
+            "target_world_space_pos",
+            b"target_world_space_pos",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "queue_command",
+            b"queue_command",
+            "target",
+            b"target",
+            "target_unit_tag",
+            b"target_unit_tag",
+            "target_world_space_pos",
+            b"target_world_space_pos",
+            "unit_tags",
+            b"unit_tags",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["target", b"target"]
+    ) -> typing.Literal["target_world_space_pos", "target_unit_tag"] | None: ...
 
 global___ActionRawUnitCommand = ActionRawUnitCommand
 
@@ -646,11 +1000,7 @@ class ActionRawCameraMove(google.protobuf.message.Message):
     CENTER_WORLD_SPACE_FIELD_NUMBER: builtins.int
     @property
     def center_world_space(self) -> s2clientprotocol.common_pb2.Point: ...
-    def __init__(
-        self,
-        *,
-        center_world_space: s2clientprotocol.common_pb2.Point | None = ...,
-    ) -> None: ...
+    def __init__(self, *, center_world_space: s2clientprotocol.common_pb2.Point | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["center_world_space", b"center_world_space"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["center_world_space", b"center_world_space"]) -> None: ...
 
@@ -666,10 +1016,7 @@ class ActionRawToggleAutocast(google.protobuf.message.Message):
     @property
     def unit_tags(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
     def __init__(
-        self,
-        *,
-        ability_id: builtins.int | None = ...,
-        unit_tags: collections.abc.Iterable[builtins.int] | None = ...,
+        self, *, ability_id: builtins.int | None = ..., unit_tags: collections.abc.Iterable[builtins.int] | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["ability_id", b"ability_id"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "unit_tags", b"unit_tags"]) -> None: ...

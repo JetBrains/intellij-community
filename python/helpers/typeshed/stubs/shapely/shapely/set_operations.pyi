@@ -5,7 +5,11 @@ from .geometry.base import BaseGeometry
 from .lib import Geometry
 
 __all__ = [
+    "coverage_union",
+    "coverage_union_all",
     "difference",
+    "disjoint_subset_union",
+    "disjoint_subset_union_all",
     "intersection",
     "intersection_all",
     "symmetric_difference",
@@ -13,8 +17,6 @@ __all__ = [
     "unary_union",
     "union",
     "union_all",
-    "coverage_union",
-    "coverage_union_all",
 ]
 
 @overload
@@ -84,3 +86,11 @@ def coverage_union(a: OptGeoArrayLike, b: OptGeoArrayLike, *, axis: int, **kwarg
 def coverage_union_all(geometries: OptGeoArrayLike, axis: None = None, **kwargs) -> BaseGeometry: ...
 @overload
 def coverage_union_all(geometries: OptGeoArrayLikeSeq, axis: int, **kwargs) -> BaseGeometry | GeoArray: ...
+@overload
+def disjoint_subset_union(a: OptGeoArrayLike, b: OptGeoArrayLike, *, axis: None = None, **kwargs) -> BaseGeometry: ...
+@overload
+def disjoint_subset_union(a: OptGeoArrayLike, b: OptGeoArrayLike, *, axis: int, **kwargs) -> BaseGeometry | GeoArray: ...
+@overload
+def disjoint_subset_union_all(geometries: OptGeoArrayLike, *, axis: None = None, **kwargs) -> BaseGeometry: ...
+@overload
+def disjoint_subset_union_all(geometries: OptGeoArrayLikeSeq, *, axis: int, **kwargs) -> BaseGeometry | GeoArray: ...

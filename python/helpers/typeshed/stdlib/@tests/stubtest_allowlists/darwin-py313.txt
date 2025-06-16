@@ -1,19 +1,5 @@
-# new in py313
-posixpath.splitroot
+# =======
+# >= 3.13
+# =======
 
-# Depends on HAVE_NCURSESW and how we install CPython,
-# should be removed when 3.13 will be officially released:
-_?curses.unget_wch
-_?curses.window.get_wch
-
-# Exists locally on MacOS but not on GitHub
-(mmap.MAP_32BIT)?
-
-# These entries looks like a `setup-python` bug:
-(dbm.gnu)?
-(_?locale.bind_textdomain_codeset)?
-(_?locale.bindtextdomain)?
-(_?locale.dcgettext)?
-(_?locale.dgettext)?
-(_?locale.gettext)?
-(_?locale.textdomain)?
+(mmap.MAP_32BIT)?  # Exists locally on MacOS but not on GitHub

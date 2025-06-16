@@ -1,64 +1,62 @@
-_posixsubprocess.cloexec_pipe
-curses.has_key
+# ============================================
+# TODO: Allowlist entries that should be fixed
+# ============================================
+
 (os|posix).sched_param  # system dependent. Unclear if macos has it.
-select.KQ_FILTER_NETDEV  # system dependent
-select.kqueue.__init__  # default C signature is wrong
-select.POLLMSG   # system dependent
 
 # Sometimes these seem to exist on darwin, sometimes not
-(_curses.A_ITALIC)?
-(curses.A_ITALIC)?
-(_socket.MSG_NOSIGNAL)?
-(socket.MsgFlag.MSG_NOSIGNAL)?
-(socket.MSG_NOSIGNAL)?
-(os.preadv)?
-(os.pwritev)?
-(posix.preadv)?
-(posix.pwritev)?
-(readline.append_history_file)?
-(fcntl.F_GETLEASE)?
-(fcntl.F_SETLEASE)?
+(_?curses.A_ITALIC)?  # ncurses extension
+(fcntl.F_GETLEASE)?  # GNU extension
+(fcntl.F_SETLEASE)?  # GNU extension
 
-# Platform differences that cannot be captured by the type system
-(posix.O_[A-Z_]+)?
-(posix.ST_[A-Z]+)?
-(termios.[A-Z0-9_]+)?
 
-# Exists at runtime, but missing from stubs
-_ctypes.dlclose
-_ctypes.dlopen
-_ctypes.dlsym
+# ==========================================
+# Modules that do not exist on MacOS systems
+# ==========================================
 
-# ==========
-# Allowlist entries that cannot or should not be fixed
-# ==========
-
-# Modules that do not exist on macos systems
-_msi
 _winapi
 asyncio.windows_events
 asyncio.windows_utils
+encodings.oem
+encodings.mbcs
 msvcrt
 nt
 winreg
 winsound
 
-# multiprocessing.popen_spawn_win32 exists on Darwin but fail to import
-multiprocessing.popen_spawn_win32
 
-# Platform differences that cannot be captured by the type system
-os.SCHED_[A-Z_]+
-posix.SCHED_[A-Z_]+
+# ==========================================================
+# Other allowlist entries that cannot or should not be fixed
+# ==========================================================
 
-# Some of these exist on non-windows, but they are useless and this is not intended
-stat.FILE_ATTRIBUTE_[A-Z_]+
+_gdbm  # Only available if compiled with libgdbm
 
-# Methods that come from __getattr__() at runtime
-tkinter.Tk.createfilehandler
-tkinter.Tk.deletefilehandler
+# Not available on python distributions compiled without sqlite3 loadable extension support
+_sqlite3.Connection.load_extension
+_sqlite3.Connection.enable_load_extension
 
-_?curses.ACS_.* # ACS codes are initialized only after initscr call
+_?curses.ACS_.*  # ACS codes are initialized only after initscr call
 curses.COLORS  # Initialized after start_color
 curses.COLOR_PAIRS  # Initialized after start_color
 curses.COLS  # Initialized only after initscr call
 curses.LINES  # Initialized only after initscr call
+curses.has_key  # stubtest gets confused because this is both a module and a function in curses
+multiprocessing.popen_spawn_win32  # exists on Darwin but fails to import
+readline.append_history_file  # Only available if compiled with GNU readline, not editline
+select.kqueue.__init__  # default C signature is wrong
+select.poll  # Actually a function; we have a class so it can be used as a type
+
+# Some of these exist on non-windows, but they are useless and this is not intended
+stat.FILE_ATTRIBUTE_[A-Z_]+
+
+tkinter.Tk.createfilehandler  # Methods that come from __getattr__() at runtime
+tkinter.Tk.deletefilehandler  # Methods that come from __getattr__() at runtime
+
+# These entries looks like a `setup-python` bug:
+(dbm.gnu)?
+(_?locale.bind_textdomain_codeset)?
+(_?locale.bindtextdomain)?
+(_?locale.dcgettext)?
+(_?locale.dgettext)?
+(_?locale.gettext)?
+(_?locale.textdomain)?

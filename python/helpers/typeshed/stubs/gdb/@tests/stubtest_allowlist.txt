@@ -8,7 +8,6 @@ gdb.FinishBreakpoint.out_of_scope
 gdb.Parameter.get_set_string
 gdb.Parameter.get_show_string
 
-
 # TODO: abstract/optional methods to be implemented by subclasses
 # gdb.FinishBreakpoint.out_of_scope
 gdb.Breakpoint.stop
@@ -30,14 +29,12 @@ gdb.TuiWindow
 gdb.command
 gdb.command.explore
 gdb.command.frame_filters
+gdb.command.missing_debug
 gdb.command.pretty_printers
 gdb.command.prompt
 gdb.command.type_printers
 gdb.command.unwinders
 gdb.command.xmethods
-
-# module is auto-imported with gdb and cannot be imported on its own
-gdb.events
 
 # implementing internal convenience functions
 gdb.function
@@ -74,9 +71,8 @@ gdb.xmethods
 gdb.Objfile.xmethods
 gdb.Progspace.xmethods
 
-# Python 2 compatibility defines
-gdb.FrameDecorator.basestring
-gdb.printing.basestring
-gdb.printing.long
-gdb.xmethod.basestring
-gdb.xmethod.long
+# stubtest thinks this can't be sub-classed at runtime, but it is
+gdb.disassembler.DisassemblerPart
+
+# incomplete modules
+gdb\.dap\.[a-z_]+\.[A-Za-z_]+

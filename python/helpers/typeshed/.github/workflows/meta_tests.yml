@@ -10,6 +10,7 @@ on:
     paths:
       - "scripts/**"
       - "tests/**"
+      - "lib/**"
       - ".github/workflows/meta_tests.yml"
       - "requirements-tests.txt"
       - "pyproject.toml"
@@ -27,7 +28,7 @@ concurrency:
 
 jobs:
   mypy:
-    name: Run mypy against the scripts and tests directories
+    name: Check scripts and tests with mypy
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -37,12 +38,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - run: uv pip install -r requirements-tests.txt --system
       - run: python ./tests/typecheck_typeshed.py --platform=${{ matrix.platform }}
   pyright:
-    name: Run pyright against the scripts and tests directories
+    name: Check scripts and tests with pyright
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -52,8 +53,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          # Max supported Python version as of pytype 2024.2.27.
-          python-version: "3.11"
+          # TODO: Since pytype is not available for Python 3.13, and
+          # pytype_test.py imports pytype, we need to use Python 3.12 for now.
+          python-version: "3.12"
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - run: uv pip install -r requirements-tests.txt --system
       - name: Run pyright on typeshed
@@ -61,7 +63,7 @@ jobs:
         with:
           version: PATH
           python-platform: ${{ matrix.python-platform }}
-          python-version: "3.9" # The Python version to test against.
+          python-version: "3.9" # Oldest version supported for running scripts and tests
           project: ./pyrightconfig.scripts_and_tests.json
   stubsabot-dry-run:
     name: Stubsabot dry run
@@ -70,7 +72,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - name: Git config
         run: |

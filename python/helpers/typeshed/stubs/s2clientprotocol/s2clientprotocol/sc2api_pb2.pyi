@@ -72,7 +72,9 @@ class _Difficulty:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _DifficultyEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Difficulty.ValueType], builtins.type):
+class _DifficultyEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_Difficulty.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     VeryEasy: _Difficulty.ValueType  # 1
     Easy: _Difficulty.ValueType  # 2
@@ -106,7 +108,9 @@ class _PlayerType:
     ValueType = typing.NewType("ValueType", builtins.int)
     V: typing_extensions.TypeAlias = ValueType
 
-class _PlayerTypeEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_PlayerType.ValueType], builtins.type):
+class _PlayerTypeEnumTypeWrapper(
+    google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[_PlayerType.ValueType], builtins.type
+):
     DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
     Participant: _PlayerType.ValueType  # 1
     Computer: _PlayerType.ValueType  # 2
@@ -371,9 +375,141 @@ class Request(google.protobuf.message.Message):
         debug: global___RequestDebug | None = ...,
         id: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["action", b"action", "available_maps", b"available_maps", "create_game", b"create_game", "data", b"data", "debug", b"debug", "game_info", b"game_info", "id", b"id", "join_game", b"join_game", "leave_game", b"leave_game", "map_command", b"map_command", "obs_action", b"obs_action", "observation", b"observation", "ping", b"ping", "query", b"query", "quick_load", b"quick_load", "quick_save", b"quick_save", "quit", b"quit", "replay_info", b"replay_info", "request", b"request", "restart_game", b"restart_game", "save_map", b"save_map", "save_replay", b"save_replay", "start_replay", b"start_replay", "step", b"step"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action", b"action", "available_maps", b"available_maps", "create_game", b"create_game", "data", b"data", "debug", b"debug", "game_info", b"game_info", "id", b"id", "join_game", b"join_game", "leave_game", b"leave_game", "map_command", b"map_command", "obs_action", b"obs_action", "observation", b"observation", "ping", b"ping", "query", b"query", "quick_load", b"quick_load", "quick_save", b"quick_save", "quit", b"quit", "replay_info", b"replay_info", "request", b"request", "restart_game", b"restart_game", "save_map", b"save_map", "save_replay", b"save_replay", "start_replay", b"start_replay", "step", b"step"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["request", b"request"]) -> typing.Literal["create_game", "join_game", "restart_game", "start_replay", "leave_game", "quick_save", "quick_load", "quit", "game_info", "observation", "action", "obs_action", "step", "data", "query", "save_replay", "map_command", "replay_info", "available_maps", "save_map", "ping", "debug"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "available_maps",
+            b"available_maps",
+            "create_game",
+            b"create_game",
+            "data",
+            b"data",
+            "debug",
+            b"debug",
+            "game_info",
+            b"game_info",
+            "id",
+            b"id",
+            "join_game",
+            b"join_game",
+            "leave_game",
+            b"leave_game",
+            "map_command",
+            b"map_command",
+            "obs_action",
+            b"obs_action",
+            "observation",
+            b"observation",
+            "ping",
+            b"ping",
+            "query",
+            b"query",
+            "quick_load",
+            b"quick_load",
+            "quick_save",
+            b"quick_save",
+            "quit",
+            b"quit",
+            "replay_info",
+            b"replay_info",
+            "request",
+            b"request",
+            "restart_game",
+            b"restart_game",
+            "save_map",
+            b"save_map",
+            "save_replay",
+            b"save_replay",
+            "start_replay",
+            b"start_replay",
+            "step",
+            b"step",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "available_maps",
+            b"available_maps",
+            "create_game",
+            b"create_game",
+            "data",
+            b"data",
+            "debug",
+            b"debug",
+            "game_info",
+            b"game_info",
+            "id",
+            b"id",
+            "join_game",
+            b"join_game",
+            "leave_game",
+            b"leave_game",
+            "map_command",
+            b"map_command",
+            "obs_action",
+            b"obs_action",
+            "observation",
+            b"observation",
+            "ping",
+            b"ping",
+            "query",
+            b"query",
+            "quick_load",
+            b"quick_load",
+            "quick_save",
+            b"quick_save",
+            "quit",
+            b"quit",
+            "replay_info",
+            b"replay_info",
+            "request",
+            b"request",
+            "restart_game",
+            b"restart_game",
+            "save_map",
+            b"save_map",
+            "save_replay",
+            b"save_replay",
+            "start_replay",
+            b"start_replay",
+            "step",
+            b"step",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["request", b"request"]
+    ) -> (
+        typing.Literal[
+            "create_game",
+            "join_game",
+            "restart_game",
+            "start_replay",
+            "leave_game",
+            "quick_save",
+            "quick_load",
+            "quit",
+            "game_info",
+            "observation",
+            "action",
+            "obs_action",
+            "step",
+            "data",
+            "query",
+            "save_replay",
+            "map_command",
+            "replay_info",
+            "available_maps",
+            "save_map",
+            "ping",
+            "debug",
+        ]
+        | None
+    ): ...
 
 global___Request = Request
 
@@ -488,9 +624,147 @@ class Response(google.protobuf.message.Message):
         error: collections.abc.Iterable[builtins.str] | None = ...,
         status: global___Status.ValueType | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["action", b"action", "available_maps", b"available_maps", "create_game", b"create_game", "data", b"data", "debug", b"debug", "game_info", b"game_info", "id", b"id", "join_game", b"join_game", "leave_game", b"leave_game", "map_command", b"map_command", "obs_action", b"obs_action", "observation", b"observation", "ping", b"ping", "query", b"query", "quick_load", b"quick_load", "quick_save", b"quick_save", "quit", b"quit", "replay_info", b"replay_info", "response", b"response", "restart_game", b"restart_game", "save_map", b"save_map", "save_replay", b"save_replay", "start_replay", b"start_replay", "status", b"status", "step", b"step"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action", b"action", "available_maps", b"available_maps", "create_game", b"create_game", "data", b"data", "debug", b"debug", "error", b"error", "game_info", b"game_info", "id", b"id", "join_game", b"join_game", "leave_game", b"leave_game", "map_command", b"map_command", "obs_action", b"obs_action", "observation", b"observation", "ping", b"ping", "query", b"query", "quick_load", b"quick_load", "quick_save", b"quick_save", "quit", b"quit", "replay_info", b"replay_info", "response", b"response", "restart_game", b"restart_game", "save_map", b"save_map", "save_replay", b"save_replay", "start_replay", b"start_replay", "status", b"status", "step", b"step"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["response", b"response"]) -> typing.Literal["create_game", "join_game", "restart_game", "start_replay", "leave_game", "quick_save", "quick_load", "quit", "game_info", "observation", "action", "obs_action", "step", "data", "query", "save_replay", "replay_info", "available_maps", "save_map", "map_command", "ping", "debug"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "available_maps",
+            b"available_maps",
+            "create_game",
+            b"create_game",
+            "data",
+            b"data",
+            "debug",
+            b"debug",
+            "game_info",
+            b"game_info",
+            "id",
+            b"id",
+            "join_game",
+            b"join_game",
+            "leave_game",
+            b"leave_game",
+            "map_command",
+            b"map_command",
+            "obs_action",
+            b"obs_action",
+            "observation",
+            b"observation",
+            "ping",
+            b"ping",
+            "query",
+            b"query",
+            "quick_load",
+            b"quick_load",
+            "quick_save",
+            b"quick_save",
+            "quit",
+            b"quit",
+            "replay_info",
+            b"replay_info",
+            "response",
+            b"response",
+            "restart_game",
+            b"restart_game",
+            "save_map",
+            b"save_map",
+            "save_replay",
+            b"save_replay",
+            "start_replay",
+            b"start_replay",
+            "status",
+            b"status",
+            "step",
+            b"step",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "available_maps",
+            b"available_maps",
+            "create_game",
+            b"create_game",
+            "data",
+            b"data",
+            "debug",
+            b"debug",
+            "error",
+            b"error",
+            "game_info",
+            b"game_info",
+            "id",
+            b"id",
+            "join_game",
+            b"join_game",
+            "leave_game",
+            b"leave_game",
+            "map_command",
+            b"map_command",
+            "obs_action",
+            b"obs_action",
+            "observation",
+            b"observation",
+            "ping",
+            b"ping",
+            "query",
+            b"query",
+            "quick_load",
+            b"quick_load",
+            "quick_save",
+            b"quick_save",
+            "quit",
+            b"quit",
+            "replay_info",
+            b"replay_info",
+            "response",
+            b"response",
+            "restart_game",
+            b"restart_game",
+            "save_map",
+            b"save_map",
+            "save_replay",
+            b"save_replay",
+            "start_replay",
+            b"start_replay",
+            "status",
+            b"status",
+            "step",
+            b"step",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["response", b"response"]
+    ) -> (
+        typing.Literal[
+            "create_game",
+            "join_game",
+            "restart_game",
+            "start_replay",
+            "leave_game",
+            "quick_save",
+            "quick_load",
+            "quit",
+            "game_info",
+            "observation",
+            "action",
+            "obs_action",
+            "step",
+            "data",
+            "query",
+            "save_replay",
+            "replay_info",
+            "available_maps",
+            "save_map",
+            "map_command",
+            "ping",
+            "debug",
+        ]
+        | None
+    ): ...
 
 global___Response = Response
 
@@ -532,9 +806,45 @@ class RequestCreateGame(google.protobuf.message.Message):
         random_seed: builtins.int | None = ...,
         realtime: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["Map", b"Map", "battlenet_map_name", b"battlenet_map_name", "disable_fog", b"disable_fog", "local_map", b"local_map", "random_seed", b"random_seed", "realtime", b"realtime"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["Map", b"Map", "battlenet_map_name", b"battlenet_map_name", "disable_fog", b"disable_fog", "local_map", b"local_map", "player_setup", b"player_setup", "random_seed", b"random_seed", "realtime", b"realtime"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["Map", b"Map"]) -> typing.Literal["local_map", "battlenet_map_name"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "Map",
+            b"Map",
+            "battlenet_map_name",
+            b"battlenet_map_name",
+            "disable_fog",
+            b"disable_fog",
+            "local_map",
+            b"local_map",
+            "random_seed",
+            b"random_seed",
+            "realtime",
+            b"realtime",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "Map",
+            b"Map",
+            "battlenet_map_name",
+            b"battlenet_map_name",
+            "disable_fog",
+            b"disable_fog",
+            "local_map",
+            b"local_map",
+            "player_setup",
+            b"player_setup",
+            "random_seed",
+            b"random_seed",
+            "realtime",
+            b"realtime",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["Map", b"Map"]
+    ) -> typing.Literal["local_map", "battlenet_map_name"] | None: ...
 
 global___RequestCreateGame = RequestCreateGame
 
@@ -550,12 +860,7 @@ class LocalMap(google.protobuf.message.Message):
     into the replay. (260 character max)
     """
     map_data: builtins.bytes
-    def __init__(
-        self,
-        *,
-        map_path: builtins.str | None = ...,
-        map_data: builtins.bytes | None = ...,
-    ) -> None: ...
+    def __init__(self, *, map_path: builtins.str | None = ..., map_data: builtins.bytes | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["map_data", b"map_data", "map_path", b"map_path"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["map_data", b"map_data", "map_path", b"map_path"]) -> None: ...
 
@@ -569,7 +874,9 @@ class ResponseCreateGame(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ErrorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseCreateGame._Error.ValueType], builtins.type):
+    class _ErrorEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseCreateGame._Error.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         MissingMap: ResponseCreateGame._Error.ValueType  # 1
         InvalidMapPath: ResponseCreateGame._Error.ValueType  # 2
@@ -597,10 +904,7 @@ class ResponseCreateGame(google.protobuf.message.Message):
     error: global___ResponseCreateGame.Error.ValueType
     error_details: builtins.str
     def __init__(
-        self,
-        *,
-        error: global___ResponseCreateGame.Error.ValueType | None = ...,
-        error_details: builtins.str | None = ...,
+        self, *, error: global___ResponseCreateGame.Error.ValueType | None = ..., error_details: builtins.str | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details"]) -> None: ...
@@ -660,9 +964,53 @@ class RequestJoinGame(google.protobuf.message.Message):
         player_name: builtins.str | None = ...,
         host_ip: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["host_ip", b"host_ip", "observed_player_id", b"observed_player_id", "options", b"options", "participation", b"participation", "player_name", b"player_name", "race", b"race", "server_ports", b"server_ports", "shared_port", b"shared_port"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["client_ports", b"client_ports", "host_ip", b"host_ip", "observed_player_id", b"observed_player_id", "options", b"options", "participation", b"participation", "player_name", b"player_name", "race", b"race", "server_ports", b"server_ports", "shared_port", b"shared_port"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["participation", b"participation"]) -> typing.Literal["race", "observed_player_id"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "host_ip",
+            b"host_ip",
+            "observed_player_id",
+            b"observed_player_id",
+            "options",
+            b"options",
+            "participation",
+            b"participation",
+            "player_name",
+            b"player_name",
+            "race",
+            b"race",
+            "server_ports",
+            b"server_ports",
+            "shared_port",
+            b"shared_port",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "client_ports",
+            b"client_ports",
+            "host_ip",
+            b"host_ip",
+            "observed_player_id",
+            b"observed_player_id",
+            "options",
+            b"options",
+            "participation",
+            b"participation",
+            "player_name",
+            b"player_name",
+            "race",
+            b"race",
+            "server_ports",
+            b"server_ports",
+            "shared_port",
+            b"shared_port",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["participation", b"participation"]
+    ) -> typing.Literal["race", "observed_player_id"] | None: ...
 
 global___RequestJoinGame = RequestJoinGame
 
@@ -675,12 +1023,7 @@ class PortSet(google.protobuf.message.Message):
     game_port: builtins.int
     """Game right now needs two internal ports to establish a multiplay game on the local host."""
     base_port: builtins.int
-    def __init__(
-        self,
-        *,
-        game_port: builtins.int | None = ...,
-        base_port: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, game_port: builtins.int | None = ..., base_port: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["base_port", b"base_port", "game_port", b"game_port"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["base_port", b"base_port", "game_port", b"game_port"]) -> None: ...
 
@@ -694,7 +1037,9 @@ class ResponseJoinGame(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ErrorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseJoinGame._Error.ValueType], builtins.type):
+    class _ErrorEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseJoinGame._Error.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         MissingParticipation: ResponseJoinGame._Error.ValueType  # 1
         InvalidObservedPlayerId: ResponseJoinGame._Error.ValueType  # 2
@@ -744,8 +1089,12 @@ class ResponseJoinGame(google.protobuf.message.Message):
         error: global___ResponseJoinGame.Error.ValueType | None = ...,
         error_details: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details", "player_id", b"player_id"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details", "player_id", b"player_id"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["error", b"error", "error_details", b"error_details", "player_id", b"player_id"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["error", b"error", "error_details", b"error_details", "player_id", b"player_id"]
+    ) -> None: ...
 
 global___ResponseJoinGame = ResponseJoinGame
 
@@ -755,9 +1104,7 @@ class RequestRestartGame(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestRestartGame = RequestRestartGame
 
@@ -771,7 +1118,9 @@ class ResponseRestartGame(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ErrorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseRestartGame._Error.ValueType], builtins.type):
+    class _ErrorEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseRestartGame._Error.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         LaunchError: ResponseRestartGame._Error.ValueType  # 1
 
@@ -792,8 +1141,14 @@ class ResponseRestartGame(google.protobuf.message.Message):
         error_details: builtins.str | None = ...,
         need_hard_reset: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details", "need_hard_reset", b"need_hard_reset"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details", "need_hard_reset", b"need_hard_reset"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal["error", b"error", "error_details", b"error_details", "need_hard_reset", b"need_hard_reset"],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal["error", b"error", "error_details", b"error_details", "need_hard_reset", b"need_hard_reset"],
+    ) -> None: ...
 
 global___ResponseRestartGame = ResponseRestartGame
 
@@ -834,9 +1189,55 @@ class RequestStartReplay(google.protobuf.message.Message):
         realtime: builtins.bool | None = ...,
         record_replay: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["disable_fog", b"disable_fog", "map_data", b"map_data", "observed_player_id", b"observed_player_id", "options", b"options", "realtime", b"realtime", "record_replay", b"record_replay", "replay", b"replay", "replay_data", b"replay_data", "replay_path", b"replay_path"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["disable_fog", b"disable_fog", "map_data", b"map_data", "observed_player_id", b"observed_player_id", "options", b"options", "realtime", b"realtime", "record_replay", b"record_replay", "replay", b"replay", "replay_data", b"replay_data", "replay_path", b"replay_path"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["replay", b"replay"]) -> typing.Literal["replay_path", "replay_data"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "disable_fog",
+            b"disable_fog",
+            "map_data",
+            b"map_data",
+            "observed_player_id",
+            b"observed_player_id",
+            "options",
+            b"options",
+            "realtime",
+            b"realtime",
+            "record_replay",
+            b"record_replay",
+            "replay",
+            b"replay",
+            "replay_data",
+            b"replay_data",
+            "replay_path",
+            b"replay_path",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "disable_fog",
+            b"disable_fog",
+            "map_data",
+            b"map_data",
+            "observed_player_id",
+            b"observed_player_id",
+            "options",
+            b"options",
+            "realtime",
+            b"realtime",
+            "record_replay",
+            b"record_replay",
+            "replay",
+            b"replay",
+            "replay_data",
+            b"replay_data",
+            "replay_path",
+            b"replay_path",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["replay", b"replay"]
+    ) -> typing.Literal["replay_path", "replay_data"] | None: ...
 
 global___RequestStartReplay = RequestStartReplay
 
@@ -848,7 +1249,9 @@ class ResponseStartReplay(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ErrorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseStartReplay._Error.ValueType], builtins.type):
+    class _ErrorEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseStartReplay._Error.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         MissingReplay: ResponseStartReplay._Error.ValueType  # 1
         InvalidReplayPath: ResponseStartReplay._Error.ValueType  # 2
@@ -872,10 +1275,7 @@ class ResponseStartReplay(google.protobuf.message.Message):
     error: global___ResponseStartReplay.Error.ValueType
     error_details: builtins.str
     def __init__(
-        self,
-        *,
-        error: global___ResponseStartReplay.Error.ValueType | None = ...,
-        error_details: builtins.str | None = ...,
+        self, *, error: global___ResponseStartReplay.Error.ValueType | None = ..., error_details: builtins.str | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details"]) -> None: ...
@@ -890,11 +1290,7 @@ class RequestMapCommand(google.protobuf.message.Message):
 
     TRIGGER_CMD_FIELD_NUMBER: builtins.int
     trigger_cmd: builtins.str
-    def __init__(
-        self,
-        *,
-        trigger_cmd: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, trigger_cmd: builtins.str | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["trigger_cmd", b"trigger_cmd"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["trigger_cmd", b"trigger_cmd"]) -> None: ...
 
@@ -908,7 +1304,9 @@ class ResponseMapCommand(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ErrorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseMapCommand._Error.ValueType], builtins.type):
+    class _ErrorEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseMapCommand._Error.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         NoTriggerError: ResponseMapCommand._Error.ValueType  # 1
 
@@ -920,10 +1318,7 @@ class ResponseMapCommand(google.protobuf.message.Message):
     error: global___ResponseMapCommand.Error.ValueType
     error_details: builtins.str
     def __init__(
-        self,
-        *,
-        error: global___ResponseMapCommand.Error.ValueType | None = ...,
-        error_details: builtins.str | None = ...,
+        self, *, error: global___ResponseMapCommand.Error.ValueType | None = ..., error_details: builtins.str | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["error", b"error", "error_details", b"error_details"]) -> None: ...
@@ -936,9 +1331,7 @@ class RequestLeaveGame(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestLeaveGame = RequestLeaveGame
 
@@ -946,9 +1339,7 @@ global___RequestLeaveGame = RequestLeaveGame
 class ResponseLeaveGame(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ResponseLeaveGame = ResponseLeaveGame
 
@@ -958,9 +1349,7 @@ class RequestQuickSave(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestQuickSave = RequestQuickSave
 
@@ -970,9 +1359,7 @@ class ResponseQuickSave(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ResponseQuickSave = ResponseQuickSave
 
@@ -982,9 +1369,7 @@ class RequestQuickLoad(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestQuickLoad = RequestQuickLoad
 
@@ -994,9 +1379,7 @@ class ResponseQuickLoad(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ResponseQuickLoad = ResponseQuickLoad
 
@@ -1006,9 +1389,7 @@ class RequestQuit(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestQuit = RequestQuit
 
@@ -1016,9 +1397,7 @@ global___RequestQuit = RequestQuit
 class ResponseQuit(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ResponseQuit = ResponseQuit
 
@@ -1028,9 +1407,7 @@ class RequestGameInfo(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestGameInfo = RequestGameInfo
 
@@ -1066,8 +1443,29 @@ class ResponseGameInfo(google.protobuf.message.Message):
         start_raw: s2clientprotocol.raw_pb2.StartRaw | None = ...,
         options: global___InterfaceOptions | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["local_map_path", b"local_map_path", "map_name", b"map_name", "options", b"options", "start_raw", b"start_raw"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["local_map_path", b"local_map_path", "map_name", b"map_name", "mod_names", b"mod_names", "options", b"options", "player_info", b"player_info", "start_raw", b"start_raw"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "local_map_path", b"local_map_path", "map_name", b"map_name", "options", b"options", "start_raw", b"start_raw"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "local_map_path",
+            b"local_map_path",
+            "map_name",
+            b"map_name",
+            "mod_names",
+            b"mod_names",
+            "options",
+            b"options",
+            "player_info",
+            b"player_info",
+            "start_raw",
+            b"start_raw",
+        ],
+    ) -> None: ...
 
 global___ResponseGameInfo = ResponseGameInfo
 
@@ -1082,12 +1480,7 @@ class RequestObservation(google.protobuf.message.Message):
     disable_fog: builtins.bool
     game_loop: builtins.int
     """In realtime the request will only return once the simulation game loop has reached this value. When not realtime this value is ignored."""
-    def __init__(
-        self,
-        *,
-        disable_fog: builtins.bool | None = ...,
-        game_loop: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, disable_fog: builtins.bool | None = ..., game_loop: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["disable_fog", b"disable_fog", "game_loop", b"game_loop"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["disable_fog", b"disable_fog", "game_loop", b"game_loop"]) -> None: ...
 
@@ -1128,7 +1521,21 @@ class ResponseObservation(google.protobuf.message.Message):
         chat: collections.abc.Iterable[global___ChatReceived] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["observation", b"observation"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action_errors", b"action_errors", "actions", b"actions", "chat", b"chat", "observation", b"observation", "player_result", b"player_result"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "action_errors",
+            b"action_errors",
+            "actions",
+            b"actions",
+            "chat",
+            b"chat",
+            "observation",
+            b"observation",
+            "player_result",
+            b"player_result",
+        ],
+    ) -> None: ...
 
 global___ResponseObservation = ResponseObservation
 
@@ -1140,12 +1547,7 @@ class ChatReceived(google.protobuf.message.Message):
     MESSAGE_FIELD_NUMBER: builtins.int
     player_id: builtins.int
     message: builtins.str
-    def __init__(
-        self,
-        *,
-        player_id: builtins.int | None = ...,
-        message: builtins.str | None = ...,
-    ) -> None: ...
+    def __init__(self, *, player_id: builtins.int | None = ..., message: builtins.str | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["message", b"message", "player_id", b"player_id"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["message", b"message", "player_id", b"player_id"]) -> None: ...
 
@@ -1160,11 +1562,7 @@ class RequestAction(google.protobuf.message.Message):
     ACTIONS_FIELD_NUMBER: builtins.int
     @property
     def actions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___Action]: ...
-    def __init__(
-        self,
-        *,
-        actions: collections.abc.Iterable[global___Action] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, actions: collections.abc.Iterable[global___Action] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["actions", b"actions"]) -> None: ...
 
 global___RequestAction = RequestAction
@@ -1175,11 +1573,11 @@ class ResponseAction(google.protobuf.message.Message):
 
     RESULT_FIELD_NUMBER: builtins.int
     @property
-    def result(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[s2clientprotocol.error_pb2.ActionResult.ValueType]: ...
-    def __init__(
+    def result(
         self,
-        *,
-        result: collections.abc.Iterable[s2clientprotocol.error_pb2.ActionResult.ValueType] | None = ...,
+    ) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[s2clientprotocol.error_pb2.ActionResult.ValueType]: ...
+    def __init__(
+        self, *, result: collections.abc.Iterable[s2clientprotocol.error_pb2.ActionResult.ValueType] | None = ...
     ) -> None: ...
     def ClearField(self, field_name: typing.Literal["result", b"result"]) -> None: ...
 
@@ -1194,11 +1592,7 @@ class RequestObserverAction(google.protobuf.message.Message):
     ACTIONS_FIELD_NUMBER: builtins.int
     @property
     def actions(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[global___ObserverAction]: ...
-    def __init__(
-        self,
-        *,
-        actions: collections.abc.Iterable[global___ObserverAction] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, actions: collections.abc.Iterable[global___ObserverAction] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["actions", b"actions"]) -> None: ...
 
 global___RequestObserverAction = RequestObserverAction
@@ -1207,9 +1601,7 @@ global___RequestObserverAction = RequestObserverAction
 class ResponseObserverAction(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ResponseObserverAction = ResponseObserverAction
 
@@ -1222,11 +1614,7 @@ class RequestStep(google.protobuf.message.Message):
     COUNT_FIELD_NUMBER: builtins.int
     count: builtins.int
     """Number of game loops to simulate for the next frame."""
-    def __init__(
-        self,
-        *,
-        count: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, count: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["count", b"count"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["count", b"count"]) -> None: ...
 
@@ -1243,11 +1631,7 @@ class ResponseStep(google.protobuf.message.Message):
      representable as a positive fixed point number.
      When we reach the "end of time", permanently pause the game and end the game for all.
     """
-    def __init__(
-        self,
-        *,
-        simulation_loop: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, simulation_loop: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["simulation_loop", b"simulation_loop"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["simulation_loop", b"simulation_loop"]) -> None: ...
 
@@ -1278,8 +1662,36 @@ class RequestData(google.protobuf.message.Message):
         buff_id: builtins.bool | None = ...,
         effect_id: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "buff_id", b"buff_id", "effect_id", b"effect_id", "unit_type_id", b"unit_type_id", "upgrade_id", b"upgrade_id"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "buff_id", b"buff_id", "effect_id", b"effect_id", "unit_type_id", b"unit_type_id", "upgrade_id", b"upgrade_id"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "buff_id",
+            b"buff_id",
+            "effect_id",
+            b"effect_id",
+            "unit_type_id",
+            b"unit_type_id",
+            "upgrade_id",
+            b"upgrade_id",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ability_id",
+            b"ability_id",
+            "buff_id",
+            b"buff_id",
+            "effect_id",
+            b"effect_id",
+            "unit_type_id",
+            b"unit_type_id",
+            "upgrade_id",
+            b"upgrade_id",
+        ],
+    ) -> None: ...
 
 global___RequestData = RequestData
 
@@ -1293,15 +1705,25 @@ class ResponseData(google.protobuf.message.Message):
     BUFFS_FIELD_NUMBER: builtins.int
     EFFECTS_FIELD_NUMBER: builtins.int
     @property
-    def abilities(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.AbilityData]: ...
+    def abilities(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.AbilityData]: ...
     @property
-    def units(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.UnitTypeData]: ...
+    def units(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.UnitTypeData]: ...
     @property
-    def upgrades(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.UpgradeData]: ...
+    def upgrades(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.UpgradeData]: ...
     @property
-    def buffs(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.BuffData]: ...
+    def buffs(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.BuffData]: ...
     @property
-    def effects(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.EffectData]: ...
+    def effects(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.data_pb2.EffectData]: ...
     def __init__(
         self,
         *,
@@ -1311,7 +1733,12 @@ class ResponseData(google.protobuf.message.Message):
         buffs: collections.abc.Iterable[s2clientprotocol.data_pb2.BuffData] | None = ...,
         effects: collections.abc.Iterable[s2clientprotocol.data_pb2.EffectData] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["abilities", b"abilities", "buffs", b"buffs", "effects", b"effects", "units", b"units", "upgrades", b"upgrades"]) -> None: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "abilities", b"abilities", "buffs", b"buffs", "effects", b"effects", "units", b"units", "upgrades", b"upgrades"
+        ],
+    ) -> None: ...
 
 global___ResponseData = ResponseData
 
@@ -1321,9 +1748,7 @@ class RequestSaveReplay(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestSaveReplay = RequestSaveReplay
 
@@ -1333,11 +1758,7 @@ class ResponseSaveReplay(google.protobuf.message.Message):
 
     DATA_FIELD_NUMBER: builtins.int
     data: builtins.bytes
-    def __init__(
-        self,
-        *,
-        data: builtins.bytes | None = ...,
-    ) -> None: ...
+    def __init__(self, *, data: builtins.bytes | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["data", b"data"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["data", b"data"]) -> None: ...
 
@@ -1364,9 +1785,21 @@ class RequestReplayInfo(google.protobuf.message.Message):
         replay_data: builtins.bytes | None = ...,
         download_data: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["download_data", b"download_data", "replay", b"replay", "replay_data", b"replay_data", "replay_path", b"replay_path"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["download_data", b"download_data", "replay", b"replay", "replay_data", b"replay_data", "replay_path", b"replay_path"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["replay", b"replay"]) -> typing.Literal["replay_path", "replay_data"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "download_data", b"download_data", "replay", b"replay", "replay_data", b"replay_data", "replay_path", b"replay_path"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "download_data", b"download_data", "replay", b"replay", "replay_data", b"replay_data", "replay_path", b"replay_path"
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["replay", b"replay"]
+    ) -> typing.Literal["replay_path", "replay_data"] | None: ...
 
 global___RequestReplayInfo = RequestReplayInfo
 
@@ -1392,8 +1825,32 @@ class PlayerInfoExtra(google.protobuf.message.Message):
         player_mmr: builtins.int | None = ...,
         player_apm: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["player_apm", b"player_apm", "player_info", b"player_info", "player_mmr", b"player_mmr", "player_result", b"player_result"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["player_apm", b"player_apm", "player_info", b"player_info", "player_mmr", b"player_mmr", "player_result", b"player_result"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "player_apm",
+            b"player_apm",
+            "player_info",
+            b"player_info",
+            "player_mmr",
+            b"player_mmr",
+            "player_result",
+            b"player_result",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "player_apm",
+            b"player_apm",
+            "player_info",
+            b"player_info",
+            "player_mmr",
+            b"player_mmr",
+            "player_result",
+            b"player_result",
+        ],
+    ) -> None: ...
 
 global___PlayerInfoExtra = PlayerInfoExtra
 
@@ -1405,7 +1862,9 @@ class ResponseReplayInfo(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ErrorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseReplayInfo._Error.ValueType], builtins.type):
+    class _ErrorEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseReplayInfo._Error.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         MissingReplay: ResponseReplayInfo._Error.ValueType  # 1
         InvalidReplayPath: ResponseReplayInfo._Error.ValueType  # 2
@@ -1458,8 +1917,58 @@ class ResponseReplayInfo(google.protobuf.message.Message):
         error: global___ResponseReplayInfo.Error.ValueType | None = ...,
         error_details: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["base_build", b"base_build", "data_build", b"data_build", "data_version", b"data_version", "error", b"error", "error_details", b"error_details", "game_duration_loops", b"game_duration_loops", "game_duration_seconds", b"game_duration_seconds", "game_version", b"game_version", "local_map_path", b"local_map_path", "map_name", b"map_name"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["base_build", b"base_build", "data_build", b"data_build", "data_version", b"data_version", "error", b"error", "error_details", b"error_details", "game_duration_loops", b"game_duration_loops", "game_duration_seconds", b"game_duration_seconds", "game_version", b"game_version", "local_map_path", b"local_map_path", "map_name", b"map_name", "player_info", b"player_info"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "base_build",
+            b"base_build",
+            "data_build",
+            b"data_build",
+            "data_version",
+            b"data_version",
+            "error",
+            b"error",
+            "error_details",
+            b"error_details",
+            "game_duration_loops",
+            b"game_duration_loops",
+            "game_duration_seconds",
+            b"game_duration_seconds",
+            "game_version",
+            b"game_version",
+            "local_map_path",
+            b"local_map_path",
+            "map_name",
+            b"map_name",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "base_build",
+            b"base_build",
+            "data_build",
+            b"data_build",
+            "data_version",
+            b"data_version",
+            "error",
+            b"error",
+            "error_details",
+            b"error_details",
+            "game_duration_loops",
+            b"game_duration_loops",
+            "game_duration_seconds",
+            b"game_duration_seconds",
+            "game_version",
+            b"game_version",
+            "local_map_path",
+            b"local_map_path",
+            "map_name",
+            b"map_name",
+            "player_info",
+            b"player_info",
+        ],
+    ) -> None: ...
 
 global___ResponseReplayInfo = ResponseReplayInfo
 
@@ -1469,9 +1978,7 @@ class RequestAvailableMaps(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestAvailableMaps = RequestAvailableMaps
 
@@ -1500,7 +2007,9 @@ class ResponseAvailableMaps(google.protobuf.message.Message):
         local_map_paths: collections.abc.Iterable[builtins.str] | None = ...,
         battlenet_map_names: collections.abc.Iterable[builtins.str] | None = ...,
     ) -> None: ...
-    def ClearField(self, field_name: typing.Literal["battlenet_map_names", b"battlenet_map_names", "local_map_paths", b"local_map_paths"]) -> None: ...
+    def ClearField(
+        self, field_name: typing.Literal["battlenet_map_names", b"battlenet_map_names", "local_map_paths", b"local_map_paths"]
+    ) -> None: ...
 
 global___ResponseAvailableMaps = ResponseAvailableMaps
 
@@ -1518,12 +2027,7 @@ class RequestSaveMap(google.protobuf.message.Message):
     """Path the game process will write to, relative to the temp directory. (260 character max)"""
     map_data: builtins.bytes
     """Binary map data of a .SC2Map."""
-    def __init__(
-        self,
-        *,
-        map_path: builtins.str | None = ...,
-        map_data: builtins.bytes | None = ...,
-    ) -> None: ...
+    def __init__(self, *, map_path: builtins.str | None = ..., map_data: builtins.bytes | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["map_data", b"map_data", "map_path", b"map_path"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["map_data", b"map_data", "map_path", b"map_path"]) -> None: ...
 
@@ -1537,7 +2041,9 @@ class ResponseSaveMap(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ErrorEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseSaveMap._Error.ValueType], builtins.type):
+    class _ErrorEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ResponseSaveMap._Error.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         InvalidMapData: ResponseSaveMap._Error.ValueType  # 1
 
@@ -1546,11 +2052,7 @@ class ResponseSaveMap(google.protobuf.message.Message):
 
     ERROR_FIELD_NUMBER: builtins.int
     error: global___ResponseSaveMap.Error.ValueType
-    def __init__(
-        self,
-        *,
-        error: global___ResponseSaveMap.Error.ValueType | None = ...,
-    ) -> None: ...
+    def __init__(self, *, error: global___ResponseSaveMap.Error.ValueType | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["error", b"error"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["error", b"error"]) -> None: ...
 
@@ -1562,9 +2064,7 @@ class RequestPing(google.protobuf.message.Message):
 
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___RequestPing = RequestPing
 
@@ -1588,8 +2088,32 @@ class ResponsePing(google.protobuf.message.Message):
         data_build: builtins.int | None = ...,
         base_build: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["base_build", b"base_build", "data_build", b"data_build", "data_version", b"data_version", "game_version", b"game_version"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["base_build", b"base_build", "data_build", b"data_build", "data_version", b"data_version", "game_version", b"game_version"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "base_build",
+            b"base_build",
+            "data_build",
+            b"data_build",
+            "data_version",
+            b"data_version",
+            "game_version",
+            b"game_version",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "base_build",
+            b"base_build",
+            "data_build",
+            b"data_build",
+            "data_version",
+            b"data_version",
+            "game_version",
+            b"game_version",
+        ],
+    ) -> None: ...
 
 global___ResponsePing = ResponsePing
 
@@ -1601,12 +2125,10 @@ class RequestDebug(google.protobuf.message.Message):
 
     DEBUG_FIELD_NUMBER: builtins.int
     @property
-    def debug(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.debug_pb2.DebugCommand]: ...
-    def __init__(
+    def debug(
         self,
-        *,
-        debug: collections.abc.Iterable[s2clientprotocol.debug_pb2.DebugCommand] | None = ...,
-    ) -> None: ...
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.debug_pb2.DebugCommand]: ...
+    def __init__(self, *, debug: collections.abc.Iterable[s2clientprotocol.debug_pb2.DebugCommand] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["debug", b"debug"]) -> None: ...
 
 global___RequestDebug = RequestDebug
@@ -1615,9 +2137,7 @@ global___RequestDebug = RequestDebug
 class ResponseDebug(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self) -> None: ...
 
 global___ResponseDebug = ResponseDebug
 
@@ -1645,8 +2165,18 @@ class PlayerSetup(google.protobuf.message.Message):
         player_name: builtins.str | None = ...,
         ai_build: global___AIBuild.ValueType | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ai_build", b"ai_build", "difficulty", b"difficulty", "player_name", b"player_name", "race", b"race", "type", b"type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ai_build", b"ai_build", "difficulty", b"difficulty", "player_name", b"player_name", "race", b"race", "type", b"type"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ai_build", b"ai_build", "difficulty", b"difficulty", "player_name", b"player_name", "race", b"race", "type", b"type"
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ai_build", b"ai_build", "difficulty", b"difficulty", "player_name", b"player_name", "race", b"race", "type", b"type"
+        ],
+    ) -> None: ...
 
 global___PlayerSetup = PlayerSetup
 
@@ -1680,8 +2210,36 @@ class SpatialCameraSetup(google.protobuf.message.Message):
         crop_to_playable_area: builtins.bool | None = ...,
         allow_cheating_layers: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["allow_cheating_layers", b"allow_cheating_layers", "crop_to_playable_area", b"crop_to_playable_area", "minimap_resolution", b"minimap_resolution", "resolution", b"resolution", "width", b"width"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["allow_cheating_layers", b"allow_cheating_layers", "crop_to_playable_area", b"crop_to_playable_area", "minimap_resolution", b"minimap_resolution", "resolution", b"resolution", "width", b"width"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "allow_cheating_layers",
+            b"allow_cheating_layers",
+            "crop_to_playable_area",
+            b"crop_to_playable_area",
+            "minimap_resolution",
+            b"minimap_resolution",
+            "resolution",
+            b"resolution",
+            "width",
+            b"width",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "allow_cheating_layers",
+            b"allow_cheating_layers",
+            "crop_to_playable_area",
+            b"crop_to_playable_area",
+            "minimap_resolution",
+            b"minimap_resolution",
+            "resolution",
+            b"resolution",
+            "width",
+            b"width",
+        ],
+    ) -> None: ...
 
 global___SpatialCameraSetup = SpatialCameraSetup
 
@@ -1739,8 +2297,52 @@ class InterfaceOptions(google.protobuf.message.Message):
         raw_affects_selection: builtins.bool | None = ...,
         raw_crop_to_playable_area: builtins.bool | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["feature_layer", b"feature_layer", "raw", b"raw", "raw_affects_selection", b"raw_affects_selection", "raw_crop_to_playable_area", b"raw_crop_to_playable_area", "render", b"render", "score", b"score", "show_burrowed_shadows", b"show_burrowed_shadows", "show_cloaked", b"show_cloaked", "show_placeholders", b"show_placeholders"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["feature_layer", b"feature_layer", "raw", b"raw", "raw_affects_selection", b"raw_affects_selection", "raw_crop_to_playable_area", b"raw_crop_to_playable_area", "render", b"render", "score", b"score", "show_burrowed_shadows", b"show_burrowed_shadows", "show_cloaked", b"show_cloaked", "show_placeholders", b"show_placeholders"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "feature_layer",
+            b"feature_layer",
+            "raw",
+            b"raw",
+            "raw_affects_selection",
+            b"raw_affects_selection",
+            "raw_crop_to_playable_area",
+            b"raw_crop_to_playable_area",
+            "render",
+            b"render",
+            "score",
+            b"score",
+            "show_burrowed_shadows",
+            b"show_burrowed_shadows",
+            "show_cloaked",
+            b"show_cloaked",
+            "show_placeholders",
+            b"show_placeholders",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "feature_layer",
+            b"feature_layer",
+            "raw",
+            b"raw",
+            "raw_affects_selection",
+            b"raw_affects_selection",
+            "raw_crop_to_playable_area",
+            b"raw_crop_to_playable_area",
+            "render",
+            b"render",
+            "score",
+            b"score",
+            "show_burrowed_shadows",
+            b"show_burrowed_shadows",
+            "show_cloaked",
+            b"show_cloaked",
+            "show_placeholders",
+            b"show_placeholders",
+        ],
+    ) -> None: ...
 
 global___InterfaceOptions = InterfaceOptions
 
@@ -1777,8 +2379,44 @@ class PlayerInfo(google.protobuf.message.Message):
         ai_build: global___AIBuild.ValueType | None = ...,
         player_name: builtins.str | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ai_build", b"ai_build", "difficulty", b"difficulty", "player_id", b"player_id", "player_name", b"player_name", "race_actual", b"race_actual", "race_requested", b"race_requested", "type", b"type"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ai_build", b"ai_build", "difficulty", b"difficulty", "player_id", b"player_id", "player_name", b"player_name", "race_actual", b"race_actual", "race_requested", b"race_requested", "type", b"type"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "ai_build",
+            b"ai_build",
+            "difficulty",
+            b"difficulty",
+            "player_id",
+            b"player_id",
+            "player_name",
+            b"player_name",
+            "race_actual",
+            b"race_actual",
+            "race_requested",
+            b"race_requested",
+            "type",
+            b"type",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "ai_build",
+            b"ai_build",
+            "difficulty",
+            b"difficulty",
+            "player_id",
+            b"player_id",
+            "player_name",
+            b"player_name",
+            "race_actual",
+            b"race_actual",
+            "race_requested",
+            b"race_requested",
+            "type",
+            b"type",
+        ],
+    ) -> None: ...
 
 global___PlayerInfo = PlayerInfo
 
@@ -1827,8 +2465,60 @@ class PlayerCommon(google.protobuf.message.Message):
         warp_gate_count: builtins.int | None = ...,
         larva_count: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["army_count", b"army_count", "food_army", b"food_army", "food_cap", b"food_cap", "food_used", b"food_used", "food_workers", b"food_workers", "idle_worker_count", b"idle_worker_count", "larva_count", b"larva_count", "minerals", b"minerals", "player_id", b"player_id", "vespene", b"vespene", "warp_gate_count", b"warp_gate_count"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["army_count", b"army_count", "food_army", b"food_army", "food_cap", b"food_cap", "food_used", b"food_used", "food_workers", b"food_workers", "idle_worker_count", b"idle_worker_count", "larva_count", b"larva_count", "minerals", b"minerals", "player_id", b"player_id", "vespene", b"vespene", "warp_gate_count", b"warp_gate_count"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "army_count",
+            b"army_count",
+            "food_army",
+            b"food_army",
+            "food_cap",
+            b"food_cap",
+            "food_used",
+            b"food_used",
+            "food_workers",
+            b"food_workers",
+            "idle_worker_count",
+            b"idle_worker_count",
+            "larva_count",
+            b"larva_count",
+            "minerals",
+            b"minerals",
+            "player_id",
+            b"player_id",
+            "vespene",
+            b"vespene",
+            "warp_gate_count",
+            b"warp_gate_count",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "army_count",
+            b"army_count",
+            "food_army",
+            b"food_army",
+            "food_cap",
+            b"food_cap",
+            "food_used",
+            b"food_used",
+            "food_workers",
+            b"food_workers",
+            "idle_worker_count",
+            b"idle_worker_count",
+            "larva_count",
+            b"larva_count",
+            "minerals",
+            b"minerals",
+            "player_id",
+            b"player_id",
+            "vespene",
+            b"vespene",
+            "warp_gate_count",
+            b"warp_gate_count",
+        ],
+    ) -> None: ...
 
 global___PlayerCommon = PlayerCommon
 
@@ -1851,7 +2541,9 @@ class Observation(google.protobuf.message.Message):
     @property
     def alerts(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[global___Alert.ValueType]: ...
     @property
-    def abilities(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.common_pb2.AvailableAbility]:
+    def abilities(
+        self,
+    ) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[s2clientprotocol.common_pb2.AvailableAbility]:
         """Abilities available in the selection. Enabled if in this list, disabled otherwise."""
 
     @property
@@ -1885,8 +2577,48 @@ class Observation(google.protobuf.message.Message):
         render_data: s2clientprotocol.spatial_pb2.ObservationRender | None = ...,
         ui_data: s2clientprotocol.ui_pb2.ObservationUI | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["feature_layer_data", b"feature_layer_data", "game_loop", b"game_loop", "player_common", b"player_common", "raw_data", b"raw_data", "render_data", b"render_data", "score", b"score", "ui_data", b"ui_data"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["abilities", b"abilities", "alerts", b"alerts", "feature_layer_data", b"feature_layer_data", "game_loop", b"game_loop", "player_common", b"player_common", "raw_data", b"raw_data", "render_data", b"render_data", "score", b"score", "ui_data", b"ui_data"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "feature_layer_data",
+            b"feature_layer_data",
+            "game_loop",
+            b"game_loop",
+            "player_common",
+            b"player_common",
+            "raw_data",
+            b"raw_data",
+            "render_data",
+            b"render_data",
+            "score",
+            b"score",
+            "ui_data",
+            b"ui_data",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "abilities",
+            b"abilities",
+            "alerts",
+            b"alerts",
+            "feature_layer_data",
+            b"feature_layer_data",
+            "game_loop",
+            b"game_loop",
+            "player_common",
+            b"player_common",
+            "raw_data",
+            b"raw_data",
+            "render_data",
+            b"render_data",
+            "score",
+            b"score",
+            "ui_data",
+            b"ui_data",
+        ],
+    ) -> None: ...
 
 global___Observation = Observation
 
@@ -1932,8 +2664,40 @@ class Action(google.protobuf.message.Message):
         action_chat: global___ActionChat | None = ...,
         game_loop: builtins.int | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["action_chat", b"action_chat", "action_feature_layer", b"action_feature_layer", "action_raw", b"action_raw", "action_render", b"action_render", "action_ui", b"action_ui", "game_loop", b"game_loop"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action_chat", b"action_chat", "action_feature_layer", b"action_feature_layer", "action_raw", b"action_raw", "action_render", b"action_render", "action_ui", b"action_ui", "game_loop", b"game_loop"]) -> None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "action_chat",
+            b"action_chat",
+            "action_feature_layer",
+            b"action_feature_layer",
+            "action_raw",
+            b"action_raw",
+            "action_render",
+            b"action_render",
+            "action_ui",
+            b"action_ui",
+            "game_loop",
+            b"game_loop",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "action_chat",
+            b"action_chat",
+            "action_feature_layer",
+            b"action_feature_layer",
+            "action_raw",
+            b"action_raw",
+            "action_render",
+            b"action_render",
+            "action_ui",
+            b"action_ui",
+            "game_loop",
+            b"game_loop",
+        ],
+    ) -> None: ...
 
 global___Action = Action
 
@@ -1945,7 +2709,9 @@ class ActionChat(google.protobuf.message.Message):
         ValueType = typing.NewType("ValueType", builtins.int)
         V: typing_extensions.TypeAlias = ValueType
 
-    class _ChannelEnumTypeWrapper(google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionChat._Channel.ValueType], builtins.type):
+    class _ChannelEnumTypeWrapper(
+        google.protobuf.internal.enum_type_wrapper._EnumTypeWrapper[ActionChat._Channel.ValueType], builtins.type
+    ):
         DESCRIPTOR: google.protobuf.descriptor.EnumDescriptor
         Broadcast: ActionChat._Channel.ValueType  # 1
         Team: ActionChat._Channel.ValueType  # 2
@@ -1959,10 +2725,7 @@ class ActionChat(google.protobuf.message.Message):
     channel: global___ActionChat.Channel.ValueType
     message: builtins.str
     def __init__(
-        self,
-        *,
-        channel: global___ActionChat.Channel.ValueType | None = ...,
-        message: builtins.str | None = ...,
+        self, *, channel: global___ActionChat.Channel.ValueType | None = ..., message: builtins.str | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["channel", b"channel", "message", b"message"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["channel", b"channel", "message", b"message"]) -> None: ...
@@ -1987,8 +2750,12 @@ class ActionError(google.protobuf.message.Message):
         ability_id: builtins.int | None = ...,
         result: s2clientprotocol.error_pb2.ActionResult.ValueType | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["ability_id", b"ability_id", "result", b"result", "unit_tag", b"unit_tag"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["ability_id", b"ability_id", "result", b"result", "unit_tag", b"unit_tag"]) -> None: ...
+    def HasField(
+        self, field_name: typing.Literal["ability_id", b"ability_id", "result", b"result", "unit_tag", b"unit_tag"]
+    ) -> builtins.bool: ...
+    def ClearField(
+        self, field_name: typing.Literal["ability_id", b"ability_id", "result", b"result", "unit_tag", b"unit_tag"]
+    ) -> None: ...
 
 global___ActionError = ActionError
 
@@ -2020,9 +2787,39 @@ class ObserverAction(google.protobuf.message.Message):
         camera_follow_player: global___ActionObserverCameraFollowPlayer | None = ...,
         camera_follow_units: global___ActionObserverCameraFollowUnits | None = ...,
     ) -> None: ...
-    def HasField(self, field_name: typing.Literal["action", b"action", "camera_follow_player", b"camera_follow_player", "camera_follow_units", b"camera_follow_units", "camera_move", b"camera_move", "player_perspective", b"player_perspective"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing.Literal["action", b"action", "camera_follow_player", b"camera_follow_player", "camera_follow_units", b"camera_follow_units", "camera_move", b"camera_move", "player_perspective", b"player_perspective"]) -> None: ...
-    def WhichOneof(self, oneof_group: typing.Literal["action", b"action"]) -> typing.Literal["player_perspective", "camera_move", "camera_follow_player", "camera_follow_units"] | None: ...
+    def HasField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "camera_follow_player",
+            b"camera_follow_player",
+            "camera_follow_units",
+            b"camera_follow_units",
+            "camera_move",
+            b"camera_move",
+            "player_perspective",
+            b"player_perspective",
+        ],
+    ) -> builtins.bool: ...
+    def ClearField(
+        self,
+        field_name: typing.Literal[
+            "action",
+            b"action",
+            "camera_follow_player",
+            b"camera_follow_player",
+            "camera_follow_units",
+            b"camera_follow_units",
+            "camera_move",
+            b"camera_move",
+            "player_perspective",
+            b"player_perspective",
+        ],
+    ) -> None: ...
+    def WhichOneof(
+        self, oneof_group: typing.Literal["action", b"action"]
+    ) -> typing.Literal["player_perspective", "camera_move", "camera_follow_player", "camera_follow_units"] | None: ...
 
 global___ObserverAction = ObserverAction
 
@@ -2033,11 +2830,7 @@ class ActionObserverPlayerPerspective(google.protobuf.message.Message):
     PLAYER_ID_FIELD_NUMBER: builtins.int
     player_id: builtins.int
     """0 to observe "Everyone" """
-    def __init__(
-        self,
-        *,
-        player_id: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, player_id: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["player_id", b"player_id"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["player_id", b"player_id"]) -> None: ...
 
@@ -2056,10 +2849,7 @@ class ActionObserverCameraMove(google.protobuf.message.Message):
     @property
     def world_pos(self) -> s2clientprotocol.common_pb2.Point2D: ...
     def __init__(
-        self,
-        *,
-        world_pos: s2clientprotocol.common_pb2.Point2D | None = ...,
-        distance: builtins.float | None = ...,
+        self, *, world_pos: s2clientprotocol.common_pb2.Point2D | None = ..., distance: builtins.float | None = ...
     ) -> None: ...
     def HasField(self, field_name: typing.Literal["distance", b"distance", "world_pos", b"world_pos"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["distance", b"distance", "world_pos", b"world_pos"]) -> None: ...
@@ -2073,11 +2863,7 @@ class ActionObserverCameraFollowPlayer(google.protobuf.message.Message):
     PLAYER_ID_FIELD_NUMBER: builtins.int
     player_id: builtins.int
     """Not implemented. Value must be [1, 15]"""
-    def __init__(
-        self,
-        *,
-        player_id: builtins.int | None = ...,
-    ) -> None: ...
+    def __init__(self, *, player_id: builtins.int | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["player_id", b"player_id"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["player_id", b"player_id"]) -> None: ...
 
@@ -2090,11 +2876,7 @@ class ActionObserverCameraFollowUnits(google.protobuf.message.Message):
     UNIT_TAGS_FIELD_NUMBER: builtins.int
     @property
     def unit_tags(self) -> google.protobuf.internal.containers.RepeatedScalarFieldContainer[builtins.int]: ...
-    def __init__(
-        self,
-        *,
-        unit_tags: collections.abc.Iterable[builtins.int] | None = ...,
-    ) -> None: ...
+    def __init__(self, *, unit_tags: collections.abc.Iterable[builtins.int] | None = ...) -> None: ...
     def ClearField(self, field_name: typing.Literal["unit_tags", b"unit_tags"]) -> None: ...
 
 global___ActionObserverCameraFollowUnits = ActionObserverCameraFollowUnits
@@ -2107,12 +2889,7 @@ class PlayerResult(google.protobuf.message.Message):
     RESULT_FIELD_NUMBER: builtins.int
     player_id: builtins.int
     result: global___Result.ValueType
-    def __init__(
-        self,
-        *,
-        player_id: builtins.int | None = ...,
-        result: global___Result.ValueType | None = ...,
-    ) -> None: ...
+    def __init__(self, *, player_id: builtins.int | None = ..., result: global___Result.ValueType | None = ...) -> None: ...
     def HasField(self, field_name: typing.Literal["player_id", b"player_id", "result", b"result"]) -> builtins.bool: ...
     def ClearField(self, field_name: typing.Literal["player_id", b"player_id", "result", b"result"]) -> None: ...
 

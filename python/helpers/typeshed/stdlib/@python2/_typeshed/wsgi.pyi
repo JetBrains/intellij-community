@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 # Types to support PEP 3333 (WSGI)
 #
 # This module doesn't exist at runtime and neither do the types defined in this

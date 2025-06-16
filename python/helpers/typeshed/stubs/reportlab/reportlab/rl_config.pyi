@@ -1,5 +1,6 @@
 from _typeshed import Incomplete
 from collections.abc import Callable
+from typing import Literal
 
 def register_reset(func: Callable[[], Callable[[], object] | None]) -> None: ...
 def _reset() -> None: ...
@@ -26,7 +27,7 @@ longTableOptimize: int
 autoConvertEncoding: int
 _FUZZ: float
 wrapA85: int
-fsEncodings: Incomplete
+fsEncodings: tuple[Literal["utf8"], Literal["cp1252"], Literal["cp430"]]
 odbc_driver: str
 platypus_link_underline: int
 canvas_basefontname: str
@@ -39,7 +40,6 @@ ttfAsciiReadable: int
 pdfMultiLine: int
 pdfComments: int
 debug: int
-rtlSupport: int
 listWrapOnFakeWidth: int
 underlineWidth: str
 underlineOffset: str
@@ -50,7 +50,7 @@ strikeGap: str
 decimalSymbol: str
 errorOnDuplicatePageLabelPage: int
 autoGenerateMissingTTFName: int
-allowTTFSubsetting: Incomplete
+allowTTFSubsetting: list[str]
 spaceShrinkage: float
 hyphenationLang: str
 uriWasteReduce: int
@@ -59,13 +59,14 @@ hyphenationMinWordLength: int
 reserveTTFNotdef: int
 documentLang: Incomplete
 encryptionStrength: int
-trustedHosts: Incomplete
-trustedSchemes: Incomplete
+trustedHosts: list[str] | None
+trustedSchemes: list[str]
 renderPMBackend: str
 xmlParser: str
 textPaths: str
 toColorCanUse: str
 defCWRF: float
-T1SearchPath: Incomplete
-TTFSearchPath: Incomplete
-CMapSearchPath: Incomplete
+unShapedFontGlob: list[str] | None
+T1SearchPath: list[str]
+TTFSearchPath: list[str]
+CMapSearchPath: list[str]

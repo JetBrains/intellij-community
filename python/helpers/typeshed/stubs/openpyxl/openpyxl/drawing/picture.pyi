@@ -1,4 +1,4 @@
-from _typeshed import Incomplete, Unused
+from _typeshed import Unused
 from typing import ClassVar, Literal
 
 from openpyxl.chart.shapes import GraphicalProperties
@@ -47,9 +47,7 @@ class NonVisualPictureProperties(Serialisable):
     picLocks: Typed[PictureLocking, Literal[True]]
     extLst: Typed[ExtensionList, Literal[True]]
     __elements__: ClassVar[tuple[str, ...]]
-    def __init__(
-        self, preferRelativeResize: _ConvertibleToBool | None = None, picLocks: Incomplete | None = None, extLst: Unused = None
-    ) -> None: ...
+    def __init__(self, preferRelativeResize: _ConvertibleToBool | None = None, picLocks=None, extLst: Unused = None) -> None: ...
 
 class PictureNonVisual(Serialisable):
     tagname: ClassVar[str]

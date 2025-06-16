@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   stubtest-third-party:
-    name: Check third party stubs with stubtest
+    name: "stubtest: third party"
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -41,9 +41,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          # TODO: Use Python 3.12. As of 2024-03-08, several third-party
-          # packages fail to install with Python 3.12.
-          python-version: "3.11"
+          python-version: "3.13"
           cache: pip
           cache-dependency-path: |
             requirements-tests.txt
@@ -69,7 +67,7 @@ jobs:
             if [ "${{ runner.os }}" = "Linux" ]; then
               if [ -n "$PACKAGES" ]; then
                 echo "Installing apt packages: $PACKAGES"
-                sudo apt-get update && sudo apt-get install -y $PACKAGES
+                sudo apt-get update -q && sudo apt-get install -qy $PACKAGES
               fi
 
               PYTHON_EXECUTABLE="xvfb-run python"

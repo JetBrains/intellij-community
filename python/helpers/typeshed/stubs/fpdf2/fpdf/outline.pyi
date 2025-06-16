@@ -1,16 +1,19 @@
 from _typeshed import Incomplete
 from collections.abc import Generator, Iterable
-from typing import NamedTuple
+from dataclasses import dataclass
 
+from .fonts import TextStyle
+from .fpdf import FPDF
 from .structure_tree import StructElem
 from .syntax import Destination, PDFObject, PDFString
 
-class OutlineSection(NamedTuple):
+@dataclass
+class OutlineSection:
     name: str
     level: int
     page_number: int
     dest: Destination
-    struct_elem: StructElem | None = ...
+    struct_elem: StructElem | None = None
 
 class OutlineItemDictionary(PDFObject):
     title: PDFString
@@ -34,3 +37,22 @@ class OutlineDictionary(PDFObject):
 def build_outline_objs(
     sections: Iterable[Incomplete],
 ) -> Generator[Incomplete, None, list[OutlineDictionary | OutlineItemDictionary]]: ...
+
+class TableOfContents:
+    text_style: TextStyle
+    use_section_title_styles: bool
+    level_indent: float
+    line_spacing: float
+    ignore_pages_before_toc: bool
+
+    def __init__(
+        self,
+        text_style: TextStyle | None = None,
+        use_section_title_styles: bool = False,
+        level_indent: float = 7.5,
+        line_spacing: float = 1.5,
+        ignore_pages_before_toc: bool = True,
+    ) -> None: ...
+    def get_text_style(self, pdf: FPDF, item: OutlineSection) -> TextStyle: ...
+    def render_toc_item(self, pdf: FPDF, item: OutlineSection) -> None: ...
+    def render_toc(self, pdf: FPDF, outline: Iterable[OutlineSection]) -> None: ...

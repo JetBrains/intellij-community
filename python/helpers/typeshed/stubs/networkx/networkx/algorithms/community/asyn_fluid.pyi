@@ -1,6 +1,8 @@
-from _typeshed import Incomplete
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
+from numpy.random import RandomState
 
-from networkx.utils.backends import _dispatch
+__all__ = ["asyn_fluidc"]
 
-@_dispatch
-def asyn_fluidc(G, k, max_iter: int = 100, seed: Incomplete | None = None): ...
+@_dispatchable
+def asyn_fluidc(G: Graph[_Node], k: int, max_iter: int = 100, seed: int | RandomState | None = None): ...

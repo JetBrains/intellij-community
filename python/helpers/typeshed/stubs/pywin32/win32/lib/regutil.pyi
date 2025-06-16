@@ -1,6 +1,5 @@
 from _typeshed import Incomplete
 
-error: str
 CLSIDPyFile: str
 RegistryIDPyFile: str
 RegistryIDPycFile: str

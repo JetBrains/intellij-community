@@ -1,4 +1,4 @@
-# Needed until mypy issues are solved
+# Needed until mypy issues are solved or https://github.com/python/mypy/issues/12358
 # pyright: reportUnnecessaryTypeIgnoreComment=false
 from __future__ import annotations
 
@@ -159,7 +159,7 @@ WithDescriptorsStrict().descriptor = None
 # Test getters
 assert_type(with_descriptors.descriptor, str)
 
-assert_type(with_descriptors.typed_not_none, str)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.typed_not_none, str)
 assert_type(with_descriptors.typed_none, Union[str, None])
 
 assert_type(with_descriptors.set_tuple, Union[Literal["a", 1], float])  # type: ignore[assert-type]  # False-positive in mypy
@@ -172,32 +172,32 @@ assert_type(with_descriptors.noneset_list, Union[str, float, None])  # type: ign
 assert_type(with_descriptors.length_tuple, Tuple[str, str])
 assert_type(with_descriptors.length_list, List[str])
 
-assert_type(with_descriptors.match_pattern_str, str)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.match_pattern_str, str)
 assert_type(with_descriptors.match_pattern_str_none, Union[str, None])
-assert_type(with_descriptors.match_pattern_bytes, ReadableBuffer)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.match_pattern_bytes, ReadableBuffer)
 assert_type(with_descriptors.match_pattern_bytes_none, Union[ReadableBuffer, None])
 
-assert_type(with_descriptors.convertible_not_none, int)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.convertible_not_none, int)
 assert_type(with_descriptors.convertible_none, Union[int, None])
 
-assert_type(with_descriptors.minmax_float, float)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.minmax_float, float)
 assert_type(with_descriptors.minmax_float_none, Union[float, None])
-assert_type(with_descriptors.minmax_int, int)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.minmax_int, int)
 assert_type(with_descriptors.minmax_int_none, Union[int, None])
 
-assert_type(with_descriptors.bool_not_none, bool)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.bool_not_none, bool)
 assert_type(with_descriptors.bool_none, Union[bool, None])
 
-assert_type(with_descriptors.datetime_not_none, datetime)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.datetime_not_none, datetime)
 assert_type(with_descriptors.datetime_none, Union[datetime, None])
 
-assert_type(with_descriptors.string_not_none, str)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.string_not_none, str)
 assert_type(with_descriptors.string_none, Union[str, None])
 
-assert_type(with_descriptors.float_not_none, float)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.float_not_none, float)
 assert_type(with_descriptors.float_none, Union[float, None])
 
-assert_type(with_descriptors.integer_not_none, int)  # type: ignore[assert-type]  # False-positive in mypy
+assert_type(with_descriptors.integer_not_none, int)
 assert_type(with_descriptors.integer_none, Union[int, None])
 
 
@@ -208,7 +208,7 @@ with_descriptors.descriptor = 0  # type: ignore
 
 
 with_descriptors.typed_not_none = ""
-with_descriptors.typed_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.typed_not_none = None  # type: ignore
 with_descriptors.typed_not_none = 0  # type: ignore
 
 with_descriptors.typed_none = ""
@@ -267,7 +267,7 @@ with_descriptors.length_list = ""  # type: ignore
 
 
 with_descriptors.match_pattern_str = ""
-with_descriptors.match_pattern_str = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.match_pattern_str = None  # type: ignore
 with_descriptors.match_pattern_str = b""  # type: ignore
 with_descriptors.match_pattern_str = 0  # type: ignore
 
@@ -277,7 +277,7 @@ with_descriptors.match_pattern_str_none = b""  # type: ignore
 with_descriptors.match_pattern_str_none = 0  # type: ignore
 
 with_descriptors.match_pattern_bytes = b""
-with_descriptors.match_pattern_bytes = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.match_pattern_bytes = None  # type: ignore
 with_descriptors.match_pattern_bytes = ""  # type: ignore
 with_descriptors.match_pattern_bytes = 0  # type: ignore
 
@@ -289,8 +289,8 @@ with_descriptors.match_pattern_bytes_none = 0  # type: ignore
 
 with_descriptors.convertible_not_none = 0
 with_descriptors.convertible_not_none = "0"
-with_descriptors.convertible_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
-with_descriptors.convertible_not_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.convertible_not_none = None  # type: ignore
+with_descriptors.convertible_not_none = object()  # type: ignore
 
 with_descriptors.convertible_none = 0
 with_descriptors.convertible_none = "0"
@@ -301,7 +301,7 @@ with_descriptors.convertible_none = object()  # FIXME: False negative(?) in pyri
 with_descriptors.minmax_float = 0
 with_descriptors.minmax_float = "0"
 with_descriptors.minmax_float = 0.0
-with_descriptors.minmax_float = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.minmax_float = None  # type: ignore
 with_descriptors.minmax_float = object()  # type: ignore
 
 with_descriptors.minmax_float_none = 0
@@ -313,7 +313,7 @@ with_descriptors.minmax_float_none = object()  # type: ignore
 with_descriptors.minmax_int = 0
 with_descriptors.minmax_int = "0"
 with_descriptors.minmax_int = 0.0
-with_descriptors.minmax_int = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.minmax_int = None  # type: ignore
 with_descriptors.minmax_int = object()  # type: ignore
 
 with_descriptors.minmax_int_none = 0
@@ -340,7 +340,7 @@ with_descriptors.bool_none = object()  # type: ignore
 
 with_descriptors.datetime_not_none = datetime(0, 0, 0)
 with_descriptors.datetime_not_none = ""
-with_descriptors.datetime_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.datetime_not_none = None  # type: ignore
 with_descriptors.datetime_not_none = 0  # type: ignore
 with_descriptors.datetime_not_none = date(0, 0, 0)  # type: ignore
 with_descriptors.datetime_not_none = time()  # type: ignore
@@ -354,7 +354,7 @@ with_descriptors.datetime_none = time()  # type: ignore
 
 
 with_descriptors.string_not_none = ""
-with_descriptors.string_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.string_not_none = None  # type: ignore
 with_descriptors.string_not_none = 0  # type: ignore
 
 with_descriptors.string_none = ""
@@ -366,8 +366,8 @@ with_descriptors.float_not_none = 0
 with_descriptors.float_not_none = 0.0
 with_descriptors.float_not_none = "0"
 with_descriptors.float_not_none = b"0"
-with_descriptors.float_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
-with_descriptors.float_not_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.float_not_none = None  # type: ignore
+with_descriptors.float_not_none = object()  # type: ignore
 
 with_descriptors.float_none = 0
 with_descriptors.float_none = 0.0
@@ -381,8 +381,8 @@ with_descriptors.integer_not_none = 0
 with_descriptors.integer_not_none = 0.0
 with_descriptors.integer_not_none = "0"
 with_descriptors.integer_not_none = b"0"
-with_descriptors.integer_not_none = None  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
-with_descriptors.integer_not_none = object()  # pyright: ignore[reportAttributeAccessIssue] # false negative in mypy
+with_descriptors.integer_not_none = None  # type: ignore
+with_descriptors.integer_not_none = object()  # type: ignore
 
 with_descriptors.integer_none = 0
 with_descriptors.integer_none = 0.0

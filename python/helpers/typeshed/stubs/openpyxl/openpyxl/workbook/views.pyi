@@ -77,7 +77,7 @@ class CustomWorkbookView(Serialisable):
     def __init__(
         self,
         name: str,
-        guid: Incomplete | None = None,
+        guid=None,
         autoUpdate: _ConvertibleToBool | None = None,
         mergeInterval: ConvertibleToInt | None = None,
         changesSavedWin: _ConvertibleToBool | None = None,

@@ -4,6 +4,32 @@ from typing import Any, Union
 from typing_extensions import assert_type
 
 
+def check_update_method__int_key() -> None:
+    d: dict[int, int] = {}
+    d.update({1: 2})
+    d.update([(1, 2)])
+    d.update(a=3)  # type: ignore
+    d.update({1: 2}, a=3)  # type: ignore
+    d.update([(1, 2)], a=3)  # type: ignore
+    d.update({"": 3})  # type: ignore
+    d.update({1: ""})  # type: ignore
+    d.update([("", 3)])  # type: ignore
+    d.update([(3, "")])  # type: ignore
+
+
+def check_update_method__str_key() -> None:
+    d: dict[str, int] = {}
+    d.update({"": 2})
+    d.update([("", 2)])
+    d.update(a=3)
+    d.update({"": 2}, a=3)
+    d.update([("", 2)], a=3)
+    d.update({1: 3})  # type: ignore
+    d.update({"": ""})  # type: ignore
+    d.update([(1, 3)])  # type: ignore
+    d.update([("", "")])  # type: ignore
+
+
 def check_setdefault_method() -> None:
     d: dict[int, str] = {}
     d2: dict[int, str | None] = {}

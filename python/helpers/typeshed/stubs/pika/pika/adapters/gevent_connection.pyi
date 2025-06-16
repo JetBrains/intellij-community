@@ -1,10 +1,11 @@
 from _typeshed import Incomplete
+from logging import Logger
 
 from pika.adapters.base_connection import BaseConnection
 from pika.adapters.utils.nbio_interface import AbstractIOReference
 from pika.adapters.utils.selector_ioloop_adapter import AbstractSelectorIOLoop, SelectorIOServicesAdapter
 
-LOGGER: Incomplete
+LOGGER: Logger
 
 class GeventConnection(BaseConnection):
     def __init__(

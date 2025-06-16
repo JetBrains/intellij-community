@@ -27,3 +27,5 @@ class sha512_crypt(_SHA2_Common):
     ident: ClassVar[str]
     checksum_size: ClassVar[int]
     default_rounds: ClassVar[int]
+
+__all__ = ["sha512_crypt", "sha256_crypt"]

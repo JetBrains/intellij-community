@@ -1,4 +1,4 @@
-from _typeshed import Incomplete, SupportsRead
+from _typeshed import Incomplete, SupportsRead, Unused
 from collections.abc import Callable, Iterable, Sequence
 from typing import Any, Literal, NoReturn, Protocol
 from typing_extensions import Self, TypeAlias
@@ -52,6 +52,7 @@ __all__ = [
     "XBox",
     "splitLine",
     "splitLines",
+    "PlacedStory",
 ]
 
 _HAlignment: TypeAlias = Literal["LEFT", "CENTER", "CENTRE", "RIGHT", 0, 1, 2]
@@ -98,7 +99,7 @@ class Flowable:
     #       make everyone happy here, sigh...
     def drawOn(self, canvas: Canvas, x: float, y: float) -> None: ...
     def wrapOn(self, canv: Canvas, aW: float, aH: float) -> tuple[float, float]: ...
-    def wrap(self, aW: float, aH: float, /) -> tuple[float, float]: ...
+    def wrap(self, aW: float, aH: float) -> tuple[float, float]: ...
     def minWidth(self) -> float: ...
     def splitOn(self, canv: Canvas, aW: float, aH: float) -> list[Flowable]: ...
     def split(self, aW: float, aH: float, /) -> list[Flowable]: ...
@@ -190,7 +191,7 @@ class KeepTogether(_ContainerSpace, Flowable):
     splitAtTop: bool
     # TODO: Consider using Sequence[Flowable] for covariance, even if reportlab
     #       only supports list/tuple
-    def __init__(self, flowables: _FlowableSublist | None, maxHeight: Incomplete | None = None) -> None: ...
+    def __init__(self, flowables: _FlowableSublist | None, maxHeight=None) -> None: ...
 
 class KeepTogetherSplitAtTop(KeepTogether):
     splitAtTop: bool
@@ -217,7 +218,7 @@ class ParagraphAndImage(Flowable):
     def draw(self) -> None: ...
 
 class FailOnWrap(NullDraw):
-    def wrap(self, aW: float, aH: float, /) -> NoReturn: ...
+    def wrap(self, aW: float, aH: float) -> NoReturn: ...
 
 class FailOnDraw(Flowable):
     def draw(self) -> NoReturn: ...
@@ -238,7 +239,7 @@ class HRFlowable(Flowable):
         spaceAfter: float = 1,
         hAlign: _HAlignment = "CENTER",
         vAlign: _VAlignment = "BOTTOM",
-        dash: Incomplete | None = None,
+        dash=None,
     ) -> None: ...
     def draw(self) -> None: ...
 
@@ -271,6 +272,27 @@ class KeepInFrame(_Container, Flowable):
         fakeWidth: bool | None = None,
     ) -> None: ...
 
+class PlacedStory(Flowable):
+    def __init__(
+        self,
+        x,
+        y,
+        maxWidth: float,
+        maxHeight: float,
+        content: list[Flowable] = [],
+        mergeSpace: Incomplete | None = 1,
+        mode: Literal["error", "continue", "shrink", "truncate"] = "shrink",
+        name: str = "",
+        anchor: str = "sw",
+        fakeWidth: bool | None = None,
+        hAlign: str = "LEFT",
+        vAlign: str = "BOTTOM",
+        showBoundary=None,
+        origin="page",
+    ) -> None: ...
+    def wrap(self, _aW: Unused, _aH: Unused) -> tuple[Literal[0], Literal[0]]: ...
+    def drawOn(self, canv: Canvas, lx: float, ly: float, _sW=0) -> None: ...
+
 class _FindSplitterMixin: ...
 
 class ImageAndFlowables(_Container, _FindSplitterMixin, Flowable):
@@ -299,7 +321,7 @@ class BalancedColumns(_FindSplitterMixin, NullDraw):
         needed: float = 72,
         spaceBefore: float = 0,
         spaceAfter: float = 0,
-        showBoundary: Incomplete | None = None,
+        showBoundary=None,
         leftPadding: float | None = None,
         innerPadding: float | None = None,
         rightPadding: float | None = None,
@@ -365,7 +387,7 @@ class BulletDrawer:
         bulletOffsetY: int = 0,
         bulletDedent: int = 0,
         bulletDir: str = "ltr",
-        bulletFormat: Incomplete | None = None,
+        bulletFormat=None,
     ) -> None: ...
     def drawOn(self, indenter: DDIndenter, canv: Canvas, x: float, y: float) -> None: ...
 
@@ -378,7 +400,7 @@ class LIIndenter(DDIndenter):
         flowable: Flowable,
         leftIndent: float = 0,
         rightIndent: float = 0,
-        bullet: Incomplete | None = None,
+        bullet=None,
         spaceBefore: float | None = None,
         spaceAfter: float | None = None,
     ) -> None: ...
@@ -392,9 +414,7 @@ class ListFlowable(_Container, Flowable):
     style: ListStyle
     # NOTE: style has to be a ListStyle, but this will be annoying with sheet["ul"]
     # TODO: Use Unpack for kwds with the ListStyle properties + spaceBefore/spaceAfter
-    def __init__(
-        self, flowables: Iterable[_NestedFlowable], start: Incomplete | None = None, style: PropertySet | None = None, **kwds
-    ) -> None: ...
+    def __init__(self, flowables: Iterable[_NestedFlowable], start=None, style: PropertySet | None = None, **kwds) -> None: ...
 
 class TopPadder(Flowable):
     # NOTE: TopPadder is mostly a transparent wrapper, we may consider trying

@@ -1,0 +1,7 @@
+version = "1.5.0"
+upstream_repository = "https://github.com/lepture/authlib"
+requires = ["cryptography"]
+partial_stub = true
+
+[tool.stubtest]
+ignore_missing_stub = true

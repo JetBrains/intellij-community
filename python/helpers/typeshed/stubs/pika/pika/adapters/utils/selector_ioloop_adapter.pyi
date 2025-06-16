@@ -1,9 +1,10 @@
 import abc
 from _typeshed import Incomplete
+from logging import Logger
 
 from pika.adapters.utils import io_services_utils, nbio_interface
 
-LOGGER: Incomplete
+LOGGER: Logger
 
 class AbstractSelectorIOLoop(metaclass=abc.ABCMeta):
     @property
@@ -56,7 +57,7 @@ class SelectorIOServicesAdapter(
 class _FileDescriptorCallbacks:
     reader: Incomplete
     writer: Incomplete
-    def __init__(self, reader: Incomplete | None = None, writer: Incomplete | None = None) -> None: ...
+    def __init__(self, reader=None, writer=None) -> None: ...
 
 class _TimerHandle(nbio_interface.AbstractTimerReference):
     def __init__(self, handle, loop) -> None: ...

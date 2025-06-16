@@ -38,16 +38,16 @@ class OAuth2Session(requests.Session):
     compliance_hook: _ComplianceHooks
     def __init__(
         self,
-        client_id: Incomplete | None = None,
+        client_id=None,
         client: Client | None = None,
         auto_refresh_url: str | None = None,
         auto_refresh_kwargs: dict[str, Any] | None = None,
-        scope: Incomplete | None = None,
-        redirect_uri: Incomplete | None = None,
-        token: Incomplete | None = None,
-        state: Incomplete | None = None,
-        token_updater: Incomplete | None = None,
-        pkce: Incomplete | None = None,
+        scope=None,
+        redirect_uri=None,
+        token=None,
+        state=None,
+        token_updater=None,
+        pkce=None,
         **kwargs,
     ) -> None: ...
     @property
@@ -73,38 +73,38 @@ class OAuth2Session(requests.Session):
     def access_token(self) -> None: ...
     @property
     def authorized(self) -> bool: ...
-    def authorization_url(self, url: str, state: Incomplete | None = None, **kwargs) -> tuple[str, str]: ...
+    def authorization_url(self, url: str, state=None, **kwargs) -> tuple[str, str]: ...
     def fetch_token(
         self,
         token_url: str,
-        code: Incomplete | None = None,
-        authorization_response: Incomplete | None = None,
+        code=None,
+        authorization_response=None,
         body: str = "",
-        auth: Incomplete | None = None,
-        username: Incomplete | None = None,
-        password: Incomplete | None = None,
+        auth=None,
+        username=None,
+        password=None,
         method: str = "POST",
         force_querystring: bool = False,
-        timeout: Incomplete | None = None,
-        headers: Incomplete | None = None,
+        timeout=None,
+        headers=None,
         verify: bool | None = None,
-        proxies: Incomplete | None = None,
-        include_client_id: Incomplete | None = None,
-        client_secret: Incomplete | None = None,
-        cert: Incomplete | None = None,
+        proxies=None,
+        include_client_id=None,
+        client_secret=None,
+        cert=None,
         **kwargs,
     ) -> _Token: ...
     def token_from_fragment(self, authorization_response: str) -> _Token: ...
     def refresh_token(
         self,
         token_url: str,
-        refresh_token: Incomplete | None = None,
+        refresh_token=None,
         body: str = "",
-        auth: Incomplete | None = None,
-        timeout: Incomplete | None = None,
-        headers: Incomplete | None = None,
+        auth=None,
+        timeout=None,
+        headers=None,
         verify: bool | None = None,
-        proxies: Incomplete | None = None,
+        proxies=None,
         **kwargs,
     ) -> _Token: ...
     def request(  # type: ignore[override]
@@ -114,8 +114,8 @@ class OAuth2Session(requests.Session):
         data: requests.sessions._Data | None = None,
         headers: requests.sessions._HeadersUpdateMapping | None = None,
         withhold_token: bool = False,
-        client_id: Incomplete | None = None,
-        client_secret: Incomplete | None = None,
+        client_id=None,
+        client_secret=None,
         files: requests.sessions._Files | None = None,
         *,
         params: requests.sessions._Params | None = None,
@@ -128,7 +128,7 @@ class OAuth2Session(requests.Session):
         stream: bool | None = None,
         verify: requests.sessions._Verify | None = None,
         cert: requests.sessions._Cert | None = None,
-        json: Incomplete | None = None,
+        json=None,
     ) -> requests.Response: ...
     @overload
     def register_compliance_hook(self, hook_type: Literal["access_token_response"], hook: _AccessTokenResponseHook) -> None: ...

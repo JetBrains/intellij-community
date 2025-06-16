@@ -1,19 +1,20 @@
-from typing import Any
+from _typeshed import Incomplete
+from typing import ClassVar
 
 class Behavior:
     name: str
     description: str
     versionString: str
-    knownChildren: Any
+    knownChildren: ClassVar[dict[str, tuple[int, int | None, int | None]]]
     quotedPrintable: bool
-    defaultBehavior: Any
+    defaultBehavior: Incomplete
     hasNative: bool
     isComponent: bool
     allowGroup: bool
     forceUTC: bool
-    sortFirst: Any
+    sortFirst: Incomplete
     @classmethod
-    def validate(cls, obj, raiseException: bool = False, complainUnrecognized: bool = False): ...
+    def validate(cls, obj, raiseException: bool = False, complainUnrecognized: bool = False) -> bool: ...
     @classmethod
     def lineValidate(cls, line, raiseException, complainUnrecognized): ...
     @classmethod
@@ -27,6 +28,6 @@ class Behavior:
     @classmethod
     def generateImplicitParameters(cls, obj) -> None: ...
     @classmethod
-    def serialize(cls, obj, buf, lineLength, validate: bool = True): ...
+    def serialize(cls, obj, buf, lineLength, validate: bool = True, *args, **kwargs): ...
     @classmethod
     def valueRepr(cls, line): ...

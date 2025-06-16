@@ -1,0 +1,12 @@
+# ====================================================================
+# TODO: New errors in Python 3.14 that need to be fixed or moved below
+# ====================================================================
+
+asyncio.tools
+
+
+# =======
+# >= 3.13
+# =======
+
+(mmap.MAP_32BIT)?  # Exists locally on MacOS but not on GitHub

@@ -299,7 +299,7 @@ class SystemColor(Serialisable):
     def __init__(
         self,
         val: _SystemColorVal = "windowText",
-        lastClr: Incomplete | None = None,
+        lastClr=None,
         tint: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         shade: _HasTagAndGet[ConvertibleToInt | None] | ConvertibleToInt | None = None,
         comp: Transform | None = None,

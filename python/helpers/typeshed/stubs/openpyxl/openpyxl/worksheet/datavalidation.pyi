@@ -99,7 +99,7 @@ class DataValidationList(Serialisable):
         disablePrompts: _ConvertibleToBool | None = None,
         xWindow: ConvertibleToInt | None = None,
         yWindow: ConvertibleToInt | None = None,
-        count: Incomplete | None = None,
+        count=None,
         dataValidation=(),
     ) -> None: ...
     @property

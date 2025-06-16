@@ -1,10 +1,11 @@
 from _typeshed import Incomplete
-from typing import ClassVar
+from collections import ChainMap
+from typing import Any, ClassVar
 
 from ..cmd import Command
 
 class install(Command):
-    description: str
+    description: ClassVar[str]
     user_options: ClassVar[list[tuple[str, str | None, str]]]
     boolean_options: ClassVar[list[str]]
     negative_opt: ClassVar[dict[str, str]]
@@ -26,15 +27,15 @@ class install(Command):
     compile: Incomplete
     optimize: Incomplete
     extra_path: Incomplete
-    install_path_file: int
-    force: int
-    skip_build: int
-    warn_dir: int
+    install_path_file: bool
+    force: bool
+    skip_build: bool
+    warn_dir: bool
     build_base: Incomplete
     build_lib: Incomplete
     record: Incomplete
     def initialize_options(self) -> None: ...
-    config_vars: Incomplete
+    config_vars: ChainMap[str, Any]  # Any: Same as sysconfig.get_config_vars
     install_libbase: Incomplete
     def finalize_options(self) -> None: ...
     def dump_dirs(self, msg) -> None: ...

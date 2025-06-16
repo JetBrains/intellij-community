@@ -1,8 +1,8 @@
 from collections.abc import Iterable
 from datetime import timedelta
 from logging import Logger
-from re import Pattern
-from typing import Any, Literal, TypedDict, TypeVar, overload
+from re import Match, Pattern
+from typing import Any, Final, Literal, TypedDict, TypeVar, overload
 from typing_extensions import TypeAlias
 
 import flask
@@ -26,19 +26,22 @@ class _Options(TypedDict, total=False):
     always_send: bool | None
 
 LOG: Logger
-ACL_ORIGIN: str
-ACL_METHODS: str
-ACL_ALLOW_HEADERS: str
-ACL_EXPOSE_HEADERS: str
-ACL_CREDENTIALS: str
-ACL_MAX_AGE: str
-ACL_REQUEST_METHOD: str
-ACL_REQUEST_HEADERS: str
-ALL_METHODS: list[str]
-CONFIG_OPTIONS: list[str]
-FLASK_CORS_EVALUATED: str
-RegexObject: type[Pattern[str]]
-DEFAULT_OPTIONS: _Options
+
+ACL_ORIGIN: Final = "Access-Control-Allow-Origin"
+ACL_METHODS: Final = "Access-Control-Allow-Methods"
+ACL_ALLOW_HEADERS: Final = "Access-Control-Allow-Headers"
+ACL_EXPOSE_HEADERS: Final = "Access-Control-Expose-Headers"
+ACL_CREDENTIALS: Final = "Access-Control-Allow-Credentials"
+ACL_MAX_AGE: Final = "Access-Control-Max-Age"
+ACL_RESPONSE_PRIVATE_NETWORK: Final = "Access-Control-Allow-Private-Network"
+ACL_REQUEST_METHOD: Final = "Access-Control-Request-Method"
+ACL_REQUEST_HEADERS: Final = "Access-Control-Request-Headers"
+ACL_REQUEST_HEADER_PRIVATE_NETWORK: Final = "Access-Control-Request-Private-Network"
+ALL_METHODS: Final[list[str]]
+CONFIG_OPTIONS: Final[list[str]]
+FLASK_CORS_EVALUATED: Final = "_FLASK_CORS_EVALUATED"
+RegexObject: Final[type[Pattern[str]]]
+DEFAULT_OPTIONS: Final[_Options]
 
 def parse_resources(resources: dict[str, _Options] | Iterable[str] | str | Pattern[str]) -> list[tuple[str, _Options]]: ...
 def get_regexp_pattern(regexp: str | Pattern[str]) -> str: ...
@@ -51,8 +54,8 @@ def probably_regex(maybe_regex: Pattern[str]) -> Literal[True]: ...
 @overload
 def probably_regex(maybe_regex: str) -> bool: ...
 def re_fix(reg: str) -> str: ...
-def try_match_any(inst: str, patterns: Iterable[str | Pattern[str]]) -> bool: ...
-def try_match(request_origin: str, maybe_regex: str | Pattern[str]) -> bool: ...
+def try_match_any_pattern(inst: str, patterns: Iterable[str | Pattern[str]], caseSensitive: bool = True) -> bool: ...
+def try_match_pattern(value: str, pattern: str | Pattern[str], caseSensitive: bool = True) -> bool | Match[str]: ...
 def get_cors_options(appInstance: flask.Flask | None, *dicts: _Options) -> _Options: ...
 def get_app_kwarg_dict(appInstance: flask.Flask | None = None) -> _Options: ...
 def flexible_str(obj: object) -> str | None: ...
@@ -60,7 +63,7 @@ def serialize_option(options_dict: _Options, key: str, upper: bool = False) -> N
 @overload
 def ensure_iterable(inst: str) -> list[str]: ...  # type: ignore[overload-overlap]
 @overload
-def ensure_iterable(inst: _IterableT) -> _IterableT: ...
+def ensure_iterable(inst: _IterableT) -> _IterableT: ...  # type: ignore[overload-overlap]
 @overload
 def ensure_iterable(inst: _T) -> list[_T]: ...
 def sanitize_regex_param(param: str | list[str]) -> list[str]: ...

@@ -1,5 +1,7 @@
+# VictoriaDayTuesdayAfterFirstMondayMay is not defined but used in __all__ runtime:
+workalendar.europe.scotland.mixins.__all__
+
 workalendar.core.CoreCalendar.name
-workalendar.europe.scotland.mixins.VictoriaDayTuesdayAfterFirstMondayMay
 workalendar.skyfield_astronomy
 workalendar.tests
 workalendar.core.classproperty

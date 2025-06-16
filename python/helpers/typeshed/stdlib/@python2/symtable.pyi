@@ -1,3 +1,5 @@
+#  Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 from typing import Any, Sequence, Text
 
 def symtable(code: Text, filename: Text, compile_type: Text) -> SymbolTable: ...

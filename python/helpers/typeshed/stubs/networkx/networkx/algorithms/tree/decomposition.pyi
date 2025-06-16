@@ -1,4 +1,6 @@
-from networkx.utils.backends import _dispatch
+from networkx.utils.backends import _dispatchable
 
-@_dispatch
+__all__ = ["junction_tree"]
+
+@_dispatchable
 def junction_tree(G): ...

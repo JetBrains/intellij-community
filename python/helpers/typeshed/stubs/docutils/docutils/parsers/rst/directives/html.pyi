@@ -1,3 +1,5 @@
-from _typeshed import Incomplete
+from typing import Final
 
-def __getattr__(name: str) -> Incomplete: ...
+from docutils.parsers.rst.directives.misc import Meta as Meta, MetaBody as MetaBody
+
+__docformat__: Final = "reStructuredText"

@@ -1,4 +1,4 @@
-from _typeshed import Incomplete, SupportsRead
+from _typeshed import SupportsRead
 from collections.abc import Mapping, Sequence
 from typing import IO, Any
 from typing_extensions import TypeAlias
@@ -34,14 +34,14 @@ class CBaseDumper(CEmitter, BaseRepresenter, BaseResolver):
         stream: IO[Any],
         default_style: str | None = None,
         default_flow_style: bool | None = False,
-        canonical: Incomplete | None = None,
+        canonical=None,
         indent: int | None = None,
         width: int | None = None,
-        allow_unicode: Incomplete | None = None,
+        allow_unicode=None,
         line_break: str | None = None,
         encoding: str | None = None,
-        explicit_start: Incomplete | None = None,
-        explicit_end: Incomplete | None = None,
+        explicit_start=None,
+        explicit_end=None,
         version: Sequence[int] | None = None,
         tags: Mapping[str, str] | None = None,
         sort_keys: bool = True,
@@ -53,14 +53,14 @@ class CDumper(CEmitter, SafeRepresenter, Resolver):
         stream: IO[Any],
         default_style: str | None = None,
         default_flow_style: bool = False,
-        canonical: Incomplete | None = None,
+        canonical=None,
         indent: int | None = None,
         width: int | None = None,
-        allow_unicode: Incomplete | None = None,
+        allow_unicode=None,
         line_break: str | None = None,
         encoding: str | None = None,
-        explicit_start: Incomplete | None = None,
-        explicit_end: Incomplete | None = None,
+        explicit_start=None,
+        explicit_end=None,
         version: Sequence[int] | None = None,
         tags: Mapping[str, str] | None = None,
         sort_keys: bool = True,

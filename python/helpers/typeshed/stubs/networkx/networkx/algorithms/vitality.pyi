@@ -1,8 +1,7 @@
-from _typeshed import Incomplete
+from networkx.classes.graph import Graph, _Node
+from networkx.utils.backends import _dispatchable
 
-from networkx.utils.backends import _dispatch
+__all__ = ["closeness_vitality"]
 
-@_dispatch
-def closeness_vitality(
-    G, node: Incomplete | None = None, weight: Incomplete | None = None, wiener_index: Incomplete | None = None
-): ...
+@_dispatchable
+def closeness_vitality(G: Graph[_Node], node=None, weight: str | None = None, wiener_index: float | None = None): ...

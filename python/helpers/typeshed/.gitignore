@@ -8,12 +8,11 @@ __pycache__/
 # Distribution / packaging
 .Python
 /env/
-/build/
+/lib/build/
 /develop-eggs/
 /dist/
 /downloads/
 /eggs/
-/lib/
 /lib64/
 /parts/
 /sdist/
@@ -69,8 +68,10 @@ analyze.py
 # Mypy cache
 .mypy_cache/
 
-# pyenv local python version
+# pyenv and uv local python version
 .python-version
+# we don't use uv's lock as we're not actually a project
+uv.lock
 
 # deliberately local test configuration files
 stdlib/@tests/stubtest_allowlists/*.local

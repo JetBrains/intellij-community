@@ -1,5 +1,4 @@
 from collections.abc import Mapping, Sequence
-from typing import Any
 from xml.etree.ElementTree import Element
 
 from markdown import inlinepatterns, util
@@ -32,7 +31,7 @@ class SubstituteTextPattern(HtmlInlineProcessor):
     def __init__(self, pattern: str, replace: Sequence[int | str | Element], md: Markdown) -> None: ...
 
 class SmartyExtension(Extension):
-    substitutions: Any
+    substitutions: dict[str, str]
     def __init__(self, **kwargs) -> None: ...
     def educateDashes(self, md: Markdown) -> None: ...
     def educateEllipses(self, md: Markdown) -> None: ...

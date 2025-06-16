@@ -14,42 +14,45 @@ will also discover incorrect usage of imported modules.
 
 from __future__ import annotations
 
+import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    assert sys.platform != "win32", "pytype isn't yet installed in CI, but wheels can be built on Windows"
+    from _typeshed import StrPath
+if sys.version_info >= (3, 13):
+    print("pytype does not support Python 3.13+ yet.", file=sys.stderr)
+    sys.exit(1)
+
 import argparse
 import importlib.metadata
 import inspect
 import os
-import sys
 import traceback
 from collections.abc import Iterable, Sequence
-
-from packaging.requirements import Requirement
-
-from _metadata import read_dependencies
-
-if sys.platform == "win32":
-    print("pytype does not support Windows.", file=sys.stderr)
-    sys.exit(1)
-if sys.version_info >= (3, 12):
-    print("pytype does not support Python 3.12+ yet.", file=sys.stderr)
-    sys.exit(1)
+from pathlib import Path
 
 # pytype is not py.typed https://github.com/google/pytype/issues/1325
 from pytype import config as pytype_config, load_pytd  # type: ignore[import]
 from pytype.imports import typeshed  # type: ignore[import]
 
-TYPESHED_SUBDIRS = ["stdlib", "stubs"]
+from ts_utils.metadata import read_dependencies
+from ts_utils.paths import STDLIB_PATH, STUBS_PATH, TS_BASE_PATH
+from ts_utils.utils import SupportedVersionsDict, parse_stdlib_versions_file, supported_versions_for_module
+
+TYPESHED_SUBDIRS = [STDLIB_PATH.absolute(), STUBS_PATH.absolute()]
 TYPESHED_HOME = "TYPESHED_HOME"
-_LOADERS = {}
+EXCLUDE_LIST = TS_BASE_PATH / "tests" / "pytype_exclude_list.txt"
+_LOADERS: dict[str, tuple[pytype_config.Options, load_pytd.Loader]] = {}
 
 
 def main() -> None:
     args = create_parser().parse_args()
-    typeshed_location = args.typeshed_location or os.getcwd()
-    subdir_paths = [os.path.join(typeshed_location, d) for d in TYPESHED_SUBDIRS]
-    check_subdirs_discoverable(subdir_paths)
+    typeshed_location = Path(args.typeshed_location) or Path.cwd()
+    check_subdirs_discoverable(TYPESHED_SUBDIRS)
     old_typeshed_home = os.environ.get(TYPESHED_HOME)
-    os.environ[TYPESHED_HOME] = typeshed_location
-    files_to_test = determine_files_to_test(paths=args.files or subdir_paths)
+    os.environ[TYPESHED_HOME] = str(typeshed_location)
+    files_to_test = determine_files_to_test(paths=[Path(file) for file in args.files] or TYPESHED_SUBDIRS)
     run_all_tests(files_to_test=files_to_test, print_stderr=args.print_stderr, dry_run=args.dry_run)
     if old_typeshed_home is None:
         del os.environ[TYPESHED_HOME]
@@ -72,12 +75,12 @@ def create_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run_pytype(*, filename: str, python_version: str, missing_modules: Iterable[str]) -> str | None:
-    """Runs pytype, returning the stderr if any."""
+def run_pytype(*, filename: StrPath, python_version: str, missing_modules: Iterable[str]) -> str | None:
+    """Run pytype, returning the stderr if any."""
     if python_version not in _LOADERS:
         options = pytype_config.Options.create("", parse_pyi=True, python_version=python_version)
         # For simplicity, pretends missing modules are part of the stdlib.
-        missing_modules = tuple(os.path.join("stdlib", m) for m in missing_modules)
+        missing_modules = tuple(str(STDLIB_PATH / m) for m in missing_modules)
         loader = load_pytd.create_loader(options, missing_modules)
         _LOADERS[python_version] = (options, loader)
     options, loader = _LOADERS[python_version]
@@ -93,21 +96,19 @@ def run_pytype(*, filename: str, python_version: str, missing_modules: Iterable[
     return stderr
 
 
-def _get_relative(filename: str) -> str:
-    top = 0
+def _get_relative(filename: StrPath) -> Path:
+    filepath = Path(filename)
     for d in TYPESHED_SUBDIRS:
         try:
-            top = filename.index(d + os.path.sep)
+            return filepath.absolute().relative_to(d.parent)
         except ValueError:
             continue
-        else:
-            break
-    return filename[top:]
+    raise ValueError(f"{filepath} not relative to {TYPESHED_SUBDIRS}")
 
 
-def _get_module_name(filename: str) -> str:
-    """Converts a filename {subdir}/m.n/module/foo to module.foo."""
-    parts = _get_relative(filename).split(os.path.sep)
+def _get_module_name(filename: StrPath) -> str:
+    """Convert a filename {subdir}/m.n/module/foo to module.foo."""
+    parts = _get_relative(filename).parts
     if parts[0] == "stdlib":
         module_parts = parts[1:]
     else:
@@ -116,45 +117,59 @@ def _get_module_name(filename: str) -> str:
     return ".".join(module_parts).replace(".pyi", "").replace(".__init__", "")
 
 
-def check_subdirs_discoverable(subdir_paths: list[str]) -> None:
+def check_subdirs_discoverable(subdir_paths: Iterable[Path]) -> None:
     for p in subdir_paths:
-        if not os.path.isdir(p):
+        if not p.is_dir():
             raise SystemExit(f"Cannot find typeshed subdir at {p} (specify parent dir via --typeshed-location)")
 
 
-def determine_files_to_test(*, paths: Sequence[str]) -> list[str]:
-    """Determine all files to test, checking if it's in the exclude list and which Python versions to use.
+def determine_files_to_test(*, paths: Iterable[Path]) -> list[Path]:
+    """Determine all files to test.
 
-    Returns a list of pairs of the file path and Python version as an int."""
+    Checks for files in the pytype exclude list and for the stdlib VERSIONS file.
+    """
     filenames = find_stubs_in_paths(paths)
     ts = typeshed.Typeshed()
-    skipped = set(ts.read_blacklist())
-    files = []
-    for f in sorted(filenames):
-        rel = _get_relative(f)
-        if rel in skipped:
-            continue
-        files.append(f)
-    return files
+    exclude_list = set(ts.read_blacklist())
+    stdlib_module_versions = parse_stdlib_versions_file()
+    return [
+        f
+        for f in sorted(filenames)
+        if _get_relative(f).as_posix() not in exclude_list and _is_supported_stdlib_version(stdlib_module_versions, f)
+    ]
 
 
-def find_stubs_in_paths(paths: Sequence[str]) -> list[str]:
-    filenames: list[str] = []
+def find_stubs_in_paths(paths: Iterable[Path]) -> list[Path]:
+    filenames: list[Path] = []
     for path in paths:
-        if os.path.isdir(path):
+        if path.is_dir():
             for root, _, fns in os.walk(path):
-                filenames.extend(os.path.join(root, fn) for fn in fns if fn.endswith(".pyi"))
+                filenames.extend(Path(root, fn) for fn in fns if fn.endswith(".pyi"))
         else:
             filenames.append(path)
     return filenames
 
 
+def _is_supported_stdlib_version(module_versions: SupportedVersionsDict, filename: StrPath) -> bool:
+    parts = _get_relative(filename).parts
+    if parts[0] != "stdlib":
+        return True
+    module_name = _get_module_name(filename)
+    min_version, max_version = supported_versions_for_module(module_versions, module_name)
+    return min_version <= sys.version_info <= max_version
+
+
 def _get_pkgs_associated_with_requirement(req_name: str) -> list[str]:
-    dist = importlib.metadata.distribution(req_name)
+    try:
+        dist = importlib.metadata.distribution(req_name)
+    except importlib.metadata.PackageNotFoundError:
+        # The package wasn't installed, probably because an environment
+        # marker excluded it.
+        return []
     toplevel_txt_contents = dist.read_text("top_level.txt")
     if toplevel_txt_contents is None:
         if dist.files is None:
-            raise RuntimeError("Can't read find the packages associated with requirement {req_name!r}")
+            raise RuntimeError(f"Can't read find the packages associated with requirement {req_name!r}")
         maybe_modules = [f.parts[0] if len(f.parts) > 1 else inspect.getmodulename(f) for f in dist.files]
         packages = [name for name in maybe_modules if name is not None and "." not in name]
     else:
@@ -163,7 +178,7 @@ def _get_pkgs_associated_with_requirement(req_name: str) -> list[str]:
     return sorted({package.removesuffix("-stubs") for package in packages})
 
 
-def get_missing_modules(files_to_test: Sequence[str]) -> Iterable[str]:
+def get_missing_modules(files_to_test: Iterable[Path]) -> Iterable[str]:
     """Get names of modules that should be treated as missing.
 
     Some typeshed stubs depend on dependencies outside of typeshed. Since pytype
@@ -173,54 +188,51 @@ def get_missing_modules(files_to_test: Sequence[str]) -> Iterable[str]:
     Similarly, pytype cannot parse files on its exclude list, so we also treat
     those as missing.
     """
-    stub_distributions = set()
+    stub_distributions = set[str]()
     for fi in files_to_test:
-        parts = fi.split(os.sep)
+        parts = fi.parts
         try:
             idx = parts.index("stubs")
         except ValueError:
             continue
         stub_distributions.add(parts[idx + 1])
 
-    missing_modules = set()
-    for distribution in stub_distributions:
-        for external_req in read_dependencies(distribution).external_pkgs:
-            req_name = Requirement(external_req).name
-            associated_packages = _get_pkgs_associated_with_requirement(req_name)
-            missing_modules.update(associated_packages)
+    missing_modules = {
+        associated_package
+        for distribution in stub_distributions
+        for external_req in read_dependencies(distribution).external_pkgs
+        for associated_package in _get_pkgs_associated_with_requirement(external_req.name)
+    }
 
-    test_dir = os.path.dirname(__file__)
-    exclude_list = os.path.join(test_dir, "pytype_exclude_list.txt")
-    with open(exclude_list) as f:
-        excluded_files = f.readlines()
-        for fi in excluded_files:
-            if not fi.startswith("stubs/"):
+    with EXCLUDE_LIST.open() as f:
+        for line in f:
+            if not line.startswith("stubs/"):
                 # Skips comments, empty lines, and stdlib files, which are in
                 # the exclude list because pytype has its own version.
                 continue
-            unused_stubs_prefix, unused_pkg, mod_path = fi.split("/", 2)  # pyright: ignore [reportUnusedVariable]
-            missing_modules.add(os.path.splitext(mod_path)[0])
+            _ts_subdir, _distribution, module_path = line.strip().split("/", 2)
+            missing_modules.add(module_path.removesuffix(".pyi"))
     return missing_modules
 
 
-def run_all_tests(*, files_to_test: Sequence[str], print_stderr: bool, dry_run: bool) -> None:
-    bad = []
+def run_all_tests(*, files_to_test: Sequence[Path], print_stderr: bool, dry_run: bool) -> None:
+    bad: list[tuple[StrPath, str, str]] = []
     errors = 0
     total_tests = len(files_to_test)
     missing_modules = get_missing_modules(files_to_test)
+    python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
     print("Testing files with pytype...")
-    for i, f in enumerate(files_to_test):
-        python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    for i, file_to_test in enumerate(files_to_test):
         if dry_run:
             stderr = None
         else:
-            stderr = run_pytype(filename=f, python_version=python_version, missing_modules=missing_modules)
+            stderr = run_pytype(filename=file_to_test, python_version=python_version, missing_modules=missing_modules)
         if stderr:
             if print_stderr:
                 print(f"\n{stderr}")
             errors += 1
             stacktrace_final_line = stderr.rstrip().rsplit("\n", 1)[-1]
-            bad.append((_get_relative(f), python_version, stacktrace_final_line))
+            bad.append((_get_relative(file_to_test), python_version, stacktrace_final_line))
 
         runs = i + 1
         if runs % 25 == 0:

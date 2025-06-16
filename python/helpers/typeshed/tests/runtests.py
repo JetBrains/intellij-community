@@ -3,33 +3,23 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
 import subprocess
 import sys
+from importlib.util import find_spec
 from pathlib import Path
-from typing import Any
 
-from _utils import TEST_CASES_DIR, test_cases_path
+from ts_utils.metadata import get_oldest_supported_python, read_metadata
+from ts_utils.paths import TEST_CASES_DIR, test_cases_path
+from ts_utils.utils import colored
 
-try:
-    from termcolor import colored  # pyright: ignore[reportAssignmentType]
-except ImportError:
-
-    def colored(text: str, color: str | None = None, **kwargs: Any) -> str:  # type: ignore[misc]
-        return text
-
-
-_STRICTER_CONFIG_FILE = "pyrightconfig.stricter.json"
-_TESTCASES_CONFIG_FILE = "pyrightconfig.testcases.json"
+_STRICTER_CONFIG_FILE = Path("pyrightconfig.stricter.json")
+_TESTCASES_CONFIG_FILE = Path("pyrightconfig.testcases.json")
 _NPX_ERROR_PATTERN = r"error (runn|find)ing npx"
 _NPX_ERROR_MESSAGE = colored("\nSkipping Pyright tests: npx is not installed or can't be run!", "yellow")
 _SUCCESS = colored("Success", "green")
 _SKIPPED = colored("Skipped", "yellow")
 _FAILED = colored("Failed", "red")
-# We're using the oldest fully supported version because it's the most likely to produce errors
-# due to unsupported syntax, feature, or bug in a tool.
-_PYTHON_VERSION = "3.8"
 
 
 def _parse_jsonc(json_text: str) -> str:
@@ -40,10 +30,9 @@ def _parse_jsonc(json_text: str) -> str:
     return valid_json
 
 
-def _get_strict_params(stub_path: str) -> list[str]:
-    with open(_STRICTER_CONFIG_FILE, encoding="UTF-8") as file:
-        data = json.loads(_parse_jsonc(file.read()))
-    lower_stub_path = stub_path.lower()
+def _get_strict_params(stub_path: Path) -> list[str | Path]:
+    data = json.loads(_parse_jsonc(_STRICTER_CONFIG_FILE.read_text(encoding="UTF-8")))
+    lower_stub_path = stub_path.as_posix().lower()
     if any(lower_stub_path == stub.lower() for stub in data["exclude"]):
         return []
     return ["-p", _STRICTER_CONFIG_FILE]
@@ -61,32 +50,40 @@ def main() -> None:
     )
     parser.add_argument(
         "--python-version",
-        default=_PYTHON_VERSION,
-        choices=("3.8", "3.9", "3.10", "3.11", "3.12", "3.13"),
-        help="Target Python version for the test (default: %(default)s).",
+        default=None,
+        choices=("3.9", "3.10", "3.11", "3.12", "3.13", "3.14"),
+        # We're using the oldest fully supported version because it's the most likely to produce errors
+        # due to unsupported syntax, feature, or bug in a tool.
+        help="Target Python version for the test (defaults to oldest supported Python version).",
     )
     parser.add_argument("path", help="Path of the stub to test in format <folder>/<stub>, from the root of the project.")
     args = parser.parse_args()
-    path: str = args.path
+    path = Path(args.path)
     run_stubtest: bool = args.run_stubtest
-    python_version: str = args.python_version
 
-    path_tokens = Path(path).parts
-    if len(path_tokens) != 2:
+    if len(path.parts) != 2:
         parser.error("'path' argument should be in format <folder>/<stub>.")
-    folder, stub = path_tokens
+    folder, stub = path.parts
     if folder not in {"stdlib", "stubs"}:
         parser.error("Only the 'stdlib' and 'stubs' folders are supported.")
-    if not os.path.exists(path):
+    if not path.exists():
         parser.error(f"{path=} does not exist.")
+
+    if args.python_version:
+        python_version: str = args.python_version
+    elif folder in "stubs":
+        python_version = read_metadata(stub).requires_python.version
+    else:
+        python_version = get_oldest_supported_python()
+
     stubtest_result: subprocess.CompletedProcess[bytes] | None = None
     pytype_result: subprocess.CompletedProcess[bytes] | None = None
 
     print("\nRunning pre-commit...")
-    pre_commit_result = subprocess.run(["pre-commit", "run", "--files", *Path(path).rglob("*")])
+    pre_commit_result = subprocess.run(["pre-commit", "run", "--files", *path.rglob("*")], check=False)
 
     print("\nRunning check_typeshed_structure.py...")
-    check_structure_result = subprocess.run([sys.executable, "tests/check_typeshed_structure.py"])
+    check_structure_result = subprocess.run([sys.executable, "tests/check_typeshed_structure.py"], check=False)
 
     strict_params = _get_strict_params(path)
     print(f"\nRunning Pyright ({'stricter' if strict_params else 'base' } configs) for Python {python_version}...")
@@ -94,6 +91,7 @@ def main() -> None:
         [sys.executable, "tests/pyright_test.py", path, "--pythonversion", python_version, *strict_params],
         stderr=subprocess.PIPE,
         text=True,
+        check=False,
     )
     if re.match(_NPX_ERROR_PATTERN, pyright_result.stderr):
         print(_NPX_ERROR_MESSAGE)
@@ -105,16 +103,16 @@ def main() -> None:
         pyright_skipped = False
 
     print(f"\nRunning mypy for Python {python_version}...")
-    mypy_result = subprocess.run([sys.executable, "tests/mypy_test.py", path, "--python-version", python_version])
+    mypy_result = subprocess.run([sys.executable, "tests/mypy_test.py", path, "--python-version", python_version], check=False)
     # If mypy failed, stubtest will fail without any helpful error
     if mypy_result.returncode == 0:
         if folder == "stdlib":
             print("\nRunning stubtest...")
-            stubtest_result = subprocess.run([sys.executable, "tests/stubtest_stdlib.py", stub])
+            stubtest_result = subprocess.run([sys.executable, "tests/stubtest_stdlib.py", stub], check=False)
         else:
             if run_stubtest:
                 print("\nRunning stubtest...")
-                stubtest_result = subprocess.run([sys.executable, "tests/stubtest_third_party.py", stub])
+                stubtest_result = subprocess.run([sys.executable, "tests/stubtest_third_party.py", stub], check=False)
             else:
                 print(
                     colored(
@@ -127,11 +125,16 @@ def main() -> None:
     else:
         print(colored("\nSkipping stubtest since mypy failed.", "yellow"))
 
-    if sys.platform == "win32":
-        print(colored("\nSkipping pytype on Windows. You can run the test with WSL.", "yellow"))
-    else:
+    if find_spec("pytype"):
         print("\nRunning pytype...")
-        pytype_result = subprocess.run([sys.executable, "tests/pytype_test.py", path])
+        pytype_result = subprocess.run([sys.executable, "tests/pytype_test.py", path], check=False)
+    else:
+        print(
+            colored(
+                f"\nSkipping pytype on Windows. You need to install it first: `{sys.executable} -m pip install pytype` .",
+                "yellow",
+            )
+        )
 
     cases_path = test_cases_path(stub if folder == "stubs" else "stdlib")
     if not cases_path.exists():
@@ -142,7 +145,7 @@ def main() -> None:
         regr_test_returncode = 0
     else:
         print(f"\nRunning Pyright regression tests for Python {python_version}...")
-        command = [
+        command: list[str | Path] = [
             sys.executable,
             "tests/pyright_test.py",
             str(cases_path),
@@ -151,7 +154,7 @@ def main() -> None:
             "-p",
             _TESTCASES_CONFIG_FILE,
         ]
-        pyright_testcases_result = subprocess.run(command, stderr=subprocess.PIPE, text=True)
+        pyright_testcases_result = subprocess.run(command, stderr=subprocess.PIPE, text=True, check=False)
         if re.match(_NPX_ERROR_PATTERN, pyright_testcases_result.stderr):
             print(_NPX_ERROR_MESSAGE)
             pyright_testcases_returncode = 0
@@ -166,6 +169,7 @@ def main() -> None:
             [sys.executable, "tests/regr_test.py", "stdlib" if folder == "stdlib" else stub, "--python-version", python_version],
             stderr=subprocess.PIPE,
             text=True,
+            check=False,
         )
         # No test means they all ran successfully (0 out of 0). Not all 3rd-party stubs have regression tests.
         if "No test cases found" in regr_test_result.stderr:

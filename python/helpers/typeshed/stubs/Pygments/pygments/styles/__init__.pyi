@@ -1,4 +1,3 @@
-from _typeshed import Incomplete
 from collections.abc import Iterator, Mapping
 
 from pygments.style import Style
@@ -10,4 +9,4 @@ def get_style_by_name(name) -> type[Style]: ...
 def get_all_styles() -> Iterator[str]: ...
 
 # Having every style class here doesn't seem to be worth it
-def __getattr__(name: str) -> Incomplete: ...
+def __getattr__(name: str): ...  # incomplete module

@@ -1,31 +1,35 @@
 from _typeshed import Incomplete
+from collections.abc import Iterable
 
 class EndpointConfig(dict[str, Incomplete]):
     def __init__(
         self,
-        version,
-        aliases: Incomplete | None = None,
-        links: Incomplete | None = None,
-        ipv4_address: Incomplete | None = None,
-        ipv6_address: Incomplete | None = None,
-        link_local_ips: Incomplete | None = None,
-        driver_opt: Incomplete | None = None,
-        mac_address: Incomplete | None = None,
+        version: str,
+        aliases: list[Incomplete] | None = None,
+        links: dict[str, str] | dict[str, None] | dict[str, str | None] | Iterable[tuple[str, str | None]] | None = None,
+        ipv4_address: str | None = None,
+        ipv6_address: str | None = None,
+        link_local_ips: list[str] | None = None,
+        driver_opt=None,
+        mac_address: str | None = None,
     ) -> None: ...
 
 class NetworkingConfig(dict[str, Incomplete]):
-    def __init__(self, endpoints_config: Incomplete | None = None) -> None: ...
+    def __init__(self, endpoints_config: EndpointConfig | None = None) -> None: ...
 
 class IPAMConfig(dict[str, Incomplete]):
     def __init__(
-        self, driver: str = "default", pool_configs: Incomplete | None = None, options: Incomplete | None = None
+        self,
+        driver: str = "default",
+        pool_configs: list[IPAMPool] | None = None,
+        options: dict[Incomplete, Incomplete] | None = None,
     ) -> None: ...
 
 class IPAMPool(dict[str, Incomplete]):
     def __init__(
         self,
-        subnet: Incomplete | None = None,
-        iprange: Incomplete | None = None,
-        gateway: Incomplete | None = None,
-        aux_addresses: Incomplete | None = None,
+        subnet: str | None = None,
+        iprange: str | None = None,
+        gateway: str | None = None,
+        aux_addresses: dict[str, str] | None = None,
     ) -> None: ...
