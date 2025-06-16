@@ -131,7 +131,7 @@ internal class IslandsFeedback : ProjectActivity {
 
     notification.addAction(NotificationAction.createSimpleExpiring(CommonBundle.message("button.decline")) {})
 
-    notification.setSuggestionType(true).setIcon(AllIcons.Ide.Feedback).notify(null)
+    notification.setSuggestionType(true).setImportantSuggestion(true).setIcon(AllIcons.Ide.Feedback).notify(null)
   }
 
   private fun showPromoNotification(project: Project) {
@@ -152,7 +152,7 @@ internal class IslandsFeedback : ProjectActivity {
       ShowSettingsUtil.getInstance().showSettingsDialog(project, AppearanceConfigurable::class.java)
     })
 
-    notification.setSuggestionType(true).setIcon(AllIcons.Ide.Gift).setAddExtraAction(true).notify(null)
+    notification.setSuggestionType(true).setImportantSuggestion(true).setIcon(AllIcons.Ide.Gift).setAddExtraAction(true).notify(null)
   }
 
   private fun clearProperties(properties: PropertiesComponent) {
