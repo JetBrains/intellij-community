@@ -1,15 +1,19 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.io.cache.backend
+package com.intellij.platform.managed.cache.backend
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.platform.managed.cache.CacheId
+import com.intellij.platform.managed.cache.RemoteManagedCacheApi
+import com.intellij.platform.managed.cache.RemoteManagedCacheBuildParams
 import com.intellij.platform.project.findProjectOrNull
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.KeyDescriptor
-import com.intellij.util.io.cache.*
+import com.intellij.util.io.cache.ManagedCache
+import com.intellij.util.io.cache.ManagedCacheFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
