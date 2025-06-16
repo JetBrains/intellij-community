@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.nj2k.tree
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
+import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.nj2k.types.JKType
 
@@ -20,7 +21,7 @@ interface JKOperatorToken {
     companion object {
         fun fromElementType(elementType: IElementType) = javaElementTypeToToken.getValue(elementType)
 
-        fun toKtElementType(token: JKOperatorToken): IElementType? = tokenToKotlinElementType[token]
+        fun toKtElementType(token: JKOperatorToken): KtToken? = tokenToKotlinElementType[token]
 
         val RANGE = JKKtSingleValueOperatorToken(KtTokens.RANGE)
         val RANGE_UNTIL = JKKtSingleValueOperatorToken(KtTokens.RANGE_UNTIL)
@@ -122,7 +123,7 @@ interface JKOperatorToken {
             JavaTokenType.GTGTGTEQ to GTGTGTEQ
         )
 
-        private val tokenToKotlinElementType: Map<JKOperatorToken, IElementType> = mapOf(
+        private val tokenToKotlinElementType: Map<JKOperatorToken, KtToken> = mapOf(
             DIV to KtTokens.DIV,
             MINUS to KtTokens.MINUS,
             ANDAND to KtTokens.ANDAND,
