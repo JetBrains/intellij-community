@@ -877,7 +877,7 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     }
     isFocusCycleRoot = true
 
-    if (Registry.`is`("editor.skeleton.enabled", true)) {
+    if (EditorSkeletonPolicy.shouldShowSkeleton(composite)) {
       skeletonScope.launch(Dispatchers.UI) {
         delay(SKELETON_DELAY)
         // show skeleton if editor is not added after [SKELETON_DELAY]
