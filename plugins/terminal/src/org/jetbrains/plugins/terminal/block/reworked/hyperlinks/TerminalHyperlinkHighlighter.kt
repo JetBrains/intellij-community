@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked.hyperlinks
 
+import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.EditorHyperlinkListener
 import com.intellij.execution.impl.EditorHyperlinkSupport
 import com.intellij.execution.impl.ExpirableTokenProvider
@@ -77,6 +78,10 @@ class TerminalHyperlinkHighlighter private constructor(
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       hyperlinkSupport.removeEditorHyperlinkListener(listener)
     }
+  }
+
+  internal fun addFilter(filter: Filter) {
+    filterWrapper.addFilter(filter)
   }
 
   private fun rehighlightAll() {
