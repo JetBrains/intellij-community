@@ -3,6 +3,7 @@ package com.intellij.ui.tabs
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.NlsContexts
@@ -12,6 +13,9 @@ import com.intellij.ui.content.AlertIcon
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
@@ -23,7 +27,11 @@ import java.lang.ref.WeakReference
 import javax.swing.Icon
 import javax.swing.JComponent
 
-class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
+/**
+ * @param cs The coroutine scope for loading the icon asynchronously and showing the loading spinner.
+ * If [cs] is not null, then all icon set with `setIcon` will be ignored until [setLoaded] is called.
+ */
+class TabInfo @JvmOverloads constructor (var component: JComponent, private val cs: CoroutineScope? = null) : Queryable, PlaceProvider {
   companion object {
     const val ACTION_GROUP: String = "actionGroup"
     const val ICON: String = "icon"
@@ -40,6 +48,22 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     private val DEFAULT_ALERT_ICON = AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6))
   }
 
+  init {
+    cs?.launch {
+      isLoaded.await()
+      currentIcon.collectLatest {
+        val iconToLoad = if (it is RetrievableIcon) {
+          it.retrieveIcon()
+        } else {
+          it
+        }
+        withContext(Dispatchers.EDT) {
+          setIconImmediately(iconToLoad)
+        }
+      }
+    }
+  }
+
   @JvmField
   internal var tabLabel: TabLabel? = null
 
@@ -53,6 +77,8 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   var icon: Icon? = null
     private set
 
+  private val currentIcon = MutableStateFlow<Icon?>(null)
+  private var isLoaded = CompletableDeferred<Unit>()
   private var place: @NonNls String? = null
 
   var `object`: Any? = null
@@ -196,13 +222,45 @@ class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
     return this
   }
 
+  /**
+   * Sets the icon for the tab entry. If [cs] is not null, then the icon will be ignored until [setLoaded] is called
+   */
   fun setIcon(icon: Icon?): TabInfo {
+    if (cs == null) {
+      setIconImmediately(icon)
+    } else {
+      currentIcon.value = icon
+    }
+    return this
+  }
+
+  /**
+   * Sets the icon for the tab entry immediately without waiting for the [setLoaded].
+   */
+  @Internal
+  fun setIconImmediately(icon: Icon?) {
     val old = this.icon
     if (old != icon) {
       this.icon = icon
       changeSupport.firePropertyChange(ICON, old, icon)
     }
-    return this
+  }
+
+  /**
+   * Set the animated spinner for the tab
+   */
+  @Internal
+  fun setupAsyncIconLoading() {
+    setIconImmediately(AnimatedIcon.Default.INSTANCE)
+  }
+
+
+  /**
+   * Mark the tab's loading is complete. Sets the current deferred (set with [setIcon]) icon as tab's icon.
+   */
+  @Internal
+  fun setLoaded() {
+    isLoaded.complete(Unit)
   }
 
   fun setComponent(c: Component): TabInfo {
