@@ -8,15 +8,15 @@ import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class DataSetPerformanceTest: SpellcheckerInspectionTestCase() {
 
-  fun `test missp spellcheck performance`() {
+  fun `test misspelled words spellcheck performance`() {
     val manager = SpellCheckerManager.getInstance(project)
-    val total = Datasets.missp.flatMap { it.misspellings + it.word }.size
+    val total = Datasets.misspelling.flatMap { it.misspellings + it.word }.size
 
-    Benchmark.newBenchmark("highlight ${total} words in missp") {
-      for (word in Datasets.missp) {
+    Benchmark.newBenchmark("highlight ${total} misspelled words") {
+      for (word in Datasets.misspelling) {
         manager.hasProblem(word.word)
-        for (missp in word.misspellings) {
-          manager.hasProblem(missp)
+        for (misspelling in word.misspellings) {
+          manager.hasProblem(misspelling)
         }
       }
     }.start()
@@ -29,8 +29,8 @@ class DataSetPerformanceTest: SpellcheckerInspectionTestCase() {
     Benchmark.newBenchmark("highlight ${total} words in words") {
       for (word in Datasets.words) {
         manager.hasProblem(word.word)
-        for (missp in word.misspellings) {
-          manager.hasProblem(missp)
+        for (misspelling in word.misspellings) {
+          manager.hasProblem(misspelling)
         }
       }
     }.start()
@@ -44,8 +44,8 @@ class DataSetPerformanceTest: SpellcheckerInspectionTestCase() {
     Benchmark.newBenchmark("highlight ${total} words in camel-case") {
       for (word in Datasets.wordsCamelCase) {
         manager.hasProblem(word.word)
-        for (missp in word.misspellings) {
-          manager.hasProblem(missp)
+        for (misspelling in word.misspellings) {
+          manager.hasProblem(misspelling)
         }
       }
     }.start()
