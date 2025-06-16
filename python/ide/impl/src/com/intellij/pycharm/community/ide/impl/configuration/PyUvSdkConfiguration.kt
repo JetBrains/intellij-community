@@ -61,15 +61,15 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
   override fun supportsHeadlessModel(): Boolean = true
 
   private suspend fun createUv(module: Module): PyResult<Sdk> {
-    val venvParentDir: String?
+    val sdkAssociatedModule: Module
     if (Registry.`is`("python.project.model.uv", false)) {
       val uvWorkspace = UvProjectModelService.findWorkspace(module)
-      venvParentDir = uvWorkspace?.root?.basePath ?: module.basePath
+      sdkAssociatedModule = uvWorkspace?.root ?: module
     }
     else {
-      venvParentDir = module.basePath
+      sdkAssociatedModule = module
     }
-    val workingDir: Path? = tryResolvePath(venvParentDir)
+    val workingDir: Path? = tryResolvePath(sdkAssociatedModule.basePath)
     if (workingDir == null) {
       return PyResult.failure(MessageError("Can't determine working dir for the module"))
     }
@@ -78,7 +78,7 @@ class PyUvSdkConfiguration : PyProjectSdkConfigurationExtension {
     sdk.onSuccess {
       withContext(Dispatchers.EDT) {
         SdkConfigurationUtil.addSdk(it)
-        it.setAssociationToModule(module)
+        it.setAssociationToModule(sdkAssociatedModule)
       }
     }
     return sdk
