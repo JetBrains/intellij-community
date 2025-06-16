@@ -73,7 +73,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addReifiedToTypeParameterOfFunctionFix", pattern = pattern)
             model("$idea/quickfix/addReturnExpression", pattern = pattern)
             model("$idea/quickfix/addReturnToLastExpressionInFunction", pattern = pattern)
-            model("$idea/quickfix/addReturnToUnusedLastExpressionInFunction", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addReturnToUnusedLastExpressionInFunction", pattern = pattern)
             model("$idea/quickfix/addRunBeforeLambda", pattern = pattern)
             model("$idea/quickfix/addSemicolonBeforeLambdaExpression", pattern = pattern)
             model("$idea/quickfix/addSpreadOperatorForArrayAsVarargAfterSam", pattern = pattern, isIgnored = true)
