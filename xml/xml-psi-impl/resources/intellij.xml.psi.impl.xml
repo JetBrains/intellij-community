@@ -116,13 +116,13 @@
 
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                       hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.html.polySymbols.elements.PolySymbolInTagNameRefProvider"/>
+                                      implementationClass="com.intellij.html.polySymbols.elements.HtmlElementSymbolReferenceProvider"/>
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
                                       hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.html.polySymbols.attributes.PolySymbolInAttributeNameRefProvider"/>
+                                      implementationClass="com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolReferenceProvider"/>
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
                                       hostLanguage="HtmlCompatible"
-                                      implementationClass="com.intellij.html.polySymbols.attributeValues.PolySymbolHtmlAttributeValueReferenceProvider"/>
+                                      implementationClass="com.intellij.html.polySymbols.attributeValues.HtmlAttributeValueSymbolReferenceProvider"/>
     <vetoRenameCondition implementation="com.intellij.html.polySymbols.HtmlPolySymbolRenameHandlerVeto"/>
     <xml.xmlExtension implementation="com.intellij.html.polySymbols.PolySymbolsXmlExtension" id="poly-symbols"
                       order="before html, after react"/>

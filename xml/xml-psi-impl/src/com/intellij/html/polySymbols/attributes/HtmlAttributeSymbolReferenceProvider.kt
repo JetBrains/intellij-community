@@ -7,7 +7,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 
-class PolySymbolInAttributeNameRefProvider : PsiPolySymbolReferenceProvider<XmlAttribute> {
+class HtmlAttributeSymbolReferenceProvider : PsiPolySymbolReferenceProvider<XmlAttribute> {
 
   override fun getReferencedSymbol(psiElement: XmlAttribute): PolySymbol? =
     psiElement.descriptor

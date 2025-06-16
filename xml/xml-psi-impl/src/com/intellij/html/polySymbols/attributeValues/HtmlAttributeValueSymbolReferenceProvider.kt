@@ -17,7 +17,7 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.util.asSafely
 
-class PolySymbolHtmlAttributeValueReferenceProvider : PsiPolySymbolReferenceProvider<XmlAttributeValue> {
+class HtmlAttributeValueSymbolReferenceProvider : PsiPolySymbolReferenceProvider<XmlAttributeValue> {
   override fun getReferencedSymbolNameOffset(psiElement: XmlAttributeValue): Int =
     psiElement.valueTextRange.startOffset - psiElement.startOffset
 
