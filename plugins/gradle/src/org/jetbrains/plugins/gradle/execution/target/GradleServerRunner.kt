@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.execution.Platform
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutputType
-import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.value.getTargetUploadPath
@@ -55,15 +54,17 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     val localProjectBasePath = projectUploadRoot.localRootPath.toString()
     val targetPlatform = remoteEnvironment.targetPlatform
 
-    val serverConfigurationProvider = connection.environmentConfigurationProvider as? GradleServerConfigurationProvider
-    val connectionAddressResolver: (HostPort) -> HostPort = {
-      val serverBindingPort = serverEnvironmentSetup.getServerBindingPort()
-      val localPort = serverBindingPort?.localValue?.blockingGet(0)
-      val targetPort = serverBindingPort?.targetValue?.blockingGet(0)
-      val hostPort = if (targetPort == it.port && localPort != null) HostPort(it.host, localPort) else it
-      serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.getEnvironmentConfiguration(), hostPort) ?: hostPort
-    }
-    val gradleServerEventsListener = GradleServerEventsListener(serverEnvironmentSetup, connectionAddressResolver, classloaderHolder) {
+    val connectorFactory = ToolingProxyConnector.ToolingProxyConnectorFactory(
+      classloaderHolder,
+      serverEnvironmentSetup,
+      connection.environmentConfigurationProvider as? GradleServerConfigurationProvider
+    )
+    val serverProcessListener = GradleServerProcessListener(
+      targetProgressIndicator,
+      serverEnvironmentSetup,
+      resultHandler,
+      connectorFactory
+    ) {
       when (it) {
         is String -> {
           consumerOperationParameters.progressListener.run {
@@ -86,9 +87,11 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
         }
       }
     }
-    val listener = GradleServerProcessListener(targetProgressIndicator, resultHandler, gradleServerEventsListener)
-    processHandler.addProcessListener(listener)
+
+    processHandler.addProcessListener(serverProcessListener)
     processHandler.runProcessWithProgressIndicator(targetProgressIndicator.progressIndicator, -1, true)
+
+    serverProcessListener.awaitServerShutdown()
   }
 
   private fun String.useLocalLineSeparators(targetPlatform: TargetPlatform) =

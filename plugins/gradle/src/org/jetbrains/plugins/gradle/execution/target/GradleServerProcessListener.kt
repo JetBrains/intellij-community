@@ -5,79 +5,93 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.execution.target.TargetProgressIndicator
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.text.nullize
+import org.gradle.initialization.BuildEventConsumer
 import org.gradle.tooling.BuildCancelledException
-import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal class GradleServerProcessListener(
-  private val targetProgressIndicator: TargetProgressIndicator,
+  private val targetProgressIndicator: GradleServerProgressIndicator,
+  private val serverEnvironmentSetup: GradleServerEnvironmentSetup,
   private val resultHandler: ResultHandler<Any?>,
-  private val gradleServerEventsListener: GradleServerEventsListener,
+  private val connectorFactory: ToolingProxyConnector.ToolingProxyConnectorFactory,
+  private val buildEventConsumer: BuildEventConsumer,
 ) : ProcessListener {
+
+  private var listenerJob: Future<*>? = null
 
   companion object {
     private const val CONNECTION_CONF_LINE_PREFIX = "Gradle target server hostAddress: "
     private val log = logger<GradleServerRunner>()
   }
 
-  @Volatile
-  private var connectionAddressReceived = false
+  private val connectionAddressReceived: AtomicBoolean = AtomicBoolean(false)
 
-  @Volatile
-  var resultReceived = false
-
-  val resultHandlerWrapper: ResultHandler<Any?> = object : ResultHandler<Any?> {
-    override fun onComplete(result: Any?) {
-      resultReceived = true
-      resultHandler.onComplete(result)
-    }
-
-    override fun onFailure(gradleConnectionException: GradleConnectionException) {
-      resultReceived = true
-      resultHandler.onFailure(gradleConnectionException)
-    }
+  @RequiresBackgroundThread
+  fun awaitServerShutdown() {
+    ProgressManager.getInstance()
+      .executeNonCancelableSection {
+        listenerJob?.get()
+      }
   }
 
   override fun processTerminated(event: ProcessEvent) {
-    if (!resultReceived) {
-      gradleServerEventsListener.waitForResult { resultReceived || targetProgressIndicator.isCanceled }
+    val outputType = if (event.exitCode == 0) ProcessOutputType.STDOUT else ProcessOutputType.STDERR
+    if (event.text != null) {
+      targetProgressIndicator.addText(event.text, outputType)
     }
-    if (!resultReceived) {
-      val outputType = if (event.exitCode == 0) ProcessOutputType.STDOUT else ProcessOutputType.STDERR
-      event.text?.also { targetProgressIndicator.addText(it, outputType) }
-      val gradleConnectionException = if (targetProgressIndicator.isCanceled) {
-        BuildCancelledException("Build cancelled.")
-      }
-      else {
-        GradleConnectionException("Operation result has not been received.")
-      }
-      resultHandler.onFailure(gradleConnectionException)
+    if (targetProgressIndicator.isCanceled) {
+      resultHandler.onFailure(BuildCancelledException("Build cancelled."))
     }
-    gradleServerEventsListener.stop()
   }
 
   override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
     log.traceIfNotEmpty(event.text)
-    if (connectionAddressReceived) return
+    if (connectionAddressReceived.get()) {
+      return
+    }
     if (outputType === ProcessOutputTypes.STDERR) {
       targetProgressIndicator.addText(event.text, outputType)
     }
     if (event.text.startsWith(CONNECTION_CONF_LINE_PREFIX)) {
-      connectionAddressReceived = true
-      val hostName = event.text.substringAfter(CONNECTION_CONF_LINE_PREFIX).substringBefore(" port: ")
-      val port = event.text.substringAfter(" port: ").trim().toInt()
-      gradleServerEventsListener.start(hostName, port, resultHandlerWrapper)
+      if (connectionAddressReceived.compareAndSet(false, true)) {
+        val hostName = event.text.substringAfter(CONNECTION_CONF_LINE_PREFIX).substringBefore(" port: ")
+        val port = event.text.substringAfter(" port: ").trim().toInt()
+        listenerJob = runListener(hostName, port)
+      }
     }
   }
 
   private fun Logger.traceIfNotEmpty(text: @NlsSafe String?) {
     text.nullize(true)?.also { trace { it.trimEnd() } }
+  }
+
+  private fun runListener(host: String, port: Int): Future<*> {
+    return ApplicationManager.getApplication()
+      .executeOnPooledThread {
+        ProgressManager.getInstance()
+          .executeProcessUnderProgress(
+            {
+              val toolingProxyConnection = connectorFactory.getConnector(host, port)
+              toolingProxyConnection.start(
+                serverEnvironmentSetup.getTargetBuildParameters(),
+                resultHandler,
+                buildEventConsumer,
+                serverEnvironmentSetup.getTargetIntermediateResultHandler()
+              )
+            },
+            targetProgressIndicator.progressIndicator
+          )
+      }
   }
 }
