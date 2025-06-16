@@ -20,6 +20,16 @@ public interface MismatchedJavadocCode {
   int getData2();
 
   /**
+   * @return foo — <warning descr="Method is specified to return 'false' but its return type is not boolean">false</warning> otherwise
+   */
+  int getDataEmDash();
+
+  /**
+   * @return foo - false otherwise
+   */
+  int getDataDash();
+
+  /**
    * @return true if data is found; false otherwise
    */
   boolean getDataOk();
