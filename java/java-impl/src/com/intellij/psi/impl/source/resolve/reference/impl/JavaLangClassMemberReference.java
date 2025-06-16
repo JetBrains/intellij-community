@@ -184,19 +184,11 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   }
 
   private static int matchMethodArguments(PsiMethod method, List<ReflectiveType> argumentTypes) {
-    // Get nested classes because they need to be passed if not static
-    List<PsiClass> enclosingClasses = PsiTreeUtil.collectParents(method, PsiClass.class, false, parent -> {
-        return parent instanceof PsiFile || (parent instanceof PsiModifierListOwner cls && cls.hasModifier(JvmModifier.STATIC));
-    });
-    if (!enclosingClasses.isEmpty()) {
-      // the containing class of the method doesn't need to be passed
-      enclosingClasses = ContainerUtil.reverse(enclosingClasses).subList(0, enclosingClasses.size() - 1);
+    List<PsiType> allTypes = ContainerUtil.map(method.getParameterList().getParameters(), p -> p.getType());
+    PsiType enclosingType = enclosingArgumentType(method);
+    if (enclosingType != null) {
+      allTypes = ContainerUtil.prepend(allTypes, enclosingType);
     }
-    final List<PsiType> containingClassTypes = ContainerUtil.map(
-      enclosingClasses, cls -> JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createType(cls)
-    );
-    final List<PsiType> methodParamTypes = ContainerUtil.map(method.getParameterList().getParameters(), p -> p.getType());
-    final List<PsiType> allTypes = ContainerUtil.concat(containingClassTypes, methodParamTypes);
 
     if (allTypes.size() != argumentTypes.size()) {
       return -1;
@@ -213,6 +205,20 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
       }
     }
     return mismatchCount;
+  }
+
+  /**
+   * Returns the type of the containing class, if the method is not declared in a static context.
+   */
+  private static PsiType enclosingArgumentType(PsiMethod method) {
+    PsiClass containing = PsiTreeUtil.getParentOfType(method, PsiClass.class, true);
+    if (containing == null || containing.hasModifier(JvmModifier.STATIC)) return null;
+    PsiElement enclosing = PsiTreeUtil.findFirstParent(containing, true, element -> {
+      return element instanceof PsiClass || (element instanceof PsiModifierListOwner owner && owner.hasModifier(JvmModifier.STATIC));
+    });
+    if (enclosing instanceof PsiModifierListOwner owner && owner.hasModifier(JvmModifier.STATIC)) return null;
+    if (!(enclosing instanceof PsiClass psiClass)) return null;
+    return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createType(psiClass);
   }
 
   public static @Nullable List<PsiExpression> getReflectionMethodArguments(@NotNull PsiMethodCallExpression definitionCall, int argumentOffset) {
