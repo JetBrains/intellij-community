@@ -1,17 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::{env, fs};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
+use std::{env, fs};
 
 use anyhow::{bail, Context, Result};
 #[allow(unused_imports)]
 use log::{debug, error, info};
 
-use crate::*;
 use crate::docker::is_running_in_docker;
+use crate::*;
 
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
@@ -69,7 +69,7 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
     }
 
     fn prepare_for_launch(&self) -> Result<(PathBuf, &str)> {
-        init_env_vars(&self.default.ide_home).context("Preparing environment variables")?;
+        init_env_vars(&self.default).context("Preparing environment variables")?;
 
         preload_native_libs(&self.default.ide_home).context("Preloading native libraries")?;
         self.default.prepare_for_launch()
@@ -254,7 +254,7 @@ impl RemoteDevLaunchConfiguration {
     fn write_merged_properties_file(&self) -> Result<PathBuf> {
         let pid = std::process::id();
         let filename = format!("pid.{pid}.temp.remote-dev.properties");
-        let path = get_temp_system_like_path()?.join(filename);
+        let path = get_ide_temp_directory(&self.default)?.join(filename);
 
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir)
@@ -277,20 +277,21 @@ impl RemoteDevLaunchConfiguration {
     }
 }
 
-fn get_temp_system_like_path() -> Result<PathBuf> {
-    Ok(env::temp_dir())
+fn get_ide_temp_directory(default: &DefaultLaunchConfiguration) -> Result<PathBuf> {
+    Ok(default.user_caches_dir.join("tmp"))
 }
 
 #[cfg(not(target_os = "linux"))]
-fn setup_font_config(_ide_home_path: &Path) -> Result<Option<(String, String)>> {
+fn setup_font_config(default: &DefaultLaunchConfiguration) -> Result<Option<(String, String)>> {
     // fontconfig is Linux-specific
     Ok(None)
 }
 
 #[cfg(target_os = "linux")]
-fn setup_font_config(ide_home_path: &Path) -> Result<Option<(String, String)>> {
+fn setup_font_config(default: &DefaultLaunchConfiguration) -> Result<Option<(String, String)>> {
     use std::hash::{Hash, Hasher};
 
+    let ide_home_path = &default.ide_home;
     let source_font_config_file = ide_home_path.join("plugins/remote-dev-server/selfcontained/fontconfig/fonts.conf");
     if !source_font_config_file.is_file() {
         error!("Missing self-contained font config file at {}; fontconfig setup will be skipped", source_font_config_file.to_string_lossy());
@@ -313,7 +314,7 @@ fn setup_font_config(ide_home_path: &Path) -> Result<Option<(String, String)>> {
 
     let mut hasher = std::collections::hash_map::DefaultHasher::new();
     source_font_config_file.hash(&mut hasher);
-    let patched_dir = get_temp_system_like_path()?.join(format!("jbrd-fontconfig-{}", hasher.finish()));
+    let patched_dir = get_ide_temp_directory(default)?.join(format!("jbrd-fontconfig-{}", hasher.finish()));
     fs::create_dir_all(&patched_dir).context("Creating directory for temporary fontconfig")?;
 
     let patched_file_path = patched_dir.join("fonts.conf");
@@ -433,7 +434,7 @@ fn print_help() {
     println!("{help_message}{remote_dev_commands_message}{remote_dev_environment_variables_message}");
 }
 
-fn init_env_vars(ide_home_path: &Path) -> Result<()> {
+fn init_env_vars(default: &DefaultLaunchConfiguration) -> Result<()> {
     let mut remote_dev_env_var_values = Vec::new();
 
     if !std::io::stdout().is_terminal() {
@@ -442,7 +443,7 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
 
     // required for the most basic launch (e.g., showing help)
     // as there may be nothing on a user system and we'll crash
-    let font_config_env = setup_font_config(ide_home_path).context("Preparing fontconfig override")?;
+    let font_config_env = setup_font_config(default).context("Preparing fontconfig override")?;
     if let Some(vars) = &font_config_env {
         remote_dev_env_var_values.push((&vars.0, &vars.1));
     }
