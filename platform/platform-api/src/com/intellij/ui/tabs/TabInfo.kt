@@ -27,11 +27,7 @@ import java.lang.ref.WeakReference
 import javax.swing.Icon
 import javax.swing.JComponent
 
-/**
- * @param cs The coroutine scope for loading the icon asynchronously and showing the loading spinner.
- * If [cs] is not null, then all icon set with `setIcon` will be ignored until [setLoaded] is called.
- */
-class TabInfo @JvmOverloads constructor (var component: JComponent, private val cs: CoroutineScope? = null) : Queryable, PlaceProvider {
+class TabInfo(var component: JComponent) : Queryable, PlaceProvider {
   companion object {
     const val ACTION_GROUP: String = "actionGroup"
     const val ICON: String = "icon"
@@ -48,17 +44,25 @@ class TabInfo @JvmOverloads constructor (var component: JComponent, private val 
     private val DEFAULT_ALERT_ICON = AlertIcon(AllIcons.Nodes.TabAlert, 0, -JBUI.scale(6))
   }
 
-  init {
-    cs?.launch {
+  private var coroutineScope: CoroutineScope? = null
+
+  /**
+   * @param coroutineScope The coroutine scope for loading the icon asynchronously and showing the loading spinner.
+   * If [coroutineScope] is not null, then all icon set with `setIcon` will be ignored until [setLoaded] is called.
+   */
+  @Internal
+  constructor(component: JComponent, coroutineScope: CoroutineScope) : this(component) {
+    this.coroutineScope = coroutineScope
+    coroutineScope.launch {
       isLoaded.await()
       currentIcon.collectLatest {
-        val iconToLoad = if (it is RetrievableIcon) {
-          it.retrieveIcon()
-        } else {
-          it
-        }
         withContext(Dispatchers.EDT) {
-          setIconImmediately(iconToLoad)
+          // FIXME[khbminus]: A lot of real icons came as a `DeferredIconImpl`.
+          //                  In the [FileEditorManagerImpl.kt] and beyond I've set [triggerEvaluation]
+          //                  But there's no reliable method to wait for the actual icon
+          //                  Ever `evaluate()` return baseIcon in case of async deferring
+          //                  So... \[T]/ Pray for the icon to have enough time to load
+          setIconImmediately(it)
         }
       }
     }
@@ -223,10 +227,10 @@ class TabInfo @JvmOverloads constructor (var component: JComponent, private val 
   }
 
   /**
-   * Sets the icon for the tab entry. If [cs] is not null, then the icon will be ignored until [setLoaded] is called
+   * Sets the icon for the tab entry. If [coroutineScope] is not null, then the icon will be ignored until [setLoaded] is called
    */
   fun setIcon(icon: Icon?): TabInfo {
-    if (cs == null) {
+    if (coroutineScope == null) {
       setIconImmediately(icon)
     } else {
       currentIcon.value = icon
