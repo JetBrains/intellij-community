@@ -23,7 +23,7 @@ abstract class GradleJavaNewProjectWizardTestCase : GradleNewProjectWizardTestCa
     Assertions.assertTrue(projectInfo.composites.isEmpty(), "NPW cannot create composite projects please use initProject instead.")
     val rootModuleInfo = projectInfo.rootModule
     return createProjectByWizard(JAVA) {
-      configureWizardStepSettings(this, rootModuleInfo, null)
+      configureWizardStepSettings(this, rootModuleInfo, parentData = null)
     }.withProjectAsync { project ->
       val parentPath = testPath.resolve(projectInfo.relativePath).toCanonicalPath()
       val parentData = ExternalSystemApiUtil.findProjectNode(project, GradleConstants.SYSTEM_ID, parentPath)!!
