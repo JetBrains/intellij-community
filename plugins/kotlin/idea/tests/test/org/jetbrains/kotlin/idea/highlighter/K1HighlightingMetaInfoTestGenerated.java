@@ -279,6 +279,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_properties.kt");
         }
 
+        @TestMetadata("Implicit_intersection.kt")
+        public void testImplicit_intersection() throws Exception {
+            runTest("testData/highlighterMetaInfo/smartCasts/Implicit_intersection.kt");
+        }
+
         @TestMetadata("Implicit_stable.kt")
         public void testImplicit_stable() throws Exception {
             runTest("testData/highlighterMetaInfo/smartCasts/Implicit_stable.kt");
