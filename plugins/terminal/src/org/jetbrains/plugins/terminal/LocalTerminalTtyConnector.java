@@ -18,7 +18,7 @@ public class LocalTerminalTtyConnector extends PtyProcessTtyConnector {
   private static final Logger LOG = Logger.getInstance(LocalTerminalTtyConnector.class);
   private final @NotNull PtyProcess myProcess;
 
-  LocalTerminalTtyConnector(@NotNull PtyProcess process, @NotNull Charset charset) {
+  public LocalTerminalTtyConnector(@NotNull PtyProcess process, @NotNull Charset charset) {
     super(process, charset);
     myProcess = process;
   }
