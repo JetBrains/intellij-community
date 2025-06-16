@@ -12,7 +12,7 @@ import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKin
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.Nls
 
-internal class PolySymbolsInspectionToolMappingEP : PluginAware {
+internal class PolySymbolInspectionToolMappingEP : PluginAware {
 
   companion object {
 
@@ -20,7 +20,7 @@ internal class PolySymbolsInspectionToolMappingEP : PluginAware {
       symbolNamespace: PolySymbolNamespace,
       symbolKind: String,
       problemKind: ProblemKind,
-    ): PolySymbolsInspectionToolMappingEP? =
+    ): PolySymbolInspectionToolMappingEP? =
       map.value[ExtensionKey(symbolNamespace, symbolKind, problemKind)]
 
   }
@@ -82,9 +82,9 @@ private data class ExtensionKey(
   var problemKind: ProblemKind,
 )
 
-private val EP_NAME = ExtensionPointName<PolySymbolsInspectionToolMappingEP>("com.intellij.polySymbols.inspectionToolMapping")
+private val EP_NAME = ExtensionPointName<PolySymbolInspectionToolMappingEP>("com.intellij.polySymbols.inspectionToolMapping")
 
-private val map: ClearableLazyValue<Map<ExtensionKey, PolySymbolsInspectionToolMappingEP>> = ExtensionPointUtil.dropLazyValueOnChange(
+private val map: ClearableLazyValue<Map<ExtensionKey, PolySymbolInspectionToolMappingEP>> = ExtensionPointUtil.dropLazyValueOnChange(
   ClearableLazyValue.create {
     EP_NAME.extensionList.associateBy { ext ->
       ExtensionKey(

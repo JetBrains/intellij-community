@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @Suppress("InspectionDescriptionNotFoundInspection")
 @ApiStatus.Internal
-abstract class PolySymbolsStubInspection : LocalInspectionTool() {
+abstract class PolySymbolStubInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return PsiElementVisitor.EMPTY_VISITOR

@@ -18,10 +18,10 @@
                     beanClass="com.intellij.polySymbols.search.impl.PolySymbolPsiSourcedSymbolHostClassEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.inspectionToolMapping"
-                    beanClass="com.intellij.polySymbols.inspections.impl.PolySymbolsInspectionToolMappingEP"
+                    beanClass="com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.problemQuickFixProvider"
-                    interface="com.intellij.polySymbols.inspections.PolySymbolsProblemQuickFixProvider"
+                    interface="com.intellij.polySymbols.inspections.PolySymbolProblemQuickFixProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.codeCompletionItemCustomizer"
                     interface="com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer"

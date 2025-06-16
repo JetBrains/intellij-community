@@ -32,7 +32,7 @@ import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.highlighting.PolySymbolHighlightingCustomizer
 import com.intellij.polySymbols.highlighting.newSilentAnnotationWithDebugInfo
 import com.intellij.polySymbols.impl.PolySymbolNameSegmentImpl
-import com.intellij.polySymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
+import com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem
 import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKind
@@ -240,7 +240,7 @@ class PolySymbolsHighlightingAnnotator : Annotator {
   ): List<InspectionToolInfo> =
     symbolKinds
       .mapNotNull { symbolType ->
-        PolySymbolsInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kind, problemKind)?.toolShortName
+        PolySymbolInspectionToolMappingEP.Companion.get(symbolType.namespace, symbolType.kind, problemKind)?.toolShortName
       }.map {
         map.computeIfAbsent(it) { createToolInfo(it, holder.currentAnnotationSession.file) }
       }

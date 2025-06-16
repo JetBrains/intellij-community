@@ -16,8 +16,8 @@ import com.intellij.polySymbols.*
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.getMessage
 import com.intellij.polySymbols.PolySymbolApiStatus.Companion.isDeprecatedOrObsolete
 import com.intellij.polySymbols.highlighting.impl.getDefaultProblemMessage
-import com.intellij.polySymbols.inspections.PolySymbolsProblemQuickFixProvider
-import com.intellij.polySymbols.inspections.impl.PolySymbolsInspectionToolMappingEP
+import com.intellij.polySymbols.inspections.PolySymbolProblemQuickFixProvider
+import com.intellij.polySymbols.inspections.impl.PolySymbolInspectionToolMappingEP
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
 import com.intellij.polySymbols.references.PolySymbolReference
@@ -175,7 +175,7 @@ private class NameSegmentReferenceWithProblem(
       .mapNotNull { segment ->
         val problemKind = segment.getProblemKind() ?: return@mapNotNull null
         val toolMapping = segment.symbolKinds.map {
-          PolySymbolsInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
+          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, problemKind)
         }.firstOrNull()
         PolySymbolReferenceProblem.create(
           segment.symbolKinds,
@@ -185,7 +185,7 @@ private class NameSegmentReferenceWithProblem(
             toolMapping?.getProblemMessage(segment.displayName)
             ?: getDefaultProblemMessage(problemKind, segment.displayName),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
-            *PolySymbolsProblemQuickFixProvider.getQuickFixes(element, symbol, segment, problemKind).toTypedArray()
+            *PolySymbolProblemQuickFixProvider.getQuickFixes(element, symbol, segment, problemKind).toTypedArray()
           )
         )
       }.firstOrNull()
@@ -194,9 +194,9 @@ private class NameSegmentReferenceWithProblem(
       val symbolTypes = nameSegments.flatMapTo(LinkedHashSet()) { it.symbolKinds }
       val toolMapping = symbolTypes.map {
         if (apiStatus is PolySymbolApiStatus.Obsolete)
-          PolySymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.ObsoleteSymbol)
+          PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.ObsoleteSymbol)
             ?.let { mapping -> return@map mapping }
-        PolySymbolsInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
+        PolySymbolInspectionToolMappingEP.get(it.namespace, it.kind, ProblemKind.DeprecatedSymbol)
       }.firstOrNull()
 
       val cause = apiStatus?.getMessage()

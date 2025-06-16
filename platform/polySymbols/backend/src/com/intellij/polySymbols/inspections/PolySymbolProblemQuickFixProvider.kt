@@ -9,7 +9,7 @@ import com.intellij.polySymbols.references.PolySymbolReferenceProblem.ProblemKin
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
-interface PolySymbolsProblemQuickFixProvider {
+interface PolySymbolProblemQuickFixProvider {
 
   fun getQuickFixes(
     element: PsiElement,
@@ -22,8 +22,8 @@ interface PolySymbolsProblemQuickFixProvider {
 
     @TestOnly
     @JvmField
-    val EP_NAME: ExtensionPointName<PolySymbolsProblemQuickFixProvider> =
-      ExtensionPointName<PolySymbolsProblemQuickFixProvider>("com.intellij.polySymbols.problemQuickFixProvider")
+    val EP_NAME: ExtensionPointName<PolySymbolProblemQuickFixProvider> =
+      ExtensionPointName<PolySymbolProblemQuickFixProvider>("com.intellij.polySymbols.problemQuickFixProvider")
 
     @Suppress("TestOnlyProblems")
     fun getQuickFixes(element: PsiElement, symbol: PolySymbol, segment: PolySymbolNameSegment, problemKind: ProblemKind): List<LocalQuickFix> =
