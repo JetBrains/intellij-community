@@ -35,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -66,6 +67,15 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   private static final Key<AtomicInteger> ORPHAN_MODULE_HANDLERS_COUNTER = Key.create("ORPHAN_MODULE_HANDLERS_COUNTER");
 
   private static final Logger LOG = Logger.getInstance(AbstractModuleDataService.class);
+
+  private static final @NotNull String UNDEFINED_MODULE_TYPE = "UNDEFINED_MODULE_TYPE";
+
+  /**
+   * @see ExternalSystemModuleOptionsEntity#getExternalSystemModuleType
+   */
+  public @Nullable String getExternalModuleType() {
+    return UNDEFINED_MODULE_TYPE;
+  }
 
   @Override
   public void importData(final @NotNull Collection<? extends DataNode<E>> toImport,
@@ -192,6 +202,53 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     extension.setCompilerOutputPathForTests(testCompileOutputPath != null ? VfsUtilCore.pathToUrl(testCompileOutputPath) : null);
 
     extension.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
+  }
+
+  @Override
+  public @NotNull Computable<Collection<Module>> computeOrphanData(@NotNull Collection<? extends DataNode<E>> toImport,
+                                                                   @NotNull ProjectData projectData,
+                                                                   @NotNull Project project,
+                                                                   @NotNull IdeModifiableModelsProvider modelsProvider) {
+    return () -> {
+      var externalSystemId = projectData.getOwner();
+      var externalRootProjectPath = projectData.getLinkedExternalProjectPath();
+      var externalModuleType = getExternalModuleType();
+
+      var result = new SmartList<Module>();
+      if (!Objects.equals(externalModuleType, UNDEFINED_MODULE_TYPE)) {
+        result.addAll(computeRemovedModules(modelsProvider, externalSystemId, externalRootProjectPath, externalModuleType));
+      }
+      return result;
+    };
+  }
+
+  /**
+   * Computes IDE modules that was associated with defined external system,
+   * but doesn't have corresponding module data in new data graph.
+   * I.e. removed from the external project structure.
+   *
+   * @param externalSystemId defines target external system.
+   * @param externalRootProjectPath path of a root external project.
+   */
+  private static @NotNull List<Module> computeRemovedModules(
+    @NotNull IdeModifiableModelsProvider modelsProvider,
+    @NotNull ProjectSystemId externalSystemId,
+    @NotNull String externalRootProjectPath,
+    @Nullable String externalModuleType
+  ) {
+    var result = new SmartList<Module>();
+
+    for (var module : modelsProvider.getModules()) {
+      if (!ExternalSystemApiUtil.isExternalSystemAwareModule(externalSystemId, module)) continue;
+      if (!Objects.equals(ExternalSystemApiUtil.getExternalModuleType(module), externalModuleType)) continue;
+      if (!Objects.equals(ExternalSystemApiUtil.getExternalRootProjectPath(module), externalRootProjectPath)) continue;
+
+      if (module.getUserData(MODULE_DATA_KEY) == null) {
+        result.add(module);
+      }
+    }
+
+    return result;
   }
 
   @Override
@@ -401,11 +458,18 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     ExternalSystemModulePropertyManager.getInstance(module).unlinkExternalOptions();
   }
 
-  protected void setModuleOptions(Module module, DataNode<E> moduleDataNode) {
-    ModuleData moduleData = moduleDataNode.getData();
+  protected void setModuleOptions(@NotNull Module module, @NotNull DataNode<E> moduleNode) {
+    ModuleData moduleData = moduleNode.getData();
+
     module.putUserData(MODULE_DATA_KEY, moduleData);
-    ExternalSystemModulePropertyManager.getInstance(module)
-      .setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT));
+
+    ExternalSystemModulePropertyManager externalModuleOptions = ExternalSystemModulePropertyManager.getInstance(module);
+    externalModuleOptions.setExternalOptions(moduleData.getOwner(), moduleData, moduleNode.getData(ProjectKeys.PROJECT));
+
+    String moduleType = getExternalModuleType();
+    if (!Objects.equals(moduleType, UNDEFINED_MODULE_TYPE)) {
+      externalModuleOptions.setExternalModuleType(moduleType);
+    }
   }
 
   @Override
