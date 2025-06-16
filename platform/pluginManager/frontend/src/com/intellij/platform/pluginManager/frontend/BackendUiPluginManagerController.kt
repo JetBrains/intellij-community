@@ -23,6 +23,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
@@ -78,7 +79,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   }
 
   override fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().performUninstall(sessionId, pluginId) }
+    return runBlockingCancellable { PluginInstallerApi.getInstance().performUninstall(sessionId, pluginId) }
   }
 
   override fun performInstallOperation(installPluginRequest: InstallPluginRequest, parentComponent: JComponent?, modalityState: ModalityState?, progressIndicator: ProgressIndicator?, pluginEnabler: PluginEnabler, installCallback: (InstallPluginResult) -> Unit) {
