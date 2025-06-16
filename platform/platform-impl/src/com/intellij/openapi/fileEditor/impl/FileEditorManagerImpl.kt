@@ -74,6 +74,7 @@ import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.pom.Navigatable
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
@@ -2537,10 +2538,16 @@ private fun getEditorTypeIds(composite: EditorComposite): Set<String> {
 }
 
 internal fun TabInfo.setupLoadingIcon(composite: EditorComposite) {
+  val isFeatureFlagEnabled = ExperimentalUI.isNewUI() && Registry.`is`("editor.loading.spinner.enabled", false)
+  val delayFromRegistry = Registry.intValue("editor.loading.spinner.delay.ms", 0).milliseconds
+  if (!isFeatureFlagEnabled) {
+    setLoaded()
+    return
+  }
   composite.coroutineScope.launch {
     coroutineScope {
       launch(CoroutineName("EditorComposite(file=${composite.file.name}).setLoadingSpinner")) {
-        delay(300.milliseconds)
+        delay(delayFromRegistry)
         withContext(Dispatchers.EDT) {
           this@setupLoadingIcon.setupAsyncIconLoading()
         }
