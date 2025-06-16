@@ -21,7 +21,7 @@ import kotlin.io.path.listDirectoryEntries
 /**
  * @param root $ROOT_CONFIG$ to watch (aka <config>, idea.config.path)
  */
-internal class SharedConfigFolderNioListener(private val root: Path) {
+internal class SharedConfigFolderNioListener(private val root: Path, private val configFilesUpdatedByThisProcess: ConfigFilesUpdatedByThisProcess) {
   private val watcher = FileSystems.getDefault().newWatchService()
   private val keys = mutableMapOf<WatchKey, Path>()
 
@@ -74,11 +74,24 @@ internal class SharedConfigFolderNioListener(private val root: Path) {
       LOG.trace { "event $kind received for '$fileName'" }
       val eventPath = path.resolve(fileName)
 
-      if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-        ContainerUtil.addIfNotNull(deleted, getSpecFor(eventPath))
-      }
-      else {
-        ContainerUtil.addIfNotNull(modified, getSpecFor(eventPath))
+      val fileSpec = getSpecFor(eventPath)
+      if (fileSpec != null) {
+        if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+          if (!configFilesUpdatedByThisProcess.wasDeleted(fileSpec)) {
+            deleted.add(fileSpec)
+          }
+          else {
+            LOG.trace { "skipped deleted file $fileName because it was deleted by this process" }
+          }
+        }
+        else if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+          if (!configFilesUpdatedByThisProcess.wasWritten(fileSpec, eventPath)) {
+            modified.add(fileSpec)
+          }
+          else {
+            LOG.trace { "skipped modified file $fileName because it was written by this process" }
+          }
+        }
       }
 
       if (kind === StandardWatchEventKinds.ENTRY_CREATE) {

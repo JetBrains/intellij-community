@@ -31,6 +31,8 @@ import kotlin.io.path.name
  * @param root $ROOT_CONFIG$ to watch (aka <config>, idea.config.path)
  */
 internal class SharedConfigFolderStreamProvider(private val root: Path) : StreamProvider, StorageManagerFileWriteRequestor {
+  internal val configFilesUpdatedByThisProcess = ConfigFilesUpdatedByThisProcess()
+
   override val isExclusive: Boolean = true
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
@@ -104,6 +106,7 @@ internal class SharedConfigFolderStreamProvider(private val root: Path) : Stream
     
     val file = resolveSpec(fileSpec)
     LOG.trace { "write ${content.size} bytes to $file" }
+    configFilesUpdatedByThisProcess.saved(fileSpec, content)
     SharedConfigFolderUtil.writeToSharedFile(file, content)
   }
 
@@ -114,6 +117,7 @@ internal class SharedConfigFolderStreamProvider(private val root: Path) : Stream
 
     val file = resolveSpec(fileSpec)
     LOG.trace { "delete $file" }
+    configFilesUpdatedByThisProcess.deleted(fileSpec)
     SharedConfigFolderUtil.deleteSharedFile(file)
     return true
   }
