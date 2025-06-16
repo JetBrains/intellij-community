@@ -1668,7 +1668,7 @@ com.intellij.ui.AnchorableComponent
 - a:getAnchor():javax.swing.JComponent
 - a:setAnchor(javax.swing.JComponent):V
 com.intellij.ui.BackgroundSupplier
-- a:getElementBackground(I):java.awt.Color
+- getElementBackground(I):java.awt.Color
 - getSelectedElementBackground(I):java.awt.Color
 c:com.intellij.ui.BooleanTableCellEditor
 - javax.swing.DefaultCellEditor

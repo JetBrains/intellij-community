@@ -15,7 +15,7 @@ public interface BackgroundSupplier {
    * @return a preferred background color or {@code null} if an element should use default background
    */
   @Nullable
-  Color getElementBackground(int row);
+  default Color getElementBackground(int row) { return null; }
 
   /**
    * This method allows specifying a background for a selected element (list item or tree node).
