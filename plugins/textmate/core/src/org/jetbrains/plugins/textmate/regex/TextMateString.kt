@@ -5,7 +5,7 @@ interface TextMateString: AutoCloseable {
   val id: Any
   val bytes: ByteArray
   fun charRangeByByteRange(byteRange: TextMateRange): TextMateRange
-  fun charOffsetByByteOffset(stringBytes: ByteArray, startByteOffset: Int, targetByteOffset: Int): Int
+  fun charOffsetByByteOffset(startByteOffset: Int, targetByteOffset: Int): Int
 }
 
 class TextMateStringImpl private constructor(override val bytes: ByteArray): TextMateString {
@@ -18,17 +18,17 @@ class TextMateStringImpl private constructor(override val bytes: ByteArray): Tex
   }
 
   override fun charRangeByByteRange(byteRange: TextMateRange): TextMateRange {
-    val startOffset = charOffsetByByteOffset(bytes, 0, byteRange.start)
-    val endOffset = startOffset + charOffsetByByteOffset(bytes, byteRange.start, byteRange.end)
+    val startOffset = charOffsetByByteOffset(0, byteRange.start)
+    val endOffset = startOffset + charOffsetByByteOffset(byteRange.start, byteRange.end)
     return TextMateRange(startOffset, endOffset)
   }
 
-  override fun charOffsetByByteOffset(stringBytes: ByteArray, startByteOffset: Int, targetByteOffset: Int): Int {
+  override fun charOffsetByByteOffset(startByteOffset: Int, targetByteOffset: Int): Int {
     return if (targetByteOffset <= 0) {
       0
     }
     else {
-      stringBytes.decodeToString(startByteOffset, targetByteOffset).length
+      bytes.decodeToString(startByteOffset, targetByteOffset).length
     }
   }
 
