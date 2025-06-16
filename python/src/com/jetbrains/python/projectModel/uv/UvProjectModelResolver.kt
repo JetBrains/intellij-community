@@ -12,7 +12,6 @@ import java.nio.file.FileVisitResult
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import kotlin.io.path.*
-import kotlin.io.path.isDirectory
 
 private const val DEFAULT_VENV_DIR = ".venv"
 
@@ -26,6 +25,8 @@ data class UvProject(
 ) : ExternalProject {
   override val sourceRoots: List<Path>
     get() = listOfNotNull((root / "src").takeIf { it.isDirectory() })
+  override val excludedRoots: List<Path>
+    get() = listOfNotNull((root / DEFAULT_VENV_DIR).takeIf { it.isDirectory() })
 }
 
 private data class UvPyProjectToml(

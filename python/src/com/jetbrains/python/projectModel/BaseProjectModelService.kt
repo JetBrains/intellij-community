@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectModel
 
-import com.intellij.openapi.externalSystem.model.project.ContentRootData
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -15,7 +14,6 @@ import com.jetbrains.python.PyBundle
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
 import java.nio.file.Path
-import kotlin.io.path.div
 import kotlin.reflect.KClass
 
 /**
@@ -119,6 +117,9 @@ abstract class BaseProjectModelService<E : EntitySource, P : ExternalProject> {
         contentRoots = listOf(ContentRootEntity(extProject.root.toVirtualFileUrl(fileUrlManager), emptyList(), source) {
           sourceRoots = extProject.sourceRoots.map { srcRoot ->
             SourceRootEntity(srcRoot.toVirtualFileUrl(fileUrlManager), PYTHON_SOURCE_ROOT_TYPE, source)
+          }
+          excludedUrls = extProject.excludedRoots.map { excludedRoot ->
+            ExcludeUrlEntity(excludedRoot.toVirtualFileUrl(fileUrlManager), source)
           }
         })
         exModuleOptions = ExternalSystemModuleOptionsEntity(source) {
