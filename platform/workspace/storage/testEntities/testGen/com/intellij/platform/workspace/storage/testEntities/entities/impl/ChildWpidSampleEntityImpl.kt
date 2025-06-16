@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SampleWithS
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChildWpidSampleEntityImpl(private val dataSource: ChildWpidSampleEntityData) : ChildWpidSampleEntity,
                                                                                               WorkspaceEntityBase(dataSource) {

@@ -6,10 +6,11 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface SelfLinkedEntity : WorkspaceEntity {
+  @Parent
   val parentEntity: SelfLinkedEntity?
 
   //region generated code
@@ -45,9 +46,9 @@ fun MutableEntityStorage.modifySelfLinkedEntity(
   return modifyEntity(SelfLinkedEntity.Builder::class.java, entity, modification)
 }
 
-var SelfLinkedEntity.Builder.children: @Child List<SelfLinkedEntity.Builder>
+var SelfLinkedEntity.Builder.children: List<SelfLinkedEntity.Builder>
   by WorkspaceEntity.extensionBuilder(SelfLinkedEntity::class.java)
 //endregion
 
-val SelfLinkedEntity.children: List<@Child SelfLinkedEntity>
+val SelfLinkedEntity.children: List<SelfLinkedEntity>
     by WorkspaceEntity.extension()

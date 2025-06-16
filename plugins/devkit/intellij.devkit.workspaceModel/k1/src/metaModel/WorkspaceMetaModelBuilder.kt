@@ -2,6 +2,8 @@
 package com.intellij.devkit.workspaceModel.k1.metaModel
 
 import com.intellij.devkit.workspaceModel.metaModel.IncorrectObjInterfaceException
+import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityInheritsEntitySourceException
+import com.intellij.devkit.workspaceModel.metaModel.WorkspaceEntityMultipleInheritanceException
 import com.intellij.devkit.workspaceModel.metaModel.WorkspaceModelDefaults
 import com.intellij.devkit.workspaceModel.metaModel.impl.*
 import com.intellij.devkit.workspaceModel.metaModel.unsupportedType
@@ -84,11 +86,11 @@ internal class WorkspaceMetaModelBuilder(
     }
 
     val module = CompiledObjModuleImpl(packageName)
-    val types = entityInterfaces.sortedBy { it.name }.withIndex().map {
+    val entityTypes = entityInterfaces.sortedBy { it.name }.withIndex().map {
       it.value to createObjTypeStub(it.value, module)
     }
 
-    return ObjModuleStub(module, types, moduleDescriptor.moduleAbstractTypes, moduleDescriptor)
+    return ObjModuleStub(module, entityTypes, moduleDescriptor.moduleAbstractTypes, moduleDescriptor)
   }
 
   private fun getObjClass(entityInterface: ClassDescriptor): ObjClass<*> {
@@ -100,13 +102,13 @@ internal class WorkspaceMetaModelBuilder(
 
   private inner class ObjModuleStub(
     val compiledObjModule: CompiledObjModuleImpl,
-    val types: List<Pair<ClassDescriptor, ObjClassImpl<Obj>>>,
+    val entityTypes: List<Pair<ClassDescriptor, ObjClassImpl<Obj>>>,
     val moduleAbstractTypes: List<ClassDescriptor>,
     val moduleDescriptor: ModuleDescriptor,
   ) {
     fun registerContent(extProperties: List<Pair<PropertyDescriptor, ClassDescriptor>>): CompiledObjModule {
       var extPropertyId = 0
-      for ((classDescriptor, objType) in types) {
+      for ((classDescriptor, objType) in entityTypes) {
         val properties = classDescriptor.unsubstitutedMemberScope.getContributedDescriptors()
           .filterIsInstance<PropertyDescriptor>()
           .filter { it.kind.isReal }
@@ -120,12 +122,20 @@ internal class WorkspaceMetaModelBuilder(
             objType.addField(createOwnProperty(property, propertyId, objType))
           }
         }
+        val extendedAbstract = mutableSetOf<String>()
         classDescriptor.typeConstructor.supertypes.forEach { superType ->
           val superDescriptor = superType.constructor.declarationDescriptor
           if (superDescriptor is ClassDescriptor && superDescriptor.isEntityInterface) {
             val superClass = findObjClass(superDescriptor)
             objType.addSuperType(superClass)
+            extendedAbstract.add(superClass.name)
           }
+          if (superDescriptor is ClassDescriptor && superDescriptor.isEntitySource) {
+            throw WorkspaceEntityInheritsEntitySourceException(classDescriptor.javaClassFqn)
+          }
+        }
+        if (extendedAbstract.size > 1) {
+          throw WorkspaceEntityMultipleInheritanceException(classDescriptor.javaClassFqn, extendedAbstract)
         }
         compiledObjModule.addType(objType)
       }
@@ -157,7 +167,8 @@ internal class WorkspaceMetaModelBuilder(
       property: PropertyDescriptor, propertyId: Int,
       receiver: ObjClassImpl<Obj>,
     ): OwnProperty<Obj, *> {
-      val valueType = convertType(property.type, hashMapOf(), property.isAnnotatedBy(WorkspaceModelDefaults.CHILD_ANNOTATION.fqName))
+      val hasParentAnnotation = property.isAnnotatedBy(WorkspaceModelDefaults.PARENT_ANNOTATION.fqName)
+      val valueType = convertType(property.type, hashMapOf(), hasParentAnnotation)
       return OwnPropertyImpl(
         receiver, property.name.identifier, valueType, property.computeKind(),
         property.isAnnotatedBy(WorkspaceModelDefaults.OPEN_ANNOTATION.fqName), property.isVar,
@@ -167,7 +178,8 @@ internal class WorkspaceMetaModelBuilder(
     }
 
     private fun createExtProperty(extProperty: PropertyDescriptor, receiverClass: ClassDescriptor, extPropertyId: Int): ExtProperty<*, *> {
-      val valueType = convertType(extProperty.type, hashMapOf(), false)
+      val hasParentAnnotation = extProperty.isAnnotatedBy(WorkspaceModelDefaults.PARENT_ANNOTATION.fqName)
+      val valueType = convertType(extProperty.type, hashMapOf(), hasParentAnnotation)
       val propertyAnnotations = extProperty.getter?.annotations
                                   ?.mapNotNull { it.fqName }
                                   ?.map { ObjAnnotationImpl(it.asString(), it.pathSegments().map { segment -> segment.asString() }) }
@@ -183,10 +195,10 @@ internal class WorkspaceMetaModelBuilder(
     private fun convertType(
       type: KotlinType,
       knownTypes: MutableMap<String, ValueType.Blob<*>>,
-      hasChildAnnotation: Boolean,
+      hasParentAnnotation: Boolean,
     ): ValueType<*> {
       if (type.isMarkedNullable) {
-        return ValueType.Optional(convertType(type.makeNotNullable(), knownTypes, hasChildAnnotation))
+        return ValueType.Optional(convertType(type.makeNotNullable(), knownTypes, hasParentAnnotation))
       }
 
       val descriptor = type.constructor.declarationDescriptor
@@ -197,19 +209,17 @@ internal class WorkspaceMetaModelBuilder(
         if (primitive != null) return primitive
 
         if (fqName.isCollection) {
-          val genericType = convertType(type.arguments.first().type, knownTypes, hasChildAnnotation)
+          val genericType = convertType(type.arguments.first().type, knownTypes, hasParentAnnotation)
           return when {
             fqName.isList -> ValueType.List(genericType)
             fqName.isSet -> ValueType.Set(genericType)
-            fqName.isMap -> ValueType.Map(genericType, convertType(type.arguments.last().type, knownTypes, hasChildAnnotation))
+            fqName.isMap -> ValueType.Map(genericType, convertType(type.arguments.last().type, knownTypes, hasParentAnnotation))
             else -> unsupportedType(type.toString())
           }
         }
 
         if (descriptor.isEntityInterface) {
-          return ValueType.ObjRef(type.isAnnotatedBy(
-            WorkspaceModelDefaults.CHILD_ANNOTATION.fqName) || hasChildAnnotation, //todo leave only one target for @Child annotation
-                                  findObjClass(descriptor))
+          return ValueType.ObjRef(!hasParentAnnotation, findObjClass(descriptor))
         }
         return classDescriptorToValueType(descriptor, knownTypes, processAbstractTypes)
       }
@@ -270,7 +280,7 @@ internal class WorkspaceMetaModelBuilder(
 
     private fun findObjClass(descriptor: ClassDescriptor): ObjClass<*> {
       if (descriptor.packageOrDie.asString() == compiledObjModule.name) {
-        return types.find { it.first.typeConstructor == descriptor.typeConstructor }?.second ?: error(
+        return entityTypes.find { it.first.typeConstructor == descriptor.typeConstructor }?.second ?: error(
           "Cannot find ${descriptor.fqNameSafe} in $compiledObjModule")
       }
       return getObjClass(descriptor)

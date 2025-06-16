@@ -22,7 +22,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.MySealedInt
 import com.intellij.platform.workspace.storage.testEntities.entities.WithSealedEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class WithSealedEntityImpl(private val dataSource: WithSealedEntityData) : WithSealedEntity, WorkspaceEntityBase(dataSource) {
 

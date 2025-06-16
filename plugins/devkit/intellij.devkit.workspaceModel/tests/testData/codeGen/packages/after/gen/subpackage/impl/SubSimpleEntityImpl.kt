@@ -16,7 +16,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.workspaceModel.test.api.subpackage.SubSimpleEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SubSimpleEntityImpl(private val dataSource: SubSimpleEntityData) : SubSimpleEntity, WorkspaceEntityBase(dataSource) {
 

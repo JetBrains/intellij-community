@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.NonNls
 
 data class FacetEntityTypeId(val name: @NonNls String)
@@ -21,9 +21,11 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
   val typeId: FacetEntityTypeId
   val configurationXmlTag: @NonNls String?
 
+  @Parent
   val module: ModuleEntity
 
   // underlyingFacet is a parent facet!!
+  @Parent
   val underlyingFacet: FacetEntity?
 
   //region generated code
@@ -70,9 +72,9 @@ fun MutableEntityStorage.modifyFacetEntity(
   return modifyEntity(FacetEntity.Builder::class.java, entity, modification)
 }
 
-var FacetEntity.Builder.childrenFacets: @Child List<FacetEntity.Builder>
+var FacetEntity.Builder.childrenFacets: List<FacetEntity.Builder>
   by WorkspaceEntity.extensionBuilder(FacetEntity::class.java)
 //endregion
 
-val FacetEntity.childrenFacets: List<@Child FacetEntity>
+val FacetEntity.childrenFacets: List<FacetEntity>
     by WorkspaceEntity.extension()

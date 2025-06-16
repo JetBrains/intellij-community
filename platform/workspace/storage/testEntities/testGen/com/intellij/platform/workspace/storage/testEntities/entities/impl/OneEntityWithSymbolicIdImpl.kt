@@ -2,8 +2,8 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
@@ -15,7 +15,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OneEntityWi
 import com.intellij.platform.workspace.storage.testEntities.entities.OneSymbolicId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OneEntityWithSymbolicIdImpl(private val dataSource: OneEntityWithSymbolicIdData) : OneEntityWithSymbolicId,
                                                                                                   WorkspaceEntityBase(dataSource) {

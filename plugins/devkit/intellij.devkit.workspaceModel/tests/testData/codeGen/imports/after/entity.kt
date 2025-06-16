@@ -2,14 +2,14 @@
 package com.intellij.workspaceModel.test.api
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.net.URL
 
 interface EntityWithManyImports : WorkspaceEntityWithSymbolicId {
   val version: Int
   val name: String
-  val files: List<@Child SimpleEntity>
+  val files: List<SimpleEntity>
   val pointer: EntityPointer<SimpleEntity>
 
   override val symbolicId: SimpleId
@@ -64,7 +64,7 @@ data class SimpleId(val name: String) : SymbolicEntityId<EntityWithManyImports> 
 
 interface SimpleEntity : WorkspaceEntity {
   val url: VirtualFileUrl
-  val parent: EntityWithManyImports
+  @Parent val parent: EntityWithManyImports
 
   //region generated code
   @GeneratedCodeApiVersion(3)

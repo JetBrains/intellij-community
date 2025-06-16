@@ -1419,7 +1419,7 @@ FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.platform.workspace.stor
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity", metadataHash = -1567432762)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToManyRefEntity", metadataHash = -63503747)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.AnotherOneToOneRefEntity", metadataHash = 1256876172)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntity", metadataHash =  449785541)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropEntity", metadataHash = 449785541)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedComputablePropsOrderEntity", metadataHash = -1820882829)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEntity", metadataHash = 539363781)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedPropsOrderEntity", metadataHash = 995904225)

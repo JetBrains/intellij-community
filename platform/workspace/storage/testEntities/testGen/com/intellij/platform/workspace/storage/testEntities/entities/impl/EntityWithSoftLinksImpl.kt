@@ -2,8 +2,8 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SoftLinkRef
 import com.intellij.platform.workspace.storage.testEntities.entities.TooDeepContainer
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLinksData) : EntityWithSoftLinks,
                                                                                           WorkspaceEntityBase(dataSource) {

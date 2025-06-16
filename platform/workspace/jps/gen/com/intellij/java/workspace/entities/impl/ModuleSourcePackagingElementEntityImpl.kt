@@ -9,7 +9,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.SoftLinkable
@@ -27,7 +27,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ModuleSourcePackagingElementEntityImpl(private val dataSource: ModuleSourcePackagingElementEntityData) :
   ModuleSourcePackagingElementEntity, WorkspaceEntityBase(dataSource) {

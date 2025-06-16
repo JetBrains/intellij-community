@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestE
 import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntitySymbolicId
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData) : ModuleTestEntity, WorkspaceEntityBase(dataSource) {
 

@@ -7,11 +7,11 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface ParentChainEntity : WorkspaceEntity {
-  val root: @Child CompositeAbstractEntity?
+  val root: CompositeAbstractEntity?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -49,7 +49,7 @@ fun MutableEntityStorage.modifyParentChainEntity(
 
 @Abstract
 interface SimpleAbstractEntity : WorkspaceEntity {
-
+  @Parent
   val parentInList: CompositeAbstractEntity?
 
   //region generated code
@@ -79,8 +79,9 @@ interface SimpleAbstractEntity : WorkspaceEntity {
 
 @Abstract
 interface CompositeAbstractEntity : SimpleAbstractEntity {
-  val children: List<@Child SimpleAbstractEntity>
+  val children: List<SimpleAbstractEntity>
 
+  @Parent
   val parentEntity: ParentChainEntity?
 
   //region generated code

@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedValueTypeEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ChangedValueTypeEntityImpl(private val dataSource: ChangedValueTypeEntityData) : ChangedValueTypeEntity,
                                                                                                 WorkspaceEntityBase(dataSource) {

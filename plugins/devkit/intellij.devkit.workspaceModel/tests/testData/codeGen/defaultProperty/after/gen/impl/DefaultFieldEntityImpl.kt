@@ -18,7 +18,7 @@ import com.intellij.workspaceModel.test.api.DefaultFieldEntity
 import com.intellij.workspaceModel.test.api.TestData
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class DefaultFieldEntityImpl(private val dataSource: DefaultFieldEntityData) : DefaultFieldEntity,
                                                                                         WorkspaceEntityBase(dataSource) {

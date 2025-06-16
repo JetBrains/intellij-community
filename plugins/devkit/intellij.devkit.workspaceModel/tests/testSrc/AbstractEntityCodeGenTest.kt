@@ -88,19 +88,35 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
   }
 
   fun testBothLinksAreParents() {
-    doTestAndCheckErrorMessage("Both fields MainEntity#secondaryEntities and SecondaryEntity#mainEntity are marked as parent. Did you forget to add @Child annotation?")
+    doTestAndCheckErrorMessage("Both fields MainEntity#secondaryEntity and SecondaryEntity#mainEntity are marked as parent. Probably both properties are annotated with @Parent, while only one should be.")
   }
 
   fun testBothLinksAreChildren() {
-    doTestAndCheckErrorMessage("Failed to generate code for mainEntity (SecondaryEntity): Child references should always be nullable")
+    doTestAndCheckErrorMessage("Both fields MainEntity#secondaryEntities and SecondaryEntity#mainEntity are marked as child. Probably @Parent annotation is missing from one of the properties.")
+  }
+
+  fun testChildrenShouldBeNullable() {
+    doTestAndCheckErrorMessage("Failed to generate code for secondaryEntity (MainEntity): Child references should always be nullable")
   }
 
   fun testVarFieldForbidden() {
-    doTestAndCheckErrorMessage("An immutable interface can't contain mutable properties")
+    doTestAndCheckErrorMessage("Failed to generate code for isValid (MainEntity): An immutable interface can't contain mutable properties")
   }
 
   fun testSymbolicIdNotDeclared() {
-    doTestAndCheckErrorMessage("Class extends 'WorkspaceEntityWithSymbolicId' but doesn't override 'WorkspaceEntityWithSymbolicId.getSymbolicId' property")
+    doTestAndCheckErrorMessage("Failed to generate code for SimpleSymbolicIdEntity: Class extends 'WorkspaceEntityWithSymbolicId' but doesn't override 'WorkspaceEntityWithSymbolicId.getSymbolicId' property")
+  }
+
+  fun testInheritanceEntityAndSource() {
+    doTestAndCheckErrorMessage("com.intellij.workspaceModel.test.api.IllegalEntity extends WorkspaceEntity and EntitySource at the same time, which is prohibited.")
+  }
+
+  fun testInheritanceMultiple() {
+    doTestAndCheckErrorMessage("com.intellij.workspaceModel.test.api.MultipleInheritanceEntity extends multiple @Abstract entities, which is prohibited: AbstractEntity3, AnotherAbstractEntity.")
+  }
+
+  fun testInheritanceNonAbstract() {
+    doTestAndCheckErrorMessage("Failed to generate code for IllegalEntity: Class 'LegalEntity' cannot be extended")
   }
 
   private fun doTestAndCheckErrorMessage(expectedMessage: String) {
@@ -108,7 +124,7 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
       doTest()
     }
     val actualMessage = exception.message!!
-    assertTrue(actualMessage.contains(expectedMessage))
+    assertEquals(expectedMessage, actualMessage)
   }
 
   private fun doTest(processAbstractTypes: Boolean = false, explicitApiEnabled: Boolean = false, isTestModule: Boolean = false) {

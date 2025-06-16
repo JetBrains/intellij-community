@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface ParentWithExtensionEntity : WorkspaceEntity {
   val data: String
@@ -46,13 +46,14 @@ fun MutableEntityStorage.modifyParentWithExtensionEntity(
   return modifyEntity(ParentWithExtensionEntity.Builder::class.java, entity, modification)
 }
 
-var ParentWithExtensionEntity.Builder.child: @Child AbstractChildEntity.Builder<out AbstractChildEntity>?
+var ParentWithExtensionEntity.Builder.child: AbstractChildEntity.Builder<out AbstractChildEntity>?
   by WorkspaceEntity.extensionBuilder(AbstractChildEntity::class.java)
 //endregion
 
 @Abstract
 interface AbstractChildEntity : WorkspaceEntity {
   val data: String
+  @Parent
   val parent: ParentWithExtensionEntity
 
   //region generated code
@@ -119,4 +120,4 @@ fun MutableEntityStorage.modifySpecificChildEntity(
 }
 //endregion
 
-val ParentWithExtensionEntity.child: @Child AbstractChildEntity? by WorkspaceEntity.extension()
+val ParentWithExtensionEntity.child: AbstractChildEntity? by WorkspaceEntity.extension()

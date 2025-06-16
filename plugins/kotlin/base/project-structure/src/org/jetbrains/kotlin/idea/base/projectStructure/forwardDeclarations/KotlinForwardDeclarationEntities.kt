@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -22,6 +22,7 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
  */
 interface KotlinForwardDeclarationsWorkspaceEntity : WorkspaceEntity {
     val forwardDeclarationRoots: Set<VirtualFileUrl>
+    @Parent
     val library: LibraryEntity
 
   //region generated code
@@ -59,11 +60,11 @@ fun MutableEntityStorage.modifyKotlinForwardDeclarationsWorkspaceEntity(
   return modifyEntity(KotlinForwardDeclarationsWorkspaceEntity.Builder::class.java, entity, modification)
 }
 
-var LibraryEntity.Builder.kotlinForwardDeclarationsWorkspaceEntity: @Child KotlinForwardDeclarationsWorkspaceEntity.Builder?
+var LibraryEntity.Builder.kotlinForwardDeclarationsWorkspaceEntity: KotlinForwardDeclarationsWorkspaceEntity.Builder?
   by WorkspaceEntity.extensionBuilder(KotlinForwardDeclarationsWorkspaceEntity::class.java)
 //endregion
 
-val LibraryEntity.kotlinForwardDeclarationsWorkspaceEntity: @Child KotlinForwardDeclarationsWorkspaceEntity?
+val LibraryEntity.kotlinForwardDeclarationsWorkspaceEntity: KotlinForwardDeclarationsWorkspaceEntity?
     by WorkspaceEntity.extension()
 
 object KotlinFwdWorkspaceEntitySource: EntitySource

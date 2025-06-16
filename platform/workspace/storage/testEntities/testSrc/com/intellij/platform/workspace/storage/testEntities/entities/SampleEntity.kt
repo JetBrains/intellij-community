@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.util.UUID
@@ -14,7 +14,7 @@ interface SampleEntity : WorkspaceEntity {
   val stringListProperty: List<String>
   val stringMapProperty: Map<String, String>
   val fileProperty: VirtualFileUrl
-  val children: List<@Child ChildSampleEntity>
+  val children: List<ChildSampleEntity>
   val nullableData: String?
   val randomUUID: UUID?
 
@@ -71,6 +71,7 @@ fun MutableEntityStorage.modifySampleEntity(
 
 interface ChildSampleEntity : WorkspaceEntity {
   val data: String
+  @Parent
   val parentEntity: SampleEntity?
 
   //region generated code
@@ -167,7 +168,7 @@ fun MutableEntityStorage.modifySecondSampleEntity(
 
 interface SourceEntity : WorkspaceEntity {
   val data: String
-  val children: List<@Child ChildSourceEntity>
+  val children: List<ChildSourceEntity>
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -208,6 +209,7 @@ fun MutableEntityStorage.modifySourceEntity(
 
 interface ChildSourceEntity : WorkspaceEntity {
   val data: String
+  @Parent
   val parentEntity: SourceEntity
 
   //region generated code

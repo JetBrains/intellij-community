@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import java.io.Serializable
@@ -26,7 +26,7 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
     val typeId: LibraryTypeId?
     val roots: List<LibraryRoot>
 
-    val excludedRoots: List<@Child ExcludeUrlEntity>
+    val excludedRoots: List<ExcludeUrlEntity>
 
     override val symbolicId: LibraryId
         get() = LibraryId(name, tableId)
@@ -76,10 +76,11 @@ fun MutableEntityStorage.modifyLibraryEntity(
 
 @get:Internal
 @set:Internal
-var LibraryEntity.Builder.libraryProperties: @Child LibraryPropertiesEntity.Builder?
+var LibraryEntity.Builder.libraryProperties: LibraryPropertiesEntity.Builder?
   by WorkspaceEntity.extensionBuilder(LibraryPropertiesEntity::class.java)
 //endregion
 
+@Parent
 val ExcludeUrlEntity.library: LibraryEntity? by WorkspaceEntity.extension()
 
 

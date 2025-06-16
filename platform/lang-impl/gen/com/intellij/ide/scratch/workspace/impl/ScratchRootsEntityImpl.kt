@@ -21,7 +21,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntityData) : ScratchRootsEntity,
                                                                                         WorkspaceEntityBase(dataSource) {

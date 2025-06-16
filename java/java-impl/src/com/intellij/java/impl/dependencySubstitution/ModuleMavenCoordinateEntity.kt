@@ -9,12 +9,13 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
 interface ModuleMavenCoordinateEntity : WorkspaceEntity {
 
+  @Parent
   val module: ModuleEntity
 
   val coordinates: MavenCoordinates
@@ -54,9 +55,9 @@ fun MutableEntityStorage.modifyModuleMavenCoordinateEntity(
   return modifyEntity(ModuleMavenCoordinateEntity.Builder::class.java, entity, modification)
 }
 
-var ModuleEntity.Builder.mavenCoordinates: @Child ModuleMavenCoordinateEntity.Builder?
+var ModuleEntity.Builder.mavenCoordinates: ModuleMavenCoordinateEntity.Builder?
   by WorkspaceEntity.extensionBuilder(ModuleMavenCoordinateEntity::class.java)
 //endregion
 
-val ModuleEntity.mavenCoordinates: @Child ModuleMavenCoordinateEntity?
+val ModuleEntity.mavenCoordinates: ModuleMavenCoordinateEntity?
   by WorkspaceEntity.extension()

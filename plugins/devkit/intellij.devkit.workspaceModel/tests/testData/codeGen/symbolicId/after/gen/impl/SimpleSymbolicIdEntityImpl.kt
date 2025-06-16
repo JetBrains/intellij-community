@@ -22,7 +22,7 @@ import com.intellij.workspaceModel.test.api.SimpleId
 import com.intellij.workspaceModel.test.api.SimpleSymbolicIdEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SimpleSymbolicIdEntityImpl(private val dataSource: SimpleSymbolicIdEntityData) : SimpleSymbolicIdEntity,
                                                                                                 WorkspaceEntityBase(dataSource) {

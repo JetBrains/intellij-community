@@ -8,9 +8,10 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface JavaSourceRootPropertiesEntity : WorkspaceEntity {
+  @Parent
   val sourceRoot: SourceRootEntity
 
   val generated: Boolean
@@ -55,14 +56,15 @@ fun MutableEntityStorage.modifyJavaSourceRootPropertiesEntity(
   return modifyEntity(JavaSourceRootPropertiesEntity.Builder::class.java, entity, modification)
 }
 
-var SourceRootEntity.Builder.javaSourceRoots: @Child List<JavaSourceRootPropertiesEntity.Builder>
+var SourceRootEntity.Builder.javaSourceRoots: List<JavaSourceRootPropertiesEntity.Builder>
   by WorkspaceEntity.extensionBuilder(JavaSourceRootPropertiesEntity::class.java)
 //endregion
 
-val SourceRootEntity.javaSourceRoots: List<@Child JavaSourceRootPropertiesEntity>
+val SourceRootEntity.javaSourceRoots: List<JavaSourceRootPropertiesEntity>
   by WorkspaceEntity.extension()
 
 interface JavaResourceRootPropertiesEntity: WorkspaceEntity {
+  @Parent
   val sourceRoot: SourceRootEntity
 
   val generated: Boolean
@@ -107,11 +109,11 @@ fun MutableEntityStorage.modifyJavaResourceRootPropertiesEntity(
   return modifyEntity(JavaResourceRootPropertiesEntity.Builder::class.java, entity, modification)
 }
 
-var SourceRootEntity.Builder.javaResourceRoots: @Child List<JavaResourceRootPropertiesEntity.Builder>
+var SourceRootEntity.Builder.javaResourceRoots: List<JavaResourceRootPropertiesEntity.Builder>
   by WorkspaceEntity.extensionBuilder(JavaResourceRootPropertiesEntity::class.java)
 //endregion
 
-val SourceRootEntity.javaResourceRoots: List<@Child JavaResourceRootPropertiesEntity>
+val SourceRootEntity.javaResourceRoots: List<JavaResourceRootPropertiesEntity>
   by WorkspaceEntity.extension()
 
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootPropertiesEntity? = javaSourceRoots.firstOrNull()

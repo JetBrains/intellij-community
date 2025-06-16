@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.SubsetEnumEnum
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class SubsetEnumEntityImpl(private val dataSource: SubsetEnumEntityData) : SubsetEnumEntity, WorkspaceEntityBase(dataSource) {
 

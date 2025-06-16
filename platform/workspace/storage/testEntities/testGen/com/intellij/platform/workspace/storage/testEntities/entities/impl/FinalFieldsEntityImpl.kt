@@ -20,7 +20,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.AnotherData
 import com.intellij.platform.workspace.storage.testEntities.entities.FinalFieldsEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class FinalFieldsEntityImpl(private val dataSource: FinalFieldsEntityData) : FinalFieldsEntity, WorkspaceEntityBase(dataSource) {
 

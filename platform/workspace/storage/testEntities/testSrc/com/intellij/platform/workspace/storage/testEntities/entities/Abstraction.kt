@@ -3,12 +3,12 @@ package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 
 interface HeadAbstractionEntity : WorkspaceEntityWithSymbolicId {
   val data: String
-  val child: @Child CompositeBaseEntity?
+  val child: CompositeBaseEntity?
 
   override val symbolicId: HeadAbstractionSymbolicId
     get() = HeadAbstractionSymbolicId(data)
@@ -54,6 +54,7 @@ data class HeadAbstractionSymbolicId(override val presentableName: String) : Sym
 
 @Abstract
 interface BaseEntity : WorkspaceEntity {
+  @Parent
   val parentEntity: CompositeBaseEntity?
 
   //region generated code
@@ -83,8 +84,9 @@ interface BaseEntity : WorkspaceEntity {
 
 @Abstract
 interface CompositeBaseEntity : BaseEntity {
-  val children: List<@Child BaseEntity>
+  val children: List<BaseEntity>
 
+  @Parent
   val parent: HeadAbstractionEntity?
 
   //region generated code

@@ -6,7 +6,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NonNls
 interface LibraryPropertiesEntity : WorkspaceEntity {
   val propertiesXmlTag: @NonNls String?
 
+  @Parent
   val library: LibraryEntity
 
   //region generated code
@@ -56,5 +57,5 @@ fun MutableEntityStorage.modifyLibraryPropertiesEntity(
 //endregion
 
 @get:Internal
-val LibraryEntity.libraryProperties: @Child LibraryPropertiesEntity?
+val LibraryEntity.libraryProperties: LibraryPropertiesEntity?
   by WorkspaceEntity.extension()

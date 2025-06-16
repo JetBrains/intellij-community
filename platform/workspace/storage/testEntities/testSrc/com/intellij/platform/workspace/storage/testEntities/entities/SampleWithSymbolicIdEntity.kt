@@ -2,7 +2,7 @@
 package com.intellij.platform.workspace.storage.testEntities.entities
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
@@ -13,7 +13,7 @@ interface SampleWithSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   val stringListProperty: List<String>
   val stringMapProperty: Map<String, String>
   val fileProperty: VirtualFileUrl
-  val children: List<@Child ChildWpidSampleEntity>
+  val children: List<ChildWpidSampleEntity>
   val nullableData: String?
 
   override val symbolicId: SampleSymbolicId
@@ -76,6 +76,7 @@ data class SampleSymbolicId(val stringProperty: String) : SymbolicEntityId<Sampl
 
 interface ChildWpidSampleEntity : WorkspaceEntity {
   val data: String
+  @Parent
   val parentEntity: SampleWithSymbolicIdEntity?
 
   //region generated code

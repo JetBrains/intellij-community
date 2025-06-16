@@ -54,16 +54,16 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * ```
  * ## Parent-child relationship between entities
  * 
- * Some types of entities may be connected by "parent-child" relationship. It's introduced by a property in the parent entity interface
- * which refers to the child entity (entities) with [@Child][com.intellij.platform.workspace.storage.annotations.Child] annotation,
- * and a property in the child entity interface which refers to the parent entity. 
+ * Some types of entities may be connected by "parent-child" relationship. It's introduced by a property in the child entity interface
+ * which refers to the parent entity with [@Parent][com.intellij.platform.workspace.storage.annotations.Parent] annotation,
+ * and a property in the parent entity interface which refers to the nullable child entity. 
  * The storage automatically maintains the consistency of this relationship during modifications: 
  * * if a parent entity is removed, all its child entities are also removed;
  * * if a child entity is removed, the corresponding property in its parent entity is updated so it no longer refers to the removed entity.
  *  
  * The property referring to child entity may have a type
- * * `@Child ChildEntity?` indicating that there are zero or one child entities of the given type, or
- * * `List<@Child ChildEntity>` indicating that there are zero, one, or more child entities of the given type.
+ * * `ChildEntity?` indicating that there are zero or one child entities of the given type, or
+ * * `List<ChildEntity>` indicating that there are zero, one, or more child entities of the given type.
  * 
  * If `ChildEntity` is [@Abstract][Abstract], [applyChangesFrom][MutableEntityStorage.applyChangesFrom] operation won't try to merge changes in children of
  * a parent entity, but always replace the whole list of children.

@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.BooleanEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class BooleanEntityImpl(private val dataSource: BooleanEntityData) : BooleanEntity, WorkspaceEntityBase(dataSource) {
 

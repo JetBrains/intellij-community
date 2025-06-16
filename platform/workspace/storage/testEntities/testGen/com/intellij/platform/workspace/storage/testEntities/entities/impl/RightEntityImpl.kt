@@ -3,7 +3,7 @@ package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.annotations.Abstract
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
@@ -25,7 +25,7 @@ import com.intellij.platform.workspace.storage.testEntities.entities.HeadAbstrac
 import com.intellij.platform.workspace.storage.testEntities.entities.RightEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class RightEntityImpl(private val dataSource: RightEntityData) : RightEntity, WorkspaceEntityBase(dataSource) {
 

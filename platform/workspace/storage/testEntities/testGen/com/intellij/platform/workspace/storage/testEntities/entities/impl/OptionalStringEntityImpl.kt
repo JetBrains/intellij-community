@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 import com.intellij.platform.workspace.storage.testEntities.entities.OptionalStringEntity
 
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class OptionalStringEntityImpl(private val dataSource: OptionalStringEntityData) : OptionalStringEntity,
                                                                                             WorkspaceEntityBase(dataSource) {

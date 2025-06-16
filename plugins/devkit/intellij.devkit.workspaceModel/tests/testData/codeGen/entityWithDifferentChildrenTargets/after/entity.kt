@@ -5,12 +5,12 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.annotations.Child
+import com.intellij.platform.workspace.storage.annotations.Parent
 
 interface EntityWithChildren : WorkspaceEntity {
   val name: String
-  val propertyChild: @Child ChildEntityType1?
-  @Child val typeChild: ChildEntityType2?
+  val propertyChild: ChildEntityType1?
+  val typeChild: ChildEntityType2?
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -51,7 +51,7 @@ fun MutableEntityStorage.modifyEntityWithChildren(
 
 interface ChildEntityType1 : WorkspaceEntity {
   val version: Int
-  val parent: EntityWithChildren
+  @Parent val parent: EntityWithChildren
 
   //region generated code
   @GeneratedCodeApiVersion(3)
@@ -91,7 +91,7 @@ fun MutableEntityStorage.modifyChildEntityType1(
 
 interface ChildEntityType2 : WorkspaceEntity {
   val version: Int
-  val parent: EntityWithChildren
+  @Parent val parent: EntityWithChildren
 
   //region generated code
   @GeneratedCodeApiVersion(3)

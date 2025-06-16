@@ -28,7 +28,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 @GeneratedCodeApiVersion(3)
-@GeneratedCodeImplVersion(6)
+@GeneratedCodeImplVersion(7)
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class DependencySubstitutionEntityImpl(private val dataSource: DependencySubstitutionEntityData) : DependencySubstitutionEntity, WorkspaceEntityBase(
   dataSource) {
