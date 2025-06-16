@@ -3,8 +3,10 @@ package com.jetbrains.python.packaging.toolwindow.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.InstalledPackage
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents.selectedPackages
@@ -20,9 +22,12 @@ internal class UpdatePackageToLatestAction : DumbAwareAction() {
       return
     }
 
-    val service = PyPackagingToolWindowService.getInstance(project)
     PyPackageCoroutine.getIoScope(project).launch {
-      service.updatePackages(*packages.map { it.name }.toTypedArray())
+      val pyPackages = packages.mapNotNull { pkg ->
+        pkg.repository?.findPackageSpecification(pkg.name, pkg.nextVersion?.presentableText)
+      }
+      val installRequest = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(pyPackages)
+      project.service<PyPackagingToolWindowService>().installPackage(installRequest)
     }
   }
 

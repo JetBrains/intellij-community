@@ -141,6 +141,13 @@ private class UvLowLevelImpl(val cwd: Path, private val uvCli: UvCli) : UvLowLev
     return PyExecResult.success(parsePackageRequirements(out))
   }
 
+  override suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String> {
+    val out = uvCli.runUv(cwd, "tree", "--package", name.name)
+      .getOr { return it }
+
+    return PyExecResult.success(out)
+  }
+
   override suspend fun installPackage(name: PythonPackageInstallRequest, options: List<String>): PyExecResult<Unit> {
     uvCli.runUv(cwd, "pip", "install", *name.formatPackageName(), *options.toTypedArray())
       .getOr { return it }

@@ -37,6 +37,7 @@ interface UvLowLevel {
   suspend fun listOutdatedPackages(): PyResult<List<PythonOutdatedPackage>>
   suspend fun listTopLevelPackages(): PyResult<List<PythonPackage>>
   suspend fun listPackageRequirements(name: PythonPackage): PyResult<List<NormalizedPythonPackageName>>
+  suspend fun listPackageRequirementsTree(name: PythonPackage): PyResult<String>
 
   suspend fun isProjectSynced(inexact: Boolean): PyExecResult<Boolean>
   suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyExecResult<ScriptSyncCheckResult>
