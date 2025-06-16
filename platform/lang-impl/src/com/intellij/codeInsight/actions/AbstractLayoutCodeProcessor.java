@@ -457,7 +457,9 @@ public abstract class AbstractLayoutCodeProcessor {
           .withName(myCommandName)
           .withGroupId(groupId)
           .shouldRecordActionForActiveDocument(myProcessAllFilesAsSingleUndoStep)
-          .run(() -> writeTask.run());
+          .run(() -> {
+            AbstractLayoutCodeProcessorWriteInterceptor.getInstance().runFileWrite(writeTask, myProject, myCommandName);
+          });
 
         checkStop(writeTask, file);
       }

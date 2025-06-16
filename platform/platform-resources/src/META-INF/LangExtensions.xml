@@ -63,6 +63,7 @@
                         serviceImplementation="com.intellij.formatting.FormattingProgressTaskFactory"/>
     <applicationService serviceInterface="com.intellij.injected.editor.InjectionEditService"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.InjectionEditServiceImpl"/>
+    <applicationService serviceImplementation="com.intellij.codeInsight.actions.AbstractLayoutCodeProcessorWriteInterceptor"/>
 
     <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.ProjectFileBasedIndexStartupActivity" order="first"
                                          id="projectIndexStartup"/>
@@ -98,6 +99,10 @@
                  description="Use WorkspaceFileIndex instead of IndexableFileIndex to generate IndexingIterators"/>
     <registryKey defaultValue="true" key="search.in.non.indexable" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
+    <registryKey defaultValue="true"
+                 description="Enable reformat action execution on frontend in remote development"
+                 key="reformat.action.execute.on.frontend"
+                 restartRequired="false"/>
 
     <projectService serviceInterface="com.intellij.util.indexing.IndexableFilesIndex"
                     serviceImplementation="com.intellij.util.indexing.roots.IndexableFilesIndexImpl"/>
