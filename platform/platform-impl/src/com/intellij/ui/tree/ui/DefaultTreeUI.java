@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -90,15 +90,19 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
 
   @ApiStatus.Internal
   public static @Nullable Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
+    Object node = TreeUtil.getLastUserObject(path);
     // to be consistent with com.intellij.ui.components.WideSelectionListUI#getBackground
     if (selected) {
+      if (node instanceof BackgroundSupplier supplier) {
+        Color background = supplier.getSelectedElementBackground(row);
+        if (background != null) return background;
+      }
       return RenderingUtil.getSelectionBackground(tree);
     }
     if (row == TreeHoverListener.getHoveredRow(tree)) {
       Color background = RenderingUtil.getHoverBackground(tree);
       if (background != null) return background;
     }
-    Object node = TreeUtil.getLastUserObject(path);
     if (node instanceof ColoredItem) {
       Color background = ((ColoredItem)node).getColor();
       if (background != null) return background;
