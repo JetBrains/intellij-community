@@ -126,7 +126,7 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         prepare_font_config_dir(&test.dist_root);
 
-        let expected_path_value = format!("{}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
+        let expected_path_value = format!("{}/tmp/jbrd-fontconfig-", get_standard_caches_dir().to_string_lossy());
         let env = HashMap::new();
         check_env_variable(&test, &env, "FONTCONFIG_PATH", expected_path_value);
         check_env_variable(&test, &env, "INTELLIJ_ORIGINAL_ENV_FONTCONFIG_PATH", "\n".to_string());
@@ -138,7 +138,7 @@ mod tests {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         let env = HashMap::from([("FONTCONFIG_PATH", "/some/existing/path")]);
         prepare_font_config_dir(&test.dist_root);
-        let expected_path_value = format!("/some/existing/path:{}/jbrd-fontconfig-", std::env::temp_dir().to_string_lossy());
+        let expected_path_value = format!("/some/existing/path:{}/tmp/jbrd-fontconfig-", get_standard_caches_dir().to_string_lossy());
         check_env_variable(&test, &env, "FONTCONFIG_PATH", expected_path_value);
         check_env_variable(&test, &env, "INTELLIJ_ORIGINAL_ENV_FONTCONFIG_PATH", "/some/existing/path".to_string());
     }
