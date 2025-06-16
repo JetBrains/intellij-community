@@ -274,8 +274,6 @@
 
     <elementDescriptionProvider implementation="com.intellij.usageView.XmlUsageViewDescriptionProvider"/>
 
-    <langCodeStyleSettingsProvider implementation="com.intellij.application.options.XmlLanguageCodeStyleSettingsProvider"/>
-
     <methodNavigationOffsetProvider implementation="com.intellij.codeInsight.navigation.XmlMethodNavigationOffsetProvider" order="last"/>
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
