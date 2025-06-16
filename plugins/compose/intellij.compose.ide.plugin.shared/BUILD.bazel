@@ -55,7 +55,9 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
+    "//platform/util/jdom",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
@@ -70,6 +72,11 @@ jvm_library(
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
     "@lib//:kotlin-test",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
+    "@lib//:kotlinc-kotlin-compiler-tests",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
   ]
 )
 
