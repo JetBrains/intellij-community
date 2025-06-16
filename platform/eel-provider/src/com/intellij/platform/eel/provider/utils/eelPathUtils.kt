@@ -52,6 +52,7 @@ object EelPathUtils {
   }
 
   @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false)
   fun createTemporaryFile(project: Project?, prefix: String = "", suffix: String = "", deleteOnExit: Boolean = true): Path {
     if (project == null || isProjectLocal(project)) {
       return Files.createTempFile(prefix, suffix)
@@ -65,6 +66,7 @@ object EelPathUtils {
   }
 
   @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false)
   fun createTemporaryDirectory(project: Project?, prefix: String = ""): Path {
     if (project == null || isProjectLocal(project)) {
       return Files.createTempDirectory(prefix)
@@ -88,6 +90,7 @@ object EelPathUtils {
   }
 
   @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false)
   fun renderAsEelPath(path: Path): String {
     val eelPath = path.asEelPath()
     if (eelPath.descriptor == LocalEelDescriptor) {
