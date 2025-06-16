@@ -488,7 +488,7 @@ object EelPathUtils {
                   throw err
                 }
               }
-              source.fileSystem.provider().newDirectoryStream(source, { true }).use { children ->
+              source.fileSystem.provider().newDirectoryStream(source) { true }.use { children ->
                 traversalStack.addAll(children.toList().asReversed().map { TraversalRecord.Pending(it) })
               }
             }
@@ -639,7 +639,7 @@ object EelPathUtils {
       // TODO It's ineffective for IjentNioFS, because there are 6 consequential system calls.
       to.setPermissions(from.permissions() + requirePermissions)
       runCatching<UnsupportedOperationException>(
-        { to.setOwner(from.owner()) },
+        { to.owner = from.owner() },
         { to.setGroup(from.group()) }
       )
     }
