@@ -26,7 +26,7 @@ import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import java.util.*
 
-class PolySymbolsHtmlTextInjector : MultiHostInjector {
+class HtmlSymbolsTextInjector : MultiHostInjector {
 
   override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
     val languageToInject =

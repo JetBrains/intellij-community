@@ -2,7 +2,7 @@
 package com.intellij.html.polySymbols.attributes
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.html.polySymbols.PolySymbolsFrameworkHtmlSupport
+import com.intellij.html.polySymbols.HtmlFrameworkSymbolsSupport
 import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.util.text.StringUtil
@@ -22,7 +22,7 @@ import com.intellij.xml.impl.BasicXmlAttributeDescriptor
 import com.intellij.xml.impl.XmlAttributeDescriptorEx
 import javax.swing.Icon
 
-open class PolySymbolAttributeDescriptor private constructor(val tag: XmlTag?,
+open class HtmlAttributeSymbolDescriptor private constructor(val tag: XmlTag?,
                                                              private val name: String,
                                                              val symbol: PolySymbol,
                                                              private val acceptsNoValue: Boolean,
@@ -35,7 +35,7 @@ open class PolySymbolAttributeDescriptor private constructor(val tag: XmlTag?,
                                                              private val defaultValue: String?)
   : BasicXmlAttributeDescriptor(), XmlAttributeDescriptorEx, PsiPresentableMetaData {
 
-  constructor(info: PolySymbolHtmlAttributeInfo, tag: XmlTag?)
+  constructor(info: HtmlAttributeSymbolInfo, tag: XmlTag?)
     : this(tag, info.name, info.symbol, info.acceptsNoValue, info.acceptsValue, info.enumValues,
            info.strictEnumValues, info.type, info.icon, info.required, info.defaultValue)
 
@@ -132,8 +132,8 @@ open class PolySymbolAttributeDescriptor private constructor(val tag: XmlTag?,
 
   companion object {
 
-    fun PolySymbolHtmlAttributeInfo.toAttributeDescriptor(tag: XmlTag?) =
-      PolySymbolsFrameworkHtmlSupport.get(this.symbol.origin.framework)
+    fun HtmlAttributeSymbolInfo.toAttributeDescriptor(tag: XmlTag?) =
+      HtmlFrameworkSymbolsSupport.get(this.symbol.origin.framework)
         .createHtmlAttributeDescriptor(this, tag)
 
   }

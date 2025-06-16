@@ -2,8 +2,8 @@
 package com.intellij.html.polySymbols
 
 import com.intellij.documentation.mdn.*
-import com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptor
-import com.intellij.html.polySymbols.elements.PolySymbolElementDescriptor
+import com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolDescriptor
+import com.intellij.html.polySymbols.elements.HtmlElementSymbolDescriptor
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -67,7 +67,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope =
         element.takeIf { queryExecutor.allowResolve }
-          ?.descriptor?.asSafely<PolySymbolElementDescriptor>()?.symbol?.queryScope
+          ?.descriptor?.asSafely<HtmlElementSymbolDescriptor>()?.symbol?.queryScope
         ?: queryExecutor.nameMatchQuery(HTML_ELEMENTS, element.name)
           .exclude(PolySymbolModifier.ABSTRACT)
           .run()
@@ -78,7 +78,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
       val attribute = context as? XmlAttribute ?: return
       attribute.takeIf { queryExecutor.allowResolve }
         ?.descriptor
-        ?.asSafely<PolySymbolAttributeDescriptor>()
+        ?.asSafely<HtmlAttributeSymbolDescriptor>()
         ?.symbol
         ?.queryScope
         ?.forEach(consumer)

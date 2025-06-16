@@ -7,7 +7,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.utils.PolySymbolTypeSupport
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 
-interface PolySymbolHtmlAttributeValueTypeSupport : PolySymbolTypeSupport {
+interface HtmlAttributeValueSymbolTypeSupport : PolySymbolTypeSupport {
 
   /**
    * @return [ThreeState.YES] if the type is equal to boolean ignoring null or undefined values,

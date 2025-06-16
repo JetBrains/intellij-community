@@ -3,7 +3,7 @@ package com.intellij.html.polySymbols.elements
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor
-import com.intellij.html.polySymbols.PolySymbolsFrameworkHtmlSupport
+import com.intellij.html.polySymbols.HtmlFrameworkSymbolsSupport
 import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator.HtmlElementDescriptorBasedSymbol
 import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator.StandardHtmlSymbol
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbolsOrExtensions
@@ -26,13 +26,13 @@ import com.intellij.xml.impl.XmlElementDescriptorEx
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import org.jetbrains.annotations.NonNls
 
-open class PolySymbolElementDescriptor private constructor(
+open class HtmlElementSymbolDescriptor private constructor(
   private val tag: XmlTag,
   private val name: String,
   val symbol: PolySymbol,
 ) : XmlElementDescriptorEx, XmlElementDescriptorAwareAboutChildren, XmlCustomElementDescriptor {
 
-  constructor(info: PolySymbolHtmlElementInfo, tag: XmlTag) : this(tag, info.name, info.symbol)
+  constructor(info: HtmlElementSymbolInfo, tag: XmlTag) : this(tag, info.name, info.symbol)
 
   override fun validateTagName(tag: XmlTag, holder: ProblemsHolder, isOnTheFly: Boolean) {
 
@@ -174,8 +174,8 @@ open class PolySymbolElementDescriptor private constructor(
 
   companion object {
 
-    fun PolySymbolHtmlElementInfo.toElementDescriptor(tag: XmlTag) =
-      PolySymbolsFrameworkHtmlSupport.get(this.symbol.origin.framework)
+    fun HtmlElementSymbolInfo.toElementDescriptor(tag: XmlTag) =
+      HtmlFrameworkSymbolsSupport.get(this.symbol.origin.framework)
         .createHtmlElementDescriptor(this, tag)
 
   }

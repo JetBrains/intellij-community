@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.polySymbols.attributes.impl
 
-import com.intellij.html.polySymbols.attributes.PolySymbolHtmlAttributeInfo
-import com.intellij.html.polySymbols.attributes.PolySymbolHtmlAttributeValueTypeSupport
+import com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolInfo
+import com.intellij.html.polySymbols.attributes.HtmlAttributeValueSymbolTypeSupport
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import javax.swing.Icon
 
-internal data class PolySymbolHtmlAttributeInfoImpl(
+internal data class HtmlAttributeSymbolInfoImpl(
   override val name: String,
   override val symbol: PolySymbol,
   override val acceptsNoValue: Boolean,
@@ -26,39 +26,39 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
   override val required: Boolean,
   override val defaultValue: String?,
   override val priority: PolySymbol.Priority,
-) : PolySymbolHtmlAttributeInfo {
+) : HtmlAttributeSymbolInfo {
 
-  override fun withName(name: String): PolySymbolHtmlAttributeInfo =
+  override fun withName(name: String): HtmlAttributeSymbolInfo =
     copy(name = name)
 
-  override fun withSymbol(symbol: PolySymbol): PolySymbolHtmlAttributeInfo =
+  override fun withSymbol(symbol: PolySymbol): HtmlAttributeSymbolInfo =
     copy(symbol = symbol)
 
-  override fun withAcceptsNoValue(acceptsNoValue: Boolean): PolySymbolHtmlAttributeInfo =
+  override fun withAcceptsNoValue(acceptsNoValue: Boolean): HtmlAttributeSymbolInfo =
     copy(acceptsNoValue = acceptsNoValue)
 
-  override fun withAcceptsValue(acceptsValue: Boolean): PolySymbolHtmlAttributeInfo =
+  override fun withAcceptsValue(acceptsValue: Boolean): HtmlAttributeSymbolInfo =
     copy(acceptsValue = acceptsValue)
 
-  override fun withEnumValues(enumValues: List<PolySymbolCodeCompletionItem>?): PolySymbolHtmlAttributeInfo =
+  override fun withEnumValues(enumValues: List<PolySymbolCodeCompletionItem>?): HtmlAttributeSymbolInfo =
     copy(enumValues = enumValues)
 
-  override fun withStrictEnumValues(strictEnumValues: Boolean): PolySymbolHtmlAttributeInfo =
+  override fun withStrictEnumValues(strictEnumValues: Boolean): HtmlAttributeSymbolInfo =
     copy(strictEnumValues = strictEnumValues)
 
-  override fun withType(type: Any?): PolySymbolHtmlAttributeInfo =
+  override fun withType(type: Any?): HtmlAttributeSymbolInfo =
     copy(type = type)
 
-  override fun withIcon(icon: Icon?): PolySymbolHtmlAttributeInfo =
+  override fun withIcon(icon: Icon?): HtmlAttributeSymbolInfo =
     copy(icon = icon)
 
-  override fun withRequired(required: Boolean): PolySymbolHtmlAttributeInfo =
+  override fun withRequired(required: Boolean): HtmlAttributeSymbolInfo =
     copy(required = required)
 
-  override fun withDefaultValue(defaultValue: String?): PolySymbolHtmlAttributeInfo =
+  override fun withDefaultValue(defaultValue: String?): HtmlAttributeSymbolInfo =
     copy(defaultValue = defaultValue)
 
-  override fun withPriority(priority: PolySymbol.Priority): PolySymbolHtmlAttributeInfo =
+  override fun withPriority(priority: PolySymbol.Priority): HtmlAttributeSymbolInfo =
     copy(priority = priority)
 
   override fun with(
@@ -73,7 +73,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
     required: Boolean,
     defaultValue: String?,
     priority: PolySymbol.Priority,
-  ): PolySymbolHtmlAttributeInfo =
+  ): HtmlAttributeSymbolInfo =
     copy(name = name,
          symbol = symbol,
          acceptsNoValue = acceptsNoValue,
@@ -92,8 +92,8 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
       queryExecutor: PolySymbolQueryExecutor,
       symbol: PolySymbol,
       context: PsiElement,
-    ): PolySymbolHtmlAttributeInfo {
-      val typeSupport = symbol.origin.typeSupport as? PolySymbolHtmlAttributeValueTypeSupport
+    ): HtmlAttributeSymbolInfo {
+      val typeSupport = symbol.origin.typeSupport as? HtmlAttributeValueSymbolTypeSupport
       val attrValue = symbol.htmlAttributeValue
       val kind = attrValue?.kind ?: PolySymbolHtmlAttributeValue.Kind.PLAIN
       val type = attrValue?.type ?: PolySymbolHtmlAttributeValue.Type.STRING
@@ -155,9 +155,9 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
 
       val strictEnumValues = type == PolySymbolHtmlAttributeValue.Type.ENUM || typeSupport?.strictEnumValues(symbol, langType) == true
 
-      return PolySymbolHtmlAttributeInfoImpl(name, symbol, acceptsNoValue, acceptsValue,
-                                             enumValues, strictEnumValues, langType, icon, isRequired,
-                                             defaultValue, priority)
+      return HtmlAttributeSymbolInfoImpl(name, symbol, acceptsNoValue, acceptsValue,
+                                         enumValues, strictEnumValues, langType, icon, isRequired,
+                                         defaultValue, priority)
     }
 
   }

@@ -12,7 +12,7 @@ class HtmlElementSymbolReferenceProvider : PsiPolySymbolReferenceProvider<XmlTag
 
   override fun getReferencedSymbol(psiElement: XmlTag): PolySymbol? =
     psiElement.descriptor
-      ?.asSafely<PolySymbolElementDescriptor>()
+      ?.asSafely<HtmlElementSymbolDescriptor>()
       ?.symbol
 
   override fun getOffsetsToReferencedSymbols(psiElement: XmlTag, hints: PsiSymbolReferenceHints): Map<Int, PolySymbol> =

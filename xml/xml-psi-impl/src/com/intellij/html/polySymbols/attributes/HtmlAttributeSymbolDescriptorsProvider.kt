@@ -2,8 +2,8 @@
 package com.intellij.html.polySymbols.attributes
 
 import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator
-import com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptor.Companion.toAttributeDescriptor
-import com.intellij.html.polySymbols.elements.PolySymbolElementDescriptor
+import com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolDescriptor.Companion.toAttributeDescriptor
+import com.intellij.html.polySymbols.elements.HtmlElementSymbolDescriptor
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbols
 import com.intellij.html.polySymbols.hasOnlyStandardHtmlSymbolsOrExtensions
 import com.intellij.lang.html.HtmlCompatibleFile
@@ -20,7 +20,7 @@ import com.intellij.util.asSafely
 import com.intellij.xml.XmlAttributeDescriptor
 import com.intellij.xml.XmlAttributeDescriptorsProvider
 
-class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
+class HtmlAttributeSymbolDescriptorsProvider : XmlAttributeDescriptorsProvider {
 
   override fun getAttributeDescriptors(context: XmlTag?): Array<XmlAttributeDescriptor> =
     if (context == null || DumbService.isDumb(context.project) || context.containingFile !is HtmlCompatibleFile)
@@ -60,7 +60,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
         .takeIf {
           it.isNotEmpty()
           && !it.hasOnlyExtensions()
-          && (elementDescriptor is PolySymbolElementDescriptor || !it.hasOnlyStandardHtmlSymbols())
+          && (elementDescriptor is HtmlElementSymbolDescriptor || !it.hasOnlyStandardHtmlSymbols())
         }
         ?.asSingleSymbol()
         ?.getAttributeDescriptor(attributeName, context, queryExecutor)
@@ -70,7 +70,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
     this
       .asSafely<HtmlSymbolQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor
-    ?: PolySymbolHtmlAttributeInfo.create(attributeName, registry, this, context)
+    ?: HtmlAttributeSymbolInfo.create(attributeName, registry, this, context)
       .toAttributeDescriptor(context)
 
 }

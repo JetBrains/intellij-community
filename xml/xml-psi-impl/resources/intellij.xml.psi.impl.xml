@@ -97,7 +97,7 @@
                                  targetClass="com.intellij.model.Symbol"
                                  implementationClass="com.intellij.xml.impl.XmlNamedReferenceProvider"/>
 
-    <multiHostInjector implementation="com.intellij.html.polySymbols.PolySymbolsHtmlTextInjector"
+    <multiHostInjector implementation="com.intellij.html.polySymbols.HtmlSymbolsTextInjector"
                        order="before JSConfigurationInjector, after TemporaryPlacesInjector"
                        id="PolySymbolsHtmlText"/>
 
@@ -110,9 +110,9 @@
       id="html"
       implementation="com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator$HtmlCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
-      implementation="com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptorsProvider"/>
+      implementation="com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolDescriptorsProvider"/>
     <xml.elementDescriptorProvider
-      implementation="com.intellij.html.polySymbols.elements.PolySymbolElementDescriptorsProvider"/>
+      implementation="com.intellij.html.polySymbols.elements.HtmlElementSymbolDescriptorsProvider"/>
 
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlTag"
                                       hostLanguage="HtmlCompatible"
@@ -123,8 +123,8 @@
     <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
                                       hostLanguage="HtmlCompatible"
                                       implementationClass="com.intellij.html.polySymbols.attributeValues.HtmlAttributeValueSymbolReferenceProvider"/>
-    <vetoRenameCondition implementation="com.intellij.html.polySymbols.HtmlPolySymbolRenameHandlerVeto"/>
-    <xml.xmlExtension implementation="com.intellij.html.polySymbols.PolySymbolsXmlExtension" id="poly-symbols"
+    <vetoRenameCondition implementation="com.intellij.html.polySymbols.HtmlSymbolRenameHandlerVeto"/>
+    <xml.xmlExtension implementation="com.intellij.html.polySymbols.HtmlSymbolsXmlExtension" id="poly-symbols"
                       order="before html, after react"/>
   </extensions>
 </idea-plugin>
