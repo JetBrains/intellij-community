@@ -71,6 +71,10 @@ public final class AsyncStacksUtils {
     return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 
+  public static boolean isSuspendHelperEnabled() {
+    return isAgentEnabled() && Registry.is("debugger.run.suspend.helper");
+  }
+
   /**
    * Returns async stack trace captured by the debugger-agent for the thread corresponding to the given frame or null.
    *
@@ -385,7 +389,7 @@ public final class AsyncStacksUtils {
 
   private static String generateAgentSettings(@Nullable Project project) {
     Properties properties = CaptureSettingsProvider.getPointsProperties(project);
-    if (Registry.is("debugger.run.suspend.helper")) {
+    if (isSuspendHelperEnabled()) {
       properties.setProperty("suspendHelper", "true");
     }
     if (!properties.isEmpty()) {
