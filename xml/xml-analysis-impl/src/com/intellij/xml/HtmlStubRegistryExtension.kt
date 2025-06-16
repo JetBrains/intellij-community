@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.psi.xml
+package com.intellij.xml
 
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.PsiFileStub
@@ -11,11 +11,11 @@ import com.intellij.psi.stubs.StubRegistry
 import com.intellij.psi.stubs.StubRegistryExtension
 import com.intellij.psi.stubs.StubSerializer
 import com.intellij.psi.stubs.StubSerializerId
-import com.intellij.psi.xml.XmlElementType.HTML_FILE
+import com.intellij.psi.xml.XmlElementType
 
 class HtmlStubRegistryExtension : StubRegistryExtension {
   override fun register(registry: StubRegistry) {
-    registry.registerStubSerializer(HTML_FILE, HtmlFileStubSerializer())
+    registry.registerStubSerializer(XmlElementType.HTML_FILE, HtmlFileStubSerializer())
   }
 
   private class HtmlFileStubSerializer : StubSerializer<PsiFileStub<*>> {

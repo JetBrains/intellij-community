@@ -148,5 +148,8 @@
     <fileBasedIndex implementation="com.intellij.xml.index.SchemaTypeInheritanceIndex"/>
 
     <daemon.changeLocalityDetector implementation="com.intellij.xml.XmlChangeLocalityDetector"/>
+
+    <languageStubDefinition language="HTML" implementationClass="com.intellij.xml.HtmlLanguageStubDefinition"/>
+    <stubElementRegistryExtension implementation="com.intellij.xml.HtmlStubRegistryExtension"/>
   </extensions>
 </idea-plugin>
