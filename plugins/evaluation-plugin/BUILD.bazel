@@ -41,7 +41,6 @@ jvm_library(
     "//platform/warmup",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:ktor-client-logging",
   ],
   runtime_deps = [":evaluation-plugin_resources"]
 )

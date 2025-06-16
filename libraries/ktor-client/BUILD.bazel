@@ -19,6 +19,7 @@ java_library(
     "@lib//:ktor-serialization-kotlinx-json",
     "@lib//:kotlinx-serialization-json-io",
     "@lib//:ktor-client-auth",
+    "@lib//:ktor-client-logging",
   ],
   runtime_deps = [
     ":ktor-client_resources",
@@ -29,6 +30,7 @@ java_library(
     "@lib//:ktor-serialization-kotlinx-json",
     "@lib//:kotlinx-serialization-json-io",
     "@lib//:ktor-client-auth",
+    "@lib//:ktor-client-logging",
     "//libraries/io",
   ]
 )
