@@ -162,9 +162,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       val withModuleMismatch = runConfigurations?.filter { it.moduleName != mainModule } ?: emptyList()
       if (withModuleMismatch.isNotEmpty()) {
         val errorMessage = withModuleMismatch.joinToString(
-          prefix = "Run configurations module does not match '$mainModule' specified in the option 'intellij.build.test.main.module':\n\n",
+          prefix = "Run configuration module mismatch, expected '$mainModule' (set in option 'intellij.build.test.main.module'), actual:\n",
           separator = "\n",
-        ) { "  * '${it.name}'" }
+        ) { "  * Run configuration: '${it.name}', module: '${it.moduleName}'" }
         context.messages.error(errorMessage)
       }
     }
