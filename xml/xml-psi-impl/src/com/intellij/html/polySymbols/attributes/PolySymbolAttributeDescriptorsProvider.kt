@@ -27,7 +27,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       XmlAttributeDescriptor.EMPTY
     else {
       val queryExecutor = PolySymbolsQueryExecutorFactory.create(context)
-      val additionalScope = listOf(HtmlSymbolQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
+      val additionalScope = listOf(HtmlSymbolQueryConfigurator.HtmlContextualSymbolScope(context.firstChild))
       queryExecutor
         .listSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true)
         .exclude(PolySymbolModifier.ABSTRACT, PolySymbolModifier.VIRTUAL)
@@ -50,7 +50,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val additionalScope = if (attribute != null)
         emptyList()
       else
-        listOf(HtmlSymbolQueryConfigurator.HtmlContextualPolySymbolsScope(context.firstChild))
+        listOf(HtmlSymbolQueryConfigurator.HtmlContextualSymbolScope(context.firstChild))
 
       queryExecutor
         .nameMatchQuery(HTML_ATTRIBUTES, attributeName)

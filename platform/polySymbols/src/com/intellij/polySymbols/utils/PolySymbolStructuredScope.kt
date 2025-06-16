@@ -4,7 +4,7 @@ import com.intellij.model.Pointer
 import com.intellij.openapi.util.TextRange
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
-import com.intellij.polySymbols.query.PolySymbolsCompoundScope
+import com.intellij.polySymbols.query.PolySymbolCompoundScope
 import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
 import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsScope
@@ -17,7 +17,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.Stack
 import com.intellij.util.takeWhileInclusive
 
-abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : PolySymbolsCompoundScope() {
+abstract class PolySymbolStructuredScope<T : PsiElement, R : PsiElement>(protected val location: T) : PolySymbolCompoundScope() {
 
   protected abstract val rootPsiElement: R?
 
@@ -34,7 +34,7 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
     getRootScope()
       ?.let { findBestMatchingScope(it) }
       ?.let {
-        val structuredScopePtr = this@PolySymbolsStructuredScope.createPointer()
+        val structuredScopePtr = this@PolySymbolStructuredScope.createPointer()
         PolySymbolsPsiScopeWithPointer(it) {
           structuredScopePtr.dereference()?.getCurrentScope()
         }
@@ -53,11 +53,11 @@ abstract class PolySymbolsStructuredScope<T : PsiElement, R : PsiElement>(protec
       }, false)
   }
 
-  abstract override fun createPointer(): Pointer<out PolySymbolsStructuredScope<T, R>>
+  abstract override fun createPointer(): Pointer<out PolySymbolStructuredScope<T, R>>
 
   override fun equals(other: Any?): Boolean =
     other === this || (
-      other is PolySymbolsStructuredScope<*, *>
+      other is PolySymbolStructuredScope<*, *>
       && other.javaClass === this.javaClass
       && other.location == location)
 

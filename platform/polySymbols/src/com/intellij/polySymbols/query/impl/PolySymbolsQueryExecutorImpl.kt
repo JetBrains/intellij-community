@@ -196,14 +196,14 @@ class PolySymbolsQueryExecutorImpl(
   }
 
   private fun initializeCompoundScopes(rootScope: List<PolySymbolsScope>): List<PolySymbolsScope> {
-    if (rootScope.any { it is PolySymbolsCompoundScope }) {
+    if (rootScope.any { it is PolySymbolCompoundScope }) {
       val compoundScopeQueryExecutor = PolySymbolsQueryExecutorImpl(
         location,
-        rootScope.filter { it !is PolySymbolsCompoundScope },
+        rootScope.filter { it !is PolySymbolCompoundScope },
         namesProvider, resultsCustomizer, context, allowResolve
       )
       return rootScope.flatMap {
-        if (it is PolySymbolsCompoundScope) {
+        if (it is PolySymbolCompoundScope) {
           it.getScopes(compoundScopeQueryExecutor)
         }
         else {
@@ -218,7 +218,7 @@ class PolySymbolsQueryExecutorImpl(
     val finalScope = rootScope.toMutableSet()
     additionalScope.flatMapTo(finalScope) {
       when (it) {
-        is PolySymbolsCompoundScope -> it.getScopes(this)
+        is PolySymbolCompoundScope -> it.getScopes(this)
         is PolySymbol -> it.queryScope
         else -> listOf(it)
       }

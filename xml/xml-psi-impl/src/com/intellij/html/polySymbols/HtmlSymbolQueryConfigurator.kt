@@ -43,15 +43,15 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
   ): List<PolySymbolsScope> =
     if (location is XmlElement) {
       listOfNotNull(
-        location.takeIf { it !is XmlTag }?.let { HtmlContextualPolySymbolsScope(it) },
+        location.takeIf { it !is XmlTag }?.let { HtmlContextualSymbolScope(it) },
         location.parentOfType<XmlTag>(withSelf = true)?.let { StandardHtmlSymbolsScope(it) },
       )
     }
     else emptyList()
 
   @ApiStatus.Internal
-  class HtmlContextualPolySymbolsScope(private val location: PsiElement)
-    : PolySymbolsCompoundScope(), PolySymbolsPrioritizedScope {
+  class HtmlContextualSymbolScope(private val location: PsiElement)
+    : PolySymbolCompoundScope(), PolySymbolsPrioritizedScope {
 
     init {
       assert(location !is XmlTag) { "Cannot create HtmlContextualPolySymbolsScope on a tag." }
@@ -90,16 +90,16 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
         .forEach(consumer)
     }
 
-    override fun createPointer(): Pointer<out PolySymbolsCompoundScope> {
+    override fun createPointer(): Pointer<out PolySymbolCompoundScope> {
       val attributePtr = location.createSmartPointer()
       return Pointer {
-        attributePtr.dereference()?.let { HtmlContextualPolySymbolsScope(location) }
+        attributePtr.dereference()?.let { HtmlContextualSymbolScope(location) }
       }
     }
 
     override fun equals(other: Any?): Boolean =
       other === this ||
-      other is HtmlContextualPolySymbolsScope && other.location == location
+      other is HtmlContextualSymbolScope && other.location == location
 
     override fun hashCode(): Int =
       location.hashCode()
