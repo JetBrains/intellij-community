@@ -63,6 +63,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
+import java.util.Collections
 import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
@@ -1384,7 +1385,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   fun showProgress() {
     indicator = OneLineProgressIndicator(false)
-    indicator!!.setCancelRunnable { pluginModel.finishInstall(descriptorForActions!!, null, false, false, true) }
+    indicator!!.setCancelRunnable { pluginModel.finishInstall(descriptorForActions!!, null, false, false, true, Collections.emptyList()) }
     nameAndButtons!!.setProgressComponent(null, indicator!!.createBaselineWrapper())
 
     PluginModelFacade.addProgress(descriptorForActions!!, indicator!!)
