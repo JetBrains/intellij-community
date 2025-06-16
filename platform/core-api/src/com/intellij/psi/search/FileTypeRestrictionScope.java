@@ -3,6 +3,7 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
@@ -27,6 +28,7 @@ final class FileTypeRestrictionScope extends DelegatingGlobalSearchScope impleme
     if (!super.contains(file)) return false;
 
     for (FileType otherFileType : myFileTypes) {
+      ProgressManager.checkCanceled();
       if (FileTypeRegistry.getInstance().isFileOfType(file, otherFileType)) return true;
     }
 
