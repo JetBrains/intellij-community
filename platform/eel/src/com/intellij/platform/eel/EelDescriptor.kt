@@ -63,7 +63,7 @@ interface EelDescriptor {
    * Describes Eel in a user-readable manner, i.e: "Docker: <container_name>" or "Wsl: <distro name>".
    * Format is *not* specified, but guaranteed to be user-readable.
    */
-  @get:ApiStatus.Experimental
+  @get:ApiStatus.Internal
   val userReadableDescription: @NonNls String
 
   /**

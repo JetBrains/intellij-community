@@ -29,6 +29,7 @@ sealed interface EelPath {
 
     @Throws(EelPathException::class)
     @JvmStatic
+    @ApiStatus.Internal
     fun build(parts: List<String>, descriptor: EelDescriptor): EelPath {
       return ArrayListEelAbsolutePath.build(parts, descriptor)
     }

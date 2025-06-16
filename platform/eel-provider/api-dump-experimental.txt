@@ -1,0 +1,47 @@
+f:com.intellij.platform.eel.provider.EelProviderUtil
+- *sf:getEelDescriptor(com.intellij.openapi.project.Project):com.intellij.platform.eel.EelDescriptor
+- *sf:getEelDescriptor(java.nio.file.Path):com.intellij.platform.eel.EelDescriptor
+- *sf:getLocalEel():com.intellij.platform.eel.LocalEelApi
+- *sf:toEelApiBlocking(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelApi
+*f:com.intellij.platform.eel.provider.LocalEelDescriptor
+- com.intellij.platform.eel.EelDescriptor
+- sf:INSTANCE:com.intellij.platform.eel.provider.LocalEelDescriptor
+- equals(java.lang.Object):Z
+- getOsFamily():com.intellij.platform.eel.EelOsFamily
+- getUserReadableDescription():java.lang.String
+- hashCode():I
+- toEelApi(kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.platform.eel.provider.LocalPosixEelApi
+- com.intellij.platform.eel.EelPosixApi
+- com.intellij.platform.eel.LocalEelApi
+*:com.intellij.platform.eel.provider.LocalWindowsEelApi
+- com.intellij.platform.eel.EelWindowsApi
+- com.intellij.platform.eel.LocalEelApi
+f:com.intellij.platform.eel.provider.utils.EelChannelUtilsKt
+- *sf:asEelChannel(java.io.OutputStream):com.intellij.platform.eel.channels.EelSendChannel
+- *sf:asEelChannel(java.nio.channels.WritableByteChannel):com.intellij.platform.eel.channels.EelSendChannel
+- *sf:asOutputStream(com.intellij.platform.eel.channels.EelSendChannel,kotlin.coroutines.CoroutineContext):java.io.OutputStream
+- *bs:asOutputStream$default(com.intellij.platform.eel.channels.EelSendChannel,kotlin.coroutines.CoroutineContext,I,java.lang.Object):java.io.OutputStream
+- *sf:consumeAsEelChannel(java.io.InputStream):com.intellij.platform.eel.channels.EelReceiveChannel
+- *sf:consumeAsEelChannel(java.nio.channels.ReadableByteChannel):com.intellij.platform.eel.channels.EelReceiveChannel
+- *sf:consumeAsInputStream(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.CoroutineContext):java.io.InputStream
+- *bs:consumeAsInputStream$default(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.CoroutineContext,I,java.lang.Object):java.io.InputStream
+- *sf:readAllBytes(com.intellij.platform.eel.channels.EelReceiveChannel,kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
+- com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
+- <init>(I,B[],B[]):V
+- getExitCode():I
+- getStderr():B[]
+- getStdout():B[]
+*:com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
+- a:getExitCode():I
+- a:getStderr():B[]
+- a:getStdout():B[]
+f:com.intellij.platform.eel.provider.utils.EelProcessUtilsKt
+- *sf:awaitProcessResult(com.intellij.platform.eel.EelProcess,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:getStderrString(com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo):java.lang.String
+- *sf:getStdoutString(com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo):java.lang.String
+f:com.intellij.platform.eel.provider.utils.IjentTunnelsUtil
+- *sf:asInetAddress(com.intellij.platform.eel.EelTunnelsApi$ResolvedSocketAddress):java.net.InetSocketAddress
+- *sf:forwardLocalPort(kotlinx.coroutines.CoroutineScope,com.intellij.platform.eel.EelTunnelsApi,I,com.intellij.platform.eel.EelTunnelsApi$HostAddress):V
+- *sf:forwardLocalServer(kotlinx.coroutines.CoroutineScope,com.intellij.platform.eel.EelTunnelsApi,I,com.intellij.platform.eel.EelTunnelsApi$HostAddress):kotlinx.coroutines.Deferred

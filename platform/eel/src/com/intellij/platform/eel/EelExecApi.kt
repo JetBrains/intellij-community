@@ -172,7 +172,7 @@ sealed interface EelExecApi {
     fun exit(exitCode: Int)
   }
 
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   interface ExternalCliOptions {
     val filePrefix: String
     val envVariablesToCapture: List<String>
@@ -214,6 +214,8 @@ sealed interface EelExecApi {
   class Pty : InteractionOptions {
     val columns: Int
     val rows: Int
+
+    @ApiStatus.Internal
     val echo: Boolean
 
     @ApiStatus.Experimental

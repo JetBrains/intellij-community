@@ -27,10 +27,12 @@ class GetAcceptorForRemotePortBuilder() {
     this.configureServerSocket = arg
   }
 
+  @ApiStatus.Experimental
   fun hostname(arg: String): GetAcceptorForRemotePortBuilder = apply {
     this.hostname = arg
   }
 
+  @ApiStatus.Experimental
   fun port(arg: UShort): GetAcceptorForRemotePortBuilder = apply {
     this.port = arg
   }
@@ -38,6 +40,7 @@ class GetAcceptorForRemotePortBuilder() {
   /**
    * @see [Builder.preferIPv4]
    */
+  @ApiStatus.Experimental
   fun protocolPreference(arg: EelIpPreference): GetAcceptorForRemotePortBuilder = apply {
     this.protocolPreference = arg
   }
@@ -54,6 +57,7 @@ class GetAcceptorForRemotePortBuilder() {
   /**
    * @see [Builder.connectionTimeout]
    */
+  @ApiStatus.Experimental
   fun timeout(arg: Duration): GetAcceptorForRemotePortBuilder = apply {
     this.timeout = arg
   }

@@ -99,16 +99,17 @@ sealed interface EelTunnelsApi {
    */
   @Throws(EelConnectionError::class)
   @ThrowsChecked(EelConnectionError::class)
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   suspend fun getConnectionToRemotePort(@GeneratedBuilder args: GetConnectionToRemotePortArgs): Connection
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   interface GetConnectionToRemotePortArgs : HostAddress {
+    @get:ApiStatus.Internal
     val configureSocketBeforeConnection: ConfigurableClientSocket.() -> Unit get() = {}
   }
 
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   sealed interface ResolvedSocketAddress {
     val port: UShort
 
@@ -125,21 +126,27 @@ sealed interface EelTunnelsApi {
   /**
    * Represents an address to a remote host.
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   interface HostAddress {
+    @get:ApiStatus.Experimental
     val port: UShort get() = 0u  // TODO Split into two interfaces
+
+    @get:ApiStatus.Experimental
     val hostname: String get() = "localhost"
 
     /**
      * @see [Builder.preferIPv4]
      */
+    @get:ApiStatus.Experimental
     val protocolPreference: EelIpPreference get() = EelIpPreference.USE_SYSTEM_DEFAULT
 
     /**
      * @see [Builder.connectionTimeout]
      */
+    @get:ApiStatus.Experimental
     val timeout: Duration get() = 10.seconds
 
+    @ApiStatus.Experimental
     interface Builder {
 
       /**
@@ -190,12 +197,14 @@ sealed interface EelTunnelsApi {
       /**
        * Creates a builder for address on the remote host.
        */
+      @ApiStatus.Experimental
       fun Builder(port: UShort): Builder = HostAddressBuilderImpl(port)
 
       /**
        * Creates a builder for address `localhost:0`.
        * This can be useful in remote port forwarding, as it allocates a random port on the remote host side.
        */
+      @ApiStatus.Experimental
       fun Builder(): Builder = HostAddressBuilderImpl(0u)
     }
   }
@@ -204,27 +213,31 @@ sealed interface EelTunnelsApi {
   /**
    * Represents a controller for a TCP connection
    */
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   interface Connection {
 
     /**
      * A channel to the server
      */
+    @get:ApiStatus.Experimental
     val sendChannel: EelSendChannel
 
     /**
      * A channel from the server
      */
+    @get:ApiStatus.Experimental
     val receiveChannel: EelReceiveChannel
 
     /**
      * Configure various socket options
      */
+    @ApiStatus.Internal
     suspend fun configureSocket(block: suspend ConfigurableClientSocket.() -> Unit)
 
     /**
      * Closes the connection to the socket.
      */
+    @ApiStatus.Experimental
     suspend fun close()
   }
 
@@ -361,7 +374,7 @@ interface EelTunnelsWindowsApi : EelTunnelsApi
  *
  * @see EelTunnelsApi.getConnectionToRemotePort for more details on the behavior of [Connection]
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 suspend fun <T> EelTunnelsApiHelpers.GetConnectionToRemotePort.withConnectionToRemotePort(
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
@@ -443,33 +456,39 @@ fun EelTunnelsApiHelpers.GetAcceptorForRemotePort.hostAddress(
 /**
  * Represents a common class for all network-related errors appearing during the interaction with IJent or local process
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed interface EelNetworkError : EelError
 
 /**
  * An error that can happen during the creation of a connection to a remote server
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 sealed class EelConnectionError(override val message: String) : EelNetworkError, IOException() {
 
   /**
    * Returned when the remote host cannot create an object of a socket.
    */
+  @ApiStatus.Experimental
+  @Deprecated("Unlikely to happen, to be merged into `Other`")
   open class SocketAllocationError(override val message: String) : EelConnectionError(message)
 
   /**
    * Returned when there is a problem with resolve of the hostname.
    */
+  @ApiStatus.Experimental
   open class ResolveFailure(override val message: String) : EelConnectionError(message)
 
   /**
    * Returned when there was a problem with establishing a connection to a resolved server
    */
+  @ApiStatus.Experimental
   open class ConnectionProblem(override val message: String) : EelConnectionError(message)
 
   /**
    * Unknown failure during a connection establishment
    */
+  // TODO Rename to `Other`
+  @ApiStatus.Experimental
   open class UnknownFailure(override val message: String) : EelConnectionError(message)
 }
 

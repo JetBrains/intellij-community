@@ -68,7 +68,7 @@ fun EelTunnelsApi.getAcceptorForRemotePort(): EelTunnelsApiHelpers.GetAcceptorFo
  * To configure a socket before connection use [configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
  */
 @GeneratedBuilder.Result
-@ApiStatus.Internal
+@ApiStatus.Experimental
 fun EelTunnelsApi.getConnectionToRemotePort(): EelTunnelsApiHelpers.GetConnectionToRemotePort =
   EelTunnelsApiHelpers.GetConnectionToRemotePort(
     owner = this,
@@ -108,10 +108,12 @@ object EelTunnelsApiHelpers {
       this.configureServerSocket = arg
     }
 
+    @ApiStatus.Experimental
     fun hostname(arg: String): GetAcceptorForRemotePort = apply {
       this.hostname = arg
     }
 
+    @ApiStatus.Experimental
     fun port(arg: UShort): GetAcceptorForRemotePort = apply {
       this.port = arg
     }
@@ -119,6 +121,7 @@ object EelTunnelsApiHelpers {
     /**
      * @see [Builder.preferIPv4]
      */
+    @ApiStatus.Experimental
     fun protocolPreference(arg: EelIpPreference): GetAcceptorForRemotePort = apply {
       this.protocolPreference = arg
     }
@@ -135,6 +138,7 @@ object EelTunnelsApiHelpers {
     /**
      * @see [Builder.connectionTimeout]
      */
+    @ApiStatus.Experimental
     fun timeout(arg: Duration): GetAcceptorForRemotePort = apply {
       this.timeout = arg
     }
@@ -161,7 +165,7 @@ object EelTunnelsApiHelpers {
    * Create it via [com.intellij.platform.eel.EelTunnelsApi.getConnectionToRemotePort].
    */
   @GeneratedBuilder.Result
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   class GetConnectionToRemotePort(
     private val owner: EelTunnelsApi,
   ) : OwnedBuilder<Connection> {
@@ -175,15 +179,18 @@ object EelTunnelsApiHelpers {
 
     private var timeout: Duration = 10.seconds
 
+    @ApiStatus.Internal
     fun configureSocketBeforeConnection(arg: @ExtensionFunctionType Function1<ConfigurableClientSocket, Unit>): GetConnectionToRemotePort =
       apply {
         this.configureSocketBeforeConnection = arg
       }
 
+    @ApiStatus.Experimental
     fun hostname(arg: String): GetConnectionToRemotePort = apply {
       this.hostname = arg
     }
 
+    @ApiStatus.Experimental
     fun port(arg: UShort): GetConnectionToRemotePort = apply {
       this.port = arg
     }
@@ -191,6 +198,7 @@ object EelTunnelsApiHelpers {
     /**
      * @see [Builder.preferIPv4]
      */
+    @ApiStatus.Experimental
     fun protocolPreference(arg: EelIpPreference): GetConnectionToRemotePort = apply {
       this.protocolPreference = arg
     }
@@ -207,6 +215,7 @@ object EelTunnelsApiHelpers {
     /**
      * @see [Builder.connectionTimeout]
      */
+    @ApiStatus.Experimental
     fun timeout(arg: Duration): GetConnectionToRemotePort = apply {
       this.timeout = arg
     }

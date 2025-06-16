@@ -15,19 +15,20 @@ import java.io.ByteArrayOutputStream
 /**
  * To simplify [EelProcessExecutionResult] delegation
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelProcessExecutionResultInfo {
   val exitCode: Int
   val stdout: ByteArray
   val stderr: ByteArray
 }
 
-@get:ApiStatus.Internal
+@get:ApiStatus.Experimental
 val EelProcessExecutionResultInfo.stdoutString: String get() = String(stdout)
-@get:ApiStatus.Internal
+
+@get:ApiStatus.Experimental
 val EelProcessExecutionResultInfo.stderrString: String get() = String(stderr)
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 class EelProcessExecutionResult(override val exitCode: Int, override val stdout: ByteArray, override val stderr: ByteArray) : EelProcessExecutionResultInfo
 
 /**
@@ -46,7 +47,7 @@ class EelProcessExecutionResult(override val exitCode: Int, override val stdout:
  * @see EelProcess
  */
 @OptIn(DelicateCoroutinesApi::class)
-@ApiStatus.Internal
+@ApiStatus.Experimental
 suspend fun EelProcess.awaitProcessResult(): EelProcessExecutionResult {
   return computeDetached {
     ByteArrayOutputStream().use { out ->

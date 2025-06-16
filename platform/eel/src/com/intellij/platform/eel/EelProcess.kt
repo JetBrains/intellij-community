@@ -39,6 +39,7 @@ sealed interface EelProcess {
    * Calls [`TerminateProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
    * on Windows.
    */
+  @ApiStatus.Experimental
   suspend fun kill()
 
   /**
@@ -47,6 +48,7 @@ sealed interface EelProcess {
    *
    * Warning: This signal can be ignored.
    */
+  @ApiStatus.Experimental
   suspend fun interrupt()
 
   /**
@@ -54,11 +56,14 @@ sealed interface EelProcess {
    * Note: After conversion, this [EelProcess] shouldn't be used: Use result [Process] instead
    * If the process was launched with PTY, `com.pty4j.PtyProcess` instance is returned.
    */
+  @ApiStatus.Experimental
   fun convertToJavaProcess(): Process
 
   @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
+  @ApiStatus.Experimental
   suspend fun resizePty(columns: Int, rows: Int)
 
+  @ApiStatus.Experimental
   sealed class ResizePtyError(msg: String) : Exception(msg) {
     class ProcessExited : ResizePtyError("Process exited")
     class NoPty : ResizePtyError("Process has no PTY")
@@ -66,15 +71,16 @@ sealed interface EelProcess {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelPosixProcess : EelProcess {
   /**
    * Sends `SIGTERM` on Unix.
    */
+  @ApiStatus.Experimental
   suspend fun terminate()
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface EelWindowsProcess : EelProcess {
   // Nothing yet.
 }
