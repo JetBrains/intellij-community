@@ -540,6 +540,9 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
       override val mode: Mode
         get() = if (documentChangesTracker.ignoreCaretMovements) Mode.ADAPTIVE else Mode.PROHIBIT_MOVEMENT
 
+      override val isTypingSessionInProgress: Boolean
+        get() = typingSessionTracker.isAlive(editor)
+
       override fun cancel() {
         if (!context.isDisposed) hide(context, FinishType.CARET_CHANGED)
       }

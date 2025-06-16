@@ -15,10 +15,8 @@ internal class InlineCompletionTypedHandler(originalHandler: TypedActionHandler)
   /**
    * Executes the original handler and starts a typing session if the editor is in the correct state.
    *
-   * The [com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentListener]
-   * listens to document changes and saves all changes related to the typing session.
-   *
-   * When the session ends, a new inline completion request is created and the completion pipeline starts.
+   * During the typing session, [com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker]
+   * follows the session-related events and send [InlineCompletionRequest]s if received events are valid.
    *
    */
   override fun execute(editor: Editor, charTyped: Char, dataContext: DataContext) {

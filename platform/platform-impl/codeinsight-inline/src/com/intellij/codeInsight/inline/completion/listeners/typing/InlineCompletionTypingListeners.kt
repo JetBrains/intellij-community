@@ -28,26 +28,26 @@ internal class InlineCompletionDocumentListener(private val editor: Editor) : Bu
       hideInlineCompletion(editor, InlineCompletionUsageTracker.ShownEvents.FinishType.DOCUMENT_CHANGED)
       return
     }
-    val typingSessionService = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
-    typingSessionService?.collectCharIfSessionActive(event, editor)
+    val typingSessionTracker = InlineCompletion.getHandlerOrNull(editor)?.typingSessionTracker
+    typingSessionTracker?.collectTypedCharOrInvalidateSession(event, editor)
   }
 }
 
 internal class InlineCompletionTypedHandlerDelegate : TypedHandlerDelegate() {
 
   override fun beforeClosingParenInserted(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    allowTyping(editor)
+    allowTyping(editor, c.toString())
     return super.beforeClosingParenInserted(c, project, editor, file)
   }
 
   override fun beforeClosingQuoteInserted(quote: CharSequence, project: Project, editor: Editor, file: PsiFile): Result {
-    allowTyping(editor)
+    allowTyping(editor, quote.toString())
     return super.beforeClosingQuoteInserted(quote, project, editor, file)
   }
 
-  private fun allowTyping(editor: Editor) {
+  private fun allowTyping(editor: Editor, typed: String) {
     val handler = InlineCompletion.getHandlerOrNull(editor)
-    handler?.typingSessionTracker?.markNextEventAsClosingBracket(editor)
+    handler?.typingSessionTracker?.expectPairedEnclosure(editor, typed)
   }
 }
 

@@ -58,6 +58,10 @@ internal abstract class InlineSessionWiseCaretListener : CaretListener {
     @RequiresEdt
     get
 
+  protected abstract val isTypingSessionInProgress: Boolean
+    @RequiresEdt
+    get
+
   @RequiresEdt
   protected abstract fun cancel()
 
@@ -72,18 +76,13 @@ internal abstract class InlineSessionWiseCaretListener : CaretListener {
         completionOffset = newOffset
       }
       Mode.PROHIBIT_MOVEMENT -> {
-        val handler = InlineCompletion.getHandlerOrNull(event.editor)
-        if (handler == null) {
-          cancel()
-          return
-        }
         if (event.oldPosition == event.newPosition) {
           // ML-1341
           // It means that we moved caret from the state 'before inline completion' to `after inline completion`
           // In such a case, the actual caret position does not change, only 'leansForward'
           cancel()
         }
-        else if (!handler.typingSessionTracker.isAlive(event.editor) || newOffset != completionOffset) {
+        else if (!isTypingSessionInProgress && newOffset != completionOffset) {
           cancel()
         }
       }
