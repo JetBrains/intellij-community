@@ -27,7 +27,7 @@ abstract class PolySymbolCompoundScope : PolySymbolScope {
     val list = mutableListOf<PolySymbolScope>()
     build(queryExecutor) {
       if (it is PolySymbolCompoundScope)
-        throw IllegalArgumentException("PolySymbolsCompoundScope cannot be nested: $it")
+        throw IllegalArgumentException("PolySymbolCompoundScope cannot be nested: $it")
       if (it is PolySymbol)
         list.addAll(it.queryScope)
       else
@@ -43,24 +43,24 @@ abstract class PolySymbolCompoundScope : PolySymbolScope {
     params: PolySymbolNameMatchQueryParams,
     scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
-    throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
+    throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
     params: PolySymbolListSymbolsQueryParams,
     scope: Stack<PolySymbolScope>,
   ): List<PolySymbol> =
-    throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
+    throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
     params: PolySymbolCodeCompletionQueryParams,
     scope: Stack<PolySymbolScope>,
   ): List<PolySymbolCodeCompletionItem> =
-    throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
+    throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   final override fun isExclusiveFor(qualifiedKind: PolySymbolQualifiedKind): Boolean =
-    throw UnsupportedOperationException("PolySymbolsCompoundScope must be queried through PolySymbolQueryExecutor.")
+    throw UnsupportedOperationException("PolySymbolCompoundScope must be queried through PolySymbolQueryExecutor.")
 
   abstract override fun createPointer(): Pointer<out PolySymbolCompoundScope>
 

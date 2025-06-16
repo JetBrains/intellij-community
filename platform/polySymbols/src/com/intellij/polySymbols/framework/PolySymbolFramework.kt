@@ -11,7 +11,7 @@ import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
 import javax.swing.Icon
 
-abstract class PolySymbolsFramework {
+abstract class PolySymbolFramework {
 
   lateinit var id: String
     internal set
@@ -32,30 +32,30 @@ abstract class PolySymbolsFramework {
 
   companion object {
 
-    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<PolySymbolsFramework, String>("com.intellij.polySymbols.framework") {
+    private val WEB_FRAMEWORK_EP = object : KeyedExtensionCollector<PolySymbolFramework, String>("com.intellij.polySymbols.framework") {
       val all get() = extensions.asSequence().map { it.instance }
     }
 
     @JvmStatic
-    fun get(id: String): PolySymbolsFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
+    fun get(id: String): PolySymbolFramework = WEB_FRAMEWORK_EP.findSingle(id) ?: UnregisteredWebFramework(id)
 
     @JvmStatic
-    fun inLocation(location: VirtualFile, project: Project): PolySymbolsFramework? = PolyContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
+    fun inLocation(location: VirtualFile, project: Project): PolySymbolFramework? = PolyContext.get(KIND_FRAMEWORK, location, project)?.let { get(it) }
 
     @JvmStatic
-    fun inLocation(location: PsiElement): PolySymbolsFramework? = PolyContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
+    fun inLocation(location: PsiElement): PolySymbolFramework? = PolyContext.get(KIND_FRAMEWORK, location)?.let { get(it) }
 
     @JvmStatic
-    val all: List<PolySymbolsFramework>
+    val all: List<PolySymbolFramework>
       get() = WEB_FRAMEWORK_EP.all.toList()
 
     @JvmStatic
-    internal val allAsSequence: Sequence<PolySymbolsFramework>
+    internal val allAsSequence: Sequence<PolySymbolFramework>
       get() = WEB_FRAMEWORK_EP.all
 
   }
 
-  private class UnregisteredWebFramework(id: String) : PolySymbolsFramework() {
+  private class UnregisteredWebFramework(id: String) : PolySymbolFramework() {
     init {
       this.id = id
     }

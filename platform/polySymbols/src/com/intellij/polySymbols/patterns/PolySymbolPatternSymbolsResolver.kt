@@ -10,7 +10,7 @@ import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface PolySymbolsPatternSymbolsResolver {
+interface PolySymbolPatternSymbolsResolver {
   fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
     emptySet()
 

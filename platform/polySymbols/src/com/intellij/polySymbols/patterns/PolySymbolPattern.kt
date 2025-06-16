@@ -12,7 +12,7 @@ import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.NonExtendable
-abstract class PolySymbolsPattern internal constructor() {
+abstract class PolySymbolPattern internal constructor() {
 
   internal abstract fun getStaticPrefixes(): Sequence<String>
 
@@ -47,21 +47,21 @@ abstract class PolySymbolsPattern internal constructor() {
   internal abstract fun match(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters, start: Int, end: Int,
   ): List<MatchResult>
 
   internal abstract fun list(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult>
 
   internal abstract fun complete(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters, start: Int, end: Int,
   ): CompletionResults
 

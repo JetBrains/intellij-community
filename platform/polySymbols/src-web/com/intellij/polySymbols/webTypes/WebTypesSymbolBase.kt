@@ -10,7 +10,7 @@ import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.html.PROP_HTML_ATTRIBUTE_VALUE
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.merge
 import com.intellij.polySymbols.webTypes.impl.WebTypesJsonContributionAdapter
@@ -216,7 +216,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     super.matchContext(context) && base.contribution.requiredContext.evaluate(context)
 
   internal class WebTypesSymbolWithPattern(private val jsonPattern: NamePatternRoot) : WebTypesSymbolBase(), PolySymbolWithPattern {
-    override val pattern: PolySymbolsPattern
+    override val pattern: PolySymbolPattern
       get() = jsonPattern.wrap(base.contribution.name, origin as WebTypesJsonOrigin)
   }
 

@@ -102,10 +102,10 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     }
   }
 
-  private fun createCachedSearchMap(namesProvider: PolySymbolNamesProvider): CachedValue<PolySymbolsSearchMap> =
+  private fun createCachedSearchMap(namesProvider: PolySymbolNamesProvider): CachedValue<PolySymbolSearchMap> =
     CachedValuesManager.getManager(project).createCachedValue {
       val dependencies = mutableSetOf<Any>()
-      val map = PolySymbolsSearchMap(namesProvider, framework)
+      val map = PolySymbolSearchMap(namesProvider, framework)
       initialize(
         {
           if (!provides(it.qualifiedKind))
@@ -156,17 +156,17 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     }
     else emptyList()
 
-  private fun getMap(queryExecutor: PolySymbolQueryExecutor): PolySymbolsSearchMap =
+  private fun getMap(queryExecutor: PolySymbolQueryExecutor): PolySymbolSearchMap =
     getNamesProviderToMapCache().getOrCreateMap(queryExecutor.namesProvider, this::createCachedSearchMap)
 
   private class NamesProviderToMapCache {
-    private val cache: ConcurrentMap<PolySymbolNamesProvider, CachedValue<PolySymbolsSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+    private val cache: ConcurrentMap<PolySymbolNamesProvider, CachedValue<PolySymbolSearchMap>> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
     private var cacheMisses = 0
 
     fun getOrCreateMap(
       namesProvider: PolySymbolNamesProvider,
-      createCachedSearchMap: (namesProvider: PolySymbolNamesProvider) -> CachedValue<PolySymbolsSearchMap>,
-    ): PolySymbolsSearchMap {
+      createCachedSearchMap: (namesProvider: PolySymbolNamesProvider) -> CachedValue<PolySymbolSearchMap>,
+    ): PolySymbolSearchMap {
       if (cacheMisses > 20) {
         // Get rid of old soft keys
         cacheMisses = 0
@@ -179,14 +179,14 @@ abstract class PolySymbolScopeWithCache<T : UserDataHolder, K>(
     }
   }
 
-  private class PolySymbolsSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?)
+  private class PolySymbolSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?)
     : SearchMap<PolySymbol>(namesProvider) {
 
     override fun Sequence<PolySymbol>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> = this
 
     fun add(symbol: PolySymbol) {
       assert(framework == null || symbol.origin.framework == framework || symbol.origin.framework == null) {
-        "PolySymbolsScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
+        "PolySymbolScope only accepts symbols with framework: $framework, but symbol with framework ${symbol.origin.framework} was added."
       }
       add(symbol.qualifiedName, (symbol as? PolySymbolWithPattern)?.pattern, symbol)
     }

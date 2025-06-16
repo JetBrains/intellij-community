@@ -11,12 +11,12 @@ import com.intellij.polySymbols.customElements.CustomElementsManifestScopeBase
 import com.intellij.polySymbols.customElements.CustomElementsSymbol
 import com.intellij.polySymbols.customElements.impl.*
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternFactory
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
-fun Reference.createPattern(origin: CustomElementsJsonOrigin): PolySymbolsPattern? =
-  createQueryPathList(origin)?.let { PolySymbolsPatternFactory.createSingleSymbolReferencePattern(it) }
+fun Reference.createPattern(origin: CustomElementsJsonOrigin): PolySymbolPattern? =
+  createQueryPathList(origin)?.let { PolySymbolPatternFactory.createSingleSymbolReferencePattern(it) }
 
 fun Reference.resolve(origin: CustomElementsJsonOrigin, queryExecutor: PolySymbolQueryExecutor): List<PolySymbol> =
   createQueryPathList(origin)

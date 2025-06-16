@@ -5,30 +5,29 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.webTypes.impl.PolySymbolsFilterEP
+import org.jetbrains.annotations.ApiStatus
 
-interface PolySymbolsFilter {
+@ApiStatus.Internal
+class PolySymbolMatchPrefixFilter : PolySymbolFilter {
 
-  fun filterCodeCompletions(
+  override fun filterCodeCompletions(
     codeCompletions: List<PolySymbolCodeCompletionItem>,
     queryExecutor: PolySymbolQueryExecutor,
     scope: List<PolySymbolScope>,
     properties: Map<String, Any>,
-  ): List<PolySymbolCodeCompletionItem>
+  ): List<PolySymbolCodeCompletionItem> {
+    val prefix = properties["prefix"] as? String ?: return codeCompletions
+    return codeCompletions.filter { it.name.startsWith(prefix) }
+  }
 
-  fun filterNameMatches(
+  override fun filterNameMatches(
     matches: List<PolySymbol>,
     queryExecutor: PolySymbolQueryExecutor,
     scope: List<PolySymbolScope>,
     properties: Map<String, Any>,
-  ): List<PolySymbol>
-
-
-  companion object {
-
-    @JvmStatic
-    fun get(name: String): PolySymbolsFilter = PolySymbolsFilterEP.get(name)
-
+  ): List<PolySymbol> {
+    val prefix = properties["prefix"] as? String ?: return matches
+    return matches.filter { it.name.startsWith(prefix) }
   }
 
 }

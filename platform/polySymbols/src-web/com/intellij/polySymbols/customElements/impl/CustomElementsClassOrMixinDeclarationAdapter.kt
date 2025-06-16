@@ -13,7 +13,7 @@ import com.intellij.polySymbols.customElements.json.resolve
 import com.intellij.polySymbols.customElements.json.toApiStatus
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.psi.PsiElement
@@ -31,7 +31,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val qualifiedKind: PolySymbolQualifiedKind
     get() = CustomElementsSymbol.CEM_DECLARATIONS
 
-  override val pattern: PolySymbolsPattern?
+  override val pattern: PolySymbolPattern?
     get() = null
 
   override val framework: FrameworkId?

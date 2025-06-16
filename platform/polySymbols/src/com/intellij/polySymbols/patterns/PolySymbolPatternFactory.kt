@@ -9,15 +9,15 @@ import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object PolySymbolsPatternFactory {
+object PolySymbolPatternFactory {
 
   fun createComplexPattern(
     optionsProvider: (queryExecutor: PolySymbolQueryExecutor, contextStack: Stack<PolySymbolScope>) -> ComplexPatternOptions,
     isStaticAndRequiredProvider: () -> Boolean,
-    patternsProvider: () -> List<PolySymbolsPattern>,
-  ): PolySymbolsPattern =
+    patternsProvider: () -> List<PolySymbolPattern>,
+  ): PolySymbolPattern =
     ComplexPattern(object : ComplexPatternConfigProvider {
-      override fun getPatterns(): List<PolySymbolsPattern> =
+      override fun getPatterns(): List<PolySymbolPattern> =
         patternsProvider()
 
       override fun getOptions(queryExecutor: PolySymbolQueryExecutor, scopeStack: Stack<PolySymbolScope>): ComplexPatternOptions =
@@ -31,11 +31,11 @@ object PolySymbolsPatternFactory {
   fun createComplexPattern(
     options: ComplexPatternOptions,
     isStaticAndRequired: Boolean,
-    vararg patterns: PolySymbolsPattern,
-  ): PolySymbolsPattern =
+    vararg patterns: PolySymbolPattern,
+  ): PolySymbolPattern =
 
     ComplexPattern(object : ComplexPatternConfigProvider {
-      override fun getPatterns(): List<PolySymbolsPattern> =
+      override fun getPatterns(): List<PolySymbolPattern> =
         patterns.toList()
 
       override fun getOptions(queryExecutor: PolySymbolQueryExecutor, scopeStack: Stack<PolySymbolScope>): ComplexPatternOptions =
@@ -46,25 +46,25 @@ object PolySymbolsPatternFactory {
 
     })
 
-  fun createPatternSequence(vararg patterns: PolySymbolsPattern): PolySymbolsPattern =
+  fun createPatternSequence(vararg patterns: PolySymbolPattern): PolySymbolPattern =
     SequencePattern { patterns.toList() }
 
-  fun createPatternSequence(patternsProvider: () -> List<PolySymbolsPattern>): PolySymbolsPattern =
+  fun createPatternSequence(patternsProvider: () -> List<PolySymbolPattern>): PolySymbolPattern =
     SequencePattern(patternsProvider)
 
-  fun createSymbolReferencePlaceholder(displayName: String? = null): PolySymbolsPattern =
+  fun createSymbolReferencePlaceholder(displayName: String? = null): PolySymbolPattern =
     SymbolReferencePattern(displayName)
 
-  fun createStringMatch(content: String): PolySymbolsPattern =
+  fun createStringMatch(content: String): PolySymbolPattern =
     StaticPattern(content)
 
-  fun createRegExMatch(regex: String, caseSensitive: Boolean = false): PolySymbolsPattern =
+  fun createRegExMatch(regex: String, caseSensitive: Boolean = false): PolySymbolPattern =
     RegExpPattern(regex, caseSensitive)
 
-  fun createCompletionAutoPopup(isSticky: Boolean): PolySymbolsPattern =
+  fun createCompletionAutoPopup(isSticky: Boolean): PolySymbolPattern =
     CompletionAutoPopupPattern(isSticky)
 
-  fun createSingleSymbolReferencePattern(path: List<PolySymbolQualifiedName>): PolySymbolsPattern =
+  fun createSingleSymbolReferencePattern(path: List<PolySymbolQualifiedName>): PolySymbolPattern =
     SingleSymbolReferencePattern(path.toList())
 
 }

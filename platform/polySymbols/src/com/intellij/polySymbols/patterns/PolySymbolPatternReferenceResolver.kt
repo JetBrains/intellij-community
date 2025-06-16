@@ -11,12 +11,12 @@ import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
+import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) : PolySymbolsPatternSymbolsResolver {
+class PolySymbolPatternReferenceResolver(private vararg val items: Reference) : PolySymbolPatternSymbolsResolver {
   override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
     items.asSequence().map { it.qualifiedKind }.toSet()
 
@@ -53,7 +53,7 @@ class PolySymbolsPatternReferenceResolver(private vararg val items: Reference) :
   data class Reference(
     val location: List<PolySymbolQualifiedName> = emptyList(),
     val qualifiedKind: PolySymbolQualifiedKind,
-    val filter: PolySymbolsFilter? = null,
+    val filter: PolySymbolFilter? = null,
     val excludeModifiers: List<PolySymbolModifier> = listOf(PolySymbolModifier.Companion.ABSTRACT),
     val nameConversionRules: List<PolySymbolNameConversionRules> = emptyList(),
   ) {

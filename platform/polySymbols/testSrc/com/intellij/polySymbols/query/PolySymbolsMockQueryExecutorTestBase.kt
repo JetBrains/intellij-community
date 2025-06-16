@@ -15,8 +15,8 @@ import com.intellij.polySymbols.html.HtmlSymbolMatchCustomizer
 import com.intellij.polySymbols.query.impl.CustomElementsManifestMockScopeImpl
 import com.intellij.polySymbols.query.impl.PolySymbolMockQueryExecutorFactory
 import com.intellij.polySymbols.query.impl.WebTypesMockScopeImpl
-import com.intellij.polySymbols.webTypes.filters.PolySymbolsMatchPrefixFilter
-import com.intellij.polySymbols.webTypes.impl.PolySymbolsFilterEP
+import com.intellij.polySymbols.webTypes.filters.PolySymbolMatchPrefixFilter
+import com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP
 import java.io.File
 
 abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
@@ -55,10 +55,10 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       true
     )
     val mockPluginDescriptor = DefaultPluginDescriptor(PluginId.getId("mock"),
-                                                       PolySymbolsMatchPrefixFilter::class.java.classLoader)
-    application.extensionArea.getExtensionPoint<PolySymbolsFilterEP>("com.intellij.polySymbols.webTypes.filter")
+                                                       PolySymbolMatchPrefixFilter::class.java.classLoader)
+    application.extensionArea.getExtensionPoint<PolySymbolFilterEP>("com.intellij.polySymbols.webTypes.filter")
       .registerExtension(
-        PolySymbolsFilterEP().also {
+        PolySymbolFilterEP().also {
           it.name = "match-prefix"
           it.implementation = "com.intellij.polySymbols.webTypes.filters.PolySymbolsMatchPrefixFilter"
           it.pluginDescriptor = mockPluginDescriptor

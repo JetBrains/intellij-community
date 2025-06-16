@@ -30,7 +30,7 @@ import com.intellij.polySymbols.utils.qualifiedName
 import java.util.*
 import kotlin.collections.iterator
 
-internal class PolySymbolsUsageSearcher : UsageSearcher {
+internal class PolySymbolUsageSearcher : UsageSearcher {
 
   override fun collectSearchRequests(parameters: UsageSearchParameters): Collection<Query<out Usage>> =
     parameters.target

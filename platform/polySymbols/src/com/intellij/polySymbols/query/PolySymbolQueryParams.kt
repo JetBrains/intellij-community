@@ -54,7 +54,7 @@ sealed interface PolySymbolListSymbolsQueryParams : PolySymbolQueryParams {
       expandPatterns: Boolean,
       configurator: Builder.() -> Unit = {},
     ): PolySymbolListSymbolsQueryParams =
-      PolySymbolsListSymbolsQueryParamsBuilderImpl(queryExecutor, expandPatterns).apply(configurator).build()
+      PolySymbolListSymbolsQueryParamsBuilderImpl(queryExecutor, expandPatterns).apply(configurator).build()
   }
 
   interface BuilderMixin<T> : PolySymbolQueryParams.Builder<T> {
@@ -77,7 +77,7 @@ sealed interface PolySymbolNameMatchQueryParams : PolySymbolQueryParams {
       queryExecutor: PolySymbolQueryExecutor,
       configurator: Builder.() -> Unit = {},
     ): PolySymbolNameMatchQueryParams =
-      PolySymbolsNameMatchQueryParamsBuilderImpl(queryExecutor).apply(configurator).build()
+      PolySymbolNameMatchQueryParamsBuilderImpl(queryExecutor).apply(configurator).build()
 
   }
 
@@ -103,7 +103,7 @@ sealed interface PolySymbolCodeCompletionQueryParams : PolySymbolQueryParams {
       position: Int,
       configurator: Builder.() -> Unit = {},
     ): PolySymbolCodeCompletionQueryParams =
-      PolySymbolsCodeCompletionQueryParamsBuilderImpl(queryExecutor, position).apply(configurator).build()
+      PolySymbolCodeCompletionQueryParamsBuilderImpl(queryExecutor, position).apply(configurator).build()
 
   }
 
@@ -112,7 +112,7 @@ sealed interface PolySymbolCodeCompletionQueryParams : PolySymbolQueryParams {
   interface Builder : PolySymbolQueryParams.Builder<Builder>, BuilderMixin<Builder>
 }
 
-private class PolySymbolsListSymbolsQueryParamsBuilderImpl(
+private class PolySymbolListSymbolsQueryParamsBuilderImpl(
   private val queryExecutor: PolySymbolQueryExecutor,
   private val expandPatterns: Boolean,
 ) : PolySymbolListSymbolsQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolListSymbolsQueryParams.Builder>() {
@@ -128,7 +128,7 @@ private class PolySymbolsListSymbolsQueryParamsBuilderImpl(
 
 }
 
-private class PolySymbolsNameMatchQueryParamsBuilderImpl(
+private class PolySymbolNameMatchQueryParamsBuilderImpl(
   private val queryExecutor: PolySymbolQueryExecutor,
 ) : PolySymbolNameMatchQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolNameMatchQueryParams.Builder>() {
   private var strictScope: Boolean = false
@@ -143,7 +143,7 @@ private class PolySymbolsNameMatchQueryParamsBuilderImpl(
 
 }
 
-private class PolySymbolsCodeCompletionQueryParamsBuilderImpl(
+private class PolySymbolCodeCompletionQueryParamsBuilderImpl(
   private val queryExecutor: PolySymbolQueryExecutor,
   private val position: Int,
 ) : PolySymbolCodeCompletionQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolCodeCompletionQueryParams.Builder>() {

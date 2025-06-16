@@ -8,45 +8,45 @@ import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory.PolySymbolsQueryExecutorBuilder
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory.PolySymbolQueryExecutorBuilder
 import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 import com.intellij.polySymbols.query.PolySymbolScope
 
-class PolySymbolsQueryExecutorBuilderImpl() : PolySymbolsQueryExecutorBuilder {
+class PolySymbolQueryExecutorBuilderImpl() : PolySymbolQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolScope>()
   private val customizers = mutableListOf<PolySymbolQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
   private val context = mutableMapOf<PolyContextKind, PolyContextName>()
   private var allowResolve = true
 
-  override fun addRootScope(scope: PolySymbolScope): PolySymbolsQueryExecutorBuilder = apply {
+  override fun addRootScope(scope: PolySymbolScope): PolySymbolQueryExecutorBuilder = apply {
     rootScopes.add(scope)
   }
 
-  override fun addRootScopes(scope: List<PolySymbolScope>): PolySymbolsQueryExecutorBuilder = apply {
+  override fun addRootScopes(scope: List<PolySymbolScope>): PolySymbolQueryExecutorBuilder = apply {
     rootScopes.addAll(scope)
   }
 
-  override fun addCustomizer(customizer: PolySymbolQueryResultsCustomizer): PolySymbolsQueryExecutorBuilder = apply {
+  override fun addCustomizer(customizer: PolySymbolQueryResultsCustomizer): PolySymbolQueryExecutorBuilder = apply {
     customizers.add(customizer)
   }
 
-  override fun addNameConversionRules(rules: PolySymbolNameConversionRules): PolySymbolsQueryExecutorBuilder = apply {
+  override fun addNameConversionRules(rules: PolySymbolNameConversionRules): PolySymbolQueryExecutorBuilder = apply {
     nameConversionRules.add(rules)
   }
 
-  override fun addPolyContext(kind: PolyContextKind, name: PolyContextName?): PolySymbolsQueryExecutorBuilder = apply {
+  override fun addPolyContext(kind: PolyContextKind, name: PolyContextName?): PolySymbolQueryExecutorBuilder = apply {
     if (name == null)
       context.remove(kind)
     else
       context[kind] = name
   }
 
-  override fun setFramework(framework: String): PolySymbolsQueryExecutorBuilder = apply {
+  override fun setFramework(framework: String): PolySymbolQueryExecutorBuilder = apply {
     context[KIND_FRAMEWORK] = framework
   }
 
-  override fun allowResolve(allowResolve: Boolean): PolySymbolsQueryExecutorBuilder = apply {
+  override fun allowResolve(allowResolve: Boolean): PolySymbolQueryExecutorBuilder = apply {
     this.allowResolve = allowResolve
   }
 

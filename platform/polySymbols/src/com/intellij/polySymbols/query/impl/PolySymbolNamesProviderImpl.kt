@@ -8,7 +8,7 @@ import com.intellij.polySymbols.css.NAMESPACE_CSS
 import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.framework.PolySymbolsFramework
+import com.intellij.polySymbols.framework.PolySymbolFramework
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
@@ -31,7 +31,7 @@ class PolySymbolNamesProviderImpl(
 
   private val renameProviders: Map<PolySymbolQualifiedKind, PolySymbolNameConverter>
 
-  private val polySymbolsFramework get() = framework?.let { PolySymbolsFramework.get(it) }
+  private val polySymbolFramework get() = framework?.let { PolySymbolFramework.get(it) }
 
   init {
     val canonicalNamesProviders = mutableMapOf<PolySymbolQualifiedKind, PolySymbolNameConverter>()
@@ -78,7 +78,7 @@ class PolySymbolNamesProviderImpl(
                       ?: canonicalNamesProviders[qualifiedName.qualifiedKind]
     }
       ?.getNames(qualifiedName.name)
-    ?: polySymbolsFramework
+    ?: polySymbolFramework
       ?.getNames(qualifiedName, target)
       ?.takeIf { it.isNotEmpty() }
     ?: if (target != CODE_COMPLETION_VARIANTS &&

@@ -4,14 +4,14 @@ package com.intellij.polySymbols.patterns.impl
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import java.util.regex.Pattern
 
-internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : PolySymbolsPattern() {
+internal class RegExpPattern(private val regex: String, private val caseSensitive: Boolean = false) : PolySymbolPattern() {
   private val pattern: Pattern by lazy(LazyThreadSafetyMode.NONE) {
     if (caseSensitive)
       Pattern.compile(regex)
@@ -26,7 +26,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
   override fun match(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
     end: Int,
@@ -44,7 +44,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
   override fun list(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     emptyList()
@@ -52,7 +52,7 @@ internal class RegExpPattern(private val regex: String, private val caseSensitiv
   override fun complete(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,

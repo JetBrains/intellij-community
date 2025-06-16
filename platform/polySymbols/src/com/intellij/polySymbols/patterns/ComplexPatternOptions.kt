@@ -13,5 +13,5 @@ data class ComplexPatternOptions(
   val priority: PolySymbol.Priority? = null,
   val repeats: Boolean = false,
   val unique: Boolean = false,
-  val symbolsResolver: PolySymbolsPatternSymbolsResolver? = null,
+  val symbolsResolver: PolySymbolPatternSymbolsResolver? = null,
 )

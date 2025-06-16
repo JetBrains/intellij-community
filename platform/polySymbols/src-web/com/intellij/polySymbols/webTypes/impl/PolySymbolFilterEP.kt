@@ -7,19 +7,19 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
+import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 import com.intellij.util.xmlb.annotations.Attribute
 
-class PolySymbolsFilterEP() : CustomLoadingExtensionPointBean<PolySymbolsFilter>() {
+class PolySymbolFilterEP() : CustomLoadingExtensionPointBean<PolySymbolFilter>() {
 
   companion object {
-    private val EP_NAME = ExtensionPointName<PolySymbolsFilterEP>("com.intellij.polySymbols.webTypes.filter")
+    private val EP_NAME = ExtensionPointName<PolySymbolFilterEP>("com.intellij.polySymbols.webTypes.filter")
 
-    fun get(name: String): PolySymbolsFilter =
+    fun get(name: String): PolySymbolFilter =
       EP_NAME.getByKey(name, PolySymbol::class.java) { it.name }?.instance
       ?: NOOP_FILTER
 
-    private val NOOP_FILTER = object : PolySymbolsFilter {
+    private val NOOP_FILTER = object : PolySymbolFilter {
       override fun filterCodeCompletions(
         codeCompletions: List<PolySymbolCodeCompletionItem>,
         queryExecutor: PolySymbolQueryExecutor,

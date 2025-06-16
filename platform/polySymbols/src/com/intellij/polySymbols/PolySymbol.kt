@@ -41,7 +41,7 @@ import javax.swing.Icon
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolsPrioritizedScope {
+interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolPrioritizedScope {
 
   /**
    * Specifies where this symbol comes from. Besides descriptive information like

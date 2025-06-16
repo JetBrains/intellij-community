@@ -17,7 +17,7 @@ import com.intellij.polySymbols.context.PolyContextKindRules
 import com.intellij.polySymbols.context.PolyContextRulesProvider
 import com.intellij.polySymbols.context.impl.buildPolyContext
 import com.intellij.polySymbols.query.*
-import com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
+import com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
 import com.intellij.polySymbols.utils.createModificationTracker
 import com.intellij.polySymbols.utils.findOriginalFile
 import com.intellij.psi.PsiElement
@@ -60,7 +60,7 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
         }
     })
 
-    scopeList.sortBy { (it.asSafely<PolySymbolsPrioritizedScope>()?.priority ?: PolySymbol.Priority.NORMAL).value }
+    scopeList.sortBy { (it.asSafely<PolySymbolPrioritizedScope>()?.priority ?: PolySymbol.Priority.NORMAL).value }
 
     return PolySymbolQueryExecutorImpl(location,
                                        scopeList,

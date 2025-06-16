@@ -15,7 +15,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.applyIf
 import com.intellij.util.containers.Stack
 
-abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
+abstract class PolySymbolIsolatedMappingScope<T : PsiElement>(
   protected val mappings: Map<PolySymbolQualifiedKind, PolySymbolQualifiedKind>,
   /**
    * Allows to optimize for symbols with a particular [PolySymbolOrigin.framework].
@@ -87,7 +87,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
   final override fun equals(other: Any?): Boolean =
     other === this
     || (other != null
-        && other is PolySymbolsIsolatedMappingScope<*>
+        && other is PolySymbolIsolatedMappingScope<*>
         && other::class.java == this::class.java
         && other.framework == framework
         && other.location == location)
@@ -103,7 +103,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
   }
 
   private fun getCachedSubQueryExecutorAndScope(): Pair<PolySymbolQueryExecutor, List<PolySymbolScope>> {
-    val location = this@PolySymbolsIsolatedMappingScope.location
+    val location = this@PolySymbolIsolatedMappingScope.location
     val builder = subScopeBuilder
     val manager = CachedValuesManager.getManager(location.project)
     val cachedValueKey = manager.getKeyForClass<Pair<PolySymbolQueryExecutor, List<PolySymbolScope>>>(builder.javaClass)

@@ -5,7 +5,7 @@ import com.intellij.model.Pointer
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Stack
@@ -182,7 +182,7 @@ abstract class StaticPolySymbolScopeBase<Root : Any, Contribution : Any, Origin 
   interface StaticSymbolContributionAdapter {
     val qualifiedKind: PolySymbolQualifiedKind
     val name: String
-    val pattern: PolySymbolsPattern?
+    val pattern: PolySymbolPattern?
     val framework: FrameworkId?
     fun withQueryExecutorContext(queryExecutor: PolySymbolQueryExecutor): PolySymbol
     fun matchContext(context: PolyContext): Boolean =

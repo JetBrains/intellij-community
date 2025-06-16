@@ -2,7 +2,7 @@
 package com.intellij.polySymbols.query
 
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 
 interface PolySymbolWithPattern : PolySymbol {
 
@@ -12,6 +12,6 @@ interface PolySymbolWithPattern : PolySymbol {
    * For such places, appropriate segments with referenced Poly Symbols will be created and navigation,
    * validation and refactoring support is available out-of-the-box.
    */
-  val pattern: PolySymbolsPattern
+  val pattern: PolySymbolPattern
 
 }

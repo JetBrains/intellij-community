@@ -52,7 +52,7 @@ import java.util.*
 
 private val INSPECTION_TOOL_INFO_CACHE = Key.create<MutableMap<String, InspectionToolInfo>>("polySymbols.inspectionTools")
 
-class PolySymbolsHighlightingAnnotator : Annotator {
+class PolySymbolHighlightingAnnotator : Annotator {
 
   private val symbolReferencesProvider = PsiPolySymbolReferenceProviderImpl()
 

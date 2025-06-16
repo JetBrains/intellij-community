@@ -3,7 +3,7 @@ package com.intellij.polySymbols.utils
 
 import com.intellij.polySymbols.PolySymbol
 
-interface PolySymbolsPrioritizedScope {
+interface PolySymbolPrioritizedScope {
 
   val priority: PolySymbol.Priority?
 

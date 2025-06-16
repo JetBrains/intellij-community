@@ -6,8 +6,8 @@ import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.asSingleSymbol
@@ -18,14 +18,14 @@ import com.intellij.util.containers.Stack
 class SingleSymbolReferencePattern(
   private val path: List<PolySymbolQualifiedName>,
   private val excludeModifiers: List<PolySymbolModifier> = listOf(PolySymbolModifier.ABSTRACT),
-) : PolySymbolsPattern() {
+) : PolySymbolPattern() {
   override fun getStaticPrefixes(): Sequence<String> =
     emptySequence()
 
   override fun match(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
     end: Int,
@@ -44,7 +44,7 @@ class SingleSymbolReferencePattern(
   override fun list(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     if (owner != null) {
@@ -61,7 +61,7 @@ class SingleSymbolReferencePattern(
   override fun complete(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,

@@ -11,7 +11,7 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.impl.StaticPolySymbolScopeBase
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.WebTypesScopeBase
@@ -60,7 +60,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
   open val contributionName: String = contribution.name ?: "<no-name>"
   abstract val jsonPattern: NamePatternRoot?
 
-  override val pattern: PolySymbolsPattern?
+  override val pattern: PolySymbolPattern?
     get() = jsonPattern?.wrap(contribution.name, jsonOrigin)
 
   open val contributionForQuery: GenericContributionsHost get() = contribution

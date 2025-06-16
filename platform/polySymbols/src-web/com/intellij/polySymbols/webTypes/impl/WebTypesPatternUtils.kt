@@ -8,7 +8,7 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.patterns.impl.*
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.namespace
@@ -16,14 +16,14 @@ import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.json.*
 import com.intellij.util.containers.Stack
 
-internal fun NamePatternRoot.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolsPattern =
+internal fun NamePatternRoot.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolPattern =
   when (val value = value) {
     is String -> RegExpPattern(value)
     is NamePatternBase -> value.wrap(defaultDisplayName, origin)
     else -> throw IllegalArgumentException(value::class.java.name)
   }
 
-internal fun NamePatternBase.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolsPattern =
+internal fun NamePatternBase.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolPattern =
   when (this) {
     is NamePatternRegex -> RegExpPattern(regex, caseSensitive == true)
     is NamePatternDefault -> ComplexPattern(WebTypesComplexPatternConfigProvider(this, defaultDisplayName, origin))
@@ -31,7 +31,7 @@ internal fun NamePatternBase.wrap(defaultDisplayName: String?, origin: WebTypesJ
   }
 
 @Suppress("UNCHECKED_CAST")
-internal fun NamePatternTemplate.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolsPattern =
+internal fun NamePatternTemplate.wrap(defaultDisplayName: String?, origin: WebTypesJsonOrigin): PolySymbolPattern =
   when (val value = value) {
     is String -> when {
       value == "#item" -> SymbolReferencePattern(defaultDisplayName)
@@ -48,8 +48,8 @@ internal fun NamePatternTemplate.wrap(defaultDisplayName: String?, origin: WebTy
 private class SequencePatternPatternsProvider(
   private val list: List<NamePatternTemplate>,
   private val origin: WebTypesJsonOrigin,
-) : () -> List<PolySymbolsPattern> {
-  override fun invoke(): List<PolySymbolsPattern> =
+) : () -> List<PolySymbolPattern> {
+  override fun invoke(): List<PolySymbolPattern> =
     list.map { it.wrap(null, origin) }
 }
 
@@ -59,7 +59,7 @@ private class WebTypesComplexPatternConfigProvider(
   private val origin: WebTypesJsonOrigin,
 ) : ComplexPatternConfigProvider {
 
-  override fun getPatterns(): List<PolySymbolsPattern> =
+  override fun getPatterns(): List<PolySymbolPattern> =
     pattern.or.asSequence()
       .map { it.wrap(defaultDisplayName, origin) }
       .let {
@@ -120,7 +120,7 @@ private class WebTypesComplexPatternConfigProvider(
           PatternSymbolsResolver(it)
         }
 
-  private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) : com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver {
+  private class PatternDelegateSymbolsResolver(override val delegate: PolySymbol) : com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver {
     override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
       setOf(delegate.qualifiedKind)
 
@@ -184,7 +184,7 @@ private class WebTypesComplexPatternConfigProvider(
 
   }
 
-  private class PatternSymbolsResolver(val items: ListReference) : com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver {
+  private class PatternSymbolsResolver(val items: ListReference) : com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver {
     override fun getSymbolKinds(context: PolySymbol?): Set<PolySymbolQualifiedKind> =
       items.asSequence().mapNotNull { it.getSymbolKind(context) }.toSet()
 

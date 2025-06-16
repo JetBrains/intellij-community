@@ -7,9 +7,9 @@ import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
-import com.intellij.polySymbols.patterns.PolySymbolsPatternReferenceResolver
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternFactory
+import com.intellij.polySymbols.patterns.PolySymbolPatternReferenceResolver
 import com.intellij.polySymbols.query.PolySymbolWithPattern
 
 /**
@@ -43,17 +43,17 @@ class ReferencingPolySymbol private constructor(
 
   private val references = references.toList()
 
-  override val pattern: PolySymbolsPattern =
-    PolySymbolsPatternFactory.createComplexPattern(
+  override val pattern: PolySymbolPattern =
+    PolySymbolPatternFactory.createComplexPattern(
       ComplexPatternOptions(
         priority = priority,
-        symbolsResolver = PolySymbolsPatternReferenceResolver(
+        symbolsResolver = PolySymbolPatternReferenceResolver(
           *references.map {
-            PolySymbolsPatternReferenceResolver.Reference(qualifiedKind = it, location = location)
+            PolySymbolPatternReferenceResolver.Reference(qualifiedKind = it, location = location)
           }.toTypedArray()
         )), false,
-      PolySymbolsPatternFactory.createPatternSequence(
-        PolySymbolsPatternFactory.createSymbolReferencePlaceholder(name),
+      PolySymbolPatternFactory.createPatternSequence(
+        PolySymbolPatternFactory.createSymbolReferencePlaceholder(name),
       )
     )
 

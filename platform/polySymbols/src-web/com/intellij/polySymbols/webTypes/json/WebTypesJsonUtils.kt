@@ -26,7 +26,7 @@ import com.intellij.polySymbols.utils.lastPolySymbol
 import com.intellij.polySymbols.utils.namespace
 import com.intellij.polySymbols.webTypes.WEB_TYPES_JS_FORBIDDEN_GLOBAL_KINDS
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
-import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
+import com.intellij.polySymbols.webTypes.filters.PolySymbolFilter
 import com.intellij.polySymbols.webTypes.json.NameConversionRulesSingle.NameConverter
 import com.intellij.util.applyIf
 import java.util.*
@@ -245,7 +245,7 @@ private fun Reference.processPolySymbols(
         path, reference.includeVirtual ?: virtualSymbols, reference.includeAbstract ?: abstractSymbols)
       if (reference.filter == null) return matches
       val properties = reference.additionalProperties.toMap()
-      PolySymbolsFilter.get(reference.filter)
+      PolySymbolFilter.get(reference.filter)
         .filterNameMatches(matches, queryExecutor, scope, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)
@@ -287,7 +287,7 @@ internal fun Reference.codeCompletion(
         }
       if (reference.filter == null) return codeCompletions
       val properties = reference.additionalProperties.toMap()
-      PolySymbolsFilter.get(reference.filter)
+      PolySymbolFilter.get(reference.filter)
         .filterCodeCompletions(codeCompletions, queryExecutor, scope, properties)
     }
     else -> throw IllegalArgumentException(reference::class.java.name)

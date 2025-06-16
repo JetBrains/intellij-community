@@ -2,14 +2,14 @@
 package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.polySymbols.patterns.ComplexPatternOptions
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.util.containers.Stack
 
 internal interface ComplexPatternConfigProvider {
 
-  fun getPatterns(): List<PolySymbolsPattern>
+  fun getPatterns(): List<PolySymbolPattern>
 
   fun getOptions(queryExecutor: PolySymbolQueryExecutor, scopeStack: Stack<PolySymbolScope>): ComplexPatternOptions
 

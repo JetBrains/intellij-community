@@ -7,8 +7,8 @@ import com.intellij.polySymbols.PolySymbolNameSegment
 import com.intellij.polySymbols.impl.selectBest
 import com.intellij.polySymbols.impl.withDisplayName
 import com.intellij.polySymbols.impl.withOffset
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.lastPolySymbol
@@ -17,7 +17,7 @@ import com.intellij.util.applyIf
 import com.intellij.util.containers.Stack
 import kotlin.math.max
 
-internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPattern() {
+internal class SymbolReferencePattern(val displayName: String?) : PolySymbolPattern() {
   override fun getStaticPrefixes(): Sequence<String> = sequenceOf("")
 
   override fun isStaticAndRequired(): Boolean = false
@@ -25,7 +25,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
   override fun match(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
     end: Int,
@@ -72,7 +72,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
   override fun list(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     symbolsResolver
@@ -99,7 +99,7 @@ internal class SymbolReferencePattern(val displayName: String?) : PolySymbolsPat
   override fun complete(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,

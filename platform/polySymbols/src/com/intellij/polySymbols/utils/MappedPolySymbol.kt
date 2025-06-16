@@ -6,8 +6,8 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternFactory
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternFactory
 import com.intellij.polySymbols.query.PolySymbolWithPattern
 
 /**
@@ -40,8 +40,8 @@ class MappedPolySymbol private constructor(
       MappedPolySymbol(qualifiedKind, name, origin, *mappingPath, priority = priority)
   }
 
-  override val pattern: PolySymbolsPattern =
-    PolySymbolsPatternFactory.createSingleSymbolReferencePattern(mappingPath.toList())
+  override val pattern: PolySymbolPattern =
+    PolySymbolPatternFactory.createSingleSymbolReferencePattern(mappingPath.toList())
 
   override fun createPointer(): Pointer<out PolySymbol> =
     Pointer.hardPointer(this)

@@ -7,7 +7,7 @@ import com.intellij.html.polySymbols.elements.PolySymbolElementDescriptor
 import com.intellij.html.polySymbols.elements.PolySymbolHtmlElementInfo
 import com.intellij.psi.xml.XmlTag
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.framework.PolySymbolsFramework
+import com.intellij.polySymbols.framework.PolySymbolFramework
 import java.util.function.Predicate
 
 interface PolySymbolsFrameworkHtmlSupport {
@@ -23,7 +23,7 @@ interface PolySymbolsFrameworkHtmlSupport {
   companion object {
     @JvmStatic
     fun get(id: FrameworkId?): PolySymbolsFrameworkHtmlSupport =
-      PolySymbolsFramework.get(id ?: "") as? PolySymbolsFrameworkHtmlSupport
+      PolySymbolFramework.get(id ?: "") as? PolySymbolsFrameworkHtmlSupport
       ?: DefaultHtmlSupport
 
   }

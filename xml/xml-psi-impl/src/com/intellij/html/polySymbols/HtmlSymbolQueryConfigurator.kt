@@ -15,7 +15,7 @@ import com.intellij.polySymbols.html.*
 import com.intellij.polySymbols.js.JS_EVENTS
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.search.PsiSourcedPolySymbol
-import com.intellij.polySymbols.utils.PolySymbolsPrioritizedScope
+import com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
 import com.intellij.polySymbols.utils.match
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
@@ -51,7 +51,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
 
   @ApiStatus.Internal
   class HtmlContextualSymbolScope(private val location: PsiElement)
-    : PolySymbolCompoundScope(), PolySymbolsPrioritizedScope {
+    : PolySymbolCompoundScope(), PolySymbolPrioritizedScope {
 
     init {
       assert(location !is XmlTag) { "Cannot create HtmlContextualPolySymbolsScope on a tag." }

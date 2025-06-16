@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PolySymbolsEnabledLanguage private constructor() : MetaLanguage("PolySymbolsEnabledLanguage") {
+class PolySymbolEnabledLanguage private constructor() : MetaLanguage("PolySymbolEnabledLanguage") {
 
   var totalTime: Long = 0
   var count: Long = 0
@@ -27,11 +27,11 @@ class PolySymbolsEnabledLanguage private constructor() : MetaLanguage("PolySymbo
       }
 
   private object Companion {
-    val EP_NAME = ExtensionPointName<PolySymbolsSupportInLanguageEP>("com.intellij.polySymbols.enableInLanguage")
+    val EP_NAME = ExtensionPointName<PolySymbolSupportInLanguageEP>("com.intellij.polySymbols.enableInLanguage")
   }
 
   @ApiStatus.Experimental
-  class PolySymbolsSupportInLanguageEP : BaseKeyedLazyInstance<String?>() {
+  class PolySymbolSupportInLanguageEP : BaseKeyedLazyInstance<String?>() {
     @Attribute("language")
     lateinit var language: String
 

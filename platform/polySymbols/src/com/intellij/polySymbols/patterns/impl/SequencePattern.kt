@@ -9,8 +9,8 @@ import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.impl.CompoundInsertHandler
 import com.intellij.polySymbols.html.NAMESPACE_HTML
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
+import com.intellij.polySymbols.patterns.PolySymbolPattern
+import com.intellij.polySymbols.patterns.PolySymbolPatternSymbolsResolver
 import com.intellij.polySymbols.query.PolySymbolMatch
 import com.intellij.polySymbols.query.PolySymbolScope
 import com.intellij.polySymbols.utils.asSingleSymbol
@@ -20,9 +20,9 @@ import com.intellij.polySymbols.utils.withOffset
 import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 
-internal class SequencePattern(private val patternsProvider: () -> List<PolySymbolsPattern>) : PolySymbolsPattern() {
+internal class SequencePattern(private val patternsProvider: () -> List<PolySymbolPattern>) : PolySymbolPattern() {
 
-  constructor(vararg patterns: PolySymbolsPattern) : this({ patterns.toList() })
+  constructor(vararg patterns: PolySymbolPattern) : this({ patterns.toList() })
 
   override fun getStaticPrefixes(): Sequence<String> {
     val patterns = patternsProvider()
@@ -37,7 +37,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
   override fun match(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: MatchParameters,
     start: Int,
     end: Int,
@@ -63,7 +63,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
   override fun list(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: ListParameters,
   ): List<ListResult> =
     process(emptyList()) { matches, pattern, _ ->
@@ -83,7 +83,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
   override fun complete(
     owner: PolySymbol?,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
     start: Int,
     end: Int,
@@ -150,11 +150,11 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   private fun sliceRequiredPartIfNeeded(
     matchResult: MatchResult?,
-    pattern: PolySymbolsPattern,
+    pattern: PolySymbolPattern,
     matchStart: Int,
     matchEnd: Int,
     prevResult: MatchResult?,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     params: CompletionParameters,
   ): List<SequenceCompletionResult>? =
     matchResult
@@ -178,7 +178,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   private fun processCompletionResults(
     matchResult: MatchResult?,
-    pattern: PolySymbolsPattern,
+    pattern: PolySymbolPattern,
     matchStart: Int,
     completionResults: CompletionResults,
     params: CompletionParameters,
@@ -302,9 +302,9 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
   }
 
   private fun getCompletionResultsOnPattern(
-    pattern: PolySymbolsPattern,
+    pattern: PolySymbolPattern,
     scopeStack: Stack<PolySymbolScope>,
-    symbolsResolver: PolySymbolsPatternSymbolsResolver?,
+    symbolsResolver: PolySymbolPatternSymbolsResolver?,
     matchResult: MatchResult?,
     params: CompletionParameters,
     matchStart: Int,
@@ -421,7 +421,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
 
   private fun <T> process(
     initialMatches: List<T>,
-    processor: (matches: List<T>, pattern: PolySymbolsPattern, staticPrefixes: Set<String>) -> List<T>,
+    processor: (matches: List<T>, pattern: PolySymbolPattern, staticPrefixes: Set<String>) -> List<T>,
   ): List<T> {
     val list = patternsProvider()
     if (list.isEmpty()) return emptyList()
@@ -446,7 +446,7 @@ internal class SequencePattern(private val patternsProvider: () -> List<PolySymb
     params: MatchParameters,
     start: Int,
     end: Int,
-    pattern: PolySymbolsPattern,
+    pattern: PolySymbolPattern,
     staticPrefixes: Set<String>,
   ): Int {
     if (end == start) return start

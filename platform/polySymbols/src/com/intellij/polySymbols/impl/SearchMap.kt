@@ -4,7 +4,7 @@ package com.intellij.polySymbols.impl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.patterns.PolySymbolsPattern
+import com.intellij.polySymbols.patterns.PolySymbolPattern
 import com.intellij.polySymbols.query.*
 import com.intellij.polySymbols.utils.match
 import com.intellij.polySymbols.utils.toCodeCompletionItems
@@ -25,7 +25,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun add(
     qualifiedName: PolySymbolQualifiedName,
-    pattern: PolySymbolsPattern?,
+    pattern: PolySymbolPattern?,
     item: T,
   ) {
     if (pattern == null) {
