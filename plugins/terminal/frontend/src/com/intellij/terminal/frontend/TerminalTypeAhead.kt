@@ -17,7 +17,7 @@ internal class TerminalTypeAhead(
 
   fun stringTyped(string: String) {
     if (isDisabled()) return
-    outputModel.insertAtCursor(string)
+    outputModel.insertAtCursor(string, true)
   }
   
   fun backspace() {

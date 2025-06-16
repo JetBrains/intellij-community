@@ -25,7 +25,7 @@ internal fun updatePsiOnOutputModelChange(
   var updateJob: Job? = null
 
   outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
-    override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
+    override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
       updateJob?.cancel()
       updateJob = coroutineScope.launch {
         delay(50)

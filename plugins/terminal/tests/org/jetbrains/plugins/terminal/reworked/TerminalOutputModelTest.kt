@@ -149,7 +149,7 @@ internal class TerminalOutputModelTest : BasePlatformTestCase() {
     val model = TerminalTestUtil.createOutputModel(maxLength = 10)
     val startOffsets = mutableListOf<Int>()
     model.addListener(testRootDisposable, object: TerminalOutputModelListener {
-      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
+      override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
         startOffsets.add(startOffset)
       }
     })

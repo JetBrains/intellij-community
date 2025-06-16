@@ -208,9 +208,14 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     context.copyUserDataTo(insertEnvironment)
     hide(context, FinishType.SELECTED)
 
-    editor.document.insertString(offset, textToInsert)
-    editor.caretModel.moveToOffset(insertEnvironment.insertedRange.endOffset)
-    PsiDocumentManager.getInstance(session.request.file.project).commitDocument(editor.document)
+    val insertingHandler = InlineCompletionEditorInsertHandler.EP_NAME.extensionList.firstOrNull { it.isApplicable(editor) }
+    if (insertingHandler == null) {
+      LOG.error("[Inline Completion] Cannot insert completion due to missing InlineCompletionEditorInsertHandler.")
+      return
+    }
+
+    insertingHandler.insert(editor = editor, textToInsert = textToInsert, offset = offset, file = session.request.file)
+
     session.provider.insertHandler.afterInsertion(insertEnvironment, elements)
     editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     traceBlocking(InlineCompletionEventType.AfterInsert)

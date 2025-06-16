@@ -2,5 +2,7 @@
 package org.jetbrains.plugins.terminal.block.reworked.lang
 
 import com.intellij.lang.Language
+import org.jetbrains.annotations.ApiStatus
 
-internal object TerminalOutputLanguage : Language("TerminalOutput")
+@ApiStatus.Internal
+object TerminalOutputLanguage : Language("TerminalOutput")

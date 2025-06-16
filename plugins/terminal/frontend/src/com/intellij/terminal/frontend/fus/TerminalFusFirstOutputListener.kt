@@ -10,7 +10,7 @@ internal class TerminalFusFirstOutputListener(private val startupFusInfo: Termin
   /** Guarded by EDT */
   private var reported = false
 
-  override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int) {
+  override fun afterContentChanged(model: TerminalOutputModel, startOffset: Int, isTypeAhead: Boolean) {
     if (!reported && hasAnyMeaningfulText(model)) {
       reportFirstOutputReceived()
       reported = true

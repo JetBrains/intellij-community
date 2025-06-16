@@ -83,8 +83,8 @@ class TerminalOutputModelImpl(
     mutableCursorOffsetState.value = lineStartOffset + trimmedColumnIndex
   }
 
-  override fun insertAtCursor(text: String) {
-    changeDocumentContent { 
+  override fun insertAtCursor(text: String, isTypeAhead: Boolean) {
+    changeDocumentContent(isTypeAhead) {
       val offset = mutableCursorOffsetState.value
       document.insertString(offset, text)
       offset
@@ -158,7 +158,7 @@ class TerminalOutputModelImpl(
    * Document changes in this model are allowed only inside [block] of this function.
    * [block] should return an offset from which document content was changed.
    */
-  private fun changeDocumentContent(block: () -> Int) {
+  private fun changeDocumentContent(isTypeAhead: Boolean = false, block: () -> Int) {
     dispatcher.multicaster.beforeContentChanged(this)
 
     contentUpdateInProgress = true
@@ -169,7 +169,7 @@ class TerminalOutputModelImpl(
       contentUpdateInProgress = false
     }
 
-    dispatcher.multicaster.afterContentChanged(this, changeStartOffset)
+    dispatcher.multicaster.afterContentChanged(this, changeStartOffset, isTypeAhead)
   }
 
   override fun getHighlightings(): TerminalOutputHighlightingsSnapshot {

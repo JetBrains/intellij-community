@@ -37,7 +37,7 @@ interface TerminalOutputModel {
    */
   fun updateCursorPosition(absoluteLineIndex: Long, columnIndex: Int)
   
-  fun insertAtCursor(text: String)
+  fun insertAtCursor(text: String, isTypeAhead: Boolean = false)
   
   fun backspace()
 
