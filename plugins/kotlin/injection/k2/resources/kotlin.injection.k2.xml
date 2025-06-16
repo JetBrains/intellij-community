@@ -17,6 +17,12 @@
                  description="Experimental `trimIndent` and `trimMargin` injection and fragment editor support for Kotlin"
                  defaultValue="true"
                  restartRequired="false"/>
+
+    <registryKey
+            key="kotlin.highlighting.injection.use.probably.injected.callable.names"
+            description="Use probably.injected.callable.names injection highlighting optimization"
+            defaultValue="true"
+            restartRequired="false" />
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.intelliLang">

@@ -26,6 +26,7 @@
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingFunctionShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinProbablyNothingPropertyShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinProbablyContractedFunctionShortNameIndex"/>
+    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinProbablyInjectedFunctionShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFilePartClassIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeClassByPackageIndex"/>

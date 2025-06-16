@@ -2,8 +2,10 @@
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,7 +48,8 @@ public final class InjectionCache {
     myAnnoIndex = CachedValuesManager.getManager(project).createCachedValue(() -> {
       Set<String> result = collectMethodNamesWithLanguage(
         configuration.getAdvancedConfiguration().getLanguageAnnotationClass());
-      return new CachedValueProvider.Result<>(result, PsiModificationTracker.MODIFICATION_COUNT, configuration);
+      ModificationTracker modificationTracker = PsiModificationTracker.getInstance(project).forLanguage(JavaLanguage.INSTANCE);
+      return new CachedValueProvider.Result<>(result, modificationTracker, configuration);
     }, false);
   }
 

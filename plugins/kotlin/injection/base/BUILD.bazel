@@ -42,6 +42,7 @@ jvm_library(
     "//plugins/IntelliLang/java-support:java-langInjection",
     "//plugins/kotlin/base/psi",
     "@lib//:kotlinc-analysis-api",
+    "//plugins/kotlin/base/analysis",
   ],
   runtime_deps = [":kotlin-base-injection_resources"]
 )
