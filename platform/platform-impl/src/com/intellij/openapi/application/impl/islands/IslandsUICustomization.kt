@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl.islands
 
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.InternalUICustomization
@@ -75,22 +76,34 @@ internal class IslandsUICustomization : InternalUICustomization() {
     }
   }
 
-  init {
-    val listener = AWTEventListener { event ->
-      if (isManyIslandEnabled && JBColor.isBright()) {
-        val component = (event as HierarchyEvent).component
-        val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
+  private val awtListener = AWTEventListener { event ->
+    val component = (event as HierarchyEvent).component
+    val isToolWindow = UIUtil.getParentOfType(XNextIslandHolder::class.java, component) != null
 
-        if (isToolWindow) {
-          UIUtil.forEachComponentInHierarchy(component) {
-            if (it.background == JBColor.PanelBackground) {
-              it.background = JBUI.CurrentTheme.ToolWindow.background()
-            }
-          }
+    if (isToolWindow) {
+      UIUtil.forEachComponentInHierarchy(component) {
+        if (it.background == JBColor.PanelBackground) {
+          it.background = JBUI.CurrentTheme.ToolWindow.background()
         }
       }
     }
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.HIERARCHY_EVENT_MASK)
+  }
+
+  init {
+    if (isManyIslandEnabled && JBColor.isBright()) {
+      Toolkit.getDefaultToolkit().addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
+    }
+
+    val connection = ApplicationManager.getApplication().messageBus.connect()
+    connection.subscribe(LafManagerListener.TOPIC, LafManagerListener {
+      val toolkit = Toolkit.getDefaultToolkit()
+
+      toolkit.removeAWTEventListener(awtListener)
+
+      if (isManyIslandEnabled && JBColor.isBright()) {
+        toolkit.addAWTEventListener(awtListener, AWTEvent.HIERARCHY_EVENT_MASK)
+      }
+    })
   }
 
   private val tabPainterAdapter = ManyIslandsTabPainterAdapter()
