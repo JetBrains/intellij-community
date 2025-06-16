@@ -11,7 +11,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionPoint
-import com.intellij.polySymbols.html.HtmlPolySymbolMatchCustomizer
+import com.intellij.polySymbols.html.HtmlSymbolMatchCustomizer
 import com.intellij.polySymbols.query.impl.CustomElementsManifestMockScopeImpl
 import com.intellij.polySymbols.query.impl.PolySymbolsMockQueryExecutorFactory
 import com.intellij.polySymbols.query.impl.WebTypesMockScopeImpl
@@ -66,7 +66,7 @@ abstract class PolySymbolsMockQueryExecutorTestBase : UsefulTestCase() {
         mockPluginDescriptor, testRootDisposable)
 
     application.extensionArea.getExtensionPoint<PolySymbolMatchCustomizerFactory>("com.intellij.polySymbols.matchCustomizerFactory")
-      .registerExtension(HtmlPolySymbolMatchCustomizer.Factory(), testRootDisposable)
+      .registerExtension(HtmlSymbolMatchCustomizer.Factory(), testRootDisposable)
 
   }
 

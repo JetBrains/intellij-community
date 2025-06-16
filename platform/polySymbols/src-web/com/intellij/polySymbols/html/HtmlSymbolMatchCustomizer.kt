@@ -9,7 +9,7 @@ import com.intellij.polySymbols.query.PolySymbolMatchCustomizerFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object HtmlPolySymbolMatchCustomizer : PolySymbolMatchCustomizer {
+object HtmlSymbolMatchCustomizer : PolySymbolMatchCustomizer {
 
   override fun mergeModifiers(current: Set<PolySymbolModifier>?, toMerge: Set<PolySymbolModifier>, symbol: PolySymbol): Set<PolySymbolModifier>? {
     val result = HashSet<PolySymbolModifier>()
@@ -32,7 +32,7 @@ object HtmlPolySymbolMatchCustomizer : PolySymbolMatchCustomizer {
   class Factory : PolySymbolMatchCustomizerFactory {
     override fun create(symbol: PolySymbolMatch): PolySymbolMatchCustomizer? =
       if (symbol.qualifiedKind.namespace == NAMESPACE_HTML)
-        HtmlPolySymbolMatchCustomizer
+        HtmlSymbolMatchCustomizer
       else
         null
   }

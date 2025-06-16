@@ -75,6 +75,6 @@
       id="html"
       implementation="com.intellij.polySymbols.html.HtmlSymbolDocumentationCustomizer"/>
     <polySymbols.matchCustomizerFactory
-      implementation="com.intellij.polySymbols.html.HtmlPolySymbolMatchCustomizer$Factory"/>
+      implementation="com.intellij.polySymbols.html.HtmlSymbolMatchCustomizer$Factory"/>
   </extensions>
 </idea-plugin>
