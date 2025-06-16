@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.dialog
 
 import com.intellij.frontend.HostIdeInfoService
@@ -45,6 +45,8 @@ data class CommonFeedbackSystemData(
   private val disabledBundledPlugins: List<String>,
   private val nonBundledPlugins: List<String>,
   private val isRemoteDevelopmentHost: Boolean,
+  private val license: String,
+  private val isEAP: Boolean,
 ) : SystemDataJsonSerializable {
   companion object {
     fun getCurrentData(): CommonFeedbackSystemData {
@@ -60,7 +62,9 @@ data class CommonFeedbackSystemData(
         getRegistryKeys(),
         getDisabledPlugins(),
         getNonBundledPlugins(),
-        AppMode.isRemoteDevHost()
+        AppMode.isRemoteDevHost(),
+        getLicenseMetadata(),
+        ApplicationManager.getApplication().isEAP,
       )
     }
 
@@ -140,6 +144,10 @@ data class CommonFeedbackSystemData(
           }
         }
         .toList()
+
+    private fun getLicenseMetadata(): String {
+      return LicensingFacade.getInstance()?.metadata ?: "null"
+    }
   }
 
   fun getMemorySizeForDialog(): String = memorySize.toString() + "M"
