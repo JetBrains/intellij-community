@@ -255,7 +255,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       return;
     }
 
-    if (app.isExitInProgress() && app.getService(InstantShutdown.class).isAllowed()) {
+    if (app.isExitInProgress() && InstantShutdown.isAllowed()) {
       return;
     }
 

@@ -857,8 +857,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   private boolean isInstantShutdownPossible() {
-    InstantShutdown instantShutdown = Objects.requireNonNull(getService(InstantShutdown.class));
-    return instantShutdown.isAllowed() && !ProgressManager.getInstance().hasProgressIndicator();
+    return InstantShutdown.isAllowed() && !ProgressManager.getInstance().hasProgressIndicator();
   }
 
   private @NotNull CompletableFuture<@NotNull ProgressWindow> createProgressWindowAsyncIfNeeded(
