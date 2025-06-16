@@ -330,5 +330,10 @@ public final class BackgroundUpdateHighlightersUtil {
     if (HighlightInfoType.VISIBLE_IF_FOLDED.contains(info.type)) {
       highlighter.setVisibleIfFolded(true);
     }
+    if (info.type.equals(HighlightInfoType.WRONG_REF)) {
+      // when typing right after/before the unresolved identifier, its color must stay red
+      highlighter.setGreedyToRight(true);
+      highlighter.setGreedyToLeft(true);
+    }
   }
 }

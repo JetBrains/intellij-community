@@ -420,7 +420,7 @@ public final class UpdateHighlightersUtil {
 
     for (HighlightInfo info : toRemove) {
       RangeHighlighterEx highlighter = info.getHighlighter();
-      if (!highlighter.isValid() || info.type.equals(HighlightInfoType.WRONG_REF)) {
+      if (!highlighter.isValid()) {
         disposeWithFileLevelIgnoreErrorsInEDT(highlighter, project, info);
       }
     }
