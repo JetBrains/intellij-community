@@ -42,6 +42,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.highlighters.VcsLogCommitsHighlighter;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
@@ -714,9 +715,17 @@ public class VcsLogGraphTable extends TableWithProgress
       }
     }
     else {
-      style = createStyle(baseStyle.getForeground(),
-                          selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
-                          VcsLogHighlighter.TextStyle.BOLD);
+      int columnModelIndex = convertColumnIndexToModel(column);
+      if (VcsLogColumnManager.getInstance().getModelIndex(Commit.INSTANCE) == columnModelIndex) {
+        style = createStyle(JBColor.GRAY,
+                            selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
+                            VcsLogHighlighter.TextStyle.NORMAL);
+
+      } else {
+        style = createStyle(baseStyle.getForeground(),
+                            selected ? baseStyle.getBackground() : CURRENT_BRANCH_BG,
+                            VcsLogHighlighter.TextStyle.BOLD);
+      }
     }
 
     if (!selected && hovered && !AppMode.isRemoteDevHost()) {
