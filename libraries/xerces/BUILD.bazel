@@ -1,0 +1,20 @@
+### auto-generated section `build intellij.libraries.xerces` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "xerces_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "xerces",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:xerces"],
+  runtime_deps = [
+    ":xerces_resources",
+    "@lib//:xerces",
+  ]
+)
+### auto-generated section `build intellij.libraries.xerces` end

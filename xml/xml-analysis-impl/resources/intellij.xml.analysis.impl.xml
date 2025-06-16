@@ -1,4 +1,13 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.xml.analysis"/>
+    <module name="intellij.xml.psi.impl"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.libraries.xerces"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint name="xml.nsColorProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.XmlNSColorProvider"

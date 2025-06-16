@@ -2,6 +2,8 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.frontback.impl"/>
   </dependencies>
 
   <projectListeners>
@@ -109,7 +111,7 @@
     <polySymbols.codeCompletionItemCustomizer
       id="html"
       implementation="com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor$HtmlCodeCompletionItemCustomizer"/>
-    <xml.attributeDescriptorsProvider
+    <xml.attributeDescriptorsProvider id="html-default"
       implementation="com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolDescriptorsProvider"/>
     <xml.elementDescriptorProvider
       implementation="com.intellij.html.polySymbols.elements.HtmlElementSymbolDescriptorsProvider"/>

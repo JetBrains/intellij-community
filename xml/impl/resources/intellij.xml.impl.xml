@@ -1,4 +1,16 @@
-<idea-plugin>>
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.xml.analysis.impl"/>
+    <module name="intellij.xml.structureView.impl"/>/>
+    <module name="intellij.xml.parser"/>
+    <module name="intellij.xml.frontback.impl"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.psi.impl"/>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.libraries.xerces"/>
+    <module name="intellij.xml.dom"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.html.compatibleLanguage"
                     beanClass="com.intellij.lang.html.HtmlCompatibleMetaLanguage$HtmlCompatibleLanguageEP"
@@ -400,7 +412,7 @@
     <renameInputValidator implementation="com.intellij.lang.xml.XmlElementRenameValidator"/>
     <renameInputValidator implementation="com.intellij.lang.xml.XmlAttributeValueRenameValidator"/>
 
-    <xml.attributeDescriptorsProvider implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
+    <xml.attributeDescriptorsProvider order="before html-default" implementation="com.intellij.html.impl.Html5CustomAttributeDescriptorsProvider"/>
 
     <breadcrumbsPresentationProvider implementation="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeBreadcrumbsPresentationProvider"/>
 
@@ -430,5 +442,7 @@
                                        toolShortName="HtmlUnknownAttribute"/>
     <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="UnknownSymbol"
                                        toolShortName="HtmlUnknownTag"/>
+
+    <virtualFileCustomDataProvider implementation="com.intellij.xml.HtmlCodeStyleSettingsCustomDataSynchronizer"/>
   </extensions>
 </idea-plugin>
