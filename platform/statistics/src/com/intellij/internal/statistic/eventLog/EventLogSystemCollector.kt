@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMeta
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateError
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventLogMetadataUpdateStage
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException.EventLogUploadErrorType
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -29,7 +30,12 @@ import java.util.*
 @ApiStatus.Internal
 internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerProvider) : CounterUsagesCollector() {
   private val id = "${eventLoggerProvider.recorderId.lowercase(Locale.ENGLISH)}.event.log"
-  private val GROUP = EventLogGroup(id, eventLoggerProvider.version, eventLoggerProvider.recorderId)
+  private val GROUP = EventLogGroup(id,
+                                    // Increase the group's versions locally
+                                    // and not increase the versions in all StatisticsEventLoggerProvider
+                                    // in case of any changes in the groups
+                                    eventLoggerProvider.version + 1,
+                                    eventLoggerProvider.recorderId)
   override fun getGroup(): EventLogGroup = GROUP
 
   private val metadataLoadedEvent = GROUP.registerEvent("metadata.loaded", EventFields.Version, METADATA_LOADED_DESCRIPTION)
@@ -71,6 +77,13 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
                                                                    LOADING_CONFIG_FAILED_DESCRIPTION,
                                                                    errorLoadingConfigFailedField,
                                                                    errorTSLoadingConfigFailedField)
+
+  private val sentFilesCountCalculated: EventId3<Int, Int, Int> = GROUP.registerEvent("sent.logs.files.calculated",
+                                                                                 totalFilesCount,
+                                                                                 maxSentFilesCount,
+                                                                                 sentFilesCount,
+                                                                                 "Calculate the count of logs files to send"
+  )
 
   fun logMetadataLoaded(version: String?) = metadataLoadedEvent.log(version)
   fun logMetadataUpdated(version: String?) = metadataUpdatedEvent.log(version)
@@ -125,6 +138,10 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
       eventPairs.add(errorTSLoadingConfigFailedField.with(time))
     }
     loadingConfigFailedEvent.log(eventPairs)
+  }
+
+  fun logFileToSendCalculated(totalFilesCount: Int, maxSentFilesCount: Int, sentFilesCount: Int) {
+    sentFilesCountCalculated.log(totalFilesCount, maxSentFilesCount,sentFilesCount)
   }
 
   companion object {
@@ -205,5 +222,8 @@ internal class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLogge
                                                                                                           ERROR_EXTERNAL_SEND_COMMAND_CREATION_FINISHED_DESCRIPTION)
     private val errorLoadingConfigFailedField = EventFields.StringValidatedByCustomRule("error", ClassNameRuleValidator::class.java)
     private val errorTSLoadingConfigFailedField = EventFields.Long("error_ts", ERROR_TS_LOADING_CONFIG_FAILED_DESCRIPTION)
+    private val totalFilesCount = EventFields.Int("total_files_count", "The total logs files count")
+    private val maxSentFilesCount = EventFields.Int("max_sent_files_count", "The max sent logs files count")
+    private val sentFilesCount = EventFields.Int("sent_files_count", "The sent logs files count")
   }
 }

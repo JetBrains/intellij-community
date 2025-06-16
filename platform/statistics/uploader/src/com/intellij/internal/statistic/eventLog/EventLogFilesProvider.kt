@@ -43,29 +43,3 @@ class DefaultEventLogFilesProvider(
 interface FilesToSendProvider {
   fun getFilesToSend(): List<EventLogFile>
 }
-
-internal class DefaultFilesToSendProvider(
-  private val logFilesProvider: EventLogFilesProvider,
-  private val maxFilesToSend: Int,
-  private val filterActiveFile: Boolean,
-) : FilesToSendProvider {
-  override fun getFilesToSend(): List<EventLogFile> {
-    val files = if (filterActiveFile) {
-      logFilesProvider.getLogFilesExceptActive()
-    }
-    else {
-      logFilesProvider.getLogFiles()
-    }
-    return getFilesToSend(files, maxFilesToSend).map { EventLogFile(it) }
-  }
-
-  private fun getFilesToSend(files: List<File>, maxFilesToSend: Int): List<File> {
-    val filteredFiles = if (maxFilesToSend == -1) {
-      files.toList()
-    }
-    else {
-      files.take(maxFilesToSend)
-    }
-    return filteredFiles
-  }
-}
