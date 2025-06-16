@@ -30,7 +30,6 @@ interface EelNioBridgeService {
     fun getInstanceSync(): EelNioBridgeService = ApplicationManager.getApplication().service()
 
     @JvmStatic
-    @RequiresBlockingContext
     suspend fun getInstance(): EelNioBridgeService = ApplicationManager.getApplication().serviceAsync()
   }
 
