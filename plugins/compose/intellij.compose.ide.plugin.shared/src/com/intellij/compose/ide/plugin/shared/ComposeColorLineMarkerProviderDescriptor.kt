@@ -375,7 +375,7 @@ private fun KtConstantExpression.colorParamTypeOrNull(): ComposeColorParamType? 
 }
 
 private fun List<KtValueArgument>.singleColorParamTypeOrNull(): ComposeColorParamType? {
-  val elementsTypes = map { (it.children.singleOrNull() as? KtConstantExpression)?.colorParamTypeOrNull() }
+  val elementsTypes = map { (it.getArgumentExpression() as? KtConstantExpression)?.colorParamTypeOrNull() }
   return when {
     elementsTypes.all { it == ComposeColorParamType.FLOAT } -> ComposeColorParamType.FLOAT
     elementsTypes.all { it == ComposeColorParamType.INT } -> ComposeColorParamType.INT
