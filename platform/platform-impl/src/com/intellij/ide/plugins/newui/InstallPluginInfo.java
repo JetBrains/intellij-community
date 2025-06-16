@@ -5,9 +5,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -60,7 +63,8 @@ final class InstallPluginInfo {
     ourShowRestart = true;
   }
 
-  public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired) {
+  public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired,
+                                  List<? extends HtmlChunk> errors) {
     if (myClosed) {
       return;
     }
@@ -76,7 +80,7 @@ final class InstallPluginInfo {
       }
     }
     else if (!cancel) {
-      myPluginModel.finishInstall(myDescriptor, myInstalledDescriptor, success, showErrors, restartRequired);
+      myPluginModel.finishInstall(myDescriptor, myInstalledDescriptor, success, showErrors, restartRequired, errors);
     }
   }
 

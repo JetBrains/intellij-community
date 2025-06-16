@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -339,12 +338,19 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           disableById(result.getPluginsToDisable());
           if (myPluginManagerCustomizer != null) {
             myPluginManagerCustomizer.updateAfterModification(() -> {
-              info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired());
+
+              info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired(), getErrors(result));
               return null;
             });
-          } else {
-            info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired());
           }
+          else {
+            info.finish(result.getSuccess(), result.getCancel(), result.getShowErrors(), result.getRestartRequired(), getErrors(result));
+          }
+        }
+
+        private static @NotNull List<? extends HtmlChunk> getErrors(InstallPluginResult result) {
+          if (result.getErrors() == null) return Collections.emptyList();
+          return MyPluginModel.getErrors(result.getErrors());
         }
 
 
@@ -444,7 +450,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                      @Nullable PluginUiModel installedDescriptor,
                      boolean success,
                      boolean showErrors,
-                     boolean restartRequired) {
+                     boolean restartRequired,
+                     List<? extends HtmlChunk> errors) {
     InstallPluginInfo info = finishInstall(descriptor);
 
     if (myInstallingWithUpdatesPlugins.isEmpty()) {
@@ -460,7 +467,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         }
         gridComponent.hideProgress(success, restartRequired);
         if (gridComponent.myInstalledDescriptorForMarketplace != null) {
-          gridComponent.updateErrors();
+          gridComponent.updateErrors(errors);
         }
       }
     }
@@ -471,7 +478,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           listComponent.setPluginModel(installedDescriptor);
         }
         listComponent.hideProgress(success, restartRequired);
-        listComponent.updateErrors();
+        listComponent.updateErrors(errors);
       }
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
@@ -1004,14 +1011,18 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       return List.of();
     }
     CheckErrorsResult response = UiPluginManager.getInstance().getErrors(sessionId.toString(), pluginId);
-    if (response.isDisabledDependencyError()) {
-      String loadingError = response.getLoadingError();
+    return getErrors(response);
+  }
+
+  private static @NotNull List<? extends HtmlChunk> getErrors(@NotNull CheckErrorsResult checkErrorsResult) {
+    if (checkErrorsResult.isDisabledDependencyError()) {
+      String loadingError = checkErrorsResult.getLoadingError();
       return loadingError != null ? List.of(createTextChunk(loadingError)) : List.of();
     }
 
     ArrayList<HtmlChunk> errors = new ArrayList<>();
 
-    Set<String> requiredPluginNames = response.getRequiredPluginNames();
+    Set<String> requiredPluginNames = checkErrorsResult.getRequiredPluginNames();
     if (requiredPluginNames.isEmpty()) {
       return errors;
     }
@@ -1020,7 +1031,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                        joinPluginNamesOrIds(requiredPluginNames));
     errors.add(createTextChunk(message));
 
-    if (response.getSuggestToEnableRequiredPlugins()) {
+    if (checkErrorsResult.getSuggestToEnableRequiredPlugins()) {
       String action = IdeBundle.message("new.plugin.manager.incompatible.deps.action", requiredPluginNames.size());
       errors.add(HtmlChunk.link("link", action));
     }

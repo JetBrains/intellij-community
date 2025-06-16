@@ -660,9 +660,8 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  public void updateErrors() {
+  public void updateErrors(List<? extends HtmlChunk> errors){
     PluginUiModel plugin = getDescriptorForActions();
-    List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myModelFacade.getErrors(plugin);
     boolean hasErrors = !errors.isEmpty() && !myIsNotFreeInFreeMode;
     updateIcon(hasErrors,
                myModelFacade.isUninstalled(plugin.getPluginId()) || !isEnabledState() || !myIsAvailable);
@@ -703,6 +702,16 @@ public final class ListPluginComponent extends JPanel {
     if (myUpdateLicensePanel != null) {
       myUpdateLicensePanel.setVisible(!hasErrors && !myIsNotFreeInFreeMode);
     }
+  }
+
+  /**
+   * @deprecated use #updateErrors(List<? extends HtmlChunk>)
+   */
+  @Deprecated(forRemoval = true)
+  public void updateErrors() {
+    PluginUiModel plugin = getDescriptorForActions();
+    List<? extends HtmlChunk> errors = myOnlyUpdateMode ? List.of() : myModelFacade.getErrors(plugin);
+    updateErrors(errors);
   }
 
   private void updateIcon(boolean errors, boolean disabled) {

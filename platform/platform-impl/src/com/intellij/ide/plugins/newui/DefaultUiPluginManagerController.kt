@@ -518,6 +518,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override fun getErrors(sessionId: String, pluginId: PluginId): CheckErrorsResult {
     val session = findSession(sessionId) ?: return CheckErrorsResult()
+    return getErrors(session, pluginId)
+  }
+
+  private fun getErrors(session: PluginManagerSession, pluginId: PluginId): CheckErrorsResult {
     if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId) ||
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId)) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any loadingError
@@ -727,6 +731,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         LOG.warn("pending dynamic plugins probably won't finish their installation: " + session.dynamicPluginsToInstall + " " + session.dynamicPluginsToUninstall)
       }
     }
+    result.errors = getErrors(session, request.pluginId)
     installCallback(result)
   }
 
