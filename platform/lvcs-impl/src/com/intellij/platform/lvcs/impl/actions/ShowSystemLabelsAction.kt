@@ -3,15 +3,14 @@ package com.intellij.platform.lvcs.impl.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
 import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 
-internal class ShowSystemLabelsAction: ToggleAction(), DumbAware {
+internal class ShowSystemLabelsAction: DumbAwareToggleAction() {
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return isShowSystemLabelsEnabled()
