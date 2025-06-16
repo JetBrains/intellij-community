@@ -565,7 +565,7 @@ suspend fun <T> withDebugContext(
  *
  * This is similar to [withContext] call to switch to the debugger thread inside a coroutine.
  *
- * The started [Job] is tied to the manager thread's [CoroutineScope], so it gets canceled when the manager thread is stoped.
+ * The started [Job] is tied to the manager thread's [CoroutineScope], so it gets canceled when the manager thread is stopped.
  *
  * This function can be used to work with the debugger manager thread:
  * ```
