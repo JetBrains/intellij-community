@@ -28,6 +28,7 @@ class JavaReflectionMemberAccessTest : LightJavaCodeInsightFixtureTestCase() {
   fun testConstructorExists() = doTest(true)
   fun testConstructorInnerClass() = doTest(true)
   fun testConstructorLocalClass() = doTest(true)
+  fun testConstructorLocalClassInStaticMethod() = doTest(true)
 
   fun testNewInstance() = doTest(true)
   fun testBugs() = doTest(true)

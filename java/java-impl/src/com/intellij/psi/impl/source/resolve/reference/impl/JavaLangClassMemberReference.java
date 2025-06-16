@@ -186,7 +186,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   private static int matchMethodArguments(PsiMethod method, List<ReflectiveType> argumentTypes) {
     // Get nested classes because they need to be passed if not static
     List<PsiClass> enclosingClasses = PsiTreeUtil.collectParents(method, PsiClass.class, false, parent -> {
-        return parent instanceof PsiFile || parent instanceof PsiClass cls && cls.hasModifier(JvmModifier.STATIC);
+        return parent instanceof PsiFile || (parent instanceof PsiModifierListOwner cls && cls.hasModifier(JvmModifier.STATIC));
     });
     if (!enclosingClasses.isEmpty()) {
       // the containing class of the method doesn't need to be passed
