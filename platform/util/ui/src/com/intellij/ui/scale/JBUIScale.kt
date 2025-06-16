@@ -45,6 +45,10 @@ object JBUIScale {
 
   internal val userScale: Float
     get() = userScaleFactor.value
+  
+  @Internal
+  @JvmStatic
+  fun isInitialized(): Boolean = systemScaleFactor.isInitialized()
 
   @Internal
   suspend fun preload(uiDefaults: Supplier<UIDefaults?>) {

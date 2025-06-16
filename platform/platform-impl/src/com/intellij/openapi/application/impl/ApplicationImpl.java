@@ -50,6 +50,7 @@ import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvi
 import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -1054,11 +1055,18 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     @NotNull Consumer<? super @Nullable ProgressIndicator> action
   ) {
     return lock.runWriteAction(action.getClass(), () -> {
-      var indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
-      indicator.runInSwingThread(() -> {
+      if (JBUIScale.isInitialized()) {
+        var indicator = new PotemkinProgress(title, project, parentComponent, cancelText);
+        indicator.runInSwingThread(() -> {
+          action.accept(indicator);
+        });
+        return !indicator.isCanceled();
+      }
+      else {
+        var indicator = new EmptyProgressIndicator();
         action.accept(indicator);
-      });
-      return !indicator.isCanceled();
+        return !indicator.isCanceled();
+      }
     });
   }
 
