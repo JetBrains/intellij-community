@@ -108,7 +108,7 @@
       implementation="com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator"/>
     <polySymbols.codeCompletionItemCustomizer
       id="html"
-      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator$HtmlSymbolsCodeCompletionItemCustomizer"/>
+      implementation="com.intellij.html.polySymbols.PolySymbolsHtmlQueryConfigurator$HtmlCodeCompletionItemCustomizer"/>
     <xml.attributeDescriptorsProvider
       implementation="com.intellij.html.polySymbols.attributes.PolySymbolAttributeDescriptorsProvider"/>
     <xml.elementDescriptorProvider

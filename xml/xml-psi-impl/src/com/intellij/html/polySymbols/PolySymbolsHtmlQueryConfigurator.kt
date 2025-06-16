@@ -105,7 +105,7 @@ class PolySymbolsHtmlQueryConfigurator : PolySymbolsQueryConfigurator {
       location.hashCode()
   }
 
-  class HtmlSymbolsCodeCompletionItemCustomizer : PolySymbolCodeCompletionItemCustomizer {
+  class HtmlCodeCompletionItemCustomizer : PolySymbolCodeCompletionItemCustomizer {
     override fun customize(
       item: PolySymbolCodeCompletionItem,
       framework: FrameworkId?,
