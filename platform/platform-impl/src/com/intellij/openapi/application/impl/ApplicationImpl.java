@@ -744,7 +744,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         return null;
       }
 
-      stopServicePreloading();
+      try {
+        stopServicePreloading();
+      }
+      catch (Throwable t) {
+        logErrorDuringExit("Failed to stop service preloading", t);
+      }
 
       try {
         lifecycleListener.beforeAppWillBeClosed(restart);
@@ -763,10 +768,15 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         }
       }
 
-      if (isInstantShutdownPossible()) {
-        for (Frame frame : Frame.getFrames()) {
-          frame.setVisible(false);
+      try {
+        if (isInstantShutdownPossible()) {
+          for (Frame frame : Frame.getFrames()) {
+            frame.setVisible(false);
+          }
         }
+      }
+      catch (Throwable e) {
+        logErrorDuringExit("Failed to instant shutdown the frames", e);
       }
 
       try {
@@ -776,7 +786,12 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
         logErrorDuringExit("Failed to invoke lifecycle listeners", t);
       }
 
-      LifecycleUsageTriggerCollector.onIdeClose(restart);
+      try {
+        LifecycleUsageTriggerCollector.onIdeClose(restart);
+      }
+      catch (Throwable e) {
+        logErrorDuringExit("Failed to notify usage collector", e);
+      }
 
       boolean success = true;
       ProjectManagerEx manager = ProjectManagerEx.getInstanceExIfCreated();
