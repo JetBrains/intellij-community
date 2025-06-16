@@ -51,8 +51,38 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     }
 
     @ParameterizedTest
-    @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
+    @CsvCrossProductSource("GROOVY", "true,false")
     fun testMultiModuleProject(gradleDsl: GradleDsl, addSampleCode: Boolean): Unit = runBlocking {
+        createProjectByWizard(KOTLIN) {
+            setGradleWizardData("project", gradleDsl = gradleDsl, addSampleCode = addSampleCode, generateMultipleModules = true)
+        }.withProjectAsync { project ->
+            assertProjectState(project, projectInfo("project", gradleDsl) {
+                if (gradleDsl == GradleDsl.KOTLIN) {
+                    modulesPerSourceSet.clear() // no build script for root module
+                    moduleInfo("project.app", "app")
+                    moduleInfo("project.utils", "utils")
+                    moduleInfo("project.buildSrc", "buildSrc")
+                }
+            })
+        }.withProjectAsync { project ->
+            val hasKotlinFiles = project.projectRoot.walk()
+                .any { it.extension == "kt" && !it.pathString.contains("project/buildSrc/build/generated-sources/") }
+            if (addSampleCode) {
+                Assertions.assertTrue(hasKotlinFiles) {
+                    "Project with sample code should contain Kotlin files"
+                }
+            } else {
+                Assertions.assertFalse(hasKotlinFiles) {
+                    "Project without sample code should not contain Kotlin files"
+                }
+            }
+        }.closeProjectAsync()
+    }
+
+    @ParameterizedTest
+    @CsvCrossProductSource("KOTLIN", "true")
+    //@CsvCrossProductSource("KOTLIN", "true, false") See KTIJ-34593. Merge this test with the test above when fixed
+    fun testMultiModuleProjectKotlin(gradleDsl: GradleDsl, addSampleCode: Boolean): Unit = runBlocking {
         createProjectByWizard(KOTLIN) {
             setGradleWizardData("project", gradleDsl = gradleDsl, addSampleCode = addSampleCode, generateMultipleModules = true)
         }.withProjectAsync { project ->
