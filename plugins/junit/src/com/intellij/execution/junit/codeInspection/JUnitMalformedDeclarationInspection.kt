@@ -589,6 +589,7 @@ private class JUnitMalformedSignatureVisitor(
   private fun checkAbsentSourceProvider(
     containingClass: PsiClass, attributeValue: PsiElement, sourceProviderName: String, method: UMethod
   ) {
+    if (containingClass.isInterface || PsiUtil.isAbstractClass(containingClass)) return
     val place = (if (method.javaPsi.isAncestor(attributeValue, true)) attributeValue
     else method.javaPsi.nameIdentifier ?: method.javaPsi).toUElement()?.sourcePsi ?: return
     val message = JUnitBundle.message(
