@@ -525,6 +525,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverLaunch.kt");
                     }
 
+                    @TestMetadata("stepOverRunBlockingInsideCoroutine.kt")
+                    public void testStepOverRunBlockingInsideCoroutine() throws Exception {
+                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverRunBlockingInsideCoroutine.kt");
+                    }
+
                     @TestMetadata("stepOverSuspendCallAndStopAtFirstLineBug.kt")
                     public void testStepOverSuspendCallAndStopAtFirstLineBug() throws Exception {
                         runTest("testData/evaluation/singleBreakpoint/coroutines/stepOver/stepOverSuspendCallAndStopAtFirstLineBug.kt");
@@ -632,6 +637,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 @TestMetadata("primitivesCoertion.kt")
                 public void testPrimitivesCoertion() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/coroutines/primitivesCoertion.kt");
+                }
+
+                @TestMetadata("privateSuspend.kt")
+                public void testPrivateSuspend() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/privateSuspend.kt");
                 }
 
                 @TestMetadata("stringUpdateInvokeStatic.kt")
@@ -865,6 +875,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("delegatedPropertyInClassWoRenderer.kt")
             public void testDelegatedPropertyInClassWoRenderer() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/delegatedPropertyInClassWoRenderer.kt");
+            }
+
+            @TestMetadata("evaluatableGetters.kt")
+            public void testEvaluatableGetters() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/evaluatableGetters.kt");
             }
 
             @TestMetadata("frameAnonymousObject.kt")
@@ -1461,6 +1476,40 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/singleBreakpoint/reifiedTypeParameters")
+        public static class ReifiedTypeParameters extends AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("capturedTypeParam.kt")
+            public void testCapturedTypeParam() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/capturedTypeParam.kt");
+            }
+
+            @TestMetadata("crossfileInlining.kt")
+            public void testCrossfileInlining() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/crossfileInlining.kt");
+            }
+
+            @TestMetadata("properties.kt")
+            public void testProperties() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/properties.kt");
+            }
+
+            @TestMetadata("variousTypeOperators.kt")
+            public void testVariousTypeOperators() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/reifiedTypeParameters/variousTypeOperators.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/renderer")
         public static class Renderer extends AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest {
             @java.lang.Override
@@ -1864,6 +1913,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/functionDeclaration.kt");
             }
 
+            @TestMetadata("functionRightBrace.kt")
+            public void testFunctionRightBrace() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/functionRightBrace.kt");
+            }
+
             @TestMetadata("functionWithBodyExpression.kt")
             public void testFunctionWithBodyExpression() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/functionWithBodyExpression.kt");
@@ -1919,11 +1973,6 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointVariants.kt");
             }
 
-            @TestMetadata("inlineFunctionClassFileLoading.kt")
-            public void testInlineFunctionClassFileLoading() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/inlineFunctionClassFileLoading.kt");
-            }
-
             @TestMetadata("inlineFunctionDeepInlining.kt")
             public void testInlineFunctionDeepInlining() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/inlineFunctionDeepInlining.kt");
@@ -1977,6 +2026,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("jvmNameConstEvaluation.kt")
             public void testJvmNameConstEvaluation() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/jvmNameConstEvaluation.kt");
+            }
+
+            @TestMetadata("jvmSpecifiedNamesInlining.kt")
+            public void testJvmSpecifiedNamesInlining() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/jvmSpecifiedNamesInlining.kt");
             }
 
             @TestMetadata("kClass.kt")
@@ -2039,6 +2093,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/kt5554OnlyIntsShouldBeCoerced.kt");
             }
 
+            @TestMetadata("kt69624.kt")
+            public void testKt69624() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt69624.kt");
+            }
+
             @TestMetadata("kt7046localVarInInline.kt")
             public void testKt7046localVarInInline() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/kt7046localVarInInline.kt");
@@ -2059,6 +2118,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/ktij26694.kt");
             }
 
+            @TestMetadata("lambdaRightBrace.kt")
+            public void testLambdaRightBrace() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdaRightBrace.kt");
+            }
+
             @TestMetadata("lambdaToString.kt")
             public void testLambdaToString() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
@@ -2072,6 +2136,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("localClass.kt")
             public void testLocalClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/localClass.kt");
+            }
+
+            @TestMetadata("localFunRefCapturingLocalVar.kt")
+            public void testLocalFunRefCapturingLocalVar() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/localFunRefCapturingLocalVar.kt");
             }
 
             @TestMetadata("localFunctionCapturedLocalVariable.kt")
@@ -2097,6 +2166,16 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("methodWithBreakpoint.kt")
             public void testMethodWithBreakpoint() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/methodWithBreakpoint.kt");
+            }
+
+            @TestMetadata("multifileClassMembers.kt")
+            public void testMultifileClassMembers() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/multifileClassMembers.kt");
+            }
+
+            @TestMetadata("multifileClassMembers-parts-inherit.kt")
+            public void testMultifileClassMembers_parts_inherit() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/multifileClassMembers-parts-inherit.kt");
             }
 
             @TestMetadata("multilineExpressionAtBreakpoint.kt")
@@ -2450,6 +2529,40 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("localFunInLibrary.kt")
             public void testLocalFunInLibrary() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/library/localFunInLibrary.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation")
+        public static class ReifiedParamEvaluation extends AbstractK1IdeK2CodeKotlinEvaluateExpressionInMppTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("generics.kt")
+            public void testGenerics() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation/generics.kt");
+            }
+
+            @TestMetadata("multilineCall.kt")
+            public void testMultilineCall() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation/multilineCall.kt");
+            }
+
+            @TestMetadata("noCaching.kt")
+            public void testNoCaching() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation/noCaching.kt");
+            }
+
+            @TestMetadata("reifiedParamEvalWithComplexInvocationLookup.kt")
+            public void testReifiedParamEvalWithComplexInvocationLookup() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/reifiedParamEvaluation/reifiedParamEvalWithComplexInvocationLookup.kt");
             }
         }
 

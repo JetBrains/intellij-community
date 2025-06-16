@@ -1,6 +1,12 @@
 ### auto-generated section `build kotlin.base.analysis.analysis-api.k2.tests` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+
+create_kotlinc_options(
+  name = "custom",
+  context_receivers = True
+)
 
 java_library(
   name = "kotlin-base-analysis-analysis-api-k2-tests",
@@ -11,22 +17,28 @@ jvm_library(
   name = "kotlin-base-analysis-analysis-api-k2-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/plugin/k2:kotlin-plugin-k2",
+    "//platform/core-api:core",
+    "//platform/indexing-api:indexing",
+    "//plugins/kotlin/plugin/k2",
     "@lib//:kotlinc-analysis-api",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
-    "//plugins/kotlin/fir/tests:kotlin-fir-tests_test_lib",
+    "//plugins/kotlin/fir/tests:tests_test_lib",
     "//java/testFramework",
     "@lib//:kotlinc-kotlin-compiler-tests",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/project-structure:project-structure_test_lib",
+    "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
+    "@lib//:kotlinc-analysis-api-platform-interface",
+    "@lib//:kotlinc-kotlin-compiler-common",
   ]
 )
 

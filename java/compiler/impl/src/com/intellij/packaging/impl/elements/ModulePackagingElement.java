@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -31,5 +32,6 @@ public interface ModulePackagingElement {
   Module findModule(PackagingElementResolvingContext context);
 
   @NotNull
+  @Unmodifiable
   Collection<VirtualFile> getSourceRoots(PackagingElementResolvingContext context);
 }

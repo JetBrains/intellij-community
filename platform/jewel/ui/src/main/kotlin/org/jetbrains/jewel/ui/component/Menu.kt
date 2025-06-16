@@ -82,11 +82,28 @@ import org.jetbrains.jewel.ui.component.styling.MenuItemColors
 import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.icon.IconKey
-import org.jetbrains.jewel.ui.icon.PathIconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.menuStyle
 import org.jetbrains.skiko.hostOs
 
+/**
+ * A popup menu component that follows the standard visual styling with customizable content.
+ *
+ * Provides a floating menu that can be used for context menus, dropdown menus, and other popup menu scenarios. The menu
+ * supports keyboard navigation, icons, keybindings, and nested submenus.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/popups-and-menus.html)
+ *
+ * **Swing equivalent:** [`JPopupMenu`](https://docs.oracle.com/javase/tutorial/uiswing/components/menu.html#popup)
+ *
+ * @param onDismissRequest Called when the menu should be dismissed, returns true if the dismissal was handled
+ * @param horizontalAlignment The horizontal alignment of the menu relative to its anchor point
+ * @param modifier Modifier to be applied to the menu container
+ * @param style The visual styling configuration for the menu and its items
+ * @param popupProperties Properties controlling the popup window behavior
+ * @param content The menu content builder using [MenuScope]
+ * @see javax.swing.JPopupMenu
+ */
 @Composable
 public fun PopupMenu(
     onDismissRequest: (InputMode) -> Boolean,
@@ -205,7 +222,45 @@ private fun ShowMenuItem(item: MenuItem, canShowIcon: Boolean = false, canShowKe
     }
 }
 
+/**
+ * Scope interface for building menu content using a DSL-style API.
+ *
+ * This interface provides methods for adding various types of menu items:
+ * - Selectable items with optional icons and keybindings
+ * - Submenus for nested menu structures
+ * - Passive items for custom content
+ * - Separators for visual grouping
+ *
+ * **Usage example:**
+ *
+ * ```kotlin
+ * PopupMenu {
+ *     selectableItem(selected = false, onClick = { /* handle click */ }) {
+ *         Text("Menu Item")
+ *     }
+ *     separator()
+ *     submenu(content = { Text("Submenu") }) {
+ *         selectableItem(selected = true, onClick = { /* handle click */ }) {
+ *             Text("Submenu Item")
+ *         }
+ *     }
+ * }
+ * ```
+ */
 public interface MenuScope {
+    /**
+     * Adds a selectable menu item with optional icon and keybinding.
+     *
+     * Creates a menu item that can be selected and clicked. The item supports an optional icon and keybinding display,
+     * and can be enabled or disabled. When clicked, the provided onClick handler is called.
+     *
+     * @param selected Whether this item is currently selected
+     * @param iconKey Optional icon key for displaying an icon before the content
+     * @param keybinding Optional set of strings representing the keybinding (e.g., ["Ctrl", "C"])
+     * @param onClick Called when the item is clicked
+     * @param enabled Controls whether the item can be interacted with
+     * @param content The content to be displayed in the menu item
+     */
     public fun selectableItem(
         selected: Boolean,
         iconKey: IconKey? = null,
@@ -215,6 +270,18 @@ public interface MenuScope {
         content: @Composable () -> Unit,
     )
 
+    /**
+     * Adds a submenu item that opens a nested menu when hovered or clicked.
+     *
+     * Creates a menu item that displays a nested menu when the user interacts with it. The submenu can have its own
+     * items and supports the same features as the parent menu. Submenus can be nested to create hierarchical menu
+     * structures.
+     *
+     * @param enabled Controls whether the submenu can be interacted with
+     * @param iconKey Optional icon key for displaying an icon before the content
+     * @param submenu Builder for the submenu content using the same [MenuScope] DSL
+     * @param content The content to be displayed in the submenu item
+     */
     public fun submenu(
         enabled: Boolean = true,
         iconKey: IconKey? = null,
@@ -222,9 +289,23 @@ public interface MenuScope {
         content: @Composable () -> Unit,
     )
 
+    /**
+     * Adds a non-interactive item with custom content to the menu.
+     *
+     * Creates a menu item that displays custom content but does not respond to user interaction. This is useful for
+     * displaying informational content, headers, or other non-interactive elements within the menu.
+     *
+     * @param content The custom content to be displayed in the menu item
+     */
     public fun passiveItem(content: @Composable () -> Unit)
 }
 
+/**
+ * Adds a visual separator line between menu items.
+ *
+ * Creates a horizontal line that helps visually group related menu items. This is commonly used to separate different
+ * sections of a menu, making it easier for users to understand the menu's structure.
+ */
 public fun MenuScope.separator() {
     passiveItem { MenuSeparator() }
 }
@@ -443,30 +524,6 @@ internal fun MenuItem(
     }
 }
 
-@Deprecated(
-    "Use the IconKey variant",
-    ReplaceWith(
-        "MenuSubmenuItem(modifier, enabled, canShowIcon, iconResource?.let { PathIconKey(it, iconClass) }, " +
-            "interactionSource, style, submenu, content)",
-        "org/jetbrains/jewel/ui/component/Menu.kt:472",
-    ),
-)
-@Composable
-public fun MenuSubmenuItem(
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    canShowIcon: Boolean,
-    iconResource: String?,
-    iconClass: Class<*>,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    style: MenuStyle = JewelTheme.menuStyle,
-    submenu: MenuScope.() -> Unit,
-    content: @Composable () -> Unit,
-) {
-    val iconKey = remember(iconResource, iconClass) { iconResource?.let { PathIconKey(it, iconClass) } }
-    MenuSubmenuItem(modifier, enabled, canShowIcon, iconKey, interactionSource, style, submenu, content)
-}
-
 @Composable
 public fun MenuSubmenuItem(
     modifier: Modifier = Modifier,
@@ -643,6 +700,19 @@ internal fun Submenu(
     }
 }
 
+/**
+ * State holder for menu items that tracks various interaction states.
+ *
+ * This class maintains the state of a menu item, including selection, enabled/disabled state, focus, hover, and press
+ * states. It implements both [SelectableComponentState] and [FocusableComponentState] for consistent behavior with
+ * other interactive components.
+ *
+ * The state is stored efficiently using a bit-masked value, where each bit represents a different state flag.
+ *
+ * @property state The raw bit-masked state value
+ * @see SelectableComponentState
+ * @see FocusableComponentState
+ */
 @Immutable
 @JvmInline
 public value class MenuItemState(public val state: ULong) : SelectableComponentState, FocusableComponentState {

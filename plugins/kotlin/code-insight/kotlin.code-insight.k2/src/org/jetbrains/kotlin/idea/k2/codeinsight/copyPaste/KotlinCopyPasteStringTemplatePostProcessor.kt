@@ -18,6 +18,7 @@ import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.EntryUpdateDiff
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.changeInterpolationPrefix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.templatePrefixLength
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
@@ -92,7 +93,7 @@ internal class KotlinCopyPasteStringTemplatePostProcessor : CopyPastePostProcess
 
         return StringTemplateSelectionData(
             range,
-            parentStringTemplate.interpolationPrefix?.textLength ?: 0,
+            parentStringTemplate.templatePrefixLength,
             selectedText,
             parentTemplateText,
             startOffsetRelative,
@@ -178,7 +179,7 @@ internal class KotlinCopyPasteStringTemplatePostProcessor : CopyPastePostProcess
         // Don't try applying string-to-string pasting logic in multi-caret cases
         val selectionData = stringTemplateData.selectionDataForSelections.singleOrNull() ?: return ReplacementResult.KeepPreprocessed
 
-        val destinationStringPrefixLength = destinationStringTemplate.interpolationPrefix?.textLength ?: 0
+        val destinationStringPrefixLength = destinationStringTemplate.templatePrefixLength
         val originalStringPrefixLength = selectionData.prefixLength
         val quotesChanged = selectionData.isSingleQuoted != destinationStringTemplate.isSingleQuoted()
 
@@ -206,7 +207,7 @@ internal class KotlinCopyPasteStringTemplatePostProcessor : CopyPastePostProcess
         var endOffsetAdjustment = nonContentAdjustment
 
         val replacedTemplate = originalTemplate.changeInterpolationPrefix(
-            newPrefixLength = destinationStringTemplate.interpolationPrefix?.textLength ?: 0,
+            newPrefixLength = destinationStringTemplate.templatePrefixLength,
             isSourceSingleQuoted = originalTemplate.isSingleQuoted(),
             isDestinationSingleQuoted = destinationStringTemplate.isSingleQuoted(),
         ) { updateInfo ->
@@ -229,8 +230,7 @@ internal class KotlinCopyPasteStringTemplatePostProcessor : CopyPastePostProcess
         destinationStringTemplate: KtStringTemplateExpression,
     ): Int {
         val originalStringPrefixLength = selectionData.prefixLength
-        val destinationStringPrefixLength = destinationStringTemplate.interpolationPrefix?.textLength ?: 0
-        val prefixLengthDiff = destinationStringPrefixLength - originalStringPrefixLength
+        val prefixLengthDiff = destinationStringTemplate.templatePrefixLength - originalStringPrefixLength
         val isSourceTemplateSingleQuoted = selectionData.isSingleQuoted
         val isDestinationTemplateSingleQuoted = destinationStringTemplate.isSingleQuoted()
         val quoteLengthDiff = when {

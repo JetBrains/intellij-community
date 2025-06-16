@@ -27,9 +27,9 @@ public final class Maven40ApiModelConverter {
       asSourcesList(build.getTestSourceDirectory()));
   }
 
-  public static @NotNull MavenModel convertModel(Model model,
-                                                 List<String> sources,
-                                                 List<String> testSources) {
+  private static @NotNull MavenModel convertModel(Model model,
+                                                  List<String> sources,
+                                                  List<String> testSources) {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
 
@@ -52,7 +52,7 @@ public final class Maven40ApiModelConverter {
     return result;
   }
 
-  public static List<MavenPlugin> convertPlugins(Model mavenModel) {
+  private static List<MavenPlugin> convertPlugins(Model mavenModel) {
     List<MavenPlugin> result = new ArrayList<>();
     Build build = mavenModel.getBuild();
 
@@ -88,7 +88,7 @@ public final class Maven40ApiModelConverter {
                            executions, deps);
   }
 
-  public static MavenPlugin.Execution convertExecution(PluginExecution execution) {
+  private static MavenPlugin.Execution convertExecution(PluginExecution execution) {
     return new MavenPlugin.Execution(execution.getId(), execution.getPhase(), execution.getGoals(), convertConfiguration(execution.getConfiguration()));
   }
 
@@ -123,7 +123,7 @@ public final class Maven40ApiModelConverter {
     return directory == null ? Collections.emptyList() : Collections.singletonList(directory);
   }
 
-  public static void convertBuild(MavenBuild result, Build build, List<String> sources, List<String> testSources) {
+  private static void convertBuild(MavenBuild result, Build build, List<String> sources, List<String> testSources) {
     convertBuildBase(result, build);
     result.setOutputDirectory(build.getOutputDirectory());
     result.setTestOutputDirectory(build.getTestOutputDirectory());
@@ -140,7 +140,7 @@ public final class Maven40ApiModelConverter {
     result.setFilters(build.getFilters() == null ? Collections.emptyList() : build.getFilters());
   }
 
-  public static List<MavenResource> convertResources(List<Resource> resources) {
+  private static List<MavenResource> convertResources(List<Resource> resources) {
     if (resources == null) return new ArrayList<MavenResource>();
 
     List<MavenResource> result = new ArrayList<MavenResource>(resources.size());
@@ -162,7 +162,7 @@ public final class Maven40ApiModelConverter {
     return patterns == null ? Collections.emptyList() : patterns;
   }
 
-  public static List<MavenRemoteRepository> convertRepositories(List<? extends Repository> repositories) {
+  private static List<MavenRemoteRepository> convertRepositories(List<? extends Repository> repositories) {
     if (repositories == null) return new ArrayList<MavenRemoteRepository>();
 
     List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
@@ -193,7 +193,7 @@ public final class Maven40ApiModelConverter {
     return artifact.getExtension();
   }
 
-  public static List<MavenProfile> convertProfiles(Collection<? extends Profile> profiles) {
+  private static List<MavenProfile> convertProfiles(Collection<? extends Profile> profiles) {
     if (profiles == null) return Collections.emptyList();
     List<MavenProfile> result = new ArrayList<MavenProfile>();
     for (Profile each : profiles) {
@@ -267,7 +267,7 @@ public final class Maven40ApiModelConverter {
     }
   }
 
-  public static boolean shouldSkip(Class clazz) {
+  private static boolean shouldSkip(Class clazz) {
     return clazz.isArray()
            || Collection.class.isAssignableFrom(clazz)
            || Map.class.isAssignableFrom(clazz)

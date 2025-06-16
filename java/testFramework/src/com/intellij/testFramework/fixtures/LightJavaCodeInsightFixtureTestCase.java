@@ -20,6 +20,15 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
+ * A JUnit 3-compatible {@link UsefulTestCase} which is based around a {@link JavaCodeInsightTestFixture}.
+ * <p>
+ * This class is similar to {@link JavaCodeInsightFixtureTestCase}, but with some differences:
+ * <ul>
+ *   <li>Uses a lightweight project setup with {@link LightProjectDescriptor}
+ *   (and provides many predefined descriptors for different Java versions)</li>
+ *   <li>Creates a simpler in-memory project structure</li>
+ *   <li>Faster to initialize and run but with some limitations</li>
+ * </ul>
  * @see LightJavaCodeInsightFixtureTestCase4
  * @see LightJavaCodeInsightFixtureTestCase5
  */

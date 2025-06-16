@@ -83,7 +83,7 @@ class KotlinPsiElementMemberChooserObject(
             if (symbol is KaClassSymbol) {
                 val classId = symbol.classId
                 if (classId != null) {
-                    return classId.asFqNameString()
+                    return classId.shortClassName.asString()
                 }
             }
 

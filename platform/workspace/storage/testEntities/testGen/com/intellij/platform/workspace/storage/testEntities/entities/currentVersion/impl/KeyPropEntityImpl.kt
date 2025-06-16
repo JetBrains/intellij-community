@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -60,8 +59,8 @@ internal class KeyPropEntityImpl(private val dataSource: KeyPropEntityData) : Ke
   }
 
 
-  internal class Builder(result: KeyPropEntityData?) : ModifiableWorkspaceEntityBase<KeyPropEntity, KeyPropEntityData>(
-    result), KeyPropEntity.Builder {
+  internal class Builder(result: KeyPropEntityData?) : ModifiableWorkspaceEntityBase<KeyPropEntity, KeyPropEntityData>(result),
+                                                       KeyPropEntity.Builder {
     internal constructor() : this(KeyPropEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -185,7 +184,8 @@ internal class KeyPropEntityData : WorkspaceEntityData<KeyPropEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.KeyPropEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.KeyPropEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

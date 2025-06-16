@@ -7,29 +7,17 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.gradle.properties.GRADLE_PROPERTIES_FILE_NAME
-import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile.getGradlePropertiesPathInUserHome
-import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
+import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_PROPERTIES_FILE_NAME
 import java.nio.file.Path
 
-internal fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
-  val externalRootProjectPath = place.getRootGradleProjectPath() ?: return@sequence
-  val userHomePropertiesFile = getGradlePropertiesPathInUserHome()?.parent?.toString()?.getGradlePropertiesFile(place.project)
-  if (userHomePropertiesFile != null) {
-    yield(userHomePropertiesFile)
-  }
-  val projectRootPropertiesFile = externalRootProjectPath.getGradlePropertiesFile(place.project)
-  if (projectRootPropertiesFile != null) {
-    yield(projectRootPropertiesFile)
-  }
-  val localSettings = GradleLocalSettings.getInstance(place.project)
-  val installationDirectoryPropertiesFile = localSettings.getGradleHome(externalRootProjectPath)?.getGradlePropertiesFile(place.project)
-  if (installationDirectoryPropertiesFile != null) {
-    yield(installationDirectoryPropertiesFile)
-  }
+internal fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> {
+  val projectPath = place.getRootGradleProjectPath()?.let { Path.of(it) } ?: return emptySequence()
+  return GradlePropertiesFile.getPropertyPaths(place.project, projectPath).asSequence()
+    .mapNotNull { it.parent.getGradlePropertiesFile(place.project) }
 }
 
-private fun String.getGradlePropertiesFile(project: Project): PropertiesFile? {
-  val file = VfsUtil.findFile(Path.of(this), false)?.findChild(GRADLE_PROPERTIES_FILE_NAME)
+private fun Path.getGradlePropertiesFile(project: Project): PropertiesFile? {
+  val file = VfsUtil.findFile(this, false)?.findChild(GRADLE_PROPERTIES_FILE_NAME)
   return file?.let { PsiUtilCore.getPsiFile(project, it) }.asSafely<PropertiesFile>()
 }

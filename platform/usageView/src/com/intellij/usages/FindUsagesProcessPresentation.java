@@ -4,6 +4,7 @@ package com.intellij.usages;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -50,7 +51,7 @@ public class FindUsagesProcessPresentation {
     myLargeFiles = largeFiles;
   }
 
-  public @NotNull Collection<VirtualFile> getLargeFiles() {
+  public @NotNull @Unmodifiable Collection<VirtualFile> getLargeFiles() {
     return myLargeFiles == null ? Collections.emptyList() : myLargeFiles;
   }
 

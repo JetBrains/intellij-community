@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -131,7 +132,7 @@ final class FocusDebuggerAction extends AnAction implements DumbAware {
 
     private void paintFocusBorders(boolean clean) {
       if (myCurrent != null) {
-        Graphics graphics = myCurrent.getGraphics();
+        Graphics graphics = GraphicsUtil.safelyGetGraphics(myCurrent);
         Graphics2D currentFocusGraphics = (Graphics2D)(graphics != null ? graphics.create() : null);
         try {
           if (currentFocusGraphics != null) {
@@ -150,7 +151,8 @@ final class FocusDebuggerAction extends AnAction implements DumbAware {
           if (currentFocusGraphics != null) currentFocusGraphics.dispose();
         }
         if (myPrevious != null) {
-          Graphics2D previousFocusGraphics = (Graphics2D)(myPrevious.getGraphics() != null ? myPrevious.getGraphics().create() : null);
+          Graphics prior = GraphicsUtil.safelyGetGraphics(myPrevious);
+          Graphics2D previousFocusGraphics = (Graphics2D)(prior != null ? prior.create() : null);
           try {
             if (previousFocusGraphics != null) {
               if (clean) {

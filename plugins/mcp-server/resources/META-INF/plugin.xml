@@ -1,0 +1,51 @@
+<idea-plugin package="com.intellij.mcpserver">
+  <name>MCP Server</name>
+  <id>com.intellij.mcpServer</id>
+  <category>AI Tools</category>
+  <description>
+    MCP (Model Context Protocol) Server for IntelliJ IDEs
+    This plugin integrates the MCP server into IntelliJ-based IDEs, enabling seamless communication between Large Language Models (LLMs) and your development environment. It provides tools for interacting with the IDE, including:
+    Reading the current file
+    Executing terminal commands
+    Setting breakpoints
+    Searching project files
+    And more
+  </description>
+  <vendor>JetBrains</vendor>
+
+  <depends config-file="mcpServer-terminal.xml" optional="true">org.jetbrains.plugins.terminal</depends>
+  <depends config-file="mcpServer-vcs.xml" optional="true">Git4Idea</depends>
+
+  <extensionPoints>
+    <extensionPoint name="mcpToolsProvider" interface="com.intellij.mcpserver.McpToolsProvider" dynamic="true" />
+    <extensionPoint name="mcpToolset" interface="com.intellij.mcpserver.McpToolset" dynamic="true" />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
+    <postStartupActivity implementation="com.intellij.mcpserver.impl.McpClientDetectionActivity" />
+    <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"/>
+
+    <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
+
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.debugger.DebuggerToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.BuiltinGeneralToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.ErrorToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FileToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.FormattingToolset" />
+    <mcpServer.mcpToolset implementation="com.intellij.mcpserver.toolsets.general.TextToolset" />
+
+    <registryKey defaultValue="false"
+                 description="Detect MCP clients to suggest enable MCP server on project startup"
+                 key="mcp.server.detect.mcp.clients"/>
+
+    <applicationConfigurable
+      instance="com.intellij.mcpserver.settings.McpServerSettingsConfigurable"
+      id="com.intellij.mcpserver.settings"
+      key="mcp.server.configurable.name"
+      bundle="messages.McpServerBundle"
+      dynamic="true"
+      parentId="tools"/>
+
+  </extensions>
+</idea-plugin>

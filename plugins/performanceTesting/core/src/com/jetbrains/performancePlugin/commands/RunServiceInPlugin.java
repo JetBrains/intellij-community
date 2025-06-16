@@ -1,13 +1,11 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginContentDescriptor;
-import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassLoaderUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,11 +30,11 @@ public class RunServiceInPlugin extends RunClassInPlugin {
 
     ClassLoader loader = null;
     // requires to avoid "class must not be requested from main classloader of plugin" error
-    List<PluginContentDescriptor.ModuleItem> modules = ((IdeaPluginDescriptorImpl)plugin).content.modules;
+    List<ContentModuleDescriptor> modules = IdeaPluginDescriptorImplKt.getContentModules((IdeaPluginDescriptorImpl)plugin);
     if (!modules.isEmpty()) {
-      for (PluginContentDescriptor.ModuleItem module : modules) {
-        if (myClazzName.contains(module.name)) {
-          loader = module.requireDescriptor().getClassLoader();
+      for (var module : modules) {
+        if (myClazzName.contains(module.getModuleName())) {
+          loader = module.getClassLoader();
         }
       }
     }

@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file;
 
 import com.intellij.codeInsight.completion.scope.JavaCompletionHints;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -47,6 +47,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private volatile SoftReference<Map<String, PsiClass[]>> myClassCache;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectories;
   private volatile CachedValue<Collection<PsiDirectory>> myDirectoriesWithLibSources;
+  private volatile CachedValue<Collection<PsiFile>> myFiles;
   private volatile SoftReference<Map<GlobalSearchScope, Map<String, PsiClass[]>>> myDumbModeFullCache;
   private volatile SoftReference<Map<Pair<GlobalSearchScope, String>, PsiClass[]>> myDumbModePartialCache;
 
@@ -70,11 +71,28 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     }
   }
 
+  @Override
+  public @Unmodifiable @NotNull Collection<@NotNull PsiFile> getIndividualFiles(@NotNull GlobalSearchScope scope) {
+    if (myFiles == null) {
+      myFiles = createCachedFiles();
+    }
+    return ContainerUtil.filter(myFiles.getValue(), d -> scope.contains(d.getVirtualFile()));
+  }
+
   private @NotNull CachedValue<Collection<PsiDirectory>> createCachedDirectories(final boolean includeLibrarySources) {
     return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
       Collection<PsiDirectory> result = new ArrayList<>();
       Processor<PsiDirectory> processor = Processors.cancelableCollectProcessor(result);
       getFacade().processPackageDirectories(this, allScope(), processor, includeLibrarySources);
+      return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
+    }, false);
+  }
+
+  private @NotNull CachedValue<Collection<PsiFile>> createCachedFiles() {
+    return CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
+      Collection<PsiFile> result = new ArrayList<>();
+      Processor<PsiFile> processor = Processors.cancelableCollectProcessor(result);
+      getFacade().processPackageFiles(this, allScope(), processor);
       return CachedValueProvider.Result.create(result, PsiPackageImplementationHelper.getInstance().getDirectoryCachedValueDependencies(this));
     }, false);
   }
@@ -106,9 +124,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public boolean isValid() {
-    return !getProject().isDisposed() &&
-           (PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) ||
-            getDirectories().length > 0);
+    return !getProject().isDisposed();
   }
 
   @Override
@@ -142,7 +158,9 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public PsiFile @NotNull [] getFiles(@NotNull GlobalSearchScope scope) {
-    return getFacade().getPackageFiles(this, scope);
+    PsiFile[] files = getFacade().getPackageFiles(this, scope);
+    Collection<@NotNull PsiFile> individualFiles = getIndividualFiles(scope);
+    return individualFiles.isEmpty() ? files : ArrayUtil.mergeArrays(files, individualFiles.toArray(PsiFile.EMPTY_ARRAY));
   }
 
   @Override
@@ -173,8 +191,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
       return getCachedClassesInDumbMode(name, scope);
     }
 
-    if (CodeInsightContextKt.isSharedSourceSupportEnabled(getProject())) {
-      // todo ijpl-339 this line introduces performance degradation, see IDEA-367535
+    if (CodeInsightContexts.isSharedSourceSupportEnabled(getProject())) {
+      // todo IJPL-339 this line introduces performance degradation, see IDEA-367535
       return findAllClasses(name, scope);
     }
     else {
@@ -230,7 +248,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
     return classes == null ? PsiClass.EMPTY_ARRAY : classes;
   }
 
-  // todo
   private PsiClass @Nullable [] findClassesHeuristically(final String name, GlobalSearchScope scope) {
     if (findSubPackageByName(name) != null) {
       return PsiClass.EMPTY_ARRAY;

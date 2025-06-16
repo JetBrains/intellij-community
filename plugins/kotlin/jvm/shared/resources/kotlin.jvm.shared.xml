@@ -1,4 +1,11 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.shared">
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.jvm.shared.bytecode.compilationConfigurationEnricher"
+            interface="org.jetbrains.kotlin.idea.jvm.shared.bytecode.CompilationConfigurationEnricher"
+            dynamic="true"/>
+  </extensionPoints>
+
   <actions>
     <!-- Kotlin Console REPL-->
     <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
@@ -16,9 +23,19 @@
             text="Kotlin Project Post-Open Activity" internal="true">
       <add-to-group group-id="KotlinInternalGroup"/>
     </action>
+
+    <action id="ShowKotlinBytecode" class="org.jetbrains.kotlin.idea.jvm.shared.bytecode.ShowKotlinBytecodeAction">
+      <add-to-group group-id="KotlinToolsGroup"/>
+    </action>
+
+    <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.jvm.shared.actions.ConfigureKotlinInProjectAction">
+      <add-to-group group-id="KotlinToolsGroup"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.inspections.JavaOutsideModuleDetector"/>
+
     <projectService serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
 
     <buildProcess.parametersProvider
@@ -28,7 +45,7 @@
 
     <library.presentationProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.framework.JavaRuntimePresentationProvider"/>
 
-    <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
+    <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.jvm.shared.configuration.KotlinSourceRootDetector"/>
 
     <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
 
@@ -70,7 +87,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
+    <scriptAdditionalIdeaDependenciesProvider
+            implementation="org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchAdditionalIdeaDependenciesProvider"/>
 
     <storageComponentContainerContributor
             implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
@@ -87,7 +105,6 @@
     <!--suppress KotlinObjectExtensionRegistration -->
     <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
 
-    <quickFixContributor implementation="org.jetbrains.kotlin.idea.jvm.k1.quickfix.JvmQuickFixRegistrar"/>
     <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.jvm.shared.facet.KotlinLibraryValidatorCreator"/>
   </extensions>
 

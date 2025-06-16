@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.inspector
 
 import com.intellij.codeInsight.daemon.DaemonBundle
@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -30,6 +31,7 @@ import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
@@ -39,18 +41,17 @@ import java.awt.event.HierarchyEvent
 import java.awt.event.HierarchyListener
 import java.awt.event.InputEvent
 import java.awt.event.MouseEvent
-import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicInteger
-import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 class InspectionsGroup(
-  val analyzerGetter: () -> AnalyzerStatus, val editor: EditorImpl
+  private val analyzerGetter: () -> AnalyzerStatus, val editor: EditorImpl
 ) : DefaultActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
   companion object {
-    val INSPECTION_TYPED_ERROR = DataKey.create<StatusItem>("INSPECTION_TYPED_ERROR")
-    val idCounter = AtomicInteger(0)
+    @JvmField
+    val INSPECTION_TYPED_ERROR: DataKey<StatusItem> = DataKey.create<StatusItem>("INSPECTION_TYPED_ERROR")
+    private val idCounter = AtomicInteger(0)
   }
 
   private val actionList = mutableListOf<InspectionAction>()
@@ -67,11 +68,9 @@ class InspectionsGroup(
     presentation.isVisible = !analyzerStatus.isEmpty()
     if (!presentation.isVisible) return emptyArray()
 
-    val newStatus: List<StatusItem> = analyzerStatus.expandedStatus
-    val newIcon: Icon = analyzerStatus.icon
-
+    val newStatus = analyzerStatus.expandedStatus
     if (!analyzerStatus.showNavigation) {
-      val item = if (newStatus.isEmpty()) StatusItem("", newIcon) else newStatus.first()
+      val item = if (newStatus.isEmpty()) StatusItem("", analyzerStatus.icon) else newStatus.first()
       val action = base?.let {
         it.item = item
         it.title = analyzerStatus.title
@@ -131,7 +130,7 @@ class InspectionsGroup(
     }
 
     override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-      component.font = com.intellij.util.ui.JBFont.small()
+      component.font = JBFont.small()
     }
 
     override fun actionPerformed(e: AnActionEvent) {
@@ -175,7 +174,7 @@ class InspectionsGroup(
     }
 
     override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-      component.font = com.intellij.util.ui.JBFont.small()
+      component.font = JBFont.small()
       component.setForeground(JBColor.lazy { (editor.colorsScheme.getColor(ICON_TEXT_COLOR) ?: ICON_TEXT_COLOR.defaultColor) })
     }
 
@@ -259,7 +258,7 @@ class InspectionsGroup(
       return e is MouseEvent && e.button == MouseEvent.BUTTON3
     }
 
-    @com.intellij.openapi.components.Service(com.intellij.openapi.components.Service.Level.PROJECT)
+    @Service(Service.Level.PROJECT)
     private class MyService(val project: Project, scope: CoroutineScope) {
       companion object {
         fun getInstance(project: Project): MyService = project.service()
@@ -318,7 +317,11 @@ class InspectionsGroup(
       }
 
       val action = ActionManager.getInstance().getAction(actionId) ?: run {
-        InspectionsFUS.actionNotFound(e.project, fusTabId, if (actionId == PREVIOUS_ACTION_ID) InspectionsFUS.InspectionsActions.GotoPreviousError else InspectionsFUS.InspectionsActions.GotoNextError)
+        InspectionsFUS.actionNotFound(
+          project = e.project,
+          id = fusTabId,
+          action = if (actionId == PREVIOUS_ACTION_ID) InspectionsFUS.InspectionsActions.GotoPreviousError else InspectionsFUS.InspectionsActions.GotoNextError,
+        )
         return
       }
 
@@ -350,10 +353,11 @@ class InspectionsGroup(
       }
     }
 
-    private fun wrapDataContext(originalContext: DataContext): DataContext =
-      CustomizedDataContext.withSnapshot(originalContext) { sink ->
+    private fun wrapDataContext(originalContext: DataContext): DataContext {
+      return CustomizedDataContext.withSnapshot(originalContext) { sink ->
         sink[INSPECTION_TYPED_ERROR] = item
       }
+    }
 
     override fun update(e: AnActionEvent) {
       e.presentation.icon = item.icon
@@ -367,7 +371,7 @@ class InspectionsGroup(
       description = "<html>$leftRight<p>${allTypes}</html><p>"
     }
 
-    protected fun getShortcut(id: String): String {
+    private fun getShortcut(id: String): String {
       val shortcuts = KeymapUtil.getActiveKeymapShortcuts(id).shortcuts
       return if (shortcuts.isEmpty()) "Not set" else KeymapUtil.getShortcutsText(shortcuts)
     }

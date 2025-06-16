@@ -1,3 +1,8 @@
+*:com.intellij.execution.process.CommandLineEnvCustomizer
+- *sf:Companion:com.intellij.execution.process.CommandLineEnvCustomizer$Companion
+- a:customizeEnv(com.intellij.execution.configurations.GeneralCommandLine,java.util.Map):V
+*f:com.intellij.execution.process.CommandLineEnvCustomizer$Companion
+- *f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.execution.process.ElevationService
 - a:authorizeService():V
 - createProcess(com.intellij.execution.configurations.GeneralCommandLine):java.lang.Process
@@ -104,10 +109,6 @@
 - s:getRegion():com.intellij.ide.Region
 a:com.intellij.ide.SaveAndSyncHandler
 - *f:getExternalChangesTracker():com.intellij.openapi.util.ModificationTracker
-*:com.intellij.ide.SaveAndSyncHandlerListener
-- sf:TOPIC:com.intellij.util.messages.Topic
-- beforeRefresh():V
-- beforeSave(com.intellij.ide.SaveAndSyncHandler$SaveTask,Z):V
 f:com.intellij.ide.dnd.SmoothAutoScroller
 - *sf:ENABLED:com.intellij.openapi.util.Key
 - *s:getSharedListener():java.awt.dnd.DropTargetListener
@@ -135,17 +136,6 @@ a:com.intellij.ide.ui.LafManager
 - *a:getInstalledThemes():kotlin.sequences.Sequence
 *:com.intellij.ide.ui.PopupLocator
 - a:getPositionFor(com.intellij.openapi.ui.popup.JBPopup):java.awt.Point
-*:com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
-- a:dispose():V
-- a:getAuthor():java.lang.String
-- a:getEditorSchemeId():java.lang.String
-- a:getId():java.lang.String
-- a:getName():java.lang.String
-- a:getProviderClassLoader():java.lang.ClassLoader
-- a:installEditorScheme(com.intellij.openapi.editor.colors.EditorColorsScheme):V
-- a:installTheme(javax.swing.UIDefaults):V
-- a:isDark():Z
-- a:isInitialized():Z
 c:com.intellij.openapi.actionSystem.PlatformDataKeys
 - com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 - *sf:CONTEXT_MENU_LOCATOR:com.intellij.openapi.actionSystem.DataKey
@@ -159,11 +149,12 @@ c:com.intellij.openapi.actionSystem.ex.ComboBoxAction$ComboBoxButton
 - javax.swing.JButton
 - com.intellij.ui.UserActivityProviderComponent
 - *p:doShiftClick():V
+f:com.intellij.openapi.actionSystem.remoting.PermissionsKt
+- *sf:getOwner():com.intellij.platform.ide.core.permissions.Permission
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
 - *:createFileEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
-- *bs:createFileEditor$suspendImpl(com.intellij.openapi.fileEditor.AsyncFileEditorProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Document,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.observable.util.ListenerUiUtil
 - *sf:whenItemChangedFromUi(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - *bs:whenItemChangedFromUi$default(javax.swing.JComboBox,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1,I,java.lang.Object):V
@@ -181,9 +172,6 @@ f:com.intellij.openapi.observable.util.PropertyOperationUtil
 - *sf:backwardFilter(com.intellij.openapi.observable.properties.ObservableMutableProperty,kotlin.jvm.functions.Function1):com.intellij.openapi.observable.properties.ObservableMutableProperty
 *:com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 - a:getOptionDescriptors(java.lang.String,java.util.function.Function):java.util.List
-*:com.intellij.openapi.options.ObservableOptionEditor
-- com.intellij.openapi.options.OptionEditor
-- a:getResultFlow():kotlinx.coroutines.flow.StateFlow
 *:com.intellij.openapi.options.OptionEditor
 - a:getComponent():javax.swing.JComponent
 - a:result():java.lang.Object
@@ -293,18 +281,25 @@ c:com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
 - *:<init>(javax.swing.table.TableCellRenderer):V
 - *:bindToEditorSize(java.util.function.Supplier):com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
 - *:withCellValidator(com.intellij.openapi.ui.cellvalidators.TableCellValidator):com.intellij.openapi.ui.cellvalidators.ValidatingTableCellRendererWrapper
+f:com.intellij.openapi.wm.PermissionsKt
+- *sf:getFullToolWindowAccess():com.intellij.platform.ide.core.permissions.Permission
+- *sf:getToolWindowViewAccess():com.intellij.platform.ide.core.permissions.Permission
 *:com.intellij.openapi.wm.WelcomeScreenCustomization
 - sf:WELCOME_SCREEN_CUSTOMIZATION:com.intellij.openapi.extensions.ExtensionPointName
 - createMainPanelToolbar(com.intellij.openapi.Disposable):javax.swing.JComponent
 - createQuickAccessActions(com.intellij.openapi.Disposable):java.util.List
 - createQuickAccessComponent(com.intellij.openapi.Disposable):java.awt.Component
+*:com.intellij.platform.ide.navigation.NavigationHandler
+- a:navigate(com.intellij.platform.backend.navigation.NavigationRequest,com.intellij.platform.ide.navigation.NavigationOptions,com.intellij.openapi.actionSystem.DataContext):Z
 *:com.intellij.platform.ide.navigation.NavigationOptions
 - *sf:Companion:com.intellij.platform.ide.navigation.NavigationOptions$Companion
 - s:defaultOptions():com.intellij.platform.ide.navigation.NavigationOptions
 - a:preserveCaret(Z):com.intellij.platform.ide.navigation.NavigationOptions
+- s:requestFocus():com.intellij.platform.ide.navigation.NavigationOptions
 - a:requestFocus(Z):com.intellij.platform.ide.navigation.NavigationOptions
 *f:com.intellij.platform.ide.navigation.NavigationOptions$Companion
 - f:defaultOptions():com.intellij.platform.ide.navigation.NavigationOptions
+- f:requestFocus():com.intellij.platform.ide.navigation.NavigationOptions
 *:com.intellij.platform.ide.navigation.NavigationService
 - *sf:Companion:com.intellij.platform.ide.navigation.NavigationService$Companion
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.platform.ide.navigation.NavigationService
@@ -361,14 +356,19 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - f:setup(javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent):V
 - bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,com.intellij.ui.Side,javax.swing.JComponent,I,java.lang.Object):V
 - bs:setup$default(com.intellij.ui.ScrollableContentBorder$Companion,javax.swing.JScrollPane,java.util.Set,javax.swing.JComponent,I,java.lang.Object):V
+c:com.intellij.ui.SimpleColoredComponent
+- javax.swing.JComponent
+- com.intellij.ui.ColoredTextContainer
+- javax.accessibility.Accessible
+- *p:getIconToolTipText():java.lang.String
 *c:com.intellij.ui.components.JBHtmlPane
-- javax.swing.JEditorPane
 - com.intellij.openapi.Disposable
+- javax.swing.JEditorPane
 - <init>():V
 - <init>(com.intellij.ui.components.JBHtmlPaneStyleConfiguration,com.intellij.ui.components.JBHtmlPaneConfiguration):V
 - dispose():V
 - f:getBackgroundFlow():kotlinx.coroutines.flow.StateFlow
-- p:getContentsScaleFactor():F
+- getContentsScaleFactor():F
 - getSelectedText():java.lang.String
 - getText():java.lang.String
 - p:initializePaneConfiguration(com.intellij.ui.components.JBHtmlPaneConfiguration$Builder):V
@@ -378,6 +378,7 @@ a:com.intellij.ui.ColoredTreeCellRenderer
 - f:reloadCssStylesheets():V
 - setDocument(javax.swing.text.Document):V
 - setEditorKit(javax.swing.text.EditorKit):V
+- setFont(java.awt.Font):V
 - setText(java.lang.String):V
 *f:com.intellij.ui.components.JBHtmlPaneConfiguration
 - *sf:Companion:com.intellij.ui.components.JBHtmlPaneConfiguration$Companion
@@ -1006,6 +1007,15 @@ f:com.intellij.ui.treeStructure.TreeViewModelKt
 com.intellij.util.net.JdkProxyCustomizer
 - *a:getOriginalAuthenticator():java.net.Authenticator
 - *a:getOriginalProxySelector():java.net.ProxySelector
+*f:com.intellij.util.net.PlatformHttpClient
+- <init>():V
+- s:checkResponse(java.net.http.HttpResponse):java.net.http.HttpResponse
+- s:client():java.net.http.HttpClient
+- s:clientBuilder():java.net.http.HttpClient$Builder
+- s:gzipStringBodyHandler():java.net.http.HttpResponse$BodyHandler
+- s:request(java.net.URI):java.net.http.HttpRequest
+- s:requestBuilder(java.net.URI):java.net.http.HttpRequest$Builder
+- s:userAgent():java.lang.String
 com.intellij.util.net.ProxySettings
 - *a:setProxyConfiguration(com.intellij.util.net.ProxyConfiguration):V
 *:com.intellij.util.ui.table.EditableTable

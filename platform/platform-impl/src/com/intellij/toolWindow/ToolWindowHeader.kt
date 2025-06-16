@@ -3,7 +3,6 @@ package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.ToggleToolbarAction
 import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -289,7 +288,7 @@ abstract class ToolWindowHeader internal constructor(
       val contentCount = (nearestDecorator?.contentManager ?: toolWindow.contentManager).contentCount
       drawBottomLine = (toolWindow.anchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && contentCount > 1)
-                        || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)
+                        || toolWindow.hasTopToolbar()
                         || scrolled)
     }
 

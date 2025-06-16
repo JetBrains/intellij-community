@@ -26,10 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.BitSet;
 import java.util.Collections;
@@ -825,7 +822,7 @@ public final class ControlFlowUtils {
                                                                  final int start,
                                                                  final PsiElement statement,
                                                                  @NotNull PsiVariable variable,
-                                                                 @NotNull Set<Integer> excluded) {
+                                                                 @NotNull @Unmodifiable Set<Integer> excluded) {
     final int statementStart = flow.getStartOffset(statement);
     final int statementEnd = flow.getEndOffset(statement);
 

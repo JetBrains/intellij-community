@@ -2,8 +2,10 @@
 package com.intellij.execution.runners;
 
 import com.intellij.CommonBundle;
+import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunSessionService;
 import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunProfile;
@@ -15,14 +17,17 @@ import com.intellij.ide.ui.customization.CustomActionsListener;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
+import com.intellij.idea.AppModeAssertions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier;
+import com.intellij.psi.search.ExecutionSearchScopes;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.ui.content.Content;
@@ -35,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -42,6 +48,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
+import static com.intellij.execution.ui.RunContentManagerImpl.isSplitRun;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 
 /**
@@ -57,6 +64,8 @@ public final class RunContentBuilder extends RunTab {
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP = "RunTab.TopToolbar.More";
 
+  private static final String RUN_TOOL_WINDOW_ID = "Run";
+
   private static final String JAVA_RUNNER = "JavaRunner";
 
   private final List<AnAction> myRunnerActions = new SmartList<>();
@@ -64,7 +73,22 @@ public final class RunContentBuilder extends RunTab {
   private DefaultActionGroup toolbar = null;
 
   public RunContentBuilder(@NotNull ExecutionResult executionResult, @NotNull ExecutionEnvironment environment) {
-    super(environment, getRunnerType(executionResult.getExecutionConsole()));
+    this(executionResult,
+         environment.getProject(),
+         ExecutionSearchScopes.executionScope(environment.getProject(), environment.getRunProfile()),
+         getRunnerType(executionResult.getExecutionConsole()),
+         environment.getExecutor().getId(),
+         environment.getRunProfile().getName());
+    myEnvironment = environment;
+  }
+
+  @ApiStatus.Internal
+  public RunContentBuilder(@NotNull ExecutionResult executionResult, @NotNull Project project, @NotNull GlobalSearchScope searchScope, @NotNull String runnerType, @NotNull String runnerTitle, @NotNull String sessionName) {
+    super(project,
+          searchScope,
+          runnerType,
+          runnerTitle,
+          sessionName);
 
     myExecutionResult = executionResult;
     myUi.getOptions().setMoveToGridActionEnabled(false).setMinimizeActionEnabled(false);
@@ -85,14 +109,19 @@ public final class RunContentBuilder extends RunTab {
     myRunnerActions.add(action);
   }
 
-  private @NotNull RunContentDescriptor createDescriptor() {
-    RunProfile profile = myEnvironment.getRunProfile();
+  private @NotNull RunContentDescriptor createDescriptor(@NlsContexts.TabTitle String displayName,
+                                                         @Nullable Icon icon,
+                                                         @Nullable RunProfile profile) {
+
+    var console = myExecutionResult.getExecutionConsole();
+    var resultRestartActions = myExecutionResult instanceof DefaultExecutionResult res
+                         ? res.getRestartActions() : null;
+    RunContentDescriptor contentDescriptor = new RunContentDescriptor(console, myExecutionResult.getProcessHandler(), displayName, icon,
+                                                                      myUi, resultRestartActions);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return new RunContentDescriptor(profile, myExecutionResult, myUi);
+      return contentDescriptor;
     }
 
-    ExecutionConsole console = myExecutionResult.getExecutionConsole();
-    RunContentDescriptor contentDescriptor = new RunContentDescriptor(profile, myExecutionResult, myUi);
     AnAction[] consoleActionsToMerge;
     AnAction[] additionalActionsToMerge;
     Content consoleContent = null;
@@ -103,7 +132,9 @@ public final class RunContentBuilder extends RunTab {
       else {
         consoleContent = buildConsoleUiDefault(myUi, console);
       }
-      initLogConsoles(profile, contentDescriptor, console);
+      if (profile != null) {
+        initLogConsoles(profile, contentDescriptor, console);
+      }
     }
     if (consoleContent != null && myUi.getContentManager().getContentCount() == 1 && console instanceof TerminalExecutionConsole) {
       // TerminalExecutionConsole provides too few toolbar actions. Such console toolbar doesn't look good, but occupy
@@ -134,9 +165,10 @@ public final class RunContentBuilder extends RunTab {
       toolbar.addAll(updatedToolbar.getChildren(ActionManager.getInstance()));
     });
 
-    if (profile instanceof RunConfigurationBase) {
+    if (profile instanceof RunConfigurationBase<?> runConfigurationBase) {
       if (console instanceof ObservableConsoleView && !ApplicationManager.getApplication().isUnitTestMode()) {
-        ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener((RunConfigurationBase)profile,
+        ((ObservableConsoleView)console).addChangeListener(new ConsoleToFrontListener(runConfigurationBase.isShowConsoleOnStdOut(),
+                                                                                      runConfigurationBase.isShowConsoleOnStdErr(),
                                                                                       myProject,
                                                                                       myEnvironment.getExecutor(),
                                                                                       contentDescriptor,
@@ -243,7 +275,7 @@ public final class RunContentBuilder extends RunTab {
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
     ActionGroup toolbarGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(mainGroupId);
     DefaultActionGroup actionGroup = new DefaultActionGroupWithDelegate(toolbarGroup);
-    addAvoidingDuplicates(actionGroup, ((CustomisedActionGroup)toolbarGroup).getDefaultChildrenOrStubs());
+    addAvoidingDuplicates(actionGroup, toolbarGroup);
 
     DefaultActionGroup afterRunActions = new DefaultActionGroup(restartActions);
     if (!isNewLayout) {
@@ -256,7 +288,7 @@ public final class RunContentBuilder extends RunTab {
       moreGroup = createToolbarMoreActionGroup(actionGroup);
       ActionGroup moreActionGroup =
         (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOL_WINDOW_TOP_TOOLBAR_MORE_GROUP);
-      addAvoidingDuplicates(moreGroup, ((CustomisedActionGroup)moreActionGroup).getDefaultChildrenOrStubs());
+      addAvoidingDuplicates(moreGroup, moreActionGroup);
     }
 
     addActionsWithConstraints(afterRunActions.getChildren(actionManager), new Constraints(AFTER, IdeActions.ACTION_RERUN), actionGroup, moreGroup);
@@ -307,12 +339,50 @@ public final class RunContentBuilder extends RunTab {
    * @param reuseContent see {@link RunContentDescriptor#myContent}
    */
   public RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent) {
-    RunContentDescriptor descriptor = createDescriptor();
+    RunProfile profile = myEnvironment.getRunProfile();
+    return showRunContent(reuseContent, profile.getName(), profile.getIcon(), profile);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull RunContentDescriptor showRunContent(@Nullable RunContentDescriptor reuseContent,
+                                                      @NlsContexts.TabTitle String displayName,
+                                                      @Nullable Icon icon,
+                                                      @Nullable RunProfile runProfile) {
+
+    if (isSplitRun() && AppModeAssertions.isBackend() && myEnvironment.getExecutor().getToolWindowId().equals(RUN_TOOL_WINDOW_ID)) {
+      RunContentDescriptor descriptor = buildHiddenDescriptor(reuseContent);
+      registerDescriptor(reuseContent, descriptor);
+      RunSessionService runSessionService = RunSessionService.getInstance();
+      if (runSessionService != null) {
+        runSessionService.storeRunSession(myEnvironment, descriptor);
+      }
+      return descriptor;
+    }
+
+    RunContentDescriptor descriptor = createDescriptor(displayName, icon, runProfile);
+    return registerDescriptor(reuseContent, descriptor);
+  }
+
+  private @NotNull RunContentDescriptor registerDescriptor(@Nullable RunContentDescriptor reuseContent, RunContentDescriptor descriptor) {
     Disposer.register(descriptor, this);
     Disposer.register(myProject, descriptor);
     RunContentManagerImpl.copyContentAndBehavior(descriptor, reuseContent);
     myRunContentDescriptor = descriptor;
     return descriptor;
+  }
+
+  /**
+   * Build a mock descriptor for the split mode backend part
+   */
+  @ApiStatus.Internal
+  public RunContentDescriptor buildHiddenDescriptor(@Nullable RunContentDescriptor reuseContent) {
+    RunContentDescriptor descriptor = new RunContentDescriptor(myEnvironment.getRunProfile(), myExecutionResult, myUi) {
+      @Override
+      public boolean isHiddenContent() {
+        return true; // will be hidden on a backend in split mode
+      }
+    };
+    return registerDescriptor(reuseContent, descriptor);
   }
 
   public static final class ConsoleToFrontListener implements ObservableConsoleView.ChangeListener {
@@ -329,12 +399,21 @@ public final class RunContentBuilder extends RunTab {
                                   @NotNull Executor executor,
                                   @NotNull RunContentDescriptor runContentDescriptor,
                                   @NotNull RunnerLayoutUi ui) {
+      this(runConfigurationBase.isShowConsoleOnStdOut(), runConfigurationBase.isShowConsoleOnStdErr(), project, executor, runContentDescriptor, ui);
+    }
+
+    @ApiStatus.Internal
+    public ConsoleToFrontListener(boolean showConsoleOnStdOut, boolean showConsoleOnStdErr,
+                                  @NotNull Project project,
+                                  @NotNull Executor executor,
+                                  @NotNull RunContentDescriptor runContentDescriptor,
+                                  @NotNull RunnerLayoutUi ui) {
       myProject = project;
       myExecutor = executor;
       myRunContentDescriptor = runContentDescriptor;
       myUi = ui;
-      myShowConsoleOnStdOut = runConfigurationBase.isShowConsoleOnStdOut();
-      myShowConsoleOnStdErr = runConfigurationBase.isShowConsoleOnStdErr();
+      myShowConsoleOnStdOut = showConsoleOnStdOut;
+      myShowConsoleOnStdErr = showConsoleOnStdErr;
     }
 
     @Override
@@ -445,7 +524,17 @@ public final class RunContentBuilder extends RunTab {
   }
 
   @ApiStatus.Internal
-  public static void addAvoidingDuplicates(DefaultActionGroup group, AnAction[] actions) {
-    addAvoidingDuplicates(group, actions, Constraints.LAST, AnAction.EMPTY_ARRAY);
+  public static void addAvoidingDuplicates(DefaultActionGroup toGroup, ActionGroup fromGroup) {
+    addAvoidingDuplicates(toGroup, getChildActionsOrStubs(fromGroup), Constraints.LAST, AnAction.EMPTY_ARRAY);
+  }
+
+  private static AnAction @NotNull [] getChildActionsOrStubs(ActionGroup group) {
+    if (group instanceof DefaultActionGroup defaultActionGroup) {
+      return defaultActionGroup.getChildActionsOrStubs();
+    }
+    if (group instanceof CustomisedActionGroup customisedActionGroup) {
+      return customisedActionGroup.getDefaultChildrenOrStubs();
+    }
+    return AnAction.EMPTY_ARRAY;
   }
 }

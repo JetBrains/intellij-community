@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -39,6 +40,15 @@ public interface ApplicationEx extends Application {
    * @see #runWriteAction(Runnable)
    */
   boolean isWriteActionPending();
+
+  /**
+   * @return true if a background thread running or wants to run a write action.
+   * This is needed for low-level optimizations and assertions
+   */
+  @ApiStatus.Internal
+  default boolean isBackgroundWriteActionRunningOrPending() {
+    return false;
+  }
 
   void setSaveAllowed(boolean value);
 
@@ -146,7 +156,7 @@ public interface ApplicationEx extends Application {
   }
 
   @ApiStatus.Experimental
-  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull @NlsContexts.ProgressTitle String title,
+  default boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull @NlsContexts.ModalProgressTitle String title,
                                                                            @Nullable Project project,
                                                                            @Nullable JComponent parentComponent,
                                                                            @NotNull Consumer<? super ProgressIndicator> action) {
@@ -218,14 +228,26 @@ public interface ApplicationEx extends Application {
   default void addWriteIntentReadActionListener(@NotNull WriteIntentReadActionListener listener, @NotNull Disposable parentDisposable) { }
 
   @ApiStatus.Internal
-  default void addLockAcquisitionListener(@NotNull LockAcquisitionListener listener, @NotNull Disposable parentDisposable) { }
-
-  @ApiStatus.Internal
   @ApiStatus.Obsolete
-  default void addSuspendingWriteActionListener(@NotNull SuspendingWriteActionListener listener, @NotNull Disposable parentDisposable) { }
+  default void addSuspendingWriteActionListener(@NotNull WriteLockReacquisitionListener listener, @NotNull Disposable parentDisposable) { }
 
   @ApiStatus.Internal
-  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly) {
+  default void prohibitTakingLocksInsideAndRun(@NotNull Runnable runnable, boolean failSoftly, @NlsSafe String advice) {
+    runnable.run();
+  }
+
+  /**
+   * Similar to {@link #invokeAndWait(Runnable, ModalityState)}, but does not take the Write-Intent lock inside.
+   * This is useful when you still need to schedule a computation with the required modality state, but don't want to acqure the WI lock inside.
+   * In the future, this method may go public
+   */
+  @ApiStatus.Internal
+  default void invokeAndWaitRelaxed(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
+    invokeAndWait(runnable, modalityState);
+  }
+
+  @ApiStatus.Internal
+  default void allowTakingLocksInsideAndRun(@NotNull Runnable runnable) {
     runnable.run();
   }
 }

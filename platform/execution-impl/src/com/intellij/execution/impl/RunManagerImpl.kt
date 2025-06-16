@@ -1311,7 +1311,8 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     removeConfigurations(_toRemove = toRemove, deleteFileIfStoredInArbitraryFile = true)
   }
 
-  internal fun removeConfigurations(@Suppress("LocalVariableName") _toRemove: Collection<RunnerAndConfigurationSettings>,
+  @ApiStatus.Internal
+  fun removeConfigurations(@Suppress("LocalVariableName") _toRemove: Collection<RunnerAndConfigurationSettings>,
                                     deleteFileIfStoredInArbitraryFile: Boolean = true,
                                     onSchemeManagerDeleteEvent: Boolean = false) {
     if (_toRemove.isEmpty()) {

@@ -5,6 +5,7 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAct
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import org.gradle.tooling.*
 import org.jetbrains.annotations.ApiStatus
@@ -13,6 +14,8 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionRunner.Companion.runBuildAction
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
 import org.jetbrains.plugins.gradle.statistics.GradleSyncCollector
+
+private val LOG = logger<GradleModelFetchActionRunner>()
 
 /**
  * This class handles setting up and running the [BuildActionExecuter] it deals with calling the correct APIs based on the version of
@@ -44,15 +47,12 @@ class GradleModelFetchActionRunner private constructor(
 
     val resultHandler = GradleModelFetchActionResultHandlerBridge(resolverContext, modelFetchAction, modelFetchActionListener)
 
-    val gradleVersion = resolverContext.projectGradleVersion
-    when {
-      // Fallback to default executor for Gradle projects with incorrect build environment or scripts
-      gradleVersion == null -> runDefaultBuildAction(resultHandler)
-
-      // Gradle older than 4.8 doesn't support phased execution
-      GradleVersionUtil.isGradleOlderThan(gradleVersion, "4.8") -> runDefaultBuildAction(resultHandler)
-
-      else -> runPhasedBuildAction(resultHandler)
+    // Gradle older than 4.8 doesn't support phased execution
+    if (GradleVersionUtil.isGradleOlderThan(resolverContext.gradleVersion, "4.8")) {
+      runDefaultBuildAction(resultHandler)
+    }
+    else {
+      runPhasedBuildAction(resultHandler)
     }
 
     resultHandler.collectAllEvents()
@@ -68,6 +68,11 @@ class GradleModelFetchActionRunner private constructor(
    * Creates the [BuildActionExecuter] to be used to run the [GradleModelFetchAction].
    */
   private fun runPhasedBuildAction(resultHandler: GradleModelFetchActionResultHandlerBridge) {
+    if(Registry.`is`("gradle.declarative.preimport.only", false)) {
+      LOG.warn("Pausing Gradle import process indefinitely due to registry flag 'gradle.declarative.preimport.only'")
+      return
+    }
+
     modelFetchAction.isUseProjectsLoadedPhase = true
     connection.action()
       .projectsLoaded(modelFetchAction, resultHandler.asProjectLoadedResultHandler())
@@ -87,14 +92,7 @@ class GradleModelFetchActionRunner private constructor(
   }
 
   private fun <T : LongRunningOperation> T.prepareOperationForSync(): T {
-    GradleExecutionHelper.prepareForExecution(
-      this,
-      resolverContext.cancellationToken,
-      resolverContext.externalSystemTaskId,
-      resolverContext.settings,
-      resolverContext.listener,
-      resolverContext.buildEnvironment
-    )
+    GradleExecutionHelper.prepareForExecution(this, resolverContext)
     return this
   }
 

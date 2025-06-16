@@ -85,6 +85,7 @@ com.intellij.xdebugger.XDebugSession
 - a:getCurrentPosition():com.intellij.xdebugger.XSourcePosition
 - a:getCurrentStackFrame():com.intellij.xdebugger.frame.XStackFrame
 - a:getDebugProcess():com.intellij.xdebugger.XDebugProcess
+- a:getExecutionEnvironment():com.intellij.execution.runners.ExecutionEnvironment
 - a:getProject():com.intellij.openapi.project.Project
 - a:getRunContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
 - a:getRunProfile():com.intellij.execution.configurations.RunProfile
@@ -96,10 +97,11 @@ com.intellij.xdebugger.XDebugSession
 - a:isSuspended():Z
 - a:pause():V
 - a:positionReached(com.intellij.xdebugger.frame.XSuspendContext):V
+- positionReached(com.intellij.xdebugger.frame.XSuspendContext,Z):V
 - a:rebuildViews():V
 - a:removeSessionListener(com.intellij.xdebugger.XDebugSessionListener):V
-- a:reportError(java.lang.String):V
-- a:reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType):V
+- reportError(java.lang.String):V
+- reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType):V
 - a:reportMessage(java.lang.String,com.intellij.openapi.ui.MessageType,javax.swing.event.HyperlinkListener):V
 - a:resume():V
 - a:runToPosition(com.intellij.xdebugger.XSourcePosition,Z):V
@@ -202,10 +204,14 @@ a:com.intellij.xdebugger.XSourcePositionWrapper
 e:com.intellij.xdebugger.breakpoints.SuspendPolicy
 - java.lang.Enum
 - sf:ALL:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- sf:Companion:com.intellij.xdebugger.breakpoints.SuspendPolicy$Companion
 - sf:NONE:com.intellij.xdebugger.breakpoints.SuspendPolicy
 - sf:THREAD:com.intellij.xdebugger.breakpoints.SuspendPolicy
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.SuspendPolicy
 - s:values():com.intellij.xdebugger.breakpoints.SuspendPolicy[]
+f:com.intellij.xdebugger.breakpoints.SuspendPolicy$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 com.intellij.xdebugger.breakpoints.XBreakpoint
 - com.intellij.openapi.util.UserDataHolder
 - a:getConditionExpression():com.intellij.xdebugger.XExpression
@@ -386,7 +392,7 @@ a:com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
 - sf:EP:com.intellij.openapi.extensions.ExtensionPointName
 - sf:PRIORITY_COMPARATOR:java.util.Comparator
 - p:<init>(java.lang.String,java.lang.String):V
-- a:getGroup(java.lang.Object,java.util.Collection):com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
+- a:getGroup(java.lang.Object):com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 - getIcon():javax.swing.Icon
 - getId():java.lang.String
 - getPresentableName():java.lang.String
@@ -424,14 +430,13 @@ f:com.intellij.xdebugger.evaluation.ExpressionInfo
 - f:getDisplayText():java.lang.String
 - f:getExpressionText():java.lang.String
 - f:getTextRange():com.intellij.openapi.util.TextRange
-bc:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
+bf:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
 - f:childSerializers():kotlinx.serialization.KSerializer[]
 - f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.xdebugger.evaluation.ExpressionInfo
 - f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
 - f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.xdebugger.evaluation.ExpressionInfo):V
-- typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.xdebugger.evaluation.ExpressionInfo$Companion
 - f:serializer():kotlinx.serialization.KSerializer
 a:com.intellij.xdebugger.evaluation.InlineDebuggerHelper
@@ -693,6 +698,29 @@ com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer
 - a:renderStringValue(java.lang.String,java.lang.String,I):V
 - a:renderValue(java.lang.String):V
 - a:renderValue(java.lang.String,com.intellij.openapi.editor.colors.TextAttributesKey):V
+com.intellij.xdebugger.hotswap.HotSwapProvider
+- a:createChangesCollector(com.intellij.xdebugger.hotswap.HotSwapSession,kotlinx.coroutines.CoroutineScope,com.intellij.xdebugger.hotswap.SourceFileChangesListener):com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+- a:performHotSwap(com.intellij.xdebugger.hotswap.HotSwapSession):V
+com.intellij.xdebugger.hotswap.HotSwapResultListener
+- a:onCanceled():V
+- a:onFailure():V
+- a:onFinish():V
+- a:onSuccessfulReload():V
+com.intellij.xdebugger.hotswap.HotSwapSession
+- a:getChanges():java.util.Set
+- a:getProject():com.intellij.openapi.project.Project
+- a:startHotSwapListening():com.intellij.xdebugger.hotswap.HotSwapResultListener
+com.intellij.xdebugger.hotswap.HotSwapSessionManager
+- a:createSession(com.intellij.xdebugger.hotswap.HotSwapProvider,com.intellij.openapi.Disposable):com.intellij.xdebugger.hotswap.HotSwapSession
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.hotswap.HotSwapSessionManager
+- a:onSessionSelected(com.intellij.xdebugger.hotswap.HotSwapSession):V
+com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+- com.intellij.openapi.Disposable
+- a:getChanges():java.util.Set
+- a:resetChanges():V
+com.intellij.xdebugger.hotswap.SourceFileChangesListener
+- a:onChangesCanceled():V
+- a:onNewChanges():V
 a:com.intellij.xdebugger.settings.DebuggerConfigurableProvider
 - sf:EXTENSION_POINT:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -739,7 +767,8 @@ a:com.intellij.xdebugger.stepping.XSmartStepIntoHandler
 - a:computeSmartStepVariants(com.intellij.xdebugger.XSourcePosition):java.util.List
 - computeSmartStepVariantsAsync(com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
 - computeStepIntoVariants(com.intellij.xdebugger.XSourcePosition):org.jetbrains.concurrency.Promise
-- a:getPopupTitle(com.intellij.xdebugger.XSourcePosition):java.lang.String
+- getPopupTitle():java.lang.String
+- getPopupTitle(com.intellij.xdebugger.XSourcePosition):java.lang.String
 - startStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoVariant):V
 - startStepInto(com.intellij.xdebugger.stepping.XSmartStepIntoVariant,com.intellij.xdebugger.frame.XSuspendContext):V
 - stepIntoEmpty(com.intellij.xdebugger.XDebugSession):V

@@ -72,7 +72,7 @@ public class AddWithParamFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(final @NotNull Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(final @NotNull Project project, final Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         SmartPsiElementPointer<XmlTag> result = WriteAction.compute(() -> {
             final XmlTag withParamTag = RefactoringUtil.addWithParam(myTag);
 
@@ -83,7 +83,7 @@ public class AddWithParamFix extends AbstractFix {
         });
 
         final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
-        final Document doc = psiDocumentManager.getDocument(file);
+        final Document doc = psiDocumentManager.getDocument(psiFile);
         assert doc != null;
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(doc);
 

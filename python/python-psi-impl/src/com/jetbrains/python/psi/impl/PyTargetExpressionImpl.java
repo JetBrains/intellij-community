@@ -116,7 +116,21 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       final List<PyType> types = StreamEx
         .of(multiResolveAssignedValue(resolveContext))
         .select(PyTypedElement.class)
-        .map(context::getType)
+        .map((el) -> {
+          if (el instanceof PyFunction function) {
+            PyClass containingClass = function.getContainingClass();
+            if (containingClass != null) {
+              String name = el.getName();
+              if (name != null) {
+                Property property = containingClass.findPropertyByCallable(function);
+                if (property != null) {
+                  return property.getType(this, context);
+                }
+              }
+            }
+          }
+          return context.getType(el);
+        })
         .toList();
 
       return PyUnionType.union(types);
@@ -154,8 +168,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
       }
     }
-    if (parent instanceof PyWithItem) {
-      return getWithItemVariableType((PyWithItem)parent, context);
+    if (parent instanceof PyWithItem withItem) {
+      return getWithItemVariableType(withItem, context);
+    }
+    if (parent instanceof PyPattern pattern) {
+      return context.getType(pattern);
     }
     if (parent instanceof PyAssignmentExpression) {
       final PyExpression assignedValue = ((PyAssignmentExpression)parent).getAssignedValue();

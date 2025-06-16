@@ -3,8 +3,8 @@ package com.intellij.ide.impl;
 
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectStorePathManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -27,7 +27,8 @@ public final class ProjectUtilCore {
    */
   @Deprecated
   public static boolean isValidProjectPath(@NotNull Path file) {
-    return ProjectCoreUtil.isKnownProjectDirectory(file) ||
+    ProjectStorePathManager storePathManager = ProjectStorePathManager.getInstance();
+    return storePathManager.testStoreDirectoryExistsForProjectRoot(file) ||
            (Strings.endsWith(file.toString(), ProjectFileType.DOT_DEFAULT_EXTENSION) && Files.isRegularFile(file));
   }
 

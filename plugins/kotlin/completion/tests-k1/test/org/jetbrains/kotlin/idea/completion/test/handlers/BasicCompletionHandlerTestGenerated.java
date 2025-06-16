@@ -104,6 +104,65 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/bracketOperators")
+    public static class BracketOperators extends AbstractBasicCompletionHandlerTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("DotAfterOperator.kt")
+        public void testDotAfterOperator() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/DotAfterOperator.kt");
+        }
+
+        @TestMetadata("GetOperator.kt")
+        public void testGetOperator() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/GetOperator.kt");
+        }
+
+        @TestMetadata("InvokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/InvokeOperator.kt");
+        }
+
+        @TestMetadata("Newline.kt")
+        public void testNewline() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/Newline.kt");
+        }
+
+        @TestMetadata("SetOperator.kt")
+        public void testSetOperator() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/SetOperator.kt");
+        }
+
+        @TestMetadata("SpacesAfter.kt")
+        public void testSpacesAfter() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/SpacesAfter.kt");
+        }
+
+        @TestMetadata("SpacesBefore.kt")
+        public void testSpacesBefore() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/SpacesBefore.kt");
+        }
+
+        @TestMetadata("SpacesMixed.kt")
+        public void testSpacesMixed() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/SpacesMixed.kt");
+        }
+
+        @TestMetadata("WithComment.kt")
+        public void testWithComment() throws Exception {
+            runTest("../testData/handlers/basic/bracketOperators/WithComment.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/callableReference")
     public static class CallableReference extends AbstractBasicCompletionHandlerTest {
         @java.lang.Override
@@ -787,6 +846,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("AfterValKeywordInConstructorParameter.kt")
         public void testAfterValKeywordInConstructorParameter() throws Exception {
             runTest("../testData/handlers/basic/override/AfterValKeywordInConstructorParameter.kt");
+        }
+
+        @TestMetadata("ContextParameters.kt")
+        public void testContextParameters() throws Exception {
+            runTest("../testData/handlers/basic/override/ContextParameters.kt");
+        }
+
+        @TestMetadata("ContextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("../testData/handlers/basic/override/ContextReceiver.kt");
         }
 
         @TestMetadata("ExpectClassValOverride.kt")
@@ -1620,6 +1689,21 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/ClassWithClassObject.kt");
         }
 
+        @TestMetadata("ConstructorCompletion.kt")
+        public void testConstructorCompletion() throws Exception {
+            runTest("../testData/handlers/basic/ConstructorCompletion.kt");
+        }
+
+        @TestMetadata("ConstructorCompletionWithMultipleConstructors.kt")
+        public void testConstructorCompletionWithMultipleConstructors() throws Exception {
+            runTest("../testData/handlers/basic/ConstructorCompletionWithMultipleConstructors.kt");
+        }
+
+        @TestMetadata("ConstructorCompletionWithSingleConstructor.kt")
+        public void testConstructorCompletionWithSingleConstructor() throws Exception {
+            runTest("../testData/handlers/basic/ConstructorCompletionWithSingleConstructor.kt");
+        }
+
         @TestMetadata("DoNotInsertReceiverCast.kt")
         public void testDoNotInsertReceiverCast() throws Exception {
             runTest("../testData/handlers/basic/DoNotInsertReceiverCast.kt");
@@ -1668,11 +1752,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("GenericFunctionWithTab2.kt")
         public void testGenericFunctionWithTab2() throws Exception {
             runTest("../testData/handlers/basic/GenericFunctionWithTab2.kt");
-        }
-
-        @TestMetadata("GetOperator.kt")
-        public void testGetOperator() throws Exception {
-            runTest("../testData/handlers/basic/GetOperator.kt");
         }
 
         @TestMetadata("InsertImportedWithObjectName.kt")

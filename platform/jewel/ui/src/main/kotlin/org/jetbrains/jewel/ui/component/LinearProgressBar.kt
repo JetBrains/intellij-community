@@ -26,9 +26,24 @@ import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.component.styling.HorizontalProgressBarStyle
 import org.jetbrains.jewel.ui.theme.horizontalProgressBarStyle
 
-// TODO implement green/red/yellow variants based on
-// com.intellij.openapi.progress.util.ColorProgressBar
-
+/**
+ * A horizontal progress bar component that follows the standard visual styling.
+ *
+ * Provides a progress indicator that fills from left to right (or right to left in RTL layouts) to show the progress of
+ * an operation. The progress is represented as a filled portion of the bar, with customizable colors and styling.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/progress-bar.html)
+ *
+ * **Usage example:**
+ * [`ProgressBar.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/ProgressBar.kt)
+ *
+ * **Swing equivalent:** [`JProgressBar`](https://docs.oracle.com/javase/tutorial/uiswing/components/progress.html)
+ *
+ * @param progress The current progress value between 0 and 1
+ * @param modifier Modifier to be applied to the progress bar
+ * @param style The visual styling configuration for the progress bar
+ * @see javax.swing.JProgressBar
+ */
 @Composable
 public fun HorizontalProgressBar(
     progress: Float, // from 0 to 1
@@ -56,6 +71,24 @@ public fun HorizontalProgressBar(
     )
 }
 
+/**
+ * An indeterminate horizontal progress bar component that follows the standard visual styling.
+ *
+ * Provides an animated progress indicator for operations where the progress cannot be determined. Displays a moving
+ * highlight that animates continuously to indicate ongoing activity.
+ *
+ * **Guidelines:** [on IJP SDK webhelp](https://plugins.jetbrains.com/docs/intellij/progress-bar.html)
+ *
+ * **Usage example:**
+ * [`ProgressBar.kt`](https://github.com/JetBrains/intellij-community/blob/master/platform/jewel/samples/showcase/src/main/kotlin/org/jetbrains/jewel/samples/showcase/components/ProgressBar.kt)
+ *
+ * **Swing equivalent:** [`JProgressBar`](https://docs.oracle.com/javase/tutorial/uiswing/components/progress.html) with
+ * [setIndeterminate(true)](https://docs.oracle.com/javase/8/docs/api/javax/swing/JProgressBar.html#setIndeterminate-boolean-)
+ *
+ * @param modifier Modifier to be applied to the progress bar
+ * @param style The visual styling configuration for the progress bar
+ * @see javax.swing.JProgressBar
+ */
 @Composable
 public fun IndeterminateHorizontalProgressBar(
     modifier: Modifier = Modifier,

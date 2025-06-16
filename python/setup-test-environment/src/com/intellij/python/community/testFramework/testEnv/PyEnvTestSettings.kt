@@ -33,10 +33,13 @@ data class PyEnvTestSettings(
   @TestOnly
   @get:JvmName("getPythons")
   internal val pythons: List<File> = foldersWithPythons
-    .filter(File::exists)
-    .flatMap { it.listFiles()?.toList() ?: emptyList() }
-    .plus(additionalInterpreters)
-    .filter { it.isDirectory && !it.name.startsWith('.') }
+      .asSequence()
+      .filter(File::exists)
+      .flatMap { it.listFiles()?.toList() ?: emptyList() }
+      .plus(additionalInterpreters)
+      .filter { if (PyTestEnvVars.PYCHARM_PY_VERSION.isSet()) it.path.contains(PyTestEnvVars.PYCHARM_PY_VERSION.getValue()!!) else true }
+      .filter { it.isDirectory && !it.name.startsWith('.') }
+      .toList()
 
   /**
    * Configuration in readable format
@@ -116,7 +119,12 @@ enum class PyTestEnvVars(private val getVarName: (PyTestEnvVars) -> String = { i
   /**
    * Only run remote-based tests
    */
-  PYCHARM_RUN_REMOTE;
+  PYCHARM_RUN_REMOTE,
+
+  /**
+   * Run only on one PY version
+   */
+  PYCHARM_PY_VERSION;
 
 
   companion object {

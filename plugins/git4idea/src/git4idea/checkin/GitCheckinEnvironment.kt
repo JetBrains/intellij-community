@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableConsumer
 import com.intellij.util.containers.CollectionFactory
@@ -55,6 +56,7 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.commit.GitMergeCommitMessageReader
 import git4idea.config.GitConfigUtil
+import git4idea.config.GitEelExecutableDetectionHelper
 import git4idea.i18n.GitBundle
 import git4idea.index.GitIndexUtil
 import git4idea.index.GitIndexUtil.StagedFile
@@ -68,6 +70,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStreamWriter
+import java.nio.file.Files
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -86,8 +89,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     return true
   }
 
-  override fun createCommitOptions(commitPanel: CheckinProjectPanel,
-                                   commitContext: CommitContext): RefreshableOnComponent {
+  override fun createCommitOptions(
+    commitPanel: CheckinProjectPanel,
+    commitContext: CommitContext,
+  ): RefreshableOnComponent {
     return GitCheckinOptions(commitPanel, commitContext, isAmendCommitOptionSupported(commitPanel, this))
   }
 
@@ -130,10 +135,12 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     myNextCleanupCommitMessage = GitCommitTemplateTracker.getInstance(myProject).exists()
   }
 
-  override fun commit(changes: List<Change>,
-                      commitMessage: @NonNls String,
-                      commitContext: CommitContext,
-                      feedback: MutableSet<in String>): List<VcsException> {
+  override fun commit(
+    changes: List<Change>,
+    commitMessage: @NonNls String,
+    commitContext: CommitContext,
+    feedback: MutableSet<in String>,
+  ): List<VcsException> {
     updateState(commitContext)
 
     val exceptions = mutableListOf<VcsException>()
@@ -168,8 +175,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     return exceptions
   }
 
-  private fun collectRepositories(changesRepositories: Collection<GitRepository>,
-                                  noChangesRoots: Collection<VcsRoot>): List<GitRepository> {
+  private fun collectRepositories(
+    changesRepositories: Collection<GitRepository>,
+    noChangesRoots: Collection<VcsRoot>,
+  ): List<GitRepository> {
     val repositoryManager = GitUtil.getRepositoryManager(myProject)
     val vcs = GitVcs.getInstance(myProject)
     val noChangesRepositories =
@@ -247,11 +256,13 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     val COMMIT_DATE_FORMAT: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
 
 
-    private fun commitRepository(repository: GitRepository,
-                                 changes: Collection<CommitChange>,
-                                 message: @NonNls String,
-                                 commitContext: CommitContext,
-                                 commitOptions: GitCommitOptions): List<VcsException> {
+    private fun commitRepository(
+      repository: GitRepository,
+      changes: Collection<CommitChange>,
+      message: @NonNls String,
+      commitContext: CommitContext,
+      commitOptions: GitCommitOptions,
+    ): List<VcsException> {
       val exceptions = mutableListOf<VcsException>()
       val project = repository.project
       val root = repository.root
@@ -288,12 +299,14 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
 
     @JvmStatic
-    fun commitUsingIndex(project: Project,
-                         repository: GitRepository,
-                         rootChanges: Collection<ChangedPath>,
-                         changedWithIndex: Set<ChangedPath>,
-                         messageFile: File,
-                         commitOptions: GitCommitOptions): List<VcsException> {
+    fun commitUsingIndex(
+      project: Project,
+      repository: GitRepository,
+      rootChanges: Collection<ChangedPath>,
+      changedWithIndex: Set<ChangedPath>,
+      messageFile: File,
+      commitOptions: GitCommitOptions,
+    ): List<VcsException> {
       val exceptions = mutableListOf<VcsException>()
       try {
         val added: Set<FilePath> = rootChanges.mapNotNullTo(HashSet()) { it.afterPath }
@@ -365,8 +378,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
 
     @Throws(VcsException::class)
-    private fun addPartialChangesToIndex(repository: GitRepository,
-                                         changes: Collection<CommitChange>): Pair<List<PartialCommitHelper>, List<CommitChange>> {
+    private fun addPartialChangesToIndex(
+      repository: GitRepository,
+      changes: Collection<CommitChange>,
+    ): Pair<List<PartialCommitHelper>, List<CommitChange>> {
       val project = repository.project
 
       if (changes.none { it.changelistIds != null }) {
@@ -438,9 +453,11 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       }
     }
 
-    private fun convertDocumentContentToBytes(repository: GitRepository,
-                                              documentContent: @NonNls String,
-                                              file: VirtualFile): ByteArray {
+    private fun convertDocumentContentToBytes(
+      repository: GitRepository,
+      documentContent: @NonNls String,
+      file: VirtualFile,
+    ): ByteArray {
       val lineSeparator = FileDocumentManager.getInstance().getLineSeparator(file, repository.project)
       val text = if (lineSeparator == "\n") {
         documentContent
@@ -453,9 +470,11 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
 
     @JvmStatic
-    fun convertDocumentContentToBytesWithBOM(repository: GitRepository,
-                                             documentContent: @NonNls String,
-                                             file: VirtualFile): ByteArray {
+    fun convertDocumentContentToBytesWithBOM(
+      repository: GitRepository,
+      documentContent: @NonNls String,
+      file: VirtualFile,
+    ): ByteArray {
       var fileContent = convertDocumentContentToBytes(repository, documentContent, file)
 
       val bom = file.bom
@@ -506,10 +525,12 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
 
 
-    private fun addCaseOnlyRenamesToIndex(repository: GitRepository,
-                                          changes: Collection<CommitChange>,
-                                          alreadyProcessed: Set<CommitChange>,
-                                          exceptions: MutableList<in VcsException>): List<CommitChange> {
+    private fun addCaseOnlyRenamesToIndex(
+      repository: GitRepository,
+      changes: Collection<CommitChange>,
+      alreadyProcessed: Set<CommitChange>,
+      exceptions: MutableList<in VcsException>,
+    ): List<CommitChange> {
       if (SystemInfo.isFileSystemCaseSensitive) return emptyList()
 
       val caseOnlyRenames = changes.filter { change -> !alreadyProcessed.contains(change) && isCaseOnlyRename(change) }
@@ -549,10 +570,12 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       return files
     }
 
-    private fun processExcludedPaths(changes: Collection<GitDiffChange>,
-                                     added: Set<FilePath>,
-                                     removed: Set<FilePath>,
-                                     function: (before: FilePath?, after: FilePath?) -> Unit) {
+    private fun processExcludedPaths(
+      changes: Collection<GitDiffChange>,
+      added: Set<FilePath>,
+      removed: Set<FilePath>,
+      function: (before: FilePath?, after: FilePath?) -> Unit,
+    ) {
       for (change in changes) {
         var before = change.beforePath
         var after = change.afterPath
@@ -566,10 +589,12 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       return GitUtil.getLogString(root, changes, { it.beforePath }, { it.afterPath })
     }
 
-    private fun commitExplicitRenames(repository: GitRepository,
-                                      changes: Collection<CommitChange>,
-                                      message: @NonNls String,
-                                      commitOptions: GitCommitOptions): Pair<Collection<CommitChange>, List<VcsException>> {
+    private fun commitExplicitRenames(
+      repository: GitRepository,
+      changes: Collection<CommitChange>,
+      message: @NonNls String,
+      commitOptions: GitCommitOptions,
+    ): Pair<Collection<CommitChange>, List<VcsException>> {
       val project = repository.project
       val root = repository.root
 
@@ -628,9 +653,11 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
 
     @Throws(VcsException::class)
-    private fun addExplicitMovementsToIndex(repository: GitRepository,
-                                            changes: Collection<CommitChange>,
-                                            explicitMoves: Collection<Movement>): Pair<List<CommitChange>, List<CommitChange>>? {
+    private fun addExplicitMovementsToIndex(
+      repository: GitRepository,
+      changes: Collection<CommitChange>,
+      explicitMoves: Collection<Movement>,
+    ): Pair<List<CommitChange>, List<CommitChange>>? {
       val explicitMoves = filterExcludedChanges(explicitMoves, changes)
       if (explicitMoves.isEmpty()) return null
       LOG.info("Committing explicit rename: " + explicitMoves + " in " + DvcsUtil.getShortRepositoryName(repository))
@@ -715,8 +742,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       return Pair(movedChanges, nextCommitChanges)
     }
 
-    private fun filterExcludedChanges(explicitMoves: Collection<Movement>,
-                                      changes: Collection<CommitChange>): List<Movement> {
+    private fun filterExcludedChanges(
+      explicitMoves: Collection<Movement>,
+      changes: Collection<CommitChange>,
+    ): List<Movement> {
       val movedPathsMultiSet = HashMultiset.create<FilePath>()
       for (move in explicitMoves) {
         movedPathsMultiSet.add(move.before)
@@ -821,9 +850,11 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
 
 
     @Throws(VcsException::class)
-    private fun resetExcluded(project: Project,
-                              root: VirtualFile,
-                              changes: Collection<ChangedPath>) {
+    private fun resetExcluded(
+      project: Project,
+      root: VirtualFile,
+      changes: Collection<ChangedPath>,
+    ) {
       val allPaths: MutableSet<FilePath> = CollectionFactory.createCustomHashingStrategySet(ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY)
       for (change in changes) {
         ContainerUtil.addIfNotNull(allPaths, change.afterPath)
@@ -838,10 +869,12 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       }
     }
 
-    private fun restoreExcluded(project: Project,
-                                root: VirtualFile,
-                                changes: Collection<ChangedPath>,
-                                unstagedDeletions: Set<FilePath>) {
+    private fun restoreExcluded(
+      project: Project,
+      root: VirtualFile,
+      changes: Collection<ChangedPath>,
+      unstagedDeletions: Set<FilePath>,
+    ) {
       val restoreExceptions = mutableListOf<VcsException>()
 
       val toAdd = HashSet<FilePath>()
@@ -869,8 +902,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       }
     }
 
-    private fun addAsCaseOnlyRename(project: Project, root: VirtualFile, change: ChangedPath,
-                                    exceptions: MutableList<in VcsException>): Boolean {
+    private fun addAsCaseOnlyRename(
+      project: Project, root: VirtualFile, change: ChangedPath,
+      exceptions: MutableList<in VcsException>,
+    ): Boolean {
       try {
         if (!isCaseOnlyRename(change)) return false
 
@@ -898,11 +933,13 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
      * @param removed    removed files to commit
      * @param exceptions a list of exceptions to update
      */
-    private fun updateIndex(project: Project,
-                            root: VirtualFile,
-                            added: Collection<FilePath>,
-                            removed: Collection<FilePath>,
-                            exceptions: MutableList<in VcsException>) {
+    private fun updateIndex(
+      project: Project,
+      root: VirtualFile,
+      added: Collection<FilePath>,
+      removed: Collection<FilePath>,
+      exceptions: MutableList<in VcsException>,
+    ) {
       if (!removed.isEmpty()) {
         try {
           GitFileUtils.deletePaths(project, root, removed, "--ignore-unmatch", "--cached", "-r")
@@ -933,21 +970,28 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     @Throws(IOException::class)
     fun createCommitMessageFile(project: Project, root: VirtualFile, message: @NonNls String): File {
       // filter comment lines
-      val file = FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT)
-      @Suppress("SSBasedInspection")
-      file.deleteOnExit()
+      val file = if (GitEelExecutableDetectionHelper.canUseEel()) {
+        EelPathUtils.createTemporaryFile(project, GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT, true)
+      } else {
+        FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT).also {
+          @Suppress("SSBasedInspection")
+          it.deleteOnExit()
+        }.toPath()
+      }
 
       val encoding = GitConfigUtil.getCommitEncodingCharset(project, root)
-      OutputStreamWriter(FileOutputStream(file), encoding).use { out ->
+      OutputStreamWriter(Files.newOutputStream(file), encoding).use { out ->
         out.write(message)
       }
-      return file
+      return file.toFile()
     }
 
     @Throws(VcsException::class)
     @JvmStatic
-    fun runWithMessageFile(project: Project, root: VirtualFile, message: @NonNls String,
-                           task: ThrowableConsumer<in File, out VcsException>) {
+    fun runWithMessageFile(
+      project: Project, root: VirtualFile, message: @NonNls String,
+      task: ThrowableConsumer<in File, out VcsException>,
+    ) {
       val messageFile = try {
         createCommitMessageFile(project, root, message)
       }
@@ -965,9 +1009,11 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
       }
     }
 
-    private fun sortChangesByGitRoot(project: Project,
-                                     changes: List<Change>,
-                                     exceptions: MutableList<in VcsException>): Map<GitRepository, MutableCollection<Change>> {
+    private fun sortChangesByGitRoot(
+      project: Project,
+      changes: List<Change>,
+      exceptions: MutableList<in VcsException>,
+    ): Map<GitRepository, MutableCollection<Change>> {
       val result = HashMap<GitRepository, MutableCollection<Change>>()
       for (change in changes) {
         try {
@@ -1005,9 +1051,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
   }
 
   // used by external plugins
-  inner class GitCheckinOptions internal constructor(commitPanel: CheckinProjectPanel,
-                                                     commitContext: CommitContext,
-                                                     showAmendOption: Boolean
+  inner class GitCheckinOptions internal constructor(
+    commitPanel: CheckinProjectPanel,
+    commitContext: CommitContext,
+    showAmendOption: Boolean,
   ) : CheckinChangeListSpecificComponent, RefreshableOnComponent, Disposable {
 
     private val myOptionsUi = GitCommitOptionsUi(commitPanel, commitContext, showAmendOption)
@@ -1047,8 +1094,10 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
   }
 
-  open class ChangedPath(val beforePath: FilePath?,
-                         val afterPath: FilePath?) {
+  open class ChangedPath(
+    val beforePath: FilePath?,
+    val afterPath: FilePath?,
+  ) {
 
     init {
       assert(beforePath != null || afterPath != null)
@@ -1065,12 +1114,14 @@ class GitCheckinEnvironment(private val myProject: Project) : CheckinEnvironment
     }
   }
 
-  private class CommitChange(beforePath: FilePath?,
-                             afterPath: FilePath?,
-                             val beforeRevision: VcsRevisionNumber?,
-                             val afterRevision: VcsRevisionNumber?,
-                             val changelistIds: List<String>?,
-                             val virtualFile: VirtualFile?) : ChangedPath(beforePath, afterPath) {
+  private class CommitChange(
+    beforePath: FilePath?,
+    afterPath: FilePath?,
+    val beforeRevision: VcsRevisionNumber?,
+    val afterRevision: VcsRevisionNumber?,
+    val changelistIds: List<String>?,
+    val virtualFile: VirtualFile?,
+  ) : ChangedPath(beforePath, afterPath) {
     override fun toString(): @NonNls String {
       return super.toString() + ", changelists: " + changelistIds
     }

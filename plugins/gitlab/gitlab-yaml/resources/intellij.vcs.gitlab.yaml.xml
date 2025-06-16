@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.gitlab.yaml">
+<idea-plugin>
 
   <dependencies>
     <module name="intellij.yaml.backend"/>

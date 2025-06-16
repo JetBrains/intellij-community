@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class DebuggerUtilsEx
@@ -24,13 +24,10 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
 import com.intellij.execution.filters.ExceptionFilters;
+import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.LineNumbersMapping;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.layout.impl.RunnerContentUi;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.java.debugger.impl.shared.SharedDebuggerUtils;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -48,16 +45,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
-import com.intellij.unscramble.DumpItem;
-import com.intellij.unscramble.JavaThreadDumpItem;
-import com.intellij.unscramble.ThreadDumpPanel;
+import com.intellij.unscramble.DumpItemKt;
+import com.intellij.unscramble.MergeableDumpItem;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -76,7 +70,10 @@ import com.sun.jdi.event.EventSet;
 import one.util.streamex.StreamEx;
 import org.jdom.Attribute;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -85,6 +82,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsEx.class);
@@ -130,7 +128,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
    * Does not handle array types correctly
    * @deprecated use {@link DebuggerUtils#instanceOf(Type, String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean isAssignableFrom(@NotNull String baseQualifiedName, @NotNull Type checkedType) {
     if (checkedType instanceof ReferenceType) {
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(baseQualifiedName)) {
@@ -196,15 +194,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static boolean isFiltered(@NotNull String qName, ClassFilter[] classFilters) {
-    return isFiltered(qName, Arrays.asList(classFilters));
+    return isFiltered(qName, Arrays.stream(classFilters));
   }
 
-  public static boolean isFiltered(@NotNull String qName, List<? extends ClassFilter> classFilters) {
+  public static boolean isFiltered(@NotNull String qName, Stream<? extends ClassFilter> classFilters) {
     if (qName.indexOf('[') != -1) {
       return false; //is array
     }
 
-    return ContainerUtil.exists(classFilters, filter -> isFiltered(filter, qName));
+    return classFilters.anyMatch(filter -> isFiltered(filter, qName));
   }
 
   public static int getEnabledNumber(ClassFilter[] classFilters) {
@@ -324,36 +322,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return Collections.emptyList();
   }
 
-  private static int myThreadDumpsCount = 0;
-
-  @ApiStatus.Internal
-  public static void addDumpItems(Project project, List<DumpItem> dumpItems, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
-    final TextConsoleBuilder consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
-    consoleBuilder.filters(ExceptionFilters.getFilters(searchScope));
-    final ConsoleView consoleView = consoleBuilder.getConsole();
-    final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    consoleView.allowHeavyFilters();
-    final ThreadDumpPanel panel = ThreadDumpPanel.createFromDumpItems(project, consoleView, toolbarActions, dumpItems);
-
-    String id = JavaDebuggerBundle.message("thread.dump.name", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
-    final Content content = ui.createContent(id + " " + myThreadDumpsCount, panel, id, null, null);
-    content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
-    content.setCloseable(true);
-    content.setDescription(JavaDebuggerBundle.message("thread.dump"));
-    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_REMOTE_CLIENTS, true);
-    ui.addContent(content);
-    ui.selectAndFocus(content, true, true);
-    myThreadDumpsCount++;
-    Disposer.register(content, consoleView);
-    ui.selectAndFocus(content, true, false);
-    if (!dumpItems.isEmpty()) {
-      panel.selectStackFrame(0);
-    }
-  }
-
   public static void addThreadDump(Project project, List<ThreadState> threads, RunnerLayoutUi ui, GlobalSearchScope searchScope) {
-    List<DumpItem> javaThreadDump = new ArrayList<>(ContainerUtil.map(threads, JavaThreadDumpItem::new));
-    addDumpItems(project, javaThreadDump, ui, searchScope);
+    List<MergeableDumpItem> javaThreadDump = new ArrayList<>(DumpItemKt.toDumpItems(threads));
+    List<Filter> filters = ExceptionFilters.getFilters(searchScope);
+    SharedDebuggerUtils.createThreadDumpPanel(project, javaThreadDump, ui, filters);
   }
 
   public static void addCollectionHistoryTab(@NotNull XDebugSession session, @NotNull XValueNodeImpl node) {
@@ -375,6 +347,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                              @Nullable XValueNodeImpl node) {
     XDebugProcess process = session.getDebugProcess();
     RunnerLayoutUi ui = session.getUI();
+    if (ui == null) {
+      // TODO [Debugger.RunnerLayoutUi]
+      return;
+    }
     String title = JavaDebuggerBundle.message("collection.history.tab.title", clsName + "." + fieldName);
     for (Content content : ui.getContents()) {
       if (title.equals(content.getDisplayName())) {

@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineReferenceContributor extends PsiReferenceContributor {
+final class CommandLineReferenceContributor extends PsiReferenceContributor {
   private static final ReferenceProvider REFERENCE_PROVIDER = new ReferenceProvider();
 
   @Override
@@ -22,11 +22,9 @@ public final class CommandLineReferenceContributor extends PsiReferenceContribut
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(CommandLineElement.class), REFERENCE_PROVIDER);
   }
 
-
-  private static class ReferenceProvider extends PsiReferenceProvider {
+  private static final class ReferenceProvider extends PsiReferenceProvider {
     @Override
-    public final PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element,
-                                                                 final @NotNull ProcessingContext context) {
+    public PsiReference @NotNull [] getReferencesByElement(final @NotNull PsiElement element, final @NotNull ProcessingContext context) {
       if (element instanceof CommandLineCommand) {
         return new PsiReference[]{new CommandLineCommandReference((CommandLineCommand)element)};
       }

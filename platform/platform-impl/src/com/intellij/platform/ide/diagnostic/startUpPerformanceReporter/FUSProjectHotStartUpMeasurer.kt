@@ -151,6 +151,12 @@ object FUSProjectHotStartUpMeasurer {
     return if (isProperContext()) MyMarker else null
   }
 
+  // This code is necessary for reporting metrics from the frontend because frontend metrics are sent outside the project initialization process.
+  @Internal
+  fun getContextElementToPass(): CoroutineContext.Element {
+    return MyMarker
+  }
+
   private fun reportViolation(violation: Violation) {
     channel.trySend(Event.ViolationEvent(violation))
     channel.close()
@@ -227,13 +233,12 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.MarkupRestoredEvent(recipe.fileId, type))
   }
 
-  fun firstOpenedEditor(file: VirtualFile) {
+  fun firstOpenedEditor(file: VirtualFile, project: Project) {
     if (!currentThreadContext().isProperContext()) {
       return
     }
     channel.trySend(Event.FirstEditorEvent(SourceOfSelectedEditor.TextEditor, file, System.nanoTime()))
     if (ApplicationManagerEx.isInIntegrationTest()) {
-      val project = ProjectManager.getInstance().openProjects[0]
       val fileEditorManager = FileEditorManager.getInstance(project)
       checkEditorHasBasicHighlight(file, project, fileEditorManager)
     }

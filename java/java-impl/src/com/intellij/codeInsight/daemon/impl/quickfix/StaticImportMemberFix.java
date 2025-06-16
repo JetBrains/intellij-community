@@ -39,19 +39,19 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   final SmartPsiElementPointer<R> myReferencePointer;
   private final long myPsiModificationCount;
 
-  StaticImportMemberFix(@NotNull PsiFile file, @NotNull R reference) {
+  StaticImportMemberFix(@NotNull PsiFile psiFile, @NotNull R reference) {
     // there is a lot of PSI computations and resolve going on here,
     // so it must be created in a background thread under the read action to ensure no freezes are reported
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Project project = file.getProject();
+    Project project = psiFile.getProject();
     myReferencePointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(reference);
-    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, file)
-        || !(file instanceof PsiJavaFile)
+    if (!PsiUtil.isAvailable(JavaFeature.STATIC_IMPORTS, psiFile)
+        || !(psiFile instanceof PsiJavaFile)
         || getElement() == null
         || !reference.isValid()
         || getQualifierExpression() != null
-        || !BaseIntentionAction.canModify(file)
+        || !BaseIntentionAction.canModify(psiFile)
         || resolveRef() != null) {
       candidates = Collections.emptyList();
     }
@@ -59,22 +59,22 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
       // search for suitable candidates here, in the background thread
       StaticMembersProcessor.MembersToImport<T> membersToImport = getMembersToImport(100);
       List<T> candidatesToImport = membersToImport.applicable().isEmpty() ? membersToImport.all() : membersToImport.applicable();
-      candidates = ContainerUtil.filter(candidatesToImport, candidate -> isValidCandidate(file, candidate));
+      candidates = ContainerUtil.filter(candidatesToImport, candidate -> isValidCandidate(psiFile, candidate));
     }
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
   }
 
-  private static boolean isValidCandidate(PsiFile file, PsiMember candidate){
+  private static boolean isValidCandidate(PsiFile psiFile, PsiMember candidate){
     if (!candidate.isValid()) return false;
-    if (PsiUtil.isMemberAccessibleAt(candidate, file)) return true;
+    if (PsiUtil.isMemberAccessibleAt(candidate, psiFile)) return true;
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(candidate);
     if (virtualFile == null) return false;
-    return ProjectFileIndex.getInstance(file.getProject()).isInContent(virtualFile);
+    return ProjectFileIndex.getInstance(psiFile.getProject()).isInContent(virtualFile);
   }
 
   @NotNull
-  IntentionPreviewInfo generatePreview(@NotNull PsiFile file, @NotNull BiConsumer<? super PsiElement, ? super T> consumer) {
-    PsiElement copy = PsiTreeUtil.findSameElementInCopy(getElement(), file);
+  IntentionPreviewInfo generatePreview(@NotNull PsiFile psiFile, @NotNull BiConsumer<? super PsiElement, ? super T> consumer) {
+    PsiElement copy = PsiTreeUtil.findSameElementInCopy(getElement(), psiFile);
     if (copy == null) return IntentionPreviewInfo.EMPTY;
     if (candidates.isEmpty()) return IntentionPreviewInfo.EMPTY;
     T element = candidates.get(0);
@@ -101,7 +101,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return !isPsiModificationStampChanged(project) && !candidates.isEmpty();
   }
 
@@ -126,8 +126,8 @@ public abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiEl
   protected abstract @Nullable PsiElement resolveRef();
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)
         || isPsiModificationStampChanged(project)
         || candidates.isEmpty()) {
       return;

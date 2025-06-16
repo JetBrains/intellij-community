@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionLocation;
@@ -52,7 +53,9 @@ public final class MavenModelDocumentationProvider implements DocumentationProvi
 
   @Override
   public @Nls String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
-    return getMavenElementDescription(element, location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false);
+    return ReadAction.compute(() ->
+      getMavenElementDescription(element, location instanceof UsageViewTypeLocation ? DescKind.TYPE : DescKind.NAME, false)
+    );
   }
 
   private static @Nullable @NlsContexts.DetailedDescription String getMavenElementDescription(PsiElement e, DescKind kind, boolean html) {

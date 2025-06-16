@@ -3,19 +3,20 @@
 package org.jetbrains.kotlin.idea.refactoring.pullUp
 
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ClassKind
-import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaClassDescriptor
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getClassDescriptorIfAny
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getTypeSubstitution
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.utils.collectDescriptorsFiltered
@@ -27,13 +28,13 @@ class KotlinPullUpData(
     val targetClass: PsiNamedElement,
     val membersToMove: Collection<KtNamedDeclaration>
 ) {
-    val resolutionFacade = sourceClass.getResolutionFacade()
+    val resolutionFacade: ResolutionFacade = sourceClass.getResolutionFacade()
 
-    val sourceClassContext = resolutionFacade.analyzeWithAllCompilerChecks(sourceClass).bindingContext
+    val sourceClassContext: BindingContext = resolutionFacade.analyzeWithAllCompilerChecks(sourceClass).bindingContext
 
-    val sourceClassDescriptor = sourceClassContext[BindingContext.DECLARATION_TO_DESCRIPTOR, sourceClass] as ClassDescriptor
+    val sourceClassDescriptor: ClassDescriptor = sourceClassContext[BindingContext.DECLARATION_TO_DESCRIPTOR, sourceClass] as ClassDescriptor
 
-    val memberDescriptors = membersToMove.keysToMapExceptNulls {
+    val memberDescriptors: Map<KtNamedDeclaration, DeclarationDescriptor> = membersToMove.keysToMapExceptNulls {
         when (it) {
             is KtPsiClassWrapper -> it.psiClass.getJavaClassDescriptor(resolutionFacade)
             is KtParameter -> sourceClassContext[BindingContext.PRIMARY_CONSTRUCTOR_PARAMETER, it]
@@ -41,13 +42,13 @@ class KotlinPullUpData(
         }
     }
 
-    val targetClassDescriptor = targetClass.getClassDescriptorIfAny(resolutionFacade)!!
+    val targetClassDescriptor: ClassDescriptor = targetClass.getClassDescriptorIfAny(resolutionFacade)!!
 
-    val superEntryForTargetClass = sourceClass.getSuperTypeEntryByDescriptor(targetClassDescriptor, sourceClassContext)
+    val superEntryForTargetClass: KtSuperTypeListEntry? = sourceClass.getSuperTypeEntryByDescriptor(targetClassDescriptor, sourceClassContext)
 
-    val targetClassSuperResolvedCall = superEntryForTargetClass.getResolvedCall(sourceClassContext)
+    val targetClassSuperResolvedCall: ResolvedCall<out CallableDescriptor>? = superEntryForTargetClass.getResolvedCall(sourceClassContext)
 
-    private val typeParametersInSourceClassContext by lazy {
+    private val typeParametersInSourceClassContext: List<TypeParameterDescriptor> by lazy {
         sourceClassDescriptor.declaredTypeParameters + sourceClass.getResolutionScope(sourceClassContext, resolutionFacade)
             .collectDescriptorsFiltered(DescriptorKindFilter.NON_SINGLETON_CLASSIFIERS)
             .filterIsInstance<TypeParameterDescriptor>()

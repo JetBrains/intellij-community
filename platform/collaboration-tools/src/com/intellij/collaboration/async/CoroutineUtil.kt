@@ -13,7 +13,10 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.HashingStrategy
+import com.intellij.util.containers.toArray
+import com.intellij.util.diff.Diff
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
@@ -63,7 +66,7 @@ fun CoroutineScope.nestedDisposable(): Disposable {
 fun CoroutineScope.cancelledWith(disposable: Disposable): CoroutineScope = apply {
   val job = coroutineContext[Job]
   requireNotNull(job) { "Coroutine scope without a parent job $this" }
-  job.cancelOnDispose(disposable, false)
+  job.cancelOnDispose(disposable)
 }
 
 fun CoroutineScope.launchNow(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job =
@@ -76,6 +79,8 @@ fun <T> Flow<T>.launchNowIn(scope: CoroutineScope, context: CoroutineContext = E
   scope.launch(context, CoroutineStart.UNDISPATCHED) {
     collect()
   }
+
+fun <T> stateFlowOf(value: T): StateFlow<T> = MutableStateFlow(value).asStateFlow()
 
 @ApiStatus.Experimental
 fun <T1, T2, R> combineState(
@@ -142,6 +147,7 @@ fun <T, M> StateFlow<T>.mapStateInNow(
 @ApiStatus.Experimental
 fun <T, M> StateFlow<T>.mapState(mapper: (value: T) -> M): StateFlow<M> = MappedStateFlow(this) { mapper(value) }
 
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class MappedStateFlow<T, R>(private val source: StateFlow<T>, private val mapper: (T) -> R) : StateFlow<R> {
   override val value: R
     get() = mapper(source.value)
@@ -189,6 +195,7 @@ inline fun <reified T, R> combineStatesIn(
  *
  * https://github.com/Kotlin/kotlinx.coroutines/issues/2631#issuecomment-870565860
  */
+@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 private class DerivedStateFlow<T>(
   private val source: Flow<T>,
   private val valueSupplier: () -> T,
@@ -588,3 +595,60 @@ fun <T : Any> ExtensionPointName<T>.extensionListFlow(): Flow<List<T>> =
 @ApiStatus.Internal
 fun <T : Any> ExtensionPointName<T>.singleExtensionFlow(): Flow<T?> =
   extensionListFlow().map { it.singleOrNull() }
+
+@ApiStatus.Internal
+sealed interface ComputedListChange<out V> {
+  data class Remove(val atIndex: Int, val length: Int) : ComputedListChange<Nothing>
+  data class Insert<V>(val atIndex: Int, val values: List<V>) : ComputedListChange<V>
+}
+
+/**
+ * Performs a simple array-based diff over different states for the list flow and emits changes.
+ * At first, it emits an initial value for the list as a sort of baseline. Afterwards, only changes
+ * are emitted. To maintain consistency of the list, every single change of this flow MUST be consumed.
+ * This flow may skip list updates and conflate them into a single bigger update if collection is not
+ * done before a new list update is sent.
+ *
+ * Changes can only be reported for immutable items, as we do not store a deep copy previous state.
+ */
+@ApiStatus.Internal
+fun <T> StateFlow<Iterable<T>>.changesFlow(): Flow<List<ComputedListChange<T>>> =
+  channelFlow {
+    val stateFlow = this@changesFlow
+
+    // Send an initial state
+    var list = emptyList<T>()
+    stateFlow.collectLatest {
+      val newList = it.toList()
+
+      // Calculate changes
+      val computedChanges = withContext(Dispatchers.Default) {
+        @Suppress("UNCHECKED_CAST")
+        val changes = Diff.buildChanges(
+          list.toArray(arrayOf<Any?>()) as Array<T>,
+          newList.toArray(arrayOf<Any?>()) as Array<T>
+        )?.toList() ?: emptyList()
+
+        buildList {
+          // deleted first, because the list of changes should be ordered in a way that's executable
+          changes.asReversed().forEach { change ->
+            if (change.deleted > 0) {
+              add(ComputedListChange.Remove(change.line0, change.deleted))
+            }
+          }
+          changes.forEach { change ->
+            if (change.inserted > 0) {
+              add(ComputedListChange.Insert(change.line1, newList.subList(change.line1, change.line1 + change.inserted)))
+            }
+          }
+        }
+      }
+
+      // Update the inner state and outer state in a single non-cancellable block
+      withContext(NonCancellable) {
+        send(computedChanges)
+        list = newList
+      }
+    }
+  }.buffer(capacity = 1, onBufferOverflow = BufferOverflow.SUSPEND)
+// SUSPEND means 'send' will suspend and wait until the previously emitted update is consumed

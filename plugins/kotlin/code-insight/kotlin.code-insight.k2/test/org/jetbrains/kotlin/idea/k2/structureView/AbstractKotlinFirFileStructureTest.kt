@@ -22,10 +22,11 @@ abstract class AbstractKotlinFirFileStructureTest : AbstractKotlinFileStructureT
     }
 
     override fun getFileName(ext: String): String {
-        val firSpecificName = getTestName(false) + ".fir" + ( if (ext.isEmpty()) "" else ".$ext")
-        if (File(testDataDirectory, firSpecificName).exists()) {
-            return firSpecificName
+        val k2SpecificName = getTestName(false) + ".k2" + ( if (ext.isEmpty()) "" else ".$ext")
+        return if (File(testDataDirectory, k2SpecificName).exists()) {
+            k2SpecificName
+        } else {
+            super.getFileName(ext)
         }
-        return super.getFileName(ext)
     }
 }

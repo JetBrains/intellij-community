@@ -15,10 +15,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.KeyStrokeAdapter;
+import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +31,8 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
@@ -40,12 +44,13 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     KeyStroke.getKeyStroke(KeyEvent.VK_D, (SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)), null);
 
   private final Component myComponent;
-  private final PotemkinProgress.EventStealer myEventStealer;
+  private final EventStealer myEventStealer;
   private final long myCreatedAt = System.nanoTime();
   private int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS * 10;
   private long myLastUiUpdate = myCreatedAt;
   private long myLastInteraction;
   private boolean myShowing;
+  private final boolean myCancellable;
 
   static {
     // preload classes
@@ -55,7 +60,13 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
 
   @Obsolete
   public PotemkinOverlayProgress(@Nullable Component component) {
+    this(component, true);
+  }
+
+  @Obsolete
+  public PotemkinOverlayProgress(@Nullable Component component, boolean cancellable) {
     EDT.assertIsEdt();
+    myCancellable = cancellable;
     myComponent = component;
     myEventStealer = PotemkinProgress.startStealingInputEvents(this::dispatchInputEvent, this);
   }
@@ -96,6 +107,10 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     myLastInteraction = now;
     long millisSinceLastUpdate = TimeoutUtil.getDurationMillis(myLastUiUpdate);
     if (!myShowing && millisSinceLastUpdate > myDelayInMillis) {
+      // since we are starting to show the dialog, we need to emulate modality and drop unrelated input events
+      // the only events that are allowed here are the ones that related to the dialog;
+      // but we know that there are no such events because the dialog is not showing yet
+      drainUndispatchedInputEvents();
       myShowing = true;
     }
     if (myShowing) {
@@ -132,29 +147,40 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     return null;
   }
 
-  private void paintProgress() {
-    paintOverlayProgress(SwingUtilities.getRootPane(myComponent), myCreatedAt);
+  private List<InputEvent> drainUndispatchedInputEvents() {
+    return myEventStealer.drainUndispatchedInputEvents();
   }
 
-  private static void paintOverlayProgress(@Nullable JRootPane rootPane, long createdAt) {
+  private void paintProgress() {
+    paintOverlayProgress(SwingUtilities.getRootPane(myComponent), myCreatedAt, myCancellable);
+  }
+
+  private static void paintOverlayProgress(@Nullable JRootPane rootPane, long createdAt, boolean cancellable) {
     IdeGlassPane glassPane = rootPane == null ? null : ObjectUtils.tryCast(rootPane.getGlassPane(), IdeGlassPane.class);
     if (glassPane == null) return;
     long roundedDuration = TimeoutUtil.getDurationMillis(createdAt) / 1000 * 1000;
     //noinspection HardCodedStringLiteral
-    String text = KeymapUtil.getShortcutText(CANCEL_SHORTCUT) + " to cancel, " +
+    String text = (cancellable ? KeymapUtil.getShortcutText(CANCEL_SHORTCUT) + " to cancel, " : "") +
                   KeymapUtil.getShortcutText(DUMP_SHORTCUT) + " to dump threads (" +
                   NlsMessages.formatDurationApproximateNarrow(roundedDuration) + ")";
-    Graphics graphics = rootPane.getGraphics();
-    GraphicsUtil.setupAAPainting(graphics);
+    Graphics originalGraphics = GraphicsUtil.safelyGetGraphics(rootPane);
     Rectangle viewR = rootPane.getBounds(), iconR = new Rectangle(), textR = new Rectangle();
-    FontMetrics fm = graphics.getFontMetrics();
+    FontMetrics fm = originalGraphics.getFontMetrics();
     SwingUtilities.layoutCompoundLabel(fm, text, null, 0, 0, 0, 0, viewR, iconR, textR, 0);
-    graphics.translate(textR.x, textR.y);
-    graphics.setColor(JBColor.GRAY);
     int border = 10;
-    graphics.fillRoundRect(-border, -border, textR.width + 2 * border, textR.height + 2 * border, border, border);
+
+    BufferedImage backBuffer = UIUtil.createImage(rootPane.getGraphicsConfiguration(), textR.width + 2 * border, textR.height + 2 * border,
+                                                  BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.ROUND);
+    Graphics graphics = backBuffer.createGraphics();
+    GraphicsUtil.setupAAPainting(originalGraphics);
+    graphics.setColor(JBColor.GRAY);
+    graphics.fillRoundRect(0, 0, textR.width + 2 * border, textR.height + 2 * border, border, border);
     graphics.setColor(JBColor.WHITE);
-    graphics.drawString(text, 0, fm.getAscent());
+    graphics.drawString(text, border, border + fm.getAscent());
+
+    originalGraphics.translate(textR.x - border, textR.y - border);
+    UIUtil.drawImage(originalGraphics, backBuffer, 0, 0, null);
     graphics.dispose();
+    originalGraphics.dispose();
   }
 }

@@ -1,65 +1,16 @@
 <idea-plugin package="com.intellij.platform.debugger.impl.frontend">
   <dependencies>
-    <plugin id="com.intellij.platform.experimental.frontend"/>
     <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.execution.impl.frontend"/>
+    <module name="intellij.platform.debugger.impl.shared"/>
+    <module name="intellij.platform.debugger.impl.rpc"/>
   </dependencies>
+  <extensionPoints>
+    <extensionPoint name="xdebugger.customQuickEvaluateActionProvider"
+                    interface="com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProvider" dynamic="true"/>
+  </extensionPoints>
   <actions resource-bundle="messages.FrontendDebuggerImplBundle">
     <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
-    <action id="XDebugger.Inspect.Frontend"
-            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXInspectAction">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend"/>
-    </action>
-    <action id="MarkObjectAction.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendMarkObjectAction"
-            use-shortcut-of="ToggleBookmark">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.Inspect.Frontend"/>
-    </action>
-    <action id="XDebugger.SetValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXSetValueAction" use-shortcut-of="XDebugger.SetValue">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                    relative-to-action="MarkObjectAction.Frontend"/>
-    </action>
-    <action id="XDebugger.CopyValue.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyValueAction"
-            use-shortcut-of="XDebugger.CopyValue">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.SetValue.Frontend"/>
-    </action>
-    <action id="XDebugger.CompareValueWithClipboard.Frontend"
-            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCompareWithClipboardAction">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.CopyValue.Frontend"/>
-    </action>
-    <action id="XDebugger.CopyName.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXCopyNameAction">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Top.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.CompareValueWithClipboard.Frontend"/>
-    </action>
-
-    <action id="EvaluateExpression.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendEvaluateAction"
-            icon="AllIcons.Debugger.EvaluateExpression">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
-                    relative-to-action="XDebugger.CopyName.Frontend"/>
-    </action>
-
-    <action id="Debugger.AddToWatch.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXAddToWatchesTreeAction"
-            icon="AllIcons.Debugger.AddToWatch">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
-                    relative-to-action="EvaluateExpression.Frontend"/>
-    </action>
-
-    <action id="Debugger.ShowReferring.Frontend"
-            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendShowReferringObjectsAction">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Middle.Section.Frontend" anchor="after"
-                    relative-to-action="Debugger.AddToWatch.Frontend"/>
-    </action>
-
-    <action id="XDebugger.JumpToSource.Frontend" class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToSourceAction"
-            use-shortcut-of="XDebugger.JumpToSource">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="first"/>
-    </action>
-
-    <action id="XDebugger.JumpToTypeSource.Frontend"
-            class="com.intellij.platform.debugger.impl.frontend.actions.FrontendXJumpToTypeSourceAction">
-      <add-to-group group-id="XDebugger.Inspect.Tree.Popup.Jump.To.Section.Frontend" anchor="after" relative-to-action="XDebugger.JumpToSource.Frontend"/>
-    </action>
 
     <action id="XDebugger.Hotswap.Modified.Files" class="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapModifiedFilesAction">
       <add-to-group group-id="DebugReloadGroup" anchor="first"/>
@@ -71,8 +22,6 @@
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
     <editorFloatingToolbarProvider implementation="com.intellij.platform.debugger.impl.frontend.hotswap.HotSwapFloatingToolbarProvider"/>
     <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebuggerInitializationProjectActivity"/>
-
-    <registryKey defaultValue="false" key="debugger.valueLookupFrontendBackend"
-                 description="Provides a way to use frontend-backend implementation of debugger's evaluation popup"/>
+    <xdebugger.managerProxy implementation="com.intellij.platform.debugger.impl.frontend.FrontendXDebugManagerProxy" order="first"/>
   </extensions>
 </idea-plugin>

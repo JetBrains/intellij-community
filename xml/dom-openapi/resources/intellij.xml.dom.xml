@@ -1,0 +1,37 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint name="dom.customAnnotationChecker"
+                    interface="com.intellij.util.xml.highlighting.DomCustomAnnotationChecker"
+                    dynamic="true"/>
+    <extensionPoint name="dom.gotoSuper" interface="com.intellij.util.xml.DomElementNavigationProvider" dynamic="true"/>
+
+    <extensionPoint name="dom.uiControlsProvider"
+                    interface="com.intellij.util.Consumer"/>
+
+    <extensionPoint name="dom.fileDescription"
+                    interface="com.intellij.util.xml.DomFileDescription"
+                    dynamic="true"/>
+
+    <extensionPoint name="moduleContextProvider" interface="com.intellij.util.xml.ModuleContextProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <actions resource-bundle="messages.XmlDomBundle">
+    <group id="DomCollectionControl">
+      <action id="DomCollectionControl.Add" class="com.intellij.util.xml.ui.DomCollectionControl$AddAction">
+        <keyboard-shortcut first-keystroke="INSERT" keymap="$default"/>
+      </action>
+      <action id="DomCollectionControl.Edit" class="com.intellij.util.xml.ui.DomCollectionControl$EditAction" use-shortcut-of="EditSource"/>
+      <action id="DomCollectionControl.Remove" class="com.intellij.util.xml.ui.DomCollectionControl$RemoveAction" use-shortcut-of="$Delete"/>
+    </group>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.util.xml.ui.CommittableUtil"/>
+
+    <patterns.patternClass className="com.intellij.patterns.DomPatterns" alias="dom"/>
+  </extensions>
+</idea-plugin>

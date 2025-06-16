@@ -83,9 +83,10 @@ public final class NameResolverTools {
     final Pair<String, String> qualifiedAndClassName = RecursionManager.doPreventingRecursion(element, false,
                                                                                               () -> QUALIFIED_AND_CLASS_NAME
                                                                                                 .getValue(element));
-    LOG.assertTrue(qualifiedAndClassName != null);
-    //noinspection ConstantConditions
-    if (qualifiedAndClassName == null) return false;
+    if (qualifiedAndClassName == null) {
+      LOG.debug("Could not get qualified name for " + element);
+      return false;
+    }
     final String qualifiedName = qualifiedAndClassName.first;
     final String className = qualifiedAndClassName.second;
 

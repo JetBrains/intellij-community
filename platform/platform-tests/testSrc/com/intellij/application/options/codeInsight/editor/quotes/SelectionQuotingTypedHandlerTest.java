@@ -10,12 +10,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
-
-  private boolean myPrevValue;
-
  /**
    * Performs an action as write action
    *
@@ -27,23 +25,12 @@ public class SelectionQuotingTypedHandlerTest extends BasePlatformTestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myPrevValue = CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED;
-    CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = true;
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeInsightSettings.getInstance().SURROUND_SELECTION_ON_QUOTE_TYPED = myPrevValue;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.SURROUND_SELECTION_ON_QUOTE_TYPED = true;
+      super.runTestRunnable(testRunnable);
+      return null;
+    });
   }
 
   public void testWOSelection() {

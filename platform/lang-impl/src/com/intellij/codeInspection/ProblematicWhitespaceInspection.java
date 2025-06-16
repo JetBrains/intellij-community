@@ -83,25 +83,25 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      super.visitFile(file);
-      final FileType fileType = file.getFileType();
+    public void visitFile(@NotNull PsiFile psiFile) {
+      super.visitFile(psiFile);
+      final FileType fileType = psiFile.getFileType();
       if (!(fileType instanceof LanguageFileType)) {
         return;
       }
-      if (file.getViewProvider().getBaseLanguage() != file.getLanguage()) {
+      if (psiFile.getViewProvider().getBaseLanguage() != psiFile.getLanguage()) {
         // don't warn multiple times on files which have multiple views like PHP and JSP
         return;
       }
-      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-      if (injectedLanguageManager.isInjectedFragment(file)) {
+      final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+      if (injectedLanguageManager.isInjectedFragment(psiFile)) {
         return;
       }
-      final CodeStyleSettings settings = CodeStyle.getSettings(file);
-      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(file);
+      final CodeStyleSettings settings = CodeStyle.getSettings(psiFile);
+      final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptionsByFile(psiFile);
       final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
       final boolean smartTabs = indentOptions.SMART_TABS;
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
       if (document == null) {
         return;
       }
@@ -117,13 +117,13 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
           if (c == '\t') {
             if (useTabs) {
               if (smartTabs && spaceSeen) {
-                if (registerError(file, startOffset, true)) {
+                if (registerError(psiFile, startOffset, true)) {
                   return;
                 }
               }
             }
             else {
-              if (registerError(file, startOffset, false)) {
+              if (registerError(psiFile, startOffset, false)) {
                 return;
               }
             }
@@ -131,13 +131,13 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
           else if (c == ' ') {
             if (useTabs) {
               if (!smartTabs) {
-                if (!isSpaceBeforeCommentStar(file, j, line) && registerError(file, startOffset, true)) {
+                if (!isSpaceAllowed(psiFile, j, line, startOffset) && registerError(psiFile, startOffset, true)) {
                   return;
                 }
               }
               else if (!spaceSeen) {
                 if (j < previousLineIndent) {
-                  if (registerError(file, startOffset, true)) {
+                  if (registerError(psiFile, startOffset, true)) {
                     return;
                   }
                 }
@@ -156,9 +156,11 @@ public final class ProblematicWhitespaceInspection extends LocalInspectionTool {
       }
     }
 
-    private static boolean isSpaceBeforeCommentStar(@NotNull PsiFile file, int j, String line) {
-      return j + 1 < line.length() && line.charAt(j + 1) == '*'
-             && PsiTreeUtil.getParentOfType(file.findElementAt(j), PsiComment.class, false) != null;
+    private static boolean isSpaceAllowed(@NotNull PsiFile file, int index, String line, int lineOffsetInFile) {
+      PsiElement element = file.findElementAt(lineOffsetInFile + index);
+      if (!(element instanceof PsiWhiteSpace)) return true; // e.g. multiline string literal
+      return index + 1 < line.length() && line.charAt(index + 1) == '*'
+             && PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null; // doc comment in java, c++, php...
     }
 
     private boolean registerError(PsiFile file, int startOffset, boolean tab) {

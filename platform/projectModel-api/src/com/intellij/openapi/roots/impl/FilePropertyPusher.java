@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FilePropertyKey;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,10 +95,12 @@ public interface FilePropertyPusher<T> {
   @Nullable
   T getImmediateValue(@NotNull Project project, @Nullable VirtualFile file);
 
+  @RequiresReadLock
   default boolean acceptsFile(@NotNull VirtualFile file, @NotNull Project project) {
     return false;
   }
 
+  @RequiresReadLock
   boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project);
 
   /**

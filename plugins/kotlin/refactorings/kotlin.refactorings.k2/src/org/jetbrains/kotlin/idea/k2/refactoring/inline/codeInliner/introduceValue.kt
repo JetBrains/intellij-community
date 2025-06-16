@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeInliner
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -29,7 +30,7 @@ import org.jetbrains.kotlin.renderer.render
 context(KaSession)
 internal fun MutableCodeToInline.introduceValue(
     value: KtExpression,
-    valueType: KaType?,
+    valueType: AbstractCodeInliner.TypeDescription?,
     usages: Collection<KtExpression>,
     expressionToBeReplaced: KtExpression,
     nameSuggestion: String? = null,

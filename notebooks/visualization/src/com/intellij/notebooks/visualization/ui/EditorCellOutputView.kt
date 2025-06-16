@@ -1,20 +1,21 @@
 package com.intellij.notebooks.visualization.ui
 
+import com.intellij.notebooks.ui.bind
+import com.intellij.notebooks.visualization.outputs.NotebookOutputInlayShowable
+import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.TestOnly
-import com.intellij.notebooks.visualization.outputs.NotebookOutputInlayShowable
-import com.intellij.notebooks.visualization.outputs.impl.CollapsingComponent
 import java.awt.Rectangle
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
-internal val NOTEBOOK_CELL_OUTPUT_DATA_KEY = DataKey.create<EditorCellOutputView>("NOTEBOOK_CELL_OUTPUT")
-
 class EditorCellOutputView internal constructor(
   private val editor: EditorImpl,
+  private val output: EditorCellOutput,
   private val component: CollapsingComponent,
   private val toDispose: Disposable?,
 ) : EditorCellViewComponent() {
@@ -26,12 +27,44 @@ class EditorCellOutputView internal constructor(
     }
 
   // Real UI Panel will be created lazily when folding became visible.
-  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, ::getFoldingBounds) {
+  val folding: EditorCellFoldingBar = EditorCellFoldingBar(editor, null, ::getFoldingBounds) {
     component.isSeen = !component.isSeen
   }
     .also {
       Disposer.register(this, it)
     }
+
+  private val resizeListener = object : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent) {
+      saveSize()
+    }
+  }
+
+  private fun saveSize() {
+    val size = if (component.hasBeenManuallyResized) {
+      component.customSize
+    }
+    else {
+      component.calculateInnerSize()
+    }
+    output.size.set(EditorCellOutputSize(size, collapsed, component.maximized, component.hasBeenManuallyResized))
+  }
+
+  init {
+    output.size.bind(this) { size ->
+      collapsed = size.collapsed
+      component.maximized = size.maximized
+      if (size.resized) {
+        component.customSize = size.size
+        component.initialSize = null
+      }
+      else {
+        component.customSize = null
+        component.initialSize = size.size
+      }
+    }
+    component.addComponentListener(resizeListener)
+  }
 
   @TestOnly
   fun getOutputComponent(): JComponent = component.mainComponent
@@ -43,6 +76,7 @@ class EditorCellOutputView internal constructor(
 
   override fun dispose() {
     super.dispose()
+    component.removeComponentListener(resizeListener)
     toDispose?.let { Disposer.dispose(it) }
   }
 
@@ -56,7 +90,7 @@ class EditorCellOutputView internal constructor(
   override fun calculateBounds(): Rectangle {
     val allCellOutputs = parent as? EditorCellOutputsView ?: return Rectangle(0, 0, 0, 0)
 
-    //Need validate because swing component can be invalid on update
+    // Need to validate because a swing component can be invalid on update
     allCellOutputs.innerComponent.validate()
 
     val inlayBounds = allCellOutputs.inlay?.bounds ?: Rectangle(0, 0, 0, 0)

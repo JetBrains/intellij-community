@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.jvm.k2.scratch
 
 import com.intellij.openapi.actionSystem.*
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.application
 import org.jetbrains.kotlin.idea.jvm.shared.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
@@ -22,14 +23,14 @@ class ScratchTopPanelK2(val scratchFile: K2KotlinScratchFile) {
         setupTopPanelUpdateHandlers()
 
         val toolbarGroup = DefaultActionGroup().apply {
-            add(RunScratchActionK2())
+            addAction(RunScratchActionK2())
             addSeparator()
-            add(ClearScratchAction())
+            addAction(ClearScratchAction())
             addSeparator()
-            add(moduleChooserAction)
-            add(IsMakeBeforeRunAction(scratchFile))
+            addAction(moduleChooserAction)
+            addAction(IsMakeBeforeRunAction(scratchFile))
             addSeparator()
-            add(IsInteractiveCheckboxAction())
+            addAction(IsInteractiveCheckboxAction())
         }
 
         actionsToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, toolbarGroup, true)
@@ -48,9 +49,11 @@ class ScratchTopPanelK2(val scratchFile: K2KotlinScratchFile) {
                 val project = e.project
                 if (project != null) {
                     application.invokeLater {
-                      runWithModalProgressBlocking(project, KotlinJvmBundle.message("progress.title.run.scratch")) {
-                        (ScratchFileAutoRunner.Companion.getInstance(project) as? ScratchFileAutoRunnerK2)?.submitRun(scratchFile)
-                      }
+                        runBlockingCancellable {
+                            withBackgroundProgress(project, KotlinJvmBundle.message("progress.title.run.scratch")) {
+                                (ScratchFileAutoRunner.getInstance(project) as? ScratchFileAutoRunnerK2)?.submitRun(scratchFile)
+                            }
+                        }
                     }
                 }
             }

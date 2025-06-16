@@ -3,11 +3,13 @@ package com.intellij.internal.jcef.test
 
 import com.intellij.internal.jcef.test.cases.ContextMenu
 import com.intellij.internal.jcef.test.cases.KeyboardEvents
+import com.intellij.internal.jcef.test.cases.PerformanceTest
 import com.intellij.internal.jcef.test.cases.ResourceHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBList
 import java.awt.CardLayout
 import java.awt.Component
@@ -25,7 +27,10 @@ internal class JBCefTestApp : AnAction(), DumbAware {
 internal class JBCefTestAppFrame : JFrame() {
   private val cardLayout = CardLayout()
   private val contentPanel: JPanel = JPanel(cardLayout)
-  private val testCases: List<TestCase> = listOf(KeyboardEvents(), ContextMenu(), ResourceHandler())
+
+  private val testCases: List<TestCase> = listOf(
+    KeyboardEvents(), ContextMenu(), ResourceHandler(), PerformanceTest())
+
   private val tabsList = JBList(testCases.map { it.getDisplayName() })
 
   init {
@@ -60,7 +65,7 @@ internal class JBCefTestAppFrame : JFrame() {
 
     addWindowListener(object : WindowAdapter() {
       override fun windowClosing(e: WindowEvent?) {
-        testCases.forEach(Disposable::dispose)
+        testCases.forEach { Disposer.dispose(it) }
       }
     })
   }

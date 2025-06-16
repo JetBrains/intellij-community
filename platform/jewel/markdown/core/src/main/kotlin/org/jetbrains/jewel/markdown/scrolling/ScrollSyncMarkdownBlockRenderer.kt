@@ -7,9 +7,14 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.takeOrElse
@@ -41,19 +46,46 @@ public open class ScrollSyncMarkdownBlockRenderer(
 ) : DefaultMarkdownBlockRenderer(rootStyling, renderingExtensions, inlineRenderer) {
     @Composable
     override fun render(
+        block: MarkdownBlock,
+        enabled: Boolean,
+        onUrlClick: (String) -> Unit,
+        onTextClick: () -> Unit,
+        modifier: Modifier,
+    ) {
+        if (block is ScrollingSynchronizer.LocatableMarkdownBlock) {
+            // Little trick that allows delegating rendering of underlying blocks to the superclass,
+            // but using the wrapper in overloaded functions here to pass to AutoScrollableBlock
+            val blocks = remember { mutableStateOf(block) }
+            blocks.value = block
+            CompositionLocalProvider(localUniqueBlock provides blocks.value) {
+                // Don't recompose unchanged blocks
+                // val ogBlock = remember(block) { block.originalBlock }
+                super.render(block.originalBlock, enabled, onUrlClick, onTextClick, modifier)
+            }
+        } else {
+            super.render(block, enabled, onUrlClick, onTextClick, modifier)
+        }
+    }
+
+    @Composable
+    override fun render(
         block: MarkdownBlock.Paragraph,
         styling: MarkdownStyling.Paragraph,
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling, enabled, onUrlClick, onTextClick)
+                    super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
                     return
                 }
-        AutoScrollableBlock(block, synchronizer) { super.render(block, styling, enabled, onUrlClick, onTextClick) }
+        val uniqueBlock = localUniqueBlock.current?.takeIf { it.originalBlock == block } ?: block
+        AutoScrollableBlock(uniqueBlock, synchronizer) {
+            super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
+        }
     }
 
     @Composable
@@ -63,30 +95,39 @@ public open class ScrollSyncMarkdownBlockRenderer(
         enabled: Boolean,
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
+        modifier: Modifier,
     ) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling, enabled, onUrlClick, onTextClick)
+                    super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
                     return
                 }
-        AutoScrollableBlock(block, synchronizer) { super.render(block, styling, enabled, onUrlClick, onTextClick) }
+        val uniqueBlock = localUniqueBlock.current?.takeIf { it.originalBlock == block } ?: block
+        AutoScrollableBlock(uniqueBlock, synchronizer) {
+            super.render(block, styling, enabled, onUrlClick, onTextClick, modifier)
+        }
     }
 
     @Composable
-    override fun renderWithMimeType(block: FencedCodeBlock, mimeType: MimeType, styling: MarkdownStyling.Code.Fenced) {
+    override fun renderCodeWithMimeType(
+        block: FencedCodeBlock,
+        mimeType: MimeType,
+        styling: MarkdownStyling.Code.Fenced,
+        enabled: Boolean,
+    ) {
         val synchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.renderWithMimeType(block, mimeType, styling)
+                    super.renderCodeWithMimeType(block, mimeType, styling, enabled)
                     return
                 }
 
         val content = block.content
         val highlightedCode by
             LocalCodeHighlighter.current.highlight(content, block.mimeType).collectAsState(AnnotatedString(content))
-        val actualBlock by rememberUpdatedState(block)
-
+        val uniqueBlock = localUniqueBlock.current?.takeIf { it.originalBlock == block } ?: block
+        val actualBlock by rememberUpdatedState(uniqueBlock)
         AutoScrollableBlock(actualBlock, synchronizer) {
             Text(
                 text = highlightedCode,
@@ -100,20 +141,28 @@ public open class ScrollSyncMarkdownBlockRenderer(
     }
 
     @Composable
-    override fun render(block: IndentedCodeBlock, styling: MarkdownStyling.Code.Indented) {
+    override fun render(
+        block: IndentedCodeBlock,
+        styling: MarkdownStyling.Code.Indented,
+        enabled: Boolean,
+        modifier: Modifier,
+    ) {
         val scrollingSynchronizer =
             (JewelTheme.markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
                 ?: run {
-                    super.render(block, styling)
+                    super.render(block, styling, enabled, modifier)
                     return
                 }
         MaybeScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
-            Modifier.background(styling.background, styling.shape)
+            modifier
+                .background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {
-            AutoScrollableBlock(block, scrollingSynchronizer, Modifier.padding(styling.padding)) {
+            val uniqueBlock = localUniqueBlock.current?.takeIf { it.originalBlock == block } ?: block
+            val actualBlock by rememberUpdatedState(uniqueBlock)
+            AutoScrollableBlock(actualBlock, scrollingSynchronizer, Modifier.padding(styling.padding)) {
                 Text(
                     text = block.content,
                     style = styling.editorTextStyle,
@@ -122,10 +171,15 @@ public open class ScrollSyncMarkdownBlockRenderer(
                         Modifier.focusProperties { canFocus = false }
                             .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                     onTextLayout = { textLayoutResult ->
-                        scrollingSynchronizer.acceptTextLayout(block, textLayoutResult)
+                        scrollingSynchronizer.acceptTextLayout(actualBlock, textLayoutResult)
                     },
                 )
             }
         }
     }
+
+    private val localUniqueBlock: ProvidableCompositionLocal<ScrollingSynchronizer.LocatableMarkdownBlock?> =
+        staticCompositionLocalOf {
+            null
+        }
 }

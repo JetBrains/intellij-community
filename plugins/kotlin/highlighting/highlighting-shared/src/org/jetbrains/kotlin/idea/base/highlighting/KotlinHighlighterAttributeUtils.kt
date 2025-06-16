@@ -34,6 +34,7 @@ fun textAttributesKeyForPropertyDeclaration(declaration: PsiElement): HighlightI
 @ApiStatus.Internal
 fun textAttributesForKtParameterDeclaration(parameter: KtParameter): HighlightInfoType = when {
     parameter.valOrVarKeyword != null -> KotlinHighlightInfoTypeSemanticNames.INSTANCE_PROPERTY
+    parameter.parent?.takeIf { it is KtForExpression || it.parent is KtCatchClause } != null -> KotlinHighlightInfoTypeSemanticNames.LOCAL_VARIABLE
     else -> KotlinHighlightInfoTypeSemanticNames.PARAMETER
 }
 

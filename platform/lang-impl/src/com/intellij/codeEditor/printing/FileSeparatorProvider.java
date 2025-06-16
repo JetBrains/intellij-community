@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -28,7 +28,7 @@ final class FileSeparatorProvider {
     DaemonProgressIndicator indicator = new DaemonProgressIndicator();
 
     ProgressManager.getInstance().executeProcessUnderProgress(() -> {
-      // todo ijpl-339 figure out what is the correct context here
+      // todo IJPL-339 figure out what is the correct context here
       HighlightingSessionImpl.runInsideHighlightingSession(file, FileViewProviderUtil.getCodeInsightContext(file), null, ProperTextRange.create(file.getTextRange()), false, __ -> {
         for (LineMarkerInfo<?> lineMarkerInfo : LineMarkersPass.queryLineMarkers(file, document)) {
           if (lineMarkerInfo.separatorColor != null) {

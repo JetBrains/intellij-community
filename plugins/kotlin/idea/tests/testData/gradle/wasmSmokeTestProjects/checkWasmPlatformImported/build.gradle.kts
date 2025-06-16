@@ -10,7 +10,7 @@ repositories {
 }
 
 kotlin {
-    wasm {
+    {{wasmTargetPlaceholder}} {
         binaries.executable()
         browser {}
     }

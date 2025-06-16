@@ -72,7 +72,7 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
   private fun setupRemoteRepositoryServerReadFiles(repo: File, contextPath: String, authenticator: Authenticator?) {
     val httpContext = myServer.createContext(contextPath) { exchange ->
       val path = exchange.requestURI.path
-      MavenLog.LOG.warn("Got request for $path")
+      //MavenLog.LOG.warn("Got request for $path")
       val file = File(repo, path)
       if (file.isDirectory) {
         exchange.responseHeaders.add("Content-Type", "text/html")
@@ -91,7 +91,7 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
         exchange.sendResponseHeaders(404, -1)
       }
       exchange.close()
-      MavenLog.LOG.warn("Sent response for $path")
+      //MavenLog.LOG.warn("Sent response for $path")
     }
     httpContext.authenticator = authenticator
   }
@@ -102,7 +102,7 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
 
     val httpContext = myServer.createContext(contextPath) { exchange ->
       val path = exchange.requestURI.path
-      MavenLog.LOG.warn("Got request for $path")
+      //MavenLog.LOG.warn("Got request for $path")
       val content = pathMap[path]
       if (null != content) {
         exchange.responseHeaders.add("Content-Type", "application/octet-stream")
@@ -113,7 +113,7 @@ class MavenHttpRepositoryServerFixture : IdeaTestFixture {
         exchange.sendResponseHeaders(404, -1)
       }
       exchange.close()
-      MavenLog.LOG.warn("Sent response for $path")
+      //MavenLog.LOG.warn("Sent response for $path")
     }
     httpContext.authenticator = authenticator
   }

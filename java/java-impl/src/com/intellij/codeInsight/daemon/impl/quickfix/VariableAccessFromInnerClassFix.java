@@ -89,7 +89,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myContext.isValid() &&
            BaseIntentionAction.canModify(myContext) &&
            myVariable.isValid() &&
@@ -103,7 +103,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
     try {
       switch (myFixType) {
         case MAKE_FINAL -> makeFinal();

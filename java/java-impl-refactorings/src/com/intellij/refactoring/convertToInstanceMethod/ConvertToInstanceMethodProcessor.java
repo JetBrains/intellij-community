@@ -4,6 +4,7 @@ package com.intellij.refactoring.convertToInstanceMethod;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -448,7 +449,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   private @NotNull PsiExpression createThisExpression() {
-    return JavaPsiFacade.getElementFactory(myProject).createExpressionFromText(PsiKeyword.THIS, null);
+    return JavaPsiFacade.getElementFactory(myProject).createExpressionFromText(JavaKeywords.THIS, null);
   }
 
   private void processMethodCall(final PsiMethodCallExpression methodCall) {

@@ -1,10 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullabilityAnnotationInfo;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
@@ -52,7 +49,10 @@ public final class ContractInspection extends AbstractBaseJavaLocalInspectionToo
       public void visitAnnotation(@NotNull PsiAnnotation annotation) {
         String qualifiedName = annotation.getQualifiedName();
         if (qualifiedName == null) return;
-        if (!JvmContractAnnotationProvider.isMethodContract(qualifiedName)) return;
+        if (!ContainerUtil.exists(
+          StaticAnalysisAnnotationManager.getInstance().getKnownContractAnnotations(),
+          fqn -> fqn.equals(qualifiedName))
+        ) return;
 
         PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
         if (method == null) return;

@@ -219,7 +219,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
       }
     }.runProcess(10000, true)
     val output = process.stdoutLines
-    var errLines = process.stderrLines
+    val errLines = process.stderrLines
     if (errLines.isNotEmpty()) {
       LOG.warn("Error output: $errLines")
     }
@@ -237,7 +237,7 @@ class PinentryExecutionTest : GitSingleRepoTest() {
 internal class GpgAgentPathsLocatorTestFactory: GpgAgentPathsLocatorFactory {
   override fun createPathLocator(project: Project, executor: GitExecutable): GpgAgentPathsLocator = object : GpgAgentPathsLocator {
     override fun resolvePaths(): GpgAgentPaths? {
-      val gpgAgentHome = project.stateStore.getProjectBasePath().resolve(GPG_HOME_DIR).createDirectories()
+      val gpgAgentHome = project.stateStore.projectBasePath.resolve(GPG_HOME_DIR).createDirectories()
       val gpgPinentryAppLauncher = gpgAgentHome.resolve(PINENTRY_LAUNCHER_FILE_NAME)
       return GpgAgentPaths.create(gpgAgentHome, gpgPinentryAppLauncher.toAbsolutePath().toString())
     }

@@ -14,7 +14,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.workspaceModel.core.fileIndex.impl.OptionalExclusionUtil;
+import com.intellij.workspaceModel.ide.OptionalExclusionUtil;
 import org.jetbrains.annotations.NotNull;
 
 

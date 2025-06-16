@@ -21,11 +21,6 @@ public class ThemeColorPalette(
     public val teal: List<Color>,
     public val rawMap: Map<String, Color>,
 ) {
-    @Deprecated("Use gray() instead", ReplaceWith("gray(index)")) public fun grey(index: Int): Color = gray(index)
-
-    @Deprecated("Use grayOrNull() instead", ReplaceWith("grayOrNull(index)"))
-    public fun greyOrNull(index: Int): Color? = grayOrNull(index)
-
     public fun gray(index: Int): Color = gray[index - 1]
 
     public fun grayOrNull(index: Int): Color? = gray.getOrNull(index - 1)
@@ -60,8 +55,8 @@ public class ThemeColorPalette(
 
     public fun lookup(colorKey: String): Color? {
         val result = colorKeyRegex.matchEntire(colorKey.trim())
-        val colorGroup = result?.groupValues?.get(1)?.lowercase()
-        val colorIndex = result?.groupValues?.get(2)?.toIntOrNull()
+        val colorGroup = result?.groupValues?.getOrNull(1)?.lowercase()
+        val colorIndex = result?.groupValues?.getOrNull(2)?.toIntOrNull()
 
         if (colorGroup == null || colorIndex == null) {
             return rawMap[colorKey]
@@ -69,14 +64,14 @@ public class ThemeColorPalette(
 
         return when (colorGroup) {
             "grey",
-            "gray" -> gray(colorIndex)
-            "blue" -> blue(colorIndex)
-            "green" -> green(colorIndex)
-            "red" -> red(colorIndex)
-            "yellow" -> yellow(colorIndex)
-            "orange" -> orange(colorIndex)
-            "purple" -> purple(colorIndex)
-            "teal" -> teal(colorIndex)
+            "gray" -> grayOrNull(colorIndex)
+            "blue" -> blueOrNull(colorIndex)
+            "green" -> greenOrNull(colorIndex)
+            "red" -> redOrNull(colorIndex)
+            "yellow" -> yellowOrNull(colorIndex)
+            "orange" -> orangeOrNull(colorIndex)
+            "purple" -> purpleOrNull(colorIndex)
+            "teal" -> tealOrNull(colorIndex)
             else -> null
         }
     }

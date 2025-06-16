@@ -17,7 +17,7 @@ public interface EditorModel extends Disposable {
   MarkupModelEx getDocumentMarkupModel();
   EditorHighlighter getHighlighter();
   InlayModelEx getInlayModel();
-  FoldingModelEx getFoldingModel();
+  FoldingModelInternal getFoldingModel();
   SoftWrapModelEx getSoftWrapModel();
   CaretModel getCaretModel();
   SelectionModel getSelectionModel();

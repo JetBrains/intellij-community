@@ -1,0 +1,14 @@
+<idea-plugin package="com.intellij.debugger.streams.core">
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.platform.debugger.streams.librarySupport" interface="com.intellij.debugger.streams.core.lib.LibrarySupportProvider" dynamic="true"/>
+  </extensionPoints>
+
+  <actions resource-bundle="messages.StreamDebuggerBundle">
+    <action id="StreamTracerAction"
+            class="com.intellij.debugger.streams.core.action.TraceStreamAction"
+            icon="com.intellij.debugger.streams.core.icons.DebuggerStreamsCoreIcons.Stream_debugger">
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" anchor="after" relative-to-action="EvaluateExpression"/>
+      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
+    </action>
+  </actions>
+</idea-plugin>

@@ -1,10 +1,21 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.jpsCache
 
+import com.intellij.openapi.util.Ref
+import io.netty.handler.codec.http.HttpHeaderNames
+import io.netty.handler.codec.http.HttpHeaderValues
+import io.netty.handler.codec.http2.Http2Headers
+import io.netty.util.AsciiString
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import org.jetbrains.intellij.build.http2Client.*
+import org.jetbrains.intellij.build.http2Client.Http2ClientConnection
+import org.jetbrains.intellij.build.http2Client.UnexpectedHttpStatus
+import org.jetbrains.intellij.build.http2Client.checkMirrorAndConnect
+import org.jetbrains.intellij.build.http2Client.getJsonOrDefaultIfNotFound
+import org.jetbrains.intellij.build.http2Client.getString
+import org.jetbrains.intellij.build.http2Client.upload
+import org.jetbrains.intellij.build.http2Client.withHttp2ClientConnectionFactory
 import org.jetbrains.intellij.build.impl.compilation.checkExists
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -59,10 +70,14 @@ internal suspend fun updateJpsCacheCommitHistory(
             return@checkMirrorAndConnect
           }
 
-          val newHistory = if (overrideRemoteHistory) commitHistory else commitHistory + getRemoteCommitHistory(connection, urlPathPrefix)
-          val serializedNewHistory = newHistory.toJson()
-          client.connect(address = uploadUrl, authHeader = authHeader).use { connectionForPut ->
-            connectionForPut.upload(path = "${uploadUrl.path}/$COMMIT_HISTORY_JSON_FILE", data = serializedNewHistory)
+          val (newHistory: CommitHistory, serializedNewHistory) = withCheckingRemoteModifications(
+            overrideRemoteHistory, commitHistory, connection,
+            urlPathPrefix
+          ) { content, headers ->
+            client.connect(address = uploadUrl, authHeader = authHeader).use { connectionForPut ->
+              val path = "${uploadUrl.path}/$COMMIT_HISTORY_JSON_FILE"
+              connectionForPut.upload(path, content, headers)
+            }
           }
           if (s3Dir != null) {
             val commitHistoryFile = s3Dir.resolve(COMMIT_HISTORY_JSON_FILE)
@@ -81,6 +96,55 @@ internal suspend fun updateJpsCacheCommitHistory(
         }
       }
     }
+}
+
+private suspend fun withCheckingRemoteModifications(
+  overrideRemoteHistory: Boolean,
+  commitHistory: CommitHistory,
+  connection: Http2ClientConnection,
+  urlPathPrefix: String,
+  doUpload: suspend (String, List<AsciiString>) -> Unit,
+): Pair<CommitHistory, String> {
+  if (overrideRemoteHistory) {
+    val serializedNewHistory = commitHistory.toJson()
+    doUpload(serializedNewHistory, emptyList())
+    return Pair(commitHistory, serializedNewHistory)
+  }
+  var attempts = 0
+  while (true) {
+    val responseHeaders = Ref<Http2Headers>()
+    val content = connection.getString("$urlPathPrefix/$COMMIT_HISTORY_JSON_FILE", responseHeaders)
+    val remoteCommitHistory = CommitHistory(content)
+
+    val newHistory = commitHistory + remoteCommitHistory
+    val serializedNewHistory = newHistory.toJson()
+
+    val uploadHeaders = arrayListOf(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+    responseHeaders.get().get(HttpHeaderNames.ETAG)?.let { etag ->
+      uploadHeaders.add(HttpHeaderNames.IF_MATCH)
+      uploadHeaders.add(AsciiString.of(etag.removePrefix("W/"))) // when compressing response (gzip), nginx marks etag as weak
+    }
+    responseHeaders.get().get(HttpHeaderNames.LAST_MODIFIED)?.let { date ->
+      uploadHeaders.add(HttpHeaderNames.IF_UNMODIFIED_SINCE)
+      uploadHeaders.add(AsciiString.of(date))
+    }
+    try {
+      doUpload(serializedNewHistory, uploadHeaders)
+      return Pair(newHistory, serializedNewHistory)
+    }
+    catch (e: Throwable) {
+      if (attempts > 10) throw e
+      if (e is UnexpectedHttpStatus) {
+        val code = e.status.code()
+        if (code == 409 || code == 412) {
+          Span.current().addEvent("got $code response, will try to upload commit history again")
+          attempts++
+          continue
+        }
+      }
+      throw e
+    }
+  }
 }
 
 private suspend fun checkThatJpsCacheWasUploaded(

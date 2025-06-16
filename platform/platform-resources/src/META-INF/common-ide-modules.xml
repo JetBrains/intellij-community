@@ -7,6 +7,9 @@
     <module name="intellij.platform.lvcs.impl"/>
     <module name="intellij.platform.smRunner.vcs"/>
     <module name="intellij.platform.collaborationTools"/>
+    <module name="intellij.platform.tasks"/>
+    <module name="intellij.platform.tasks.impl"/>
+    <module name="intellij.platform.ml.impl"/>
     <module name="intellij.libraries.microba"/>
     <module name="intellij.libraries.skiko"/>
     <module name="intellij.platform.compose"/>
@@ -15,15 +18,29 @@
     <module name="intellij.platform.jewel.ui"/>
     <module name="intellij.platform.jewel.ideLafBridge"/>
     <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling"/>
-    <module name="intellij.platform.jewel.markdown.extension.gfmAlerts"/>
-    <module name="intellij.platform.jewel.markdown.extension.gfmTables"/>
+    <module name="intellij.platform.jewel.markdown.extensions.autolink"/>
+    <module name="intellij.platform.jewel.markdown.extensions.gfmAlerts"/>
+    <module name="intellij.platform.jewel.markdown.extensions.gfmTables"/>
+    <module name="intellij.platform.jewel.markdown.extensions.gfmStrikethrough"/>
     <module name="intellij.platform.jewel.markdown.core"/>
     <module name="intellij.platform.diagnostic.freezeAnalyzer"/>
     <module name="intellij.platform.diagnostic.freezes"/>
+    <module name="intellij.platform.warmup"/>
     <module name="intellij.settingsSync.core"/>
+    
+    <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.spellchecker.xml"/>
+    
+    <module name="intellij.emojipicker"/>
+    <module name="intellij.platform.ide.impl.wsl"/>
+    <module name="intellij.platform.diagnostic.telemetry.agent.extension"/>
+    <module name="intellij.platform.polySymbols.backend" loading="embedded"/> <!--todo: move to essential modules when not embedded-->
   </content>
 
   <xi:include href="/META-INF/grid-core-modules.xml"/>
   <xi:include href="/META-INF/vcs-modules.xml"/>
+  <xi:include href="/META-INF/xml-modules.xml"/>
 
 </idea-plugin>

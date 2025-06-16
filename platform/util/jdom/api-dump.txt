@@ -673,11 +673,6 @@ c:org.jdom.output.XMLOutputter
 - outputString(org.jdom.Text):java.lang.String
 - p:printText(java.io.Writer,org.jdom.Text):V
 - setFormat(org.jdom.output.Format):V
-pf:org.jdom.output.XMLOutputter$NamespaceStack
-- getURI(java.lang.String):java.lang.String
-- pop():java.lang.String
-- push(org.jdom.Namespace):V
-- size():I
 f:org.jdom.util.NamespaceStack
 - java.lang.Iterable
 - <init>():V

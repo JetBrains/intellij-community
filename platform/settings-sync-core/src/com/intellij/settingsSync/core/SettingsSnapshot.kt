@@ -45,6 +45,7 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
   data class AppInfo(
     val applicationId: UUID,
     val buildNumber: BuildNumber?,
+    val fullApplicationName: String?,
     val userName: String,
     val hostName: String,
     val configFolder: String)
@@ -92,6 +93,7 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
 fun getLocalApplicationInfo(): SettingsSnapshot.AppInfo {
   return SettingsSnapshot.AppInfo(SettingsSyncLocalSettings.getInstance().applicationId,
                                   ApplicationInfo.getInstance().build,
+                                  ApplicationInfo.getInstance().fullApplicationName,
                                   SystemProperties.getUserName(),
                                   service<LocalHostNameProvider>().getHostName(),
                                   PathManager.getConfigPath())

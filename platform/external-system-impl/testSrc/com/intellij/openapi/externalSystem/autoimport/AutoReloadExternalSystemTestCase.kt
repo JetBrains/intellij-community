@@ -4,15 +4,14 @@ package com.intellij.openapi.externalSystem.autoimport
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.autoimport.ProjectAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager
 import com.intellij.testFramework.ExtensionTestUtil
 
@@ -25,7 +24,8 @@ abstract class AutoReloadExternalSystemTestCase : AutoReloadTestCase() {
     val externalSystemManagers = ExternalSystemManager.EP_NAME.extensionList + TestExternalSystemManager(myProject)
     ExtensionTestUtil.maskExtensions(ExternalSystemManager.EP_NAME, externalSystemManagers, testRootDisposable)
     withProjectTracker {
-      val projectId = ExternalSystemProjectId(TEST_EXTERNAL_SYSTEM_ID, projectPath)
+      val systemId = ProjectSystemId("External System")
+      val projectId = ExternalSystemProjectId(systemId, projectPath)
       val autoImportAware = object : ExternalSystemAutoImportAware {
         override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String {
           return projectNioPath.getResolvedPath(SETTINGS_FILE).toCanonicalPath()
@@ -55,38 +55,22 @@ abstract class AutoReloadExternalSystemTestCase : AutoReloadTestCase() {
     private val projectAware: ProjectAwareWrapper,
   ) {
 
-    private fun resetAssertionCounters() {
-      projectAware.resetAssertionCounters()
-    }
-
     fun assertStateAndReset(
-      numReload: Int? = null,
+      numReload: Int,
       numReloadStarted: Int? = null,
       numReloadFinished: Int? = null,
       numSubscribing: Int? = null,
       numUnsubscribing: Int? = null,
-      autoReloadType: AutoReloadType = SELECTIVE,
+      autoReloadType: AutoReloadType? = null,
       event: String,
     ) {
-      assertState(numReload, numReloadStarted, numReloadFinished, numSubscribing, numUnsubscribing, autoReloadType, event)
-      resetAssertionCounters()
-    }
+      assertProjectTrackerSettings(autoReloadType, event)
 
-    private fun assertState(
-      numReload: Int? = null,
-      numReloadStarted: Int? = null,
-      numReloadFinished: Int? = null,
-      numSubscribing: Int? = null,
-      numUnsubscribing: Int? = null,
-      autoReloadType: AutoReloadType = SELECTIVE,
-      event: String,
-    ) {
-      if (numReload != null) assertCountEvent(numReload, projectAware.reloadCounter.get(), "project reload", event)
-      if (numReloadStarted != null) assertCountEvent(numReloadStarted, projectAware.startReloadCounter.get(), "project before reload", event)
-      if (numReloadFinished != null) assertCountEvent(numReloadFinished, projectAware.finishReloadCounter.get(), "project after reload", event)
-      if (numSubscribing != null) assertCountEvent(numSubscribing, projectAware.subscribeCounter.get(), "subscribe", event)
-      if (numUnsubscribing != null) assertCountEvent(numUnsubscribing, projectAware.unsubscribeCounter.get(), "unsubscribe", event)
-      assertProjectTrackerSettings(autoReloadType, event = event)
+      assertCountEventAndReset(projectAware.projectId, numReload, projectAware.reloadCounter, "project reload", event)
+      assertCountEventAndReset(projectAware.projectId, numReloadStarted, projectAware.startReloadCounter, "project before reload", event)
+      assertCountEventAndReset(projectAware.projectId, numReloadFinished, projectAware.finishReloadCounter, "project after reload", event)
+      assertCountEventAndReset(projectAware.projectId, numSubscribing, projectAware.subscribeCounter, "subscribe", event)
+      assertCountEventAndReset(projectAware.projectId, numUnsubscribing, projectAware.unsubscribeCounter, "unsubscribe", event)
     }
   }
 }

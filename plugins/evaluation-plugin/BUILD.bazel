@@ -2,28 +2,37 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "evaluationPlugin_resources",
+  name = "evaluation-plugin_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "evaluationPlugin",
+  name = "evaluation-plugin",
   module_name = "intellij.evaluationPlugin",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
-    "//plugins/evaluation-plugin/core:evaluationPlugin-core",
-    "//plugins/completion-ml-ranking:completionMlRanking",
-    "//plugins/stats-collector:statsCollector",
+    "//plugins/evaluation-plugin/languages",
+    "//plugins/evaluation-plugin/core",
+    "//plugins/completion-ml-ranking",
+    "//libraries/io",
+    "//libraries/ktor-client",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//plugins/stats-collector",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/core-ui",
     "//platform/vcs-api:vcs",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "//platform/ml-api:ml",
     "@lib//:clikt",
     "@lib//:gson",
@@ -32,32 +41,40 @@ jvm_library(
     "//platform/warmup",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "@lib//:ktor-client-core",
-    "@lib//:ktor-client-java",
+    "@lib//:ktor-client-logging",
   ],
-  runtime_deps = [":evaluationPlugin_resources"]
+  runtime_deps = [":evaluation-plugin_resources"]
 )
 ### auto-generated section `build intellij.evaluationPlugin` end
 
 ### auto-generated section `build intellij.evaluationPlugin.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "evaluationPlugin-tests_test",
+jvm_library(
+  name = "evaluationPlugin-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/evaluation-plugin/core:evaluationPlugin-core",
-    "//plugins/evaluation-plugin:evaluationPlugin",
+    "//plugins/evaluation-plugin/core",
+    "//plugins/evaluation-plugin",
+    "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:mockito",
     "@lib//:junit5",
     "@lib//:gson",
-    "//plugins/evaluation-plugin/languages:evaluationPlugin-languages",
+    "//plugins/evaluation-plugin/languages",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//plugins/evaluation-plugin/languages/python",
+    "@lib//:mockito-kotlin",
   ]
+)
+
+jvm_test(
+  name = "evaluationPlugin-tests_test",
+  runtime_deps = [":evaluationPlugin-tests_test_lib"]
 )
 ### auto-generated section `build intellij.evaluationPlugin.tests` end

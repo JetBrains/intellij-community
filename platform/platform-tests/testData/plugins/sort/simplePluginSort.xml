@@ -135,10 +135,10 @@
     <depends optional="true" config-file="optional_config_cycle0_dep.xml">com.intellij.modules.core</depends>
     <depends>com.intellij.modules.core</depends>
   </idea-plugin>
-  <config-file-idea-plugin url="file://optional_config_cycle0_dep.xml">
+  <config-file-idea-plugin descriptor-url="file://optional_config_cycle0_dep.xml">
     <depends optional="true" config-file="optional_config_cycle1_dep.xml">optional_config_cycle2</depends>
   </config-file-idea-plugin>
-  <config-file-idea-plugin url="file://optional_config_cycle1_dep.xml">
+  <config-file-idea-plugin descriptor-url="file://optional_config_cycle1_dep.xml">
   </config-file-idea-plugin>
   <idea-plugin url="file://optional_config_cycle1.xml">
     <id>optional_config_cycle1</id>

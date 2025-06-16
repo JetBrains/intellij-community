@@ -27,6 +27,7 @@ public class PyGenericType implements PyTypeVarType {
   private final @NotNull List<@Nullable PyType> myConstraints;
   private final @Nullable PyType myBound;
   private final @Nullable Ref<PyType> myDefaultType;
+  private final @NotNull Variance myVariance;
   private final boolean myIsDefinition;
   private final @Nullable PyQualifiedNameOwner myDeclarationElement;
   private final @Nullable PyQualifiedNameOwner myScopeOwner;
@@ -34,14 +35,16 @@ public class PyGenericType implements PyTypeVarType {
   public PyGenericType(@NotNull String name,
                        @NotNull List<@Nullable PyType> constraints,
                        @Nullable PyType bound,
-                       @Nullable Ref<PyType> defaultType) {
-    this(name, constraints, bound, defaultType, false, null, null);
+                       @Nullable Ref<PyType> defaultType,
+                       @NotNull Variance variance) {
+    this(name, constraints, bound, defaultType, variance, false, null, null);
   }
 
   protected PyGenericType(@NotNull String name,
                           @NotNull List<@Nullable PyType> constraints,
                           @Nullable PyType bound,
                           @Nullable Ref<PyType> defaultType,
+                          @NotNull Variance variance,
                           boolean isDefinition,
                           @Nullable PyQualifiedNameOwner declarationElement,
                           @Nullable PyQualifiedNameOwner scopeOwner) {
@@ -49,6 +52,7 @@ public class PyGenericType implements PyTypeVarType {
     myConstraints = constraints;
     myBound = bound;
     myDefaultType = defaultType;
+    myVariance = variance;
     myIsDefinition = isDefinition;
     myDeclarationElement = declarationElement;
     myScopeOwner = scopeOwner;
@@ -68,6 +72,10 @@ public class PyGenericType implements PyTypeVarType {
     if (bound != null) {
       return bound.resolveMember(name, location, direction, resolveContext);
     }
+    PyType defaultType = getDefaultTypePromotedToClassObjectTypesIfNeeded();
+    if (defaultType != null) {
+      return defaultType.resolveMember(name, location, direction, resolveContext);
+    }
     return null;
   }
 
@@ -77,17 +85,31 @@ public class PyGenericType implements PyTypeVarType {
     if (bound != null) {
       return bound.getCompletionVariants(completionPrefix, location, context);
     }
+
+    PyType defaultType = getDefaultTypePromotedToClassObjectTypesIfNeeded();
+    if (defaultType != null) {
+      return defaultType.getCompletionVariants(completionPrefix, location, context);
+    }
     return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
   }
 
   private @Nullable PyType getBoundPromotedToClassObjectTypesIfNeeded() {
     PyType effectiveBound = myConstraints.isEmpty() ? myBound : PyUnionType.union(myConstraints);
+    return promoteToClassObjectIfNeeded(effectiveBound);
+  }
+
+  private @Nullable PyType getDefaultTypePromotedToClassObjectTypesIfNeeded() {
+    PyType defaultType = myDefaultType != null ? myDefaultType.get() : null;
+    return promoteToClassObjectIfNeeded(defaultType);
+  }
+
+  private @Nullable PyType promoteToClassObjectIfNeeded(PyType type) {
     if (myIsDefinition) {
-      return PyTypeUtil.toStream(effectiveBound)
+      return PyTypeUtil.toStream(type)
         .map(t -> t instanceof PyInstantiableType ? ((PyInstantiableType<?>)t).toClass() : t)
         .collect(PyTypeUtil.toUnion());
     }
-    return effectiveBound;
+    return type;
   }
 
   @Override
@@ -139,6 +161,11 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   @Override
+  public @NotNull Variance getVariance() {
+    return myVariance;
+  }
+
+  @Override
   public @Nullable Ref<PyType> getDefaultType() {
     return myDefaultType;
   }
@@ -154,7 +181,7 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   public @NotNull PyGenericType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
-    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), isDefinition(), getDeclarationElement(), scopeOwner);
+    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), getVariance(), isDefinition(), getDeclarationElement(), scopeOwner);
   }
 
   public @NotNull PyGenericType withTargetExpression(@Nullable PyTargetExpression targetExpression) {
@@ -162,16 +189,16 @@ public class PyGenericType implements PyTypeVarType {
   }
 
   public @NotNull PyGenericType withDeclarationElement(@Nullable PyQualifiedNameOwner declarationElement) {
-    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), isDefinition(), declarationElement, getScopeOwner());
+    return new PyTypeVarTypeImpl(getName(), getConstraints(), getBound(), getDefaultType(), getVariance(), isDefinition(), declarationElement, getScopeOwner());
   }
 
   @Override
   public @NotNull PyGenericType toInstance() {
-    return myIsDefinition ? new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, false, myDeclarationElement, myScopeOwner) : this;
+    return myIsDefinition ? new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, myVariance, false, myDeclarationElement, myScopeOwner) : this;
   }
 
   @Override
   public @NotNull PyGenericType toClass() {
-    return myIsDefinition ? this : new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, true, myDeclarationElement, myScopeOwner);
+    return myIsDefinition ? this : new PyTypeVarTypeImpl(myName, myConstraints, myBound, myDefaultType, myVariance, true, myDeclarationElement, myScopeOwner);
   }
 }

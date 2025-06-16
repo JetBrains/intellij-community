@@ -51,11 +51,11 @@
           <sourceDirectory>${basedir}/../resources/bcd.json</sourceDirectory>
           <sourceType>JSONSCHEMA</sourceType>
           <outputDirectory>${basedir}/../../gen/</outputDirectory>
-          <customRuleFactory>com.intellij.webSymbols.webTypes.gen.WebTypesRuleFactory</customRuleFactory>
+          <customRuleFactory>com.intellij.polySymbols.webTypes.gen.WebTypesRuleFactory</customRuleFactory>
         </configuration>
         <dependencies>
           <dependency>
-            <groupId>intellij.webSymbols</groupId>
+            <groupId>intellij.polySymbols</groupId>
             <artifactId>web-types-ext</artifactId>
             <version>1.0.0</version>
           </dependency>

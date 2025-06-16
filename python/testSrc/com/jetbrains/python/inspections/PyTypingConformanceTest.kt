@@ -1,18 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
-import com.intellij.codeInspection.InspectionEP
-import com.intellij.codeInspection.InspectionProfileEntry
-import com.intellij.codeInspection.LocalInspectionEP
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiComment
 import com.intellij.util.io.URLUtil
-import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.PythonTestUtil
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
@@ -26,18 +22,21 @@ import kotlin.io.path.div
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
-private const val CHECK_OPTIONAL_ERRORS = false
-private const val RUN_ALL_INSPECTIONS = false
-
 private val inspections
   get() = arrayOf(
+    PyAbstractClassInspection(),
     PyArgumentListInspection(),
     PyAssertTypeInspection(),
+    PyCallingNonCallableInspection(),
+    PyClassVarInspection(),
     PyDataclassInspection(),
     PyEnumInspection(),
+    PyFinalInspection(),
     //PyInitNewSignatureInspection(), // False negative constructors_consistency.py
     PyNewStyleGenericSyntaxInspection(),
     PyNewTypeInspection(),
+    PyOverloadsInspection(),
+    PyOverridesInspection(),
     PyProtocolInspection(),
     PyTypedDictInspection(),
     PyTypeCheckerInspection(),
@@ -45,29 +44,13 @@ private val inspections
     PyUnresolvedReferencesInspection(),
   )
 
-private val IGNORED_INSPECTIONS = listOf(
-  PyInitNewSignatureInspection::class, // False negative constructors_consistency.py
-  PyInterpreterInspection::class,
-  PyPep8Inspection::class,
-  PyRedeclarationInspection::class,
-  PyStatementEffectInspection::class,
-).map { it.java.name }
-
 @RunWith(Parameterized::class)
 class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   @Test
   fun test() {
-    val settings = PyCodeInsightSettings.getInstance()
-    val oldHighlightUnusedImports = settings.HIGHLIGHT_UNUSED_IMPORTS
-    settings.HIGHLIGHT_UNUSED_IMPORTS = false
-    try {
-      myFixture.configureByFiles(*getFilePaths())
-      myFixture.enableInspections(*getInspections())
-      checkHighlighting()
-    }
-    finally {
-      settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnusedImports
-    }
+    myFixture.configureByFiles(*getFilePaths())
+    myFixture.enableInspections(*inspections)
+    checkHighlighting()
   }
 
   private fun getFilePaths(): Array<String> {
@@ -84,30 +67,18 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
       .toTypedArray()
   }
 
-  private fun getInspections(): Array<out InspectionProfileEntry> =
-    if (RUN_ALL_INSPECTIONS) {
-      sequenceOf(LocalInspectionEP.LOCAL_INSPECTION, LocalInspectionEP.GLOBAL_INSPECTION)
-        .flatMap { it.extensionList }
-        .filter { !IGNORED_INSPECTIONS.contains(it.implementationClass) && it.language == PythonLanguage.INSTANCE.id && it.enabledByDefault }
-        .map(InspectionEP::instantiateTool)
-        .toList()
-        .toTypedArray()
-    }
-    else {
-      inspections
-    }
-
   private fun checkHighlighting() {
     val document = myFixture.getDocument(myFixture.file)
-    val errors = myFixture.doHighlighting(HighlightSeverity.WARNING).associate {
+    val actualErrors = myFixture.doHighlighting(HighlightSeverity.WARNING).associate {
       document.getLineNumber(it.startOffset) to it.description
     }
-    compareErrors(extractExpectedErrors(), errors)
+    val lineToError = mutableMapOf<Int, Error>()
+    val errorGroups = mutableMapOf<CharSequence, ErrorGroup>()
+    extractExpectedErrors(lineToError, errorGroups)
+    compareErrors(lineToError, errorGroups, actualErrors)
   }
 
-  private fun extractExpectedErrors(): Errors {
-    val lineToError = mutableMapOf<Int, Error>()
-    val errorGroups = mutableMapOf<CharSequence, MutableList<Int>>()
+  private fun extractExpectedErrors(lineToError: MutableMap<Int, Error>, errorGroups: MutableMap<CharSequence, ErrorGroup>) {
     val document = myFixture.getDocument(myFixture.file)
     myFixture.file.accept(object : PyRecursiveElementVisitor() {
       override fun visitComment(comment: PsiComment) {
@@ -116,16 +87,18 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
         val lineStartOffset = document.getLineStartOffset(lineNumber)
         val lineWithoutComment = document.getText(TextRange(lineStartOffset, startOffset))
         if (lineWithoutComment.isNotBlank()) {
-          parseComment(comment.text,
-                       { lineToError[lineNumber] = it },
-                       { errorGroups.computeIfAbsent(it) { mutableListOf() }.add(lineNumber) })
+          parseComment(comment.text, lineNumber, lineToError, errorGroups)
         }
       }
     })
-    return Errors(lineToError, errorGroups)
   }
 
-  private fun parseComment(comment: CharSequence, onError: (Error) -> Unit, onErrorTag: (CharSequence) -> Unit) {
+  private fun parseComment(
+    comment: @NlsSafe String,
+    lineNumber: Int,
+    lineToError: MutableMap<Int, Error>,
+    errorGroups: MutableMap<CharSequence, ErrorGroup>,
+  ) {
     assert(comment.startsWith("#"))
     var index = 1
     while (index < comment.length && comment[index].isWhitespace()) {
@@ -137,7 +110,22 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
       if (index < comment.length && comment[index] == '[') {
         val endIndex = comment.indexOfAny(charArrayOf(']', '\n'), index + 1, false)
         if (endIndex != -1 && comment[endIndex] != '\n') {
-          onErrorTag(comment.subSequence(index + 1, endIndex))
+          val tag: CharSequence
+          val allowMultiple: Boolean
+          if (comment[endIndex - 1] == '+') {
+            tag = comment.subSequence(index + 1, endIndex - 1)
+            allowMultiple = true
+          }
+          else {
+            tag = comment.subSequence(index + 1, endIndex)
+            allowMultiple = false
+          }
+          val errorGroup = errorGroups.computeIfAbsent(tag) { ErrorGroup(allowMultiple) }
+          if (errorGroup.allowMultiple != allowMultiple) {
+            val sb = StringBuilder("Inconsistent tag '$tag' usage at").appendLocation(lineNumber)
+            throw IllegalArgumentException(sb.toString())
+          }
+          errorGroup.lines.add(lineNumber)
         }
       }
       else {
@@ -157,56 +145,69 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
         else {
           message = null
         }
-        onError(Error(message, optional))
+        lineToError[lineNumber] = Error(message, optional)
       }
     }
   }
 
-  private data class Error(val message: CharSequence?, val isOptional: Boolean)
+  private fun compareErrors(lineToError: Map<Int, Error>,
+                            errorGroups: Map<CharSequence, ErrorGroup>,
+                            actualErrors: Map<Int, @NlsContexts.DetailedDescription String>) {
+    val missingErrors = mutableListOf<Pair<Int, CharSequence>>()
+    val unexpectedErrors = mutableListOf<Pair<Int, CharSequence>>()
 
-  private data class Errors(val lineToError: Map<Int, Error>, val errorGroups: Map<CharSequence, List<Int>>)
-
-  private fun compareErrors(expectedErrors: Errors, actualErrors: Map<Int, @NlsContexts.DetailedDescription String>) {
-    var missingErrorsCount = 0
-    var unexpectedErrorsCount = 0
-    val failMessage = StringBuilder()
-
-    for ((lineNumber, expectedError) in expectedErrors.lineToError) {
-      if (CHECK_OPTIONAL_ERRORS || !expectedError.isOptional) {
+    for ((lineNumber, expectedError) in lineToError) {
+      if (!expectedError.isOptional) {
         val actualError = actualErrors[lineNumber]
         if (actualError == null) {
-          missingErrorsCount++
-          failMessage.append("Expected error at ").appendLocation(lineNumber)
+          val message = StringBuilder("Expected error at ").appendLocation(lineNumber)
           if (expectedError.message != null) {
-            failMessage.append(": ").append(expectedError.message)
+            message.append(": ").append(expectedError.message)
           }
-          failMessage.appendLine()
+          missingErrors.add(lineNumber to message)
         }
       }
     }
 
-    for ((tag, lineNumbers) in expectedErrors.errorGroups) {
-      if (!lineNumbers.isEmpty() && lineNumbers.all { it !in actualErrors }) {
-        missingErrorsCount++
-        failMessage.append("Expected error (tag $tag) at ").appendLocation(lineNumbers[0])
-        lineNumbers.subList(1, lineNumbers.size).map { it + 1 }.joinTo(failMessage, ", ", "[", "]")
-        failMessage.appendLine()
+    for ((tag, errorGroup) in errorGroups) {
+      val lines = errorGroup.lines
+      val errorsCount = lines.count { it in actualErrors }
+      if (errorsCount == 0 || errorsCount > 1 && !errorGroup.allowMultiple) {
+        val message = StringBuilder("Expected ")
+        if (errorsCount != 0) {
+          message.append("single ")
+        }
+        message.append("error (tag $tag) at ")
+        message.appendLocation(lines[0])
+        lines.subList(1, lines.size).map { it + 1 }.joinTo(message, ", ", "[", "]")
+        val errors = if (errorsCount == 0) missingErrors else unexpectedErrors
+        errors.add(lines[0] to message)
       }
     }
 
-    val linesUsedByGroups = expectedErrors.errorGroups.values.flatten().toSet()
+    val linesUsedByGroups = errorGroups.values.flatMap { it.lines }.toSet()
 
     for ((lineNumber, message) in actualErrors) {
-      if (lineNumber !in expectedErrors.lineToError && !linesUsedByGroups.contains(lineNumber)) {
-        unexpectedErrorsCount++
-        failMessage.append("Unexpected error at ").appendLocation(lineNumber).append(": ").appendLine(message)
+      if (lineNumber !in lineToError && !linesUsedByGroups.contains(lineNumber)) {
+        unexpectedErrors.add(
+          lineNumber to StringBuilder("Unexpected error at ").appendLocation(lineNumber).append(": ").append(message)
+        )
       }
     }
 
-    if (missingErrorsCount != 0 || unexpectedErrorsCount != 0) {
-      allErrors.add(Triple(testFileName, missingErrorsCount, unexpectedErrorsCount))
-      fail(failMessage.toString())
+    if (missingErrors.isNotEmpty() || unexpectedErrors.isNotEmpty()) {
+      failures.add(Failure(testFileName, missingErrors.size, unexpectedErrors.size))
+      val message = (missingErrors.asSequence() + unexpectedErrors.asSequence())
+        .sortedBy(Pair<Int, CharSequence>::first)
+        .joinToString(separator = System.lineSeparator(), transform = Pair<Int, CharSequence>::second)
+      fail(message)
     }
+  }
+
+  private class Error(val message: CharSequence?, val isOptional: Boolean)
+
+  private class ErrorGroup(val allowMultiple: Boolean) {
+    val lines: MutableList<Int> = mutableListOf()
   }
 
   private fun StringBuilder.appendLocation(lineNumber: Int): StringBuilder {
@@ -221,28 +222,29 @@ class PyTypingConformanceTest(private val testFileName: String) : PyTestCase() {
   companion object {
     private const val TESTS_DIR = "typing/conformance/tests"
     private val TESTS_DIR_ABSOLUTE_PATH = Path.of(PythonTestUtil.getTestDataPath(), TESTS_DIR)
-    private val IGNORED_TESTS = Files.readAllLines(TESTS_DIR_ABSOLUTE_PATH / "_ignored.txt").toSet()
-    private val allErrors = mutableListOf<Triple<String, Int, Int>>()
+    private val failures = mutableListOf<Failure>()
+
+    private class Failure(val testFileName: String, val missingErrorsCount: Int, val unexpectedErrorsCount: Int)
 
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun parameters(): List<String> {
+      val ignoredTests = Files.readAllLines(Path.of(PythonTestUtil.getTestDataPath(), "typing/ignored.txt")).toSet()
       return TESTS_DIR_ABSOLUTE_PATH.listDirectoryEntries()
         .map(Path::name)
-        .filter { !it.startsWith('_') }
-        .filter { it !in IGNORED_TESTS }
+        .filter { !it.startsWith('_') && it !in ignoredTests }
     }
 
     @AfterClass
     @JvmStatic
     fun afterClass() {
-      if (allErrors.isNotEmpty()) {
-        val missingErrorsCount = allErrors.sumOf { it.second }
-        val unexpectedErrorsCount = allErrors.sumOf { it.third }
+      if (failures.isNotEmpty()) {
+        val missingErrorsCount = failures.sumOf { it.missingErrorsCount }
+        val unexpectedErrorsCount = failures.sumOf { it.unexpectedErrorsCount }
         println("Test failed: missing errors: $missingErrorsCount; unexpected errors: $unexpectedErrorsCount")
 
-        allErrors.sortedBy { it.second + it.third }.forEach {
-          println("${it.first} ${it.second} ${it.third}")
+        failures.sortedBy { it.missingErrorsCount + it.unexpectedErrorsCount }.forEach {
+          println("${it.testFileName} ${it.missingErrorsCount} ${it.unexpectedErrorsCount}")
         }
       }
     }

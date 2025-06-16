@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -26,7 +27,7 @@ public interface FacetModel {
    * @param typeId type of facets
    * @return all facets of the given type
    */
-  @NotNull
+  @NotNull @Unmodifiable
   <F extends Facet<?>> Collection<F> getFacetsByType(FacetTypeId<F> typeId);
 
   /**
@@ -57,7 +58,7 @@ public interface FacetModel {
    * @param typeId type of subfacet
    * @return all subfacets of the given facet
    */
-  @NotNull
+  @NotNull @Unmodifiable
   <F extends Facet<?>> Collection<F> getFacetsByType(@NotNull Facet<?> underlyingFacet, FacetTypeId<F> typeId);
 
   @NotNull

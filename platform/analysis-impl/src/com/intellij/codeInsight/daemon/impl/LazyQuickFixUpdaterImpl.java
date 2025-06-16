@@ -47,11 +47,11 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
 
   @Override
   @RequiresBackgroundThread
-  public void waitQuickFixesSynchronously(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info) {
+  public void waitQuickFixesSynchronously(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull HighlightInfo info) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ReadAction.run(() -> {
       try {
-        info.computeQuickFixesSynchronously(editor.getDocument());
+        info.computeQuickFixesSynchronously(psiFile, editor.getDocument());
       }
       catch (ExecutionException | InterruptedException ignored) {
 
@@ -60,10 +60,10 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
   }
 
   @Override
-  public void startComputingNextQuickFixes(@NotNull PsiFile file, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
+  public void startComputingNextQuickFixes(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull ProperTextRange visibleRange) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    Project project = file.getProject();
+    Project project = psiFile.getProject();
     Document document = editor.getDocument();
     CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
     // compute unresolved refs suggestions from the caret to two pages down (in case the user is scrolling down, which is often the case)
@@ -92,31 +92,31 @@ public final class LazyQuickFixUpdaterImpl implements LazyQuickFixUpdater {
     // query hasLazyQuickFixes outside MarkupModel lock
     for (HighlightInfo info : infos) {
       if (info.hasLazyQuickFixes()) {
-        startJob(info, editor);
+        startJob(info, editor, project);
       }
     }
   }
 
-  private void startJob(@NotNull HighlightInfo info, @NotNull Editor editor) {
+  private void startJob(@NotNull HighlightInfo info, @NotNull Editor editor, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (!enabled) {
       return;
     }
-    info.startComputeQuickFixes(editor.getDocument());
+    info.startComputeQuickFixes(editor.getDocument(), project);
   }
 
   @TestOnly
-  void stopUntil(@NotNull Disposable disposable) {
+  public void stopUntil(@NotNull Disposable disposable) {
     enabled = false;
     Disposer.register(disposable, ()->enabled=true);
   }
 
   @TestOnly
   @RequiresEdt
-  void waitForBackgroundJobIfStartedInTests(@NotNull PsiFile file, @NotNull Editor editor, @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+  public void waitForBackgroundJobIfStartedInTests(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull HighlightInfo info, long timeout, @NotNull TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    AppExecutorUtil.getAppExecutorService().submit(() -> waitQuickFixesSynchronously(file, editor, info))
+    AppExecutorUtil.getAppExecutorService().submit(() -> waitQuickFixesSynchronously(psiFile, editor, info))
     .get(timeout, unit);
   }
 }

@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
@@ -52,11 +53,17 @@ object MarkdownActionUtil {
     }
   }
 
+  /**
+   * @param strictMarkdown If true, requires pure Markdown language;
+   * if false, allows Markdown-compatible languages (such as Jupyter).
+   */
   @JvmStatic
-  fun findMarkdownEditor(event: AnActionEvent): Editor? {
+  @JvmOverloads
+  fun findMarkdownEditor(event: AnActionEvent, strictMarkdown: Boolean = false): Editor? {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return null
     return when {
-      file.language.supportsMarkdown() -> event.getData(CommonDataKeys.EDITOR)
+      if (strictMarkdown) file.language.isMarkdownLanguage() else file.language.supportsMarkdown() ->
+        event.getData(CommonDataKeys.EDITOR)
       else -> null
     }
   }

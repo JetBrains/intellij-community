@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.k2.quickfi
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaCompilerPluginDiagnostic0
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -32,16 +33,15 @@ internal object IncorrectTransientFixFactory {
     private class UseKotlinxSerializationTransientQuickFix(
         element: KtAnnotationEntry,
         val isImportNeeded: Boolean,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtAnnotationEntry, Unit>(element, Unit) {
+    ) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
 
         @OptIn(KaIdeApi::class)
         override fun invoke(
-            actionContext: ActionContext,
+            context: ActionContext,
             element: KtAnnotationEntry,
-            elementContext: Unit,
-            updater: ModPsiUpdater,
+            updater: ModPsiUpdater
         ) {
-            val psiFactory = KtPsiFactory(actionContext.project)
+            val psiFactory = KtPsiFactory(context.project)
             val newAnnotationEntry = psiFactory.createAnnotationEntry("@${SerializationAnnotations.serialTransientFqName}")
             val replaced = element.replace(newAnnotationEntry) as KtAnnotationEntry
             shortenReferences(replaced)

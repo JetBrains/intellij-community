@@ -2,8 +2,8 @@
 package com.intellij.codeInspection.actions
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper
+import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
-import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
@@ -49,4 +49,4 @@ internal fun cellRenderer(): ListCellRenderer<Any?> = listCellRenderer<Any?> {
 }
 
 private val InspectionToolWrapper<*, *>.icon: Icon
-  get() = Language.findLanguageByID(language)?.associatedFileType?.icon ?: UnknownFileType.INSTANCE.icon
+  get() = Language.findLanguageByID(language)?.associatedFileType?.icon ?: AllIcons.FileTypes.Any_type

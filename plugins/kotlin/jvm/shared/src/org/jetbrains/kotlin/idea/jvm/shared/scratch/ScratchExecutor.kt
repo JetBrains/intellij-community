@@ -83,6 +83,10 @@ abstract class ScratchExecutor(protected open val file: ScratchFile) {
             handlers.forEach { it.handle(file, expression, output) }
         }
 
+        override fun handle(file: ScratchFile, output: ScratchOutput) {
+            handlers.forEach { it.handle(file, output) }
+        }
+
         override fun error(file: ScratchFile, message: String) {
             handlers.forEach { it.error(file, message) }
         }

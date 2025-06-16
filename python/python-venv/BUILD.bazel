@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "community-impl-venv_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "community-impl-venv",
   module_name = "intellij.python.community.impl.venv",
@@ -21,6 +27,8 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//platform/projectModel-api:projectModel",
     "//platform/util",
+    "//platform/core-api:core",
+    "//python/python-exec-service/execService.python",
   ],
   runtime_deps = [":community-impl-venv_resources"]
 )
@@ -43,13 +51,20 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework/common",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",
     "//platform/ide-core-impl",
     "//platform/execution",
+    "//platform/core-api:core",
+    "//python/python-exec-service/execService.python",
+    "//python/python-exec-service/execService.python:execService.python_test_lib",
   ],
-  runtime_deps = [":community-impl-venv_resources"]
+  runtime_deps = [
+    ":community-impl-venv_resources",
+    ":community-impl-venv_test_resources",
+  ]
 )
 
 jvm_test(

@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
@@ -24,7 +25,7 @@ public class ReflectionAccessMethodBuilder {
   private boolean myIsStatic = false;
   private String myReturnType = "void";
   private final String myName;
-  private MyMemberAccessor myMemberAccessor;
+  private MyBodyProvider myBodyProvider;
   private final List<ParameterInfo> myParameters = new SmartList<>();
 
   public ReflectionAccessMethodBuilder(@NotNull String name) {
@@ -35,37 +36,12 @@ public class ReflectionAccessMethodBuilder {
                          @Nullable PsiElement context) {
     checkRequirements();
     String parameters = StreamEx.of(myParameters).map(p -> p.accessibleType + " " + p.name).joining(", ", "(", ")");
-    String returnExpression =
-      ("void".equals(myReturnType) ? "member." : "return (" + myReturnType + ")member.") + myMemberAccessor.getAccessExpression();
-    String methodBody = "  java.lang.Class<?> klass = " + myMemberAccessor.getClassLookupExpression() + ";\n" +
-                        "  " + myMemberAccessor.getMemberType() + " member = null;\n" +
-                        "  int interfaceNumber = -1;\n" +
-                        "  Class<?>[] interfaces = null;\n" +
-                        "  while (member == null) {\n" +
-                        "    try {\n" +
-                        "      member = klass." + myMemberAccessor.getMemberLookupExpression() + ";\n" +
-                        "    } catch (java.lang.ReflectiveOperationException e) {\n" +
-                        "      if (interfaceNumber == -1) {\n" +
-                        "        interfaces = klass.getInterfaces();\n" +
-                        "        interfaceNumber = 0;\n" +
-                        "      }\n" +
-                        "      if (interfaceNumber < interfaces.length) {\n" +
-                        "        klass = interfaces[interfaceNumber];\n" +
-                        "        interfaceNumber += 1;\n" +
-                        "      } else {\n" +
-                        "        klass = klass.getSuperclass();\n" +
-                        "        if (klass == null) throw e;\n" +
-                        "        interfaceNumber = -1;\n" +
-                        "      }\n" +
-                        "    }\n" +
-                        "  }\n" +
-                        "  member.setAccessible(true);\n" +
-                        "  " + returnExpression + ";\n";
-    List<String> possibleExceptions = myMemberAccessor.getPossibleExceptions();
+    String methodBody = myBodyProvider.createBody(myReturnType);
+    List<String> possibleExceptions = myBodyProvider.getPossibleExceptions();
     if (!possibleExceptions.isEmpty()) {
       methodBody = "try {\n" +
                    methodBody +
-                   "}" +
+                   "}\n" +
                    createCatchBlocks(possibleExceptions);
     }
 
@@ -76,28 +52,33 @@ public class ReflectionAccessMethodBuilder {
   }
 
   private void checkRequirements() {
-    if (myMemberAccessor == null) {
+    if (myBodyProvider == null) {
       LOG.error("Accessed member not specified");
     }
   }
 
   public ReflectionAccessMethodBuilder accessedMethod(@NotNull String jvmClassName, @NotNull String methodName) {
-    myMemberAccessor = new MyMethodAccessor(jvmClassName, methodName);
+    myBodyProvider = new MyMethodAccessor(jvmClassName, methodName);
     return this;
   }
 
   public ReflectionAccessMethodBuilder accessedField(@NotNull String jvmClassName, @NotNull String fieldName) {
-    myMemberAccessor = new MyFieldAccessor(jvmClassName, fieldName, FieldAccessType.GET);
+    myBodyProvider = new MyFieldAccessor(jvmClassName, fieldName, FieldAccessType.GET);
     return this;
   }
 
   public ReflectionAccessMethodBuilder updatedField(@NotNull String jvmClassName, @NotNull String fieldName) {
-    myMemberAccessor = new MyFieldAccessor(jvmClassName, fieldName, FieldAccessType.SET);
+    myBodyProvider = new MyFieldAccessor(jvmClassName, fieldName, FieldAccessType.SET);
     return this;
   }
 
   public ReflectionAccessMethodBuilder accessedConstructor(@NotNull String jvmClassName) {
-    myMemberAccessor = new MyConstructorAccessor(jvmClassName);
+    myBodyProvider = new MyConstructorAccessor(jvmClassName);
+    return this;
+  }
+
+  public ReflectionAccessMethodBuilder newArray(@NotNull String jvmClassName) {
+    myBodyProvider = new MyNewArrayGenerator(jvmClassName);
     return this;
   }
 
@@ -112,25 +93,41 @@ public class ReflectionAccessMethodBuilder {
   }
 
   public ReflectionAccessMethodBuilder addParameter(@NotNull String jvmType, @NotNull String name) {
-    myParameters.add(new ParameterInfo(jvmType.replace('$', '.'), name, jvmType));
+    myParameters.add(new ParameterInfo(jvmType.replace('$', '.'), name, new TypeInfo(jvmType, 0)));
     return this;
   }
 
   public ReflectionAccessMethodBuilder addParameters(@NotNull PsiParameterList parameterList) {
     PsiParameter[] parameters = parameterList.getParameters();
-    for (PsiParameter parameter : parameters) {
-      PsiType parameterType = parameter.getType();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiType parameterType = parameters[i].getType();
       PsiType erasedType = TypeConversionUtil.erasure(parameterType);
       String typeName = typeName(parameterType, erasedType);
-      String jvmType = erasedType != null ? extractJvmType(erasedType) : typeName;
+      TypeInfo jvmType = erasedType != null ? extractJvmType(erasedType) : new TypeInfo(typeName, 0);
 
-      String name = parameter.getName();
+      String name = "p" + i; // To avoid confusion with local variables, the real parameter names are not used.
 
-      PsiType accessedType = PsiReflectionAccessUtil.nearestAccessibleType(parameterType);
-      myParameters.add(new ParameterInfo(accessedType.getCanonicalText(), name, jvmType));
+      if (requiresObjectType(parameterType)) {
+        myParameters.add(new ParameterInfo(CommonClassNames.JAVA_LANG_OBJECT, name, jvmType));
+      }
+      else {
+        PsiType accessedType = PsiReflectionAccessUtil.nearestAccessibleType(parameterType, parameterList);
+        myParameters.add(new ParameterInfo(accessedType.getCanonicalText(), name, jvmType));
+      }
     }
 
     return this;
+  }
+
+  private static boolean requiresObjectType(PsiType type) {
+    if (type instanceof PsiEllipsisType) {
+      return false;
+    }
+    if (type instanceof PsiArrayType) {
+      return true;
+    }
+    PsiClass psiClass = PsiTypesUtil.getPsiClass(type);
+    return psiClass != null && (psiClass.isRecord() || psiClass.isEnum());
   }
 
   private static @NotNull String typeName(@NotNull PsiType type, @Nullable PsiType erasedType) {
@@ -148,34 +145,89 @@ public class ReflectionAccessMethodBuilder {
     return erasedType.getCanonicalText();
   }
 
-  private static @NotNull String extractJvmType(@NotNull PsiType type) {
+  private static class TypeInfo {
+    final int arrayDimension;
+    final String typeName;
+
+    private TypeInfo(String name, int dimension) {
+      arrayDimension = dimension;
+      typeName = name;
+    }
+
+    String lookupClass() {
+      if (TypeConversionUtil.isPrimitive(typeName)) {
+        return typeName + StringUtil.repeat("[]", arrayDimension) + ".class";
+      }
+      else {
+        String className = typeName;
+        if (arrayDimension > 0) {
+          className = StringUtil.repeat("[", arrayDimension) + "L" + typeName + ";";
+        }
+        return "java.lang.Class.forName(\"" + className + "\")";
+      }
+    }
+  }
+
+  private static @NotNull TypeInfo extractJvmType(@NotNull PsiType type) {
+    int arrayDimension = 0;
+    while (type instanceof PsiArrayType arrayType) {
+      arrayDimension++;
+      type = arrayType.getComponentType();
+    }
     PsiClass psiClass = PsiUtil.resolveClassInType(type);
     String canonicalText = type.getCanonicalText();
     String jvmName = psiClass == null ? canonicalText : ClassUtil.getJVMClassName(psiClass);
-    return jvmName == null ? canonicalText : jvmName;
+    return new TypeInfo(jvmName == null ? canonicalText : jvmName, arrayDimension);
   }
 
   private static String createCatchBlocks(@NotNull List<String> exceptions) {
     return StreamEx.of(exceptions).map(x -> "catch(" + x + " e) { throw new java.lang.RuntimeException(e); }").joining("\n");
   }
 
-  private record ParameterInfo(@NotNull String accessibleType, @NotNull String name, @NotNull String jvmTypeName) {
+  private record ParameterInfo(@NotNull String accessibleType, @NotNull String name, @NotNull TypeInfo jvmType) {
   }
 
-  private interface MyMemberAccessor {
-    String getMemberLookupExpression();
-
-    String getClassLookupExpression();
-
-    String getAccessExpression();
-
-    String getMemberType();
-
+  private interface MyBodyProvider {
     List<String> getPossibleExceptions();
+    String createBody(String returnType);
   }
 
+  private static abstract class MyMemberAccessor implements MyBodyProvider {
+    abstract String getMemberLookupExpression();
+    abstract String getClassLookupExpression();
+    abstract String getReturnExpression(String returnType);
+    abstract String getMemberType();
 
-  private static class MyFieldAccessor implements MyMemberAccessor {
+    @Override
+    public String createBody(String returnType) {
+      return "  java.lang.Class<?> klass = " + getClassLookupExpression() + ";\n" +
+             "  " + getMemberType() + " member = null;\n" +
+             "  int interfaceNumber = -1;\n" +
+             "  Class<?>[] interfaces = null;\n" +
+             "  while (member == null) {\n" +
+             "    try {\n" +
+             "      member = klass." + getMemberLookupExpression() + ";\n" +
+             "    } catch (java.lang.ReflectiveOperationException e) {\n" +
+             "      if (interfaceNumber == -1) {\n" +
+             "        interfaces = klass.getInterfaces();\n" +
+             "        interfaceNumber = 0;\n" +
+             "      }\n" +
+             "      if (interfaceNumber < interfaces.length) {\n" +
+             "        klass = interfaces[interfaceNumber];\n" +
+             "        interfaceNumber += 1;\n" +
+             "      } else {\n" +
+             "        klass = klass.getSuperclass();\n" +
+             "        if (klass == null) throw e;\n" +
+             "        interfaceNumber = -1;\n" +
+             "      }\n" +
+             "    }\n" +
+             "  }\n" +
+             "  member.setAccessible(true);\n" +
+             "  " + getReturnExpression(returnType) + ";\n";
+    }
+  }
+
+  private static class MyFieldAccessor extends MyMemberAccessor {
     private static final List<String> EXCEPTIONS = Collections.singletonList("java.lang.ReflectiveOperationException");
     private final String myFieldName;
     private final String myClassName;
@@ -200,8 +252,10 @@ public class ReflectionAccessMethodBuilder {
     }
 
     @Override
-    public String getAccessExpression() {
-      return FieldAccessType.GET.equals(myAccessType) ? "get(object)" : "set(object, value)";
+    String getReturnExpression(String returnType) {
+      return FieldAccessType.GET.equals(myAccessType)
+             ? "return (" + returnType + ")member.get(object)"
+             : "member.set(object, value); \n return value";
     }
 
     @Override
@@ -215,8 +269,7 @@ public class ReflectionAccessMethodBuilder {
     }
   }
 
-
-  private class MyMethodAccessor implements MyMemberAccessor {
+  private class MyMethodAccessor extends MyMemberAccessor {
     private final String myClassName;
     private final String myMethodName;
 
@@ -227,7 +280,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public String getMemberLookupExpression() {
-      String args = StreamEx.of(myParameters).skip(1).map(x -> PsiReflectionAccessUtil.classForName(x.jvmTypeName))
+      String args = StreamEx.of(myParameters).skip(1).map(x -> x.jvmType.lookupClass())
                             .prepend(StringUtil.wrapWithDoubleQuote(myMethodName))
                             .joining(", ", "(", ")");
       return "getDeclaredMethod" + args;
@@ -250,13 +303,13 @@ public class ReflectionAccessMethodBuilder {
     }
 
     @Override
-    public String getAccessExpression() {
-      return StreamEx.of(myParameters).map(x -> x.name).joining(", ", "invoke(", ")");
+    String getReturnExpression(String returnType) {
+      String invokeString = "member.invoke" + parametersStringForInvoke();
+      return "void".equals(returnType) ? invokeString : "return (" + returnType + ")" + invokeString;
     }
   }
 
-
-  private class MyConstructorAccessor implements MyMemberAccessor {
+  private class MyConstructorAccessor extends MyMemberAccessor {
     private final String myClassName;
 
     MyConstructorAccessor(@NotNull String className) {
@@ -265,7 +318,7 @@ public class ReflectionAccessMethodBuilder {
 
     @Override
     public String getMemberLookupExpression() {
-      String args = StreamEx.of(myParameters).map(x -> x.jvmTypeName).map(PsiReflectionAccessUtil::classForName).joining(", ", "(", ")");
+      String args = StreamEx.of(myParameters).map(x -> x.jvmType.lookupClass()).joining(", ", "(", ")");
       return "getDeclaredConstructor" + args;
     }
 
@@ -275,9 +328,8 @@ public class ReflectionAccessMethodBuilder {
     }
 
     @Override
-    public String getAccessExpression() {
-      String args = StreamEx.of(myParameters).map(x -> x.name).joining(", ", "(", ")");
-      return "newInstance" + args;
+    String getReturnExpression(String returnType) {
+      return "return (" + returnType + ")member.newInstance" + parametersStringForInvoke();
     }
 
     @Override
@@ -289,5 +341,34 @@ public class ReflectionAccessMethodBuilder {
     public List<String> getPossibleExceptions() {
       return Collections.singletonList("java.lang.ReflectiveOperationException");
     }
+  }
+
+  private static class MyNewArrayGenerator implements MyBodyProvider {
+    private final String myClassName;
+
+    MyNewArrayGenerator(@NotNull String className) {
+      myClassName = className;
+    }
+
+    @Override
+    public String createBody(String returnType) {
+      return "return (" + returnType + ")java.lang.reflect.Array.newInstance(" + PsiReflectionAccessUtil.classForName(myClassName) + ", dimensions);";
+    }
+
+    @Override
+    public List<String> getPossibleExceptions() {
+      return Collections.singletonList("java.lang.ReflectiveOperationException");
+    }
+  }
+
+  private String parametersStringForInvoke() {
+    return StreamEx.of(myParameters).map(x -> {
+      if (x.jvmType.arrayDimension > 0) {
+        return "(java.lang.Object)" + x.name; // cast arrays to Object to avoid confusion with varargs method invocation
+      }
+      else {
+        return x.name;
+      }
+    }).joining(", ", "(", ")");
   }
 }

@@ -28,16 +28,21 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     val originalEditor = editor.getUserData(ORIGINAL_EDITOR)
     var startOffset: Int
     var psiFile = context.file
-    if (originalEditor != null) {
-      startOffset = originalEditor.second
-      editor = originalEditor.first
-      psiFile = PsiDocumentManager.getInstance(context.project).getPsiFile(editor.getDocument()) ?: return
-      val installedEditor = editor.getUserData(INSTALLED_EDITOR) ?: return
-      Disposer.dispose(installedEditor)
+    if (completionCommand.customPrefixMatcher("") == null) {
+      if (originalEditor != null) {
+        startOffset = originalEditor.second
+        editor = originalEditor.first
+        psiFile = PsiDocumentManager.getInstance(context.project).getPsiFile(editor.getDocument()) ?: return
+        val installedEditor = editor.getUserData(INSTALLED_EDITOR) ?: return
+        Disposer.dispose(installedEditor)
+      }
+      else {
+        // Remove the dots and command text from the document
+        startOffset = removeCommandText(context)
+      }
     }
     else {
-      // Remove the dots and command text from the document
-      startOffset = removeCommandText(context)
+      startOffset = context.tailOffset
     }
 
     // Execute the command
@@ -52,7 +57,7 @@ internal class CommandInsertHandler(private val completionCommand: CompletionCom
     ApplicationManager.getApplication().invokeLater {
       CommandProcessor.getInstance().executeCommand(context.project, {
         completionCommand.execute(startOffset, psiFile, editor)
-      }, completionCommand.name, completionCommand)
+      }, completionCommand.presentableName, completionCommand)
     }
   }
 

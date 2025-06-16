@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
@@ -11,52 +12,43 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
+import com.intellij.openapi.vfs.findFile
+import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.requireIs
+import com.intellij.testFramework.*
 import com.intellij.util.CommonProcessors
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.platform.modification.*
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
-import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
-import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
-import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.base.projectStructure.openapiSdk
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
-import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.addDependency
+import org.jetbrains.kotlin.idea.test.util.compileScriptsIntoDirectory
+import org.jetbrains.kotlin.platform.CommonPlatforms
+import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.psi.KotlinDeclarationNavigationPolicy
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
+import org.jetbrains.kotlin.test.util.multiRootProjectLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.Assert
 import java.io.File
@@ -462,6 +454,106 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertEquals(libraryUnrelated.name, libraryModule.libraryName)
     }
 
+    fun `test kotlin metadata files are ignored in a JVM library module containing common files`() {
+        // We need a library module which includes both JVM and common files. Then it is marked as a JVM library but also contains
+        // `.kotlin_metadata` files that should be ignored. See KT-74907.
+        //
+        // Trying this with a 2.x stdlib fails because that version of `kotlin-stdlib-common` doesn't contain `.kotlin_metadata` files, only
+        // `.knm` files.
+        val hybridLibrary = multiRootProjectLibrary(
+            classRoots = listOf(
+                TestKotlinArtifacts.kotlinStdlibLegacy1922.jarRoot,
+                TestKotlinArtifacts.kotlinStdlibCommonLegacy1922.jarRoot,
+            ),
+        )
+
+        val module = createModule("a").apply { addDependency(hybridLibrary) }
+        val kaSourceModule = module.toKaSourceModule(KaSourceModuleKind.PRODUCTION)
+
+        val libraryScope = LibraryScope(project, hybridLibrary)
+
+        val classFile = getFile("AbstractCollection.class", libraryScope)
+        val libraryModule = kaModuleWithAssertion<KaLibraryModule>(classFile, contextualModule = kaSourceModule)
+        assertInstanceOf<JvmPlatform>(libraryModule.targetPlatform.single())
+
+        val metadataFile = getFile("AbstractCollection.kotlin_metadata", libraryScope)
+        kaModuleWithAssertion<KaNotUnderContentRootModule>(metadataFile, contextualModule = kaSourceModule)
+
+        assertTrue(classFile.virtualFile in libraryModule.contentScope)
+        assertFalse(metadataFile.virtualFile in libraryModule.contentScope)
+    }
+
+    fun `test knm files are ignored in a JVM library module containing common files`() {
+        // See the `.kotlin_metadata` test above for the motivation. Here, we have a 2.x `kotlin-stdlib-common` which contains `.knm` files.
+        val hybridLibrary = multiRootProjectLibrary(
+            classRoots = listOf(
+                TestKotlinArtifacts.kotlinStdlib.jarRoot,
+                TestKotlinArtifacts.kotlinStdlibCommon.jarRoot,
+            ),
+        )
+
+        val module = createModule("a").apply { addDependency(hybridLibrary) }
+        val kaSourceModule = module.toKaSourceModule(KaSourceModuleKind.PRODUCTION)
+
+        val libraryScope = LibraryScope(project, hybridLibrary)
+
+        val classFile = getFile("AbstractCollection.class", libraryScope)
+        val libraryModule = kaModuleWithAssertion<KaLibraryModule>(classFile, contextualModule = kaSourceModule)
+        assertInstanceOf<JvmPlatform>(libraryModule.targetPlatform.single())
+
+        val metadataFile = getFile("00_collections.knm", libraryScope)
+        kaModuleWithAssertion<KaNotUnderContentRootModule>(metadataFile, contextualModule = kaSourceModule)
+
+        assertTrue(classFile.virtualFile in libraryModule.contentScope)
+        assertFalse(metadataFile.virtualFile in libraryModule.contentScope)
+    }
+
+    fun `test common library is preferred over JVM and common library hybrid for knm file`() {
+        // See KT-74907. If a `.knm` file is contained in both a JVM and a common library, the common library should be returned as a module
+        // of the `.knm` file.
+        val hybridLibraryName = "hybrid-library"
+        val hybridLibrary = multiRootProjectLibrary(
+            libraryName = hybridLibraryName,
+            classRoots = listOf(
+                TestKotlinArtifacts.kotlinStdlib.jarRoot,
+                TestKotlinArtifacts.kotlinStdlibCommon.jarRoot,
+            ),
+        )
+
+        val commonLibraryName = "common-library"
+        val commonLibrary = projectLibrary(
+            libraryName = commonLibraryName,
+            classesRoot = TestKotlinArtifacts.kotlinStdlibCommon.jarRoot,
+        )
+
+        val module = createModule("a").apply {
+            addDependency(hybridLibrary)
+            addDependency(commonLibrary)
+        }
+        val kaSourceModule = module.toKaSourceModule(KaSourceModuleKind.PRODUCTION)
+
+        val libraryScope = LibraryScope(project, hybridLibrary)
+
+        // When we get a module for the `.class` file, the JVM/common library is the only possible candidate.
+        val classFile = getFile("AbstractCollection.class", libraryScope)
+        val hybridLibraryModule = kaModuleWithAssertion<KaLibraryModule>(classFile, contextualModule = kaSourceModule)
+        assertEquals(hybridLibraryName, hybridLibraryModule.libraryName)
+        assertInstanceOf<JvmPlatform>(hybridLibraryModule.targetPlatform.single())
+
+        // When we get a module for the `.knm` file, the common and hybrid libraries are both candidates, but the hybrid library should be
+        // filtered out by the content scope check.
+        val metadataFile = getFile("00_collections.knm", libraryScope)
+        val commonLibraryModule = kaModuleWithAssertion<KaLibraryModule>(metadataFile, contextualModule = kaSourceModule)
+        assertEquals(commonLibraryName, commonLibraryModule.libraryName)
+        assertEquals(CommonPlatforms.defaultCommonPlatform, commonLibraryModule.targetPlatform)
+
+        assertTrue(classFile.virtualFile in hybridLibraryModule.contentScope)
+        assertFalse(metadataFile.virtualFile in hybridLibraryModule.contentScope)
+
+        assertFalse(classFile.virtualFile in commonLibraryModule.contentScope)
+        assertTrue(metadataFile.virtualFile in commonLibraryModule.contentScope)
+    }
+
     fun `test source module`() {
         createModule(
           moduleName = "a",
@@ -481,6 +573,206 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         assertKaModuleType<KaSourceModule>("Main.kt")
         assertKaModuleType<KaSourceModule>("Test.kt")
+    }
+
+    fun `test KaSourceModule cache invalidation`() {
+        val main = createModule(
+            moduleName = "main",
+            srcContentSpec = directoryContent {
+                dir("one") { file("Main.kt", "class Main") }
+            }
+        )
+
+        val dependents = createSimpleSourceModules(count = 3)
+        for (dependent in dependents) {
+            dependent.module.addDependency(main)
+        }
+
+        fun doTest(
+            shouldBeInvalidated: Boolean,
+            shouldDependentsBeInvalidated: Boolean = shouldBeInvalidated,
+            createEvent: (KaModule) -> KotlinModificationEvent,
+        ) {
+            doInvalidationModuleTest(
+                shouldBeInvalidated,
+                shouldDependentsBeInvalidated,
+                getModuleByFileFromThatModule = {
+                    getFile("Main.kt").getKaModuleOfType<KaSourceModule>(project, useSiteModule = null)
+                },
+                getDependentModulesByCorrespondingPsiFiles = {
+                    dependents.map { it.getter() }
+                },
+                createEvent = createEvent,
+            )
+        }
+
+
+        doTest(shouldBeInvalidated = true) { KotlinModuleStateModificationEvent(it, KotlinModuleStateModificationKind.REMOVAL) }
+        doTest(shouldBeInvalidated = true) { KotlinModuleStateModificationEvent(it, KotlinModuleStateModificationKind.UPDATE) }
+        doTest(shouldBeInvalidated = true) { KotlinGlobalModuleStateModificationEvent }
+        doTest(shouldBeInvalidated = true) { KotlinGlobalSourceModuleStateModificationEvent }
+
+        doTest(shouldBeInvalidated = false) { KotlinModuleOutOfBlockModificationEvent(it) }
+        doTest(shouldBeInvalidated = false) { KotlinGlobalScriptModuleStateModificationEvent }
+        doTest(shouldBeInvalidated = false) { KotlinGlobalSourceOutOfBlockModificationEvent }
+    }
+
+
+    private data class ModuleWithGetterByFile(
+        val module: Module,
+        val getter: () -> KaSourceModule,
+    )
+
+    fun `test KaLibraryModule library cache invalidation`() {
+        val lib = projectLibrary(
+            classesRoot = TestKotlinArtifacts.kotlinStdlib.jarRoot,
+        )
+
+        val dependents = createSimpleSourceModules(count = 3)
+        for (dependent in dependents) {
+            dependent.module.addDependency(lib)
+        }
+
+        fun doTest(
+            shouldBeInvalidated: Boolean,
+            shouldDependentsBeInvalidated: Boolean = shouldBeInvalidated,
+            createEvent: (KaModule) -> KotlinModificationEvent,
+        ) {
+            doInvalidationModuleTest(
+                shouldBeInvalidated,
+                shouldDependentsBeInvalidated,
+                getModuleByFileFromThatModule = {
+                    val file = JavaPsiFacade.getInstance(project)
+                        .findClass("kotlin.Pair", GlobalSearchScope.everythingScope(project))
+                        ?: error("Can't find class 'kotlin.Pair'")
+
+                    file.getKaModuleOfType<KaLibraryModule>(project, useSiteModule = null)
+                },
+                getDependentModulesByCorrespondingPsiFiles = {
+                    dependents.map { it.getter() }
+                },
+                createEvent = createEvent,
+            )
+        }
+
+        doTest(shouldBeInvalidated = true) { KotlinModuleStateModificationEvent(it, KotlinModuleStateModificationKind.REMOVAL) }
+        doTest(shouldBeInvalidated = true) { KotlinModuleStateModificationEvent(it, KotlinModuleStateModificationKind.UPDATE) }
+        doTest(shouldBeInvalidated = true) { KotlinGlobalModuleStateModificationEvent }
+        doTest(shouldBeInvalidated = false, shouldDependentsBeInvalidated = true) { KotlinGlobalSourceModuleStateModificationEvent }
+
+        doTest(shouldBeInvalidated = false) { KotlinModuleOutOfBlockModificationEvent(it) }
+        doTest(shouldBeInvalidated = false) { KotlinGlobalScriptModuleStateModificationEvent }
+        doTest(shouldBeInvalidated = false) { KotlinGlobalSourceOutOfBlockModificationEvent }
+    }
+
+    fun `test KaLibraryModule sdk cache invalidation`() {
+        val jdk = IdeaTestUtil.getMockJdk17("JDK")
+        runWriteAction {
+            ProjectJdkTable.getInstance().addJdk(jdk, testRootDisposable)
+        }
+        val dependents = createSimpleSourceModules(count = 3)
+        for (dependent in dependents) {
+            ModuleRootModificationUtil.modifyModel(dependent.module) {
+                it.sdk = jdk
+                true
+            }
+        }
+
+        fun doTest(
+            shouldBeInvalidated: Boolean,
+            shouldDependentsBeInvalidated: Boolean = shouldBeInvalidated,
+            createEvent: (KaModule) -> KotlinModificationEvent,
+        ) {
+            doInvalidationModuleTest(
+                shouldBeInvalidated,
+                shouldDependentsBeInvalidated,
+                getModuleByFileFromThatModule = {
+                    val file = JavaPsiFacade.getInstance(project).findClass("java.lang.String", GlobalSearchScope.allScope(project))
+                        ?: error("Can't find class 'java.lang.String'")
+
+                    file.getKaModuleOfType<KaLibraryModule>(project, useSiteModule = null)
+                },
+                getDependentModulesByCorrespondingPsiFiles = {
+                    dependents.map { it.getter() }
+                },
+                createEvent = createEvent,
+            )
+        }
+
+        doTest(shouldBeInvalidated = true) { KotlinModuleStateModificationEvent(it, KotlinModuleStateModificationKind.REMOVAL) }
+        doTest(shouldBeInvalidated = true) { KotlinModuleStateModificationEvent(it, KotlinModuleStateModificationKind.UPDATE) }
+        doTest(shouldBeInvalidated = true) { KotlinGlobalModuleStateModificationEvent }
+        doTest(shouldBeInvalidated = false, shouldDependentsBeInvalidated = true) { KotlinGlobalSourceModuleStateModificationEvent }
+
+        doTest(shouldBeInvalidated = false) { KotlinModuleOutOfBlockModificationEvent(it) }
+        doTest(shouldBeInvalidated = false) { KotlinGlobalScriptModuleStateModificationEvent }
+        doTest(shouldBeInvalidated = false) { KotlinGlobalSourceOutOfBlockModificationEvent }
+    }
+
+    private fun createSimpleSourceModules(count: Int): List<ModuleWithGetterByFile> {
+        require(count > 0) { "The count must be greater than zero" }
+        return (0 until count).map { i ->
+            val className = "Class$i"
+            val fileName = "$className.kt"
+            val module = createModule(
+                moduleName = "sourceModule$i",
+                srcContentSpec = directoryContent {
+                    dir("one") { file(fileName, "class $className") }
+                }
+            )
+            val getter: () -> KaSourceModule = ({
+                getFile(fileName).getKaModuleOfType<KaSourceModule>(project, useSiteModule = null)
+            })
+            ModuleWithGetterByFile(module, getter)
+        }
+    }
+
+
+    private fun doInvalidationModuleTest(
+        shouldBeInvalidated: Boolean,
+        shouldDependentsBeInvalidated: Boolean,
+        getModuleByFileFromThatModule: () -> KaModule,
+        getDependentModulesByCorrespondingPsiFiles: () -> List<KaModule>,
+        createEvent: (KaModule) -> KotlinModificationEvent
+    ) {
+        val initialKaModule = getModuleByFileFromThatModule()
+        assertSame(initialKaModule, getModuleByFileFromThatModule())
+
+        val initialDependentModules = getDependentModulesByCorrespondingPsiFiles()
+
+        val event = createEvent(initialKaModule)
+        runWriteActionAndWait {
+            project.publishModificationEvent(event)
+        }
+        val moduleAfter = getModuleByFileFromThatModule()
+
+        fun check(initial: KaModule, after: KaModule, shouldBeInvalidated: Boolean, moduleDescription: String) {
+            if (shouldBeInvalidated) {
+                assertNotSame(
+                    "Expected that ${moduleDescription} IS invalidated but they ARE the same. Event: $event. Initial module: $initial. Module after: $after",
+                    initial,
+                    after,
+                )
+            } else {
+                assertSame(
+                    "Expected that ${moduleDescription} IS NOT invalidated but they ARE NOT the same. Event: $event. Initial module: $initial. Module after: $after",
+                    initial,
+                    after,
+                )
+            }
+        }
+
+        check(initialKaModule, moduleAfter, shouldBeInvalidated, "main module")
+
+        val dependentModulesAfter = getDependentModulesByCorrespondingPsiFiles()
+        check(initialDependentModules.size == dependentModulesAfter.size) {
+            "Expected that number of dependent modules is the same. Initial dependent modules: $initialDependentModules. Dependent modules after: $dependentModulesAfter"
+        }
+        for (i in initialDependentModules.indices) {
+            val initial = initialDependentModules[i]
+            val after = dependentModulesAfter[i]
+            check(initial, after, shouldDependentsBeInvalidated, "dependent module")
+        }
     }
 
     @OptIn(K1ModeProjectStructureApi::class)
@@ -543,8 +835,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val dependency = getFile("utils.kt")
         val scriptFile = getFile("build.gradle.kts")
 
-        ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously(scriptFile)
-
         assertKaModuleType<KaSourceModule>(dependency, kaModule(scriptFile))
     }
 
@@ -558,7 +848,6 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         )
 
         val scriptFile = getFile("build.gradle.kts")
-        ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously(scriptFile)
         assertKaModuleType<KaScriptModule>(scriptFile, kaModule(scriptFile))
     }
 
@@ -612,6 +901,34 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKaModuleType<KaDanglingFileModule>(file)
     }
 
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    fun `test dangling file element cannot be analyzed in context module scope`() {
+        // See KT-71135.
+        createModule(
+            moduleName = "a",
+            srcContentSpec = directoryContent {
+                dir("one") {
+                    file("A.kt", "class A")
+                }
+            }
+        )
+        val sourceKtFile = getFile("A.kt")
+        val sourceKaModule = kaModuleWithAssertion<KaSourceModule>(sourceKtFile)
+
+        val temporaryFile = KtPsiFactory.contextual(sourceKtFile).createFile(name, "A()")
+        temporaryFile.originalFile = sourceKtFile
+        assertKaModuleType<KaDanglingFileModule>(temporaryFile)
+
+        allowAnalysisOnEdt {
+            analyze(sourceKaModule) {
+                assertFalse(
+                    "The dangling file should not be analyzable in the context of its source module.",
+                    temporaryFile.canBeAnalysed(),
+                )
+            }
+        }
+    }
+
     @OptIn(KaExperimentalApi::class)
     fun `test script module`() {
         val dummyRoot = directoryContent { file("dummy.kts", "class A") }
@@ -632,6 +949,55 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         )
 
         assertKaModuleType<KaScriptModule>("myScript.kts")
+    }
+
+    fun `test compiled script class always belongs to KaLibraryModule`() {
+        val fileStructure = directoryContent {
+            dir("test") {
+                file("A.kts",
+                     """
+                     fun foo() = 42
+                     foo()
+                 """.trimIndent()
+                )
+            }
+
+            dir("toCompile") {
+                file("Simple.kts", "class Simple {}")
+            }
+
+            dir("compiled") {
+            }
+        }
+
+        val rootFile = fileStructure.generateInVirtualTempDir()
+        val scriptModule = createModule(moduleName ="scriptA", resourceContentSpec = fileStructure)
+        val compiledScriptsDirectory = rootFile.findChild("compiled")!!
+
+        val scriptFile = VfsUtil.virtualToIoFile(rootFile.findFile("toCompile/Simple.kts")!!)
+        /*
+        To store compiled script artifacts,
+        one should use 'KotlinCompilerStandalone' directly.
+         */
+        compiledScriptsDirectory.compileScriptsIntoDirectory(listOf(scriptFile))
+        compiledScriptsDirectory.refresh(false, true)
+
+        moduleLibrary(
+            scriptModule,
+            libraryName = "libWithCompiledScripts",
+            classesRoot = compiledScriptsDirectory,
+        )
+
+        val scriptPsiFile = (getFile("A.kts") as KtFile).script as KtScript
+        val compiledScriptPsiFile = getFile("Simple.class")
+
+        assertKaModuleType<KaLibraryModuleImpl>(
+            compiledScriptPsiFile,
+            kaModule(scriptPsiFile)
+        )
+        assertKaModuleType<KaLibraryModuleImpl>(
+            compiledScriptPsiFile
+        )
     }
 
     fun `test element to library mapping consistency with contextual library module`() {
@@ -714,7 +1080,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     private inline fun <reified T : KaModule> kaModuleWithAssertion(
       element: PsiElement,
       contextualModule: KaModule? = null
-    ): T = KotlinProjectStructureProvider.Companion.getModule(
+    ): T = KotlinProjectStructureProvider.getModule(
         project,
         element,
         useSiteModule = contextualModule,

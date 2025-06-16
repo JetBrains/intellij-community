@@ -20,6 +20,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.psi.ExternalChangeAction;
+import com.intellij.psi.ExternalChangeActionUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TestLoggerKt;
@@ -498,27 +500,23 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
   public void testHasWriteActionWorksInOtherThreads() throws Throwable {
     ApplicationImpl app = (ApplicationImpl)ApplicationManager.getApplication();
-    ThrowableComputable<Void, RuntimeException> runnable = new ThrowableComputable<>() {
-      @Override
-      public Void compute() throws RuntimeException {
-        Class<?> actionClass = getClass();
-        assertTrue(app.hasWriteAction(actionClass));
+    Runnable runnable = ExternalChangeActionUtil.externalChangeAction(() -> {
+      assertTrue(app.hasWriteAction(ExternalChangeAction.class));
         app.executeSuspendingWriteAction(getProject(), "", () -> ReadAction.run(() -> {
-          assertTrue(app.hasWriteAction(actionClass));
-          waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
+          assertTrue(app.hasWriteAction(ExternalChangeAction.class));
+          waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(ExternalChangeAction.class)))));
         }));
-        return null;
-      }
-    };
+    });
 
-    assertFalse(app.hasWriteAction(runnable.getClass()));
+    assertFalse(app.hasWriteAction(ExternalChangeAction.class));
     safeWrite(runnable);
   }
-  private static <T> void safeWrite(ThrowableComputable<T, RuntimeException> r) throws Throwable {
+
+  private static <T> void safeWrite(Runnable r) throws Throwable {
     AtomicReference<Throwable> e = new AtomicReference<>();
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
-        WriteAction.compute(r);
+        ApplicationManager.getApplication().runWriteAction(r);
       }
       catch (Throwable e1) {
         e.set(e1);

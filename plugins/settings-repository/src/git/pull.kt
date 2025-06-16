@@ -2,7 +2,6 @@
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.SmartList
@@ -29,6 +28,7 @@ import org.eclipse.jgit.merge.SquashMessageFormatter
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.revwalk.RevWalkUtils
 import org.eclipse.jgit.transport.CredentialsProvider
+import org.eclipse.jgit.transport.FetchResult
 import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.TrackingRefUpdate
 import org.eclipse.jgit.treewalk.FileTreeIterator
@@ -87,9 +87,7 @@ internal open class Pull(val manager: GitRepositoryClient, val commitMessageForm
 
     val fetchResult = reportRawProgress { reporter ->
       val progressMonitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
-      blockingContext {
-        repository.fetch(remoteConfig, manager.credentialsProvider, progressMonitor)
-      }
+      repository.fetch(remoteConfig, manager.credentialsProvider, progressMonitor)
     } ?: return null
 
     if (LOG.isDebugEnabled) {

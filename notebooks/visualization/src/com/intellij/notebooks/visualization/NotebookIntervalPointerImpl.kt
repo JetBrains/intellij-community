@@ -2,6 +2,7 @@ package com.intellij.notebooks.visualization
 
 import com.intellij.notebooks.visualization.NotebookIntervalPointersEvent.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.diagnostic.thisLogger
@@ -17,7 +18,8 @@ import org.jetbrains.annotations.TestOnly
 
 class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactoryProvider {
   override fun create(project: Project, document: Document): NotebookIntervalPointerFactory {
-    val notebookCellLines = NotebookCellLines.get(document)
+    val provider = NotebookCellLinesProvider.getOrInstall(project, document)
+    val notebookCellLines = provider.create(document)
     val factory = NotebookIntervalPointerFactoryImpl(notebookCellLines,
                                                      document,
                                                      UndoManager.getInstance(project),
@@ -173,6 +175,7 @@ class NotebookIntervalPointerFactoryImpl(
     eventChanges: NotebookIntervalPointersEventChanges,
     shiftChanges: NotebookIntervalPointersEventChanges,
   ) {
+    CommandProcessor.getInstance().currentCommand
     registerUndoableAction(object : BasicUndoableAction(document) {
       override fun undo() {}
 

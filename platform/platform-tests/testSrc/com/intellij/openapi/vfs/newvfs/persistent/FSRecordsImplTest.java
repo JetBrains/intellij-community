@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import com.intellij.util.io.DataOutputStream;
@@ -15,50 +14,55 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.stream.IntStream;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FSRecordsImplTest {
 
 
   private FSRecordsImpl vfs;
+  private Path vfsDir;
 
   @Test
-  public void allocatedRecordId_CouldBeAlwaysWritten_EvenInMultiThreadedEnv() throws Exception {
-    //RC: there are EA reports with 'fileId ... outside of allocated range ...' exception
-    //    _just after recordId was allocated_. So the test checks there are no concurrency errors
-    //    that could leads to that:
-    int CPUs = Runtime.getRuntime().availableProcessors();
-    int recordsPerThread = 1_000_000;
-    ExecutorService pool = Executors.newFixedThreadPool(CPUs);
-    try {
-      FileAttributes attributes = new FileAttributes(true, false, false, true, 1, 1, true);
-      Callable<Object> insertingRecordsTask = () -> {
-        for (int i = 0; i < recordsPerThread; i++) {
-          int fileId = vfs.createRecord();
-          vfs.updateRecordFields(fileId, 1, attributes, "file_" + i, true);
-        }
-        return null;
-      };
-      List<Future<Object>> futures = IntStream.range(0, CPUs)
-        .mapToObj(i -> insertingRecordsTask)
-        .map(pool::submit)
-        .toList();
-      for (Future<Object> future : futures) {
-        future.get();//give a chance to deliver exception
-      }
+  public void insertedRoots_CouldBeReadBack() throws Exception {
+    int totalRoots = 100_000;               //too many roots could exceed attribute storage max record size
+    int[] rootIds = new int[totalRoots];
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + i;
+      rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
     }
-    finally {
-      pool.shutdown();
-      pool.awaitTermination(15, SECONDS);
-    }
+
+    int[] rootIdsReadBack = vfs.listRoots();
+    assertArrayEquals(
+      rootIds,
+      rootIdsReadBack,
+      "rootIds stored must be equal to rootIds read back"
+    );
   }
+
+  @Test
+  public void insertedRoots_CouldBeReadBack_AfterReinitialization() throws Exception {
+    int totalRoots = 100_000;               //too many roots could exceed attribute storage max record size
+    int[] rootIds = new int[totalRoots];
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + i;
+      rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
+    }
+
+    vfs = reloadVFS();
+
+    int[] rootIdsReadBack = vfs.listRoots();
+    assertArrayEquals(
+      rootIds,
+      rootIdsReadBack,
+      "rootIds stored must be equal to rootIds read back even after VFS was re-initialized"
+    );
+  }
+
 
   @Test
   public void writtenFileContentIsDeduplicated_onlyUniqueContentsAreStored() throws IOException {
@@ -149,7 +153,6 @@ public class FSRecordsImplTest {
     }
   }
 
-
   @Test
   public void fileRecordModCountChanges_ifFileAttributeWritten_regardlessOfActualValueChange() throws IOException {
     FileAttribute fileAttribute = new FileAttribute("X");
@@ -186,8 +189,13 @@ public class FSRecordsImplTest {
     }
   }
 
+
+  /* ========================= infrastructure =========================================================================== */
+
+
   @BeforeEach
   void setUp(@TempDir Path vfsDir) {
+    this.vfsDir = vfsDir;
     vfs = FSRecordsImpl.connect(vfsDir, FSRecordsImpl.ON_ERROR_RETHROW);
   }
 
@@ -196,6 +204,11 @@ public class FSRecordsImplTest {
     if (vfs != null) {
       StorageTestingUtils.bestEffortToCloseAndClean(vfs);
     }
+  }
+
+  private FSRecordsImpl reloadVFS() throws Exception {
+    StorageTestingUtils.bestEffortToCloseAndUnmap(vfs);
+    return FSRecordsImpl.connect(vfsDir, FSRecordsImpl.ON_ERROR_RETHROW);
   }
 
   private void writeContent(int fileId,

@@ -13,6 +13,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -26,7 +27,6 @@ import org.jetbrains.jewel.ui.Orientation
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.ListComboBox
 import org.jetbrains.jewel.ui.component.OutlinedButton
-import org.jetbrains.jewel.ui.component.SimpleListItem
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.TextArea
 
@@ -68,18 +68,16 @@ private fun ControlsRow(modifier: Modifier = Modifier, onLoadMarkdown: (String) 
         Spacer(Modifier.weight(1f))
 
         val comboBoxItems = remember { listOf("Jewel readme", "Markdown catalog") }
-        var selected by remember { mutableStateOf("Jewel readme") }
+        var selectedIndex by remember { mutableIntStateOf(0) }
         ListComboBox(
             items = comboBoxItems,
+            selectedIndex = selectedIndex,
+            onSelectedItemChange = { index ->
+                selectedIndex = index
+                onLoadMarkdown(if (selectedIndex == 0) JewelReadme else MarkdownCatalog)
+            },
             modifier = Modifier.width(170.dp).padding(end = 2.dp),
             maxPopupHeight = 150.dp,
-            onSelectedItemChange = { _, text ->
-                selected = text
-                onLoadMarkdown(if (selected == "Jewel readme") JewelReadme else MarkdownCatalog)
-            },
-            itemContent = { item, isSelected, isActive ->
-                SimpleListItem(text = item, isSelected = isSelected, isActive = isActive)
-            },
         )
     }
 }

@@ -65,7 +65,7 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
         .keyboardActions(keyboardActions)
         .imageResolverFactory(component -> new JBHtmlPaneImageResolver(component, it -> imageResolver.resolveImage(it)))
         .iconResolver(name -> iconResolver.apply(name))
-        .customStyleSheetProvider(bg -> getDocumentationPaneAdditionalCssRules())
+        .customStyleSheetProvider(pane -> getDocumentationPaneAdditionalCssRules(num -> (int)(pane.getContentsScaleFactor() * num)))
         .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
         .build()
     );
@@ -82,6 +82,12 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
   public void setDocument(Document doc) {
     super.setDocument(doc);
     myCachedPreferredSize = null;
+  }
+
+  @Override
+  public void invalidate() {
+    myCachedPreferredSize = null;
+    super.invalidate();
   }
 
   @NotNull
@@ -135,6 +141,8 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
     return JBUIScale.scale(contentLengthPreferredSize);
   }
 
+  private FontSize myFontSize;
+
   @Internal
   public void applyFontProps(@NotNull FontSize size) {
     Document document = getDocument();
@@ -145,8 +153,15 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
                       ? EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName()
                       : getFont().getFontName();
 
+    myFontSize = size;
+
     // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
     setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUIScale.scale(size.getSize())));
+  }
+
+  @Override
+  public float getContentsScaleFactor() {
+    return myFontSize != null ? ((float)myFontSize.getSize()) / FontSize.SMALL.getSize() : 1f;
   }
 
   private Object myHighlightedTag;

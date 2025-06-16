@@ -19,6 +19,8 @@ public final class JupyterCoreIcons {
   /** 16x16 */ public static final @NotNull Icon AddJupyterConnection = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/addJupyterConnection.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/addJupyterConnection.svg", 1973780321, 2);
   /** 16x16 */ public static final @NotNull Icon ClearOutputs = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/clearOutputs.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/clearOutputs.svg", 2092497102, 2);
   /** 16x16 */ public static final @NotNull Icon CodeCell = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/codeCell.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/codeCell.svg", 1312298672, 0);
+  /** 16x16 */ public static final @NotNull Icon ConsoleJupyter = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/consoleJupyter.svg", -790402162, 2);
+  /** 16x16 */ public static final @NotNull Icon DuplicateCellBelow = load("icons/org.jetbrains.plugins.notebooks.jupyter/duplicateCellBelow.svg", 709097184, 2);
   /** 16x16 */ public static final @NotNull Icon ImportDataCell = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/importDataCell.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/importDataCell.svg", 1271458516, 0);
   /** 16x16 */ public static final @NotNull Icon Jupyter = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/jupyter.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/jupyter.svg", -1078981909, 0);
   /** 16x16 */ public static final @NotNull Icon JupyterNotebook = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/jupyterNotebook.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/jupyterNotebook.svg", 1303434450, 0);
@@ -41,10 +43,10 @@ public final class JupyterCoreIcons {
   /** 16x16 */ public static final @NotNull Icon RunningPythonNotebook = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/runningPythonNotebook.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/runningPythonNotebook.svg", -584924617, 0);
 
   public static final class Server {
-    /** 16x16 */ public static final @NotNull Icon Jupyter_busy = load("icons/org.jetbrains.plugins.notebooks.jupyter/server/jupyter_busy.svg", -2139470969, 2);
+    /** 16x16 */ public static final @NotNull Icon Jupyter_busy = load("icons/org.jetbrains.plugins.notebooks.jupyter/server/jupyter_busy.svg", 1512602932, 2);
     /** 16x16 */ public static final @NotNull Icon Jupyter_error = load("icons/org.jetbrains.plugins.notebooks.jupyter/server/jupyter_error.svg", 107279657, 2);
     /** 16x16 */ public static final @NotNull Icon Jupyter_stopped = load("icons/org.jetbrains.plugins.notebooks.jupyter/server/jupyter_stopped.svg", 955716393, 2);
-    /** 16x16 */ public static final @NotNull Icon Jupyter_waiting = load("icons/org.jetbrains.plugins.notebooks.jupyter/server/jupyter_waiting.svg", -622250181, 2);
+    /** 16x16 */ public static final @NotNull Icon Jupyter_waiting = load("icons/org.jetbrains.plugins.notebooks.jupyter/server/jupyter_waiting.svg", -304440608, 2);
   }
 
   /** 16x18 */ public static final @NotNull Icon SplitCell = load("icons/org.jetbrains.plugins.notebooks.jupyter/expui/splitCell.svg", "icons/org.jetbrains.plugins.notebooks.jupyter/splitCell.svg", -1172223546, 2);

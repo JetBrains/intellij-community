@@ -107,6 +107,12 @@ enum class WorkspaceFileKind {
   CONTENT,
 
   /**
+   * Describe files that are in the workspace but should not be indexed. These files are usually in a directory that the user has opened,
+   * but before the project is imported by any build system. They can be edited.
+   */
+  CONTENT_NON_INDEXABLE,
+
+  /**
    * Subset of [CONTENT] which is used to identify test files. 
    * Files of this kind constitute 'Project Test Files' scope in UI.
    * This kind corresponds to [com.intellij.openapi.roots.FileIndex.isInTestSourceContent] method in the old API.
@@ -140,7 +146,10 @@ enum class WorkspaceFileKind {
   CUSTOM;
   
   val isContent: Boolean
-    get() = this == CONTENT || this == TEST_CONTENT
+    get() = this == CONTENT || this == TEST_CONTENT || this == CONTENT_NON_INDEXABLE
+
+  val isIndexable: Boolean
+    get() = (this != CONTENT_NON_INDEXABLE)
 }
 
 /**
@@ -199,13 +208,15 @@ interface WorkspaceFileSetRegistrar {
   fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity)
 
   /**
-   * Includes [file] to the workspace. Note, that unlike the default [registerFileSet], files under [file] won't be included. 
+   * Includes [file] to the workspace. Note, that unlike the default [registerFileSet], files under [file] won't be included.
    * @param kind specify kind which will be assigned to the files
    * @param entity first parameter of [WorkspaceFileIndexContributor.registerFileSets] must be passed here
    * @param customData optional custom data which will be associated with the root and can be accessed via [WorkspaceFileSetWithCustomData].
    */
-  fun registerNonRecursiveFileSet(file: VirtualFileUrl,
-                                  kind: WorkspaceFileKind,
-                                  entity: WorkspaceEntity,
-                                  customData: WorkspaceFileSetData?)
+  fun registerNonRecursiveFileSet(
+    file: VirtualFileUrl,
+    kind: WorkspaceFileKind,
+    entity: WorkspaceEntity,
+    customData: WorkspaceFileSetData?,
+  )
 }

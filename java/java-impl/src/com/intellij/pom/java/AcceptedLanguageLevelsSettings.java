@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
 import com.intellij.ide.IdeBundle;
@@ -148,7 +148,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     //allow custom features to appear in EAP
     if (ApplicationManager.getApplication().isEAP()) return true;
     // language levels up to HIGHEST are officially supported
-    return LanguageLevel.HIGHEST.compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
+    return JavaRelease.getHighest().compareTo(languageLevel) >= 0 || getSettings().acceptedNames.contains(languageLevel.name());
   }
 
   private static void acceptAndRestore(Project project, Collection<? extends Module> modules, LanguageLevel languageLevel) {
@@ -172,9 +172,14 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
     }
   }
 
-  public static LanguageLevel getHighestAcceptedLevel() {
-    LanguageLevel highest = LanguageLevel.HIGHEST;
-    for (LanguageLevel level : LanguageLevel.values()) {
+
+  /**
+   * @return the highest stable language level for Java, or a preview language level if the user has accepted the legal notice or is using
+   * an EAP version.
+   */
+  public static @NotNull LanguageLevel getHighestAcceptedLevel() {
+    LanguageLevel highest = JavaRelease.getHighest();
+    for (LanguageLevel level : LanguageLevel.getEntries()) {
       if (isLanguageLevelAccepted(level)) {
         highest = level;
       }
@@ -246,7 +251,7 @@ public final class AcceptedLanguageLevelsSettings implements PersistentStateComp
   private static @NotNull LanguageLevel adjustLanguageLevel(@NotNull LanguageLevel languageLevel) {
     if (isLanguageLevelAccepted(languageLevel)) return languageLevel;
     LanguageLevel highestAcceptedLevel = getHighestAcceptedLevel();
-    return highestAcceptedLevel.isAtLeast(languageLevel) ? LanguageLevel.HIGHEST : highestAcceptedLevel;
+    return highestAcceptedLevel.isAtLeast(languageLevel) ? JavaRelease.getHighest() : highestAcceptedLevel;
   }
 
   @TestOnly

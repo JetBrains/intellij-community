@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.ide.IdeEventQueue
@@ -20,12 +20,12 @@ class AnyThreadWriteThreadingSupportTest {
     val readInterrupted = AtomicBoolean(false)
     val readThreadStarted = Semaphore(1, 1)
     val readThreadEnded = Semaphore(1, 1)
-    lock.runWriteAction {
+    lock.runWriteAction(javaClass) {
       // Run background read action, it should block as we are in write action
       val rt = Thread({
         try {
           readThreadStarted.release()
-          lock.runReadAction {
+          lock.runReadAction(javaClass) {
             readRun.set(true)
           }
         } catch (_: InterruptedException) {
@@ -46,7 +46,7 @@ class AnyThreadWriteThreadingSupportTest {
 
     // Test that write action is Ok now, no lock leaked
     val secondWriteRun = AtomicBoolean(false)
-    lock.runWriteAction {
+    lock.runWriteAction(javaClass) {
       secondWriteRun.set(true)
     }
     assertTrue(readRun.get() != readInterrupted.get())

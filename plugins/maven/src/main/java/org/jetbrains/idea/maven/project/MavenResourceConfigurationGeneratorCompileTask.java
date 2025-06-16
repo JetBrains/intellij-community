@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -34,6 +34,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -142,11 +143,16 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
       if (!mavenProjectsManager.isMavenizedModule(module)) continue;
 
       for (ContentEntry contentEntry : ModuleRootManager.getInstance(module).getContentEntries()) {
-        for (SourceFolder folder : contentEntry.getSourceFolders()) {
+        SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+        if (sourceFolders.length == 0) continue;
+        
+        Set<VirtualFile> excludedRoots = Set.copyOf(Arrays.asList(contentEntry.getExcludeFolderFiles()));
+        
+        for (SourceFolder folder : sourceFolders) {
           VirtualFile file = folder.getFile();
           if (file == null) continue;
 
-          if (!compilerConfiguration.isExcludedFromCompilation(file) && !isUnderRoots(processedRoots, file)) {
+          if (!compilerConfiguration.isExcludedFromCompilation(file) && !isUnderRoots(processedRoots, file) && !isUnderRoots(excludedRoots, file)) {
             MavenModuleResourceConfiguration configuration = projectCfg.moduleConfigurations.get(module.getName());
             if (configuration == null) continue;
 
@@ -185,7 +191,7 @@ public final class MavenResourceConfigurationGeneratorCompileTask implements Com
 
   private static boolean isUnderRoots(Set<VirtualFile> roots, VirtualFile file) {
     for (VirtualFile f = file; f != null; f = f.getParent()) {
-      if (roots.contains(file)) {
+      if (roots.contains(f)) {
         return true;
       }
     }

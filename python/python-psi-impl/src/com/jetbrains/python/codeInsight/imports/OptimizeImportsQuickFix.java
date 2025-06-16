@@ -30,13 +30,13 @@ public class OptimizeImportsQuickFix implements LocalQuickFix, IntentionAction, 
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file instanceof PyFile;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return psiFile instanceof PyFile;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    optimizeImports(project, file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    optimizeImports(project, psiFile);
   }
 
   @Override

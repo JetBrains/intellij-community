@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -21,7 +20,6 @@ public val DropdownStyle.Companion.Default: IntUiDefaultDropdownStyleFactory
     get() = IntUiDefaultDropdownStyleFactory
 
 public object IntUiDefaultDropdownStyleFactory {
-    @Composable
     public fun light(
         colors: DropdownColors = DropdownColors.Default.light(),
         metrics: DropdownMetrics = DropdownMetrics.default(),
@@ -29,7 +27,6 @@ public object IntUiDefaultDropdownStyleFactory {
         menuStyle: MenuStyle = MenuStyle.light(),
     ): DropdownStyle = DropdownStyle(colors, metrics, icons, menuStyle)
 
-    @Composable
     public fun dark(
         colors: DropdownColors = DropdownColors.Default.dark(),
         metrics: DropdownMetrics = DropdownMetrics.default(),
@@ -42,7 +39,6 @@ public val DropdownStyle.Companion.Undecorated: IntUiUndecoratedDropdownStyleFac
     get() = IntUiUndecoratedDropdownStyleFactory
 
 public object IntUiUndecoratedDropdownStyleFactory {
-    @Composable
     public fun light(
         colors: DropdownColors = DropdownColors.Undecorated.light(),
         metrics: DropdownMetrics = DropdownMetrics.undecorated(),
@@ -50,7 +46,6 @@ public object IntUiUndecoratedDropdownStyleFactory {
         menuStyle: MenuStyle = MenuStyle.light(),
     ): DropdownStyle = DropdownStyle(colors, metrics, icons, menuStyle)
 
-    @Composable
     public fun dark(
         colors: DropdownColors = DropdownColors.Undecorated.dark(),
         metrics: DropdownMetrics = DropdownMetrics.undecorated(),
@@ -63,7 +58,6 @@ public val DropdownColors.Companion.Default: IntUiDefaultDropdownColorsFactory
     get() = IntUiDefaultDropdownColorsFactory
 
 public object IntUiDefaultDropdownColorsFactory {
-    @Composable
     public fun light(
         background: Color = IntUiLightTheme.colors.gray(14),
         backgroundDisabled: Color = IntUiLightTheme.colors.gray(13),
@@ -109,7 +103,6 @@ public object IntUiDefaultDropdownColorsFactory {
             iconTintHovered = iconTintHovered,
         )
 
-    @Composable
     public fun dark(
         background: Color = IntUiDarkTheme.colors.gray(2),
         backgroundDisabled: Color = background,
@@ -160,7 +153,6 @@ public val DropdownColors.Companion.Undecorated: IntUiUndecoratedDropdownColorsF
     get() = IntUiUndecoratedDropdownColorsFactory
 
 public object IntUiUndecoratedDropdownColorsFactory {
-    @Composable
     public fun light(
         background: Color = Color.Transparent,
         backgroundDisabled: Color = background,
@@ -201,7 +193,6 @@ public object IntUiUndecoratedDropdownColorsFactory {
             iconTintHovered = iconTintHovered,
         )
 
-    @Composable
     public fun dark(
         background: Color = Color.Transparent,
         backgroundDisabled: Color = background,

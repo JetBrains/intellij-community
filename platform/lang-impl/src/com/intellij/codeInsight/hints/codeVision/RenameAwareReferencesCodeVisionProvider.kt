@@ -8,6 +8,7 @@ import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -75,6 +76,9 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     if (ApplicationManager.getApplication().isUnitTestMode && !CodeVisionHost.isCodeLensTest()) return CodeVisionState.READY_EMPTY
 
     val virtualFile = file.viewProvider.virtualFile
+
+    if (ScratchUtil.isScratch(file.virtualFile)) return CodeVisionState.READY_EMPTY
+
     if (ProjectFileIndex.getInstance(file.project).isInLibrarySource(virtualFile)) return CodeVisionState.READY_EMPTY
 
     val renamedElementToSkip = when (val refactoringData = file.getUserData(REFACTORING_DATA_KEY)) {

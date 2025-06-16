@@ -103,6 +103,8 @@ class ChangeVariableMutabilityFix(
                 val getter = property.getter ?: return@quickFixesPsiBasedFactory emptyList()
                 if (!getter.hasBody()) return@quickFixesPsiBasedFactory emptyList()
                 if (getter.hasBlockBody() && property.typeReference == null) return@quickFixesPsiBasedFactory emptyList()
+                val setter = property.setter
+                if (setter != null && setter.hasBody()) return@quickFixesPsiBasedFactory emptyList()
                 listOf(ChangeVariableMutabilityFix(property, makeVar = false).asIntention())
             }
 

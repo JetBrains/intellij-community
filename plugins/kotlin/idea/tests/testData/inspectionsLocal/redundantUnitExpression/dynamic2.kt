@@ -1,5 +1,5 @@
 // PROBLEM: none
-// K2_ERROR: Unsupported [dynamic type].
+// K2_ERROR: Dynamic type is only supported in Kotlin JS.
 // ERROR: Unsupported [Dynamic types are not supported in this context]
 
 fun foo() {

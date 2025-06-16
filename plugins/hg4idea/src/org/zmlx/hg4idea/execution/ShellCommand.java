@@ -62,7 +62,7 @@ public final class ShellCommand {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     try {
       OSProcessHandler processHandler = isBinary ? new BinaryOSProcessHandler(myCommandLine) : new KillableProcessHandler(myCommandLine);
-      ProcessAdapter outputAdapter = new ProcessAdapter() {
+      ProcessListener outputAdapter = new ProcessListener() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           for (@NlsSafe String line : LineHandlerHelper.splitText(event.getText())) {

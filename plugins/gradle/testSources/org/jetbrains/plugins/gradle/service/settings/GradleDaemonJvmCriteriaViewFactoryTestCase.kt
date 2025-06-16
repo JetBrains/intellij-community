@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.openapi.Disposable
+import com.intellij.pom.java.JavaRelease
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VendorItem
 import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VersionItem
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -39,7 +39,7 @@ abstract class GradleDaemonJvmCriteriaViewFactoryTestCase {
   }
 
   fun GradleDaemonJvmCriteriaView.assertVersionDropdownItems() {
-    val expectedVersionList = LanguageLevel.HIGHEST.toJavaVersion().feature.downTo(8)
+    val expectedVersionList = JavaRelease.getHighest().toJavaVersion().feature.downTo(8)
     expectedVersionList.forEachIndexed { index, expectedVersion ->
       val actualVersion = when (val versionItem = versionModel.getElementAt(index)) {
         is VersionItem.Default -> versionItem.version.toString()

@@ -30,7 +30,7 @@ private class FirStatusBarWidgetFactory : StatusBarWidgetFactory {
     override fun getDisplayName(): String = DISPLAY_NAME
 
     override fun isAvailable(project: Project): Boolean {
-        return KotlinPluginModeProvider.isK2Mode() && Registry.`is`(REGISTRY_KEY, /* defaultValue = */ true)
+        return KotlinPluginModeProvider.isK2Mode() && Registry.`is`(REGISTRY_KEY, /* defaultValue = */ false)
     }
 
     override fun createWidget(project: Project): StatusBarWidget = Widget(project)

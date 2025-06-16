@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.base.util
 
 import org.jetbrains.kotlin.codegen.sanitizeNameIfNeeded
-import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
+import org.jetbrains.kotlin.idea.base.facet.stableName
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.module
@@ -73,7 +73,9 @@ object CallableNameCalculator {
 
     private fun getInternalPostfix(declaration: KtDeclaration): String? {
         val module = declaration.module ?: return null
-        val moduleName = StableModuleNameProvider.getInstance(declaration.project).getStableModuleName(module)
+        //TODO: extract method that would get stable module name without wrapping it into < >
+        val moduleName = module.stableName.asString().removeSurrounding("<", ">")
+        if (moduleName.isEmpty()) return null
         return "$" + NameUtils.sanitizeAsJavaIdentifier(moduleName)
     }
 

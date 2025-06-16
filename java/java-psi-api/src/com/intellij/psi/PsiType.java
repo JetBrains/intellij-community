@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
@@ -11,16 +12,16 @@ import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.*;
 
 /**
- * Representation of Java type (primitive type, array or class type).
+ * Representation of a Java type (primitive type, array or class type).
  * <p/>
  * <h3><a id="deprecated-constants">Deprecated constants</a></h3>
  * All static fields in this class representing instances of {@link PsiPrimitiveType} are deprecated. It was done to avoid deadlocks 
  * during initialization of the class. According to <a href="https://docs.oracle.com/javase/specs/jvms/se17/html/jvms-5.html#jvms-5.5">section 5.5</a>
- * of JVM specification, when a class is initialized, JVM firsly synchronizes on an initialization lock specific for that class, then
+ * of JVM specification, when a class is initialized, JVM firstly synchronizes on an initialization lock specific for that class, then
  * initializes its super class and then computes initializers for its static fields. So because of these fields initialization of {@link PsiType}
  * performs initialization of {@link PsiPrimitiveType}, and initialization of {@link PsiPrimitiveType} performs initialization of {@link PsiType}
- * because its the super class of its super class. Therefore, if one thread starts initialization of {@link PsiType}, and another thread
- * starts initialization of {@link PsiPrimitiveType} at the same time, it'll result in a deadlock. In order to avoid this, methods from
+ * because it's the super class of its super class. Therefore, if one thread starts initialization of {@link PsiType}, and another thread
+ * starts initialization of {@link PsiPrimitiveType} at the same time, it will result in a deadlock. To avoid this, methods from
  * {@link PsiTypes} must be used to get instances of the primitive types.
  */
 @SuppressWarnings("StaticInitializerReferencesSubClass")
@@ -90,6 +91,17 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Returns a type with the specified nullability. May return the original type if nullability update
+   * cannot be performed (e.g., for primitive type)
+   * 
+   * @param nullability wanted nullability
+   * @return the type with the specified nullability, or the original type if nullability cannot be updated.
+   */
+  public @NotNull PsiType withNullability(@NotNull TypeNullability nullability) {
+    return this;
   }
 
   /**
@@ -168,6 +180,13 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * @return true if the string is equivalent to the type, false otherwise
    */
   public abstract boolean equalsToText(@NotNull @NonNls String text);
+
+  /**
+   * @return nullability of this type
+   */
+  public @NotNull TypeNullability getNullability() {
+    return TypeNullability.UNKNOWN;
+  }
 
   /**
    * Returns the class type for qualified class name.

@@ -5,8 +5,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.stub.XmlAttributeStub;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.PsiFileStub;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -26,7 +26,7 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
   private volatile @Nullable XmlAttributeDelegate myImpl;
 
   public XmlStubBasedAttributeBase(@NotNull StubT stub,
-                                   @NotNull IStubElementType<? extends StubT, ? extends XmlAttribute> nodeType) {
+                                   @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -45,6 +45,11 @@ public class XmlStubBasedAttributeBase<StubT extends XmlAttributeStub<?>>
 
   protected @NotNull XmlAttributeDelegate createDelegate() {
     return new XmlStubBasedAttributeBaseDelegate();
+  }
+
+  @Override
+  public IElementType getIElementType() {
+    return getElementTypeImpl();
   }
 
   @Override

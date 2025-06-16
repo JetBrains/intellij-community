@@ -131,9 +131,19 @@ public abstract class FirGenerateToStringActionTestGenerated extends AbstractFir
             runTest("../../idea/tests/testData/codeInsight/generate/toString/singleTemplate/abstractSuper.kt");
         }
 
+        @TestMetadata("anonym.kt")
+        public void testAnonym() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/generate/toString/singleTemplate/anonym.kt");
+        }
+
         @TestMetadata("arrays.kt")
         public void testArrays() throws Exception {
             runTest("../../idea/tests/testData/codeInsight/generate/toString/singleTemplate/arrays.kt");
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/generate/toString/singleTemplate/companionObject.kt");
         }
 
         @TestMetadata("customAccessors.kt")

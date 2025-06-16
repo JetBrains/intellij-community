@@ -220,6 +220,6 @@ abstract class TextMateSelectorWeigherTestCase {
   }
 
   private fun assertGreaterThan(firstValue: Int, secondValue: Int) {
-    assertTrue(firstValue > secondValue, String.format("%d > %d", firstValue, secondValue))
+    assertTrue(firstValue > secondValue, "$firstValue > $secondValue")
   }
 }

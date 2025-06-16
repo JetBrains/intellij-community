@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.observation.trackActivity
@@ -124,9 +123,7 @@ class MavenIndicesManager(private val myProject: Project, private val cs: Corout
       MavenLog.LOG.info("Updating index list for project $myProject")
       updateMutex.lock()
       val existing = myGavIndices.firstOrNull()
-      val repository = blockingContext {
-        MavenIndexUtils.getLocalRepository (myProject)
-      }
+      val repository = MavenIndexUtils.getLocalRepository(myProject)
       if (existing != null && existing.repository == repository) {
         MavenLog.LOG.info("updating index list for ${myProject} - ${repository} remains the same, nothing to update")
         return

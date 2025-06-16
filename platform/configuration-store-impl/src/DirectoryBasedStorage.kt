@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+
 package com.intellij.configurationStore
 
 import com.intellij.application.options.PathMacrosCollector
@@ -9,7 +11,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -32,85 +33,19 @@ open class DirectoryBasedStorage(
   override val controller: SettingsController? = null,
 ) : StateStorageBase<StateMap>() {
   private var componentName: String? = null
-  @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator?> = @Suppress("RemoveRedundantQualifierName") java.util.Map.of()
+  @Volatile private var nameToLineSeparatorMap: Map<String, LineSeparator> = @Suppress("RemoveRedundantQualifierName") java.util.Map.of()
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   override val roamingType: RoamingType?
     get() = null
 
   public override fun loadData(): StateMap {
-    val (elementMap, separatorMap) = loadComponentsAndDetectLineSeparator()
+    val (elementMap, separatorMap) = loadComponentsAndDetectLineSeparator(dir, pathMacroSubstitutor)
     nameToLineSeparatorMap = separatorMap
     return StateMap.fromMap(elementMap)
   }
 
-  private fun loadComponentsAndDetectLineSeparator(): Pair<Map<String, Element>, Map<String, LineSeparator?>> {
-    try {
-      Files.newDirectoryStream(dir).use { files ->
-        val fileToState = HashMap<String, Element>()
-        val fileToSeparator = HashMap<String, LineSeparator?>()
-
-        for (file in files) {
-          // ignore system files like .DS_Store on Mac
-          if (!file.toString().endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true)) {
-            continue
-          }
-
-          try {
-            val (element, separator) = loadDataAndDetectLineSeparator(file)
-            val componentName = ComponentStorageUtil.getComponentNameIfValid(element) ?: continue
-            if (element.name != ComponentStorageUtil.COMPONENT) {
-              LOG.error("Incorrect root tag name (${element.name}) in $file")
-              continue
-            }
-
-            val elementChildren = element.children
-            if (elementChildren.isEmpty()) {
-              continue
-            }
-
-            val state = elementChildren[0].detach()
-            if (state.isEmpty) {
-              continue
-            }
-
-            if (pathMacroSubstitutor != null) {
-              pathMacroSubstitutor.expandPaths(state)
-              if (pathMacroSubstitutor is TrackingPathMacroSubstitutor) {
-                pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(state))
-              }
-            }
-
-            val name = file.fileName.toString()
-            fileToState.put(name, state)
-            fileToSeparator.put(name, separator)
-          }
-          catch (e: Throwable) {
-            if (e.message!!.startsWith("Unexpected End-of-input in prolog")) {
-              LOG.warn("Ignore empty file $file")
-            }
-            else {
-              LOG.warn("Unable to load state from $file", e)
-            }
-          }
-        }
-        return Pair(fileToState, fileToSeparator)
-      }
-    }
-    catch (e: DirectoryIteratorException) {
-      throw e.cause!!
-    }
-    catch (_: NoSuchFileException) {
-      @Suppress("RemoveRedundantQualifierName")
-      return Pair(java.util.Map.of(), java.util.Map.of())
-    }
-    catch (_: NotDirectoryException) {
-      @Suppress("RemoveRedundantQualifierName")
-      return Pair(java.util.Map.of(), java.util.Map.of())
-    }
-  }
-
-  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap[name] ?: LineSeparator.getSystemLineSeparator()
+  private fun getLineSeparator(name: String): LineSeparator = nameToLineSeparatorMap.get(name) ?: LineSeparator.getSystemLineSeparator()
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
@@ -244,7 +179,9 @@ open class DirectoryBasedStorage(
 
     override fun createSaveSession(): SaveSession? = if (storage.checkIsSavingDisabled() || copiedStorageData == null) null else this
 
-    override suspend fun save(events: MutableList<VFileEvent>?) = blockingContext { doSave(useVfs = false, events = events) }
+    override suspend fun save(events: MutableList<VFileEvent>?) {
+      doSave(useVfs = false, events = events)
+    }
 
     override fun saveBlocking() = doSave(useVfs = true, events = null)
 
@@ -313,7 +250,7 @@ open class DirectoryBasedStorage(
           }
           else {
             val file = storage.dir.resolve(fileName)
-            writeFile(file, requestor = this, dataWriter, storage.getLineSeparator(fileName), prependXmlProlog = false)
+            writeFile(file = file, requestor = this, dataWriter = dataWriter, lineSeparator = storage.getLineSeparator(fileName), prependXmlProlog = false)
             if (events != null) {
               val vFile = dir?.findChild(fileName)
               when {
@@ -383,4 +320,72 @@ open class DirectoryBasedStorage(
 
 internal interface DirectoryBasedSaveSessionProducer : SaveSessionProducer {
   fun setFileState(fileName: String, componentName: String, element: Element?)
+}
+
+private fun loadComponentsAndDetectLineSeparator(dir: Path, pathMacroSubstitutor: PathMacroSubstitutor?): Pair<Map<String, Element>, Map<String, LineSeparator>> {
+  try {
+    Files.newDirectoryStream(dir).use { files ->
+      val fileToState = HashMap<String, Element>()
+      val fileToSeparator = HashMap<String, LineSeparator>()
+
+      for (file in files) {
+        // ignore system files like .DS_Store on Mac
+        if (!file.toString().endsWith(ComponentStorageUtil.DEFAULT_EXT, ignoreCase = true)) {
+          continue
+        }
+
+        try {
+          val (element, separator) = loadDataAndDetectLineSeparator(file)
+          val componentName = ComponentStorageUtil.getComponentNameIfValid(element) ?: continue
+          if (element.name != ComponentStorageUtil.COMPONENT) {
+            LOG.error("Incorrect root tag name (${element.name}) in $file")
+            continue
+          }
+
+          val elementChildren = element.children
+          if (elementChildren.isEmpty()) {
+            continue
+          }
+
+          val state = elementChildren[0].detach()
+          if (state.isEmpty) {
+            continue
+          }
+
+          if (pathMacroSubstitutor != null) {
+            pathMacroSubstitutor.expandPaths(state)
+            if (pathMacroSubstitutor is TrackingPathMacroSubstitutor) {
+              pathMacroSubstitutor.addUnknownMacros(componentName, PathMacrosCollector.getMacroNames(state))
+            }
+          }
+
+          val name = file.fileName.toString()
+          fileToState.put(name, state)
+          if (separator != null && separator != LineSeparator.getSystemLineSeparator()) {
+            fileToSeparator.put(name, separator)
+          }
+        }
+        catch (e: Throwable) {
+          if (e.message!!.startsWith("Unexpected End-of-input in prolog")) {
+            LOG.warn("Ignore empty file $file")
+          }
+          else {
+            LOG.warn("Unable to load state from $file", e)
+          }
+        }
+      }
+      return Pair(fileToState, fileToSeparator)
+    }
+  }
+  catch (e: DirectoryIteratorException) {
+    throw e.cause!!
+  }
+  catch (_: NoSuchFileException) {
+    @Suppress("RemoveRedundantQualifierName")
+    return Pair(java.util.Map.of(), java.util.Map.of())
+  }
+  catch (_: NotDirectoryException) {
+    @Suppress("RemoveRedundantQualifierName")
+    return Pair(java.util.Map.of(), java.util.Map.of())
+  }
 }

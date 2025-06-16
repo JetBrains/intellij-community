@@ -12,6 +12,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.Date;
 
+@ApiStatus.NonExtendable
 public interface PluginDescriptor {
   @NotNull PluginId getPluginId();
 
@@ -91,7 +92,26 @@ public interface PluginDescriptor {
    */
   default boolean isRequireRestart() { return false; }
 
+  /**
+   * @deprecated This method does not reflect the enabled/disabled state of the plugin (as the tick box in the settings shows).
+   * Its effective semantics in the current implementation are rather about loaded state,
+   * but it cannot be completely trusted too due to public mutability.
+   * <br>
+   * Note that if a plugin is marked as enabled, it does not mean it is loaded, and vice versa.
+   * <br>
+   * Instead, use {@link com.intellij.ide.plugins.PluginManagerCore#isLoaded(PluginId)},
+   * {@link com.intellij.ide.plugins.PluginManagerCore#isDisabled(PluginId)}.
+   */
+  @Deprecated
   boolean isEnabled();
 
+  /**
+   * @deprecated for removal. This method has no immediate effect and is, in fact, an implementation detail of plugin loading.
+   * <br>
+   * Instead, use {@link com.intellij.ide.plugins.PluginManagerCore#disablePlugin(PluginId)} and
+   * {@link com.intellij.ide.plugins.PluginManagerCore#enablePlugin(PluginId)}.
+   * Also, see {@link com.intellij.ide.plugins.PluginEnabler}.
+   */
+  @Deprecated
   void setEnabled(boolean enabled);
 }

@@ -7,9 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.frame.XValueModifier
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
-import com.intellij.xdebugger.impl.rpc.SetValueResult
-import com.intellij.xdebugger.impl.rpc.XDebuggerValueModifierApi
-import com.intellij.xdebugger.impl.rpc.XValueDto
+import com.intellij.platform.debugger.impl.rpc.SetValueResult
+import com.intellij.platform.debugger.impl.rpc.XDebuggerValueModifierApi
+import com.intellij.platform.debugger.impl.rpc.XValueDto
 import com.intellij.xdebugger.impl.rpc.toRpc
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.util.BuildNumber
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
 class UpdateChain internal constructor(
@@ -36,7 +37,7 @@ sealed class PlatformUpdates {
  */
 // TODO separation into enabled and disabled as part of this class seems unnecessary
 @ApiStatus.Internal
-data class PluginUpdates @JvmOverloads internal constructor(
+data class PluginUpdates @JvmOverloads @VisibleForTesting constructor(
   val allEnabled: Collection<PluginDownloader> = emptyList(),
   val allDisabled: Collection<PluginDownloader> = emptyList(),
   val incompatible: Collection<IdeaPluginDescriptor> = emptyList(),
@@ -49,7 +50,7 @@ data class PluginUpdates @JvmOverloads internal constructor(
 // FIXME InternalPluginResults should not be exposed as a return value from non-internal API (or should be an interface instead) :(
 //       this also applies to neighbor classes
 @ApiStatus.Internal
-data class InternalPluginResults @JvmOverloads internal constructor(
+data class InternalPluginResults @JvmOverloads @VisibleForTesting constructor(
   val pluginUpdates: PluginUpdates,
   val pluginNods: Collection<PluginNode> = emptyList(),
   val errors: Map<String?, Exception> = emptyMap(),

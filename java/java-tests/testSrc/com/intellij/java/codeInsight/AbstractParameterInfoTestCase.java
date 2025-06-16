@@ -66,7 +66,11 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
   protected void checkHintContents(String hintText) {
     String hint = myHintFixture.getCurrentHintText();
     // Remove any coloring and formatting
-    if (hint != null) hint = hint.replaceAll("</?span[^>]*>", "");
+    if (hint != null) {
+      hint = hint
+        .replaceAll("<style>[^<]*</style>\\s*", "")
+        .replaceAll("</?span[^>]*>", "");
+    }
     assertEquals(hintText, hint);
   }
 

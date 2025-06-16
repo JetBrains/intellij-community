@@ -1,11 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions.commit
 
-import com.intellij.configurationStore.saveSettings
-import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.vcs.FilePath
@@ -14,9 +11,9 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter
 import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.actions.RefreshAction
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.commit.CommitModeManager
@@ -87,10 +84,7 @@ internal object CheckinActionUtil {
                                 pathsToCommit: List<FilePath>,
                                 executor: CommitExecutor?,
                                 forceUpdateCommitStateFromContext: Boolean) {
-    FileDocumentManager.getInstance().saveAllDocuments()
-    runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
-      saveSettings(project)
-    }
+    RefreshAction.saveAllAndInvokeCustomRefreshersOnEdt(project)
 
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler
     if (executor == null && workflowHandler != null) {
@@ -117,13 +111,15 @@ internal object CheckinActionUtil {
                                  selectedUnversioned: List<FilePath>,
                                  initialChangeList: LocalChangeList,
                                  pathsToCommit: List<FilePath>): Collection<Any> {
+    val resolvedConflictPaths = ChangeListManager.getInstance(project).resolvedConflictPaths
     if (selectedChanges.isEmpty() && selectedUnversioned.isEmpty()) {
       val allChanges = ChangeListManager.getInstance(project).allChanges
       val changesToCommit = VcsImplUtil.filterChangesUnder(allChanges, pathsToCommit).toSet()
-      return initialChangeList.changes.intersect(changesToCommit)
+      return ContainerUtil.concat(resolvedConflictPaths, initialChangeList.changes.intersect(changesToCommit).toList())
     }
     else {
-      return ContainerUtil.concat(selectedChanges, selectedUnversioned)
+      val changesAndUnversioned = ContainerUtil.concat(selectedChanges, selectedUnversioned)
+      return ContainerUtil.concat(resolvedConflictPaths, changesAndUnversioned)
     }
   }
 

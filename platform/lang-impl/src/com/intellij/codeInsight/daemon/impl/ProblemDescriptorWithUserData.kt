@@ -21,19 +21,29 @@ val RELATED_PROBLEMS_ROOT_HASH = Key.create<String>("RELATED_PROBLEMS_ROOT_HASH"
 val RELATED_PROBLEMS_CHILD_HASH = Key.create<String>("RELATED_PROBLEMS_CHILD_HASH")
 val PROBLEM_DESCRIPTOR_TAG = Key.create<List<String>>("PROBLEM_DESCRIPTOR_TAG")
 
-class ProblemRelatedLocation(startElement: PsiElement,
-                             endElement: PsiElement,
-                             @InspectionMessage message: String) {
-  private val problemDescriptor: ProblemDescriptorBase = ProblemDescriptorBase(
-    startElement,
-    endElement,
-    message,
-    emptyArray(),
-    ProblemHighlightType.INFORMATION,
-    false,
-    null,
-    false,
-    false)
+class ProblemRelatedLocation {
+  private val problemDescriptor: ProblemDescriptorBase
+
+  constructor(startElement: PsiElement,
+              endElement: PsiElement,
+              @InspectionMessage message: String) {
+    problemDescriptor = ProblemDescriptorBase(
+      startElement,
+      endElement,
+      message,
+      emptyArray(),
+      ProblemHighlightType.INFORMATION,
+      false,
+      null,
+      false,
+      false
+    )
+  }
+
+  @ApiStatus.Internal
+  constructor(problemDescriptor: ProblemDescriptorBase) {
+    this.problemDescriptor = problemDescriptor
+  }
 
   fun getRange(): TextRange? = problemDescriptor.textRange
   fun getPsiElement(): PsiElement? = problemDescriptor.psiElement

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.IdeBundle
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.platform.util.progress.reportRawProgress
@@ -56,7 +57,10 @@ internal class IndexingProgressReporter {
         while (true) {
           shouldShowProgress.first { it }
 
-          withBackgroundProgress(project, progressTitle, cancellable = false) {
+          withBackgroundProgress(project, progressTitle,
+                                 cancellation = TaskCancellation.nonCancellable(),
+                                 suspender = null,
+                                 visibleInStatusBar = false) {
             reportRawProgress { reporter ->
               async {
                 pauseReason

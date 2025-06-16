@@ -81,9 +81,9 @@ public abstract class MultipleValueFilterPopupComponent<Filter, Model extends Fi
     return StringUtil.join(getLocalizedValues(values), ", ");
   }
 
-  protected abstract @NotNull List<String> parseLocalizedValues(@NotNull Collection<String> values);
+  protected abstract @NotNull @Unmodifiable List<String> parseLocalizedValues(@NotNull Collection<String> values);
 
-  protected abstract @NotNull List<@Nls String> getLocalizedValues(@NotNull Collection<String> values);
+  protected abstract @NotNull @Unmodifiable List<@Nls String> getLocalizedValues(@NotNull Collection<String> values);
 
   protected @NotNull AnAction createSelectMultipleValuesAction() {
     return new SelectMultipleValuesAction();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.concurrency.JobScheduler
@@ -16,11 +16,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.CaretState
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.ex.EditorEx
@@ -29,7 +25,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Pair as OpenApiPair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
@@ -48,6 +43,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.math.min
+import com.intellij.openapi.util.Pair as OpenApiPair
 
 class ConsoleViewImplTest : LightPlatformTestCase() {
   private lateinit var console: ConsoleViewImpl
@@ -491,7 +487,7 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   fun testInputFilter() {
     Disposer.dispose(console) // have to re-init extensions
     val registered = mutableListOf<Pair<String?, ConsoleViewContentType?>?>()
-    val crazyProvider = ConsoleInputFilterProvider { project: Project? ->
+    val crazyProvider = ConsoleInputFilterProvider { _: Project? ->
       arrayOf(InputFilter { text: String?, contentType: ConsoleViewContentType? ->
         registered.add(Pair(text, contentType))
         listOf(OpenApiPair("+!$text-!", contentType))
@@ -549,14 +545,14 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   }
 
   fun testCustomFiltersPrecedence() {
-    val predefinedHyperlink = HyperlinkInfo { project: Project? -> }
-    val predefinedFilter = Filter { line: String?, entireLength: Int -> Filter.Result(0, 1, predefinedHyperlink) }
-    val customHyperlink = HyperlinkInfo { project: Project? -> }
-    val customFilter = Filter { line: String?, entireLength: Int -> Filter.Result(0, 10, customHyperlink) }
+    val predefinedHyperlink = HyperlinkInfo { _: Project? -> }
+    val predefinedFilter = Filter { _: String?, _: Int -> Filter.Result(0, 1, predefinedHyperlink) }
+    val customHyperlink = HyperlinkInfo { _: Project? -> }
+    val customFilter = Filter { _: String?, _: Int -> Filter.Result(0, 10, customHyperlink) }
 
     Disposer.dispose(console) // have to re-init extensions
 
-    val predefinedProvider = ConsoleFilterProvider { project: Project? -> arrayOf(predefinedFilter) }
+    val predefinedProvider = ConsoleFilterProvider { _: Project? -> arrayOf(predefinedFilter) }
     maskExtensions(
       ConsoleFilterProvider.FILTER_PROVIDERS,
       listOf(predefinedProvider),
@@ -576,8 +572,8 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   }
 
   fun testSeveralUpdatesDoNotProduceDuplicateHyperlinks() {
-    val customHyperlink = HyperlinkInfo { project: Project? -> }
-    val customFilter = Filter { line: String?, entireLength: Int ->
+    val customHyperlink = HyperlinkInfo { _: Project? -> }
+    val customFilter = Filter { _: String?, _: Int ->
       TimeUnit.MILLISECONDS.sleep(100)
       Filter.Result(0, 10, customHyperlink)
     }
@@ -608,8 +604,8 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
   }
 
   fun testNotHighlightedWhenExpired() {
-    val customHyperlink = HyperlinkInfo { project: Project? -> }
-    val customFilter = Filter { line: String?, entireLength: Int ->
+    val customHyperlink = HyperlinkInfo { _: Project? -> }
+    val customFilter = Filter { _: String?, _: Int ->
       TimeUnit.MILLISECONDS.sleep(500)
       Filter.Result(0, 10, customHyperlink)
     }

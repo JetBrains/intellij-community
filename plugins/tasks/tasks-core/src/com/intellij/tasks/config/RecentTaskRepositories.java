@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.config;
 
 import com.intellij.openapi.Disposable;
@@ -12,6 +12,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.XmlSerializer;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,9 +39,9 @@ public final class RecentTaskRepositories implements PersistentStateComponent<El
     }
   };
 
-  public RecentTaskRepositories() {
+  public RecentTaskRepositories(@NotNull CoroutineScope coroutineScope) {
     // remove repositories pertaining to non-existent types
-    TaskRepositoryType.addEPListChangeListener(this, () -> {
+    TaskRepositoryType.addEPListChangeListener(coroutineScope, () -> {
       List<Class<?>> possibleRepositoryClasses = TaskRepositoryType.getRepositoryClasses();
       myRepositories.removeIf(repository -> {
         return !ContainerUtil.exists(possibleRepositoryClasses, clazz -> clazz.isAssignableFrom(repository.getClass()));

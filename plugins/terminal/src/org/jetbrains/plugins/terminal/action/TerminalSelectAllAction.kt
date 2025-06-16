@@ -5,10 +5,10 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
-import org.jetbrains.plugins.terminal.block.TerminalPromotedEditorAction
+import org.jetbrains.plugins.terminal.block.TerminalFrontendEditorAction
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
 
-internal class TerminalSelectAllAction : TerminalPromotedEditorAction(SelectAllHandler())
+internal class TerminalSelectAllAction : TerminalFrontendEditorAction(SelectAllHandler())
 
 private class SelectAllHandler : EditorActionHandler() {
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean = editor.isReworkedTerminalEditor

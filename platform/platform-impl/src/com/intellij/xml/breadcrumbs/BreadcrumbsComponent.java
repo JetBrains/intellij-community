@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
@@ -623,7 +623,7 @@ public final class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComp
     }
   }
 
-  public static final class ButtonSettings extends PainterSettings {
+  static final class ButtonSettings extends PainterSettings {
     public static Color getBackgroundColor(boolean selected, boolean hovered, boolean light, boolean navigationCrumb) {
       return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(
         hovered

@@ -12,12 +12,12 @@ class StatisticsEventLogMessageBuilder {
       val event = logEvent.event
       val groupId = logEvent.group.id
       val eventId = formatValue(rawEventId, logEvent.event.id)
-      append(" - [\"$groupId\", v${logEvent.group.version}]: \"$eventId\" ")
+      append(" - [\"$groupId\", v${logEvent.group.version}]: \"$eventId\"")
       val count = event.count
       if (!event.state && count > 1) {
-        append("(count=$count) ")
+        append(" (count=$count)")
       }
-      append("{")
+      append(" {")
       append(eventDataToString(event.data, rawData))
       append("}")
     }
@@ -32,7 +32,8 @@ class StatisticsEventLogMessageBuilder {
     }
 
   private fun eventDataToString(eventData: Map<String, Any>, rawData: Map<String, Any>?): String {
-    return eventData.filter { (key, _) -> !systemFields.contains(key) }
+    return eventData.toSortedMap(compareBy { it })
+      .filter { (key, _) -> !systemFields.contains(key) }
       .map { (key, value) -> "\"$key\":${valueToString(key, value, rawData?.get(key))}" }
       .joinToString(", ")
   }
@@ -43,7 +44,7 @@ class StatisticsEventLogMessageBuilder {
   private fun prepareValue(key: String, value: Any?, rawValue: Any?): Any? {
     return when (value) {
       is Map<*, *> -> {
-        value.entries.associate {
+        value.entries.sortedBy { it.key.toString() }.associate {
           val rawValuesMap = rawValue as? Map<*, *>
           it.key to prepareValue(it.key as String, it.value, rawValuesMap?.get(it.key))
         }
@@ -52,7 +53,7 @@ class StatisticsEventLogMessageBuilder {
         val rawValuesList = rawValue as? List<*>
         prepareValue(key, element, rawValuesList?.get(index))
       }
-      is String -> formatValue(rawValue?.toString(), if (fieldsToShorten.contains(key)) shortenAnonymizedId(value.toString()) else value)
+      is String -> formatValue(rawValue?.toString(), if (fieldsToShorten.contains(key)) shortenAnonymizedId(value) else value)
       else -> value
     }
   }

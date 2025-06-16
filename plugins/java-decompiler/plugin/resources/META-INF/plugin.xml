@@ -7,7 +7,7 @@
   </description>
   <vendor>JetBrains</vendor>
 
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
 
   <resource-bundle>messages.IdeaDecompilerBundle</resource-bundle>
 

@@ -2,10 +2,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.CustomizableIntentionAction;
-import com.intellij.codeInsight.intention.CustomizableIntentionActionDelegate;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
@@ -176,6 +173,13 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
     return false;
   }
 
+  public void suggestionShown(Project project, Editor editor, PsiFile psiFile) {
+    IntentionAction action = IntentionActionDelegate.unwrap(getDelegate());
+    if (action instanceof EventTrackingIntentionAction et) {
+      et.suggestionShown(project, editor, psiFile);
+    }
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -235,13 +239,13 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return myAction.isAvailable(project, editor, file);
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+      return myAction.isAvailable(project, editor, psiFile);
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myAction.invoke(project, editor, file);
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+      myAction.invoke(project, editor, psiFile);
       myMarkInvoked.accept(IntentionActionWithTextCaching.this, myAction);
     }
 
@@ -256,8 +260,8 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
     }
 
     @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-      return myAction.generatePreview(project, editor, file);
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+      return myAction.generatePreview(project, editor, psiFile);
     }
 
     @Override

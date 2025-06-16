@@ -37,7 +37,7 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final GrReferenceExpression element = myRefExpression.getElement();
     if (element == null || !element.isValid()) {
       return false;

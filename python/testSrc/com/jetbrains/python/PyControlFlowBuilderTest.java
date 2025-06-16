@@ -117,8 +117,18 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   public void testForIf() {
     doTest();
   }
+  
+  // PY-80824
+  public void testIfFor() {
+    doTest();
+  }
 
   public void testForReturn() {
+    doTest();
+  }
+  
+  // PY-80564
+  public void testReturnComprehensionFromExcept() {
     doTest();
   }
 
@@ -575,6 +585,21 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
 
   // PY-61877
   public void testNewStyleGenericFunctionAnnotationsAreNotIncludedInEnclosingScopeGraph() {
+    doTest();
+  }
+
+  // PY-79910
+  public void testTryExceptNoFinally() {
+    doTest();
+  }
+
+  // PY-80471
+  public void testWhileInsideIfTrue() {
+    doTest();
+  }
+
+  // PY-80733
+  public void testWhileTrueBreakInsideExcept() {
     doTest();
   }
 

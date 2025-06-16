@@ -40,7 +40,7 @@ public final class TypeMigrationVariableTypeFixProvider implements ChangeVariabl
       }
 
       @Override
-      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+      public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
         // Avoid displaying the same diff as for VariableTypeFix, to avoid confusion.
         // TODO: add HTML description
         return IntentionPreviewInfo.EMPTY;
@@ -48,7 +48,7 @@ public final class TypeMigrationVariableTypeFixProvider implements ChangeVariabl
 
       @Override
       public void invoke(@NotNull Project project,
-                         @NotNull PsiFile file,
+                         @NotNull PsiFile psiFile,
                          @Nullable Editor editor,
                          @NotNull PsiElement startElement,
                          @NotNull PsiElement endElement) {

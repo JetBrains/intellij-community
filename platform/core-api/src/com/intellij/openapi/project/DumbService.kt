@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -20,11 +20,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.annotations.Contract
-import org.jetbrains.annotations.Unmodifiable
 import java.util.*
 import javax.swing.JComponent
 
@@ -32,13 +32,11 @@ import javax.swing.JComponent
  * A service managing the IDE's 'dumb' mode: when indexes are updated in the background, and the functionality is very much limited.
  * Only the explicitly allowed functionality is available. Usually, it's allowed by implementing [DumbAware] interface.
  *
- *
  * "Dumb" mode starts and ends in a [com.intellij.openapi.application.WriteAction], so if you're inside a [ReadAction]
  * on a background thread, it won't suddenly begin in the middle of your operation. But note that whenever you start
- * a top-level read action on a background thread, you should be prepared to anything being changed, including "dumb"
+ * a top-level read action on a background thread, you should be prepared for anything being changed, including "dumb"
  * mode being suddenly on and off. To avoid executing a read action in "dumb" mode, please use [runReadActionInSmartMode] or
  * [com.intellij.openapi.application.NonBlockingReadAction.inSmartMode].
- *
  *
  * More information about dumb mode could be found here: [IndexNotReadyException]
  */
@@ -55,6 +53,30 @@ abstract class DumbService {
    * The IDE offers only limited functionality at such times, e.g., plain text file editing and version control operations.
    */
   abstract val isDumb: Boolean
+
+  /**
+   * Same as [isDumb], but if form of a flow with the following properties:
+   *   * This flow never completes
+   *   * Last emitted value is always immediately available
+   *   * The flow is not conflated by [DumbState] fields, but only by the underlying state
+   *
+   * In most cases you don't need this method, because neither checking `isDumb` outside a read action, nor suspending inside a read action
+   *  have little sense except a few very special use cases.
+   */
+  @get:ApiStatus.Internal
+  abstract val state: StateFlow<DumbState>
+
+  /**
+   * Last dumb mode start stack trace for diagnostic purposes
+   */
+  @get:ApiStatus.Internal
+  abstract val dumbModeStartTrace: Throwable?
+
+  /**
+   * Opportunistic check for [runWhenSmart] condition
+   */
+  @ApiStatus.Internal
+  abstract fun canRunSmart(): Boolean
 
   /**
    * Executes the runnable as soon as possible on AWT Event Dispatch when:
@@ -78,6 +100,14 @@ abstract class DumbService {
   abstract fun waitForSmartMode()
 
   /**
+   * @see [waitForSmartMode]
+   * @return false if waiting timed out, true otherwise
+   */
+  @ApiStatus.Internal
+  @RequiresBlockingContext
+  abstract fun waitForSmartMode(timeoutMillis: Long): Boolean
+
+  /**
    * DEPRECATED.
    *
    * Use instead:
@@ -87,7 +117,7 @@ abstract class DumbService {
    * WARNING: This method does not have any effect if it is called inside another read action.
    *
    * Otherwise, it pauses the current thread until dumb mode ends, and then runs the read action.
-   * In this case indexes are guaranteed to be available inside
+   * In this case, indexes are guaranteed to be available inside.
    *
    * @throws ProcessCanceledException if the project is closed during dumb mode
    */
@@ -277,6 +307,17 @@ abstract class DumbService {
   abstract fun completeJustSubmittedTasks()
 
   /**
+   * This method starts dumb mode (if not started), then runs suspend lambda, then ends dumb mode (if no other dumb tasks are running).
+   *
+   * This method can be invoked from any thread. It will switch to EDT to start/stop dumb mode. Runnable itself will be invoked from
+   * method's invocation context (thread).
+   *
+   * @param debugReason will only be printed to logs
+   */
+  @ApiStatus.Internal
+  abstract suspend fun <T> runInDumbMode(debugReason: @NonNls String, block: suspend () -> T): T
+
+  /**
    * Replaces given component temporarily with "Not available until indices are built" label during dumb mode.
    *
    * @return Wrapped component.
@@ -294,22 +335,6 @@ abstract class DumbService {
   abstract fun wrapWithSpoiler(dumbAwareContent: JComponent, updateRunnable: Runnable, parentDisposable: Disposable): JComponent
 
   /**
-   * Disables given component temporarily during dumb mode.
-   */
-  fun makeDumbAware(componentToDisable: JComponent, parentDisposable: Disposable) {
-    componentToDisable.isEnabled = !isDumb
-    project.messageBus.connect(parentDisposable).subscribe(DUMB_MODE, object : DumbModeListener {
-      override fun enteredDumbMode() {
-        componentToDisable.isEnabled = false
-      }
-
-      override fun exitDumbMode() {
-        componentToDisable.isEnabled = true
-      }
-    })
-  }
-
-  /**
    * Use [showDumbModeNotificationForAction] or [showDumbModeNotificationForFunctionality] instead
    */
   @Obsolete
@@ -321,7 +346,21 @@ abstract class DumbService {
   abstract fun showDumbModeNotificationForFunctionality(message: @NlsContexts.PopupContent String,
                                                         functionality: DumbModeBlockedFunctionality)
 
+  /**
+   * Doesn't log new event if the equality object is equal to the previous one
+   */
+  @ApiStatus.Internal
+  abstract fun showDumbModeNotificationForFunctionalityWithCoalescing(message: @NlsContexts.PopupContent String,
+                                                                      functionality: DumbModeBlockedFunctionality,
+                                                                      equality: Any)
+
   abstract fun showDumbModeNotificationForAction(message: @NlsContexts.PopupContent String, actionId: String?)
+
+  /**
+   * This method is designed to be used when [DumbAware] action was invoked in dumb mode and threw [IndexNotReadyException]
+   */
+  @ApiStatus.Internal
+  abstract fun showDumbModeNotificationForFailedAction(message: @NlsContexts.PopupContent String, actionId: String?)
 
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
@@ -433,7 +472,7 @@ abstract class DumbService {
    * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
   @Experimental
-  abstract suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend () -> Unit)
+  abstract suspend fun suspendIndexingAndRun(activityName: @NlsContexts.ProgressText String, activity: suspend CoroutineScope.() -> Unit)
 
   @ApiStatus.Internal
   abstract fun runWithWaitForSmartModeDisabled(): AccessToken
@@ -533,4 +572,16 @@ abstract class DumbService {
       runnable.run()
     }
   }
+
+  @ApiStatus.Internal
+  interface DumbState {
+    val isDumb: Boolean
+  }
 }
+
+/**
+ * @see [DumbService.runInDumbMode]
+ */
+@ApiStatus.Internal
+@TestOnly
+suspend fun <T> DumbService.runInDumbMode(block: suspend () -> T): T = runInDumbMode("test", block)

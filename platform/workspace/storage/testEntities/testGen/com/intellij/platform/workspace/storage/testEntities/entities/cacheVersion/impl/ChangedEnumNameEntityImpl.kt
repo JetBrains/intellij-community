@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -22,8 +21,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.cacheVersio
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumNameEntityData) : ChangedEnumNameEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumNameEntityData) : ChangedEnumNameEntity,
+                                                                                              WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -50,8 +49,8 @@ internal class ChangedEnumNameEntityImpl(private val dataSource: ChangedEnumName
   }
 
 
-  internal class Builder(result: ChangedEnumNameEntityData?) : ModifiableWorkspaceEntityBase<ChangedEnumNameEntity, ChangedEnumNameEntityData>(
-    result), ChangedEnumNameEntity.Builder {
+  internal class Builder(result: ChangedEnumNameEntityData?) :
+    ModifiableWorkspaceEntityBase<ChangedEnumNameEntity, ChangedEnumNameEntityData>(result), ChangedEnumNameEntity.Builder {
     internal constructor() : this(ChangedEnumNameEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,7 +147,8 @@ internal class ChangedEnumNameEntityData : WorkspaceEntityData<ChangedEnumNameEn
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.cacheVersion.ChangedEnumNameEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

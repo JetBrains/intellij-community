@@ -57,6 +57,8 @@
     <internalFileTemplate name="Kotlin Enum"/>
     <internalFileTemplate name="Kotlin Interface"/>
     <internalFileTemplate name="Kotlin Worksheet"/>
+    <internalFileTemplate name="Kotlin Object"/>
     <internalFileTemplate name="Kotlin Script"/>
+    <internalFileTemplate name="Kotlin Script MainKts"/>
   </extensions>
 </idea-plugin>

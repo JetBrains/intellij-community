@@ -382,7 +382,7 @@ private val expectedKryoRegistration = """
   it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
   com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
   com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
-  com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
+  com.intellij.platform.workspace.storage.impl.indices.ImmutableMultimapStorageIndex
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
   it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
   com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
@@ -410,6 +410,7 @@ private val expectedKryoRegistration = """
   java.util.Hashtable
   java.util.WeakHashMap
   java.util.IdentityHashMap
+  java.util.concurrent.ConcurrentHashMap
   com.intellij.util.SmartList
   java.util.LinkedHashMap
   com.intellij.platform.workspace.storage.impl.containers.BidirectionalSetMap

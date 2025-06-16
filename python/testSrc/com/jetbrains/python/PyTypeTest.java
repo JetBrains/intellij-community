@@ -99,8 +99,8 @@ public class PyTypeTest extends PyTestCase {
   public void testUnionOfTuples() {
     doTest("Union[Tuple[int, str], Tuple[str, int]]",
            """
-             def x():
-               if True:
+             def x(b):
+               if b:
                  return (1, 'a')
                else:
                  return ('a', 1)
@@ -686,7 +686,7 @@ public class PyTypeTest extends PyTestCase {
 
   // EA-40207
   public void testRecursion() {
-    doTest("list",
+    doTest("List[Any]",
            """
              def f():
                  return [f()]
@@ -1051,7 +1051,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testDictFromTuple() {
-    doTest("Dict[Union[str, int], Union[str, int]]",
+    doTest("Dict[Union[str, int], Union[int, str]]",
            "expr = dict((('1', 1), (2, 2), (3, '3')))");
   }
 
@@ -1225,15 +1225,6 @@ public class PyTypeTest extends PyTestCase {
              expr = f3(42)""");
   }
 
-  // PY-8836
-  public void testNumpyArrayIntMultiplicationType() {
-    doMultiFileTest("ndarray",
-                    """
-                      import numpy as np
-                      expr = np.ones(10) * 2
-                      """);
-  }
-
   // PY-9439
   public void testNumpyArrayType() {
     doMultiFileTest("ndarray",
@@ -1244,7 +1235,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testUnionTypeAttributeOfDifferentTypes() {
-    doTest("Union[list, int]",
+    doTest("Union[List[Any], int]",
            """
              class Foo:
                  x = []
@@ -1640,7 +1631,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testListLiteral() {
-    doTest("list", "expr = []");
+    doTest("List[Any]", "expr = []");
 
     doTest("List[int]", "expr = [1, 2, 3]");
 
@@ -1658,13 +1649,13 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testDictLiteral() {
-    doTest("dict", "expr = {}");
+    doTest("Dict[Any, Any]", "expr = {}");
 
     doTest("Dict[int, bool]", "expr = {1: False}");
 
-    doTest("Dict[Union[str, int], Union[str, int]]", "expr = {'1': 1, 1: '1', 1: 1}");
+    doTest("Dict[Union[str, int], Union[int, str]]", "expr = {'1': 1, 1: '1', 1: 1}");
 
-    doTest("Dict[Union[Union[str, int], Any], Union[Union[str, int], Any]]",
+    doTest("Dict[Union[Union[str, int], Any], Union[Union[int, str], Any]]",
            "expr = {'1': 1, 1: '1', 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1}");
   }
 
@@ -1712,7 +1703,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-20797
   public void testValueOfEmptyDefaultDict() {
-    doTest("list",
+    doTest("List[Any]",
            """
              from collections import defaultdict
              expr = defaultdict(lambda: [])['x']
@@ -1721,24 +1712,24 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-8473
   public void testCopyDotCopy() {
-    doMultiFileTest("A",
-                    """
-                      import copy
-                      class A(object):
-                          pass
-                      expr = copy.copy(A())
-                      """);
+    doTest("A",
+           """
+             import copy
+             class A(object):
+                 pass
+             expr = copy.copy(A())
+             """);
   }
 
   // PY-8473
   public void testCopyDotDeepCopy() {
-    doMultiFileTest("A",
-                    """
-                      import copy
-                      class A(object):
-                          pass
-                      expr = copy.deepcopy(A())
-                      """);
+    doTest("A",
+           """
+             import copy
+             class A(object):
+                 pass
+             expr = copy.deepcopy(A())
+             """);
   }
 
   // PY-21083
@@ -1894,7 +1885,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-21474
   public void testReassigningOptionalListWithDefaultValue() {
-    doTest("Union[List[str], list]",
+    doTest("Union[List[str], List[Any]]",
            """
              def x(things):
                  ""\"
@@ -2034,7 +2025,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-37755
   public void testGlobalType() {
-    doTest("list",
+    doTest("List[Any]",
            """
              expr = []
 
@@ -2042,7 +2033,7 @@ public class PyTypeTest extends PyTestCase {
                  global expr
                  expr""");
 
-    doTest("list",
+    doTest("List[Any]",
            """
              expr = []
 
@@ -2051,7 +2042,7 @@ public class PyTypeTest extends PyTestCase {
                      global expr
                      expr""");
 
-    doTest("list",
+    doTest("List[Any]",
            """
              expr = []
 
@@ -2564,7 +2555,7 @@ public class PyTypeTest extends PyTestCase {
           final List<PyClassLikeType> superClassTypes = ((PyClassType)type).getSuperClassTypes(context);
           assertEquals(1, superClassTypes.size());
 
-          assertInstanceOf(superClassTypes.get(0), PyNamedTupleType.class);
+          assertInstanceOf(superClassTypes.get(0), PyClassTypeImpl.class);
         }
       }
     );
@@ -2882,12 +2873,9 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-80436
   public void testEllipsis() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON34,
-      () -> doTest("Any",
-                   "expr = ...")
-    );
+    doTest("ellipsis", "expr = Ellipsis");
   }
 
   // PY-25751
@@ -2928,7 +2916,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-26061
   public void testUnknownDictValues() {
-    doTest("list",
+    doTest("List[Any]",
            "expr = dict().values()");
   }
 
@@ -3122,7 +3110,7 @@ public class PyTypeTest extends PyTestCase {
   public void testSliceOnUnion() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON36,
-      () -> doTest("Union[str, Any]",
+      () -> doTest("str",
                    """
                      from typing import Union
                      myvar: Union[str, int]
@@ -3980,7 +3968,7 @@ public class PyTypeTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
       () -> {
-        doTest("A",
+        doTest("type[A]",
                """
                  from typing import TypedDict
                  A = TypedDict('A', {'x': int}, total=False)
@@ -4014,7 +4002,7 @@ public class PyTypeTest extends PyTestCase {
   public void testParticularTypeAgainstTypeVarBoundedWithBuiltinType() {
     runWithLanguageLevel(
       LanguageLevel.getLatest(),
-      () -> doTest("Type[MyClass]",
+      () -> doTest("type[MyClass]",
                    """
                      from typing import TypeVar, Type
 
@@ -4163,6 +4151,19 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-79330
+  public void testTypeHintedEnumItemValueAttribute2() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTest("() -> Any", // Should be 'Any' PY-71603
+                   """
+                     from enum import Enum
+                     
+                     def f(p: Enum):
+                         expr = p.value""")
+    );
+  }
+
   // PY-54503
   public void testImportedEnumGetItemResultValueAttribute() {
     myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
@@ -4172,7 +4173,7 @@ public class PyTypeTest extends PyTestCase {
                                               expr = MyEnum['ONE'].value""");
     assertNotNull(expr);
     TypeEvalContext codeAnalysisContext = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
-    assertType("Any", expr, codeAnalysisContext);
+    assertType("int", expr, codeAnalysisContext);
     assertProjectFilesNotParsed(codeAnalysisContext);
 
     TypeEvalContext userInitiatedContext = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile());

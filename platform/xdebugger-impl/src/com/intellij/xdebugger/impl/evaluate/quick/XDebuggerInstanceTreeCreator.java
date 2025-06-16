@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -15,6 +14,7 @@ import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -29,10 +29,10 @@ public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XI
   private final XDebuggerEditorsProvider myProvider;
   private final XSourcePosition myPosition;
   private final XValueMarkers<?, ?> myMarkers;
-  private final XDebugSession mySession;
+  private final XDebugSessionProxy mySession;
 
   public XDebuggerInstanceTreeCreator(@NotNull Project project, XDebuggerEditorsProvider editorsProvider, XSourcePosition sourcePosition,
-                                      XValueMarkers<?, ?> markers, XDebugSession session) {
+                                      XValueMarkers<?, ?> markers, XDebugSessionProxy session) {
     myProject = project;
     myProvider = editorsProvider;
     myPosition = sourcePosition;

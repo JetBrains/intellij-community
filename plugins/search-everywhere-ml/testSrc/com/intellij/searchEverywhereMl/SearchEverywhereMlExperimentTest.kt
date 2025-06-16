@@ -8,7 +8,7 @@ class SearchEverywhereMlExperimentTest : BasePlatformTestCase() {
   private val EXPERIMENT_GROUP_REG_KEY = "search.everywhere.ml.experiment.group"
 
   fun `test experiment group registry value is clamped between -1 and the number of experiment groups`() {
-    val mlExperiment = SearchEverywhereMlExperiment().apply { isExperimentalMode = true }
+    val mlExperiment = SearchEverywhereMlExperiment.apply { isExperimentalMode = true }
 
     // Upper boundary
     Registry.get(EXPERIMENT_GROUP_REG_KEY).setValue(SearchEverywhereMlExperiment.NUMBER_OF_GROUPS - 1)
@@ -21,16 +21,17 @@ class SearchEverywhereMlExperimentTest : BasePlatformTestCase() {
 
   fun `test no experiment group higher than total number of groups`() {
     // For context, see IDEA-322948. Basically, we want to make sure that all experiments we defined are accessible
-    val mlExperiment = SearchEverywhereMlExperiment()
-    mlExperiment.getTabExperiments()
-      .mapValues { experimentDefinition ->
-        experimentDefinition.value.tabExperiments.keys.filter { experimentGroup ->
+    SearchEverywhereTab.allTabs
+      .filterIsInstance<SearchEverywhereTab.TabWithExperiments>()
+      .associateWith { it.experiments.keys }
+      .mapValues { it ->
+        it.value.filter { experimentGroup ->
           experimentGroup < 0 || experimentGroup >= SearchEverywhereMlExperiment.NUMBER_OF_GROUPS
         }
       }
       .filterValues { it.isNotEmpty() }
       .takeIf { it.isNotEmpty() }
-      ?.map { (tab, invalidGroups) -> "Tab \"${tab.name.lowercase()}\" with groups $invalidGroups" }
+      ?.map { (tab, invalidGroups) -> "Tab \"${tab}\" with groups $invalidGroups" }
       ?.let { "Inaccessible experiment groups: $it" }
       ?.let {
         Assert.fail(it)

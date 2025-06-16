@@ -38,17 +38,18 @@ object CodeWithMeGuestLauncher {
     clientBuild: BuildNumber?,
     url: String,
     @NlsContexts.DialogTitle product: String,
-    onDone: (Lifetime) -> Unit = {}
+    enableBeforeRunHooks: Boolean,
+    onDone: (Lifetime) -> Unit = {},
   ) {
     if (!application.isDispatchThread) {
       // starting a task from background will call invokeLater, but with wrong modality, so do it ourselves
-      application.invokeLater({ downloadCompatibleClientAndLaunch(lifetime, project, clientBuild, url, product, onDone) }, ModalityState.any())
+      application.invokeLater({ downloadCompatibleClientAndLaunch(lifetime, project, clientBuild, url, product, enableBeforeRunHooks, onDone) }, ModalityState.any())
       return
     }
 
     val uri = UrlUtil.parseOrShowError(url, product) ?: return
 
-    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, onDone)) {
+    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, enableBeforeRunHooks, onDone)) {
       return
     }
 
@@ -57,7 +58,7 @@ object CodeWithMeGuestLauncher {
       return
     }
 
-    ProgressManager.getInstance().run(DownloadAndLaunchClientTask(project, uri, lifetime, url, product, onDone))
+    ProgressManager.getInstance().run(DownloadAndLaunchClientTask(project, uri, lifetime, url, product, enableBeforeRunHooks, onDone))
   }
 
   private class DownloadAndLaunchClientTask(
@@ -66,7 +67,8 @@ object CodeWithMeGuestLauncher {
     private val lifetime: Lifetime?,
     private val url: String,
     private val product: @NlsContexts.DialogTitle String,
-    private val onDone: (Lifetime) -> Unit
+    private val enableBeforeRunHooks: Boolean,
+    private val onDone: (Lifetime) -> Unit,
   ) : Backgroundable(project, RemoteDevUtilBundle.message("launcher.title"), true) {
 
     private var clientLifetime : Lifetime = Lifetime.Terminated
@@ -99,7 +101,8 @@ object CodeWithMeGuestLauncher {
           frontendInstallation = frontendInstallation,
           urlForThinClient = url,
           product = product,
-          progressIndicator = progressIndicator
+          progressIndicator = progressIndicator,
+          enableBeforeRunHooks = enableBeforeRunHooks,
         )
       }
       catch (t: Throwable) {
@@ -120,7 +123,8 @@ object CodeWithMeGuestLauncher {
     aLifetime: Lifetime?,
     project: Project?,
     url: String,
-    onDone: (Lifetime) -> Unit
+    enableBeforeRunHooks: Boolean,
+    onDone: (Lifetime) -> Unit,
   ): Boolean {
     if (clientBuild == null) {
       return false
@@ -141,7 +145,8 @@ object CodeWithMeGuestLauncher {
     val clientLifetime = CodeWithMeClientDownloader.runFrontendProcess(
       lifetime = lifetime,
       url = url,
-      frontendInstallation = frontendInstallation
+      frontendInstallation = frontendInstallation,
+      enableBeforeRunHooks = enableBeforeRunHooks,
     )
     onDone(clientLifetime)
     return true
@@ -166,13 +171,15 @@ object CodeWithMeGuestLauncher {
     return StandaloneFrontendInstallation(guestData.targetPath, clientBuild, null)
   }
 
-  fun runDownloadedFrontend(lifetime: Lifetime, frontendInstallation: FrontendInstallation, urlForThinClient: String,
-                            @NlsContexts.DialogTitle product: String, progressIndicator: ProgressIndicator?): Lifetime {
+  fun runDownloadedFrontend(
+    lifetime: Lifetime, frontendInstallation: FrontendInstallation, urlForThinClient: String,
+    @NlsContexts.DialogTitle product: String, progressIndicator: ProgressIndicator?, enableBeforeRunHooks: Boolean,
+  ): Lifetime {
     // todo: offer to connect as-is?
     try {
       progressIndicator?.text = RemoteDevUtilBundle.message("launcher.launch.client")
       progressIndicator?.text2 = frontendInstallation.installationHome.pathString
-      val thinClientLifetime = CodeWithMeClientDownloader.runFrontendProcess(lifetime, urlForThinClient, frontendInstallation)
+      val thinClientLifetime = CodeWithMeClientDownloader.runFrontendProcess(lifetime, urlForThinClient, frontendInstallation, enableBeforeRunHooks)
 
       // Wait a bit until process will be launched and only after that finish task
       Thread.sleep(3000)

@@ -20,6 +20,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
 import org.jetbrains.idea.maven.model.MavenProfileKind;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenSettingsCache;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import javax.swing.*;
@@ -74,13 +75,11 @@ class ProfileNode extends MavenSimpleNode {
 
     // search in "Per User Maven Settings" - %USER_HOME%/.m2/settings.xml
     // and in "Global Maven Settings" - %M2_HOME%/conf/settings.xml
-    for (VirtualFile virtualFile : myMavenProjectsStructure.getProjectsManager().getGeneralSettings().getEffectiveSettingsFiles()) {
-      if (virtualFile != null) {
+    for (VirtualFile virtualFile : MavenSettingsCache.getInstance(myProject).getEffectiveVirtualSettingsFiles()) {
         final MavenDomSettingsModel model = MavenDomUtil.getMavenDomModel(myProject, virtualFile, MavenDomSettingsModel.class);
         if (model != null) {
           addProfiles(profiles, model.getProfiles().getProfiles());
         }
-      }
     }
 
     for (MavenProject mavenProject : myMavenProjectsStructure.getProjectsManager().getProjects()) {

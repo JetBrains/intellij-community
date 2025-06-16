@@ -1,38 +1,88 @@
+- name: lib/completion-ranking-cpp-exp.jar
+  library: completion-ranking-cpp-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0/completion-ranking-cpp-0.jar
+- name: lib/completion-ranking-css-exp.jar
+  library: completion-ranking-css-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-css/0/completion-ranking-css-0.jar
+- name: lib/completion-ranking-dart-exp.jar
+  library: completion-ranking-dart-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-dart/0/completion-ranking-dart-0.jar
+- name: lib/completion-ranking-go-exp.jar
+  library: completion-ranking-go-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-go/0/completion-ranking-go-0.jar
+- name: lib/completion-ranking-html-exp.jar
+  library: completion-ranking-html-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-html/0/completion-ranking-html-0.jar
+- name: lib/completion-ranking-java-exp.jar
+  library: completion-ranking-java-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
+- name: lib/completion-ranking-java-exp2.jar
+  library: completion-ranking-java-exp2
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
+- name: lib/completion-ranking-js-exp.jar
+  library: completion-ranking-js-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-js/0/completion-ranking-js-0.jar
+- name: lib/completion-ranking-kotlin-exp.jar
+  library: completion-ranking-kotlin-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
+- name: lib/completion-ranking-php-exp.jar
+  library: completion-ranking-php-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-php/0/completion-ranking-php-0.jar
+- name: lib/completion-ranking-python-exp.jar
+  library: completion-ranking-python-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0/completion-ranking-python-0.jar
+- name: lib/completion-ranking-ruby-exp.jar
+  library: completion-ranking-ruby-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-ruby/0/completion-ranking-ruby-0.jar
+- name: lib/completion-ranking-rust-exp.jar
+  library: completion-ranking-rust-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0/completion-ranking-rust-0.jar
+- name: lib/completion-ranking-scala-exp.jar
+  library: completion-ranking-scala-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0/completion-ranking-scala-0.jar
+- name: lib/completion-ranking-sh-exp.jar
+  library: completion-ranking-sh-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0/completion-ranking-sh-0.jar
+- name: lib/completion-ranking-swift-exp.jar
+  library: completion-ranking-swift-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-swift/0/completion-ranking-swift-0.jar
+- name: lib/completion-ranking-typescript-exp.jar
+  library: completion-ranking-typescript-exp
+  module: intellij.completionMlRankingModels
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0/completion-ranking-typescript-0.jar
 - name: lib/completionMlRankingModels.jar
   modules:
   - name: intellij.completionMlRankingModels
-    libraries:
-      completion-ranking-java-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
-      completion-ranking-java-exp2:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-java/0/completion-ranking-java-0.jar
-      completion-ranking-kotlin-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
-      completion-ranking-scala-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-scala/0/completion-ranking-scala-0.jar
-      completion-ranking-rust-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-rust/0/completion-ranking-rust-0.jar
-      completion-ranking-python-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0/completion-ranking-python-0.jar
-      completion-ranking-php-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-php/0/completion-ranking-php-0.jar
-      completion-ranking-ruby-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-ruby/0/completion-ranking-ruby-0.jar
-      completion-ranking-go-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-go/0/completion-ranking-go-0.jar
-      completion-ranking-js-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-js/0/completion-ranking-js-0.jar
-      completion-ranking-typescript-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-typescript/0/completion-ranking-typescript-0.jar
-      completion-ranking-dart-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-dart/0/completion-ranking-dart-0.jar
-      completion-ranking-swift-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-swift/0/completion-ranking-swift-0.jar
-      completion-ranking-cpp-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-cpp/0/completion-ranking-cpp-0.jar
-      completion-ranking-html-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-html/0/completion-ranking-html-0.jar
-      completion-ranking-css-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-css/0/completion-ranking-css-0.jar
-      completion-ranking-sh-exp:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-sh/0/completion-ranking-sh-0.jar

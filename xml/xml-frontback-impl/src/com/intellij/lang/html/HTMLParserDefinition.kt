@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.ParserDefinition.SpaceRequirements
 import com.intellij.lang.PsiParser
-import com.intellij.lang.xml.XMLParserDefinition.Companion.canStickTokensTogether
+import com.intellij.lang.xml.canStickTokensTogether
 import com.intellij.lexer.HtmlLexer
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.components.service

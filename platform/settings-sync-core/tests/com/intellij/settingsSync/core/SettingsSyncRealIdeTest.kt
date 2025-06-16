@@ -2,16 +2,19 @@ package com.intellij.settingsSync.core
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.core.SettingsSnapshot.MetaInfo
 import com.intellij.util.toByteArray
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -26,13 +29,13 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `settings are pushed`() = timeoutRunBlockingAndStopBridge {
-    SettingsSyncSettings.getInstance().init()
+    init(SettingsSyncSettings.getInstance())
     SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
-    saveComponentStore()
+    componentStore.save()
     initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     executeAndWaitUntilPushed {
-      GeneralSettings.getInstance().initModifyAndSave {
+      initModifyAndSave(GeneralSettings.getInstance()) {
         autoSaveFiles = false
       }
     }
@@ -53,11 +56,32 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
     val keymap = createKeymap()
     executeAndWaitUntilPushed {
-      saveComponentStore()
+      componentStore.save()
     }
 
     assertServerSnapshot {
       fileState("keymaps/${keymap.name}.xml", String(keymap.writeScheme().toByteArray(), Charset.defaultCharset()))
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-175567"])
+  fun `non-scheme additionalExportDirectory changes are logged`() = timeoutRunBlockingAndStopBridge {
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+
+    val fileTemplate = FileTemplateManager.getDefaultInstance().addTemplate("my-mega-template", "php")
+    Disposer.register(disposable, Disposable {
+      FileTemplateManager.getDefaultInstance().removeTemplate(fileTemplate)
+    })
+    val phpCode = "<?php echo 'hello world' ?>"
+    fileTemplate.text= phpCode
+    FileTemplateManager.getDefaultInstance().saveAllTemplates()
+    executeAndWaitUntilPushed {
+      componentStore.save()
+    }
+
+    assertServerSnapshot {
+      fileState("fileTemplates/my-mega-template.php", phpCode)
     }
   }
 
@@ -72,18 +96,14 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     return keymap
   }
 
-  private fun saveComponentStore() {
-    runBlocking { componentStore.save() }
-  }
-
   @Test
   fun `quickly modified settings are pushed together`() = timeoutRunBlockingAndStopBridge {
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    GeneralSettings.getInstance().initModifyAndSave {
+    initModifyAndSave(GeneralSettings.getInstance()) {
       autoSaveFiles = false
     }
-    EditorSettingsExternalizable.getInstance().initModifyAndSave {
+    initModifyAndSave(EditorSettingsExternalizable.getInstance()) {
       SHOW_INTENTION_BULB = false
     }
 
@@ -105,14 +125,14 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `existing settings are copied on initialization`() = timeoutRunBlockingAndStopBridge {
-    GeneralSettings.getInstance().initModifyAndSave {
+    initModifyAndSave(GeneralSettings.getInstance()) {
       autoSaveFiles = false
     }
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     executeAndWaitUntilPushed {
-      UISettings.getInstance().initModifyAndSave {
+      initModifyAndSave(UISettings.getInstance()) {
         recentFilesLimit = 1000
       }
     }
@@ -133,17 +153,17 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `disabled categories should be ignored when copying settings on initialization`() = timeoutRunBlockingAndStopBridge {
-    GeneralSettings.getInstance().initModifyAndSave {
+    initModifyAndSave(GeneralSettings.getInstance()) {
       autoSaveFiles = false
     }
-    EditorSettingsExternalizable.getInstance().initModifyAndSave {
+    initModifyAndSave(EditorSettingsExternalizable.getInstance()) {
       SHOW_INTENTION_BULB = false
     }
     //AppEditorFontOptions.getInstance().initModifyAndSave {
     //  FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE - 5
     //}
     val keymap = createKeymap()
-    saveComponentStore()
+    componentStore.save()
 
     val os = getPerOsSettingsStorageFolderName()
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
@@ -168,7 +188,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `settings from server are applied`() = timeoutRunBlockingAndStopBridge(5.seconds) {
-    val generalSettings = GeneralSettings.getInstance().init()
+    val generalSettings = init(GeneralSettings.getInstance())
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     val fileState = GeneralSettings().apply {
@@ -187,10 +207,10 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   @Test
   fun `enabling category should copy existing settings from that category`() = timeoutRunBlockingAndStopBridge {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.CODE, isEnabled = false)
-    GeneralSettings.getInstance().initModifyAndSave {
+    initModifyAndSave(GeneralSettings.getInstance()) {
       autoSaveFiles = false
     }
-    EditorSettingsExternalizable.getInstance().initModifyAndSave {
+    initModifyAndSave(EditorSettingsExternalizable.getInstance()) {
       SHOW_INTENTION_BULB = false
     }
     val editorXmlContent = (configDir / "options" / "editor.xml").readText()
@@ -226,8 +246,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `not enabling cross IDE sync initially works as expected`() = timeoutRunBlockingAndStopBridge {
-    SettingsSyncSettings.getInstance().init()
-    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+    init(SettingsSyncSettings.getInstance())
+    initModifyAndSave(GeneralSettings.getInstance()) { autoSaveFiles = false }
 
     assertIdeCrossSync(false)
 
@@ -247,8 +267,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `enabling cross IDE sync initially works as expected`() = timeoutRunBlockingAndStopBridge {
-    SettingsSyncSettings.getInstance().init()
-    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+    init(SettingsSyncSettings.getInstance())
+    initModifyAndSave(GeneralSettings.getInstance()) { autoSaveFiles = false }
 
     assertIdeCrossSync(false)
 
@@ -268,8 +288,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `sync settings are always uploaded even if system settings are disabled`() = timeoutRunBlockingAndStopBridge {
-    SettingsSyncSettings.getInstance().init()
-    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+    init(SettingsSyncSettings.getInstance())
+    initModifyAndSave(GeneralSettings.getInstance()) { autoSaveFiles = false }
 
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
 
@@ -299,8 +319,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   fun `don't sync non-roamable files`() = timeoutRunBlockingAndStopBridge {
     val nonRoamable = ExportableNonRoamable()
 
-    nonRoamable.init()
-    val generalSettings = GeneralSettings.getInstance().init()
+    init(nonRoamable)
+    val generalSettings = init(GeneralSettings.getInstance())
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     val generalSettingsState = GeneralSettings().apply {
@@ -335,7 +355,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
 
-  private suspend fun testVariousComponentsShouldBeSyncedOrNot(component: BaseComponent, expectedToBeSynced: Boolean) {
+  private fun CoroutineScope.testVariousComponentsShouldBeSyncedOrNot(component: BaseComponent, expectedToBeSynced: Boolean) {
     component.aState.foo = "bar"
     runBlocking {
       application.componentStore.saveComponent(component)
@@ -358,11 +378,11 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
   fun `local and remote changes in different files are both applied`() = timeoutRunBlockingAndStopBridge {
-    val generalSettings = GeneralSettings.getInstance().init()
+    val generalSettings = init(GeneralSettings.getInstance())
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     // prepare local commit but don't allow it to be pushed
-    UISettings.getInstance().initModifyAndSave {
+    initModifyAndSave(UISettings.getInstance()) {
       compactTreeIndents = true
     }
     // at this point there is an unpushed local commit

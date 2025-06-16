@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-public final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
   private final List<MyData<?,?>> myAnnotationData = Collections.synchronizedList(new ArrayList<>());
@@ -67,13 +68,13 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     }
   }
 
-  ExternalToolPass(@NotNull PsiFile file,
+  ExternalToolPass(@NotNull PsiFile psiFile,
                    @NotNull Document document,
                    @Nullable Editor editor,
                    int startOffset,
                    int endOffset,
                    @NotNull HighlightInfoProcessor processor) {
-    super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
+    super(psiFile.getProject(), document, LangBundle.message("pass.external.annotators"), psiFile, editor, new TextRange(startOffset, endOffset), false, processor);
   }
 
   @Override
@@ -154,9 +155,25 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
       public void setRejected() {
         try {
           super.setRejected();
-          if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
-            doFinish();
+          // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
+          if (myProject.isDisposed()) {
+            return;
           }
+          // We need to remove obsolete data from markup model.
+          //
+          // The update may be canceled not only at the moment of `queue`,
+          // but also when it gets restarted in the context of SingleAlarm
+          // So we need to recreate the context similar to `Update.run`
+          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+            // All updates are running in the non-cancellable section, so here we are repeating the inner logic of MergingUpdateQueue here
+            Cancellation.executeInNonCancelableSection(() -> {
+              // Highlighting requires read access
+              ReadAction.run(() -> {
+                doFinish();
+              });
+            });
+          }, indicator);
         }
         finally {
           externalUpdateTaskCompleted = true;
@@ -262,7 +279,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     HighlightingSessionImpl.runInsideHighlightingSession(myFile, getContext(), getColorsScheme(), ProperTextRange.create(myFile.getTextRange()), false, session -> {
       // use the method which doesn't retrieve a HighlightingSession from the indicator, because we likely destroyed the one already
       BackgroundUpdateHighlightersUtil.setHighlightersInRange(myRestrictRange, highlights, markupModel, getId(), session);
-      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId());
+      DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getContext(), getId(), session.getProgressIndicator());
       myHighlightInfos = highlights;
     });
   }

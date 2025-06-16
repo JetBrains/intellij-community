@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(FlowPreview::class)
 
 package com.intellij.openapi.wm.impl
@@ -177,7 +177,7 @@ internal class ToolWindowImpl(
     return decorator!!
   }
 
-  fun createCellDecorator() : InternalDecoratorImpl {
+  fun createCellDecorator(): InternalDecoratorImpl {
     val cellContentManager = ContentManagerImpl(canCloseContent, toolWindowManager.project, parentDisposable, ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
       ToolWindowContentUi(this, contentManager, componentGetter.get())
     })
@@ -185,12 +185,17 @@ internal class ToolWindowImpl(
   }
 
   private fun createContentManager(): ContentManagerImpl {
-    val contentManager = ContentManagerImpl(canCloseContent, toolWindowManager.project, parentDisposable,
-                                            ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
-                                              val result = ToolWindowContentUi(this, contentManager, componentGetter.get())
-                                              contentUi = result
-                                              result
-                                            })
+    val contentManager = ContentManagerImpl(
+      /* canCloseContents = */ canCloseContent,
+      /* project = */ toolWindowManager.project,
+      /* parentDisposable = */ parentDisposable,
+      /* contentUiProducer = */
+      ContentManagerImpl.ContentUiProducer { contentManager, componentGetter ->
+        val result = ToolWindowContentUi(this, contentManager, componentGetter.get())
+        contentUi = result
+        result
+      },
+    )
 
     addContentNotInHierarchyComponents(contentUi!!)
 
@@ -221,10 +226,11 @@ internal class ToolWindowImpl(
     })
     object : ComponentTreeWatcher(ArrayUtil.EMPTY_CLASS_ARRAY) {
       override fun processComponent(component: Component) {
-        if (component is ActionToolbar) {
-          updateToolbarsVisibility()
-        }
+        if (component !is ActionToolbar) return
+        ToggleToolbarAction.updateToolbarVisibility(
+          this@ToolWindowImpl, component, PropertiesComponent.getInstance(project))
       }
+
       override fun unprocessComponent(component: Component) = Unit
     }.register(decorator)
     if (ExperimentalUI.isNewUI()) {
@@ -251,8 +257,13 @@ internal class ToolWindowImpl(
     return contentManager
   }
 
-  private fun updateToolbarsVisibility() {
-    ToggleToolbarAction.updateToolbarsVisibility(this, PropertiesComponent.getInstance(project))
+  internal fun hasTopToolbar(): Boolean {
+    val decorator = decorator ?: return false
+    val header = decorator.header
+    val headerBounds = SwingUtilities.convertRectangle(header.parent, header.bounds, decorator)
+    val component = UIUtil.getDeepestComponentAt(
+      decorator, headerBounds.width/2, headerBounds.height * 3 / 2)
+    return UIUtil.getParentOfType(ActionToolbar::class.java, component) != null
   }
 
   private fun updateScrolledState() {
@@ -363,7 +374,7 @@ internal class ToolWindowImpl(
     toolWindowFocusWatcher?.setFocusedComponentImpl(component)
   }
 
-  fun getLastFocusedContent() : Content? {
+  fun getLastFocusedContent(): Content? {
     val lastFocusedComponent = toolWindowFocusWatcher?.focusedComponent
     if (lastFocusedComponent is JComponent) {
       if (!lastFocusedComponent.isShowing) return null
@@ -704,7 +715,6 @@ internal class ToolWindowImpl(
     ToolWindowContentUi.toggleContentPopup(contentUi!!, contentManager.value)
   }
 
-  @JvmOverloads
   fun createPopupGroup(skipHideAction: Boolean = false): ActionGroup {
     return object : ActionGroupWrapper(GearActionGroup()) {
       override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
@@ -817,22 +827,6 @@ internal class ToolWindowImpl(
     }
   }
 
-  private inner class ResizeActionGroup : DefaultActionGroup(
-    ActionsBundle.groupText("ResizeToolWindowGroup"),
-    ActionManager.getInstance().let { actionManager ->
-      listOf(
-        actionManager.getAction("ResizeToolWindowLeft"),
-        actionManager.getAction("ResizeToolWindowRight"),
-        actionManager.getAction("ResizeToolWindowUp"),
-        actionManager.getAction("ResizeToolWindowDown"),
-        actionManager.getAction("MaximizeToolWindow")
-      )
-    }) {
-    init {
-      isPopup = true
-    }
-  }
-
   private inner class RemoveStripeButtonAction :
     AnAction(ActionsBundle.messagePointer("action.RemoveStripeButton.text"),
              ActionsBundle.messagePointer("action.RemoveStripeButton.description")), DumbAware, FusAwareAction {
@@ -900,6 +894,22 @@ internal class ToolWindowImpl(
     SwingUtilities.invokeLater {
       isAboutToReceiveFocus = false
     }
+  }
+}
+
+private class ResizeActionGroup : DefaultActionGroup(
+  ActionsBundle.groupText("ResizeToolWindowGroup"),
+  ActionManager.getInstance().let { actionManager ->
+    listOf(
+      actionManager.getAction("ResizeToolWindowLeft"),
+      actionManager.getAction("ResizeToolWindowRight"),
+      actionManager.getAction("ResizeToolWindowUp"),
+      actionManager.getAction("ResizeToolWindowDown"),
+      actionManager.getAction("MaximizeToolWindow")
+    )
+  }) {
+  init {
+    isPopup = true
   }
 }
 

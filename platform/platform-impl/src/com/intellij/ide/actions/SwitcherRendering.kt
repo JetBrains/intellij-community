@@ -20,13 +20,19 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.toolWindow.ToolWindowEventSource
-import com.intellij.ui.*
+import com.intellij.ui.BackgroundSupplier
+import com.intellij.ui.CellRendererPanel
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -165,13 +171,12 @@ class SwitcherVirtualFile(
     }
     component.append(mainText, SimpleTextAttributes(style, foreground, effectColor))
     component.font?.let {
-      val fontMetrics = component.getFontMetrics(it)
-      val mainTextWidth = PaintUtil.getStringWidth(mainText, component.graphics, fontMetrics)
-      val shortcutTextWidth = shortcutText?.let { PaintUtil.getStringWidth(it, component.graphics, fontMetrics) } ?: 0
+      val mainTextWidth = UIUtil.computeStringWidth(component, mainText)
+      val shortcutTextWidth = shortcutText?.let { UIUtil.computeStringWidth(component, it) } ?: 0
       val width = component.width - mainTextWidth - shortcutTextWidth - component.iconTextGap - component.icon.iconWidth -
                   component.insets.left - component.insets.right
       if (width <= 0) return@let null
-      PaintUtil.cutContainerText(" $pathText", width, fontMetrics)?.let {
+      PaintUtil.cutContainerText(" $pathText", width, component)?.let {
         @Suppress("HardCodedStringLiteral")
         component.append(it, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }

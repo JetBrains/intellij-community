@@ -16,8 +16,11 @@ import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryRespo
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewThread
+import org.jetbrains.plugins.github.api.data.request.search.GithubIssueSearchType
 import org.jetbrains.plugins.github.api.util.GHSchemaPreview
+import org.jetbrains.plugins.github.api.util.GithubApiSearchQueryBuilder
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.QualifierName
 
 object GHGQLRequests {
   object User {
@@ -267,7 +270,7 @@ object GHGQLRequests {
     fun markReadyForReview(repository: GHRepositoryCoordinates, pullRequestId: String): GQLQuery<Any?> =
       GQLQuery.Parsed(
         repository.serverPath.toGraphQLUrl(), GHGQLQueries.markPullRequestReadyForReview,
-        mutableMapOf<String, Any>("pullRequestId" to pullRequestId),
+        mapOf<String, Any>("pullRequestId" to pullRequestId),
         Any::class.java
       ).apply {
         acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
@@ -304,6 +307,47 @@ object GHGQLRequests {
         withOperation(GithubApiRequestOperation.GraphQLSearchPullRequests)
         withOperationName("search issues")
       }
+
+    internal fun metrics(repo: GHRepositoryCoordinates): GQLQuery<GHPullRequestMetrics> =
+      GQLQuery.Parsed(
+        repo.serverPath.toGraphQLUrl(), GHGQLQueries.metrics,
+        MetricCountType.params(repo),
+        GHPullRequestMetrics::class.java
+      ).apply {
+        withOperation(GithubApiRequestOperation.GraphQLPullRequestsMetrics)
+        withOperationName("count pull requests")
+      }
+
+    private enum class MetricCountType(private val paramName: String) {
+      ALL("allPRCountQuery"),
+      OPEN("openPRCountQuery"),
+      OPEN_AUTHORED("openAuthoredPRCountQuery"),
+      OPEN_ASSIGNEE("openAssigneePRCountQuery"),
+      OPEN_TO_BE_REVIEWED("openReviewAssignedPRCountQuery"),
+      OPEN_REVIEWED("openReviewedPRCountQuery");
+
+      private fun constructMetricQuery(repo: GHRepositoryCoordinates): String = GithubApiSearchQueryBuilder.searchQuery {
+        if (this@MetricCountType != ALL) {
+          term(QualifierName.state.createTerm(GithubIssueState.open.name))
+        }
+
+        term(QualifierName.type.createTerm(GithubIssueSearchType.pr.name))
+        term(QualifierName.repo.createTerm(repo.repositoryPath.toString(showOwner = true)))
+
+        when (this@MetricCountType) {
+          OPEN_AUTHORED -> term(QualifierName.author.createTerm("@me"))
+          OPEN_ASSIGNEE -> term(QualifierName.assignee.createTerm("@me"))
+          OPEN_REVIEWED -> term(QualifierName.reviewedBy.createTerm("@me"))
+          OPEN_TO_BE_REVIEWED -> term(QualifierName.reviewRequested.createTerm("@me"))
+          else -> {}
+        }
+      }
+
+      companion object {
+        fun params(repo: GHRepositoryCoordinates): Map<String, String> =
+          entries.associate { it.paramName to it.constructMetricQuery(repo) }
+      }
+    }
 
     private class PRSearch(search: SearchConnection<GHPullRequestShort>)
       : GHGQLSearchQueryResponse<GHPullRequestShort>(search)

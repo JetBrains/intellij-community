@@ -134,9 +134,9 @@ public final class GutterTooltipHelper extends GutterTooltipBuilder {
   @Override
   protected void appendElement(@NotNull StringBuilder sb, @NotNull PsiElement element, boolean skip) {
     super.appendElement(sb, element, skip);
-    PsiFile file = element.getContainingFile();
-    if (file instanceof PsiClassOwner) {
-      appendPackageName(sb, ((PsiClassOwner)file).getPackageName());
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile instanceof PsiClassOwner) {
+      appendPackageName(sb, ((PsiClassOwner)psiFile).getPackageName());
     }
   }
 

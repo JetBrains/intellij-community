@@ -5,6 +5,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/**
+ * @see MultiMap
+ */
 public final class BidirectionalMultiMap<K, V> {
   private final Map<K, Set<V>> keyToValues;
   private final Map<V, Set<K>> valueToKeys;

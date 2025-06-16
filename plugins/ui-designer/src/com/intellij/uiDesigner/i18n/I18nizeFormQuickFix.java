@@ -95,7 +95,7 @@ public class I18nizeFormQuickFix extends QuickFix {
   }
 
   static String getBundleName(Project project, PropertiesFile aPropertiesFile) {
-    String packageName = PackageIndex.getInstance(project).getPackageNameByDirectory(aPropertiesFile.getVirtualFile().getParent());
+    String packageName = PackageIndex.getInstance(project).getPackageName(aPropertiesFile.getVirtualFile());
     if (packageName == null) return null;
     String bundleName;
     if (!packageName.isEmpty()) {

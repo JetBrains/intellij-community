@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
 import com.intellij.openapi.module.Module
@@ -6,10 +6,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import org.jetbrains.annotations.ApiStatus
 
-internal fun SdkModificator.associateWithModule(module: Module) {
-  getOrCreateSdkAdditionalData().associateWithModule(module)
+@ApiStatus.Internal
+fun SdkModificator.associateWithModule(module: Module) {
+  val basePath = module.basePath ?: throw IllegalArgumentException("Module $module has no roots and can't be associated")
+  getOrCreateSdkAdditionalData().associatedModulePath = basePath
 }
 
 /**
@@ -17,11 +21,11 @@ internal fun SdkModificator.associateWithModule(module: Module) {
  */
 internal fun SdkModificator.associateWithProject(project: Project) {
   val projectBasePath = project.basePath
-  if (projectBasePath != null) getOrCreateSdkAdditionalData().associateWithModulePath(projectBasePath)
+  if (projectBasePath != null) getOrCreateSdkAdditionalData().associatedModulePath = projectBasePath
 }
 
 internal fun SdkModificator.resetAssociatedModulePath() {
-  (sdkAdditionalData as? PythonSdkAdditionalData)?.resetAssociatedModulePath()
+  (sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath = null
 }
 
 private fun SdkModificator.getOrCreateSdkAdditionalData(): PythonSdkAdditionalData {

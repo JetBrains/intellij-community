@@ -30,6 +30,6 @@ open class SettingsDialogUiComponent(data: ComponentData) : DialogUiComponent(da
     settingsTree.clickPath(*path, fullMatch = fullMatch)
   }
 
-  fun content(action: UiComponent.() -> Unit): UiComponent =
+  fun content(action: UiComponent.() -> Unit = {}): UiComponent =
     x { byType("com.intellij.openapi.options.ex.ConfigurableCardPanel") }.apply(action)
 }

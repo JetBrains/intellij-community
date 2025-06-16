@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.icons.AllIcons
@@ -40,6 +40,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsLi
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Container
@@ -48,6 +49,7 @@ import java.awt.event.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
 
+@ApiStatus.Internal
 open class AttachToProcessDialog(
   private val project: Project,
   private val attachDebuggerProviders: List<XAttachDebuggerProvider>,
@@ -62,7 +64,7 @@ open class AttachToProcessDialog(
     private val logger = Logger.getInstance(AttachToProcessDialog::class.java)
   }
 
-  protected val filterTextField = SearchTextField(false).apply {
+  protected val filterTextField: SearchTextField = SearchTextField(false).apply {
     border = JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0)
 
     val editor: JBTextField = textEditor
@@ -562,7 +564,7 @@ open class AttachToProcessDialog(
       val activeDebuggerAction = getActiveDebuggerAction()
       activeDebuggerAction?.isMainAction = true
       isEnabled = activeDebuggerAction != null
-      putValue(Action.NAME, activeDebuggerAction?.debugger.getActionPresentation())
+      putValue(NAME, activeDebuggerAction?.debugger.getActionPresentation())
     }
 
     override fun actionPerformed(e: ActionEvent?) {
@@ -582,7 +584,7 @@ open class AttachToProcessDialog(
     var isMainAction: Boolean = false
 
     init {
-      putValue(Action.NAME, debugger.getActionPresentation())
+      putValue(NAME, debugger.getActionPresentation())
     }
 
     override fun actionPerformed(e: ActionEvent?) {

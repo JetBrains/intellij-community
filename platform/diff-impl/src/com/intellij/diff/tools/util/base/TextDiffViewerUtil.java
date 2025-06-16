@@ -258,6 +258,7 @@ public final class TextDiffViewerUtil {
     public EnumPolicySettingAction(T @NotNull [] policies) {
       assert policies.length > 0;
       myPolicies = policies;
+
     }
 
     @Override

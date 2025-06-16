@@ -53,21 +53,6 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
     myGetModel = getSdkListModel;
   }
 
-  /**
-   * @deprecated Use {@link SdkListPresenter#create} instead. Wrapping is handled by {@code listItemSupplier}.
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull <T> ListCellRenderer<T> forType(@NotNull Function<? super T, ? extends SdkListItem> unwrap) {
-    return new ListCellRenderer<>() {
-      @Override
-      public Component getListCellRendererComponent(JList<? extends T> list, @Nullable T value, int index, boolean selected, boolean focused) {
-        SdkListItem item = value == null ? null : unwrap.apply(value);
-        @SuppressWarnings("unchecked") JList<SdkItem> cast = (JList<SdkItem>)list;
-        return SdkListPresenter.this.getListCellRendererComponent(cast, item, index, selected, focused);
-      }
-    };
-  }
-
   @Override
   public Component getListCellRendererComponent(@NotNull JList<? extends SdkListItem> list,
                                                 @Nullable SdkListItem value,

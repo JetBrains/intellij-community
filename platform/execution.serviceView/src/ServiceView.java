@@ -10,6 +10,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
@@ -56,7 +57,7 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     myModel.saveState(state);
   }
 
-  abstract @NotNull List<ServiceViewItem> getSelectedItems();
+  abstract @NotNull @Unmodifiable List<ServiceViewItem> getSelectedItems();
 
   abstract Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass);
 
@@ -76,7 +77,7 @@ abstract class ServiceView extends JPanel implements UiDataProvider, Disposable 
     myModel.setGroupByContributor(value);
   }
 
-  abstract List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass);
+  abstract @Unmodifiable List<Object> getChildrenSafe(@NotNull List<Object> valueSubPath, @NotNull Class<?> contributorClass);
 
   void setAutoScrollToSourceHandler(@NotNull AutoScrollToSourceHandler autoScrollToSourceHandler) {
     myAutoScrollToSourceHandler = autoScrollToSourceHandler;

@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.ActualCodeInsightContextInfo;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 // Tests only (module plus dependencies) scope
 // Delegates to ModuleWithDependentsScope with extra flag testOnly to reduce memory for holding modules and CPU for traversing dependencies.
-class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope implements ActualCodeInsightContextInfo {
+final class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope implements ActualCodeInsightContextInfo {
   ModuleWithDependentsTestScope(@NotNull Module module) {
     // the additional equality argument allows to distinguish ModuleWithDependentsTestScope from ModuleWithDependentsScope
     super(new ModuleWithDependentsScope(module), true);
@@ -22,7 +22,7 @@ class ModuleWithDependentsTestScope extends DelegatingGlobalSearchScope implemen
   @Override
   public boolean contains(@NotNull VirtualFile file) {
     ModuleWithDependentsScope scope = getBaseScope();
-    return scope.contains(file, CodeInsightContextKt.anyContext(), true);
+    return scope.contains(file, CodeInsightContexts.anyContext(), true);
   }
 
   @Override

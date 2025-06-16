@@ -46,7 +46,7 @@ public class RemoveParamFix extends AbstractFix {
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         myTag.delete();
     }
 

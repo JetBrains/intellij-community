@@ -6,7 +6,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class ObsoleteApiUsageInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = ObsoleteApiUsageInspection()
+  override val inspection: ObsoleteApiUsageInspection = ObsoleteApiUsageInspection()
 
   override fun setUp() {
     super.setUp()
@@ -21,5 +21,5 @@ abstract class ObsoleteApiUsageInspectionTestBase : JvmInspectionTestBase() {
     enableWarnings()
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST, true) { }
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST, true) {}
 }

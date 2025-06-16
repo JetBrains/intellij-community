@@ -1,7 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.openapi.util.io
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.DiskQueryRelay
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.blockingDispatcher
@@ -118,6 +121,7 @@ class DiskQueryRelayTest {
         while (started.get() < MANY_REQUESTS) {
           delay(100)
         }
+        delay(100)
 
 
         nonCancellableComputation.terminateFor(arg)

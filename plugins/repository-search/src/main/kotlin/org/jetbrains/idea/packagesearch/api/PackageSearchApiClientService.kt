@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.createParentDirectories
 import io.ktor.client.engine.java.Java
 import io.ktor.client.plugins.*
@@ -30,6 +31,7 @@ import org.jetbrains.packagesearch.api.PackageSearchApiClientObject
 import org.jetbrains.packagesearch.api.v3.ApiMavenPackage
 import org.jetbrains.packagesearch.api.v3.http.PackageSearchApiClient
 import org.jetbrains.packagesearch.api.v3.http.PackageSearchApiClient.Companion.defaultHttpClient
+import org.jetbrains.packagesearch.api.v3.http.PackageSearchDefaultEndpoints
 import org.jetbrains.packagesearch.api.v3.http.PackageSearchEndpoints
 import org.jetbrains.packagesearch.api.v3.http.searchPackages
 import org.jetbrains.packagesearch.api.v3.search.jvmMavenPackages
@@ -87,9 +89,15 @@ class PackageSearchApiClientService(val coroutineScope: CoroutineScope) : Dispos
     getCacheFile(),
     DataStore.CommitStrategy.Periodic(5.seconds))
 
+  private val overrideEndpoint = Registry.`is`("packagesearch.config.url.override")
+  private val endpoint = if(overrideEndpoint) {
+    PackageSearchDefaultEndpoints(
+      host = "maven-deps-search.labs.jb.gg",
+    )
+  }  else PackageSearchEndpoints.PROD
   val client = PackageSearchApiClient(
     dataStore = mvDataStore,
-    endpoints = PackageSearchEndpoints.PROD,
+    endpoints = endpoint,
     httpClient = httpClient
   )
 

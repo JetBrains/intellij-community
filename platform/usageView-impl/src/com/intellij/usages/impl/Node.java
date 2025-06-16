@@ -10,6 +10,7 @@ import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Vector;
@@ -87,7 +88,8 @@ public abstract class Node extends DefaultMutableTreeNode {
     return result;
   }
 
-  final boolean isExcluded() {
+  @VisibleForTesting
+  public final boolean isExcluded() {
     return isFlagSet(EXCLUDED_MASK);
   }
 

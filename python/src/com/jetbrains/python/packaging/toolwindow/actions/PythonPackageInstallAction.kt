@@ -2,7 +2,7 @@
 package com.jetbrains.python.packaging.toolwindow.actions
 
 import com.intellij.openapi.project.Project
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import org.jetbrains.annotations.Nls
 
 abstract class PythonPackageInstallAction(
@@ -10,5 +10,5 @@ abstract class PythonPackageInstallAction(
   internal val project: Project,
 ) {
 
-  abstract suspend fun installPackage(specification: PythonPackageSpecification)
+  abstract suspend fun installPackage(specification: PythonRepositoryPackageSpecification)
 }

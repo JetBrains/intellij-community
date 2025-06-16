@@ -75,6 +75,14 @@ abstract class AbstractEntityCodeGenTest : CodeGenerationTestBase() {
     doTest()
   }
 
+  fun testOpenClassProperty() {
+    doTest(processAbstractTypes = true)
+  }
+
+  fun testPackages() {
+    doTest()
+  }
+
   fun testPropertiesOrder() {
     doTest()
   }

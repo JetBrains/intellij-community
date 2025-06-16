@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.JavaTailTypes;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
@@ -120,31 +121,31 @@ public final class GroovyCompletionData {
 
 
     if (parent instanceof GrExpression && parent.getParent() instanceof GrAnnotationNameValuePair) {
-      addKeywords(consumer, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL);
+      addKeywords(consumer, false, JavaKeywords.TRUE, JavaKeywords.FALSE, JavaKeywords.NULL);
       return;
     }
 
     if (afterAtInType(position)) {
-      consumer.consume(keyword(PsiKeyword.INTERFACE, TailTypes.humbleSpaceBeforeWordType()));
+      consumer.consume(keyword(JavaKeywords.INTERFACE, TailTypes.humbleSpaceBeforeWordType()));
     }
 
     if (!psiElement().afterLeaf(".", ".&", "@", "*.", "?.").accepts(position)) {
       if (afterAbstractMethod(position, false, true)) {
-        consumer.consume(keyword(PsiKeyword.THROWS, TailTypes.humbleSpaceBeforeWordType()));
+        consumer.consume(keyword(JavaKeywords.THROWS, TailTypes.humbleSpaceBeforeWordType()));
         if (afterAbstractMethod(position, false, false)) return;
       }
 
       if (suggestPackage(position)) {
-        consumer.consume(keyword(PsiKeyword.PACKAGE, TailTypes.humbleSpaceBeforeWordType()));
+        consumer.consume(keyword(JavaKeywords.PACKAGE, TailTypes.humbleSpaceBeforeWordType()));
       }
       if (suggestImport(position)) {
-        consumer.consume(keyword(PsiKeyword.IMPORT, TailTypes.humbleSpaceBeforeWordType()));
+        consumer.consume(keyword(JavaKeywords.IMPORT, TailTypes.humbleSpaceBeforeWordType()));
       }
 
       addTypeDefinitionKeywords(consumer, position);
 
       if (isAfterAnnotationMethodIdentifier(position)) {
-        consumer.consume(keyword(PsiKeyword.DEFAULT, TailTypes.humbleSpaceBeforeWordType()));
+        consumer.consume(keyword(JavaKeywords.DEFAULT, TailTypes.humbleSpaceBeforeWordType()));
       }
 
       addExtendsForTypeParams(position, consumer);
@@ -152,10 +153,10 @@ public final class GroovyCompletionData {
       registerControlCompletion(position, consumer);
 
       if (parent instanceof GrExpression || isInfixOperatorPosition(position)) {
-        addKeywords(consumer, false, PsiKeyword.TRUE, PsiKeyword.FALSE, PsiKeyword.NULL, PsiKeyword.SUPER, PsiKeyword.THIS);
-        consumer.consume(keyword(PsiKeyword.NEW, TailTypes.humbleSpaceBeforeWordType()));
+        addKeywords(consumer, false, JavaKeywords.TRUE, JavaKeywords.FALSE, JavaKeywords.NULL, JavaKeywords.SUPER, JavaKeywords.THIS);
+        consumer.consume(keyword(JavaKeywords.NEW, TailTypes.humbleSpaceBeforeWordType()));
         if (GroovyConfigUtils.isAtLeastGroovy40(position)) {
-          consumer.consume(keyword(PsiKeyword.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
+          consumer.consume(keyword(JavaKeywords.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
         }
       }
 
@@ -164,7 +165,7 @@ public final class GroovyCompletionData {
         consumer.consume(keyword("in", TailTypes.humbleSpaceBeforeWordType()));
       }
       if (isInfixOperatorPosition(position)) {
-        addKeywords(consumer, true, "as", "in", PsiKeyword.INSTANCEOF);
+        addKeywords(consumer, true, "as", "in", JavaKeywords.INSTANCEOF);
       }
       if (suggestPrimitiveTypes(position)) {
         final boolean addSpace = !IN_CAST_TYPE_ELEMENT.accepts(position) &&
@@ -176,20 +177,20 @@ public final class GroovyCompletionData {
 
       if (GroovyConfigUtils.isAtLeastGroovy40(position) && PsiJavaPatterns.psiElement(GrReferenceExpression.class).inside(
         PsiJavaPatterns.psiElement(GrCaseSection.class)).accepts(parent)) {
-        addKeywords(consumer, true, PsiKeyword.YIELD);
+        addKeywords(consumer, true, JavaKeywords.YIELD);
       }
 
       if (PsiJavaPatterns.psiElement(GrReferenceExpression.class).inside(
         StandardPatterns.or(PsiJavaPatterns.psiElement(GrWhileStatement.class), PsiJavaPatterns.psiElement(GrForStatement.class))).accepts(parent)) {
-        addKeywords(consumer, false, PsiKeyword.BREAK, PsiKeyword.CONTINUE);
+        addKeywords(consumer, false, JavaKeywords.BREAK, JavaKeywords.CONTINUE);
       }
       else if (PsiJavaPatterns.psiElement(GrReferenceExpression.class).inside(GrCaseSection.class).accepts(parent)) {
-        addKeywords(consumer, false, PsiKeyword.BREAK);
+        addKeywords(consumer, false, JavaKeywords.BREAK);
       }
 
       if (PsiJavaPatterns.psiElement().withSuperParent(2, GrImportStatement.class).accepts(position)) {
-        if (PsiJavaPatterns.psiElement().afterLeaf(PsiKeyword.IMPORT).accepts(position)) {
-          addKeywords(consumer, true, PsiKeyword.STATIC);
+        if (PsiJavaPatterns.psiElement().afterLeaf(JavaKeywords.IMPORT).accepts(position)) {
+          addKeywords(consumer, true, JavaKeywords.STATIC);
         }
       } else {
         if (suggestModifiers(position)) {
@@ -197,11 +198,11 @@ public final class GroovyCompletionData {
         }
         if (PsiJavaPatterns.psiElement().afterLeaf(MODIFIERS).accepts(position) ||
             GroovyCompletionUtil.isInTypeDefinitionBody(position) && GroovyCompletionUtil.isNewStatement(position, true)) {
-          addKeywords(consumer, true, PsiKeyword.SYNCHRONIZED);
+          addKeywords(consumer, true, JavaKeywords.SYNCHRONIZED);
         }
         if (suggestFinalDef(position) || PsiJavaPatterns
           .psiElement().afterLeaf(PsiJavaPatterns.psiElement().withText("(").withParent(GrForStatement.class)).accepts(position)) {
-          addKeywords(consumer, true, PsiKeyword.FINAL, "def");
+          addKeywords(consumer, true, JavaKeywords.FINAL, "def");
         }
       }
     }
@@ -234,7 +235,7 @@ public final class GroovyCompletionData {
 
   private static void addExtendsForTypeParams(PsiElement position, GroovyCompletionConsumer consumer) {
     if (GroovyCompletionUtil.isWildcardCompletion(position)) {
-      addKeywords(consumer, true, PsiKeyword.EXTENDS, PsiKeyword.SUPER);
+      addKeywords(consumer, true, JavaKeywords.EXTENDS, JavaKeywords.SUPER);
     }
   }
 
@@ -251,13 +252,13 @@ public final class GroovyCompletionData {
     PsiModifierList modifierList = ModifierChooser.findModifierList(position);
     addKeywords(result, true, ModifierChooser.addMemberModifiers(modifierList, scope != null && scope.isInterface(), position));
     if (GroovyConfigUtils.isAtLeastGroovy40(position)) {
-      addKeywords(result, true, PsiKeyword.SEALED, PsiKeyword.NON_SEALED);
+      addKeywords(result, true, JavaKeywords.SEALED, JavaKeywords.NON_SEALED);
     }
   }
 
   private static void addTypeDefinitionKeywords(GroovyCompletionConsumer result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
-      addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM, PsiKeyword.RECORD, GroovyTokenTypes.kTRAIT.toString());
+      addKeywords(result, true, JavaKeywords.CLASS, JavaKeywords.INTERFACE, JavaKeywords.ENUM, JavaKeywords.RECORD, GroovyTokenTypes.kTRAIT.toString());
     }
   }
 
@@ -306,13 +307,13 @@ public final class GroovyCompletionData {
     }
     List<String> keywords = new ArrayList<>();
     if (ext) {
-      keywords.add(PsiKeyword.EXTENDS);
+      keywords.add(JavaKeywords.EXTENDS);
     }
     if (impl) {
-      keywords.add(PsiKeyword.IMPLEMENTS);
+      keywords.add(JavaKeywords.IMPLEMENTS);
     }
     if (permits && GroovyConfigUtils.isAtLeastGroovy40(context)) {
-      keywords.add(PsiKeyword.PERMITS);
+      keywords.add(JavaKeywords.PERMITS);
     }
 
     return ArrayUtil.toStringArray(keywords);
@@ -331,14 +332,14 @@ public final class GroovyCompletionData {
 
   private static void registerControlCompletion(PsiElement context, GroovyCompletionConsumer result) {
     if (isControlStructure(context)) {
-      result.consume(keyword(PsiKeyword.TRY, JavaTailTypes.TRY_LBRACE));
-      result.consume(keyword(PsiKeyword.WHILE, JavaTailTypes.WHILE_LPARENTH));
-      result.consume(keyword(PsiKeyword.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
-      result.consume(keyword(PsiKeyword.FOR, JavaTailTypes.FOR_LPARENTH));
-      result.consume(keyword(PsiKeyword.THROW, TailTypes.humbleSpaceBeforeWordType()));
-      result.consume(keyword(PsiKeyword.ASSERT, TailTypes.humbleSpaceBeforeWordType()));
-      result.consume(keyword(PsiKeyword.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
-      result.consume(keyword(PsiKeyword.RETURN, hasReturnValue(context) ? TailTypes.humbleSpaceBeforeWordType() : TailTypes.noneType()));
+      result.consume(keyword(JavaKeywords.TRY, JavaTailTypes.TRY_LBRACE));
+      result.consume(keyword(JavaKeywords.WHILE, JavaTailTypes.WHILE_LPARENTH));
+      result.consume(keyword(JavaKeywords.SWITCH, JavaTailTypes.SWITCH_LPARENTH));
+      result.consume(keyword(JavaKeywords.FOR, JavaTailTypes.FOR_LPARENTH));
+      result.consume(keyword(JavaKeywords.THROW, TailTypes.humbleSpaceBeforeWordType()));
+      result.consume(keyword(JavaKeywords.ASSERT, TailTypes.humbleSpaceBeforeWordType()));
+      result.consume(keyword(JavaKeywords.SYNCHRONIZED, JavaTailTypes.SYNCHRONIZED_LPARENTH));
+      result.consume(keyword(JavaKeywords.RETURN, hasReturnValue(context) ? TailTypes.humbleSpaceBeforeWordType() : TailTypes.noneType()));
     }
     if (inCaseSection(context)) {
       boolean isArrowAllowed = GroovyConfigUtils.isAtLeastGroovy40(context);
@@ -347,20 +348,20 @@ public final class GroovyCompletionData {
       result.consume(keyword("default", defaultType));
     }
     if (afterTry(context)) {
-      result.consume(keyword(PsiKeyword.CATCH, JavaTailTypes.CATCH_LPARENTH));
-      result.consume(keyword(PsiKeyword.FINALLY, JavaTailTypes.FINALLY_LBRACE));
+      result.consume(keyword(JavaKeywords.CATCH, JavaTailTypes.CATCH_LPARENTH));
+      result.consume(keyword(JavaKeywords.FINALLY, JavaTailTypes.FINALLY_LBRACE));
     }
     if (afterIfOrElse(context)) {
-      result.consume(keyword(PsiKeyword.ELSE, TailTypes.humbleSpaceBeforeWordType()));
+      result.consume(keyword(JavaKeywords.ELSE, TailTypes.humbleSpaceBeforeWordType()));
     }
     if (WHILE_KEYWORD_POSITION.accepts(context)) {
-      result.consume(keyword(PsiKeyword.WHILE, JavaTailTypes.WHILE_LPARENTH));
+      result.consume(keyword(JavaKeywords.WHILE, JavaTailTypes.WHILE_LPARENTH));
     }
 
     if (isCommandCallWithOneArg(context)) {
-      result.consume(keyword(PsiKeyword.ASSERT, TailTypes.humbleSpaceBeforeWordType()));
+      result.consume(keyword(JavaKeywords.ASSERT, TailTypes.humbleSpaceBeforeWordType()));
       if (hasReturnValue(context)) {
-        result.consume(keyword(PsiKeyword.RETURN, TailTypes.humbleSpaceBeforeWordType()));
+        result.consume(keyword(JavaKeywords.RETURN, TailTypes.humbleSpaceBeforeWordType()));
       }
     }
   }

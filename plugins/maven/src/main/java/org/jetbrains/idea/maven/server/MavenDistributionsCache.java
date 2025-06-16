@@ -75,7 +75,7 @@ public final class MavenDistributionsCache {
       MavenDistribution mavenDistribution = fromPath(sp.getMavenHome(), sp.getTitle());
       if (mavenDistribution != null) return mavenDistribution;
     }
-    else if (type instanceof BundledMaven3 || type instanceof BundledMaven4) {
+    else if (type instanceof BundledMaven) {
       return resolveEmbeddedMavenHome();
     }
 

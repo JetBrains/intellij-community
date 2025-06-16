@@ -24,13 +24,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
 public final class BuildFSState {
   public static final int VERSION = 3;
   private static final Logger LOG = Logger.getInstance(BuildFSState.class);
-  private static final Key<Collection<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");
+  private static final Key<Set<? extends BuildTarget<?>>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_targets_");
   @ApiStatus.Internal
   public static final Key<FilesDelta> NEXT_ROUND_DELTA_KEY = Key.create("_next_round_delta_");
   @ApiStatus.Internal
@@ -38,19 +35,19 @@ public final class BuildFSState {
 
   // when true, will always determine dirty files by scanning FS and comparing timestamps
   // alternatively, when false, after first scan will rely on external notifications about changes
-  private final boolean alwaysScanFS;
-  private final Set<BuildTarget<?>> initialScanPerformed = Collections.synchronizedSet(new HashSet<>());
+  private final boolean myAlwaysScanFS;
+  private final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<>());
   @SuppressWarnings("SSBasedInspection")
-  private final Object2LongOpenCustomHashMap<Path> registrationStamps = new Object2LongOpenCustomHashMap<>(CanonicalPathHashStrategy.INSTANCE);
-  private final Map<BuildTarget<?>, FilesDelta> deltas = Collections.synchronizedMap(new HashMap<>());
+  private final Object2LongOpenCustomHashMap<Path> myRegistrationStamps = new Object2LongOpenCustomHashMap<>(CanonicalPathHashStrategy.INSTANCE);
+  private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<>());
 
   public BuildFSState(boolean alwaysScanFS) {
-    this.alwaysScanFS = alwaysScanFS;
+    myAlwaysScanFS = alwaysScanFS;
   }
 
   public void save(DataOutput out) throws IOException {
     MultiMap<BuildTargetType<?>, BuildTarget<?>> targetsByType = new MultiMap<>();
-    for (BuildTarget<?> target : initialScanPerformed) {
+    for (BuildTarget<?> target : myInitialScanPerformed) {
       targetsByType.putValue(target.getTargetType(), target);
     }
     out.writeInt(targetsByType.size());
@@ -80,7 +77,7 @@ public final class BuildFSState {
           BuildTarget<?> target = loader.createTarget(id);
           if (target != null) {
             getDelta(target).load(in, target, buildRootIndex);
-            initialScanPerformed.add(target);
+            myInitialScanPerformed.add(target);
             loaded = true;
           }
         }
@@ -97,17 +94,17 @@ public final class BuildFSState {
   }
 
   public long getEventRegistrationStamp(@NotNull Path file) {
-    synchronized (registrationStamps) {
-      return registrationStamps.getLong(file);
+    synchronized (myRegistrationStamps) {
+      return myRegistrationStamps.getLong(file);
     }
   }
 
   public boolean hasWorkToDo(@NotNull BuildTarget<?> target) {
-    if (!initialScanPerformed.contains(target)) {
+    if (!myInitialScanPerformed.contains(target)) {
       return true;
     }
 
-    FilesDelta delta = deltas.get(target);
+    FilesDelta delta = myDeltas.get(target);
     return delta != null && delta.hasChanges();
   }
 
@@ -115,10 +112,10 @@ public final class BuildFSState {
    * @return true, if there were changed files reported for the specified target, _after_ the target compilation had been started
    */
   public boolean hasUnprocessedChanges(@NotNull CompileContext context, @NotNull BuildTarget<?> target) {
-    if (!initialScanPerformed.contains(target)) {
+    if (!myInitialScanPerformed.contains(target)) {
       return false;
     }
-    final FilesDelta delta = deltas.get(target);
+    final FilesDelta delta = myDeltas.get(target);
     if (delta == null) {
       return false;
     }
@@ -163,7 +160,7 @@ public final class BuildFSState {
   }
 
   public void markInitialScanPerformed(BuildTarget<?> target) {
-    initialScanPerformed.add(target);
+    myInitialScanPerformed.add(target);
   }
 
   public void registerDeleted(@Nullable CompileContext context,
@@ -189,26 +186,26 @@ public final class BuildFSState {
   }
 
   public void clearDeletedPaths(BuildTarget<?> target) {
-    final FilesDelta delta = deltas.get(target);
+    final FilesDelta delta = myDeltas.get(target);
     if (delta != null) {
       delta.clearDeletedPaths();
     }
   }
 
   public Collection<String> getAndClearDeletedPaths(BuildTarget<?> target) {
-    FilesDelta delta = deltas.get(target);
+    FilesDelta delta = myDeltas.get(target);
     return delta == null ? List.of() : delta.getAndClearDeletedPaths();
   }
 
   @ApiStatus.Internal
   public @NotNull FilesDelta getDelta(@NotNull BuildTarget<?> buildTarget) {
-    synchronized (deltas) {
-      return deltas.computeIfAbsent(buildTarget, __ -> new FilesDelta());
+    synchronized (myDeltas) {
+      return myDeltas.computeIfAbsent(buildTarget, __ -> new FilesDelta());
     }
   }
 
   public boolean isInitialScanPerformed(BuildTarget<?> target) {
-    return !alwaysScanFS && initialScanPerformed.contains(target);
+    return !myAlwaysScanFS && myInitialScanPerformed.contains(target);
   }
 
   @ApiStatus.Internal
@@ -286,8 +283,8 @@ public final class BuildFSState {
         }
         if (saveEventStamp) {
           long eventStamp = System.currentTimeMillis();
-          synchronized (registrationStamps) {
-            registrationStamps.put(file, eventStamp);
+          synchronized (myRegistrationStamps) {
+            myRegistrationStamps.put(file, eventStamp);
           }
         }
         if (stampStorage != null) {
@@ -331,10 +328,10 @@ public final class BuildFSState {
   public void clearAll() {
     clearContextRoundData(null);
     clearContextChunk(null);
-    initialScanPerformed.clear();
-    deltas.clear();
-    synchronized (registrationStamps) {
-      registrationStamps.clear();
+    myInitialScanPerformed.clear();
+    myDeltas.clear();
+    synchronized (myRegistrationStamps) {
+      myRegistrationStamps.clear();
     }
   }
 

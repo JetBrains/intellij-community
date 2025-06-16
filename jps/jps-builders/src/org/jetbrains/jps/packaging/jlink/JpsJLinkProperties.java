@@ -7,6 +7,7 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 
 @ApiStatus.Internal
@@ -22,7 +23,8 @@ public final class JpsJLinkProperties extends JpsElementBase<JpsJLinkProperties>
     copyToThis(properties);
   }
 
-  JpsJLinkProperties(@NotNull CompressionLevel compressionLevel, boolean verbose) {
+  @VisibleForTesting
+  public JpsJLinkProperties(@NotNull CompressionLevel compressionLevel, boolean verbose) {
     this.compressionLevel = compressionLevel;
     this.verbose = verbose;
   }

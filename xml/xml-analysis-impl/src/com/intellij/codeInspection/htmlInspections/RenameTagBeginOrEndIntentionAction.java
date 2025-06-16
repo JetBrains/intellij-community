@@ -44,14 +44,14 @@ public final class RenameTagBeginOrEndIntentionAction implements IntentionAction
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     return true;
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
-    PsiElement psiElement = file.findElementAt(offset);
+    PsiElement psiElement = psiFile.findElementAt(offset);
 
     if (psiElement == null) return;
 
@@ -76,7 +76,7 @@ public final class RenameTagBeginOrEndIntentionAction implements IntentionAction
       }
 
       if (target != null) {
-        final Document document = file.getViewProvider().getDocument();
+        final Document document = psiFile.getViewProvider().getDocument();
         if (document != null) {
           final TextRange textRange = target.getTextRange();
           document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(), myTargetName);

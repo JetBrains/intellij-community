@@ -4,6 +4,7 @@ package com.intellij.model.psi;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -19,24 +20,25 @@ public interface PsiSymbolReferenceService {
   /**
    * @return all (own and external) references from this element
    */
-  @NotNull Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiElement element);
+  @NotNull @Unmodifiable
+  Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiElement element);
 
   /**
    * @param <T> type of desired reference
    * @return all (own and external) references from this element, which have desired type
    */
-  <T extends @NotNull PsiSymbolReference> @NotNull Collection<T> getReferences(@NotNull PsiElement host, @NotNull Class<T> referenceClass);
+  <T extends @NotNull PsiSymbolReference> @NotNull @Unmodifiable Collection<T> getReferences(@NotNull PsiElement host, @NotNull Class<T> referenceClass);
 
   /**
    * @return all (own and external) references from this element, which match {@code hints}
    */
-  @NotNull Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiElement element,
+  @NotNull @Unmodifiable Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiElement element,
                                                                            @NotNull PsiSymbolReferenceHints hints);
 
   /**
    * @return external references from this element, which match {@code hints}
    */
-  @NotNull
+  @NotNull @Unmodifiable
   Collection<? extends @NotNull PsiSymbolReference> getExternalReferences(@NotNull PsiExternalReferenceHost host,
                                                                           @NotNull PsiSymbolReferenceHints hints);
 }

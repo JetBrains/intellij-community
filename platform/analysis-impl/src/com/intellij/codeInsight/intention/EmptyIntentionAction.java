@@ -33,7 +33,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     // edit inspection settings is always enabled
     return true;
   }
@@ -61,7 +61,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project,
                                                        @NotNull Editor editor,
-                                                       @NotNull PsiFile file) {
+                                                       @NotNull PsiFile psiFile) {
     return new IntentionPreviewInfo.Html(AnalysisBundle.message("empty.inspection.action.description", myName));
   }
 }

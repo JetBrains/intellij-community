@@ -49,59 +49,53 @@ public class GitLogRecord {
 
   // trivial access methods
   @NotNull
-  String getHash() {
+  public String getHash() {
     return lookup(HASH);
   }
 
   @NotNull
-  String getTreeHash() {
+  public String getTreeHash() {
     return lookup(TREE);
   }
 
   @NotNull
-  String getAuthorName() {
+  public String getAuthorName() {
     return lookup(AUTHOR_NAME);
   }
 
   @NotNull
-  String getAuthorEmail() {
+  public String getAuthorEmail() {
     return lookup(AUTHOR_EMAIL);
   }
 
   @NotNull
-  String getCommitterName() {
+  public String getCommitterName() {
     return lookup(COMMITTER_NAME);
   }
 
-  @NotNull
-  String getCommitterEmail() {
+  public @NotNull String getCommitterEmail() {
     return lookup(COMMITTER_EMAIL);
   }
 
-  @NotNull
-  String getSubject() {
+  public @NotNull String getSubject() {
     return lookup(SUBJECT);
   }
 
-  @NotNull
-  String getBody() {
+  public @NotNull String getBody() {
     return lookup(BODY);
   }
 
-  @NotNull
-  String getRawBody() {
+  public @NotNull String getRawBody() {
     return lookup(RAW_BODY);
   }
 
-  @NotNull
-  String getShortenedRefLog() {
+  public @NotNull String getShortenedRefLog() {
     return lookup(SHORT_REF_LOG_SELECTOR);
   }
 
   // access methods with some formatting or conversion
 
-  @NotNull
-  Date getDate() {
+  public @NotNull Date getDate() {
     return new Date(getCommitTime());
   }
 
@@ -115,7 +109,7 @@ public class GitLogRecord {
     }
   }
 
-  long getAuthorTimeStamp() {
+  public long getAuthorTimeStamp() {
     try {
       return GitLogUtil.parseTime(myOptions.get(AUTHOR_TIME));
     }
@@ -129,7 +123,7 @@ public class GitLogRecord {
     return (mySupportsRawBody ? getRawBody() : getSubject() + "\n\n" + getBody()).stripTrailing();
   }
 
-  String @NotNull [] getParentsHashes() {
+  public String @NotNull [] getParentsHashes() {
     final String parents = lookup(PARENTS);
     if (parents.trim().isEmpty()) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return parents.split(" ");

@@ -25,7 +25,7 @@ suspend fun <T> retryWithExponentialBackOff(
   }
   catch (e: Exception) {
     onException(attempt, e)
-    if (e is NoMoreRetriesException) {
+    if (e is IExceptionWithRetryPolicy && e.isRetryAllowed.not()) {
       throw Exception("Attempt $attempt failed, stopping retries", e).apply {
         exceptions.forEach(this::addSuppressed)
       }
@@ -54,7 +54,8 @@ suspend fun <T> retryWithExponentialBackOff(
 }
 
 private fun defaultExceptionConsumer(attempt: Int, e: Exception) {
-  BuildDependenciesDownloader.TRACER.spanBuilder("Retrying action with exponential back off").startSpan().use { span ->
+  val spanMessage = if (e is IExceptionWithRetryPolicy && e.isRetryAllowed.not()) "Exception is not retryable" else "Retrying action with exponential back off"
+  BuildDependenciesDownloader.TRACER.spanBuilder(spanMessage).startSpan().use { span ->
     span.addEvent("Attempt failed", Attributes.of(
       AttributeKey.longKey("attemptNumber"), attempt.toLong(),
       AttributeKey.stringKey("error"), e.toString()
@@ -78,4 +79,10 @@ private fun nextDelay(
   return nextDelay
 }
 
-class NoMoreRetriesException(message: String): Exception(message)
+interface IExceptionWithRetryPolicy{
+  val isRetryAllowed: Boolean
+}
+
+class NoMoreRetriesException(message: String): Exception(message), IExceptionWithRetryPolicy {
+  override val isRetryAllowed: Boolean = false
+}

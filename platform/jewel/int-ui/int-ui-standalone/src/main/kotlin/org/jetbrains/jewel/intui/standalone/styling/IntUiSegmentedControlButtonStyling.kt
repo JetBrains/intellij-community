@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -15,19 +14,16 @@ import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonColors
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.SegmentedControlButtonStyle
 
-@Composable
 public fun SegmentedControlButtonStyle.Companion.light(
     colors: SegmentedControlButtonColors = SegmentedControlButtonColors.light(),
     metrics: SegmentedControlButtonMetrics = SegmentedControlButtonMetrics.defaults(),
 ): SegmentedControlButtonStyle = SegmentedControlButtonStyle(colors, metrics)
 
-@Composable
 public fun SegmentedControlButtonStyle.Companion.dark(
     colors: SegmentedControlButtonColors = SegmentedControlButtonColors.dark(),
     metrics: SegmentedControlButtonMetrics = SegmentedControlButtonMetrics.defaults(),
 ): SegmentedControlButtonStyle = SegmentedControlButtonStyle(colors, metrics)
 
-@Composable
 public fun SegmentedControlButtonColors.Companion.light(
     background: Brush = SolidColor(Color.Transparent),
     backgroundPressed: Brush = SolidColor(IntUiLightTheme.colors.gray(14)),
@@ -55,7 +51,6 @@ public fun SegmentedControlButtonColors.Companion.light(
         borderSelectedFocused = borderSelectedFocused,
     )
 
-@Composable
 public fun SegmentedControlButtonColors.Companion.dark(
     background: Brush = SolidColor(Color.Transparent),
     backgroundPressed: Brush = SolidColor(IntUiDarkTheme.colors.gray(3)),

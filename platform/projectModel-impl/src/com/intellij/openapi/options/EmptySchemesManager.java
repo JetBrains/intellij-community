@@ -3,7 +3,6 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import kotlin.jvm.functions.Function1;
 import kotlin.sequences.Sequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,7 @@ public final class EmptySchemesManager extends SchemeManager<Object> {
   }
 
   @Override
-  public void reload(@Nullable Function1<? super Object, Boolean> retainFilter) {
+  public void reload() {
   }
 
   @Override

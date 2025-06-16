@@ -11,7 +11,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 @State(name = "Trusted.Paths",
        category = SettingsCategory.TOOLS,
        exportable = true,
@@ -46,6 +46,7 @@ class TrustedPaths : TrustedProjectsStateStorage<TrustedPaths.State>(State()) {
     }
   }
 
+  @Deprecated("Use TrustedProjects.setProjectTrusted(Path, Boolean) instead")
   fun setProjectPathTrusted(path: Path, value: Boolean) {
     updateState {
       State(it.trustedPaths + (path.toString() to value))

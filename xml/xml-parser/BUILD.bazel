@@ -18,6 +18,8 @@ jvm_library(
     "//platform/core-impl",
     "//platform/util",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/syntax/syntax-api:syntax",
+    "//platform/syntax/syntax-psi:psi",
   ],
   runtime_deps = [":parser_resources"]
 )

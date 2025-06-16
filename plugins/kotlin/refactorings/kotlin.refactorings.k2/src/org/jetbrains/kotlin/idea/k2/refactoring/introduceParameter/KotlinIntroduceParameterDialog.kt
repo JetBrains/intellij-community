@@ -227,7 +227,7 @@ internal class KotlinIntroduceParameterDialog(
                                     runWriteAction {
                                         extractionResult = Generator.generateDeclaration(
                                             ExtractionGeneratorConfiguration(
-                                                lambdaExtractionDescriptor.copy(suggestedNames = listOf(chosenName)),
+                                                lambdaExtractionDescriptor.copy(suggestedNames = listOf(chosenName), typeParameters = emptyList()),
                                                 options
                                             ), null
                                         )

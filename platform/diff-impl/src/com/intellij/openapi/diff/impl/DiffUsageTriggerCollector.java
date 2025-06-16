@@ -21,7 +21,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 7);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 8);
   private static final StringEventField DIFF_PLACE_FIELD = EventFields.String("diff_place",
                                                                               List.of(DiffPlaces.DEFAULT, DiffPlaces.CHANGES_VIEW,
                                                                                       DiffPlaces.VCS_LOG_VIEW, DiffPlaces.COMMIT_DIALOG,

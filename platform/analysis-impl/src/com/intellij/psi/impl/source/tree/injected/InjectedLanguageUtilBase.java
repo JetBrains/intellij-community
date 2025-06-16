@@ -495,23 +495,23 @@ public class InjectedLanguageUtilBase {
     if (psi == null) return null;
     PsiFile containingFile = psi.getContainingFile().getOriginalFile();              // * formatting
     PsiElement fileContext = containingFile.getContext();                            // * quick-edit-handler
-    if (fileContext instanceof PsiLanguageInjectionHost) return (PsiLanguageInjectionHost)fileContext;
+    if (fileContext instanceof PsiLanguageInjectionHost injectionHost) return injectionHost;
     Place shreds = getShreds(containingFile.getViewProvider()); // * injection-registrar
     if (shreds == null) {
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(containingFile);
-      if (virtualFile instanceof LightVirtualFile) {
-        virtualFile = ((LightVirtualFile)virtualFile).getOriginalFile();             // * dynamic files-from-text
+      if (virtualFile instanceof LightVirtualFile light) {
+        virtualFile = light.getOriginalFile();             // * dynamic files-from-text
       }
-      if (virtualFile instanceof VirtualFileWindow) {
-        shreds = getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow());
+      if (virtualFile instanceof VirtualFileWindow window) {
+        shreds = getShreds(window.getDocumentWindow());
       }
     }
     return shreds != null ? shreds.getHostPointer().getElement() : null;
   }
 
   public static @Nullable PsiLanguageInjectionHost findInjectionHost(@Nullable VirtualFile virtualFile) {
-    return virtualFile instanceof VirtualFileWindow ?
-           getShreds(((VirtualFileWindow)virtualFile).getDocumentWindow()).getHostPointer().getElement() : null;
+    return virtualFile instanceof VirtualFileWindow window ?
+           getShreds(window.getDocumentWindow()).getHostPointer().getElement() : null;
   }
 
   /**

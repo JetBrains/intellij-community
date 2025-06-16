@@ -15,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,12 @@ public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<Langua
 
   @Override
   public boolean pushDirectoriesOnly() {
-    return true;
+    return false;
+  }
+
+  @Override
+  public boolean acceptsFile(@NotNull VirtualFile file, @NotNull Project project) {
+    return file.equals(ProjectFileIndex.getInstance(project).getSourceRootForFile(file));
   }
 
   @Override
@@ -90,6 +96,6 @@ public final class JavaLanguageLevelPusher extends FilePropertyPusherBase<Langua
   }
 
   public static @Nullable LanguageLevel getPushedLanguageLevel(@NotNull VirtualFile file) {
-    return KEY.getPersistentValue(file.getParent());
+    return ObjectUtils.coalesce(KEY.getPersistentValue(file.getParent()), KEY.getPersistentValue(file));
   }
 }

@@ -587,7 +587,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
     init {
       layout = BorderLayout()
-      background = BACKGROUND_COLOR
+      background = lookup.backgroundColor
       if (isNewUI()) {
         val bodyInsets = bodyInsets()
         border = EmptyBorder(selectionInsets())

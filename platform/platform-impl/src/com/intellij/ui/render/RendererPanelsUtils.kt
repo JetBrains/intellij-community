@@ -66,8 +66,9 @@ private const val CENTER_RIGHT_GAP = 4
  */
 @Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.listCellRenderer instead")
 open class IconCompOptionalCompPanel<C1 : JComponent>(
-  val center: C1) : IconPanel() {
+  @ApiStatus.Internal val center: C1) : IconPanel() {
 
+  @ApiStatus.Internal
   var right: JComponent? = null
     set(value) {
       if (value === field) {
@@ -103,7 +104,10 @@ open class IconPanel : SelectablePanel() {
   /**
    * Content panel allows to trim components that could go outside of selection
    */
+  @ApiStatus.Internal
   protected val content: JPanel = JPanel(GridLayout())
+
+  @ApiStatus.Internal
   protected val iconLabel: JLabel = JLabel()
 
   init {
@@ -115,14 +119,6 @@ open class IconPanel : SelectablePanel() {
     add(content, BorderLayout.CENTER)
   }
 
-  open fun reset() {
-    selectionArc = 0
-    selectionArcCorners = SelectionArcCorners.ALL
-    selectionColor = null
-    selectionInsets = JBUI.emptyInsets()
-    iconLabel.isVisible = false
-  }
-
   fun setIcon(icon: Icon?) {
     iconLabel.isVisible = icon != null
     iconLabel.icon = icon
@@ -131,6 +127,7 @@ open class IconPanel : SelectablePanel() {
   /**
    * Calculate width of all non-resizeable components and gaps in the panel
    */
+  @ApiStatus.Internal
   fun calculateNonResizeableWidth(): Int {
     val contentLayout = content.layout as GridLayout
     val insets = insets
@@ -156,6 +153,7 @@ open class IconPanel : SelectablePanel() {
     return result
   }
 
+  @ApiStatus.Internal
   protected fun createBuilder(): RowsGridBuilder {
     return RowsGridBuilder(content)
       .defaultBaselineAlign(true)

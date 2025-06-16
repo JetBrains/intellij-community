@@ -1,5 +1,6 @@
 package com.jetbrains.python.sdk;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -22,18 +23,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -42,6 +46,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
 
 /**
  * Utility methods for Python {@link Sdk} based on the project model and the file system.
@@ -67,7 +73,16 @@ public final class PythonSdkUtil {
   private static final Key<PySkeletonHeader> CACHED_SKELETON_HEADER = Key.create("CACHED_SKELETON_HEADER");
 
   public static boolean isPythonSdk(@NotNull Sdk sdk) {
-    return PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName());
+    if (!PyNames.PYTHON_SDK_ID_NAME.equals(sdk.getSdkType().getName())) {
+      return false;
+    }
+
+    // PY-79923: Should explicitly filter sdks created while pro was active
+    if (PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell()) {
+      return !isRemote(sdk) || !PluginManagerCore.isDisabled(ULTIMATE_PLUGIN_ID);
+    }
+
+    return true;
   }
 
   public static @Unmodifiable List<Sdk> getAllSdks() {
@@ -129,9 +144,6 @@ public final class PythonSdkUtil {
       }
       final VirtualFile venvLibDir = PySearchUtilBase.findVirtualEnvLibDir(pythonSdk);
       if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
-        return true;
-      }
-      if (PyUserSkeletonsUtil.isStandardLibrarySkeleton(vFile)) {
         return true;
       }
       if (PyTypeShed.INSTANCE.isInStandardLibrary(vFile) && PyTypeShed.INSTANCE.isInside(vFile)) {

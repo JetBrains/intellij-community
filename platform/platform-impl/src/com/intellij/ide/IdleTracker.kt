@@ -6,12 +6,11 @@ package com.intellij.ide
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -78,9 +77,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
         .debounce(delay)
         .collect {
           withContext(Dispatchers.EDT) {
-            blockingContext {
-              listener.run()
-            }
+            listener.run()
           }
         }
     }

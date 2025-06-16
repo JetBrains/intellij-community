@@ -89,7 +89,7 @@ public final class ClasspathCache {
       resourcePackageHashes.add(getPackageNameHash(path, path.length()));
     }
 
-    void addPackageFromName(@NotNull String path) {
+    public void addPackageFromName(@NotNull String path) {
       StrippedLongSet set = path.endsWith(CLASS_EXTENSION) ? classPackageHashes : resourcePackageHashes;
       set.add(getPackageNameHash(path, path.lastIndexOf('/')));
     }

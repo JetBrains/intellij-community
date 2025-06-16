@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
@@ -44,10 +44,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.RepositoryOfflineException;
 import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.version.Version;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.aether.ArtifactDependencyNode;
@@ -79,7 +76,12 @@ import static com.intellij.jarRepository.JarRepositoryAuthenticationDataProvider
 public final class JarRepositoryManager {
   private static final Logger LOG = Logger.getInstance(JarRepositoryManager.class);
 
-  static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
+  /**
+   * * @deprecated Do not use it. See description for getLocalRepositoryPath
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
+  public static final String MAVEN_REPOSITORY_MACRO = "$MAVEN_REPOSITORY$";
 
   private static final String DEFAULT_REPOSITORY_PATH = ".m2/repository";
   private static final AtomicInteger ourTasksInProgress = new AtomicInteger();
@@ -111,7 +113,9 @@ public final class JarRepositoryManager {
     return ourTasksInProgress.get() > 0;   // todo: count tasks on per-project basis?
   }
 
-  public static @Nullable NewLibraryConfiguration chooseLibraryAndDownload(@NotNull Project project, @Nullable String initialFilter, JComponent parentComponent) {
+  public static @Nullable NewLibraryConfiguration chooseLibraryAndDownload(@NotNull Project project,
+                                                                           @Nullable String initialFilter,
+                                                                           JComponent parentComponent) {
     RepositoryAttachDialog dialog = new RepositoryAttachDialog(project, initialFilter, RepositoryAttachDialog.Mode.DOWNLOAD);
     if (!dialog.showAndGet()) {
       return null;
@@ -132,7 +136,9 @@ public final class JarRepositoryManager {
       project, libraryDescriptor, artifactKinds, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories()
     );
     if (config == null) {
-      Messages.showErrorDialog(parentComponent, JavaUiBundle.message("error.message.no.files.were.downloaded.for.0", libraryDescriptor.getMavenId()), CommonBundle.getErrorTitle());
+      Messages.showErrorDialog(parentComponent,
+                               JavaUiBundle.message("error.message.no.files.were.downloaded.for.0", libraryDescriptor.getMavenId()),
+                               CommonBundle.getErrorTitle());
     }
     return config;
   }
@@ -160,7 +166,8 @@ public final class JarRepositoryManager {
                                                                      boolean includeTransitiveDependencies,
                                                                      String copyTo,
                                                                      Collection<RemoteRepositoryDescription> repositories) {
-    JpsMavenRepositoryLibraryDescriptor libraryDescriptor = new JpsMavenRepositoryLibraryDescriptor(coord, includeTransitiveDependencies, Collections.emptyList());
+    JpsMavenRepositoryLibraryDescriptor libraryDescriptor =
+      new JpsMavenRepositoryLibraryDescriptor(coord, includeTransitiveDependencies, Collections.emptyList());
     return resolveAndDownload(
       project, libraryDescriptor, ArtifactKind.kindsOf(attachSources, attachJavaDoc, libraryDescriptor.getPackaging()), copyTo, repositories
     );
@@ -189,14 +196,40 @@ public final class JarRepositoryManager {
   }
 
 
+  /**
+   * this method is quickfix until we planning to support compilation with JPS, avoid to use it
+   */
+  @ApiStatus.Experimental
+  public static @NotNull Path getJPSLocalMavenRepositoryForIdeaProject(@NotNull Project project) {
+    String expanded = PathMacroManager.getInstance(project).expandPath(MAVEN_REPOSITORY_MACRO);
+    if (!MAVEN_REPOSITORY_MACRO.equals(expanded) && !expanded.isEmpty()) {
+      slf4jLogger.debug("RepositoryPath: return expanded macros: " + expanded);
+      return Path.of(expanded);
+    }
+
+    return getLocalRepositoryPath().toPath();
+  }
+
+  /**
+   * @deprecated Do not use it. See description for getLocalRepositoryPath
+   */
+  @Deprecated
   private static volatile File ourLocalRepositoryPath;
+
+  /**
+   * @deprecated Do not use it. There is no such thing like Local repository path without a project.
+   * Actually, there is no such thing even for idea project, should be per-linked project
+   * use getJPSLocalMavenRepositoryForIdeaProject
+   */
+  @Deprecated
   public static @NotNull File getLocalRepositoryPath() {
     File repoPath = ourLocalRepositoryPath;
     if (repoPath != null) {
+      slf4jLogger.debug("RepositoryPath: return cached application-wide repo: " + repoPath );
       return repoPath;
     }
     final String expanded = PathMacroManager.getInstance(ApplicationManager.getApplication()).expandPath(MAVEN_REPOSITORY_MACRO);
-    if (!MAVEN_REPOSITORY_MACRO.equals(expanded)) {
+    if (!MAVEN_REPOSITORY_MACRO.equals(expanded) && !expanded.isEmpty()) {
       repoPath = new File(expanded);
       if (repoPath.exists()) {
         try {
@@ -206,17 +239,27 @@ public final class JarRepositoryManager {
         }
       }
       ourLocalRepositoryPath = repoPath;
+      slf4jLogger.debug("RepositoryPath: return expanded application-wide repo: " + repoPath );
       return repoPath;
     }
 
-    final String userHome = System.getProperty("user.home", null);
-    repoPath = userHome != null ? new File(userHome, DEFAULT_REPOSITORY_PATH) : new File(DEFAULT_REPOSITORY_PATH);
-    ourLocalRepositoryPath = repoPath;
-    return repoPath;
+
+    ourLocalRepositoryPath = getDefaultMavenLocalRepositoryPathNoRespectToSettings();
+    slf4jLogger.debug("RepositoryPath: return default application-wide repo: " + repoPath );
+    return ourLocalRepositoryPath;
   }
 
+  private static File getDefaultMavenLocalRepositoryPathNoRespectToSettings() {
+    final String userHome = System.getProperty("user.home", null);
+    return userHome != null ? new File(userHome, DEFAULT_REPOSITORY_PATH) : new File(DEFAULT_REPOSITORY_PATH);
+  }
+
+  /**
+   * @deprecated Do not use it. See description for getLocalRepositoryPath
+   */
   @TestOnly
   @ApiStatus.Internal
+  @Deprecated
   public static void setLocalRepositoryPath(File localRepo) {
     ourLocalRepositoryPath = localRepo;
   }
@@ -285,12 +328,12 @@ public final class JarRepositoryManager {
    */
   @ApiStatus.Internal
   public static @NotNull Collection<OrderRoot> loadDependenciesSync(@NotNull Project project,
-                                                           @NotNull RepositoryLibraryProperties libraryProps,
-                                                           boolean loadSources,
-                                                           boolean loadJavadoc,
-                                                           @Nullable String copyTo,
-                                                           @Nullable Collection<RemoteRepositoryDescription> repositories,
-                                                           @NotNull ProgressIndicator progressIndicator) {
+                                                                    @NotNull RepositoryLibraryProperties libraryProps,
+                                                                    boolean loadSources,
+                                                                    boolean loadJavadoc,
+                                                                    @Nullable String copyTo,
+                                                                    @Nullable Collection<RemoteRepositoryDescription> repositories,
+                                                                    @NotNull ProgressIndicator progressIndicator) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = libraryProps.getRepositoryLibraryDescriptor();
     if (libDescriptor.getMavenId() != null) {
@@ -314,7 +357,9 @@ public final class JarRepositoryManager {
    * @param repositories Repositories to override any other values
    * @return Collection of remote repositories chosen from params.
    */
-  static List<RemoteRepositoryDescription> selectRemoteRepositories(@NotNull Project project,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static List<RemoteRepositoryDescription> selectRemoteRepositories(@NotNull Project project,
                                                                     @Nullable JpsMavenRepositoryLibraryDescriptor desc,
                                                                     @Nullable Collection<RemoteRepositoryDescription> repositories) {
     if (repositories != null && !repositories.isEmpty()) {
@@ -353,13 +398,15 @@ public final class JarRepositoryManager {
                                                                           @NotNull RepositoryLibraryDescription libraryDescription,
                                                                           @NotNull List<RemoteRepositoryDescription> repositories) {
     List<RemoteRepositoryDescription> repos = selectRemoteRepositories(project, null, repositories).stream().toList();
-    return submitBackgroundJob(new VersionResolveJob(libraryDescription, repos));
+    return submitBackgroundJob(new VersionResolveJob(project, libraryDescription, repos));
   }
 
-  public static @Nullable ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description, @NotNull String version, Project project) {
+  public static @Nullable ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description,
+                                                                      @NotNull String version,
+                                                                      Project project) {
     List<RemoteRepositoryDescription> repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     return submitModalJob(project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 0),
-                          new AetherJob<>(repositories) {
+                          new AetherJob<>(project, repositories) {
                             @Override
                             protected String getProgressText() {
                               return JavaUiBundle.message("jar.repository.manager.progress.text.loading.dependencies",
@@ -491,7 +538,9 @@ public final class JarRepositoryManager {
     }
   }
 
-  private static @Nullable <T> T submitModalJob(@Nullable Project project, @NlsContexts.DialogTitle String title, Function<? super ProgressIndicator, ? extends T> job) {
+  private static @Nullable <T> T submitModalJob(@Nullable Project project,
+                                                @NlsContexts.DialogTitle String title,
+                                                Function<? super ProgressIndicator, ? extends T> job) {
     Ref<T> result = Ref.create(null);
     new Task.Modal(project, title, true) {
       @Override
@@ -536,7 +585,9 @@ public final class JarRepositoryManager {
     return promise;
   }
 
-  private static @NotNull Collection<String> lookupVersionsImpl(String groupId, String artifactId, @NotNull ArtifactRepositoryManager manager) throws Exception {
+  private static @NotNull Collection<String> lookupVersionsImpl(String groupId,
+                                                                String artifactId,
+                                                                @NotNull ArtifactRepositoryManager manager) throws Exception {
     try {
       List<Version> versions = new ArrayList<>(manager.getAvailableVersions(groupId, artifactId, "[0,)", ArtifactKind.ARTIFACT));
       ArrayList<String> strings = new ArrayList<>(versions.size());
@@ -551,9 +602,11 @@ public final class JarRepositoryManager {
   }
 
   private abstract static class AetherJob<T> implements Function<ProgressIndicator, T> {
+    @NotNull private final Project myProject;
     private final @NotNull Collection<RemoteRepositoryDescription> myRepositories;
 
-    AetherJob(@NotNull Collection<RemoteRepositoryDescription> repositories) {
+    AetherJob(@NotNull Project project, @NotNull Collection<RemoteRepositoryDescription> repositories) {
+      myProject = project;
       myRepositories = repositories;
     }
 
@@ -569,17 +622,18 @@ public final class JarRepositoryManager {
 
         List<RemoteRepository> remotes = createRemoteRepositories(myRepositories);
         try {
-          return perform(indicator, new ArtifactRepositoryManager(getLocalRepositoryPath(), remotes, new ProgressConsumer() {
-            @Override
-            public void consume(@NlsContexts.ProgressText String message) {
-              indicator.setText(message);
-            }
+          return perform(indicator, new ArtifactRepositoryManager(getJPSLocalMavenRepositoryForIdeaProject(myProject).toFile(), remotes,
+                                                                  new ProgressConsumer() {
+                                                                    @Override
+                                                                    public void consume(@NlsContexts.ProgressText String message) {
+                                                                      indicator.setText(message);
+                                                                    }
 
-            @Override
-            public boolean isCanceled() {
-              return indicator.isCanceled();
-            }
-          }));
+                                                                    @Override
+                                                                    public boolean isCanceled() {
+                                                                      return indicator.isCanceled();
+                                                                    }
+                                                                  }));
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -614,16 +668,15 @@ public final class JarRepositoryManager {
                                                                                      @NotNull Set<ArtifactKind> kinds,
                                                                                      @NotNull Collection<RemoteRepositoryDescription> repositories,
                                                                                      @Nullable String copyTo) {
-    return new LibraryResolveJob(desc, kinds, repositories).andThen(
+    return new LibraryResolveJob(project, desc, kinds, repositories).andThen(
       resolved -> resolved.isEmpty() ? Collections.emptyList() : copyAndRefreshFiles(project, resolved, copyTo));
   }
 
   static List<OrderRoot> copyAndRefreshFiles(@NotNull Project project, @NotNull Collection<Artifact> artifacts, @Nullable String copyTo) {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
-    String targetRepository = PathMacroManager.getInstance(project).expandPath(MAVEN_REPOSITORY_MACRO);
-    String localRepositoryPath = getLocalRepositoryPath().getPath();
-    EelDescriptor targetRepositoryDescriptor = EelProviderUtil.getEelDescriptor(Path.of(targetRepository));
+    String repositoryPath = getJPSLocalMavenRepositoryForIdeaProject(project).toString();
+    EelDescriptor targetRepositoryDescriptor = EelProviderUtil.getEelDescriptor(Path.of(repositoryPath));
     for (Artifact each : artifacts) {
       long ms = System.currentTimeMillis();
       try {
@@ -637,8 +690,8 @@ public final class JarRepositoryManager {
         }
         else if (!targetRepositoryDescriptor.equals(EelProviderUtil.getEelDescriptor(Path.of(each.getFile().getPath())))) {
           // if .m2 is located remotely, then we need to copy the files to the remote location
-          String suffix = repoFile.getAbsolutePath().substring(localRepositoryPath.length());
-          String actualPath = targetRepository + suffix;
+          String suffix = repoFile.getAbsolutePath().substring(repositoryPath.length());
+          String actualPath = repositoryPath + suffix;
           toFile = new File(actualPath);
           if (repoFile.exists()) {
             FileUtil.copy(repoFile, toFile);
@@ -673,10 +726,11 @@ public final class JarRepositoryManager {
     private final @NotNull JpsMavenRepositoryLibraryDescriptor myDesc;
     private final @NotNull Set<ArtifactKind> myKinds;
 
-    LibraryResolveJob(@NotNull JpsMavenRepositoryLibraryDescriptor desc,
+    LibraryResolveJob(@NotNull Project project,
+                      @NotNull JpsMavenRepositoryLibraryDescriptor desc,
                       @NotNull Set<ArtifactKind> kinds,
                       @NotNull Collection<RemoteRepositoryDescription> repositories) {
-      super(repositories);
+      super(project, repositories);
       myDesc = desc;
       myKinds = kinds;
     }
@@ -688,7 +742,8 @@ public final class JarRepositoryManager {
 
     @Override
     protected String getProgressText() {
-      return JavaUiBundle.message("jar.repository.manager.library.resolve.progress.text", RepositoryLibraryDescription.findDescription(myDesc).getDisplayName());
+      return JavaUiBundle.message("jar.repository.manager.library.resolve.progress.text",
+                                  RepositoryLibraryDescription.findDescription(myDesc).getDisplayName());
     }
 
     @Override
@@ -727,8 +782,8 @@ public final class JarRepositoryManager {
         throw e;
       }
       catch (Exception e) {
-        slf4jLogger.debug("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
-                          Duration.between(startTime, Instant.now()).toMillis(), e);
+        slf4jLogger.warn("LibraryResolveJob({}) #{} failed in {}ms", myDesc.getMavenId(), Thread.currentThread().getId(),
+                         Duration.between(startTime, Instant.now()).toMillis(), e);
 
         final String resolvedVersion = resolveVersion(manager, version);
         if (Objects.equals(version, resolvedVersion)) { // no changes
@@ -771,8 +826,10 @@ public final class JarRepositoryManager {
   private static class VersionResolveJob extends AetherJob<Collection<String>> {
     private final @NotNull RepositoryLibraryDescription myDescription;
 
-    VersionResolveJob(@NotNull RepositoryLibraryDescription repositoryLibraryDescription, @NotNull List<RemoteRepositoryDescription> repositories) {
-      super(repositories);
+    VersionResolveJob(@NotNull Project project,
+                      @NotNull RepositoryLibraryDescription repositoryLibraryDescription,
+                      @NotNull List<RemoteRepositoryDescription> repositories) {
+      super(project, repositories);
 
       myDescription = repositoryLibraryDescription;
     }
@@ -786,11 +843,14 @@ public final class JarRepositoryManager {
     protected Collection<String> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
       var startTime = Instant.now();
 
-      slf4jLogger.debug("VersionResolveJob({}:{}) #{} started", myDescription.getGroupId(), myDescription.getArtifactId(), Thread.currentThread().getId());
+      slf4jLogger.debug("VersionResolveJob({}:{}) #{} started", myDescription.getGroupId(), myDescription.getArtifactId(),
+                        Thread.currentThread().getId());
       try {
         return lookupVersionsImpl(myDescription.getGroupId(), myDescription.getArtifactId(), manager);
-      } finally {
-        slf4jLogger.debug("VersionResolveJob({}:{}) #{} finished in {}ms", myDescription.getGroupId(), myDescription.getArtifactId(), Thread.currentThread().getId(), Duration.between(startTime, Instant.now()).toMillis());
+      }
+      finally {
+        slf4jLogger.debug("VersionResolveJob({}:{}) #{} finished in {}ms", myDescription.getGroupId(), myDescription.getArtifactId(),
+                          Thread.currentThread().getId(), Duration.between(startTime, Instant.now()).toMillis());
       }
     }
 

@@ -52,6 +52,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
   init {
     // add existing options
+    LOG.info("Initialize event logger provider for '$recorderId'")
     val configOptionsService = EventLogConfigOptionsService.getInstance()
     recorderOptionsProvider = RecorderOptionProvider(configOptionsService.getOptions(recorderId).allOptions)
 
@@ -150,7 +151,9 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
     val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
     val currentProductModeId = ProductLoadingStrategy.strategy.currentModeId
-    val productMode = if (currentProductModeId != ProductMode.MONOLITH.id) {
+    val productMode = if (PlatformUtils.isQodana()) {
+      null
+    } else if (currentProductModeId != ProductMode.MONOLITH.id) {
       currentProductModeId
     } else if (detectClionNova()) {
       "nova"

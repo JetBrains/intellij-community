@@ -2,20 +2,19 @@
 
 package com.intellij.ide.impl.dataRules;
 
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataMap;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.UsageView;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 
-@ApiStatus.Internal
-public final class UsageInfo2ListRule implements GetDataRule {
-  @Override
-  public @Nullable Object getData(final @NotNull DataProvider dataProvider) {
-    UsageInfo usageInfo = (UsageInfo)dataProvider.getData(UsageView.USAGE_INFO_KEY.getName());
+import static com.intellij.usages.UsageView.USAGE_INFO_KEY;
+
+final class UsageInfo2ListRule {
+  static @Nullable List<UsageInfo> getData(@NotNull DataMap dataProvider) {
+    UsageInfo usageInfo = dataProvider.get(USAGE_INFO_KEY);
     if (usageInfo != null) return Collections.singletonList(usageInfo);
     return null;
   }

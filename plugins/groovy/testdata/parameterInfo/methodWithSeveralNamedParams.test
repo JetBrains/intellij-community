@@ -6,6 +6,6 @@ String foo(@NamedParam("larch1") int param1, @NamedParam("param2") int larch2) {
 }
 println foo(<caret>)
 -----
-<html><b>@NamedParam(&quot;larch1&quot;) int param1</b>, @NamedParam(&quot;param2&quot;) int larch2</html>
+<html><b>@NamedParam("larch1") int param1</b>, @NamedParam("param2") int larch2</html>
 -
 <html><b>larch1: int, param2: int</b></html>

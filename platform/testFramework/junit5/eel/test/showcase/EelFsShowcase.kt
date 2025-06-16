@@ -2,6 +2,7 @@
 package com.intellij.platform.testFramework.junit5.eel.showcase
 
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
@@ -19,13 +20,13 @@ import java.nio.file.Path
 @TestApplication
 class EelFsShowcase {
 
-  val fsAndEelUnix: TestFixture<IsolatedFileSystem> = eelFixture(EelPath.OS.UNIX)
+  val fsAndEelUnix: TestFixture<IsolatedFileSystem> = eelFixture(EelPlatform.Linux(EelPlatform.Arch.Unknown))
 
-  val fsAndEelWindows: TestFixture<IsolatedFileSystem> = eelFixture(EelPath.OS.WINDOWS)
+  val fsAndEelWindows: TestFixture<IsolatedFileSystem> = eelFixture(EelPlatform.Windows(EelPlatform.Arch.Unknown))
 
-  fun EelPath.OS.osDependentFixture(): TestFixture<IsolatedFileSystem> = when (this) {
-    EelPath.OS.WINDOWS -> fsAndEelWindows
-    EelPath.OS.UNIX -> fsAndEelUnix
+  fun EelPlatform.osDependentFixture(): TestFixture<IsolatedFileSystem> = when (this) {
+    is EelPlatform.Windows -> fsAndEelWindows
+    is EelPlatform.Posix -> fsAndEelUnix
   }
 
   @Test
@@ -59,15 +60,16 @@ class EelFsShowcase {
     Assertions.assertEquals(eelNio, eelNioEel)
   }
 
-  @ParameterizedTest
-  @EnumSource(EelPath.OS::class)
-  fun `uri validity`(os: EelPath.OS) {
-    val root = os.osDependentFixture().get().storageRoot
-    val path = root.resolve("a/b/c/d/e")
-    val uri = EelPathUtils.getUriLocalToEel(path)
-    Assertions.assertEquals("file", uri.scheme)
-    Assertions.assertNull(uri.authority)
-    Assertions.assertTrue(uri.path.contains("a/b/c/d/e"))
+  @Test
+  fun `uri validity`() {
+    for (eel in listOf(fsAndEelUnix, fsAndEelWindows)) {
+      val root = eel.get().storageRoot
+      val path = root.resolve("a/b/c/d/e")
+      val uri = EelPathUtils.getUriLocalToEel(path)
+      Assertions.assertEquals("file", uri.scheme)
+      Assertions.assertNull(uri.authority)
+      Assertions.assertTrue(uri.path.contains("a/b/c/d/e"))
+    }
   }
 
   @Test

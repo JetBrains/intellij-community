@@ -2,32 +2,35 @@
 package com.intellij.terminal.backend
 
 import com.google.common.base.Ascii
+import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil.ENTER_BYTES
 import com.intellij.terminal.backend.util.TerminalSessionTestUtil.awaitOutputEvent
 import com.intellij.terminal.session.*
+import com.intellij.terminal.session.dto.toState
+import com.intellij.terminal.session.dto.toStyleRange
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jediterm.core.util.TermSize
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.SendChannel
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
-import org.jetbrains.plugins.terminal.reworked.util.ZshPS1Customizer
-import org.junit.Assert
+import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.reworked.util.TerminalTestUtil
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.seconds
 
 @RunWith(Parameterized::class)
@@ -49,17 +52,18 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `shell integration send correct events on command invocation`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { session ->
-      session.sendInputEvent(TerminalWriteBytesEvent("pwd".toByteArray() + ENTER_BYTES))
+    val cwd = System.getProperty("user.home")
+    val options = ShellStartupOptions.Builder().workingDirectory(cwd).build()
+    val events = startSessionAndCollectOutputEvents(options) { input ->
+      input.send(TerminalWriteBytesEvent("pwd".toByteArray() + ENTER_BYTES))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalCommandStartedEvent("pwd"),
-      TerminalCommandFinishedEvent("pwd", 0),
+      TerminalCommandFinishedEvent("pwd", 0, cwd),
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
     )
@@ -69,15 +73,14 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `shell integration should not send command finished event without command started event on Ctrl+C`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { session ->
-      session.sendInputEvent(TerminalWriteBytesEvent("abcdef".toByteArray()))
+    val events = startSessionAndCollectOutputEvents { input ->
+      input.send(TerminalWriteBytesEvent("abcdef".toByteArray()))
       delay(1000)
-      session.sendInputEvent(TerminalWriteBytesEvent(CTRL_C_BYTES))
+      input.send(TerminalWriteBytesEvent(CTRL_C_BYTES))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalPromptStartedEvent,
@@ -97,17 +100,17 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   fun `prompt events received after prompt is redrawn because of long completion output`() = timeoutRunBlocking(30.seconds) {
     Assume.assumeTrue(shellPath.toString().contains("zsh"))
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 4)) { session ->
-      session.sendInputEvent(TerminalWriteBytesEvent("g".toByteArray() + TAB_BYTES))
+    val options = ShellStartupOptions.Builder().initialTermSize(TermSize(80, 4)).build()
+    val events = startSessionAndCollectOutputEvents(options) { input ->
+      input.send(TerminalWriteBytesEvent("g".toByteArray() + TAB_BYTES))
       // Shell can ask "do you wish to see all N possibilities? (y/n)"
       // Wait for this question and ask `y`
       delay(1000)
-      session.sendInputEvent(TerminalWriteBytesEvent("y".toByteArray()))
+      input.send(TerminalWriteBytesEvent("y".toByteArray()))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalPromptStartedEvent,
@@ -127,23 +130,27 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
     Assume.assumeTrue(shellPath.toString().contains("bash"))
 
     val bindCommand = "bind 'set show-all-if-ambiguous on'"
+    val cwd = System.getProperty("user.home")
 
-    val events = startSessionAndCollectOutputEvents(TermSize(80, 100)) { session ->
+    val options = ShellStartupOptions.Builder()
+      .initialTermSize(TermSize(80, 100))
+      .workingDirectory(cwd)
+      .build()
+    val events = startSessionAndCollectOutputEvents(options) { input ->
       // Configure the shell to show completion items on the first Tab key press.
-      session.sendInputEvent(TerminalWriteBytesEvent(bindCommand.toByteArray() + ENTER_BYTES))
+      input.send(TerminalWriteBytesEvent(bindCommand.toByteArray() + ENTER_BYTES))
       delay(1000)
-      session.sendInputEvent(TerminalWriteBytesEvent("gi".toByteArray() + TAB_BYTES))
+      input.send(TerminalWriteBytesEvent("gi".toByteArray() + TAB_BYTES))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
       // Initialization
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       // Bind command execution
       TerminalCommandStartedEvent(bindCommand),
-      TerminalCommandFinishedEvent(bindCommand, 0),
+      TerminalCommandFinishedEvent(bindCommand, 0, cwd),
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       // Prompt redraw after completion
@@ -156,14 +163,13 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
   @Test
   fun `prompt events received after prompt is redrawn because of Ctrl+L`() = timeoutRunBlocking(30.seconds) {
-    val events = startSessionAndCollectOutputEvents { session ->
-      session.sendInputEvent(TerminalWriteBytesEvent("abcdef".toByteArray()))
-      session.sendInputEvent(TerminalWriteBytesEvent(CTRL_L_BYTES))
+    val events = startSessionAndCollectOutputEvents { input ->
+      input.send(TerminalWriteBytesEvent("abcdef".toByteArray()))
+      input.send(TerminalWriteBytesEvent(CTRL_L_BYTES))
     }
 
     val shellIntegrationEvents = events.filter { it is TerminalShellIntegrationEvent }
     val expectedEvents = listOf(
-      TerminalShellIntegrationInitializedEvent,
       TerminalPromptStartedEvent,
       TerminalPromptFinishedEvent,
       TerminalPromptStartedEvent,
@@ -174,27 +180,218 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
   }
 
   @Test
+  fun `non-zero exit code is received if command has failed`() = timeoutRunBlocking(30.seconds) {
+    val events = startSessionAndCollectOutputEvents { input ->
+      input.send(TerminalWriteBytesEvent("abracadabra".toByteArray() + ENTER_BYTES))
+      delay(2000)
+    }
+
+    val commandFinishedEvent = events.find { it is TerminalCommandFinishedEvent }
+    assertThat(commandFinishedEvent)
+      .overridingErrorMessage { "Failed to find command finished event.\n${dumpTerminalState(events)}" }
+      .isNotNull
+    assertThat((commandFinishedEvent as TerminalCommandFinishedEvent).exitCode)
+      .overridingErrorMessage { "Expected exit code to be non-zero.\n${dumpTerminalState(events)}" }
+      .isNotEqualTo(0)
+    Unit
+  }
+
+  @Test
   fun `zsh integration can change PS1`() = timeoutRunBlocking(30.seconds) {
     Assume.assumeTrue(shellPath.name == "zsh")
-    // It's a good idea to configure Zsh with PowerLevel10k.
-    val ps1Suffix = "MyCustomPS1Suffix"
+
+    val enforcedPS1 = "my-enforced-PS1>"
+    val zdotdir = Files.createTempDirectory("zsh-custom-zdotdir")
+    zdotdir.resolve(".zshrc").writeText("""
+      # Overwrite PS1, like PowerLevel10k does
+      PS1="$enforcedPS1"
+      builtin autoload -Uz add-zsh-hook
+
+      function enforcePS1() {
+        PS1="$enforcedPS1"
+        # re-add `enforcePS1` to ensure it runs last
+        add-zsh-hook -d precmd enforcePS1
+        add-zsh-hook precmd enforcePS1
+      }
+
+      add-zsh-hook precmd enforcePS1
+    """.trimIndent())
+
+    val envs = mapOf("ZDOTDIR" to zdotdir.toString())
+    val options = ShellStartupOptions.Builder().envVariables(envs).build()
+
+    val events = startSessionAndCollectOutputEvents(options) {}
+    val promptFinishedEvent = events.find { it is TerminalPromptFinishedEvent }
+    assertThat(promptFinishedEvent)
+      .overridingErrorMessage { "Failed to find TerminalPromptFinishedEvent. All events:\n${events.map { it::class.java.simpleName }}" }
+      .isNotNull
+    Unit
+  }
+
+  @Test
+  fun `zsh integration should be executed in the global scope`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+    val dir = Files.createTempDirectory("zsh-custom-zdotdir")
+    Files.writeString(dir.resolve(".zshrc"), """
+      export -T MY_PATH my_path
+      MY_PATH='path1:path2:path1:path3:path2'
+      typeset -U my_path MY_PATH
+      echo "MY_PATH=${'$'}MY_PATH"
+    """.trimIndent())
+
+    val envs = mapOf("ZDOTDIR" to dir.toString())
+    val options = ShellStartupOptions.Builder().envVariables(envs).build()
+    val events = startSessionAndCollectOutputEvents(options) {}
+
+    val textToFind = "MY_PATH=path1:path2:path3"
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to contain '$textToFind'.\n${dumpTerminalState(events)}" }
+      .contains(textToFind)
+    Unit
+  }
+
+  /**
+   * $# variable value is the number of the parameters passed to the enclosing function.
+   * User's shell scripts should be sourced in the global scope instead of the function.
+   * So, this variable should be zero during user scripts sourcing.
+   */
+  @Test
+  fun `zsh $# variable is zero during user scripts sourcing`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+
+    val warningText = "variable is not zero"
+    val dir = Files.createTempDirectory("zsh-custom-zdotdir")
+    Files.writeString(dir.resolve(".zshrc"), """
+      if [[ $# -gt 0 ]]; then
+        echo "$warningText"
+      fi
+    """.trimIndent())
+
+    val envs = mapOf("ZDOTDIR" to dir.toString())
+    val options = ShellStartupOptions.Builder().envVariables(envs).build()
+    val events = startSessionAndCollectOutputEvents(options) {}
+
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to not contain '$warningText'.\n${dumpTerminalState(events)}" }
+      .doesNotContain(warningText)
+    Unit
+  }
+
+  @Test
+  fun `ZDOTDIR can be changed in zshenv`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+    val msg = "Loading .zshrc in the updated ZDOTDIR"
+    val zshrcDir = Files.createTempDirectory(".zshrc-dir").also {
+      it.resolve(".zshrc").writeText("echo '$msg'")
+    }
+    val zshenvDir = Files.createTempDirectory(".zshenv-dir").also {
+      it.resolve(".zshenv").writeText("ZDOTDIR='$zshrcDir'")
+    }
+
+    val envs = mapOf("ZDOTDIR" to zshenvDir.toString())
+    val options = ShellStartupOptions.Builder().envVariables(envs).build()
+    val events = startSessionAndCollectOutputEvents(options) {}
+
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to contain '$msg'.\n${dumpTerminalState(events)}" }
+      .contains(msg)
+    Unit
+  }
+
+  @Test
+  fun `JEDITERM_SOURCE should be loaded after all startup files`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "zsh")
+    val customVariableName = "MY_CUSTOM_VARIABLE_NAME"
+    val customVariableValue = "MY_CUSTOM_VARIABLE_VALUE"
+    val zdotdir = Files.createTempDirectory("zsh-custom-zdotdir")
+    // Use .zlogin, because it's loaded last in the Zsh startup files.
+    zdotdir.resolve(".zlogin").writeText("$customVariableName='$customVariableValue'")
+
+    val customizer = object : LocalTerminalCustomizer() {
+      override fun customizeCommandAndEnvironment(project: Project,
+                                                  workingDirectory: String?,
+                                                  command: Array<out String>?,
+                                                  envs: MutableMap<String?, String?>): Array<out String?>? {
+        val file = Files.createTempFile("my-jediterm-source", ".zsh")
+        file.writeText("echo $$customVariableName")
+        envs["JEDITERM_SOURCE"] = file.toString()
+        return command
+      }
+    }
+
     ExtensionTestUtil.maskExtensions(
       LocalTerminalCustomizer.EP_NAME,
-      listOf(ZshPS1Customizer(ps1Suffix)),
+      listOf(customizer),
       disposableRule.disposable
     )
-    val events = startSessionAndCollectOutputEvents {}
-    val contentUpdatedEvents = events.filterIsInstance<TerminalContentUpdatedEvent>()
-    val suffixFound = contentUpdatedEvents.any { it.text.contains(ps1Suffix) }
-    Assert.assertTrue(contentUpdatedEvents.joinToString("\n") { it.text }, suffixFound)
+
+    val envs = mapOf("ZDOTDIR" to zdotdir.toString())
+    val options = ShellStartupOptions.Builder().shellCommand(listOf(shellPath.toString(), "--login")).envVariables(envs).build()
+    val events = startSessionAndCollectOutputEvents(options) {}
+
+    val output = calculateResultingOutput(events)
+    assertThat(output)
+      .overridingErrorMessage { "Expected output to contain '$customVariableValue'.\n${dumpTerminalState(events)}" }
+      .contains(customVariableValue)
+    Unit
+  }
+
+  /**
+   * This test may fail locally if you have some custom prompt configured in your Bash configs.
+   * Some prompts may be rendered differently in the posix mode.
+   */
+  @Test
+  fun `Output is not affected by enabling posix option in bash`() = timeoutRunBlocking(30.seconds) {
+    Assume.assumeTrue(shellPath.name == "bash")
+
+    val terminalInputActions: suspend (SendChannel<TerminalInputEvent>) -> Unit = {
+      it.send(TerminalWriteBytesEvent("echo 'abracadabra'".toByteArray()))
+      it.send(TerminalWriteBytesEvent(ENTER_BYTES))
+    }
+
+    val regularSessionEvents = async {
+      startSessionAndCollectOutputEvents(block = terminalInputActions)
+    }
+    val posixSessionEvents = async {
+      val rcFile = Files.createTempFile("terminal", ".rcfile")
+      rcFile.writeText("set -o posix")
+
+      val initialCommand = TerminalSessionTestUtil.createShellCommand(shellPath.toString())
+      val fullCommand = initialCommand + listOf("--rcfile", rcFile.toString())
+      val options = ShellStartupOptions.Builder().shellCommand(fullCommand).build()
+      startSessionAndCollectOutputEvents(options, terminalInputActions)
+    }
+
+    val regularSessionOutput = calculateResultingOutput(regularSessionEvents.await())
+    val posixSessionOutput = calculateResultingOutput(posixSessionEvents.await())
+
+    // Check that the output of posix and regular sessions is the same
+    assertThat(posixSessionOutput).isEqualTo(regularSessionOutput)
+    Unit
   }
 
   private suspend fun startSessionAndCollectOutputEvents(
-    size: TermSize = TermSize(80, 24),
-    block: suspend (TerminalSession) -> Unit,
+    options: ShellStartupOptions = ShellStartupOptions.Builder().build(),
+    block: suspend (SendChannel<TerminalInputEvent>) -> Unit,
   ): List<TerminalOutputEvent> {
     return coroutineScope {
-      val session = TerminalSessionTestUtil.startTestTerminalSession(shellPath.toString(), projectRule.project, childScope("TerminalSession"), size)
+      val allOptions = if (options.shellCommand != null) {
+        options
+      }
+      else {
+        val shellCommand = TerminalSessionTestUtil.createShellCommand(shellPath.toString())
+        options.builder().shellCommand(shellCommand).build()
+      }
+
+      val session = TerminalSessionTestUtil.startTestTerminalSession(
+        projectRule.project,
+        allOptions,
+        childScope("TerminalSession"),
+      )
+      val inputChannel = session.getInputChannel()
 
       val outputEvents = mutableListOf<TerminalOutputEvent>()
       val eventsCollectionJob = launch {
@@ -207,7 +404,7 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
       // Wait for prompt initialization before going further
       session.awaitOutputEvent(TerminalPromptFinishedEvent)
 
-      block(session)
+      block(inputChannel)
 
       launch(start = CoroutineStart.UNDISPATCHED) {
         // Block the coroutine scope completion until we receive the termination event.
@@ -217,10 +414,38 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
       delay(1000) // Wait for the shell to handle input sent in `block`
 
-      session.sendInputEvent(TerminalCloseEvent)
+      inputChannel.send(TerminalCloseEvent())
 
       outputEvents
     }
+  }
+
+  private fun calculateResultingOutput(events: List<TerminalOutputEvent>): String {
+    val outputModel = TerminalTestUtil.createOutputModel(maxLength = Int.MAX_VALUE)
+
+    val initialState = events.find { it is TerminalInitialStateEvent }
+    if (initialState is TerminalInitialStateEvent) {
+      outputModel.restoreFromState(initialState.outputModelState.toState())
+    }
+
+    events
+      .filterIsInstance<TerminalContentUpdatedEvent>()
+      .map { event ->
+        val styles = event.styles.map { it.toStyleRange() }
+        outputModel.updateContent(event.startLineLogicalIndex, event.text, styles)
+      }
+
+    return outputModel.document.text
+  }
+
+  private fun dumpTerminalState(events: List<TerminalOutputEvent>): String {
+    return """
+      |Output:
+      |${calculateResultingOutput(events)}
+      |-------------------------------------------------------------
+      |All events:
+      |${events.joinToString("\n")}
+      """.trimMargin()
   }
 
   private fun assertSameEvents(
@@ -234,15 +459,13 @@ internal class ShellIntegrationTest(private val shellPath: Path) {
 
     val errorMessage = {
       """
-        |
         |Expected:
         |${expected.asString()}
-        |
+        |-------------------------------------------------------------
         |But was:
         |${actual.asString()}
-        |
-        |All events:
-        |${eventsToLog.asString()}
+        |-------------------------------------------------------------
+        |${dumpTerminalState(eventsToLog)}
       """.trimMargin()
     }
 

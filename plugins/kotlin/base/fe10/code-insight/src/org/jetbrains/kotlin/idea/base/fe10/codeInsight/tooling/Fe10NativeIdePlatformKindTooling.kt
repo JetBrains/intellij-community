@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import javax.swing.Icon
 
+@InternalIgnoreDependencyViolation
 private class Fe10NativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() {
     override val testIconProvider: AbstractGenericTestIconProvider
         get() = Fe10GenericTestIconProvider

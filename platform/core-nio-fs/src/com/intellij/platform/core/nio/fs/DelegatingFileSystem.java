@@ -72,7 +72,7 @@ public abstract class DelegatingFileSystem<P extends DelegatingFileSystemProvide
 
           @Override
           public Path next() {
-            return provider().toDelegatePath(myIterator.next());
+            return provider().wrapDelegatePath(myIterator.next());
           }
         };
       }
@@ -91,7 +91,7 @@ public abstract class DelegatingFileSystem<P extends DelegatingFileSystemProvide
 
   @Override
   public @NotNull Path getPath(@NotNull String first, @NotNull String @NotNull ... more) {
-    return provider().toDelegatePath(getDelegate(first).getPath(first, more));
+    return provider().wrapDelegatePath(getDelegate(first).getPath(first, more));
   }
 
   @Override

@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/grazie/src:core",
-    "//plugins/properties",
+    "//plugins/properties:properties-backend",
     "//plugins/properties/properties-psi-api:psi",
     "//platform/util",
     "//platform/core-api:core",

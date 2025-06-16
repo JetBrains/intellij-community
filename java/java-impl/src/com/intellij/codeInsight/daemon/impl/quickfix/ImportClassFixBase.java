@@ -79,7 +79,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiFile psiFile) {
     if (myClassesToImport.length == 0) return false;
     return isStillAvailable() && !getClassesToImport(true).isEmpty();
   }
@@ -231,11 +231,11 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     return false;
   }
 
-  private void filterByPackageName(@NotNull Collection<PsiClass> classList, @NotNull PsiFile file) {
+  private void filterByPackageName(@NotNull Collection<PsiClass> classList, @NotNull PsiFile psiFile) {
     String qualifiedName = getQualifiedName(myReferenceElement);
     String packageName = StringUtil.getPackageName(qualifiedName);
     if (!packageName.isEmpty() &&
-        file instanceof PsiJavaFile javaFile &&
+        psiFile instanceof PsiJavaFile javaFile &&
         !ImportUtils.createImplicitImportChecker(javaFile).isImplicitlyImported(qualifiedName, false)) {
       classList.removeIf(aClass -> {
         String classQualifiedName = aClass.getQualifiedName();
@@ -250,22 +250,34 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   private void filterByRequiredMemberName(@NotNull List<PsiClass> classList, boolean needsStatic) {
     String memberName = getRequiredMemberName(myReferenceElement);
-    if (memberName != null) {
-      classList.removeIf(psiClass -> {
-        PsiField field = psiClass.findFieldByName(memberName, true);
-        if (field != null && (!needsStatic || field.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(field, myReferenceElement)) {
-          return false;
-        }
-
-        PsiClass inner = psiClass.findInnerClassByName(memberName, true);
-        if (inner != null && isAccessible(inner, myReferenceElement)) return false;
-
-        for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
-          if ((!needsStatic || method.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(method, myReferenceElement)) return false;
-        }
-        return true;
-      });
+    if (memberName == null) {
+      return;
     }
+    List<PsiClass> toRemove = new ArrayList<>();
+    for (PsiClass aClass : classList) {
+      if (!hasMember(needsStatic, aClass, memberName)) {
+        toRemove.add(aClass);
+      }
+    }
+    //if all of them don't contain member, let's keep as is to create this member in the future
+    if (classList.size() != toRemove.size()) {
+      classList.removeAll(toRemove);
+    }
+  }
+
+  private boolean hasMember(boolean needsStatic, @NotNull PsiClass psiClass, @NotNull String memberName) {
+    PsiField field = psiClass.findFieldByName(memberName, true);
+    if (field != null && (!needsStatic || field.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(field, myReferenceElement)) {
+      return true;
+    }
+
+    PsiClass inner = psiClass.findInnerClassByName(memberName, true);
+    if (inner != null && isAccessible(inner, myReferenceElement)) return true;
+
+    for (PsiMethod method : psiClass.findMethodsByName(memberName, true)) {
+      if ((!needsStatic || method.hasModifierProperty(PsiModifier.STATIC)) && isAccessible(method, myReferenceElement)) return true;
+    }
+    return false;
   }
 
   private static void filterAlreadyImportedButUnresolved(@NotNull Collection<PsiClass> list, @NotNull PsiFile containingFile) {
@@ -431,10 +443,10 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (isQualified(myReference)) {
       return false;
     }
-    PsiFile file = myReferenceElement.isValid() && myContainingPsiFile != null && myContainingPsiFile.isValid() ? myContainingPsiFile : null;
-    if (file == null) return false;
+    PsiFile psiFile = myReferenceElement.isValid() && myContainingPsiFile != null && myContainingPsiFile.isValid() ? myContainingPsiFile : null;
+    if (psiFile == null) return false;
 
-    Result result = doFix(editor, true, false, ShowAutoImportPass.mayAutoImportNow(file, myInContent, extensionsAllowToChangeFileSilently));
+    Result result = doFix(editor, true, false, ShowAutoImportPass.mayAutoImportNow(psiFile, myInContent, extensionsAllowToChangeFileSilently));
     return result == Result.POPUP_SHOWN || result == Result.CLASS_AUTO_IMPORTED;
   }
 
@@ -455,14 +467,14 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   protected abstract boolean hasUnresolvedImportWhichCanImport(@NotNull PsiFile psiFile, @NotNull String name);
 
-  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(@NotNull List<PsiClass> classes, @NotNull PsiFile file) {
-    Project project = file.getProject();
+  private static void reduceSuggestedClassesBasedOnDependencyRuleViolation(@NotNull List<PsiClass> classes, @NotNull PsiFile psiFile) {
+    Project project = psiFile.getProject();
     DependencyValidationManager validationManager = DependencyValidationManager.getInstance(project);
     for (int i = classes.size() - 1; i >= 0; i--) {
       PsiClass psiClass = classes.get(i);
       PsiFile targetFile = psiClass.getContainingFile();
       if (targetFile == null) continue;
-      DependencyRule[] violated = validationManager.getViolatorDependencyRules(file, targetFile);
+      DependencyRule[] violated = validationManager.getViolatorDependencyRules(psiFile, targetFile);
       // remove class with violated dependency except the only remaining
       if (violated.length != 0 && (i!=0 || classes.size()>1)) {
         classes.remove(i);
@@ -480,8 +492,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
       if (!isStillAvailable()) return;
       PsiClass[] classes = getClassesToImport(true).toArray(PsiClass.EMPTY_ARRAY);

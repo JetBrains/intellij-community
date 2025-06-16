@@ -43,15 +43,15 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
   protected open fun init() {
     layout = myResizeManager.createLayout()
     isOpaque = true
-    background = JBUI.CurrentTheme.ToolWindow.background()
+    background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
 
     val topWrapper = JBPanel<JBPanel<*>>(BorderLayout()).apply {
-      border = JBUI.Borders.customLineTop(getBorderColor())
+      border = JBUI.Borders.customLineTop(JBUI.CurrentTheme.MainToolbar.borderColor())
     }
     border = createBorder()
-    topStripe.background = JBUI.CurrentTheme.ToolWindow.background()
-    bottomStripe.background = JBUI.CurrentTheme.ToolWindow.background()
-    topWrapper.background = JBUI.CurrentTheme.ToolWindow.background()
+    topStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
+    bottomStripe.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
+    topWrapper.background = JBUI.CurrentTheme.ToolWindow.stripeBackground()
 
     topWrapper.add(topStripe, BorderLayout.NORTH)
     add(topWrapper, BorderLayout.NORTH)

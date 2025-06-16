@@ -31,10 +31,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "@lib//:fastutil-min",
   ],
-  exports = [
-    "//grid/types",
-    "//grid/csv:csv-core-impl",
-  ],
   runtime_deps = [":core-impl_resources"]
 )
 ### auto-generated section `build intellij.grid.core.impl` end

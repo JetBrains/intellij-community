@@ -66,6 +66,12 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var renameTestMethods: Boolean
             by delegateTo { it::renameTestMethods }
 
+    override var PULL_UP_MEMBERS_JAVADOC: Int
+            by delegateTo { it::PULL_UP_MEMBERS_JAVADOC }
+
+    override var PUSH_DOWN_PREVIEW_USAGES: Boolean
+            by delegateTo { it::PUSH_DOWN_PREVIEW_USAGES }
+
     override var INLINE_LOCAL_THIS: Boolean
             by delegateTo { it::INLINE_LOCAL_THIS }
 

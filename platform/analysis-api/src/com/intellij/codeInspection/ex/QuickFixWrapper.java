@@ -131,25 +131,25 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   @Override
   public @NotNull String getText() {
-    return getFamilyName();
-  }
-
-  @Override
-  public @NotNull String getFamilyName() {
     return myFix.getName();
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiElement psiElement = myDescriptor.getPsiElement();
-    if (psiElement == null || !psiElement.isValid()) return false;
-    PsiFile containingFile = psiElement.getContainingFile();
-    return containingFile == file || containingFile == null ||
-           containingFile.getViewProvider().getVirtualFile().equals(file.getViewProvider().getVirtualFile());
+  public @NotNull String getFamilyName() {
+    return myFix.getFamilyName();
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    PsiElement psiElement = myDescriptor.getPsiElement();
+    if (psiElement == null || !psiElement.isValid()) return false;
+    PsiFile containingFile = psiElement.getContainingFile();
+    return containingFile == psiFile || containingFile == null ||
+           containingFile.getViewProvider().getVirtualFile().equals(psiFile.getViewProvider().getVirtualFile());
+  }
+
+  @Override
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     //if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     // consider all local quick fixes do it themselves
 
@@ -157,7 +157,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     final PsiFile fileForUndo = element == null ? null : element.getContainingFile();
     myFix.applyFix(project, myDescriptor);
     DaemonCodeAnalyzer.getInstance(project).restart();
-    if (fileForUndo != null && !fileForUndo.equals(file)) {
+    if (fileForUndo != null && !fileForUndo.equals(psiFile)) {
       UndoUtil.markPsiFileForUndo(fileForUndo);
     }
   }
@@ -184,7 +184,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
   @Override
   public @NotNull Priority getPriority() {
-    return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL;
+    return myFix instanceof PriorityAction priority ? priority.getPriority() : Priority.NORMAL;
   }
 
   @TestOnly

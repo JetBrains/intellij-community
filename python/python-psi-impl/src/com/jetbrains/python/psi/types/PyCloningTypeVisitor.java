@@ -83,11 +83,6 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   }
 
   @Override
-  public PyType visitPyNoneType(@NotNull PyNoneType noneType) {
-    return noneType;
-  }
-
-  @Override
   public PyType visitPyGenericType(@NotNull PyCollectionType genericType) {
     return new PyCollectionTypeImpl(
       genericType.getPyClass(),

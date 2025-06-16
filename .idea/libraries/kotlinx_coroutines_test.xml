@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-test" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-test-jvm:1.8.0-intellij-12">
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-test-jvm:1.10.1-intellij-4">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-test-jvm/1.8.0-intellij-12/kotlinx-coroutines-test-jvm-1.8.0-intellij-12.jar">
-          <sha256sum>6ba37eebb33a839292c14c306c1291d0897f218050d6ae9b8c4d40b3db28da4a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-test-jvm/1.10.1-intellij-4/kotlinx-coroutines-test-jvm-1.10.1-intellij-4.jar">
+          <sha256sum>33c09ea2c5ff9b7379db9ff70d3041f70991ed4fd469159b147014598d0c329d</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-test-jvm/1.8.0-intellij-12/kotlinx-coroutines-test-jvm-1.8.0-intellij-12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-test-jvm/1.10.1-intellij-4/kotlinx-coroutines-test-jvm-1.10.1-intellij-4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-test-jvm/1.8.0-intellij-12/kotlinx-coroutines-test-jvm-1.8.0-intellij-12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-test-jvm/1.10.1-intellij-4/kotlinx-coroutines-test-jvm-1.10.1-intellij-4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

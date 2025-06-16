@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
@@ -66,7 +67,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private final HighlightInfoUpdater myHighlightInfoUpdater;
   private final HighlightVisitorRunner myHighlightVisitorRunner;
 
-  public GeneralHighlightingPass(@NotNull PsiFile psiFile,
+  GeneralHighlightingPass(@NotNull PsiFile psiFile,
                           @NotNull Document document,
                           int startOffset,
                           int endOffset,
@@ -188,20 +189,27 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
           BiPredicate<? super Object, ? super PsiFile> keepToolIdPredicate = (toolId, __) -> !HighlightInfoUpdaterImpl.isHighlightVisitorToolId(toolId) || liveVisitorClasses.contains(toolId);
           impl.removeHighlightsForObsoleteTools(getHighlightingSession(), List.of(), keepToolIdPredicate);
         }
-        boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
-                                            forceHighlightParents, (toolId, psiElement, newInfos) -> {
-            myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject, getHighlightingSession(), invalidPsiRecycler);
-            myHighlights.addAll(newInfos);
-            if (psiElement instanceof PsiErrorElement) {
-              myHasErrorElement = true;
-            }
-            for (HighlightInfo info : newInfos) {
-              if (info.getSeverity() == HighlightSeverity.ERROR) {
-                myHasErrorSeverity = true;
-                break;
+        boolean success;
+        if (allInsideElements.isEmpty() && allOutsideElements.isEmpty()) {
+          success = true;
+        }
+        else {
+          success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors,
+                                      forceHighlightParents, (toolId, psiElement, newInfos) -> {
+              myHighlightInfoUpdater.psiElementVisited(toolId, psiElement, newInfos, getDocument(), getFile(), myProject,
+                                                       getHighlightingSession(), invalidPsiRecycler);
+              myHighlights.addAll(newInfos);
+              if (psiElement instanceof PsiErrorElement) {
+                myHasErrorElement = true;
               }
-            }
-        });
+              for (HighlightInfo info : newInfos) {
+                if (info.getSeverity() == HighlightSeverity.ERROR) {
+                  myHasErrorSeverity = true;
+                  break;
+                }
+              }
+            });
+        }
         if (success) {
           if (myUpdateAll) {
             daemonCodeAnalyzer.getFileStatusMap().setErrorFoundFlag(getDocument(), getContext(), myHasErrorSeverity);
@@ -219,6 +227,11 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
         ManagedHighlighterRecycler.runWithRecycler(getHighlightingSession(), recyclerConsumer);
       }
     });
+    if (LOG.isTraceEnabled()) {
+      List<HighlightInfo> errors = ContainerUtil.filter(myHighlights, h -> h.getSeverity() == HighlightSeverity.ERROR);
+      LOG.trace("GHP finished: myHasErrorElement=" + myHasErrorElement + "; highlights:" + myHighlights.size() + "; errors:" + errors.size() + ": " +
+                StringUtil.join(errors, "\n"));
+    }
   }
 
   private boolean isWholeFileHighlighting() {
@@ -300,10 +313,10 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   }
 
 
-  protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
+  protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile psiFile) {
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList().toArray(HighlightInfoFilter.EMPTY_ARRAY);
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
-    HighlightInfoHolder holder = new HighlightInfoHolder(file, filters) {
+    HighlightInfoHolder holder = new HighlightInfoHolder(psiFile, filters) {
       @Override
       public @NotNull TextAttributesScheme getColorsScheme() {
         return actualScheme;

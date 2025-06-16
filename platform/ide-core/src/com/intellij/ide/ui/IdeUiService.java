@@ -81,8 +81,7 @@ public class IdeUiService {
 
   }
 
-  public void performActionDumbAwareWithCallbacks(AnAction action, AnActionEvent event) {
-
+  public void performAction(@NotNull AnAction action, @NotNull AnActionEvent event) {
   }
 
   public boolean notifyByBalloon(Project project,

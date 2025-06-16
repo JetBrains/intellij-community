@@ -36,10 +36,10 @@ import com.intellij.testFramework.fixtures.EditorTestFixture
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.usages.Usage
 import com.intellij.xml.XmlSchemaProvider
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertTrue
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.perf.suite.CursorConfig
 import org.jetbrains.kotlin.idea.perf.suite.TypingConfig
 import org.jetbrains.kotlin.idea.performance.tests.utils.*
@@ -231,7 +231,7 @@ class Fixture(
 
             // side effect: to load script definitions"
             val scriptDefinitionsManager = ScriptDefinitionsManager.getInstance(project)
-            scriptDefinitionsManager.allDefinitions
+            scriptDefinitionsManager.getDefinitions()
             dispatchAllInvocationEvents()
 
             //assertFalse(KotlinScriptingSettings.getInstance(project).isAutoReloadEnabled)

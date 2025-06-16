@@ -25,7 +25,7 @@ private class CoroutineDebugConfigurationExtension : RunConfigurationExtension()
                 configuration.project,
                 configuration,
                 params,
-                argumentsShouldBeModified(configuration)
+                shouldAttachCoroutineAgent = true // TODO: define that a coroutine agent should be attached properly, see IDEA-368470
             )
         }
     }
@@ -41,14 +41,3 @@ private fun JavaParameters.isKotlinxCoroutinesDebugDisabled(): Boolean {
     val kotlinxCoroutinesDebugProperty = vmParametersList.properties[KOTLINX_COROUTINES_DEBUG_PROPERTY_NAME]
     return kotlinxCoroutinesDebugProperty == KOTLINX_COROUTINES_DEBUG_OFF_VALUE
 }
-
-private fun argumentsShouldBeModified(configuration: RunConfigurationBase<*>): Boolean =
-    !configuration.isGradleConfiguration() && !configuration.isMavenConfiguration()
-
-private fun RunConfigurationBase<*>.isGradleConfiguration(): Boolean {
-    val name = type.id
-    return name == "GradleRunConfiguration" || name == "KotlinGradleRunConfiguration"
-}
-
-private fun RunConfigurationBase<*>.isMavenConfiguration(): Boolean =
-    type.id == "MavenRunConfiguration"

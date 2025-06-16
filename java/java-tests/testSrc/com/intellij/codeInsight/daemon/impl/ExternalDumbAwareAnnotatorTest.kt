@@ -6,7 +6,7 @@ import com.intellij.lang.ExternalLanguageAnnotators
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
@@ -18,14 +18,14 @@ class ExternalDumbAwareAnnotatorTest : CodeInsightFixtureTestCase<ModuleFixtureB
     myFixture.configureByText("a.java", "class A {}")
     var test = 0
     val annotator: ExternalAnnotator<Int, Int> = object : ExternalAnnotator<Int, Int>(), DumbAware {
-      override fun collectInformation(file: PsiFile): Int {
-        assert(DumbServiceImpl.getInstance(file.project).isDumb)
+      override fun collectInformation(psiFile: PsiFile): Int {
+        assert(DumbService.getInstance(psiFile.project).isDumb)
         return 1
       }
 
       override fun doAnnotate(collectedInfo: Int?): Int {
         assertNotNull(collectedInfo)
-        assert(DumbServiceImpl.getInstance(file.project).isDumb)
+        assert(DumbService.getInstance(file.project).isDumb)
         test += collectedInfo!!
         return test
       }

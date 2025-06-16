@@ -43,8 +43,13 @@ interface ServiceModuleMapping {
             else if (previousGroup != pluginGroup) {
               val currentPath = showPath(dependency, dependencyPath)
               val previousPath = showPath(dependency, dependencyPathToModule?.get(dependency))
-              errors.add("Modules from two plugins depend on module '${dependency.moduleId.stringId}': " +
-                         "'${previousGroup.mainModule.moduleId.stringId}'$previousPath and '${pluginGroup.mainModule.moduleId.stringId}'$currentPath")
+              errors.add("""
+                |Modules from two plugins depend on module '${dependency.moduleId.stringId}': 
+                | '${previousGroup.mainModule.moduleId.stringId}'$previousPath and '${pluginGroup.mainModule.moduleId.stringId}'$currentPath
+                |Currently every module should belong to some plugin, but the system cannot automatically determine which plugin should be used.
+                |To fix the problem, register '${dependency.moduleId.stringId}' in some plugin explicitly or include it in the main module
+                |in product-modules.xml.
+                """.trimMargin())
             }
           }
         }

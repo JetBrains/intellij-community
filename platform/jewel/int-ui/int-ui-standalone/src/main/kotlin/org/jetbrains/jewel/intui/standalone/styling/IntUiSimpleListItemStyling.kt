@@ -1,19 +1,19 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemColors
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemMetrics
 import org.jetbrains.jewel.ui.component.styling.SimpleListItemStyle
 
 @Composable
-public fun SimpleListItemStyle.Companion.default(): SimpleListItemStyle = if (isSystemInDarkTheme()) dark() else light()
+public fun SimpleListItemStyle.Companion.default(): SimpleListItemStyle = if (JewelTheme.isDark) dark() else light()
 
 public fun SimpleListItemStyle.Companion.light(
     colors: SimpleListItemColors = SimpleListItemColors.light(),
@@ -27,7 +27,7 @@ public fun SimpleListItemStyle.Companion.dark(
 
 @Composable
 public fun SimpleListItemStyle.Companion.fullWidth(): SimpleListItemStyle =
-    if (isSystemInDarkTheme()) darkFullWidth() else lightFullWidth()
+    if (JewelTheme.isDark) darkFullWidth() else lightFullWidth()
 
 public fun SimpleListItemStyle.Companion.lightFullWidth(
     colors: SimpleListItemColors = SimpleListItemColors.light(),

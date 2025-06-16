@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.ide.JavaUiBundle
@@ -10,10 +10,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
+import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
-import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import javax.swing.DefaultComboBoxModel
@@ -29,23 +29,20 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     val items = mutableListOf<Any>()
     items.add(defaultItem ?: "")
 
-    val highestPreviewLevel = LanguageLevel.HIGHEST.previewLevel
-    val highestWithPreview = highestPreviewLevel ?: LanguageLevel.HIGHEST
+    val highestLanguageLevel = JavaRelease.getHighest()
+    val highestWithPreview = highestLanguageLevel.getPreviewLevel() ?: highestLanguageLevel
 
     fun MutableList<Any>.filterAndAdd(levels: Collection<LanguageLevel>) = levels.filter(levelFilter).also { addAll(it) }
 
-    val ltsItems = items.filterAndAdd(LTS.toList())
-
-    val otherItems = items.filterAndAdd(buildList {
+    val regularItems = items.filterAndAdd(buildList {
       LanguageLevel.entries
-        .sortedBy { it.feature() }
-        .filter { level: LanguageLevel -> level <= highestWithPreview && !level.isUnsupported && 
-                                          (level.isPreview || !ArrayUtil.contains(level, *LTS)) }
+        .sortedBy { -it.feature() }
+        .filter { level: LanguageLevel -> level <= highestWithPreview && !level.isUnsupported }
         .forEach { level: LanguageLevel -> add(level) }
     })
 
     val experimentalItems = items.filterAndAdd(buildList {
-      for (level in LanguageLevel.entries) {
+      for (level in LanguageLevel.entries.reversed()) {
         if (level > highestWithPreview && !level.isUnsupported) {
           add(level)
         }
@@ -53,7 +50,7 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     })
     
     val unsupportedItems = items.filterAndAdd(buildList {
-      for (level in LanguageLevel.entries) {
+      for (level in LanguageLevel.entries.reversed()) {
         if (level.isUnsupported) {
           add(level)
         }
@@ -61,8 +58,7 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
     })
 
     val separatorsMap: Map<Any?, ListSeparator> = listOf(
-      ltsItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.lts.versions")),
-      otherItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.other.versions")),
+      regularItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.supported.versions")),
       experimentalItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.experimental.versions")),
       unsupportedItems.firstOrNull() to ListSeparator(JavaUiBundle.message("language.level.combo.unsupported.versions")),
     ).filter { it.first != null }.toMap()
@@ -78,6 +74,8 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
            }) {
         if (value is LanguageLevel && value.isUnsupported) {
           attributes = SimpleTextAttributes.ERROR_ATTRIBUTES
+        } else if (value is LanguageLevel && LTS.contains(value)) {
+          attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.derive(SimpleTextAttributes.STYLE_BOLD, null, null, null)
         }
       }
       separatorsMap[value]?.let {

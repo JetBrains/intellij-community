@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental;
 import com.dynatrace.hash4j.hashing.HashSink;
 import com.dynatrace.hash4j.hashing.HashStream64;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.*;
 import org.jetbrains.jps.ProjectPaths;
@@ -155,7 +156,7 @@ public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescri
         File outputIoDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(myModule, JavaSourceRootType.TEST_SOURCE == sourceRoot.getRootType(), profile);
         if (outputIoDir != null) {
           Path outputDir = outputIoDir.toPath();
-          if (sourceRoot.getPath().startsWith(outputDir)) {
+          if (outputDir.startsWith(sourceRoot.getPath())) {
             excludes = FileCollectionFactory.createCanonicalPathSet(excludes);
             excludes.add(outputDir);
           }
@@ -227,6 +228,18 @@ public class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescri
       hash.putString(encoding);
     }
 
+    if (SystemProperties.getBooleanProperty("jps.rebuild.on.change.in.instrumenters", true)) {
+      for (JvmClassFileInstrumenter instrumenter : BuilderRegistry.getInstance().getClassFileInstrumenters()) {
+        if (instrumenter.isEnabled(projectDescriptor, module)) {
+          hash.putString(instrumenter.getId());
+          hash.putInt(instrumenter.getVersion());
+          if (logBuilder != null) {
+            logBuilder.append(instrumenter.getId()).append(":").append(instrumenter.getVersion()).append('\n');
+          }
+        }
+      }
+    }
+    
     if (logBuilder == null) {
       return;
     }

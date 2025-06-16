@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -21,10 +22,12 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiers
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
@@ -40,10 +43,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
-    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(parameters, sink, priority) {
+) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(sink, priority) {
 
     private val onTypingIsKeyword: Boolean =
         super.prefixMatcher.prefix.let { prefix ->
@@ -139,7 +141,7 @@ internal class FirWhenWithSubjectConditionContributor(
                     context = context,
                     lookupString = classifier.name.asString(),
                     symbol = classifier,
-                    origin = CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
+                    scopeKind = classifierWithScopeKind.scopeKind,
                     fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
@@ -150,7 +152,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 positionContext = positionContext,
                 parameters = parameters,
                 symbolProvider = symbolFromIndexProvider,
-                scopeNameFilter = scopeNameFilter,
+                scopeNameFilter = getIndexNameFilter(),
                 visibilityChecker = visibilityChecker,
             ).filterNot { it in availableFromScope }
                 .filterIsInstance<KaNamedSymbol>()
@@ -159,7 +161,6 @@ internal class FirWhenWithSubjectConditionContributor(
                         context = context,
                         lookupString = classifier.name.asString(),
                         symbol = classifier,
-                        origin = CompletionSymbolOrigin.Index,
                         fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                         isSingleCondition = isSingleCondition,
                     )
@@ -205,7 +206,6 @@ internal class FirWhenWithSubjectConditionContributor(
                     context = context,
                     lookupString = classId.relativeClassName.asString(),
                     symbol = inheritor,
-                    origin = CompletionSymbolOrigin.Index,
                     fqName = classId.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
@@ -292,7 +292,6 @@ internal class FirWhenWithSubjectConditionContributor(
                     context = context,
                     lookupString = "${classSymbol.name.asString()}.${entry.name.asString()}",
                     symbol = entry,
-                    origin = CompletionSymbolOrigin.Index,
                     fqName = entry.callableId?.asSingleFqName(),
                     isSingleCondition = isSingleCondition,
                 )
@@ -309,9 +308,9 @@ internal class FirWhenWithSubjectConditionContributor(
         context: WeighingContext,
         lookupString: String,
         symbol: KaNamedSymbol,
-        origin: CompletionSymbolOrigin,
         fqName: FqName?,
         isSingleCondition: Boolean,
+        scopeKind: KaScopeKind? = null,
     ): LookupElement {
         val isPrefixNeeded = isPrefixNeeded(symbol)
 
@@ -325,7 +324,7 @@ internal class FirWhenWithSubjectConditionContributor(
             .withInsertHandler(WhenConditionInsertionHandler)
             .withTailText(createStarTypeArgumentsList(typeArgumentsCount), /*grayed*/true)
             .letIf(isSingleCondition) { it.appendTailText(" -> ",  /*grayed*/true) }
-            .applyWeighs(context, KtSymbolWithOrigin(symbol, origin))
+            .applyWeighs(context, KtSymbolWithOrigin(symbol, scopeKind))
     }
 }
 

@@ -2,13 +2,13 @@
 package com.intellij.diagnostic
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.LockAcquisitionListener
 import com.intellij.openapi.application.ThreadingSupport
 import com.intellij.openapi.application.WriteDelayDiagnostics
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.platform.locking.impl.listeners.LockAcquisitionListener
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 class WriteLockMeasurerImpl(scope: CoroutineScope) : WriteLockMeasurer {
   init {
     val application = ApplicationManager.getApplication()
-    if (application is ApplicationEx) {
+    if (application is ApplicationImpl) {
       application.addLockAcquisitionListener(WriteLockMeasurementListener(), scope.asDisposable())
     }
   }

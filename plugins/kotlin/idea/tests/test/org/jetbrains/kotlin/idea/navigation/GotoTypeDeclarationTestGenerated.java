@@ -70,6 +70,11 @@ public class GotoTypeDeclarationTestGenerated extends AbstractGotoTypeDeclaratio
         runTest("testData/navigation/gotoTypeDeclaration/functionCall.test");
     }
 
+    @TestMetadata("genericTypeInParameter.test")
+    public void testGenericTypeInParameter() throws Exception {
+        runTest("testData/navigation/gotoTypeDeclaration/genericTypeInParameter.test");
+    }
+
     @TestMetadata("itExtensionLambda.test")
     public void testItExtensionLambda() throws Exception {
         runTest("testData/navigation/gotoTypeDeclaration/itExtensionLambda.test");

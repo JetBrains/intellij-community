@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "restructuredtext_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
 jvm_provided_library(
   name = "lang-impl_provided",
   lib = "//platform/lang-impl"
@@ -33,13 +39,19 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "@lib//:guava",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl:ide-impl",
     "//platform/indexing-impl",
     "@lib//:jsoup",
     "//platform/util/jdom",
     "@lib//:jcef",
+    "//platform/indexing-api:indexing",
     ":lang-impl_provided",
     ":execution-impl_provided",
     ":core-ui_provided",

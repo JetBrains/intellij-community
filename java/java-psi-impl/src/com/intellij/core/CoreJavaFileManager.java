@@ -2,6 +2,7 @@
 package com.intellij.core;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +27,10 @@ public class CoreJavaFileManager implements JavaFileManager {
 
   public CoreJavaFileManager(PsiManager psiManager) {
     myPsiManager = psiManager;
+  }
+
+  public CoreJavaFileManager(Project project) {
+    myPsiManager = PsiManager.getInstance(project);
   }
 
   private List<VirtualFile> roots() {

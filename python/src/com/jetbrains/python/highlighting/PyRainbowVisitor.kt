@@ -24,7 +24,7 @@ class PyRainbowVisitor : RainbowVisitor() {
     val HIGHLIGHTING_KEYS: Set<TextAttributesKey> = setOf(PyHighlighter.PY_PARAMETER, DEFAULT_HIGHLIGHTING_KEY)
   }
 
-  override fun suitableForFile(file: PsiFile): Boolean = file is PyFile
+  override fun suitableForFile(psiFile: PsiFile): Boolean = psiFile is PyFile
 
   override fun visit(element: PsiElement) {
     when (element) {

@@ -1,0 +1,21 @@
+LineBreakpoint created at framesAboveCoroutineOwner.kt:18
+Run Java
+Connected to the target VM
+framesAboveCoroutineOwner.kt:18
+vvv stack trace vvv
+  invokeSuspend:18, FramesAboveCoroutineOwnerKt$main$1$1$1$1$1
+  invokeSuspend:15, FramesAboveCoroutineOwnerKt$main$1$1$1$1
+  invoke:-1, FramesAboveCoroutineOwnerKt$main$1$1$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  invokeSuspend:14, FramesAboveCoroutineOwnerKt$main$1$1$1
+  <hidden frames>
+-- Async stack trace --
+  <hidden frames>
+  main:10, FramesAboveCoroutineOwnerKt
+  main:-1, FramesAboveCoroutineOwnerKt
+^^^ stack trace ^^^
+Disconnected from the target VM
+
+Process finished with exit code 0

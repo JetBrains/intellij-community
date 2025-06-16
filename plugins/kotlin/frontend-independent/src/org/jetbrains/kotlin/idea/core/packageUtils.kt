@@ -83,8 +83,10 @@ fun PsiDirectory.getFqNameWithImplicitPrefixOrRoot(): FqName = getFqNameWithImpl
 private fun VirtualFile.hasExplicitPackagePrefix(project: Project): Boolean =
     toPsiDirectory(project)?.getPackage()?.qualifiedName?.isNotEmpty() == true
 
-fun KtFile.packageMatchesDirectoryOrImplicit() =
-    packageFqName == getFqNameByDirectory() || packageFqName == parent?.getFqNameWithImplicitPrefix()
+fun KtFile.packageMatchesDirectoryOrImplicit(): Boolean {
+    val fqName = packageFqName
+    return fqName == getFqNameByDirectory() || fqName == parent?.getFqNameWithImplicitPrefix()
+}
 
 private fun getWritableModuleDirectory(vFiles: Query<VirtualFile>, module: Module, manager: PsiManager): PsiDirectory? {
     for (vFile in vFiles.asIterable()) {

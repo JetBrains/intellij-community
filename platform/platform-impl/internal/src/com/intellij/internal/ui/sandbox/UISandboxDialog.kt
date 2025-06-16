@@ -17,7 +17,6 @@ import com.intellij.internal.ui.sandbox.dsl.validation.CrossValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationPanel
 import com.intellij.internal.ui.sandbox.dsl.validation.ValidationRefactoringPanel
 import com.intellij.internal.ui.sandbox.tests.accessibility.AccessibilityFailedInspectionsPanel
-import com.intellij.internal.ui.sandbox.tests.components.JBTextAreaTestPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -66,9 +65,11 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
       JBTabsPanel(),
       JBTextAreaPanel(),
       JCheckBoxPanel(),
+      JComboBoxPanel(),
       JRadioButtonPanel(),
       JSpinnerPanel(),
       JTextFieldPanel(),
+      OnOffButtonPanel(),
       SearchTextFieldPanel(),
       ThreeStateCheckBoxPanel())),
 

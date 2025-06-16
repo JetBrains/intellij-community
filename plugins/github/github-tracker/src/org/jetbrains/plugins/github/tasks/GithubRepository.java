@@ -48,7 +48,7 @@ final class GithubRepository extends BaseRepository {
   private @NotNull String myUser = "";
   private boolean myAssignedIssuesOnly = false;
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   GithubRepository() {
   }
 

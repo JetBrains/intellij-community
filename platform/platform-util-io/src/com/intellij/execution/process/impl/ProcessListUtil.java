@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -19,10 +19,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.ThreeState;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,8 +33,12 @@ import java.util.*;
 public final class ProcessListUtil {
   private static final Logger LOG = Logger.getInstance(ProcessListUtil.class);
   private static final String WIN_PROCESS_LIST_HELPER_FILENAME = "WinProcessListHelper.exe";
-  public static final List<@NlsSafe String> COMM_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,comm");
-  public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,user,command");
+  @ApiStatus.Internal
+  public static final List<@NlsSafe String> COMM_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,comm");
+  @ApiStatus.Internal
+  public static final List<@NlsSafe String> COMMAND_LIST_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,ppid,state,command");
+  @ApiStatus.Internal
+  public static final List<@NlsSafe String> PROCESS_OWNER_COMMAND = List.of("/bin/ps", "-a", "-x", "-o", "pid,user");
 
   private static final String PARENT_PID_PREFIX = "PPid:";
 
@@ -91,7 +92,14 @@ public final class ProcessListUtil {
   private static @Nullable List<ProcessInfo> parseCommandOutput(@NotNull List<@NlsSafe String> command,
                                                                 @NotNull NullableFunction<? super String, ? extends List<ProcessInfo>> parser,
                                                                 @Nullable Charset charset) {
-    String output;
+    String output = getCommandStdout(command, charset);
+    if (output == null) {
+      return null;
+    }
+    return parser.fun(output);
+  }
+
+  private static @Nullable String getCommandStdout(@NotNull List<@NlsSafe String> command, @Nullable Charset charset) {
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine(command);
       if (charset != null)
@@ -104,13 +112,12 @@ public final class ProcessListUtil {
                   + "\nstderr:\n"
                   + processOutput.getStderr());
       }
-      output = processOutput.getStdout();
+      return processOutput.getStdout();
     }
     catch (ExecutionException e) {
       LOG.error("Cannot get process list", e);
-      return null;
     }
-    return parser.fun(output);
+    return null;
   }
 
   private static @Nullable List<ProcessInfo> getProcessListOnUnix() {
@@ -187,26 +194,40 @@ public final class ProcessListUtil {
     // In order to correctly determine executable file name and retrieve arguments from the command line
     // we need first to get the executable from 'comm' parameter, and then subtract it from the 'command' parameter.
     // Example:
-    // 12  S user ./command
-    // 12  S user ./command argument list
+    // 12  S ./command
+    // 12  S ./command argument list
 
-    return parseCommandOutput(COMM_LIST_COMMAND,
-                              commandOnly -> parseCommandOutput(COMMAND_LIST_COMMAND,
-                                                                full -> parseMacOutput(commandOnly, full, getCurrentUser())));
-  }
-
-  @ApiStatus.Internal
-  public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
-    return parseMacOutput(commandOnly, full, null);
+    String commandOnly = getCommandStdout(COMM_LIST_COMMAND, null);
+    if (commandOnly == null) {
+      return null;
+    }
+    String full = getCommandStdout(COMMAND_LIST_COMMAND, null);
+    if (full == null) {
+      return null;
+    }
+    String processOwners = getCommandStdout(PROCESS_OWNER_COMMAND, null);
+    if (processOwners == null) {
+      return null;
+    }
+    return parseMacOutput(commandOnly, full, processOwners, getCurrentUser());
   }
 
   @ApiStatus.Internal
   public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly,
                                                            @NotNull String full,
+                                                           @NotNull String processOwners) {
+    return parseMacOutput(commandOnly, full, processOwners, null);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> parseMacOutput(@NotNull String commandOnly,
+                                                           @NotNull String full,
+                                                           @NotNull String processOwners,
                                                            @Nullable String currentUser) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     List<MacProcessInfo> fulls = doParseMacOutput(full);
-    if (commands == null || fulls == null) return null;
+    Int2ObjectMap<String> owners = doParseProcessOwners(processOwners);
+    if (commands == null || fulls == null || owners == null) return null;
 
     Int2ObjectMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
     for (MacProcessInfo each : commands) {
@@ -216,6 +237,8 @@ public final class ProcessListUtil {
     List<ProcessInfo> result = new ArrayList<>();
     for (MacProcessInfo each : fulls) {
       if (!idToCommand.containsKey(each.pid)) continue;
+      String user = owners.get(each.pid);
+      if (user == null) continue;
 
       String command = idToCommand.get(each.pid);
       if (!(each.commandLine.equals(command) || each.commandLine.startsWith(command + " "))) continue;
@@ -223,24 +246,16 @@ public final class ProcessListUtil {
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.substring(command.length()).trim();
 
-      ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(each.user)) : ThreeState.UNSURE;
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid, each.user, isOwnedByCurrentUser));
+      ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(user)) : ThreeState.UNSURE;
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid, user, isOwnedByCurrentUser));
     }
     return result;
-  }
-
-  /**
-   * @deprecated The method seems to be not used, but it can be hypothetically used in some unpublished third-party plugin.
-   */
-  @ApiStatus.Internal
-  @Deprecated(forRemoval = true)
-  public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
-    return parseLinuxOutputMacStyle(commandOnly, full, null);
   }
 
   @ApiStatus.Internal
   public static @Nullable List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly,
                                                                      @NotNull String full,
+                                                                     @NotNull String processOwners,
                                                                      @Nullable String currentUser) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     if (commands == null) {
@@ -252,7 +267,11 @@ public final class ProcessListUtil {
       LOG.debug("Failed to parse comm output: ", full);
       return null;
     }
-
+    Int2ObjectMap<String> owners = doParseProcessOwners(processOwners);
+    if (owners == null) {
+      LOG.debug("Failed to parse process owners output: ", processOwners);
+      return null;
+    }
 
     Int2ObjectMap<String> idToCommand = new Int2ObjectOpenHashMap<>();
     for (MacProcessInfo each : commands) {
@@ -262,13 +281,15 @@ public final class ProcessListUtil {
     List<ProcessInfo> result = new ArrayList<>();
     for (MacProcessInfo each : fulls) {
       if (!idToCommand.containsKey(each.pid)) continue;
+      String user = owners.get(each.pid);
+      if (user == null) continue;
 
       String command = idToCommand.get(each.pid);
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.startsWith(command) ? each.commandLine.substring(command.length()).trim()
                                                          : each.commandLine;
-      ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(each.user)) : ThreeState.UNSURE;
-      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid, each.user, isOwnedByCurrentUser));
+      ThreeState isOwnedByCurrentUser = currentUser != null ? ThreeState.fromBoolean(currentUser.equals(user)) : ThreeState.UNSURE;
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command, each.parentPid, user, isOwnedByCurrentUser));
     }
     return result;
   }
@@ -292,10 +313,7 @@ public final class ProcessListUtil {
     int statStart = header.indexOf("S", parentPidStart);
     if (statStart == -1) return null;
 
-    int userStart = header.indexOf("USER", statStart);
-    if (userStart == -1) return null;
-
-    int commandStart = header.indexOf("COMM", userStart);
+    int commandStart = header.indexOf("COMM", statStart);
     if (commandStart == -1) return null;
 
     for (int i = 1; i < lines.length; i++) {
@@ -307,13 +325,12 @@ public final class ProcessListUtil {
 
         int parentPid = StringUtil.parseInt(line.substring(parentPidSectionStart, statStart).trim(), -1);
 
-        @NlsSafe String state = line.substring(statStart, userStart).trim();
+        @NlsSafe String state = line.substring(statStart, commandStart).trim();
         if (state.contains("Z")) continue; // zombie
 
-        String user = line.substring(userStart, commandStart).trim();
         String commandLine = line.substring(commandStart).trim();
 
-        result.add(new MacProcessInfo(pid, commandLine, user, state, parentPid));
+        result.add(new MacProcessInfo(pid, commandLine, state, parentPid));
       }
       catch (Exception e) {
         LOG.error("Can't parse line '" + line + "'", e);
@@ -322,7 +339,7 @@ public final class ProcessListUtil {
     return result;
   }
 
-  private record MacProcessInfo(int pid, String commandLine, String user, String state, int parentPid) {
+  private record MacProcessInfo(int pid, String commandLine, String state, int parentPid) {
   }
 
   private static @Nullable List<ProcessInfo> getProcessListUsingWinProcessListHelper() {
@@ -381,7 +398,9 @@ public final class ProcessListUtil {
     return null;
   }
 
-  static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> parseWinProcessListHelperOutput(@NotNull String output,
                                                                      @NotNull Map<Long, String> processOwners,
                                                                      @Nullable String currentUser) {
     String[] lines = StringUtil.splitByLines(output, false);
@@ -462,12 +481,16 @@ public final class ProcessListUtil {
     }
   }
 
-  static @Nullable List<ProcessInfo> getProcessListUsingWindowsWMIC() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> getProcessListUsingWindowsWMIC() {
     return parseCommandOutput(Arrays.asList("wmic.exe", "path", "win32_process", "get", "Caption,Processid,ParentProcessId,Commandline,ExecutablePath"),
                               output -> parseWMICOutput(output, getProcessOwners(), getCurrentUser()));
   }
 
-  static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> parseWMICOutput(@NotNull String output,
                                                      @NotNull Map<Long, String> processOwners,
                                                      @Nullable String currentUser) {
     List<ProcessInfo> result = new ArrayList<>();
@@ -518,12 +541,16 @@ public final class ProcessListUtil {
     return result;
   }
 
-  static @Nullable List<ProcessInfo> getProcessListUsingWindowsTaskList() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> getProcessListUsingWindowsTaskList() {
     return parseCommandOutput(Arrays.asList("tasklist.exe", "/fo", "csv", "/nh", "/v"),
                               output -> parseListTasksOutput(output, getCurrentUser()));
   }
 
-  static @Nullable List<ProcessInfo> parseListTasksOutput(@NotNull String output, @Nullable String currentUser) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @Nullable List<ProcessInfo> parseListTasksOutput(@NotNull String output, @Nullable String currentUser) {
     List<ProcessInfo> result = new ArrayList<>();
 
     CSVReader reader = new CSVReader(new StringReader(output));
@@ -558,6 +585,39 @@ public final class ProcessListUtil {
       }
     }
 
+    return result;
+  }
+
+  /**
+   * Parses {@link ProcessListUtil#PROCESS_OWNER_COMMAND} output and returns mapping pid -> its user.
+   */
+  private static @Nullable Int2ObjectMap<String> doParseProcessOwners(@NlsSafe String output) {
+    String[] lines = StringUtil.splitByLinesDontTrim(output);
+    if (lines.length == 0) return null;
+
+    Int2ObjectMap<String> result = new Int2ObjectOpenHashMap<>();
+    String header = lines[0];
+    String pidString = "PID";
+    int pidStart = header.indexOf(pidString);
+    if (pidStart == -1) return null;
+
+    int userStart = header.indexOf("USER", pidStart + pidString.length());
+    if (userStart == -1) return null;
+
+    for (int i = 1; i < lines.length; i++) {
+      String line = lines[i];
+
+      try {
+        int pid = StringUtil.parseInt(line.substring(0, userStart).trim(), -1);
+        if (pid == -1) continue;
+
+        String user = line.substring(userStart).trim();
+        result.put(pid, user);
+      }
+      catch (Exception e) {
+        LOG.error("Can't parse line '" + line + "'", e);
+      }
+    }
     return result;
   }
 

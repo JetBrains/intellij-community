@@ -1,10 +1,12 @@
 ### auto-generated section `build kotlin.util.compiler-classpath` start
-load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-java_library(
+jvm_library(
   name = "util-compiler-classpath",
+  module_name = "kotlin.util.compiler-classpath",
   visibility = ["//visibility:public"],
-  runtime_deps = [
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:asm",
     "@lib//:java_compatibility",

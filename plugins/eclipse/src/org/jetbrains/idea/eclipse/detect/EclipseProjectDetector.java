@@ -20,12 +20,14 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.eclipse.EclipseBundle;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
@@ -37,10 +39,9 @@ public final class EclipseProjectDetector extends ProjectDetector {
   void collectProjectPaths(List<String> projects) {
     String home = System.getProperty("user.home");
     Path path = Path.of(home, ".eclipse/org.eclipse.oomph.setup/setups/locations.setup");
-    File file = path.toFile();
-    if (file.exists()) {
+    if (Files.exists(path)) {
       try {
-        List<String> workspaceUrls = parseOomphLocations(FileUtil.loadFile(file));
+        List<String> workspaceUrls = parseOomphLocations(Files.readString(path));
         for (String url : workspaceUrls) {
           scanForProjects(URI.create(url).getPath(), projects);
         }
@@ -131,7 +132,8 @@ public final class EclipseProjectDetector extends ProjectDetector {
     }
   }
 
-  static String[] getWorkspaces(String prefs) throws IOException {
+  @VisibleForTesting
+  public static String[] getWorkspaces(String prefs) throws IOException {
     Properties properties = new Properties();
     try {
       properties.load(new StringReader(prefs));
@@ -162,7 +164,8 @@ public final class EclipseProjectDetector extends ProjectDetector {
     }
   }
 
-  static List<String> parseOomphLocations(String fileContent) throws Exception {
+  @VisibleForTesting
+  public static List<String> parseOomphLocations(String fileContent) throws Exception {
     Element root = JDOMUtil.load(fileContent);
     List<Element> elements = root.getChildren("workspace");
     return ContainerUtil.map(elements, element1 -> StringUtil

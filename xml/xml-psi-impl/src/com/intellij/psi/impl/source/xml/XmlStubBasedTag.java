@@ -3,13 +3,13 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.xml.stub.XmlTagStubImpl;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlStubBasedTag extends XmlStubBasedTagBase<XmlTagStubImpl> {
 
   public XmlStubBasedTag(@NotNull XmlTagStubImpl stub,
-                         @NotNull IStubElementType<? extends XmlTagStubImpl, ? extends XmlStubBasedTag> nodeType) {
+                         @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 

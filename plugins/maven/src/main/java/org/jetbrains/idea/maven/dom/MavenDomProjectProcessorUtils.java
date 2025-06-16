@@ -21,10 +21,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class MavenDomProjectProcessorUtils {
 
@@ -41,7 +38,8 @@ public final class MavenDomProjectProcessorUtils {
     return models;
   }
 
-  private static void collectChildrenProjects(final @NotNull MavenDomProjectModel model, @NotNull Set<? super MavenDomProjectModel> models) {
+  private static void collectChildrenProjects(final @NotNull MavenDomProjectModel model,
+                                              @NotNull Set<? super MavenDomProjectModel> models) {
     MavenProject mavenProject = MavenDomUtil.findProject(model);
     if (mavenProject != null) {
       final Project project = model.getManager().getProject();
@@ -151,6 +149,29 @@ public final class MavenDomProjectProcessorUtils {
   }
 
   public static @NotNull Set<MavenDomDependency> searchDependencyUsages(final @NotNull MavenDomProjectModel model,
+                                                                        final @NotNull String groupId,
+                                                                        final @NotNull String artifactId) {
+    Project project = model.getManager().getProject();
+    final Set<MavenDomDependency> usages = new LinkedHashSet<>();
+
+    var searchProcessor = new Processor<MavenDomDependencies>() {
+
+      @Override
+      public boolean process(MavenDomDependencies dependencies) {
+        for (MavenDomDependency domDependency : dependencies.getDependencies()) {
+          if (groupId.equals(domDependency.getGroupId().getStringValue()) &&
+              artifactId.equals(domDependency.getArtifactId().getStringValue())) {
+            usages.add(domDependency);
+          }
+        }
+        return false;
+      }
+    };
+    process(model, searchProcessor, project, domProfile -> domProfile.getDependencies(), domProfile -> domProfile.getDependencies());
+    return usages;
+  }
+
+  public static @NotNull Set<MavenDomDependency> searchDependencyUsages(final @NotNull MavenDomProjectModel model,
                                                                         final @NotNull DependencyConflictId dependencyId,
                                                                         final @NotNull Set<MavenDomDependency> excludes) {
     Project project = model.getManager().getProject();
@@ -243,7 +264,8 @@ public final class MavenDomProjectProcessorUtils {
     return searchManagingDependency(dependency, dependency.getManager().getProject());
   }
 
-  public static @Nullable MavenDomDependency searchManagingDependency(final @NotNull MavenDomDependency dependency, final @NotNull Project project) {
+  public static @Nullable MavenDomDependency searchManagingDependency(final @NotNull MavenDomDependency dependency,
+                                                                      final @NotNull Project project) {
     final DependencyConflictId depId = DependencyConflictId.create(dependency);
     if (depId == null) return null;
 
@@ -385,7 +407,7 @@ public final class MavenDomProjectProcessorUtils {
   public static <T> boolean process(@NotNull MavenDomProjectModel projectDom,
                                     final @NotNull Processor<? super T> processor,
                                     final @NotNull Project project,
-                                    final @NotNull Function<? super MavenDomProfile , T> domProfileFunction,
+                                    final @NotNull Function<? super MavenDomProfile, T> domProfileFunction,
                                     final @NotNull Function<? super MavenDomProjectModel, T> projectDomFunction) {
 
     return process(projectDom, processor, project, domProfileFunction, projectDomFunction, new HashSet<>());
@@ -434,9 +456,9 @@ public final class MavenDomProjectProcessorUtils {
                                                 @NotNull Processor<? super T> processor,
                                                 @NotNull Project project,
                                                 Function<? super MavenDomProfile, ? extends T> domProfileFunction) {
-    MavenGeneralSettings settings = MavenProjectsManager.getInstance(project).getGeneralSettings();
+    MavenSettingsCache cache = MavenSettingsCache.getInstance(project);
 
-    for (VirtualFile each : settings.getEffectiveSettingsFiles()) {
+    for (VirtualFile each : cache.getEffectiveVirtualSettingsFiles()) {
       MavenDomSettingsModel settingsDom = MavenDomUtil.getMavenDomModel(project, each, MavenDomSettingsModel.class);
       if (settingsDom == null) continue;
 
@@ -445,6 +467,19 @@ public final class MavenDomProjectProcessorUtils {
     return false;
   }
 
+  /**
+   * Processes the project model by applying the given functions and processor to the profiles
+   * and the project DOM.
+   *
+   * @param projectDom         the Maven DOM project model to be processed
+   * @param mavenProjectOrNull the Maven project instance or null in case no such project is available
+   * @param processor          the processor to be applied to the result of the functions
+   * @param project            the IntelliJ project instance
+   * @param domProfileFunction the function to convert a Maven DOM profile to a target type
+   * @param projectDomFunction the function to convert a Maven DOM project model to a target type
+   * @param <T>                the type that the provided functions return
+   * @return true if the processing was successful, otherwise false
+   */
   private static <T> boolean processProject(MavenDomProjectModel projectDom,
                                             MavenProject mavenProjectOrNull,
                                             Processor<? super T> processor,
@@ -527,7 +562,7 @@ public final class MavenDomProjectProcessorUtils {
       }
 
       VirtualFile projectFile = MavenDomUtil.getVirtualFile(projectDom);
-      return projectFile == null ? null : process(myManager.getGeneralSettings(), projectFile, parentDesc);
+      return projectFile == null ? null : process(projectFile, parentDesc);
     }
   }
 

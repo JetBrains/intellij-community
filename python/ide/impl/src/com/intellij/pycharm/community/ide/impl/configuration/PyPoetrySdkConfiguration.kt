@@ -21,6 +21,8 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrLogException
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
@@ -33,7 +35,6 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
-import java.io.FileNotFoundException
 import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -70,11 +71,11 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
   private suspend fun createAndAddSDk(module: Module, inspection: Boolean): Sdk? {
     val poetryEnvExecutable = askForEnvData(module, inspection) ?: return null
     PropertiesComponent.getInstance().poetryPath = poetryEnvExecutable.poetryPath.pathString
-    return createPoetry(module).getOrNull()
+    return createPoetry(module).getOrLogException(LOGGER)
   }
 
   private suspend fun askForEnvData(module: Module, inspection: Boolean): PyAddNewPoetryFromFilePanel.Data? {
-    val poetryExecutable = getPoetryExecutable().getOrNull()
+    val poetryExecutable = getPoetryExecutable().getOrLogException(LOGGER)
     val isHeadlessEnv = ApplicationManager.getApplication().isHeadlessEnvironment
 
     if ((inspection || isHeadlessEnv) && validatePoetryExecutable(poetryExecutable) == null) {
@@ -99,25 +100,25 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
     return if (permitted) envData else null
   }
 
-  private suspend fun createPoetry(module: Module): Result<Sdk> =
+  private suspend fun createPoetry(module: Module): PyResult<Sdk> =
     withBackgroundProgress(module.project, PyCharmCommunityCustomizationBundle.message("sdk.progress.text.setting.up.poetry.environment")) {
       LOGGER.debug("Creating poetry environment")
 
       val basePath = module.basePath?.let { Path.of(it) }
       if (basePath == null) {
-        return@withBackgroundProgress Result.failure(FileNotFoundException("Can't find module base path"))
+        return@withBackgroundProgress PyResult.localizedError("Can't find module base path")
       }
 
-      val poetry = setupPoetry(basePath, null, true, findAmongRoots(module, PY_PROJECT_TOML) == null).onFailure { return@withBackgroundProgress Result.failure(it) }.getOrThrow()
+      val poetry = setupPoetry(basePath, null, true, findAmongRoots(module, PY_PROJECT_TOML) == null).getOr { return@withBackgroundProgress it }
 
       val path = withContext(Dispatchers.IO) { VirtualEnvReader.Instance.findPythonInPythonRoot(Path.of(poetry)) }
       if (path == null) {
-        return@withBackgroundProgress Result.failure(FileNotFoundException("Can't find python executable in $poetry"))
+        return@withBackgroundProgress PyResult.localizedError("Can't find python executable in $poetry")
       }
 
       val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(path.pathString)
       if (file == null) {
-        return@withBackgroundProgress Result.failure(FileNotFoundException("Can't find python executable in $poetry"))
+        return@withBackgroundProgress PyResult.localizedError("Can't find python executable in $poetry")
       }
 
       LOGGER.debug("Setting up associated poetry environment: $path, $basePath")
@@ -125,7 +126,7 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
         ProjectJdkTable.getInstance().allJdks,
         file,
         PythonSdkType.getInstance(),
-        PyPoetrySdkAdditionalData(),
+        PyPoetrySdkAdditionalData(module.basePath?.let { Path.of(it) }),
         suggestedSdkName(basePath)
       )
 
@@ -135,7 +136,7 @@ internal class PyPoetrySdkConfiguration : PyProjectSdkConfigurationExtension {
         SdkConfigurationUtil.addSdk(sdk)
       }
 
-      Result.success(sdk)
+      PyResult.success(sdk)
     }
 
 

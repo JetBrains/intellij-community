@@ -26,6 +26,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.EmptyIcon;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -192,7 +193,7 @@ public final class BuildContentManagerImpl implements BuildContentManager, Dispo
     if (pair.first == null) {
       content.putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT);
     }
-    content.setIcon(ExecutionUtil.getLiveIndicator(pair.first, 0, 13));
+    content.setIcon(ExecutionUtil.withLiveIndicator(pair.first != null ? pair.first : EmptyIcon.ICON_13));
     invokeLaterIfNeeded(() -> {
       JComponent component = content.getComponent();
       component.invalidate();

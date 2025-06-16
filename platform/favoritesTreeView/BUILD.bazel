@@ -2,11 +2,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "ide-favoritesTreeView",
+  name = "favoritesTreeView",
   module_name = "intellij.platform.ide.favoritesTreeView",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/core-ui",
     "//platform/core-api:core",

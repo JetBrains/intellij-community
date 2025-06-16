@@ -7,8 +7,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdate
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
@@ -21,7 +20,7 @@ fun canConvertPropertyInitializerToGetterByPsi(element: KtProperty): Boolean {
     return (element.getter == null &&
             !element.isExtensionDeclaration() &&
             !element.isLocal &&
-            element.findAnnotation(ClassId.topLevel(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)) == null &&
+            element.findAnnotation(JvmStandardClassIds.Annotations.JvmField) == null &&
             !element.hasModifier(KtTokens.CONST_KEYWORD))
 }
 

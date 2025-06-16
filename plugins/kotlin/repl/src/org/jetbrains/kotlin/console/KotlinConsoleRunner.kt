@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.console
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.execution.Executor
 import com.intellij.execution.console.ConsoleExecuteAction
 import com.intellij.execution.console.LanguageConsoleBuilder
@@ -55,16 +54,15 @@ import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.caches.trackers.KOTLIN_CONSOLE_KEY
-import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.core.script.k1.ConsoleScriptDefinitionSource
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.lazy.ForceResolveUtil
 import org.jetbrains.kotlin.resolve.repl.ReplState
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import java.awt.Color
 import java.awt.Font
 import java.nio.charset.StandardCharsets
@@ -321,28 +319,5 @@ class KotlinConsoleRunner(
         psiFile.forcedModuleInfo = module.testSourceInfo
             ?: module.productionSourceInfo
             ?: NotUnderContentRootModuleInfo(psiFile.project, psiFile)
-    }
-}
-
-class ConsoleScriptDefinitionSource : ScriptDefinitionsSource {
-
-    private val definitionsSet = ConcurrentCollectionFactory.createConcurrentSet<ScriptDefinition>()
-
-    override val definitions: Sequence<ScriptDefinition>
-        get() = definitionsSet.asSequence()
-
-    fun registerDefinition(definition: ScriptDefinition) {
-        definitionsSet.add(definition)
-    }
-
-    fun unregisterDefinition(definition: ScriptDefinition) {
-        definitionsSet.remove(definition)
-    }
-
-    companion object {
-        fun getInstance(project: Project): ConsoleScriptDefinitionSource? =
-            SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
-                .filterIsInstance<ConsoleScriptDefinitionSource>()
-                .singleOrNull()
     }
 }

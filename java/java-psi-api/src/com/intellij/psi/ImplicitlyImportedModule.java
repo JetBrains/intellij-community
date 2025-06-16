@@ -32,13 +32,14 @@ public final class ImplicitlyImportedModule implements ImplicitlyImportedElement
   }
 
   private static @NotNull PsiImportModuleStatement createImportStatementInner(@NotNull Project project, @NotNull String moduleName) {
-    PsiElementFactory factory = PsiElementFactory.getInstance(project);
     if (PsiJavaModule.JAVA_BASE.equals(moduleName)) {
       return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+        PsiElementFactory factory = PsiElementFactory.getInstance(project);
         return CachedValueProvider.Result.create(factory.createImportModuleStatementFromText(PsiJavaModule.JAVA_BASE),
                                                  ProjectRootModificationTracker.getInstance(project));
       });
     }
+    PsiElementFactory factory = PsiElementFactory.getInstance(project);
     return factory.createImportModuleStatementFromText(moduleName);
   }
 

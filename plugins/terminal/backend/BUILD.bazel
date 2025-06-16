@@ -13,8 +13,11 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
     "//plugins/terminal",
     "@lib//:jediterm-core",
     "@lib//:jediterm-ui",
@@ -24,6 +27,8 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/execution-impl",
     "//platform/core-impl",
+    "//platform/statistics",
+    "//platform/core-ui",
   ],
   runtime_deps = [":backend_resources"]
 )
@@ -34,9 +39,12 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":backend"],
   deps = [
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
     "//plugins/terminal",
     "//plugins/terminal:terminal_test_lib",
     "@lib//:jediterm-core",
@@ -47,12 +55,15 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/execution-impl",
     "//platform/core-impl",
+    "//platform/statistics",
+    "//platform/statistics:statistics_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:junit4",
     "@lib//:assert_j",
     "@lib//:guava",
+    "//platform/core-ui",
   ],
   runtime_deps = [":backend_resources"]
 )

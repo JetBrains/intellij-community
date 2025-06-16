@@ -46,7 +46,7 @@ fun initOutputTextConsole(editor: Editor,
  * Changes the color scheme of consoleEditor to the color scheme of the main editor, if required.
  * [editor] is a main notebook editor, [consoleEditor] editor of particular console output.
  */
-fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
+private fun updateOutputTextConsoleUI(consoleEditor: EditorEx, editor: Editor) {
   if (consoleEditor.colorsScheme != editor.colorsScheme) {
     consoleEditor.colorsScheme = editor.colorsScheme
   }

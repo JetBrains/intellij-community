@@ -37,6 +37,18 @@ public class PyPropertyAccessInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  public void testCachedProperty() {
+    doMultiFileTest();
+  }
+
+  public void testDjangoCachedProperty() {
+    doMultiFileTest();
+  }
+
+  public void testKombuCachedProperty() {
+    doMultiFileTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

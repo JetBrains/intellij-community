@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl
 
 import com.intellij.diff.chains.DiffRequestProducer
+import com.intellij.history.core.HistoryPathFilter
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -9,8 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 interface ActivityProvider {
   fun getActivityItemsChanged(scope: ActivityScope): Flow<Unit>
 
-  fun loadActivityList(scope: ActivityScope, fileFilter: String?): ActivityData
-  fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>?
+  fun loadActivityList(scope: ActivityScope, filter: ActivityFilter?): ActivityData
+  fun filterActivityList(scope: ActivityScope, data: ActivityData, filter: ActivityFilter?): Set<ActivityItem>?
 
   fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData?
   fun loadSingleDiff(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer?
@@ -19,6 +20,11 @@ interface ActivityProvider {
 
   fun getPresentation(item: ActivityItem): ActivityPresentation?
 }
+
+@ApiStatus.Experimental
+data class ActivityFilter(val filePathFilter: HistoryPathFilter?,
+                          val contentFilter: String?,
+                          val showSystemLabels: Boolean)
 
 @ApiStatus.Experimental
 enum class FilterKind {

@@ -10,6 +10,7 @@ import com.intellij.testFramework.assertInstanceOf
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveModel
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveTargetModel
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.*
 
@@ -63,7 +64,8 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
-        assert(moveDeclarationsModel.target.fileName == "Bar.kt")
+        assertInstanceOf<K2MoveTargetModel.File>(moveDeclarationsModel.target)
+        assert((moveDeclarationsModel.target as K2MoveTargetModel.File).fileName == "Bar.kt")
     }
 
     fun `test file from source directory to class move`() {
@@ -80,7 +82,8 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
-        assert(moveDeclarationsModel.target.fileName == "Bar.kt")
+        assertInstanceOf<K2MoveTargetModel.File>(moveDeclarationsModel.target)
+        assert((moveDeclarationsModel.target as K2MoveTargetModel.File).fileName == "Bar.kt")
     }
 
     fun `test file from source directory to source directory move`() {
@@ -236,7 +239,8 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
             val sourceElement = moveFilesModel.source.elements.firstOrNull()
             assert(sourceElement is KtClass && sourceElement.name == "Foo")
             assertEquals("bar", moveFilesModel.target.pkgName.asString())
-            assertEquals("Foo.kt", moveFilesModel.target.fileName)
+            assertInstanceOf<K2MoveTargetModel.Declarations>(moveFilesModel.target)
+            assert((moveFilesModel.target as K2MoveTargetModel.Declarations).fileName == "Foo.kt")
         } finally {
             PsiTestUtil.addSourceRoot(module, myFixture.getTempDirFixture().getFile("")!!)
         }
@@ -573,5 +577,137 @@ class K2MoveModelTest : KotlinLightCodeInsightFixtureTestCase() {
         assertSize(1, moveDeclarationsModel.source.elements)
         val sourceElement = moveDeclarationsModel.source.elements.firstOrNull()
         assert(sourceElement is KtClass && sourceElement.name == "Foo")
+    }
+
+    fun `test moving override function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open fun fn() {}
+            }
+            
+            open class Derived : Base() {
+                override fun fn<caret>() {
+                    super.fn()
+                }
+            }
+        """.trimIndent()) as KtFile
+        val overrideFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(overrideFunction), null)
+        }
+    }
+
+    fun `test moving open function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open fun fn<caret>() {}
+            }
+            
+            open class Derived : Base() {
+                override fun fn() {
+                    super.fn()
+                }
+            }
+        """.trimIndent()) as KtFile
+        val openFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(openFunction), null)
+        }
+    }
+
+    fun `test moving abstract class function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                abstract fun fn<caret>()
+            }
+        """.trimIndent()) as KtFile
+        val abstractFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(abstractFunction), null)
+        }
+    }
+
+    fun `test moving abstract interface function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            interface Foo {
+                fun fn<caret>()
+            }
+        """.trimIndent()) as KtFile
+        val abstractFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(abstractFunction), null)
+        }
+    }
+
+    fun `test moving open interface function should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            interface Foo {
+                fun fn<caret>() {}
+            }
+        """.trimIndent()) as KtFile
+        val openFunction = myFixture.elementAtCaret as KtNamedFunction
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(openFunction), null)
+        }
+    }
+
+    fun `test moving companion object should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            class Foo {
+                companion object<caret> { }
+            }
+        """.trimIndent()) as KtFile
+        val element = myFixture.elementAtCaret
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(element), null)
+        }
+    }
+
+    fun `test moving override property should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open val v = 1
+            }
+            
+            open class Derived : Base() {
+                override val v<caret> = super.v
+            }
+        """.trimIndent())
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
+    }
+
+    fun `test moving open property should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                open val v<caret> = 1
+            }
+        """.trimIndent())
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
+    }
+
+    fun `test moving abstract property should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            open class Base {
+                abstract val v<caret> : Int
+            }
+        """.trimIndent())
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
+    }
+
+    fun `test moving abstract interface property should fail`() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            interface IFace {
+                val v<caret> : Int
+            }
+        """.trimIndent())
+        assertThrows(RefactoringErrorHintException::class.java) {
+            K2MoveModel.create(arrayOf(myFixture.elementAtCaret), null)
+        }
     }
 }

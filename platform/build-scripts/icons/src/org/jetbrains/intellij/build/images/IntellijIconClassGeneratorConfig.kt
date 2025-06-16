@@ -17,6 +17,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         className = "DevKitIcons",
         packageName = "org.jetbrains.idea.devkit",
       )
+      "intellij.diagram.impl" -> IntellijIconClassGeneratorModuleConfig(
+        className = "UmlIcons",
+        packageName = "com.intellij.uml"
+      )
       "intellij.platform.ide.ui.inspector" -> IntellijIconClassGeneratorModuleConfig(
         // inspection icons are loaded by com.intellij.internal.inspector.components.HierarchyTree.Icons
         excludePackages = listOf("com.intellij.internal.inspector.icons"),
@@ -163,6 +167,13 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
       "intellij.platform.vcs.dvcs.impl.shared" -> IntellijIconClassGeneratorModuleConfig(
         className = "DvcsImplIcons",
         packageName = "icons",
+      )
+
+      "intellij.platform.icons" -> super.getConfigForModule(moduleName)?.copy(generateJewelIcons = true) ?: IntellijIconClassGeneratorModuleConfig(generateJewelIcons = true)
+
+      "intellij.java.ultimate.icons" -> IntellijIconClassGeneratorModuleConfig(
+        className = "JavaUltimateIcons",
+        packageName = "com.intellij.java.ultimate.icons",
       )
 
       else -> super.getConfigForModule(moduleName)

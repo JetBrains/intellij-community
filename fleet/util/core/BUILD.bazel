@@ -1,32 +1,42 @@
 ### auto-generated section `build fleet.util.core` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlin.concurrent.atomics.ExperimentalAtomicApi"]
+)
+
+jvm_provided_library(
+  name = "multiplatform_provided",
+  lib = "//fleet/util/multiplatform"
+)
 
 jvm_library(
-  name = "fleet-util-core",
+  name = "core",
   module_name = "fleet.util.core",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcJvmMain/**/*.kt", "srcJvmMain/**/*.java", "srcCommonMain/**/*.kt", "srcCommonMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:kotlinx-coroutines-slf4j",
-    "//fleet/util/logging/api:fleet-util-logging-api",
+    "//fleet/util/logging/api",
     "@lib//:kotlinx-collections-immutable",
-    "//fleet/reporting/api:fleet-reporting-api",
-    "//fleet/multiplatform.shims:multiplatform-shims",
-    "//fleet/preferences",
-    "//fleet/util/os:fleet-util-os",
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/multiplatform.shims",
     "//fleet/fastutil",
-    "@lib//:slf4j-api",
     "@lib//:kotlinx-datetime-jvm",
-    "//fleet/util/multiplatform:fleet-util-multiplatform",
+    "@lib//:de-cketti-unicode-kotlin-codepoints-jvm",
+    ":multiplatform_provided",
   ],
   exports = [
-    "//fleet/util/logging/api:fleet-util-logging-api",
+    "//fleet/util/logging/api",
     "@lib//:kotlinx-collections-immutable",
-    "//fleet/multiplatform.shims:multiplatform-shims",
+    "//fleet/multiplatform.shims",
     "//fleet/fastutil",
   ]
 )

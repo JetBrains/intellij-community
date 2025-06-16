@@ -36,12 +36,12 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class TestModulePropertiesEntityImpl(private val dataSource: TestModulePropertiesEntityData) : TestModulePropertiesEntity,
+                                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val MODULE_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, TestModulePropertiesEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val MODULE_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleEntity::class.java, TestModulePropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       MODULE_CONNECTION_ID,
@@ -69,8 +69,8 @@ internal class TestModulePropertiesEntityImpl(private val dataSource: TestModule
   }
 
 
-  internal class Builder(result: TestModulePropertiesEntityData?) : ModifiableWorkspaceEntityBase<TestModulePropertiesEntity, TestModulePropertiesEntityData>(
-    result), TestModulePropertiesEntity.Builder {
+  internal class Builder(result: TestModulePropertiesEntityData?) :
+    ModifiableWorkspaceEntityBase<TestModulePropertiesEntity, TestModulePropertiesEntityData>(result), TestModulePropertiesEntity.Builder {
     internal constructor() : this(TestModulePropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -250,7 +250,8 @@ internal class TestModulePropertiesEntityData : WorkspaceEntityData<TestModulePr
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity") as EntityMetadata
+      "com.intellij.platform.workspace.jps.entities.TestModulePropertiesEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

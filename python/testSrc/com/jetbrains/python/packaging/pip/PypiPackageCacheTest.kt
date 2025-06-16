@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.util.io.delete
 import com.intellij.util.io.write
+import com.jetbrains.python.Result
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.packaging.PyPIPackageRanking
 import kotlinx.coroutines.runBlocking
@@ -23,7 +24,7 @@ class PypiPackageCacheTest : PyTestCase() {
     withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
     withEmptyCacheStorage()
     val cache = PypiPackageCache()
-    runBlocking { cache.reloadCache() }
+    runBlocking { cache.reloadCache().orThrow() }
     assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
   }
 
@@ -31,7 +32,7 @@ class PypiPackageCacheTest : PyTestCase() {
     withLocalStoredPackages(listOf("c-pkg", "a-pkg", "b-pkg"), Instant.now())
     withPypiLoaderThrowingError()
     val cache = PypiPackageCache()
-    runBlocking { cache.reloadCache() }
+    runBlocking { cache.reloadCache().orThrow() }
     assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
   }
 
@@ -40,7 +41,7 @@ class PypiPackageCacheTest : PyTestCase() {
     withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
     withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
     val cache = PypiPackageCache()
-    runBlocking { cache.reloadCache() }
+    runBlocking { cache.reloadCache().orThrow() }
     assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
   }
 
@@ -49,7 +50,7 @@ class PypiPackageCacheTest : PyTestCase() {
     withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
     withPypiPackagesRanking(mapOf("c-pkg" to 2, "b-pkg" to 1, "a-pkg" to 1))
     val cache = PypiPackageCache()
-    runBlocking { cache.reloadCache() }
+    runBlocking { cache.reloadCache().orThrow() }
     assertThat(cache.packages).containsExactly("c-pkg", "a-pkg", "b-pkg")
   }
 
@@ -71,7 +72,7 @@ class PypiPackageCacheTest : PyTestCase() {
 
   private fun withPypiPackages(pypiPackages: List<String>) {
     val mock = Mockito.mock(PypiPackageCache.PypiPackageLoader::class.java)
-    Mockito.`when`(mock.loadPackages()).thenReturn(pypiPackages)
+    Mockito.`when`(mock.loadPackages()).thenReturn(Result.success(pypiPackages))
     ApplicationManager.getApplication().registerServiceInstance(
       PypiPackageCache.PypiPackageLoader::class.java,
       mock

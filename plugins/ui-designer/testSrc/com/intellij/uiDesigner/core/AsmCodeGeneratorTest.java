@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.core;
 
 import com.intellij.DynamicBundle;
@@ -25,10 +25,8 @@ import com.intellij.uiDesigner.compiler.NestedFormLoader;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.NotNullProducer;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
+import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
@@ -56,8 +54,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -97,7 +95,9 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, DataProvider.class);
     appendPath(cp, BaseState.class);
     appendPath(cp, KDeclarationContainer.class);
+    appendPath(cp, BitUtil.class); // intellij.platform.util.multiplatform
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
+    appendPath(cp, CharArrayCharSequence.class); // intellij.platform.util.base.multiplatform
     appendPath(cp, Strings.class);  // intellij.platform.util.base
     appendPath(cp, XmlDomReader.class);  // intellij.platform.util.xmlDom
     appendPath(cp, FileUtilRt.class);  // intellij.platform.util.rt

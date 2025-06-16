@@ -9,8 +9,10 @@ import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -24,7 +26,7 @@ import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteCustomUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo;
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceUsageInfo;
-import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteUsageInfo;
+import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
@@ -33,9 +35,9 @@ import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.*;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -164,22 +166,22 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
-    List<String> conflicts = new ArrayList<>();
+    MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
 
     for (PsiElement element : myElements) {
       for (SafeDeleteProcessorDelegate delegate : SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
         if (delegate.handlesElement(element)) {
-          Collection<String> foundConflicts = delegate instanceof SafeDeleteProcessorDelegateBase
-                                              ? ((SafeDeleteProcessorDelegateBase)delegate).findConflicts(element, myElements, usages)
+          delegate.findConflicts(element, myElements, usages, conflicts);
+
+          // fallback for clients that are not updated for the new conflicts dialog:
+          Collection<String> foundConflicts = delegate instanceof SafeDeleteProcessorDelegateBase base
+                                              ? base.findConflicts(element, myElements, usages)
                                               : delegate.findConflicts(element, myElements);
-          if (foundConflicts != null) {
-            conflicts.addAll(foundConflicts);
-          }
+          if (foundConflicts != null) conflicts.put(element, foundConflicts);
           break;
         }
       }
     }
-
     if (checkConflicts(usages, conflicts)) return false;
 
     UsageInfo[] preprocessedUsages = usages;
@@ -189,9 +191,9 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
 
     HashSet<UsageInfo> diff = ContainerUtil.newHashSet(preprocessedUsages);
-    diff.removeAll(Arrays.asList(usages));
+    Arrays.asList(usages).forEach(diff::remove);
 
-    if (checkConflicts(diff.toArray(UsageInfo.EMPTY_ARRAY), new ArrayList<>())) return false;
+    if (checkConflicts(diff.toArray(UsageInfo.EMPTY_ARRAY), new MultiMap<>())) return false;
 
     UsageInfo[] filteredUsages = UsageViewUtil.removeDuplicatedUsages(preprocessedUsages);
     prepareSuccessful(); // dialog is always dismissed
@@ -199,32 +201,25 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
-  private boolean checkConflicts(UsageInfo @NotNull [] usages, @NotNull List<@DialogMessage String> conflicts) {
-    Map<PsiElement,UsageHolder> elementsToUsageHolders = sortUsages(usages);
-    Collection<UsageHolder> usageHolders = elementsToUsageHolders.values();
-    for (UsageHolder usageHolder : usageHolders) {
-      if (usageHolder.hasUnsafeUsagesInCode()) {
-        conflicts.add(usageHolder.getDescription());
-      }
-    }
+  private boolean checkConflicts(UsageInfo @NotNull [] usages, @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
+    boolean hasConflict = !conflicts.isEmpty();
+    boolean hasUnsafeUsagesInCode = collectUnsafeUsages(usages, conflicts);
 
-    if (!conflicts.isEmpty()) {
+    if (hasConflict || hasUnsafeUsagesInCode) {
       RefactoringEventData conflictData = new RefactoringEventData();
-      conflictData.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts);
+      conflictData.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values());
       myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected("refactoring.safeDelete", conflictData);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts);
+        if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
       }
       else {
-        UnsafeUsagesDialog dialog = new UnsafeUsagesDialog(ArrayUtilRt.toStringArray(conflicts), myProject);
+        ConflictsDialog dialog = new ConflictsDialog(myProject, conflicts);
         if (!dialog.showAndGet()) {
-          int exitCode = dialog.getExitCode();
           prepareSuccessful(); // dialog is always dismissed;
-          if (exitCode == UnsafeUsagesDialog.VIEW_USAGES_EXIT_CODE) {
-            showUsages(Arrays.stream(usages)
-                         .filter(usage -> usage instanceof SafeDeleteReferenceUsageInfo &&
-                                          !((SafeDeleteReferenceUsageInfo)usage).isSafeDelete()).toArray(UsageInfo[]::new),
-                       usages);
+          if (dialog.isShowConflicts()) {
+            UsageInfo[] safeDeleteUsages = Arrays.stream(usages).
+              filter(usage -> usage instanceof SafeDeleteReferenceUsageInfo info && !info.isSafeDelete()).toArray(UsageInfo[]::new);
+            showUsages(safeDeleteUsages, usages);
           }
           return true;
         }
@@ -316,22 +311,34 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   /**
-   * @return Map from elements to UsageHolders
+   * @return true when any unsafe usages are in code, false when there are no unsafe changes,
+   * or they are only in string, comments and generated files
    */
-  private static @NotNull Map<PsiElement,UsageHolder> sortUsages(UsageInfo @NotNull [] usages) {
-    HashMap<PsiElement,UsageHolder> result = new HashMap<>();
-
+  private static boolean collectUnsafeUsages(UsageInfo @NotNull [] usages, @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
+    boolean codeUsages = false;
     for (UsageInfo usage : usages) {
-      if (usage instanceof SafeDeleteUsageInfo) {
-        PsiElement referencedElement = ((SafeDeleteUsageInfo)usage).getReferencedElement();
-        if (!result.containsKey(referencedElement)) {
-          result.put(referencedElement, new UsageHolder(referencedElement, usages));
+      if (usage instanceof SafeDeleteReferenceUsageInfo info) {
+        if (info.isSafeDelete()) continue;
+        String description = RefactoringUIUtil.getDescription(info.getReferencedElement(), true);
+        if (usage.isNonCodeUsage) {
+          conflicts.putValue(info.getElement(), RefactoringBundle.message("non.code.usage.that.is.not.safe.to.delete", description));
+        }
+        else if (isInGeneratedCode(info, info.getProject())) {
+          conflicts.putValue(info.getElement(), RefactoringBundle.message("generated.code.usage.that.is.not.safe.to.delete", description));
+        }
+        else {
+          codeUsages = true;
+          conflicts.putValue(info.getElement(), RefactoringBundle.message("usage.that.is.not.safe.to.delete", description));
         }
       }
     }
-    return result;
+    return codeUsages;
   }
 
+  private static boolean isInGeneratedCode(SafeDeleteReferenceUsageInfo usage, Project project) {
+    VirtualFile file = usage.getVirtualFile();
+    return file != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project);
+  }
 
   @Override
   protected void refreshElements(PsiElement @NotNull [] elements) {

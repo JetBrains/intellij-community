@@ -468,6 +468,14 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return matchingClasses;
     }
 
+    if (matchingClasses.isEmpty()) { // sometimes inner classes may be loaded before outer
+      return StreamEx.of(myDebugProcess.getVirtualMachineProxy().allClasses())
+        .filter(t -> t.name().startsWith(classInfo.className))
+        .map(outer -> findNested(outer, 0, psiClass, 0, position))
+        .nonNull()
+        .toList();
+    }
+
     return StreamEx.of(matchingClasses)
       .map(outer -> findNested(outer, 0, psiClass, classInfo.requiredDepth, position))
       .nonNull()

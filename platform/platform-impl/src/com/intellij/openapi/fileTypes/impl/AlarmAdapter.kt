@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl
 
-import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -22,9 +21,7 @@ fun singleAlarm(debounce: Int, coroutineScope: CoroutineScope, runnable: Runnabl
     requests
       .debounce(debounce.milliseconds)
       .collectLatest {
-        blockingContext {
-          runnable.run()
-        }
+        runnable.run()
       }
   }
   return requests

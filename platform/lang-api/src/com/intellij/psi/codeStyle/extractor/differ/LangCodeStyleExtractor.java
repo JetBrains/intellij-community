@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -32,5 +33,6 @@ public interface LangCodeStyleExtractor {
   Differ getDiffer(Project project, PsiFile psiFile, CodeStyleSettings settings);
 
   @NotNull
+  @Unmodifiable
   Collection<Value.VAR_KIND> getCustomVarKinds();
 }

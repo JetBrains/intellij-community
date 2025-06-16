@@ -13,7 +13,7 @@ import java.util.function.Function;
  * Useful when you want to create and fill an {@link java.util.HashMap} and then return it as-is with a "no mutations" guarantee.
  */
 class FreezableHashMap<K,V> extends HashMap<K,V> {
-  private int modCount;
+  private boolean isFrozen;
 
   FreezableHashMap(int initialCapacity) {
     super(initialCapacity);
@@ -29,7 +29,7 @@ class FreezableHashMap<K,V> extends HashMap<K,V> {
   @NotNull
   @Unmodifiable
   Map<K,V> freeze() {
-    modCount = -1;
+    isFrozen = true;
     return this;
   }
   private void checkForFrozen() {
@@ -117,7 +117,7 @@ class FreezableHashMap<K,V> extends HashMap<K,V> {
   }
 
   private boolean isFrozen() {
-    return modCount == -1;
+    return isFrozen;
   }
 
   @Override

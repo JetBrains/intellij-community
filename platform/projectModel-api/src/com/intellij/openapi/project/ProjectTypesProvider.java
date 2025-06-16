@@ -4,6 +4,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -25,5 +26,6 @@ public interface ProjectTypesProvider {
   /**
    * @return found project types
    */
-  @NotNull Collection<ProjectType> inferProjectTypes(@NotNull Project project);
+  @NotNull @Unmodifiable
+  Collection<ProjectType> inferProjectTypes(@NotNull Project project);
 }

@@ -183,9 +183,8 @@ public final class JavaPsiModuleUtil {
     }
     JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
-    List<VirtualFile> sourceRoots = rootManager.getSourceRoots(rootType);
     Set<VirtualFile> excludeRoots = ContainerUtil.newHashSet(ModuleRootManager.getInstance(module).getExcludeRoots());
-    if (!excludeRoots.isEmpty()) sourceRoots.removeIf(root -> excludeRoots.contains(root));
+    List<VirtualFile> sourceRoots = ContainerUtil.filter(rootManager.getSourceRoots(rootType), root -> !excludeRoots.contains(root));
 
     List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
     if (files.isEmpty()) {
@@ -618,6 +617,23 @@ public final class JavaPsiModuleUtil {
     @Override
     public @NotNull Set<PsiJavaModule> getAllTransitiveDependencies(@NotNull PsiJavaModule psiJavaModule) {
       return JavaPsiModuleUtil.getAllTransitiveDependencies(psiJavaModule);
+    }
+
+    @Override
+    public boolean isAccessible(@NotNull String targetPackageName, PsiFile targetFile, @NotNull PsiElement place) {
+      PsiFile useFile = place.getContainingFile() != null ? place.getContainingFile().getOriginalFile() : null;
+      if (useFile == null) return true;
+      List<JpmsModuleInfo.TargetModuleInfo> infos = JpmsModuleInfo.findTargetModuleInfos(targetPackageName, targetFile, useFile);
+      if (infos == null) return true;
+      return !infos.isEmpty() && ContainerUtil.exists(
+        infos, info -> info.accessAt(useFile).checkAccess(useFile, JpmsModuleAccessInfo.JpmsModuleAccessMode.EXPORT) == null);
+    }
+
+    @Override
+    public boolean isAccessible(@NotNull PsiJavaModule targetModule, @NotNull PsiElement place) {
+      PsiFile useFile = place.getContainingFile() != null ? place.getContainingFile().getOriginalFile() : null;
+      if (useFile == null) return true;
+      return new JpmsModuleInfo.TargetModuleInfo(targetModule, "").accessAt(useFile).checkModuleAccess(place) == null;
     }
   }
 }

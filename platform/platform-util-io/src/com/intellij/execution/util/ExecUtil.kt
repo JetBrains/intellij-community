@@ -7,24 +7,23 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.*
 import com.intellij.execution.sudo.SudoCommandProvider
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.PathExecLazyValue
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.spawnProcess
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.io.SuperUserStatus
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.io.*
-import java.nio.charset.Charset
-import java.nio.file.Files
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStreamReader
 import java.nio.file.Path
 
 object ExecUtil {
@@ -34,11 +33,6 @@ object ExecUtil {
   @Suppress("SpellCheckingInspection")
   private val hasUrxvt = PathExecLazyValue.create("urxvt")
   private val hasXTerm = PathExecLazyValue.create("xterm")
-  @Suppress("SpellCheckingInspection")
-  private val hasSetsid = PathExecLazyValue.create("setsid")
-
-  private const val NICE_PATH = "/usr/bin/nice"
-  private val hasNice by lazy { Files.exists(Path.of(NICE_PATH)) }
 
   @JvmStatic
   val osascriptPath: @NlsSafe String
@@ -47,12 +41,6 @@ object ExecUtil {
   @JvmStatic
   val openCommandPath: @NlsSafe String
     get() = "/usr/bin/open"
-
-  @JvmStatic
-  @Suppress("unused")
-  val windowsShellName: String
-    @Deprecated("Inline this property", level = DeprecationLevel.ERROR)
-    get() = CommandLineUtil.getWinShellName()
 
   @ApiStatus.Internal
   @JvmStatic
@@ -76,8 +64,8 @@ object ExecUtil {
 
   @JvmStatic
   @Throws(IOException::class, ExecutionException::class)
-  fun createTempExecutableScript(prefix: @NlsSafe String, suffix: @NlsSafe String, content: @NlsSafe String): File {
-    val tempDir = File(PathManager.getTempPath())
+  fun createTempExecutableScript(prefix: @NlsSafe String, suffix: @NlsSafe String, content: @NlsSafe String): java.io.File {
+    val tempDir = java.io.File(PathManager.getTempPath())
     val tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true)
     FileUtil.writeToFile(tempFile, content.toByteArray(Charsets.UTF_8))
     if (!tempFile.setExecutable(true, true)) {
@@ -103,7 +91,7 @@ object ExecUtil {
   fun execAndGetOutput(commandLine: GeneralCommandLine, stdin: String): String =
     CapturingProcessHandler(commandLine)
       .apply {
-        addProcessListener(object : ProcessAdapter() {
+        addProcessListener(object : ProcessListener {
           override fun startNotified(event: ProcessEvent) {
             processInput.writer(commandLine.charset).use {
               it.write(stdin)
@@ -117,21 +105,11 @@ object ExecUtil {
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
   fun execAndReadLine(commandLine: GeneralCommandLine): String? = try {
-    readFirstLine(commandLine.createProcess().inputStream, commandLine.charset)
+    val process = commandLine.createProcess()
+    BufferedReader(InputStreamReader(process.inputStream, commandLine.charset)).use { it.readLine() }
   }
   catch (e: ExecutionException) {
-    Logger.getInstance(ExecUtil::class.java).debug(e)
-    null
-  }
-
-  @ApiStatus.Internal
-  @RequiresBackgroundThread(generateAssertion = false)
-  @JvmStatic
-  fun readFirstLine(stream: InputStream, cs: Charset?): String? = try {
-    BufferedReader(if (cs == null) InputStreamReader(stream) else InputStreamReader(stream, cs)).use { it.readLine() }
-  }
-  catch (e: IOException) {
-    Logger.getInstance(ExecUtil::class.java).debug(e)
+    logger<ExecUtil>().debug(e)
     null
   }
 
@@ -178,6 +156,7 @@ object ExecUtil {
     else "quoted form of \"${arg.replace("\"", "\\\"").replace("\\", "\\\\")}\""
 
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(
     "It is an oversimplified quoting. Prefer CommandLineUtil.posixQuote instead.",
     ReplaceWith("CommandLineUtil.posixQuote(arg)", "com.intellij.execution.CommandLineUtil.posixQuote"),
@@ -229,57 +208,23 @@ object ExecUtil {
     }
   }
 
-  /**
-   * Wraps the commandline process with the OS-specific utility to mark the process to run with low priority.
-   *
-   * NOTE: Windows implementation does not return the original process exit code!
-   */
   @ApiStatus.Internal
   @JvmStatic
-  fun setupLowPriorityExecution(commandLine: GeneralCommandLine) {
-    if (canRunLowPriority()) {
-      val executablePath = commandLine.exePath
-      if (SystemInfoRt.isWindows) {
-        commandLine.withExePath(CommandLineUtil.getWinShellName())
-        commandLine.parametersList.prependAll("/c", "start", "/b", "/low", "/wait", GeneralCommandLine.inescapableQuote(""), executablePath)
-      }
-      else {
-        commandLine.withExePath(NICE_PATH)
-        commandLine.parametersList.prependAll("-n", "10", executablePath)
-      }
-    }
-  }
-
-  private fun canRunLowPriority() = Registry.`is`("ide.allow.low.priority.process") && (SystemInfoRt.isWindows || hasNice)
-
-  @ApiStatus.Internal
-  @JvmStatic
-  fun setupNoTtyExecution(commandLine: GeneralCommandLine) {
-    if (SystemInfoRt.isLinux && hasSetsid.get()) {
-      val executablePath = commandLine.exePath
-      @Suppress("SpellCheckingInspection")
-      commandLine.withExePath("setsid")
-      commandLine.parametersList.prependAll(executablePath)
-    }
-  }
-
-  @ApiStatus.Internal
-  @JvmStatic
-  fun EelExecApi.startProcessBlockingUsingEel(builder: ProcessBuilder, pty: LocalPtyOptions?): Process {
+  fun EelExecApi.startProcessBlockingUsingEel(builder: ProcessBuilder, pty: LocalPtyOptions?, isPassParentEnvironment: Boolean): Process {
     val args = builder.command()
     val exe = args.first().let { exe -> runCatching { Path.of(exe).asEelPath().toString() }.getOrNull() ?: exe }
     val rest = args.subList(1, args.size)
-    val env = builder.environment()
+    val env = (if (isPassParentEnvironment) runBlockingMaybeCancellable { fetchLoginShellEnvVariables() } else emptyMap()) + builder.environment()
     val workingDir = builder.directory()?.toPath()?.asEelPath()
 
-    val options = EelExecApi.ExecuteProcessOptions.Builder(exe)
+    val options = spawnProcess(exe)
       .args(rest)
       .workingDirectory(workingDir)
       .env(env)
-      .ptyOrStdErrSettings(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
+      .interactionOptions(pty?.run { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) })
 
     return runBlockingMaybeCancellable {
-      execute(options.build()).getOrThrow().convertToJavaProcess()
+      options.eelIt().convertToJavaProcess()
     }
   }
 }

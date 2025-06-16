@@ -6,9 +6,11 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleColoredRenderer;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -16,11 +18,14 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
+import com.intellij.vcs.log.ui.render.RootCell;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
@@ -72,7 +77,15 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     clear();
 
-    FilePath path = (FilePath)value;
+    RootCell cell = (RootCell)value;
+    List<FilePath> paths;
+    if (cell instanceof RootCell.RealCommit) {
+      FilePath path = ((RootCell.RealCommit)cell).getPath();
+      paths = ContainerUtil.filter(List.of(path), Objects::nonNull);
+    }
+    else {
+      paths = ((RootCell.NewCommit)cell).getIncludedPaths();
+    }
 
     boolean hovered = row == getHoveredRow(table);
 
@@ -81,11 +94,17 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
 
     if (isShowRootNames()) {
       if (isTextShown(table, value, row, column)) {
-        if (path == null) {
+        if (paths.isEmpty()) {
           append("");
         }
         else {
-          String text = path.getName();
+          String text;
+          if (paths.size() == 1) {
+            text = paths.get(0).getName();
+          }
+          else {
+            text = paths.get(0).getName() + "+" + (paths.size() - 1);
+          }
           int availableWidth = ((VcsLogGraphTable)table).getRootColumn().getWidth() -
                                VcsLogUiUtil.getHorizontalTextPadding(this);
           text = VcsLogUiUtil.shortenTextToFit(text, getFontMetrics(VcsLogGraphTable.getTableFont()),
@@ -100,14 +119,20 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
       isNarrow = true;
     }
 
-    if (path == null) {
-      myColor = UIUtil.getTableBackground(isSelected, hasFocus);
-    }
-    else {
-      myColor = myColorManager.getPathColor(path, isNarrow ? VcsLogColorManager.DEFAULT_COLOR_MODE : VcsLogColorManagerFactory.ROOT_OPENED_STATE);
+    if (cell instanceof RootCell.NewCommit) {
+      myColor = JBColor.LIGHT_GRAY;
+    } else {
+      if (paths.isEmpty()) {
+        myColor = UIUtil.getTableBackground(isSelected, hasFocus);
+      }
+      else {
+        myColor = myColorManager.getPathColor(paths.get(0), isNarrow
+                                                            ? VcsLogColorManager.DEFAULT_COLOR_MODE
+                                                            : VcsLogColorManagerFactory.ROOT_OPENED_STATE);
+      }
     }
 
-    myTooltip = getTooltipText(path, isNarrow);
+    myTooltip = getTooltipText(paths, isNarrow);
 
     return this;
   }
@@ -149,6 +174,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
   }
 
   private static boolean isTextShown(JTable table, Object value, int row, int column) {
+    if (value instanceof RootCell.NewCommit) return true;
     int readableRow = ScrollingUtil.getReadableRow(table, Math.round(table.getRowHeight() * 0.5f));
     if (row < readableRow) {
       return false;
@@ -184,14 +210,16 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     return Math.min(textWidth + insets, JBUIScale.scale(ROOT_NAME_MAX_WIDTH));
   }
 
-  private @NotNull @Nls String getTooltipText(@Nullable FilePath path, boolean isNarrow) {
+  private @NotNull @Nls String getTooltipText(@Nullable List<FilePath> paths, boolean isNarrow) {
     String clickMessage = !isNarrow
                           ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
                           : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
-    if (path == null) return clickMessage;
-    return new HtmlBuilder().append(HtmlChunk.text(myColorManager.getLongName(path)).bold())
-      .br()
-      .append(clickMessage)
-      .wrapWith(HtmlChunk.html()).toString();
+    if (paths == null || paths.isEmpty()) return clickMessage;
+    HtmlBuilder htmlBuilder = new HtmlBuilder();
+    for (FilePath path : paths) {
+      htmlBuilder.append(HtmlChunk.text(myColorManager.getLongName(path)).bold()).br();
+    }
+    htmlBuilder.append(clickMessage);
+    return htmlBuilder.wrapWith(HtmlChunk.html()).toString();
   }
 }

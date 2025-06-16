@@ -9,8 +9,8 @@ import com.thoughtworks.qdox.model.JavaModule;
 import com.thoughtworks.qdox.model.JavaModuleDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.javac.ModulePath;
+import org.jetbrains.jps.util.Iterators;
 
 import java.io.BufferedInputStream;
 import java.io.File;

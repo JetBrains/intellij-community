@@ -23,6 +23,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.instrumentation.ClassProcessingBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -33,6 +34,7 @@ import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerConfiguration;
 import org.jetbrains.jps.uiDesigner.model.JpsUiDesignerExtensionService;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -44,12 +46,28 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public final class FormsInstrumenter extends ModuleLevelBuilder {
+public final class FormsInstrumenter extends ModuleLevelBuilder implements JvmClassFileInstrumenter {
   public static final @NlsSafe String BUILDER_NAME = "forms";
   private static final Logger LOG = Logger.getInstance(FormsInstrumenter.class);
 
   public FormsInstrumenter() {
     super(BuilderCategory.CLASS_INSTRUMENTER);
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull ProjectDescriptor projectDescriptor, @NotNull JpsModule module) {
+    JpsProject project = module.getProject();
+    return JpsUiDesignerExtensionService.getInstance().getOrCreateUiDesignerConfiguration(project).isInstrumentClasses();
+  }
+
+  @Override
+  public @NotNull String getId() {
+    return "ui-forms";
+  }
+
+  @Override
+  public int getVersion() {
+    return 0;
   }
 
   @Override

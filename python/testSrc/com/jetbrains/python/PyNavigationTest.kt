@@ -5,6 +5,7 @@ import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.jetbrains.python.codeInsight.PyTypedDictGoToDeclarationProvider
 import com.jetbrains.python.fixtures.PyTestCase
@@ -87,7 +88,7 @@ class PyNavigationTest : PyTestCase() {
           class C:
               def __init__(self, val):
                   self.va<caret>l = val
-          
+
               def __str__(self):
                   return f"{self.val} {self.val}"
           """.trimIndent()
@@ -135,7 +136,7 @@ class PyNavigationTest : PyTestCase() {
     myFixture.configureByText(
       "a.py",
       "class MyMeta(type):\n" +
-      "  def __call__(self, p1, p2):\n" +
+      "  def __call__(self, p1, p2) -> object:\n" +
       "    pass\n" +
       "class MyClass(metaclass=MyMeta):\n" +
       "  def __init__(self, p3, p4):\n" +
@@ -310,6 +311,78 @@ class PyNavigationTest : PyTestCase() {
     assertEquals("Foo", (target as PyClass).name)
   }
 
+  // PY-80432
+  fun testGoToCollectionsAbc() {
+    // ensure that `collections.abc` navigates to `_collections_abc.py`, not `collections/abc.pyi`
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
+      myFixture.configureByFile(getTestName(true) + "/test.py")
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
+      assertNotNull(target)
+      assertEquals("_collections_abc.py", target!!.containingFile.name)
+    }
+  }
+
+  // PY-38169
+  fun testGoToRealDefinitionNotTypeshed() {
+    // ensure that `collections.abc.Mapping` navigates to `_collections_abc.py`, not `typing.pyi`
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
+      myFixture.configureByFile(getTestName(true) + "/test.py")
+      val target = PyGotoDeclarationHandler().getGotoDeclarationTarget(this.elementAtCaret, myFixture.editor)
+      assertNotNull(target)
+      assertEquals("_collections_abc.py", target!!.containingFile.name)
+    }
+  }
+
+  // PY-80931
+  fun testUnionAttribute() {
+    val (a, b) = checkMulti(
+      """
+        class A:
+            x: int
+        class B:
+            x: int
+        class C:
+            x: int
+        ab: A | B
+        ab.<caret>x
+        """.trimIndent()
+    ).also {
+      assertSize(2, it)
+    }
+
+    assertInstanceOf<PyTargetExpression>(a)
+    assertEquals("A", a.parentOfType<PyClass>()!!.name)
+
+    assertInstanceOf<PyTargetExpression>(b)
+    assertEquals("B", b.parentOfType<PyClass>()!!.name)
+  }
+
+  // PY-53288
+  fun testOperators() {
+    val (a, b) = checkMulti(
+      """
+        class A:
+            def __add__(self, other): ...
+            def __radd__(self, other): ...
+        class B:
+            def __add__(self, other): ...
+            def __radd__(self, other): ...
+        A() +<caret> B()
+      """.trimIndent()
+    ).also {
+      assertSize(2, it)
+    }
+
+    assertInstanceOf<PyFunction>(a)
+    assertEquals("__add__", a.name)
+    assertEquals("A", a.parentOfType<PyClass>()!!.name)
+
+    assertInstanceOf<PyFunction>(b)
+    assertEquals("__radd__", b.name)
+    assertEquals("B", b.parentOfType<PyClass>()!!.name)
+
+  }
+
   private fun doTestGotoDeclarationNavigatesToPyNotPyi() {
     myFixture.copyDirectoryToProject(getTestName(true), "")
     myFixture.configureByFile("test.py")
@@ -338,6 +411,14 @@ class PyNavigationTest : PyTestCase() {
     myFixture.copyDirectoryToProject(dirName, "")
     myFixture.configureByFile("test.py")
     assertTrue(myFixture.elementAtCaret is PyiFile)
+  }
+
+
+  private fun checkMulti(text: String): List<PsiElement> {
+    myFixture.configureByText("test.py", text)
+    return PyGotoDeclarationHandler()
+      .getGotoDeclarationTargets(elementAtCaret, -1, myFixture.editor)!!
+      .toList()
   }
 
   private fun checkPyNotPyi(file: PsiElement?) {

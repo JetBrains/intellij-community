@@ -7,6 +7,14 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/refactoring",
     "//platform/testFramework",
     "//plugins/maven",
     "@lib//:maven-test_framework-io-takari-maven-wrapper",
@@ -18,6 +26,7 @@ jvm_library(
     "//java/testFramework",
     "//platform/projectModel-api:projectModel",
     "//platform/core-api:core",
+    "//xml/xml-psi-api:psi",
     "//platform/backend/observation",
   ]
 )

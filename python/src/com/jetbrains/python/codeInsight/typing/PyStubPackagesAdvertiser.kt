@@ -40,18 +40,23 @@ private class PyStubPackagesAdvertiser : PyInspection() {
     private val FORCED = emptyMap<String, String>() // top-level package to package on PyPI
 
     // notification will be shown for packages below
-    private val CHECKED = mapOf("coincurve" to "coincurve",
-                                "docutils" to "docutils",
-                                "pika" to "pika",
+    private val CHECKED = mapOf("docutils" to "docutils",
                                 "gi" to "PyGObject",
                                 "PyQt5" to "PyQt5",
-                                "pyspark" to "pyspark",
+                                "pandas" to "pandas",
+                                "celery" to "celery",
+                                "boto3" to "boto3",
+                                "scipy" to "scipy",
                                 "traits" to "traits") // top-level package to package on PyPI, sorted by the latter
 
+    private val EXTRAS = mapOf("boto3-stubs" to "[full]")
+
+    private val IGNORE = setOf(
+      "types-boto3", // duplicate of boto3-stubs
+      "celery-stubs", // deprecated
+    )
+
     private val BALLOON_SHOWING = Key.create<Boolean>("showingStubPackagesAdvertiserBalloon")
-    private val BALLOON_NOTIFICATIONS = Cancellation.forceNonCancellableSectionInClassInitializer {
-      NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
-    }
   }
 
   var ignoredPackages: MutableList<String> = mutableListOf()
@@ -66,6 +71,9 @@ private class PyStubPackagesAdvertiser : PyInspection() {
   private class Visitor(private val ignoredPackages: MutableList<String>,
                         holder: ProblemsHolder,
                         session: LocalInspectionToolSession) : PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
+
+    private val BALLOON_NOTIFICATIONS
+      get() = NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
 
     override fun visitPyFile(node: PyFile) {
       super.visitPyFile(node)
@@ -103,7 +111,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       val availablePackages = packageManagementService.allPackagesCached
       if (availablePackages.isEmpty()) return
 
-      val ignoredStubPackages = ignoredPackages.mapNotNull { packageManager.parseRequirement(it) }
+      val ignoredStubPackages = (IGNORE + ignoredPackages).mapNotNull { packageManager.parseRequirement(it) }
       val cache = ApplicationManager.getApplication().getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk)
 
       val forcedToLoad = processForcedPackages(file, sources, module, sdk, packageManager, ignoredStubPackages, cache)
@@ -247,7 +255,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
         .flatMap { it.packages.entries.asSequence() }
         .filterNot { isIgnoredStubPackage(it.key, it.value.first, ignoredStubPackages) }
         .map {
-          pyRequirement(it.key, PyRequirementRelation.EQ, it.value.first)
+          pyRequirement(it.key, PyRequirementRelation.EQ, it.value.first, extras = EXTRAS.getOrDefault(it.key, ""))
         }
         .toList()
       if (requirements.isEmpty()) return emptyList<PyRequirement>() to emptyList()

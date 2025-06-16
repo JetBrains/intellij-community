@@ -3,9 +3,9 @@ package com.intellij.xdebugger.impl.hotswap
 
 import com.intellij.history.LocalHistory
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
@@ -16,8 +16,9 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.search.SearchScope
 import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
+import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.*
@@ -75,22 +76,16 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
 
   private suspend fun onDocumentChange(document: Document) = coroutineScope {
     val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@coroutineScope
-    if (logger.isDebugEnabled) {
-      logger.debug("Document changed: ${virtualFile}")
-    }
+    logger.debug { "Document changed: ${virtualFile}" }
     val filteredCollectors = collectors
       .map { collector -> collector to async(Dispatchers.Default) { collector.filters.all { it.isApplicable(virtualFile) } } }
       .filter { it.second.await() }
       .map { it.first }
     if (filteredCollectors.isEmpty()) {
-      if (logger.isDebugEnabled) {
-        logger.debug("Document change skipped as filtered: $virtualFile")
-      }
+      logger.debug { "Document change skipped as filtered: $virtualFile" }
       return@coroutineScope
     }
-    if (logger.isDebugEnabled) {
-      logger.debug("Document change processing: $virtualFile")
-    }
+    logger.debug { "Document change processing: $virtualFile" }
     val contentHash = Strings.stringHashCode(document.immutableCharSequence)
     val groupedByTimeStamp = filteredCollectors.groupBy { it.lastResetTimeStamp }
     dropUnusedTimestamps(groupedByTimeStamp.keys)
@@ -104,7 +99,7 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
         lastSearchTimeNs = System.nanoTime() - timeStartNs
       }
       for (collector in collectors) {
-        collector.processDocumentChange(hasChanges, virtualFile, document)
+        collector.processDocumentChange(hasChanges, virtualFile)
       }
     }
   }
@@ -166,10 +161,7 @@ class SourceFileChangesCollectorImpl(
     currentChanges = hashSetOf()
   }
 
-  internal fun processDocumentChange(
-    hasChangesSinceLastReset: Boolean,
-    file: VirtualFile, document: Document,
-  ) = coroutineScope.launch(limitedDispatcher) {
+  internal fun processDocumentChange(hasChangesSinceLastReset: Boolean, file: VirtualFile) = coroutineScope.launch(limitedDispatcher) {
     val currentChanges = currentChanges
     lock.withLock {
       if (hasChangesSinceLastReset) {
@@ -182,15 +174,11 @@ class SourceFileChangesCollectorImpl(
 
     val isEmpty = currentChanges.isEmpty()
     if (isEmpty) {
-      if (logger.isDebugEnabled) {
-        logger.debug("Document change reverted previous changes: $file")
-      }
+      logger.debug { "Document change reverted previous changes: $file" }
       listener.onChangesCanceled()
     }
     else {
-      if (logger.isDebugEnabled) {
-        logger.debug("Document change active: $file")
-      }
+      logger.debug { "Document change active: $file" }
       listener.onNewChanges()
     }
   }
@@ -225,11 +213,4 @@ private fun getContentHashBeforeLastReset(file: VirtualFile, lastTimestamp: Long
   val bytes = localHistory.getByteContent(file) { timestamp -> timestamp < lastTimestamp } ?: return -1
   val content = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false)
   return Strings.stringHashCode(content)
-}
-
-@ApiStatus.Internal
-class SearchScopeFilter(private val searchScope: SearchScope) : SourceFileChangeFilter<VirtualFile> {
-  override suspend fun isApplicable(change: VirtualFile): Boolean {
-    return readAction { searchScope.contains(change) }
-  }
 }

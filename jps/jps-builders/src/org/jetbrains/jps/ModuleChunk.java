@@ -18,27 +18,26 @@ import java.util.stream.Collectors;
  * {@link org.jetbrains.jps.incremental.ModuleLevelBuilder#build} method.
  */
 public final class ModuleChunk {
-  private final Set<JpsModule> modules;
-  private final boolean containsTests;
-  private final Set<ModuleBuildTarget> targets;
+  private final Set<JpsModule> myModules;
+  private final boolean myContainsTests;
+  private final Set<ModuleBuildTarget> myTargets;
 
   public ModuleChunk(@NotNull Set<ModuleBuildTarget> targets) {
-    this.targets = targets;
-    modules = new LinkedHashSet<>(targets.size());
-
     boolean containsTests = false;
+    myTargets = targets;
+    myModules = new LinkedHashSet<>();
     for (ModuleBuildTarget target : targets) {
-      modules.add(target.getModule());
+      myModules.add(target.getModule());
       containsTests |= target.isTests();
     }
-    this.containsTests = containsTests;
+    myContainsTests = containsTests;
   }
 
   public @Nls @NotNull String getPresentableShortName() {
-    String first = modules.iterator().next().getName();
+    String first = myModules.iterator().next().getName();
     String name;
-    if (modules.size() > 1) {
-      name = JpsBuildBundle.message("target.description.0.and.1.more", first, modules.size() - 1);
+    if (myModules.size() > 1) {
+      name = JpsBuildBundle.message("target.description.0.and.1.more", first, myModules.size() - 1);
       String fullName = getName();
       if (fullName.length() < name.length()) {
         name = fullName;
@@ -54,24 +53,22 @@ public final class ModuleChunk {
   }
 
   public @NotNull String getName() {
-    if (modules.size() == 1) {
-      return modules.iterator().next().getName();
+    if (myModules.size() == 1) {
+      return myModules.iterator().next().getName();
     }
-    else {
-      return modules.stream().map(JpsNamedElement::getName).collect(Collectors.joining(","));
-    }
+    return myModules.stream().map(JpsNamedElement::getName).collect(Collectors.joining(","));
   }
 
   public @NotNull Set<JpsModule> getModules() {
-    return modules;
+    return myModules;
   }
 
   public boolean containsTests() {
-    return containsTests;
+    return myContainsTests;
   }
 
   public @NotNull Set<ModuleBuildTarget> getTargets() {
-    return targets;
+    return myTargets;
   }
 
   @Override
@@ -83,6 +80,6 @@ public final class ModuleChunk {
    * Returns an arbitrary target included in the chunk.
    */
   public @NotNull ModuleBuildTarget representativeTarget() {
-    return targets.iterator().next();
+    return myTargets.iterator().next();
   }
 }

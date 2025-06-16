@@ -38,8 +38,8 @@ public class PyImplementMethodsQuickFix extends LocalQuickFixOnPsiElement {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    final Editor editor = PyQuickFixUtil.getEditor(file);
+  public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    final Editor editor = PyQuickFixUtil.getEditor(psiFile);
 
     if (editor != null && startElement instanceof PyClass) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

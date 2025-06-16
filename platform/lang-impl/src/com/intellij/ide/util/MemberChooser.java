@@ -453,6 +453,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
   }
 
   @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.large();
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTree;
   }

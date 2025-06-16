@@ -1,16 +1,19 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.util.PingProgress
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.FilesScanningTask
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsContexts.ProgressText
@@ -239,8 +242,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     // We want scanning to start after all these "extra" dumb tasks are finished.
     // Note that a project may become dumb immediately after the check. This is not a problem - we schedule scanning anyway.
     if (scanningWaitsForNonDumbMode()) {
-      flow = flow.combine(DumbServiceImpl.getInstance(project).isDumbAsFlow) { state, isDumb ->
-        state.copy(isDumb = isDumb)
+      flow = flow.combine(DumbService.getInstance(project).state) { state, dumbState ->
+        state.copy(isDumb = dumbState.isDumb)
       }.combine(scanningWaitsForNonDumbModeOverride) { state, scanningWaitsOverride ->
         state.copy(shouldWaitForNonDumb = scanningWaitsForNonDumbMode(scanningWaitsOverride))
       }
@@ -275,9 +278,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
       (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
         task.applyDelayedPushOperations(scanningHistory)
       }
-      blockingContext {
-        task.perform(taskIndicator, progressReporter, scanningHistory, scanningParameters)
-      }
+      task.perform(taskIndicator, progressReporter, scanningHistory, scanningParameters)
 
       progressScope.cancel()
       return@coroutineScope scanningHistory
@@ -378,10 +379,24 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
    * This method does not have "happens before" semantics. It requests GUI suspender to suspend and executes runnable without waiting for
    * all the running tasks to pause.
    */
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable) {
     pauseReason.update { it.add(activityName) }
     try {
       DumbService.getInstance(project).suspendIndexingAndRun(activityName, runnable)
+    }
+    finally {
+      pauseReason.update { it.remove(activityName) }
+    }
+  }
+
+  override suspend fun suspendScanningAndIndexingThenExecute(
+    activityName: @ProgressText String,
+    activity: suspend CoroutineScope.() -> Unit,
+  ) {
+    pauseReason.update { it.add(activityName) }
+    try {
+      project.serviceAsync<DumbService>().suspendIndexingAndRun(activityName, activity)
     }
     finally {
       pauseReason.update { it.remove(activityName) }

@@ -602,6 +602,7 @@ object GithubApiRequests {
                        term(QualifierName.assignee.createTerm(assignee.orEmpty()))
                        query(query)
                      })
+                     param("advanced_search", "true")
                      param(pagination)
                    }))
 

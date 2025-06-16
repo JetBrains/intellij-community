@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -27,13 +26,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OptionalOne
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalOneToOneChildEntityData) : OptionalOneToOneChildEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalOneToOneChildEntityData) : OptionalOneToOneChildEntity,
+                                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(OptionalOneToOneParentEntity::class.java,
-                                                                          OptionalOneToOneChildEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_ONE, true)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      OptionalOneToOneParentEntity::class.java, OptionalOneToOneChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, true
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENT_CONNECTION_ID,
@@ -61,8 +60,9 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
   }
 
 
-  internal class Builder(result: OptionalOneToOneChildEntityData?) : ModifiableWorkspaceEntityBase<OptionalOneToOneChildEntity, OptionalOneToOneChildEntityData>(
-    result), OptionalOneToOneChildEntity.Builder {
+  internal class Builder(result: OptionalOneToOneChildEntityData?) :
+    ModifiableWorkspaceEntityBase<OptionalOneToOneChildEntity, OptionalOneToOneChildEntityData>(result),
+    OptionalOneToOneChildEntity.Builder {
     internal constructor() : this(OptionalOneToOneChildEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -133,8 +133,9 @@ internal class OptionalOneToOneChildEntityImpl(private val dataSource: OptionalO
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENT_CONNECTION_ID,
-                                                                           this) as? OptionalOneToOneParentEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENT_CONNECTION_ID, this
+          ) as? OptionalOneToOneParentEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENT_CONNECTION_ID)] as? OptionalOneToOneParentEntity.Builder)
         }
         else {
@@ -195,7 +196,8 @@ internal class OptionalOneToOneChildEntityData : WorkspaceEntityData<OptionalOne
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneChildEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.OptionalOneToOneChildEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

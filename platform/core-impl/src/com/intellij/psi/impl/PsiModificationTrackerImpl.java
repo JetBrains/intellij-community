@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
@@ -136,7 +137,7 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
           incLanguageModificationCount(language);
         }
         catch (PsiInvalidElementAccessException e) {
-          PsiDocumentManagerBase.LOG.warn(e);
+          Logger.getInstance(getClass()).warn(e);
         }
       }
     }

@@ -7,22 +7,38 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "vcs-gitlab_resources_1",
+  files = glob(["gen-resources/**/*"]),
+  strip_prefix = "gen-resources"
+)
+
+jvm_resources(
+  name = "vcs-gitlab_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "vcs-gitlab",
   module_name = "intellij.vcs.gitlab",
   visibility = ["//visibility:public"],
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-util-io:ide-util-io",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
+    "//platform/util/diff",
     "//platform/util:util-ui",
     "//platform/vcs-api:vcs",
-    "//platform/collaboration-tools:collaborationTools",
+    "//platform/collaboration-tools",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
@@ -33,7 +49,8 @@ jvm_library(
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "@lib//:jackson-databind",
     "//plugins/git4idea:vcs-git",
-    "//platform/vcs-log/impl:vcs-log-impl",
+    "//plugins/git4idea/shared",
+    "//platform/vcs-log/impl",
     "//platform/vcs-impl",
     "@lib//:jetbrains-markdown",
     "//platform/markdown-utils",
@@ -45,8 +62,13 @@ jvm_library(
     "//platform/vcs-log/api:vcs-log",
     "@lib//:jsoup",
     "//platform/util/coroutines",
+    "//platform/dvcs-impl/shared",
+    "//platform/ide-core-impl",
   ],
-  runtime_deps = [":vcs-gitlab_resources"]
+  runtime_deps = [
+    ":vcs-gitlab_resources",
+    ":vcs-gitlab_resources_1",
+  ]
 )
 
 jvm_library(
@@ -55,18 +77,22 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java", "testApi/**/*.kt", "testApi/**/*.java"], allow_empty = True),
   associates = [":vcs-gitlab"],
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-ui",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
+    "//platform/util/diff",
     "//platform/util:util-ui",
     "//platform/vcs-api:vcs",
-    "//platform/collaboration-tools:collaborationTools",
-    "//platform/collaboration-tools:collaborationTools_test_lib",
+    "//platform/collaboration-tools",
+    "//platform/collaboration-tools:collaboration-tools_test_lib",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
@@ -84,8 +110,9 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/git4idea:vcs-git",
     "//plugins/git4idea:vcs-git_test_lib",
-    "//platform/vcs-log/impl:vcs-log-impl",
-    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
+    "//plugins/git4idea/shared",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "@lib//:jetbrains-markdown",
@@ -105,8 +132,14 @@ jvm_library(
     "//platform/util/coroutines",
     "@lib//:io-mockk",
     "@lib//:io-mockk-jvm",
+    "//platform/dvcs-impl/shared",
+    "//platform/ide-core-impl",
   ],
-  runtime_deps = [":vcs-gitlab_resources"]
+  runtime_deps = [
+    ":vcs-gitlab_resources",
+    ":vcs-gitlab_resources_1",
+    ":vcs-gitlab_test_resources",
+  ]
 )
 
 jvm_test(

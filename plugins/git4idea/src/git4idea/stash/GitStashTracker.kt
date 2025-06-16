@@ -3,6 +3,7 @@ package git4idea.stash
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,7 +22,7 @@ import com.intellij.vcs.log.runInEdt
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
-import git4idea.stash.ui.isStashTabAvailable
+import git4idea.stash.ui.GitStashUIHandler
 import git4idea.ui.StashInfo
 import java.util.*
 
@@ -60,7 +61,7 @@ class GitStashTracker(private val project: Project) : Disposable {
   }
 
   fun scheduleRefresh() {
-    if (!isStashTabAvailable()) return
+    if (!project.service<GitStashUIHandler>().isStashTabAvailable()) return
 
     updateQueue.queue(DisposableUpdate.createDisposable(this, "update", Runnable {
       val newStashes = mutableMapOf<VirtualFile, Stashes>()

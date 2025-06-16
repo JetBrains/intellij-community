@@ -86,7 +86,7 @@ internal class SettingsFileEditor(
   }
 
   override fun <T> putUserData(key: Key<T?>, value: T?) {
-    // do nothing
+    userDataHolder.putUserData(key, value)
   }
 
 
@@ -102,7 +102,5 @@ internal class SettingsFileEditor(
     override fun toString(): String {
       return "NavigationState(pathId='$pathId')"
     }
-
-
   }
 }

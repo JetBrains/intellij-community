@@ -4,10 +4,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings;
 import org.jetbrains.plugins.textmate.configuration.TextMatePersistentBundle;
+import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings;
 
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -36,8 +35,7 @@ public abstract class TextMateAcceptanceTestCase extends BasePlatformTestCase {
     if (!loadingBundles.equals(enabledBundles)) {
       Map<String, TextMatePersistentBundle> bundles = new HashMap<>();
       for (String bundleName : loadingBundles) {
-        Path bundleDirectory = TestUtil.getBundleDirectory(bundleName);
-        String path = bundleDirectory.toAbsolutePath().toString();
+        String path = TestUtilMultiplatform.INSTANCE.getBundleDirectoryPath(bundleName);
         bundles.put(FileUtil.toSystemIndependentName(path), new TextMatePersistentBundle(bundleName, true));
       }
       settings.setBundlesConfig(bundles);

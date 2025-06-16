@@ -463,7 +463,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     mySegments = tempSegments;
     processor.finish();
 
-    if (textLength > 0 && (mySegments.mySegmentCount == 0 || mySegments.myEnds[mySegments.mySegmentCount - 1] != textLength)) {
+    if (textLength > 0 && (mySegments.getSegmentCount() == 0 || mySegments.getSegmentEnd(mySegments.getSegmentCount() - 1) != textLength)) {
       throw new IllegalStateException("Unexpected termination offset for lexer " + myLexer);
     }
 
@@ -499,7 +499,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return attributesKeys;
   }
 
-  public @NotNull List<TextAttributes> getAttributesForPreviousAndTypedChars(@NotNull Document document, int offset, char c) {
+  public synchronized @NotNull List<TextAttributes> getAttributesForPreviousAndTypedChars(@NotNull Document document, int offset, char c) {
     CharSequence text = document.getImmutableCharSequence();
 
     CharSequence newText = StringUtil.replaceSubSequence(text, offset, offset, new SingleCharSequence(c));
@@ -603,7 +603,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @ApiStatus.Internal
-  public @NotNull List<Pair<TextRange, TextAttributes>> getAttributesFor(@NotNull Document document, int offset, @NotNull CharSequence s) {
+  public synchronized @NotNull List<Pair<TextRange, TextAttributes>> getAttributesFor(@NotNull Document document, int offset, @NotNull CharSequence s) {
     var lexerWrapper = getLexerWrapper(StringUtil.replaceSubSequence(document.getImmutableCharSequence(), offset, offset, s), offset);
     int data;
 

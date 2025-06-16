@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -14,10 +15,12 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
+import io.kotest.assertions.withClue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -27,6 +30,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.math.min
 import kotlin.test.assertTrue
 
 @TestApplication
@@ -281,26 +285,72 @@ class EdtCoroutineDispatcherTest {
   }
 
   @Test
-  fun `main ui dispatcher does not perform dispatch when used under edt`(): Unit = timeoutRunBlocking {
+  fun `ui dispatcher performs dispatch when used under edt`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.EDT) {
       assertThat(application.isReadAccessAllowed).isTrue
-      withContext(Dispatchers.UIImmediate) {
-        assertThat(application.isReadAccessAllowed).isTrue
+      val currentTrace = getCurrentTrace()
+      withContext(Dispatchers.UiImmediate) {
+        assertNotTraceContinuation(currentTrace)
+        withClue("Locks should be acquired in EDT dispatcher") {
+          assertThat(application.isReadAccessAllowed).isFalse
+        }
       }
       assertThat(application.isReadAccessAllowed).isTrue
     }
   }
 
   @Test
-  fun `main edt dispatcher performs dispatch when used under ui`(): Unit = timeoutRunBlocking {
+  fun `edt dispatcher performs dispatch when used under ui`(): Unit = timeoutRunBlocking {
     withContext(Dispatchers.UI) {
       assertThat(application.isReadAccessAllowed).isFalse
-      withContext(Dispatchers.EDTImmediate) {
-        assertThat(application.isReadAccessAllowed).isTrue
+      val currentTrace = getCurrentTrace()
+      withContext(Dispatchers.EdtImmediate) {
+        assertNotTraceContinuation(currentTrace)
+        withClue("Locks should not be acquired in immediate EDT dispatcher") {
+          assertThat(application.isReadAccessAllowed).isTrue
+        }
       }
       assertThat(application.isReadAccessAllowed).isFalse
     }
   }
+
+  @Test
+  fun `edt dispatcher does not perform dispatch when locks are taken`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      assertThat(application.isReadAccessAllowed).isTrue
+      val currentTrace = getCurrentTrace()
+      withContext(Dispatchers.EdtImmediate) {
+        assertTraceContinuation(currentTrace)
+      }
+    }
+  }
+
+  @Test
+  fun `ui dispatcher does not perform dispatch when locks are forbidden`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.UI) {
+      assertThat(application.isReadAccessAllowed).isFalse
+      val currentTrace = getCurrentTrace()
+      launch(Dispatchers.UiImmediate) {
+        assertTraceContinuation(currentTrace)
+      }
+    }
+  }
+
+  private fun assertTraceContinuation(originalTrace: List<StackTraceElement>) {
+    withClue("This code should be executing in the same frame as it was called from") {
+      assertThat(Throwable().stackTrace.reversed()).startsWith(*originalTrace.toTypedArray())
+    }
+  }
+
+  private fun assertNotTraceContinuation(originalTrace: List<StackTraceElement>) {
+    withClue("This code should not be executing in the same frame as it was called from") {
+      val newTrace = getCurrentTrace()
+      assertFalse(newTrace.subList(0, min(originalTrace.size, newTrace.size)) == originalTrace)
+    }
+  }
+
+  private fun getCurrentTrace(): List<StackTraceElement> =
+    Throwable().stackTrace.drop(3).reversed()
 
 
   @Test
@@ -344,9 +394,7 @@ class EdtCoroutineDispatcherTest {
       assertFalse(application.isReadAccessAllowed)
       assertFalse(application.isWriteAccessAllowed)
       assertFalse(application.isWriteIntentLockAcquired)
-      assertThrows<RuntimeException> {
-        TransactionGuard.getInstance().isWritingAllowed
-      }
+      assertTrue(TransactionGuard.getInstance().isWritingAllowed) // TODO
     }
   }
 
@@ -377,28 +425,24 @@ class EdtCoroutineDispatcherTest {
     }
   }
 
-  @Test
-  fun `main dispatcher fails softly on locking actions`(): Unit = timeoutRunBlocking(context = Dispatchers.Main) {
+  @UiThreadDispatcherTest
+  fun `main and relaxed dispatcher allows locking actions`(dispatcher: CoroutineContext): Unit = timeoutRunBlocking(context = dispatcher) {
+    Assumptions.assumeTrue(dispatcher == Dispatchers.Main || dispatcher == Dispatchers.ui(UiDispatcherKind.RELAX))
     val counter = AtomicInteger()
-    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
-      application.runWriteAction {
-        counter.incrementAndGet()
-      }
+    assertThat(application.isReadAccessAllowed).isFalse
+    assertThat(application.isWriteAccessAllowed).isFalse
+    assertThat(application.isWriteIntentLockAcquired).isFalse
+    application.runWriteAction {
+      counter.incrementAndGet()
     }
-    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
-      application.runReadAction {
-        counter.incrementAndGet()
-      }
+    application.runReadAction {
+      counter.incrementAndGet()
     }
-    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
-      assertTrue(ApplicationManagerEx.getApplicationEx().tryRunReadAction {
-        counter.incrementAndGet()
-      })
-    }
-    assertErrorLogged<ThreadingSupport.LockAccessDisallowed> {
-      application.runWriteIntentReadAction<Unit, Exception> {
-        counter.incrementAndGet()
-      }
+    assertTrue(ApplicationManagerEx.getApplicationEx().tryRunReadAction {
+      counter.incrementAndGet()
+    })
+    application.runWriteIntentReadAction<Unit, Exception> {
+      counter.incrementAndGet()
     }
     assertThat(counter.get()).isEqualTo(4)
   }
@@ -441,6 +485,29 @@ class EdtCoroutineDispatcherTest {
     job.join()
   }
 
+  @Test
+  fun `exception messages in preventive locking for Dispatchers UI`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.UI) {
+      IdeEventQueue.getInstance().threadingSupport.runPreventiveWriteIntentReadAction {
+        val error = assertErrorLogged<RuntimeException> {
+          ThreadingAssertions.assertReadAccess()
+        }
+        assertThat(error.message)
+          .contains("read access")
+          .contains("Dispatchers.UI")
+          .doesNotContain("Dispatchers.Main")
+
+        val error2 = assertErrorLogged<RuntimeException> {
+          ThreadingAssertions.assertWriteIntentReadAccess()
+        }
+        assertThat(error2.message)
+          .contains("write-intent access")
+          .contains("Dispatchers.UI")
+          .doesNotContain("Dispatchers.Main")
+      }
+    }
+  }
+
 }
 
 @RequiresEdt
@@ -462,12 +529,5 @@ internal fun uiThreadDispatchers(): List<Arguments> = listOf(
   Dispatchers.EDT,
   Dispatchers.UI,
   Dispatchers.Main,
+  Dispatchers.ui(UiDispatcherKind.RELAX)
 ).map { Arguments.of(it) }
-
-@Suppress("UnusedReceiverParameter")
-val Dispatchers.UIImmediate: CoroutineDispatcher
-  get() = (Dispatchers.UI[ContinuationInterceptor.Key] as MainCoroutineDispatcher).immediate
-
-@Suppress("UnusedReceiverParameter")
-val Dispatchers.EDTImmediate: CoroutineDispatcher
-  get() = (Dispatchers.EDT[ContinuationInterceptor.Key] as MainCoroutineDispatcher).immediate

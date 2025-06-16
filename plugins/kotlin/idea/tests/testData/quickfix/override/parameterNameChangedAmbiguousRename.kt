@@ -1,5 +1,5 @@
 // "class org.jetbrains.kotlin.idea.quickfix.RenameParameterToMatchOverriddenMethodFix" "false"
-
+// "Rename parameter to match overridden method" "false"
 abstract class A {
     abstract fun foo(arg : Int) : Int;
 }

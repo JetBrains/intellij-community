@@ -38,14 +38,12 @@ class BuildPaths(
   companion object {
     @JvmStatic
     val ULTIMATE_HOME: Path by lazy {
-      IdeaProjectLoaderUtil.guessUltimateHome(this::class.java) ?: error(
-        "Could not detect ultimate home folder from class: ${BuildPaths::class.java.name}")
+      IdeaProjectLoaderUtil.guessUltimateHome()
     }
 
     @JvmStatic
     val COMMUNITY_ROOT: BuildDependenciesCommunityRoot by lazy {
-      IdeaProjectLoaderUtil.guessCommunityHome(this::class.java) ?: error(
-        "Could not detect community home folder from class: ${BuildPaths::class.java.name}")
+      IdeaProjectLoaderUtil.guessCommunityHome()
     }
   }
 

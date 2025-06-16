@@ -54,6 +54,16 @@ public class KotlinCodeStyleSettings extends CustomCodeStyleSettings {
     public boolean IF_RPAREN_ON_NEW_LINE = false;
     public boolean ALLOW_TRAILING_COMMA = false;
     public boolean ALLOW_TRAILING_COMMA_ON_CALL_SITE = false;
+    public boolean ALLOW_TRAILING_COMMA_TYPE_PARAMETER_LIST = true;
+    public boolean ALLOW_TRAILING_COMMA_DESTRUCTURING_DECLARATION = true;
+    public boolean ALLOW_TRAILING_COMMA_WHEN_ENTRY = true;
+    public boolean ALLOW_TRAILING_COMMA_FUNCTION_LITERAL = true;
+    public boolean ALLOW_TRAILING_COMMA_VALUE_PARAMETER_LIST = true;
+    public boolean ALLOW_TRAILING_COMMA_CONTEXT_RECEIVER_LIST = true;
+    public boolean ALLOW_TRAILING_COMMA_COLLECTION_LITERAL_EXPRESSION = false;
+    public boolean ALLOW_TRAILING_COMMA_TYPE_ARGUMENT_LIST = false;
+    public boolean ALLOW_TRAILING_COMMA_INDICES = false;
+    public boolean ALLOW_TRAILING_COMMA_VALUE_ARGUMENT_LIST = false;
     public int BLANK_LINES_BEFORE_DECLARATION_WITH_COMMENT_OR_ANNOTATION_ON_SEPARATE_LINE = 1;
 
     @ReflectionUtil.SkipInEquals

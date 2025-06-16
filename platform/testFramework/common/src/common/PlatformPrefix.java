@@ -19,7 +19,7 @@ public final class PlatformPrefix {
   private static final String[] PREFIX_CANDIDATES = {
     "Rider", "GoLand", "CLion", "FleetBackend",
     null,
-    "AppCode", "SwiftTests",
+    "AppCode",
     "Python", "DataSpell", "PyCharmCore",
     "DataGrip",
     "Ruby",

@@ -12,7 +12,6 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.AbstractVcsHelper"
                     serviceImplementation="com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl"/>
-    <projectService serviceImplementation="com.intellij.openapi.vcs.IssueNavigationConfiguration"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.roots.VcsRootDetector"
                     serviceImplementation="com.intellij.openapi.vcs.roots.VcsRootDetectorImpl"/>
@@ -55,6 +54,9 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.VcsDirtyScopeManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
+
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ChangesViewWorkflowManagerImpl"/>
 
     <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangeManagerProjectActivity"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
@@ -165,6 +167,9 @@
 
     <toolWindow id="Commit" anchor="left" icon="AllIcons.Toolwindows.ToolWindowCommit"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.CommitToolWindowFactory"/>
+    <registryKey defaultValue="false"
+                 description="Close Commit dialog (Commit TW opened in either floating or windowed mode) by pressing ESC"
+                 key="vcs.commit.dialog.esc.close"/>
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>
@@ -202,6 +207,8 @@
 
     <vcs.changes.changesViewModifier implementation="com.intellij.vcs.commit.EditedCommitChangesViewModifier"/>
 
+    <vcs.changes.changesViewConflictsBannerCustomizer implementation="com.intellij.openapi.vcs.merge.DefaultChangesViewConflictsBannerCustomizer"/>
+
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.MultipleChangeListsCheckFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckFactory"/>
 
@@ -218,8 +225,7 @@
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.projectlevelman.AllVcsesI"
                     serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.AllVcses"/>
 
-    <projectService serviceInterface="com.intellij.openapi.vcs.VcsFileListenerContextHelper"
-                    serviceImplementation="com.intellij.openapi.vcs.VcsFileListenerContextHelperImpl"/>
+    <vcs.fileListenerIgnoredFilesProvider implementation="com.intellij.openapi.vcs.VcsFileListenerContextHelper$IgnoredFilesProvider"/>
 
     <vcs.fileStatusProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictFileStatusProvider"/>
     <writingAccessProvider implementation="com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictAccessProvider"/>
@@ -245,8 +251,6 @@
     <projectSetProcessor implementation="com.intellij.openapi.vcs.VcsProjectSetProcessor"/>
     <projectSetProcessor implementation="com.intellij.openapi.vcs.OpenProjectSetProcessor"/>
 
-    <getDataRule key="VCS_VIRTUAL_FILES" implementationClass="com.intellij.openapi.vcs.VcsVirtualFilesRule"/>
-    <getDataRule key="VCS_REVISION_NUMBERS" implementationClass="com.intellij.openapi.vcs.history.VcsRevisionNumberArrayRule"/>
     <uiDataRule implementation="com.intellij.openapi.vcs.ui.VcsUiDataRule"/>
 
     <jbProtocolCommand implementation="com.intellij.openapi.vcs.checkout.JBProtocolCheckoutCommand"/>
@@ -354,6 +358,7 @@
 
     <editorNotificationProvider implementation="com.intellij.openapi.vcs.actions.AnnotateWarningsProvider"/>
 
+    <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -394,6 +399,8 @@
               topic="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener"/>
     <listener class="com.intellij.openapi.vcs.actions.AnnotationsLineStatusTrackerListener"
               topic="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$Listener"/>
+    <listener class="com.intellij.vcs.commit.ChangesViewToolWindowRefresher"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </projectListeners>
 </idea-plugin>
 

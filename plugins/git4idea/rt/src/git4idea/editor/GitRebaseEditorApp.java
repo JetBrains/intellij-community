@@ -2,9 +2,10 @@
 package git4idea.editor;
 
 import externalApp.ExternalApp;
+import externalApp.ExternalAppEntry;
 import externalApp.ExternalAppUtil;
+import externalApp.ExternalCli;
 
-import java.io.File;
 import java.util.Arrays;
 
 import static git4idea.editor.GitRebaseEditorAppHandler.ERROR_EXIT_CODE;
@@ -12,44 +13,50 @@ import static git4idea.editor.GitRebaseEditorAppHandler.ERROR_EXIT_CODE;
 /**
  * The rebase editor application, this editor is invoked by the git.
  */
-public class GitRebaseEditorApp implements ExternalApp {
+public class GitRebaseEditorApp implements ExternalApp, ExternalCli {
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void main(String[] args) {
+  @Override
+  public int entryPoint(ExternalAppEntry entry) {
     try {
-      if (args.length != 1) {
-        System.err.println("Invalid arguments: " + Arrays.asList(args));
-        System.exit(ERROR_EXIT_CODE);
-        return;
+      if (entry.getArgs().length != 1) {
+        entry.getStderr().println("Invalid arguments: " + Arrays.asList(entry.getArgs()));
+        return ERROR_EXIT_CODE;
       }
 
-      String handlerId = ExternalAppUtil.getEnv(GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV);
-      int idePort = ExternalAppUtil.getEnvInt(GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV);
+      String handlerId = ExternalAppUtil.getEnv(GitRebaseEditorAppHandler.IJ_EDITOR_HANDLER_ENV, entry.getEnvironment());
+      int idePort = ExternalAppUtil.getEnvInt(GitRebaseEditorAppHandler.IJ_EDITOR_PORT_ENV, entry.getEnvironment());
 
-      String workingDir = new File("").getAbsolutePath();
-      String path = args[0];
+      String workingDir = entry.getWorkingDirectory();
+      String path = entry.getArgs()[0];
       String bodyContent = path + "\n" + workingDir;
 
       ExternalAppUtil.Result result = ExternalAppUtil.sendIdeRequest(GitRebaseEditorAppHandler.ENTRY_POINT_NAME, idePort,
                                                                      handlerId, bodyContent);
 
       if (result.isError) {
-        System.err.println(result.getPresentableError());
-        System.exit(ERROR_EXIT_CODE);
+        entry.getStderr().println(result.getPresentableError());
+        return ERROR_EXIT_CODE;
       }
 
       String response = result.response;
       if (response == null) {
-        System.exit(ERROR_EXIT_CODE); // dialog cancelled
+        return ERROR_EXIT_CODE; // dialog cancelled
       }
 
       int exitCode = Integer.parseInt(response);
-      System.exit(exitCode);
+      return exitCode;
     }
     catch (Throwable t) {
-      System.err.println(t.getMessage());
-      t.printStackTrace(System.err);
-      System.exit(ERROR_EXIT_CODE);
+      entry.getStderr().println(t.getMessage());
+      t.printStackTrace(entry.getStderr());
+      return ERROR_EXIT_CODE;
     }
   }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  public static void main(String[] args) {
+    var exitCode = new GitRebaseEditorApp().entryPoint(ExternalAppEntry.fromMain(args));
+    System.exit(exitCode);
+  }
+
 }

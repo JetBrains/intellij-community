@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
@@ -59,7 +59,8 @@ class LineBreakpointExpressionVisitor private constructor(
 
         for (child in children) {
             val ktElement = child as? KtElement ?: continue
-            val result = ktElement.accept(this, data)
+            @Suppress("USELESS_ELVIS")
+            val result = ktElement.accept(this, data) ?: continue
             if (result.shouldStop) {
                 return result
             }
@@ -185,7 +186,8 @@ class LineBreakpointExpressionVisitor private constructor(
         }
 
         if (lines.isMultiLine) {
-            return parenthesized.accept(this, data)
+            @Suppress("USELESS_ELVIS")
+            return parenthesized.accept(this, data) ?: ApplicabilityResult.UNKNOWN
         }
 
         return ApplicabilityResult.UNKNOWN

@@ -199,7 +199,7 @@ public abstract class MavenBuildToolLogTestUtils extends LightIdeaTestCase {
         (MavenRunConfiguration)new MavenRunConfigurationType.MavenRunConfigurationFactory(MavenRunConfigurationType.getInstance())
           .createTemplateConfiguration(getProject());
       CollectConsumer collectConsumer = new CollectConsumer();
-      MavenLogOutputParser parser = new MavenLogOutputParser(configuration, myTaskId, myParsers);
+      MavenLogOutputParser parser = new MavenLogOutputParser(configuration, myTaskId, myParsers, false);
 
       collectConsumer.accept(new StartBuildEventImpl(
         new DefaultBuildDescriptor(myTaskId, "Maven Run", System.getProperty("user.dir"), System.currentTimeMillis()), "Maven Run"));

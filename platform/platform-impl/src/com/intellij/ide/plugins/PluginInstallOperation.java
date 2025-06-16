@@ -9,6 +9,8 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
+import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -45,8 +47,8 @@ public final class PluginInstallOperation {
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build();
 
-  private final @NotNull List<PluginNode> myPluginsToInstall;
-  private final @NotNull Collection<PluginNode> myCustomReposPlugins;
+  private final @NotNull List<PluginUiModel> myPluginsToInstall;
+  private final @NotNull Collection<PluginUiModel> myCustomReposPlugins;
   private final @NotNull PluginEnabler myPluginEnabler;
   private final @NotNull ProgressIndicator myIndicator;
   private boolean mySuccess = true;
@@ -61,13 +63,23 @@ public final class PluginInstallOperation {
                                 @NotNull Collection<PluginNode> customReposPlugins,
                                 @NotNull PluginEnabler pluginEnabler,
                                 @NotNull ProgressIndicator indicator) {
+    this(ContainerUtil.map(pluginsToInstall, PluginUiModelAdapter::new),
+         ContainerUtil.map(customReposPlugins, PluginUiModelAdapter::new),
+         indicator,
+         pluginEnabler);
+  }
+
+  public PluginInstallOperation(@NotNull List<PluginUiModel> pluginsToInstall,
+                                @NotNull Collection<PluginUiModel> customReposPlugins,
+                                @NotNull ProgressIndicator indicator,
+                                @NotNull PluginEnabler pluginEnabler) {
     myPluginsToInstall = pluginsToInstall;
     myCustomReposPlugins = customReposPlugins;
     myPluginEnabler = pluginEnabler;
     myIndicator = indicator;
 
     synchronized (ourInstallLock) {
-      for (PluginNode node : pluginsToInstall) {
+      for (PluginUiModel node : pluginsToInstall) {
         PluginId id = node.getPluginId();
         ActionCallback callback = ourInstallCallbacks.get(id);
         if (callback == null) {
@@ -141,7 +153,7 @@ public final class PluginInstallOperation {
 
   private void updateUrls() {
     boolean unknownNodes = false;
-    for (PluginNode node : myPluginsToInstall) {
+    for (PluginUiModel node : myPluginsToInstall) {
       if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
         unknownNodes = true;
         break;
@@ -149,10 +161,10 @@ public final class PluginInstallOperation {
     }
     if (!unknownNodes) return;
 
-    Map<PluginId, PluginNode> allPlugins = new HashMap<>();
+    Map<PluginId, PluginUiModel> allPlugins = new HashMap<>();
     for (String host : RepositoryHelper.getCustomPluginRepositoryHosts()) {
       try {
-        for (PluginNode descriptor : RepositoryHelper.loadPlugins(host, null, myIndicator)) {
+        for (PluginUiModel descriptor : RepositoryHelper.loadPluginModels(host, null, myIndicator)) {
           allPlugins.put(descriptor.getPluginId(), descriptor);
         }
       }
@@ -160,9 +172,9 @@ public final class PluginInstallOperation {
       }
     }
 
-    for (PluginNode node : myPluginsToInstall) {
+    for (PluginUiModel node : myPluginsToInstall) {
       if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
-        PluginNode descriptor = allPlugins.get(node.getPluginId());
+        PluginUiModel descriptor = allPlugins.get(node.getPluginId());
         node.setRepositoryName(descriptor != null ? descriptor.getRepositoryName() : null);
         String oldUrl = node.getDownloadUrl();
         if (descriptor != null) {
@@ -175,14 +187,14 @@ public final class PluginInstallOperation {
     }
   }
 
-  private boolean prepareToInstall(@NotNull List<PluginNode> pluginsToInstall) {
+  private boolean prepareToInstall(@NotNull List<PluginUiModel> pluginsToInstall) {
     List<PluginId> pluginIds = new SmartList<>();
-    for (PluginNode pluginNode : pluginsToInstall) {
+    for (PluginUiModel pluginNode : pluginsToInstall) {
       pluginIds.add(pluginNode.getPluginId());
     }
 
     boolean result = false;
-    for (PluginNode pluginNode : pluginsToInstall) {
+    for (PluginUiModel pluginNode : pluginsToInstall) {
       myIndicator.setText(pluginNode.getName());
       try {
         result |= prepareToInstallWithCallback(pluginNode, pluginIds);
@@ -199,7 +211,7 @@ public final class PluginInstallOperation {
     return result;
   }
 
-  private boolean prepareToInstallWithCallback(@NotNull PluginNode pluginNode,
+  private boolean prepareToInstallWithCallback(@NotNull PluginUiModel pluginNode,
                                                @NotNull List<PluginId> pluginIds) throws IOException {
     PluginId id = pluginNode.getPluginId();
     ActionCallback localCallback = myLocalInstallCallbacks.remove(id);
@@ -225,14 +237,14 @@ public final class PluginInstallOperation {
   }
 
   @RequiresBackgroundThread
-  private boolean prepareToInstall(@NotNull PluginNode pluginNode,
+  private boolean prepareToInstall(@NotNull PluginUiModel pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
-    if (!checkMissingDependencies(pluginNode, pluginIds)) return false;
-    if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode)) {
+    if (!checkMissingDependencies(pluginNode.getDescriptor(), pluginIds)) return false;
+    if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode.getDescriptor())) {
       LOG.warn("The plugin " + pluginNode.getPluginId() + " is not allowed to install for the organization");
       return false;
     }
-    IdeaPluginDescriptor toDisable = checkDependenciesAndReplacements(pluginNode);
+    IdeaPluginDescriptor toDisable = checkDependenciesAndReplacements(pluginNode.getDescriptor());
 
     myShownErrors = false;
 
@@ -241,7 +253,7 @@ public final class PluginInstallOperation {
     IdeaPluginDescriptor previousDescriptor = PluginManagerCore.getPlugin(pluginNode.getPluginId());
     String previousVersion = (previousDescriptor == null) ? null : previousDescriptor.getVersion();
     PluginManagerUsageCollector.pluginInstallationStarted(
-      pluginNode,
+      pluginNode.getDescriptor(),
       downloader.isFromMarketplace() ? InstallationSourceEnum.MARKETPLACE : InstallationSourceEnum.CUSTOM_REPOSITORY,
       previousVersion
     );
@@ -273,7 +285,9 @@ public final class PluginInstallOperation {
         }
       }
       myDependant.add(new PluginInstallCallbackData(downloader.getFilePath(), descriptor, !allowNoRestart));
-      pluginNode.setStatus(PluginNode.Status.DOWNLOADED);
+      if(pluginNode.getDescriptor() instanceof PluginNode node){
+        node.setStatus(PluginNode.Status.DOWNLOADED);
+      }
       if (toDisable != null) {
         myPluginEnabler.disable(Set.of(toDisable));
       }
@@ -325,13 +339,13 @@ public final class PluginInstallOperation {
     }
 
     // prepare plugins list for install
-    final List<PluginNode> depends = new ArrayList<>();
-    final List<PluginNode> optionalDeps = new ArrayList<>();
+    final List<PluginUiModel> depends = new ArrayList<>();
+    final List<PluginUiModel> optionalDeps = new ArrayList<>();
     for (IdeaPluginDependency dependency : dependencies) {
       PluginId depPluginId = dependency.getPluginId();
 
-      if (PluginManagerCore.isModuleDependency(depPluginId)) {
-        IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.INSTANCE.findPluginByModuleDependency(depPluginId);
+      if (PluginManagerCore.looksLikePlatformPluginAlias(depPluginId)) {
+        IdeaPluginDescriptorImpl descriptorByModule = PluginManagerCore.findPluginByPlatformAlias(depPluginId);
         PluginId pluginIdByModule = descriptorByModule != null ?
                                     descriptorByModule.getPluginId() :
                                     getCachedPluginId(depPluginId.getIdString());
@@ -347,7 +361,7 @@ public final class PluginInstallOperation {
         continue;
       }
 
-      PluginNode depPluginDescriptor = findPluginInRepo(depPluginId);
+      PluginUiModel depPluginDescriptor = findPluginInRepo(depPluginId);
       if (depPluginDescriptor != null) {
         (dependency.isOptional() ? optionalDeps : depends).add(depPluginDescriptor);
       }
@@ -364,7 +378,7 @@ public final class PluginInstallOperation {
   }
 
   private boolean prepareDependencies(@NotNull IdeaPluginDescriptor pluginNode,
-                                      @NotNull List<PluginNode> dependencies,
+                                      @NotNull List<PluginUiModel> dependencies,
                                       @NotNull @NonNls String titleKey,
                                       @NotNull @NonNls String messageKey,
                                       boolean askConfirmation) {
@@ -379,7 +393,7 @@ public final class PluginInstallOperation {
         synchronized (ourInstallLock) {
           InstalledPluginsState pluginsState = InstalledPluginsState.getInstance();
           Set<PluginId> dependenciesToShow = new LinkedHashSet<>();
-          for (Iterator<PluginNode> iterator = dependencies.iterator(); iterator.hasNext(); ) {
+          for (Iterator<PluginUiModel> iterator = dependencies.iterator(); iterator.hasNext(); ) {
             PluginId pluginId = iterator.next().getPluginId();
             ActionCallback callback = ourInstallCallbacks.get(pluginId);
             if (callback == null || callback.isRejected()) {
@@ -432,7 +446,7 @@ public final class PluginInstallOperation {
     }
   }
 
-  private static @NotNull @Nls String getPluginsText(@NotNull List<PluginNode> nodes) {
+  private static @NotNull @Nls String getPluginsText(@NotNull List<PluginUiModel> nodes) {
     List<String> pluginNames = ContainerUtil.map(nodes,
                                                  node -> StringUtil.wrapWithDoubleQuote(node.getName()));
 
@@ -447,20 +461,20 @@ public final class PluginInstallOperation {
   /**
    * Searches for plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with bigger version number
    */
-  private @Nullable PluginNode findPluginInRepo(@NotNull PluginId depPluginId) {
-    PluginNode pluginFromCustomRepos = myCustomReposPlugins.stream()
+  private @Nullable PluginUiModel findPluginInRepo(@NotNull PluginId depPluginId) {
+    PluginUiModel pluginFromCustomRepos = myCustomReposPlugins.stream()
       .parallel()
       .filter(p -> p.getPluginId().equals(depPluginId))
       .findAny()
       .orElse(null);
 
-    PluginNode pluginFromMarketplace = MarketplaceRequests.getInstance()
-      .getLastCompatiblePluginUpdate(depPluginId);
+    PluginUiModel pluginFromMarketplace = MarketplaceRequests.getInstance()
+      .getLastCompatiblePluginUpdateModel(depPluginId);
 
     boolean fromCustomRepos = pluginFromMarketplace == null ||
                               pluginFromCustomRepos != null &&
                               PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginFromCustomRepos.getVersion(),
-                                                                                        pluginFromMarketplace) > 0;
+                                                                                        pluginFromMarketplace.getDescriptor()) > 0;
     return fromCustomRepos ? pluginFromCustomRepos : pluginFromMarketplace;
   }
 

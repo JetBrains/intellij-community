@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block.reworked
 
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.session.TerminalBlocksModelState
 import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -35,4 +36,8 @@ interface TerminalBlocksModel {
 
   @RequiresEdt
   fun restoreFromState(state: TerminalBlocksModelState)
+
+  companion object {
+    val KEY: Key<TerminalBlocksModel> = Key.create("TerminalBlocksModel")
+  }
 }

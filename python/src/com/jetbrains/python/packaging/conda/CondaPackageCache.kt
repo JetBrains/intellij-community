@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
@@ -35,8 +36,8 @@ internal class CondaPackageCache : PythonPackageCache<String> {
   @Volatile
   private var cache: Map<String, List<String>> = emptyMap()
 
-  override val packages: List<String>
-    get() = cache.keys.toList()
+  override val packages: Set<String>
+    get() = cache.keys
 
   private val lock = Mutex()
   private var loadInProgress: Boolean = false

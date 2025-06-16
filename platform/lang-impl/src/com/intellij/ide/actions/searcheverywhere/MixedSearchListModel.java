@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
@@ -23,6 +24,8 @@ public final class MixedSearchListModel extends SearchListModel {
   private final AtomicReference<SearchEverywhereFoundElementInfo> myNotificationElement = new AtomicReference<>();
 
   private final SearchEverywhereReorderingService myReorderingService = SearchEverywhereReorderingService.getInstance();
+
+  private static final Logger LOG = Logger.getInstance(MixedSearchListModel.class);
 
   private Computable<String> tabIDProvider;
 
@@ -53,6 +56,17 @@ public final class MixedSearchListModel extends SearchListModel {
   public void addElements(List<? extends SearchEverywhereFoundElementInfo> items) {
     if (items.isEmpty()) {
       return;
+    }
+
+    if (LOG.isTraceEnabled()) {
+      final var sb = new StringBuilder();
+      sb.append("Adding ").append(items.size()).append(" elements to the list, breakdown:\n");
+
+      for (final var item : items) {
+        sb.append(item.getElement()).append(" coming from contributor ").append(item.getContributor().getClass().getSimpleName()).append("\n");
+      }
+
+      LOG.trace(sb.toString());
     }
 
     items = items.stream()

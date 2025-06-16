@@ -1,14 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("SSBasedInspection", "UsePropertyAccessSyntax", "OVERRIDE_DEPRECATION")
 
 package org.jetbrains.intellij.build.http2Client
 
 import io.netty.bootstrap.Bootstrap
-import io.netty.buffer.ByteBuf
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.SimpleChannelInboundHandler
-import io.netty.handler.codec.http2.DefaultHttp2DataFrame
 import io.netty.handler.codec.http2.DefaultHttp2HeadersFrame
 import io.netty.handler.codec.http2.Http2Headers
 import io.netty.handler.codec.http2.Http2StreamChannel
@@ -104,10 +102,6 @@ internal suspend fun Future<*>.joinCancellable(cancelFutureOnCancellation: Boole
 
 internal suspend fun Http2StreamChannel.writeHeaders(headers: Http2Headers, endStream: Boolean) {
   writeAndFlush(DefaultHttp2HeadersFrame(headers, endStream)).joinCancellable()
-}
-
-internal suspend fun Http2StreamChannel.writeData(data: ByteBuf, endStream: Boolean) {
-  writeAndFlush(DefaultHttp2DataFrame(data, endStream)).joinCancellable()
 }
 
 internal abstract class InboundHandlerResultTracker<T : Any>(

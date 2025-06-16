@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -22,8 +21,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.DefaultValu
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class DefaultValueEntityImpl(private val dataSource: DefaultValueEntityData) : DefaultValueEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class DefaultValueEntityImpl(private val dataSource: DefaultValueEntityData) : DefaultValueEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -54,8 +53,8 @@ internal class DefaultValueEntityImpl(private val dataSource: DefaultValueEntity
   }
 
 
-  internal class Builder(result: DefaultValueEntityData?) : ModifiableWorkspaceEntityBase<DefaultValueEntity, DefaultValueEntityData>(
-    result), DefaultValueEntity.Builder {
+  internal class Builder(result: DefaultValueEntityData?) :
+    ModifiableWorkspaceEntityBase<DefaultValueEntity, DefaultValueEntityData>(result), DefaultValueEntity.Builder {
     internal constructor() : this(DefaultValueEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -171,7 +170,8 @@ internal class DefaultValueEntityData : WorkspaceEntityData<DefaultValueEntity>(
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.DefaultValueEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.DefaultValueEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

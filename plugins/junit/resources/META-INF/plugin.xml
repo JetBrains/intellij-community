@@ -3,7 +3,7 @@
   <id>JUnit</id>
   <description>
       <![CDATA[
-      Supports <a href="https://github.com/junit-team/junit">JUnit tests</a>.
+      Supports <a href="https://junit.org">JUnit</a> tests.
       The following features are available:
         <ul>
         <li>Ability to create JUnit 3.x, JUnit 4.x or JUnit 5.x tests.</li>

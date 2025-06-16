@@ -20,4 +20,8 @@ class KotlinFileFacadeShortNameIndex internal constructor() : StringStubIndexExt
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
         return Helper[shortName, project, scope]
     }
+
+    override fun getVersion(): Int = super.getVersion() + 1
+
+    override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 }

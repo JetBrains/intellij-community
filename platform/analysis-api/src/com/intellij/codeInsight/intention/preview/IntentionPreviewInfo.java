@@ -308,7 +308,16 @@ public interface IntentionPreviewInfo {
    * @return a preview that visualizes the file rename
    */
   static @NotNull IntentionPreviewInfo rename(@NotNull PsiFile file, @NotNull @NlsSafe String newName) {
-    Icon icon = file.getIcon(0);
+    return rename(file.getVirtualFile(), newName);
+  }
+
+  /**
+   * @param file    file to be renamed
+   * @param newName new file name (with extension)
+   * @return a preview that visualizes the file rename
+   */
+  static @NotNull IntentionPreviewInfo rename(@NotNull VirtualFile file, @NotNull @NlsSafe String newName) {
+    Icon icon = IconUtil.getIcon(file, 0, null);
     HtmlChunk iconChunk = getIconChunk(icon, "file");
     HtmlChunk fragment = new HtmlBuilder()
       .append(iconChunk)
@@ -321,8 +330,8 @@ public interface IntentionPreviewInfo {
   }
 
   private static @NotNull HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
-    if (icon instanceof DeferredIcon) {
-      icon = ((DeferredIcon)icon).evaluate();
+    if (icon instanceof DeferredIcon deferred) {
+      icon = deferred.evaluate();
     }
     return icon == null ? HtmlChunk.empty() : new HtmlBuilder().append(HtmlChunk.icon(id, icon)).nbsp().toFragment();
   }
@@ -357,12 +366,12 @@ public interface IntentionPreviewInfo {
    */
   static @NotNull IntentionPreviewInfo movePsi(@NotNull PsiNamedElement source, @NotNull PsiNamedElement target) {
     Icon sourceIcon = source.getIcon(0);
-    if (sourceIcon instanceof DeferredIcon) {
-      sourceIcon = ((DeferredIcon)sourceIcon).evaluate();
+    if (sourceIcon instanceof DeferredIcon deferred) {
+      sourceIcon = deferred.evaluate();
     }
     Icon targetIcon = target.getIcon(0);
-    if (targetIcon instanceof DeferredIcon) {
-      targetIcon = ((DeferredIcon)targetIcon).evaluate();
+    if (targetIcon instanceof DeferredIcon deferred) {
+      targetIcon = deferred.evaluate();
     }
     HtmlChunk moveFragment = getHtmlMoveFragment(sourceIcon, targetIcon, source.getName(), target.getName());
     return new Html(moveFragment.wrapWith("p"));
@@ -406,8 +415,8 @@ public interface IntentionPreviewInfo {
 
   private static Icon getIcon(@NotNull PsiNamedElement source) {
     Icon icon = source.getIcon(0);
-    if (icon instanceof DeferredIcon) {
-      icon = ((DeferredIcon)icon).evaluate();
+    if (icon instanceof DeferredIcon deferred) {
+      icon = deferred.evaluate();
     }
     return icon;
   }

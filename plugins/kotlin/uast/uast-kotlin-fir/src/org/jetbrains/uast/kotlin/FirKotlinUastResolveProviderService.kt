@@ -19,19 +19,24 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.unwrapParenthesesLabelsAndAnnotations
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.yieldIfNotNull
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.KotlinExtensionConstants.LAMBDA_THIS_PARAMETER_NAME
 import org.jetbrains.uast.kotlin.internal.*
+import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedSymbolAnnotation
+import org.jetbrains.uast.kotlin.psi.UastFakeLightMethodBase
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameterBase
 
 interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
@@ -48,6 +53,22 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     fun isSupportedFile(file: KtFile): Boolean = true
 
     override fun convertToPsiAnnotation(ktElement: KtElement): PsiAnnotation? {
+        val ktDeclaration = ktElement.getStrictParentOfType<KtModifierList>()?.parent as? KtDeclaration
+        // SLC won't model a declaration with value class in its signature.
+        if (ktDeclaration != null && hasTypeForValueClassInSignature(ktDeclaration)) {
+            (ktElement as? KtAnnotationEntry)?.let { entry ->
+                analyzeForUast(ktDeclaration) {
+                    val declaration = ktDeclaration.symbol
+                    declaration.annotations.find { it.psi == entry }?.let { annoApp ->
+                        return UastFakeDeserializedSymbolAnnotation(
+                            declaration.createPointer(),
+                            annoApp.classId,
+                            ktDeclaration
+                        )
+                    }
+                }
+            }
+        }
         return ktElement.toLightAnnotation()
     }
 
@@ -57,8 +78,9 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val handledParameters = mutableSetOf<KaValueParameterSymbol>()
             val valueArguments = SmartList<UNamedExpression>()
             // NB: we need a loop over call element's value arguments to preserve their order.
-            ktCallElement.valueArguments.forEach {
-                val parameter = argumentMapping[it.getArgumentExpression()]?.symbol ?: return@forEach
+            ktCallElement.valueArguments.forEach { valueArg ->
+                val exp = valueArg.getArgumentExpression()?.unwrapParenthesesLabelsAndAnnotations()
+                val parameter = argumentMapping[exp]?.symbol ?: return@forEach
                 if (!handledParameters.add(parameter)) return@forEach
                 val arguments = argumentMapping.entries
                     .filter { (_, param) -> param.symbol == parameter }
@@ -202,12 +224,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         }
 
                         is KaCompoundVariableAccessCall -> {
-                            val variableSymbol = candidate.variablePartiallyAppliedSymbol.symbol
-                            if (variableSymbol is KaSyntheticJavaPropertySymbol) {
-                                add(variableSymbol.getter)
-                                addIfNotNull(variableSymbol.setter)
-                            } else {
-                                add(variableSymbol)
+                            when (val variableSymbol = candidate.variablePartiallyAppliedSymbol.symbol) {
+                                is KaSyntheticJavaPropertySymbol -> {
+                                    add(variableSymbol.javaGetterSymbol)
+                                    addIfNotNull(variableSymbol.javaSetterSymbol)
+                                }
+                                is KaPropertySymbol -> {
+                                    addIfNotNull(variableSymbol.getter)
+                                    addIfNotNull(variableSymbol.setter)
+                                }
+                                else ->
+                                    add(variableSymbol)
                             }
                             add(candidate.compoundOperation.operationPartiallyAppliedSymbol.symbol)
                         }
@@ -229,7 +256,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 val psi = analyzeForUast(ktExpression) {
                     val candidate = candidatePointer.restoreSymbol() ?: return@forEach
                     when (candidate) {
-                        is KaVariableSymbol -> psiForUast(candidate)
+                        is KaVariableSymbol -> psiForUast(candidate, ktExpression)
                         is KaFunctionSymbol -> toPsiMethod(candidate, ktExpression)
                     }
                 }
@@ -331,7 +358,8 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktCallElement) {
             val resolvedAnnotationConstructorSymbol =
                 ktCallElement.resolveToCall()?.singleConstructorCallOrNull()?.symbol ?: return null
-            return resolvedAnnotationConstructorSymbol.containingClassId
+            val type = resolvedAnnotationConstructorSymbol.returnType.fullyExpandedType
+            return type.symbol?.classId
                 ?.asSingleFqName()
                 ?.toString()
         }
@@ -455,7 +483,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         resolvedTargetSymbol.owningProperty.psi
                     }
                     else -> {
-                        psiForUast(resolvedTargetSymbol)
+                        psiForUast(resolvedTargetSymbol, ktExpression)
                     }
                 }
 
@@ -465,6 +493,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 resolvedTargetElement is PsiPackageImpl ||
                 !isKotlin(resolvedTargetElement)
             ) {
+                return resolvedTargetElement
+            }
+
+            // If the resolution result is "fake" PSI, it doesn't belong to any module.
+            // Before falling to the following module lookup, bail out here.
+            if (resolvedTargetElement is UastFakeLightMethodBase) {
                 return resolvedTargetElement
             }
 

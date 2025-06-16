@@ -65,9 +65,9 @@ class IncorrectListNumberingInspection: LocalInspectionTool() {
       return MarkdownBundle.message("markdown.fix.list.items.numbering,quick.fix.text")
     }
 
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
       require(startElement is MarkdownList)
-      val document = file.viewProvider.document
+      val document = psiFile.viewProvider.document
       if (document == null) {
         thisLogger().error("Failed to find document for the quick fix")
         return

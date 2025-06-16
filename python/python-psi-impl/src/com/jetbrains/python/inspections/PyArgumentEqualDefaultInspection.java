@@ -120,7 +120,7 @@ public final class PyArgumentEqualDefaultInspection extends PyInspection {
       final String name = parameter.getName();
       final PyExpression value = parameter.getDefaultValue();
 
-      if (name == null || !(value instanceof PyNoneLiteralExpression) || !((PyNoneLiteralExpression)value).isEllipsis()) return value;
+      if (name == null || !(value instanceof PyEllipsisLiteralExpression)) return value;
 
       final PyCallableType callableType = mapping.getCallableType();
       if (callableType == null) return value;

@@ -6,14 +6,12 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.use
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.branch.GitBranchUtil
@@ -25,31 +23,29 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
 import org.jetbrains.plugins.github.util.GithubNotifications
 
 @Service(Service.Level.PROJECT)
 class GHPROnCurrentBranchService(private val project: Project, parentCs: CoroutineScope) {
-  private val cs = parentCs.childScope(Dispatchers.Default)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Default)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   internal val vmState: StateFlow<GHPRBranchWidgetViewModel?> by lazy {
-    val toolWindowVm = project.service<GHPRToolWindowViewModel>()
-    toolWindowVm.projectVm.flatMapLatest { projectVm ->
+    val vm = project.service<GHPRProjectViewModel>()
+    vm.connectedProjectVm.flatMapLatest { projectVm ->
       projectVm?.prOnCurrentBranch
         ?.mapNotNull { it?.result } // we're not interested in intermittent loading/canceled state
         ?.map { it.getOrNull() }
         ?.distinctUntilChanged()
         ?.transformLatest<GHPRIdentifier?, GHPRBranchWidgetViewModel?> { prOnCurrentBranch ->
           if (prOnCurrentBranch != null) {
-            Disposer.newDisposable().use {
-              val vm = projectVm.acquireBranchWidgetModel(prOnCurrentBranch, it)
-              supervisorScope {
-                vm.showUpdateErrorsIn(this)
-                emit(vm)
-                awaitCancellation()
-              }
+            supervisorScope {
+              val vm = projectVm.acquireBranchWidgetModel(prOnCurrentBranch, this)
+              vm.showUpdateErrorsIn(this)
+              emit(vm)
+              awaitCancellation()
             }
           }
           else {
@@ -58,7 +54,7 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
         }
       ?: flowOf(null)
     }.onStart {
-      toolWindowVm.loginIfPossible()
+      vm.loginIfPossible()
     }.stateIn(cs, SharingStarted.Eagerly, null)
   }
 
@@ -129,17 +125,21 @@ class GHPROnCurrentBranchService(private val project: Project, parentCs: Corouti
     }
   }
 
-  class ToggleReviewAction : DumbAwareAction(), Toggleable {
+  class ToggleReviewAction : DumbAwareToggleAction() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-      val vm = e.project?.getCurrentVm()
-      e.presentation.isEnabledAndVisible = vm?.updateRequired?.value == false
-      Toggleable.setSelected(e.presentation, vm?.editorReviewEnabled?.value ?: false)
+      val enabledAndVisible = e.project?.getCurrentVm()?.updateRequired?.value == false
+      e.presentation.isEnabledAndVisible = enabledAndVisible
+      if (enabledAndVisible) {
+        super.update(e)
+      }
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-      e.project?.getCurrentVm()?.toggleEditorReview()
+    override fun isSelected(e: AnActionEvent): Boolean = e.project?.getCurrentVm()?.editorReviewEnabled?.value ?: false
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      e.project?.getCurrentVm()?.toggleEditorReview(state)
     }
   }
 

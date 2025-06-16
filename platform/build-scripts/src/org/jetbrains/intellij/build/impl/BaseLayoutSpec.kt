@@ -41,10 +41,7 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   }
 
   fun withProjectLibrary(libraryName: String, outPath: String) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                           packMode = LibraryPackMode.MERGED,
-                                                           outPath = outPath,
-                                                           reason = "withProjectLibrary"))
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, outPath = outPath, reason = "withProjectLibrary"))
   }
 
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
@@ -52,10 +49,7 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   }
 
   fun withProjectLibrary(libraryName: String, outPath: String, packMode: LibraryPackMode) {
-    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                           packMode = packMode,
-                                                           outPath = outPath,
-                                                           reason = "withProjectLibrary"))
+    layout.includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, outPath = outPath, reason = "withProjectLibrary"))
   }
 
   /**
@@ -65,12 +59,7 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    * @param relativeOutputPath target path relative to 'lib' directory
    */
   fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String, extraCopy: Boolean = false) {
-    layout.withModuleLibrary(
-      libraryName = libraryName,
-      moduleName = moduleName,
-      relativeOutputPath = relativeOutputPath,
-      extraCopy = extraCopy,
-    )
+    layout.withModuleLibrary(libraryName = libraryName, moduleName = moduleName, relativeOutputPath = relativeOutputPath, extraCopy = extraCopy)
   }
 
   /**

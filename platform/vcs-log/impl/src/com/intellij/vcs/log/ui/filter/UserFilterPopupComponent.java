@@ -80,12 +80,12 @@ public class UserFilterPopupComponent
   }
 
   @Override
-  protected @NotNull List<String> parseLocalizedValues(@NotNull Collection<String> values) {
+  protected @NotNull @Unmodifiable List<String> parseLocalizedValues(@NotNull Collection<String> values) {
     return ContainerUtil.map(values, user -> user.equals(me()) ? VcsLogFilterObject.ME : user);
   }
 
   @Override
-  protected @NotNull List<String> getLocalizedValues(@NotNull Collection<String> values) {
+  protected @NotNull @Unmodifiable List<String> getLocalizedValues(@NotNull Collection<String> values) {
     return ContainerUtil.map(values, user -> user.equals(VcsLogFilterObject.ME) ? me() : user);
   }
 

@@ -42,6 +42,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -992,7 +993,7 @@ public final class EditorUtil {
       }
       // for injected editors disposal will happen only when host editor is disposed,
       // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
-      Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       if (hostEditor instanceof EditorImpl) {
         Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
       }

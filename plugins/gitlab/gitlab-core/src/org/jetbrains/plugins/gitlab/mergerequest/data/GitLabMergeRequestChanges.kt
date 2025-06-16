@@ -107,8 +107,9 @@ class GitLabMergeRequestChangesImpl(
         }.map { it.body().changes }.foldToList(GitLabDiffDTO::toPatch)
       }
       else {
-        ApiPageUtil.createPagesFlowByLinkHeader(api.getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid)) {
-          api.rest.loadMergeRequestDiffs(it)
+        // doesn't send back Link headers...
+        ApiPageUtil.createPagesFlowByPagination { page ->
+          api.rest.loadMergeRequestDiffs(api.getMergeRequestDiffsURI(glProject, mergeRequestDetails.iid, page))
         }.map { it.body() }.foldToList(GitLabDiffDTO::toPatch)
       }
     }

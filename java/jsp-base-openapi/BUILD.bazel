@@ -7,8 +7,10 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//xml/openapi:xml",
+    "//xml/xml-psi-api:psi",
     "//platform/lang-api:lang",
   ],
   exports = ["//xml/openapi:xml"]

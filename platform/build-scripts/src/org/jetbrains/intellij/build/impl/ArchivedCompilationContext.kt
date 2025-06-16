@@ -1,13 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.CompilationContext
+import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputStorage
 import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.module.JpsModule
@@ -38,31 +43,36 @@ class ArchivedCompilationContext(
     return OriginalModuleRepositoryImpl(this)
   }
 
-  override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
-    return replaceWithCompressedIfNeeded(delegate.getModuleOutputDir(module = module, forTests = forTests))
-  }
-
-  override suspend fun getModuleTestsOutputDir(module: JpsModule): Path {
-    return replaceWithCompressedIfNeeded(delegate.getModuleTestsOutputDir(module))
+  override suspend fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
+    return delegate.getModuleOutputRoots(module, forTests).map { replaceWithCompressedIfNeeded(it) }
   }
 
   override suspend fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
     return doReplace(delegate.getModuleRuntimeClasspath(module, forTests), inputMapper = { Path.of(it) }, resultMapper = { it.toString() })
   }
 
-  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String): ByteArray? {
-    val moduleOutput = getModuleOutputDir(module)
-    if (!moduleOutput.startsWith(archivesLocation)) {
-      return delegate.readFileContentFromModuleOutput(module, relativePath)
-    }
-
-    var fileContent: ByteArray? = null
-    readZipFile(moduleOutput) { name, data ->
-      if (name == relativePath) {
-        fileContent = data().toByteArray()
+  override suspend fun readFileContentFromModuleOutput(module: JpsModule, relativePath: String, forTests: Boolean): ByteArray? {
+    val result = getModuleOutputRoots(module, forTests).mapNotNull { moduleOutput ->
+      if (!moduleOutput.startsWith(archivesLocation)) {
+        return delegate.readFileContentFromModuleOutput(module, relativePath)
       }
+
+      var fileContent: ByteArray? = null
+      readZipFile(moduleOutput) { name, data ->
+        if (name == relativePath) {
+          fileContent = data().toByteArray()
+          ZipEntryProcessorResult.STOP
+        }
+        else {
+          ZipEntryProcessorResult.CONTINUE
+        }
+      }
+      return@mapNotNull fileContent
     }
-    return fileContent
+    check(result.size < 2) {
+      "More than one '$relativePath' file for module '${module.name}' in output roots"
+    }
+    return result.singleOrNull()
   }
 
   override fun createCopy(messages: BuildMessages, options: BuildOptions, paths: BuildPaths): CompilationContext {
@@ -101,16 +111,18 @@ class ArchivedCompilationContext(
 
 val CompilationContext.asArchivedIfNeeded: CompilationContext
   get() {
-    if (this is ArchivedCompilationContext) return this
-    return if (TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank()) {
-      this.asArchived
+    return when {
+      this is ArchivedCompilationContext -> this
+      TestingOptions().useArchivedCompiledClasses || !System.getProperty("intellij.test.jars.mapping.file", "").isNullOrBlank() -> this.asArchived
+      else -> this
     }
-    else this
   }
 
 val CompilationContext.asArchived: CompilationContext
   get() {
-    if (this is ArchivedCompilationContext) return this
-    if (this is BuildContextImpl) return this.compilationContext.asArchived
-    return ArchivedCompilationContext(this)
+    return when (this) {
+      is ArchivedCompilationContext -> this
+      is BuildContextImpl -> compilationContext.asArchived
+      else -> ArchivedCompilationContext(this)
+    }
   }

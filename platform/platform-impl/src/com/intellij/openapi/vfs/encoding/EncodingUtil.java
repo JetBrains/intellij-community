@@ -31,10 +31,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -64,7 +61,9 @@ public final class EncodingUtil {
   // returns ABSOLUTELY if bytes on disk, converted to text with the charset, converted back to bytes matched
   // returns NO_WAY if the new encoding is incompatible (bytes on disk will differ)
   // returns WELL_IF_YOU_INSIST if the bytes on disk remain the same but the text will change
-  static @NotNull Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull Magic8 isSafeToReloadIn(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytes, @NotNull Charset charset) {
     // file has BOM but the charset hasn't
     byte[] bom = null;
     try {
@@ -113,8 +112,10 @@ public final class EncodingUtil {
     }
     return CharsetToolkit.getMandatoryBom(charset);
   }
-  
-  static @NotNull Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
+
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull Magic8 isSafeToConvertTo(@NotNull VirtualFile virtualFile, @NotNull CharSequence text, byte @NotNull [] bytesOnDisk, @NotNull Charset charset) {
     try {
       String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
       CharSequence textToSave = lineSeparator.equals("\n") ? text : StringUtilRt.convertLineSeparators(text, lineSeparator);
@@ -132,11 +133,13 @@ public final class EncodingUtil {
     }
   }
 
-  static void saveIn(@NotNull Project project,
-                     @NotNull Document document,
-                     Editor editor,
-                     @NotNull VirtualFile virtualFile,
-                     @NotNull Charset charset) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static void saveIn(@NotNull Project project,
+                            @NotNull Document document,
+                            Editor editor,
+                            @NotNull VirtualFile virtualFile,
+                            @NotNull Charset charset) {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     documentManager.saveDocument(document);
     boolean writable = ReadonlyStatusHandler.ensureFilesWritable(project, virtualFile);
@@ -162,7 +165,9 @@ public final class EncodingUtil {
     });
   }
 
-  static void reloadIn(@NotNull VirtualFile virtualFile,
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static void reloadIn(@NotNull VirtualFile virtualFile,
                        @NotNull Charset charset,
                        @NotNull Project project) {
     Consumer<VirtualFile> setEncoding = file -> EncodingProjectManager.getInstance(project).setEncoding(file, charset);
@@ -224,7 +229,9 @@ public final class EncodingUtil {
     return checkCanReload(virtualFile, null) == null;
   }
 
-  static @Nullable FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @Nullable FailReason checkCanReload(@NotNull VirtualFile virtualFile, @Nullable Ref<? super Charset> current) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }
@@ -257,7 +264,9 @@ public final class EncodingUtil {
     return hardcoded ? FailReason.BY_FILETYPE : null;
   }
 
-  static @Nullable("null means enabled, notnull means disabled and contains error message") FailReason checkCanConvert(@NotNull VirtualFile virtualFile) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @Nullable("null means enabled, notnull means disabled and contains error message") FailReason checkCanConvert(@NotNull VirtualFile virtualFile) {
     if (virtualFile.isDirectory()) {
       return FailReason.IS_DIRECTORY;
     }

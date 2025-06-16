@@ -2,6 +2,8 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.terminal.session.TerminalState
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.TerminalKeyEncoder
@@ -23,7 +25,7 @@ internal class TerminalKeyEncodingManager(
   private val encoder: TerminalKeyEncoder = TerminalKeyEncoder()
 
   init {
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       var curEncodingState: EncodingState? = null
 
       sessionModel.terminalState.collect { terminalState ->

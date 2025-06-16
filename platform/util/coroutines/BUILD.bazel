@@ -18,10 +18,11 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.util.coroutines.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "coroutines-tests_test",
+jvm_library(
+  name = "coroutines-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
@@ -33,5 +34,10 @@ jvm_test(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
   ]
+)
+
+jvm_test(
+  name = "coroutines-tests_test",
+  runtime_deps = [":coroutines-tests_test_lib"]
 )
 ### auto-generated section `build intellij.platform.util.coroutines.tests` end

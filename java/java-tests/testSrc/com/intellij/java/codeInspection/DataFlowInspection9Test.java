@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -21,7 +21,7 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
   public void testMutabilityInferred() { doTest(); }
   public void testObjectsRequireNonNullElse() { doTest(); }
   public void testNewCollectionAliasing() { doTest(); }
-
+  public void testIoContracts9() { doTest(); }
   public void testOptionalStreamInlining() { doTest(); }
 
   public void testNullabilityAnnotationOnModule() {

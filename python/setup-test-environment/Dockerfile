@@ -29,7 +29,7 @@ RUN echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.g
 # xterm installs freetype, xlib, cb etc. GL is also required by some python tests
 # First, install certs to install docker. Then update, then install docker and other tools
 # Docker cli is used in tests
-RUN apt-get update && apt-get install -y ca-certificates && apt-get upgrade -y && apt-get update && apt-get install -y openssl libgl1 xterm locales libsqlite3-dev apt-transport-https ca-certificates curl software-properties-common docker-ce-cli && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates && apt-get upgrade -y && apt-get update && apt-get install -y openssl libgl1 zsh fish bash xterm locales libsqlite3-dev apt-transport-https ca-certificates curl software-properties-common docker-ce-cli && rm -rf /var/lib/apt/lists/*
 
 # UTF locale is required for testFileEncoding
 # libsqlite3 is for Django

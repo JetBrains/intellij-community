@@ -24,7 +24,8 @@ else
   builtin unset 'ZDOTDIR'
 fi
 
-__jetbrains_intellij_source_original_zsh_file '.zlogin'
+JETBRAINS_INTELLIJ_ORIGINAL_FILENAME_TO_SOURCE='.zlogin'
+builtin source "$JETBRAINS_INTELLIJ_ZSH_DIR/zdotdir/source-original.zsh"
 
 if [[ -n "${JETBRAINS_INTELLIJ_TERMINAL_DEBUG_LOG_LEVEL-}" ]]; then
   builtin echo "intellij: after loading ${(%):-%x}"

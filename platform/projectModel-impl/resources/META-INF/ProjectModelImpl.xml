@@ -26,6 +26,8 @@
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.SourceRootTypeRegistryImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridge"
                         serviceImplementation="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceModelLegacyBridgeImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.roots.TestModulePropertiesProvider"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridgeProvider"/>
     <!-- Global Workspace Model -->
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl"/>

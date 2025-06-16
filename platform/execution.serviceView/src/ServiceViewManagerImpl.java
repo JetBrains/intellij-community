@@ -56,10 +56,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.SmartHashSet;
 import kotlin.Unit;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -247,11 +244,13 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
-  boolean shouldBeAvailable() {
+  @ApiStatus.Internal
+  public boolean shouldBeAvailable() {
     return myRegisteringToolWindowAvailable;
   }
 
-  void createToolWindowContent(@NotNull ToolWindow toolWindow) {
+  @ApiStatus.Internal
+  public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
     String toolWindowId = toolWindow.getId();
     Collection<ServiceViewContributor<?>> contributors = myGroups.get(toolWindowId);
     if (contributors == null) return;
@@ -296,7 +295,6 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       }
     });
     addMainContent(toolWindow.getContentManager(), mainView);
-    loadViews(contentManager, mainView, contributors, states.second);
     ServiceViewDragHelper.installDnDSupport(myProject, toolWindowEx.getDecorator(), contentManager);
   }
 
@@ -861,14 +859,30 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     myProject.getMessageBus().connect(disposable).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void toolWindowShown(@NotNull ToolWindow toolWindow) {
-        Collection<ServiceViewContributor<?>> contributors = myGroups.get(toolWindow.getId());
+        String toolWindowId = toolWindow.getId();
+        Collection<ServiceViewContributor<?>> contributors = myGroups.get(toolWindowId);
         if (contributors != null) {
+          List<Promise<?>> promises = new ArrayList<>();
           for (ServiceViewContributor<?> contributor : contributors) {
             if (myNotInitializedContributors.remove(contributor)) {
               ServiceEvent e = ServiceEvent.createResetEvent(contributor.getClass());
-              myModel.handle(e);
+              promises.add(myModel.handle(e));
             }
           }
+          Promises.all(promises).onProcessed(ignored -> {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              ToolWindow tw = ToolWindowManager.getInstance(myProject).getToolWindow(toolWindowId);
+              if (tw == null) return;
+
+              Pair<ServiceViewState, List<ServiceViewState>> states = getServiceViewStates(toolWindowId);
+              ContentManager contentManager = tw.getContentManager();
+              Content mainContent = getMainContent(contentManager);
+              if (mainContent == null) return;
+
+              ServiceView mainView = getServiceView(mainContent);
+              loadViews(contentManager, mainView, contributors, states.second);
+            }, ModalityState.nonModal(), myProject.getDisposed());
+          });
         }
         if (myNotInitializedContributors.isEmpty()) {
           Disposer.dispose(disposable);

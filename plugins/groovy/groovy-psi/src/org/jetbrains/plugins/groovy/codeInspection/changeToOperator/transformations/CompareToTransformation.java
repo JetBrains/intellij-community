@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations;
 
 import com.intellij.psi.PsiElement;
@@ -17,7 +17,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ComparisonUtils.i
 import static org.jetbrains.plugins.groovy.lang.psi.impl.utils.ParenthesesUtils.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.LiteralUtilKt.isZero;
 
-class CompareToTransformation extends BinaryTransformation {
+final class CompareToTransformation extends BinaryTransformation {
   @Override
   public void apply(@NotNull GrMethodCall methodCall, @NotNull Options options) {
     GrExpression rhs = getRhs(methodCall);

@@ -21,7 +21,7 @@ import kotlin.system.measureTimeMillis
 
 class ActionsInterpretationHandler(
   private val config: Config,
-  private val datasetContext: DatasetContext
+  private val datasetContext: DatasetContext,
 ) {
 
   companion object {
@@ -41,7 +41,7 @@ class ActionsInterpretationHandler(
     LOG.info("Computing of sessions count took $computingTime ms")
     val interpretationConfig = config.interpret
     val logsSaver = createLogsSaver(workspace)
-    val handler = InterpretationHandlerImpl(indicator, sessionsCount, interpretationConfig.sessionsLimit)
+    val handler = InterpretationHandlerImpl(indicator, sessionsCount, interpretationConfig.sessionsLimit, interpretationConfig.strictSessionsLimit)
     val filter =
       if (interpretationConfig.sessionProbability < 1)
         RandomInterpretFilter(interpretationConfig.sessionProbability, interpretationConfig.sessionSeed)
@@ -53,39 +53,45 @@ class ActionsInterpretationHandler(
       println("During actions interpretation will be skipped about $skippedSessions sessions")
     }
     var fileCount = 0
-    for (chunk in environment.chunks(datasetContext)) {
+    for (chunk in environment.chunks(datasetContext).flatMap { it.iterate(interpretationConfig.iterationCount ?: 1) }) {
       if (config.interpret.filesLimit?.let { it <= fileCount } == true) {
         break
       }
 
-      workspace.fullLineLogsStorage.enableLogging(chunk.name)
+      val chunkName = chunk.name
+
+      workspace.fullLineLogsStorage.enableLogging(chunkName)
+
       try {
-        val sessions = logsSaver.invokeRememberingLogs {
+        val result = logsSaver.invokeRememberingLogs {
           chunk.evaluate(handler, filter, interpretationConfig.order) { session ->
-            featuresStorage.saveSession(session, chunk.name)
+            featuresStorage.saveSession(session, chunkName)
           }
         }
 
-        if (sessions.isNotEmpty()) {
+        if (result.sessions.isNotEmpty()) {
           val sessionsInfo = FileSessionsInfo(
             projectName = chunk.datasetName,
-            filePath = chunk.name,
-            text = chunk.presentationText,
-            sessions = sessions
+            filePath = chunkName,
+            text = result.presentationText ?: "",
+            sessions = result.sessions
           )
           workspace.sessionsStorage.saveSessions(sessionsInfo)
           fileCount += 1
         }
         else {
           if (chunk.sessionsExist) {
-            LOG.warn("No sessions collected from file: ${chunk.name}")
+            LOG.warn("No sessions collected from file: $chunkName")
           }
         }
+      }
+      catch (e: StopEvaluationException) {
+        throw e
       }
       catch (e: Throwable) {
         try {
           workspace.errorsStorage.saveError(
-            FileErrorInfo(chunk.name, e.message ?: "No Message", ExceptionsUtil.stackTraceToString(e))
+            FileErrorInfo(chunkName, e.message ?: "No Message", ExceptionsUtil.stackTraceToString(e))
           )
         }
         catch (e2: Throwable) {
@@ -93,7 +99,10 @@ class ActionsInterpretationHandler(
         }
         handler.onErrorOccurred(e, 0)
       }
-      if (handler.isCancelled() || handler.isLimitExceeded()) break
+
+      if (handler.isCancelled() || handler.isLimitExceeded()) {
+        break
+      }
     }
     logsSaver.save(config.actions?.language, config.interpret.trainTestSplit)
     SetupStatsCollectorStep.deleteLogs()

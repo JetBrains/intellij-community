@@ -24,6 +24,7 @@ import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.impl.MessageBusImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -197,7 +198,11 @@ public final class ConsoleExecutionEditor implements Disposable {
 
   @Override
   public void dispose() {
-    myBusConnection.deliverImmediately();
+    if (myBusConnection instanceof MessageBusImpl.MessageHandlerHolder messageHandlerHolder) {
+      if (!messageHandlerHolder.isDisposed()) {
+        myBusConnection.deliverImmediately();
+      }
+    }
     Disposer.dispose(myBusConnection);
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myConsoleEditor);

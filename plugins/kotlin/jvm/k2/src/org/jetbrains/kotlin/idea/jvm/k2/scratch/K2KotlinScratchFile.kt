@@ -13,6 +13,6 @@ class K2KotlinScratchFile(project: Project, file: VirtualFile, coroutineScope: C
     val executor: K2ScratchExecutor = K2ScratchExecutor(this, project, coroutineScope)
 
     init {
-        project.syncPublisherWithDisposeCheck(ScratchFileListener.Companion.TOPIC).fileCreated(this)
+        project.syncPublisherWithDisposeCheck(ScratchFileListener.TOPIC).fileCreated(this)
     }
 }

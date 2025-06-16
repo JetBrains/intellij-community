@@ -13,6 +13,11 @@ jvm_library(
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   associates = ["//xml/dom-impl"],
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//xml/impl",
     "//java/testFramework",
     "//java/java-psi-impl:psi-impl",
@@ -23,6 +28,7 @@ jvm_library(
     "//java/openapi:java",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+    "//xml/xml-psi-api:psi",
     "//platform/libraries/cglib",
   ]
 )

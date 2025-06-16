@@ -4,7 +4,7 @@ fun test() {
     // Comment 1
     loop@ while (true) {
         // Comment 2
-        loop1@ for (i in -10..10) {
+        loop2@ for (i in -10..10) {
             // Comment 3
             if (i < 0) {
                 // Comment 4
@@ -20,7 +20,7 @@ fun test() {
                     i == 0 -> {
                         i.hashCode()
                         // Comment 7
-                        break@loop1
+                        break@loop2
                     }
                     i > 5 -> {
                         // Comment 8
@@ -28,7 +28,7 @@ fun test() {
                     }
                     else -> {
                         // Comment 9
-                        continue@loop1
+                        continue@loop2
                     }
                 }
             }

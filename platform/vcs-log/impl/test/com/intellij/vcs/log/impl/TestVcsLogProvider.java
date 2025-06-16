@@ -201,7 +201,7 @@ public class TestVcsLogProvider implements VcsLogProvider {
     }
 
     @Override
-    public @NotNull List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames) {
+    public @NotNull @Unmodifiable List<RefGroup> groupForTable(@NotNull Collection<? extends VcsRef> refs, boolean compact, boolean showTagNames) {
       return groupForBranchFilter(refs);
     }
 

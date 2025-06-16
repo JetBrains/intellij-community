@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.lexer
 
-import com.intellij.lexer.Lexer
-import com.intellij.testFramework.LexerTestCase
+import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.testFramework.syntax.LexerTestCase
 
 abstract class AbstractBasicJavadocLexerTest : LexerTestCase() {
   fun testSnippetAttributes() {
@@ -203,7 +203,6 @@ DOC_COMMENT_END ('*/')""")
 
   abstract override fun createLexer(): Lexer
 
-  override fun getDirPath(): String {
-    return ""
-  }
+  override val dirPath: String
+    get() = ""
 }

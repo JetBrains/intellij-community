@@ -13,17 +13,20 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//xml/xml-psi-api:psi",
     "//platform/util",
     "//platform/icons",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//spellchecker",
     "//platform/lang-impl",
     "@lib//:fastutil-min",
     "//platform/core-ui",
     "//platform/util/jdom",
-    "//platform/platform-impl/designer:ide-designer",
+    "//platform/platform-impl/designer",
   ],
   runtime_deps = [":uiDesigner_resources"]
 )

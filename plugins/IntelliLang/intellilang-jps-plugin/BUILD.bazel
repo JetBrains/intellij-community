@@ -16,9 +16,9 @@ jvm_library(
   deps = [
     "//jps/jps-builders:build",
     "//jps/model-api:model",
-    "//jps/jps-builders-6:build-javac-rt",
+    "@rules_jvm//jps-builders-6:build-javac-rt",
     "//platform/util",
-    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/compiler/instrumentation-util",
     "//jps/model-serialization",
     "@lib//:asm",
     "//platform/util/jdom",

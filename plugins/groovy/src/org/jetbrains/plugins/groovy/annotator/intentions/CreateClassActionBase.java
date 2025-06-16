@@ -53,7 +53,7 @@ public abstract class CreateClassActionBase extends Intention {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     String name = myRefElement.getReferenceName();
     if (name == null) {
       return IntentionPreviewInfo.EMPTY;
@@ -83,7 +83,7 @@ public abstract class CreateClassActionBase extends Intention {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myRefElement.isValid() && ModuleUtilCore.findModuleForPsiElement(myRefElement) != null;
   }
 

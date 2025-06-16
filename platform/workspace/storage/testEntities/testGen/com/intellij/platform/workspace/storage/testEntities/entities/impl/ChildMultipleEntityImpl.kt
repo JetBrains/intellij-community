@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -27,13 +26,12 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentMulti
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEntityData) : ChildMultipleEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEntityData) : ChildMultipleEntity,
+                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentMultipleEntity::class.java,
-                                                                                ChildMultipleEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ParentMultipleEntity::class.java, ChildMultipleEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -61,8 +59,8 @@ internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEnti
   }
 
 
-  internal class Builder(result: ChildMultipleEntityData?) : ModifiableWorkspaceEntityBase<ChildMultipleEntity, ChildMultipleEntityData>(
-    result), ChildMultipleEntity.Builder {
+  internal class Builder(result: ChildMultipleEntityData?) :
+    ModifiableWorkspaceEntityBase<ChildMultipleEntity, ChildMultipleEntityData>(result), ChildMultipleEntity.Builder {
     internal constructor() : this(ChildMultipleEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -143,8 +141,9 @@ internal class ChildMultipleEntityImpl(private val dataSource: ChildMultipleEnti
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ParentMultipleEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENTENTITY_CONNECTION_ID, this
+          ) as? ParentMultipleEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentMultipleEntity.Builder)
         }
         else {
@@ -209,7 +208,8 @@ internal class ChildMultipleEntityData : WorkspaceEntityData<ChildMultipleEntity
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildMultipleEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

@@ -27,8 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
-import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE_EXCLUDE;
-import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE_INCLUDE;
+import static de.plushnikov.intellij.plugin.LombokClassNames.*;
 
 /**
  * Inspect and validate @EqualsAndHashCode lombok annotation on a class
@@ -104,7 +103,8 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
           !"SKIP".equalsIgnoreCase(configProperty) &&
           PsiClassUtil.hasSuperClass(psiClass) &&
           !hasOneOfMethodsDefined(psiClass)) {
-        builder.addWarningMessage("inspection.message.generating.equals.hashcode.implementation").withLocalQuickFixes(quickFixes);
+        builder.addWarningMessage("inspection.message.generating.equals.hashcode.implementation")
+          .withLocalQuickFixes(quickFixes);
       }
     }
   }
@@ -120,7 +120,8 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass.isRecord()) {
-      builder.addErrorMessage("inspection.message.equals.and.hashcode.only.supported.on.class.type");
+      builder.addErrorMessage("inspection.message.equals.and.hashcode.only.supported.on.class.type")
+        .withLocalQuickFixes(() -> PsiQuickFixFactory.createDeleteAnnotationFix(psiClass, EQUALS_AND_HASHCODE));
       builder.markFailed();
     }
   }

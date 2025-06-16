@@ -1,73 +1,111 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.PyBundle
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.packaging.management.runPackagingTool
+import com.jetbrains.python.packaging.management.hasInstalledPackage
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.statistics.version
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import kotlin.collections.plus
+import java.nio.file.Path
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 open class PipPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  @Volatile
-  override var installedPackages: List<PythonPackage> = emptyList()
-  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project, sdk)
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
+  private val engine = PipPackageManagerEngine(project, sdk)
 
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
-    try {
-      runPackagingTool("install", specification.buildInstallationString() + options, PyBundle.message("python.packaging.install.progress", specification.name))
-    }
-    catch (ex: ExecutionException) {
-      return Result.failure(ex)
-    }
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> = engine.loadOutdatedPackagesCommand()
 
-    return Result.success(Unit)
+  override suspend fun installPackageCommand(
+    installRequest: PythonPackageInstallRequest,
+    options: List<String>,
+  ): PyResult<Unit> = engine.installPackageCommand(installRequest, options)
+
+  override suspend fun updatePackageCommand(
+    vararg specifications: PythonRepositoryPackageSpecification,
+  ): PyResult<Unit> = engine.updatePackageCommand(*specifications)
+
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> = engine.uninstallPackageCommand(*pythonPackages)
+
+  override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = engine.loadPackagesCommand()
+}
+
+@ApiStatus.Internal
+class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPackageManager) {
+  private val languageLevel: LanguageLevel = sdk.version
+
+  suspend fun installManagementIfNeeded(): Boolean {
+    if (hasManagement()) return true
+    return performManagementInstallation()
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
-    try {
-      runPackagingTool("install", listOf("--upgrade") + specification.buildInstallationString(), PyBundle.message("python.packaging.update.progress", specification.name))
-    }
-    catch (ex: ExecutionException) {
-      return Result.failure(ex)
-    }
+  private suspend fun performManagementInstallation(): Boolean = installManagement()
 
-    return Result.success(Unit)
+  suspend fun hasManagement(): Boolean =
+    languageLevel < LanguageLevel.PYTHON27 || (manager.hasInstalledPackage(PIP_PACKAGE) && hasSetuptools())
+
+  private suspend fun installManagement(): Boolean =
+    installWheelIfMissing(::hasPip, WheelFiles.PIP_WHEEL_NAME) &&
+    installWheelIfMissing(::hasSetuptools, WheelFiles.SETUPTOOLS_WHEEL_NAME)
+
+  private suspend fun installWheelIfMissing(requirementCheck: suspend () -> Boolean, wheelNameToInstall: String): Boolean {
+    if (!requirementCheck()) {
+      val wheelPathToInstall = withContext(Dispatchers.IO) { findPathInHelpers(wheelNameToInstall).toString() }
+      return installUsingPipWheel("--no-index", wheelPathToInstall)
+    }
+    return true
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
-    try {
-      runPackagingTool("uninstall", listOf(pkg.name), PyBundle.message("python.packaging.uninstall.progress", pkg.name))
-    }
-    catch (ex: ExecutionException) {
-      return Result.failure(ex)
-    }
-
-    return Result.success(Unit)
+  private fun installUsingPipWheel(vararg additionalArgs: String): Boolean {
+    val pipWheelPath = findPathInHelpers(WheelFiles.PIP_WHEEL_NAME).resolve(Path.of(PyPackageUtil.PIP))
+    val commandArguments = buildCommandArguments(pipWheelPath, *additionalArgs)
+    return executeCommand(commandArguments)
   }
 
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
+  private fun executeCommand(commandArguments: List<String>): Boolean =
     try {
-      val output = runPackagingTool("list", emptyList(), PyBundle.message("python.packaging.list.progress"))
-      val packages = output.lineSequence()
-        .filter { it.isNotBlank() }
-        .map {
-          val line = it.split("\t")
-          PythonPackage(line[0], line[1], isEditableMode = false)
-        }
-        .sortedWith(compareBy(PythonPackage::name))
-        .toList()
+      val processHandler = CapturingProcessHandler(GeneralCommandLine(commandArguments))
+      val output: ProcessOutput = processHandler.runProcess()
+      output.exitCode == 0
+    }
+    catch (ex: Exception) {
+      throw ExecutionException(ex.message, ex)
+    }
 
-      return Result.success(packages)
-    }
-    catch (ex: ExecutionException) {
-      return Result.failure(ex)
-    }
+  private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PIP_PACKAGE)
+
+  private suspend fun hasSetuptools(): Boolean =
+    languageLevel >= LanguageLevel.PYTHON312 ||
+    manager.hasInstalledPackage(SETUPTOOLS_PACKAGE) ||
+    manager.hasInstalledPackage(DISTRIBUTE_PACKAGE)
+
+  private fun buildCommandArguments(wheelPath: Path, vararg additionalArgs: String): List<String> =
+    listOfNotNull(sdk.homePath.toString(), wheelPath.toString(), "install") + additionalArgs
+
+  private object WheelFiles {
+    const val SETUPTOOLS_WHEEL_NAME = "setuptools-44.1.1-py2.py3-none-any.whl"
+    const val PIP_WHEEL_NAME = "pip-24.3.1-py2.py3-none-any.whl"
+  }
+
+  companion object {
+    val PIP_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.PIP, "24.3.1", false)
+    val SETUPTOOLS_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.SETUPTOOLS, "44.1.1", false)
+    val DISTRIBUTE_PACKAGE: PythonPackage = PythonPackage(PyPackageUtil.DISTRIBUTE, "", false)
   }
 }

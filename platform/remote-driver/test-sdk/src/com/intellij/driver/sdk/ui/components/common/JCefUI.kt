@@ -5,6 +5,7 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import com.intellij.driver.sdk.withRetries
@@ -40,7 +41,7 @@ htmlElement.click()
 ```
  */
 fun Finder.jcef(@Language("xpath") xpath: String? = null, action: JCefUI.() -> Unit = {}): JCefUI {
-  return x(xpath ?: "//div[contains(@class, 'Canvas') or contains(@class, 'JBCef')]", JCefUI::class.java).apply(action)
+  return x(xpath ?: xQuery { byType("com.intellij.ui.jcef.JBCefBrowser${"$"}MyPanel") }, JCefUI::class.java).apply(action)
 }
 
 class JCefUI(data: ComponentData) : UiComponent(data) {

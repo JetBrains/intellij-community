@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.marketplace.ranking
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.SearchQueryParser
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
@@ -27,7 +28,7 @@ interface MarketplaceLocalRanker {
    * Ranks the plugins inplace within a single lookup in the Marketplace tab of Plugin Manager.
    * Returns the plugin relevance scores assigned by the ranking model.
    */
-  fun rankPlugins(queryParser: SearchQueryParser.Marketplace, plugins: MutableList<IdeaPluginDescriptor>): Map<IdeaPluginDescriptor, Double>
+  fun rankPlugins(queryParser: SearchQueryParser.Marketplace, plugins: MutableList<PluginUiModel>): Map<PluginUiModel, Double>
 
   val experimentGroup: Int
   val experimentVersion: Int

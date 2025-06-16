@@ -6,6 +6,7 @@
   <description>Allows to design Swing UI graphically, supports code generation/instrumentation, preview, widgets library and UI-related code inspections</description>
   <resource-bundle>messages.UIDesignerBundle</resource-bundle>
   <depends>com.intellij.java-i18n</depends>
+  <depends>com.intellij.modules.spellchecker</depends>
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>
@@ -226,10 +227,10 @@
       <add-to-group anchor="after" group-id="GenerateGroup" relative-to-action="GenerateSuperMethodCall"/>
     </action>
 
-    <group id="GuiDesigner.NewActions" popup="true" icon="AllIcons.FileTypes.UiForm">
+    <group id="GuiDesigner.NewActions" class="com.intellij.ide.actions.NonTrivialActionGroup">
       <separator/>
-      <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction"/>
-      <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction"/>
+      <action id="NewForm" class="com.intellij.uiDesigner.actions.CreateFormAction" icon="AllIcons.FileTypes.UiForm"/>
+      <action id="NewDialog" class="com.intellij.uiDesigner.actions.CreateDialogAction" icon="AllIcons.General.Balloon"/>
 
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>

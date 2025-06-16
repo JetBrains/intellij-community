@@ -28,12 +28,10 @@ import java.util.function.Predicate;
 public abstract class CompletionAutoPopupTesterBase {
   public void runWithAutoPopupEnabled(@NotNull ThrowableRunnable<Throwable> r) throws Throwable {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, true);
     try {
-      r.run();
+      TestModeFlags.runWithFlag(CompletionAutoPopupHandler.ourTestingAutopopup, true, ()->{r.run(); return null;});
     }
     finally {
-      TestModeFlags.reset(CompletionAutoPopupHandler.ourTestingAutopopup);
       Editor editor = getEditor();
       if (editor != null) {
         ((DocumentEx)editor.getDocument()).setModificationStamp(0);// to force possible autopopup handler's invokeLater cancel itself

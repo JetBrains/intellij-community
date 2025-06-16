@@ -2,14 +2,14 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ServiceViewNavBarExtension extends AbstractNavBarModelExtension {
   @Override
-  public @Nullable String getPopupMenuGroup(@NotNull DataProvider provider) {
-    ServiceView serviceView = ServiceViewActionProvider.getSelectedView(provider);
+  public @Nullable String getPopupMenuGroup(@NotNull DataContext dataContext) {
+    ServiceView serviceView = ServiceViewActionProvider.getSelectedView(dataContext);
     return serviceView == null ? null : ServiceViewActionProvider.SERVICE_VIEW_ITEM_POPUP;
   }
 

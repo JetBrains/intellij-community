@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("AppJavaExecutorUtil")
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
@@ -8,7 +8,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -19,15 +18,14 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit
-import kotlin.Throws
 
 /**
  * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
  */
 @Internal
 @ApiStatus.Obsolete
-fun executeOnPooledIoThread(task: Runnable) {
-  (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) {
+fun executeOnPooledIoThread(task: Runnable): Job {
+  return (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) {
     task.run()
   }
 }
@@ -39,6 +37,17 @@ fun executeOnPooledIoThread(task: Runnable) {
 @ApiStatus.Obsolete
 fun executeOnPooledIoThread(coroutineScope: CoroutineScope, task: Runnable) {
   coroutineScope.launch(Dispatchers.IO) {
+    task.run()
+  }
+}
+
+/**
+ * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
+ */
+@Internal
+@ApiStatus.Obsolete
+fun executeOnPooledCpuThread(coroutineScope: CoroutineScope, task: Runnable) {
+  coroutineScope.launch {
     task.run()
   }
 }
@@ -72,12 +81,12 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, name: St
 
   fun isEmpty(): Boolean = childScope.coroutineContext.job.children.none()
 
+  fun scope(): CoroutineScope = childScope
+
   override fun execute(command: Runnable) {
     childScope.coroutineContext.ensureActive()
     childScope.launch(ClientId.coroutineContext()) {
-      blockingContext {
-        command.run()
-      }
+      command.run()
     }
   }
 

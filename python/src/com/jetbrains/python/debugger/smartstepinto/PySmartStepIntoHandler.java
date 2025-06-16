@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
@@ -47,7 +46,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
   }
 
   @Override
-  public String getPopupTitle(@NotNull XSourcePosition position) {
+  public String getPopupTitle() {
     return PyBundle.message("debug.popup.title.step.into.function");
   }
 
@@ -62,8 +61,6 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
   }
 
   private @NotNull List<PySmartStepIntoVariant> findVariants(@NotNull XSourcePosition position) {
-    ThreadingAssertions.assertBackgroundThread();
-
     PyStackFrame currentFrame = (PyStackFrame)mySession.getCurrentStackFrame();
     if (currentFrame == null || currentFrame.isComprehension()) return Collections.emptyList();
 
@@ -82,7 +79,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
 
   @Override
   public @NotNull List<PySmartStepIntoVariant> computeSmartStepVariants(@NotNull XSourcePosition position) {
-    throw new IllegalStateException("Should not be called");
+    return findVariants(position);
   }
 
   private @NotNull List<PySmartStepIntoVariant> removePossiblyUnreachableVariants(@NotNull Document document, int line,

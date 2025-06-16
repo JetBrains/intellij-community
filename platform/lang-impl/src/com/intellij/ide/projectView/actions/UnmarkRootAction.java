@@ -13,7 +13,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.core.fileIndex.impl.OptionalExclusionUtil;
+import com.intellij.workspaceModel.ide.OptionalExclusionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

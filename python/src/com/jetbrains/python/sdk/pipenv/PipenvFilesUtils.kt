@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.pipenv
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
-import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
@@ -32,11 +31,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -132,14 +133,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
       withBackgroundProgress(module.project, description) {
         val sdk = module.pythonSdk ?: return@withBackgroundProgress
         runPipEnv(sdk.associatedModulePath?.let { Path.of(it) }, *args.toTypedArray()).onFailure {
-          if (it is ExecutionException) {
-            withContext(Dispatchers.EDT) {
-              showSdkExecutionException(sdk, it, PyBundle.message("python.sdk.pipenv.execution.exception.error.running.pipenv.message"))
-            }
-          }
-          else {
-            throw it
-          }
+          ShowingMessageErrorSync.emit(it)
         }
 
         withContext(Dispatchers.Default) {
@@ -181,7 +175,7 @@ private suspend fun getPipFileLockRequirements(virtualFile: VirtualFile, package
       .filterNot { (_, pkg) -> pkg.editable ?: false }
       // TODO: Support requirements markers (PEP 496), currently any packages with markers are ignored due to PY-30803
       .filter { (_, pkg) -> pkg.markers == null }
-      .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}") }.asSequence()
+      .flatMap { (name, pkg) -> packageManager.parseRequirements("$name${pkg.version ?: ""}") }
       .toList()
 
   val pipFileLock = parsePipFileLock(virtualFile).getOrNull() ?: return null

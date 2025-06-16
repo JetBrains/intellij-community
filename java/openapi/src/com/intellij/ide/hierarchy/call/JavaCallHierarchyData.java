@@ -8,6 +8,7 @@ import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Map;
 import java.util.Set;
@@ -57,7 +58,7 @@ public class JavaCallHierarchyData {
     return myMethod;
   }
 
-  public @NotNull Set<? extends PsiMethod> getMethodsToFind() {
+  public @NotNull @Unmodifiable Set<? extends PsiMethod> getMethodsToFind() {
     return myMethodsToFind;
   }
 

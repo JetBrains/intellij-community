@@ -198,7 +198,7 @@ public class DataGridSearchSession implements GridSearchSession<GridRow, GridCol
   }
 
   @Override
-  public void findModelChanged(FindModel findModel) {
+  public void findModelChanged(@NotNull FindModel findModel) {
     worker.submitStartSearch();
   }
 

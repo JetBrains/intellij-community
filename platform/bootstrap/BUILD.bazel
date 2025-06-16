@@ -7,13 +7,15 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util-class-loader:util-classLoader",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/platform-impl/bootstrap",
     "//platform/boot",
     "//platform/ide-core-impl",
     "@lib//:jbr-api",
@@ -21,6 +23,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/runtime/repository",
     "//platform/diagnostic/telemetry-impl",
+    "//platform/plugins/parser/impl",
   ],
   runtime_deps = ["//platform/bootstrap/coroutine"]
 )

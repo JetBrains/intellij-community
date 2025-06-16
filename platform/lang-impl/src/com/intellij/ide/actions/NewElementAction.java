@@ -7,7 +7,6 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -15,6 +14,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleTextAttributes;
@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
@@ -83,6 +84,10 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     Presentation presentation = e.getPresentation();
     Project project = e.getProject();
     if (isProjectView(e)) {
+      if (!Registry.is("ide.project.view.show.new.element.button", true)) {
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
       presentation.setText(ActionsBundle.message("action.NewElement.ProjectView.text"));
     }
     if (project == null) {
@@ -101,7 +106,10 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       }
     }
 
-    presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext()), e));
+    if (!ActionPlaces.TOOLWINDOW_TITLE.equals(e.getPlace())) {
+      // always enabled in the tool window title position, no need to extra check that slow down update
+      presentation.setEnabled(!ActionGroupUtil.isGroupEmpty(getGroup(e.getDataContext(), e), e));
+    }
   }
 
   protected boolean isEnabled(@NotNull AnActionEvent e) {
@@ -111,15 +119,26 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     return true;
   }
 
-  protected ActionGroup getGroup(DataContext dataContext) {
-    var result = getCustomizedGroup();
+  protected ActionGroup getGroup(DataContext dataContext, AnActionEvent e) {
+    ActionGroup group = getGroup(dataContext);
+    if (group != null) return group;
+
+    var result = getCustomizedGroup(e);
     if (result == null) {
       result = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
     }
     return result;
   }
 
-  private static ActionGroup getCustomizedGroup() {
+  /**
+   * @deprecated Override {@link #getGroup(DataContext, AnActionEvent)} instead.
+   */
+  @Deprecated
+  protected ActionGroup getGroup(DataContext dataContext) {
+    return null;
+  }
+
+  private static ActionGroup getCustomizedGroup(AnActionEvent e) {
     // We can't just get a customized GROUP_WEIGHING_NEW because it's only customized as
     // a part of the Project View popup customization, so we get that and dig for the New subgroup.
     // There has to be a better way to do it...
@@ -128,8 +147,8 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       return null;
     }
     AnAction[] actions = group instanceof DefaultActionGroup o ? o.getChildren(ActionManager.getInstance()) :
-                         group instanceof CustomisedActionGroup o && o.getDelegate() instanceof DefaultActionGroup oo ? oo.getChildren(ActionManager.getInstance()) :
-                         group.getChildren(null);
+                         group instanceof CustomisedActionGroup o ? o.getChildren(e)
+                         : group.getChildren(e); // should not happen
     for (AnAction child : actions) {
        if (child instanceof ActionGroup childGroup && isNewElementGroup(childGroup)) {
          return childGroup;
@@ -171,7 +190,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       var dataContext = event.getDataContext();
       return JBPopupFactory.getInstance().createActionGroupPopup(
         getTitle(),
-        getGroup(dataContext),
+        getGroup(dataContext, event),
         dataContext,
         getActionSelectionAid(),
         isShowDisabledActions(),
@@ -254,11 +273,8 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     protected void show(@NotNull ListPopup popup) {
       @Nullable Component showUnderneathComponent = null;
       var inputEvent = event.getInputEvent();
-      if (inputEvent != null) {
-        var inputComponent = inputEvent.getComponent();
-        if (inputComponent instanceof ActionButton) {
-          showUnderneathComponent = inputComponent;
-        }
+      if (inputEvent instanceof MouseEvent) {
+        showUnderneathComponent = inputEvent.getComponent();
       }
       if (showUnderneathComponent != null) {
         popup.showUnderneathOf(showUnderneathComponent);

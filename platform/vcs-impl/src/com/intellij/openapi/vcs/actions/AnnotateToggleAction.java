@@ -12,6 +12,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
+import com.intellij.platform.ide.core.permissions.Permission;
+import com.intellij.platform.ide.core.permissions.RequiresPermissions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -44,7 +46,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  * @author lesya
  */
-public final class AnnotateToggleAction extends ToggleAction implements DumbAware {
+public final class AnnotateToggleAction extends ToggleAction implements DumbAware, RequiresPermissions {
   private static final Logger LOG = Logger.getInstance(AnnotateToggleAction.class);
 
   public static final ExtensionPointName<Provider> EP_NAME =
@@ -66,9 +68,18 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     Provider provider = getProvider(e);
     Presentation presentation = e.getPresentation();
     presentation.setEnabledAndVisible(provider != null);
+    if (ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION.equals(e.getPlace())) {
+      // Actions in the VCS pop-up should always be visible in order not to break numeric key-bindings
+      presentation.setVisible(true);
+    }
     if (provider != null) {
       presentation.setText(provider.getActionName(e));
     }
+  }
+
+  @Override
+  public @NotNull Collection<@NotNull Permission> getRequiredPermissions() {
+    return List.of();
   }
 
   private static @Nls @NotNull String getVcsActionName(@Nullable Project project) {

@@ -29,7 +29,7 @@ internal fun isJUnit5InScope(file: PsiFile): Boolean {
 }
 
 private fun hasInModuleScope(file: PsiFile, detectionClass: String): Boolean {
-  val vFile = file.virtualFile ?: return false
+  val vFile = file.originalFile.virtualFile ?: return false
   val module = ModuleUtil.findModuleForFile(file) ?: return false
   val productionScope = module.getModuleScope(false)
   if (!productionScope.contains(vFile)) {

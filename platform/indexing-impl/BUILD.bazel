@@ -7,8 +7,11 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/indexing-api:indexing",
+    "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -27,8 +30,8 @@ jvm_library(
     "//platform/util/nanoxml",
     "@lib//:aalto-xml",
     "//platform/util/xmlDom",
-    "//platform/util/storages:io-storages",
-  ],
-  exports = ["//platform/indexing-api:indexing"]
+    "//platform/workspace/storage",
+    "//platform/util/storages",
+  ]
 )
 ### auto-generated section `build intellij.platform.indexing.impl` end

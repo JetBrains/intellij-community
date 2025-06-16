@@ -3,12 +3,10 @@
 package org.jetbrains.kotlin.idea.jvm.shared.internal
 
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import org.jetbrains.kotlin.psi.KtFile
 
 class DecompileFailedException(message: String, cause: Throwable) : RuntimeException(message, cause)
 
-@InternalIgnoreDependencyViolation
 interface KotlinJvmDecompilerFacade {
     fun showDecompiledCode(sourceFile: KtFile)
 

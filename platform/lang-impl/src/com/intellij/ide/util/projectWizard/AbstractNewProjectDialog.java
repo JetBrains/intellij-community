@@ -24,12 +24,14 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import kotlin.sequences.SequencesKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static com.intellij.ide.wizard.GeneratorNewProjectWizardBuilderAdapter.NPW_PREFIX;
 
@@ -137,6 +139,22 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   @Override
   protected final Action @NotNull [] createActions() {
     return new Action[0];
+  }
+
+  @ApiStatus.Internal
+  public boolean setSelectedAction(@NotNull Predicate<AnAction> actionSelector) {
+    if (myPair == null) return false;
+    JBList<AnAction> actionList = myPair.second;
+    ListModel<AnAction> model = actionList.getModel();
+
+    for (int i = 0; i < model.getSize(); i++) {
+      AnAction action = model.getElementAt(i);
+      if (actionSelector.test(action)) {
+        actionList.setSelectedIndex(i);
+        return true;
+      }
+    }
+    return false;
   }
 
   static class ProjectStepPeerHolder extends StepAdapter {

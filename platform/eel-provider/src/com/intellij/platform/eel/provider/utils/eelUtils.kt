@@ -1,39 +1,53 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
+import com.intellij.platform.eel.OwnedBuilder
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.*
 
+@ApiStatus.Internal
 fun EelExecApi.fetchLoginShellEnvVariablesBlocking(): Map<String, String> {
   return runBlockingMaybeCancellable { fetchLoginShellEnvVariables() }
 }
 
+@ApiStatus.Internal
 fun CpuArch.toEelArch(): EelPlatform.Arch = when (this) {
-  CpuArch.X86 -> EelPlatform.X86
-  CpuArch.X86_64 -> EelPlatform.X86_64
-  CpuArch.ARM32 -> EelPlatform.ARM_32
-  CpuArch.ARM64 -> EelPlatform.ARM_64
-  CpuArch.OTHER, CpuArch.UNKNOWN -> EelPlatform.Unknown
+  CpuArch.X86 -> EelPlatform.Arch.X86
+  CpuArch.X86_64 -> EelPlatform.Arch.X86_64
+  CpuArch.ARM32 -> EelPlatform.Arch.ARM_32
+  CpuArch.ARM64 -> EelPlatform.Arch.ARM_64
+  CpuArch.OTHER, CpuArch.UNKNOWN -> EelPlatform.Arch.Unknown
 }
 
 @Throws(FileSystemException::class)
+@ApiStatus.Internal
 fun <T, E : EelFsError> EelResult<T, E>.getOrThrowFileSystemException(): T =
   when (this) {
     is EelResult.Ok -> value
     is EelResult.Error -> error.throwFileSystemException()
   }
 
+@Throws(FileSystemException::class)
+@ApiStatus.Internal
+suspend fun <T, E : EelFsError, O : OwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSystemException(): T =
+  when (val v = eelIt()) {
+    is EelResult.Ok -> v.value
+    is EelResult.Error -> v.error.throwFileSystemException()
+  }
+
 // TODO There's java.nio.file.FileSystemLoopException, so ELOOP should be added to all error codes for a decent support of all exceptions.
 @Throws(FileSystemException::class)
+@ApiStatus.Internal
 fun EelFsError.throwFileSystemException(): Nothing {
   throw when (this) {
     is EelFsError.DoesNotExist -> NoSuchFileException(where.toString(), null, message.nullize())

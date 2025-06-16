@@ -15,7 +15,9 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/vcs-impl",
     "//platform/lang-impl",
     "//platform/vcs-api:vcs",
@@ -23,7 +25,7 @@ jvm_library(
     "//platform/built-in-server:builtInServer-impl",
     "//platform/core-ui",
     "//platform/statistics",
-    "//platform/platform-impl/ui:ide-ui",
+    "//platform/platform-impl/ui",
   ],
   runtime_deps = [":smart-update_resources"]
 )

@@ -168,6 +168,13 @@ public final class GitBranchWorker {
     new GitRenameBranchOperation(myProject, myGit, myUiHandler, currentName, newName, repositories).execute();
   }
 
+  public void renameBranchAndUnsetUpstream(@NotNull String currentName,
+                                           @NotNull String newName,
+                                           @NotNull List<? extends GitRepository> repositories) {
+    updateInfo(repositories);
+    new GitRenameBranchOperation(myProject, myGit, myUiHandler, currentName, newName, repositories, true).execute();
+  }
+
   public static @NotNull Collection<Change> loadTotalDiff(@NotNull Repository repository, @NotNull String branchName) throws VcsException {
     // return git diff between current working directory and branchName: working dir should be displayed as a 'left' one (base)
     return GitChangeUtils.getDiffWithWorkingDir(repository.getProject(), repository.getRoot(), branchName, null, true);

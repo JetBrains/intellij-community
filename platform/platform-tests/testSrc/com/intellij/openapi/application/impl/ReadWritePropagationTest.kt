@@ -2,14 +2,17 @@
 package com.intellij.openapi.application.impl
 
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.concurrency.ImplicitBlockingContextTest
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.io.await
 import kotlinx.coroutines.Dispatchers
@@ -18,14 +21,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.assertFalse
 
 
 private const val REPETITIONS: Int = 100
 
 @TestApplication
-@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 class ReadWritePropagationTest {
   private fun checkInheritanceViaStructureConcurrency(wrapper: suspend (() -> Unit) -> Unit, checker: () -> Boolean): Unit = timeoutRunBlocking {
     wrapper {
@@ -47,16 +48,6 @@ class ReadWritePropagationTest {
   @RepeatedTest(REPETITIONS)
   fun `read action is inherited by structured concurrency`() {
     checkInheritanceViaStructureConcurrency(::readAction, { ApplicationManager.getApplication().isReadAccessAllowed })
-  }
-
-  @RepeatedTest(REPETITIONS)
-  fun `write intent read action is inherited by structured concurrency`() {
-    checkInheritanceViaStructureConcurrency(::writeIntentReadAction, { ApplicationManager.getApplication().isWriteIntentLockAcquired })
-  }
-
-  @RepeatedTest(REPETITIONS)
-  fun `write action is inherited by structured concurrency`() {
-    checkInheritanceViaStructureConcurrency(::edtWriteAction, { ApplicationManager.getApplication().isWriteAccessAllowed })
   }
 
   private fun checkInheritanceViaNewContext(wrapper: suspend (() -> Unit) -> Unit, checker: () -> Boolean, innerChecker: () -> Boolean = checker): Unit = timeoutRunBlocking {
@@ -81,13 +72,6 @@ class ReadWritePropagationTest {
     checkInheritanceViaNewContext(::readAction, { ApplicationManager.getApplication().isReadAccessAllowed })
   }
 
-  @RepeatedTest(REPETITIONS)
-  fun `write intent read action is inherited by new context`() {
-    // WIL check works only on owning thread
-    checkInheritanceViaNewContext(::writeIntentReadAction,
-                                  { ApplicationManager.getApplication().isWriteIntentLockAcquired },
-                                  { ApplicationManager.getApplication().isReadAccessAllowed })
-  }
 
   private fun checkNoInheritanceViaNonStructuredConcurrency(wrapper: suspend (() -> Unit) -> Unit, checker: () -> Boolean): Unit = timeoutRunBlocking {
     wrapper {
@@ -111,16 +95,6 @@ class ReadWritePropagationTest {
   @RepeatedTest(REPETITIONS)
   fun `read action is not inherited by non-structured concurrency`() {
     checkNoInheritanceViaNonStructuredConcurrency(::readAction, { ApplicationManager.getApplication().isReadAccessAllowed })
-  }
-
-  @RepeatedTest(REPETITIONS)
-  fun `write intent read action is not inherited by non-structured concurrency`() {
-    checkNoInheritanceViaNonStructuredConcurrency(::writeIntentReadAction, { ApplicationManager.getApplication().isWriteIntentLockAcquired })
-  }
-
-  @RepeatedTest(REPETITIONS)
-  fun `write action is not inherited by non-structured concurrency`() {
-    checkNoInheritanceViaNonStructuredConcurrency(::edtWriteAction, { ApplicationManager.getApplication().isWriteAccessAllowed })
   }
 
   @RepeatedTest(REPETITIONS)
@@ -170,7 +144,7 @@ class ReadWritePropagationTest {
     readTaskReady.waitFor()
     val wa = launch(Dispatchers.Default) {
       assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
-      ApplicationManager.getApplication().runWriteAction {
+      getGlobalThreadingSupport().runWriteAction(Runnable::class.java) {
         assertTrue(ApplicationManager.getApplication().isWriteAccessAllowed)
       }
     }

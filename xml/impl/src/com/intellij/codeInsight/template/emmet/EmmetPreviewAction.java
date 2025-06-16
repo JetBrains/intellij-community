@@ -25,10 +25,10 @@ final class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwar
   protected @NotNull CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       @Override
-      public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-        PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+      public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+        PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(editor.getDocument());
 
-        ReadAction.nonBlocking(() -> EmmetPreviewUtil.calculateTemplateText(editor, file, true))
+        ReadAction.nonBlocking(() -> EmmetPreviewUtil.calculateTemplateText(editor, psiFile, true))
           .finishOnUiThread(ModalityState.any(), templateText -> {
             if (StringUtil.isEmpty(templateText)) {
               CommonRefactoringUtil.showErrorHint(project, editor, XmlBundle.message("cannot.show.preview.for.given.abbreviation"),
@@ -36,8 +36,8 @@ final class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwar
               return;
             }
 
-            EmmetPreviewHint.createHint((EditorEx)editor, templateText, file.getFileType()).showHint();
-            EmmetPreviewUtil.addEmmetPreviewListeners(editor, file, true);
+            EmmetPreviewHint.createHint((EditorEx)editor, templateText, psiFile.getFileType()).showHint();
+            EmmetPreviewUtil.addEmmetPreviewListeners(editor, psiFile, true);
           })
           .expireWith(() -> editor.isDisposed())
           .submit(AppExecutorUtil.getAppExecutorService());
@@ -51,9 +51,9 @@ final class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwar
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return super.isValidForFile(project, editor, file) &&
-           ZenCodingTemplate.findApplicableDefaultGenerator(new CustomTemplateCallback(editor, file),
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return super.isValidForFile(project, editor, psiFile) &&
+           ZenCodingTemplate.findApplicableDefaultGenerator(new CustomTemplateCallback(editor, psiFile),
                                                             false) instanceof XmlZenCodingGenerator;
   }
 }

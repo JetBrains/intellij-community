@@ -1,11 +1,16 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
 import com.intellij.openapi.diagnostic.Logger
 import com.jetbrains.python.Result.Failure
 import com.jetbrains.python.Result.Success
+import com.jetbrains.python.errorProcessing.MessageError
+import org.jetbrains.annotations.Nls
 
 /**
+ * TL;TR: This class is kinda low-level. Use [com.jetbrains.python.errorProcessing.PyResult] in upper-level signatures,
+ * but use this class as low-level api (preferably internal) inside your modules.
+ *
  * Operation result to be used as `Maybe` instead of checked exceptions.
  * Unlike Kotlin `Result`, [ERR] could be anything (i.e [String]).
  *
@@ -21,7 +26,7 @@ import com.jetbrains.python.Result.Success
  *
  * Chain several calls, get latest result or first error (all errors are the same): [mapResult].
  *
- * When errors are different: [mapResultWithErr]
+ * When errors are different: [mapSuccessError]
  *
  * Fast return: [getOr]
  * ```kotlin
@@ -43,7 +48,10 @@ sealed class Result<out SUCC, out ERR> {
   data class Failure<out ERR>(val error: ERR) : Result<Nothing, ERR>()
   data class Success<out SUCC>(val result: SUCC) : Result<SUCC, Nothing>()
 
-  fun <RES> map(map: (SUCC) -> RES): Result<RES, ERR> =
+  /**
+   * See also [mapSuccessError], [mapError]
+   */
+  fun <RES> mapSuccess(map: (SUCC) -> RES): Result<RES, ERR> =
     when (this) {
       is Success -> Success(map(result))
       is Failure -> Failure(error)
@@ -72,8 +80,9 @@ sealed class Result<out SUCC, out ERR> {
    *   onErr = { LocalizedErrorString("Oops, ${it.message}") }
    * )
    * ```
+   * See also [mapError]
    */
-  inline fun <NEW_ERR, NEW_S> mapResultWithErr(
+  inline fun <NEW_ERR, NEW_S> mapSuccessError(
     onSuccess: (SUCC) -> Result<NEW_S, NEW_ERR>,
     onErr: (ERR) -> NEW_ERR,
   ): Result<NEW_S, NEW_ERR> =
@@ -83,6 +92,7 @@ sealed class Result<out SUCC, out ERR> {
     }
 
   val successOrNull: SUCC? get() = if (this is Success) result else null
+  val errorOrNull: ERR? get() = if (this is Failure) error else null
 
 
   /**
@@ -99,6 +109,7 @@ sealed class Result<out SUCC, out ERR> {
   companion object {
     fun <S> success(value: S): Success<S> = Success(value)
     fun <E> failure(error: E): Failure<E> = Failure(error)
+    fun localizedError(message: @Nls String): Failure<MessageError> = failure(MessageError(message))
   }
 }
 
@@ -153,10 +164,21 @@ inline fun <S, E> Result<S, E>.onFailure(code: (E) -> Unit): Result<S, E> {
   return this
 }
 
+/**
+ * Like [Result.mapSuccess] but for error. See also [Result.mapSuccessError]
+ */
+inline fun <S, E, E2> Result<S, E>.mapError(code: (E) -> E2): Result<S, E2> =
+  when (this) {
+    is Success -> this
+    is Failure -> {
+      Result.failure(code(this.error))
+    }
+  }
+
 // aliases to drop-in replace for kotlin Result
+fun <S, E> Result<S, E>.getOrLogException(logger: Logger): S? = this.orLogException(logger)
 fun <S, E> Result<S, E>.getOrNull(): S? = this.successOrNull
 val <S, E> Result<S, E>.isFailure: Boolean get() = this is Failure
 val <S, E> Result<S, E>.isSuccess: Boolean get() = this is Success
-fun <S, E> Result<S, E>.exceptionOrNull(): S = this.orThrow()
 fun <S, E> Result<S, E>.getOrThrow(): S = orThrow()
 

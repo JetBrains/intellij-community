@@ -222,6 +222,7 @@ a:com.intellij.ide.macro.MacroFilter
 - <init>():V
 - a:accept(com.intellij.ide.macro.Macro):Z
 f:com.intellij.ide.macro.MacroManager
+- sf:CONTEXT_PATH:com.intellij.openapi.actionSystem.DataKey
 - sf:PATH_CONVERTER_KEY:com.intellij.openapi.actionSystem.DataKey
 - cacheMacrosPreview(com.intellij.openapi.actionSystem.DataContext):V
 - s:containsMacros(java.lang.String):Z
@@ -234,7 +235,6 @@ f:com.intellij.ide.macro.MacroManager
 - getMacros():java.util.Collection
 com.intellij.ide.macro.MacroManager$MacroExpander
 - a:expand(com.intellij.ide.macro.Macro,java.lang.String):java.lang.String
-com.intellij.ide.macro.MacroWithParams
 f:com.intellij.ide.macro.ModuleFileDirMacro
 - com.intellij.ide.macro.Macro
 - com.intellij.ide.macro.PathMacro
@@ -316,7 +316,6 @@ a:com.intellij.ide.macro.PromptingMacro
 - p:getRangeForSuffix(java.lang.CharSequence,I,I):com.intellij.openapi.util.TextRange
 - preview(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - pa:promptUser(com.intellij.openapi.actionSystem.DataContext,java.lang.String,java.lang.String):java.lang.String
-com.intellij.ide.macro.SecondQueueExpandMacro
 c:com.intellij.ide.macro.SelectedTextMacro
 - com.intellij.ide.macro.EditorMacro
 - <init>():V

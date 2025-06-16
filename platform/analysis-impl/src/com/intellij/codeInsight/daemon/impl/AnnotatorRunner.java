@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
@@ -138,16 +137,19 @@ final class AnnotatorRunner {
         }
         else {
           newInfos = new ArrayList<>(sizeAfter - sizeBefore);
+          // first compute quick fixes using injected document offsets, then convert them to the host offsets in addConvertedToHostInfo below
+          Document document = myPsiFile.getViewProvider().getDocument();
+          boolean isFromInjection = myPsiFile.getViewProvider() instanceof InjectedFileViewProvider;
           for (int i = sizeBefore; i < sizeAfter; i++) {
             Annotation annotation = annotationHolder.get(i);
-            Document document = PsiDocumentManager.getInstance(myProject).getDocument(InjectedLanguageManager.getInstance(myProject).getTopLevelFile(myPsiFile));
             HighlightInfo info = HighlightInfo.fromAnnotation(annotator.getClass(), annotation, myBatchMode, document);
-            if (myPsiFile.getViewProvider() instanceof InjectedFileViewProvider) {
+            if (isFromInjection) {
               info.markFromInjection();
             }
+            int sizeNewBefore = newInfos.size();
             addConvertedToHostInfo(info, newInfos);
             if (LOG.isDebugEnabled()) {
-              LOG.debug("runAnnotator "+annotator+"; annotation="+annotation+" -> "+newInfos);
+              LOG.debug("runAnnotator "+annotator+"; annotation="+annotation+" -> "+newInfos.subList(sizeNewBefore, newInfos.size()));
             }
             myAnnotatorStatisticsCollector.reportAnnotationProduced(annotator, annotation);
           }
@@ -170,11 +172,12 @@ final class AnnotatorRunner {
       TextRange hostRange = documentWindow.injectedToHost(editable);
 
       boolean isAfterEndOfLine = injectedInfo.isAfterEndOfLine();
+      Document hostDocument = documentWindow.getDelegate();
       if (isAfterEndOfLine) {
         // convert injected afterEndOfLine to either host's afterEndOfLine or not-afterEndOfLine highlight of the injected fragment boundary
         int hostEndOffset = hostRange.getEndOffset();
-        int lineNumber = documentWindow.getDelegate().getLineNumber(hostEndOffset);
-        int hostLineEndOffset = documentWindow.getDelegate().getLineEndOffset(lineNumber);
+        int lineNumber = hostDocument.getLineNumber(hostEndOffset);
+        int hostLineEndOffset = hostDocument.getLineEndOffset(lineNumber);
         if (hostEndOffset < hostLineEndOffset) {
           // convert to non-afterEndOfLine
           isAfterEndOfLine = false;
@@ -183,12 +186,11 @@ final class AnnotatorRunner {
       }
 
       // create manually to avoid extra call to HighlightInfoFilter.accept() in HighlightInfo.Builder.create()
-      //noinspection deprecation
-      HighlightInfo patched = new HighlightInfo(injectedInfo.forcedTextAttributes, injectedInfo.forcedTextAttributesKey, injectedInfo.type,
-                                                hostRange.getStartOffset(), hostRange.getEndOffset(),
-                                                injectedInfo.getDescription(), injectedInfo.getToolTip(), injectedInfo.getSeverity(), isAfterEndOfLine, null,
-                                                false, 0, injectedInfo.getProblemGroup(), injectedInfo.toolId, injectedInfo.getGutterIconRenderer(), HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP,
-                                                injectedInfo.hasHint(), injectedInfo.getLazyQuickFixes());
+      HighlightInfo.Builder builder = injectedInfo.copy(false).range(hostRange);
+      if (isAfterEndOfLine) {
+        builder.endOfLine();
+      }
+      HighlightInfo patched = builder.createUnconditionally();
 
       List<HighlightInfo.IntentionActionDescriptor> quickFixes = new ArrayList<>();
       injectedInfo.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {
@@ -199,7 +201,7 @@ final class AnnotatorRunner {
         }
         return null;
       });
-      patched.registerFixes(quickFixes, documentWindow.getDelegate());
+      patched.registerFixes(quickFixes, hostDocument);
       patched.markFromInjection();
       outHostInfos.add(patched);
     }

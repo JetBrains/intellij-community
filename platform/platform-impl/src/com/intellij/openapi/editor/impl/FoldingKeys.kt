@@ -7,6 +7,22 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object FoldingKeys {
 
+  @JvmField
+  val SELECT_REGION_ON_CARET_NEARBY: Key<Boolean> = Key.create("select.region.on.caret.nearby")
+
+  @JvmField
+  val ZOMBIE_REGION_KEY: Key<Boolean> = Key.create("zombie.fold.region")
+
+  @JvmField
+  val ZOMBIE_BITTEN_KEY: Key<Boolean> = Key.create("zombie.bitten.region")
+
+  @JvmField
+  val AUTO_CREATED_ZOMBIE: Key<Boolean> = Key.create("zombie.backend.created")
+
+  @JvmField
+  val HIDE_GUTTER_RENDERER_FOR_COLLAPSED: Key<Boolean> = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED")
+
+
   /**
    * This key is needed for rendering inline completion.
    * Please see [com.intellij.codeInsight.inline.completion.render.InlineCompletionTextRenderManager].

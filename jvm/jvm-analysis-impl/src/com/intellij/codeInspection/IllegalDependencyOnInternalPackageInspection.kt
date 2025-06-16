@@ -18,9 +18,9 @@ class IllegalDependencyOnInternalPackageInspection : LocalInspectionTool() {
 }
 
 private class IllegalDependencyOnInternalPackage(private val holder: ProblemsHolder) : PsiElementVisitor() {
-  override fun visitFile(file: PsiFile) {
-    if (!PsiUtil.isAvailable(JavaFeature.MODULES, file) || JavaModuleGraphUtil.findDescriptorByElement(file) != null) return
-    DependenciesBuilder.analyzeFileDependencies(file) { place, dependency ->
+  override fun visitFile(psiFile: PsiFile) {
+    if (!PsiUtil.isAvailable(JavaFeature.MODULES, psiFile) || JavaModuleGraphUtil.findDescriptorByElement(psiFile) != null) return
+    DependenciesBuilder.analyzeFileDependencies(psiFile) { place, dependency ->
       if (dependency !is PsiClass) return@analyzeFileDependencies
       val dependencyFile = dependency.containingFile
       if (dependencyFile !is PsiClassOwner || !dependencyFile.isPhysical || dependencyFile.virtualFile == null) return@analyzeFileDependencies

@@ -78,8 +78,8 @@ public final class GenerateToStringActionHandlerImpl implements GenerateToString
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiClass clazz = getSubjectClass(editor, file);
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiClass clazz = getSubjectClass(editor, psiFile);
     if (clazz == null) return;
 
     doExecuteAction(project, clazz, editor);

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Set;
 
 class InstallFromDiskAction extends DumbAwareAction {
@@ -71,7 +72,7 @@ class InstallFromDiskAction extends DumbAwareAction {
     }
 
     var toSelect = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (toSelect == null || !toSelect.isInLocalFileSystem() || !Set.of("zip", "jar").contains(toSelect.getExtension())) {
+    if (toSelect == null || !toSelect.isInLocalFileSystem() || !hasValidExtension(toSelect)) {
       toSelect = getFileToSelect(PropertiesComponent.getInstance().getValue(PLUGINS_PRESELECTION_PATH));
     }
 
@@ -85,6 +86,11 @@ class InstallFromDiskAction extends DumbAwareAction {
       PropertiesComponent.getInstance().setValue(PLUGINS_PRESELECTION_PATH, chosenFile.getParent().getPath());
       installFromDisk(chosenFile.toNioPath(), project);
     }
+  }
+
+  private static boolean hasValidExtension(VirtualFile file) {
+    String extension = file.getExtension();
+    return extension != null && Set.of("zip", "jar").contains(extension.toLowerCase(Locale.ROOT));
   }
 
   @RequiresEdt

@@ -10,8 +10,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -21,10 +23,12 @@ public final class FindUIHelper implements Disposable {
   private @NotNull FindModel myModel;
   FindModel myPreviousModel;
   private @NotNull Runnable myOkHandler;
+  private @Nullable Runnable myStopHandler;
 
   FindUI myUI;
 
-  FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
+  @ApiStatus.Internal
+  public FindUIHelper(@NotNull Project project, @NotNull FindModel model, @NotNull Runnable okHandler) {
     myProject = project;
     myModel = model;
     myOkHandler = okHandler;
@@ -165,5 +169,17 @@ public final class FindUIHelper implements Disposable {
 
   public void doOKAction() {
     myOkHandler.run();
+  }
+
+  @ApiStatus.Internal
+  public void setStopHandler(@Nullable Runnable stopHandler) {
+    myStopHandler = stopHandler;
+  }
+
+  @ApiStatus.Internal
+  public void onSearchStop() {
+    if (myStopHandler != null) {
+      myStopHandler.run();
+    }
   }
 }

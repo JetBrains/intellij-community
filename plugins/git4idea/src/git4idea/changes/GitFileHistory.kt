@@ -36,6 +36,7 @@ interface GitFileHistory : Comparator<String> {
 
   /**
    * Retrieve a chain of patches between commits [parent] and [child]
+   * Including [child], but excluding [parent]
    */
   fun getPatchesBetween(parent: String, child: String): List<TextFilePatch>
 }

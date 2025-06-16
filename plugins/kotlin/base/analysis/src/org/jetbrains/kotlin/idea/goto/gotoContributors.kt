@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.goto
 
@@ -13,6 +13,7 @@ import com.intellij.util.Processor
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.KotlinIcons
@@ -27,7 +28,8 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import javax.swing.Icon
 
-internal abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
+@ApiStatus.Internal
+abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
     private val helper: KotlinStringStubIndexHelper<T>,
     private val useOriginalScope: Boolean = false
 ) : ChooseByNameContributorEx, GotoClassContributor, DumbAware {
@@ -70,11 +72,13 @@ internal abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiEl
 }
 
 
-internal class KotlinGotoClassContributor : AbstractKotlinGotoSymbolContributor<KtClassOrObject>(KotlinClassShortNameIndex) {
+@ApiStatus.Internal
+class KotlinGotoClassContributor : AbstractKotlinGotoSymbolContributor<KtClassOrObject>(KotlinClassShortNameIndex) {
     override fun getQualifiedName(item: NavigationItem): String? = (item as? KtClassOrObject)?.fqName?.asString()
 }
 
-internal class KotlinGotoTypeAliasContributor : AbstractKotlinGotoSymbolContributor<KtTypeAlias>(KotlinTypeAliasShortNameIndex) {
+@ApiStatus.Internal
+class KotlinGotoTypeAliasContributor : AbstractKotlinGotoSymbolContributor<KtTypeAlias>(KotlinTypeAliasShortNameIndex) {
     override fun getQualifiedName(item: NavigationItem): String? = (item as? KtTypeAlias)?.fqName?.asString()
 }
 
@@ -93,7 +97,8 @@ private abstract class FacadeCallable : PsiElementBasedNavigationItem() {
     fun getQualifiedName(): String? = target.getQualifiedNameInFacade()
 }
 
-internal class KotlinGotoFunctionSymbolContributor : AbstractKotlinGotoSymbolContributor<KtNamedFunction>(KotlinFunctionShortNameIndex) {
+@ApiStatus.Internal
+class KotlinGotoFunctionSymbolContributor : AbstractKotlinGotoSymbolContributor<KtNamedFunction>(KotlinFunctionShortNameIndex) {
     override fun processAdditionalElements(element: KtNamedFunction, processor: Processor<in NavigationItem>): Boolean {
         if (element.isTopLevel) {
             return processor.process(FacadeFunction(element))
@@ -102,9 +107,9 @@ internal class KotlinGotoFunctionSymbolContributor : AbstractKotlinGotoSymbolCon
     }
 
     private class FacadeFunction(override val target: KtNamedFunction) : FacadeCallable() {
-        override fun getPresentation(): ItemPresentation? {
+        override fun getPresentation(): ItemPresentation {
             return object : KotlinFunctionPresentation(target) {
-                override fun getLocationString(): String? {
+                override fun getLocationString(): String {
                     return getPresentationInContainer(target.containingKtFile.javaFileFacadeFqName.asString())
                 }
             }
@@ -121,7 +126,8 @@ internal class KotlinGotoFunctionSymbolContributor : AbstractKotlinGotoSymbolCon
 }
 
 
-internal class KotlinGotoPropertySymbolContributor : AbstractKotlinGotoSymbolContributor<KtNamedDeclaration>(KotlinPropertyShortNameIndex) {
+@ApiStatus.Internal
+class KotlinGotoPropertySymbolContributor : AbstractKotlinGotoSymbolContributor<KtNamedDeclaration>(KotlinPropertyShortNameIndex) {
     override fun processAdditionalElements(element: KtNamedDeclaration, processor: Processor<in NavigationItem>): Boolean {
         if (element is KtProperty && element.isTopLevel) {
             return processor.process(FacadeProperty(element))
@@ -130,9 +136,9 @@ internal class KotlinGotoPropertySymbolContributor : AbstractKotlinGotoSymbolCon
     }
 
     private class FacadeProperty(override val target: KtProperty) : FacadeCallable() {
-        override fun getPresentation(): ItemPresentation? {
+        override fun getPresentation(): ItemPresentation {
             return object : KotlinDefaultNamedDeclarationPresentation(target) {
-                override fun getLocationString(): String? {
+                override fun getLocationString(): String {
                     return getPresentationInContainer(target.containingKtFile.javaFileFacadeFqName.asString())
                 }
             }

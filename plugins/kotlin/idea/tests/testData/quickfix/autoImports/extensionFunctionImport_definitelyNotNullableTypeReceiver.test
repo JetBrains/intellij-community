@@ -1,0 +1,36 @@
+// FILE: first.before.kt
+// "Import extension function 'MyInterface.extFun'" "true"
+// ERROR: Unresolved reference: extFun
+package test
+
+import dependency.MyInterface
+
+fun <T : MyInterface?> foo(a: T & Any) {
+    a.<caret>extFun()
+}
+
+// FILE: second.kt
+package dependency
+
+interface MyInterface
+
+fun MyInterface.extFun() {}
+
+// FILE: third.kt
+package unrelated
+
+class Unrelated
+
+fun Unrelated.extFun() {}
+
+// FILE: first.after.kt
+// "Import extension function 'MyInterface.extFun'" "true"
+// ERROR: Unresolved reference: extFun
+package test
+
+import dependency.MyInterface
+import dependency.extFun
+
+fun <T : MyInterface?> foo(a: T & Any) {
+    a.<caret>extFun()
+}

@@ -5,9 +5,9 @@ import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Queryable
@@ -279,7 +279,7 @@ class InternalDecoratorImpl internal constructor(
       Mode.SINGLE, Mode.CELL -> {
         layout = BorderLayout()
 
-        InternalUICustomization.getInstance().internalCustomizer.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
+        InternalUICustomization.getInstance()?.toolWindowUIDecorator?.decorateAndReturnHolder(dividerAndHeader, myDecoratorChild)?.let {
           add(it, BorderLayout.CENTER)
         } ?: run {
           add(dividerAndHeader, BorderLayout.NORTH)
@@ -577,12 +577,19 @@ class InternalDecoratorImpl internal constructor(
       width: Int,
       height: Int,
       ) {
-      g.color = JBColor.border()
       if (insets.top > 0) {
+        val anchor = window.windowInfo.anchor
+        if (anchor == ToolWindowAnchor.BOTTOM || (anchor == ToolWindowAnchor.RIGHT && window.windowInfo.isSplit)) {
+          g.color = JBUI.CurrentTheme.ToolWindow.mainBorderColor()
+        }
+        else {
+          g.color = JBUI.CurrentTheme.MainToolbar.borderColor()
+        }
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top - 1).toDouble(), (x + width - 1).toDouble(),
                             (y + insets.top - 1).toDouble())
         LinePainter2D.paint(g, x.toDouble(), (y + insets.top).toDouble(), (x + width - 1).toDouble(), (y + insets.top).toDouble())
       }
+      g.color = JBUI.CurrentTheme.ToolWindow.mainBorderColor()
       if (paintLeftExternalBorder) {
         LinePainter2D.paint(g, (x - 1).toDouble(), y.toDouble(), (x - 1).toDouble(), (y + height).toDouble())
         LinePainter2D.paint(g, x.toDouble(), y.toDouble(), x.toDouble(), (y + height).toDouble())
@@ -888,11 +895,7 @@ class InternalDecoratorImpl internal constructor(
     val rectangle = bounds
     super.reshape(x, y, w, h)
     val topLevelDecorator = findTopLevelDecorator(this)
-    if (topLevelDecorator == null || !topLevelDecorator.isShowing) {
-      putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, null)
-      putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, null)
-    }
-    else {
+    if (topLevelDecorator != null && topLevelDecorator.isShowing) { // topLevelDecorator != null means that this is not a top level one.
       val hideLabel: Any? = if (SwingUtilities.convertPoint(this, x, y, topLevelDecorator) == Point()) null else "true"
       putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, hideLabel)
       val topScreenLocation = topLevelDecorator.locationOnScreen

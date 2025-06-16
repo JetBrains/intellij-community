@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hints
 
@@ -12,12 +12,12 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.actions.ShortNameType
 import com.intellij.openapi.vcs.annotate.AnnotationsPreloader
 import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect
+import com.intellij.openapi.vcs.annotate.LineAnnotationAspect.AUTHOR
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl
 import com.intellij.openapi.vfs.VirtualFile
@@ -62,15 +63,18 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
   }
 
   override fun computeCodeVision(editor: Editor, uiData: Unit): CodeVisionState {
-    return runReadAction {
-      val project = editor.project ?: return@runReadAction READY_EMPTY
-      val document = editor.document
-      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@runReadAction READY_EMPTY
+    val project = editor.project ?: return READY_EMPTY
+    val document = editor.document
+    val fileAnnotationLoading =
+      if (hasPreviewInfo(editor)) LoadingFileAnnotation.Loaded(null)
+      else when (val annotation = getAnnotation(editor, project, document)) {
+        AnnotationResult.NoAnnotation -> return CodeVisionState.Ready(emptyList())
+        AnnotationResult.NotReady -> LoadingFileAnnotation.NotReady
+        is AnnotationResult.Success -> LoadingFileAnnotation.Loaded(annotation.res)
+      }
 
-      if (!hasSupportedVcs(project, file, editor)) return@runReadAction READY_EMPTY
-
-      val virtualFile = file.viewProvider.virtualFile
-      if (ProjectFileIndex.getInstance(project).isInLibrarySource(virtualFile)) return@runReadAction READY_EMPTY
+    return InlayHintsUtils.computeCodeVisionUnderReadAction {
+      val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return@computeCodeVisionUnderReadAction READY_EMPTY
 
       val fileLanguage = file.language
       val fileContext = VcsCodeVisionLanguageContext.providersExtensionPoint.forLanguage(fileLanguage)
@@ -80,12 +84,18 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
             it.isCustomFileAccepted(file)
           } ?: emptyList()
         else emptyList()
-      if (fileContext == null && additionalContexts.isEmpty()) return@runReadAction READY_EMPTY
+      // If an annotation is not loaded and the context can't be resolved, we can immediately return an empty state.
+      if (fileContext == null && additionalContexts.isEmpty()) return@computeCodeVisionUnderReadAction READY_EMPTY
+      if (fileAnnotationLoading !is LoadingFileAnnotation.Loaded) return@computeCodeVisionUnderReadAction CodeVisionState.NotReady
 
-      val aspect = when (val aspectResult = getAspect(file, editor)) {
-        AnnotationResult.NoAnnotation -> return@runReadAction CodeVisionState.Ready(emptyList())
-        AnnotationResult.NotReady -> return@runReadAction CodeVisionState.NotReady
-        is AnnotationResult.Success -> aspectResult.res
+      val aspect = when {
+        hasPreviewInfo(editor) -> LineAnnotationAspectAdapter.NULL_ASPECT
+        fileAnnotationLoading.annotation != null -> {
+          val annotation = fileAnnotationLoading.annotation
+          handleAnnotationRegistration(annotation, editor, project, VcsUtil.resolveSymlinkIfNeeded(project, file.viewProvider.virtualFile))
+          annotation.aspects.find { it.id == AUTHOR }
+        }
+        else -> null
       }
 
       val lenses = ArrayList<Pair<TextRange, CodeVisionEntry>>()
@@ -121,16 +131,32 @@ class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
           lenses.add(adjustedRange to entry)
         }
       }
-      return@runReadAction CodeVisionState.Ready(lenses)
+      return@computeCodeVisionUnderReadAction CodeVisionState.Ready(lenses)
     }
   }
 
-  private fun hasSupportedVcs(project: Project, file: PsiFile, editor: Editor): Boolean {
-    if (hasPreviewInfo(editor)) {
-      return true
+  private sealed class LoadingFileAnnotation {
+    class Loaded(val annotation: FileAnnotation?) : LoadingFileAnnotation()
+    object NotReady : LoadingFileAnnotation()
+  }
+
+  private fun getAnnotation(editor: Editor, project: Project, document: Document): AnnotationResult<FileAnnotation?> {
+    val fromUserData = editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION)
+    if (fromUserData != null) return AnnotationResult.Success(fromUserData)
+
+    val virtualFile = FileDocumentManager.getInstance().getFile(document)?.let { VcsUtil.resolveSymlinkIfNeeded(project, it) }
+                      ?: return AnnotationResult.NoAnnotation
+    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(virtualFile)?.takeIf { "Git" == it.name }
+              ?: return AnnotationResult.NoAnnotation
+    val annotationProvider = vcs.annotationProvider as? CacheableAnnotationProvider
+                             ?: return AnnotationResult.NoAnnotation
+    val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
+
+    return when (status) {
+      FileStatus.UNKNOWN, FileStatus.IGNORED -> AnnotationResult.NoAnnotation
+      FileStatus.ADDED -> AnnotationResult.Success(null) // new files have no annotation
+      else -> getAnnotation(annotationProvider, virtualFile)
     }
-    val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file.virtualFile) ?: return false
-    return "Git" == vcs.name
   }
 
   override fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?): CodeVisionPlaceholderCollector? {
@@ -209,29 +235,15 @@ private fun getCodeAuthorInfo(project: Project, range: TextRange, editor: Editor
   )
 }
 
-private fun getAspect(file: PsiFile, editor: Editor): AnnotationResult<LineAnnotationAspect?> {
-  if (hasPreviewInfo(editor)) return AnnotationResult.Success(LineAnnotationAspectAdapter.NULL_ASPECT)
-  val virtualFile = file.virtualFile ?: return AnnotationResult.NoAnnotation
-  val vcsFile = VcsUtil.resolveSymlinkIfNeeded(file.project, virtualFile)
-  return when (val annotationResult = getAnnotation(file.project, vcsFile, editor)) {
-    AnnotationResult.NoAnnotation -> AnnotationResult.NoAnnotation
-    AnnotationResult.NotReady -> AnnotationResult.NotReady
-    is AnnotationResult.Success -> AnnotationResult.Success(
-      annotationResult.res?.aspects?.find { it.id == LineAnnotationAspect.AUTHOR })
-  }
-}
-
 private val VCS_CODE_AUTHOR_ANNOTATION = Key.create<FileAnnotation>("Vcs.CodeAuthor.Annotation")
 
-private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): AnnotationResult<FileAnnotation?> {
-  editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION)?.let { return AnnotationResult.Success(it) }
+private fun getAnnotation(annotationProvider: CacheableAnnotationProvider, file: VirtualFile): AnnotationResult<FileAnnotation?> {
+  val annotation = annotationProvider.getFromCache(file) ?: return AnnotationResult.NotReady
+  return AnnotationResult.Success(annotation)
+}
 
-  val vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file) ?: return AnnotationResult.NoAnnotation
-  val provider = vcs.annotationProvider as? CacheableAnnotationProvider ?: return AnnotationResult.NoAnnotation
-  val status = FileStatusManager.getInstance(project).getStatus(file)
-  if (status == FileStatus.UNKNOWN || status == FileStatus.IGNORED) return AnnotationResult.NoAnnotation
-  if (status == FileStatus.ADDED) return AnnotationResult.Success(null) // new files have no annotation
-  val annotation = provider.getFromCache(file) ?: return AnnotationResult.NotReady
+private fun handleAnnotationRegistration(annotation: FileAnnotation, editor: Editor, project: Project, file: VirtualFile) {
+  if (editor.getUserData(VCS_CODE_AUTHOR_ANNOTATION) != null) return
 
   val annotationDisposable = Disposable {
     unregisterAnnotation(annotation)
@@ -250,8 +262,6 @@ private fun getAnnotation(project: Project, file: VirtualFile, editor: Editor): 
   ApplicationManager.getApplication().invokeLater {
     EditorUtil.disposeWithEditor(editor, annotationDisposable)
   }
-
-  return AnnotationResult.Success(annotation)
 }
 
 private fun registerAnnotation(annotation: FileAnnotation) =

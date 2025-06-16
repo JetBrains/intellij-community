@@ -1,6 +1,7 @@
 // FILE: main.before.kt
 // "Import" "false"
 // ACTION: Create annotation 'Some'
+// ACTION: Create test
 // ACTION: Make internal
 // ACTION: Make private
 // ERROR: Unresolved reference: Some

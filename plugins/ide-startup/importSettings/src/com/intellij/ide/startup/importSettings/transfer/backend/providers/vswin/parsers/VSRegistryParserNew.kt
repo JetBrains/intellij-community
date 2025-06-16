@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin.parsers
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
@@ -10,20 +10,20 @@ import com.intellij.ide.startup.importSettings.models.FeatureInfo
 import com.intellij.ide.startup.importSettings.models.ILookAndFeel
 import com.intellij.ide.startup.importSettings.models.RecentPathInfo
 import com.intellij.ide.startup.importSettings.providers.vswin.mappings.FontsAndColorsMappings
-import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHive
-import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHiveDetourFileNotFoundException
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSProfileDetectorUtils
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSProfileSettingsFileNotFound
-import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl.PrivateRegistryRoot
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.registryUtils.impl.RegistryRoot
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.mappings.VisualStudioPluginsMapping
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHive
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.VSHiveDetourFileNotFoundException
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.utilities.registryUtils.impl.PrivateRegistryRoot
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.util.io.systemIndependentPath
+import com.intellij.util.io.systemIndependentPath
 import com.jetbrains.rd.util.lifetime.Lifetime
+import com.sun.jna.platform.win32.Win32Exception
 import com.sun.jna.platform.win32.WinReg
 import org.w3c.dom.Node
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
@@ -32,8 +32,7 @@ import java.util.*
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.xpath.XPathConstants
 import javax.xml.xpath.XPathFactory
-import kotlin.io.path.Path
-import kotlin.io.path.exists
+import kotlin.io.path.*
 
 class VSRegistryParserNew private constructor(val hive: VSHive) {
   companion object {
@@ -57,10 +56,10 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
 
   private val appDataHiveFolder = Path("${WindowsEnvVariables.localApplicationData}\\Microsoft\\VisualStudio\\${hive.hiveString}")
 
-  private val detourFile: File? = if (isRegistryDetourRequired()) detourFileInit() else null
+  private val detourFile: Path? = if (isRegistryDetourRequired()) detourFileInit() else null
 
-  val envPath: Pair<Path?, File?> by lazy { envPathInit() }
-  val settingsFile: File? by lazy { settingsFileInit() }
+  val envPath: Pair<Path?, Path?> by lazy { envPathInit() }
+  val settingsFile: Path? by lazy { settingsFileInit() }
   val vsLocation: String? by lazy { vsLocationInit() }
   val recentProjects: MutableList<RecentPathInfo> by lazy { recentProjectsInit() ?: mutableListOf() }
   val extensions: Map<String, FeatureInfo> by lazy { extensionsListInit() }
@@ -126,9 +125,9 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     }
   }
 
-  private fun envPathInit(): Pair<Path?, File?> {
+  private fun envPathInit(): Pair<Path?, Path?> {
     var envDir: Path? = null
-    var devEnv: File? = null
+    var devEnv: Path? = null
 
     val setupVSKey = registryRootKeyConfig / "Setup" / "VS"
 
@@ -141,7 +140,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
       return Pair(null, null)
     }
     if (fileDirStr == null) {
-      logger.warn("EnvDir is null")
+      logger.trace("EnvDir is null")
     }
 
     val filePathStr = try {
@@ -153,7 +152,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
       return Pair(null, null)
     }
     if (filePathStr == null) {
-      logger.warn("EnvPath is null")
+      logger.trace("EnvPath is null")
     }
 
     // file access
@@ -167,25 +166,25 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     }
 
     if (filePathStr != null) {
-      devEnv = File(filePathStr)
+      devEnv = Path(filePathStr)
     }
 
     return Pair(envDir, devEnv)
   }
 
-  private fun settingsFileInit(): File? {
+  private fun settingsFileInit(): Path? {
 
     val unexpandedPath =
       try {
         registryRootKey.inChild("Profile").getStringValue("AutoSaveFile")
       }
-      catch (_: com.sun.jna.platform.win32.Win32Exception) {
+      catch (_: Win32Exception) {
         throw VSProfileSettingsFileNotFound(
           "A problem occurred while trying to work with registry. Probably key does not exist.")
       } ?: throw Exception("Unknown registry error")
     val path = VSProfileDetectorUtils.expandPath(unexpandedPath, hive)
 
-    return path?.let { File(it) }
+    return path?.let { Path(it) }
   }
 
   private fun vsLocationInit(): String? {
@@ -220,10 +219,10 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     }.sortedByDescending { it.second }
 
     return preItems.map {
-      val pathExp = File(VSProfileDetectorUtils.expandPath(it.first, hive)!!)
+      val pathExp = Path(VSProfileDetectorUtils.expandPath(it.first, hive)!!)
       val info = RecentProjectMetaInfo().apply {
         metadata = null
-        if (pathExp.isDirectory) {
+        if (pathExp.isDirectory()) {
           metadata = "folder|"
         }
         displayName = pathExp.name
@@ -231,7 +230,7 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
         buildTimestamp = it.second.time
       }
 
-      RecentPathInfo(pathExp.systemIndependentPath, info)
+      RecentPathInfo(pathExp.invariantSeparatorsPathString, info)
     }.toMutableList()
   }
 
@@ -282,11 +281,11 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
 
       var i = System.currentTimeMillis()
 
-      val pathExp = File(VSProfileDetectorUtils.expandPath(path, hive)!!)
+      val pathExp = Path(VSProfileDetectorUtils.expandPath(path, hive)!!)
       val info = RecentProjectMetaInfo().apply {
         i -= 1000
         metadata = null
-        if (pathExp.isDirectory) {
+        if (pathExp.isDirectory()) {
           metadata = "folder|"
         }
         projectOpenTimestamp = i
@@ -298,10 +297,10 @@ class VSRegistryParserNew private constructor(val hive: VSHive) {
     }.toMutableList()
   }
 
-  private fun detourFileInit(): File {
+  private fun detourFileInit(): Path {
     check(isRegistryDetourRequired()) { "Calling getDetourFile for old VS" }
 
-    @Suppress("SpellCheckingInspection") val file = appDataHiveFolder.resolve("privateregistry.bin").toFile()
+    @Suppress("SpellCheckingInspection") val file = appDataHiveFolder.resolve("privateregistry.bin")
 
     if (!file.exists()) {
       logger.warn("detour file is not found. did you delete it or its not vs<=17?")

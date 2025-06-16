@@ -70,13 +70,15 @@ object PluginAutoUpdater {
     val autoupdatesDir = getAutoUpdateDirPath()
 
     val currentDescriptors = span("loading existing descriptors") {
-      val pool = ZipFilePoolImpl()
-      val result = loadDescriptors(
-        CompletableDeferred(pool),
-        CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader)
-      )
-      pool.clear()
-      result.second
+      ZipFilePoolImpl().use { pool ->
+        val discoveredPlugins = loadDescriptors(
+          CompletableDeferred(pool),
+          CompletableDeferred(PluginAutoUpdateRepository::class.java.classLoader),
+        ).second
+        val loadingResult = PluginLoadingResult()
+        loadingResult.initAndAddAll(descriptorLoadingResult = discoveredPlugins, initContext = ProductPluginInitContext())
+        loadingResult
+      }
     }
     // shadowing intended
     val updates = updates.filter { (id, _) ->
@@ -89,7 +91,7 @@ object PluginAutoUpdater {
       updates.mapValues { (_, info) ->
         val updateFile = autoupdatesDir.resolve(info.updateFilename)
         async(Dispatchers.IO) {
-          runCatching { loadDescriptorFromArtifact(updateFile, null) }
+          runCatching { loadAndInitDescriptorFromArtifact(updateFile, null) }
         }
       }.mapValues { it.value.await() }
     }.filter {
@@ -132,7 +134,7 @@ object PluginAutoUpdater {
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
     val enabledPluginsAndModulesIds: Set<String> = currentDescriptors.getIdMap().flatMap { entry ->
       val desc = entry.value
-      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.content.modules.map { it.name }
+      listOf(desc.pluginId.idString) + desc.pluginAliases.map { it.idString } + desc.contentModules.map { it.moduleName } // FIXME content module aliases are not accounted
     }.toSet()
     for ((id, updateDesc) in updates) {
       val existingDesc = currentDescriptors.getIdMap()[id] ?: currentDescriptors.getIncompleteIdMap()[id]
@@ -166,7 +168,7 @@ object PluginAutoUpdater {
       // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
       // bit more formalized and a bit more flexible to be reused here (TODO).
       val unmetDependencies = findUnsatisfiedDependencies(
-        updateDesc.pluginDependencies,
+        updateDesc.dependencies,
         enabledPluginsAndModulesIds
       )
       if (unmetDependencies.isNotEmpty()) {

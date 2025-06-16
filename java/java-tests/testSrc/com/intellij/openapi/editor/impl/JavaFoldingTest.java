@@ -1000,11 +1000,10 @@ public class JavaFoldingTest extends JavaFoldingTestCase {
   }
 
   public void test_imports_remain_collapsed_when_new_item_is_added_at_the_end() {
-    boolean oldValue = CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
-    CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
-    DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);// tests disable this by default
-    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true);
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = true;
+      DaemonCodeAnalyzerSettings.getInstance().setImportHintEnabled(true);// tests disable this by default
+      ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true);
       configure("""
         import java.util.ArrayList;
         import java.util.List;
@@ -1034,10 +1033,8 @@ public class JavaFoldingTest extends JavaFoldingTestCase {
         }""");
       myFixture.doHighlighting();// update folding for the new text
       assertTopLevelFoldRegionsState("[FoldRegion +(7:76), placeholder='...']");
-    }
-    finally {
-      CodeInsightSettings.getInstance().ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY = oldValue;
-    }
+      return null;
+    });
   }
 
   public void testGroupedFoldingsAreNotUpdatedOnUnrelatedDocumentChange() {

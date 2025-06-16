@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@SuppressWarnings("ALL")
+@Deprecated(forRemoval = true)
 public class PySliceExpressionImpl extends PyElementImpl implements PySliceExpression {
   public PySliceExpressionImpl(ASTNode astNode) {
     super(astNode);

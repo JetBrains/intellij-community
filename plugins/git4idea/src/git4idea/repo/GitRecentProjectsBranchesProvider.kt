@@ -11,10 +11,12 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.application
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
+import git4idea.i18n.GitBundle
 import git4idea.util.CaffeineUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -33,7 +35,25 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.readText
 
 internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
-  override fun getCurrentBranch(projectPath: String): String? = application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath)
+  override fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? =
+    application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath, nameIsDistinct)
+}
+
+internal enum class RecentProjectsShowBranchMode {
+  NEVER {
+    override fun toString(): String = GitBundle.message("git.recent.projects.show.branch.mode.never")
+    override fun shouldShow(nameIsDistinct: Boolean): Boolean = false
+  },
+  DUPLICATE_NAMES {
+    override fun toString(): String = GitBundle.message("git.recent.projects.show.branch.mode.for.duplicate.names")
+    override fun shouldShow(nameIsDistinct: Boolean): Boolean = !nameIsDistinct
+  },
+  ALWAYS {
+    override fun toString(): String = GitBundle.message("git.recent.projects.show.branch.mode.always")
+    override fun shouldShow(nameIsDistinct: Boolean): Boolean = true
+  };
+
+  abstract fun shouldShow(nameIsDistinct: Boolean): Boolean
 }
 
 @Service
@@ -68,7 +88,11 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
     }
   }
 
-  fun getCurrentBranch(projectPath: String): String? {
+  fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
+    val showBranchMode = AdvancedSettings.getEnum("git.recent.projects.show.branch", RecentProjectsShowBranchMode::class.java)
+    if (!showBranchMode.shouldShow(nameIsDistinct)) {
+      return null
+    }
     val branchFuture = cache.get(projectPath)
     return (branchFuture.getNow(GitRecentProjectCachedBranch.Unknown) as? GitRecentProjectCachedBranch.KnownBranch)?.branchName
   }

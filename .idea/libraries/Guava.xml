@@ -1,37 +1,32 @@
 <component name="libraryTable">
   <library name="Guava" type="repository">
-    <properties maven-id="com.google.guava:guava:33.4.0-jre">
+    <properties maven-id="com.google.guava:guava:33.4.8-jre">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava/33.4.0-jre/guava-33.4.0-jre.jar">
-          <sha256sum>b918c98a7e44dbe94ebd9fe3e40cddaadb5a93e6a78eb6008b42df237241e538</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava/33.4.8-jre/guava-33.4.8-jre.jar">
+          <sha256sum>f3d7f57f67fd622f4d468dfdd692b3a5e3909246c28017ac3263405f0fe617ed</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2.jar">
-          <sha256sum>8a8f81cf9b359e3f6dfa691a1e776985c061ef2f223c9b2c80753e1b458e8064</sha256sum>
-        </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0.jar">
-          <sha256sum>88241573467ddca44ffd4d74aa04c2bbfd11bf7c17e0c342c94c9de7a70a7c64</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar">
+          <sha256sum>cbfc3906b19b8f55dd7cfd6dfe0aa4532e834250d7f080bd8d211a3e246b59cb</sha256sum>
         </artifact>
       </verification>
       <exclude>
         <dependency maven-id="com.google.guava:listenablefuture" />
-        <dependency maven-id="com.google.code.findbugs:jsr305" />
-        <dependency maven-id="org.checkerframework:checker-qual" />
+        <dependency maven-id="org.jspecify:jspecify" />
         <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+        <dependency maven-id="com.google.j2objc:j2objc-annotations" />
       </exclude>
     </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/guava" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.4.0-jre/guava-33.4.0-jre.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.4.8-jre/guava-33.4.8-jre.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.4.0-jre/guava-33.4.0-jre-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.2/failureaccess-1.0.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/3.0.0/j2objc-annotations-3.0.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/33.4.8-jre/guava-33.4.8-jre-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

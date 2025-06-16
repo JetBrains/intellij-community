@@ -1,7 +1,5 @@
 // "Create local variable 'abc'" "true"
 // WITH_STDLIB
-//TODO K2 incorrectly deduces the type, see KT-67250
-// K2_AFTER_ERROR: Initializer type mismatch: expected 'Int', actual 'Nothing?'.
 class Test {
     fun outer() {
         val abc = 0

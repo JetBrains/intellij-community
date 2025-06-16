@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -40,6 +40,7 @@ import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.File;
 import java.io.IOException;
@@ -211,7 +212,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
     }
   }
 
-  void update(@NotNull ExternalProjectInfo externalProjectInfo) {
+  public void update(@NotNull ExternalProjectInfo externalProjectInfo) {
     ProjectSystemId projectSystemId = externalProjectInfo.getProjectSystemId();
     String projectPath = externalProjectInfo.getExternalProjectPath();
     InternalExternalProjectInfo newInfo = new InternalExternalProjectInfo(
@@ -318,7 +319,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
 
   @NotNull
   @ApiStatus.Internal
-  public Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
+  public @Unmodifiable Collection<ExternalProjectInfo> list(final @NotNull ProjectSystemId projectSystemId) {
     return ContainerUtil.mapNotNull(myExternalRootProjects.values(),
                                     info -> projectSystemId.equals(info.getProjectSystemId()) ? info : null);
   }

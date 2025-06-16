@@ -38,7 +38,7 @@ var1 = 1
 # The following should all generate errors because they are not legal type
 # expressions, despite being enclosed in quotes.
 def invalid_annotations(
-    p1: "eval(" ".join(map(chr, [105, 110, 116])))",  # E
+    p1: "eval(''.join(map(chr, [105, 110, 116])))",  # E
     p2: "[int, str]",  # E
     p3: "(int, str)",  # E
     p4: "[int for i in range(1)]",  # E
@@ -87,6 +87,9 @@ class ClassD:
     x: "int" = 0  # OK
 
     y: int = 0  # E: Refers to local int, which isn't a legal type expression
+
+    def __init__(self) -> None:
+        self.ClassC = ClassC()
 
 
 assert_type(ClassD.str, str)

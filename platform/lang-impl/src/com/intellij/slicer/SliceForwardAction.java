@@ -25,7 +25,7 @@ public final class SliceForwardAction extends CodeInsightAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return LanguageSlicing.getProvider(file) != null && !editor.getSelectionModel().hasSelection();
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return LanguageSlicing.getProvider(psiFile) != null && !editor.getSelectionModel().hasSelection();
   }
 }

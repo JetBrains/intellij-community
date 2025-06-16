@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -35,6 +35,11 @@ public final class DuplicateLinesAction extends EditorAction {
         VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
         DuplicateAction.duplicateLinesRange(editor, caretPos, caretPos);
       }
+    }
+
+    @Override
+    public boolean reverseCaretOrder() {
+      return true;
     }
   }
 }

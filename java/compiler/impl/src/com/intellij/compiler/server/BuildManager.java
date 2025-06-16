@@ -26,7 +26,7 @@ import com.intellij.ide.IdleTracker;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -122,8 +122,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
-import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
+import org.jetbrains.jps.util.Iterators;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
@@ -135,9 +135,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
@@ -155,8 +153,7 @@ import java.util.stream.Collectors;
 import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static com.intellij.openapi.diagnostic.InMemoryHandler.IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME;
 import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferContentsIfNonLocal;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -744,7 +741,7 @@ public final class BuildManager implements Disposable {
       return false;
     }
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!config.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isTrusted(project)) {
+    if (!config.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isProjectTrusted(project)) {
       return false;
     }
     return config.allowAutoMakeWhileRunningApplication() || !hasRunningProcess(project);
@@ -923,8 +920,7 @@ public final class BuildManager implements Disposable {
         String optionsPath = PathManager.getOptionsPath();
 
         if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-          final var eel = upgradeBlocking(eelDescriptor);
-          optionsPath = asEelPath(transferContentsIfNonLocal(eel, Path.of(optionsPath), null)).toString();
+          optionsPath = asEelPath(transferLocalContentToRemote(Path.of(optionsPath), new EelPathUtils.TransferTarget.Temporary(eelDescriptor))).toString();
         }
         else {
           optionsPath = pathMapper.apply(optionsPath);
@@ -1456,22 +1452,14 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-D" + JPS_USE_EXPERIMENTAL_STORAGE + "=true");
     }
 
-    String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
-    if (jnaBootLibraryPath != null && wslPath == null) {
-      //noinspection SpellCheckingInspection
-      cmdLine.addParameter("-Djna.boot.library.path=" + cmdLine.copyPathToHostIfRequired(Path.of(jnaBootLibraryPath)));
-      //noinspection SpellCheckingInspection
-      cmdLine.addParameter("-Djna.nosys=true");
-      //noinspection SpellCheckingInspection
-      cmdLine.addParameter("-Djna.noclasspath=true");
-    }
+    attachJnaBootLibraryIfNeeded(project, cmdLine, wslPath);
     if (Registry.is("jps.build.use.workspace.model")) {
       // todo: upload workspace model to remote side because it runs with eel
       String globalCacheId = "Local";
 
       cmdLine.addParameter("-Dintellij.jps.use.workspace.model=true");
       WorkspaceModelCache cache = WorkspaceModelCache.getInstance(project);
-      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.getInstance();
+      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.Companion.getInstance();
       if (cache != null && globalCache != null) {
         //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
         cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
@@ -1509,13 +1497,22 @@ public final class BuildManager implements Disposable {
 
     if (ProjectUtilCore.isExternalStorageEnabled(project)) {
       Path externalProjectConfig = ProjectUtil.getExternalConfigurationDir(project);
-      String pathToExternalStorage;
       if (canUseEel() && !EelPathUtils.isProjectLocal(project)) {
-        pathToExternalStorage = cmdLine.copyPathToHostIfRequired(externalProjectConfig);
-        cmdLine.addParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=' + pathToExternalStorage);
+        try {
+          cmdLine.addPathParameter(
+            "-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=',
+            cmdLine.copyProjectSpecificPathToTargetIfRequired(project, externalProjectConfig)
+          );
+        }
+        catch (NoSuchFileException ignored) {
+          // No external project cache -- no copy of external project cache.
+        }
+        catch (FileSystemException err) {
+          throw new ExecutionException("Failed to copy external project configuration", err);
+        }
       }
       else {
-        pathToExternalStorage = externalProjectConfig.toString();
+        String pathToExternalStorage = externalProjectConfig.toString();
         cmdLine.addPathParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + '=', pathToExternalStorage);
       }
     }
@@ -1647,7 +1644,8 @@ public final class BuildManager implements Disposable {
                                FileUtil.toSystemIndependentName(PathManager.getPluginsPath()));
     }
 
-    cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + '=', FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
+    Path logPath = Path.of(FileUtil.toSystemIndependentName(getBuildLogDirectory().getAbsolutePath()));
+    cmdLine.addPathParameter("-D" + GlobalOptions.LOG_DIR_OPTION + '=', logPath);
     if (AdvancedSettings.getBoolean(IN_MEMORY_LOGGER_ADVANCED_SETTINGS_NAME)) {
       cmdLine.addParameter("-D" + GlobalOptions.USE_IN_MEMORY_FAILED_BUILD_LOGGER + "=true");
     }
@@ -1674,7 +1672,12 @@ public final class BuildManager implements Disposable {
       }
 
       for (Pair<String, Path> parameter : provider.getPathParameters()) {
-        cmdLine.addPathParameter(parameter.getFirst(), cmdLine.copyPathToTargetIfRequired(parameter.getSecond()));
+        try {
+          cmdLine.addPathParameter(parameter.getFirst(), cmdLine.copyProjectSpecificPathToTargetIfRequired(project, parameter.getSecond()));
+        }
+        catch (FileSystemException err) {
+          throw new ExecutionException("Failed to copy parameter " + parameter.getFirst(), err);
+        }
       }
     }
 
@@ -1738,7 +1741,12 @@ public final class BuildManager implements Disposable {
 
     for (BuildProcessParametersProvider buildProcessParametersProvider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
       for (String path : buildProcessParametersProvider.getAdditionalPluginPaths()) {
-        cmdLine.copyPathToTargetIfRequired(Paths.get(path));
+        try {
+          cmdLine.copyProjectSpecificPathToTargetIfRequired(project, Paths.get(path));
+        }
+        catch (FileSystemException err) {
+          throw new ExecutionException("Failed to copy additional plugin", err);
+        }
       }
     }
 
@@ -1752,6 +1760,9 @@ public final class BuildManager implements Disposable {
     boolean lowPriority = AdvancedSettings.getBoolean("compiler.lower.process.priority");
     if (SystemInfo.isUnix && lowPriority) {
       cmdLine.setUnixProcessPriority(10);
+    }
+    if (SystemInfo.isLinux && Registry.is("compiler.process.new.session", true)) {
+      cmdLine.setStartNewSession();
     }
 
     try {
@@ -1772,7 +1783,7 @@ public final class BuildManager implements Disposable {
         return BaseOutputReader.Options.BLOCKING;
       }
     };
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         // re-translate builder's output to idea.log
@@ -1807,6 +1818,30 @@ public final class BuildManager implements Disposable {
     }
 
     return processHandler;
+  }
+
+  private static void attachJnaBootLibraryIfNeeded(
+    @NotNull Project project,
+    @NotNull BuildCommandLineBuilder cmdLine,
+    @Nullable WslPath wslPath
+  ) {
+    // it's impossible to use a Windows DLL inside a WSL environment
+    if (wslPath != null) {
+      return;
+    }
+    // it's impossible to use a Windows DLL inside a non-local environment
+    if (!(EelProviderUtil.getEelDescriptor(project) instanceof LocalEelDescriptor)) {
+      return;
+    }
+    String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
+    if (jnaBootLibraryPath != null) {
+      //noinspection SpellCheckingInspection
+      cmdLine.addPathParameter("-Djna.boot.library.path=", jnaBootLibraryPath);
+      //noinspection SpellCheckingInspection
+      cmdLine.addParameter("-Djna.nosys=true");
+      //noinspection SpellCheckingInspection
+      cmdLine.addParameter("-Djna.noclasspath=true");
+    }
   }
 
   private static void showSnapshotNotificationAfterFinish(@NotNull Project project) {

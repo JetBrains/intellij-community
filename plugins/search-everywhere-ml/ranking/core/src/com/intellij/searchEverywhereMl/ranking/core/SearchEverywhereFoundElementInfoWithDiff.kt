@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.internal.statistic.eventLog.events.EventPair
 
 
@@ -15,8 +16,9 @@ internal open class SearchEverywhereFoundElementInfoBeforeDiff(
   val heuristicPriority: Int,
   contributor: SearchEverywhereContributor<*>,
   val mlWeight: Double?,
-  val mlFeatures: List<EventPair<*>>
-) : SearchEverywhereFoundElementInfo(element, heuristicPriority, contributor)
+  val mlFeatures: List<EventPair<*>>,
+  correction: SearchEverywhereSpellCheckResult = SearchEverywhereSpellCheckResult.NoCorrection
+) : SearchEverywhereFoundElementInfo(element, heuristicPriority, contributor, correction)
 
 /**
  * This class is used to display orderingDiff information and store seSearchPosition for OpenFeaturesInScratchFileAction
@@ -27,6 +29,7 @@ internal open class SearchEverywhereFoundElementInfoAfterDiff(
   contributor: SearchEverywhereContributor<*>,
   mlWeight: Double?,
   mlFeatures: List<EventPair<*>>,
+  correction: SearchEverywhereSpellCheckResult = SearchEverywhereSpellCheckResult.NoCorrection,
   val orderingDiff: Int,
   val seSearchPosition: Int
-) : SearchEverywhereFoundElementInfoWithMl(element, heuristicPriority, contributor, mlWeight, mlFeatures)
+) : SearchEverywhereFoundElementInfoWithMl(element, heuristicPriority, contributor, mlWeight, mlFeatures, correction)

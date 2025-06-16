@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -43,6 +44,10 @@ public class ContentTabLabel extends ContentLabel {
   @Override
   protected void handleMouseClick(@NotNull MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_RELEASED) {
+      if (e.isAltDown()) {
+        closeAllOtherTabs();
+        return;
+      }
       if (handleActionsClick(e)) return;
       selectContent();
       handleDoubleClick(e);
@@ -54,9 +59,7 @@ public class ContentTabLabel extends ContentLabel {
       DataContext dataContext = DataManager.getInstance().getDataContext(this);
       for (AnAction action : myLayout.doubleClickActions) {
         AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
-        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-          ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-        }
+        ActionUtil.performAction(action, event);
       }
     }
   }
@@ -237,7 +240,11 @@ public class ContentTabLabel extends ContentLabel {
         content.setPinned(false);
         return;
       }
-      closeContent();
+      if (Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx() == InputEvent.ALT_DOWN_MASK) {
+        closeAllOtherTabs();
+      } else {
+        closeContent();
+      }
     }
 
     @Override
@@ -255,6 +262,15 @@ public class ContentTabLabel extends ContentLabel {
       return text.isEmpty() || !isSelected()
              ? IdeBundle.message("tooltip.close.tab")
              : IdeBundle.message("tooltip.close.tab") + " (" + text + ")";
+    }
+  }
+
+  private void closeAllOtherTabs() {
+    ContentManager contentManager = getContentManager();
+    for (Content content : contentManager.getContents()) {
+      if (content != myContent && content.isCloseable()) {
+        contentManager.removeContent(content, true);
+      }
     }
   }
 }

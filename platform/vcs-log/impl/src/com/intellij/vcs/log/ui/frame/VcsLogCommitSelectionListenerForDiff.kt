@@ -6,6 +6,7 @@ import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.StatusText
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.VcsLogBundle
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.ApiStatus
 
@@ -18,7 +19,7 @@ open class VcsLogCommitSelectionListenerForDiff(
     changesBrowser.setSelectedDetails(emptyList())
   }
 
-  override fun onDetailsLoaded(commitIds: List<Int>, details: List<VcsFullCommitDetails>) {
+  override fun onDetailsLoaded(commitIds: List<VcsLogCommitStorageIndex>, details: List<VcsFullCommitDetails>) {
     val maxSize = VcsLogUtil.getMaxSize(details)
     if (maxSize > VcsLogUtil.getShownChangesLimit()) {
       val sizeText = VcsLogUtil.getSizeText(maxSize)

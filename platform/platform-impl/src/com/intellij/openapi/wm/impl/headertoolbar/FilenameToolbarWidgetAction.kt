@@ -61,7 +61,7 @@ class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRe
     var icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
     if (JBColor.isBright() && isDarkToolbar()) {
       icon = IconLoader.getDarkIcon(icon, true)
-      fg = EditorColorsManager.getInstance().getScheme("Dark").getColor(status.colorKey)
+      fg = EditorColorsManager.getInstance().getScheme("Dark")?.getColor(status.colorKey)
     }
     else {
       fg = status.color

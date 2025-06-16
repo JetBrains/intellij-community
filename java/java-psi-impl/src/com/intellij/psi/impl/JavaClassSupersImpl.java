@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,12 +10,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UnmodifiableHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.intellij.psi.impl.PsiSubstitutorImpl.PSI_EQUIVALENCE;
 
@@ -161,7 +161,7 @@ public final class JavaClassSupersImpl extends JavaClassSupers {
     return null;
   }
 
-  private static final Set<String> ourReportedInconsistencies = ContainerUtil.newConcurrentSet();
+  private static final Set<String> ourReportedInconsistencies = ConcurrentHashMap.newKeySet();
 
   @Override
   public void reportHierarchyInconsistency(@NotNull PsiClass superClass, @NotNull PsiClass derivedClass) {

@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.application
 import com.intellij.util.ui.VcsExecutablePathSelector
-import git4idea.GitVcs
+import com.intellij.vcs.git.shared.GitDisplayName
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
 
@@ -33,7 +33,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
   private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
   private val projectSettings get() = GitVcsSettings.getInstance(project)
 
-  private val pathSelector = VcsExecutablePathSelector(GitVcs.DISPLAY_NAME.get(), disposable, GitExecutableHandler())
+  private val pathSelector = VcsExecutablePathSelector(GitDisplayName.NAME, disposable, GitExecutableHandler())
 
   @Volatile
   private var versionCheckRequested = false
@@ -89,7 +89,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
       modalityState, disposable
     )
 
-    if (!project.isDefault && !project.isTrusted()) {
+    if (!project.isDefault && !TrustedProjects.isProjectTrusted(project)) {
       errorNotifier.showError(GitBundle.message("git.executable.validation.cant.run.in.safe.mode"), null)
       return
     }
@@ -99,9 +99,9 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
 
       override fun run(indicator: ProgressIndicator) {
         val executableManager = GitExecutableManager.getInstance()
-        val executable = executableManager.getExecutable(pathToGit)
+        val executable = executableManager.getExecutable(project, pathToGit)
         executableManager.dropVersionCache(executable)
-        gitVersion = executableManager.identifyVersion(executable)
+        gitVersion = executableManager.identifyVersion(project, executable)
       }
 
       override fun onThrowable(error: Throwable) {
@@ -164,7 +164,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
 
   private inner class GitExecutableHandler : VcsExecutablePathSelector.ExecutableHandler {
     override fun patchExecutable(executable: String): String? {
-      return GitExecutableDetector.patchExecutablePath(executable)
+      return GitExecutableDetector.patchExecutablePath(project, executable)
     }
 
     override fun testExecutable(executable: String) {

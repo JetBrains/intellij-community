@@ -5,6 +5,7 @@ import com.intellij.model.Symbol;
 import com.intellij.model.search.SearchRequest;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -22,8 +23,9 @@ import java.util.Collection;
  */
 public interface PsiSymbolReferenceProvider {
 
-  @NotNull Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiExternalReferenceHost element,
-                                                                           @NotNull PsiSymbolReferenceHints hints);
+  @NotNull @Unmodifiable
+  Collection<? extends @NotNull PsiSymbolReference> getReferences(@NotNull PsiExternalReferenceHost element,
+                                                                  @NotNull PsiSymbolReferenceHints hints);
 
-  @NotNull Collection<? extends @NotNull SearchRequest> getSearchRequests(@NotNull Project project, @NotNull Symbol target);
+  @NotNull @Unmodifiable Collection<? extends @NotNull SearchRequest> getSearchRequests(@NotNull Project project, @NotNull Symbol target);
 }

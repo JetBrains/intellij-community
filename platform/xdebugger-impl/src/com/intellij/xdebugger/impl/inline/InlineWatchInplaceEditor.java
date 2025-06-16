@@ -4,13 +4,13 @@ package com.intellij.xdebugger.impl.inline;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.InplaceEditor;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,19 +22,19 @@ import java.awt.*;
 @ApiStatus.Internal
 public class InlineWatchInplaceEditor extends InplaceEditor {
   private final XSourcePosition myPresentationPosition;
-  private final XDebugSession mySession;
+  private final XDebugSessionProxy mySession;
   private final Editor myHostEditor;
   private final XExpression myInitialExpression;
   private XDebuggerExpressionComboBox myInplaceEditor;
 
   public InlineWatchInplaceEditor(XSourcePosition presentationPosition,
-                                  @NotNull XDebugSession session,
+                                  @NotNull XDebugSessionProxy session,
                                   @NotNull Editor editor) {
     this(presentationPosition, session, editor, null);
   }
 
   public InlineWatchInplaceEditor(XSourcePosition presentationPosition,
-                                  @NotNull XDebugSession session,
+                                  @NotNull XDebugSessionProxy session,
                                   @NotNull Editor editor,
                                   XExpression expression) {
     myPresentationPosition = presentationPosition;
@@ -48,7 +48,7 @@ public class InlineWatchInplaceEditor extends InplaceEditor {
 
   @Override
   protected JComponent createInplaceEditorComponent() {
-    myInplaceEditor = new XDebuggerExpressionComboBox(mySession.getProject(), mySession.getDebugProcess().getEditorsProvider(), "inlineWatch",
+    myInplaceEditor = new XDebuggerExpressionComboBox(mySession.getProject(), mySession.getEditorsProvider(), "inlineWatch",
                                                       mySession.getCurrentPosition(), false, true);
     if (myInitialExpression != null) {
       myInplaceEditor.setExpression(myInitialExpression);

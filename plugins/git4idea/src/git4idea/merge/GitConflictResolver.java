@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
+import com.intellij.openapi.vcs.merge.MergeConflictManager;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -167,7 +168,12 @@ public class GitConflictResolver {
         return mergeDialogInvokedFromNotification || proceedIfNothingToMerge();
       }
 
-      showMergeDialog(initiallyUnmergedFiles);
+      if (MergeConflictManager.isNonModalMergeEnabled(myProject)) {
+        MergeConflictManager.getInstance(myProject).showMergeConflicts(initiallyUnmergedFiles);
+      }
+      else {
+        showMergeDialog(initiallyUnmergedFiles);
+      }
 
       Collection<VirtualFile> unmergedFilesAfterResolve = getUnmergedFiles(myProject, myRoots);
       if (unmergedFilesAfterResolve.isEmpty()) {

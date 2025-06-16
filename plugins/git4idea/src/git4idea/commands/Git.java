@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +13,7 @@ import git4idea.push.GitPushParams;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -22,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.NonExtendable
 public interface Git {
   static @NotNull Git getInstance() {
     return ApplicationManager.getApplication().getService(Git.class);
@@ -145,6 +147,11 @@ public interface Git {
   GitCommandResult setUpstream(@NotNull GitRepository repository,
                                @NotNull String upstreamBranchName,
                                @NotNull String branchName);
+
+  @NotNull
+  GitCommandResult unsetUpstream(@NotNull GitRepository repository,
+                                 @NotNull String branchName);
+
   @NotNull
   GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint, boolean force);
 
@@ -185,6 +192,11 @@ public interface Git {
 
   @NotNull
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository);
+
+  @NotNull
+  default GitCommandResult getResolvedFiles(@NotNull GitRepository repository) {
+    throw new IllegalStateException("getResolvedFiles should be implemented in GitImpl");
+  }
 
   @NotNull
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,

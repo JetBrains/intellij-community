@@ -14,6 +14,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -55,7 +56,8 @@ public interface InspectionProfile extends Comparable<Object> {
    * @param element context element
    * @return all (both enabled and disabled) tools
    */
-  @NotNull List<InspectionToolWrapper<?, ?>> getInspectionTools(@Nullable PsiElement element);
+  @NotNull @Unmodifiable
+  List<InspectionToolWrapper<?, ?>> getInspectionTools(@Nullable PsiElement element);
 
   boolean isToolEnabled(@Nullable HighlightDisplayKey key, @Nullable PsiElement element);
 
@@ -88,5 +90,5 @@ public interface InspectionProfile extends Comparable<Object> {
 
   @NotNull String getDisplayName();
 
-  @NotNull List<Tools> getAllEnabledInspectionTools(Project project);
+  @NotNull @Unmodifiable List<Tools> getAllEnabledInspectionTools(Project project);
 }

@@ -979,7 +979,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       selector.accept(this);
       if (syntheticVar) {
-        expressionValue = createTempVariable(targetType);
+        expressionValue = targetType == null ? 
+                          myCurrentFlow.createTempVariable(DfType.TOP) : createTempVariable(targetType);
         addInstruction(new SimpleAssignmentInstruction(null, expressionValue));
       }
       addInstruction(new PopInstruction());
@@ -2751,7 +2752,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final CallInliner[] INLINERS = {
     new AssertJInliner(), new OptionalChainInliner(), new LambdaInliner(), new CollectionUpdateInliner(),
     new StreamChainInliner(), new MapUpdateInliner(), new AssumeInliner(), new ClassMethodsInliner(),
-    new AssertAllInliner(), new BoxingInliner(), new SimpleMethodInliner(), new AccessorInliner(),
+    new AssertAllInliner(), new AllNotNullInliner(), new BoxingInliner(), new SimpleMethodInliner(), new AccessorInliner(),
     new TransformInliner(), new EnumCompareInliner(), new IndexOfInliner(), new AssertInstanceOfInliner()
   };
 }

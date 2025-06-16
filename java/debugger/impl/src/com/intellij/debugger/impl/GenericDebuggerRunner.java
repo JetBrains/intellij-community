@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -97,8 +97,8 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
     throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();
     return state.prepareTargetToCommandExecution(env, LOG, "Failed to execute debug configuration async", () -> {
-      if (state instanceof JavaCommandLine) {
-        JavaProgramPatcher.runCustomPatchers(((JavaCommandLine)state).getJavaParameters(), env.getExecutor(), env.getRunProfile());
+      if (state instanceof JavaCommandLine javaCommandLine) {
+        JavaProgramPatcher.runCustomPatchers(javaCommandLine.getJavaParameters(), env.getExecutor(), env.getRunProfile());
       }
       return createContentDescriptor(state, env);
     });
@@ -106,32 +106,32 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
 
   protected @Nullable RunContentDescriptor createContentDescriptor(@NotNull RunProfileState state,
                                                                    @NotNull ExecutionEnvironment environment) throws ExecutionException {
-    if (state instanceof JavaCommandLine) {
-      JavaParameters parameters = ((JavaCommandLine)state).getJavaParameters();
-      boolean isPollConnection = true;
-      RemoteConnection connection = null;
-      if (state instanceof RemoteConnectionCreator) {
-        connection = ((RemoteConnectionCreator)state).createRemoteConnection(environment);
-        isPollConnection = ((RemoteConnectionCreator)state).isPollConnection();
-      }
-      if (connection == null) {
-        int transport = DebuggerSettings.getInstance().getTransport();
-        connection = new RemoteConnectionBuilder(true, transport, transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "")
-          .asyncAgent(true)
-          .project(environment.getProject())
-          .create(parameters);
-        isPollConnection = true;
-      }
 
-      return attachVirtualMachine(state, environment, connection, isPollConnection);
+    if (state instanceof RemoteConnectionCreator remoteConnectionCreator) {
+      RemoteConnection connection = remoteConnectionCreator.createRemoteConnection(environment);
+      boolean isPollConnection = remoteConnectionCreator.isPollConnection();
+      if (connection != null) {
+        return attachVirtualMachine(state, environment, connection, isPollConnection);
+      }
     }
-    if (state instanceof PatchedRunnableState) {
-      RemoteConnection connection =
-        doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
+
+    if (state instanceof JavaCommandLine javaCommandLine) {
+      JavaParameters parameters = javaCommandLine.getJavaParameters();
+      int transport = DebuggerSettings.getInstance().getTransport();
+      RemoteConnection connection = new RemoteConnectionBuilder(true, transport, transport == DebuggerSettings.SOCKET_TRANSPORT ? "0" : "")
+        .asyncAgent(true)
+        .project(environment.getProject())
+        .create(parameters);
       return attachVirtualMachine(state, environment, connection, true);
     }
-    if (state instanceof RemoteState) {
-      final RemoteConnection connection = createRemoteDebugConnection((RemoteState)state, environment.getRunnerSettings());
+
+    if (state instanceof PatchedRunnableState) {
+      RemoteConnection connection = createPatchedConnection(environment);
+      return attachVirtualMachine(state, environment, connection, true);
+    }
+
+    if (state instanceof RemoteState remoteState) {
+      final RemoteConnection connection = createRemoteDebugConnection(remoteState, environment.getRunnerSettings());
       return attachVirtualMachine(state, environment, connection, false);
     }
 
@@ -170,6 +170,7 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             if (executionResult instanceof DefaultExecutionResult) {
               sessionImpl.addRestartActions(((DefaultExecutionResult)executionResult).getRestartActions());
             }
+            sessionImpl.setPauseActionSupported(true); // enable pause by default
             return JavaDebugProcess.create(session, debuggerSession);
           }
         }).getRunContentDescriptor());
@@ -212,6 +213,10 @@ public class GenericDebuggerRunner implements JvmPatchableProgramRunner<GenericD
             runProfile instanceof RunConfiguration ? ((RunConfiguration)runProfile).getProject() : null);
     JavaProgramPatcher
       .runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtensionOrFail(DefaultDebugExecutor.class), runProfile);
+  }
+
+  public static RemoteConnection createPatchedConnection(@NotNull ExecutionEnvironment environment) throws ExecutionException {
+    return doPatch(new JavaParameters(), environment.getRunnerSettings(), true, environment.getProject());
   }
 
   private static RemoteConnection doPatch(@NotNull JavaParameters javaParameters,

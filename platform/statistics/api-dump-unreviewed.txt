@@ -21,12 +21,6 @@ f:com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
 - getLogFiles():java.util.List
 - getLogFilesExceptActive():java.util.List
-f:com.intellij.internal.statistic.eventLog.EventLogAppConnectionSettings
-- <init>():V
-- getExtraHeaders():java.util.Map
-- getSSLContext():javax.net.ssl.SSLContext
-- getUserAgent():java.lang.String
-- selectProxy(java.lang.String):com.intellij.internal.statistic.eventLog.connection.request.StatsProxyInfo
 com.intellij.internal.statistic.eventLog.EventLogConfigOptionsListener
 - a:optionsChanged(java.lang.String,java.util.Map):V
 f:com.intellij.internal.statistic.eventLog.EventLogConfigOptionsService
@@ -56,13 +50,16 @@ c:com.intellij.internal.statistic.eventLog.EventLogFileWriter
 - f:log(java.lang.String):V
 - f:rollOver():V
 - pf:setOldestExistingFile(J):V
-f:com.intellij.internal.statistic.eventLog.EventLogGroup
+c:com.intellij.internal.statistic.eventLog.EventLogGroup
 - <init>(java.lang.String,I):V
 - <init>(java.lang.String,I,java.lang.String):V
 - b:<init>(java.lang.String,I,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,I,java.lang.String,java.lang.String):V
+- <init>(java.lang.String,I,java.lang.String,java.lang.String,java.util.List):V
+- b:<init>(java.lang.String,I,java.lang.String,java.lang.String,java.util.List,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getDescription():java.lang.String
 - f:getEvents():java.util.List
+- f:getGroupData():java.util.List
 - f:getId():java.lang.String
 - f:getRecorder():java.lang.String
 - f:getVersion():I
@@ -134,8 +131,6 @@ f:com.intellij.internal.statistic.eventLog.StatisticsEventLogFileWriter
 - getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 - log(com.jetbrains.fus.reporting.model.lion3.LogEvent):V
 - rollOver():V
-com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
-- a:onLogEvent(com.jetbrains.fus.reporting.model.lion3.LogEvent,java.lang.String,java.util.Map):V
 f:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 - sf:forceLoggingAlwaysEnabled():Z
@@ -148,15 +143,6 @@ com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter
 - a:getActiveFile():com.intellij.internal.statistic.eventLog.EventLogFile
 - a:getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 - a:log(com.jetbrains.fus.reporting.model.lion3.LogEvent):V
-- a:rollOver():V
-com.intellij.internal.statistic.eventLog.StatisticsEventLogger
-- a:cleanup():V
-- a:computeAsync(kotlin.jvm.functions.Function1):V
-- a:getActiveLogFile():com.intellij.internal.statistic.eventLog.EventLogFile
-- a:getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
-- a:logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,java.util.Map,Z):java.util.concurrent.CompletableFuture
-- a:logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,kotlin.jvm.functions.Function0,Z):java.util.concurrent.CompletableFuture
-- logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,Z):java.util.concurrent.CompletableFuture
 - a:rollOver():V
 a:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 - sf:Companion:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider$Companion

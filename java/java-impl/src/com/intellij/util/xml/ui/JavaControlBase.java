@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.ui;
 
 import com.intellij.ide.util.ClassFilter;
@@ -12,10 +12,12 @@ import com.intellij.ui.ReferenceEditorWithBrowseButton;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericDomValue;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
-abstract class JavaControlBase<T extends JComponent> extends EditorTextFieldControl<T> {
+@ApiStatus.Internal
+public abstract class JavaControlBase<T extends JComponent> extends EditorTextFieldControl<T> {
   protected JavaControlBase(DomWrapper<String> domWrapper, boolean commitOnEveryChange) {
     super(domWrapper, commitOnEveryChange);
   }

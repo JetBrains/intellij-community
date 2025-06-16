@@ -4,6 +4,7 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.pasteText
 import com.intellij.driver.sdk.ui.ui
@@ -35,11 +36,17 @@ open class NewProjectDialogUI(data: ComponentData) : UiComponent(data) {
       .click()
   }
 
+  open fun chooseGradleDsl(gradleDsl: String) {
+    x("//div[@text='Gradle DSL:']/following-sibling::div[@class='SegmentedButtonComponent']")
+      .waitOneText(gradleDsl)
+      .click()
+  }
+
   val nameTextField = textField("//div[@accessiblename='Name:' and @class='JBTextField']")
   val nextButton = x("//div[@text='Next']")
   open val createButton = x("//div[@text='Create']")
   private val projectTypeList = x("//div[@class='JBList']")
-  val sampleCodeLabel = x("//div[@text='Add sample code']")
-
-
+  val sampleCodeLabel = checkBox { byText("Add sample code") }
+  val multiModuleLabel = checkBox { byText("Generate multi-module build") }
+  val compactStructureLabel = checkBox { byText("Use compact project structure") }
 }

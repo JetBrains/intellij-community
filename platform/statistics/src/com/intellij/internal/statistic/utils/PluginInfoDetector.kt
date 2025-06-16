@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginUtils
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.internal.statistic.FeaturedPluginsInfoProvider
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -37,7 +38,7 @@ internal fun isPlatformOrJetBrainsBundled(aClass: Class<*>): Boolean {
       return true
     }
     else -> {
-      return PluginManagerCore.getPluginDescriptorIfIdeaClassLoaderIsUsed(aClass) == null
+      return PluginUtils.getPluginDescriptorIfIdeaClassLoaderIsUsed(aClass) == null
     }
   }
 }
@@ -54,7 +55,7 @@ fun getPluginInfo(className: String): PluginInfo {
     return jvmCore
   }
 
-  val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className) ?: return unknownPlugin
+  val plugin = PluginUtils.getPluginDescriptorOrPlatformByClassName(className) ?: return unknownPlugin
   return getPluginInfoByDescriptor(plugin)
 }
 
@@ -257,7 +258,7 @@ private fun isClassFromCoreOrJetBrainsPlugin(clazz: Class<*>): Boolean {
   if (loader is PluginAwareClassLoader) {
     return isCoreOrJetBrainsPlugin((loader as PluginAwareClassLoader).pluginDescriptor)
   }
-  val descriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(clazz.name)
+  val descriptor = PluginUtils.getPluginDescriptorOrPlatformByClassName(clazz.name)
   return descriptor != null && isCoreOrJetBrainsPlugin(descriptor)
 }
 

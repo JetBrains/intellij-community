@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew
 
 import com.intellij.codeWithMe.ClientId
@@ -10,12 +10,13 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
 import kotlinx.coroutines.withContext
@@ -41,8 +42,6 @@ private class WhatsNewEnvironmentAccessorImpl : WhatsNewEnvironmentAccessor {
             || AppMode.isRemoteDevHost()
             // TODO: disable for UI tests since UI tests are not ready for What's new
             || Registry.`is`("expose.ui.hierarchy.url", false)
-            // TODO this is done temporarily, see LLM-13591
-            || PlatformUtils.isIdeaCommunity()
 
   override suspend fun getWhatsNewContent() = WhatsNewContent.getWhatsNewContent()
   override fun findAction() = ActionManager.getInstance().getAction("WhatsNewAction") as? WhatsNewAction
@@ -73,6 +72,14 @@ private class WhatsNewEnvironmentAccessorImpl : WhatsNewEnvironmentAccessor {
   }
 }
 
+@Service
+internal class WhatsNewStatus {
+  private val isContentAvailableFlag = AtomicBoolean()
+  var isContentAvailable: Boolean
+    get() = isContentAvailableFlag.get()
+    set(value) = isContentAvailableFlag.set(value)
+}
+
 internal class WhatsNewShowOnStartCheckService(private val environment: WhatsNewEnvironmentAccessor) : ProjectActivity {
   @Suppress("unused") // used by the component container
   constructor() : this(WhatsNewEnvironmentAccessorImpl())
@@ -90,6 +97,7 @@ internal class WhatsNewShowOnStartCheckService(private val environment: WhatsNew
       val content = environment.getWhatsNewContent()
       logger.info("Got What's New content: $content")
       if (content != null) {
+        serviceAsync<WhatsNewStatus>().isContentAvailable = content.isAvailable()
         if (WhatsNewContentVersionChecker.isNeedToShowContent(content).also { logger.info("Should show What's New: $it") }) {
           val whatsNewAction = environment.findAction()
           if (whatsNewAction != null) {

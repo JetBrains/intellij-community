@@ -9,13 +9,12 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
-import com.intellij.vcs.log.impl.VcsLogTabsManager
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import git4idea.GitVcs
 import java.util.*
 
-class ShowGitLogCommandAction : DumbAwareAction() {
+internal class ShowGitLogCommandAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
@@ -33,9 +32,11 @@ class ShowGitLogCommandAction : DumbAwareAction() {
       val uiFactory = GitLogCommandUiFactory("command-log-" + UUID.randomUUID().toString(),
                                              VcsLogFilterObject.collection(), project.service<VcsLogProjectTabsProperties>(),
                                              vcsLogManager.colorManager)
-      val ui = VcsLogContentUtil.openLogTab(project, vcsLogManager, VcsLogTabsManager.TAB_GROUP_ID,
-                                            { it.filterUi.filters[GitLogCommandFilter.KEY]?.command ?: "" }, uiFactory, true)
+      val ui = vcsLogManager.createLogUi(uiFactory)
       ui.filterUi.addFilterListener { VcsLogContentUtil.updateLogUiName(project, ui) }
+
+      VcsLogContentUtil.openLogTab(project, vcsLogManager, VcsLogContentUtil.DEFAULT_TAB_GROUP_ID,
+                                   ui, { it.filterUi.filters[GitLogCommandFilter.KEY]?.command ?: "" }, true)
       IdeFocusManager.getInstance(project).requestFocus(ui.filterUi.textFilterComponent.focusedComponent, true)
     }
   }

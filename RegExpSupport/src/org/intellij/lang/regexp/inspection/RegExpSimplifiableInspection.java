@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.lang.regexp.RegExpBundle;
 import org.intellij.lang.regexp.RegExpTT;
@@ -62,7 +63,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
         if (elements.length == 1) {
           final RegExpClassElement element = elements[0];
           if (element instanceof RegExpPosixBracketExpression) return;
-          if (!(element instanceof RegExpCharRange)) {
+          if (!(element instanceof RegExpCharRange) && !(element instanceof RegExpIntersection)) {
             if (!(element instanceof RegExpChar) || !"{}().*+?|$".contains(element.getText())) {
               // [a] -> a
               registerProblem(regExpClass, element.getUnescapedText());
@@ -107,7 +108,7 @@ public class RegExpSimplifiableInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpQuantifier(RegExpQuantifier quantifier) {
-      if (!quantifier.isCounted()) {
+      if (!quantifier.isCounted() || quantifier.getLastChild() instanceof PsiErrorElement) {
         return;
       }
       final RegExpNumber minElement = quantifier.getMin();

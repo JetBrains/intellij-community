@@ -5,10 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.command.CommandCompletionLookupElement;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction;
 import com.intellij.codeInsight.template.impl.actions.NextVariableAction;
@@ -123,6 +122,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
   private boolean myFirstElementAdded = false;
   private boolean myShowIfMeaningless = false;
+  private final LookupDisplayStrategy myDisplayStrategy;
 
   final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
 
@@ -138,6 +138,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myArranger = arranger;
     myPresentableArranger = arranger;
     this.editor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
+    myDisplayStrategy = LookupDisplayStrategy.getStrategy(editor);
 
     DaemonCodeAnalyzer.getInstance(session.getProject()).disableUpdateByTimer(this);
 
@@ -158,14 +159,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
 
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+    list.setBackground(getBackgroundColor());
 
     if (ExperimentalUI.isNewUI()) {
       myAdComponent = new NewUILookupAdvertiser();
     }
     else {
       myAdComponent = new Advertiser();
-      myAdComponent.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+      myAdComponent.setBackground(getBackgroundColor());
     }
 
     myOffsets = new LookupOffsets(this.editor);
@@ -177,6 +178,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     addListeners();
 
     myCreatedTimestamp = System.currentTimeMillis();
+  }
+
+  @ApiStatus.Internal
+  protected @NotNull Color getBackgroundColor() {
+    return myDisplayStrategy.getBackgroundColor();
   }
 
   private CollectionListModelWithBatchUpdate<LookupElement> getListModel() {
@@ -656,7 +662,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     fireItemSelected(item, completionChar);
   }
 
-  private void hideWithItemSelected(LookupElement lookupItem, char completionChar) {
+  @ApiStatus.Internal
+  public void hideWithItemSelected(LookupElement lookupItem, char completionChar) {
     fireBeforeItemSelected(lookupItem, completionChar);
     doHide(false, true);
     fireItemSelected(lookupItem, completionChar);
@@ -679,19 +686,21 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     hostEditor.getCaretModel().runForEachCaret(__ -> {
       EditorModificationUtilEx.deleteSelectedText(hostEditor);
       final int caretOffset = hostEditor.getCaretModel().getOffset();
-
-      int offset;
-      try {
-        offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
+      CommandCompletionLookupElement element = item.as(CommandCompletionLookupElement.class);
+      if (element == null || element.getUseLookupString()) {
+        int offset;
+        try {
+          offset = LookupUtil.insertLookupInDocumentWindowIfNeeded(project, editor, caretOffset, prefixLength, lookupString);
+        }
+        catch (AssertionError ae) {
+          String classes = StreamEx.iterate(
+              item, Objects::nonNull, i -> i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null)
+            .map(le -> le.getClass().getName()).joining(" -> ");
+          LOG.error("When completing " + item + " (" + classes + ")", ae);
+          return;
+        }
+        hostEditor.getCaretModel().moveToOffset(offset);
       }
-      catch (AssertionError ae) {
-        String classes = StreamEx.iterate(
-            item, Objects::nonNull, i -> i instanceof LookupElementDecorator ? ((LookupElementDecorator<?>)i).getDelegate() : null)
-          .map(le -> le.getClass().getName()).joining(" -> ");
-        LOG.error("When completing " + item + " (" + classes + ")", ae);
-        return;
-      }
-      hostEditor.getCaretModel().moveToOffset(offset);
       hostEditor.getSelectionModel().removeSelection();
     });
 
@@ -726,10 +735,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       return false;
     }
     if (isVisible() && editor.getContentComponent().isShowing()) {
-      HintManagerImpl.updateLocation(this, editor, myUi.calculatePosition().getLocation());
+      updateLocation(myUi.calculatePosition().getLocation());
     }
     checkValid();
     return true;
+  }
+
+  @ApiStatus.Internal
+  protected void updateLocation(Point p) {
+    myDisplayStrategy.updateLocation(this, editor, p);
   }
 
   @Override
@@ -821,11 +835,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       delegateActionToEditor(IdeActions.ACTION_RENAME, null, actionEvent);
     }
     try {
-      HintManagerImpl.getInstanceImpl().showEditorHint(
-        this, editor, p, HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING, 0, false,
-        HintManagerImpl.createHintHint(editor, p, this, HintManager.UNDER).
-          setRequestFocus(ScreenReader.isActive()).
-          setAwtTooltip(false));
+      myDisplayStrategy.showLookup(this, editor, p);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -852,7 +862,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
                                       @Nullable Supplier<? extends AnAction> delegateActionSupplier,
                                       @NotNull AnActionEvent actionEvent) {
     AnAction action = ActionManager.getInstance().getAction(actionID);
-    DumbAwareAction.create(e -> ActionUtil.performActionDumbAwareWithCallbacks(
+    DumbAwareAction.create(e -> ActionUtil.performAction(
       delegateActionSupplier == null ? action : delegateActionSupplier.get(), actionEvent)
     ).registerCustomShortcutSet(action.getShortcutSet(), list);
   }
@@ -954,9 +964,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
           AnAction completeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM);
           // the execution is wrapped into a command inside EditorAction
           if (completeAction != null && editor instanceof EditorEx) {
-            AnActionEvent dataContext =
-              AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
-            ActionUtil.performActionDumbAwareWithCallbacks(completeAction, dataContext);
+            AnActionEvent dataContext = AnActionEvent.createFromDataContext(
+              ActionPlaces.UNKNOWN, null, ((EditorEx)editor).getDataContext());
+            ActionUtil.performAction(completeAction, dataContext);
           }
           else {
             CommandProcessor.getInstance()
@@ -1227,7 +1237,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       myHidden = true;
 
       try {
-        super.hide();
+        myDisplayStrategy.hideLookup(this, editor);
 
         Disposer.dispose(this);
         ToolTipManager.sharedInstance().unregisterComponent(list);

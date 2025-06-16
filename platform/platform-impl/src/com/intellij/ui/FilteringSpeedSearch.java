@@ -13,6 +13,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.JTextComponent;
@@ -30,26 +31,15 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
   private final JTextComponent myField;
   private final FilteringTree<T, U> myFilteringTree;
 
-  private boolean myUpdating = false;
-
   protected FilteringSpeedSearch(@NotNull FilteringTree<T, U> filteringTree, @NotNull SearchTextField field) {
     myFilteringTree = filteringTree;
     myField = field.getTextEditor();
     myField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        if (!myUpdating) {
-          myUpdating = true;
-          try {
-            String text = myField.getText();
-            updatePattern(text);
-            onUpdatePattern(text);
-            update();
-          }
-          finally {
-            myUpdating = false;
-          }
-        }
+        String text = myField.getText();
+        updatePattern(text);
+        onSearchPatternUpdated(text);
       }
     });
     setEnabled(true);
@@ -63,14 +53,6 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
     });
     getTreeComponent().addKeyListener(this);
     installSupplyTo(getTreeComponent());
-  }
-
-  protected void onSearchFieldUpdated(String pattern) {
-    TreePath[] paths = getTreeComponent().getSelectionModel().getSelectionPaths();
-    myFilteringTree.getSearchModel().refilter();
-    myFilteringTree.expandTreeOnSearchUpdateComplete(pattern);
-    getTreeComponent().getSelectionModel().setSelectionPaths(paths);
-    myFilteringTree.onSpeedSearchUpdateComplete(pattern);
   }
 
   public void select(@NotNull T node) {
@@ -109,16 +91,20 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
   @Override
   public void update() {
     String filter = getFilter();
-    if (!myUpdating) {
-      myUpdating = true;
-      try {
-        myField.setText(filter);
-      }
-      finally {
-        myUpdating = false;
-      }
-    }
-    onSearchFieldUpdated(filter);
+    myField.setText(filter);
+  }
+
+  protected void onSearchPatternUpdated(@Nullable String pattern) {
+    refilter(pattern);
+  }
+
+  @VisibleForTesting
+  public void refilter(@Nullable String pattern) {
+    TreePath[] paths = getTreeComponent().getSelectionModel().getSelectionPaths();
+    myFilteringTree.getSearchModel().refilter();
+    myFilteringTree.expandTreeOnSearchUpdateComplete(pattern);
+    getTreeComponent().getSelectionModel().setSelectionPaths(paths);
+    myFilteringTree.onSpeedSearchUpdateComplete(pattern);
     updateSelection();
   }
 
@@ -163,8 +149,6 @@ public class FilteringSpeedSearch<T extends DefaultMutableTreeNode, U> extends S
       return fullMatch ? matching == FilteringTree.Matching.FULL : matching != FilteringTree.Matching.NONE;
     });
   }
-
-  protected void onUpdatePattern(@Nullable String text) { }
 
   public @NotNull Iterator<T> iterate(T start, boolean fwd, boolean wrap) {
     if (!wrap || start == null) return iterate(start, fwd);

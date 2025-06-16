@@ -18,325 +18,342 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/multiplatform")
-public class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAnalysisTest {
-    @java.lang.Override
-    @org.jetbrains.annotations.NotNull
-    public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K1;
+public abstract class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAnalysisTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiplatform")
+    public static class Multiplatform extends AbstractMultiplatformAnalysisTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("aliasesTypeMismatch")
+        public void testAliasesTypeMismatch() throws Exception {
+            runTest("testData/multiplatform/aliasesTypeMismatch/");
+        }
+
+        @TestMetadata("builtinsAndStdlib")
+        public void testBuiltinsAndStdlib() throws Exception {
+            runTest("testData/multiplatform/builtinsAndStdlib/");
+        }
+
+        @TestMetadata("callableReferences")
+        public void testCallableReferences() throws Exception {
+            runTest("testData/multiplatform/callableReferences/");
+        }
+
+        @TestMetadata("chainedTypeAliasRefinement")
+        public void testChainedTypeAliasRefinement() throws Exception {
+            runTest("testData/multiplatform/chainedTypeAliasRefinement/");
+        }
+
+        @TestMetadata("commonSealedWithPlatformInheritor")
+        public void testCommonSealedWithPlatformInheritor() throws Exception {
+            runTest("testData/multiplatform/commonSealedWithPlatformInheritor/");
+        }
+
+        @TestMetadata("constructorsOfExpect")
+        public void testConstructorsOfExpect() throws Exception {
+            runTest("testData/multiplatform/constructorsOfExpect/");
+        }
+
+        @TestMetadata("correctOverloadResolutionAmbiguity")
+        public void testCorrectOverloadResolutionAmbiguity() throws Exception {
+            runTest("testData/multiplatform/correctOverloadResolutionAmbiguity/");
+        }
+
+        @TestMetadata("defaultArguments")
+        public void testDefaultArguments() throws Exception {
+            runTest("testData/multiplatform/defaultArguments/");
+        }
+
+        @TestMetadata("differentKindsOfDependencies")
+        public void testDifferentKindsOfDependencies() throws Exception {
+            runTest("testData/multiplatform/differentKindsOfDependencies/");
+        }
+
+        @TestMetadata("duplicateExpectsExplicit")
+        public void testDuplicateExpectsExplicit() throws Exception {
+            runTest("testData/multiplatform/duplicateExpectsExplicit/");
+        }
+
+        @TestMetadata("duplicateExpectsImplicit")
+        public void testDuplicateExpectsImplicit() throws Exception {
+            runTest("testData/multiplatform/duplicateExpectsImplicit/");
+        }
+
+        @TestMetadata("duplicateExpectsWithStrongIncompatibility")
+        public void testDuplicateExpectsWithStrongIncompatibility() throws Exception {
+            runTest("testData/multiplatform/duplicateExpectsWithStrongIncompatibility/");
+        }
+
+        @TestMetadata("enumFromCommonSerlializableSupertype")
+        public void testEnumFromCommonSerlializableSupertype() throws Exception {
+            runTest("testData/multiplatform/enumFromCommonSerlializableSupertype/");
+        }
+
+        @TestMetadata("expectActualLineMarkers")
+        public void testExpectActualLineMarkers() throws Exception {
+            runTest("testData/multiplatform/expectActualLineMarkers/");
+        }
+
+        @TestMetadata("extensionOnExpect")
+        public void testExtensionOnExpect() throws Exception {
+            runTest("testData/multiplatform/extensionOnExpect/");
+        }
+
+        @TestMetadata("hierarcicalActualization")
+        public void testHierarcicalActualization() throws Exception {
+            runTest("testData/multiplatform/hierarcicalActualization/");
+        }
+
+        @TestMetadata("incompleteActualization")
+        public void testIncompleteActualization() throws Exception {
+            runTest("testData/multiplatform/incompleteActualization/");
+        }
+
+        @TestMetadata("internalFromDependsOn")
+        public void testInternalFromDependsOn() throws Exception {
+            runTest("testData/multiplatform/internalFromDependsOn/");
+        }
+
+        @TestMetadata("internalFromDependsOnOfProduction")
+        public void testInternalFromDependsOnOfProduction() throws Exception {
+            runTest("testData/multiplatform/internalFromDependsOnOfProduction/");
+        }
+
+        @TestMetadata("internalFromProduction")
+        public void testInternalFromProduction() throws Exception {
+            runTest("testData/multiplatform/internalFromProduction/");
+        }
+
+        @TestMetadata("jsNameClash")
+        public void testJsNameClash() throws Exception {
+            runTest("testData/multiplatform/jsNameClash/");
+        }
+
+        @TestMetadata("jvmInlineValueClass")
+        public void testJvmInlineValueClass() throws Exception {
+            runTest("testData/multiplatform/jvmInlineValueClass/");
+        }
+
+        @TestMetadata("kt41218")
+        public void testKt41218() throws Exception {
+            runTest("testData/multiplatform/kt41218/");
+        }
+
+        @TestMetadata("kt44898")
+        public void testKt44898() throws Exception {
+            runTest("testData/multiplatform/kt44898/");
+        }
+
+        @TestMetadata("kt48291")
+        public void testKt48291() throws Exception {
+            runTest("testData/multiplatform/kt48291/");
+        }
+
+        @TestMetadata("ktij22295")
+        public void testKtij22295() throws Exception {
+            runTest("testData/multiplatform/ktij22295/");
+        }
+
+        @TestMetadata("ktij27523")
+        public void testKtij27523() throws Exception {
+            runTest("testData/multiplatform/ktij27523/");
+        }
+
+        @TestMetadata("lambdas")
+        public void testLambdas() throws Exception {
+            runTest("testData/multiplatform/lambdas/");
+        }
+
+        @TestMetadata("languageConstructions")
+        public void testLanguageConstructions() throws Exception {
+            runTest("testData/multiplatform/languageConstructions/");
+        }
+
+        @TestMetadata("multilevelParents")
+        public void testMultilevelParents() throws Exception {
+            runTest("testData/multiplatform/multilevelParents/");
+        }
+
+        @TestMetadata("multiplatformLibrary")
+        public void testMultiplatformLibrary() throws Exception {
+            runTest("testData/multiplatform/multiplatformLibrary/");
+        }
+
+        @TestMetadata("nativeStdlib")
+        public void testNativeStdlib() throws Exception {
+            runTest("testData/multiplatform/nativeStdlib/");
+        }
+
+        @TestMetadata("nativeTestLineMarker")
+        public void testNativeTestLineMarker() throws Exception {
+            runTest("testData/multiplatform/nativeTestLineMarker/");
+        }
+
+        @TestMetadata("overrideExpect")
+        public void testOverrideExpect() throws Exception {
+            runTest("testData/multiplatform/overrideExpect/");
+        }
+
+        @TestMetadata("overrideExpectWithCompositeType")
+        public void testOverrideExpectWithCompositeType() throws Exception {
+            runTest("testData/multiplatform/overrideExpectWithCompositeType/");
+        }
+
+        @TestMetadata("platformDependencyInCommon")
+        public void testPlatformDependencyInCommon() throws Exception {
+            runTest("testData/multiplatform/platformDependencyInCommon/");
+        }
+
+        @TestMetadata("platformSpecificChecksInCommon")
+        public void testPlatformSpecificChecksInCommon() throws Exception {
+            runTest("testData/multiplatform/platformSpecificChecksInCommon/");
+        }
+
+        @TestMetadata("qualifiedReceiver")
+        public void testQualifiedReceiver() throws Exception {
+            runTest("testData/multiplatform/qualifiedReceiver/");
+        }
+
+        @TestMetadata("recursiveTypes")
+        public void testRecursiveTypes() throws Exception {
+            runTest("testData/multiplatform/recursiveTypes/");
+        }
+
+        @TestMetadata("sealedInheritorsInComplexModuleStructure1")
+        public void testSealedInheritorsInComplexModuleStructure1() throws Exception {
+            runTest("testData/multiplatform/sealedInheritorsInComplexModuleStructure1/");
+        }
+
+        @TestMetadata("sealedInheritorsInComplexModuleStructure2")
+        public void testSealedInheritorsInComplexModuleStructure2() throws Exception {
+            runTest("testData/multiplatform/sealedInheritorsInComplexModuleStructure2/");
+        }
+
+        @TestMetadata("simple")
+        public void testSimple() throws Exception {
+            runTest("testData/multiplatform/simple/");
+        }
+
+        @TestMetadata("smartCastOnPropertyFromDependentModule")
+        public void testSmartCastOnPropertyFromDependentModule() throws Exception {
+            runTest("testData/multiplatform/smartCastOnPropertyFromDependentModule/");
+        }
+
+        @TestMetadata("supertypes")
+        public void testSupertypes() throws Exception {
+            runTest("testData/multiplatform/supertypes/");
+        }
+
+        @TestMetadata("transitiveDependencyOnCommonSourceSets")
+        public void testTransitiveDependencyOnCommonSourceSets() throws Exception {
+            runTest("testData/multiplatform/transitiveDependencyOnCommonSourceSets/");
+        }
+
+        @TestMetadata("typeAliasToExpectClassExplicitReference")
+        public void testTypeAliasToExpectClassExplicitReference() throws Exception {
+            runTest("testData/multiplatform/typeAliasToExpectClassExplicitReference/");
+        }
+
+        @TestMetadata("typeAliases")
+        public void testTypeAliases() throws Exception {
+            runTest("testData/multiplatform/typeAliases/");
+        }
+
+        @TestMetadata("typeParameters")
+        public void testTypeParameters() throws Exception {
+            runTest("testData/multiplatform/typeParameters/");
+        }
+
+        @TestMetadata("unresolvedInMultiplatformLibrary")
+        public void testUnresolvedInMultiplatformLibrary() throws Exception {
+            runTest("testData/multiplatform/unresolvedInMultiplatformLibrary/");
+        }
+
+        @TestMetadata("useCorrectBuiltIns")
+        public void testUseCorrectBuiltIns() throws Exception {
+            runTest("testData/multiplatform/useCorrectBuiltIns/");
+        }
+
+        @TestMetadata("weaklyIncompatibleActualInIntermediateModule")
+        public void testWeaklyIncompatibleActualInIntermediateModule() throws Exception {
+            runTest("testData/multiplatform/weaklyIncompatibleActualInIntermediateModule/");
+        }
+
+        @TestMetadata("whenExhaustivenessForSealed")
+        public void testWhenExhaustivenessForSealed() throws Exception {
+            runTest("testData/multiplatform/whenExhaustivenessForSealed/");
+        }
     }
 
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiplatform/ambiguousActuals")
+    public static class AmbiguousActuals extends AbstractMultiplatformAnalysisTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
 
-    @TestMetadata("aliasesTypeMismatch")
-    public void testAliasesTypeMismatch() throws Exception {
-        runTest("testData/multiplatform/aliasesTypeMismatch/");
-    }
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("builtinsAndStdlib")
-    public void testBuiltinsAndStdlib() throws Exception {
-        runTest("testData/multiplatform/builtinsAndStdlib/");
-    }
+        @TestMetadata("diamondActualInBottom")
+        public void testDiamondActualInBottom() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/diamondActualInBottom/");
+        }
 
-    @TestMetadata("callableReferences")
-    public void testCallableReferences() throws Exception {
-        runTest("testData/multiplatform/callableReferences/");
-    }
+        @TestMetadata("diamondActualOnOnePath")
+        public void testDiamondActualOnOnePath() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/diamondActualOnOnePath/");
+        }
 
-    @TestMetadata("chainedTypeAliasRefinement")
-    public void testChainedTypeAliasRefinement() throws Exception {
-        runTest("testData/multiplatform/chainedTypeAliasRefinement/");
-    }
+        @TestMetadata("diamondDuplicateActuals")
+        public void testDiamondDuplicateActuals() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/diamondDuplicateActuals/");
+        }
 
-    @TestMetadata("commonSealedWithPlatformInheritor")
-    public void testCommonSealedWithPlatformInheritor() throws Exception {
-        runTest("testData/multiplatform/commonSealedWithPlatformInheritor/");
-    }
+        @TestMetadata("diamondModuleDependency1")
+        public void testDiamondModuleDependency1() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/diamondModuleDependency1/");
+        }
 
-    @TestMetadata("constructorsOfExpect")
-    public void testConstructorsOfExpect() throws Exception {
-        runTest("testData/multiplatform/constructorsOfExpect/");
-    }
+        @TestMetadata("diamondModuleDependency2")
+        public void testDiamondModuleDependency2() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/diamondModuleDependency2/");
+        }
 
-    @TestMetadata("correctOverloadResolutionAmbiguity")
-    public void testCorrectOverloadResolutionAmbiguity() throws Exception {
-        runTest("testData/multiplatform/correctOverloadResolutionAmbiguity/");
-    }
+        @TestMetadata("diamondSeesTwoActuals")
+        public void testDiamondSeesTwoActuals() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/diamondSeesTwoActuals/");
+        }
 
-    @TestMetadata("defaultArguments")
-    public void testDefaultArguments() throws Exception {
-        runTest("testData/multiplatform/defaultArguments/");
-    }
+        @TestMetadata("duplicateActualsExplicit")
+        public void testDuplicateActualsExplicit() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/duplicateActualsExplicit/");
+        }
 
-    @TestMetadata("diamondActualInBottom")
-    public void testDiamondActualInBottom() throws Exception {
-        runTest("testData/multiplatform/diamondActualInBottom/");
-    }
+        @TestMetadata("duplicateActualsImplicit")
+        public void testDuplicateActualsImplicit() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/duplicateActualsImplicit/");
+        }
 
-    @TestMetadata("diamondActualOnOnePath")
-    public void testDiamondActualOnOnePath() throws Exception {
-        runTest("testData/multiplatform/diamondActualOnOnePath/");
-    }
+        @TestMetadata("duplicateActualsOneWeaklyIncompatible")
+        public void testDuplicateActualsOneWeaklyIncompatible() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/duplicateActualsOneWeaklyIncompatible/");
+        }
 
-    @TestMetadata("diamondDuplicateActuals")
-    public void testDiamondDuplicateActuals() throws Exception {
-        runTest("testData/multiplatform/diamondDuplicateActuals/");
-    }
-
-    @TestMetadata("diamondModuleDependency1")
-    public void testDiamondModuleDependency1() throws Exception {
-        runTest("testData/multiplatform/diamondModuleDependency1/");
-    }
-
-    @TestMetadata("diamondModuleDependency2")
-    public void testDiamondModuleDependency2() throws Exception {
-        runTest("testData/multiplatform/diamondModuleDependency2/");
-    }
-
-    @TestMetadata("diamondSeesTwoActuals")
-    public void testDiamondSeesTwoActuals() throws Exception {
-        runTest("testData/multiplatform/diamondSeesTwoActuals/");
-    }
-
-    @TestMetadata("differentKindsOfDependencies")
-    public void testDifferentKindsOfDependencies() throws Exception {
-        runTest("testData/multiplatform/differentKindsOfDependencies/");
-    }
-
-    @TestMetadata("duplicateActualsExplicit")
-    public void testDuplicateActualsExplicit() throws Exception {
-        runTest("testData/multiplatform/duplicateActualsExplicit/");
-    }
-
-    @TestMetadata("duplicateActualsImplicit")
-    public void testDuplicateActualsImplicit() throws Exception {
-        runTest("testData/multiplatform/duplicateActualsImplicit/");
-    }
-
-    @TestMetadata("duplicateActualsOneWeaklyIncompatible")
-    public void testDuplicateActualsOneWeaklyIncompatible() throws Exception {
-        runTest("testData/multiplatform/duplicateActualsOneWeaklyIncompatible/");
-    }
-
-    @TestMetadata("duplicateActualsOneWithStrongIncompatibility")
-    public void testDuplicateActualsOneWithStrongIncompatibility() throws Exception {
-        runTest("testData/multiplatform/duplicateActualsOneWithStrongIncompatibility/");
-    }
-
-    @TestMetadata("duplicateExpectsExplicit")
-    public void testDuplicateExpectsExplicit() throws Exception {
-        runTest("testData/multiplatform/duplicateExpectsExplicit/");
-    }
-
-    @TestMetadata("duplicateExpectsImplicit")
-    public void testDuplicateExpectsImplicit() throws Exception {
-        runTest("testData/multiplatform/duplicateExpectsImplicit/");
-    }
-
-    @TestMetadata("duplicateExpectsWithStrongIncompatibility")
-    public void testDuplicateExpectsWithStrongIncompatibility() throws Exception {
-        runTest("testData/multiplatform/duplicateExpectsWithStrongIncompatibility/");
-    }
-
-    @TestMetadata("enumFromCommonSerlializableSupertype")
-    public void testEnumFromCommonSerlializableSupertype() throws Exception {
-        runTest("testData/multiplatform/enumFromCommonSerlializableSupertype/");
-    }
-
-    @TestMetadata("expectActualLineMarkers")
-    public void testExpectActualLineMarkers() throws Exception {
-        runTest("testData/multiplatform/expectActualLineMarkers/");
-    }
-
-    @TestMetadata("extensionOnExpect")
-    public void testExtensionOnExpect() throws Exception {
-        runTest("testData/multiplatform/extensionOnExpect/");
-    }
-
-    @TestMetadata("hierarcicalActualization")
-    public void testHierarcicalActualization() throws Exception {
-        runTest("testData/multiplatform/hierarcicalActualization/");
-    }
-
-    @TestMetadata("incompleteActualization")
-    public void testIncompleteActualization() throws Exception {
-        runTest("testData/multiplatform/incompleteActualization/");
-    }
-
-    @TestMetadata("internalFromDependsOn")
-    public void testInternalFromDependsOn() throws Exception {
-        runTest("testData/multiplatform/internalFromDependsOn/");
-    }
-
-    @TestMetadata("internalFromDependsOnOfProduction")
-    public void testInternalFromDependsOnOfProduction() throws Exception {
-        runTest("testData/multiplatform/internalFromDependsOnOfProduction/");
-    }
-
-    @TestMetadata("internalFromProduction")
-    public void testInternalFromProduction() throws Exception {
-        runTest("testData/multiplatform/internalFromProduction/");
-    }
-
-    @TestMetadata("jsNameClash")
-    public void testJsNameClash() throws Exception {
-        runTest("testData/multiplatform/jsNameClash/");
-    }
-
-    @TestMetadata("jvmInlineValueClass")
-    public void testJvmInlineValueClass() throws Exception {
-        runTest("testData/multiplatform/jvmInlineValueClass/");
-    }
-
-    @TestMetadata("kt41218")
-    public void testKt41218() throws Exception {
-        runTest("testData/multiplatform/kt41218/");
-    }
-
-    @TestMetadata("kt44898")
-    public void testKt44898() throws Exception {
-        runTest("testData/multiplatform/kt44898/");
-    }
-
-    @TestMetadata("kt48291")
-    public void testKt48291() throws Exception {
-        runTest("testData/multiplatform/kt48291/");
-    }
-
-    @TestMetadata("ktij22295")
-    public void testKtij22295() throws Exception {
-        runTest("testData/multiplatform/ktij22295/");
-    }
-
-    @TestMetadata("ktij27523")
-    public void testKtij27523() throws Exception {
-        runTest("testData/multiplatform/ktij27523/");
-    }
-
-    @TestMetadata("lambdas")
-    public void testLambdas() throws Exception {
-        runTest("testData/multiplatform/lambdas/");
-    }
-
-    @TestMetadata("languageConstructions")
-    public void testLanguageConstructions() throws Exception {
-        runTest("testData/multiplatform/languageConstructions/");
-    }
-
-    @TestMetadata("multilevelParents")
-    public void testMultilevelParents() throws Exception {
-        runTest("testData/multiplatform/multilevelParents/");
-    }
-
-    @TestMetadata("multiplatformLibrary")
-    public void testMultiplatformLibrary() throws Exception {
-        runTest("testData/multiplatform/multiplatformLibrary/");
-    }
-
-    @TestMetadata("nativeStdlib")
-    public void testNativeStdlib() throws Exception {
-        runTest("testData/multiplatform/nativeStdlib/");
-    }
-
-    @TestMetadata("nativeTestLineMarker")
-    public void testNativeTestLineMarker() throws Exception {
-        runTest("testData/multiplatform/nativeTestLineMarker/");
-    }
-
-    @TestMetadata("overrideExpect")
-    public void testOverrideExpect() throws Exception {
-        runTest("testData/multiplatform/overrideExpect/");
-    }
-
-    @TestMetadata("overrideExpectWithCompositeType")
-    public void testOverrideExpectWithCompositeType() throws Exception {
-        runTest("testData/multiplatform/overrideExpectWithCompositeType/");
-    }
-
-    @TestMetadata("platformDependencyInCommon")
-    public void testPlatformDependencyInCommon() throws Exception {
-        runTest("testData/multiplatform/platformDependencyInCommon/");
-    }
-
-    @TestMetadata("platformSpecificChecksInCommon")
-    public void testPlatformSpecificChecksInCommon() throws Exception {
-        runTest("testData/multiplatform/platformSpecificChecksInCommon/");
-    }
-
-    @TestMetadata("qualifiedReceiver")
-    public void testQualifiedReceiver() throws Exception {
-        runTest("testData/multiplatform/qualifiedReceiver/");
-    }
-
-    @TestMetadata("recursiveTypes")
-    public void testRecursiveTypes() throws Exception {
-        runTest("testData/multiplatform/recursiveTypes/");
-    }
-
-    @TestMetadata("sealedInheritorsInComplexModuleStructure1")
-    public void testSealedInheritorsInComplexModuleStructure1() throws Exception {
-        runTest("testData/multiplatform/sealedInheritorsInComplexModuleStructure1/");
-    }
-
-    @TestMetadata("sealedInheritorsInComplexModuleStructure2")
-    public void testSealedInheritorsInComplexModuleStructure2() throws Exception {
-        runTest("testData/multiplatform/sealedInheritorsInComplexModuleStructure2/");
-    }
-
-    @TestMetadata("simple")
-    public void testSimple() throws Exception {
-        runTest("testData/multiplatform/simple/");
-    }
-
-    @TestMetadata("smartCastOnPropertyFromDependentModule")
-    public void testSmartCastOnPropertyFromDependentModule() throws Exception {
-        runTest("testData/multiplatform/smartCastOnPropertyFromDependentModule/");
-    }
-
-    @TestMetadata("supertypes")
-    public void testSupertypes() throws Exception {
-        runTest("testData/multiplatform/supertypes/");
-    }
-
-    @TestMetadata("transitiveDependencyOnCommonSourceSets")
-    public void testTransitiveDependencyOnCommonSourceSets() throws Exception {
-        runTest("testData/multiplatform/transitiveDependencyOnCommonSourceSets/");
-    }
-
-    @TestMetadata("typeAliasToExpectClassExplicitReference")
-    public void testTypeAliasToExpectClassExplicitReference() throws Exception {
-        runTest("testData/multiplatform/typeAliasToExpectClassExplicitReference/");
-    }
-
-    @TestMetadata("typeAliases")
-    public void testTypeAliases() throws Exception {
-        runTest("testData/multiplatform/typeAliases/");
-    }
-
-    @TestMetadata("typeParameters")
-    public void testTypeParameters() throws Exception {
-        runTest("testData/multiplatform/typeParameters/");
-    }
-
-    @TestMetadata("unresolvedInMultiplatformLibrary")
-    public void testUnresolvedInMultiplatformLibrary() throws Exception {
-        runTest("testData/multiplatform/unresolvedInMultiplatformLibrary/");
-    }
-
-    @TestMetadata("useCorrectBuiltIns")
-    public void testUseCorrectBuiltIns() throws Exception {
-        runTest("testData/multiplatform/useCorrectBuiltIns/");
-    }
-
-    @TestMetadata("weaklyIncompatibleActualInIntermediateModule")
-    public void testWeaklyIncompatibleActualInIntermediateModule() throws Exception {
-        runTest("testData/multiplatform/weaklyIncompatibleActualInIntermediateModule/");
-    }
-
-    @TestMetadata("whenExhaustivenessForSealed")
-    public void testWhenExhaustivenessForSealed() throws Exception {
-        runTest("testData/multiplatform/whenExhaustivenessForSealed/");
+        @TestMetadata("duplicateActualsOneWithStrongIncompatibility")
+        public void testDuplicateActualsOneWithStrongIncompatibility() throws Exception {
+            runTest("testData/multiplatform/ambiguousActuals/duplicateActualsOneWithStrongIncompatibility/");
+        }
     }
 }

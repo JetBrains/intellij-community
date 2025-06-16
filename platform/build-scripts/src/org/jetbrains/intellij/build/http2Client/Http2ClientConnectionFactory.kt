@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.http2Client
 
 import io.netty.bootstrap.Bootstrap
@@ -12,7 +12,12 @@ import io.netty.channel.nio.NioIoHandler
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http2.Http2SecurityUtil
-import io.netty.handler.ssl.*
+import io.netty.handler.ssl.ApplicationProtocolConfig
+import io.netty.handler.ssl.ApplicationProtocolNames
+import io.netty.handler.ssl.SslContext
+import io.netty.handler.ssl.SslContextBuilder
+import io.netty.handler.ssl.SslProvider
+import io.netty.handler.ssl.SupportedCipherSuiteFilter
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory
 import io.netty.util.AsciiString
 import io.netty.util.internal.PlatformDependent
@@ -90,8 +95,6 @@ internal suspend fun <T> withHttp2ClientConnectionFactory(
   }
 }
 
-private const val useNativeTransport = true
-
 private fun createHttp2ClientSessionFactory(
   useSsl: Boolean = true,
   trustAll: Boolean = false,
@@ -99,8 +102,8 @@ private fun createHttp2ClientSessionFactory(
 ): Http2ClientConnectionFactory {
   val (ioFactory, socketChannel) = try {
     when {
-      useNativeTransport && PlatformDependent.isOsx() -> KQueueIoHandler.newFactory() to KQueueSocketChannel::class.java
-      useNativeTransport && !PlatformDependent.isWindows() -> EpollIoHandler.newFactory() to EpollSocketChannel::class.java
+      PlatformDependent.isOsx() -> KQueueIoHandler.newFactory() to KQueueSocketChannel::class.java
+      !PlatformDependent.isWindows() -> EpollIoHandler.newFactory() to EpollSocketChannel::class.java
       else -> nioIoHandlerAndSocketChannel()
     }
   }
@@ -142,7 +145,7 @@ private fun createHttp2ClientSessionFactory(
     .channel(socketChannel)
     .option(ChannelOption.SO_KEEPALIVE, true)
 
-  // asCoroutineDispatcher is an overkill - we don't need schedule (`Delay`) features
+  // asCoroutineDispatcher is overkill - we don't need schedule (`Delay`) features
   val dispatcher = object : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
       group.execute(block)

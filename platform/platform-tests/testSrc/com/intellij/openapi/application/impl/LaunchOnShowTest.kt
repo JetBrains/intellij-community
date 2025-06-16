@@ -25,6 +25,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 class LaunchOnShowTest {
@@ -50,6 +51,24 @@ class LaunchOnShowTest {
     assertTrue(executed)
     assertTrue(job.isCompleted)
     assertNotReferenced(container, job)
+  }
+
+  @Test
+  fun `launch once is restarted if canceled before starting`(): Unit = edtTest {
+    val component = JLabel()
+    var executed = false
+    val job = component.launchOnceOnShow("test") {
+      executed = true
+    }
+
+    withShowingChanged { container.add(component) }
+    withShowingChanged { container.remove(component) }
+    withShowingChanged { container.add(component) }
+    withTimeout(15L.seconds) {
+      job.join()
+    }
+    assertTrue(executed)
+    assertTrue(job.isCompleted)
   }
 
   @Test

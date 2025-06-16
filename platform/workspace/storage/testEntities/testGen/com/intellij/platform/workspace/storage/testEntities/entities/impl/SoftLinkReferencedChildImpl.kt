@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.impl.EntityLink
@@ -29,13 +21,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SoftLinkRef
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SoftLinkReferencedChildImpl(private val dataSource: SoftLinkReferencedChildData) : SoftLinkReferencedChild, WorkspaceEntityBase(
-  dataSource) {
+internal class SoftLinkReferencedChildImpl(private val dataSource: SoftLinkReferencedChildData) : SoftLinkReferencedChild,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSoftLinks::class.java,
-                                                                                SoftLinkReferencedChild::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      EntityWithSoftLinks::class.java, SoftLinkReferencedChild::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -57,8 +49,8 @@ internal class SoftLinkReferencedChildImpl(private val dataSource: SoftLinkRefer
   }
 
 
-  internal class Builder(result: SoftLinkReferencedChildData?) : ModifiableWorkspaceEntityBase<SoftLinkReferencedChild, SoftLinkReferencedChildData>(
-    result), SoftLinkReferencedChild.Builder {
+  internal class Builder(result: SoftLinkReferencedChildData?) :
+    ModifiableWorkspaceEntityBase<SoftLinkReferencedChild, SoftLinkReferencedChildData>(result), SoftLinkReferencedChild.Builder {
     internal constructor() : this(SoftLinkReferencedChildData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -127,8 +119,9 @@ internal class SoftLinkReferencedChildImpl(private val dataSource: SoftLinkRefer
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? EntityWithSoftLinks.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENTENTITY_CONNECTION_ID, this
+          ) as? EntityWithSoftLinks.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as EntityWithSoftLinks.Builder)
         }
         else {
@@ -191,7 +184,8 @@ internal class SoftLinkReferencedChildData : WorkspaceEntityData<SoftLinkReferen
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SoftLinkReferencedChild") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SoftLinkReferencedChild"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

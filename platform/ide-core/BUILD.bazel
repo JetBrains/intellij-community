@@ -17,6 +17,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/util/concurrency",
+    "//jps/model-api:model",
     "//platform/util:util-ui",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",
@@ -31,6 +32,10 @@ jvm_library(
     "//platform/util",
     "//platform/settings",
     "//platform/util/coroutines",
+    "//platform/workspace/storage",
+    "//platform/workspace/jps",
+    "//platform/backend/workspace",
+    "//platform/kernel/shared:kernel",
   ],
   runtime_deps = [":ide-core_resources"]
 )

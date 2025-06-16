@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeMetaInfo.renderConfigurations.HighlightingConfiguration.SeverityRenderingOption
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.CHECK_SYMBOL_NAMES
 import org.jetbrains.kotlin.idea.highlighter.checkHighlighting
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives
@@ -43,16 +42,12 @@ abstract class AbstractKotlinGradleHighlightingTest : AbstractGradleCodeInsightT
         test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
             val mainFile = mainTestDataPsiFile
 
-            runInEdtAndWait {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(mainFile)
-            }
-
             val ktsFileUnderTest = mainFile.virtualFile.toNioPath().toFile()
             val path = ktsFileUnderTest.path
-            val ktsFileHighlighting = outputFileExtensions.mapNotNull<String, File> { ext ->
+            val ktsFileHighlighting = outputFileExtensions.firstNotNullOfOrNull { ext ->
                 val resolveSibling = ktsFileUnderTest.resolveSibling("$path$ext")
                 resolveSibling.takeIf(File::exists)
-            }.firstOrNull() ?: error("highlighting file does not exist for ${ktsFileUnderTest.path}")
+            } ?: error("highlighting file does not exist for ${ktsFileUnderTest.path}")
 
             val directives = parseDirectives(mainTestDataFile.content).also {
                 it.put(CHECK_SYMBOL_NAMES, true.toString())

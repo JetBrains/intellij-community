@@ -220,7 +220,8 @@ public final class CoverageSuiteChooserDialog extends DialogWrapper {
 
   @ApiStatus.Internal
   public final class NoCoverageAction extends DialogWrapperAction {
-    NoCoverageAction() {
+    @VisibleForTesting
+    public NoCoverageAction() {
       super(CoverageBundle.message("coverage.data.no.coverage.button"));
     }
 

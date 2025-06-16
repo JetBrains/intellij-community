@@ -6,7 +6,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.BadgeIconSupplier;
@@ -26,7 +26,7 @@ public class ShowFilterPopupGroup extends DefaultActionGroup implements Shortcut
     setPopup(true);
     getTemplatePresentation().setText(FindBundle.message("find.popup.show.filter.popup"));
     getTemplatePresentation().setIcon(FILTER_ICON.getOriginalIcon());
-    getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
   }
 
   @Override

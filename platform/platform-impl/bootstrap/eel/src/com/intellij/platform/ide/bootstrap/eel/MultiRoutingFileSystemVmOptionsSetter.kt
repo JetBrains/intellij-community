@@ -9,7 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
-import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
+import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.lang.management.ManagementFactory
@@ -19,7 +19,7 @@ object MultiRoutingFileSystemVmOptionsSetter {
   fun ensureInVmOptionsImpl(
     isEnabled: Boolean,
     forceProductionOptions: Boolean,
-    isEnabledByDefault: Boolean = isIjentWslFsEnabledByDefaultForProduct(ApplicationNamesInfo.getInstance().scriptName),
+    isEnabledByDefault: Boolean = isMultiRoutingFileSystemEnabledForProduct(ApplicationNamesInfo.getInstance().scriptName),
     getOptionByPrefix: (String) -> String?,
   ): Collection<Pair<String, String?>> {
     val changedOptions = mutableListOf<Pair<String, String?>>()

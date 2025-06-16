@@ -10,11 +10,10 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.*;
+import kotlin.Pair;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.concurrent.Callable;
@@ -201,7 +200,11 @@ public interface Application extends ComponentManager {
    *
    * @param actionClass the class of the write action to return.
    * @return {@code true} if the action is running, or {@code false} if no action of the specified class is currently executing.
+   * @deprecated Consider using {@link com.intellij.psi.ExternalChangeActionUtil}.
+   *  This method is used only in the Document subsystem to detect if external changes are in progress.
+   *  The logic based on runtime information about classes is fragile.
    */
+  @Deprecated
   boolean hasWriteAction(@NotNull Class<?> actionClass);
 
   /**
@@ -687,18 +690,13 @@ public interface Application extends ComponentManager {
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default CoroutineContext getLockStateAsCoroutineContext(CoroutineContext context, boolean shared) {
-    return EmptyCoroutineContext.INSTANCE;
+  default Pair<CoroutineContext, AccessToken> getLockStateAsCoroutineContext(CoroutineContext context, boolean shared) {
+    return new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
   }
 
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  default void returnPermitFromContextElement(CoroutineContext ctx) {
-  }
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  default boolean hasLockStateInContext(CoroutineContext context) {
+  default boolean isParallelizedReadAction(CoroutineContext context) {
     return false;
   }
 
@@ -709,5 +707,10 @@ public interface Application extends ComponentManager {
   @ApiStatus.Obsolete
   default boolean isTopmostReadAccessAllowed() {
     return isReadAccessAllowed();
+  }
+
+  @ApiStatus.Internal
+  default @NonNls @Nullable String isLockingProhibited() {
+    return null;
   }
 }

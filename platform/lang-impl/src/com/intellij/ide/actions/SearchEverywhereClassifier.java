@@ -2,9 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,15 +41,6 @@ public interface SearchEverywhereClassifier {
       return EP_NAME.getExtensionList().stream()
         .map(classifier -> classifier.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)).filter(Objects::nonNull)
         .findFirst().orElse(null);
-    }
-
-    /**
-     * @deprecated This method is deprecated and will be removed in a future version.
-     * Use GlobalSearchScope.projectScope(project) to retrieve the project scope instead.
-     */
-    @Deprecated(forRemoval = true)
-    public static @Nullable GlobalSearchScope getProjectScope(@NotNull Project project) {
-      return null;
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -198,6 +198,7 @@ public abstract class DialogWrapper {
   private boolean myValidationStarted;
   private boolean myKeepPopupsOpen;
   @Nls private @NonNls @Nullable String invocationPlace = null;
+  private boolean useWriteIntentReadAction = true;
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -523,7 +524,7 @@ public abstract class DialogWrapper {
     }
 
     // Can be called very early when there is no application yet
-    if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && useWriteIntentReadAction) {
       //maybe readaction
       WriteIntentReadAction.run((Runnable)() -> Disposer.dispose(myDisposable));
     }
@@ -1188,6 +1189,11 @@ public abstract class DialogWrapper {
     return myHelpAction;
   }
 
+  @ApiStatus.Internal // maybe experimental?
+  public void setShouldUseWriteIntentReadAction(boolean value) {
+    useWriteIntentReadAction = value;
+  }
+
   protected boolean isProgressDialog() {
     return false;
   }
@@ -1379,6 +1385,7 @@ public abstract class DialogWrapper {
     }
 
     JComponent centerSection = new JPanel(new BorderLayout());
+    centerSection.setName("centerSection");
     myRoot.add(centerSection, BorderLayout.CENTER);
 
     JComponent n = createNorthPanel();
@@ -1812,7 +1819,13 @@ public abstract class DialogWrapper {
       ClientProperty.put(window, KEEP_POPUPS_OPEN, myKeepPopupsOpen);
     }
 
-    myPeer.show();
+    if (useWriteIntentReadAction && !isProgressDialog()) {
+      WriteIntentReadAction.run((Runnable) () -> {
+        myPeer.show();
+      });
+    } else {
+      myPeer.show();
+    }
   }
 
   /**

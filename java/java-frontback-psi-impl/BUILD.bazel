@@ -15,6 +15,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "//java/java-frontback-psi-api:frontback-psi",
+    "//platform/core-api:core",
     "//platform/core-impl",
     "@lib//:asm",
     "@lib//:stream_ex",
@@ -22,6 +23,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-serialization-core",
+    "//platform/syntax/syntax-psi:psi",
   ],
   exports = [
     "//java/java-frontback-psi-api:frontback-psi",

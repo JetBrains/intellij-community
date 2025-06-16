@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 object KotlinCreateFileFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.ide.new.file", 3)
+    private val GROUP = EventLogGroup("kotlin.ide.new.file", 4)
 
     private val pluginInfo = getPluginInfoById(KotlinIdePlugin.id)
 
@@ -26,7 +26,8 @@ object KotlinCreateFileFUSCollector : CounterUsagesCollector() {
         "Kotlin_Scratch",
         "Kotlin_Scratch_From_Selection",
         "Kotlin_Script",
-        "Kotlin_Worksheet"
+        "Kotlin_Script_MainKts",
+        "Kotlin_Script_Gradle",
     )
 
     private val newFileEvent = GROUP.registerEvent(

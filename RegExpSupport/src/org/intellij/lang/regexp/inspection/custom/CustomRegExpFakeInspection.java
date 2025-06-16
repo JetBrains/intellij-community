@@ -283,14 +283,16 @@ public class CustomRegExpFakeInspection extends LocalInspectionTool {
       assert project != null;
 
       FileType fileType = null;
+      int flags = 0;
       FindModel.SearchContext context = FindModel.SearchContext.ANY;
       if (myList.getModel().getSize() > 0) {
         final InspectionPattern pattern = myList.getModel().getElementAt(0);
         fileType = pattern.fileType();
+        flags = pattern.flags;
         context = pattern.searchContext();
       }
       final String replace = myReplace ? "" : null;
-      final InspectionPattern defaultPattern = new InspectionPattern("", fileType, context, replace);
+      final InspectionPattern defaultPattern = new InspectionPattern("", fileType, flags, context, replace);
 
       final RegExpDialog dialog = new RegExpDialog(project, true, defaultPattern);
       if (!dialog.showAndGet()) return;

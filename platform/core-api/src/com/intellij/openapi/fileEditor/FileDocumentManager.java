@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,8 +86,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * (due to 'Strip trailing spaces on Save' functionality). When saving, {@code \n} line separators are converted into
    * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
    *
-   * Should be invoked on the event dispatch thread.
+   * Should be invoked on the event dispatch thread under the write intent lock.
    */
+  @RequiresWriteLock
   public abstract void saveAllDocuments();
 
   /**
@@ -94,9 +96,10 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * (due to 'Strip trailing spaces on Save' functionality). When saving, {@code \n} line separators are converted into
    * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
    *
-   * Should be invoked on the event dispatch thread.
+   * Should be invoked on the event dispatch thread under the write intent lock.
    * @param filter the filter for documents to save. If it returns `true`, the document will be saved.
    */
+  @RequiresWriteLock
   public abstract void saveDocuments(@NotNull Predicate<? super Document> filter);
 
   /**
@@ -104,18 +107,20 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * trailing spaces on Save' functionality). When saving, {@code \n} line separators are converted into
    * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
    *
-   * Should be invoked on the event dispatch thread.
+   * Should be invoked on the event dispatch thread under the write intent lock.
    * @param document the document to save.
    */
+  @RequiresWriteLock
   public abstract void saveDocument(@NotNull Document document);
 
   /**
    * Saves the document without stripping the trailing spaces or adding a blank line in the end of the file.<p/>
    *
-   * Should be invoked on the event dispatch thread.
+   * Should be invoked on the event dispatch thread under the write intent lock.
    *
    * @param document the document to save.
    */
+  @RequiresWriteLock
   public abstract void saveDocumentAsIs(@NotNull Document document);
 
   /**

@@ -200,7 +200,7 @@ public final class EditorGutterLayout {
     );
 
     List<GutterArea> lineNumbersAreas = List.of(
-      areaGap()
+      areaGap(gapBeforeLineMarkersWidth())
         .as(EditorMouseEventArea.LINE_NUMBERS_AREA)
         .showIf(this::isLineNumbersShown),
       area(LINE_NUMBERS_AREA, () -> myEditorGutter.myLineNumberAreaWidth)
@@ -226,14 +226,17 @@ public final class EditorGutterLayout {
     List<GutterArea> iconRelatedAreas = List.of(
       area(LEFT_FREE_PAINTERS_AREA, myEditorGutter::getLeftFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
       area(ICONS_AREA, myEditorGutter::getIconsAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
-      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea)
-        .showIf(myEditorGutter::isLineMarkersShown)
-        .showIf(() -> !isLineNumbersShown())
+      area(GAP_AFTER_ICONS_AREA, myEditorGutter::getGapAfterIconsArea).showIf(
+        () -> myEditorGutter.isLineMarkersShown() && !isLineNumbersAfterIcons())
     );
 
     List<GutterArea> rightEdgeAreas = List.of(
       area(RIGHT_FREE_PAINTERS_AREA, myEditorGutter::getRightFreePaintersAreaWidth).showIf(myEditorGutter::isLineMarkersShown),
       area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidth)
+    );
+
+    List<GutterArea> rightEdgeAreasForLineNumbersAfterIcons = List.of(
+      area(FOLDING_AREA, myEditorGutter::getFoldingAreaWidthForLineNumbersAfterIcons)
     );
 
     List<GutterArea> extraRightFreePainters = List.of(
@@ -256,6 +259,7 @@ public final class EditorGutterLayout {
       layout.addAll(dfmMarginArea);
       layout.addAll(iconRelatedAreas);
       layout.addAll(lineNumbersAreas);
+      layout.addAll(rightEdgeAreasForLineNumbersAfterIcons);
       layout.addAll(extraRightFreePainters);
     }
     else {
@@ -267,6 +271,10 @@ public final class EditorGutterLayout {
       layout.addAll(extraRightFreePainters);
     }
     return layout;
+  }
+
+  private static int gapBeforeLineMarkersWidth() {
+    return JBUI.CurrentTheme.Editor.Gutter.gapAfterVcsMarkersWidth();
   }
 
   private static @NotNull GutterArea areaGap() {

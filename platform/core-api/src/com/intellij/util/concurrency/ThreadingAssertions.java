@@ -37,6 +37,18 @@ public final class ThreadingAssertions {
   @VisibleForTesting
   public static final String MUST_EXECUTE_IN_READ_ACTION =
     "Read access is allowed from inside read-action only (see Application.runReadAction())";
+  @Internal
+  @VisibleForTesting
+  public static final String READ_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN =
+    "This thread requested read access, but it does not have permission to use locks.";
+  @Internal
+  @VisibleForTesting
+  public static final String WRITE_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN =
+    "This thread requested write access, but it does not have permission to use locks.";
+  @Internal
+  @VisibleForTesting
+  public static final String WRITE_INTENT_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN =
+    "This thread requested write-intent access, but it does not have permission to use locks.";
   private static final String MUST_EXECUTE_IN_READ_ACTION_EXPLICIT =
     "Access is allowed with explicit read lock.\n" +
     "Now each coroutine scheduled on EDT wrapped in implicit write intent lock (which implies read lock too). This implicit lock will be removed in future releases.\n" +
@@ -73,7 +85,7 @@ public final class ThreadingAssertions {
    * @see com.intellij.util.concurrency.annotations.RequiresEdt
    */
   public static void assertEventDispatchThread() {
-    if (!EDT.isCurrentThreadEdt()) {
+    if (!EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       throwThreadAccessException(MUST_EXECUTE_IN_EDT);
     }
   }
@@ -85,7 +97,7 @@ public final class ThreadingAssertions {
    */
   @Obsolete
   public static void softAssertEventDispatchThread() {
-    if (!EDT.isCurrentThreadEdt()) {
+    if (!EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_EDT));
     }
   }
@@ -96,7 +108,7 @@ public final class ThreadingAssertions {
    * @see com.intellij.util.concurrency.annotations.RequiresBackgroundThread
    */
   public static void assertBackgroundThread() {
-    if (EDT.isCurrentThreadEdt()) {
+    if (EDT.isCurrentThreadEdt() && !EDT.isDisableEdtChecks()) {
       throwThreadAccessException(MUST_NOT_EXECUTE_IN_EDT);
     }
   }
@@ -108,7 +120,7 @@ public final class ThreadingAssertions {
    */
   @Obsolete
   public static void softAssertBackgroundThread() {
-    if (EDT.isCurrentThreadEdt()) {
+    if (EDT.isCurrentThreadEdt() && EDT.isDisableEdtChecks()) {
       getLogger().error(createThreadAccessException(MUST_NOT_EXECUTE_IN_EDT));
     }
   }
@@ -124,6 +136,16 @@ public final class ThreadingAssertions {
   public static void assertReadAccess() {
     if (!isFlagSet(Application::isReadAccessAllowed)) {
       throwThreadAccessException(MUST_EXECUTE_IN_READ_ACTION);
+    }
+    else {
+      trySoftAssertReadAccessWhenLocksAreForbidden();
+    }
+  }
+
+  private static void trySoftAssertReadAccessWhenLocksAreForbidden() {
+    String advice = getStringDetail(Application::isLockingProhibited);
+    if (advice != null) {
+      getLogger().error(createLockingForbiddenException(READ_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN + "\n" + advice));
     }
   }
 
@@ -149,6 +171,9 @@ public final class ThreadingAssertions {
   public static void softAssertReadAccess() {
     if (!isFlagSet(Application::isReadAccessAllowed)) {
       getLogger().error(createThreadAccessException(MUST_EXECUTE_IN_READ_ACTION));
+    }
+    else {
+      trySoftAssertReadAccessWhenLocksAreForbidden();
     }
   }
 
@@ -179,6 +204,16 @@ public final class ThreadingAssertions {
     if (!isFlagSet(Application::isWriteIntentLockAcquired)) {
       throwWriteIntentReadAccess();
     }
+    else {
+      trySoftAssertWriteIntentAccessWhenLocksAreForbidden();
+    }
+  }
+
+  private static void trySoftAssertWriteIntentAccessWhenLocksAreForbidden() {
+    String advice = getStringDetail(Application::isLockingProhibited);
+    if (advice != null) {
+      getLogger().error(createLockingForbiddenException(WRITE_INTENT_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN + "\n" + advice));
+    }
   }
 
   /**
@@ -197,6 +232,16 @@ public final class ThreadingAssertions {
     if (!isFlagSet(Application::isWriteAccessAllowed)) {
       throwThreadAccessException(MUST_EXECUTE_IN_WRITE_ACTION);
     }
+    else {
+      trySoftAssertWriteAccessWhenLocksAreForbidden();
+    }
+  }
+
+  private static void trySoftAssertWriteAccessWhenLocksAreForbidden() {
+    String advice = getStringDetail(Application::isLockingProhibited);
+    if (advice != null) {
+      getLogger().error(createLockingForbiddenException(WRITE_ACCESS_REQUIRED_WHILE_LOCKS_ARE_FORBIDDEN + "\n" + advice));
+    }
   }
 
   private static void throwThreadAccessException(@NotNull @NonNls String message) {
@@ -213,6 +258,10 @@ public final class ThreadingAssertions {
     );
   }
 
+  private static @NotNull RuntimeExceptionWithAttachments createLockingForbiddenException(@NonNls @NotNull String advice) {
+    return new RuntimeExceptionWithAttachments(advice + "\nSee " + DOCUMENTATION_URL + " for details" + "\n" + getThreadDetails());
+  }
+
   private static @NotNull String getThreadDetails() {
     Thread current = Thread.currentThread();
     Thread edt = EDT.getEventDispatchThreadOrNull();
@@ -227,5 +276,10 @@ public final class ThreadingAssertions {
   private static boolean isFlagSet(@NotNull Function<Application, Boolean> getter) {
     Application app = ApplicationManager.getApplication();
     return app != null && getter.apply(app);
+  }
+
+  private static String getStringDetail(@NotNull Function<Application, String> getter) {
+    Application app = ApplicationManager.getApplication();
+    return app != null ? getter.apply(app) : null;
   }
 }

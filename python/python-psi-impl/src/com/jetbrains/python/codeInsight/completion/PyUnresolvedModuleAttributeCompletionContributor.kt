@@ -14,6 +14,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -144,19 +145,18 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           .filterIsInstance<PyFile>()
           .map { PyModuleType(it) }
           .flatMap { it.getCompletionVariantsAsLookupElements(parameters.position, context, false, false, typeContext) }
-          .mapNotNull {it.psiElement }
-          .filterIsInstance<PyElement>()
-          .filterNot { it is PsiFileSystemItem }
-          .filterNot { it.name == null || it.name!!.startsWith('_') }
-          .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches("$qualifier.${it.name}") }
+          .filter { PyNames.isIdentifier(it.lookupString) && !it.lookupString.startsWith('_')}
+          .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches("$qualifier.${it.lookupString}") }
           .mapNotNull {
-            if (suggestedQualifiedNames.add("$packageName.${it.name}")) {
-              LookupElementBuilder.create(it, "$qualifier.${it.name}")
-                .withIcon(it.getIcon(0))
-                .withInsertHandler(getInsertHandler(it, parameters.position))
+            val element = it.psiElement as? PyElement
+            if (element == null || element is PsiFileSystemItem) return@mapNotNull null
+            if (suggestedQualifiedNames.add("$packageName.${it.lookupString}")) {
+              return@mapNotNull LookupElementBuilder.create(element, "$qualifier.${it.lookupString}")
+                .withIcon(element.getIcon(0))
+                .withInsertHandler(getInsertHandler(element, parameters.position))
                 .withTypeText(packageNameForAlias)
             }
-            else null
+            return@mapNotNull null
           }
           .forEach { resultMatchingCompleteReference.addElement(it) }
 

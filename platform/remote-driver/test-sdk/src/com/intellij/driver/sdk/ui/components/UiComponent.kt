@@ -124,8 +124,14 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     throw lastException ?: RuntimeException("Unable to execute action with component")
   }
 
-  /*
-    Returns all UiText's matching predicate without waiting
+  /**
+   * Returns all UiText elements matching the optional filter without waiting.
+   *
+   * @param filter Optional predicate to filter the text elements
+   * @return List of UiText elements that match the filter, or all text elements if no filter is provided
+   * @see waitAnyTexts for waiting until text elements are found
+   * @see hasText for checking if specific text exists
+   * @see hasSubtext for checking if text containing substring exists
    */
   fun getAllTexts(filter: ((UiText) -> Boolean)? = null): List<UiText> {
     return withComponent { searchService.findAllText(it) }
@@ -134,7 +140,14 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
-   * Waits for a non-empty list of UiText's matching predicate.
+   * Waits for a non-empty list of UiText elements matching the specified predicate.
+   *
+   * @param message Optional custom message for the waiting operation
+   * @param timeout The maximum time to wait for matching elements (default: DEFAULT_FIND_TIMEOUT)
+   * @param predicate Function to test each UiText element (default: accepts all)
+   * @return List of UiText elements that match the predicate
+   * @see waitAnyTexts for waiting for specific text content
+   * @see getAllTexts for non-blocking retrieval of text elements
    */
   fun waitAnyTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (UiText) -> Boolean = { true }): List<UiText> {
     return waitAny(message = message ?: "Finding at least some texts and filter matching predicate in $this",
@@ -145,7 +158,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
-   * Waits for a non-empty list of UiText's with text '$text'.
+   * Waits for a non-empty list of UiText elements with the exact specified text.
+   *
+   * @param text The exact text to search for
+   * @param message Optional custom message for the waiting operation
+   * @param timeout The maximum time to wait for matching elements (default: DEFAULT_FIND_TIMEOUT)
+   * @return List of UiText elements with the specified text
+   * @see waitAnyTexts for waiting with custom predicate
+   * @see waitOneText for waiting for exactly one text element
+   * @see waitAnyTextsContains for waiting for text containing substring
    */
   fun waitAnyTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
     return waitAny(message = message ?: "Finding at least some texts and filter '$text' in $this",
@@ -156,7 +177,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
-   * Waits for one UiText with text '$text'.
+   * Waits for exactly one UiText element with the specified exact text.
+   *
+   * @param text The exact text to search for
+   * @param message Optional custom message for the waiting operation
+   * @param timeout The maximum time to wait for the element (default: DEFAULT_FIND_TIMEOUT)
+   * @return The UiText element with the specified text
+   * @see waitAnyTexts for waiting for multiple text elements
+   * @see waitOneText for waiting with custom predicate
+   * @see waitOneContainsText for waiting for text containing substring
    */
   fun waitOneText(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
     return waitForOne(message = message ?: "Finding text '$text' in $this",
@@ -167,7 +196,14 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
-   * Waits for one UiText matching predicate.
+   * Waits for exactly one UiText element matching the specified predicate.
+   *
+   * @param message Optional custom message for the waiting operation
+   * @param timeout The maximum time to wait for the element (default: DEFAULT_FIND_TIMEOUT)
+   * @param predicate Function to test each UiText element
+   * @return The UiText element that matches the predicate
+   * @see waitOneText for waiting for specific text content
+   * @see waitAnyTexts for waiting for multiple matching elements
    */
   fun waitOneText(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (UiText) -> Boolean): UiText {
     return waitForOne(message = message ?: "Finding one text matching predicate in $this",
@@ -178,7 +214,13 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
-   * Waits until there is no UiText's with text '$text'.
+   * Waits until there are no UiText elements with the specified exact text.
+   *
+   * @param text The exact text that should not be present
+   * @param message Optional custom message for the waiting operation
+   * @param timeout The maximum time to wait for the condition (default: DEFAULT_FIND_TIMEOUT)
+   * @see waitAnyTexts for waiting until text is present
+   * @see hasText for non-blocking check if text exists
    */
   fun waitNoTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
     waitFor(message = message ?: "Finding no texts '$text' in $this",
@@ -189,7 +231,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
-   * Waits for a non-empty list of UiText's with substring '$text'.
+   * Waits for a non-empty list of UiText elements containing the specified substring.
+   *
+   * @param text The substring to search for within text elements
+   * @param message Optional custom message for the waiting operation
+   * @param timeout The maximum time to wait for matching elements (default: DEFAULT_FIND_TIMEOUT)
+   * @return List of UiText elements containing the specified substring
+   * @see waitAnyTexts for waiting for exact text matches
+   * @see waitOneContainsText for waiting for exactly one text containing substring
+   * @see hasSubtext for non-blocking check if text containing substring exists
    */
   fun waitAnyTextsContains(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
     return waitAny(message = message ?: "Finding at least some texts and contains '$text' in $this",
@@ -199,12 +249,27 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     )
   }
 
+  /**
+   * Checks if this component has any text that contains the specified substring.
+   *
+   * @param subtext The substring to search for within the component's text
+   * @return true if the component has text containing the specified substring, false otherwise
+   * @see hasText for checking exact text matches
+   */
   fun hasSubtext(subtext: String): Boolean {
     return getAllTexts { it.text.contains(subtext) }.isNotEmpty()
   }
 
   /**
-   * Waits until there is one UiText's with substring '$text'.
+   * Waits until there is one UiText element that contains the specified substring.
+   *
+   * @param text The substring to search for within the component's text elements
+   * @param message Optional custom message for waiting operation
+   * @param ignoreCase Whether to ignore the case when searching for the substring (default: true)
+   * @param timeout The maximum time to wait for the element (default: DEFAULT_FIND_TIMEOUT)
+   * @return The UiText element that contains the specified substring
+   * @see waitContainsText for waiting until all text contains the substring
+   * @see hasSubtext for non-blocking check if the component has text containing a substring
    */
   fun waitOneContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
     return waitForOne(message = message ?: "Finding the text containing '$text' in $this",
@@ -215,7 +280,14 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   /**
-   * Waits until all text contains 'text'.
+   * Waits until all text in the component contains the specified substring.
+   *
+   * @param text The substring that all text must contain
+   * @param message Optional custom message for waiting operation
+   * @param ignoreCase Whether to ignore case when searching for the substring (default: true)
+   * @param timeout The maximum time to wait for the condition (default: DEFAULT_FIND_TIMEOUT)
+   * @see waitOneContainsText for waiting until one text element contains the substring
+   * @see hasSubtext for non-blocking check if component has text containing a substring
    */
   fun waitContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
     waitFor(message = message ?: "Finding the text containing '$text' in $this",
@@ -225,6 +297,13 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     )
   }
 
+  /**
+   * Checks if this component has the specified text.
+   *
+   * @param text The exact text to search for within the component
+   * @return true if the component has the specified text, false otherwise
+   * @see hasSubtext for checking if text contains a substring
+   */
   fun hasText(text: String): Boolean {
     return getAllTexts().any { it.text == text }
   }
@@ -348,6 +427,11 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     else {
       withComponent { robot.doubleClick(it) }
     }
+  }
+
+  fun tripleClick(point: Point) {
+    LOG.info("Triple click at $this${point?.let { ": $it" } ?: ""}")
+    withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 3) }
   }
 
   fun rightClick(point: Point? = null) {

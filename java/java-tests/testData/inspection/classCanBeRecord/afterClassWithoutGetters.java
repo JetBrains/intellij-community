@@ -1,7 +1,9 @@
-// "Convert to record class" "true"
+// "Convert to record class" "true-preview"
 
 package my.annotation2;
 
 
-record A(java.util.Date date) {
+import java.util.Date;
+
+record A(Date date) {
 }

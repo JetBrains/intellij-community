@@ -29,10 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.util.*;
@@ -54,7 +51,7 @@ public class AnalysisScope {
   public @interface Type { }
 
   private final @NotNull Project myProject;
-  protected List<Module> myModules;
+  private final @Unmodifiable List<Module> myModules;
   protected Module myModule;
   protected PsiElement myElement;
   protected final SearchScope myScope;
@@ -493,15 +490,15 @@ public class AnalysisScope {
     return myModule;
   }
 
-  public @NotNull List<Module> getModules() {
-    return myModules == null ? Collections.emptyList() : Collections.unmodifiableList(myModules);
+  public @NotNull @Unmodifiable List<Module> getModules() {
+    return myModules == null ? Collections.emptyList() : myModules;
   }
 
   public @Nullable PsiElement getElement() {
     return myElement;
   }
 
-  public @NotNull Set<VirtualFile> getFiles() {
+  public @NotNull @Unmodifiable Set<VirtualFile> getFiles() {
     //noinspection unchecked
     return myVFiles == null ? Collections.emptySet() : (Set<VirtualFile>)myVFiles;
   }

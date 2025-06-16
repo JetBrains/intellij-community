@@ -4,7 +4,9 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.debugger.ui.DebuggerContentInfo;
 import com.intellij.execution.actions.CreateAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.runners.BackendExecutionEnvironmentProxy;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.runners.ExecutionEnvironmentProxy;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
@@ -18,7 +20,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.customization.CustomActionsListener;
-import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -35,10 +36,14 @@ import com.intellij.ui.content.ContentManagerListener;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.UIUtil;
+import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebugSessionSelectionService;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.*;
+import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +54,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Note: could be stored in frontend, but it kept in shared due to compatibility issues.
+ */
 @ApiStatus.Internal
 public class XDebugSessionTab extends DebuggerSessionTabBase {
   private static final Logger LOG = Logger.getInstance(XDebugSessionTab.class);
@@ -59,21 +67,26 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   private final Map<String, XDebugView> myViews = new LinkedHashMap<>();
 
   protected @Nullable XDebugSessionProxy mySession;
+  private XDebugSessionData mySessionData;
 
+  /**
+   * @deprecated Use {@link XDebugSessionTab#create(XDebugSessionProxy, Icon, ExecutionEnvironmentProxy, RunContentDescriptor, boolean, boolean)}
+   */
+  @Deprecated
   public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionImpl session,
                                                  @Nullable Icon icon,
                                                  @Nullable ExecutionEnvironment environment,
                                                  @Nullable RunContentDescriptor contentToReuse) {
-    XDebugSessionProxy proxy = XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session);
+    XDebugSessionProxy proxy = XDebugSessionProxyKeeperKt.asProxy(session);
     boolean forceNewDebuggerUi = XDebugSessionTabCustomizerKt.forceShowNewDebuggerUi(session.getDebugProcess());
     boolean withFramesCustomization = XDebugSessionTabCustomizerKt.allowFramesViewCustomization(session.getDebugProcess());
-    return create(proxy, icon, environment, contentToReuse, forceNewDebuggerUi, withFramesCustomization);
+    return create(proxy, icon, environment == null ? null : new BackendExecutionEnvironmentProxy(environment), contentToReuse, forceNewDebuggerUi, withFramesCustomization);
   }
 
   @ApiStatus.Internal
   public static @NotNull XDebugSessionTab create(@NotNull XDebugSessionProxy proxy,
                                                  @Nullable Icon icon,
-                                                 @Nullable ExecutionEnvironment environment,
+                                                 @Nullable ExecutionEnvironmentProxy environmentProxy,
                                                  @Nullable RunContentDescriptor contentToReuse,
                                                  boolean forceNewDebuggerUi,
                                                  boolean withFramesCustomization) {
@@ -82,7 +95,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       if (component != null) {
         XDebugSessionTab oldTab = TAB_KEY.getData(DataManager.getInstance().getDataContext(component));
         if (oldTab != null) {
-          oldTab.setSession(proxy, environment, icon);
+          oldTab.setSession(proxy, environmentProxy, icon);
           oldTab.attachToSession(proxy);
           return oldTab;
         }
@@ -92,18 +105,18 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (UIExperiment.isNewDebuggerUIEnabled() || forceNewDebuggerUi) {
       if (withFramesCustomization) {
         if (proxy instanceof XDebugSessionProxy.Monolith monolith) {
-          tab = new XDebugSessionTab3(monolith, icon, environment);
+          tab = new XDebugSessionTab3(monolith, icon, environmentProxy);
         }
         else {
           throw new IllegalStateException("Frames view customization is not supported in split mode");
         }
       }
       else {
-        tab = new XDebugSessionTabNewUI(proxy, icon, environment);
+        tab = new XDebugSessionTabNewUI(proxy, icon, environmentProxy);
       }
     }
     else {
-      tab = new XDebugSessionTab(proxy, icon, environment, true);
+      tab = new XDebugSessionTab(proxy, icon, environmentProxy, true);
     }
 
     tab.init(proxy);
@@ -117,19 +130,19 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected XDebugSessionTab(@NotNull XDebugSessionProxy session,
                              @Nullable Icon icon,
-                             @Nullable ExecutionEnvironment environment,
+                             @Nullable ExecutionEnvironmentProxy environmentProxy,
                              boolean shouldInitTabDefaults) {
     super(session.getProject(), "Debug", session.getSessionName(), GlobalSearchScope.allScope(session.getProject()), shouldInitTabDefaults);
 
-    setSession(session, environment, icon);
-    myUi.getContentManager().addDataProvider((EdtNoGetDataProvider)sink -> {
+    setSession(session, environmentProxy, icon);
+    myUi.getContentManager().addUiDataProvider(sink -> {
       sink.set(XWatchesView.DATA_KEY, myWatchesView);
       sink.set(TAB_KEY, this);
+      sink.set(XDebugSessionData.DATA_KEY, mySessionData);
 
       if (mySession != null) {
         sink.set(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY, mySession);
         mySession.putKey(sink);
-        sink.set(XDebugSessionData.DATA_KEY, mySession.getSessionData());
         sink.set(LangDataKeys.CONSOLE_VIEW, mySession.getConsoleView());
       }
     });
@@ -164,6 +177,13 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return getView(DebuggerContentInfo.VARIABLES_CONTENT, XVariablesViewBase.class);
   }
 
+  @ApiStatus.Internal
+  public void showTab() {
+    RunContentDescriptor descriptor = getRunContentDescriptor();
+    if (descriptor == null) return;
+    RunContentManager.getInstance(myProject).showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+  }
+
   protected void initFocusingVariablesFromFramesView() {
     XFramesView framesView = getView(DebuggerContentInfo.FRAME_CONTENT, XFramesView.class);
     XVariablesViewBase variablesView = getVariablesView();
@@ -193,10 +213,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   protected final void createDefaultTabs(XDebugSessionProxy session) {
-    Content framesContent = createFramesContent(session);
-    if (framesContent != null) {
-      myUi.addContent(framesContent, 0, PlaceInGrid.left, false);
-    }
+    myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
 
     if (Registry.is("debugger.new.threads.view")) {
       Content threadsContent = createThreadsContent(session);
@@ -222,20 +239,18 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
   protected void addVariablesAndWatches(@NotNull XDebugSessionProxy session) {
     Content variablesContent = createVariablesContent(session);
-    if (variablesContent != null) {
-      myUi.addContent(variablesContent, 0, PlaceInGrid.center, false);
-    }
+    myUi.addContent(variablesContent, 0, PlaceInGrid.center, false);
     if (!myWatchesInVariables) {
       Content watchesContent = createWatchesContent(session, null);
-      if (watchesContent != null) {
-        myUi.addContent(watchesContent, 0, PlaceInGrid.right, false);
-      }
+      myUi.addContent(watchesContent, 0, PlaceInGrid.right, false);
     }
   }
 
-  private void setSession(@NotNull XDebugSessionProxy session, @Nullable ExecutionEnvironment environment, @Nullable Icon icon) {
-    myEnvironment = environment;
+  private void setSession(@NotNull XDebugSessionProxy session, @Nullable ExecutionEnvironmentProxy environmentProxy, @Nullable Icon icon) {
+    myEnvironment = environmentProxy == null ? null : environmentProxy.getExecutionEnvironment();
+    myEnvironmentProxy = environmentProxy;
     mySession = session;
+    mySessionData = session.getSessionData();
     myConsole = session.getConsoleView();
 
     AnAction[] restartActions;
@@ -248,23 +263,69 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getProcessHandler(),
-                                                      myUi.getComponent(), session.getSessionName(), icon, this::computeWatches, restartActions);
+                                                      myUi.getComponent(), session.getSessionName(), icon, this::computeWatches,
+                                                      restartActions);
     myRunContentDescriptor.setRunnerLayoutUi(myUi);
     Disposer.register(myRunContentDescriptor, this);
     Disposer.register(myProject, myRunContentDescriptor);
+
+    XDebugSessionSelectionService.startCurrentSessionListening(myProject);
+
+    session.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionPaused() {
+        updateActions();
+      }
+
+      @Override
+      public void sessionResumed() {
+        updateActions();
+      }
+
+      @Override
+      public void sessionStopped() {
+        updateActions();
+        AppUIUtil.invokeOnEdt(() -> {
+          myUi.attractBy(XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION);
+          if (!myProject.isDisposed()) {
+            myWatchesView.updateSessionData();
+          }
+          detachFromSession();
+        });
+
+        if (!myProject.isDisposed() &&
+            !ApplicationManager.getApplication().isUnitTestMode() &&
+            XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isHideDebuggerOnProcessTermination()) {
+          RunContentManager.getInstance(myProject).hideRunContent(DefaultDebugExecutor.getDebugExecutorInstance(),
+                                                                  getRunContentDescriptor());
+        }
+      }
+
+      @Override
+      public void stackFrameChanged() {
+        updateActions();
+      }
+
+      @Override
+      public void beforeSessionResume() {
+        UIUtil.invokeLaterIfNeeded(() -> {
+          getUi().clearAttractionBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
+        });
+      }
+
+      private void updateActions() {
+        UIUtil.invokeLaterIfNeeded(() -> getUi().updateActionsNow());
+      }
+    }, this);
   }
 
-  private @Nullable Content createVariablesContent(@NotNull XDebugSessionProxy proxy) {
-    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
-      LOG.error("Variables view is not supported in split mode");
-      return null;
-    }
-    XDebugSessionImpl session = (XDebugSessionImpl)monolith.getSession();
+  private @NotNull Content createVariablesContent(@NotNull XDebugSessionProxy proxy) {
     XVariablesView variablesView;
     if (myWatchesInVariables) {
-      variablesView = myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables, false, false);
-    } else {
-      variablesView = new XVariablesView(session);
+      variablesView = myWatchesView = new XWatchesViewImpl(proxy, myWatchesInVariables, false, false);
+    }
+    else {
+      variablesView = new XVariablesView(proxy);
     }
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
@@ -277,30 +338,22 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     return result;
   }
 
-  protected @Nullable Content createWatchesContent(@NotNull XDebugSessionProxy proxy, @Nullable XWatchesViewImpl watchesView) {
-    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
-      LOG.error("Watches view is not supported in split mode");
-      return null;
-    }
-    XDebugSessionImpl session = (XDebugSessionImpl)monolith.getSession();
-    myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(session, myWatchesInVariables);
+  protected @NotNull Content createWatchesContent(@NotNull XDebugSessionProxy proxy, @Nullable XWatchesViewImpl watchesView) {
+    myWatchesView = watchesView != null ? watchesView : new XWatchesViewImpl(proxy, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
-                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), null, myWatchesView.getDefaultFocusedComponent());
+                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), null,
+                                                myWatchesView.getDefaultFocusedComponent());
     watchesContent.setCloseable(false);
     return watchesContent;
   }
 
-  private @Nullable Content createFramesContent(XDebugSessionProxy proxy) {
-    if (!(proxy instanceof XDebugSessionProxy.Monolith monolith)) {
-      LOG.error("Frames view is not supported in split mode");
-      return null;
-    }
-    XDebugSessionImpl session = (XDebugSessionImpl)monolith.getSession();
-    XFramesView framesView = new XFramesView(session);
+  private @NotNull Content createFramesContent(XDebugSessionProxy proxy) {
+    XFramesView framesView = new XFramesView(proxy);
     registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
     Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
-                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), null, framesView.getFramesList());
+                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), null,
+                                               framesView.getFramesList());
     framesContent.setCloseable(false);
     return framesContent;
   }
@@ -338,20 +391,25 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
 
     XDebugTabLayouter layouter = session.createTabLayouter();
-    Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
-    attachNotificationTo(consoleContent);
+    if (myConsole != null) { // TODO should be non-null
+      Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
+      attachNotificationTo(consoleContent);
+      layouter.registerAdditionalContent(myUi);
 
-    layouter.registerAdditionalContent(myUi);
-    RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+      RunContentBuilder.addAdditionalConsoleEditorActions(myConsole, consoleContent);
+      consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
+    }
+    else {
+      layouter.registerAdditionalContent(myUi);
+    }
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
 
-    consoleContent.setHelpId(DefaultDebugExecutor.getDebugExecutorInstance().getHelpId());
     initToolbars(session);
 
-    if (myEnvironment != null) {
+    if (myEnvironment != null && myConsole != null) { // TODO should be non-null
       initLogConsoles(myEnvironment.getRunProfile(), myRunContentDescriptor, myConsole);
     }
   }
@@ -366,7 +424,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }
-    RunContentBuilder.addAvoidingDuplicates(leftToolbar, ((CustomisedActionGroup)leftGroup).getDefaultChildrenOrStubs());
+    RunContentBuilder.addAvoidingDuplicates(leftToolbar, leftGroup);
 
     for (AnAction action : session.getExtraStopActions()) {
       leftToolbar.add(action, new Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM));
@@ -389,7 +447,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     ActionGroup topGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP);
     DefaultActionGroup topLeftToolbar = new DefaultActionGroupWithDelegate(topGroup);
-    RunContentBuilder.addAvoidingDuplicates(topLeftToolbar, ((CustomisedActionGroup)topGroup).getDefaultChildrenOrStubs());
+    RunContentBuilder.addAvoidingDuplicates(topLeftToolbar, topGroup);
 
     registerAdditionalActions(leftToolbar, topLeftToolbar, settings);
     myUi.getOptions().setLeftToolbar(leftToolbar, ActionPlaces.DEBUGGER_TOOLBAR);
@@ -408,7 +466,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     }
   }
 
-  public void detachFromSession() {
+  private void detachFromSession() {
     assert mySession != null;
     mySession = null;
   }
@@ -443,29 +501,33 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     rebuildViews();
   }
 
+  /**
+   * @deprecated Use {@link XDebugSessionTab#showWatchesView(XDebugSessionProxy)} instead
+   */
+  @Deprecated
   public static void showWatchesView(@NotNull XDebugSessionImpl session) {
+    showWatchesView(XDebugSessionProxyKeeperKt.asProxy(session));
+  }
+
+  public static void showWatchesView(@NotNull XDebugSessionProxy session) {
     XDebugSessionTab tab = session.getSessionTab();
-    if (tab != null) {
-      showView(session, tab.getWatchesContentId());
-    }
+    if (tab == null) return;
+    tab.showView(tab.getWatchesContentId());
   }
 
   public static void showFramesView(@Nullable XDebugSessionImpl session) {
-    XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
-    if (tab != null) {
-      showView(session, tab.getFramesContentId());
-    }
+    if (session == null) return;
+    XDebugSessionTab tab = session.getSessionTab();
+    if (tab == null) return;
+    tab.showView(tab.getFramesContentId());
   }
 
-  private static void showView(@Nullable XDebugSessionImpl session, String viewId) {
-    XDebugSessionTab tab = session != null ? session.getSessionTab() : null;
-    if (tab != null) {
-      tab.toFront(false, null);
-      Content content = tab.findOrRestoreContentIfNeeded(viewId);
-      // make sure we make it visible to the user
-      if (content != null) {
-        tab.myUi.selectAndFocus(content, false, false);
-      }
+  void showView(String viewId) {
+    toFront(false, null);
+    Content content = findOrRestoreContentIfNeeded(viewId);
+    // make sure we make it visible to the user
+    if (content != null) {
+      myUi.selectAndFocus(content, false, false);
     }
   }
 
@@ -535,5 +597,27 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       return contentUi.findOrRestoreContentIfNeeded(contentId);
     }
     return myUi.findContent(contentId);
+  }
+
+  @ApiStatus.Internal
+  public void onPause(boolean pausedByUser, boolean topFramePositionAbsent) {
+    // user attractions should only be made if event happens independently (e.g. program paused/suspended)
+    // and should not be made when user steps in the code
+    if (!pausedByUser) return;
+    if (XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isShowDebuggerOnBreakpoint()) {
+      toFront(true, () -> {
+        if (mySession != null) {
+          mySession.updateExecutionPosition();
+        }
+      });
+    }
+
+    if (topFramePositionAbsent) {
+      // if there is no source position available, we should somehow tell the user that session is stopped.
+      // the best way is to show the stack frames.
+      showView(getFramesContentId());
+    }
+
+    getUi().attractBy(XDebuggerUIConstants.LAYOUT_VIEW_BREAKPOINT_CONDITION);
   }
 }

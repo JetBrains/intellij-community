@@ -32,7 +32,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     for (Iterator<NamedScope> iterator = scopes.iterator(); iterator.hasNext(); ) {
       final NamedScope scope = iterator.next();
       for (CustomScopesProvider provider : CUSTOM_SCOPES_PROVIDER.getExtensions(project)) {
-        if (provider instanceof CustomScopesProviderEx && ((CustomScopesProviderEx)provider).isVetoed(scope, ScopePlace.SETTING)) {
+        if (provider instanceof CustomScopesProviderEx custom && custom.isVetoed(scope, ScopePlace.SETTING)) {
           iterator.remove();
           break;
         }

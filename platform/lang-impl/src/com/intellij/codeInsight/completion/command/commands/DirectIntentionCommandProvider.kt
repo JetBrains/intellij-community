@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.codeInsight.completion.command.*
+import com.intellij.codeInsight.completion.command.configuration.ApplicationCommandCompletionService
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.codeInsight.daemon.impl.HighlightInfo.IntentionActionDescriptor
@@ -9,7 +10,10 @@ import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass.IntentionsInfo
 import com.intellij.codeInsight.intention.*
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
 import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptorBase
@@ -24,33 +28,38 @@ import com.intellij.lang.LanguageExtension
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.lang.annotation.HighlightSeverity.INFORMATION
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.editor.impl.DocumentMarkupModel
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.ProjectTypeService
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import kotlinx.coroutines.job
+import java.lang.ref.SoftReference
+import java.util.concurrent.CancellationException
 import java.util.function.Predicate
 
 /**
@@ -59,7 +68,7 @@ import java.util.function.Predicate
  */
 internal class DirectIntentionCommandProvider : CommandProvider {
   override fun getCommands(context: CommandCompletionProviderContext): List<CompletionCommand> {
-    if (!Registry.`is`("ide.completion.command.enabled")) return emptyList()
+    if (!ApplicationCommandCompletionService.getInstance().commandCompletionEnabled()) return emptyList()
     val originalEditor = context.originalEditor
     val psiFile = context.psiFile
     val offset = context.offset
@@ -79,14 +88,14 @@ internal class DirectIntentionCommandProvider : CommandProvider {
     return runBlockingCancellable {
       val result: MutableList<CompletionCommand> = ArrayList()
 
-      val errorCache = originalEditor.getUserData(ERROR_CACHE)
+      val errorCache = originalEditor.getUserData(ERROR_CACHE)?.get()
       val cachedErrorCommand = errorCache?.getCommands(psiFile.fileDocument, offset)
       cachedErrorCommand?.let {
         result.addAll(it)
       }
       val asyncErrorHighlighting = if (cachedErrorCommand == null) asyncErrorHighlighting(psiFile, editor, offset) else null
 
-      val inspectionCache = originalEditor.getUserData(INSPECTION_CACHE)
+      val inspectionCache = originalEditor.getUserData(INSPECTION_CACHE)?.get()
       val cachedInspectionCommand = inspectionCache?.getCommands(psiFile.fileDocument, offset)
       cachedInspectionCommand?.let {
         result.addAll(it)
@@ -102,22 +111,22 @@ internal class DirectIntentionCommandProvider : CommandProvider {
       val errors = asyncErrorHighlighting?.await()
       errors?.let {
         result.addAll(errors)
-        originalEditor.putUserData(ERROR_CACHE, IntentionCache(
+        originalEditor.putUserData(ERROR_CACHE, SoftReference(IntentionCache(
           commands = errors,
           offset = offset,
           hashCode = psiFile.fileDocument.immutableCharSequence.hashCode()
-        ))
+        )))
       }
 
 
       val inspections = asyncInspections?.await()
       inspections?.let {
         result.addAll(inspections)
-        originalEditor.putUserData(INSPECTION_CACHE, IntentionCache(
+        originalEditor.putUserData(INSPECTION_CACHE, SoftReference(IntentionCache(
           commands = inspections,
           offset = offset,
           hashCode = psiFile.fileDocument.immutableCharSequence.hashCode()
-        ))
+        )))
       }
 
       val intentions = asyncIntentions.await()
@@ -136,8 +145,8 @@ internal class DirectIntentionCommandProvider : CommandProvider {
     return intentionEditor
   }
 
-  private val ERROR_CACHE: Key<IntentionCache> = Key.create("completion.command.error.cache")
-  private val INSPECTION_CACHE: Key<IntentionCache> = Key.create("completion.command.inspection.cache")
+  private val ERROR_CACHE: Key<SoftReference<IntentionCache>> = Key.create("completion.command.error.cache")
+  private val INSPECTION_CACHE: Key<SoftReference<IntentionCache>> = Key.create("completion.command.inspection.cache")
 
   private data class IntentionCache(
     private val commands: List<CompletionCommand>,
@@ -165,167 +174,200 @@ internal class DirectIntentionCommandProvider : CommandProvider {
       val offsetProvider = IntentionCommandOffsetProvider.EP_NAME.forLanguage(language)
 
       val result: MutableMap<String, CompletionCommand> = mutableMapOf()
-      val intentionCommandSkipper = IntentionCommandSkipper.EP_NAME.forLanguage(psiFile.language)
-      val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
-      val allOffsets = offsetProvider?.findOffsets(psiFile, offset) ?: mutableListOf(offset)
-      val fileDocument = psiFile.fileDocument
-      val lineByOffset = mutableMapOf<Int, Int>()
-      for (offset in allOffsets) {
-        val lineNumber = fileDocument.getLineNumber(offset)
-        lineByOffset.compute(lineNumber) { k, v -> if (v == null) offset else maxOf(v, offset) }
-      }
-      for (currentOffset in lineByOffset.values) {
-        editor.caretModel.moveToOffset(currentOffset)
-        val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
-        val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-        val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, currentOffset)
-        val isInjected = topLevelFile != psiFile
-        val profileToUse = getInstance(psiFile.project).getCurrentProfile()
-        val inspectionWrapper = InspectionProfileWrapper(profileToUse)
-        val inspectionTools = getInspectionTools(inspectionWrapper, originalFile)
-        val lineRange = getLineRange(topLevelFile, topLevelOffset)
-        val indicator = EmptyProgressIndicator()
-        val inspectionResult = jobToIndicator(coroutineContext.job, indicator) {
-          if (!isInjected) {
-            InspectionEngine.inspectEx(inspectionTools, topLevelFile, lineRange, lineRange, true, false, true, indicator, fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
-              return true
-            })
-          }
-          else {
-            val textRange = getLineRange(psiFile, currentOffset)
-            InspectionEngine.inspectElements(inspectionTools, psiFile, textRange, true, true, indicator,
-                                             PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
-              return true
-            })
-          }
+      try {
+        val intentionCommandSkipper = IntentionCommandSkipper.EP_NAME.forLanguage(psiFile.language)
+        val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
+        val allOffsets = offsetProvider?.findOffsets(psiFile, offset) ?: mutableListOf(offset)
+        val fileDocument = psiFile.fileDocument
+        val lineByOffset = mutableMapOf<Int, Int>()
+        for (offset in allOffsets) {
+          val lineNumber = fileDocument.getLineNumber(offset)
+          lineByOffset.compute(lineNumber) { k, v -> if (v == null) offset else maxOf(v, offset) }
         }
-        for (entry: MutableMap.MutableEntry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
-          val inspectionToolWrapper: LocalInspectionToolWrapper = entry.key ?: continue
-          val toolId = inspectionToolWrapper.shortName
-          val descriptors: List<ProblemDescriptor?> = entry.value ?: continue
-          for (descriptor in descriptors) {
-            if (descriptor == null) continue
-            val fixes = descriptor.fixes ?: continue
-            if (descriptor !is ProblemDescriptorBase) continue
-            var textRange = descriptor.textRange ?: continue
-            if (!lineRange.intersects(textRange)) continue
-            if (isInjected) {
-              textRange = injectedLanguageManager.injectedToHost(psiFile, textRange)
+        for (currentOffset in lineByOffset.values) {
+          editor.caretModel.moveToOffset(currentOffset)
+          val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
+          val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+          val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, currentOffset)
+          val isInjected = topLevelFile != psiFile
+          val profileToUse = getInstance(psiFile.project).getCurrentProfile()
+          val inspectionWrapper = InspectionProfileWrapper(profileToUse)
+          val inspectionTools = getInspectionTools(inspectionWrapper, originalFile)
+          val lineRange = getLineRange(topLevelFile, topLevelOffset)
+          val indicator = EmptyProgressIndicator()
+          val inspectionResult = jobToIndicator(coroutineContext.job, indicator) {
+            if (!isInjected) {
+              InspectionEngine.inspectEx(inspectionTools, topLevelFile, lineRange, lineRange, true, false, true, indicator, fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+                return true
+              })
             }
-            val displayKey: HighlightDisplayKey = inspectionToolWrapper.getDisplayKey() ?: continue
-            val severity: HighlightSeverity = inspectionWrapper.getErrorLevel(displayKey, topLevelFile).severity
-            val severityRegistrar: SeverityRegistrar = inspectionWrapper.profileManager.severityRegistrar
-            val level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, severityRegistrar)
-            //necessary to be compatible with call site
-            editor.caretModel.moveToOffset(offset)
-            topLevelEditor.caretModel.moveToOffset(offset)
-            for (i in 0..fixes.size - 1) {
-              val action = QuickFixWrapper.wrap(descriptor, i)
-              if (action is EmptyIntentionAction) continue
-              if (intentionCommandSkipper != null && intentionCommandSkipper.skip(action, psiFile, currentOffset)) continue
-              if (!isInjected && !ShowIntentionActionsHandler.availableFor(topLevelFile, topLevelEditor, topLevelOffset, action)) continue
-              if (isInjected && !ShowIntentionActionsHandler.availableFor(psiFile, editor, currentOffset, action)) continue
-              val priority = if (level.getSeverity(null) == INFORMATION) 70 else 80
-              val icon = if (level.getSeverity(null) == INFORMATION) AllIcons.Actions.IntentionBulbGrey else AllIcons.Actions.IntentionBulb
+            else {
+              val textRange = getLineRange(psiFile, currentOffset)
+              InspectionEngine.inspectElements(inspectionTools, psiFile, textRange, true, true, indicator,
+                                               PsiTreeUtil.collectElements(psiFile) { it.textRange.intersects(textRange) }.toList(), fun(_: LocalInspectionToolWrapper, _: ProblemDescriptor): Boolean {
+                return true
+              })
+            }
+          }
+          for (entry: MutableMap.MutableEntry<LocalInspectionToolWrapper?, List<ProblemDescriptor?>?> in inspectionResult.entries) {
+            val inspectionToolWrapper: LocalInspectionToolWrapper = entry.key ?: continue
+            val toolId = inspectionToolWrapper.shortName
+            val descriptors: List<ProblemDescriptor?> = entry.value ?: continue
+            for (descriptor in descriptors) {
+              if (descriptor == null) continue
+              val fixes = descriptor.fixes ?: continue
+              if (descriptor !is ProblemDescriptorBase) continue
+              var textRange = descriptor.textRange ?: continue
+              if (!lineRange.intersects(textRange)) continue
+              if (isInjected) {
+                textRange = injectedLanguageManager.injectedToHost(psiFile, textRange)
+              }
+              val displayKey: HighlightDisplayKey = inspectionToolWrapper.getDisplayKey() ?: continue
+              val severity: HighlightSeverity = inspectionWrapper.getErrorLevel(displayKey, topLevelFile).severity
+              val severityRegistrar: SeverityRegistrar = inspectionWrapper.profileManager.severityRegistrar
+              val level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, severityRegistrar)
+              //necessary to be compatible with call site
+              editor.caretModel.moveToOffset(offset)
+              topLevelEditor.caretModel.moveToOffset(offset)
+              for (i in 0..fixes.size - 1) {
+                val action = QuickFixWrapper.wrap(descriptor, i)
+                if (action is EmptyIntentionAction) continue
+                if (intentionCommandSkipper != null && intentionCommandSkipper.skip(action, psiFile, currentOffset)) continue
+                if (!isInjected && !ShowIntentionActionsHandler.availableFor(topLevelFile, topLevelEditor, topLevelOffset, action)) continue
+                if (isInjected && !ShowIntentionActionsHandler.availableFor(psiFile, editor, currentOffset, action)) continue
+                val priority = if (level.getSeverity(null) == INFORMATION) 70 else 80
+                val icon = if (level.getSeverity(null) == INFORMATION) AllIcons.Actions.IntentionBulbGrey else AllIcons.Actions.IntentionBulb
 
-              result[toolId + ":" + action.text] = (DirectInspectionFixCompletionCommand(
-                inspectionId = toolId,
-                name = action.text,
-                priority = priority,
-                icon = icon,
-                highlightInfo = HighlightInfoLookup(textRange, level.attributesKey, priority),
-                targetOffset = currentOffset))
+                result[toolId + ":" + action.text] = (DirectInspectionFixCompletionCommand(
+                  inspectionId = toolId,
+                  presentableName = action.text,
+                  priority = priority,
+                  icon = icon,
+                  highlightInfo = HighlightInfoLookup(textRange, level.attributesKey, priority),
+                  targetOffset = currentOffset,
+                  previewProvider = {
+                    computePreview(psiFile, action, editor, offset)
+                  }))
+              }
             }
           }
         }
       }
+      catch (e: Exception) {
+        if (e is ControlFlowException || e is CancellationException) {
+          throw e
+        }
+        thisLogger().error("Can't collect inspections", e)
+      }
+
+
       return@readAction result.values.toList()
     }
+  }
+
+  private fun computePreview(
+    psiFile: PsiFile,
+    action: IntentionAction,
+    editor: Editor,
+    offset: Int,
+  ): IntentionPreviewInfo? = try {
+    IntentionPreviewComputable(psiFile.project, action, psiFile, editor, offset).call()
+  }
+  catch (e: Exception) {
+    if (e is ControlFlowException || e is CancellationException) {
+      throw e
+    }
+    thisLogger().error("Can't create preview", e)
+    null
   }
 
   private fun CoroutineScope.asyncErrorHighlighting(psiFile: PsiFile, editor: Editor, offset: Int): Deferred<List<CompletionCommand>> {
     return async {
       val result: MutableList<CompletionCommand> = mutableListOf()
       readAction {
-        val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
-        val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
-        val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-        val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, offset)
-        val isInjected = topLevelFile != psiFile
-        val indicator = DaemonProgressIndicator()
-        val errorHighlightings: List<HighlightInfo?>? = jobToIndicator(coroutineContext.job, indicator) {
-          HighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(topLevelFile, true, true, true)
-        }
-        if (errorHighlightings == null) return@readAction
-        var insideRange = getLineRange(topLevelFile, topLevelOffset)
-        if (isInjected) {
-          insideRange = insideRange.intersection(
-            TextRange(injectedLanguageManager.injectedToHost(psiFile, 0),
-                      injectedLanguageManager.injectedToHost(psiFile, psiFile.fileDocument.textLength)))
-        }
-        var attemptToAddAi = false
-        for (info: HighlightInfo? in errorHighlightings) {
-          if (info == null) continue
-          if (!insideRange.intersects(info.startOffset, info.endOffset) ||
-              (isInjected && !insideRange.contains(TextRange(info.startOffset, info.endOffset)))) continue
-          if (!attemptToAddAi && info.severity == HighlightSeverity.ERROR) {
-            val intentionsInfo: IntentionsInfo? = tryToAddAI(info, psiFile, editor, offset)
-            if (intentionsInfo != null) {
-              val intentionsCache = CachedIntentions(psiFile.project, psiFile, editor)
-              intentionsCache.wrapAndUpdateActions(intentionsInfo, false)
-              for (descriptor in intentionsCache.errorFixes) {
-                val command = IntentionCompletionCommand(descriptor, 50, AllIcons.Actions.QuickfixBulb,
-                                                         HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
-                                                                             CodeInsightColors.ERRORS_ATTRIBUTES, 100), offset)
-                result.add(command)
-              }
+        try {
+          val injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.project)
+          val topLevelFile = injectedLanguageManager.getTopLevelFile(psiFile)
+          val topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+          val topLevelOffset = injectedLanguageManager.injectedToHost(psiFile, offset)
+
+          val fileDocument = topLevelFile.fileDocument
+          val lineNumber = fileDocument.getLineNumber(topLevelOffset)
+          val startLineNumber = maxOf(0, lineNumber - 2)
+          val endLineNumber = minOf(fileDocument.lineCount - 1, lineNumber + 2)
+          val startOffset = fileDocument.getLineStartOffset(startLineNumber)
+          val endOffset = fileDocument.getLineEndOffset(endLineNumber)
+          val isInjected = topLevelFile != psiFile
+          val indicator = DaemonProgressIndicator()
+          val errorHighlightings: List<HighlightInfo?>? = jobToIndicator(coroutineContext.job, indicator) {
+            ApplicationManager.getApplication().runReadAction<List<HighlightInfo?>?> {
+              HighlightVisitorBasedInspection.runAnnotatorsInGeneralHighlighting(topLevelFile,
+                                                                                 startOffset,
+                                                                                 endOffset,
+                                                                                 ProperTextRange(startOffset, endOffset),
+                                                                                 true, true, true)
             }
-            attemptToAddAi = true
           }
-          val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
-          ShowIntentionsPass.addAvailableFixesForGroups(info, topLevelEditor, topLevelFile, fixes, -1, offset, false)
-          for (descriptor in fixes) {
-            if (descriptor.action is EmptyIntentionAction) continue
-            val command = DirectErrorFixCompletionCommand(name = descriptor.action.text,
-                                                          priority = 100,
-                                                          icon = AllIcons.Actions.QuickfixBulb,
-                                                          highlightInfo = HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
-                                                                                              CodeInsightColors.ERRORS_ATTRIBUTES, 100))
-            result.add(command)
+          if (errorHighlightings == null) return@readAction
+          var insideRange = getLineRange(topLevelFile, topLevelOffset)
+          if (isInjected) {
+            insideRange = insideRange.intersection(
+              TextRange(injectedLanguageManager.injectedToHost(psiFile, 0),
+                        injectedLanguageManager.injectedToHost(psiFile, psiFile.fileDocument.textLength)))
           }
+          val lazyQuickFixUpdater = LazyQuickFixUpdater.getInstance(psiFile.project)
+          for (info: HighlightInfo? in errorHighlightings) {
+            if (info == null) continue
+            if (!insideRange.intersects(info.startOffset, info.endOffset) ||
+                (isInjected && !insideRange.contains(TextRange(info.startOffset, info.endOffset)))) continue
+            if (info.hasLazyQuickFixes()) {
+              info.updateLazyFixesPsiTimeStamp(PsiModificationTracker.getInstance(psiFile.project).modificationCount)
+              lazyQuickFixUpdater.waitQuickFixesSynchronously(psiFile, editor, info)
+            }
+            val fixes: MutableList<IntentionActionDescriptor> = ArrayList()
+            ShowIntentionsPass.addAvailableFixesForGroups(info, topLevelEditor, topLevelFile, fixes, -1, offset, false)
+            for (descriptor in fixes) {
+              if (descriptor.action is EmptyIntentionAction) continue
+              var name = descriptor.action.text
+              val prefix = "<html>"
+              val suffix = "</html>"
+              if (name.startsWith(prefix) && name.endsWith(suffix)) {
+                @Suppress("HardCodedStringLiteral")
+                name = name.substring(prefix.length, name.length - suffix.length)
+              }
+              val command = DirectErrorFixCompletionCommand(presentableName = name,
+                                                            priority = 100,
+                                                            icon = AllIcons.Actions.QuickfixBulb,
+                                                            highlightInfo = HighlightInfoLookup(TextRange(info.startOffset, info.endOffset),
+                                                                                                CodeInsightColors.ERRORS_ATTRIBUTES, 100),
+                                                            previewProvider = {
+                                                              computePreview(psiFile, descriptor.action, editor, offset)
+                                                            })
+              result.add(command)
+            }
+          }
+          result.addAll(errorFixesWithHighlighting(psiFile, errorHighlightings, offset))
+        }
+        catch (e: Exception) {
+          if (e is ControlFlowException || e is CancellationException) {
+            throw e
+          }
+          thisLogger().error("Can't collect errors", e)
         }
       }
       return@async result
     }
   }
 
-  /**
-   * temporary workaround for fix with AI
-   */
-  private fun tryToAddAI(info: HighlightInfo, psiFile: PsiFile, editor: Editor, offset: Int): IntentionsInfo? {
-    val copyFile = psiFile.copy() as? PsiFile ?: return null
-    val markup = DocumentMarkupModel.forDocument(copyFile.fileDocument, psiFile.project, true) as? MarkupModelEx ?: return null
-    val textAttributesKey = if (info.forcedTextAttributesKey == null) info.type.getAttributesKey() else info.forcedTextAttributesKey
-    val highlighter = markup.addRangeHighlighter(textAttributesKey, info.startOffset, info.endOffset, 5000, HighlighterTargetArea.EXACT_RANGE)
-    highlighter.errorStripeTooltip = info
-    val dumbService = DumbService.getInstance(psiFile.project)
-    val intentions = IntentionsInfo()
-    val copyEditor = MyEditor(copyFile, editor.settings)
-    copyEditor.caretModel.moveToOffset(offset)
-    for (extension in IntentionMenuContributor.EP_NAME.extensionList) {
-      if (extension.javaClass.name != "com.intellij.ml.llm.inlinePromptDetector.fixWithAi.FixWithAiIntentionMenuContributor") continue
-      ProgressManager.checkCanceled()
-      try {
-        if (dumbService.isUsableInCurrentContext(extension)) {
-          extension.collectActions(copyEditor, copyFile, intentions, -1, offset)
-        }
-      }
-      catch (_: IntentionPreviewUnsupportedOperationException) {
-        //can collect action on a mock memory editor and produce exceptions - ignore
-      }
+  private fun errorFixesWithHighlighting(psiFile: PsiFile, errorHighlightings: List<HighlightInfo?>, offset: Int): Collection<CompletionCommand> {
+    val project = psiFile.project
+    val dumbService = DumbService.getInstance(project)
+    val result = mutableListOf<CompletionCommand>()
+    val highlightInfos = errorHighlightings.filterNotNull()
+    for (provider in dumbService.filterByDumbAwareness(ErrorFixCommandProvider.EP_NAME.extensionList)) {
+      result.addAll(provider.getCommands(psiFile, highlightInfos, offset))
     }
-
-    return intentions
+    return result
   }
 
   private fun CoroutineScope.asyncIntentions(
@@ -372,9 +414,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             try {
               ProgressManager.checkCanceled()
               if (!dumbService.isUsableInCurrentContext(intention) ||
-                  !intention.action.isAvailable(originalFile.project, editor, psiFile) &&
-                  //todo temporary workaround for AI
-                  intention.action.familyName !in ("AI Actions…") ||
+                  !intention.action.isAvailable(originalFile.project, editor, psiFile) ||
                   !filter.test(intention.action)) {
                 toRemove.add(intention)
               }
@@ -395,8 +435,11 @@ internal class DirectIntentionCommandProvider : CommandProvider {
             if (intention.action is EmptyIntentionAction ||
                 intentionCommandSkipper != null && intentionCommandSkipper.skip(intention.action, psiFile, currentOffset)) continue
             val intentionCommand =
-              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, null, currentOffset)
-            result.put(intention.text, intentionCommand)
+              IntentionCompletionCommand(intention, 50, intention.icon ?: AllIcons.Actions.IntentionBulbGrey, null, currentOffset) {
+                editor.caretModel.moveToOffset(currentOffset)
+                computePreview(psiFile, intention.action, editor, currentOffset)
+              }
+            result[intention.text] = intentionCommand
           }
         }
       }
@@ -451,6 +494,21 @@ private fun getInspectionTools(profile: InspectionProfileWrapper, file: PsiFile)
     enabled.add(wrapper)
   }
   return enabled
+}
+
+
+/**
+ * This class allows language plugins to contribute specialized error fix commands to IntelliJ's completion system.
+ * These commands are displayed when errors are detected in the code and provide context-specific fixes.
+ *
+ */
+interface ErrorFixCommandProvider : PossiblyDumbAware {
+
+  fun getCommands(psiFile: PsiFile, errorHighlightings: List<HighlightInfo>, offset: Int): List<CompletionCommand>
+
+  companion object {
+    internal val EP_NAME: ExtensionPointName<ErrorFixCommandProvider> = ExtensionPointName.create("com.intellij.codeInsight.completion.error.intention")
+  }
 }
 
 interface IntentionCommandSkipper {

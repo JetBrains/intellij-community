@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.AbstractJavaInplaceIntroducer;
 import com.intellij.refactoring.HelpID;
@@ -56,6 +57,12 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
   static boolean canIntroduceField(@NotNull PsiClass parentClass, @Nullable PsiType type, Editor editor) {
     if (parentClass.isInterface()) {
       String message = JavaRefactoringBundle.message("cannot.introduce.field.in.interface");
+      showErrorMessage(parentClass.getProject(), editor, message);
+      return false;
+    }
+    if (PsiTypes.nullType().equals(type) || type instanceof PsiLambdaParameterType || type instanceof PsiLambdaExpressionType ||
+        type instanceof PsiMethodReferenceType) {
+      String message = JavaRefactoringBundle.message("variable.type.unknown");
       showErrorMessage(parentClass.getProject(), editor, message);
       return false;
     }
@@ -214,7 +221,8 @@ public class IntroduceFieldHandler extends BaseExpressionToFieldHandler implemen
                                                PsiExpression[] occurrences,
                                                boolean isStatic) {
         final PsiStatement statement = PsiTreeUtil.getParentOfType(local, PsiStatement.class);
-        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), local.getType(), occurrences, local, statement);
+        PsiType type = PsiTypesUtil.removeExternalAnnotations(local.getType());
+        return IntroduceFieldHandler.this.showRefactoringDialog(project, editor, aClass, local.getInitializer(), type, occurrences, local, statement);
       }
 
       @Override

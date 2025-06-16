@@ -221,7 +221,7 @@ private class NewRemoteDevModuleAction : DumbAwareAction() {
         //language=XML
         """
         <dependencies>
-          <plugin id="com.intellij.platform.experimental.frontend"/>
+          <module name="intellij.platform.frontend"/>
         </dependencies>
       """.trimIndent()
       ModuleType.BACKEND ->

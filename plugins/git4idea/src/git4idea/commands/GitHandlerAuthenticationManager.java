@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.eel.EelApi;
 import com.intellij.util.EnvironmentUtil;
 import externalApp.nativessh.NativeSshAskPassAppHandler;
 import git4idea.GitUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.UUID;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -217,10 +219,18 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   private void addHandlerPathToEnvironment(@NotNull String env,
                                            @NotNull ExternalProcessHandlerService<?> service) throws IOException {
     GitExecutable executable = myHandler.getExecutable();
-    File scriptFile = service.getCallbackScriptPath(executable.getId(),
-                                                    new GitScriptGenerator(executable),
-                                                    shouldUseBatchScript(executable));
-    String scriptPath = executable.convertFilePath(scriptFile);
+    String scriptPath;
+    if (executable instanceof GitExecutable.Eel) {
+      EelApi eelApi = ((GitExecutable.Eel)executable).getEel();
+      Path scriptFile = service.getCallbackScriptPath(eelApi, shouldUseBatchScript(executable), myDisposable);
+      scriptPath = executable.convertFilePath(scriptFile);
+    }
+    else {
+      File scriptFile = service.getCallbackScriptPath(executable.getId(),
+                                                      new GitScriptGenerator(executable),
+                                                      shouldUseBatchScript(executable));
+      scriptPath = executable.convertFilePath(scriptFile.toPath());
+    }
     myHandler.addCustomEnvironmentVariable(env, scriptPath);
   }
 

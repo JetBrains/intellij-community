@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -72,6 +73,8 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
           String relativePath = RelativePathCalculator.computeRelativePath(toPath.getPath(), fromPath.getPath(), true);
           if (relativePath != null) return FileUtilRt.toSystemDependentName(relativePath); //NON-NLS
         }
+
+        if (ModuleType.isInternal(fromModule)) return null;
 
         VirtualFile fromContentRoot = fileIndex.getContentRootForFile(fromParent, hideExcludedFiles);
         if (fromContentRoot == null) return null;

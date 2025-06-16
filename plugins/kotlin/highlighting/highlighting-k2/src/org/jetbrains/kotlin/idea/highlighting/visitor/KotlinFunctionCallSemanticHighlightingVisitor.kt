@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.idea.highlighting.analyzers.KotlinSemanticAnalyzer
 internal class KotlinFunctionCallSemanticHighlightingVisitor : KotlinAbstractSemanticHighlightingVisitor() {
     override fun clone(): KotlinFunctionCallSemanticHighlightingVisitor = KotlinFunctionCallSemanticHighlightingVisitor()
     override fun createSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession): KotlinSemanticAnalyzer {
+        // KotlinDslSemanticHighlightingVisitor covers KotlinFunctionCallSemanticAnalyzer as well
+        // consider to delete this class
         return KotlinFunctionCallSemanticAnalyzer(holder, session)
     }
 }

@@ -25,9 +25,9 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
         DebuggerManagerThreadImpl.assertIsManagerThread()
         val coroutineInfoCache = CoroutineInfoCache()
         try {
-            val executionContext = suspendContext.executionContext() ?: return coroutineInfoCache.fail()
+            val executionContext = suspendContext.executionContext()
             val coroutineInfos =
-                CoroutinesInfoFromJsonAndReferencesProvider(executionContext).dumpCoroutinesInfo()
+                CoroutinesInfoFromJsonAndReferencesProvider(executionContext).dumpCoroutinesWithStacktraces()
                     ?: CoroutineLibraryAgent2Proxy.instance(executionContext)?.dumpCoroutinesInfo()
                     ?: emptyList()
             coroutineInfoCache.ok(coroutineInfos)
@@ -45,6 +45,9 @@ class CoroutineDebugProbesProxy(val suspendContext: SuspendContextImpl) {
      * The Helper method getJobAndParentForCoroutines returns the array of Strings with size = infos.size * 2 and
      * array[2 * i] = info.job
      * array[2 * i + 1] = info.parent
+     *
+     * NOTE: only coroutines which are captured in the coroutine dump will be shown in the Coroutine View,
+     * jobs which do not correspond to any captured coroutine will not be shown (e.g., jobs of completing coroutines or scope coroutines).
      *
      * The corresponding properties [CoroutineInfoData.job] and [CoroutineInfoData.parentJob] are set to the obtained values.
      */

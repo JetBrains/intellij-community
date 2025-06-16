@@ -5,15 +5,18 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.getTarget;
 
-final class RestoreConfigurationAction extends AnAction {
+final class RestoreConfigurationAction
+  extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -37,6 +40,7 @@ final class RestoreConfigurationAction extends AnAction {
     RunDashboardRunConfigurationNode node = project == null ? null : getTarget(e);
     if (node == null) return;
 
+    // todo delegate to backend - ask Lera?
     RunManager runManager = RunManager.getInstance(project);
     RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
     runManager.setUniqueNameIfNeeded(settings.getConfiguration());

@@ -9,6 +9,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -165,7 +166,8 @@ public class OverrideImplementExploreUtil {
            belongsToRecord(abstractOne);
   }
 
-  static boolean belongsToRecord(@NotNull PsiMethod method) {
+  @ApiStatus.Internal
+  public static boolean belongsToRecord(@NotNull PsiMethod method) {
     return CommonClassNames.JAVA_LANG_RECORD.equals(Objects.requireNonNull(method.getContainingClass()).getQualifiedName());
   }
 

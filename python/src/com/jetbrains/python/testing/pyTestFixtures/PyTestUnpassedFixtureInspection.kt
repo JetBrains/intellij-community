@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.testing.pyTestFixtures
 
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -16,12 +16,14 @@ import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
  * Reports if a fixture is used without being passed to test function parameters.
  * Suggests a quick fix "Add fixture to test function parameters"
  */
+@ApiStatus.Internal
 class PyTestUnpassedFixtureInspection : PyInspection() {
 
   /**

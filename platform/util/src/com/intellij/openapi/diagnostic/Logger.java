@@ -498,6 +498,7 @@ public abstract class Logger {
            t instanceof CancellationException && ourRethrowCE;
   }
 
+  @Contract("null -> null; !null -> !null")
   protected static @Nullable Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t != null && shouldRethrow(t) ?
            new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +

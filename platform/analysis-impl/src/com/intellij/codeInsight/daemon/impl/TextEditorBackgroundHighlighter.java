@@ -6,7 +6,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.diagnostic.Activity;
@@ -69,7 +69,7 @@ public final class TextEditorBackgroundHighlighter implements BackgroundEditorHi
 
     CodeInsightContext context = editor != null
                                  ? EditorContextManager.getEditorContext(editor, project)
-                                 : CodeInsightContextKt.anyContext();
+                                 : CodeInsightContexts.anyContext();
 
     PsiFile psiFile = renewFile(project, document, context);
     if (psiFile == null) return List.of();

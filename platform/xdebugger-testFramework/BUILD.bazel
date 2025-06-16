@@ -7,6 +7,10 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-api:debugger",

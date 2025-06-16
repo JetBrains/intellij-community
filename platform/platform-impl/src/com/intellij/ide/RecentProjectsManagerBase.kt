@@ -4,6 +4,7 @@
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
+import com.intellij.ide.RecentProjectsManager.RecentProjectsChange
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
@@ -18,18 +19,18 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.project.impl.OpenProjectImplOptions
 import com.intellij.openapi.project.impl.createIdeFrame
-import com.intellij.openapi.project.impl.frame
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
@@ -42,6 +43,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtilRt
 import com.intellij.util.PlatformUtils
+import com.intellij.util.application
 import com.intellij.util.io.createParentDirectories
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -63,7 +65,9 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
+import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.relativeTo
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<RecentProjectsManager>()
@@ -75,7 +79,7 @@ private val LOG = logger<RecentProjectsManager>()
 @State(name = "RecentProjectsManager",
        category = SettingsCategory.SYSTEM,
        storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
-open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
+open class RecentProjectsManagerBase(private val coroutineScope: CoroutineScope) :
   RecentProjectsManager, PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
     const val MAX_PROJECTS_IN_MAIN_MENU: Int = 6
@@ -115,15 +119,48 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
           }
         }
     }
+
+    application.messageBus.connect().subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
+      override fun change() {
+        updateSystemDockMenu()
+      }
+    })
   }
 
   final override fun getState(): RecentProjectManagerState = state
 
-  internal fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
+  @Internal
+  fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
     val path = getProjectPath(projectStoreBaseDir) ?: return null
+    return getProjectMetaInfo(path)
+  }
+
+  @Internal
+  fun getProjectMetaInfo(path: String): RecentProjectMetaInfo? {
     synchronized(stateLock) {
       return state.additionalInfo.get(path)
     }
+  }
+
+  /**
+   * Fixes recent project paths after they were modified by Monolith IDE.
+   * See IJPL-179484 for details.
+   */
+  private fun transformFrontendPathIfNeeded(key: String): String {
+    LOG.runAndLogException {
+      val configDir = PathManager.getConfigDir()
+      val originalConfigDir = PathManager.getOriginalConfigDir()
+
+      val projectDir = key.toNioPathOrNull() ?: return key
+      if (projectDir.exists()) return key
+      if (!projectDir.startsWith(configDir)) return key
+
+      // `projectDir` is a valid path, leads to a non-existing location, inside the config folder
+      val relativeProjectDir = projectDir.relativeTo(configDir)
+      val fixedProjectDir = originalConfigDir.resolve(relativeProjectDir)
+      return FileUtilRt.toSystemIndependentName(fixedProjectDir.toString())
+    }
+    return key
   }
 
   final override fun loadState(state: RecentProjectManagerState) {
@@ -133,6 +170,19 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
       for ((path, value) in state.additionalInfo) {
         checkForNonsenseBounds("com.intellij.ide.RecentProjectsManagerBase.loadState(path=$path)", value.frame?.bounds)
+      }
+
+      // Remote Development: Restore correct paths after monolith settings save
+      if (PlatformUtils.isJetBrainsClient()) {
+        val newAdditionalInfo = linkedMapOf<String, RecentProjectMetaInfo>()
+        state.additionalInfo.forEach { key, value ->
+          newAdditionalInfo.put(transformFrontendPathIfNeeded(key), value)
+        }
+
+        if (newAdditionalInfo != state.additionalInfo) {
+          state.additionalInfo.clear()
+          state.additionalInfo.putAll(newAdditionalInfo)
+        }
       }
 
       // IDEA <= 2019.2 doesn't delete project info from additionalInfo on project delete
@@ -165,6 +215,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
         @Suppress("DEPRECATION")
         state.recentPaths.clear()
+      }
+    }
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+      coroutineScope.launch(Dispatchers.ui(UiDispatcherKind.STRICT)) {
+        updateSystemDockMenu()
       }
     }
   }
@@ -445,8 +501,8 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  fun getCurrentBranchName(path: String): String? {
-    return RecentProjectsBranchesProvider.getCurrentBranch(path)
+  fun getCurrentBranch(path: String, nameIsDistinct: Boolean): String? {
+    return RecentProjectsBranchesProvider.getCurrentBranch(path, nameIsDistinct)
   }
 
   fun getProjectName(path: String): String {
@@ -468,9 +524,9 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
   }
 
-  override fun willReopenProjectOnStart(): Boolean {
+  override suspend fun willReopenProjectOnStart(): Boolean {
     if (!synchronized(stateLock) { state.forceReopenProjects }
-        && (!GeneralSettings.getInstance().isReopenLastProject || AppMode.isDontReopenProjects())) {
+        && (!serviceAsync<GeneralSettings>().isReopenLastProject || AppMode.isDontReopenProjects())) {
       return false
     }
 
@@ -529,9 +585,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     return ApplicationManager.getApplication().isHeadlessEnvironment || WindowManagerEx.getInstanceEx().getFrameHelper(null) != null
   }
 
-  private suspend fun openOneByOne(openPaths: List<Entry<String, RecentProjectMetaInfo>>,
-                                   index: Int,
-                                   someProjectWasOpened: Boolean): Boolean {
+  private suspend fun openOneByOne(
+    openPaths: List<Entry<String, RecentProjectMetaInfo>>,
+    index: Int,
+    someProjectWasOpened: Boolean,
+  ): Boolean {
     val (key, value) = openPaths.get(index)
     EelInitialization.runEelInitialization(key)
     val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
@@ -588,8 +646,19 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     }
 
     val projectManager = ProjectManagerEx.getInstanceEx()
-    for ((path, options) in taskList) {
-      projectManager.openProjectAsync(path, options)
+    try {
+      val iterator = taskList.iterator()
+      while (iterator.hasNext()) {
+        val (path, options) = iterator.next()
+        projectManager.openProjectAsync(path, options)
+        iterator.remove()
+      }
+    }
+    finally {
+      // cleanup unused pre-allocated frames if the operation failed or was canceled
+      for (task in taskList) {
+        task.second.frame?.dispose()
+      }
     }
     return true
   }
@@ -603,10 +672,11 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
    */
   fun setProjectHidden(project: Project, hidden: Boolean) {
     val path = getProjectPath(project) ?: return
-    val info = state.additionalInfo.get(path) ?: return
-    val oldHidden = info.hidden
-    info.hidden = hidden
-    if (oldHidden != hidden) {
+    synchronized(stateLock) {
+      val info = state.additionalInfo.get(path) ?: return
+      if (info.hidden == hidden) return
+
+      info.hidden = hidden
       modCounter.increment()
     }
   }
@@ -787,11 +857,11 @@ int32 "extendedState"
   fun updateProjectColor(project: Project) {
     val info = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
     val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return
-    updateProjectColor(Path.of(projectPath), info)
+    updateProjectColor(projectPath, info)
   }
 
   @Internal
-  fun updateProjectColor(projectBasePath: Path, info: RecentProjectColorInfo) {
+  fun updateProjectColor(projectBasePath: String, info: RecentProjectColorInfo) {
     synchronized(stateLock) {
       getProjectMetaInfo(projectBasePath)?.colorInfo = info
       modCounter.increment()
@@ -864,7 +934,7 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val storePath = ProjectCoreUtil.getProjectStoreDirectory(file)
+  val storePath = ProjectStorePathManager.getInstance().getStoreDirectoryPath(file)
   return JpsPathUtil.readProjectName(storePath) ?: PathUtilRt.getFileName(path)
 }
 
@@ -924,3 +994,16 @@ internal fun getProjectNameOnlyByPath(path: String): String {
 @JvmInline
 @Internal
 value class ProjectNameOrPathIfNotYetComputed(val nameOnlyByProjectPath: String)
+
+@Internal
+data class OpenProjectImplOptions(
+  @JvmField val recentProjectMetaInfo: RecentProjectMetaInfo,
+  @JvmField val frameInfo: FrameInfo? = null,
+  @JvmField val frame: IdeFrameImpl? = null,
+)
+
+val OpenProjectTask.frame: IdeFrameImpl?
+  @Internal get() = (implOptions as OpenProjectImplOptions?)?.frame
+
+val OpenProjectTask.frameInfo: FrameInfo?
+  @Internal get() = (implOptions as OpenProjectImplOptions?)?.frameInfo

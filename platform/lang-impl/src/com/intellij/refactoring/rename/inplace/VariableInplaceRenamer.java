@@ -262,7 +262,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   static int restoreCaretOffset(@NotNull RangeMarker caretRangeMarker, int offset) {
     if (caretRangeMarker.isValid()) {
-      if (caretRangeMarker.getStartOffset() <= offset && caretRangeMarker.getEndOffset() >= offset) {
+      if (caretRangeMarker.getTextRange().containsInclusive(offset)) {
         return offset;
       }
       return caretRangeMarker.getEndOffset();

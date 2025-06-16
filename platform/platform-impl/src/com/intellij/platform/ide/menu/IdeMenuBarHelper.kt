@@ -8,7 +8,11 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
-import com.intellij.openapi.actionSystem.impl.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
+import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -83,7 +87,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       presentationFactory.reset()
       updateMenuActions(forceRebuild = true)
     })
-    var context = Dispatchers.EDT + ModalityState.any().asContextElement()
+    var context = Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()
     if (StartUpMeasurer.isEnabled()) {
       context += rootTask() + CoroutineName("ide menu bar actions init")
     }
@@ -107,7 +111,7 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
     coroutineScope.launch {
       initJob.join()
 
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
         updateRequests.throttle(500).collectLatest { forceRebuild ->
           runCatching {
             if (canUpdate()) {
@@ -202,7 +206,7 @@ class IdeMainMenuActionCustomizer : ActionConfigurationCustomizer, ActionConfigu
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     val group = actionRegistrar.getActionOrStub(IdeActions.GROUP_MAIN_MENU) as? DefaultActionGroup
     group?.childActionsOrStubs?.forEach {
-      it.templatePresentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, true)
+      it.templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
     }
   }
 }

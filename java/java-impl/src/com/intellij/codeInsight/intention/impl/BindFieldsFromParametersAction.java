@@ -10,6 +10,7 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.*;
 import java.util.function.Function;
 
-public final class BindFieldsFromParametersAction implements ModCommandAction {
+public final class BindFieldsFromParametersAction implements ModCommandAction, DumbAware {
   private static final Logger LOG = Logger.getInstance(BindFieldsFromParametersAction.class);
 
   @Override

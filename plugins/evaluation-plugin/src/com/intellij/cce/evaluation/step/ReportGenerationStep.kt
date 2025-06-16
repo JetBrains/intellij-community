@@ -43,8 +43,6 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     val workspaces = inputWorkspaces ?: listOf(workspace)
     val configs = workspaces.map { it.readConfig(feature.getStrategySerializer()) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }
-    val featuresStorages = workspaces.map { it.featuresStorage }
-    val fullLineStorages = workspaces.map { it.fullLineLogsStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
     val defaultMetrics = configs.firstOrNull()?.reports?.defaultMetrics
     var iteration = 0
@@ -65,8 +63,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           HtmlReportGenerator(
             dirs,
             defaultMetrics,
-            feature.getFileReportGenerator(filter.name, comparisonStorage.reportName, featuresStorages, fullLineStorages,
-                                           dirs)
+            feature.getFileReportGenerator(filter.name, comparisonStorage.reportName, workspaces, dirs)
           ),
           JsonReportGenerator(
             workspace.reportsDirectory(),
@@ -77,6 +74,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
             workspace.reportsDirectory(),
             filter.name,
             comparisonStorage.reportName,
+            configs.firstOrNull()?.reports?.openTelemetrySpanFilter
           ),
         )
         if (ApplicationManager.getApplication().isUnitTestMode) reportGenerators.add(
@@ -85,7 +83,6 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           reportGenerators,
           sessionFiles,
           sessionStorages,
-          workspaces.map { it.errorsStorage },
           evaluationTitles,
           comparisonStorage,
           workspaces
@@ -119,7 +116,6 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     reportGenerators: List<FullReportGenerator>,
     sessionFiles: Map<String, List<SessionsInfo>>,
     sessionStorages: List<SessionsStorage>,
-    errorStorages: List<FileErrorsStorage>,
     evaluationTitles: List<String>,
     comparisonStorage: CompareSessionsStorage,
     workspaces: List<EvaluationWorkspace>
@@ -177,7 +173,7 @@ class ReportGenerationStep<T : EvaluationStrategy>(
       comparisonStorage.clear()
       reportGenerators.forEach { it.generateFileReport(fileEvaluations) }
     }
-    for (errorsStorage in errorStorages) {
+    for (errorsStorage in workspaces.map { it.errorsStorage }) {
       reportGenerators.forEach { it.generateErrorReports(errorsStorage.getErrors()) }
     }
     val globalMetricInfos = title2evaluator.values.flatMap { it.globalMetricInfos(numberOfSessions) }

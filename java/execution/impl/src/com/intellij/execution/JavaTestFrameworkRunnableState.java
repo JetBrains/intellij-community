@@ -37,10 +37,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -179,7 +176,20 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   @Override
   public TargetEnvironmentRequest createCustomTargetEnvironmentRequest() {
     // Don't call getJavaParameters() because it will perform too much initialization
-    final var config = checkCreateNonLocalConfiguration(getJdk());
+    Sdk sdk = null;
+
+    // Notice that `alternativeJrePath` can be an SDK name or an absolute path to a Java home.
+    String alternativeJrePath = getConfiguration().getAlternativeJrePath();
+    if (alternativeJrePath != null) {
+      sdk = ProjectJdkTable.getInstance(getConfiguration().getProject()).findJdk(alternativeJrePath);
+      if (sdk == null) {
+        sdk = SimpleJavaSdkType.getInstance().createJdk(alternativeJrePath, alternativeJrePath);
+      }
+    }
+    if (sdk == null) {
+      sdk = getJdk();
+    }
+    final var config = checkCreateNonLocalConfiguration(sdk);
     return config == null ? null : new EelTargetEnvironmentRequest(config);
   }
 
@@ -189,16 +199,8 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     }
   }
 
-  /**
-   * @deprecated Use {@link #createSearchingForTestsTask(TargetEnvironment)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public @Nullable SearchForTestsTask createSearchingForTestsTask() throws ExecutionException {
-    return null;
-  }
-
   public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) throws ExecutionException {
-    return createSearchingForTestsTask();
+    return null;
   }
 
   protected boolean configureByModule(Module module) {
@@ -292,7 +294,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     if (root instanceof TestProxyRoot) {
       ((TestProxyRoot)root).setHandler(handler);
     }
-    handler.addProcessListener(new ProcessAdapter() {
+    handler.addProcessListener(new ProcessListener() {
       @Override
       public void startNotified(@NotNull ProcessEvent event) {
         if (getConfiguration().isSaveOutputToFile()) {

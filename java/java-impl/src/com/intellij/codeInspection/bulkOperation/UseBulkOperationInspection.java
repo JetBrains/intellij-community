@@ -264,7 +264,6 @@ public final class UseBulkOperationInspection extends AbstractBaseJavaLocalInspe
   }
 
   private static class UseBulkOperationFix extends PsiUpdateModCommandQuickFix {
-    @SafeFieldForPreview
     private final BulkMethodInfo myInfo;
 
     UseBulkOperationFix(BulkMethodInfo info) {

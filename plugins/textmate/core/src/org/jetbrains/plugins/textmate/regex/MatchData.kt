@@ -31,7 +31,7 @@ data class MatchData(val matched: Boolean, private val offsets: IntArray) {
   }
 
   override fun toString(): String {
-    return "{ matched=" + matched + ", offsets=" + offsets.contentToString() + '}'
+    return "{ matched=$matched, offsets=${offsets.contentToString()} }"
   }
 
   companion object {

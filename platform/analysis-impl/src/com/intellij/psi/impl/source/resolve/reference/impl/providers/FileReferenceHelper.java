@@ -160,7 +160,7 @@ public abstract class FileReferenceHelper {
   /**
    * @deprecated use {@link #getRoots(Module, VirtualFile)} that provides better context
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Unmodifiable @NotNull Collection<PsiFileSystemItem> getRoots(@NotNull Module module) {
     return emptyList();
   }

@@ -13,12 +13,12 @@ class GeneralCommandLineEnvCustomizerService : ExecutionEnvCustomizerService {
   }
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface CommandLineEnvCustomizer {
   fun customizeEnv(commandLine: GeneralCommandLine, environment: MutableMap<String, String>)
 
   companion object {
-    @ApiStatus.Internal
+    @ApiStatus.Experimental
     val EP_NAME: ExtensionPointName<CommandLineEnvCustomizer> = ExtensionPointName("com.intellij.commandLineEnvCustomizer")
   }
 }

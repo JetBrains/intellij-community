@@ -2,9 +2,12 @@
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 /**
  * Concurrent weak key:K -> strong value:V map.
@@ -13,19 +16,12 @@ import java.lang.ref.WeakReference;
  * To create, use {@link CollectionFactory#createConcurrentWeakMap}
  */
 final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
-  ConcurrentWeakHashMap(float loadFactor) {
-    super(DEFAULT_CAPACITY, loadFactor, DEFAULT_CONCURRENCY_LEVEL, HashingStrategy.canonical());
-  }
-
   ConcurrentWeakHashMap(int initialCapacity,
                         float loadFactor,
                         int concurrencyLevel,
-                        @NotNull HashingStrategy<? super K> hashingStrategy) {
-    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
-  }
-
-  ConcurrentWeakHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
-    super(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, hashingStrategy);
+                        @Nullable HashingStrategy<? super K> hashingStrategy,
+                        @Nullable BiConsumer<? super @NotNull ConcurrentMap<K,V>, ? super V> evictionListener) {
+    super(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy, evictionListener);
   }
 
   private static final class WeakKey<K> extends WeakReference<K> implements KeyReference<K> {

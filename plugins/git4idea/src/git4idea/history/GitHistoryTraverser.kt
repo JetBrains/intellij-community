@@ -4,20 +4,8 @@ package git4idea.history
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.TimedVcsCommit
-import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.*
 import git4idea.GitCommit
-
-/**
- * Commit index which is used by [GitHistoryTraverser].
- * Can be obtained by [GitHistoryTraverser.traverse] and [GitHistoryTraverser.IndexedRoot.filterCommits] methods.
- *
- * @see subscribeForGitHistoryTraverserCreation
- * @see getTraverser
- */
-typealias TraverseCommitId = Int
 
 interface GitHistoryTraverser : Disposable {
   /**
@@ -44,7 +32,7 @@ interface GitHistoryTraverser : Disposable {
   /**
    * Load commit hash.
    */
-  fun toHash(id: TraverseCommitId): Hash
+  fun toHash(id: VcsLogCommitStorageIndex): Hash
 
   /**
    * Load basic commit details like message, hash, commit time, author time, etc.
@@ -52,7 +40,7 @@ interface GitHistoryTraverser : Disposable {
    *
    * Result commits order may be different from [ids] if [ids] contains commits from different roots.
    */
-  fun loadMetadata(ids: List<TraverseCommitId>): List<VcsCommitMetadata>
+  fun loadMetadata(ids: List<VcsLogCommitStorageIndex>): List<VcsCommitMetadata>
 
   /**
    * Load commits details with its changes.
@@ -63,7 +51,7 @@ interface GitHistoryTraverser : Disposable {
    * [fullDetailsHandler] calling order may be different from [ids] if [ids] contains commits from different roots.
    */
   fun loadFullDetails(
-    ids: List<TraverseCommitId>,
+    ids: List<VcsLogCommitStorageIndex>,
     requirements: GitCommitRequirements = GitCommitRequirements.DEFAULT,
     fullDetailsHandler: (GitCommit) -> Unit
   )
@@ -74,10 +62,10 @@ interface GitHistoryTraverser : Disposable {
    * Allows to request commit details loading. They will be loaded synchronously after [traverse] execution.
    */
   interface Traverse {
-    fun loadMetadataLater(id: TraverseCommitId, onLoad: (VcsCommitMetadata) -> Unit)
+    fun loadMetadataLater(id: VcsLogCommitStorageIndex, onLoad: (VcsCommitMetadata) -> Unit)
 
     fun loadFullDetailsLater(
-      id: TraverseCommitId,
+      id: VcsLogCommitStorageIndex,
       requirements: GitCommitRequirements = GitCommitRequirements.DEFAULT,
       onLoad: (GitCommit) -> Unit
     )
@@ -94,21 +82,21 @@ interface GitHistoryTraverser : Disposable {
      *
      * Note that they may become unreachable from any branches, so it's better to check that given commits are reachable during [traverse].
      */
-    fun filterCommits(filter: TraverseCommitsFilter): Collection<TraverseCommitId>
+    fun filterCommits(filter: TraverseCommitsFilter): Collection<VcsLogCommitStorageIndex>
 
     /**
      * Load commit hash with timestamp and parents.
      *
      * This method uses prepared index and don't execute Git commands.
      */
-    fun loadTimedCommit(id: TraverseCommitId): TimedVcsCommit
+    fun loadTimedCommit(id: VcsLogCommitStorageIndex): TimedVcsCommit
 
     /**
      * Load basic commit details like message, hash, commit time, author time, etc.
      *
      * This method uses prepared index and don't execute Git commands.
      */
-    fun loadMetadata(id: TraverseCommitId): VcsCommitMetadata
+    fun loadMetadata(id: VcsLogCommitStorageIndex): VcsCommitMetadata
 
     sealed class TraverseCommitsFilter {
       /**
@@ -143,7 +131,7 @@ interface GitHistoryTraverser : Disposable {
   }
 
   data class TraverseCommitInfo(
-    val id: TraverseCommitId,
-    val parents: List<TraverseCommitId>
+    val id: VcsLogCommitStorageIndex,
+    val parents: List<VcsLogCommitStorageIndex>
   )
 }

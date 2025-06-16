@@ -14,29 +14,29 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class HighlightUsagesHandlerFactoryBase implements HighlightUsagesHandlerFactory {
   @Override
-  public final @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement target = findTarget(editor, file);
+  public final @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement target = findTarget(editor, psiFile);
     if (target == null) return null;
-    return createHighlightUsagesHandler(editor, file, target);
+    return createHighlightUsagesHandler(editor, psiFile, target);
   }
 
   @Override
-  public final @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file,
+  public final @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile,
                                                                                  @NotNull ProperTextRange visibleRange) {
-    PsiElement target = findTarget(editor, file);
+    PsiElement target = findTarget(editor, psiFile);
     if (target == null) return null;
-    return createHighlightUsagesHandler(editor, file, target, visibleRange);
+    return createHighlightUsagesHandler(editor, psiFile, target, visibleRange);
   }
 
-  public abstract @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target);
+  public abstract @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target);
 
-  public @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target,
+  public @Nullable HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target,
                                                                            @NotNull ProperTextRange visibleRange) {
-    return createHighlightUsagesHandler(editor, file, target);
+    return createHighlightUsagesHandler(editor, psiFile, target);
   }
 
-  private static PsiElement findTarget(@NotNull Editor editor, @NotNull PsiFile file) {
-    int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    return file.findElementAt(offset);
+  private static PsiElement findTarget(@NotNull Editor editor, @NotNull PsiFile psiFile) {
+    int offset = TargetElementUtil.adjustOffset(psiFile, editor.getDocument(), editor.getCaretModel().getOffset());
+    return psiFile.findElementAt(offset);
   }
 }

@@ -2,11 +2,9 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 
 class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
 
-  @Test
   fun testSuccessfullBuildWithTwoSubmodules() = runBlocking {
     failOnWarns {
       assertSameLines("" +
@@ -34,7 +32,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testArchetypeRun() = runBlocking {
+  fun testArchetypeRun() = runBlocking {
     failOnWarns {
       testCase(*fromFile("org/jetbrains/maven/buildlogs/test-scala-archetype.log"))
         .withSkippedOutput()
@@ -42,7 +40,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testdependencyInSinleMojoFailed() = runBlocking {
+  fun testdependencyInSinleMojoFailed() = runBlocking {
     failOnWarns {
       assertSameLines("io.testproject:web-test-example:jar:1.1\n" +
                       "  resources\n" +
@@ -63,7 +61,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun testSuccessfullBuildWithOutputTwoSubmodules() = runBlocking {
+  fun testSuccessfullBuildWithOutputTwoSubmodules() = runBlocking {
     failOnWarns {
       assertSameLines("test:project:pom:1\n" +
                       "  [INFO]\n" +
@@ -196,7 +194,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun `test parse build log with -q failed`() = runBlocking {
+  fun `test parse build log with -q failed`() = runBlocking {
     failOnWarns {
       assertSameLines("error:Maven Run\n" +
                       " org.example:demo-old-version:pom:1.0-SNAPSHOT\n" +
@@ -209,7 +207,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun `test parse build log with -q`() = runBlocking {
+  fun `test parse build log with -q`() = runBlocking {
     failOnWarns {
       assertSameLines("org.example:demo-old-version:pom:1.0-SNAPSHOT\n" +
                       " org.example:child1:jar:1.0-SNAPSHOT\n" +
@@ -225,7 +223,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun `test parse build log no goal failed`() = runBlocking {
+  fun `test parse build log no goal failed`() = runBlocking {
     failOnWarns {
       assertSameLines("error:",
         testCase(*fromFile("org/jetbrains/maven/buildlogs/build-no-goal-failed.log"))
@@ -234,7 +232,7 @@ class MavenSpyOutputParserTest : MavenBuildToolLogTestUtils() {
     }
   }
 
-  @Test fun `test parse build log no pom failed`() = runBlocking {
+  fun `test parse build log no pom failed`() = runBlocking {
     failOnWarns {
       assertSameLines("error:",
         testCase(*fromFile("org/jetbrains/maven/buildlogs/build-no-pom-failed.log"))

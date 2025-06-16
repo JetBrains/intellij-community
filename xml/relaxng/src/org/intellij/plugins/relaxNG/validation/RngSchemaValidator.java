@@ -55,12 +55,12 @@ public final class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidat
   private static final Logger LOG = Logger.getInstance(RngSchemaValidator.class.getName());
 
   @Override
-  public @Nullable MyValidationMessageConsumer collectInformation(final @NotNull PsiFile file) {
-    final FileType type = file.getFileType();
+  public @Nullable MyValidationMessageConsumer collectInformation(final @NotNull PsiFile psiFile) {
+    final FileType type = psiFile.getFileType();
     if (type != XmlFileType.INSTANCE && type != RncFileType.getInstance()) {
       return null;
     }
-    final XmlFile xmlfile = (XmlFile)file;
+    final XmlFile xmlfile = (XmlFile)psiFile;
     final XmlDocument document = xmlfile.getDocument();
     if (document == null) {
       return null;
@@ -78,22 +78,22 @@ public final class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidat
         return null;
       }
     }
-    final Document doc = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+    final Document doc = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
 
     final MyValidationMessageConsumer consumer = new MyValidationMessageConsumer();
     ErrorHandler eh = new DefaultHandler() {
       @Override
       public void warning(SAXParseException e) {
-        handleError(e, file, doc, consumer.warning());
+        handleError(e, psiFile, doc, consumer.warning());
       }
 
       @Override
       public void error(SAXParseException e) {
-        handleError(e, file, doc, consumer.error());
+        handleError(e, psiFile, doc, consumer.error());
       }
     };
 
-    RngParser.parsePattern(file, eh, true);
+    RngParser.parsePattern(psiFile, eh, true);
     return consumer;
   }
 
@@ -103,7 +103,7 @@ public final class RngSchemaValidator extends ExternalAnnotator<RngSchemaValidat
   }
 
   @Override
-  public void apply(@NotNull PsiFile file,
+  public void apply(@NotNull PsiFile psiFile,
                     MyValidationMessageConsumer annotationResult,
                     @NotNull AnnotationHolder holder) {
     annotationResult.apply(holder);

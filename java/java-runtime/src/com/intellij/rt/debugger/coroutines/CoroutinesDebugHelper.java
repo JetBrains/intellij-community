@@ -1,16 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.rt.debugger.coroutines;
+
+import com.intellij.rt.debugger.JsonUtils;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public final class CoroutinesDebugHelper {
 
   private static final String COROUTINE_OWNER_CLASS = "CoroutineOwner";
   private static final String DEBUG_METADATA_FQN = "kotlin.coroutines.jvm.internal.DebugMetadataKt";
   private static final String BASE_CONTINUATION_FQN = "kotlin.coroutines.jvm.internal.BaseContinuationImpl";
+  private static final String COROUTINE_STACK_FRAME_FQN = "kotlin.coroutines.jvm.internal.CoroutineStackFrame";
   private static final String DEBUG_COROUTINE_INFO_FQN = "kotlinx.coroutines.debug.internal.DebugCoroutineInfo";
   private static final String COROUTINE_CONTEXT_FQN = "kotlin.coroutines.CoroutineContext";
   private static final String COROUTINE_JOB_FQN = "kotlinx.coroutines.Job";
@@ -97,26 +99,34 @@ public final class CoroutinesDebugHelper {
     ClassLoader loader = continuation.getClass().getClassLoader();
     Class<?> debugMetadata = Class.forName(DEBUG_METADATA_FQN, false, loader);
     Class<?> baseContinuation = Class.forName(BASE_CONTINUATION_FQN, false, loader);
-    Method getStackTraceElement = debugMetadata.getDeclaredMethod("getStackTraceElement", baseContinuation);
-    getStackTraceElement.setAccessible(true);
+    Class<?> coroutineStackFrame = Class.forName(COROUTINE_STACK_FRAME_FQN, false, loader);
+    Method getStackTraceElement = coroutineStackFrame.getDeclaredMethod("getStackTraceElement");
+    Method callerFrame = coroutineStackFrame.getDeclaredMethod("getCallerFrame");
     Method getSpilledVariableFieldMapping = debugMetadata.getDeclaredMethod("getSpilledVariableFieldMapping", baseContinuation);
     getSpilledVariableFieldMapping.setAccessible(true);
 
     Object current = continuation;
-    do {
-      StackTraceElement stackTraceElement = (StackTraceElement)getStackTraceElement.invoke(null, current);
+    while(current != null && coroutineStackFrame.isInstance(current) && !isCoroutineOwner(current)) {
+
+      StackTraceElement stackTraceElement = (StackTraceElement)getStackTraceElement.invoke(current);
       continuationStackElements.add(stackTraceElement);
 
-      List<String> fields = new ArrayList<>();
-      List<String> names = new ArrayList<>();
-      extractSpilledVariables(current, names, fields, getSpilledVariableFieldMapping);
-      variableNames.add(names);
-      fieldNames.add(fields);
-      continuationStack.add(current);
+      if (baseContinuation.isInstance(current)) {
+        List<String> fields = new ArrayList<>();
+        List<String> names = new ArrayList<>();
 
-      current = invoke(current, "getCompletion");
+        extractSpilledVariables(current, names, fields, getSpilledVariableFieldMapping);
+
+        variableNames.add(names);
+        fieldNames.add(fields);
+      } else {
+        variableNames.add(Collections.<String>emptyList());
+        fieldNames.add(Collections.<String>emptyList());
+      }
+
+      continuationStack.add(current);
+      current = invoke(current, callerFrame);
     }
-    while (current != null && baseContinuation.isInstance(current));
 
     List<StackTraceElement> creationStack = null;
     if (current != null && isCoroutineOwner(current)) {
@@ -156,9 +166,34 @@ public final class CoroutinesDebugHelper {
     }
   }
 
+  public static Object[] dumpCoroutinesWithStacktracesAsJson() throws ReflectiveOperationException {
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    try {
+      Class<?> debugProbesImplClass = classLoader.loadClass("kotlinx.coroutines.debug.internal.DebugProbesImpl");
+      Object debugProbesImplInstance = debugProbesImplClass.getField("INSTANCE").get(null);
+      Object[] dump = (Object[])invoke(debugProbesImplInstance, "dumpCoroutinesInfoAsJsonAndReferences");
+      Object[] coroutineInfos = (Object[])dump[3];
+      String[] lastObservedStackTraces = new String[coroutineInfos.length];
+      for (int i = 0; i < coroutineInfos.length; i++) {
+        lastObservedStackTraces[i] = lastObservedStackTrace(coroutineInfos[i]);
+      }
+      dump[3] = lastObservedStackTraces;
+      return dump;
+    } catch (Throwable e) {
+      return null;
+    }
+  }
+
+  public static String lastObservedStackTrace(Object debugCoroutineInfo) throws ReflectiveOperationException {
+    List<StackTraceElement> stackTrace = (List<StackTraceElement>)invoke(debugCoroutineInfo, "lastObservedStackTrace");
+    return JsonUtils.dumpStackTraceElements(stackTrace);
+  }
+
   /**
    * This method takes the array of {@link kotlinx.coroutines.debug.internal.DebugCoroutineInfo} instances
-   * and for each coroutine requests it's job, and it's first parent.
+   * and for each coroutine finds it's job and the first parent, which corresponds to some coroutine, captured in the dump.
+   * That means that parent jobs corresponding to ScopeCoroutines (coroutineScope) or DispatchedCoroutine (withContext)
+   * will be skipped. Their frames will be seen in the async stack trace.
    *
    * @return an array of Strings of size (debugCoroutineInfos.size * 2), where
    * (2 * i)-th element is a String representation of the job and
@@ -166,7 +201,6 @@ public final class CoroutinesDebugHelper {
    */
   public static String[] getJobsAndParentsForCoroutines(Object ... debugCoroutineInfos) throws ReflectiveOperationException {
     if (debugCoroutineInfos.length == 0) return new String[]{};
-    String[] jobsWithParents = new String[debugCoroutineInfos.length * 2];
     ClassLoader loader = debugCoroutineInfos[0].getClass().getClassLoader();
     Class<?> debugCoroutineInfoClass = Class.forName(DEBUG_COROUTINE_INFO_FQN, false, loader);
     Class<?> coroutineContext = Class.forName(COROUTINE_CONTEXT_FQN, false, loader);
@@ -177,20 +211,33 @@ public final class CoroutinesDebugHelper {
     Method getParentJob = coroutineJobClass.getMethod("getParent");
     Method getContext = debugCoroutineInfoClass.getMethod("getContext");
 
-    for (int i = 0; i < debugCoroutineInfos.length * 2; i += 2) {
-      Object info = debugCoroutineInfos[i / 2];
-      if (info == null) {
-        jobsWithParents[i] = null;
-        jobsWithParents[i + 1] = null;
-        continue;
-      }
+    String[] jobToCapturedParent = new String[debugCoroutineInfos.length * 2];
+    Set<String> capturedJobs = new HashSet<>();
+    for(Object info : debugCoroutineInfos) {
       Object context = invoke(info, getContext);
       Object job = invoke(context, coroutineContextGet, coroutineJobKey);
-      Object parent = invoke(job, getParentJob);
-      jobsWithParents[i] = (job == null) ? null : job.toString();
-      jobsWithParents[i + 1] = (parent == null) ? null : parent.toString();
+      capturedJobs.add(job.toString());
     }
-    return jobsWithParents;
+    for (int i = 0; i < debugCoroutineInfos.length * 2; i += 2) {
+      Object info = debugCoroutineInfos[i / 2];
+      Object context = invoke(info, getContext);
+      Object job = invoke(context, coroutineContextGet, coroutineJobKey);
+      if (job == null) {
+        jobToCapturedParent[i] = null;
+        jobToCapturedParent[i + 1] = null;
+        continue;
+      }
+      jobToCapturedParent[i] = job.toString();
+      Object parent = invoke(job, getParentJob);
+      while (parent != null) {
+        if (capturedJobs.contains(parent.toString())) {
+          jobToCapturedParent[i + 1] = parent.toString();
+          break;
+        }
+        parent = invoke(parent, getParentJob);
+      }
+    }
+    return jobToCapturedParent;
   }
 
   private static Object getField(Object object, String fieldName) throws ReflectiveOperationException {

@@ -64,11 +64,23 @@ public final class TextRangeScalarUtil {
   }
 
   /**
-   * @return {@code range} coerced to be within ({@code start}, {@code end})
+   * @return {@code range} coerced to be within ({@code requiredStart}, {@code requiredEnd})
    */
-  public static long coerce(long range, int start, int end) {
-    int newStart = Math.max(startOffset(range), start);
-    int newEnd = Math.max(newStart, Math.min(endOffset(range), end));
+  public static long coerceRange(long range, int requiredStart, int requiredEnd) {
+    return coerceRange(startOffset(range), endOffset(range), requiredStart, requiredEnd);
+  }
+  public static long coerceRange(int start, int end, int requiredStart, int requiredEnd) {
+    assert requiredStart >= 0 && requiredStart <= requiredEnd : "requiredStart:" + requiredStart + ", requiredEnd=" + requiredEnd;
+    int newStart = coerce(start, requiredStart, requiredEnd);
+    int newEnd = coerce(end, newStart, requiredEnd);
     return toScalarRange(newStart, newEnd);
+  }
+
+  /**
+   * @return offset guaranteed to be within (requiredStart, requiredEnd)
+   */
+  public static int coerce(int offset, int requiredStart, int requiredEnd) {
+    assert requiredStart >= 0 && requiredStart <= requiredEnd : "requiredStart:" + requiredStart + ", requiredEnd=" + requiredEnd;
+    return Math.min(Math.max(offset, requiredStart), requiredEnd);
   }
 }

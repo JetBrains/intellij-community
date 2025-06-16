@@ -38,8 +38,8 @@ public final class EncapsulateFieldAction extends BaseRefactoringIntentionAction
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement element = getElement(editor, file);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement element = getElement(editor, psiFile);
     final PsiField field = getField(element);
     if (field == null) return IntentionPreviewInfo.EMPTY;
     RefactoringActionHandler handler = JavaRefactoringActionHandlerFactory.getInstance().createEncapsulateFieldsHandler();

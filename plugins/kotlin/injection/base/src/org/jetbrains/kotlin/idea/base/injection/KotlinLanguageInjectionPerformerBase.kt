@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
+import org.intellij.plugins.intelliLang.inject.registerSupport
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -37,15 +38,10 @@ abstract class KotlinLanguageInjectionPerformerBase : LanguageInjectionPerformer
 
         if (parts.ranges.isEmpty()) return false
 
-        InjectorUtils.registerInjection(language, file, parts.ranges, registrar)
-        InjectorUtils.registerSupport(support, false, context, language)
-        InjectorUtils.putInjectedFileUserData(
-            context,
-            language,
-            InjectedLanguageManager.FRANKENSTEIN_INJECTION,
-            if (parts.isUnparsable) true else null
-        )
-
+        InjectorUtils.registerInjection(language, file, parts.ranges, registrar) {
+            it.registerSupport(support, false)
+                .frankensteinInjection(parts.isUnparsable)
+        }
         return true
     }
 

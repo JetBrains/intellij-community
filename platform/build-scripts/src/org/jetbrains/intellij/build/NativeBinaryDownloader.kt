@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL
@@ -40,7 +40,7 @@ object NativeBinaryDownloader {
   private fun findLocalLauncher(context: BuildContext, os: OsFamily): Pair<Path, Path>? {
     val targetDir = context.paths.communityHomeDirRoot.communityRoot.resolve("native/XPlatLauncher/target/debug")
     if (targetDir.isDirectory()) {
-      val executableName = "xplat-launcher${if (os == OsFamily.WINDOWS) ".exe" else ""}"
+      val executableName = "xplat-launcher${os.binaryExt}"
       val executableFile = targetDir.resolve(executableName)
       if (executableFile.isRegularFile()) {
         val licenseFile = targetDir.resolve(LICENSE_FILE_NAME)
@@ -72,7 +72,7 @@ object NativeBinaryDownloader {
   }
 
   private fun findExecutable(archiveFile: Path, unpackedDir: Path, os: OsFamily, arch: JvmArchitecture, baseName: String): Path =
-    findFile(archiveFile, unpackedDir, "${os.osName}-${arch.archName}/${baseName}${if (os == OsFamily.WINDOWS) ".exe" else ""}")
+    findFile(archiveFile, unpackedDir, "${os.osName}-${arch.archName}/${baseName}${os.binaryExt}")
 
   private fun findFile(archiveFile: Path, unpackedDir: Path, relativePath: String): Path {
     val file = unpackedDir.resolve(relativePath)

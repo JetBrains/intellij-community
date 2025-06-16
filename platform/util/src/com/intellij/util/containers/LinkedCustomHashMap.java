@@ -34,9 +34,7 @@ public final class LinkedCustomHashMap<K, V> {
    * Number of entries in the set.
    */
   private int size;
-  /**
-   * The acceptable load factor.
-   */
+  /** Fixed (not customizable) load factor for hashmap */
   private static final float LOAD_FACTOR = 0.6f;
 
   private final EqualityPolicy<? super K> hashingStrategy;
@@ -48,7 +46,7 @@ public final class LinkedCustomHashMap<K, V> {
   }
 
   @TestOnly
-  LinkedCustomHashMap() {
+  public LinkedCustomHashMap() {
     //noinspection unchecked
     this((EqualityPolicy<? super K>)EqualityPolicy.CANONICAL, (map, eldest, key, value) -> {
       return false;

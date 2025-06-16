@@ -14,8 +14,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -63,8 +63,8 @@ final class LookupUi {
   private final Alarm hintAlarm;
   private final JScrollPane myScrollPane;
   private final AsyncProcessIcon processIcon = new AsyncProcessIcon("Completion progress");
-  private final ActionButton myMenuButton;
-  private final ActionButton hintButton;
+  private final JComponent myMenuButton;
+  private final JComponent hintButton;
   private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
@@ -104,14 +104,8 @@ final class LookupUi {
     menuAction.add(new ShowCompletionSettingsAction());
 
     myMenuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-    JComponent menuButtonWrapper = UiDataProvider.wrapComponent(myMenuButton, sink -> {
-      sink.set(CommonDataKeys.PROJECT, this.lookup.getProject());
-      sink.set(CommonDataKeys.EDITOR, this.lookup.getEditor());
-    });
-
-    AnAction hintAction = new HintAction();
-    hintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
-                                  ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    HintAction hintAction = new HintAction();
+    hintButton = new ActionButton(hintAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
     hintButton.setVisible(false);
 
     LookupLayeredPane layeredPane = new LookupLayeredPane();
@@ -121,7 +115,7 @@ final class LookupUi {
       myBottomPanel.add(myAdvertiser.getAdComponent());
       myBottomPanel.add(processIcon);
       myBottomPanel.add(hintButton);
-      myBottomPanel.add(menuButtonWrapper);
+      myBottomPanel.add(myMenuButton);
       if (ExperimentalUI.isNewUI()) {
         myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
         myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
@@ -152,12 +146,7 @@ final class LookupUi {
 
     addListeners();
 
-    Disposer.register(lookup, new Disposable() {
-      @Override
-      public void dispose() {
-        processIcon.dispose();
-      }
-    });
+    Disposer.register(lookup, processIcon);
   }
 
   private void addListeners() {
@@ -243,7 +232,7 @@ final class LookupUi {
       lookup.pack();
       rectangle = calculatePosition();
     }
-    HintManagerImpl.updateLocation(lookup, editor, rectangle.getLocation());
+    lookup.updateLocation(rectangle.getLocation());
 
     if (reused || selectionVisible || onExplicitAction) {
       lookup.ensureSelectionVisible(false);
@@ -392,11 +381,11 @@ final class LookupUi {
     }
   }
 
-  private final class LookupLayeredPane extends JBLayeredPane {
+  private final class LookupLayeredPane extends JBLayeredPane implements UiDataProvider {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     private LookupLayeredPane() {
-      mainPanel.setBackground(LookupCellRenderer.BACKGROUND_COLOR);
+      mainPanel.setBackground(lookup.getBackgroundColor());
       add(mainPanel, 0, 0);
 
       setLayout(new AbstractLayoutManager() {
@@ -440,6 +429,12 @@ final class LookupUi {
         }
       });
     }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.PROJECT, lookup.getProject());
+      sink.set(CommonDataKeys.EDITOR, lookup.getEditor());
+    }
   }
 
   private final class HintAction extends DumbAwareAction {
@@ -462,7 +457,7 @@ final class LookupUi {
   private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     MenuAction() {
       getTemplatePresentation().setIcon(AllIcons.Actions.More);
-      getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+      getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
       getTemplatePresentation().setPopupGroup(true);
     }
   }

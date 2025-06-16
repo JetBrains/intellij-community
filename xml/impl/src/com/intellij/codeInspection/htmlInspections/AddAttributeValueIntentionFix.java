@@ -34,7 +34,7 @@ public class AddAttributeValueIntentionFix extends LocalQuickFixAndIntentionActi
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      final @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {

@@ -24,6 +24,7 @@ import javax.swing.AbstractAction
 import javax.swing.KeyStroke
 import javax.swing.ListSelectionModel
 
+@Suppress("UsePropertyAccessSyntax")
 internal class PyPackagesTable(
   val project: Project,
   tablesView: PyPackagingTablesView,
@@ -143,7 +144,7 @@ internal class PyPackagesTable(
   }
 
   private fun loadMoreItems(service: PyPackagingToolWindowService, node: ExpandResultNode) {
-    val result = service.getMoreResultsForRepo(node.repository, items.size - 1)
+    val result = service.getMoreResultsForRepo(node.repository, items.size - 1) ?: return
     items = items.dropLast(1) + result.packages
     if (result.moreItems > 0) {
       node.more = result.moreItems

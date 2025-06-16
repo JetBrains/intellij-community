@@ -19,6 +19,12 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_resources(
+  name = "ui_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
 jvm_library(
   name = "ui",
   module_name = "intellij.platform.jewel.ui",
@@ -58,28 +64,13 @@ jvm_library(
     "//platform/jewel/foundation:foundation_test_lib",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
     "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui-test-junit4",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui-test",
-    "@lib//:platform-jewel-ui-org-hamcrest-hamcrest-core",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui-test-desktop",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-runtime-runtime",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui-text",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui-unit",
-    "@lib//:platform-jewel-ui-org-jetbrains-annotations",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-desktop-desktop",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-desktop-desktop-jvm",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-runtime-runtime2",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui2",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui-tooling-preview",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-ui-ui-tooling-preview-desktop",
-    "@lib//:platform-jewel-ui-org-jetbrains-compose-runtime-runtime3",
-    "//libraries/junit4",
-    "@lib//:kotlinx-coroutines-test",
     "//libraries/compose-foundation-desktop",
+    "//libraries/compose-foundation-desktop-junit",
   ],
-  runtime_deps = [":ui_resources"],
+  runtime_deps = [
+    ":ui_resources",
+    ":ui_test_resources",
+  ],
   plugins = ["@lib//:compose-plugin"]
 )
 

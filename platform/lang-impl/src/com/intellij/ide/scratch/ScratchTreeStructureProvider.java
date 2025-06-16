@@ -40,6 +40,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -269,7 +270,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
     }
 
     @Override
-    public @NotNull Collection<VirtualFile> getRoots() {
+    public @NotNull @Unmodifiable Collection<VirtualFile> getRoots() {
       return getDefaultRootsFor(getVirtualFile());
     }
 

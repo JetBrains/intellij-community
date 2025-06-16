@@ -18,6 +18,7 @@ internal fun KaModule.getOneLineModuleDescriptionForRendering(): String? {
         }
 
         is KaLibrarySourceModule -> "library sources of " + binaryLibrary.getOneLineModuleDescriptionForRendering()
+        is KaLibraryFallbackDependenciesModule -> "fallback dependencies of " + dependentLibrary.getOneLineModuleDescriptionForRendering()
         is KaNotUnderContentRootModule -> (this.file?.name ?: "NO_FILE")
         is KaScriptDependencyModule -> (this.file?.name ?: "NO_FILE")
         is KaScriptModule -> this.file.name
@@ -64,6 +65,7 @@ private val baseClasses = listOf(
     KaDanglingFileModule::class.java,
     KaLibraryModule::class.java,
     KaLibrarySourceModule::class.java,
+    KaLibraryFallbackDependenciesModule::class.java,
     KaNotUnderContentRootModule::class.java,
     KaScriptModule::class.java,
     KaSourceModule::class.java,

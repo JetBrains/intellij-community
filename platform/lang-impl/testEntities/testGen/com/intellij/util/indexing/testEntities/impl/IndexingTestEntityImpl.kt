@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities.impl
 
 import com.intellij.platform.workspace.storage.ConnectionId
@@ -23,8 +23,8 @@ import com.intellij.util.indexing.testEntities.IndexingTestEntity
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity,
+                                                                                        WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -57,8 +57,8 @@ internal class IndexingTestEntityImpl(private val dataSource: IndexingTestEntity
   }
 
 
-  internal class Builder(result: IndexingTestEntityData?) : ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(
-    result), IndexingTestEntity.Builder {
+  internal class Builder(result: IndexingTestEntityData?) :
+    ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(result), IndexingTestEntity.Builder {
     internal constructor() : this(IndexingTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

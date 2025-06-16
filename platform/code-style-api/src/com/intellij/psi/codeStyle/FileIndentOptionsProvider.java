@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -70,5 +71,13 @@ public abstract class FileIndentOptionsProvider {
 
   public final boolean isAllowed(boolean isFullReformat) {
     return !isFullReformat || useOnFullReformat();
+  }
+
+  /**
+   * @return The activation action for project based on the context.
+   * {@code null} means that activation is not available in the file context.
+   */
+  public @Nullable AnAction getActivatingAction(@Nullable CodeStyleStatusBarUIContributor activeUiContributor, @NotNull PsiFile file) {
+    return null;
   }
 }

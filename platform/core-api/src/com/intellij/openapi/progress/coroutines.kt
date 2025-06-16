@@ -1,22 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.application.isLockStoredInContext
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.util.progress.*
 import com.intellij.platform.util.progress.internalCreateRawHandleFromContextStepIfExistsAndFresh
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.concurrency.BlockingJob
+import com.intellij.util.concurrency.ThreadScopeCheckpoint
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.ui.EDT
@@ -49,30 +45,25 @@ suspend fun checkCanceled() {
 }
 
 /**
- * The method has same semantics as [runBlocking], and additionally [action] gets canceled
- * when [the current progress indicator][ProgressManager.getGlobalProgressIndicator] is cancelled,
- * or [the current job][Cancellation.currentJob] is cancelled.
+ * Same as [runBlocking], but installs [coroutineContext] of the calling code into [action].
+ * This is the recommended way for invoking suspending code from blocking code in IntelliJ Platform.
  *
- * This is a bridge for invoking suspending code from blocking code.
- *
- * ### IMPORTANT
- *
- * Coroutines use [currentCoroutineContext] to handle cancellation or to pass [ModalityState] around.
- * [ProgressManager.checkCanceled], [ModalityState.defaultModalityState]
- * (and [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait] by extension),
- * and many other platform methods **DO NOT work in a coroutine**.
- * - Instead of [ProgressManager.checkCanceled] use [ensureActive] in a coroutine.
- * - [ModalityState] is not expected to be used explicitly. Instead of `invokeAndWait` or `invokeLater` use
- *   `withContext(`[Dispatchers.EDT][com.intellij.openapi.application.EDT]`) {}` in a coroutine.
- *   If actually needed (think twice), use [contextModality] to obtain the context [ModalityState].
- * - To invoke older code, which cannot be modified but relies on [ProgressManager.checkCanceled] or
- *   [Application.invokeAndWait][com.intellij.openapi.application.Application.invokeAndWait],
- *   use [blockingContext] to switch from a coroutine to the blocking context.
+ * One of the main differences with [runBlocking] is that this function is _cancellable_:
+ * ```kotlin
+ * val job = launch {
+ *   runBlockingCancellable {
+ *     while (true) {
+ *       coroutineContext.ensureActive()
+ *     }
+ *   }
+ * }
+ * job.cancelAndJoin() // this will resume quickly, because the `Job` inside `launch` is propagated to `runBlockingCancellable`
+ * ```
  *
  * ### EDT
  *
  * This method is **forbidden on EDT** because it does not pump the event queue.
- * Switch to a BGT, or use [runWithModalProgressBlocking][com.intellij.openapi.progress.runWithModalProgressBlocking].
+ * Switch to a BGT, or use [runWithModalProgressBlocking][com.intellij.platform.ide.progress.runWithModalProgressBlocking].
  *
  * ### Non-cancellable `runBlocking`
  *
@@ -80,8 +71,6 @@ suspend fun checkCanceled() {
  * To prevent such a usage, an exception is logged.
  *
  * What to do with that exception? Options:
- * - Make sure this method is called under a context job.
- *   If it's run from a coroutine somewhere deeper in the trace, use [blockingContext] in the latest possible frame.
  * - Make sure this method is called under an indicator by installing one as a thread indicator via [ProgressManager.runProcess].
  * - Fall back to [runBlockingMaybeCancellable]. **It may freeze because nobody can cancel it from outside**.
  *
@@ -117,8 +106,6 @@ suspend fun checkCanceled() {
  * @throws ProcessCanceledException if [current indicator][ProgressManager.getGlobalProgressIndicator] is cancelled
  * or [current job][Cancellation.currentJob] is cancelled
  * @see coroutineToIndicator
- * @see blockingContext
- * @see blockingContextToIndicator
  * @see runBlocking
  */
 @RequiresBackgroundThread(generateAssertion = false)
@@ -145,14 +132,15 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
     if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
+    val (lockContext, cleanup) = getLockContext(ctx)
     try {
       if (compensateParallelism) {
         @OptIn(InternalCoroutinesApi::class)
-        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + getLockPermitContext(), action)
+        IntellijCoroutines.runBlockingWithParallelismCompensation(ctx + lockContext, action)
       }
       else {
         @Suppress("RAW_RUN_BLOCKING")
-        runBlocking(ctx + getLockPermitContext(), action)
+        runBlocking(ctx + lockContext, action)
       }
     }
     catch (pce: ProcessCanceledException) {
@@ -161,7 +149,19 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, compensateParalleli
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
     }
+    finally {
+      cleanup.finish()
+    }
   }
+}
+
+private fun getLockContext(currentThreadContext: CoroutineContext): Pair<CoroutineContext, AccessToken> {
+  val parallelize = with(ApplicationManager.getApplication()) {
+    installThreadContext(currentThreadContext).use {
+      isReadAccessAllowed
+    }
+  }
+  return getLockPermitContext(currentThreadContext, parallelize)
 }
 
 /**
@@ -204,9 +204,10 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
   return prepareIndicatorThreadContext(indicator) { ctx ->
     val context = ctx +
                   CoroutineName("indicator run blocking")
+    val (lockContext, cleanup) = getLockPermitContext()
     try {
       @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(context + getLockPermitContext(), action)
+      runBlocking(context + lockContext, action)
     }
     catch (pce: ProcessCanceledException) {
       throw pce
@@ -214,10 +215,15 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
     catch (ce: CancellationException) {
       throw CeProcessCanceledException(ce)
     }
+    finally {
+      cleanup.finish()
+    }
   }
 }
 
 /**
+ * This function is deprecated since IJPL-445
+ *
  * Switches from a suspending context to the blocking context.
  *
  * The function is marked with `suspend` so it's only callable from a coroutine.
@@ -232,22 +238,21 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
  *
  * @see com.intellij.concurrency.currentThreadContext
  */
+@Suppress("RedundantSuspendModifier")
+@Deprecated(message = "Starting from 2024.2, `blockingContext` is installed implicitly", replaceWith = ReplaceWith("action()"))
 suspend fun <T> blockingContext(action: () -> T): T {
-  return coroutineScope {
-    blockingContextInner(coroutineContext, action)
-  }
+  return action()
 }
 
 /**
- * Executes the given [action] in a blocking context and suspends the coroutine until all the children computations,
+ * Executes the given [action] and suspends the coroutine until all the children computations,
  * spawned during the execution of [action], are completed.
  *
- * This function is a combination of [blockingContext] and [coroutineScope], providing both their functionalities.
- * It ensures proper tracking of children computations that are executed in different environments,
+ * This function ensures proper tracking of children computations that are executed in different environments,
  * such as different threads (like [com.intellij.openapi.application.Application.invokeLater])
  * or after a certain period of time (like [com.intellij.util.Alarm.addRequest]).
  *
- * If any child throws an exception that is not [CancellationException] or [ProcessCanceledException],
+ * If any child throws an exception that is not [CancellationException],
  * then [blockingContextScope] cancels the whole tree of spawned children
  * and resumes with this exception when every remaining child completes exceptionally.
  *
@@ -265,32 +270,96 @@ suspend fun <T> blockingContext(action: () -> T): T {
  *   print("E")
  * }
  * ```
- * The execution of the snippet above prints `"ABCDE"` or `"ABDCE"`, but never `"ABDEC"`.
+ * The execution of the snippet above prints `"ABCDE"` or `"ABDCE"`, but **never** `"ABDEC"`.
  *
  * @param action The function to execute in the blocking context.
  * @return The result of [action] after all its children are completed.
  *
  * @throws Exception if any of the children computations throw an exception.
  *
- * @see [blockingContext]
  * @see [coroutineScope]
  */
 suspend fun <T> blockingContextScope(action: () -> T): T {
-  return coroutineScope {
-    val coroutineContext = coroutineContext
-    blockingContextInner(coroutineContext + BlockingJob(coroutineContext.job), action)
+  val (result, job) = withCurrentThreadCoroutineScope {
+    coroutineScope {
+      val coroutineContext = coroutineContext
+      val blockingJob = BlockingJob(coroutineContext.job)
+      rememberElements(blockingJob, coroutineContext)
+      blockingContextInner(coroutineContext + blockingJob, action)
+    }
+  }
+  job.join()
+  return result
+}
+
+/**
+ * The same as [withCurrentThreadCoroutineScope], but for non-suspending execution context.
+ */
+@ApiStatus.Experimental
+@RequiresBlockingContext
+fun <T> withCurrentThreadCoroutineScopeBlocking(action: () -> T): Pair<T, Job> {
+  val currentContext = currentThreadContext()
+  val checkpoint = getFixThreadScopeElements(currentContext)
+  return installThreadContext(currentContext + checkpoint, true).use {
+    val actionResult = try {
+      action()
+    }
+    catch (e: Throwable) {
+      checkpoint.context.job.cancel()
+      throw e
+    }
+    actionResult to checkpoint.startWaitingForChildren()
   }
 }
 
 /**
- * Returns [CoroutineScope] that corresponds to the caller's context.
+ * Executes the given [action] and provides access to [currentThreadCoroutineScope] inside.
+ *
+ * In contrast to [blockingContextScope], it does **not** wait for
+ * IntelliJ Platform asynchronous computations (such as [Application.invokeLater]) inside [action].
+ *
+ * This is needed to support old scoping code such as [ProgressManager.runProcessWithProgressSynchronously], which defines a _scope_ (bound to modality),
+ * but does not fully await for asynchronous computations (like [Application.executeOnPooledThread]) to complete.
+ *
+ * @return A result of the computation, and a [Job] which binds all coroutines spawned with [currentThreadCoroutineScope]
+ */
+@ApiStatus.Experimental
+suspend fun <T> withCurrentThreadCoroutineScope(action: suspend CoroutineScope.() -> T): Pair<T, Job> {
+  val checkpoint = getFixThreadScopeElements(coroutineContext)
+  return withContext(checkpoint) {
+    val actionResult = try {
+      action()
+    }
+    catch (e: Throwable) {
+      checkpoint.context.job.cancel()
+      throw e
+    }
+    actionResult to checkpoint.startWaitingForChildren()
+  }
+}
+
+private fun getFixThreadScopeElements(context: CoroutineContext): ThreadScopeCheckpoint {
+  val totalCoroutinesJob = SupervisorJob(context[Job])
+  val exceptionHandler = CoroutineExceptionHandler { _, throwable ->
+    totalCoroutinesJob.cancel("Exception from children coroutines", throwable)
+  }
+  return ThreadScopeCheckpoint(context + totalCoroutinesJob + exceptionHandler)
+}
+
+/**
+ * Returns [CoroutineScope] that corresponds to the caller's chosen context.
  *
  * This method should be the default choice for initiating coroutines in blocking code.
- * Its advantage is ensuring the alignment of coroutines' context with the blocking code's cancellation strategy from the spawning point.
+ * This coroutine scope binds the spawned coroutines to the first checkpoint defined by the caller code.
+ * For example, you can use this function to launch coroutines in `AnAction.actionPerformed`.
+ *
+ * The [coroutineContext] of this scope is the same as at the moment of invocation of [blockingContextScope] or [withCurrentThreadCoroutineScope]
+ *
+ * To enable usage of [currentThreadCoroutineScope], consider using either [blockingContextScope] or [withCurrentThreadCoroutineScopeBlocking]
  *
  * Example:
  *
- * ```
+ * ```kotlin
  * suspend fun deepPlatformCode() {
  *   for (extension in SomeExtensionPoint.EP_NAME.extensionList) {
  *     // the platform has not yet designed suspending API for `SomeExtensionPoint`
@@ -310,28 +379,43 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
  *   }
  * }
  *
- * fun myTestFunction = runBlocking {
+ * fun myTestFunction() = runBlocking {
  *   blockingContextScope {
  *     MyPluginExtension().legacyApiImplementation() // the 'launch' is tracked now
  *   }
  * }
  * ```
  *
- * An alternative approach would be to create a service that exposes the injected coroutine scope;
+ * An alternative is a pattern with a service that exposes the injected coroutine scope:
+ * ```
+ * @Service(Service.Level.APP)
+ * class ScopeService(val scope: CoroutineScope)
+ *
+ * fun blockingFunction() {
+ *   service<ScopeService>().scope.launch {
+ *     // ...
+ *   }
+ * }
+ * ```
  * the difference between these two approaches is similar to the difference between [coroutineScope] and [GlobalScope]:
  * the coroutines spawned on the service scope are not controlled by the code that spawned them.
  */
 @RequiresBlockingContext
 fun currentThreadCoroutineScope(): CoroutineScope {
-  val threadContext = prepareCurrentThreadContext()
-  if (threadContext[Job] == null) {
+  val threadContext = currentThreadContext()
+  val checkpoint = threadContext[ThreadScopeCheckpoint]
+  if (checkpoint == null) {
     LOG.error(IllegalStateException(
-      """There is no `Job` in this thread, spawned coroutines are not cancellable. 
-        | If the transition from coroutines to blocking code happens in the same stack frame as the call to this function, the transition should use `blockingContext`.
-        | If the transition occurs in the different stack frame, then the transition should use `blockingContextScope` to set up a `Job` on this frame.""".trimMargin()))
+      """There is no scoping element in this thread. Current context: ${threadContext}. 
+        | Please use `blockingContextScope` or `withCurrentThreadCoroutineScope` to ensure that spawned coroutines are tracked""".trimMargin()))
   }
-  @Suppress("SSBasedInspection")
-  return CoroutineScope(threadContext)
+  @Suppress("RAW_SCOPE_CREATION")
+  return if (checkpoint == null) {
+    CoroutineScope(threadContext.minusKey(BlockingJob))
+  }
+  else {
+    CoroutineScope(checkpoint.context)
+  }
 }
 
 @Internal
@@ -346,15 +430,22 @@ internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: 
   }
 }
 
+@Deprecated(message = "This function does not provide an instance of `ProgressIndicator` to `action`", level = DeprecationLevel.HIDDEN)
+suspend fun <T> coroutineToIndicator(action: () -> T): T {
+  val ctx = coroutineContext
+  return contextToIndicator(ctx, action)
+}
+
 /**
  * Runs blocking (e.g., Java) code under indicator, which is canceled if the current Job is canceled.
  *
  * This function switches from suspending context to indicator context.
  *
  * Example:
- * ```
+ * ```kotlin
  * launch {
  *   coroutineToIndicator {
+ *     val indicator = ProgressManager.getGlobalProgressIndicator() // retrieving the new indicator
  *     someJavaFunctionWhichDoesntKnowAboutCoroutines()
  *   }
  * }
@@ -369,10 +460,11 @@ internal fun <T> blockingContextInner(currentContext: CoroutineContext, action: 
  * @see runBlockingCancellable
  * @see ProgressManager.runProcess
  */
-@ApiStatus.Experimental
-suspend fun <T> coroutineToIndicator(action: () -> T): T {
+suspend fun <T> coroutineToIndicator(action: (ProgressIndicator) -> T): T {
   val ctx = coroutineContext
-  return contextToIndicator(ctx, action)
+  return contextToIndicator(ctx) {
+    action(ProgressManager.getGlobalProgressIndicator())
+  }
 }
 
 /**
@@ -490,54 +582,34 @@ private fun assertBackgroundThreadAndNoWriteAction() {
 
 @IntellijInternalApi
 @Internal
-fun getLockPermitContext(forSharing: Boolean = false): CoroutineContext {
+fun getLockPermitContext(forSharing: Boolean = false): Pair<CoroutineContext, AccessToken> {
   return getLockPermitContext(currentThreadContext(), forSharing)
 }
 
 @IntellijInternalApi
 @Internal
-fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): CoroutineContext {
+fun getLockPermitContext(baseContext: CoroutineContext, forSharing: Boolean): Pair<CoroutineContext, AccessToken> {
   val application = ApplicationManager.getApplication()
   return if (application != null) {
-    if (isLockStoredInContext) {
-      if (EDT.isCurrentThreadEdt()) {
-        application.getLockStateAsCoroutineContext(baseContext, forSharing) + LockLeakedFromEDTMarker
-      }
-      else {
-        application.getLockStateAsCoroutineContext(baseContext, forSharing)
-      }
-    }
-    else if (application.isReadAccessAllowed) {
-      RunBlockingUnderReadActionMarker
+    val (context, cleanup) = application.getLockStateAsCoroutineContext(baseContext, forSharing)
+    val targetContext = if (EDT.isCurrentThreadEdt()) {
+      context + SafeForRunBlockingUnderReadAction
     }
     else {
-      EmptyCoroutineContext
+      context
     }
+    targetContext to cleanup
   }
   else {
-    EmptyCoroutineContext
+    EmptyCoroutineContext to AccessToken.EMPTY_ACCESS_TOKEN
   }
-}
-
-@IntellijInternalApi
-@Internal
-fun closeLockPermitContext(ctx: CoroutineContext) {
-  if (!isLockStoredInContext) {
-    return
-  }
-  ApplicationManager.getApplication().returnPermitFromContextElement(ctx.minusKey(LockLeakedFromEDTMarker))
 }
 
 @IntellijInternalApi
 @Internal
 fun CoroutineContext.isRunBlockingUnderReadAction(): Boolean {
-  return if (isLockStoredInContext) {
-    val application = ApplicationManager.getApplication()
-    application != null && application.hasLockStateInContext(this) && this[LockLeakedFromEDTMarker] == null
-  }
-  else {
-    this[RunBlockingUnderReadActionMarker] != null
-  }
+  val application = ApplicationManager.getApplication()
+  return application != null && application.isParallelizedReadAction(this) && application.isReadAccessAllowed && this[SafeForRunBlockingUnderReadAction] == null
 }
 
 private object RunBlockingUnderReadActionMarker
@@ -546,8 +618,16 @@ private object RunBlockingUnderReadActionMarker
   override val key: CoroutineContext.Key<*> get() = this
 }
 
-private object LockLeakedFromEDTMarker
+// public only because needed in actions API
+@Internal
+object SafeForRunBlockingUnderReadAction
   : CoroutineContext.Element,
-    CoroutineContext.Key<LockLeakedFromEDTMarker> {
+    CoroutineContext.Key<SafeForRunBlockingUnderReadAction> {
   override val key: CoroutineContext.Key<*> get() = this
+}
+
+private fun rememberElements(job: BlockingJob, context: CoroutineContext) {
+  context.fold(Unit) { _, element ->
+    job.rememberElement(element)
+  }
 }

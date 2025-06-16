@@ -10,7 +10,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.impl.DummyProject
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
@@ -28,18 +31,21 @@ import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
+import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.asNioPathOrNull
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.utils.EelPathUtils.getActualPath
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
-import com.intellij.platform.eel.provider.utils.where
+import com.intellij.platform.eel.where
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.navigation.Place
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -67,18 +73,28 @@ import java.io.IOException
 import java.nio.file.Path
 import javax.swing.event.HyperlinkEvent
 
-object MavenEelUtil  {
+object MavenEelUtil {
   @JvmStatic
   fun EelApi?.resolveM2Dir(): Path {
     val localUserHome = Path.of(SystemProperties.getUserHome())
-    val userHome = if (this != null && this !is LocalEelApi) fs.user.home.asNioPath() else localUserHome
+    val mavenUserHomeVar = Environment.getVariable("MAVEN_USER_HOME")
+    if (mavenUserHomeVar == null) {
+      val userHome = if (this != null && this !is LocalEelApi) fs.user.home.asNioPath() else localUserHome
 
-    return userHome.resolve(DOT_M2_DIR)
+      return userHome.resolve(DOT_M2_DIR)
+    }
+    else {
+      if (this != null && this !is LocalEelApi) {
+        return fs.getPath(mavenUserHomeVar).asNioPath()
+      }
+      else return Path.of(mavenUserHomeVar)
+    }
+
   }
 
   @JvmStatic
   suspend fun Project?.resolveM2DirAsync(): Path {
-    return this?.filterAcceptable()?.getEelDescriptor()?.upgrade().resolveM2Dir()
+    return this?.filterAcceptable()?.getEelDescriptor()?.toEelApi().resolveM2Dir()
   }
 
   suspend fun <T> resolveUsingEel(project: Project?, ordinary: suspend () -> T, eel: suspend (EelApi) -> T?): T {
@@ -86,7 +102,7 @@ object MavenEelUtil  {
       MavenLog.LOG.error("resolveEelAware: Project is null")
     }
 
-    return project?.filterAcceptable()?.getEelDescriptor()?.upgrade()?.let { eel(it) } ?: ordinary.invoke()
+    return project?.filterAcceptable()?.getEelDescriptor()?.toEelApi()?.let { eel(it) } ?: ordinary.invoke()
   }
 
   private fun Project.filterAcceptable(): Project? = takeIf { !it.isDefault && it !is DummyProject }
@@ -107,46 +123,21 @@ object MavenEelUtil  {
       getMavenHomePath(mavenHomeType)
     }
     else {
-      collectMavenDirectories().firstNotNullOfOrNull(::getMavenHomePath)
+      findMavenDistribution()?.let { getMavenHomePath(it) }
     }
 
     return directory?.resolve(CONF_DIR)?.resolve(SETTINGS_XML)
   }
 
-  @JvmStatic
-  fun EelApi.collectMavenDirectories(): List<StaticResolvedMavenHomeType> {
-    val result = ArrayList<StaticResolvedMavenHomeType>()
-
-    val m2home = exec.fetchLoginShellEnvVariablesBlocking()[ENV_M2_HOME]
-    if (m2home != null && !isEmptyOrSpaces(m2home)) {
-      val homeFromEnv = fs.getPath(m2home).asNioPath()
-      if (isValidMavenHome(homeFromEnv)) {
-        MavenLog.LOG.debug("resolved maven home using \$M2_HOME as ${homeFromEnv}")
-        result.add(MavenInSpecificPath(m2home))
-      }
-      else {
-        MavenLog.LOG.debug("Maven home using \$M2_HOME is invalid")
-      }
+  fun EelApi.findMavenDistribution(): MavenInSpecificPath? {
+    return runCatching {
+      tryMavenRootFromEnvironment()
+      ?: fs.tryMavenRoot("/usr/share/maven")
+      ?: fs.tryMavenRoot("/usr/share/maven2")
+      ?: tryMavenFromPath()
+    }.getOrLogException {
+      MavenLog.LOG.error("Unable to resolve a Maven distribution. An error occurred", it)
     }
-
-
-    var home = fs.getPath("/usr/share/maven").asNioPath()
-    if (isValidMavenHome(home)) {
-      MavenLog.LOG.debug("Maven home found at /usr/share/maven")
-      result.add(MavenInSpecificPath(home))
-    }
-
-    home = fs.getPath("/usr/share/maven2").asNioPath()
-    if (isValidMavenHome(home)) {
-      MavenLog.LOG.debug("Maven home found at /usr/share/maven2")
-      result.add(MavenInSpecificPath(home))
-    }
-
-    val path = runBlockingMaybeCancellable { exec.where("mvn") }?.asNioPathOrNull()?.parent?.parent
-    if (path != null && isValidMavenHome(path)) {
-      result.add(MavenInSpecificPath(path))
-    }
-    return result
   }
 
   @JvmStatic
@@ -164,10 +155,6 @@ object MavenEelUtil  {
     ) ?: resolveM2Dir().resolve(REPOSITORY_DIR)
   }
 
-  @JvmStatic
-  fun <T> resolveUsingEelBlocking(project: Project?, ordinary: () -> T, eel: suspend (EelApi) -> T?): T {
-    return runBlockingMaybeCancellable { resolveUsingEel(project, ordinary, eel) }
-  }
 
   /**
    * USE ONLY IN SETTINGS PREVIEW
@@ -309,12 +296,12 @@ object MavenEelUtil  {
   }
 
   @JvmStatic
-  fun getGlobalSettings(project: Project?, mavenHome: StaticResolvedMavenHomeType, mavenConfig: MavenConfig?): Path? {
+  suspend fun getGlobalSettingsAsync(project: Project?, mavenHome: StaticResolvedMavenHomeType, mavenConfig: MavenConfig?): Path? {
     val filePath = mavenConfig?.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS)
     if (filePath != null) return Path.of(filePath)
-    return resolveUsingEelBlocking(project,
-                                   { resolveGlobalSettingsFile(mavenHome) },
-                                   { resolveGlobalSettingsFile(mavenHome) })
+    return resolveUsingEel(project,
+                           { resolveGlobalSettingsFile(mavenHome) },
+                           { resolveGlobalSettingsFile(mavenHome) })
   }
 
   @JvmStatic
@@ -430,14 +417,17 @@ object MavenEelUtil  {
     ProgressManager.getInstance().run(jdkTask)
   }
 
+  @Service(Service.Level.PROJECT)
+  private class CoroutineService(val coroutineScope: CoroutineScope)
+
   private fun findOrDownloadNewJdkOverEel(
     project: Project,
     notification: Notification,
     listener: NotificationListener,
   ) {
-    MavenCoroutineScopeProvider.getCoroutineScope(project).launch(Dispatchers.IO) {
+    project.service<CoroutineService>().coroutineScope.launch(Dispatchers.IO) {
       withBackgroundProgress(project, MavenProjectBundle.message("wsl.jdk.searching"), cancellable = false) {
-        val eel = project.getEelDescriptor().upgrade()
+        val eel = project.getEelDescriptor().toEelApi()
         val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
         if (sdkPath != null) {
           edtWriteAction {
@@ -488,5 +478,33 @@ object MavenEelUtil  {
   @Deprecated("Use EEL API")
   private fun sameDistributions(first: WSLDistribution?, second: WSLDistribution?): Boolean {
     return first?.id == second?.id
+  }
+
+  private fun EelApi.tryMavenRootFromEnvironment(): MavenInSpecificPath? {
+    val home = exec.fetchLoginShellEnvVariablesBlocking()[ENV_M2_HOME] ?: return null
+    if (home.isNotBlank()) {
+      return fs.tryMavenRoot(home)
+    }
+    return null
+  }
+
+  private fun EelApi.tryMavenFromPath(): MavenInSpecificPath? {
+    val eelPath = runBlockingMaybeCancellable { exec.where("mvn") } ?: return null
+    val mavenHome = eelPath.parent?.parent ?: return null
+    return fs.tryMavenRoot(mavenHome)
+  }
+
+  private fun EelFileSystemApi.tryMavenRoot(path: String): MavenInSpecificPath? {
+    return tryMavenRoot(getPath(path))
+  }
+
+  private fun EelFileSystemApi.tryMavenRoot(path: EelPath): MavenInSpecificPath? {
+    val home = path.asNioPath()
+    // we want to prevent paths like "\\wsl.localhost\Ubuntu\mnt\c\Something\something" from being leaked into the execution
+    if (isValidMavenHome(home) && home == getActualPath(home)) {
+      MavenLog.LOG.debug("Maven home found at $path")
+      return MavenInSpecificPath(home)
+    }
+    return null
   }
 }

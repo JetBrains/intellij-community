@@ -2,11 +2,11 @@
 package org.jetbrains.yaml.schema
 
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.jetbrains.jsonSchema.impl.JsonBySchemaHeavyCompletionTestBase
-import com.jetbrains.jsonSchema.impl.assertThatSchema
+import com.jetbrains.jsonSchema.impl.*
+import com.jetbrains.jsonSchema.impl.TestSchemas.open1ThenOpen2Then3Schema
+import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthand
+import com.jetbrains.jsonSchema.impl.TestSchemas.settingWithEnabledShorthandAndCustomization
 import com.jetbrains.jsonSchema.impl.nestedCompletions.buildNestedCompletionsTree
-import com.jetbrains.jsonSchema.impl.testNestedCompletionsWithPredefinedCompletionsRoot
-import com.jetbrains.jsonSchema.impl.withConfiguration
 import org.intellij.lang.annotations.Language
 import java.io.File
 
@@ -264,6 +264,37 @@ class YamlByJsonSchemaHeavyNestedCompletionTest : JsonBySchemaHeavyCompletionTes
       """.trimIndent())
   }
 
+  fun `test nested completion leads to expanding - single level nestedness`() {
+    addShorthandValueHandlerForEnabledField(testRootDisposable)
+
+    settingWithEnabledShorthand
+      .appliedToYamlFile("""
+        setting: enabled
+        val<caret>
+      """.trimIndent())
+      .completesTo("""
+        setting:
+          enabled: true
+          value: <caret>
+      """.trimIndent())
+  }
+
+  fun `test nested completion leads to expanding - multiple level nestedness`() {
+    addShorthandValueHandlerForEnabledField(testRootDisposable)
+
+    settingWithEnabledShorthandAndCustomization
+      .appliedToYamlFile("""
+        setting: enabled
+        val<caret>
+      """.trimIndent())
+      .completesTo("""
+        setting:
+          enabled: true
+          customization:
+            value: <caret>
+      """.trimIndent())
+  }
+
   private fun JsonSchemaYamlSetup.completesTo(@Language("YAML") expectedResult: String) {
     workingFolder.resolve("Schema.json").createTemporarilyWithContent(schemaSetup.schemaJson) {
       workingFolder.resolve("test.yml").createTemporarilyWithContent(yaml) {
@@ -312,30 +343,3 @@ private inline fun File.createTemporarilyWithContent(content: String, block: () 
     delete()
   }
 }
-
-
-internal val open1ThenOpen2Then3Schema
-  get() = assertThatSchema("""
-     {
-       "properties": {
-         "one": {
-           "properties": {
-             "two": {
-               "properties": {
-                 "three": {
-                   "type": "boolean"
-                 }
-               }
-             }
-           }
-         }
-       }
-     }
-   """.trimIndent())
-    .withConfiguration(
-      buildNestedCompletionsTree {
-        open("one") {
-          open("two")
-        }
-      }
-    )

@@ -2,17 +2,21 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "execution-serviceView_resources",
+  name = "execution.serviceView_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "execution-serviceView",
+  name = "execution.serviceView",
   module_name = "intellij.platform.execution.serviceView",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util/jdom",
     "//platform/util/coroutines",
@@ -22,9 +26,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
-    "//platform/execution-impl",
     "//platform/navbar/frontend",
   ],
-  runtime_deps = [":execution-serviceView_resources"]
+  runtime_deps = [":execution.serviceView_resources"]
 )
 ### auto-generated section `build intellij.platform.execution.serviceView` end

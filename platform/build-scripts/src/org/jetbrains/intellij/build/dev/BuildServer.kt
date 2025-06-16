@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package org.jetbrains.intellij.build.dev
 
 import com.intellij.openapi.util.io.NioFiles
@@ -9,14 +11,18 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
-import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.VmProperties
+import org.jetbrains.intellij.build.closeKtorClient
 import org.jetbrains.intellij.build.impl.productInfo.PRODUCT_INFO_FILE_NAME
 import org.jetbrains.intellij.build.impl.productInfo.jsonEncoder
 import org.jetbrains.intellij.build.telemetry.TraceManager
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.readLines
@@ -69,8 +75,8 @@ fun readVmOptions(runDir: Path): List<String> {
   require(vmOptionsFile != null) {
     "No single *.vmoptions file in ${runDir} (${NioFiles.list(runDir).map(Path::getFileName).joinToString()})}"
   }
-  result += vmOptionsFile.readLines()
-  result += "-Djb.vmOptionsFile=${vmOptionsFile}"
+  result.addAll(vmOptionsFile.readLines())
+  result.add("-Djb.vmOptionsFile=${vmOptionsFile}")
 
   val productInfoFile = runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME)
   if (productInfoFile.exists()) {
@@ -80,7 +86,7 @@ fun readVmOptions(runDir: Path): List<String> {
       OsFamily.MACOS -> "\$APP_PACKAGE/Contents"
       OsFamily.LINUX -> "\$IDE_HOME"
     }
-    result += productJson.launch[0].additionalJvmArguments.map { it.replace(macroName, runDir.toString()) }
+    result.addAll(productJson.launch[0].additionalJvmArguments.map { it.replace(macroName, runDir.toString()) })
   }
 
   return result
@@ -88,8 +94,8 @@ fun readVmOptions(runDir: Path): List<String> {
 
 /** Returns IDE installation directory */
 suspend fun buildProductInProcess(request: BuildRequest): Path {
-  if (request.tracer != null) {
-    TraceManager.setTracer(request.tracer)
+  request.tracer?.let {
+    TraceManager.setTracer(it)
   }
   return TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).use {
     try {
@@ -123,13 +129,15 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Co
   return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
 }
 
-internal fun getProductPropertiesPath(homePath: Path): Path =
+internal fun getProductPropertiesPath(homePath: Path): Path {
   // handle a custom product properties path
-  System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) }
-  ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+  return System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }?.takeIf { Files.exists(it) }
+         ?: homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+}
 
-private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration =
-  configuration.products[platformPrefix]
-  ?: throw ConfigurationException("No production configuration for platform prefix `${platformPrefix}`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
+private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {
+  return configuration.products[platformPrefix]
+         ?: throw ConfigurationException("No production configuration for platform prefix `${platformPrefix}`; please add to `${PRODUCTS_PROPERTIES_PATH}` if needed")
+}
 
 internal class ConfigurationException(message: String) : RuntimeException(message)

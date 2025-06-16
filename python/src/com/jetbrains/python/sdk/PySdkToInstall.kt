@@ -52,8 +52,18 @@ fun installSdkIfNeeded(sdk: Sdk, module: Module?, existingSdks: List<Sdk>, conte
  * Generic PySdkToInstall. Compatible with all OS / CpuArch.
  */
 @Internal
-class PySdkToInstall(val installation: BinaryInstallation)
-  : ProjectJdkImpl(installation.release.title, PythonSdkType.getInstance(), "", installation.release.version) {
+class PySdkToInstall(
+  val installation: BinaryInstallation,
+) : ProjectJdkImpl(
+  installation.release.title,
+  PythonSdkType.getInstance(),
+  "",
+  /**
+   * We use [com.jetbrains.python.sdk.flavors.PythonSdkFlavor.getLanguageLevelFromVersionStringStaticSafe] to parse versions of this type
+   * of SDK. That method relies on the version string being prepended with "Python ".
+   */
+  "${PythonSdkFlavor.PYTHON_VERSION_STRING_PREFIX}${installation.release.version}"
+) {
 
   /**
    * Customize [renderer], which is typically either [com.intellij.ui.ColoredListCellRenderer] or [com.intellij.ui.ColoredTreeCellRenderer].

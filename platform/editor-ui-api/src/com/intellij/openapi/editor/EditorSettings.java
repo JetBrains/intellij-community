@@ -232,12 +232,16 @@ public interface EditorSettings {
   @Nullable Float getCharacterGridWidthMultiplier();
 
   /**
-   * Sets the width of single-width characters
+   * Sets the width of single-width characters and enables the character grid mode
    * <p>
    *   Settings this to a non-null value enables a special mode in which the editor tries to align all
    *   characters to a grid of cells with their width determined by multiplying this value
    *   by {@link com.intellij.openapi.editor.impl.view.EditorView#getMaxCharWidth() EditorView.getMaxCharWidth}.
    *   Double-width characters take two cells each.
+   * </p>
+   * <p>
+   *   If this mode is enabled, all kinds of grid properties can be queried by calling
+   *   {@link com.intellij.openapi.editor.impl.EditorImpl#getCharacterGrid()}.
    * </p>
    * @param value the width of single-width characters or {@code null} to disable cell grid alignment
    */

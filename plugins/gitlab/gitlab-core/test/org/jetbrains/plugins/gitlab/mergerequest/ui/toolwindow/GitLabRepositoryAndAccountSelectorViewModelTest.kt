@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow
 
 import com.intellij.collaboration.util.MainDispatcherRule
+import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import io.mockk.coEvery
 import io.mockk.every
@@ -30,6 +31,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
 
   private val projectManager = mockk<GitLabProjectsManager>()
   private val accountManager = mockk<GitLabAccountManager>()
+  private val project = mockk<Project>()
 
   @Test
   fun `single mapping and account initial selection`() = runTest {
@@ -49,7 +51,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
     val scope = childScope(Dispatchers.Main)
-    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mockk() }
+    val vm = GitLabRepositoryAndAccountSelectorViewModel(project, scope, projectManager, accountManager) { _, _ -> mockk() }
 
     assertEquals(projectMapping, vm.repoSelectionState.value)
     assertEquals(account, vm.accountSelectionState.value)
@@ -79,7 +81,7 @@ internal class GitLabRepositoryAndAccountSelectorViewModelTest {
     every { accountManager.canPersistCredentials } returns MutableStateFlow(true)
 
     val scope = childScope(Dispatchers.Main)
-    val vm = GitLabRepositoryAndAccountSelectorViewModel(scope, projectManager, accountManager) { _, _ -> mockk() }
+    val vm = GitLabRepositoryAndAccountSelectorViewModel(project, scope, projectManager, accountManager) { _, _ -> mockk() }
 
     assertEquals(null, vm.repoSelectionState.value)
     assertEquals(null, vm.accountSelectionState.value)

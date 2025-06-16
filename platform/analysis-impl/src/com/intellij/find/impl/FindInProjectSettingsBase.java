@@ -119,8 +119,8 @@ public class FindInProjectSettingsBase implements PersistentStateComponent<FindI
       var componentElement = element;
       while (true) {
         var parent = componentElement.getParent();
-        if (!(parent instanceof Element)) break;
-        componentElement = (Element)parent;
+        if (!(parent instanceof Element parentElement)) break;
+        componentElement = parentElement;
       }
       return Strings.nullize(componentElement.getAttributeValue(ComponentStorageUtil.NAME));
     }

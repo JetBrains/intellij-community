@@ -17,5 +17,5 @@ public final class DevkitApiDumpIcons {
   /** 16x16 */ public static final @NotNull Icon ApiDump = load("icons/expui/apiDump.svg", -293962250, 2);
   /** 16x16 */ public static final @NotNull Icon ApiDumpExperimental = load("icons/expui/apiDumpExperimental.svg", -1597409252, 2);
   /** 16x16 */ public static final @NotNull Icon ApiDumpExposed = load("icons/expui/apiDumpExposed.svg", 1027630778, 2);
-  /** 16x16 */ public static final @NotNull Icon ApiDumpUnreviewed = load("icons/expui/apiDumpUnreviewed.svg", 1385720882, 2);
+  /** 16x16 */ public static final @NotNull Icon ApiDumpUnreviewed = load("icons/expui/apiDumpUnreviewed.svg", 1468204164, 2);
 }

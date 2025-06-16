@@ -42,7 +42,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, object : FileEditorManagerListener.Before {
       override fun beforeFileClosed(source: FileEditorManager, file: VirtualFile) {
         updateHistoryEntry(
-          fileEditorManager = source as FileEditorManagerEx,
+          fileEditorManager = source,
           file = file,
           fallback = null,
           changeEntryOrderOnly = false,
@@ -104,7 +104,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   private fun fileOpenedImpl(
     file: VirtualFile,
     fallback: FileEditorWithProvider?,
-    fileEditorManager: FileEditorManagerEx,
+    fileEditorManager: FileEditorManager,
   ) {
     ThreadingAssertions.assertEventDispatchThread()
 
@@ -126,7 +126,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       editorComposite.selectedWithProvider ?: list.first()
     }
     else {
-      val selected = fileEditorManager.getSelectedEditorWithProvider(file) ?: fallback
+      val selected = (fileEditorManager as? FileEditorManagerEx)?.getSelectedEditorWithProvider(file) ?: fallback
       val selectedProviderIndex = selected?.let { list.indexOf(it) } ?: -1
       if (selectedProviderIndex == -1) {
         LOG.error("Can't find $selected among $list")
@@ -168,7 +168,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
   fun updateHistoryEntry(file: VirtualFile, changeEntryOrderOnly: Boolean) {
     updateHistoryEntry(
-      fileEditorManager = FileEditorManagerEx.getInstanceEx(project),
+      fileEditorManager = FileEditorManager.getInstance(project),
       file = file,
       fallback = null,
       changeEntryOrderOnly = changeEntryOrderOnly,
@@ -176,7 +176,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   }
 
   private fun updateHistoryEntry(
-    fileEditorManager: FileEditorManagerEx,
+    fileEditorManager: FileEditorManager,
     file: VirtualFile,
     fallback: FileEditorWithProvider?,
     changeEntryOrderOnly: Boolean,
@@ -229,7 +229,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       }
     }
 
-    val selectedEditorWithProvider = fileEditorManager.getSelectedEditorWithProvider(file)
+    val selectedEditorWithProvider = (fileEditorManager as? FileEditorManagerEx)?.getSelectedEditorWithProvider(file)
     if (selectedEditorWithProvider != null) {
       entry.selectedProvider = selectedEditorWithProvider.provider
       if (changeEntryOrderOnly) {
@@ -342,7 +342,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
   override fun getState(): Element {
     val element = Element("state")
     // update history before saving
-    val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+    val fileEditorManager = FileEditorManager.getInstance(project)
     for (file in fileEditorManager.openFiles.reversed()) {
       // we have to update only files that are in history
       if (getEntry(file) != null) {
@@ -377,7 +377,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
       service.fileOpenedImpl(
         file = file,
         fallback = null,
-        fileEditorManager = source as? FileEditorManagerEx ?: return,
+        fileEditorManager = source,
       )
     }
 
@@ -393,7 +393,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         val oldFile = event.oldFile
         if (oldFile != null) {
           service.updateHistoryEntry(
-            fileEditorManager = event.manager as FileEditorManagerEx,
+            fileEditorManager = event.manager,
             file = oldFile,
             fallback = event.oldEditor?.let { FileEditorWithProvider(fileEditor = it, provider = event.oldProvider!!) },
             changeEntryOrderOnly = false,
@@ -403,7 +403,7 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
         val newFile = event.newFile
         if (newFile != null) {
           service.updateHistoryEntry(
-            fileEditorManager = event.manager as FileEditorManagerEx,
+            fileEditorManager = event.manager,
             file = newFile,
             fallback = event.newEditor?.let { FileEditorWithProvider(fileEditor = it, provider = event.newProvider!!) },
             changeEntryOrderOnly = true,

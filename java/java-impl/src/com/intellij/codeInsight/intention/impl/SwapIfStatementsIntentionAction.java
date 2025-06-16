@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -46,7 +47,7 @@ public final class SwapIfStatementsIntentionAction extends PsiUpdateModCommandAc
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiKeyword element) {
-    if (!PsiKeyword.ELSE.equals(element.getText())) {
+    if (!JavaKeywords.ELSE.equals(element.getText())) {
       return null;
     }
     final PsiElement parent = element.getParent();

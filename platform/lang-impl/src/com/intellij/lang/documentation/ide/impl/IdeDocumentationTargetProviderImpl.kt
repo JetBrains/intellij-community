@@ -13,6 +13,7 @@ import com.intellij.model.Symbol
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.LookupElementDocumentationTargetProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.asSafely
 
@@ -28,11 +29,21 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     }
     val sourceElement = DocumentationManager.getContextElement(editor, file)
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
-                        ?: return emptyList()
+    if (targetElement == null) {
+      return lookupElementDocumentationTarget(file,  lookupElement, editor.caretModel.offset)
+    }
     return psiDocumentationTargets(targetElement, sourceElement)
   }
 
   override fun documentationTargets(editor: Editor, file: PsiFile, offset: Int): List<DocumentationTarget> {
     return documentationTargets(file, offset)
+  }
+
+  private fun lookupElementDocumentationTarget(file: PsiFile, lookupElement: LookupElement, offset: Int): List<DocumentationTarget> {
+    for (ext in LookupElementDocumentationTargetProvider.EP_NAME.extensionList) {
+      val target = ext.documentationTarget(file, lookupElement,offset)
+      if (target !=null ) return listOf(target)
+    }
+    return emptyList()
   }
 }

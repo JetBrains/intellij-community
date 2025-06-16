@@ -13,7 +13,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/main/intellij.platform.main:main",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
@@ -26,6 +25,15 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl/rpc",
+    "//platform/util/text-matching",
+    "//platform/usageView",
+    "//platform/execution-impl",
+    "//platform/statistics",
+  ],
+  exports = [
+    "//platform/lang-impl",
+    "//platform/statistics",
   ],
   runtime_deps = [":searchEverywhere_resources"]
 )

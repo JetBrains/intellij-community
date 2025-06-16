@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
@@ -6,8 +6,9 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModCommandBatchQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -19,12 +20,14 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,7 +43,7 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
     return new HtmlTagCanBeJavaDocTagFix();
   }
 
-  private static class HtmlTagCanBeJavaDocTagFix extends ModCommandQuickFix {
+  private static class HtmlTagCanBeJavaDocTagFix extends ModCommandBatchQuickFix {
 
     @Override
     public @NotNull String getFamilyName() {
@@ -48,11 +51,17 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
     }
 
     @Override
-    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      return ModCommand.psiUpdate(descriptor.getStartElement(), e -> applyFix(e, descriptor.getTextRangeInElement()));
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull List<ProblemDescriptor> descriptors) {
+      record FixData(PsiElement element, TextRange textRange) {}
+
+      return ModCommand.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
+        List<FixData> data =
+          ContainerUtil.map(descriptors, d -> new FixData(updater.getWritable(d.getPsiElement()), d.getTextRangeInElement()));
+        data.forEach(d -> applyFix(updater.getWritable(d.element), d.textRange));
+      });
     }
 
-    protected void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {
+    private static void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {
       PsiFile file = element.getContainingFile();
       Document document = file.getFileDocument();
       final int startOffset = range.getStartOffset();
@@ -102,6 +111,8 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
   }
 
   private static class HtmlTagCanBeJavaDocTagVisitor extends BaseInspectionVisitor {
+    private static final Pattern START_TAG_PATTERN = Pattern.compile("<([a-zA-Z])+([^>])*>");
+
     @Override
     public void visitDocToken(@NotNull PsiDocToken token) {
       super.visitDocToken(token);
@@ -150,15 +161,10 @@ public final class HtmlTagCanBeJavadocTagInspection extends BaseInspection imple
       }
       return false;
     }
-  }
 
-  private static final Pattern START_TAG_PATTERN = Pattern.compile("<([a-zA-Z])+([^>])*>");
-
-  static boolean containsHtmlTag(String text, int startIndex, int endIndex) {
-    final Matcher matcher = START_TAG_PATTERN.matcher(text);
-    if (matcher.find(startIndex)) {
-      return matcher.start() < endIndex;
+    private static boolean containsHtmlTag(String text, int startIndex, int endIndex) {
+      final Matcher matcher = START_TAG_PATTERN.matcher(text);
+      return matcher.find(startIndex) && matcher.start() < endIndex;
     }
-    return false;
   }
 }

@@ -1,10 +1,15 @@
 ### auto-generated section `build intellij.java.rt` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources")
 
 jvm_resources(
   name = "rt_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+jvm_provided_library(
+  name = "junit4_provided",
+  lib = "//libraries/junit4"
 )
 
 jvm_library(
@@ -15,7 +20,7 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "@lib//:java-rt-ant-1-7-1-provided",
-    "@lib//:junit4",
+    ":junit4_provided",
   ],
   runtime_deps = [":rt_resources"]
 )

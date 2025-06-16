@@ -17,6 +17,10 @@ inline fun processElementsMaxDuration(): Duration =
     Registry.intValue("kotlin.indices.timing.threshold.batch", Int.MAX_VALUE).toDuration(DurationUnit.MILLISECONDS)
 
 @ApiStatus.Internal
+inline fun collectionThresholdSize(): Int =
+    Registry.intValue("kotlin.indices.keys.threshold.size", Int.MAX_VALUE)
+
+@ApiStatus.Internal
 inline fun <T> processElementsAndMeasure(index: StubIndexKey<*, *>, log: Logger, crossinline block: () -> T): T =
     measureIndexCall(
         index,
@@ -46,9 +50,23 @@ inline fun <T> measureIndexCall(index: StubIndexKey<*, *>, prefix: String, thres
     val elapsed = mark.elapsedNow()
     if (elapsed > threshold) {
         val application = ApplicationManager.getApplication()
-        if (application.isInternal && !application.isUnitTestMode && Registry.`is`("kotlin.indices.timing.enabled")) {
+        if (application.isInternal && !application.isUnitTestMode && Registry.`is`("kotlin.indices.diagnostic.enabled")) {
             log.error("${index.name} $prefix took $elapsed more than expected $threshold")
         }
     }
     return t
+}
+
+@ApiStatus.Internal
+@OptIn(ExperimentalTime::class)
+inline fun <T> checkCollectionSize(index: StubIndexKey<*, *>, prefix: String, log: Logger, collection: Collection<T>): Collection<T> {
+    val thresholdSize = collectionThresholdSize()
+    val size = collection.size
+    if (size > thresholdSize) {
+        val application = ApplicationManager.getApplication()
+        if (application.isInternal && !application.isUnitTestMode && Registry.`is`("kotlin.indices.diagnostic.enabled")) {
+            log.error("${index.name} $prefix is going to process collection with $size elements more than expected $thresholdSize")
+        }
+    }
+    return collection
 }

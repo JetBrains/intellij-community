@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.openapi.Disposable
@@ -21,7 +21,7 @@ internal class EditorContextManagerImpl(
   private val cs: CoroutineScope,
 ) : EditorContextManager, Disposable.Default {
 
-  // todo ijpl-339 don't drop current contexts entirely on invalidating contexts. try to restore them on the next request
+  // todo IJPL-339 don't drop current contexts entirely on invalidating contexts. try to restore them on the next request
   private val currentContextCache = AtomicMapCache { CollectionFactory.createConcurrentWeakMap<Editor, EditorSelectedContexts>() }
 
   private val _eventFlow = MutableSharedFlow<EditorContextManager.ChangeEvent>(extraBufferCapacity = Int.MAX_VALUE)

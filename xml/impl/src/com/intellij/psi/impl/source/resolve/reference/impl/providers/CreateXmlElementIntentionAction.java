@@ -52,7 +52,7 @@ final class CreateXmlElementIntentionAction implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
     if (!myIsAvailableEvaluated) {
       final XmlTag tag = PsiTreeUtil.getParentOfType(myRef.getElement(), XmlTag.class);
       if (tag != null && tag.isValid()) {
@@ -71,7 +71,7 @@ final class CreateXmlElementIntentionAction implements IntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
     final XmlTag rootTag = myTargetFile.getDocument().getRootTag();
 
     Editor targetEditor;

@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
@@ -75,14 +74,12 @@ private class SettingsSynchronizerApplicationInitializedListener : ApplicationAc
 
   private suspend fun initializeSyncing(initMode: SettingsSyncBridge.InitMode, settingsSyncEventListener: SettingsSyncEventListener) {
     LOG.info("Initializing settings sync. Mode: $initMode")
-    val settingsSyncMain = serviceAsync<SettingsSyncMain>()
-    blockingContext {
-      settingsSyncMain.controls.bridge.initialize(initMode)
-      val settingsSyncEvents = SettingsSyncEvents.getInstance()
-      settingsSyncEvents.addListener(settingsSyncEventListener)
-      settingsSyncEvents.fireSettingsChanged(SyncSettingsEvent.SyncRequest)
-      LocalHostNameProvider.initialize()
-    }
+    val settingsSyncMain = SettingsSyncMain.getInstanceAsync()
+    settingsSyncMain.controls.bridge.initialize(initMode)
+    val settingsSyncEvents = SettingsSyncEvents.getInstance()
+    settingsSyncEvents.addListener(settingsSyncEventListener)
+    settingsSyncEvents.fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+    LocalHostNameProvider.initialize()
   }
 
   private fun setProviderCodeAndUserId() {
@@ -118,7 +115,7 @@ private class SettingsSynchronizer : ApplicationActivationListener {
     get() = Registry.intValue("settingsSync.autoSync.frequency.sec", 60).toLong()
 
   override fun applicationActivated(ideFrame: IdeFrame) {
-    if (!true || !isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
+    if (!isSettingsSyncEnabledInSettings() || !SettingsSyncMain.isAvailable()) {
       return
     }
 

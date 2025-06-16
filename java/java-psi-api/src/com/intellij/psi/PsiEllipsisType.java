@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,10 @@ public class PsiEllipsisType extends PsiArrayType {
 
   public PsiEllipsisType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider) {
     super(componentType, provider);
+  }
+  
+  private PsiEllipsisType(@NotNull PsiType componentType, @NotNull TypeAnnotationProvider provider, @NotNull TypeNullability nullability) {
+    super(componentType, provider, nullability);
   }
 
   @Override
@@ -39,6 +44,11 @@ public class PsiEllipsisType extends PsiArrayType {
   public boolean equalsToText(@NotNull String text) {
     return text.endsWith("...") && getComponentType().equalsToText(text.substring(0, text.length() - 3)) ||
            super.equalsToText(text);
+  }
+
+  @Override
+  public @NotNull PsiEllipsisType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiEllipsisType(getComponentType(), getAnnotationProvider(), nullability);
   }
 
   /**

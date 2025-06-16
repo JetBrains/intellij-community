@@ -31,7 +31,7 @@ public class MockIntroduceConstantHandler extends IntroduceConstantHandler{
   protected Settings showRefactoringDialog(final Project project, final Editor editor, final PsiClass parentClass, final PsiExpression expr,
                                            final PsiType type, final PsiExpression[] occurrences, final PsiElement anchorElement,
                                            final PsiElement anchorElementIfAll) {
-    return new Settings("xxx", expr, occurrences, true, true, true, InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, null, false,
+    return new Settings("xxx", expr, occurrences, true, true, true, InitializationPlace.IN_FIELD_DECLARATION, getVisibility(), null, type, false,
                         myTargetClass != null ? myTargetClass : parentClass, false, false);
   }
 

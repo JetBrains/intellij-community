@@ -4,7 +4,6 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -14,13 +13,14 @@ import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerInstanceTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeWithHistoryPanel;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import javax.swing.JComponent;
 
 @ApiStatus.Internal
 public class XInspectDialog extends DialogWrapper {
@@ -33,7 +33,7 @@ public class XInspectDialog extends DialogWrapper {
                         @NotNull String name,
                         @NotNull XValue value,
                         XValueMarkers<?, ?> markers,
-                        @Nullable XDebugSession session,
+                        @Nullable XDebugSessionProxy session,
                         boolean rebuildOnSessionEvents) {
     super(project, false);
     myRebuildOnSessionEvents = rebuildOnSessionEvents;

@@ -23,6 +23,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util/concurrency",
     "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/statistics",
     "//platform/platform-impl:ide-impl",
@@ -33,8 +34,9 @@ jvm_library(
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
-    "//platform/ui.jcef:ui-jcef",
+    "//platform/ui.jcef",
     "//platform/analysis-api:analysis",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":whatsNew_resources"]
 )
@@ -50,6 +52,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
@@ -62,12 +65,13 @@ jvm_library(
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin-provided",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
-    "//platform/ui.jcef:ui-jcef",
+    "//platform/ui.jcef",
     "//platform/analysis-api:analysis",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":whatsNew_resources"]
 )

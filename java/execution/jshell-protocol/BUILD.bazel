@@ -9,11 +9,17 @@ jvm_library(
   kotlinc_opts = "@community//:k11"
 )
 
-jvm_test(
-  name = "java-jshell-protocol_test",
+jvm_library(
+  name = "java-jshell-protocol_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["testStrc/**/*.kt", "testStrc/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k11",
   associates = [":java-jshell-protocol"],
   deps = ["@lib//:junit4"]
+)
+
+jvm_test(
+  name = "java-jshell-protocol_test",
+  runtime_deps = [":java-jshell-protocol_test_lib"]
 )
 ### auto-generated section `build intellij.java.jshell.protocol` end

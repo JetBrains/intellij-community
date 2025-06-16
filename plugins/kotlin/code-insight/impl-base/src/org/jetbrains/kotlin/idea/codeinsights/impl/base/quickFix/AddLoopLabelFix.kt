@@ -8,10 +8,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getExistingLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getUniqueLabelName
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 
 // This quick fix is not topical for any language version > 1.3, see https://youtrack.jetbrains.com/issue/KT-33413
 class AddLoopLabelFix(
@@ -19,10 +26,10 @@ class AddLoopLabelFix(
     jumpExpression: KtExpressionWithLabel
 ) : KotlinQuickFixAction<KtLoopExpression>(loop), LocalQuickFix {
     private val jumpExpressionPointer: SmartPsiElementPointer<KtExpressionWithLabel> = SmartPointerManager.createPointer(jumpExpression)
-    private val existingLabelName = (loop.parent as? KtLabeledExpression)?.getLabelName()
+    private val existingLabelName = getExistingLabelName(loop)
 
     @Nls
-    private val description = run {
+    private val description: String = run {
         when {
             existingLabelName != null -> {
                 val labelName = "@$existingLabelName"
@@ -34,52 +41,35 @@ class AddLoopLabelFix(
         }
     }
 
-    override fun getText() = description
-    override fun getFamilyName() = text
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) = applyFix()
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) = applyFix()
+    override fun getText(): @Nls String = description
+    override fun getFamilyName(): @Nls String = text
 
-    private fun applyFix() {
-        val element = element ?: return
-        val labelName = existingLabelName ?: getUniqueLabelName(element)
-
-        val jumpExpression = jumpExpressionPointer.element
-        jumpExpression?.replace(KtPsiFactory(element.project).createExpression(jumpExpression.text + "@" + labelName))
-
-        if (existingLabelName == null) {
-            element.replace(KtPsiFactory(element.project).createExpressionByPattern("$0@ $1", labelName, element, reformat = false))
-        }
-
-        // TODO(yole) We should initiate in-place rename for the label here, but in-place rename for labels is not yet implemented
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        applyFix()
     }
 
-    companion object {
-        private fun getUniqueLabelName(existingNames: Collection<String>): String {
-            var index = 0
-            var result = "loop"
-            while (result in existingNames) {
-                result = "loop${++index}"
-            }
-            return result
-        }
+    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+        applyFix()
+    }
 
-        fun getUniqueLabelName(loop: KtLoopExpression): String =
-            getUniqueLabelName(collectUsedLabels(loop))
+    private fun applyFix() {
+        val loopExpression = element ?: return
+        val jumpExpression = jumpExpressionPointer.element ?: return
+        addLoopLabel(loopExpression, jumpExpression)
+    }
 
-        private fun collectUsedLabels(element: KtElement): Set<String> {
-            val usedLabels = hashSetOf<String>()
-            element.acceptChildren(object : KtTreeVisitorVoid() {
-                override fun visitLabeledExpression(expression: KtLabeledExpression) {
-                    super.visitLabeledExpression(expression)
-                    usedLabels.add(expression.getLabelName()!!)
-                }
-            })
-            element.parents.forEach {
-                if (it is KtLabeledExpression) {
-                    usedLabels.add(it.getLabelName()!!)
-                }
-            }
-            return usedLabels
+    private fun addLoopLabel(loopExpression: KtLoopExpression, jumpExpression: KtExpressionWithLabel): KtExpression {
+        val labelName = getExistingLabelName(loopExpression) ?: getUniqueLabelName(loopExpression)
+
+        val ktPsiFactory = KtPsiFactory(loopExpression.project)
+        jumpExpression.replace(ktPsiFactory.createExpression(jumpExpression.text + "@" + labelName))
+
+        return if (getExistingLabelName(loopExpression) == null) {
+            loopExpression.replaced(
+                ktPsiFactory.createExpressionByPattern("$0@ $1", labelName, loopExpression, reformat = false)
+            )
+        } else {
+            loopExpression
         }
     }
 }

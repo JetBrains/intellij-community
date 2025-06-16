@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,7 +69,7 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
       .findObjectExpression(myCallExpression.getMethodExpression(), myMethod, outerClass, callExpression, elementFactory);
     String args = StreamEx.of(myCallExpression.getArgumentList().getExpressions())
       .map(x -> x.getText())
-      .prepend(objectToCallOn == null ? "null" : objectToCallOn)
+      .prepend(objectToCallOn)
       .joining(", ", "(", ")");
     String newMethodCallExpression = newMethod.getName() + args;
 

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,11 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     super(parent, true);
     myDescription = description;
     initializeDialog(items, title, sort);
+  }
+
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return JBUI.DialogSizes.medium();
   }
 
   /**

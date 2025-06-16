@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.CommonBundle
@@ -13,8 +13,8 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.StorageScheme
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
@@ -22,8 +22,8 @@ import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectStorePathManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
+import com.intellij.platform.PROJECT_OPENED_BY_PLATFORM_PROCESSOR
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.createOptionsToOpenDotIdeaOrCreateNewIfNotExists
 import com.intellij.platform.attachToProjectAsync
@@ -52,6 +53,7 @@ import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.DisposableWindow
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
@@ -59,7 +61,9 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.ui.StartupUiUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.Nls
@@ -226,7 +230,7 @@ object ProjectUtil {
           useDefaultProjectAsTemplate = true,
           runConfigurators = true,
           beforeOpen = {
-            it.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
+            it.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, true)
             options.beforeOpen?.invoke(it) ?: true
           },
         )
@@ -346,9 +350,10 @@ object ProjectUtil {
       }
     }
     if (fileAttributes.isDirectory) {
-      val isKnownProject = ProjectCoreUtil.isKnownProjectDirectory(file)
+      val storePathManager = ProjectStorePathManager.getInstance()
+      val isKnownProject = storePathManager.testStoreDirectoryExistsForProjectRoot(file)
       if (!isKnownProject) {
-        val dirPath = ProjectCoreUtil.getProjectStoreDirectory(file)
+        val dirPath = storePathManager.getStoreDirectoryPath(file)
         Messages.showErrorDialog(IdeBundle.message("error.project.file.does.not.exist", dirPath.toString()), CommonBundle.getErrorTitle())
         return null
       }
@@ -459,7 +464,7 @@ object ProjectUtil {
     if (projectFile.startsWith(storeDir)) {
       return true
     }
-    var parent: Path? = projectFile.parent ?: return false
+    val parent = projectFile.parent ?: return false
     return projectFile.fileName.toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) &&
            FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString())
   }
@@ -475,7 +480,7 @@ object ProjectUtil {
   @RequiresEdt
   fun focusProjectWindow(project: Project?, stealFocusIfAppInactive: Boolean = false) {
     val frame = WindowManager.getInstance().getFrame(project) ?: return
-    val appIsActive = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow != null
+    val appIsActive = getActiveWindow() != null
 
     // On macOS, `j.a.Window#toFront` restores the frame if needed.
     // On X Window, restoring minimized frame can steal focus from an active application, so we do it only when the IDE is active.
@@ -512,7 +517,7 @@ object ProjectUtil {
 
   @JvmStatic
   fun getUserHomeProjectDir(): String {
-    val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip()) {
+    val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() || PlatformUtils.isMPS()) {
       ApplicationNamesInfo.getInstance().productName
     }
     else {
@@ -595,7 +600,7 @@ object ProjectUtil {
   }
 
   private val projectsDirDefault: String
-    get() = if (PlatformUtils.isDataGrip()) getUserHomeProjectDir() else PathManager.getConfigPath() + File.separator + PROJECTS_DIR
+    get() = if (PlatformUtils.isDataGrip() || PlatformUtils.isDataSpell()) getUserHomeProjectDir() else PathManager.getConfigPath() + File.separator + PROJECTS_DIR
 
   fun getProjectPath(name: String): Path {
     return Path.of(getProjectPath(), name)
@@ -603,7 +608,7 @@ object ProjectUtil {
 
   fun getProjectFile(name: String): Path? {
     val projectDir = getProjectPath(name)
-    return if (ProjectCoreUtil.isKnownProjectDirectory(projectDir)) projectDir else null
+    return if (service<ProjectStorePathManager>().testStoreDirectoryExistsForProjectRoot(projectDir)) projectDir else null
   }
 
   @JvmStatic
@@ -615,7 +620,8 @@ object ProjectUtil {
   }
 
   private suspend fun openOrCreateProjectInner(name: String, file: Path): Project? {
-    val existingFile = if (ProjectCoreUtil.isKnownProjectDirectory(file)) file else null
+    val storePathManager = serviceAsync<ProjectStorePathManager>()
+    val existingFile = if (storePathManager.testStoreDirectoryExistsForProjectRoot(file)) file else null
     val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
     if (existingFile != null) {
       for (p in projectManager.openProjects) {
@@ -682,14 +688,14 @@ object ProjectUtil {
   fun getProjectForComponent(component: Component?): Project? = getProjectForWindow(ComponentUtil.getWindow(component))
 
   @JvmStatic
-  fun getActiveProject(): Project? = getProjectForWindow(KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow)
+  fun getActiveProject(): Project? = getProjectForWindow(getActiveWindow())
 
   @JvmStatic
   fun getOpenProjects(): Array<Project> = ProjectUtilCore.getOpenProjects()
 
   @Internal
   @VisibleForTesting
-  suspend fun openExistingDir(file: Path, currentProject: Project?): Project? {
+  suspend fun openExistingDir(file: Path, currentProject: Project?, forceReuseFrame: Boolean = false): Project? {
     val canAttach = ProjectAttachProcessor.canAttachToProject()
     val preferAttach = currentProject != null &&
                        canAttach &&
@@ -699,11 +705,16 @@ object ProjectUtil {
     }
 
     val project = if (canAttach) {
-      val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject)
+      val options = createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject).copy(
+        forceReuseFrame = forceReuseFrame
+      )
       (serviceAsync<ProjectManager>() as ProjectManagerEx).openProjectAsync(file, options)
     }
     else {
-      openOrImportAsync(file, OpenProjectTask().withProjectToClose(currentProject))
+      val options = OpenProjectTask().withProjectToClose(currentProject).copy(
+        forceReuseFrame = forceReuseFrame
+      )
+      openOrImportAsync(file, options)
     }
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       FileChooserUtil.setLastOpenedFile(project, file)
@@ -742,25 +753,8 @@ fun <T> runUnderModalProgressIfIsEdt(task: suspend CoroutineScope.() -> T): T {
   }
 }
 
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Internal
-@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
-fun Project.executeOnPooledThread(task: Runnable) {
-  (this as ComponentManagerEx).getCoroutineScope().launch { blockingContext { task.run() } }
-}
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Internal
-@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
-fun Project.executeOnPooledThread(coroutineScope: CoroutineScope, task: Runnable) {
-  coroutineScope.launch { blockingContext { task.run() } }
-}
-
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Internal
-@ScheduledForRemoval
-@Deprecated(message = "temporary solution for old code in java", level = DeprecationLevel.ERROR)
-fun Project.executeOnPooledIoThread(task: Runnable) {
-  @Suppress("DEPRECATION")
-  (this as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.IO) { blockingContext { task.run() } }
+private fun getActiveWindow(): Window? {
+  val window = KeyboardFocusManager.getCurrentKeyboardFocusManager().activeWindow
+  if (window is DisposableWindow && window.isWindowDisposed) return null
+  return window
 }

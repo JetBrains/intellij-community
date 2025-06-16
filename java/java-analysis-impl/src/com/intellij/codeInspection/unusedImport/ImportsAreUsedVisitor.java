@@ -17,14 +17,13 @@ package com.intellij.codeInspection.unusedImport;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.intellij.psi.util.ImportsUtil.getAllImplicitImports;
 
@@ -34,17 +33,30 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
   private final List<PsiImportStatementBase> importStatements;
   private final List<PsiImportStatementBase> usedImportStatements = new ArrayList<>();
   private final List<PsiImportStatementBase> implicitlyUsedImportStatements = new ArrayList<>();
+  private final Set<PsiImportStatementBase> highLevelModuleImports = new HashSet<>();
+  private final JavaCodeStyleSettings settings;
 
   ImportsAreUsedVisitor(@NotNull PsiJavaFile file) {
     myFile = file;
+    settings = JavaCodeStyleSettings.getInstance(file);
     final PsiImportList importList = file.getImportList();
     if (importList == null) {
       importStatements = Collections.emptyList();
-    } else {
+    }
+    else {
       final PsiImportStatementBase[] importStatements = importList.getAllImportStatements();
       this.importStatements = new ArrayList<>(Arrays.asList(importStatements));
       this.implicitlyUsedImportStatements.addAll(getAllImplicitImports(file));
       this.importStatements.sort(ImportStatementComparator.getInstance());
+
+      highLevelModuleImports.addAll(ImportUtils.optimizeModuleImports(myFile));
+      List<PsiImportStatementBase> unusedModuleImports =
+        ContainerUtil.filter(this.importStatements,
+                             t -> t instanceof PsiImportModuleStatement importModuleStatement &&
+                                  !highLevelModuleImports.contains(importModuleStatement));
+
+      this.importStatements.removeAll(unusedModuleImports);
+      this.importStatements.addAll(unusedModuleImports);
     }
   }
 
@@ -178,6 +190,10 @@ class ImportsAreUsedVisitor extends JavaRecursiveElementWalkingVisitor {
     if (importStatements.isEmpty()) {
       return PsiImportStatementBase.EMPTY_ARRAY;
     }
+    if (!settings.isDeleteUnusedModuleImports()) {
+      importStatements.removeAll(highLevelModuleImports);
+    }
+
     return importStatements.toArray(PsiImportStatementBase.EMPTY_ARRAY);
   }
 }

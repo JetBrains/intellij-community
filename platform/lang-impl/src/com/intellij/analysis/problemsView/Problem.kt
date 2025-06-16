@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -26,7 +26,7 @@ interface Problem {
   /**
    * A name used to group problems by context.
    *
-   * todo ijpl-339 mark experimental
+   * todo IJPL-339 mark experimental
    */
   val contextGroup: CodeInsightContext?
     @ApiStatus.Internal

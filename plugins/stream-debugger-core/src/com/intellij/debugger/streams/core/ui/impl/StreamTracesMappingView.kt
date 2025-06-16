@@ -3,6 +3,7 @@ package com.intellij.debugger.streams.core.ui.impl
 
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
 import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
+import com.intellij.debugger.streams.core.trace.GenericEvaluationContext
 import com.intellij.debugger.streams.core.ui.TraceController
 
 /**
@@ -10,8 +11,9 @@ import com.intellij.debugger.streams.core.ui.TraceController
  */
 class StreamTracesMappingView(
   launcher: DebuggerCommandLauncher,
+  context: GenericEvaluationContext,
   prevController: TraceController,
   nextController: TraceController,
   builder: CollectionTreeBuilder,
   debugName: String
-) : FlatView(listOf(prevController, nextController), launcher, builder, debugName)
+) : FlatView(listOf(prevController, nextController), launcher, context, builder, debugName)

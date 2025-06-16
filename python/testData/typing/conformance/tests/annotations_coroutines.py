@@ -16,7 +16,10 @@ async def func1(ignored: int, /) -> str:
     return "spam"
 
 
-assert_type(func1, Callable[[int], Coroutine[Any, Any, str]])
+# Don't use assert_type here because some type checkers infer
+# the narrower type types.CoroutineType rather than typing.Coroutine
+# in this case.
+v1: Callable[[int], Coroutine[Any, Any, str]] = func1
 
 
 async def func2() -> None:

@@ -1,20 +1,14 @@
 interface ITest {
-  int foo();
+  void foo();
+
+  default void bar() {
+  }
 }
 
 public class Test implements ITest {
-  ITest lambda = () -> {};
+  ITest lambda = () -> ITest.super.bar();
 
   @Override
-  public int foo() {
+  public void foo() {
   }
-
-  public int bar() {
-    return 1;
-  }
-}
-
-class Sub extends Test {
-  ITest lambda1 = () -> super.foo();
-  ITest lambda2 = () -> { return super.foo(); };
 }

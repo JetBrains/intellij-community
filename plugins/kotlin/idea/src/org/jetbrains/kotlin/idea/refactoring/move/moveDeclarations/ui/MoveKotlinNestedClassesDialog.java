@@ -21,12 +21,10 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
 import org.jetbrains.kotlin.idea.completion.CompletionUtilsKt;
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject;
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject;
-import org.jetbrains.kotlin.idea.projectView.KtClassOrObjectTreeNode;
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo;
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel;
@@ -36,7 +34,6 @@ import org.jetbrains.kotlin.idea.refactoring.ui.KotlinTypeReferenceEditorComboWi
 import org.jetbrains.kotlin.psi.*;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -117,17 +114,7 @@ public class MoveKotlinNestedClassesDialog extends RefactoringDialog {
                                 null,
                                 null,
                                 true
-                        ) {
-                            @Override
-                            protected @Nullable PsiClass getSelectedFromTreeUserObject(DefaultMutableTreeNode node) {
-                                PsiClass psiClass = super.getSelectedFromTreeUserObject(node);
-                                if (psiClass != null) return psiClass;
-
-                                Object userObject = node.getUserObject();
-                                if (!(userObject instanceof KtClassOrObjectTreeNode)) return null;
-                                return LightClassUtilsKt.toLightClass(((KtClassOrObjectTreeNode) userObject).getValue());
-                            }
-                        };
+                        );
                         chooser.selectDirectory(
                                 (targetClass != null ? targetClass : originalClass).getContainingFile().getContainingDirectory());
                         chooser.showDialog();

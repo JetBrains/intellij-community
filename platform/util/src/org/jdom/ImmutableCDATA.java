@@ -10,9 +10,7 @@ public final class ImmutableCDATA extends CDATA {
 
   @Override
   public CDATA clone() {
-    CDATA text = new CDATA();
-    text.value = value;
-    return text;
+    return new CDATA(true, value);
   }
 
   @Override

@@ -8,7 +8,7 @@ import pydevd_tracing
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle import pydevd_traceproperty, pydevd_dont_trace, pydevd_utils
-from _pydevd_bundle.pydevd_pep_669_tracing import process_new_breakpoint
+from _pydevd_bundle.pydevd_pep_669_tracing import add_new_breakpoint, remove_breakpoint
 from _pydevd_bundle.pydevd_additional_thread_info import set_additional_thread_info
 from _pydevd_bundle.pydevd_breakpoints import LineBreakpoint, get_exception_class
 from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS,
@@ -64,6 +64,8 @@ from _pydevd_bundle.pydevd_comm import (CMD_RUN, CMD_VERSION, CMD_LIST_THREADS,
                                         CMD_DATAVIEWER_ACTION, InternalDataViewerAction,
                                         CMD_TABLE_EXEC, InternalTableCommand,
                                         CMD_INTERRUPT_DEBUG_CONSOLE,
+                                        CMD_IMAGE_COMMAND_START_LOAD, InternalTableImageStartCommand,
+                                        CMD_IMAGE_COMMAND_CHUNK_LOAD, InternalTableImageChunkCommand,
                                         CMD_SET_USER_TYPE_RENDERERS)
 from _pydevd_bundle.pydevd_constants import (get_thread_id, IS_PY3K, DebugInfoHolder,
                                              dict_keys, STATE_RUN,
@@ -455,7 +457,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                 py_db.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
 
                 if py_db.is_pep669_monitoring_enabled:
-                    process_new_breakpoint(breakpoint)
+                    add_new_breakpoint(breakpoint)
 
                 if py_db.plugin is not None:
                     py_db.has_plugin_line_breaks = py_db.plugin.has_line_breaks()
@@ -500,6 +502,9 @@ def process_net_command(py_db, cmd_id, seq, text):
                                 existing = id_to_pybreakpoint[breakpoint_id]
                                 sys.stderr.write('Removed breakpoint:%s - line:%s - func_name:%s (id: %s)\n' % (
                                     file, existing.line, existing.func_name.encode('utf-8'), breakpoint_id))
+
+                            if py_db.is_pep669_monitoring_enabled:
+                                remove_breakpoint(id_to_pybreakpoint[breakpoint_id])
 
                             del id_to_pybreakpoint[breakpoint_id]
                             py_db.consolidate_breakpoints(file, id_to_pybreakpoint, breakpoints)
@@ -947,6 +952,22 @@ def process_net_command(py_db, cmd_id, seq, text):
                         format = parameters[6]
 
                     int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index, format)
+                    py_db.post_internal_command(int_cmd, thread_id)
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_IMAGE_COMMAND_START_LOAD:
+                try:
+                    thread_id, frame_id, init_command, command_type = text.split('\t')
+                    int_cmd = InternalTableImageStartCommand(seq, thread_id, frame_id, init_command, command_type)
+                    py_db.post_internal_command(int_cmd, thread_id)
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_IMAGE_COMMAND_CHUNK_LOAD:
+                try:
+                    thread_id, frame_id, init_command, command_type, offset, image_id = text.split('\t')
+                    int_cmd = InternalTableImageChunkCommand(seq, thread_id, frame_id, init_command, command_type, int(offset), image_id)
                     py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()

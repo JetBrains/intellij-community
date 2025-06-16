@@ -26,7 +26,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
@@ -132,7 +132,7 @@ class JdkDownload : SdkDownload {
             return null
           }
           else {
-            return (project?.getEelDescriptor() ?: LocalEelDescriptor).upgradeBlocking()
+            return (project?.getEelDescriptor() ?: LocalEelDescriptor).toEelApiBlocking()
           }
         }
       }

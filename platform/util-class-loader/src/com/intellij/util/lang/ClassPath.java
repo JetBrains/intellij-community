@@ -365,7 +365,8 @@ public final class ClassPath {
     return loaders.get(loaderIndex);
   }
 
-  public @NotNull List<Path> getBaseUrls() {
+  // TODO: synchronized should not be needed
+  public synchronized @NotNull List<Path> getBaseUrls() {
     List<Path> result = new ArrayList<>();
     for (Loader loader : loaders) {
       result.add(loader.getPath());

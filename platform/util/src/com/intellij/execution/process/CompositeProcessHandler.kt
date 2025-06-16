@@ -1,9 +1,11 @@
 package com.intellij.execution.process
 
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
 import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 open class CompositeProcessHandler(val handlers: List<ProcessHandler>) : ProcessHandler() {
   private val terminatedCount = AtomicInteger()
 

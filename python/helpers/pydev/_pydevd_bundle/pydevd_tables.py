@@ -4,6 +4,7 @@
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
+from _pydevd_bundle.tables.images.pydevd_image_loader import load_image_chunk
 
 
 class TableCommandType:
@@ -12,7 +13,8 @@ class TableCommandType:
     SLICE_CSV = "SLICE_CSV"
     DESCRIBE = "DF_DESCRIBE"
     VISUALIZATION_DATA = "VISUALIZATION_DATA"
-    IMAGE = "IMAGE"
+    IMAGE_START_CHUNK_LOAD = "IMAGE_START_CHUNK_LOAD"
+    IMAGE_CHUNK_LOAD = "IMAGE_CHUNK_LOAD"
 
 
 def is_error_on_eval(val):
@@ -24,17 +26,31 @@ def is_error_on_eval(val):
         is_exception_on_eval = False
     return is_exception_on_eval
 
+def exec_image_table_command(init_command, command_type, offset, image_id, f_globals, f_locals):
+    table = pydevd_vars.eval_in_context(init_command, f_globals, f_locals)
+    is_exception_on_eval = is_error_on_eval(table)
+    if is_exception_on_eval:
+        return False, table.result
+
+    image_provider = __get_image_provider(table)
+    if not image_provider:
+        raise RuntimeError('No image provider for: {}'.format(type(table)))
+
+    if command_type == TableCommandType.IMAGE_START_CHUNK_LOAD:
+        return True, image_provider.create_image(table)
+
+    return True, load_image_chunk(offset, image_id)
+
 
 def exec_table_command(init_command, command_type, start_index, end_index, format, f_globals,
                        f_locals):
-    # type: (str, str, [int, None], [int, None], [str, None], dict, dict) -> (bool, str)
     table = pydevd_vars.eval_in_context(init_command, f_globals, f_locals)
     is_exception_on_eval = is_error_on_eval(table)
     if is_exception_on_eval:
         return False, table.result
 
     table_provider = __get_table_provider(table)
-    if not table_provider and command_type != TableCommandType.IMAGE:
+    if not table_provider:
         raise RuntimeError('No table data provider for: {}'.format(type(table)))
 
     res = []
@@ -58,10 +74,6 @@ def exec_table_command(init_command, command_type, start_index, end_index, forma
         res.append(table_provider.get_data(table, False, start_index, end_index, format))
     elif command_type == TableCommandType.SLICE_CSV:
         res.append(table_provider.get_data(table, True, start_index, end_index, format))
-
-    elif command_type == TableCommandType.IMAGE:
-        image_provider = __get_image_provider(table)
-        res.append(image_provider.get_bytes(table))
 
     return True, ''.join(res)
 
@@ -127,9 +139,9 @@ def __get_image_provider(output):
         import _pydevd_bundle.tables.images.pydevd_numpy_based_image as image_provider
     elif type_qualified_name == 'numpy.ndarray':
         import _pydevd_bundle.tables.images.pydevd_numpy_image as image_provider
-    elif type_qualified_name == 'PIL.Image.Image':
+    elif type_qualified_name in ['PIL.Image.Image', 'PIL.PngImagePlugin.PngImageFile', 'PIL.JpegImagePlugin.JpegImageFile']:
         import _pydevd_bundle.tables.images.pydevd_pillow_image as image_provider
-    elif type_qualified_name == 'matplotlib.figure.Figure':
+    elif type_qualified_name in ['matplotlib.figure.Figure', 'plotly.graph_objs._figure.Figure']:
         import _pydevd_bundle.tables.images.pydevd_matplotlib_image as image_provider
 
     return image_provider

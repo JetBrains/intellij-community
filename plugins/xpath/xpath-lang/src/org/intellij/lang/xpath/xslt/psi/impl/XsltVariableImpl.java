@@ -33,66 +33,65 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
+class XsltVariableImpl extends XsltElementImpl implements XsltVariable {
+  XsltVariableImpl(XmlTag target) {
+    super(target);
+  }
 
-    XsltVariableImpl(XmlTag target) {
-        super(target);
+  @Override
+  public Icon getIcon(int i) {
+    return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
+  }
+
+  @Override
+  public @NotNull XPathType getType() {
+    final XPathType declaredType = XsltCodeInsightUtil.getDeclaredType(getTag());
+    if (declaredType != null) {
+      return declaredType;
     }
 
-    @Override
-    public Icon getIcon(int i) {
-        return IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Variable);
+    final XmlAttribute attr = getTag().getAttribute("type", XsltSupport.PLUGIN_EXTENSIONS_NS);
+    if (attr != null) {
+      return XPathType.fromString(attr.getValue());
     }
-
-    @Override
-    public @NotNull XPathType getType() {
-        final XPathType declaredType = XsltCodeInsightUtil.getDeclaredType(getTag());
-        if (declaredType != null) {
-          return declaredType;
-        }
-
-        final XmlAttribute attr = getTag().getAttribute("type", XsltSupport.PLUGIN_EXTENSIONS_NS);
-        if (attr != null) {
-            return XPathType.fromString(attr.getValue());
-        }
-        final XPathExpression value = getValue();
-        if (value instanceof XPathVariableReference reference) {
-            // recursive reference <xsl:variable name="foo" select="$foo" />
-          if (reference.resolve() == this) {
-                return XPathType.UNKNOWN;
-            }
-        }
-        return value != null ? value.getType() : XPathType.UNKNOWN;
+    final XPathExpression value = getValue();
+    if (value instanceof XPathVariableReference reference) {
+      // recursive reference <xsl:variable name="foo" select="$foo" />
+      if (reference.resolve() == this) {
+        return XPathType.UNKNOWN;
+      }
     }
+    return value != null ? value.getType() : XPathType.UNKNOWN;
+  }
 
-    @Override
-    public @Nullable XPathExpression getValue() {
-        return XsltCodeInsightUtil.getXPathExpression(this, "select");
-    }
+  @Override
+  public @Nullable XPathExpression getValue() {
+    return XsltCodeInsightUtil.getXPathExpression(this, "select");
+  }
 
-    @Override
-    public final @NotNull SearchScope getUseScope() {
-        return XsltSupport.isTopLevelElement(getTag()) ? getDefaultUseScope() : getLocalUseScope();
-    }
+  @Override
+  public final @NotNull SearchScope getUseScope() {
+    return XsltSupport.isTopLevelElement(getTag()) ? getDefaultUseScope() : getLocalUseScope();
+  }
 
-    protected @NotNull SearchScope getLocalUseScope() {
-        return new LocalSearchScope(getTag().getParentTag());
-    }
+  protected @NotNull SearchScope getLocalUseScope() {
+    return new LocalSearchScope(getTag().getParentTag());
+  }
 
-    protected @NotNull SearchScope getDefaultUseScope() {
-        return super.getUseScope();
-    }
+  protected @NotNull SearchScope getDefaultUseScope() {
+    return super.getUseScope();
+  }
 
-    @Override
-    public String toString() {
-        return "XPathVariable(XSLT): " + getTag().getValue();
-    }
+  @Override
+  public String toString() {
+    return "XPathVariable(XSLT): " + getTag().getValue();
+  }
 
-    @Override
-    public boolean isVoid() {
-        final String name = getName();
-        return name != null && "type:void".equals(QNameUtil.createQName(name, getTag()).getNamespaceURI());
-    }
+  @Override
+  public boolean isVoid() {
+    final String name = getName();
+    return name != null && "type:void".equals(QNameUtil.createQName(name, getTag()).getNamespaceURI());
+  }
 
   @Override
   public void accept(@NotNull XPathElementVisitor visitor) {

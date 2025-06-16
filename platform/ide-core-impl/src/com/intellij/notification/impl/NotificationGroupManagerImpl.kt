@@ -56,7 +56,7 @@ internal class NotificationGroupManagerImpl() : NotificationGroupManager {
 
   override fun isGroupRegistered(groupId: String): Boolean = registeredGroups.containsKey(groupId)
 
-  override fun getRegisteredNotificationGroups(): MutableCollection<NotificationGroup> = registeredGroups.values
+  override fun getRegisteredNotificationGroups(): Collection<NotificationGroup> = registeredGroups.values
 
   override fun isRegisteredNotificationId(notificationId: String): Boolean = getNotificationIds().contains(notificationId)
 }

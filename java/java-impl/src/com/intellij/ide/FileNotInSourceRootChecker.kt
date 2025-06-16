@@ -149,11 +149,11 @@ private class FileNotInSourceRootService(
     override fun startInWriteAction(): Boolean = false
     override fun getText(): String = familyName
     override fun getFamilyName(): String = JavaBundle.message("intention.family.name.dismiss")
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
+    override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean = true
 
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-      file ?: return
-      DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(GROUP, file)
+    override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
+      psiFile ?: return
+      DaemonCodeAnalyzerEx.getInstanceEx(project).cleanFileLevelHighlights(GROUP, psiFile)
     }
   }
 
@@ -161,7 +161,7 @@ private class FileNotInSourceRootService(
     override fun startInWriteAction(): Boolean = false
     override fun getText(): String = familyName
     override fun getFamilyName(): String = JavaBundle.message("intention.family.name.ignore.project")
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
+    override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean = true
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
       file ?: return

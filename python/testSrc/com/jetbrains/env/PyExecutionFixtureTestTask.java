@@ -31,7 +31,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.extensions.ModuleExtKt;
-import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -319,9 +318,6 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     // So we need to either fix gradle (PythonEnvsPlugin.groovy on github) or use helper instead of "conda list" to get all packages
     // We do the latter.
     final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
-    if (packageManager instanceof PyCondaPackageManagerImpl) {
-      ((PyCondaPackageManagerImpl)packageManager).useConda = false;
-    }
     return sdk;
   }
 

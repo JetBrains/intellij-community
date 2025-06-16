@@ -4,6 +4,7 @@ package com.intellij.platform.backend.workspace
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -19,8 +20,10 @@ public interface GlobalWorkspaceModelCache {
   public fun cacheFile(id: InternalEnvironmentName): Path
   public fun loadCache(id: InternalEnvironmentName): MutableEntityStorage?
   public fun scheduleCacheSave()
+
   @TestOnly
-  public suspend fun saveCacheNow();
+  public suspend fun saveCacheNow()
+
   public fun invalidateCaches()
 
   public fun setVirtualFileUrlManager(vfuManager: VirtualFileUrlManager)
@@ -37,8 +40,9 @@ public interface GlobalWorkspaceModelCache {
   }
 
   public companion object {
-    @JvmStatic
-    public fun getInstance(): GlobalWorkspaceModelCache? =
-      ApplicationManager.getApplication().getService(GlobalWorkspaceModelCache::class.java)
+    @RequiresBlockingContext
+    public fun getInstance(): GlobalWorkspaceModelCache? {
+      return ApplicationManager.getApplication().getService(GlobalWorkspaceModelCache::class.java)
+    }
   }
 }

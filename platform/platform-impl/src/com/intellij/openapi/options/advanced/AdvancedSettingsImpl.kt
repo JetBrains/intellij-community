@@ -18,12 +18,14 @@ import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.lang.reflect.Method
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Internal
 class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> {
   companion object {
     @JvmField
@@ -140,7 +142,8 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   fun description(): @Nls String? {
     if (descriptionGetter != null && serviceInstance != null) {
-      descriptionGetter!!.invoke(serviceInstance!!)?.let { if ((it as? String)?.isNotEmpty() == true) return it}
+      descriptionGetter!!.invoke(serviceInstance!!)
+        ?.let { if ((it as? String)?.isNotEmpty() == true) return it }
     }
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.${id}.description" }
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.let { BundleBase.message(it, descriptionKey) }
@@ -186,7 +189,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   private fun findBundle(): ResourceBundle? {
     val bundleName = bundle.nullize()
-                     ?: pluginDescriptor?.takeIf { it.pluginId.idString == "com.intellij" } ?.let { ApplicationBundle.BUNDLE }
+                     ?: pluginDescriptor?.takeIf { it.pluginId.idString == "com.intellij" }?.let { ApplicationBundle.BUNDLE }
                      ?: pluginDescriptor?.resourceBundleBaseName
                      ?: return null
     val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
@@ -235,7 +238,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
       null
     else
       serviceInstance?.let { instance ->
-        instance.javaClass.methods.find { it.name == "is" + StringUtil.capitalizeWithJavaBeanConvention(property) +  "Enabled" }?.takeIf { it.canAccess(instance) }
+        instance.javaClass.methods.find { it.name == "is" + StringUtil.capitalizeWithJavaBeanConvention(property) + "Enabled" }?.takeIf { it.canAccess(instance) }
       }
   }
 
@@ -250,6 +253,7 @@ private val logger = logger<AdvancedSettingsImpl>()
   Storage("advancedSettings.xml", roamingType = RoamingType.DISABLED),
   Storage(value = "ide.general.xml", deprecated = true, roamingType = RoamingType.DISABLED)
 ])
+@ApiStatus.Internal
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
     var settings: Map<String, String> = mapOf()
@@ -278,7 +282,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     }, this)
   }
 
-  override fun dispose() { }
+  override fun dispose() {}
 
   override fun getState(): AdvancedSettingsState {
     if (logger.isDebugEnabled) {
@@ -293,8 +297,10 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     if (logger.isDebugEnabled) {
       logger.debug("Will load advanced settings state: ${state.settings}. Current state: ${this.internalState}")
     }
+
     this.internalState.clear()
-    state.settings.forEach { (k, v) ->
+
+    for ((k, v) in state.settings) {
       val optionOrNull = getOptionOrNull(k)
       if (optionOrNull != null) {
         this.internalState.put(k, optionOrNull.valueFromString(v))
@@ -367,7 +373,6 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     return bean
   }
 
-
   private fun getSettingAndType(id: String): Pair<Any, AdvancedSettingType> =
     getSetting(id) to getOption(id).type()
 
@@ -377,6 +382,6 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
   fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {
     val (oldValue, type) = getSettingAndType(id)
     setSetting(id, value, type)
-    Disposer.register(revertOnDispose, Disposable { setSetting(id, oldValue, type )})
+    Disposer.register(revertOnDispose, Disposable { setSetting(id, oldValue, type) })
   }
 }

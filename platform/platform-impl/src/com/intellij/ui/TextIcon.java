@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,11 +12,13 @@ import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.ui.paint.RectanglePainter.DRAW;
 import static com.intellij.ui.paint.RectanglePainter.FILL;
 import static com.intellij.util.ui.UIUtil.getLcdContrastValue;
+import static java.lang.Math.min;
 
 public final class TextIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(TextIcon.class);
@@ -28,27 +32,61 @@ public final class TextIcon implements Icon {
   private Color myBorderColor;
   private Font myFont;
   private String myText;
-  private Rectangle myTextBounds;
+  private Rectangle myStabilizedTextBounds;
   private FontRenderContext myContext;
   private AffineTransform myFontTransform;
+  private List<String> myTextsForMinimumBounds;
+  private Rectangle myMinimumTextBounds;
+  private Rectangle myCurrentTextBounds;
 
   private Rectangle getTextBounds() {
-    if (myTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
+    if (myStabilizedTextBounds == null && myFont != null && myText != null && !myText.isEmpty()) {
       myContext = createContext();
       Font fnt = myFontTransform == null ? myFont : myFont.deriveFont(myFontTransform);
-      myTextBounds = getPixelBounds(fnt, myText, myContext);
+      myCurrentTextBounds = getPixelBounds(fnt, myText, myContext);
+      myStabilizedTextBounds = myCurrentTextBounds;
+
+      if (myTextsForMinimumBounds != null) {
+        boolean debug = LOG.isDebugEnabled();
+        if (myMinimumTextBounds == null) {
+          for (String text : myTextsForMinimumBounds) {
+            Rectangle bounds = getPixelBounds(fnt, text, myContext);
+            if (debug) {
+              LOG.debug("Bounds for text \"" + text + "\" are: " + bounds);
+            }
+            myMinimumTextBounds = max(myMinimumTextBounds, bounds);
+          }
+        }
+        myStabilizedTextBounds = max(myMinimumTextBounds, myStabilizedTextBounds);
+        if (debug) {
+          LOG.debug("StabilizedTextBounds for text \"" + myText + "\" are: " + myStabilizedTextBounds);
+        }
+      }
 
       if (myFontTransform != null) {
         try {
           AffineTransform reverseTransform = myFontTransform.createInverse();
-          myTextBounds = applyTransform(myTextBounds, reverseTransform);
+          myStabilizedTextBounds = applyTransform(myStabilizedTextBounds, reverseTransform);
+          myCurrentTextBounds = applyTransform(myCurrentTextBounds, reverseTransform);
         }
         catch (NoninvertibleTransformException e) {
           LOG.error(e);
         }
       }
     }
-    return myTextBounds;
+    return myStabilizedTextBounds;
+  }
+
+  @NotNull
+  private static Rectangle max(@Nullable Rectangle one, @NotNull Rectangle other) {
+    if (one == null) return other;
+    if (LOG.isDebugEnabled() && ((one.x != other.x) || (one.y != other.y))) {
+      LOG.debug("Attention. Unequal starting points: " + one + ", other = " + other);
+    }
+    return new Rectangle(min(one.x, other.x),
+                         min(one.y, other.y),
+                         Math.max(one.width, other.width),
+                         Math.max(one.height, other.height));
   }
 
   public TextIcon(String text, Color foreground, Color background, int margin) {
@@ -79,6 +117,9 @@ public final class TextIcon implements Icon {
 
   public void setFontTransform(AffineTransform fontTransform) {
     myFontTransform = fontTransform;
+    myMinimumTextBounds = null;
+    myStabilizedTextBounds = null;
+    myCurrentTextBounds = null;
   }
 
   public void setInsets(int top, int left, int bottom, int right) {
@@ -110,13 +151,22 @@ public final class TextIcon implements Icon {
   }
 
   public void setText(String text) {
-    myTextBounds = null;
+    myStabilizedTextBounds = null;
     myText = text;
+    myCurrentTextBounds = null;
   }
 
   public void setFont(Font font) {
     myFont = font;
-    myTextBounds = null;
+    myStabilizedTextBounds = null;
+    myMinimumTextBounds = null;
+    myCurrentTextBounds = null;
+  }
+
+  public void setTextsForMinimumBounds(List<String> textsForMinimumBounds) {
+    myTextsForMinimumBounds = textsForMinimumBounds;
+    myStabilizedTextBounds = null;
+    myMinimumTextBounds = null;
   }
 
   public Insets getInsets() {
@@ -176,8 +226,11 @@ public final class TextIcon implements Icon {
       }
     }
     Rectangle bounds = getTextBounds();
+    Rectangle currentTextBounds = myCurrentTextBounds;
     if (myForeground != null && bounds != null) {
-      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x, myInsets.top + y, bounds.width, bounds.height);
+      Graphics2D g2d = (Graphics2D)g.create(myInsets.left + x - 1 + (bounds.width - currentTextBounds.width) / 2,
+                                            myInsets.top + y - 1 + (bounds.height - currentTextBounds.height) / 2,
+                                            currentTextBounds.width + 2, currentTextBounds.height + 2);
       try {
         Object textLcdContrast = UIManager.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
         if (textLcdContrast == null) textLcdContrast = getLcdContrastValue(); // L&F is not properly updated
@@ -186,7 +239,11 @@ public final class TextIcon implements Icon {
         g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myContext.getFractionalMetricsHint());
         g2d.setColor(myForeground);
         g2d.setFont(myFont);
-        g2d.drawString(myText, -bounds.x, -bounds.y);
+        g2d.drawString(myText, -bounds.x + 1, -bounds.y + 1);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Drawing \"" + myText + "\" at " + x + ", " + y + ", insets " + myInsets + "," +
+                    " with bounds " + bounds + " and currentTextBounds " + currentTextBounds);
+        }
       }
       finally {
         g2d.dispose();
@@ -205,14 +262,16 @@ public final class TextIcon implements Icon {
            Objects.equals(myForeground, icon.myForeground) &&
            Objects.equals(myFont, icon.myFont) &&
            Objects.equals(myText, icon.myText) &&
-           Objects.equals(myTextBounds, icon.myTextBounds) &&
+           Objects.equals(myStabilizedTextBounds, icon.myStabilizedTextBounds) &&
+           Objects.equals(myTextsForMinimumBounds, icon.myTextsForMinimumBounds) &&
            Objects.equals(withBorders, icon.withBorders) &&
            Objects.equals(myBorderColor, icon.myBorderColor);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myTextBounds, withBorders, myBorderColor);
+    return Objects.hash(myInsets, myRound, myBackground, myForeground, myFont, myText, myStabilizedTextBounds, myTextsForMinimumBounds,
+                        withBorders, myBorderColor);
   }
 
   private static Rectangle applyTransform(Rectangle srcRect, AffineTransform at) {
@@ -237,5 +296,10 @@ public final class TextIcon implements Icon {
     Object fmHint = UIManager.get(RenderingHints.KEY_FRACTIONALMETRICS);
     if (fmHint == null) fmHint = RenderingHints.VALUE_FRACTIONALMETRICS_DEFAULT;
     return new FontRenderContext(null, aaHint, fmHint);
+  }
+
+  public void uiSettingsChanged() {
+    myStabilizedTextBounds = null;
+    myMinimumTextBounds = null;
   }
 }

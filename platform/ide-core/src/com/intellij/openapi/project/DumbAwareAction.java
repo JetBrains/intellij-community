@@ -92,11 +92,11 @@ public abstract class DumbAwareAction extends AnAction implements DumbAware {
                                                                         LightEditCompatible {
     private final java.util.function.Consumer<? super AnActionEvent> myActionPerformed;
 
-    SimpleDumbAwareAction(java.util.function.Consumer<? super AnActionEvent> actionPerformed) {
+    public SimpleDumbAwareAction(java.util.function.Consumer<? super AnActionEvent> actionPerformed) {
       myActionPerformed = actionPerformed;
     }
 
-    SimpleDumbAwareAction(@NlsActions.ActionText String text,
+    public SimpleDumbAwareAction(@NlsActions.ActionText String text,
                           java.util.function.Consumer<? super AnActionEvent> actionPerformed) {
       super(text);
       myActionPerformed = actionPerformed;

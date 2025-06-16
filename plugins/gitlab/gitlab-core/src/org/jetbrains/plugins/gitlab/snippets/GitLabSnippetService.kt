@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.NotificationListener
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -122,7 +123,7 @@ internal class GitLabSnippetService(private val project: Project, private val se
                                      accountManager: GitLabAccountManager,
                                      result: GitLabCreateSnippetResult): GitLabApi? {
     return coroutineScope {
-      async(Dispatchers.Main) {
+      async(Dispatchers.EDT) {
         val loginResult = GitLabLoginUtil.updateToken(project, null, result.account) { server, name ->
           GitLabLoginUtil.isAccountUnique(accountManager.accountsState.value, server, name)
         }.asSafely<LoginResult.Success>() ?: return@async null

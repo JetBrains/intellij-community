@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk;
 
 import com.intellij.execution.ExecutionException;
@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
@@ -44,7 +45,7 @@ import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
-import com.jetbrains.python.sdk.add.v1.PyDetectedSdkAdditionalData;
+import com.jetbrains.python.target.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
@@ -60,8 +61,8 @@ import java.lang.ref.WeakReference;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.execution.target.TargetBasedSdks.loadTargetConfiguration;
@@ -315,7 +316,9 @@ public final class PythonSdkType extends SdkType {
    * @return whether provided Python interpreter path corresponds to custom Python SDK
    */
   @Contract(pure = true)
-  static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static boolean isCustomPythonSdkHomePath(@NotNull String homePath) {
     return CustomSdkHomePattern.isCustomPythonSdkHomePath(homePath);
   }
 
@@ -347,14 +350,20 @@ public final class PythonSdkType extends SdkType {
     final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
     final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
     AtomicReference<Project> projectRef = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (ownerComponent != null) {
-        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
-      }
-      else {
-        projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
-      }
-    });
+    if (PlatformUtils.isQodana()) {
+      Project project = ContainerUtil.getFirstItem(Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
+      projectRef.set(project);
+    }
+    else {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (ownerComponent != null) {
+          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
+        }
+        else {
+          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
+        }
+      });
+    }
     PythonSdkUpdater.updateOrShowError(sdk, projectRef.get(), ownerComponent);
   }
 

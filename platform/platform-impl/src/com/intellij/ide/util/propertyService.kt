@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.ide.util
@@ -154,7 +154,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
 @Internal
 class AppPropertyService : BasePropertyService() {
   companion object {
-    const val COMPONENT_NAME = "PropertyService"
+    const val COMPONENT_NAME: String = "PropertyService"
   }
 }
 

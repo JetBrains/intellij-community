@@ -21,10 +21,12 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
+import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.getThisReceiverOwner
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
@@ -79,11 +81,11 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
 
         analyze(callableDeclaration) {
             val usedTypeParametersInReceiver = callableDeclaration.collectDescendantsOfType<KtTypeReference>()
-                .mapNotNull { (it.type as? KaTypeParameterType)?.symbol }
+                .mapNotNull { (it.typeIfSafeToResolve as? KaTypeParameterType)?.symbol }
                 .filterTo(mutableSetOf()) { it.isReified }
 
-            val receiverType = receiverTypeReference.type
-            val receiverTypeSymbol = receiverType.symbol
+            val receiverType = receiverTypeReference.typeIfSafeToResolve
+            val receiverTypeSymbol = receiverType?.symbol
             if (receiverTypeSymbol is KaClassSymbol && receiverTypeSymbol.classKind == KaClassKind.COMPANION_OBJECT) return
 
             val callableSymbol = callableDeclaration.symbol
@@ -101,19 +103,7 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
                 }
             }
 
-            var used = false
-            callableDeclaration.acceptChildren(object : KtVisitorVoid(),PsiRecursiveVisitor {
-                override fun visitKtElement(element: KtElement) {
-                    if (used) return
-                    element.acceptChildren(this)
-
-                    if (isUsageOfSymbol(callableSymbol, element) || isUsageOfReifiedType(usedTypeParametersInReceiver, element)) {
-                        used = true
-                    }
-                }
-            })
-
-            if (!used) {
+            if (!isReceiverUsedInside(callableDeclaration, usedTypeParametersInReceiver)) {
                 registerProblem(holder, receiverTypeReference, textForReceiver = null)
             }
         }
@@ -151,6 +141,26 @@ internal class UnusedReceiverParameterInspection : AbstractKotlinInspection() {
             removeUnusedTypeParameters(typeParameters)
         }
     }
+}
+
+context(KaSession)
+fun isReceiverUsedInside(
+    callableDeclaration: KtCallableDeclaration,
+    usedTypeParametersInReceiver: Set<KaTypeParameterSymbol>
+): Boolean {
+    val callableSymbol: KaDeclarationSymbol = callableDeclaration.symbol
+    var used = false
+    callableDeclaration.acceptChildren(object : KtVisitorVoid(), PsiRecursiveVisitor {
+        override fun visitKtElement(element: KtElement) {
+            if (used) return
+            element.acceptChildren(this)
+
+            if (isUsageOfSymbol(callableSymbol, element) || isUsageOfReifiedType(usedTypeParametersInReceiver, element)) {
+                used = true
+            }
+        }
+    })
+    return used
 }
 
 /**
@@ -230,22 +240,6 @@ private fun removeUnusedTypeParameters(typeParameters: List<KtTypeParameter>) {
 }
 
 /**
- * Returns the owner symbol of the given receiver value, or null if no owner could be found.
- */
-context(KaSession)
-private fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
-    val symbol = when (this) {
-        is KaExplicitReceiverValue -> {
-            val thisRef = (KtPsiUtil.deparenthesize(expression) as? KtThisExpression)?.instanceReference ?: return null
-            thisRef.resolveExpression()
-        }
-        is KaImplicitReceiverValue -> symbol
-        is KaSmartCastedReceiverValue -> original.getThisReceiverOwner()
-    }
-    return symbol?.containingSymbol
-}
-
-/**
  * We use this function to check if the callable symbol has a receiver that might potentially be used as a context receiver of this symbol.
  * This is needed because the analysis API does not expose passed context receivers yet: KT-73709
  */
@@ -288,19 +282,42 @@ private fun isUsageOfSymbol(symbol: KaDeclarationSymbol, element: KtElement): Bo
         else -> false
     }
 
-    if (element is KtClassLiteralExpression) {
-        val typeParameterType = (element.receiverExpression?.mainReference?.resolveToSymbol() as? KaTypeParameterSymbol)?.defaultType
-        if (typeParameterType != null && receiverType?.semanticallyEquals(typeParameterType) == true) {
-            return true
+    when (element) {
+        is KtClassLiteralExpression -> {
+            val typeParameterType = (element.receiverExpression?.mainReference?.resolveToSymbol() as? KaTypeParameterSymbol)?.defaultType
+            if (typeParameterType != null && receiverType?.semanticallyEquals(typeParameterType) == true) {
+                return true
+            }
         }
     }
 
-    if (element is KtThisExpression) {
-        // Check if this refers to our receiver
-        val referencedSymbol = element.instanceReference.mainReference.resolveToSymbol()
-        return referencedSymbol is KaReceiverParameterSymbol && referencedSymbol.owningCallableSymbol == symbol
+    fun processOperators(e: KtElement): Boolean {
+        val operatorFunctions = e.mainReference?.resolveToSymbols()?.filterIsInstance<KaFunctionSymbol>() ?: return false
+        return operatorFunctions.any { receiverType?.symbol == it.containingDeclaration }
     }
 
-    val resolvedCall = element.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return false
-    return isUsageOfSymbolInResolvedCall(resolvedCall)
+    when (element) {
+        is KtThisExpression -> { // Check if this refers to our receiver
+            val referencedSymbol = element.instanceReference.mainReference.resolveToSymbol()
+            return referencedSymbol is KaReceiverParameterSymbol && referencedSymbol.owningCallableSymbol == symbol
+        }
+
+        is KtDestructuringDeclarationEntry -> {
+            return processOperators(element)
+        }
+
+        is KtProperty -> {
+            val propertyDelegate = element.delegate
+            return propertyDelegate != null && processOperators(propertyDelegate)
+        }
+
+        is KtForExpression -> {
+            return processOperators(element)
+        }
+
+        else -> {
+            val resolvedCall = element.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return false
+            return isUsageOfSymbolInResolvedCall(resolvedCall)
+        }
+    }
 }

@@ -1,15 +1,12 @@
-<idea-plugin package="com.intellij.grazie">
+<idea-plugin package="com.intellij.grazie" allow-bundled-update="true">
   <id>tanvd.grazi</id>
-  <name>Grazie Lite</name>
+  <name>Natural Languages</name>
   <vendor>JetBrains</vendor>
 
-  <incompatible-with>com.intellij.cwm.guest</incompatible-with>
   <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
-  <incompatible-with>com.intellij.gateway</incompatible-with>
 
   <description><![CDATA[
     <p>Intelligent spelling and grammar checks for any text you write in the IDE.</p>
-
     <ul>
       <li>
         Supports over 20 languages, including English, German, Russian, and Chinese.
@@ -22,13 +19,16 @@
       </li>
       <li>Uses <a href="https://www.languagetool.org/">LanguageTool</a> as its proofreading engine.</li>
     </ul>
-
     <p>Data privacy: all verification is performed locally, inside your IDE.</p>
-    ]]></description>
+  ]]></description>
 
   <dependencies>
+    <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
+    <module name="intellij.spellchecker"/>
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
+
   <content>
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
@@ -108,6 +108,8 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.grazie.text.ProblemFilter"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.grazie.proofreadSettingsExtension" interface="com.intellij.openapi.options.Configurable"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.grazie.textChecker" interface="com.intellij.grazie.text.TextChecker"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.grazie.disableChecking"
@@ -115,8 +117,7 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.grazie.textContentModificationTrackerProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
-                    dynamic="true"
-    >
+                    dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.grazie.text.TextContentModificationTrackerProvider"/>
     </extensionPoint>
   </extensionPoints>

@@ -7,12 +7,6 @@ const LC_KEYS = {
 };
 const EXTERNAL_VARIABLES = {}
 
-const ERROR_HIGHLIGHT = " <<<----<<< ";
-const WARNING_HIGHLIGHT = " <<<~~~~<<< ";
-const SUCCESS_HIGHLIGHT = " <<<++++<<< ";
-const HIGHLIGHTS = [ERROR_HIGHLIGHT, WARNING_HIGHLIGHT, SUCCESS_HIGHLIGHT];
-
-
 document.addEventListener("click", function (e) {
   if (e.target.closest(".multiline") != null) {
     updateMultilinePopup(e)
@@ -160,46 +154,12 @@ function updatePopup(sessionDiv) {
 
 // Add the `addDiffView` function
 function addDiffView(sessionDiv, popup, lookup, originalText) {
-  const lineDiff = new HighlightResistantDiff(HIGHLIGHTS);
-
   sessionDiv.classList.add("diffView")
   sessionDiv.classList.remove("features", "contexts","suggestions")
-  const diffDiv = document.createElement("DIV");
-  diffDiv.setAttribute("class", "diffView");
 
   const suggestionsText = lookup["suggestions"][lookup["suggestions"].length - 1].presentationText;
-
-  const unifiedDiff = lineDiff.unifiedSlideDiff(originalText, suggestionsText, 1);
-
-  unifiedDiff.forEach(line => {
-    const lineDiv = document.createElement("DIV");
-    const text = highlightedText(line.content);
-    text.style.display = "inline";
-    lineDiv.appendChild(text);
-
-    const oldLineNumberSpan = document.createElement("span");
-    oldLineNumberSpan.textContent = line.oldLineNumber !== '' ? line.oldLineNumber : ' ';
-    oldLineNumberSpan.style.width = '30px';
-    oldLineNumberSpan.style.display = 'inline-block';
-
-    const newLineNumberSpan = document.createElement("span");
-    newLineNumberSpan.textContent = line.newLineNumber !== '' ? line.newLineNumber : ' ';
-    newLineNumberSpan.style.width = '30px';
-    newLineNumberSpan.style.display = 'inline-block';
-
-    if (line.type === "added") {
-      lineDiv.style.color = "green";
-    } else if (line.type === "removed") {
-      lineDiv.style.color = "red";
-    } else {
-      lineDiv.style.color = "black";
-    }
-
-    lineDiv.prepend(newLineNumberSpan);
-    lineDiv.prepend(oldLineNumberSpan);
-    diffDiv.appendChild(lineDiv);
-  });
-
+  const diffDiv = renderDiff(originalText, suggestionsText);
+  diffDiv.setAttribute("class", "diffView");
   popup.appendChild(diffDiv);
 }
 
@@ -235,6 +195,8 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   addAiaDiagnosticsBlock("Code snippets from response", "extracted_code_snippets", popup, lookup)
   addAiaDiagnosticsBlock("Internal api calls from original code snippet", "ground_truth_internal_api_calls", popup, lookup)
   addAiaDiagnosticsBlock("Extracted api calls from generated code snippet", "predicted_api_calls", popup, lookup)
+  addAiaDiagnosticsBlock("Expected Function Calls", "expected_function_calls", popup, lookup)
+  addAiaDiagnosticsBlock("Actual Function Calls", "actual_function_calls", popup, lookup)
   // TODO better to add a separate popup view?
   addAiaDiagnosticsBlock("Appeared highlights", "appeared_highlights", popup, lookup)
   addAiaDiagnosticsBlock("Erased APIs", "erased_apis", popup, lookup)
@@ -329,7 +291,7 @@ function addAiaDiagnosticsBlock(description, field, popup, lookup) {
   if (!(field in lookup["additionalInfo"])) return
   let contextBlock = document.createElement("DIV")
   contextBlock.style.whiteSpace = "inherit"
-  contextBlock.appendChild(highlightedText(`${description}:\n\n${lookup["additionalInfo"][field]}`))
+  contextBlock.appendChild(highlightedTextIfExists(`${description}:\n\n${lookup["additionalInfo"][field]}`))
   popup.appendChild(contextBlock)
 }
 
@@ -669,89 +631,14 @@ function showMetrics() {
   metricsDiv.style.display = metricsDiv.style.display === "none" ? "" : "none"
 }
 
-function highlightedText(text) {
-  const container = [];
-  let previousText = undefined;
-
-  function addText(text, inlineComment) {
-    let textElement;
-    let resultElement;
-
-    if (inlineComment !== undefined) {
-      textElement = document.createElement("span");
-      textElement.innerText = text;
-
-      const commentComponent = document.createElement("span");
-      commentComponent.style.marginLeft = "10px";
-      commentComponent.innerText = inlineComment;
-      commentComponent.style.textDecoration = "";
-      commentComponent.style.color = "grey";
-
-      resultElement = document.createElement("pre");
-      resultElement.appendChild(textElement);
-      resultElement.appendChild(commentComponent);
-    }
-    else {
-      textElement = document.createElement("pre");
-      textElement.innerText = text;
-      resultElement = textElement;
-    }
-
-    const leadingNewLineCount = text.match(/^\n+/)?.[0]?.length || 0
-    for (let i = 0; i < leadingNewLineCount; i++) {
-      container.push(document.createElement("br"));
-    }
-
-    container.push(resultElement);
-
-    const trailingNewLineCount = text.match(/\n+$/)?.[0]?.length || 0;
-    for (let i = 0; i < trailingNewLineCount; i++) {
-      container.push(document.createElement("br"));
-    }
-
-    return textElement;
+function highlightedTextIfExists(text) {
+  if (typeof highlightedText !== 'undefined') {
+    return highlightedText(text);
   }
 
-  for (const line of text.split('\n')) {
-    const highlight = HIGHLIGHTS.find(highlight => line.includes(highlight));
-    if (highlight !== undefined) {
-      if (previousText !== undefined) {
-        addText(previousText);
-        previousText = undefined;
-      }
-
-      const [text, message] = line.split(highlight);
-
-      const lineElement = addText(text, message);
-      lineElement.style.textDecoration = "underline";
-      lineElement.style.textDecorationThickness = "2px";
-      if (highlight === ERROR_HIGHLIGHT) {
-        lineElement.style.textDecorationColor = "red";
-      }
-      else if (highlight === WARNING_HIGHLIGHT) {
-        lineElement.style.textDecorationColor = "orange";
-      }
-      else if (highlight === SUCCESS_HIGHLIGHT) {
-        lineElement.style.textDecorationColor = "green";
-      }
-    }
-    else {
-      previousText = previousText === undefined ? line : `${previousText}\n${line}`;
-    }
-  }
-
-  if (previousText !== undefined) {
-    addText(previousText)
-  }
-
-  if (container.length === 1) {
-    return container[0];
-  }
-  else {
-    const div = document.createElement("div");
-    div.append(...container);
-    return div;
-  }
+  const pre = document.createElement("pre");
+  pre.innerText = text;
+  return pre;
 }
 
 document.getElementById("defaultTabOpen")?.click()

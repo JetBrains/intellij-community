@@ -1063,7 +1063,7 @@
     <depends optional="true">-org-jetbrains-plugins-gradle-</depends>
     <depends optional="true">-com-intellij-diagram-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.editorconfig/META-INF/plugin.xml">
+  <idea-plugin url="file://out/intellij.editorconfig.plugin/META-INF/plugin.xml">
     <id>-org-editorconfig-editorconfigjetbrains-</id>
     <name>EditorConfig</name>
     <depends>com.intellij.modules.lang</depends>
@@ -1198,19 +1198,6 @@
     <depends>com.intellij.modules.lang</depends>
     <depends>-JavaScript-</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.clion.plugin/META-INF/plugin.xml">
-    <id>-com-intellij-idea-clion-</id>
-    <name>C/C++ (Internal Preview)</name>
-    <module value="com.intellij.modules.cidr.lang"/>
-    <module value="com.intellij.modules.cidr.debugger"/>
-    <module value="com.intellij.modules.cidr.doxygen"/>
-    <module value="com.intellij.modules.clion"/>
-    <module value="com.intellij.modules.cmake"/>
-    <module value="org.jetbrains.plugins.gradle.native"/>
-    <depends>com.intellij.modules.ultimate</depends>
-    <depends>com.intellij.modules.c-capable</depends>
-    <depends>-com-intellij-gradle-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.performanceTesting/META-INF/plugin.xml">
     <id>-com-jetbrains-performancePlugin-</id>
     <name>Performance Testing</name>
@@ -1229,61 +1216,6 @@
     <id>-com-intellij-configurationScript-</id>
     <name>Configuration Script</name>
     <depends>com.intellij.modules.platform</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.cidr.langInjection/META-INF/plugin.xml">
-    <id>-org-jetbrains-plugins-cidr-intelliLang-</id>
-    <name>CLion IntelliLang</name>
-    <depends>com.intellij.modules.cidr.lang</depends>
-    <depends>-org-intellij-intelliLang-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.cidr.markdown/META-INF/plugin.xml">
-    <id>-com-intellij-cidr-markdown-</id>
-    <name>CIDR-Markdown</name>
-    <depends>com.intellij.modules.cidr.lang</depends>
-    <depends>-org-intellij-plugins-markdown-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.clion.gradle/META-INF/plugin.xml">
-    <id>-com-intellij-clion-gradle-</id>
-    <name>Gradle Native</name>
-    <depends>com.intellij.modules.clion</depends>
-    <depends>-com-intellij-gradle-</depends>
-    <depends optional="true">com.intellij.modules.clion.ide</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.clion.compdb/META-INF/plugin.xml">
-    <id>-com-intellij-clion-compdb-</id>
-    <name>Compilation Database</name>
-    <depends>com.intellij.modules.clion</depends>
-    <depends>com.intellij.modules.externalSystem</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.clion.webDeployment/META-INF/plugin.xml">
-    <id>-com-jetbrains-clion-plugins-webDeployment-</id>
-    <name>Remote Hosts Data Access</name>
-    <depends>com.intellij.modules.lang</depends>
-    <depends>com.intellij.modules.clion</depends>
-    <depends>-com-jetbrains-plugins-webDeployment-</depends>
-    <depends optional="true">com.intellij.modules.clion.ide</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.clion.embedded/META-INF/plugin.xml">
-    <id>-com-intellij-clion-embedded-</id>
-    <name>Embedded Development Support</name>
-    <depends>com.intellij.modules.clion</depends>
-    <depends optional="true">com.intellij.modules.clion.cmake</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.cidr.clangConfig/META-INF/plugin.xml">
-    <id>-org-jetbrains-plugins-clangConfig-</id>
-    <name>ClangConfig</name>
-    <depends>-org-jetbrains-plugins-yaml-</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.cidr.clangFormat/META-INF/plugin.xml">
-    <id>-org-jetbrains-plugins-clangFormat-</id>
-    <name>ClangFormat</name>
-    <depends>-org-jetbrains-plugins-clangConfig-</depends>
-    <depends>com.intellij.modules.clion</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.cidr.linkerscript/META-INF/plugin.xml">
-    <id>-org-jetbrains-plugins-linkerscript-</id>
-    <name>LinkerScript</name>
-    <depends>com.intellij.modules.clion</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.sh/META-INF/plugin.xml">
     <id>-com-jetbrains-sh-</id>

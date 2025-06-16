@@ -1,0 +1,1 @@
+val test = $$"""<caret>{don't turn me into expression}"""

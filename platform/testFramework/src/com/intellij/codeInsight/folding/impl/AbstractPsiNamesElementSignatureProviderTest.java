@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractPsiNamesElementSignatureProviderTest extends BasePlatformTestCase {
-  void doTest(@NotNull String text, @NotNull String ext) {
+  public void doTest(@NotNull String text, @NotNull String ext) {
     myFixture.configureByText("test." + ext, text);
 
     EditorTestUtil.buildInitialFoldingsInBackground(myFixture.getEditor());
@@ -33,7 +33,7 @@ public abstract class AbstractPsiNamesElementSignatureProviderTest extends BaseP
     return findElement(region.getStartOffset(), region.getEndOffset(), file);
   }
 
-  static @Nullable PsiElement findElement(int startOffset, int endOffset, @NotNull PsiFile file) {
+  public static @Nullable PsiElement findElement(int startOffset, int endOffset, @NotNull PsiFile file) {
     for (PsiElement element = file.findElementAt(startOffset); element != null; element = element.getParent()) {
       TextRange range = element.getTextRange();
       if (range.getStartOffset() < startOffset) {

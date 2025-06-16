@@ -15,8 +15,7 @@ import org.jetbrains.annotations.NotNull;
 public final class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoModel<PyElement, PyClass, PyMemberInfo<PyElement>> {
   private final @NotNull PyPullUpView myView;
 
-
-  PyPullUpInfoModel(final @NotNull PyClass classUnderRefactoring,
+  public PyPullUpInfoModel(final @NotNull PyClass classUnderRefactoring,
                     final @NotNull PyPullUpView view) {
     super(classUnderRefactoring, null, false);
     myView = view;
@@ -31,7 +30,6 @@ public final class PyPullUpInfoModel extends AbstractUsesDependencyMemberInfoMod
   public int checkForProblems(final @NotNull PyMemberInfo<PyElement> member) {
     return member.isChecked() ? OK : super.checkForProblems(member);
   }
-
 
   @Override
   protected int doCheck(final @NotNull PyMemberInfo<PyElement> memberInfo, final int problem) {

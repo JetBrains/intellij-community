@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -13,6 +13,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.codeserver.core.JavaPsiEnumUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
@@ -86,7 +87,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_COMPARABLE;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 
 public final class JavaCompletionContributor extends CompletionContributor implements DumbAware {
-  private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
+  static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT = or(
       // dot at the statement beginning
       psiElement().afterLeaf(".").insideStarting(psiExpressionStatement()),
       //example: class A{ .something }
@@ -99,6 +100,16 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         .withParent(PsiJavaCodeReferenceElement.class)
         .withSuperParent(2, PsiTypeElement.class)
         .withSuperParent(3, PsiClass.class),
+      //example: void test(String p.<caret>)
+      psiElement().afterLeaf(".")
+        .afterLeafSkipping(psiElement().andOr(
+                             psiElement().whitespace(),
+                             psiElement().withText("")),
+                           psiElement().withParent(PsiErrorElement.class))
+        .afterLeafSkipping(psiElement().withParent(PsiErrorElement.class),
+                           psiElement().withElementType(JavaTokenType.IDENTIFIER)
+                             .withParent(PsiParameter.class)
+                             .withSuperParent(2, PsiParameterList.class)),
       // like `call(Cls::methodRef.<caret>`
       psiElement().afterLeaf(psiElement(JavaTokenType.DOT).afterSibling(psiElement(PsiMethodCallExpression.class).withLastChild(
         psiElement(PsiExpressionList.class).withLastChild(psiElement(PsiErrorElement.class))))),
@@ -112,7 +123,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
        psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)),
        psiElement().afterLeaf(",").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
   private static final PsiJavaElementPattern.Capture<PsiElement> IN_TYPE_PARAMETER =
-    psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.SUPER, "&").withParent(
+    psiElement().afterLeaf(JavaKeywords.EXTENDS, JavaKeywords.SUPER, "&").withParent(
       psiElement(PsiReferenceList.class).withParent(PsiTypeParameter.class));
 
   public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
@@ -138,19 +149,19 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
   private static final ElementPattern<PsiElement> CATCH_OR_FINALLY = psiElement().afterLeaf(
     psiElement().withText("}").withParent(
-      psiElement(PsiCodeBlock.class).afterLeaf(PsiKeyword.TRY)));
+      psiElement(PsiCodeBlock.class).afterLeaf(JavaKeywords.TRY)));
   private static final ElementPattern<PsiElement> INSIDE_CONSTRUCTOR = psiElement().inside(psiMethod().constructor(true));
   private static final ElementPattern<PsiElement> AFTER_ENUM_CONSTANT =
     psiElement().inside(PsiTypeElement.class).afterLeaf(
       psiElement().inside(true, psiElement(PsiEnumConstant.class), psiElement(PsiClass.class, PsiExpressionList.class)));
   static final ElementPattern<PsiElement> IN_EXTENDS_OR_IMPLEMENTS = psiElement().afterLeaf(
     psiElement()
-      .withText(string().oneOf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&"))
+      .withText(string().oneOf(JavaKeywords.EXTENDS, JavaKeywords.IMPLEMENTS, ",", "&"))
       .withParent(PsiReferenceList.class));
   static final ElementPattern<PsiElement> IN_PERMITS_LIST = psiElement().afterLeaf(
     psiElement()
-      .withText(string().oneOf(PsiKeyword.PERMITS, ","))
-      .withParent(psiElement(PsiReferenceList.class).withFirstChild(psiElement(PsiKeyword.class).withText(PsiKeyword.PERMITS))));
+      .withText(string().oneOf(JavaKeywords.PERMITS, ","))
+      .withParent(psiElement(PsiReferenceList.class).withFirstChild(psiElement(PsiKeyword.class).withText(JavaKeywords.PERMITS))));
   private static final ElementPattern<PsiElement> IN_VARIABLE_TYPE = psiElement()
     .withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiDeclarationStatement.class)
     .afterLeaf(psiElement().inside(psiAnnotation()));
@@ -196,7 +207,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
-    if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position) ||
+    if (psiElement().afterLeaf(JavaKeywords.INSTANCEOF).accepts(position) ||
         position.getParent() instanceof PsiJavaCodeReferenceElement ref &&
         ref.getParent() instanceof PsiTypeElement typeElement &&
         (typeElement.getParent() instanceof PsiPatternVariable ||
@@ -962,21 +973,21 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     PsiCodeBlock block = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
     PsiElement statement = block == null ? null : block.getParent();
     if (statement instanceof PsiTryStatement) {
-      place = ((PsiTryStatement)statement).getFinallyBlock() == block ? PsiKeyword.TRY + "-" + PsiKeyword.FINALLY : PsiKeyword.TRY;
+      place = ((PsiTryStatement)statement).getFinallyBlock() == block ? JavaKeywords.TRY + "-" + JavaKeywords.FINALLY : JavaKeywords.TRY;
     }
     else if (statement instanceof PsiCatchSection) {
-      place = PsiKeyword.CATCH;
+      place = JavaKeywords.CATCH;
     }
     else if (statement instanceof PsiSynchronizedStatement) {
-      place = PsiKeyword.SYNCHRONIZED;
+      place = JavaKeywords.SYNCHRONIZED;
     }
     else if (statement instanceof PsiBlockStatement) {
       PsiElement parent = statement.getParent();
       if (parent instanceof PsiWhileStatement) {
-        place = PsiKeyword.WHILE;
+        place = JavaKeywords.WHILE;
       }
       else if (parent instanceof PsiIfStatement) {
-        place = ((PsiIfStatement)parent).getThenBranch() == statement ? PsiKeyword.IF + "-then" : PsiKeyword.IF + "-" + PsiKeyword.ELSE;
+        place = ((PsiIfStatement)parent).getThenBranch() == statement ? JavaKeywords.IF + "-then" : JavaKeywords.IF + "-" + JavaKeywords.ELSE;
       }
     }
     return place;
@@ -1074,9 +1085,9 @@ public final class JavaCompletionContributor extends CompletionContributor imple
 
       PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
       String defText = defaultValue == null ? null : defaultValue.getText();
-      if (PsiKeyword.TRUE.equals(defText) || PsiKeyword.FALSE.equals(defText)) {
+      if (JavaKeywords.TRUE.equals(defText) || JavaKeywords.FALSE.equals(defText)) {
         result.addElement(createAnnotationAttributeElement(method,
-                                                           PsiKeyword.TRUE.equals(defText) ? PsiKeyword.FALSE : PsiKeyword.TRUE,
+                                                           JavaKeywords.TRUE.equals(defText) ? JavaKeywords.FALSE : JavaKeywords.TRUE,
                                                            position));
         result.addElement(PrioritizedLookupElement.withPriority(createAnnotationAttributeElement(method, defText, position)
                                                                   .withTailText(" (default)", true), -1));

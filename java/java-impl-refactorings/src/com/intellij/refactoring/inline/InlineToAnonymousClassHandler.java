@@ -4,6 +4,7 @@ package com.intellij.refactoring.inline;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -39,7 +40,7 @@ public final class InlineToAnonymousClassHandler extends JavaInlineActionHandler
   static final ElementPattern ourCatchClausePattern = PlatformPatterns.psiElement(PsiTypeElement.class).withParent(PlatformPatterns.psiElement(PsiParameter.class).withParent(
   PlatformPatterns.psiElement(PsiCatchSection.class)));
   static final ElementPattern ourThrowsClausePattern = PlatformPatterns.psiElement().withParent(PlatformPatterns.psiElement(PsiReferenceList.class).withFirstChild(
-    PlatformPatterns.psiElement().withText(PsiKeyword.THROWS)));
+    PlatformPatterns.psiElement().withText(JavaKeywords.THROWS)));
 
   @Override
   public boolean isEnabledOnElement(PsiElement element) {

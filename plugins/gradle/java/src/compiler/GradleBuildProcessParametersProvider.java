@@ -15,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,13 +75,11 @@ public final class GradleBuildProcessParametersProvider extends BuildProcessPara
         return pathToAnt.toString();
       }
 
-      if (Files.isDirectory(gradleJar)) {
-        // Code runs from IDEA run configuration (code from .class file in out/ directory)
-        try {
-          return PathUtil.getJarPathForClass(Class.forName("org.apache.tools.ant.taskdefs.Ant"));
-        }
-        catch (ClassNotFoundException ignore) {
-        }
+      // Code runs from IDEA run configuration (code from .class file in out/ directory)
+      try {
+        return PathUtil.getJarPathForClass(Class.forName("org.apache.tools.ant.taskdefs.Ant"));
+      }
+      catch (ClassNotFoundException ignore) {
       }
     }
     LOG.warn("Unable to locate ant.jar for build process classpath");

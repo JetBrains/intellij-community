@@ -39,7 +39,7 @@ interface GitLabMergeRequestTimelineDiscussionViewModel :
   val diffVm: Flow<GitLabDiscussionDiffViewModel?>
 
   val mainNote: Flow<GitLabNoteViewModel>
-  val replies: Flow<List<GitLabNoteViewModel>>
+  val replies: StateFlow<List<GitLabNoteViewModel>>
 
   val replyVm: StateFlow<NewGitLabNoteViewModel?>
 }
@@ -81,10 +81,10 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
     )
   }.stateIn(cs, SharingStarted.Eagerly, CodeReviewFoldableThreadViewModel.RepliesStateData.Empty)
 
-  override val replies: Flow<List<GitLabNoteViewModel>> = discussion.notes
+  override val replies: StateFlow<List<GitLabNoteViewModel>> = discussion.notes
     .map { it.drop(1) }
     .mapModelsToViewModels { GitLabNoteViewModelImpl(project, this, projectData, it, flowOf(false), currentUser) }
-    .modelFlow(cs, LOG)
+    .stateIn(cs, SharingStarted.Lazily, listOf())
 
   override val isBusy: StateFlow<Boolean> = taskLauncher.busy
 

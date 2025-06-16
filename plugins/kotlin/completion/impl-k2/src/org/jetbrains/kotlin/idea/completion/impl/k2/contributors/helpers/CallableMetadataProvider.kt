@@ -77,7 +77,7 @@ internal object CallableMetadataProvider {
     @OptIn(KaExperimentalApi::class)
     fun getCallableMetadata(
         signature: KaCallableSignature<*>,
-        symbolOrigin: CompletionSymbolOrigin,
+        scopeKind: KaScopeKind?,
         actualReceiverTypes: List<List<KaType>>,
         isFunctionalVariableCall: Boolean,
     ): CallableMetadata? {
@@ -85,13 +85,13 @@ internal object CallableMetadataProvider {
         return if (symbol is KaSyntheticJavaPropertySymbol) {
             getCallableMetadata(
                 signature = symbol.javaGetterSymbol.asSignature(),
-                symbolOrigin = symbolOrigin,
+                scopeKind = scopeKind,
                 actualReceiverTypes = actualReceiverTypes,
                 isFunctionalVariableCall = isFunctionalVariableCall,
             )
         } else if (symbol.isExtensionCall(isFunctionalVariableCall)) {
             extensionWeight(signature, actualReceiverTypes, isFunctionalVariableCall)
-        } else when (val scopeKind = (symbolOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
+        } else when (scopeKind) {
             is KaScopeKind.LocalScope -> CallableMetadata(CallableKind.LOCAL, scopeKind.indexInTower)
 
             is KaScopeKind.TypeScope,

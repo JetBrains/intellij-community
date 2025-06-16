@@ -20,19 +20,19 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.NonExtendable
 public /*abstract*/ class AnnotationSession implements UserDataHolder {
-  private final PsiFile myFile;
+  private final PsiFile myPsiFile;
 
   /**
    * FOR MAINTAINING BINARY COMPATIBILITY ONLY.
    * @deprecated Do not instantiate this class directly, use {@link AnnotationHolder#getCurrentAnnotationSession()} instead
    */
   @Deprecated
-  public AnnotationSession(@NotNull PsiFile file) {
-    myFile = file;
+  public AnnotationSession(@NotNull PsiFile psiFile) {
+    myPsiFile = psiFile;
   }
 
   public @NotNull /*abstract*/ PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   /**

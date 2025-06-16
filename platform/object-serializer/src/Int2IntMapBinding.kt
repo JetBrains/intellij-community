@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serialization
 
 import com.amazon.ion.IonType
@@ -65,7 +65,7 @@ internal class Int2IntMapBinding : Binding {
   }
 
   private fun doRead(reader: ValueReader, size: Int, result: Int2IntMap) {
-    for (i in 0 until size) {
+    repeat(size) {
       reader.next()
       val k = reader.intValue()
       reader.next()

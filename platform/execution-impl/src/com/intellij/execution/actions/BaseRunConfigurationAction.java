@@ -181,12 +181,6 @@ public abstract class BaseRunConfigurationAction extends ActionGroup implements 
 
   protected void perform(@NotNull RunnerAndConfigurationSettings configurationSettings,
                          @NotNull ConfigurationContext context) {
-    perform(context);
-  }
-
-  /** @deprecated Use {@link #perform(RunnerAndConfigurationSettings, ConfigurationContext)} instead */
-  @Deprecated(forRemoval = true)
-  protected void perform(ConfigurationContext context) {
   }
 
   /** @deprecated Use regular {@link #update(AnActionEvent)} instead */

@@ -4,7 +4,7 @@
 class Foo {
     fun test() {
         "".let {
-            "".let { it -> it }
+            "".let { it1 -> it1 }
             it
         }
     }

@@ -40,6 +40,11 @@ public class GotoDeclarationTestGenerated extends AbstractGotoDeclarationTest {
         runTest("testData/navigation/gotoDeclaration/dataClassToString.test");
     }
 
+    @TestMetadata("enumEntries.test")
+    public void testEnumEntries() throws Exception {
+        runTest("testData/navigation/gotoDeclaration/enumEntries.test");
+    }
+
     @TestMetadata("flexibleType.test")
     public void testFlexibleType() throws Exception {
         runTest("testData/navigation/gotoDeclaration/flexibleType.test");

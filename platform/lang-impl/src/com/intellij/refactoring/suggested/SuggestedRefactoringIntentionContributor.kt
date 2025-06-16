@@ -115,11 +115,11 @@ class SuggestedRefactoringIntentionContributor : IntentionMenuContributor {
 
     override fun getText() = text
 
-    override fun isAvailable(project: Project, editor: Editor, file: PsiFile?) = true
+    override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile?) = true
 
     override fun startInWriteAction() = false
 
-    override fun invoke(project: Project, editor: Editor, file: PsiFile?) {
+    override fun invoke(project: Project, editor: Editor, psiFile: PsiFile?) {
       performSuggestedRefactoring(project, editor, null, null, showReviewBalloon, ActionPlaces.INTENTION_MENU)
     }
   }

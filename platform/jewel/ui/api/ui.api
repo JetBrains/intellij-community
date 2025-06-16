@@ -105,6 +105,15 @@ public final class org/jetbrains/jewel/ui/component/ActionButtonKt {
 	public static final fun ActionButton (Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/layout/PaddingValues;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
+public final class org/jetbrains/jewel/ui/component/AutoHideBehavior : java/lang/Enum {
+	public static final field Long Lorg/jetbrains/jewel/ui/component/AutoHideBehavior;
+	public static final field Never Lorg/jetbrains/jewel/ui/component/AutoHideBehavior;
+	public static final field Normal Lorg/jetbrains/jewel/ui/component/AutoHideBehavior;
+	public static fun getEntries ()Lkotlin/enums/EnumEntries;
+	public static fun valueOf (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/component/AutoHideBehavior;
+	public static fun values ()[Lorg/jetbrains/jewel/ui/component/AutoHideBehavior;
+}
+
 public final class org/jetbrains/jewel/ui/component/BannerKt {
 	public static final fun ErrorDefaultBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 	public static final fun InformationDefaultBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/DefaultBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
@@ -251,6 +260,7 @@ public final class org/jetbrains/jewel/ui/component/CircularProgressIndicatorKt 
 }
 
 public final class org/jetbrains/jewel/ui/component/ComboBoxKt {
+	public static final fun ComboBox-05tvjtU (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 	public static final fun ComboBox-xYaah8o (Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
 }
 
@@ -290,35 +300,36 @@ public final class org/jetbrains/jewel/ui/component/ComboBoxState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$BannerKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$BannerKt;
-	public static field lambda-1 Lkotlin/jvm/functions/Function2;
-	public static field lambda-2 Lkotlin/jvm/functions/Function2;
-	public static field lambda-3 Lkotlin/jvm/functions/Function2;
-	public static field lambda-4 Lkotlin/jvm/functions/Function2;
 	public fun <init> ()V
-	public final fun getLambda-1$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-2$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-3$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-4$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1598537304$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1749954721$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1861256637$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$57961071$ui ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$InlineBannerKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$InlineBannerKt;
-	public static field lambda-1 Lkotlin/jvm/functions/Function2;
-	public static field lambda-2 Lkotlin/jvm/functions/Function2;
-	public static field lambda-3 Lkotlin/jvm/functions/Function2;
-	public static field lambda-4 Lkotlin/jvm/functions/Function2;
 	public fun <init> ()V
-	public final fun getLambda-1$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-2$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-3$ui ()Lkotlin/jvm/functions/Function2;
-	public final fun getLambda-4$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1555647357$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-516555399$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-812795800$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-964818995$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1503990447$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$152227743$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$1892680925$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$423463284$ui ()Lkotlin/jvm/functions/Function2;
+}
+
+public final class org/jetbrains/jewel/ui/component/ComposableSingletons$ListComboBoxKt {
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$ListComboBoxKt;
+	public fun <init> ()V
+	public final fun getLambda$502279318$ui ()Lkotlin/jvm/functions/Function5;
 }
 
 public final class org/jetbrains/jewel/ui/component/ComposableSingletons$MenuKt {
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/component/ComposableSingletons$MenuKt;
-	public static field lambda-1 Lkotlin/jvm/functions/Function2;
 	public fun <init> ()V
-	public final fun getLambda-1$ui ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda$-1067661272$ui ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class org/jetbrains/jewel/ui/component/ContextMenuDivider : androidx/compose/foundation/ContextMenuItem {
@@ -382,6 +393,7 @@ public final class org/jetbrains/jewel/ui/component/DropdownState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/EditableComboBoxKt {
 	public static final fun EditableComboBox (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lorg/jetbrains/jewel/ui/component/PopupManager;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun detectPressAndCancel (Landroidx/compose/ui/input/pointer/PointerInputScope;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
 }
 
 public final class org/jetbrains/jewel/ui/component/FixedCursorPoint : androidx/compose/foundation/TooltipPlacement {
@@ -446,12 +458,8 @@ public final class org/jetbrains/jewel/ui/component/IconButtonState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/IconKt {
 	public static final fun Icon (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Landroidx/compose/ui/graphics/ColorFilter;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Icon (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Icon (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Landroidx/compose/ui/Modifier;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Icon-FHprtrg (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/Modifier;JLorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Icon-FHprtrg (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/Modifier;J[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-FHprtrg (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;JLorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-FHprtrg (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;J[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-ww6aTOc (Landroidx/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;II)V
@@ -461,10 +469,14 @@ public final class org/jetbrains/jewel/ui/component/IconKt {
 }
 
 public final class org/jetbrains/jewel/ui/component/InlineBannerKt {
-	public static final fun ErrorInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
-	public static final fun InformationInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
-	public static final fun SuccessInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
-	public static final fun WarningInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ErrorInlineBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun ErrorInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InformationInlineBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun InformationInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SuccessInlineBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SuccessInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
+	public static final fun WarningInlineBanner (Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun WarningInlineBanner (Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/String;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function3;Lkotlin/jvm/functions/Function3;Lorg/jetbrains/jewel/ui/component/styling/InlineBannerStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/InputFieldState : org/jetbrains/jewel/foundation/state/FocusableComponentState {
@@ -553,8 +565,10 @@ public final class org/jetbrains/jewel/ui/component/LinkState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/ListComboBoxKt {
-	public static final fun EditableListComboBox-lYrZsNM (Ljava/util/List;Landroidx/compose/ui/Modifier;ZILorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
-	public static final fun ListComboBox-lYrZsNM (Ljava/util/List;Landroidx/compose/ui/Modifier;ZILorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
+	public static final fun EditableListComboBox-xzYpEKs (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ListComboBox-xKBSf-U (Ljava/util/List;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Lkotlin/jvm/functions/Function5;Landroidx/compose/runtime/Composer;III)V
+	public static final fun ListComboBox-xzYpEKs (Ljava/util/List;ILkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/Outline;FLandroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/ComboBoxStyle;Landroidx/compose/ui/text/TextStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Landroidx/compose/runtime/Composer;III)V
+	public static final fun selectedItemIndex (Lorg/jetbrains/jewel/foundation/lazy/SelectableLazyListState;Ljava/util/List;Lkotlin/jvm/functions/Function2;)I
 }
 
 public final class org/jetbrains/jewel/ui/component/ListItemState {
@@ -606,7 +620,6 @@ public final class org/jetbrains/jewel/ui/component/MenuItemState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/MenuKt {
 	public static final fun MenuSeparator (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuItemMetrics;Lorg/jetbrains/jewel/ui/component/styling/MenuItemColors;Landroidx/compose/runtime/Composer;II)V
-	public static final fun MenuSubmenuItem (Landroidx/compose/ui/Modifier;ZZLjava/lang/String;Ljava/lang/Class;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun MenuSubmenuItem (Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/icon/IconKey;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun PopupMenu (Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Alignment$Horizontal;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/MenuStyle;Landroidx/compose/ui/window/PopupProperties;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
 	public static final fun items (Lorg/jetbrains/jewel/ui/component/MenuScope;ILkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function3;)V
@@ -639,11 +652,6 @@ public abstract interface class org/jetbrains/jewel/ui/component/MenuScope {
 public final class org/jetbrains/jewel/ui/component/MenuScope$DefaultImpls {
 	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun submenu$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
-}
-
-public final class org/jetbrains/jewel/ui/component/PlatformIconKt {
-	public static final fun PlatformIcon-uDo3WH8 (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;JLorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
-	public static final fun PlatformIcon-uDo3WH8 (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;J[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/PopupContainerKt {
@@ -708,15 +716,12 @@ public final class org/jetbrains/jewel/ui/component/RadioButtonState$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/component/ScrollableContainerKt {
-	public static final fun HorizontallyScrollableContainer (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun HorizontallyScrollableContainer (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun HorizontallyScrollableContainer (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun ScrollableContainer (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun ScrollableContainer (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final synthetic fun ScrollableContainer (Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/ScrollState;Landroidx/compose/foundation/ScrollState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun VerticallyScrollableContainer (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun VerticallyScrollableContainer (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
-	public static final fun VerticallyScrollableContainer (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun HorizontallyScrollableContainer (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun HorizontallyScrollableContainer (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun HorizontallyScrollableContainer (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun VerticallyScrollableContainer (Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun VerticallyScrollableContainer (Landroidx/compose/foundation/lazy/grid/LazyGridState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
+	public static final fun VerticallyScrollableContainer (Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;ZZLandroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function3;Landroidx/compose/runtime/Composer;II)V
 	public static final fun scrollbarContentSafePadding (Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;II)F
 }
 
@@ -854,9 +859,13 @@ public final class org/jetbrains/jewel/ui/component/SelectableIconButtonState$Co
 
 public final class org/jetbrains/jewel/ui/component/SimpleListItemKt {
 	public static final fun SimpleListItem-0vH8DBg (Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-J1qPv4o (ZZLandroidx/compose/ui/graphics/ColorFilter;Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SimpleListItem-Wu8B24Y (Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/ui/graphics/ColorFilter;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;III)V
+	public static final fun SimpleListItem-XFD2ZOI (Ljava/lang/String;ZZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/ui/graphics/ColorFilter;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;III)V
 	public static final fun SimpleListItem-aqv2aB4 (Ljava/lang/String;ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/runtime/Composer;II)V
 	public static final fun SimpleListItem-eKw1uXw (Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLandroidx/compose/runtime/Composer;II)V
 	public static final fun SimpleListItem-gMrHQkA (ZLandroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleListItem-tJlDC5Y (Lorg/jetbrains/jewel/ui/component/ListItemState;Landroidx/compose/ui/graphics/ColorFilter;Ljava/util/List;Landroidx/compose/ui/Modifier;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lorg/jetbrains/jewel/ui/component/styling/SimpleListItemStyle;FLkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class org/jetbrains/jewel/ui/component/SliderKt {
@@ -1036,13 +1045,11 @@ public final class org/jetbrains/jewel/ui/component/TabsKt {
 public final class org/jetbrains/jewel/ui/component/TextAreaKt {
 	public static final fun TextArea (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/foundation/text/input/InputTransformation;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/input/KeyboardActionHandler;Landroidx/compose/foundation/text/input/TextFieldLineLimits;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Lorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/text/input/OutputTransformation;ZLandroidx/compose/foundation/ScrollState;Lorg/jetbrains/jewel/ui/component/styling/ScrollbarStyle;Landroidx/compose/runtime/Composer;III)V
 	public static final fun TextArea (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLkotlin/jvm/functions/Function2;ZLorg/jetbrains/jewel/ui/Outline;Landroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;ILkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;III)V
-	public static final fun TextArea (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;ILkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextAreaStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TextFieldKt {
 	public static final fun TextField (Landroidx/compose/foundation/text/input/TextFieldState;Landroidx/compose/ui/Modifier;ZZLandroidx/compose/foundation/text/input/InputTransformation;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/input/KeyboardActionHandler;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Lorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/foundation/text/input/OutputTransformation;ZLandroidx/compose/runtime/Composer;III)V
 	public static final fun TextField (Landroidx/compose/ui/text/input/TextFieldValue;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Landroidx/compose/ui/text/TextStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
-	public static final fun TextField (Ljava/lang/String;Lkotlin/jvm/functions/Function1;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/Outline;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;ZLandroidx/compose/ui/text/input/VisualTransformation;Landroidx/compose/foundation/text/KeyboardOptions;Landroidx/compose/foundation/text/KeyboardActions;Lkotlin/jvm/functions/Function1;Lorg/jetbrains/jewel/ui/component/styling/TextFieldStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;III)V
 }
 
 public final class org/jetbrains/jewel/ui/component/TextKt {
@@ -1099,6 +1106,7 @@ public final class org/jetbrains/jewel/ui/component/ToggleableIconButtonState$Co
 
 public final class org/jetbrains/jewel/ui/component/TooltipKt {
 	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Tooltip (Lkotlin/jvm/functions/Function2;Landroidx/compose/ui/Modifier;ZLorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Lorg/jetbrains/jewel/ui/component/AutoHideBehavior;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 	public static final fun rememberPopupPositionProviderAtFixedPosition-7KAyTs4 (JJLandroidx/compose/ui/Alignment;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/window/PopupPositionProvider;
 }
 
@@ -2936,12 +2944,14 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipColors$Compan
 public final class org/jetbrains/jewel/ui/component/styling/TooltipMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;JJLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBorderWidth-D9Ej5fM ()F
 	public final fun getContentPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public final fun getCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getFullDisappearDelay-UwyO8pc ()J
 	public final fun getPlacement ()Landroidx/compose/foundation/TooltipPlacement;
+	public final fun getRegularDisappearDelay-UwyO8pc ()J
 	public final fun getShadowSize-D9Ej5fM ()F
 	public final fun getShowDelay-UwyO8pc ()J
 	public fun hashCode ()I
@@ -2949,8 +2959,8 @@ public final class org/jetbrains/jewel/ui/component/styling/TooltipMetrics {
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion {
-	public final fun defaults-8qf-r9M (Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;)Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
-	public static synthetic fun defaults-8qf-r9M$default (Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion;Landroidx/compose/foundation/layout/PaddingValues;JLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
+	public final fun defaults-L5TaK9c (Landroidx/compose/foundation/layout/PaddingValues;JJJLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;)Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
+	public static synthetic fun defaults-L5TaK9c$default (Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics$Companion;Landroidx/compose/foundation/layout/PaddingValues;JJJLandroidx/compose/foundation/shape/CornerSize;FFLandroidx/compose/foundation/TooltipPlacement;ILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/TooltipMetrics;
 }
 
 public final class org/jetbrains/jewel/ui/component/styling/TooltipStyle {
@@ -3038,6 +3048,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Actions {
 	public final fun getAnnotate ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getArrowCollapse ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getArrowExpand ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getAttach ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getBack ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getBuildAutoReloadChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getBuildLoadChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3110,6 +3121,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Actions {
 	public final fun getInstall ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIntentionBulb ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIntentionBulbGrey ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getLearn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLightning ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getListChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getListFiles ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3191,8 +3203,8 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Actions {
 	public final fun getResume ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRollback ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRunAll ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getRunAnything ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRunToCursor ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getRun_anything ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getScratch ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSearch ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSearchNewLine ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3216,6 +3228,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Actions {
 	public final fun getStepOutCodeBlock ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getStopAndRestart ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getStopRefresh ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getStopWatch ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getStub ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSuggestedRefactoringBulb ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSuspend ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3379,11 +3392,13 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger {
 	public final fun getThawAll ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadAtBreakpoint ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadCurrent ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getThreadDaemon ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadFrozen ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadGroup ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadGroupCurrent ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadRunning ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreadSuspended ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getThreadVirtual ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getThreads ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getValue ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getVariablesTab ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3395,7 +3410,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger {
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger$ThreadStates {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Debugger$ThreadStates;
-	public final fun getDaemon_sign ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIdle ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSocket ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
@@ -3447,6 +3461,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$FileTypes {
 	public final fun getAny_type ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getArchive ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getAspectj ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getBinaryData ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getConfig ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getContexts ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getContextsModifier ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3555,6 +3570,8 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
 	public final fun getInheritedMethod ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineAdd ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineAddHover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getInlineClose ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getInlineCloseHover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineCopy ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineCopyHover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInlineRefresh ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3566,6 +3583,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
 	public final fun getInspectionsError ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsErrorEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsEye ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getInspectionsGrammar ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsMixed ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsOK ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsOKEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3576,13 +3594,14 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
 	public final fun getInspectionsWarning ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInspectionsWarningEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getKeyboard ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getLanguage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLayout ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLayoutEditorOnly ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLayoutEditorPreview ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLayoutPreviewOnly ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLinkDropTriangle ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getLocalizationSettings ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getLocate ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getMenu ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getModified ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getModifiedSelected ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getMoreTabs ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3610,9 +3629,11 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$General {
 	public final fun getQuestionDialog ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getReaderMode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRefresh ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getRefreshAuto ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRemove ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getReset ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRunWithCoverage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getSelectIn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSeparatorH ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSettings ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getShow ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3679,6 +3700,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Gutter {
 	public final fun getSuggestedRefactoringBulbDisabled ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnfold ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnique ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getWeb ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWriteAccess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
@@ -3738,7 +3760,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide {
 	public final fun getNavBarSeparator ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getOutgoingChangesOn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPipette ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getPipette_rollover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getPipetteRollover ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPowerSaveMode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRating ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRating1 ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3797,13 +3819,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$RoundShadow {
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$RunAnything {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$RunAnything;
-	public final fun getOpenRecentProject ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-}
-
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$Settings {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$Settings;
-	public final fun getNewUI ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Ide$Shadow {
@@ -3971,11 +3986,10 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 	public final fun getConfigFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getConsole ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getConstant ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getConstructor ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getController ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getCopyOfFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getCustomRegion ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getCvs_global ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getCvs_roots ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDataColumn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDataSchema ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDataTables ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4004,9 +4018,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 	public final fun getIdeaModule ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIdeaProject ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInclude ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getInspectionResults ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInterface ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getJ2eeParameter ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJarDirectory ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJavaDocFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getJavaModule ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4040,7 +4052,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 	public final fun getParameter ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPlugin ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPluginJB ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getPluginLogo ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPluginRestart ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPluginnotinstalled ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getPluginobsolete ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4091,13 +4102,13 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 	public final fun getUndeploy ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnknown ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUnknownJdk ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getUnloadedProject ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUpFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getUpLevel ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getVariable ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWarningIntroduction ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWarningMark ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWebFolder ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getWeblistener ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWord ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWorkspace ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWriteAccess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4106,7 +4117,6 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes {
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes$Jsf {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Nodes$Jsf;
-	public final fun getRenderer ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$ObjectBrowser {
@@ -4210,6 +4220,12 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Profiler {
 	public final fun getRec ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
+public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Promo {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Promo;
+	public final fun getJavaDuke ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+}
+
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Providers {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Providers;
@@ -4236,6 +4252,8 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Providers {
 	public final fun getElasticsearch ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getExasol ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getFirebird ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getGaussDB ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getGeminiDb ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getGoogleCloudSpanner ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getGreenplum ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getH2 ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4244,6 +4262,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Providers {
 	public final fun getHsqldb ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIbm ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getImpala ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getInfluxDB ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInformix ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getIntersystemCache ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getKafka ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4268,11 +4287,14 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Providers {
 	public final fun getSqlite ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSun ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSybase ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getTair ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getTarantool ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getTaurusDB ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getTeradata ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getTibero ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getTidb ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getTrino ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getTurso ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getVertica ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getYugabyte ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
@@ -4363,6 +4385,16 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Status {
 	public final fun getSuccess ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
+public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Survey {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Survey;
+	public final fun getDissatisfied ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getNeutral ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getSatisfied ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getVeryDissatisfied ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getVerySatisfied ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+}
+
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Table {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Table;
@@ -4408,6 +4440,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public final fun getDocumentation ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getErrorEvents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInfoEvents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getLearn ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getMeetNewUi ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getNoEvents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getNotifications ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4420,16 +4453,18 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public final fun getTask ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowAnalyzeDataflow ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowAnt ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowAskAI ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowBookmarks ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowBuild ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowCommander ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowCommit ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowComponents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowCoverage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowDataView ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowDebugger ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowDevMode ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowDuplicates ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getToolWindowFavorites ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowFind ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowHierarchy ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowInspection ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4437,6 +4472,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public final fun getToolWindowJsonPath ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowMessages ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowModuleDependencies ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowOverflow ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowPalette ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowProblems ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowProblemsEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4445,10 +4481,10 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public final fun getToolWindowProject ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowRun ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowRunWithCoverage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowServer ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowServices ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowStructure ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowTodo ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getToolWindowUIDesigner ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowVariableView ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWarningEvents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWebToolWindow ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -4521,6 +4557,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Webreferences {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Webreferences;
 	public final fun getMessageQueue ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getOpenapi ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getServer ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getWebSocket ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
@@ -4573,6 +4610,13 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Windows {
 	public final fun getRestore ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRestoreInactive ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getRestoreSmall ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+}
+
+public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Windows$Mouse {
+	public static final field $stable I
+	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Windows$Mouse;
+	public final fun getCursorPointingHand ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getCursorText ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Xml {

@@ -10,6 +10,12 @@ import org.junit.rules.RuleChain
 import org.junit.rules.TestName
 import org.junit.rules.TestRule
 
+/**
+ * A wrapper around [LightJavaCodeInsightFixtureTestCase] that is JUnit 4-compatible.
+ * 
+ * @see LightJavaCodeInsightFixtureTestCase
+ * @see LightJavaCodeInsightFixtureTestCase5
+ */
 @TestDataPath("\$CONTENT_ROOT/testData")
 abstract class LightJavaCodeInsightFixtureTestCase4(
   projectDescriptor: LightProjectDescriptor? = null,

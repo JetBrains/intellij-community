@@ -32,10 +32,8 @@ import com.jetbrains.python.black.BlackFormatterUtil
 import com.jetbrains.python.black.BlackFormatterVersionService
 import com.jetbrains.python.black.BlackFormatterVersionService.Companion.UNKNOWN_VERSION
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration.BlackFormatterOption.Companion.toCliOptionFlags
-import com.jetbrains.python.newProject.steps.createPythonSdkComboBox
-import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.createSpecification
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.installPackageBackground
 import com.jetbrains.python.sdk.pythonSdk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -133,17 +131,10 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
         installButton = button(PyBundle.message("black.install.button.label")) {
           runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("black.installing.modal.title")) {
             if (selectedSdk != null) {
-              val manager = PythonPackageManager.forSdk(project, selectedSdk!!)
-              val blackPackageSpecification = manager.repositoryManager.createSpecification(BlackFormatterUtil.PACKAGE_NAME, null)
-              blackPackageSpecification?.let { packageSpec ->
-                runPackagingOperationOrShowErrorDialog(selectedSdk!!, PyBundle.message("python.new.project.install.failed.title", BlackFormatterUtil.PACKAGE_NAME),
-                                                       BlackFormatterUtil.PACKAGE_NAME) {
-                  manager.installPackage(packageSpec, emptyList())
-                }.onSuccess {
-                  withContext(Dispatchers.EDT) {
-                    isBlackFormatterPackageInstalled = true
-                    enableOnReformatCheckBox.isSelected = true
-                  }
+              PythonPackageManagerUI.forSdk(project, selectedSdk!!).installPackageBackground(BlackFormatterUtil.PACKAGE_NAME)?.let {
+                withContext(Dispatchers.EDT) {
+                  isBlackFormatterPackageInstalled = true
+                  enableOnReformatCheckBox.isSelected = true
                 }
               }
             }
@@ -298,6 +289,7 @@ class BlackFormatterConfigurable(val project: Project) : BoundConfigurable(PyBun
   override fun apply() {
     applyToConfig(storedState)
   }
+
   override fun createPanel(): DialogPanel {
     mainPanel.registerValidators(disposable!!)
     return mainPanel

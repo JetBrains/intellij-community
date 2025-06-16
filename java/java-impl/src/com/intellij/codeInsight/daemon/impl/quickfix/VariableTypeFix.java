@@ -65,7 +65,7 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
@@ -80,22 +80,22 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
 
   @Override
   public void invoke(final @NotNull Project project,
-                     final @NotNull PsiFile file,
+                     final @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     if (changeMethodSignatureIfNeeded(myVariable)) return;
-    WriteCommandAction.writeCommandAction(project, file).withName(getText()).run(() -> {
+    WriteCommandAction.writeCommandAction(project, psiFile).withName(getText()).run(() -> {
       try {
         myVariable.normalizeDeclaration();
         final PsiTypeElement typeElement = myVariable.getTypeElement();
         LOG.assertTrue(typeElement != null, myVariable.getClass());
         final PsiTypeElement newTypeElement =
-          JavaPsiFacade.getElementFactory(file.getProject()).createTypeElement(getReturnType());
+          JavaPsiFacade.getElementFactory(psiFile.getProject()).createTypeElement(getReturnType());
         typeElement.replace(newTypeElement);
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-        UndoUtil.markPsiFileForUndo(file);
+        UndoUtil.markPsiFileForUndo(psiFile);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -162,14 +162,14 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiVariable variable = (PsiVariable)getStartElement();
     if (variable instanceof LightRecordField) {
       variable = ((LightRecordField)variable).getRecordComponent();
     }
     PsiFile containingFile = variable.getContainingFile();
-    if (containingFile == file.getOriginalFile()) {
-      PsiVariable varCopy = PsiTreeUtil.findSameElementInCopy(variable, file);
+    if (containingFile == psiFile.getOriginalFile()) {
+      PsiVariable varCopy = PsiTreeUtil.findSameElementInCopy(variable, psiFile);
       PsiTypeElement typeElement = varCopy.getTypeElement();
       if (typeElement != null) {
         typeElement.replace(PsiElementFactory.getInstance(project).createTypeElement(myReturnType));

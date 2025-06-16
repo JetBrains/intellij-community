@@ -8,11 +8,17 @@ import com.intellij.openapi.wm.impl.AbstractToolbarCombo
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.ClickListener
 import com.intellij.ui.hover.HoverListener
-import com.intellij.ui.paint.PaintUtil
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import java.awt.*
+import com.intellij.util.ui.UIUtil
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Rectangle
+import java.awt.RenderingHints
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.MouseEvent
@@ -77,14 +83,14 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
       }
 
       if (!text.isNullOrEmpty() && maxTextWidth > 0) {
-        if (!leftIcons.isEmpty()) paintRect.cutLeft(ICON_TEXT_GAP)
+        if (!leftIcons.isEmpty()) paintRect.cutLeft(combo.iconTextGap)
         val textRect = Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height)
         drawText(c, text, g2, textRect)
         paintRect.cutLeft(maxTextWidth)
       }
 
       if (!rightIcons.isEmpty()) {
-        paintRect.cutLeft(ICON_TEXT_GAP)
+        paintRect.cutLeft(combo.iconTextGap)
         val iconsRect = paintIcons(rightIcons, combo, g2, paintRect)
         paintRect.cutLeft(iconsRect.width)
       }
@@ -109,23 +115,23 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
     }
 
     if (!leftIcons.isEmpty()) {
-      result.width += calcIconsWidth(leftIcons, BETWEEN_ICONS_GAP)
+      result.width += calcIconsWidth(leftIcons, combo.betweenIconsGap)
       result.height = leftIcons.stream().mapToInt{ it.iconHeight }.max().orElse(0)
     }
 
     if (!combo.text.isNullOrEmpty()) {
       if (!leftIcons.isEmpty()) {
-        result.width += ICON_TEXT_GAP
+        result.width += combo.iconTextGap
       }
       val metrics = c.getFontMetrics(c.getFont())
       val text = getText(combo)
-      result.width += PaintUtil.getStringWidth(text, c.graphics, metrics)
+      result.width += UIUtil.computeStringWidth(c, metrics, text)
       result.height = max(result.height, metrics.height)
     }
 
     if (!rightIcons.isEmpty()) {
-      result.width += ICON_TEXT_GAP
-      result.width += calcIconsWidth(rightIcons, BETWEEN_ICONS_GAP)
+      result.width += combo.iconTextGap
+      result.width += calcIconsWidth(rightIcons, combo.betweenIconsGap)
       result.height = max(result.height, rightIcons.stream().mapToInt{ it.iconHeight }.max().orElse(0))
     }
 
@@ -147,12 +153,12 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
   private fun calcMaxTextWidth(c: ToolbarComboButton, paintRect: Rectangle): Int {
     var otherElementsWidth = 0
 
-    var left = calcIconsWidth(c.leftIcons, BETWEEN_ICONS_GAP)
-    if (left > 0) left += ICON_TEXT_GAP
+    var left = calcIconsWidth(c.leftIcons, c.betweenIconsGap)
+    if (left > 0) left += c.iconTextGap
     otherElementsWidth += left
 
-    var right = calcIconsWidth(c.rightIcons, BETWEEN_ICONS_GAP)
-    if (right > 0) right += ICON_TEXT_GAP
+    var right = calcIconsWidth(c.rightIcons, c.betweenIconsGap)
+    if (right > 0) right += c.iconTextGap
     otherElementsWidth += right
 
     otherElementsWidth += BEFORE_CHEVRON_GAP + AllIcons.General.ChevronDown.iconWidth

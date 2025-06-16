@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.module
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
@@ -11,7 +10,6 @@ import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.util.projectWizard.WizardContext
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.observable.properties.GraphProperty
@@ -45,7 +43,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
 
   override fun getBuilderId(): String = "idea-plugin"
   override fun getPresentableName(): String = DevKitBundle.message("module.builder.title")
-  override fun getWeight(): Int = IJ_PLUGIN_WEIGHT
+  override fun getWeight(): Int = JVM_WEIGHT + 1000
   override fun getNodeIcon(): Icon = AllIcons.Nodes.Plugin
   override fun getDescription(): String = DevKitBundle.message("module.description")
 
@@ -63,9 +61,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
     ))
   }
 
-  override fun createWizardSteps(context: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> {
-    return emptyArray()
-  }
+  override fun createWizardSteps(context: WizardContext, modulesProvider: ModulesProvider) = emptyArray<ModuleWizardStep>()
 
   override fun createOptionsStep(contextProvider: StarterContextProvider): StarterInitialStep {
     return IdePluginInitialStep(contextProvider)
@@ -226,14 +222,6 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
       layout.row {
         hyperLink(DevKitBundle.message("module.builder.github.template.link"),
                   "https://jb.gg/plugin-template")
-      }
-
-      val scalaPluginId = PluginId.findId("org.intellij.scala")
-      if (scalaPluginId != null && PluginManager.isPluginInstalled(scalaPluginId)) {
-        layout.row {
-          hyperLink(DevKitBundle.message("module.builder.scala.github.template.link"),
-                    "https://github.com/JetBrains/sbt-idea-plugin")
-        }
       }
     }
   }

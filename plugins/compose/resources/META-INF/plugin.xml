@@ -17,6 +17,8 @@
     <module name="intellij.compose.ide.plugin.shared"/>
     <module name="intellij.compose.ide.plugin.k1"/>
     <module name="intellij.compose.ide.plugin.k2"/>
+    <module name="intellij.compose.ide.plugin.gradleTooling.rt"/>
+    <module name="intellij.compose.ide.plugin.resources"/>
   </content>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

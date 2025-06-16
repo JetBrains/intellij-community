@@ -51,6 +51,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.VcsLogActionIds
 import com.intellij.vcs.log.util.VcsLogUtil
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -62,11 +63,10 @@ import javax.swing.tree.DefaultTreeModel
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
-class VcsLogChangesBrowser internal constructor(project: Project,
-                                                private val uiProperties: VcsLogUiProperties,
-                                                private val dataGetter: (CommitId) -> VcsShortCommitDetails,
-                                                isWithEditorDiffPreview: Boolean,
-                                                parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
+class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
+                                                           private val uiProperties: VcsLogUiProperties,
+                                                           private val dataGetter: (CommitId) -> VcsShortCommitDetails,
+                                                           parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private val toolbarWrapper: Wrapper
 
@@ -99,8 +99,6 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     }
 
     init()
-
-    showDiffActionPreview = if (isWithEditorDiffPreview) VcsLogEditorDiffPreview(this) else null
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)

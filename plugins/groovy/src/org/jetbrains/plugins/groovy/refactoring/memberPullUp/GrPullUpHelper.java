@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -242,8 +242,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
       if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
         if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, mySourceClass) && !myTargetSuperClass.isInterface() ||
             PsiUtil.isAvailable(JavaFeature.OVERRIDE_INTERFACE, mySourceClass)) {
-          new AddAnnotationFix(CommonClassNames.JAVA_LANG_OVERRIDE, method)
-            .invoke(method.getProject(), null, mySourceClass.getContainingFile());
+          AddAnnotationPsiFix.addPhysicalAnnotationIfAbsent(CommonClassNames.JAVA_LANG_OVERRIDE, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
         }
       }
 

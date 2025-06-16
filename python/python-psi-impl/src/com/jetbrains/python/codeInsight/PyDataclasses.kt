@@ -12,10 +12,10 @@ import com.jetbrains.python.codeInsight.PyDataclassParameters.Type
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.PyKnownDecorator
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.StubAwareComputation
+import com.jetbrains.python.psi.impl.mapArguments
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.impl.stubs.PyDataclassStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -36,7 +36,7 @@ object PyDataclassNames {
     const val DATACLASSES_REPLACE = "dataclasses.replace"
     const val DATACLASSES_KW_ONLY = "dataclasses.KW_ONLY"
     const val DUNDER_POST_INIT = "__post_init__"
-    val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "kw_only")
+    val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "match_args", "kw_only")
     val HELPER_FUNCTIONS = setOf(DATACLASSES_FIELDS, DATACLASSES_ASDICT, "dataclasses.astuple", DATACLASSES_REPLACE)
   }
 
@@ -64,6 +64,7 @@ object PyDataclassNames {
       "auto_exc",
       "eq",
       "order",
+      "match_args",
     )
     val FIELD_FUNCTIONS = setOf(
       "attr.ib",
@@ -120,17 +121,17 @@ object PyDataclassNames {
  * determine what settings dataclass has.
  */
 private val DECORATOR_AND_TYPE_AND_PARAMETERS = listOf(
-  Triple(KnownDecorator.DATACLASSES_DATACLASS, PyDataclassParameters.PredefinedType.STD, PyDataclassNames.Dataclasses.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_ATTRIBUTES, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTR_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTRS_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTRS_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
-  Triple(KnownDecorator.ATTRS_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.DATACLASSES_DATACLASS, PyDataclassParameters.PredefinedType.STD, PyDataclassNames.Dataclasses.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_S, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_ATTRS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_ATTRIBUTES, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_DATACLASS, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTR_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTRS_DEFINE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTRS_MUTABLE, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
+  Triple(PyKnownDecorator.ATTRS_FROZEN, PyDataclassParameters.PredefinedType.ATTRS, PyDataclassNames.Attrs.DECORATOR_PARAMETERS),
 )
 
 fun parseStdDataclassParameters(cls: PyClass, context: TypeEvalContext): PyDataclassParameters? {
@@ -219,6 +220,7 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         order = provided.order,
         unsafeHash = provided.unsafeHash,
         frozen = provided.frozen,
+        matchArgs = provided.matchArgs,
         kwOnly = provided.kwOnly,
       ),
       DataclassParameterArgumentMapping(
@@ -228,6 +230,7 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         orderArgument = provided.orderArgument,
         unsafeHashArgument = provided.unsafeHashArgument,
         frozenArgument = provided.frozenArgument,
+        matchArgsArgument = provided.matchArgsArgument,
         kwOnlyArgument = provided.kwOnlyArgument,
         others = provided.others,
       )
@@ -240,8 +243,7 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         val types = decoratorAndTypeAndMarkedCallee(cls.project)
         val decoratorAndTypeAndMarkedCallee = types.firstOrNull { it.first == decoratorQualifiedName } ?: continue
   
-        val mapping = PyCallExpressionHelper.mapArguments(
-          decorator,
+        val mapping = decorator.mapArguments(
           PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, null),
           context ?: TypeEvalContext.codeInsightFallback(cls.project)
         )
@@ -302,6 +304,7 @@ data class PyDataclassParameters(
   val order: Boolean,
   val unsafeHash: Boolean,
   val frozen: Boolean,
+  val matchArgs: Boolean,
   val kwOnly: Boolean,
   val initArgument: PyExpression?,
   val reprArgument: PyExpression?,
@@ -309,6 +312,7 @@ data class PyDataclassParameters(
   val orderArgument: PyExpression?,
   val unsafeHashArgument: PyExpression?,
   val frozenArgument: PyExpression?,
+  val matchArgsArgument: PyExpression?,
   val kwOnlyArgument: PyExpression?,
   val type: Type,
   val others: Map<String, PyExpression>,
@@ -348,6 +352,7 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
   private var order: Boolean? = null
   private var unsafeHash: Boolean? = null
   private var frozen: Boolean? = null
+  private var matchArgs: Boolean? = null
   private var kwOnly: Boolean? = null
 
   private var initArgument: PyExpression? = null
@@ -356,6 +361,7 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
   private var orderArgument: PyExpression? = null
   private var unsafeHashArgument: PyExpression? = null
   private var frozenArgument: PyExpression? = null
+  private var matchArgsArgument: PyExpression? = null
   private var kwOnlyArgument: PyExpression? = null
 
   private val others = mutableMapOf<String, PyExpression>()
@@ -377,6 +383,11 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
       "frozen" -> {
         frozen = PyEvaluator.evaluateAsBooleanNoResolve(value)
         frozenArgument = argument
+        return
+      }
+      "match_args" -> {
+        matchArgs = PyEvaluator.evaluateAsBooleanNoResolve(value)
+        matchArgsArgument = argument
         return
       }
       "kw_only" -> {
@@ -457,6 +468,7 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
         order = order,
         unsafeHash = unsafeHash,
         frozen = frozen,
+        matchArgs = matchArgs,
         kwOnly = kwOnly,
       ),
       DataclassParameterArgumentMapping(
@@ -466,6 +478,7 @@ private class PyDataclassParametersBuilder(private val type: Type, private val d
         orderArgument = orderArgument,
         unsafeHashArgument = unsafeHashArgument,
         frozenArgument = frozenArgument,
+        matchArgsArgument = matchArgsArgument,
         kwOnlyArgument = kwOnlyArgument,
         others = others,
       )
@@ -479,6 +492,7 @@ private data class DataclassParameterArgumentMapping(
   val orderArgument: PyExpression?,
   val unsafeHashArgument: PyExpression?,
   val frozenArgument: PyExpression?,
+  val matchArgsArgument: PyExpression?,
   val kwOnlyArgument: PyExpression?,
   val others: Map<String, PyExpression>
 )
@@ -505,6 +519,7 @@ private fun resolveDataclassParameters(
         order = stub.orderValue() ?: false,
         unsafeHash = stub.unsafeHashValue() ?: false,
         frozen = stub.frozenValue() ?: false,
+        matchArgs = stub.matchArgsValue() ?: true,
         kwOnly = stub.kwOnly() ?: false,
         initArgument = argumentMapping?.initArgument,
         reprArgument = argumentMapping?.reprArgument,
@@ -512,6 +527,7 @@ private fun resolveDataclassParameters(
         orderArgument = argumentMapping?.orderArgument,
         unsafeHashArgument = argumentMapping?.unsafeHashArgument,
         frozenArgument = argumentMapping?.frozenArgument,
+        matchArgsArgument = argumentMapping?.matchArgsArgument,
         kwOnlyArgument = argumentMapping?.kwOnlyArgument,
         others = argumentMapping?.others ?: emptyMap(),
         type = type,
@@ -521,7 +537,7 @@ private fun resolveDataclassParameters(
     PyDataclassParameters.PredefinedType.ATTRS -> {
       // TODO remove this hack, make it a proper field
       val extraArguments = mutableMapOf<String, PyExpression>()
-      if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS && stub.decoratorName() == KnownDecorator.ATTR_DATACLASS.qualifiedName) {
+      if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS && stub.decoratorName() == PyKnownDecorator.ATTR_DATACLASS.qualifiedName) {
         extraArguments["auto_attribs"] = 
           PyElementGenerator.getInstance(pyClass.project).createExpressionFromText(LanguageLevel.forElement(pyClass), PyNames.TRUE)
       }
@@ -533,6 +549,7 @@ private fun resolveDataclassParameters(
         order = stub.orderValue() ?: true,
         unsafeHash = stub.unsafeHashValue() ?: false,
         frozen = stub.frozenValue() ?: (stub.decoratorName()?.toString() in PyDataclassNames.Attrs.ATTRS_FROZEN),
+        matchArgs = stub.matchArgsValue() ?: true,
         kwOnly = stub.kwOnly() ?: false,
         initArgument = argumentMapping?.initArgument,
         reprArgument = argumentMapping?.reprArgument,
@@ -540,6 +557,7 @@ private fun resolveDataclassParameters(
         orderArgument = argumentMapping?.orderArgument,
         unsafeHashArgument = argumentMapping?.unsafeHashArgument,
         frozenArgument = argumentMapping?.frozenArgument,
+        matchArgsArgument = argumentMapping?.matchArgsArgument,
         kwOnlyArgument = argumentMapping?.kwOnlyArgument,
         others = (argumentMapping?.others ?: emptyMap()) + extraArguments,
         type = type,
@@ -577,6 +595,7 @@ private fun resolveDataclassParameters(
             order = stub.orderValue() ?: dataclassTransformStub.orderDefault,
             unsafeHash = stub.unsafeHashValue() ?: true,
             frozen = stub.frozenValue() ?: dataclassTransformStub.frozenDefault,
+            matchArgs = stub.matchArgsValue() ?: true,
             kwOnly = stub.kwOnly() ?: dataclassTransformStub.kwOnlyDefault,
             initArgument = argumentMapping?.initArgument,
             reprArgument = argumentMapping?.reprArgument,
@@ -584,6 +603,7 @@ private fun resolveDataclassParameters(
             orderArgument = argumentMapping?.orderArgument,
             unsafeHashArgument = argumentMapping?.unsafeHashArgument,
             frozenArgument = argumentMapping?.frozenArgument,
+            matchArgsArgument = argumentMapping?.matchArgsArgument,
             kwOnlyArgument = argumentMapping?.kwOnlyArgument,
             others = argumentMapping?.others ?: emptyMap(),
             type = type,
@@ -603,11 +623,13 @@ private fun resolveDataclassParameters(
         unsafeHash = stub.unsafeHashValue() ?: false,
         frozen = stub.frozenValue() ?: false,
         kwOnly = stub.kwOnly() ?: false,
+        matchArgs = stub.matchArgsValue() ?: true,
         initArgument = argumentMapping?.initArgument,
         reprArgument = argumentMapping?.reprArgument,
         eqArgument = argumentMapping?.eqArgument,
         orderArgument = argumentMapping?.orderArgument,
         unsafeHashArgument = argumentMapping?.unsafeHashArgument,
+        matchArgsArgument = argumentMapping?.matchArgsArgument,
         frozenArgument = argumentMapping?.frozenArgument,
         kwOnlyArgument = argumentMapping?.kwOnlyArgument,
         others = argumentMapping?.others ?: emptyMap(),

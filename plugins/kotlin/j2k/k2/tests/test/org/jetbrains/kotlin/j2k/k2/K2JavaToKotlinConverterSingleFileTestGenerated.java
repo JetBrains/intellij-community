@@ -3633,6 +3633,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         public void testNewExpressionWithoutName() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/invalidCode/newExpressionWithoutName.java");
         }
+
+        @TestMetadata("trailngLabel.java")
+        public void testTrailngLabel() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/invalidCode/trailngLabel.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

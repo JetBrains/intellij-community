@@ -13,26 +13,14 @@ import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiFile
 
 class XMLReportEngine : CoverageEngine() {
-  @Deprecated("Deprecated in Java")
-  override fun createCoverageSuite(covRunner: CoverageRunner,
-                                   name: String,
-                                   coverageDataFileProvider: CoverageFileProvider,
-                                   filters: Array<out String>?,
-                                   lastCoverageTimeStamp: Long,
-                                   suiteToMerge: String?,
-                                   coverageByTestEnabled: Boolean,
-                                   branchCoverage: Boolean,
-                                   trackTestFolders: Boolean,
-                                   project: Project?): CoverageSuite? {
-    if (covRunner !is XMLReportRunner) return null
-    return XMLReportSuite(name, project, covRunner, coverageDataFileProvider, lastCoverageTimeStamp, this)
+  override fun createCoverageSuite(name: String, project: Project, runner: CoverageRunner, fileProvider: CoverageFileProvider, timestamp: Long): CoverageSuite? {
+    if (runner !is XMLReportRunner) return null
+    return XMLReportSuite(name, project, runner, fileProvider, timestamp, this)
   }
 
-  @Deprecated("Deprecated in Java")
-  override fun createCoverageSuite(covRunner: CoverageRunner,
-                                   name: String,
-                                   coverageDataFileProvider: CoverageFileProvider,
-                                   config: CoverageEnabledConfiguration) = error("Should not be called")
+  override fun createCoverageSuite(name: String, project: Project, runner: CoverageRunner, fileProvider: CoverageFileProvider, timestamp: Long, config: CoverageEnabledConfiguration): CoverageSuite? {
+    error("Should not be called")
+  }
 
   override fun createEmptyCoverageSuite(coverageRunner: CoverageRunner): XMLReportSuite? {
     if (coverageRunner !is XMLReportRunner) return null

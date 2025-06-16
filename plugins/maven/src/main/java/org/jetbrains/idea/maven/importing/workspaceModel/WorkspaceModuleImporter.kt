@@ -4,6 +4,9 @@ package org.jetbrains.idea.maven.importing.workspaceModel
 import com.intellij.configurationStore.serialize
 import com.intellij.externalSystem.ImportedLibraryProperties
 import com.intellij.externalSystem.ImportedLibraryType
+import com.intellij.java.impl.dependencySubstitution.LibraryMavenCoordinateEntity
+import com.intellij.java.impl.dependencySubstitution.ModuleMavenCoordinateEntity
+import com.intellij.java.impl.dependencySubstitution.mavenCoordinates
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.javaSettings
@@ -30,6 +33,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceF
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
+import org.jetbrains.idea.maven.importing.SHADED_MAVEN_LIBRARY_NAME_PREFIX
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
@@ -38,6 +42,7 @@ import org.jetbrains.idea.maven.importing.tree.dependency.LibraryDependency
 import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -76,6 +81,7 @@ internal class WorkspaceModuleImporter(
     val moduleEntity = createModuleEntity(moduleName, importData.mavenProject, importData.moduleData.type, dependencies,
                                           moduleLibrarySource)
     configureModuleEntity(importData, moduleEntity, folderImportingContext)
+    configureModuleMavenCoordinates(moduleEntity)
     return moduleEntity
   }
 
@@ -245,8 +251,10 @@ internal class WorkspaceModuleImporter(
     val source = sourceProvider()
     val libraryEntity = builder addEntity LibraryEntity(libraryId.name, libraryId.tableId, libraryRootsProvider(), source)
 
-    if (mavenArtifact == null) return
-    addMavenCoordinatesProperties(mavenArtifact, libraryEntity)
+    if (mavenArtifact != null) {
+      addMavenCoordinatesProperties(mavenArtifact, libraryEntity)
+      configureLibraryMavenCoordinates(libraryEntity, mavenArtifact)
+    }
   }
 
   private fun addMavenCoordinatesProperties(
@@ -254,12 +262,7 @@ internal class WorkspaceModuleImporter(
     libraryEntity: LibraryEntity,
   ) {
     val libraryKind = ImportedLibraryType.IMPORTED_LIBRARY_KIND
-    val libPropertiesElement = serialize(ImportedLibraryProperties(MavenCoordinates(mavenArtifact.groupId,
-                                                                                    mavenArtifact.artifactId,
-                                                                                    mavenArtifact.version,
-                                                                                    mavenArtifact.baseVersion,
-                                                                                    mavenArtifact.packaging,
-                                                                                    mavenArtifact.classifier)).state) ?: return
+    val libPropertiesElement = serialize(ImportedLibraryProperties(mavenArtifact.toMavenCoordinates()).state) ?: return
     libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
     val xmlTag = JDOMUtil.writeElement(libPropertiesElement)
     builder.modifyLibraryEntity(libraryEntity) {
@@ -319,6 +322,45 @@ internal class WorkspaceModuleImporter(
         this.manifestAttributes = manifestAttributes
       }
     }
+  }
+
+  private fun configureModuleMavenCoordinates(
+    moduleEntity: ModuleEntity,
+  ) {
+    val mavenModuleType = importData.moduleData.type
+    if (mavenModuleType != StandardMavenModuleType.SINGLE_MODULE &&
+        mavenModuleType != StandardMavenModuleType.MAIN_ONLY) {
+      return
+    }
+
+    val coordinates = importData.mavenProject.mavenId.toMavenCoordinatesOrNull() ?: return
+
+    builder.modifyModuleEntity(moduleEntity) {
+      mavenCoordinates = ModuleMavenCoordinateEntity(coordinates, entitySource)
+    }
+  }
+
+  private fun configureLibraryMavenCoordinates(
+    libraryEntity: LibraryEntity,
+    mavenArtifact: MavenArtifact,
+  ) {
+    if (libraryEntity.name.startsWith(SHADED_MAVEN_LIBRARY_NAME_PREFIX)) {
+      return
+    }
+
+    val coordinates = mavenArtifact.toMavenCoordinates()
+
+    builder.modifyLibraryEntity(libraryEntity) {
+      mavenCoordinates = LibraryMavenCoordinateEntity(coordinates, entitySource)
+    }
+  }
+
+  private fun MavenId.toMavenCoordinatesOrNull(): MavenCoordinates? {
+    return MavenCoordinates(groupId ?: return null, artifactId ?: return null, version ?: return null)
+  }
+
+  private fun MavenArtifact.toMavenCoordinates(): MavenCoordinates {
+    return MavenCoordinates(groupId, artifactId, version, baseVersion, packaging, classifier)
   }
 
   companion object {

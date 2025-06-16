@@ -20,8 +20,10 @@ jvm_library(
     "//xml/xml-parser:parser",
     "//platform/core-impl",
     "//platform/lang-impl",
-    "//platform/backend",
   ],
-  runtime_deps = [":xml_resources"]
+  runtime_deps = [
+    ":xml_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.markdown.xml` end

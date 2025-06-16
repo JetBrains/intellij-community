@@ -5,7 +5,6 @@ import com.intellij.cce.actions.*
 import com.intellij.cce.core.Session
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
-import java.util.*
 
 class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
                                 private val handler: InterpretationHandler,
@@ -23,8 +22,8 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
       handler.onErrorOccurred(IllegalStateException("File ${fileActions.path} has been modified."), fileActions.sessionsCount)
       return emptyList()
     }
-    var shouldCompleteToken = filter.shouldCompleteToken()
-    var currentSessionId: UUID? = null
+    var shouldCompleteToken = filter.shouldCompleteToken() && !handler.isStrictLimitExceeded()
+    var currentSessionId: SessionId? = null
     var isCanceled = false
     val actions = fileActions.actions.reorder(order)
     for (action in actions) {
@@ -40,12 +39,12 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
         }
         is CallFeature -> {
           if (shouldCompleteToken) {
-            val session = featureInvoker.callFeature(action.expectedText, action.offset, action.nodeProperties)
+            val session = featureInvoker.callFeature(action.expectedText, action.offset, action.nodeProperties, action.sessionId.id)
             sessions.add(session)
             sessionHandler(session)
           }
           isCanceled = handler.onSessionFinished(fileActions.path, fileActions.sessionsCount - sessions.size)
-          shouldCompleteToken = filter.shouldCompleteToken()
+          shouldCompleteToken = filter.shouldCompleteToken() && !handler.isStrictLimitExceeded()
         }
         is Rename -> actionsInvoker.rename(action.newName)
         is PrintText -> actionsInvoker.printText(action.text)
@@ -53,6 +52,12 @@ class ActionInvokingInterpreter(private val invokersFactory: InvokersFactory,
         is SelectRange -> actionsInvoker.selectRange(action.begin, action.end)
         is Delay -> actionsInvoker.delay(action.seconds)
         is OpenFileInBackground -> fileOpener.openInBackground(action.file)
+        is OptimiseImports -> actionsInvoker.optimiseImports(action.file)
+        is Rollback -> {
+          val currentTextLength = actionsInvoker.getText().length
+          actionsInvoker.deleteRange(0, currentTextLength)
+          actionsInvoker.printText(text)
+        }
       }
       if (isCanceled) break
     }

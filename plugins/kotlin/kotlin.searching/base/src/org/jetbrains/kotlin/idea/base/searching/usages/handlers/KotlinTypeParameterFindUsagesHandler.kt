@@ -42,5 +42,9 @@ class KotlinTypeParameterFindUsagesHandler(
         }
     }
 
-    override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions = factory.defaultOptions
+    override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions {
+        val usagesOptions = factory.defaultOptions.clone()
+        usagesOptions.isSearchForTextOccurrences = false
+        return usagesOptions
+    }
 }

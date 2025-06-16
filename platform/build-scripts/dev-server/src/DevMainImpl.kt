@@ -10,14 +10,20 @@ import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.dev.getIdeSystemProperties
 import org.jetbrains.intellij.build.telemetry.withTracer
 import java.nio.file.Path
+import kotlin.io.path.Path
 
 data class BuildDevInfo(
+  val mainClassName: String,
   val classPath: Collection<Path>,
   val systemProperties: Map<String, String>,
 )
 
+/**
+ * Returns the name of the main class and the classpath for the application classloader.
+ * The function is called via reflection and uses a class from JDK to store a pair to avoid dealing with classes from additional libraries in the classloader of the calling site.
+ */
 @Suppress("unused")
-fun buildDevMain(): Collection<Path> {
+fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collection<Path>> {
   val info = buildDevImpl()
 
   @Suppress("SpellCheckingInspection")
@@ -29,7 +35,7 @@ fun buildDevMain(): Collection<Path> {
     }
   }
   System.setProperty(PathManager.PROPERTY_HOME_PATH, info.systemProperties.getValue(PathManager.PROPERTY_HOME_PATH))
-  return info.classPath
+  return java.util.AbstractMap.SimpleImmutableEntry(info.mainClassName, info.classPath)
 }
 
 @Suppress("IO_FILE_USAGE")
@@ -38,9 +44,11 @@ fun buildDevImpl(): BuildDevInfo {
   @Suppress("TestOnlyProblems")
   val ideaProjectRoot = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!)
   System.setProperty("idea.dev.project.root", ideaProjectRoot.toString().replace(java.io.File.separator, "/"))
+  val additionalClassPaths = System.getProperty("idea.dev.additional.classpath")?.split(",")?.map { Path(it) }?.toTypedArray() ?: emptyArray()
 
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
+  var mainClassName: String? = null
   val environment = mutableMapOf<String, String>()
   withTracer(serviceName = "builder") {
     buildProductInProcess(
@@ -49,8 +57,9 @@ fun buildDevImpl(): BuildDevInfo {
         additionalModules = getAdditionalPluginMainModules(),
         projectDir = ideaProjectRoot,
         keepHttpClient = false,
-        platformClassPathConsumer = { classPath, runDir ->
-          newClassPath = classPath
+        platformClassPathConsumer = { actualMainClassName, classPath, runDir ->
+          mainClassName = actualMainClassName
+          newClassPath = setOf(*classPath.toTypedArray(), *additionalClassPaths)
           homePath = runDir.toString().replace(java.io.File.separator, "/")
           environment.putAll(getIdeSystemProperties(runDir).map)
         },
@@ -63,6 +72,7 @@ fun buildDevImpl(): BuildDevInfo {
     environment[PathManager.PROPERTY_HOME_PATH] = it
   }
   return BuildDevInfo(
+    mainClassName = mainClassName!!,
     classPath = newClassPath!!,
     systemProperties = environment,
   )

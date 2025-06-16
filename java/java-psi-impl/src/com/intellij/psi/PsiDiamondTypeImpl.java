@@ -107,6 +107,13 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return newExpression != null ? getStaticFactory(newExpression, newExpression) : null;
   }
 
+  @Override
+  public JavaResolveResult @NotNull [] getStaticFactories() {
+    final PsiNewExpression newExpression = getNewExpression();
+    JavaResolveResult[] results = newExpression != null ? getStaticFactories(newExpression, newExpression) : null;
+    return results == null ? JavaResolveResult.EMPTY_ARRAY : results;
+  }
+
   public static DiamondInferenceResult resolveInferredTypes(PsiNewExpression newExpression) {
     return resolveInferredTypes(newExpression, newExpression);
   }
@@ -139,13 +146,19 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return inferenceResult;
   }
 
-  private static JavaResolveResult getStaticFactory(final PsiNewExpression newExpression, final PsiElement context) {
+  private static @Nullable JavaResolveResult getStaticFactory(final PsiNewExpression newExpression, final PsiElement context) {
+    JavaResolveResult[] results = getStaticFactories(newExpression, context);
+    return results == null ? null :
+           results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+  }
+
+  private static JavaResolveResult @Nullable [] getStaticFactories(PsiNewExpression newExpression, PsiElement context) {
     return context == newExpression && !MethodCandidateInfo.isOverloadCheck(newExpression.getArgumentList())
-           ? CachedValuesManager.getCachedValue(newExpression,
-                                                () -> new CachedValueProvider.Result<>(
-                                                  getStaticFactoryCandidateInfo(newExpression, newExpression),
-                                                  PsiModificationTracker.MODIFICATION_COUNT))
-           : getStaticFactoryCandidateInfo(newExpression, context);
+                                  ? CachedValuesManager.getCachedValue(newExpression,
+                                                                       () -> new CachedValueProvider.Result<>(
+                                                                         getStaticFactoryCandidateInfos(newExpression, newExpression),
+                                                                         PsiModificationTracker.MODIFICATION_COUNT))
+                                  : getStaticFactoryCandidateInfos(newExpression, context);
   }
 
   public static DiamondInferenceResult resolveInferredTypesNoCheck(final PsiNewExpression newExpression, final PsiElement context) {
@@ -208,8 +221,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     return result;
   }
 
-  private static JavaResolveResult getStaticFactoryCandidateInfo(@NotNull PsiNewExpression newExpression,
-                                                                 final PsiElement context) {
+  private static JavaResolveResult @Nullable [] getStaticFactoryCandidateInfos(@NotNull PsiNewExpression newExpression, final PsiElement context) {
     return ourDiamondGuard.doPreventingRecursion(context, false, () -> {
 
       final PsiExpressionList argumentList = newExpression.getArgumentList();
@@ -226,22 +238,33 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
                                                                              PsiUtil.getLanguageLevel(containingFile),
                                                                              containingFile);
       final List<CandidateInfo> results = collectStaticFactories(newExpression);
-      CandidateInfo result = results != null ? resolver.resolveConflict(new ArrayList<>(results)) : null;
+      CandidateInfo result;
+      if (results != null) {
+        ArrayList<CandidateInfo> staticCandidates = new ArrayList<>(results);
+        result = resolver.resolveConflict(staticCandidates);
+        if (result == null && staticCandidates.size() > 1) {
+          return staticCandidates.toArray(JavaResolveResult.EMPTY_ARRAY);
+        }
+      }
+      else {
+        result = null;
+      }
       final PsiMethod staticFactory = result != null ? (PsiMethod)result.getElement() : null;
       if (staticFactory == null) {
         //additional diagnostics: inference fails due to unresolved constructor
-        return JavaResolveResult.EMPTY;
+        return JavaResolveResult.EMPTY_ARRAY;
       }
 
       final MethodCandidateInfo staticFactoryCandidateInfo = createMethodCandidate((MethodCandidateInfo)result, context, false, argumentList);
       if (!staticFactory.isVarArgs()) {
-        return staticFactoryCandidateInfo;
+        return new JavaResolveResult[] {staticFactoryCandidateInfo};
       }
 
       final ArrayList<CandidateInfo> conflicts = new ArrayList<>();
       conflicts.add(staticFactoryCandidateInfo);
       conflicts.add(createMethodCandidate((MethodCandidateInfo)result, context, true, argumentList));
-      return resolver.resolveConflict(conflicts);
+      CandidateInfo info = resolver.resolveConflict(conflicts);
+      return info == JavaResolveResult.EMPTY ? JavaResolveResult.EMPTY_ARRAY : new JavaResolveResult[]{info};
     });
   }
 

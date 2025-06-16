@@ -19,6 +19,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
+import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.ui.ProgressStripe
 import git4idea.i18n.GitBundle.message
@@ -28,13 +29,15 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffActio
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import java.awt.datatransfer.DataFlavor
 import java.awt.event.ActionEvent
 import javax.swing.*
 
-internal object BranchesDashboardTreeComponent {
+@ApiStatus.Internal
+object BranchesDashboardTreeComponent {
   fun create(
     parentDisposable: Disposable,
     project: Project,
@@ -65,20 +68,26 @@ internal object BranchesDashboardTreeComponent {
     }
 
     val progressStripe = ProgressStripe(ScrollPaneFactory.createScrollPane(tree, true), parentDisposable)
+    fun updateLoadingState() {
+      if (model.isLoading) {
+        progressStripe.startLoading()
+        tree.emptyText.text = message("action.Git.Loading.Branches.progress")
+      }
+      else {
+        progressStripe.stopLoading()
+        tree.emptyText.text = StatusText.getDefaultEmptyText()
+      }
+    }
     model.addListener(object : BranchesTreeModel.Listener {
       override fun onLoadingStateChange() {
-        if (model.isLoading) {
-          progressStripe.startLoading()
-        }
-        else {
-          progressStripe.stopLoading()
-        }
+        updateLoadingState()
       }
     })
+    updateLoadingState()
 
     val uiController = BranchesDashboardTreeController(project, selectionHandler, model, tree)
 
-    return simplePanel().withBorder(createBorder(SideBorder.LEFT))
+    return simplePanel()
       .addToTop(branchesSearchFieldPanel)
       .addToCenter(progressStripe)
       .apply {
@@ -163,7 +172,8 @@ internal object BranchesDashboardTreeComponent {
   }
 }
 
-internal interface BranchesDashboardTreeSelectionHandler {
+@ApiStatus.Internal
+interface BranchesDashboardTreeSelectionHandler {
   @get:RequiresEdt
   @set:RequiresEdt
   var selectionAction: SelectionAction?

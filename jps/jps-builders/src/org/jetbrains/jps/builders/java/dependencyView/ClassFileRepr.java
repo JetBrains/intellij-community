@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
@@ -12,7 +13,8 @@ import java.io.PrintStream;
 import java.util.HashSet;
 import java.util.Set;
 
-abstract class ClassFileRepr extends Proto {
+@ApiStatus.Internal
+public abstract class ClassFileRepr extends Proto {
   protected final DependencyContext myContext;
   private final int myFileName;
   private final Set<UsageRepr.Usage> myUsages;

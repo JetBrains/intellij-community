@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView.newStructureView;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.*;
@@ -79,11 +78,12 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, DataProvider, StructureView {
+public class StructureViewComponent extends SimpleToolWindowPanel implements TreeActionsOwner, StructureView {
   private static final Logger LOG = Logger.getInstance(StructureViewComponent.class);
 
   private static final Key<TreeState> STRUCTURE_VIEW_STATE_KEY = Key.create("STRUCTURE_VIEW_STATE");
@@ -375,16 +375,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   @ApiStatus.Internal
-  public final DefaultActionGroup getViewActions() {
-    DefaultActionGroup result = new DefaultActionGroup(IdeBundle.message("group.view.options"), null, AllIcons.Actions.GroupBy);
-    result.setPopup(true);
+  public final void getViewActions(@NotNull DefaultActionGroup result) {
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.sort"));
     result.addAll(sortActionsByName(getSortActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.filter"));
     result.addAll(sortActionsByName(getFilterActions()));
     result.addSeparator(StructureViewBundle.message("structureview.subgroup.group"));
     addGroupByActions(result);
-    return result;
   }
 
   private @NotNull List<AnAction> getSortActions() {
@@ -1003,14 +1000,16 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     @Override
     public void processMouseEvent(MouseEvent event) {
       if (event.getID() == MouseEvent.MOUSE_PRESSED) requestFocus();
-      if (myTreeModel instanceof StructureViewModel.ActionHandler actionHandler) {
-        boolean handled = processCustomEventHandler(actionHandler, event);
-        if (handled) {
-          event.consume();
-          return;
-        }
+      if (myTreeModel instanceof StructureViewModel.ActionHandler || myTreeModel instanceof StructureViewModel.ClickHandler) {
+        processCustomEventHandler(myTreeModel, event)
+          .whenComplete((Boolean handled, Throwable t) -> {
+            if (handled != null && handled)
+              event.consume();
+            else
+              super.processMouseEvent(event);
+          });
       }
-      super.processMouseEvent(event);
+      else super.processMouseEvent(event);
     }
 
     @Override
@@ -1048,24 +1047,32 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return super.getFileColorForPath(path);
     }
 
-    private boolean processCustomEventHandler(StructureViewModel.ActionHandler actionHandler, MouseEvent event) {
-      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return false;
+    private CompletableFuture<Boolean> processCustomEventHandler(
+      StructureViewModel handler, MouseEvent event
+    ) {
+      if (event.getClickCount() != 1 || event.getID() != MouseEvent.MOUSE_PRESSED) return CompletableFuture.completedFuture(false);
       TreePath path = getPathForLocation(event.getX(), event.getY());
-      if (path == null) return false;
+      if (path == null) return CompletableFuture.completedFuture(false);
       Object lastPathComponent = path.getLastPathComponent();
       StructureViewTreeElement treeElement = getStructureTreeElement(lastPathComponent);
-      if (treeElement == null) return false;
+      if (treeElement == null) return CompletableFuture.completedFuture(false);
 
       Rectangle pathBounds = getPathBounds(path);
-      if (pathBounds == null) return false;
+      if (pathBounds == null) return CompletableFuture.completedFuture(false);
       int dx = event.getX() - (int) pathBounds.getX();
-      if (dx < 0 || dx > pathBounds.width) return false;
+      if (dx < 0 || dx > pathBounds.width) return CompletableFuture.completedFuture(false);
 
       Component component = this.cellRenderer.getTreeCellRendererComponent(this, lastPathComponent, false, false, true, getRowForPath(path), false);
-      if (!(component instanceof SimpleColoredComponent simpleColoredComponent)) return false;
+      if (!(component instanceof SimpleColoredComponent simpleColoredComponent)) return CompletableFuture.completedFuture(false);
       int fragmentIndex = simpleColoredComponent.findFragmentAt(dx);
-      if (fragmentIndex >= 0) return actionHandler.handleClick(treeElement, fragmentIndex);
-      return false;
+      if (fragmentIndex < 0)
+        return CompletableFuture.completedFuture(false);
+      else if (handler instanceof StructureViewModel.ActionHandler actionHandler)
+        return CompletableFuture.completedFuture(actionHandler.handleClick(treeElement, fragmentIndex));
+      else if (handler instanceof StructureViewModel.ClickHandler actionHandler)
+        return actionHandler.handleClick(new StructureViewClickEvent(treeElement, fragmentIndex));
+      else
+        return CompletableFuture.completedFuture(false);
     }
 
     @Override

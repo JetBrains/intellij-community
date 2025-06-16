@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.tree.IElementType;
@@ -18,6 +18,11 @@ import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.util.BitUtil.isSet;
 import static com.intellij.util.BitUtil.set;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicReferenceParser {
   public static final int EAT_LAST_DOT = 0x01;
   public static final int ELLIPSIS = 0x02;
@@ -91,7 +96,7 @@ public class BasicReferenceParser {
         isSet(flags, VAR_TYPE) &&
         builder.lookAhead(1) != JavaTokenType.DOT &&
         builder.lookAhead(1) != JavaTokenType.COLON &&
-        PsiKeyword.VAR.equals(builder.getTokenText()) &&
+        JavaKeywords.VAR.equals(builder.getTokenText()) &&
         JavaFeature.LVTI.isSufficient(getLanguageLevel(builder))) {
       builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
     }

@@ -25,10 +25,6 @@ public class DefaultUpdateRequestParametersProvider implements UpdateRequestPara
 
   @Override
   public @NotNull Url amendUpdateRequest(@NotNull Url url) {
-    return passDefaultParameters(url);
-  }
-
-  public static @NotNull Url passDefaultParameters(@NotNull Url url) {
     if (URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
       return url;
     }
@@ -66,6 +62,10 @@ public class DefaultUpdateRequestParametersProvider implements UpdateRequestPara
       var metadata = facade.metadata;
       if (metadata != null) {
         parameters.put("metadata", metadata);
+      }
+      var userBucket = facade.userBucket;
+      if (userBucket != null) {
+        parameters.put("userBucket", userBucket);
       }
     }
 

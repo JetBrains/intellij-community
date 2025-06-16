@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 // ML-1086
@@ -92,11 +93,21 @@ internal abstract class InlineSessionWiseCaretListener : CaretListener {
 
 internal class InlineCompletionFocusListener : FocusChangeListener {
   override fun focusGained(editor: Editor) {
-    if (editor.caretModel.caretCount != 1 || editor.caretModel.currentCaret.hasSelection()) {
-      return
+    return // IJPL-179647: slow ops because we load a PSI-file on EDT before it's loaded by the platform
+
+    application.invokeLater {
+      if (editor.caretModel.caretCount != 1 || editor.caretModel.currentCaret.hasSelection()) {
+        return@invokeLater
+      }
+      val handler = InlineCompletion.getHandlerOrNull(editor) ?: return@invokeLater
+      val event = InlineCompletionEvent.EditorFocused(editor)
+      handler.invokeEvent(event)
     }
-    val handler = InlineCompletion.getHandlerOrNull(editor) ?: return
-    val event = InlineCompletionEvent.EditorFocused(editor)
-    handler.invokeEvent(event)
+  }
+
+  override fun focusLost(editor: Editor) {
+    // IJPL-189478: any interaction with the tooltip hides the inline completion. Didn't find an easy way to distinguish the tooltip.
+    return
+    hideInlineCompletion(editor, FinishType.FOCUS_LOST) // IJPL-186694
   }
 }

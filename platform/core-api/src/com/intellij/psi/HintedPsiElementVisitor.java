@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -22,5 +23,6 @@ public interface HintedPsiElementVisitor {
   /**
    * @return PSI element classes to visit
    */
-  @NotNull List<Class<?>> getHintPsiElements();
+  @NotNull @Unmodifiable
+  List<Class<?>> getHintPsiElements();
 }

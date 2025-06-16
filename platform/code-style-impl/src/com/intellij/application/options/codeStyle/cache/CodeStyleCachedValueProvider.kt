@@ -34,7 +34,7 @@ private val LOG = logger<CodeStyleCachedValueProvider>()
 @Service(Service.Level.PROJECT)
 private class CodeStyleCachedValueProviderService(@JvmField val coroutineScope: CoroutineScope)
 
-internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<VirtualFile>,
+internal class CodeStyleCachedValueProvider(val fileSupplier: Supplier<VirtualFile>,
                                             private val project: Project,
                                             private val dataHolder: UserDataHolder) : CachedValueProvider<CodeStyleSettings?> {
   private val file get() = fileSupplier.get()
@@ -197,10 +197,12 @@ internal class CodeStyleCachedValueProvider(private val fileSupplier: Supplier<V
           LOG.debug { "Created TransientCodeStyleSettings for ${file.name}" }
           for (modifier in CodeStyleSettingsModifier.EP_NAME.extensionList) {
             LOG.debug { "Modifying ${file.name}: ${modifier.javaClass.name}" }
-            if (modifier.modifySettings(modifiableSettings, psiFile)) {
+            if (modifier.modifySettingsAndUiCustomization(modifiableSettings, psiFile) || modifiableSettings.modifier != null) {
               LOG.debug { "Modified ${file.name}: ${modifier.javaClass.name}" }
-              modifiableSettings.setModifier(modifier)
               currSettings = modifiableSettings
+            }
+            if (modifiableSettings.modifier != null) {
+              LOG.debug { "Indenter for ${file.name}: ${modifier.javaClass.name}" }
               break
             }
           }

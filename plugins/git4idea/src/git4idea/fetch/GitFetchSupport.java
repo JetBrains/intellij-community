@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.fetch;
 
 import com.intellij.openapi.project.Project;
@@ -49,6 +49,12 @@ public interface GitFetchSupport {
    */
   @NotNull
   GitFetchResult fetch(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String refspec);
+
+  /**
+   * Fetches all targets defined in {@code fetchSpec}
+   */
+  @NotNull
+  GitFetchResult fetch(@NotNull Collection<GitFetchSpec> fetchSpec);
 
   /**
    * Returns the default remote to fetch from, or null if there are no remotes in the repository,

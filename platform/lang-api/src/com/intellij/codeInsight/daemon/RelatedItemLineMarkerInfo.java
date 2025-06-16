@@ -11,6 +11,7 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -23,7 +24,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
   /**
    * @deprecated Use {@link #RelatedItemLineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, NotNullFactory)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public RelatedItemLineMarkerInfo(@NotNull T element, @NotNull TextRange range, Icon icon, int updatePass,
                                    @Nullable Function<? super T, String> tooltipProvider,
                                    @Nullable GutterIconNavigationHandler<T> navHandler,
@@ -53,7 +54,7 @@ public class RelatedItemLineMarkerInfo<T extends PsiElement> extends MergeableLi
     myTargets = NotNullLazyValue.createValue(targets);
   }
 
-  public @NotNull Collection<? extends GotoRelatedItem> createGotoRelatedItems() {
+  public @NotNull @Unmodifiable Collection<? extends GotoRelatedItem> createGotoRelatedItems() {
     return myTargets.getValue();
   }
 

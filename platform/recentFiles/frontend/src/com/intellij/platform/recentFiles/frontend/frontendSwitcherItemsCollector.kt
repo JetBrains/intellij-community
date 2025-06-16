@@ -2,11 +2,10 @@
 package com.intellij.platform.recentFiles.frontend
 
 import com.intellij.ide.actions.ActivateToolWindowAction
-import com.intellij.ide.vfs.VirtualFileId
-import com.intellij.ide.vfs.rpcId
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
@@ -14,9 +13,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.platform.recentFiles.shared.SWITCHER_ELEMENTS_LIMIT
 
-private const val SWITCHER_ELEMENTS_LIMIT = 30
+private val LOG by lazy { fileLogger() }
 
 private val mnemonicAndMainTextComparator by lazy {
   Comparator.comparing(SwitcherListItem::mnemonic) { m1, m2 ->
@@ -25,11 +26,13 @@ private val mnemonicAndMainTextComparator by lazy {
     .thenComparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE)
 }
 
-internal fun collectFilesFromFrontendEditorSelectionHistory(project: Project): List<VirtualFileId> {
-  return (FileEditorManager.getInstance(project) as FileEditorManagerImpl).getSelectionHistoryList()
+internal fun collectFilesFromFrontendEditorSelectionHistory(project: Project): List<VirtualFile> {
+  return (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)
+    ?.getSelectionHistoryList()
+    .orEmpty()
     .asSequence()
     .take(SWITCHER_ELEMENTS_LIMIT)
-    .map { it.first.rpcId() }
+    .map { it.first }
     .toList()
 }
 
@@ -107,7 +110,16 @@ private fun updateMnemonics(windows: List<SwitcherToolWindow>, mnemonicsRegistry
       }
     }
   }
-  assert(windows.size == toolWindowsWithAlreadyAssignedMnemonics.size) { "There are ${windows.size - toolWindowsWithAlreadyAssignedMnemonics.size} missing in the resulting recent toolwindows list" }
+  if (windows.size != toolWindowsWithAlreadyAssignedMnemonics.size) {
+    val processedToolWindows = toolWindowsWithAlreadyAssignedMnemonics
+      .joinToString(separator = ", ", postfix = "\n") { it.window.id }
+    val skippedToolWindows = windows.toSet().minus(toolWindowsWithAlreadyAssignedMnemonics)
+      .filter { it !in toolWindowsWithAlreadyAssignedMnemonics }
+      .joinToString(separator = ", ", postfix = "\n") { it.window.id }
+    LOG.warn("There are ${windows.size - toolWindowsWithAlreadyAssignedMnemonics.size} excluded from the resulting toolwindows list. " +
+             "The following toolwindows were processed: ${processedToolWindows}The following toolwindows were skipped: $skippedToolWindows"
+    )
+  }
   return toolWindowsWithAlreadyAssignedMnemonics
 }
 

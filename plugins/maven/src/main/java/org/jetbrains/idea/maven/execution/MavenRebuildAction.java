@@ -1,10 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.impl.ExecutionManagerImpl;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.FakeRerunAction;
+import com.intellij.execution.runners.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,7 +37,7 @@ public class MavenRebuildAction extends FakeRerunAction {
   }
 
   @Override
-  protected @Nullable ExecutionEnvironment getEnvironment(@NotNull AnActionEvent event) {
-    return myEnvironment;
+  protected @Nullable ExecutionEnvironmentProxy getEnvironmentProxy(@NotNull AnActionEvent event) {
+    return new BackendExecutionEnvironmentProxy(myEnvironment);
   }
 }

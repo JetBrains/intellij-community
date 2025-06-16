@@ -2,6 +2,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
@@ -40,7 +41,7 @@ public final class MyDiffContainer extends JBLayeredPane implements Disposable {
 
   @Override
   public void dispose() {
-    myIcon.dispose();
+    Disposer.dispose(myIcon);
   }
 
   @ApiStatus.Internal

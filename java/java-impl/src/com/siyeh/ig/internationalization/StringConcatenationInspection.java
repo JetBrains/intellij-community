@@ -16,7 +16,7 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
@@ -126,7 +126,7 @@ public final class StringConcatenationInspection extends BaseInspection {
                                                                     listOwner.getResolveScope()) == null) {
       return null;
     }
-    return new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, listOwner);
+    return LocalQuickFix.from(new AddAnnotationModCommandAction(AnnotationUtil.NON_NLS, listOwner));
   }
 
   public static @Nullable PsiModifierListOwner getAnnotatableElement(PsiExpression expression) {

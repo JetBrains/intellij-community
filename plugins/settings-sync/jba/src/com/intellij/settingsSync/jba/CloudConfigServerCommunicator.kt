@@ -4,9 +4,11 @@ import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.settingsSync.core.AbstractServerCommunicator
+import com.intellij.settingsSync.core.SettingsSyncBundle
 import com.intellij.settingsSync.core.SettingsSyncEventListener
 import com.intellij.settingsSync.core.SettingsSyncEvents
-import com.intellij.settingsSync.core.SettingsSyncSettings
+import com.intellij.settingsSync.core.SettingsSyncStatusTracker
+import com.intellij.settingsSync.core.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.jba.auth.JBAAuthService
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.cloudconfig.CloudConfigFileClientV2
@@ -94,9 +96,9 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     }
     else if (e is UnauthorizedException) {
       _currentIdTokenVar?.also {
-        jbaAuthService.invalidateJBA(it)
         LOG.warn("Got \"Unauthorized\" from Settings Sync server. Settings Sync will be disabled. Please login to JBA again")
-        SettingsSyncSettings.getInstance().syncEnabled = false
+        setAuthActionRequired()
+        jbaAuthService.invalidateJBA(it)
       }
     }
     else {
@@ -157,12 +159,38 @@ internal open class CloudConfigServerCommunicator(private val serverUrl: String?
     val idToken = jbaAuthService.idToken
     _currentIdTokenVar = idToken
     if (idToken == null) {
-      LOG.warn("No idToken provided! Setting Sync is not ready yet")
+      if (jbaAuthService.getAccountInfoService()?.userData != null) {
+        setAuthActionRequired()
+      }
       return null
     } else {
       configuration.auth(JbaJwtTokenAuthProvider(idToken))
     }
     return configuration
+  }
+
+  private fun setAuthActionRequired() {
+    if (SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.ActionRequired)
+      return
+    jbaAuthService.authRequiredAction = SettingsSyncAuthService.PendingUserAction(
+      message = SettingsSyncJbaBundle.message("action.settingsSync.authRequired"),
+      actionTitle = SettingsSyncBundle.message("config.button.login"),
+      actionDescription = SettingsSyncJbaBundle.message("action.settingsSync.authRequired.text")
+      ) {
+      val userData = jbaAuthService.login(it)
+      if (userData != null) {
+        jbaAuthService.authRequiredAction = null
+        SettingsSyncStatusTracker.getInstance().updateOnSuccess()
+      }
+    }
+  }
+
+  override fun dispose() {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("Disposing...")
+    }
+    clientRef.set(null)
+    _currentIdTokenVar = null
   }
 
   companion object {

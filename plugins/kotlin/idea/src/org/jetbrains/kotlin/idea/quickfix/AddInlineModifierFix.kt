@@ -1,38 +1,37 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.psi.findParameterWithName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
 
-class AddInlineModifierFix(
+internal class AddInlineModifierFix(
     parameter: KtParameter,
     modifier: KtModifierKeywordToken
-) : AddModifierFixFE10(parameter, modifier) {
+) : AddModifierFix(parameter, modifier) {
 
-    override fun getText(): String {
-        val element = this.element
-        return when {
-            element != null -> KotlinBundle.message("fix.add.modifier.inline.parameter.text", modifier.value, element.name.toString())
-            else -> null
-        } ?: ""
-    }
+    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation =
+        Presentation.of(KotlinBundle.message("fix.add.modifier.inline.parameter.text", modifier.value, element.name.toString()))
 
-    override fun getFamilyName() = KotlinBundle.message("fix.add.modifier.inline.parameter.family", modifier.value)
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.add.modifier.inline.parameter.family", modifier.value)
 
     object CrossInlineFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val casted = Errors.NON_LOCAL_RETURN_NOT_ALLOWED.cast(diagnostic)
             val reference = casted.a as? KtNameReferenceExpression ?: return null
             val parameter = reference.findParameterWithName(reference.getReferencedName()) ?: return null
-            return AddInlineModifierFix(parameter, KtTokens.CROSSINLINE_KEYWORD)
+            return AddInlineModifierFix(parameter, KtTokens.CROSSINLINE_KEYWORD).asIntention()
         }
     }
 
@@ -45,21 +44,21 @@ class AddInlineModifierFix(
             }
             val reference = casted.a as? KtNameReferenceExpression ?: return null
             val parameter = reference.findParameterWithName(reference.getReferencedName()) ?: return null
-            return AddInlineModifierFix(parameter, KtTokens.NOINLINE_KEYWORD)
+            return AddInlineModifierFix(parameter, KtTokens.NOINLINE_KEYWORD).asIntention()
         }
     }
 
     object NoInlineSuspendFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val parameter = diagnostic.psiElement as? KtParameter ?: return null
-            return AddInlineModifierFix(parameter, KtTokens.NOINLINE_KEYWORD)
+            return AddInlineModifierFix(parameter, KtTokens.NOINLINE_KEYWORD).asIntention()
         }
     }
 
     object CrossInlineSuspendFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val parameter = diagnostic.psiElement as? KtParameter ?: return null
-            return AddInlineModifierFix(parameter, KtTokens.CROSSINLINE_KEYWORD)
+            return AddInlineModifierFix(parameter, KtTokens.CROSSINLINE_KEYWORD).asIntention()
         }
     }
 

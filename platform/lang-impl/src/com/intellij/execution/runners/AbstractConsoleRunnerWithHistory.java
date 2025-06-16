@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runners;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -75,7 +75,7 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
 
       ProcessTerminatedListener.attach(myProcessHandler);
 
-      myProcessHandler.addProcessListener(new ProcessAdapter() {
+      myProcessHandler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           finishConsole();

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.AnnotationUtil
@@ -33,6 +33,7 @@ fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true)
   require(elements.isNotEmpty())
   val analyzer = CodeFragmentAnalyzer(elements)
 
+  if (analyzer.hasObservableThrowExit()) throw ExtractException(JavaRefactoringBundle.message("extract.method.error.exception"), elements.first())
   val flowOutput = findFlowOutput(analyzer)
                    ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), elements.first())
 
@@ -128,7 +129,6 @@ private fun normalizeType(type: PsiType): PsiType {
 }
 
 private fun findFlowOutput(analyzer: CodeFragmentAnalyzer): FlowOutput? {
-  if (analyzer.hasObservableThrowExit()) return null
   val (exitStatements, numberOfExits, isNormalExit) = analyzer.findExitDescription()
   return when (numberOfExits) {
     1 -> if (exitStatements.isNotEmpty()) UnconditionalFlow(exitStatements, isNormalExit) else EmptyFlow

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.collection.visualizer
 
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -37,8 +37,7 @@ interface XDebuggerNodeLinkActionProvider {
     fun computeHyperlink(project: Project, node: XValueNodeImpl) {
       if (node.hasLinks()) return
 
-      val session = XDebugView.getSession(node.tree) ?: return
-      val scope = XDebuggerSuspendScopeProvider.provideSuspendScope(session) ?: return
+      val scope = XDebugView.getSessionProxy(node.tree)?.currentSuspendContextCoroutineScope?: return
 
       scope.launch(Dispatchers.Default) {
         for (provider in EP_NAME.extensionList) {

@@ -110,12 +110,19 @@ public final class ScopesAndSeveritiesTable extends JBTable {
     });
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
-    SeverityRenderer renderer = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> tableSettings.onSettingsChanged(), this);
+    SeverityRenderer renderer = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> {}, this);
     severityColumn.setCellRenderer(renderer);
-    severityColumn.setCellEditor(renderer);
+    SeverityRenderer editor = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> tableSettings.onSettingsChanged(), this);
+    severityColumn.setCellEditor(editor);
 
     final TableColumn highlightingColumn = columnModel.getColumn(HIGHLIGHTING_COLUMN);
-    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(getEditorAttributesKeysAndNames(tableSettings.getInspectionProfile())) {
+    var editorAttributesKeysAndNames = getEditorAttributesKeysAndNames(tableSettings.getInspectionProfile());
+    final HighlightingRenderer highlightingRenderer = new HighlightingRenderer(editorAttributesKeysAndNames) {
+      @Override
+      void openColorSettings() { } // not used for renderers
+    };
+    highlightingColumn.setCellRenderer(highlightingRenderer);
+    final HighlightingRenderer highlightingEditor = new HighlightingRenderer(editorAttributesKeysAndNames) {
       @Override
       void openColorSettings() {
         final var dataContext = DataManager.getInstance().getDataContext(this);
@@ -126,8 +133,7 @@ public final class ScopesAndSeveritiesTable extends JBTable {
         });
       }
     };
-    highlightingColumn.setCellRenderer(highlightingRenderer);
-    highlightingColumn.setCellEditor(highlightingRenderer);
+    highlightingColumn.setCellEditor(highlightingEditor);
 
     setColumnSelectionAllowed(false);
     setRowSelectionAllowed(true);

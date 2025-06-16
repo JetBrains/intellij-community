@@ -15,6 +15,7 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +57,7 @@ public final class LanguageFolding extends LanguageExtension<FoldingBuilder> {
    * Only queries base language results if there are no extensions for originally requested language.
    */
   @Override
-  public @NotNull List<FoldingBuilder> allForLanguage(@NotNull Language language) {
+  public @NotNull @Unmodifiable List<FoldingBuilder> allForLanguage(@NotNull Language language) {
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
       List<FoldingBuilder> extensions = forKey(l);
       if (!extensions.isEmpty()) {

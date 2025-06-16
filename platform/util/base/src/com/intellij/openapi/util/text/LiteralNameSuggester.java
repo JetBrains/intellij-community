@@ -4,6 +4,7 @@ package com.intellij.openapi.util.text;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Arrays;
 import java.util.List;
@@ -60,7 +61,7 @@ public final class LiteralNameSuggester {
    * @param literalValue string literal value
    * @return suggested names
    */
-  public static List<String> literalNames(String literalValue) {
+  public static @Unmodifiable List<String> literalNames(String literalValue) {
     return Arrays.stream(ourPatternBasedSuggestions)
       .filter(suggestion -> suggestion.pattern.matcher(literalValue).matches())
       .flatMap(suggestion -> suggestion.names.stream()).collect(Collectors.toList());

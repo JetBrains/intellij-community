@@ -62,11 +62,6 @@ f:org.jetbrains.debugger.SourceInfo
 - getLine():I
 - getOffset():I
 - f:getUrl():com.intellij.util.Url
-a:org.jetbrains.debugger.VariableViewBase
-- com.intellij.xdebugger.frame.XNamedValue
-- p:<init>(java.lang.String):V
-- a:getValueType():org.jetbrains.debugger.values.ValueType
-- isDomPropertiesValue():Z
 a:org.jetbrains.debugger.connection.RemoteVmConnection
 - org.jetbrains.debugger.connection.VmConnection
 - <init>():V
@@ -87,7 +82,6 @@ a:org.jetbrains.debugger.connection.VmConnection
 - com.intellij.openapi.Disposable
 - <init>():V
 - f:addDebugListener(org.jetbrains.debugger.DebugEventListener):V
-- f:addListener(com.intellij.util.io.socketConnection.SocketConnectionListener):V
 - f:close(java.lang.String,com.intellij.util.io.socketConnection.ConnectionStatus):V
 - detachAndClose():org.jetbrains.concurrency.Promise
 - dispose():V

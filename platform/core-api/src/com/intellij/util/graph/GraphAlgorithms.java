@@ -30,12 +30,12 @@ public abstract class GraphAlgorithms {
     int levelBound
   );
 
-  public abstract @Nullable <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
+  public abstract @Nullable @Unmodifiable <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish);
 
-  public abstract @NotNull <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
+  public abstract @NotNull @Unmodifiable <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
                                                                       @NotNull ProgressIndicator progressIndicator);
 
-  public abstract @NotNull <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
+  public abstract @NotNull @Unmodifiable <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node);
 
   public abstract <Node> void iterateOverAllSimpleCycles(
     @NotNull Graph<Node> graph,

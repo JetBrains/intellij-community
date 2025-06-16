@@ -374,7 +374,7 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
             scope.hasKotlinJvmRuntime(module.project)
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
                     || hasKotlinCommonRuntimeInScope(module)
-                    || hasKotlinCommonLegacyRuntimeInScope(scope)
+                    || hasKotlinCommonLegacyRuntimeInScope(scope, module.project)
                     || hasKotlinJsRuntimeInScope(module)
                     || hasKotlinWasmRuntimeInScope(module)
                     || hasKotlinWasmJsRuntimeInScope(module)
@@ -449,8 +449,8 @@ fun hasKotlinCommonRuntimeInScope(module: Module): Boolean {
 /**
  * Will check if kotlin is present as .kotlin_metadata (legacy) file
  */
-fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope): Boolean {
-    return IdeVirtualFileFinder(scope).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
+fun hasKotlinCommonLegacyRuntimeInScope(scope: GlobalSearchScope, project: Project): Boolean {
+    return IdeVirtualFileFinder(scope, project).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
 }
 
 fun hasKotlinJsRuntimeInScope(module: Module): Boolean {

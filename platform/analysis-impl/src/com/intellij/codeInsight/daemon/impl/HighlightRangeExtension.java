@@ -16,5 +16,5 @@ public interface HighlightRangeExtension {
    * (Regular highlighting doesn't analyze parents of PSI elements with an error).
    * Please be aware that returning true may decrease highlighting performance/increase latency.
    */
-  boolean isForceHighlightParents(@NotNull PsiFile file);
+  boolean isForceHighlightParents(@NotNull PsiFile psiFile);
 }

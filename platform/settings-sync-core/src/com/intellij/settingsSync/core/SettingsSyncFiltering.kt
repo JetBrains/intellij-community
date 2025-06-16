@@ -4,12 +4,12 @@ import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentCategorizer
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.settingsSync.core.config.EDITOR_FONT_SUBCATEGORY_ID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -40,9 +40,13 @@ private fun getRoamableCategory(fileName: String, componentClasses: List<Class<P
     val category = ComponentCategorizer.getCategory(componentClass)
     if (category == SettingsCategory.OTHER) continue
 
-    val state = componentClass.getAnnotation(State::class.java)
+    val state = componentClass.getAnnotation(State::class.java) ?: continue
     val storage = state.storages.find { it.value == fileName }
-    if (storage == null || !storage.roamingType.isRoamable) {
+    if (storage == null) {
+      if (state.additionalExportDirectory != fileName && !fileName.startsWith(state.additionalExportDirectory + '/')) {
+        continue
+      }
+    } else if(!storage.roamingType.isRoamable) {
       continue
     }
 
@@ -101,7 +105,7 @@ private fun getSubCategory(fileSpec: String): String? {
 }
 
 private fun findComponentClasses(fileSpec: String): List<Class<PersistentStateComponent<Any>>> {
-  val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
+  val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
   val componentClasses = ArrayList<Class<PersistentStateComponent<Any>>>()
   componentManager.processAllImplementationClasses { aClass, _ ->
     if (PersistentStateComponent::class.java.isAssignableFrom(aClass)) {

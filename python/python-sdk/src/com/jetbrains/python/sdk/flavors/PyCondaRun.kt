@@ -14,14 +14,22 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.packaging.*
+import com.jetbrains.python.packaging.IndicatedProcessOutputListener
+import com.jetbrains.python.packaging.PyCondaPackageService
+import com.jetbrains.python.packaging.PyExecutionException
+import com.jetbrains.python.packaging.getCondaBasePython
 import com.jetbrains.python.sdk.PySdkUtil
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 
 @Deprecated("Use Sdk.configureBuilderToRunPythonOnTarget")
 @Throws(ExecutionException::class)
 fun runConda(condaExecutable: String, arguments: List<String>): ProcessOutput {
   return run(condaExecutable, arguments, readCondaEnv(condaExecutable))
 }
+
+@ApiStatus.Internal
 
 @Deprecated("Use Sdk.configureBuilderToRunPythonOnTarget")
 @Throws(ExecutionException::class)
@@ -68,6 +76,8 @@ private fun ProcessOutput.checkExitCode(executable: String, arguments: List<Stri
     throw PyExecutionException(message, executable, arguments, this)
   }
 }
+
+@ApiStatus.Internal
 
 @Deprecated("Use PyCondaEnv")
 @Throws(ExecutionException::class, JsonSyntaxException::class)

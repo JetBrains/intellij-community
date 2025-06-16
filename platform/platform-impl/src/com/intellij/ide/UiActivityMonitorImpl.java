@@ -13,6 +13,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.*;
@@ -137,11 +138,13 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
     return container != null ? container : getGlobalBusy();
   }
 
-  void initBusyObjectFor(@Nullable Project key) {
+  @VisibleForTesting
+  public void initBusyObjectFor(@Nullable Project key) {
     myObjects.put(key, new BusyContainer(key));
   }
 
-  boolean hasObjectFor(Project project) {
+  @VisibleForTesting
+  public boolean hasObjectFor(Project project) {
     return myObjects.containsKey(project);
   }
 

@@ -33,6 +33,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -508,6 +509,7 @@ public class PsiUtilCore {
     }
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public static @Nullable PsiFileSystemItem findFileSystemItem(@Nullable Project project, @Nullable VirtualFile file) {
     if (project == null || file == null) return null;
     if (project.isDisposed() || !file.isValid()) return null;

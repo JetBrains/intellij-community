@@ -184,12 +184,13 @@ com.intellij.usages.UsageGroup
 - isValid():Z
 - update():V
 c:com.intellij.usages.UsageInfo2UsageAdapter
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.usages.RenameableUsage
 - com.intellij.usages.UsageInfoAdapter
 - com.intellij.usages.UsagePresentation
 - com.intellij.usages.rules.MergeableUsage
 - com.intellij.usages.rules.PsiElementUsage
+- com.intellij.usages.rules.UsageDocumentProcessor
 - com.intellij.usages.rules.UsageInFile
 - com.intellij.usages.rules.UsageInLibrary
 - com.intellij.usages.rules.UsageInModule
@@ -203,7 +204,6 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - p:computeText():com.intellij.usages.TextChunk[]
 - s:convert(com.intellij.usageView.UsageInfo[]):com.intellij.usages.UsageInfo2UsageAdapter[]
 - getBackgroundColor():java.awt.Color
-- getData(java.lang.String):java.lang.Object
 - getDocument():com.intellij.openapi.editor.Document
 - f:getElement():com.intellij.psi.PsiElement
 - getFile():com.intellij.openapi.vfs.VirtualFile
@@ -232,11 +232,11 @@ c:com.intellij.usages.UsageInfo2UsageAdapter
 - merge(com.intellij.usages.rules.MergeableUsage):Z
 - navigate(Z):V
 - openTextEditor(Z):com.intellij.openapi.editor.Editor
-- processRangeMarkers(com.intellij.util.Processor):Z
 - rename(java.lang.String):V
 - reset():V
 - pf:resetCachedPresentation():V
 - selectInEditor():V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 com.intellij.usages.UsageInfoAdapter
 - com.intellij.usages.Usage
 - com.intellij.usages.rules.MergeableUsage
@@ -542,6 +542,10 @@ a:com.intellij.usages.rules.SingleParentUsageGroupingRule
 - pa:getParentGroupFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):com.intellij.usages.UsageGroup
 - f:getParentGroupsFor(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):java.util.List
 - groupUsage(com.intellij.usages.Usage):com.intellij.usages.UsageGroup
+com.intellij.usages.rules.UsageDocumentProcessor
+- com.intellij.usages.UsageInfoAdapter
+- a:getDocument():com.intellij.openapi.editor.Document
+- processRangeMarkers(com.intellij.util.Processor):Z
 com.intellij.usages.rules.UsageFilteringRule
 - sf:EMPTY_ARRAY:com.intellij.usages.rules.UsageFilteringRule[]
 - getActionId():java.lang.String

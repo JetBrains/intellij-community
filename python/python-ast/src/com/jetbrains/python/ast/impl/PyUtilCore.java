@@ -227,7 +227,7 @@ public final class PyUtilCore {
     return name == null ? 0 : name.startsWith("__") ? 2 : name.startsWith(PyNames.UNDERSCORE) ? 1 : 0;
   }
 
-  public static @Nullable List<String> strListValue(PyAstExpression value) {
+  public static @Nullable List<@NotNull String> strListValue(@Nullable PyAstExpression value) {
     while (value instanceof PyAstParenthesizedExpression) {
       value = ((PyAstParenthesizedExpression)value).getContainedExpression();
     }
@@ -302,5 +302,51 @@ public final class PyUtilCore {
       }
     }
     return null;
+  }
+
+  public static @Nullable PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
+    PsiElement element;
+    if (caretOffset < 0) {
+      return null;
+    }
+    int lineStartOffset = 0;
+    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    if (document != null) {
+      int lineNumber = document.getLineNumber(caretOffset);
+      lineStartOffset = document.getLineStartOffset(lineNumber);
+    }
+    do {
+      caretOffset--;
+      element = psiFile.findElementAt(caretOffset);
+    }
+    while (caretOffset >= lineStartOffset && PsiTreeUtil.instanceOf(element, toSkip));
+    return PsiTreeUtil.instanceOf(element, toSkip) ? null : element;
+  }
+
+  public static @Nullable PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
+    PsiElement element = findNextAtOffset(psiFile, caretOffset, PsiWhiteSpace.class);
+    if (element == null) {
+      element = findPrevAtOffset(psiFile, caretOffset - 1, PsiWhiteSpace.class);
+    }
+    return element;
+  }
+
+  public static @Nullable PsiElement findNextAtOffset(final @NotNull PsiFile psiFile, int caretOffset, @NotNull Class<? extends PsiElement> @NotNull ... toSkip) {
+    PsiElement element = psiFile.findElementAt(caretOffset);
+    if (element == null) {
+      return null;
+    }
+
+    final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
+    int lineEndOffset = 0;
+    if (document != null) {
+      int lineNumber = document.getLineNumber(caretOffset);
+      lineEndOffset = document.getLineEndOffset(lineNumber);
+    }
+    while (caretOffset < lineEndOffset && PsiTreeUtil.instanceOf(element, toSkip)) {
+      caretOffset++;
+      element = psiFile.findElementAt(caretOffset);
+    }
+    return PsiTreeUtil.instanceOf(element, toSkip) ? null : element;
   }
 }

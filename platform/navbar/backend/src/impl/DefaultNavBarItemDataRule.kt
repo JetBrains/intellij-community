@@ -1,32 +1,32 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.backend.impl
 
-import com.intellij.ide.impl.dataRules.GetDataRule
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
-import com.intellij.model.Pointer
 import com.intellij.openapi.actionSystem.CommonDataKeys.*
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataMap
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.MODULE
+import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.module.ModuleType
 import com.intellij.platform.navbar.backend.NavBarItem
+import com.intellij.platform.navbar.backend.NavBarItem.Companion.NAVBAR_ITEM_KEY
 import com.intellij.platform.navbar.backend.NavBarItemProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 
-public open class DefaultNavBarItemDataRule : GetDataRule {
-
-  override fun getData(dataProvider: DataProvider): Pointer<out NavBarItem>? {
-    return getNavBarItem(dataProvider)?.createPointer()
+class DefaultNavBarItemDataRule : UiDataRule {
+  override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    sink.lazyValue(NAVBAR_ITEM_KEY) { dataProvider ->
+      getNavBarItem(dataProvider)?.createPointer()
+    }
   }
 
-  private fun getNavBarItem(dataProvider: DataProvider): NavBarItem? {
-    val ctx = DataContext { dataId -> dataProvider.getData(dataId) }
-
+  fun getNavBarItem(dataProvider: DataMap): NavBarItem? {
     // leaf element -- either from old EP impls or default one
     // owner -- EP extension provided the leaf (if any)
-    val (leaf, owner) = fromOldExtensions { ext -> ext.getLeafElement(ctx)?.let { it to ext } }
-                        ?: fromDataContext(ctx)?.let { Pair(it, null) }
+    val (leaf, owner) = fromOldExtensions { ext -> ext.getLeafElement(dataProvider)?.let { it to ext } }
+                        ?: fromDataContext(dataProvider)?.let { Pair(it, null) }
                         ?: return null
 
     if (leaf.isValid) {
@@ -38,11 +38,11 @@ public open class DefaultNavBarItemDataRule : GetDataRule {
     }
     else {
       // Narrow down the root element to the first interesting one
-      MODULE.getData(ctx)
+      dataProvider[MODULE]
         ?.takeUnless { ModuleType.isInternal(it) }
         ?.let { return ModuleNavBarItem(it) }
 
-      val projectItem = PROJECT.getData(ctx)
+      val projectItem = dataProvider[PROJECT]
                           ?.let(::ProjectNavBarItem)
                         ?: return null
 
@@ -62,20 +62,17 @@ public open class DefaultNavBarItemDataRule : GetDataRule {
     }
   }
 
-  private fun fromDataContext(ctx: DataContext): PsiElement? {
-    val psiFile = PSI_FILE.getData(ctx)
+  private fun fromDataContext(dataProvider: DataMap): PsiElement? {
+    val psiFile = dataProvider[PSI_FILE]
     if (psiFile != null) {
       ensurePsiFromExtensionIsValid(psiFile, "Context PSI_FILE is invalid", psiFile.javaClass)
       return adjustWithAllExtensions(psiFile)
     }
-
-    val fileSystemItem = PsiUtilCore.findFileSystemItem(PROJECT.getData(ctx), VIRTUAL_FILE.getData(ctx))
+    val fileSystemItem = PsiUtilCore.findFileSystemItem(dataProvider[PROJECT], dataProvider[VIRTUAL_FILE])
     if (fileSystemItem != null) {
       ensurePsiFromExtensionIsValid(fileSystemItem, "Context fileSystemItem is invalid", fileSystemItem.javaClass)
       return adjustWithAllExtensions(fileSystemItem)
     }
-
     return null
   }
-
 }

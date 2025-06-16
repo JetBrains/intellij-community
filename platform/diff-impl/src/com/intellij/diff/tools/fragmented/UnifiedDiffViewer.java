@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -81,6 +81,7 @@ import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -473,6 +474,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       myEditor.getGutterComponentEx().revalidateMarkup();
     };
   }
+
 
   private @NotNull RangeMarker createGuardedBlock(int start, int end) {
     RangeMarker block = myDocument.createGuardedBlock(start, end);
@@ -1061,6 +1063,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   // Helpers
   //
 
+  @ApiStatus.Internal
   @Override
   public @Nullable PrevNextDifferenceIterable getDifferenceIterable() {
     return myPrevNextDifferenceIterable;
@@ -1583,7 +1586,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   }
 
   private class UnifiedImaginaryEditor extends ImaginaryEditor {
-    private static final Set<String> ourReportedMockMethods = ContainerUtil.newConcurrentSet();
+    private static final Set<String> ourReportedMockMethods = ConcurrentHashMap.newKeySet();
     private static boolean ourDisableImaginaryEditor = false;
 
     private final Side mySide;

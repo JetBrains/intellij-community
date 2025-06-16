@@ -52,7 +52,7 @@ sealed class KotlinPsiUpdateModCommandAction<E : PsiElement, C : Any>(
      * @see [PsiUpdateModCommandAction.invoke]
      */
     @RequiresBackgroundThread
-    protected abstract fun invoke(
+    abstract fun invoke(
         actionContext: ActionContext,
         element: E,
         elementContext: C,

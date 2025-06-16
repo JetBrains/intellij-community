@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -25,6 +25,8 @@ enum class OsFamily(
   WINDOWS(osId = BuildOptions.OS_WINDOWS, osName = "Windows", dirName = "win", distSuffix = "win", jbrArchiveSuffix = "windows"),
   MACOS(osId = BuildOptions.OS_MAC, osName = "macOS", dirName = "mac", distSuffix = "mac", jbrArchiveSuffix = "osx"),
   LINUX(osId = BuildOptions.OS_LINUX, osName = "Linux", dirName = "linux", distSuffix = "unix", jbrArchiveSuffix = "linux");
+
+  val binaryExt: String get() = if (this == WINDOWS) ".exe" else ""
 
   companion object {
     @JvmField

@@ -5,6 +5,8 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService;
+import com.intellij.ide.plugins.newui.PluginUiModel;
+import com.intellij.ide.plugins.newui.PluginUiModelAdapter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -95,8 +97,18 @@ public final class RepositoryHelper {
 
   /**
    * Use method only for getting plugins from custom repositories
+   * deprecated, use {@link #loadPluginModels}
    */
+  @Deprecated(forRemoval = true)
   public static @NotNull List<PluginNode> loadPlugins(
+    @Nullable String repositoryUrl,
+    @Nullable BuildNumber build,
+    @Nullable ProgressIndicator indicator
+  ) throws IOException {
+    return ContainerUtil.map(loadPluginModels(repositoryUrl, build, indicator), it -> (PluginNode)it.getDescriptor());
+  }
+
+  public static @NotNull List<PluginUiModel> loadPluginModels(
     @Nullable String repositoryUrl,
     @Nullable BuildNumber build,
     @Nullable ProgressIndicator indicator
@@ -129,39 +141,39 @@ public final class RepositoryHelper {
     return process(descriptors, build != null ? build : PluginManagerCore.getBuildNumber(), repositoryUrl);
   }
 
-  private static List<PluginNode> process(List<PluginNode> pluginNodes, BuildNumber build, @Nullable String repositoryUrl) {
-    var result = new LinkedHashMap<PluginId, PluginNode>(pluginNodes.size());
+  private static List<PluginUiModel> process(List<PluginUiModel> uiModels, BuildNumber build, @Nullable String repositoryUrl) {
+    var result = new LinkedHashMap<PluginId, PluginUiModel>(uiModels.size());
 
     var isPaidPluginsRequireMarketplacePlugin = isPaidPluginsRequireMarketplacePlugin();
 
-    for (var node : pluginNodes) {
-      var pluginId = node.getPluginId();
+    for (var model : uiModels) {
+      var pluginId = model.getPluginId();
 
-      if (repositoryUrl != null && node.getDownloadUrl() == null) {
+      if (repositoryUrl != null && model.getDownloadUrl() == null) {
         LOG.debug("Malformed plugin record (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
 
-      if (isBrokenPlugin(node) || PluginManagerCore.isIncompatible(node, build)) {
+      if (isBrokenPlugin(model.getPluginId(), model.getVersion()) || PluginManagerCore.isIncompatible(model.getDescriptor(), build)) {
         LOG.debug("An incompatible plugin (id:" + pluginId + " repository:" + repositoryUrl + ")");
         continue;
       }
 
       if (repositoryUrl != null) {
-        node.setRepositoryName(repositoryUrl);
+        model.setRepositoryName(repositoryUrl);
       }
 
-      if (node.getName() == null) {
-        var url = node.getDownloadUrl();
-        node.setName(FileUtilRt.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
+      if (model.getName() == null) {
+        var url = model.getDownloadUrl();
+        model.setName(FileUtilRt.getNameWithoutExtension(url.substring(url.lastIndexOf('/') + 1)));
       }
 
       var previous = result.get(pluginId);
-      if (previous == null || VersionComparatorUtil.compare(node.getVersion(), previous.getVersion()) > 0) {
-        result.put(pluginId, node);
+      if (previous == null || VersionComparatorUtil.compare(model.getVersion(), previous.getVersion()) > 0) {
+        result.put(pluginId, model);
       }
 
-      addMarketplacePluginDependencyIfRequired(node, isPaidPluginsRequireMarketplacePlugin);
+      addMarketplacePluginDependencyIfRequired(model, isPaidPluginsRequireMarketplacePlugin);
     }
 
     return List.copyOf(result.values());
@@ -170,29 +182,44 @@ public final class RepositoryHelper {
   /**
    * If a plugin is paid (has `productCode`) and the IDE is not JetBrains "ultimate", then MARKETPLACE_PLUGIN_ID is required.
    */
-  public static void addMarketplacePluginDependencyIfRequired(@NotNull PluginNode node) {
+  @ApiStatus.Internal
+  public static void addMarketplacePluginDependencyIfRequired(@NotNull PluginUiModel model) {
     var isPaidPluginsRequireMarketplacePlugin = isPaidPluginsRequireMarketplacePlugin();
-    addMarketplacePluginDependencyIfRequired(node, isPaidPluginsRequireMarketplacePlugin);
+    addMarketplacePluginDependencyIfRequired(model, isPaidPluginsRequireMarketplacePlugin);
   }
 
   private static boolean isPaidPluginsRequireMarketplacePlugin() {
     var core = PluginManagerCore.findPlugin(PluginManagerCore.CORE_ID);
-    return core == null || !core.pluginAliases.contains(PluginId.getId(ULTIMATE_MODULE)) || !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
+    return core == null ||
+           !core.getPluginAliases().contains(PluginId.getId(ULTIMATE_MODULE)) ||
+           !ApplicationInfoImpl.getShadowInstance().isVendorJetBrains();
   }
 
-  private static void addMarketplacePluginDependencyIfRequired(PluginNode node, boolean isPaidPluginsRequireMarketplacePlugin) {
+  private static void addMarketplacePluginDependencyIfRequired(PluginUiModel node, boolean isPaidPluginsRequireMarketplacePlugin) {
     if (isPaidPluginsRequireMarketplacePlugin && node.getProductCode() != null) {
-      node.addDepends(MARKETPLACE_PLUGIN_ID, false);
+      node.addDependency(PluginId.getId(MARKETPLACE_PLUGIN_ID), false);
     }
   }
 
   @ApiStatus.Internal
+  @Deprecated(forRemoval = true)
   public static @NotNull Collection<PluginNode> mergePluginsFromRepositories(
     @NotNull List<PluginNode> marketplacePlugins,
     @NotNull List<PluginNode> customPlugins,
+    boolean addMissing) {
+    List<PluginUiModel> marketplaceModels = ContainerUtil.map(marketplacePlugins, PluginUiModelAdapter::new);
+    List<PluginUiModel> customPluginsModels = ContainerUtil.map(customPlugins, PluginUiModelAdapter::new);
+    Collection<PluginUiModel> mergedPluginModels = mergePluginModelsFromRepositories(marketplaceModels, customPluginsModels, addMissing);
+    return ContainerUtil.map(mergedPluginModels, model-> (PluginNode)model.getDescriptor());
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Collection<PluginUiModel> mergePluginModelsFromRepositories(
+    @NotNull List<PluginUiModel> marketplacePlugins,
+    @NotNull List<PluginUiModel> customPlugins,
     boolean addMissing
   ) {
-    var compatiblePluginMap = new LinkedHashMap<PluginId, PluginNode>(marketplacePlugins.size());
+    var compatiblePluginMap = new LinkedHashMap<PluginId, PluginUiModel>(marketplacePlugins.size());
 
     for (var marketplacePlugin : marketplacePlugins) {
       compatiblePluginMap.put(marketplacePlugin.getPluginId(), marketplacePlugin);
@@ -202,7 +229,7 @@ public final class RepositoryHelper {
       var pluginId = customPlugin.getPluginId();
       var plugin = compatiblePluginMap.get(pluginId);
       if (plugin == null && addMissing ||
-          plugin != null && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.getVersion(), plugin) > 0) {
+          plugin != null && PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.getVersion(), plugin.getDescriptor()) > 0) {
         compatiblePluginMap.put(pluginId, customPlugin);
       }
     }

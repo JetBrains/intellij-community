@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeMap
 import kotlin.experimental.and
 
 class ClassVersionPrinter {
@@ -13,7 +14,7 @@ class ClassVersionPrinter {
       val versionToClasses = TreeMap<Byte, MutableList<String>>()
       readZipFile(Path.of(args[0])) { name, dataSupplier ->
         if (!name.endsWith(".class")) {
-          return@readZipFile
+          return@readZipFile ZipEntryProcessorResult.CONTINUE
         }
 
         val buffer = dataSupplier()
@@ -29,6 +30,7 @@ class ClassVersionPrinter {
         }
 
         versionToClasses.computeIfAbsent(major) { mutableListOf() }.add(name)
+        ZipEntryProcessorResult.CONTINUE
       }
 
       for ((major, names) in versionToClasses) {

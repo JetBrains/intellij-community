@@ -50,8 +50,8 @@ public interface VariableDescriptor {
    * @return a field value
    */
   default @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
-    if (qualifier instanceof DfaVariableValue) {
-      return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
+    if (qualifier instanceof DfaVariableValue dfaVariableValue) {
+      return factory.getVarFactory().createVariableValue(this, dfaVariableValue);
     }
     return factory.getUnknown();
   }

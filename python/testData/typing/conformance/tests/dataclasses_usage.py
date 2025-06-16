@@ -117,6 +117,7 @@ class DC8(DC7):
 
     def __init__(self, a: DC7, y: int):
         self.__dict__ = a.__dict__
+        self.y = y
 
 
 a = DC7(3)
@@ -173,7 +174,7 @@ class DC13:
     x_squared: int
 
 
-# This should generate an error because there is no
+# This should generate an error because there is no matching
 # override __init__ method and no synthesized __init__.
 DC13(3)  # E
 

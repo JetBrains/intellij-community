@@ -8,6 +8,7 @@ import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.ToolWindowImpl
+import com.intellij.ui.JBColor
 import com.intellij.ui.awt.DevicePoint
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -41,6 +42,7 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
 
   override fun wrapWithControls(pane: ToolWindowPane): JComponent {
     return JPanel(BorderLayout()).apply {
+      background = JBColor.namedColor("MainWindow.background", JBColor.PanelBackground)
       add(pane, BorderLayout.CENTER)
       add(left, BorderLayout.WEST)
       add(right, BorderLayout.EAST)

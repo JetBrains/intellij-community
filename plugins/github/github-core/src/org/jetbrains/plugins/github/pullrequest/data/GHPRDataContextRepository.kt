@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.ui.html.AsyncHtmlImageLoader
 import com.intellij.collaboration.ui.icon.AsyncImageIconsProvider
 import com.intellij.collaboration.ui.icon.CachingIconsProvider
+import com.intellij.collaboration.util.ResultUtil.runCatchingUser
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -30,7 +32,6 @@ import java.awt.Image
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
-import kotlin.Throws
 
 @Service(Service.Level.PROJECT)
 internal class GHPRDataContextRepository(private val project: Project, parentCs: CoroutineScope) {
@@ -80,8 +81,16 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     val cs = this
     return async {
       val accountDetails = GHCachingAccountInformationProvider.getInstance().loadInformation(requestExecutor, account)
-      val ghostUserDetails = requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))
-                             ?: error("Couldn't load ghost user details")
+      val ghostUserDetails = runCatchingUser {
+        requestExecutor.executeSuspend(GHGQLRequests.User.find(account.server, "ghost"))!!
+      }.fold(onSuccess = { it }) {
+        if (it is HttpStatusErrorException)
+
+        // github.com is always expected to have a ghost user, but any enterprise server may not
+          if (account.server.isGithubDotCom) error("Couldn't load ghost user details")
+
+        GHUser.FAKE_GHOST
+      }
 
       val repositoryInfo =
         requestExecutor.executeSuspend(
@@ -94,7 +103,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                accountDetails.name)
 
       // Image loaders
-      val iconsScope = cs.childScope(Dispatchers.Main)
+      val iconsScope = cs.childScope(javaClass.name, Dispatchers.Main)
       val imageLoader = AsyncHtmlImageLoader { _, src ->
         withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
           val request = GithubApiRequests.getBytes(src)
@@ -130,8 +139,8 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val filesService = GHPRFilesServiceImpl(requestExecutor, apiRepositoryCoordinates)
       val reactionsService = GHReactionsServiceImpl(requestExecutor, apiRepositoryCoordinates)
 
-      val listLoader = GHPRListLoader(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-      val listUpdatesChecker = GHPRListETagUpdateChecker(ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
+      val listLoader = GHPRListLoader(cs, requestExecutor, apiRepositoryCoordinates)
+      val listUpdatesChecker = GHPRListETagUpdateChecker(cs, ProgressManager.getInstance(), requestExecutor, account.server, apiRepositoryPath)
 
       val dataProviderRepository = GHPRDataProviderRepositoryImpl(cs,
                                                                   repoDataService,
@@ -140,15 +149,16 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
                                                                   filesService,
                                                                   commentService,
                                                                   changesService) { id ->
-        GHGQLPagedListLoader(ProgressManager.getInstance(),
-                             SimpleGHGQLPagesLoader(requestExecutor, { p ->
-                               GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner,
-                                                                        apiRepositoryPath.repository,
-                                                                        id.number, p)
-                             }, true))
+        GHGQLPagedListLoader(
+          this,
+          ProgressManager.getInstance(),
+          SimpleGHGQLPagesLoader(requestExecutor, { p ->
+            GHGQLRequests.PullRequest.Timeline.items(account.server, apiRepositoryPath.owner,
+                                                     apiRepositoryPath.repository,
+                                                     id.number, p)
+          }, true))
       }
 
-      val filesManager = GHPRFilesManagerImpl(project, apiRepositoryCoordinates)
       val interactionState = project.service<GHPRPersistentInteractionState>()
 
       val creationService = GHPRCreationServiceImpl(requestExecutor, repoDataService)
@@ -156,7 +166,7 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       GHPRDataContext(cs, listLoader, listUpdatesChecker, dataProviderRepository,
                       securityService, repoDataService, creationService, detailsService, reactionsService,
                       imageLoader, avatarIconsProvider, reactionIconsProvider,
-                      filesManager, interactionState)
+                      interactionState)
     }
   }
 
@@ -174,9 +184,6 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
     override suspend fun postProcess(image: Image): Image =
       ImageUtil.createCircleImage(ImageUtil.toBufferedImage(image))
   }
-
-  // dangerous to do this without lock, but making it suspendable is too much work
-  fun findContext(repositoryCoordinates: GHRepositoryCoordinates): GHPRDataContext? = cache[repositoryCoordinates]
 
   companion object {
     private val LOG = logger<GHPRDataContextRepository>()

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,8 @@ import static javax.swing.SwingConstants.*;
 
 public final class TabsUtil {
   public static final int NEW_TAB_VERTICAL_PADDING = JBUIScale.scale(2);
+  @ApiStatus.Internal
+  public static final int UNSCALED_DROP_TOLERANCE = 15;
 
   private TabsUtil() {
   }

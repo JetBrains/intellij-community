@@ -15,16 +15,24 @@ import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScope) : BaseProjectDirectories(project) {
 
   private val virtualFilesTree = VirtualFilePrefixTree.createSet()
   private val processingCounter = AtomicInteger(0)
 
+  @Volatile
   private var baseDirectoriesSet: Set<VirtualFile> = emptySet()
+
+  private val lock = Any()
 
   init {
     scope.launch {
@@ -39,7 +47,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
       }
     }
 
-    synchronized(virtualFilesTree) {
+    synchronized(lock) {
       @Suppress("LeakingThis")
       collectRoots(WorkspaceModel.getInstance(project).currentSnapshot).forEach { virtualFilesTree.add(it) }
       baseDirectoriesSet = virtualFilesTree.getRoots()
@@ -59,7 +67,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
     val oldRoots: Set<VirtualFile>
     val newRoots: Set<VirtualFile>
 
-    synchronized(virtualFilesTree) {
+    synchronized(lock) {
       oldRoots = virtualFilesTree.getRoots()
       oldPossibleRoots.forEach { virtualFilesTree.remove(it) }
       newPossibleRoots.forEach { virtualFilesTree.add(it) }
@@ -97,7 +105,7 @@ open class BaseProjectDirectoriesImpl(val project: Project, scope: CoroutineScop
   }
 
   override fun getBaseDirectories(): Set<VirtualFile> {
-    return synchronized(virtualFilesTree) { baseDirectoriesSet }
+    return baseDirectoriesSet
   }
 
   override fun getBaseDirectoryFor(virtualFile: VirtualFile): VirtualFile? {

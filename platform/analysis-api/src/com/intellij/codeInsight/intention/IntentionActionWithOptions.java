@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -23,7 +24,8 @@ import java.util.List;
  * Intention action with sub-actions (options)
  */
 public interface IntentionActionWithOptions extends IntentionAction {
-  @NotNull List<IntentionAction> getOptions();
+  @NotNull @Unmodifiable
+  List<IntentionAction> getOptions();
 
   /**
    * If this intention is used as an inspection quick fix, control what should be displayed in the popup.

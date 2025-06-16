@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -69,12 +70,16 @@ public abstract class CoverageEngine {
 
   /**
    * Create a suite from an external report.
+   * <p>
+   * This method must be overridden for the coverage providers.
    */
-  public final @Nullable CoverageSuite createCoverageSuite(@NotNull String name,
-                                                           @NotNull Project project,
-                                                           @NotNull CoverageRunner runner,
-                                                           @NotNull CoverageFileProvider fileProvider,
-                                                           long timestamp) {
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull String name,
+    @NotNull Project project,
+    @NotNull CoverageRunner runner,
+    @NotNull CoverageFileProvider fileProvider,
+    long timestamp
+  ) {
     return createCoverageSuite(runner, name, fileProvider, null, timestamp, null, false, false, false, project);
   }
 
@@ -82,46 +87,31 @@ public abstract class CoverageEngine {
   /**
    * Create a suite from a run configuration.
    */
+  @ApiStatus.NonExtendable
   public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageEnabledConfiguration config) {
     CoverageRunner runner = config.getCoverageRunner();
     if (runner == null) return null;
-    return createCoverageSuite(runner, config.createSuiteName(), config.createFileProvider(), config);
+    return createCoverageSuite(config.createSuiteName(), config.getConfiguration().getProject(), runner,
+                               config.createFileProvider(), config.createTimestamp(), config);
   }
 
   /**
-   * Coverage suite is coverage settings & coverage data gather by coverage runner. This method is used for external suites.
-   *
-   * @param runner                Coverage Runner
-   * @param name                  Suite name
-   * @param fileProvider          Coverage raw data file provider
-   * @param filters               Coverage data filters
-   * @param lastCoverageTimeStamp timestamp
-   * @param suiteToMerge          Suite to merge this coverage data with
-   * @param coverageByTestEnabled Collect coverage per test
-   * @param branchCoverage        Whether the suite includes branch coverage, or only line coverage otherwise
-   * @param trackTestFolders      Track test folders option
-   * @return Suite
-   * @deprecated Use {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
+   * Create a suite from a run configuration.
+   * This is a short-cut for {@link #createCoverageSuite(CoverageEnabledConfiguration)}
+   * <p>
+   * This method must be overridden for the coverage providers.
    */
-  @Deprecated
-  public abstract @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
-                                                    @NotNull String name,
-                                                    @NotNull CoverageFileProvider fileProvider,
-                                                    String @Nullable [] filters,
-                                                    long lastCoverageTimeStamp,
-                                                    @Nullable String suiteToMerge,
-                                                    boolean coverageByTestEnabled,
-                                                    boolean branchCoverage,
-                                                    boolean trackTestFolders, Project project);
-
-  /**
-   * @deprecated Use {@link CoverageEngine#createCoverageSuite(CoverageEnabledConfiguration)}
-   */
-  @Deprecated
-  public abstract @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
-                                                    @NotNull String name,
-                                                    @NotNull CoverageFileProvider coverageDataFileProvider,
-                                                    @NotNull CoverageEnabledConfiguration config);
+  @ApiStatus.OverrideOnly
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull String name,
+    @NotNull Project project,
+    @NotNull CoverageRunner runner,
+    @NotNull CoverageFileProvider fileProvider,
+    long timestamp,
+    @NotNull CoverageEnabledConfiguration config
+  ) {
+    return createCoverageSuite(runner, name, fileProvider, config);
+  }
 
   /**
    * Create a new suite with no parameters set.
@@ -167,8 +157,8 @@ public abstract class CoverageEngine {
    */
   @ApiStatus.Internal
   public @NotNull Set<File> getCorrespondingOutputFiles(final @NotNull PsiFile srcFile,
-                                               final @Nullable Module module,
-                                               final @NotNull CoverageSuitesBundle suite) {
+                                                        final @Nullable Module module,
+                                                        final @NotNull CoverageSuitesBundle suite) {
     final VirtualFile virtualFile = srcFile.getVirtualFile();
     return virtualFile == null ? Collections.emptySet() : Collections.singleton(VfsUtilCore.virtualToIoFile(virtualFile));
   }
@@ -190,7 +180,7 @@ public abstract class CoverageEngine {
    */
   @ApiStatus.Internal
   protected @Nullable String getQualifiedName(final @NotNull File outputFile,
-                                    final @NotNull PsiFile sourceFile) {
+                                              final @NotNull PsiFile sourceFile) {
     return null;
   }
 
@@ -222,7 +212,7 @@ public abstract class CoverageEngine {
    */
   @ApiStatus.Internal
   public @Nullable List<Integer> collectSrcLinesForUntouchedFile(final @NotNull File classFile,
-                                                       final @NotNull CoverageSuitesBundle suite) {
+                                                                 final @NotNull CoverageSuitesBundle suite) {
     return null;
   }
 
@@ -417,15 +407,79 @@ public abstract class CoverageEngine {
    */
   @Deprecated(forRemoval = true)
   public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
-                                           @NotNull String name,
-                                           @NotNull CoverageFileProvider coverageDataFileProvider,
-                                           String @Nullable [] filters,
-                                           long lastCoverageTimeStamp,
-                                           @Nullable String suiteToMerge,
-                                           boolean coverageByTestEnabled,
-                                           boolean branchCoverage,
-                                           boolean trackTestFolders) {
+                                                     @NotNull String name,
+                                                     @NotNull CoverageFileProvider coverageDataFileProvider,
+                                                     String @Nullable [] filters,
+                                                     long lastCoverageTimeStamp,
+                                                     @Nullable String suiteToMerge,
+                                                     boolean coverageByTestEnabled,
+                                                     boolean branchCoverage,
+                                                     boolean trackTestFolders) {
     return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
                                coverageByTestEnabled, branchCoverage, trackTestFolders, null);
+  }
+
+  /**
+   * Coverage suite is coverage settings & coverage data gather by coverage runner. This method is used for external suites.
+   *
+   * @param runner                Coverage Runner
+   * @param name                  Suite name
+   * @param fileProvider          Coverage raw data file provider
+   * @param filters               Coverage data filters
+   * @param lastCoverageTimeStamp timestamp
+   * @param suiteToMerge          Suite to merge this coverage data with
+   * @param coverageByTestEnabled Collect coverage per test
+   * @param branchCoverage        Whether the suite includes branch coverage, or only line coverage otherwise
+   * @param trackTestFolders      Track test folders option
+   * @return Suite
+   * @deprecated Use {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public @Nullable CoverageSuite createCoverageSuite(
+    @NotNull CoverageRunner runner,
+    @NotNull String name,
+    @NotNull CoverageFileProvider fileProvider,
+    String @Nullable [] filters,
+    long lastCoverageTimeStamp,
+    @Nullable String suiteToMerge,
+    boolean coverageByTestEnabled,
+    boolean branchCoverage,
+    boolean trackTestFolders,
+    @Nullable Project project
+  ) {
+    AbstractMethodError error = new AbstractMethodError(
+      "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long) method");
+    if (project == null || isCalledByDelegationFromThis(error)) {
+      throw error;
+    }
+    Logger.getInstance(CoverageEngine.class).error(error);
+    return createCoverageSuite(name, project, runner, fileProvider, lastCoverageTimeStamp);
+  }
+
+  /**
+   * @deprecated Override {@link CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long, CoverageEnabledConfiguration)}
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public @Nullable CoverageSuite createCoverageSuite(@NotNull CoverageRunner runner,
+                                                     @NotNull String name,
+                                                     @NotNull CoverageFileProvider fileProvider,
+                                                     @NotNull CoverageEnabledConfiguration config) {
+    AbstractMethodError error = new AbstractMethodError(
+      "Please override CoverageEngine#createCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long, CoverageEnabledConfiguration) method");
+    if (isCalledByDelegationFromThis(error)) {
+      throw error;
+    }
+    Logger.getInstance(CoverageEngine.class).error(error);
+    return createCoverageSuite(name, config.getConfiguration().getProject(), runner, fileProvider, config.createTimestamp(), config);
+  }
+
+
+  private static boolean isCalledByDelegationFromThis(Throwable e) {
+    StackTraceElement[] stackTrace = e.getStackTrace();
+    if (stackTrace.length < 2) return false;
+    StackTraceElement element = stackTrace[1];
+    return element.getClassName().equals(CoverageEngine.class.getName()) && element.getMethodName().equals("createCoverageSuite");
   }
 }

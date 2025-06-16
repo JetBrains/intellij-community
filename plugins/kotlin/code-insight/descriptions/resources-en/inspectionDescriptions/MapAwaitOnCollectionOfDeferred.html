@@ -1,0 +1,22 @@
+<html>
+Reports <code>map { it.await() }</code> calls
+on collections of <code>Deferred</code>.
+<p>
+  This can be replaced by a more concise and potentially more efficient <code>awaitAll()</code> call.
+</p>
+<p>
+  See the documentation for <code>kotlinx.coroutines.awaitAll</code> for more details.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+  suspend fun waitForResult(results: List&lt;Deferred&lt;String&gt;&gt;): List&lt;String&gt; {
+    return results.map { it.await() }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  suspend fun waitForResult(results: List&lt;Deferred&lt;String&gt;&gt;): List&lt;String&gt; {
+    return results.awaitAll()
+  }
+</code></pre>
+</html>

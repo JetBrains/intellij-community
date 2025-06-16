@@ -109,9 +109,9 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     return previousErrors.isNotEmpty();
   }
 
-  protected final boolean isNearTemplateExpressions(@NotNull PsiFile file, int start, int end) {
-    FileViewProvider viewProvider = file.getViewProvider();
-    if (isTemplateViewProvider(viewProvider) && file.getLanguage() != viewProvider.getBaseLanguage()) {
+  protected final boolean isNearTemplateExpressions(@NotNull PsiFile psiFile, int start, int end) {
+    FileViewProvider viewProvider = psiFile.getViewProvider();
+    if (isTemplateViewProvider(viewProvider) && psiFile.getLanguage() != viewProvider.getBaseLanguage()) {
       CharSequence fileText = viewProvider.getContents();
       PsiElement beforeWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftBackward(fileText, start - 1, " \t\n"));
       PsiElement afterWs = findBaseLanguageElement(viewProvider, CharArrayUtil.shiftForward(fileText, end, " \t\n"));
@@ -120,11 +120,11 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
       }
     }
 
-    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(file.getProject());
-    PsiElement host = injectedLanguageManager.getInjectionHost(file);
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
+    PsiElement host = injectedLanguageManager.getInjectionHost(psiFile);
     if (host != null) {
-      start = injectedLanguageManager.injectedToHost(file, start);
-      end = injectedLanguageManager.injectedToHost(file, end);
+      start = injectedLanguageManager.injectedToHost(psiFile, start);
+      end = injectedLanguageManager.injectedToHost(psiFile, end);
       if (start <= end) {
         return isNearTemplateExpressions(host.getContainingFile(), start, end);
       }

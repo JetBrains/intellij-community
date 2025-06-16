@@ -2,23 +2,29 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "collaborationTools_resources",
+  name = "collaboration-tools_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "collaborationTools",
+  name = "collaboration-tools",
   module_name = "intellij.platform.collaborationTools",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/credential-store",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
-    "//platform/vcs-log/impl:vcs-log-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
+    "//platform/vcs-log/impl",
     "//platform/platform-impl:ide-impl",
     "//platform/ide-core-impl",
     "//platform/vcs-api:vcs",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
@@ -34,31 +40,40 @@ jvm_library(
     "//platform/vcs-log/api:vcs-log",
     "@lib//:caffeine",
     "//platform/collaboration-tools/auth-base:collaborationTools-auth-base",
-    "//platform/collaboration-tools/auth:collaborationTools-auth",
+    "//platform/collaboration-tools/auth",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-markdown",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/util/coroutines",
     "//platform/credential-store-impl:credentialStore-impl",
-    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//platform/dvcs-impl/shared",
+    "@lib//:http-client",
+    "//platform/vcs-impl/shared",
   ],
-  runtime_deps = [":collaborationTools_resources"]
+  runtime_deps = [":collaboration-tools_resources"]
 )
 
 jvm_library(
-  name = "collaborationTools_test_lib",
+  name = "collaboration-tools_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":collaborationTools"],
+  associates = [":collaboration-tools"],
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/credential-store",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
-    "//platform/vcs-log/impl:vcs-log-impl",
-    "//platform/vcs-log/impl:vcs-log-impl_test_lib",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
+    "//platform/vcs-log/impl",
+    "//platform/vcs-log/impl:impl_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "//platform/vcs-api:vcs",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
@@ -78,7 +93,7 @@ jvm_library(
     "//platform/vcs-log/api:vcs-log",
     "@lib//:caffeine",
     "//platform/collaboration-tools/auth-base:collaborationTools-auth-base",
-    "//platform/collaboration-tools/auth:collaborationTools-auth",
+    "//platform/collaboration-tools/auth",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-markdown",
     "@lib//:kotlin-test",
@@ -90,13 +105,18 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/credential-store-impl:credentialStore-impl",
     "//platform/credential-store-impl:credentialStore-impl_test_lib",
-    "//platform/dvcs-impl/shared:vcs-dvcs-impl-shared",
+    "//platform/dvcs-impl/shared",
+    "@lib//:mockito",
+    "@lib//:http-client",
+    "@lib//:app-cash-turbine-jvm",
+    "@lib//:assert_j",
+    "//platform/vcs-impl/shared",
   ],
-  runtime_deps = [":collaborationTools_resources"]
+  runtime_deps = [":collaboration-tools_resources"]
 )
 
 jvm_test(
-  name = "collaborationTools_test",
-  runtime_deps = [":collaborationTools_test_lib"]
+  name = "collaboration-tools_test",
+  runtime_deps = [":collaboration-tools_test_lib"]
 )
 ### auto-generated section `build intellij.platform.collaborationTools` end

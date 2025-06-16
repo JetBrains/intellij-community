@@ -32,7 +32,7 @@ public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
 
   @Override
   public @NotNull ProviderInfo getProviderInfo() {
-    return new ProviderInfo("JCEF Browser", JCEFHtmlPanelProvider.class.getName());
+    return new ProviderInfo("Chromium browser", JCEFHtmlPanelProvider.class.getName());
   }
 
   @Override

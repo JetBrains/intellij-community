@@ -26,6 +26,7 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestObservation
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
@@ -42,13 +43,19 @@ private object TestGradleProjectConfigurationActivityKey: ActivityKey {
 }
 
 suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Project): Project {
-  return openProject()
-    .withProjectAsync { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, it) }
+  return openProject().withProjectAsync { project ->
+    TestObservation.awaitConfiguration(project, DEFAULT_SYNC_TIMEOUT)
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+  }
 }
 
 suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
-  return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
-    .also { TestObservation.awaitConfiguration(DEFAULT_SYNC_TIMEOUT, project) }
+  try {
+    return project.trackActivity(TestGradleProjectConfigurationActivityKey, action)
+  } finally {
+    TestObservation.awaitConfiguration(project, DEFAULT_SYNC_TIMEOUT)
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+  }
 }
 
 fun <R> waitForAnyGradleTaskExecution(action: ThrowableComputable<R, Throwable>): R {

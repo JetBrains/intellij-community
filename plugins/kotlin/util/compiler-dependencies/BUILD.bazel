@@ -2,7 +2,7 @@
 load("@rules_java//java:defs.bzl", "java_library")
 
 java_library(
-  name = "kotlin-util-compiler-dependencies",
+  name = "compiler-dependencies",
   visibility = ["//visibility:public"],
   runtime_deps = [
     "@lib//:kotlinc-kotlin-dist",
@@ -37,9 +37,9 @@ java_library(
     "@lib//:kotlinc-noarg-compiler-plugin",
     "@lib//:kotlinc-sam-with-receiver-compiler-plugin",
     "@lib//:kotlinc-assignment-compiler-plugin",
-    "@lib//:kotlinc-android-extensions-compiler-plugin",
     "@lib//:kotlinc-parcelize-compiler-plugin",
     "@lib//:kotlinc-lombok-compiler-plugin",
+    "@lib//:kotlinc-kotlin-dataframe-compiler-plugin",
   ]
 )
 ### auto-generated section `build kotlin.util.compiler-dependencies` end

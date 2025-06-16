@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.projectStructure.scope
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.GlobalSearchScopeUtil
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
@@ -148,11 +149,16 @@ abstract class AbstractCombinedSourceAndClassRootsScopeTest : AbstractProjectStr
         }
     }
 
-
     internal val Library.classRoots: List<VirtualFile> get() = getFiles(OrderRootType.CLASSES).toList()
     internal val Library.sourceRoots: List<VirtualFile> get() = getFiles(OrderRootType.SOURCES).toList()
 
     private val KaModule.combinableContentScope: CombinableSourceAndClassRootsScope
-        get() = contentScope as? CombinableSourceAndClassRootsScope
-            ?: error("Expected the content scope of the `${this::class.simpleName}` to be combinable, but it was ${contentScope::class.simpleName}.")
+        get() {
+            // In the case of library modules, the combinable scope might be nested inside an intersection with a restriction scope. As we
+            // only want to test combining roots scopes here and not scope merging in general, we can ignore the restriction scope.
+            val flattenedScopes = GlobalSearchScopeUtil.flattenIntersectionScope(contentScope)
+
+            return flattenedScopes.filterIsInstance<CombinableSourceAndClassRootsScope>().singleOrNull()
+                ?: error("Expected a single combinable scope in the content scope of the `${this::class.simpleName}`.")
+        }
 }

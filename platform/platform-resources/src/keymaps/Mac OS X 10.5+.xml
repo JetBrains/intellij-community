@@ -494,6 +494,9 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
+  <action id="ChangesView.ShowCommitOptions">
+    <keyboard-shortcut first-keystroke="control O"/>
+  </action>
 
   <action id="ChangesView.SetDefault">
     <keyboard-shortcut first-keystroke="control SPACE" />

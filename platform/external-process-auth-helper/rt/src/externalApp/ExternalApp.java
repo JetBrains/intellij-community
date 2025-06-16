@@ -20,6 +20,7 @@ package externalApp;
  * when it needs to communicate with user.
  *
  * @see ExternalAppHandler
+ * @see ExternalCli which can be used with eel api
  */
 public interface ExternalApp {
 }

@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
@@ -136,6 +137,36 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     flushSwingQueue();
     flushSwingQueue();
     checkOrder(2);
+  }
+
+  public void testNonModalOrder() {
+    UIUtil.invokeAndWaitIfNeeded(() -> {
+      var queue = new ArrayDeque<Integer>();
+      var n = 10_000;
+
+      for (int i = 0; i < n; i++) {
+        var capturedValue = i;
+        ApplicationManager.getApplication().invokeLater(() -> {
+          queue.add(capturedValue);
+        }, ModalityState.nonModal());
+
+        if (i % 1000 == 0) {
+          LaterInvocator.enterModal(myWindow1);
+          flushSwingQueue();
+          assertTrue(queue.isEmpty());
+          LaterInvocator.leaveModal(myWindow1);
+        }
+      }
+
+      flushSwingQueue();
+
+      assertEquals(n, queue.size());
+      var counter = 0;
+      for (int i = 0; i < n; i++) {
+        var item = (int)queue.poll();
+        assertEquals(counter++, item);
+      }
+    });
   }
 
   public void testEverInvoked() {

@@ -37,8 +37,8 @@ public abstract class NextPrevParameterAction extends CodeInsightAction implemen
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return NextPrevParameterHandler.hasSuitablePolicy(editor, file);
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return NextPrevParameterHandler.hasSuitablePolicy(editor, psiFile);
   }
 
   public static boolean hasSuitablePolicy(Editor editor, PsiFile file) {
@@ -47,10 +47,10 @@ public abstract class NextPrevParameterAction extends CodeInsightAction implemen
 
   private class Handler implements CodeInsightActionHandler {
     @Override
-    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-      TemplateParameterTraversalPolicy policy = NextPrevParameterHandler.findSuitableTraversalPolicy(editor, file);
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+      TemplateParameterTraversalPolicy policy = NextPrevParameterHandler.findSuitableTraversalPolicy(editor, psiFile);
       if (policy != null) {
-        policy.invoke(editor, file, myNext);
+        policy.invoke(editor, psiFile, myNext);
       }
     }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
+import com.intellij.openapi.util.registry.Registry
 import com.sun.jna.Library
 import com.sun.jna.Native
 
@@ -18,7 +19,7 @@ private val MIN_SUPPORTED_GLIBC_VERSION: Version = Version(2, 28, 0)
 
 internal class UnsupportedGlibcNotifierActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (SystemInfo.isLinux) {
+    if (SystemInfo.isLinux && Registry.`is`("ide.warn.glibc.version.unsupported")) {
       val glibc = Native.load("c", LibC::class.java)
       val libcVersionString = glibc.gnu_get_libc_version()
 

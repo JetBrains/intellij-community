@@ -123,6 +123,8 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testHtmlLinkWithRef() { verifyJavaDoc(getTestClass()); }
   public void testMultipleSpacesInLiteral() { useJava8(); verifyJavaDoc(getTestClass()); }
   public void testLegacySpacesInLiteral() { useJava7(); verifyJavaDoc(getTestClass()); }
+  public void testLinkWithModule() { doTestClass(); }
+  public void testLinkToModule() { doTestClass(); }
   public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForUncheckedExceptionsInSupers() { useJava7(); doTestAtCaret(); }
   public void testDocumentationForGetterByField() { doTestAtCaret(); }
@@ -207,6 +209,11 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testEscapeHtmlCodesInCodeBlock() { doTestClass(); }
   public void testPreTagLeakBeforeCode() { doTestClass(); }
   public void testPreTagStrictBeforeCode(){ doTestClass(); }
+  public void testSeeTagWithLabel() { doTestClass(); }
+  public void testSeeTagWithLabelMarkdown() { doTestClass(); }
+  public void testLinkInParamDescriptionMarkdown() { doTestAtCaret(); }
+  public void testAllTags() { doTestAtCaret(); }
+  public void testAllTagsMarkdown() { doTestAtCaret(); }
 
   public void testRepeatableAnnotations() {
     useJava8();

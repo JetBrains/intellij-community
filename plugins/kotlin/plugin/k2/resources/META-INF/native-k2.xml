@@ -10,9 +10,4 @@
     <virtualFileSystem implementationClass="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsFileSystemImpl"
                        key="fwd" physical="false"/>
   </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <idea.base.projectStructure.moduleInfoProviderExtension
-            implementation="org.jetbrains.kotlin.idea.base.projectStructure.forwardDeclarations.KotlinForwardDeclarationsModuleInfoProviderExtension"/>
-  </extensions>
 </idea-plugin>

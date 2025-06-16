@@ -40,13 +40,10 @@ abstract class ProjectBuilder {
   }
 
   /**
-   * Configure project when it's added to workspace as module.
+   * Configures [project] when it's attached to the multi-project workspace.
+   *
+   * Note: The original project from [commit] may be replaced with the workspace project.
    */
   @ApiStatus.Internal
-  open fun createProjectConfigurator(): ProjectConfigurator? = null
-}
-
-@ApiStatus.Internal
-interface ProjectConfigurator {
-  fun configureProject(workspace: Project, projectDir: VirtualFile)
+  open fun postCommit(project: Project, projectDir: VirtualFile) = Unit
 }

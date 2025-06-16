@@ -111,12 +111,12 @@ public class PyiTypeTest extends PyTestCase {
 
   // PY-22808
   public void testOverloadedNotMatchedType() {
-    doTest("list | Any");
+    doTest("list[Any] | Any");
   }
 
   // PY-22808
   public void testOverloadedNotMatchedGenericType() {
-    doTest("dict[str, Any] | list");
+    doTest("dict[str, Any] | list[Any]");
   }
 
   public void testGenericClassDefinitionInOtherFile() {

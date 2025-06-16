@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
@@ -52,6 +52,13 @@ class GitStageCommitWorkflowHandler(
   }
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
+
+  override fun beforeCommitChecksEnded(sessionInfo: CommitSessionInfo, result: CommitChecksResult) {
+    super.beforeCommitChecksEnded(sessionInfo, result)
+    if (result.shouldCommit) {
+      workflow.commitState = workflow.commitState.copy(commitMessage = getCommitMessage())
+    }
+  }
 
   override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.trackerState = state

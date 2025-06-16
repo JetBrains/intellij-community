@@ -17,6 +17,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.Assertions;
@@ -289,7 +290,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(DefaultLanguageHighlighterColors.IDENTIFIER, DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION, declarationAttrs);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.FUNCTION_DECLARATION.getFallbackAttributeKey());
-    Assertions.assertThat(result.second).isEqualTo(fallbackAttrs);
+    Assertions.assertThat(result.second).isNotSameAs(fallbackAttrs);
+    Assertions.assertThat(ExpectedHighlightingData.sameTextAttributesByValue(result.second, fallbackAttrs)).isTrue();
   }
 
   public void testSaveInheritanceForEmptyAttrs() {

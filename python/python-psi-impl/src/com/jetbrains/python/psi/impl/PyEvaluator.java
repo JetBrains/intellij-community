@@ -27,6 +27,7 @@ import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,7 +97,7 @@ public class PyEvaluator {
     else if (expression instanceof PySequenceExpression) {
       return evaluateSequence((PySequenceExpression)expression);
     }
-    final Boolean bool = evaluateBoolean(expression);
+    final Boolean bool = getBooleanLiteralValue(expression);
     if (bool != null) {
       return bool;
     }
@@ -180,7 +181,8 @@ public class PyEvaluator {
     return null;
   }
 
-  private static @Nullable Boolean evaluateBoolean(@NotNull PyExpression expression) {
+  @ApiStatus.Internal
+  public static @Nullable Boolean getBooleanLiteralValue(@NotNull PsiElement expression) {
     if (expression instanceof PyBoolLiteralExpression) {
       if (PyNames.DEBUG.equals(expression.getText())) {
         return null;

@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -70,16 +69,14 @@ public final class MakeExternalAnnotationExplicit implements ModCommandAction {
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     assert module != null;
 
-    ModCommandAwareExternalAnnotationsManager externalAnnotationsManager = ObjectUtils.tryCast(
-      ExternalAnnotationsManager.getInstance(project), ModCommandAwareExternalAnnotationsManager.class);
+    ModCommandAwareExternalAnnotationsManager externalAnnotationsManager = ModCommandAwareExternalAnnotationsManager.getInstance(project);
 
     PsiAnnotation[] annotations = getAnnotations(project, owner);
     return ModCommand.psiUpdate(modifierList, writableList -> {
       for (PsiAnnotation anno : annotations) {
         JavaCodeStyleManager.getInstance(project).shortenClassReferences(writableList.addAfter(anno, null));
       }
-    }).andThen(externalAnnotationsManager == null ? ModCommand.nop() : 
-               externalAnnotationsManager.deannotateModCommand(List.of(owner), ContainerUtil.map(annotations, PsiAnnotation::getQualifiedName)));
+    }).andThen(externalAnnotationsManager.deannotateModCommand(List.of(owner), ContainerUtil.map(annotations, PsiAnnotation::getQualifiedName)));
   }
 
   private static PsiAnnotation @NotNull [] getAnnotations(@NotNull Project project, PsiModifierListOwner owner) {

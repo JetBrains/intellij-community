@@ -20,7 +20,7 @@ internal class CreateConstructorAction(
   override val request: CreateConstructorRequest
 ) : CreateMemberAction(targetClass, request) {
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
     val targetClass = myTargetPointer.element ?: return IntentionPreviewInfo.EMPTY
     val constructor = ConstructorMethodRenderer(project, target, request).renderConstructor()
     val className = targetClass.name
@@ -31,7 +31,7 @@ internal class CreateConstructorAction(
 
   override fun getText(): String = message("create.constructor.from.new.text")
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
     ConstructorMethodRenderer(project, target, request).execute()
   }
 }

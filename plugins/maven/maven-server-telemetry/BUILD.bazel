@@ -12,8 +12,8 @@ jvm_library(
     "//plugins/maven-server-api:maven-server",
     "@lib//:jetbrains-annotations",
     "@lib//:opentelemetry",
-    "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+    "//platform/diagnostic/telemetry/rt",
   ],
-  exports = ["//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt"]
+  exports = ["//platform/diagnostic/telemetry/rt"]
 )
 ### auto-generated section `build intellij.maven.server.telemetry` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.ExecutionException;
@@ -837,7 +837,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         ProcessTerminatedListener.attach(myProcessHandler);
 
         PythonConsoleView consoleView = myConsoleView;
-        myProcessHandler.addProcessListener(new ProcessAdapter() {
+        myProcessHandler.addProcessListener(new ProcessListener() {
           @Override
           public void processTerminated(@NotNull ProcessEvent event) {
             consoleView.setEditable(false);

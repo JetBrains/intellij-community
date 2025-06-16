@@ -1,1 +1,1 @@
-Object foo.A has 1 usage that is not safe to delete.
+Usage of object foo.A that is not safe to delete.

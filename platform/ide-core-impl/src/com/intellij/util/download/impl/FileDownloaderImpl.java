@@ -220,6 +220,7 @@ final class FileDownloaderImpl implements FileDownloader {
             }
           }
           else {
+            LOG.debug("Downloading `" + url + "` into `" + existing + "`");
             File downloaded;
             try {
               downloaded = downloadFile(description, existing, indicator);

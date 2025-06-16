@@ -34,7 +34,7 @@ open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement
     private val KtDeclaration.topLevelDeclaration: Boolean
         get() = parent is KtFile || parent is KtBlockExpression && parent.parent is KtScript
 
-    override fun getFilters() = FILTERS
+    override fun getFilters(): Array<Filter> = FILTERS
 
     override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean {
         val value = element.value
@@ -52,13 +52,13 @@ open class KotlinStructureViewModel(ktFile: KtFile, editor: Editor?, rootElement
 }
 
 object KotlinVisibilitySorter : VisibilitySorter() {
-    override fun getComparator() = Comparator<Any> { a1, a2 -> a1.accessLevel() - a2.accessLevel() }
+    override fun getComparator(): Comparator<Any> = Comparator { a1, a2 -> a1.accessLevel() - a2.accessLevel() }
 
     private fun Any.accessLevel() = (this as? AbstractKotlinStructureViewElement)?.accessLevel ?: Int.MAX_VALUE
 
-    override fun getName() = ID
+    override fun getName(): String = ID
 
-    const val ID = "KOTLIN_VISIBILITY_SORTER"
+    const val ID: String = "KOTLIN_VISIBILITY_SORTER"
 }
 
 object PublicElementsFilter : Filter {
@@ -74,11 +74,11 @@ object PublicElementsFilter : Filter {
         )
     }
 
-    override fun getName() = ID
+    override fun getName(): String = ID
 
-    override fun isReverted() = true
+    override fun isReverted(): Boolean = true
 
-    const val ID = "KOTLIN_SHOW_NON_PUBLIC"
+    const val ID: String = "KOTLIN_SHOW_NON_PUBLIC"
 }
 
 object PropertiesFilter : Filter {
@@ -92,11 +92,11 @@ object PropertiesFilter : Filter {
         return ActionPresentationData(KotlinCodeInsightBundle.message("show.properties"), null, IconManager.getInstance().getPlatformIcon(PlatformIcons.Property))
     }
 
-    override fun getName() = ID
+    override fun getName(): String = ID
 
-    override fun isReverted() = true
+    override fun isReverted(): Boolean = true
 
-    const val ID = "KOTLIN_SHOW_PROPERTIES"
+    const val ID: String = "KOTLIN_SHOW_PROPERTIES"
 }
 
 /**

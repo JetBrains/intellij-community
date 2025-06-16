@@ -2,7 +2,7 @@
 package com.intellij.vcs.log.visible
 
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.graph.VisibleGraph
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 
 /**
  * Compound visible pack, represented by two visible packs (parts).
@@ -11,15 +11,9 @@ import com.intellij.vcs.log.graph.VisibleGraph
  */
 internal class CompoundVisiblePack private constructor(private val newPack: VisiblePack,
                                                        private val oldPack: VisiblePack) :
-  VisiblePack(oldPack.dataPack, oldPack.visibleGraph, oldPack.canRequestMore(), oldPack.filters, oldPack.additionalData) {
+  VisiblePack(oldPack.dataPack, CompoundVisibleGraph(newPack.visibleGraph, oldPack.visibleGraph), oldPack.canRequestMore, oldPack.filters, oldPack.additionalData) {
 
-  private val compoundVisibleGraph = CompoundVisibleGraph(newPack.visibleGraph, oldPack.visibleGraph)
-
-  override fun getVisibleGraph(): VisibleGraph<Int> {
-    return compoundVisibleGraph
-  }
-
-  override fun getRootAtHead(headCommitIndex: Int): VirtualFile? {
+  override fun getRootAtHead(headCommitIndex: VcsLogCommitStorageIndex): VirtualFile? {
     return newPack.dataPack.refsModel.rootAtHead(headCommitIndex)
            ?: oldPack.dataPack.refsModel.rootAtHead(headCommitIndex)
   }

@@ -13,6 +13,7 @@
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
+    <workspaceModel.fileIndexContributor implementation="com.intellij.workspaceModel.ide.ProjectRootEntityWorkspaceFileIndexContributor"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener"
@@ -23,11 +24,8 @@
   <extensionPoints>
     <extensionPoint name="directoryIndexExcludePolicy" area="IDEA_PROJECT" dynamic="true"
                     interface="com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy"/>
-    <!--suppress PluginXmlDynamicPlugin -->
-    <extensionPoint name="workspaceModel.fileIndexContributor"
+    <extensionPoint name="workspaceModel.fileIndexContributor" dynamic="true"
                     interface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor"/>
-    <extensionPoint name="workspaceModel.optionalExclusionContributor" dynamic="true"
-                    interface="com.intellij.workspaceModel.core.fileIndex.OptionalExclusionContributor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -35,8 +33,7 @@
                     serviceImplementation="com.intellij.openapi.roots.DefaultSingleFileSourcesTracker"/>
     <projectService serviceInterface="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex"
                     serviceImplementation="com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl"/>
-    <projectServiceInitializer.essential id="workspaceFileIndexInitializer"
-                                         implementation="com.intellij.workspaceModel.ide.impl.WorkspaceFileIndexInitializer"/>
+    <projectPreInit id="workspaceFileIndexInitializer" implementation="com.intellij.workspaceModel.ide.impl.WorkspaceFileIndexInitializer"/>
 
     <registryKey key="ide.new.project.model.strict.mode.rbs" defaultValue="false" restartRequired="true"
                  description="Enable additional checks after replaceBySource and applyChangesFrom"/>
@@ -46,7 +43,7 @@
                  description="Enable workspace model checking for listeners that execute more than 200ms"/>
     <registryKey key="ide.workspace.model.assertions.bridges.usage" defaultValue="false" restartRequired="true"
                  description="Enable workspace model checking for accessing bridges from WSM listeners"/>
-    <registryKey key="ide.workspace.model.sdk.remove.custom.processing" defaultValue="false" restartRequired="true"
+    <registryKey key="ide.workspace.model.sdk.remove.custom.processing" defaultValue="true" restartRequired="true"
                  description="Removes custom processing of Global Libraries and SDKs in the Workspace Model"/>
     <registryKey key="ide.workspace.model.per.environment.model.separation" defaultValue="false" restartRequired="true"
                  description="Enable existence of multiple workspace models, one per each isolated environment"/>

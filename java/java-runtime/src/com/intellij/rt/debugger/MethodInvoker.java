@@ -235,6 +235,9 @@ public final class MethodInvoker {
   }
 
   private static Object keepReference(Object ref, boolean soft) {
+    if (ref == null) {
+      return ref;
+    }
     List<Object> objects = keptValues.get();
     if (objects == null) {
       objects = new LinkedList<>();

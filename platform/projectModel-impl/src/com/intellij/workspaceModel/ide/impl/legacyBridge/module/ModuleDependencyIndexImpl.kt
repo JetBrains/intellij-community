@@ -39,7 +39,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
 @ApiStatus.Internal
-class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
+open class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyIndex, Disposable {
   companion object {
     @JvmStatic
     private val LOG = logger<ModuleDependencyIndexImpl>()
@@ -62,11 +62,12 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
   }
 
   private val eventDispatcher = EventDispatcher.create(ModuleDependencyListener::class.java)
-  
+
+  private val workspaceModel = project.workspaceModel
   private val libraryTablesListener = LibraryTablesListener()
   private val jdkChangeListener = JdkChangeListener()
   private val rootSetChangeListener = ReferencedRootSetChangeListener()
-  
+
   init {
     if (!project.isDefault) {
       val messageBusConnection = project.messageBus.connect(this)
@@ -289,7 +290,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
       }
     }
 
-    fun hasDependencyOn(libraryId: LibraryId) = project.workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java).any()
+    fun hasDependencyOn(libraryId: LibraryId) = workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java).any()
 
     override fun afterLibraryRenamed(library: Library, oldName: String?) {
       ThreadingAssertions.assertWriteAccess()
@@ -302,7 +303,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
 
         // We are allowed to get all modules and then update the project model because we are in a write action
         //   However, if the write action has to be removed from here, this all has to be done in `WorkspaceModel.update` for consistency
-        val affectedModules = project.workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java)
+        val affectedModules = workspaceModel.currentSnapshot.referrers(libraryId, ModuleEntity::class.java)
 
         if (affectedModules.any()) {
           WorkspaceModel.getInstance(project).updateProjectModel("Module dependency index: after library renamed") { builder ->

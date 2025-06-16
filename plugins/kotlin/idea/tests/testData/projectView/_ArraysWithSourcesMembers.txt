@@ -1907,6 +1907,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +DeprecatedSinceKotlin
      +DeprecationLevel
      +DslMarker
+     +ExperimentalContextParameters
      +ExperimentalMultiplatform
      +ExperimentalStdlibApi
      +ExperimentalSubclassOptIn
@@ -1914,6 +1915,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +ExposedCopyVisibility
      +ExtensionFunctionType
      Function
+     +IgnorableReturnValue
      +InitializedLazyImpl
      +kotlin.kotlin_builtins
      +KotlinNothingValueException
@@ -1923,6 +1925,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +Lazy
      +LazyThreadSafetyMode
      +Metadata
+     +MustUseReturnValue
      +NotImplementedError
      +NoWhenBranchMatchedException
      +OptIn
@@ -1959,6 +1962,9 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +CharCodeJVMKt
      CharCodeKt
      CompareToKt
+     ContextParametersKt
+     +ContextParametersKt__ContextKt
+     +ContextParametersKt__ContextOfKt
      DeepRecursiveKt
      +ExceptionsKt
      +ExceptionsKt__ExceptionsKt

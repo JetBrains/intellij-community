@@ -15,7 +15,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.impl.LibrariesAndSdkContributors
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
@@ -30,12 +29,13 @@ import org.jetbrains.annotations.ApiStatus
 internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
 
   override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext> {
-    val workspaceFileIndex = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
+    val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
 
     val fileSets = workspaceFileIndex.findFileSets(
       file = file,
       honorExclusion = true,
       includeContentSets = true,
+      includeContentNonIndexableSets = true,
       includeExternalSets = true,
       includeExternalSourceSets = true,
       includeCustomKindSets = true
@@ -66,7 +66,7 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
       return DeprecatedLibraryContextImpl(globalLibrary)
     }
 
-    val sdk = LibrariesAndSdkContributors.getSdk(fileSet)
+    val sdk = storage.findSdk(fileSet)
     if (sdk != null) {
       return DeprecatedSdkContextImpl(sdk)
     }

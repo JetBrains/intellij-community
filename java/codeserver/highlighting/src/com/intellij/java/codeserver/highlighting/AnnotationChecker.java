@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.AnnotationValueErrorContext;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,7 +37,7 @@ final class AnnotationChecker {
     psiElement().withParent(PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiNameValuePair.class),
     psiElement().withParents(PsiArrayInitializerMemberValue.class, PsiAnnotationMethod.class),
-    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(PsiKeyword.DEFAULT),
+    psiElement().withParent(PsiAnnotationMethod.class).afterLeaf(JavaKeywords.DEFAULT),
     // Unterminated parameter list like "void test(@NotNull String)": error on annotation looks annoying here
     psiElement().withParents(PsiModifierList.class, PsiParameterList.class)
   );
@@ -466,7 +467,7 @@ final class AnnotationChecker {
     if (applicable == null) {
       if (targets.length == 1 && targets[0] == PsiAnnotation.TargetType.TYPE_USE) {
         PsiElement parent = annotation.getParent();
-        if (parent instanceof PsiTypeElement) {
+        if (parent instanceof PsiTypeElement && !(annotation.getOwner() instanceof PsiArrayType)) {
           PsiElement modifierList =
             PsiTreeUtil.skipSiblingsBackward(parent, PsiWhiteSpace.class, PsiComment.class, PsiTypeParameterList.class);
           if (modifierList instanceof PsiModifierList psiModifierList) {

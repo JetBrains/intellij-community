@@ -2,7 +2,7 @@
 package com.intellij.platform.feedback.impl.state
 
 import com.intellij.openapi.components.*
-import com.intellij.platform.feedback.FeedbackSurveyConfig
+import com.intellij.platform.feedback.NotificationBasedFeedbackSurveyConfig
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
@@ -55,7 +55,7 @@ class CommonFeedbackSurveyService : PersistentStateComponent<CommonFeedbackSurve
     }
 
     @JvmStatic
-    fun checkIsFeedbackSurveyAnswerSent(config: FeedbackSurveyConfig): Boolean {
+    fun checkIsFeedbackSurveyAnswerSent(config: NotificationBasedFeedbackSurveyConfig): Boolean {
       if (config.isIndefinite) return false
 
       return checkIsFeedbackSurveyAnswerSent(config.surveyId)

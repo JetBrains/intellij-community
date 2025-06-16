@@ -1,14 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -21,20 +19,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.g
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.*
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.EditorTextComponent
-import com.intellij.ui.IdeBorderFactory.createBorder
-import com.intellij.ui.JBColor
-import com.intellij.ui.SideBorder
-import com.intellij.util.ui.JBUI.Borders.*
-import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.JBUI.scale
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil.*
-import com.intellij.vcsUtil.VcsUIUtil
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 import javax.swing.JComponent
-import javax.swing.SwingConstants
 import kotlin.coroutines.coroutineContext
 import kotlin.properties.Delegates.observable
 
@@ -43,19 +34,9 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
 
   private val changesView get() = changesViewHost.changesView
 
-  private val toolbarPanel = simplePanel().apply {
-    isOpaque = false
-    border = emptyLeft(1)
-  }
-  private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
+  private val progressPanel = ChangesViewCommitProgressPanel(project, this, commitMessage.editorField)
 
   private var isHideToolWindowOnCommit = false
-
-  var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->
-    if (oldValue != newValue) {
-      addToolbar(newValue) // this also removes toolbar from previous parent
-    }
-  }
 
   private val commitActions = commitActionsPanel.createActions()
   private var rootComponent: JComponent? = null
@@ -63,11 +44,7 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
   init {
     Disposer.register(this, commitMessage)
 
-    bottomPanel.add(progressPanel.component)
-    bottomPanel.add(commitAuthorComponent.apply { border = empty(0, 5, 4, 0) })
-    bottomPanel.add(commitActionsPanel)
-
-    addToolbar(isToolbarHorizontal)
+    setProgressComponent(progressPanel)
 
     for (support in EditChangelistSupport.EP_NAME.getExtensionList(project)) {
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
@@ -75,20 +52,14 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
 
     changesView.setInclusionListener {
       //readaction is not enough
-      WriteIntentReadAction.run { fireInclusionChanged () }
+      WriteIntentReadAction.run { fireInclusionChanged() }
     }
     changesView.isShowCheckboxes = true
-    changesViewHost.statusComponent =
-      CommitStatusPanel(this).apply {
-        border = emptyRight(6)
-
-        addToLeft(toolbarPanel)
-      }
     ChangesViewCommitTabTitleUpdater(changesView, this, this).start()
 
     commitActionsPanel.isCommitButtonDefault = {
       !progressPanel.isDumbMode &&
-      UIUtil.isFocusAncestor(rootComponent ?: this)
+      UIUtil.isFocusAncestor(rootComponent ?: component)
     }
   }
 
@@ -98,30 +69,13 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
     commitActions.forEach { it.registerCustomShortcutSet(newRootComponent, this) }
   }
 
-  private fun addToolbar(isHorizontal: Boolean) {
-    if (isHorizontal) {
-      toolbar.setOrientation(SwingConstants.HORIZONTAL)
-      toolbar.setReservePlaceAutoPopupIcon(false)
-
-      centerPanel.border = null
-      toolbarPanel.addToCenter(toolbar.component)
-    }
-    else {
-      toolbar.setOrientation(SwingConstants.VERTICAL)
-      toolbar.setReservePlaceAutoPopupIcon(true)
-
-      centerPanel.border = createBorder(JBColor.border(), SideBorder.LEFT)
-      addToLeft(toolbar.component)
-    }
-  }
-
   override var editedCommit by observable<EditedCommitPresentation?>(null) { _, _, newValue ->
     ChangesViewManager.getInstanceEx(project).promiseRefresh().then {
       newValue?.let { expand(it) }
     }
   }
 
-  override val isActive: Boolean get() = isVisible
+  override val isActive: Boolean get() = component.isVisible
 
   override fun activate(): Boolean {
     val toolWindow = getVcsToolWindow() ?: return false
@@ -129,9 +83,8 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
 
     saveToolWindowState()
     changesView.isShowCheckboxes = true
-    isVisible = true
+    component.isVisible = true
     commitActionsPanel.isActive = true
-    changesViewHost.statusComponent?.isVisible = true
 
     toolbar.updateActionsImmediately()
 
@@ -147,9 +100,8 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
 
     clearToolWindowState()
     changesView.isShowCheckboxes = false
-    isVisible = false
+    component.isVisible = false
     commitActionsPanel.isActive = false
-    changesViewHost.statusComponent?.isVisible = false
 
     toolbar.updateActionsImmediately()
   }
@@ -181,15 +133,6 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
 
     val path = treePathTraverser(changesView).preOrderDfsTraversal().find { getLastUserObject(it) in items }
     path?.let { selectPath(changesView, it, false) }
-  }
-
-  override fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) {
-    if (isFromToolbar && !isToolbarHorizontal) {
-      VcsUIUtil.showPopupAbove(popup, this, scale(COMMIT_OPTIONS_POPUP_MINIMUM_SIZE))
-    }
-    else {
-      super.showCommitOptions(popup, isFromToolbar, dataContext)
-    }
   }
 
   override fun setCompletionContext(changeLists: List<LocalChangeList>) {
@@ -228,21 +171,21 @@ class ChangesViewCommitPanel @ApiStatus.Internal constructor(project: Project, p
   }
 
   override fun dispose() {
-    changesViewHost.statusComponent = null
     changesView.isShowCheckboxes = false
     changesView.setInclusionListener(null)
   }
 }
 
 private class ChangesViewCommitProgressPanel(
+  project: Project,
   private val commitWorkflowUi: ChangesViewCommitWorkflowUi,
-  commitMessage: EditorTextComponent
-) : CommitProgressPanel() {
+  commitMessage: EditorTextComponent,
+) : CommitProgressPanel(project) {
 
   private var oldInclusion: Set<Any> = emptySet()
 
   init {
-    setup(commitWorkflowUi, commitMessage, empty(6))
+    setup(commitWorkflowUi, commitMessage, JBUI.Borders.empty())
   }
 
   override fun inclusionChanged() {

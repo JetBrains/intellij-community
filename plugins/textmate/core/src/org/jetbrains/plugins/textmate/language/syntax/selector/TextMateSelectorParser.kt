@@ -1,17 +1,17 @@
 package org.jetbrains.plugins.textmate.language.syntax.selector
 
+import org.jetbrains.plugins.textmate.getLogger
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorToken.PriorityToken
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorToken.SelectorToken
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.jetbrains.plugins.textmate.logging.TextMateLogger
 
 class TextMateSelectorParser internal constructor(private val myHighlightingSelector: CharSequence) {
   private val myTokens: List<TextMateSelectorToken> = TextMateSelectorLexer.tokenize(myHighlightingSelector)
   private var myIndex = 0
 
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(TextMateSelectorParser::class.java)
+    private val LOG: TextMateLogger = getLogger(TextMateSelectorParser::class)
     private const val NESTING_WEIGH_INITIAL = 100
     private const val BASE_WEIGH: Int = NESTING_WEIGH_INITIAL * 10
   }
@@ -19,7 +19,7 @@ class TextMateSelectorParser internal constructor(private val myHighlightingSele
   fun parse(): Node? {
     val result = parseSelectorList()
     if (!eof()) {
-      LOG.error("Cannot parse highlighting selector: {}", myHighlightingSelector)
+      LOG.error { "Cannot parse highlighting selector: $myHighlightingSelector" }
     }
     return result
   }

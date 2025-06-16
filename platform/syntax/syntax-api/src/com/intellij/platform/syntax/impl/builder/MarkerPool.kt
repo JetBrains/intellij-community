@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
-import com.intellij.platform.syntax.impl.fastutil.ints.IntArrayList
-import com.intellij.platform.syntax.impl.fastutil.ints.isEmpty
+import com.intellij.util.fastutil.ints.IntArrayList
+import com.intellij.util.fastutil.ints.isEmpty
 
 internal open class MarkerPool(
-  private val builder: ParsingTreeBuilder,
+  private val builder: SyntaxTreeBuilderImpl,
 ) {
   private val freeStartMarkers = IntArrayList()
   private val freeErrorItems = IntArrayList()
@@ -14,6 +14,9 @@ internal open class MarkerPool(
   init {
     list.add(CompositeMarker(-1, builder)) //no marker has id 0
   }
+
+  val size: Int
+    get() = list.size
 
   fun allocateCompositeMarker(): CompositeMarker {
     if (!freeStartMarkers.isEmpty()) {

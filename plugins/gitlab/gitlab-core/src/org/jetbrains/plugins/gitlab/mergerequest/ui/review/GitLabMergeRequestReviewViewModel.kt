@@ -9,6 +9,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
@@ -26,7 +27,8 @@ interface GitLabMergeRequestReviewViewModel : CodeReviewDiscussionsViewModel {
   }
 }
 
-internal open class GitLabMergeRequestReviewViewModelBase(
+@ApiStatus.Internal
+open class GitLabMergeRequestReviewViewModelBase(
   protected val cs: CoroutineScope,
   private val currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest

@@ -38,7 +38,7 @@ abstract class KtScratchFileEditorWithPreview(
 
     protected val toolWindowHandler: ScratchOutputHandler = requestToolWindowHandler()
     private val inlayScratchOutputHandler = InlayScratchOutputHandler(sourceTextEditor, toolWindowHandler)
-    private val previewEditorScratchOutputHandler = PreviewEditorScratchOutputHandler(
+    protected val previewEditorScratchOutputHandler: PreviewEditorScratchOutputHandler = PreviewEditorScratchOutputHandler(
       previewOutputManager, toolWindowHandler, previewTextEditor as Disposable
     )
     protected val commonPreviewOutputHandler: LayoutDependantOutputHandler = LayoutDependantOutputHandler(
@@ -177,8 +177,8 @@ var TextEditor.parentScratchEditorWithPreview: KtScratchFileEditorWithPreview? b
 class LayoutDependantOutputHandler(
   private val noPreviewOutputHandler: ScratchOutputHandler,
   private val previewOutputHandler: ScratchOutputHandler,
-  private val layoutProvider: () -> TextEditorWithPreview.Layout
-) : ScratchOutputHandler {
+  private val layoutProvider: () -> TextEditorWithPreview.Layout?
+) : ScratchOutputHandlerAdapter() {
 
     override fun onStart(file: ScratchFile) {
         targetHandler.onStart(file)
@@ -192,8 +192,12 @@ class LayoutDependantOutputHandler(
         targetHandler.error(file, message)
     }
 
-    override fun handle(file: ScratchFile, infos: List<ExplainInfo>, scope: CoroutineScope) {
-        targetHandler.handle(file, infos, scope)
+    override fun handle(file: ScratchFile, output: ScratchOutput) {
+        targetHandler.handle(file, output)
+    }
+
+    override fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {
+        targetHandler.handle(file, explanations, scope)
     }
 
     override fun onFinish(file: ScratchFile) {

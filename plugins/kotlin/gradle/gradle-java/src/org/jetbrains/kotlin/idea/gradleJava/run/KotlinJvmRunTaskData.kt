@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.tooling.core.withClosure
 import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
-internal class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
+class KotlinJvmRunTaskData(val targetName: String, val taskName: String) {
     companion object {
         private const val KOTLIN_JVM_RUN_CLASS_NAME = "org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmRun"
 

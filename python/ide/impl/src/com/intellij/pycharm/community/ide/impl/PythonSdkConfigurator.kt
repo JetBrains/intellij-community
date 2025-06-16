@@ -2,7 +2,7 @@
 package com.intellij.pycharm.community.ide.impl
 
 import com.intellij.concurrency.SensitiveProgressWrapper
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.DirectoryProjectConfigurator
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
@@ -61,7 +62,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     if (sdk != null || isProjectCreatedWithWizard) {
       return
     }
-    if (PySdkFromEnvironmentVariableConfigurator.getPycharmPythonPathProperty()?.isNotBlank() == true) {
+    if (PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()?.isNotBlank() == true) {
       return
     }
 
@@ -79,7 +80,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   private fun findExtension(module: Module): PyProjectSdkConfigurationExtension? {
-    return if (!module.project.isTrusted() || ApplicationManager.getApplication().isUnitTestMode) {
+    return if (!TrustedProjects.isProjectTrusted(module.project) || ApplicationManager.getApplication().isUnitTestMode) {
       null
     }
     else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe {
@@ -110,7 +111,7 @@ fun configureSdk(
       runInEdt { it.forEach { module.excludeInnerVirtualEnv(it) } }
     }
 
-    if (!project.isTrusted()) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
       // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
       LOGGER.info("Python interpreter has not been configured since project is not trusted")
       return
@@ -134,10 +135,7 @@ fun configureSdk(
     LOGGER.debug("Looking for a virtual environment related to the project")
     guardIndicator(indicator) { detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() }?.let {
       LOGGER.debug { "Detected virtual environment related to the project: $it" }
-      val newSdk = it.setupAssociated(existingSdks, module.basePath, true).getOrElse { err->
-        LOGGER.error(err)
-        return
-      }
+      val newSdk = it.setupAssociated(existingSdks, module.basePath, true).orLogException(LOGGER) ?: return
 
       LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 

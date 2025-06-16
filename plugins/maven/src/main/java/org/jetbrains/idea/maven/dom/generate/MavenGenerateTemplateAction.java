@@ -26,7 +26,7 @@ public class MavenGenerateTemplateAction extends GenerateDomElementAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return file instanceof XmlFile && MavenDomUtil.getMavenDomModel(file, MavenDomProjectModel.class) != null;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return psiFile instanceof XmlFile && MavenDomUtil.getMavenDomModel(psiFile, MavenDomProjectModel.class) != null;
   }
 }

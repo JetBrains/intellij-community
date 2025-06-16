@@ -8,13 +8,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-parcelize-k2_resources",
+  name = "k2_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-parcelize-k2",
+  name = "k2",
   module_name = "kotlin.compiler-plugins.parcelize.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -26,10 +26,10 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-parcelize-compiler-plugin",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/compiler-plugins/parcelize/common:kotlin-compiler-plugins-parcelize-common",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/compiler-plugins/parcelize/common",
+    "//plugins/kotlin/code-insight/api",
+    "//plugins/kotlin/frontend-independent",
     "//java/java-psi-api:psi",
     "//platform/analysis-api:analysis",
     "//platform/util",
@@ -37,6 +37,6 @@ jvm_library(
     "//platform/core-impl",
     "//platform/editor-ui-api:editor-ui",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-parcelize-k2_resources"]
+  runtime_deps = [":k2_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.parcelize.k2` end

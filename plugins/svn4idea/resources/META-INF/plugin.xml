@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <name>Subversion</name>
   <id>Subversion</id>
   <category>Version Controls</category>

@@ -16,8 +16,8 @@ public enum LombokNullAnnotationLibraryDefned implements LombokNullAnnotationLib
                    "org.checkerframework.checker.nullness.qual.Nullable", true),
   FINDBUGS("findbugs", "edu.umd.cs.findbugs.annotations.NonNull", "edu.umd.cs.findbugs.annotations.Nullable", false),
   SPRING("spring", "org.springframework.lang.NonNull", "org.springframework.lang.Nullable", false),
-  JML("jml", "org.jmlspecs.annotation.NonNull", "org.jmlspecs.annotation.Nullable", false);
-
+  JML("jml", "org.jmlspecs.annotation.NonNull", "org.jmlspecs.annotation.Nullable", false),
+  JSPECIFY("jspecify", "org.jspecify.annotations.NonNull", "org.jspecify.annotations.Nullable", true);
 
   private final String key;
   private final String nonNullAnnotation;

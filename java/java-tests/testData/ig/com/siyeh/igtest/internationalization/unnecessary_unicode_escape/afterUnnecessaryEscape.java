@@ -1,6 +1,6 @@
-// "Fix all 'Unnecessary unicode escape sequence' problems in file" "true"
+// "Fix all 'Unnecessary Unicode escape sequence' problems in file" "true"
 class X {
-  void test() {
+	void test() {
     String s = "abcd";
     String t = """
       \t

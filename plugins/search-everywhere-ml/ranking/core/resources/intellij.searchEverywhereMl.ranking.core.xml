@@ -2,6 +2,7 @@
   <resource-bundle>messages.searchEverywhereMlBundle</resource-bundle>
 
   <dependencies>
+    <module name="intellij.platform.ml.impl"/>
     <module name="intellij.searchEverywhereMl.ranking.ext"/>
   </dependencies>
 
@@ -90,8 +91,6 @@
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider"/>
-    <searchEverywhereElementFeaturesProvider
-      implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereTypoFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereFileGroupFeatureProvider"/>
     <searchEverywhereElementFeaturesProvider

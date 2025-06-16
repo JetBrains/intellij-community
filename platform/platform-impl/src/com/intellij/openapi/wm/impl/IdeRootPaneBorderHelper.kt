@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.ui.LafManagerListener
@@ -29,9 +29,9 @@ internal object IdeRootPaneBorderHelper {
    * Relies on [IdeFrameDecorator.FULL_SCREEN] in [rootPane] to acquire and listen to fullscreen state
    * [frameDecorator] is passed mainly to convey that fact and avoid adding a listener if the state never changes
    */
-  fun install(application: Application, cs: CoroutineScope, frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: JRootPane) {
+  fun install(app: Application, coroutineScope: CoroutineScope, frame: JFrame, frameDecorator: IdeFrameDecorator?, rootPane: JRootPane) {
     if (SystemInfoRt.isXWindow) {
-      installLinux(application, cs, frame, frameDecorator, rootPane)
+      installLinux(application = app, cs = coroutineScope, frame = frame, frameDecorator = frameDecorator, rootPane = rootPane)
     }
     else {
       rootPane.border = UIManager.getBorder("Window.border")
@@ -45,7 +45,7 @@ internal object IdeRootPaneBorderHelper {
     frameDecorator: IdeFrameDecorator?,
     rootPane: JRootPane,
   ) {
-    val fullScreen = AtomicReference<Boolean>(frameDecorator?.isInFullScreen == true)
+    val fullScreen = AtomicReference(frameDecorator?.isInFullScreen == true)
     application.messageBus.connect(cs).subscribe(LafManagerListener.TOPIC, LafManagerListener {
       if (rootPane.windowDecorationStyle == NONE) {
         installLinuxBorder(rootPane, UISettings.getInstance(), fullScreen.get(), frame.extendedState)

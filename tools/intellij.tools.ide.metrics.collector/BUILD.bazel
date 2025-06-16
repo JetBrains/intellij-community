@@ -1,10 +1,16 @@
 ### auto-generated section `build intellij.tools.ide.metrics.collector` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
   name = "custom",
   opt_in = ["kotlin.time.ExperimentalTime"]
+)
+
+jvm_resources(
+  name = "ide-metrics-collector_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
 )
 
 jvm_library(
@@ -21,7 +27,7 @@ jvm_library(
     "@lib//:jackson-databind",
     "@lib//:jackson-module-kotlin",
     "//platform/diagnostic/telemetry",
-    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/diagnostic/telemetry.exporters",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
@@ -50,7 +56,7 @@ jvm_library(
     "@lib//:mockito-junit-jupiter",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/diagnostic/telemetry.exporters",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
@@ -58,7 +64,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:fastutil-min",
     "@lib//:assert_j",
-  ]
+  ],
+  runtime_deps = [":ide-metrics-collector_test_resources"]
 )
 
 jvm_test(

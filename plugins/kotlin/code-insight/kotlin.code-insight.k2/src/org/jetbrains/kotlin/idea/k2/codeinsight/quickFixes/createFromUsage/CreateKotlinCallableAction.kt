@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
@@ -15,9 +15,10 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfParameterTypes
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfReturnType
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
@@ -38,12 +39,14 @@ internal class CreateKotlinCallableAction(
     @IntentionName private val myText: String,
     private val pointerToContainer: SmartPsiElementPointer<*>,
 ) : JvmGroupIntentionAction, PriorityAction {
+
     private val methodName: String = request.methodName
     private val callPointer: SmartPsiElementPointer<PsiElement>? = when (request) {
-        is CreateMethodFromKotlinUsageRequest -> request.call.createSmartPointer()
-        is CreateExecutableFromJavaUsageRequest<*> -> request.call.createSmartPointer()
+        is CreateMethodFromKotlinUsageRequest -> request.call
+        is CreateExecutableFromJavaUsageRequest<*> -> request.call
         else -> null
-    }
+    }?.createSmartPointer()
+
     private val call: PsiElement?
         get() = callPointer?.element
 
@@ -54,8 +57,8 @@ internal class CreateKotlinCallableAction(
 
     internal data class ParamCandidate(val names: Collection<String>, val renderedTypes: List<String>)
 
-    private val parameterCandidates: List<ParamCandidate> = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { analyze(it) { renderCandidatesOfParameterTypes(request.expectedParameters, it) } } ?: emptyList()
-    private val candidatesOfRenderedReturnType: List<String> = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { analyze(it) { renderCandidatesOfReturnType(request, it) } } ?: emptyList()
+    private val parameterCandidates: List<ParamCandidate> = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element -> allowAnalysisFromWriteActionInEdt(element) { analyze(it) { renderCandidatesOfParameterTypes(request.expectedParameters, it) } } } ?: emptyList()
+    private val candidatesOfRenderedReturnType: List<String> = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { element -> allowAnalysisFromWriteActionInEdt(element) { analyze(it) { renderCandidatesOfReturnType(request, it) } } } ?: emptyList()
     private val containerClassFqName: FqName? = (getContainer() as? KtClassOrObject)?.fqName
 
     private val isForCompanion: Boolean = (request as? CreateMethodFromKotlinUsageRequest)?.isForCompanion == true
@@ -114,8 +117,6 @@ internal class CreateKotlinCallableAction(
             listOf(), listOf()
         )
 
-        val call = call
-        require(call != null)
         val createKotlinCallablePsiEditor = CreateKotlinCallablePsiEditor(
             project, callableInfo,
         )
@@ -123,9 +124,9 @@ internal class CreateKotlinCallableAction(
             callableInfo.definitionAsString
         )
         val passedContainerElement = pointerToContainer.element ?: return
-        val anchor = call
-        val shouldComputeContainerFromAnchor =
-            if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension || !passedContainerElement.isWritable
+        val anchor = call ?: passedContainerElement
+        val shouldComputeContainerFromAnchor = if (call == null) false
+        else if (passedContainerElement is PsiFile) !passedContainerElement.isWritable
             else passedContainerElement.getContainer() == anchor.getContainer()
         val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
             anchor.getExtractionContainers().firstOrNull() ?:return
@@ -134,7 +135,7 @@ internal class CreateKotlinCallableAction(
         }
         createKotlinCallablePsiEditor.showEditor(
             function,
-            call,
+            anchor,
             isExtension,
             requestTargetClassPointer?.element,
             insertContainer,
@@ -148,11 +149,21 @@ internal class CreateKotlinCallableAction(
 
     private fun buildCallableAsString(request: CreateMethodRequest): String? {
         val container = getContainer()
-        if (call == null || container == null) return null
-        val modifierListAsString =
-            request.modifiers.mapNotNull(CreateFromUsageUtil::visibilityModifierToString).joinToString(separator = " ")
+            ?: return null
+
         return buildString {
-            append(modifierListAsString)
+            for (annotation in request.annotations) {
+                if (isNotEmpty()) append(" ")
+                append('@')
+                append(annotation.qualifiedName)
+            }
+
+            for (modifier in request.modifiers) {
+                if (isNotEmpty()) append(" ")
+                val string = CreateFromUsageUtil.visibilityModifierToString(modifier) ?: continue
+                append(string)
+            }
+
             if (abstract) {
                 if (isNotEmpty()) append(" ")
                 append("abstract")
@@ -168,7 +179,7 @@ internal class CreateKotlinCallableAction(
             append(renderTypeParameterDeclarations(request, container, receiverTypeText))
             if ((request as? CreateMethodFromKotlinUsageRequest)?.isExtension == true) {
                 if (receiver.isNotEmpty()) {
-                    append("$receiver ")
+                    append(receiver)
                 }
             }
             append(request.methodName)

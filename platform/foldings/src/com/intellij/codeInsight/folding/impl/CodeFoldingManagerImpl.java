@@ -50,6 +50,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   private static final Key<Boolean> ASYNC_FOLDING_UPDATE = Key.create("ASYNC_FOLDING_UPDATE");
   private static final Key<Map<TextRange, Boolean>> ASYNC_FOLDING_CACHE = Key.create("ASYNC_FOLDING_CACHE");
   private static final Key<Boolean> AUTO_CREATED = Key.create("AUTO_CREATED");
+  private static final Key<Boolean> NOT_PERSISTENT = Key.create("NOT_PERSISTENT");
 
   private final Project myProject;
   private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
@@ -190,6 +191,15 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
   public static boolean isAutoCreated(@Nullable FoldRegion region) {
     return AUTO_CREATED.isIn(region);
+  }
+
+  /// Do not store the folding region in user config
+  public static void markAsNotPersistent(@NotNull FoldRegion region) {
+    NOT_PERSISTENT.set(region, true);
+  }
+
+  public static boolean isNotPersistent(@Nullable FoldRegion region) {
+    return NOT_PERSISTENT.isIn(region);
   }
 
   public static Map<TextRange, Boolean> getAsyncExpandStatusMap(@Nullable Editor editor) {

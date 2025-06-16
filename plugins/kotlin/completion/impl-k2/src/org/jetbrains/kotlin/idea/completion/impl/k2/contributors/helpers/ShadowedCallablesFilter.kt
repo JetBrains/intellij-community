@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
+import com.intellij.openapi.util.Ref
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaTypeRelationChecker
@@ -27,7 +28,9 @@ internal class ShadowedCallablesFilter {
     )
 
     private val processed = HashSet<SimplifiedSignature>()
-    private val processedSimplifiedSignatures = HashMap<SimplifiedSignature, CompletionSymbolOrigin>()
+
+    // todo reconsider Ref
+    private val processedSimplifiedSignatures = HashMap<SimplifiedSignature, Ref<KaScopeKind>>()
 
     /**
      *  Checks whether callable is shadowed and updates [CallableInsertionOptions] if the callable is already imported and its short name
@@ -42,7 +45,7 @@ internal class ShadowedCallablesFilter {
     fun excludeFromCompletion(
         callableSignature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
-        symbolOrigin: CompletionSymbolOrigin,
+        scopeKind: KaScopeKind?,
         importStrategyDetector: ImportStrategyDetector,
         requiresTypeArguments: (KaFunctionSymbol) -> Boolean,
     ): FilterResult {
@@ -71,18 +74,18 @@ internal class ShadowedCallablesFilter {
 
         // if callable is already imported, try updating importing strategy
         if (importStrategy != ImportStrategy.DoNothing
-            && (symbolOrigin is CompletionSymbolOrigin.Scope || isAlreadyImported())
+            && (scopeKind != null || isAlreadyImported())
         ) {
             val newImportStrategy = ImportStrategy.DoNothing
             val excludeFromCompletion =
-                processSignatureConsideringOptions(fullSimplifiedSignature, simplifiedSignature, newImportStrategy, symbolOrigin)
+                processSignatureConsideringOptions(fullSimplifiedSignature, simplifiedSignature, newImportStrategy, scopeKind)
             if (!excludeFromCompletion) {
                 return FilterResult(excludeFromCompletion = false, newImportStrategy)
             }
         }
 
         val excludeFromCompletion =
-            processSignatureConsideringOptions(fullSimplifiedSignature, simplifiedSignature, importStrategy, symbolOrigin)
+            processSignatureConsideringOptions(fullSimplifiedSignature, simplifiedSignature, importStrategy, scopeKind)
         return FilterResult(excludeFromCompletion)
     }
 
@@ -91,16 +94,16 @@ internal class ShadowedCallablesFilter {
         fullSimplifiedSignature: SimplifiedSignature,
         simplifiedSignature: SimplifiedSignature,
         importStrategy: ImportStrategy,
-        symbolOrigin: CompletionSymbolOrigin,
+        scopeKind: KaScopeKind?,
     ): Boolean {
         return when (importStrategy) {
-            ImportStrategy.DoNothing -> processSignature(simplifiedSignature, symbolOrigin)
+            ImportStrategy.DoNothing -> processSignature(simplifiedSignature, scopeKind)
 
-            is ImportStrategy.InsertFqNameAndShorten -> processSignature(fullSimplifiedSignature, symbolOrigin)
+            is ImportStrategy.InsertFqNameAndShorten -> processSignature(fullSimplifiedSignature, scopeKind)
 
             is ImportStrategy.AddImport -> {
                 // `AddImport` doesn't necessarily mean that import is required and will be eventually inserted
-                val considerContainer = symbolOrigin is CompletionSymbolOrigin.Index
+                val considerContainer = scopeKind == null
                 val shadowingCallableOrigin = processedSimplifiedSignatures[simplifiedSignature]
                 if (shadowingCallableOrigin == null) {
                     // no callable with unspecified container shadows current callable
@@ -108,18 +111,18 @@ internal class ShadowedCallablesFilter {
                     // import is required and container needs to be considered
                     processSignature(
                         simplifiedSignature = if (considerContainer) fullSimplifiedSignature else simplifiedSignature,
-                        symbolOrigin = symbolOrigin,
+                        scopeKind = scopeKind,
                     )
                 } else {
                     if (!considerContainer) return true
 
                     // if the callable which shadows target callable belongs to the scope with priority lower than the priority of
                     // explicit simple importing scope, then it won't shadow target callable after import is inserted
-                    when ((shadowingCallableOrigin as? CompletionSymbolOrigin.Scope)?.kind) {
+                    when (shadowingCallableOrigin.get()) {
                         is KaScopeKind.PackageMemberScope,
                         is KaScopeKind.DefaultSimpleImportingScope,
                         is KaScopeKind.ExplicitStarImportingScope,
-                        is KaScopeKind.DefaultStarImportingScope -> processSignature(fullSimplifiedSignature, symbolOrigin)
+                        is KaScopeKind.DefaultStarImportingScope -> processSignature(fullSimplifiedSignature, scopeKind)
 
                         else -> true
                     }
@@ -130,8 +133,8 @@ internal class ShadowedCallablesFilter {
 
     private fun processSignature(
         simplifiedSignature: SimplifiedSignature,
-        symbolOrigin: CompletionSymbolOrigin,
-    ): Boolean = processedSimplifiedSignatures.putIfAbsent(simplifiedSignature, symbolOrigin) != null
+        scopeKind: KaScopeKind?,
+    ): Boolean = processedSimplifiedSignatures.putIfAbsent(simplifiedSignature, Ref.create(scopeKind)) != null
 
     companion object {
         /**

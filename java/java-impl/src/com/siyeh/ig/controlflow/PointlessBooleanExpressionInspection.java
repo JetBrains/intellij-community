@@ -21,6 +21,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -106,6 +107,8 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
         }
         if (result) out.append(tracker.text(onlyArgument));
         if (!result) out.append("!").append(tracker.text(onlyArgument, ParenthesesUtils.PREFIX_PRECEDENCE));
+      } else {
+        out.append(tracker.text(methodCallExpr));
       }
     }
     else if (expression != null) {
@@ -124,13 +127,13 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
           continue;
         }
         if (evaluate(operand) == Boolean.FALSE) {
-          out.append(PsiKeyword.FALSE);
+          out.append(JavaKeywords.FALSE);
           return;
         }
         expressions.add(operand);
       }
       if (expressions.isEmpty()) {
-        out.append(PsiKeyword.TRUE);
+        out.append(JavaKeywords.TRUE);
         return;
       }
       buildSimplifiedExpression(expressions, tokenType.equals(JavaTokenType.ANDAND) ? "&&" : "&", false, out, tracker);
@@ -141,13 +144,13 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
           continue;
         }
         if (evaluate(operand) == Boolean.TRUE) {
-          out.append(PsiKeyword.TRUE);
+          out.append(JavaKeywords.TRUE);
           return;
         }
         expressions.add(operand);
       }
       if (expressions.isEmpty()) {
-        out.append(PsiKeyword.FALSE);
+        out.append(JavaKeywords.FALSE);
         return;
       }
       buildSimplifiedExpression(expressions, tokenType.equals(JavaTokenType.OROR) ? "||" : "|", false, out, tracker);
@@ -166,10 +169,10 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
       }
       if (expressions.isEmpty()) {
         if (negate) {
-          out.append(PsiKeyword.TRUE);
+          out.append(JavaKeywords.TRUE);
         }
         else {
-          out.append(PsiKeyword.FALSE);
+          out.append(JavaKeywords.FALSE);
         }
         return;
       }
@@ -189,10 +192,10 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
       }
       if (expressions.isEmpty()) {
         if (negate) {
-          out.append(PsiKeyword.FALSE);
+          out.append(JavaKeywords.FALSE);
         }
         else {
-          out.append(PsiKeyword.TRUE);
+          out.append(JavaKeywords.TRUE);
         }
         return;
       }
@@ -261,11 +264,11 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
     if (JavaTokenType.EXCL.equals(tokenType)) {
       final Boolean value = evaluate(operand);
       if (value == Boolean.TRUE) {
-        out.append(PsiKeyword.FALSE);
+        out.append(JavaKeywords.FALSE);
         return;
       }
       else if (value == Boolean.FALSE) {
-        out.append(PsiKeyword.TRUE);
+        out.append(JavaKeywords.TRUE);
         return;
       }
     }

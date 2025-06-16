@@ -8,9 +8,9 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 
 abstract class UnstableApiUsageInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection by lazy { UnstableApiUsageInspection() } // lazy because inspection needs service in initialization
+  override val inspection: UnstableApiUsageInspection by lazy { UnstableApiUsageInspection() } // lazy because inspection needs service in initialization
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST, true) { }
+  override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST, true) {}
 
   override fun setUp() {
     super.setUp()

@@ -1,1 +1,0 @@
-[(id:Int)?, domain:String, command:String, (parameters:Array<Any>)?]

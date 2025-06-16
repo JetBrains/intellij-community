@@ -82,7 +82,7 @@ internal class DependencySupportBean() : PluginAware {
   }
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
-    if (pluginDescriptor is IdeaPluginDescriptorImpl && pluginDescriptor.moduleName == null) {
+    if (pluginDescriptor is IdeaPluginDescriptorImpl && pluginDescriptor !is ContentModuleDescriptor) {
       this.pluginDescriptor = pluginDescriptor
     }
     else {
@@ -100,6 +100,7 @@ internal class DependencySupportBean() : PluginAware {
 }
 
 internal const val DEPENDENCY_SUPPORT_FEATURE: String = "dependencySupport"
+internal const val FILE_HANDLER_KIND: String = "file-handler"
 
 internal val DependencySupportBean.id: @NlsSafe String
   get() = "$kind:$coordinate"

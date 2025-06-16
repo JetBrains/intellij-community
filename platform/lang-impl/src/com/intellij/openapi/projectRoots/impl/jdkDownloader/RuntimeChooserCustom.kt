@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressIndicator
@@ -40,14 +39,7 @@ internal object RuntimeChooserCustom {
   val isActionAvailable: Boolean
     get() = sdkType != null
 
-  val jdkDownloaderExtensionProvider: DataProvider = DataProvider { dataId ->
-    when {
-      JDK_DOWNLOADER_EXT.`is`(dataId) -> jdkDownloaderExtension
-      else -> null
-    }
-  }
-
-  private val jdkDownloaderExtension = object : JdkDownloaderDialogHostExtension {
+  val jdkDownloaderExtension = object : JdkDownloaderDialogHostExtension {
     override fun allowWsl(): Boolean = false
     override fun getEel(): EelApi? = null
 

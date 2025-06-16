@@ -7,11 +7,10 @@ import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiJavaToken;
-import com.intellij.psi.PsiSwitchBlock;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.siyeh.ig.psiutils.SwitchUtils;
@@ -136,7 +135,13 @@ public final class JavaTailTypes {
       Document document = context.getDocument();
       CharSequence chars = document.getCharsSequence();
       int offset = CharArrayUtil.shiftForward(chars, context.getTailOffset(), " \n\t");
-      return !CharArrayUtil.regionMatches(chars, offset, "->");
+      if (CharArrayUtil.regionMatches(chars, offset, "->")) {
+        return false;
+      }
+      PsiElement element = context.getFile().findElementAt(context.getStartOffset());
+      return PsiUtil.isJavaToken(element, JavaTokenType.DEFAULT_KEYWORD) ||
+             PsiUtil.isJavaToken(element, JavaTokenType.CASE_KEYWORD) ||
+             PsiTreeUtil.getParentOfType(element, PsiCaseLabelElementList.class) != null;
     }
 
     @Override

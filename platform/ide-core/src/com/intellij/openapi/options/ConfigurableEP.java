@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 /**
@@ -258,7 +259,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   @Attribute("treeRenderer")
   public String treeRendererClass;
 
-  private final Supplier<ObjectProducer> producer = new SynchronizedClearableLazy<>(this::createProducer);
+  private final Supplier<ObjectProducer> producer = new SynchronizedClearableLazy<>(() -> new SafeProducerWrapper(createProducer()));
   private ComponentManager componentManager;
   private Project myProject;
 
@@ -443,6 +444,55 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     @Override
     protected boolean canCreateElement() {
       return true;
+    }
+  }
+
+  /**
+   * Protects from plugin errors
+   */
+  private static final class SafeProducerWrapper extends ObjectProducer {
+    private final ObjectProducer producer;
+    private SafeProducerWrapper(@NotNull ObjectProducer producer) {
+      this.producer = producer;
+    }
+
+    @Override
+    protected Object createElement() {
+      try {
+        return producer.createElement();
+      } catch (CancellationException exception) {
+        throw exception;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        return null;
+      }
+    }
+
+    @Override
+    protected boolean canCreateElement() {
+      try {
+        return producer.canCreateElement();
+      } catch (CancellationException exception) {
+        throw exception;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        return false;
+      }
+    }
+
+    @Override
+    protected Class<?> getType() {
+      try {
+        return producer.getType();
+      } catch (CancellationException exception) {
+        throw exception;
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+        return null;
+      }
     }
   }
 }

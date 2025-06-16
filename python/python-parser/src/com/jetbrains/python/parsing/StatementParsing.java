@@ -30,6 +30,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   protected static final @NonNls String TOK_AS = PyNames.AS;
   protected static final @NonNls String TOK_PRINT = PyNames.PRINT;
   protected static final @NonNls String TOK_NONE = PyNames.NONE;
+  protected static final @NonNls String TOK_ELLIPSIS = PyNames.ELLIPSIS;
   protected static final @NonNls String TOK_TRUE = PyNames.TRUE;
   protected static final @NonNls String TOK_DEBUG = PyNames.DEBUG;
   protected static final @NonNls String TOK_FALSE = PyNames.FALSE;
@@ -1113,6 +1114,9 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
              source == PyTokenTypes.IDENTIFIER) {
       if (isWordAtPosition(text, start, end, TOK_NONE)) {
         return PyTokenTypes.NONE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_ELLIPSIS)) {
+        return PyTokenTypes.ELLIPSIS_LITERAL;
       }
       if (isWordAtPosition(text, start, end, TOK_TRUE)) {
         return PyTokenTypes.TRUE_KEYWORD;

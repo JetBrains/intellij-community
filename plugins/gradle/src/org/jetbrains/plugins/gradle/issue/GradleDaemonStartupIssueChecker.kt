@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue
 
 import com.intellij.build.BuildConsoleUtils.getMessageTitle
@@ -23,19 +23,15 @@ import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import java.nio.file.Paths
-import java.util.*
 import java.util.function.BiPredicate
 import java.util.function.Consumer
 import kotlin.io.path.isRegularFile
 
 /**
  * This issue checker provides quick fixes to deal with known startup issues of the Gradle daemon.
- *
- * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-class GradleDaemonStartupIssueChecker : GradleIssueChecker {
-
+private class GradleDaemonStartupIssueChecker : GradleIssueChecker {
   override fun check(issueData: GradleIssueData): BuildIssue? {
     val rootCause = getRootCauseAndLocation(issueData.error).first
     val rootCauseText = rootCause.toString()
@@ -97,8 +93,8 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
     if (location == null) return false
 
     if (failureCause == "startup failed:") {
-      @Suppress("HardCodedStringLiteral") val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
-      val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file.path}': ${location.startLine + 1}: ", "") //NON-NLS
+      val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
+      val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file?.path ?: ""}': ${location.startLine + 1}: ", "") //NON-NLS
                                   .nullize()?.substringBeforeLast(" @ ") ?: return false //NON-NLS
       val locationPart = locationLine.substringAfterLast(" @ ")
       val matchResult = GradleConsoleFilter.LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)

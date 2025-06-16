@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -29,13 +29,18 @@ public interface FindInProjectSearchEngine {
   interface FindInProjectSearcher {
     /**
      * @return files that contain non-trivial search results for corresponding {@link FindModel}.
+     * Returned files are _likely_ contain occurrences of the query, but it's not 100% guaranteed, so additional check may be needed
      */
     @NotNull
     Collection<VirtualFile> searchForOccurrences();
 
     /**
-     * @return true if there are no occurrences can be found outside result of {@link FindInProjectSearcher#searchForOccurrences()},
-     * otherwise false.
+     * @return true if there are no occurrences can be found outside the result of {@link FindInProjectSearcher#searchForOccurrences()},
+     * <p>
+     * More specifically: if this method returns true, and {@link #searchForOccurrences()} does NOT return file X, and
+     * {@code isCovered(X)==true} => file X is guaranteed to NOT contain a search pattern.
+     * If this method returns false, then even if {@code isCovered(X)==true} and {@link #searchForOccurrences()} does NOT return
+     * the file X -- it is still possible that the file X contains a search pattern.
      */
     boolean isReliable();
 

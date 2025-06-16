@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
@@ -89,10 +91,9 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
       packages = null
       val output = runBlockingCancellable {
         runPipEnv(sdk.associatedModulePath?.let { Path.of(it) }, "graph", "--json")
-      }.getOrElse {
+      }.onFailure {
         packages = emptyList()
-        throw it
-      }
+      }.getOrThrow()
       packages = parsePipEnvGraphEntries(parsePipEnvGraph(output))
       ApplicationManager.getApplication().messageBus.syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
     }

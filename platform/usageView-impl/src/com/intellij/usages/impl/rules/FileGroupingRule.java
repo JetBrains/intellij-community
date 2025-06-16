@@ -3,8 +3,8 @@ package com.intellij.usages.impl.rules;
 
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -60,7 +60,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     return true;
   }
 
-  public static class FileUsageGroup implements UsageGroup, DataProvider, NamedPresentably {
+  public static class FileUsageGroup implements UsageGroup, UiDataProvider, NamedPresentably {
     private final Project myProject;
     private final VirtualFile myFile;
     private @NlsSafe String myPresentableName;
@@ -144,21 +144,11 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-        return myFile;
-      }
-      if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowId -> getSlowData(slowId);
-      }
-      return null;
-    }
-
-    private @Nullable Object getSlowData(@NotNull String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.VIRTUAL_FILE, myFile);
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         return getPsiFile();
-      }
-      return null;
+      });
     }
 
     @ApiStatus.Internal

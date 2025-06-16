@@ -63,6 +63,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
       }
+      if (myT instanceof PsiClassType && exprType == PsiTypes.nullType()) {
+        constraints.add(new StrictSubtypingConstraint(myT, exprType));
+      }
       return true;
     }
     if (myExpression instanceof PsiParenthesizedExpression) {

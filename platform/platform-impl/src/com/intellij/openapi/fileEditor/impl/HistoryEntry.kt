@@ -40,6 +40,7 @@ internal class HistoryEntry(
   companion object {
     const val TAG: @NonNls String = "entry"
     const val FILE_ATTRIBUTE: String = "file"
+    const val FILE_ID_ATTRIBUTE: String = "file-id"
 
     fun createHeavy(project: Project, e: Element): HistoryEntry? {
       val fileEditorProviderManager = FileEditorProviderManager.getInstance()

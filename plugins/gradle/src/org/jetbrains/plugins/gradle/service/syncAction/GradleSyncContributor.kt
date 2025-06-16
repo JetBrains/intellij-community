@@ -106,6 +106,8 @@ interface GradleSyncContributor {
      */
     const val PROJECT_ROOT_CONTRIBUTOR = 0
 
+    const val DECLARATIVE_CONTRIBUTOR = 1
+
     /**
      * The [CONTENT_ROOT_CONTRIBUTOR] configures the IDE project content root structure and their basic module info.
      *

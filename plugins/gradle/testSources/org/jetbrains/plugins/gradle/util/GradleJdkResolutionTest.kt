@@ -5,8 +5,8 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUt
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_DOWNLOADABLE_FIX
 import com.intellij.openapi.externalSystem.service.execution.TestUnknownSdkResolver.TestUnknownSdkFixMode.TEST_LOCAL_FIX
-import org.jetbrains.plugins.gradle.properties.USER_HOME
-import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_DIRECTORY_PATH_KEY
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_USER_HOME_ENV_KEY
+import org.jetbrains.plugins.gradle.util.GradleConstants.USER_HOME_PROPERTY_KEY
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -153,7 +153,7 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
 
   @Test
   fun `test gradle properties resolution (user_home properties)`() {
-    environment.properties(USER_HOME to userHome)
+    environment.properties(USER_HOME_PROPERTY_KEY to userHome)
     withGradleProperties(userCache, java = earliestSdk) {
       assertGradleProperties(java = earliestSdk)
       withGradleProperties(externalProjectPath, java = latestSdk) {
@@ -176,7 +176,7 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
 
   @Test
   fun `test gradle properties resolution (GRADLE_USER_HOME properties)`() {
-    environment.variables(SYSTEM_DIRECTORY_PATH_KEY to gradleUserHome)
+    environment.variables(GRADLE_USER_HOME_ENV_KEY to gradleUserHome)
     withGradleProperties(gradleUserHome, java = earliestSdk) {
       assertGradleProperties(java = earliestSdk)
       withGradleProperties(externalProjectPath, java = latestSdk) {
@@ -223,8 +223,8 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
 
   @Test
   fun `test gradle properties resolution (GRADLE_USER_HOME overrides user_home)`() {
-    environment.properties(USER_HOME to userHome)
-    environment.variables(SYSTEM_DIRECTORY_PATH_KEY to gradleUserHome)
+    environment.properties(USER_HOME_PROPERTY_KEY to userHome)
+    environment.variables(GRADLE_USER_HOME_ENV_KEY to gradleUserHome)
     withGradleProperties(gradleUserHome, java = earliestSdk) {
       withGradleProperties(userCache, java = latestSdk) {
         assertGradleProperties(java = earliestSdk)

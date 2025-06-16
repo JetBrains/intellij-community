@@ -6,14 +6,11 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
-import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
 import org.jetbrains.kotlin.idea.completion.kotlinIdentifierPartPattern
 import org.jetbrains.kotlin.idea.completion.kotlinIdentifierStartPattern
@@ -30,10 +27,7 @@ internal fun isDumbPsiCompletionEnabled(): Boolean {
  * As such, the information returned is limited and can be wrong based on the context.
  */
 class KotlinDumbCompletionContributor : CompletionContributor(), DumbAware {
-    private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
-        override fun getLanguageVersionSetting(element: PsiElement) = element.languageVersionSettings
-        override fun getLanguageVersionSetting(module: Module) = module.languageVersionSettings
-    })
+    private val keywordCompletion = KeywordCompletion()
 
     private val psiTreeCompletion = PsiTreeCompletion()
 

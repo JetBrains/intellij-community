@@ -12,6 +12,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,7 +27,7 @@ public final class FindClassUtil {
    * @param qualifiedName the full-qualified name of the class to find.
    * @return the modules that contain the given class in dependencies or libraries.
    */
-  public static @NotNull Collection<Module> findModulesWithClass(@NotNull Project project, @NonNls @NotNull String qualifiedName) {
+  public static @NotNull @Unmodifiable Collection<Module> findModulesWithClass(@NotNull Project project, @NonNls @NotNull String qualifiedName) {
     GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     PsiClass[] possibleClasses = facade.findClasses(qualifiedName, allScope);

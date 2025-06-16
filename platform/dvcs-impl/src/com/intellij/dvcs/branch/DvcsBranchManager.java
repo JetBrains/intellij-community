@@ -1,11 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.branch;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcsUtil.VcsUtil;
@@ -15,11 +17,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class DvcsBranchManager<T extends Repository> {
+  private static final Logger LOG = Logger.getInstance(DvcsBranchManager.class);
+
   private final AbstractRepositoryManager<T> myRepositoryManager;
 
   private final @NotNull DvcsBranchSettings myBranchSettings;
   private final @NotNull Map<BranchType, Collection<String>> myPredefinedFavoriteBranches = new HashMap<>();
-  private final @NotNull Project myProject;
+  protected final @NotNull Project myProject;
 
   public static final @NotNull Topic<DvcsBranchManagerListener> DVCS_BRANCH_SETTINGS_CHANGED =
     Topic.create("Branch settings changed", DvcsBranchManagerListener.class);
@@ -49,12 +53,35 @@ public abstract class DvcsBranchManager<T extends Repository> {
   public boolean isFavorite(@Nullable BranchType branchType, @Nullable Repository repository, @NotNull String branchName) {
     if (branchType == null) return false;
     String branchTypeName = branchType.getName();
-    if (myBranchSettings.getFavorites().contains(branchTypeName, repository, branchName)) return true;
-    if (myBranchSettings.getExcludedFavorites().contains(branchTypeName, repository, branchName)) return false;
+    VirtualFile root = repository == null ? null : repository.getRoot();
+    if (myBranchSettings.getFavorites().contains(branchTypeName, root, branchName)) return true;
+    if (myBranchSettings.getExcludedFavorites().contains(branchTypeName, root, branchName)) return false;
     return isPredefinedAsFavorite(branchType, branchName);
   }
 
-  public @NotNull Map<T, Set<String>> getFavoriteBranches(@NotNull BranchType branchType) {
+  public @NotNull Set<@NotNull String> getFavoriteRefs(@NotNull BranchType refType, @NotNull Repository repository) {
+    Set<String> result = new HashSet<>(myPredefinedFavoriteBranches.getOrDefault(refType, Collections.emptyList()));
+
+    var favorites = myBranchSettings.getFavorites().getBranches();
+    var excludedFavorites = myBranchSettings.getExcludedFavorites().getBranches();
+
+    String repoPath = DvcsBranchUtil.getPathFor(repository);
+    for (DvcsBranchInfo info : ContainerUtil.notNullize(favorites.get(refType.getName()))) {
+      if (info.repoPath.equals(repoPath)) {
+        result.add(info.sourceName);
+      }
+    }
+
+    for (DvcsBranchInfo info : ContainerUtil.notNullize(excludedFavorites.get(refType.getName()))) {
+      if (info.repoPath.equals(repoPath)) {
+        result.remove(info.sourceName);
+      }
+    }
+
+    return result;
+  }
+
+  public @NotNull Map<@NotNull T, @NotNull Set<@NotNull String>> getFavoriteBranches(@NotNull BranchType branchType) {
     Map<T, List<String>> favorites = collectBranchesByRoot(myBranchSettings.getFavorites(), branchType);
     Map<T, List<String>> excludedFavorites = collectBranchesByRoot(myBranchSettings.getExcludedFavorites(), branchType);
     Collection<String> predefinedFavorites = myPredefinedFavoriteBranches.get(branchType);
@@ -116,34 +143,40 @@ public abstract class DvcsBranchManager<T extends Repository> {
   }
 
   public void setFavorite(@Nullable BranchType branchType,
-                          @Nullable Repository repository,
+                          @Nullable T repository,
                           @NotNull String branchName,
                           boolean shouldBeFavorite) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Changing favorite state of %s(%s) to %s in %s"
+                  .formatted(branchName, branchType != null ? branchType.getName() : "", shouldBeFavorite, repository));
+    }
+
     if (branchType == null) return;
     String branchTypeName = branchType.getName();
+    VirtualFile root = repository == null ? null : repository.getRoot();
     if (shouldBeFavorite) {
-      myBranchSettings.getExcludedFavorites().remove(branchTypeName, repository, branchName);
+      myBranchSettings.getExcludedFavorites().remove(branchTypeName, root, branchName);
       if (!isPredefinedAsFavorite(branchType, branchName)) {
-        myBranchSettings.getFavorites().add(branchTypeName, repository, branchName);
+        myBranchSettings.getFavorites().add(branchTypeName, root, branchName);
       }
     }
     else {
-      myBranchSettings.getFavorites().remove(branchTypeName, repository, branchName);
+      myBranchSettings.getFavorites().remove(branchTypeName, root, branchName);
       if (isPredefinedAsFavorite(branchType, branchName)) {
-        myBranchSettings.getExcludedFavorites().add(branchTypeName, repository, branchName);
+        myBranchSettings.getExcludedFavorites().add(branchTypeName, root, branchName);
       }
     }
-    notifyFavoriteSettingsChanged();
+    notifyFavoriteSettingsChanged(repository);
   }
 
-  private void notifyFavoriteSettingsChanged() {
+  protected void notifyFavoriteSettingsChanged(@Nullable T repository) {
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
       myProject.getMessageBus().syncPublisher(DVCS_BRANCH_SETTINGS_CHANGED).branchFavoriteSettingsChanged();
     });
   }
 
   public boolean isGroupingEnabled(@NotNull GroupingKey key) {
-    return myBranchSettings.getGroupingKeyIds().contains(key.getId());
+    return myBranchSettings.isGroupingEnabled(key);
   }
 
   public void setGrouping(@NotNull GroupingKey key, boolean state) {

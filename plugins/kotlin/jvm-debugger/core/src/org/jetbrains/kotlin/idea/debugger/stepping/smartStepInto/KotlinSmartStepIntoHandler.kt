@@ -10,9 +10,9 @@ import com.intellij.debugger.actions.SmartStepTarget
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.MethodFilter
-import com.intellij.debugger.engine.SuspendContextImpl
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.DebuggerSession
+import com.intellij.debugger.impl.DexDebugFacility
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.debugger.statistics.Engine
@@ -31,7 +31,6 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import com.intellij.debugger.impl.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.dumbAction
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
@@ -41,6 +40,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 
 class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
@@ -55,15 +55,14 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
 
     override fun findSmartStepTargetsAsync(position: SourcePosition, session: DebuggerSession): Promise<List<SmartStepTarget>> {
         val promise = AsyncPromise<List<SmartStepTarget>>()
-        session.process.managerThread.schedule(object : DebuggerContextCommandImpl(session.contextManager.context) {
-            override suspend fun threadActionSuspend(suspendContext: SuspendContextImpl) {
-                promise.compute { findSmartStepTargetsInternal(position, session) }
-            }
-
-            override fun commandCancelled() {
+        val debuggerContext = session.contextManager.context
+        executeOnDMT(debuggerContext) {
+            promise.compute { findSmartStepTargetsInternal(position, session) }
+        }.invokeOnCompletion {
+            if (it is CancellationException) {
                 promise.setError("Cancelled")
             }
-        })
+        }
         return promise
     }
 
@@ -132,7 +131,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
     }
 }
 
-private fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<SmartStepTarget> {
+fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<SmartStepTarget> {
     val targets = OrderedSet<SmartStepTarget>()
     val visitor = SmartStepTargetVisitor(lines, targets)
     element.accept(visitor, null)
@@ -148,7 +147,10 @@ private suspend fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarge
     return targetsToShow
 }
 
-private suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(context: SmartStepIntoContext): List<KotlinMethodSmartStepTarget> {
+suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
+    context: SmartStepIntoContext,
+    specificLocation: Location? = null
+): List<KotlinMethodSmartStepTarget> {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     val debugProcess = context.debugProcess
     if (isEmpty()) {
@@ -160,7 +162,7 @@ private suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(cont
             ?: this
     }
     val frameProxy = debugProcess.suspendManager.pausedContext?.frameProxy
-    val location = frameProxy?.safeLocation() ?: run {
+    val location = specificLocation ?: frameProxy?.safeLocation() ?: run {
         DebuggerStatistics.logSmartStepIntoTargetsDetection(
             debugProcess.project, Engine.KOTLIN,
             SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE
@@ -191,7 +193,7 @@ private fun fixOrdinalsAfterTargetRemoval(removedTarget: KotlinMethodSmartStepTa
  * It should be suitable for smart step into analysis,
  * meaning that it is expected to include all possible step targets.
  */
-private fun SourcePosition.getContainingExpression(): KtElement? {
+fun SourcePosition.getContainingExpression(): KtElement? {
     val element = elementAt ?: return null
     // Firstly, try to locate an element that starts at the current line
     val topmostElement = getTopmostElementAtOffset(element, element.textRange.startOffset) as? KtElement

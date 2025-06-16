@@ -859,10 +859,8 @@ public class JBScrollPane extends JScrollPane {
         Component view = viewport.getView();
         if (view != null) {
           Point viewLocation = view.getLocation();
-          Dimension viewportExtentSize = viewport.getPreferredSize();
-          if (viewportExtentSize == null) viewportExtentSize = new Dimension();
-          Dimension viewPreferredSize = view.getPreferredSize();
-          if (viewPreferredSize == null) viewPreferredSize = new Dimension();
+          Dimension viewportExtentSize = calculatePreferredSize(viewport);
+          Dimension viewPreferredSize = calculatePreferredSize(view);
           if (view instanceof JComponent && !view.isPreferredSizeSet()) {
             JBInsets.removeFrom(viewPreferredSize, JBViewport.getViewInsets((JComponent)view));
           }
@@ -893,6 +891,26 @@ public class JBScrollPane extends JScrollPane {
       if (colHead != null && colHead.isVisible()) result.height += colHead.getPreferredSize().height;
 
       return result;
+    }
+
+    private static Dimension calculatePreferredSize(Component component) {
+      Dimension preferredSize = component.getPreferredSize();
+      if (preferredSize == null) preferredSize = new Dimension();
+      Dimension maximumSize = component.getMaximumSize();
+      if (maximumSize != null) {
+        // IJPL-190373
+        // For some reason, the default maximum size for a control is Short.MAX_VALUE.
+        // It turns out that if Short.MAX_VALUE is returned as a preferred width,
+        // it can mess with the layout logic, causing lay outing problems.
+        // Don't replace preferredSize values in such cases.
+        if (maximumSize.width != Short.MAX_VALUE && maximumSize.width != Integer.MAX_VALUE) {
+          preferredSize.width = Math.min(maximumSize.width, preferredSize.width);
+        }
+        if (maximumSize.height != Short.MAX_VALUE && maximumSize.height != Integer.MAX_VALUE) {
+          preferredSize.height = Math.min(maximumSize.height, preferredSize.height);
+        }
+      }
+      return preferredSize;
     }
 
     private static boolean isOverlappingScrollBar(JScrollPane scrollPane) {

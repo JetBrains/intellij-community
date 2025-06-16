@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
@@ -18,6 +20,7 @@ import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceJavaDele
 import com.intellij.refactoring.safeDelete.usageInfo.SafeDeleteReferenceSimpleDeleteUsageInfo
 import com.intellij.refactoring.util.RefactoringDescriptionLocation
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.Modality
@@ -294,25 +297,31 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
         } ?: getSearchInfo(element)
     }
 
-    override fun findConflicts(element: PsiElement, allElementsToDelete: Array<out PsiElement>): MutableCollection<String>? {
+    override fun findConflicts(
+        element: PsiElement,
+        allElementsToDelete: Array<PsiElement>,
+        usages: Array<UsageInfo>,
+        conflicts: MultiMap<PsiElement, @NlsContexts.DialogMessage String>
+    ) {
+        super.findConflicts(element, allElementsToDelete, usages, conflicts)
         if (element is KtNamedFunction || element is KtProperty) {
             val ktClass = element.getNonStrictParentOfType<KtClass>()
-            if (ktClass == null || ktClass.body != element.parent) return null
+            if (ktClass == null || ktClass.body != element.parent) return
 
             val modifierList = ktClass.modifierList
-            if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return null
+            if (modifierList != null && modifierList.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return
 
             val bindingContext = (element as KtElement).analyze()
 
             val declarationDescriptor =
-                bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, element] as? CallableMemberDescriptor ?: return null
+                bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, element] as? CallableMemberDescriptor ?: return
 
-            return declarationDescriptor.overriddenDescriptors
+            declarationDescriptor.overriddenDescriptors
                 .asSequence()
                 .filter { overridenDescriptor -> overridenDescriptor.modality == Modality.ABSTRACT }
-                .mapTo(ArrayList()) { overridenDescriptor ->
+                .forEach { overridenDescriptor ->
                     val oElement = DescriptorToSourceUtils.getSourceFromDescriptor(overridenDescriptor)
-                    KotlinBundle.message(
+                    val message = KotlinBundle.message(
                         "override.declaration.x.implements.y",
                         ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITH_PARENT),
                         if (oElement != null) ElementDescriptionUtil.getElementDescription(
@@ -320,10 +329,9 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                             RefactoringDescriptionLocation.WITH_PARENT
                         ) else IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.render(overridenDescriptor),
                     )
+                    conflicts.putValue(oElement, StringUtil.capitalize(message))
                 }
         }
-
-        return super.findConflicts(element, allElementsToDelete)
     }
 
     /*

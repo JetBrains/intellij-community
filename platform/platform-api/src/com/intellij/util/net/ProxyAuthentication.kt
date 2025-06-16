@@ -140,7 +140,9 @@ class PlatformProxyAuthentication(
     val credentialStore = getCredentialStore()
     var result: Credentials? = null
     val login: String = credentialStore.getCredentials(host, port)?.userName ?: ""
-    logger.debug { "prompting auth for $host:$port" }
+    if (logger.isDebugEnabled) {
+      logger.debug(Exception("proxy auth stacktrace")) { "prompting auth for $host:$port" }
+    }
     runAboveAll {
       val dialog = AuthenticationDialog(
         PopupUtil.getActiveComponent(),

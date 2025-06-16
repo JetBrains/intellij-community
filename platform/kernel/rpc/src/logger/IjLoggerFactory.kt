@@ -12,15 +12,18 @@ internal class IjLoggerFactory : KLoggerFactory {
     return KLogger(IjLogger(Logger.getInstance(owner.java)))
   }
 
-  override fun logger(owner: Class<*>): KLogger {
-    return KLogger(IjLogger(Logger.getInstance(owner)))
-  }
-
   override fun logger(owner: Any): KLogger {
     return KLogger(IjLogger(Logger.getInstance(owner.toString())))
   }
 
   override fun logger(name: String): KLogger {
     return KLogger(IjLogger(Logger.getInstance(name)))
+  }
+
+  override fun setLoggingContext(map: Map<String, String>?) {
+  }
+
+  override fun getLoggingContext(): Map<String, String>? {
+    return null
   }
 }

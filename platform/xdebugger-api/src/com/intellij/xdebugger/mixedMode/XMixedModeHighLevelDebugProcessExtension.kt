@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.mixedMode
 
+import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XSuspendContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -16,7 +17,11 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface XMixedModeHighLevelDebugProcessExtension : XMixedModeDebugProcessExtension {
-  fun pauseMixedModeSession()
+  /**
+   * @param stopEventThreadId - XSuspendContext::getActiveExecutionStack must represent a thread with a corresponding id.
+   * MixedModeProcessTransitionStateMachine specifies it when handling some tricky scenarios
+   */
+  fun pauseMixedModeSession(stopEventThreadId : Long?)
 
   suspend fun isStepWillBringIntoLowLevelCode(suspendContext: XSuspendContext): Boolean
 
@@ -30,4 +35,6 @@ interface XMixedModeHighLevelDebugProcessExtension : XMixedModeDebugProcessExten
   fun stoppedInHighLevelSuspendContext(suspendContext: XSuspendContext): Boolean
 
   suspend fun abortHighLevelStepping()
+
+  fun setNextStatement(suspendContext: XSuspendContext, position: XSourcePosition)
 }

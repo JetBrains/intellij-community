@@ -2,6 +2,8 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -29,7 +31,7 @@ internal class TerminalBlocksDecorator(
   private val decorations: MutableMap<Int, BlockDecoration> = HashMap()
 
   init {
-    coroutineScope.launch(Dispatchers.EDT) {
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       blocksModel.events.collect { event ->
         editor.doTerminalOutputScrollChangingAction {
           handleBlocksModelEvent(event)

@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+fun String.foo() {
+}
+
+fun bar() {
+    with("baz") {
+        this.foo()
+    }
+}

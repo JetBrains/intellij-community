@@ -75,6 +75,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.WindowWrapper;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -588,7 +589,7 @@ public final class DiffUtil {
       activatable.showNotify();
     }
     else {
-      UiNotifyConnector.installOn(component, activatable);
+      UiNotifyConnector.installOn(component, activatable, false);
     }
   }
 
@@ -884,10 +885,7 @@ public final class DiffUtil {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
     if (diffComputer != null) return new SimpleTextDiffProvider(settings, rediff, disposable, diffComputer);
 
-    TwosideTextDiffProvider smartProvider = SmartTextDiffProvider.create(project, request, settings, rediff, disposable);
-    if (smartProvider != null) return smartProvider;
-
-    return new SimpleTextDiffProvider(settings, rediff, disposable);
+    return SmartTextDiffProvider.create(project, request, settings, rediff, disposable);
   }
 
   public static @NotNull TwosideTextDiffProvider.NoIgnore createNoIgnoreTextDiffProvider(@Nullable Project project,
@@ -898,10 +896,7 @@ public final class DiffUtil {
     DiffUserDataKeysEx.DiffComputer diffComputer = request.getUserData(DiffUserDataKeysEx.CUSTOM_DIFF_COMPUTER);
     if (diffComputer != null) return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable, diffComputer);
 
-    TwosideTextDiffProvider.NoIgnore smartProvider = SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff, disposable);
-    if (smartProvider != null) return smartProvider;
-
-    return new SimpleTextDiffProvider.NoIgnore(settings, rediff, disposable);
+    return SmartTextDiffProvider.createNoIgnore(project, request, settings, rediff, disposable);
   }
 
   public static List<DocumentContent> getDocumentContentsForViewer(@Nullable Project project,
@@ -1279,7 +1274,8 @@ public final class DiffUtil {
   }
 
   public static @NotNull TextRange getLinesRange(@NotNull Document document, int line1, int line2, boolean includeNewline) {
-    return DiffRangeUtil.getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
+    LinesRange linesRange = DiffRangeUtil.getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
+    return new TextRange(linesRange.getStartOffset(), linesRange.getEndOffset());
   }
 
 
@@ -1511,8 +1507,11 @@ public final class DiffUtil {
 
   @RequiresEdt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
-    if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-    return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles();
+    Project projectOrDefault = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
+    return ReadAction.compute(() ->
+                                !ReadonlyStatusHandler.getInstance(projectOrDefault)
+                                  .ensureFilesWritable(Collections.singletonList(file))
+                                  .hasReadonlyFiles());
   }
 
   public static void putNonundoableOperation(@Nullable Project project, @NotNull Document document) {

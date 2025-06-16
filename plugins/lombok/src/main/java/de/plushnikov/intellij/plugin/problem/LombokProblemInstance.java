@@ -4,6 +4,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -13,33 +15,33 @@ import java.util.function.Supplier;
  */
 public class LombokProblemInstance implements LombokProblem {
 
-  private final ProblemHighlightType highlightType;
-  private final @InspectionMessage String message;
-  private LocalQuickFix[] quickFixes;
+  private final @NotNull ProblemHighlightType highlightType;
+  private final @InspectionMessage @NotNull String message;
+  private @NotNull LocalQuickFix @Nullable [] quickFixes;
 
-  public LombokProblemInstance(@InspectionMessage String message, ProblemHighlightType highlightType) {
+  public LombokProblemInstance(@InspectionMessage @NotNull String message, @NotNull ProblemHighlightType highlightType) {
     this.message = message;
     this.highlightType = highlightType;
     this.quickFixes = LocalQuickFix.EMPTY_ARRAY;
   }
 
   @Override
-  public void withLocalQuickFixes(Supplier<LocalQuickFix>... quickFixSuppliers) {
+  public void withLocalQuickFixes(Supplier<@Nullable LocalQuickFix>... quickFixSuppliers) {
     this.quickFixes = ContainerUtil.map2Array(quickFixSuppliers, LocalQuickFix.class, Supplier<LocalQuickFix>::get);
   }
 
   @Override
-  public ProblemHighlightType getHighlightType() {
+  public @NotNull ProblemHighlightType getHighlightType() {
     return highlightType;
   }
 
   @Override
-  public LocalQuickFix[] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     return quickFixes;
   }
 
   @Override
-  public @InspectionMessage String getMessage() {
+  public @InspectionMessage @NotNull String getMessage() {
     return message;
   }
 

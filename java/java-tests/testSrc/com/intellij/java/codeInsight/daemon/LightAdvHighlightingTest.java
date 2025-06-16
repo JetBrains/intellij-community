@@ -469,4 +469,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testReferenceToImplicitClass() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> doTest(false));
   }
+  
+  public void testUninitializedFields() { doTest(false); }
 }

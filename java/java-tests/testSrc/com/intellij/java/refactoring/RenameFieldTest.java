@@ -1,16 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.*;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NonNls;
@@ -25,47 +27,47 @@ public class RenameFieldTest extends LightRefactoringTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  protected void doTest(@NonNls String newName, @NonNls String ext) {
-    String suffix = getTestName(false);
-    configureByFile("/refactoring/renameField/before" + suffix + "." + ext);
-    perform(newName);
-    checkResultByFile("/refactoring/renameField/after" + suffix + "." + ext);
+  protected void doTest(@NonNls String newFieldName) {
+    String testName = getTestName(false);
+    configureByFile("/refactoring/renameField/before" + testName + ".java");
+    perform(newFieldName);
+    checkResultByFile("/refactoring/renameField/after" + testName + ".java");
   }
 
   public void testSimpleFieldRenaming() {
-    doTest("myNewField", "java");
+    doTest("myNewField");
   }
 
   public void testCollisionsInMethod() {
-    doTest("newFieldName", "java");
+    doTest("newFieldName");
   }
 
   public void testCollisionsInMethodOfSubClass() {
-    doTest("newFieldName", "java");
+    doTest("newFieldName");
   }
 
   public void testCollisionsRenamingFieldWithSetter() {
-    doTest("utm", "java");
+    doTest("utm");
   }
 
   public void testOverridingSetterParameterRenamed() {
-    doTest("bar", "java");
+    doTest("bar");
   }
 
   public void testHidesOuter() {
-    doTest("x", "java");
+    doTest("x");
   }
 
   public void testEnumConstantWithConstructor() {
-    doTest("newName", "java");
+    doTest("newName");
   }
 
   public void testEnumConstantWithInitializer() {  // IDEADEV-28840
-    doTest("AAA", "java");
+    doTest("AAA");
   }
 
   public void testNonNormalizedFields() { // IDEADEV-34344
-    doTest("newField", "java");
+    doTest("newField");
   }
 
   public void testRenameWrongRefDisabled() {
@@ -76,40 +78,60 @@ public class RenameFieldTest extends LightRefactoringTestCase {
 
   public void testFieldInColumns() {
     // Assuming that test infrastructure setups temp settings (CodeStyleSettingsManager.setTemporarySettings()) and we don't
-    // need to perform explicit clean-up at the test level.
+    // need to perform explicit cleanup at the test level.
     CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true;
-    doTest("jj", "java");
+    doTest("jj");
   }
 
   public void testRecordComponent() {
-    doTest("baz", "java");
+    doTest("baz");
   }
 
   public void testRecordCanonicalConstructor() {
-    doTest("baz", "java");
+    doTest("baz");
   }
 
   public void testRecordCompactConstructorReference() {
-    doTest("baz", "java");
+    doTest("baz");
   }
 
   public void testRecordExplicitGetter() {
-    doTest("baz", "java");
+    doTest("baz");
   }
 
   public void testRecordWithCanonicalConstructor() {
-    doTest("baz", "java");
+    doTest("baz");
   }
 
   public void testRecordGetterOverloadPresent() {
-    doTest("baz", "java");
+    doTest("baz");
   }
+
   public void testRecordComponentUsedInOuterClass() {
-    doTest("baz", "java");
+    doTest("baz");
   }
 
   public void testRecordOverloads() {
-    doTest("baz", "java");
+    doTest("baz");
+  }
+
+  public void testRecordNonPhysicalAccessor() {
+    String testName = getTestName(false);
+    configureByFile("/refactoring/renameField/before" + testName + ".java");
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil.ELEMENT_NAME_ACCEPTED);
+
+    assertNotNull(element);
+    try {
+      new MemberInplaceRenameHandler().doRename(element, getEditor(), null);
+      type("hello");
+    }
+    finally {
+      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+      assertNotNull(state);
+      state.gotoEnd(false);
+    }
+    checkResultByFile("/refactoring/renameField/after" + testName + ".java");
   }
 
   public void testFieldOnlyInImplicitClass() {
@@ -126,9 +148,8 @@ public class RenameFieldTest extends LightRefactoringTestCase {
   }
 
   private void perform(String newName) {
-    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), TargetElementUtil
-                                                                            .ELEMENT_NAME_ACCEPTED |
-                                                                          TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
+    int flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED;
+    PsiElement element = TargetElementUtil.findTargetElement(getEditor(), flags);
     element = RenamePsiElementProcessor.forElement(element).substituteElementToRename(element, getEditor());
     assertNotNull(element);
 

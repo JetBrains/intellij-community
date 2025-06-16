@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -16,7 +16,6 @@ import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
   @Override
@@ -121,10 +120,12 @@ public class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTestCase {
     String message = JavaBundle.message("set.language.level.to.0", level.getPresentableText());
     IntentionAction foundAction = ContainerUtil.find(actions, act -> act.getText().equals(message));
     if (foundAction == null && expected) {
-      LanguageLevel foundLevel = Stream.of(LanguageLevel.values())
-        .filter(l -> ContainerUtil.exists(actions, act -> act.getText()
-          .equals(JavaBundle.message("set.language.level.to.0", l.getPresentableText()))))
-        .findFirst().orElse(null);
+      LanguageLevel foundLevel = ContainerUtil.find(
+        LanguageLevel.getEntries(),
+        l -> ContainerUtil.exists(
+          actions,
+          act -> act.getText().equals(JavaBundle.message("set.language.level.to.0", l.getPresentableText()))
+        ));
       if (foundLevel != null) {
         fail("Expected level: "+level+"; actual: "+foundLevel);
       } else {

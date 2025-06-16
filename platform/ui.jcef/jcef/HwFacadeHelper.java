@@ -71,11 +71,14 @@ public class HwFacadeHelper {
         return list;
       }
 
-      Set<CefClient> clients = clientsField.get(ourCefApp);
-      if (clients == null) {
-        return list;
+      Set<CefClient> clients;
+      synchronized (ourCefApp) {
+        clients = clientsField.get(ourCefApp);
+        if (clients == null) {
+          return list;
+        }
+        clients = new HashSet<>(clients);
       }
-
       for (CefClient client : clients) {
         Map<?, CefBrowser> browsers = browsersField.get(client);
         if (browsers == null) return list;

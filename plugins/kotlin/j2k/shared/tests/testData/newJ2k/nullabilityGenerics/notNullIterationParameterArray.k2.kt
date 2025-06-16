@@ -1,5 +1,4 @@
 // ERROR: Initializer type mismatch: expected 'Array<String?>', actual 'Array<String>'.
-// ERROR: Type mismatch: inferred type is 'String?', but 'String' was expected.
 class C {
     var stringsField: Array<String> = arrayOf<String>("Hello", "World")
 

@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics;
 
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
@@ -27,7 +26,6 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -82,17 +80,17 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
 
   @Override
   public @NotNull Set<MetricEvent> getMetrics(@NotNull Project project) {
-    if (!TrustedProjects.isTrusted(project)) return Collections.emptySet();
+    if (!TrustedProjects.isProjectTrusted(project)) return Collections.emptySet();
 
     VcsProjectLog projectLog = project.getServiceIfCreated(VcsProjectLog.class);
     if (projectLog == null) return Collections.emptySet();
-    VcsProjectLogManager logManager = projectLog.getProjectLogManager();
+    VcsLogManager logManager = projectLog.getLogManager();
     if (logManager == null) return Collections.emptySet();
+    if(!(logManager instanceof IdeVcsLogManager actualManager)) return Collections.emptySet();
 
-    MainVcsLogUi mainUi = projectLog.getMainLogUi();
-    Set<String> additionalTabIds = logManager.getTabsManager().getTabs();
-    List<? extends MainVcsLogUi> additionalToolWindowUis = getAdditionalLogUis(logManager.getLogUis(VcsLogTabLocation.TOOL_WINDOW), additionalTabIds);
-    List<? extends MainVcsLogUi> additionalEditorUis = getAdditionalLogUis(logManager.getLogUis(VcsLogTabLocation.EDITOR), additionalTabIds);
+    MainVcsLogUi mainUi = actualManager.getMainUi();
+    List<? extends MainVcsLogUi> additionalToolWindowUis = actualManager.getLogUis(VcsLogTabLocation.TOOL_WINDOW);
+    List<? extends MainVcsLogUi> additionalEditorUis = actualManager.getLogUis(VcsLogTabLocation.EDITOR);
     if (mainUi == null && additionalToolWindowUis.isEmpty() && additionalEditorUis.isEmpty()) return Collections.emptySet();
 
     Set<MetricEvent> metricEvents = ContainerUtil.newHashSet(UI_INITIALIZED.metric());
@@ -178,12 +176,6 @@ public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
         metricEvents.add(FILTER.metric(EventFields.Enabled.with(true), FILTER_NAME.with(key.getName())));
       }
     }
-  }
-
-  private static @Unmodifiable @NotNull List<? extends MainVcsLogUi> getAdditionalLogUis(@NotNull List<? extends VcsLogUi> uis,
-                                                                                         @NotNull Set<String> additionalTabIds) {
-    return ContainerUtil.filter(ContainerUtil.filterIsInstance(uis, MainVcsLogUi.class),
-                                ui -> additionalTabIds.contains(ui.getId()));
   }
 
   private static @NotNull String getFactoryIdSafe(@NotNull VcsLogHighlighterFactory factory) {

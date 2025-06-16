@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
 import kotlin.reflect.KClass
 
-class EditorNotebook(private val editor: EditorImpl) : Disposable {
+class EditorNotebook(val editor: EditorImpl) : Disposable {
 
   private var _cells = mutableListOf<EditorCell>()
 
@@ -48,6 +48,7 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
       }
     }, this)
   }
+
 
   @Suppress("UNCHECKED_CAST")
   fun <T : EditorNotebookExtension> getExtension(cls: KClass<T>): T? {
@@ -80,6 +81,7 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
       }
     }
     EDITOR_NOTEBOOK_KEY.set(editor, null)
+    clear()
   }
 
   fun clear() {
@@ -94,7 +96,7 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
     cell.onBeforeRemove()
     val removed = _cells.removeAt(index)
     Disposer.dispose(removed)
-    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed)))
+    cellEventListeners.multicaster.onEditorCellEvents(listOf(CellRemoved(removed, index)))
   }
 
   fun <T : EditorNotebookExtension> addExtension(type: KClass<T>, extension: T) {
@@ -118,7 +120,7 @@ class EditorNotebook(private val editor: EditorImpl) : Disposable {
     }
     for (i in range) {
       val cell = _cells[i]
-      if (cell.visible.get()) {
+      if (cell.isUnfolded.get()) {
         return cell
       }
     }

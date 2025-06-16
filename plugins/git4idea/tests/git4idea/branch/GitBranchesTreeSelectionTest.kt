@@ -30,7 +30,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin()
 
     "mai".toCharArray().forEach { char ->
-      searchTextField.text += char
+      appendFilter(char)
       assertTree(expectedDuringTyping)
     }
   }
@@ -39,7 +39,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     setState(localBranches = listOf("1", "2", "3", "main"), remoteBranches = listOf("main"))
     selectBranch("1")
 
-    searchTextField.text = "main"
+    filter("main")
     assertTree("""
       |-ROOT
       | HEAD
@@ -55,7 +55,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     setState(localBranches = listOf("main-123", "main"), remoteBranches = listOf("main"))
     selectBranch("main-123")
 
-    searchTextField.text = "mai"
+    filter("mai")
     val expectedSelectionNotUpdated = """
       |-ROOT
       | HEAD
@@ -68,7 +68,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
     """.trimMargin()
     assertTree(expectedSelectionNotUpdated)
 
-    searchTextField.text = "main"
+    filter("main")
     val expectedSelectionUpdated = """
       |-ROOT
       | HEAD
@@ -85,7 +85,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
   fun `test exact match of branch name and group node`() = branchesTreeTest {
     setState(localBranches = listOf("main/123", "main"), remoteBranches = listOf())
     selectBranch("main/123")
-    searchTextField.text = "main"
+    filter("main")
     assertTree("""
       |-ROOT
       | HEAD
@@ -98,7 +98,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
 
   fun `test empty groups are not shown`() = branchesTreeTest {
     setState(localBranches = listOf("group-1/match", "group-2/qq"), remoteBranches = listOf())
-    searchTextField.text = "match"
+    filter("match")
     assertTree("""
       |-ROOT
       | HEAD
@@ -111,7 +111,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
   fun `test selection of remote`() = branchesTreeTest {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main", "ish/242", "a/242/b", "242", "242/fix"))
 
-    searchTextField.text = "242"
+    filter("242")
     assertTree("""
       |-ROOT
       | HEAD
@@ -132,7 +132,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
   fun `test selection of remote with no grouping`() = branchesTreeTest(groupByDirectories = false) {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main", "ish/242", "a/242/b", "242", "242/fix"))
 
-    searchTextField.text = "242"
+    filter("242")
     assertTree("""
      |-ROOT
      | HEAD
@@ -148,7 +148,7 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
   fun `test no selection when no match`() = branchesTreeTest(groupByDirectories = false) {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main", "ish/242", "a/242/b", "242", "242/fix"))
 
-    searchTextField.text = "not-main"
+    filter("not-main")
     assertTrue(branchesTree.isEmptyModel())
     assertTree("""
      |-ROOT
@@ -157,14 +157,14 @@ class GitBranchesTreeSelectionTest: GitBranchesTreeTest() {
      | REMOTE
     """.trimMargin())
 
-    searchTextField.text = ""
+    filter("")
     assertFalse(branchesTree.isEmptyModel())
   }
 
   fun `test tag can be matched`() = branchesTreeTest(groupByDirectories = false) {
     setState(localBranches = listOf("main"), remoteBranches = listOf("main"), tags = listOf("ma"))
 
-    searchTextField.text = "ma"
+    filter("ma")
     assertTree("""
       |-ROOT
       | HEAD

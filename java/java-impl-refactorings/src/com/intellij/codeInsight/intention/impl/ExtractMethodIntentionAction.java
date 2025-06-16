@@ -38,18 +38,18 @@ public final class ExtractMethodIntentionAction implements IntentionAction, Icon
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
     if (floatingToolbar != null && (floatingToolbar.isShown() || floatingToolbar.canBeShownAtCurrentSelection())) return false;
-    if (file instanceof PsiCodeFragment || !file.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+    if (psiFile instanceof PsiCodeFragment || !psiFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return false;
     }
     SelectionModel model = editor.getSelectionModel();
     if (!model.hasSelection()) return false;
-    PsiElement[] elements = ExtractMethodHandler.getElements(project, editor, file);
+    PsiElement[] elements = ExtractMethodHandler.getElements(project, editor, psiFile);
     if (elements == null || elements.length == 0) return false;
     if (PsiTreeUtil.getParentOfType(elements[0], PsiClass.class) == null) return false;
-    ExtractMethodProcessor processor = ExtractMethodHandler.getProcessor(project, elements, file, false);
+    ExtractMethodProcessor processor = ExtractMethodHandler.getProcessor(project, elements, psiFile, false);
     if (processor == null) return false;
     try {
       return processor.prepare(null);
@@ -60,8 +60,8 @@ public final class ExtractMethodIntentionAction implements IntentionAction, Icon
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    new ExtractMethodHandler().invoke(project, editor, file, null);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    new ExtractMethodHandler().invoke(project, editor, psiFile, null);
   }
 
   @Override

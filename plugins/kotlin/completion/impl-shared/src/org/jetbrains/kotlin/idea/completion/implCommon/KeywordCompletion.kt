@@ -7,7 +7,6 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.*
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget.*
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
@@ -34,7 +34,9 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.*
+import org.jetbrains.kotlin.resolve.deprecatedParentTargetMap
+import org.jetbrains.kotlin.resolve.possibleParentTargetPredicateMap
+import org.jetbrains.kotlin.resolve.possibleTargetMap
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 /**
@@ -49,14 +51,10 @@ open class KeywordLookupObject {
 }
 
 
-class KeywordCompletion(private val languageVersionSettingProvider: LanguageVersionSettingProvider) {
-    interface LanguageVersionSettingProvider {
-        fun getLanguageVersionSetting(element: PsiElement): LanguageVersionSettings
-        fun getLanguageVersionSetting(module: Module): LanguageVersionSettings
-    }
-
+class KeywordCompletion() {
     companion object {
-        private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types)
+        // workaround for the all keyword can be removed after KT-77099
+        private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types + ALL_KEYWORD)
             .map { it as KtKeywordToken }
 
         private val INCOMPATIBLE_KEYWORDS_AROUND_SEALED = setOf(
@@ -129,7 +127,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
     fun complete(position: PsiElement, prefixMatcher: PrefixMatcher, isJvmModule: Boolean, consumer: (LookupElement) -> Unit) {
         if (!GENERAL_FILTER.isAcceptable(position, position)) return
-        val sealedInterfacesEnabled = languageVersionSettingProvider.getLanguageVersionSetting(position).supportsFeature(LanguageFeature.SealedInterfaces)
+        val sealedInterfacesEnabled = position.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)
 
         val parserFilter = buildFilter(position)
         for (keywordToken in ALL_KEYWORDS) {
@@ -144,7 +142,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
     private fun KtKeywordToken.getNextPossibleKeywords(position: PsiElement): Set<KtKeywordToken>? {
         return when {
             this == SUSPEND_KEYWORD && position.isInsideKtTypeReference -> null
-            else -> getCompoundKeywords(this, languageVersionSettingProvider.getLanguageVersionSetting(position))
+            else -> getCompoundKeywords(this, position.languageVersionSettings)
         }
     }
 
@@ -290,7 +288,6 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
             CommentFilter(),
             ParentFilter(ClassFilter(KtLiteralStringTemplateEntry::class.java)),
             ParentFilter(ClassFilter(KtConstantExpression::class.java)),
-            FileFilter(ClassFilter(KtTypeCodeFragment::class.java)),
             LeftNeighbour(TextFilter(".")),
             LeftNeighbour(TextFilter("?."))
         )
@@ -310,17 +307,6 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
         override fun isAcceptable(element: Any?, context: PsiElement?): Boolean {
             val parent = (element as? PsiElement)?.parent
             return parent != null && (filter?.isAcceptable(parent, context) ?: true)
-        }
-    }
-
-    private class FileFilter(filter: ElementFilter) : PositionElementFilter() {
-        init {
-            setFilter(filter)
-        }
-
-        override fun isAcceptable(element: Any?, context: PsiElement?): Boolean {
-            val file = (element as? PsiElement)?.containingFile
-            return file != null && (filter?.isAcceptable(file, context) ?: true)
         }
     }
 
@@ -522,12 +508,15 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
             return secondaryConstructor.getContainingClassOrObject() is KtObjectDeclaration
         }
 
+        fun KtKeywordToken.isValOrVar() = this == VAL_KEYWORD || this == VAR_KEYWORD
+
         fun isKeywordCorrectlyApplied(keywordTokenType: KtKeywordToken, file: KtFile): Boolean {
             val elementAt = file.findElementAt(prefixText.length)!!
+            val parent = elementAt.parent
+            val parentParent = parent?.parent
 
-            val languageVersionSettings =
-                ModuleUtilCore.findModuleForPsiElement(position)?.let(languageVersionSettingProvider::getLanguageVersionSetting)
-                    ?: LanguageVersionSettingsImpl.DEFAULT
+            val languageVersionSettings = ModuleUtilCore.findModuleForPsiElement(position)?.languageVersionSettings
+                ?: LanguageVersionSettingsImpl.DEFAULT
             when {
                 !elementAt.node!!.elementType.matchesKeyword(keywordTokenType) -> return false
 
@@ -537,16 +526,26 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
                 !isModifierSupportedAtLanguageLevel(elementAt, keywordTokenType, languageVersionSettings) -> return false
 
-                (keywordTokenType == VAL_KEYWORD || keywordTokenType == VAR_KEYWORD) &&
-                        elementAt.parent is KtParameter &&
+                keywordTokenType.isValOrVar() &&
+                        parent is KtParameter &&
+                        parent.valOrVarKeyword != null &&
                         elementAt.parentOfTypes(KtNamedFunction::class, KtSecondaryConstructor::class) != null -> return false
+
+                keywordTokenType.isValOrVar() &&
+                        (parentParent is KtBinaryExpression ||
+                                parentParent is KtUnaryExpression ||
+                                parentParent is KtParenthesizedExpression) -> return false
+
+                keywordTokenType == VAR_KEYWORD &&
+                        parentParent is KtWhenExpression &&
+                        (parent as? KtProperty)?.valOrVarKeyword != null -> return false
 
                 keywordTokenType == CONSTRUCTOR_KEYWORD && elementAt.isSecondaryConstructorInObjectDeclaration() -> return false
 
                 keywordTokenType !is KtModifierKeywordToken -> return true
 
                 else -> {
-                    val container = (elementAt.parent as? KtModifierList)?.parent ?: return true
+                    val container = (parent as? KtModifierList)?.parent ?: return true
                     val possibleTargets = when (container) {
                         is KtParameter -> {
                             if (container.ownerFunction is KtPrimaryConstructor)
@@ -623,6 +622,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
                                     it !is PsiWhiteSpace && !it.isSemicolon() && it !is KtImportList && it !is KtPackageDirective
                                 }
                             }
+
                             else -> false
                         }
                     }
@@ -665,6 +665,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
     ): Boolean {
         val feature = when (keyword) {
             TYPE_ALIAS_KEYWORD -> LanguageFeature.TypeAliases
+            ALL_KEYWORD -> LanguageFeature.AnnotationAllUseSiteTarget
             EXPECT_KEYWORD, ACTUAL_KEYWORD -> LanguageFeature.MultiPlatformProjects
             SUSPEND_KEYWORD -> LanguageFeature.Coroutines
             FIELD_KEYWORD -> {
@@ -672,7 +673,15 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
 
                 LanguageFeature.ExplicitBackingFields
             }
-            CONTEXT_KEYWORD -> LanguageFeature.ContextReceivers
+
+            CONTEXT_KEYWORD -> {
+                // Because there are two feature flags for this keyword, we need to check them separately
+                if (languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
+                    return true
+                }
+                LanguageFeature.ContextReceivers
+            }
+
             else -> return true
         }
         return languageVersionSettings.supportsFeature(feature)

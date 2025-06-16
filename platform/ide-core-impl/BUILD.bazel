@@ -13,9 +13,11 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/ide-core",
     "//platform/platform-util-io:ide-util-io",
+    "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/util",
     "//platform/util/jdom",
@@ -33,6 +35,7 @@ jvm_library(
     "//platform/diagnostic",
     "//platform/util/coroutines",
     "@lib//:hash4j",
+    "//platform/workspace/storage",
     "//platform/backend/observation",
   ],
   runtime_deps = [":ide-core-impl_resources"]

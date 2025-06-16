@@ -9,13 +9,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-base-fe10-project-structure_resources",
+  name = "project-structure_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-base-fe10-project-structure",
+  name = "project-structure",
   module_name = "kotlin.base.fe10.project-structure",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -25,10 +25,10 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/workspace/storage",
     "//platform/backend/workspace",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
+    "//plugins/kotlin/base/project-structure",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
   ],
-  runtime_deps = [":kotlin-base-fe10-project-structure_resources"]
+  runtime_deps = [":project-structure_resources"]
 )
 ### auto-generated section `build kotlin.base.fe10.project-structure` end

@@ -1,75 +1,59 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.config
 
-import com.intellij.internal.statistic.config.EventLogConfigParserException
-import com.intellij.internal.statistic.config.EventLogExternalSettings
-import com.intellij.internal.statistic.config.bean.EventLogBucketRange
-import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType
+import com.intellij.internal.statistics.TestEventLogUploadSettingsClient
+import com.intellij.internal.statistics.TestHttpServerProcessing
+import com.jetbrains.fus.reporting.model.config.v4.ConfigurationBucketRange
 import org.junit.Assert
-import java.io.BufferedReader
-import java.io.StringReader
-
-private const val DEFAULT_VERSION = "2019.2"
 
 abstract class EventLogConfigBaseParserTest {
-
-  @Suppress("SameParameterValue")
-  protected fun doTestError(config: String) {
-    var exception: Exception? = null
+  protected fun doTest(
+    config: String,
+    existingConfig: Map<EventLogBuildType, List<ConfigurationBucketRange>> = emptyMap(),
+    existingEndpoints: Map<String, String> = emptyMap(),
+    notExistingConfig: Set<EventLogBuildType> = emptySet(),
+    notExistingEndpoints: Set<String> = emptySet(),
+    existingOptions: Map<String, String> = emptyMap(),
+    notExistingOptions: Set<String> = emptySet(),
+  ) {
+    val serverProcessing = TestHttpServerProcessing(config)
     try {
-      doTest(config)
+      serverProcessing.serverStart()
+      val configurationClient = TestEventLogUploadSettingsClient(serverProcessing.getUrl())
+
+      val sendEnabled = existingConfig.isNotEmpty()
+      Assert.assertEquals(sendEnabled, configurationClient.isSendEnabled())
+
+      for (type in existingConfig.keys) {
+        val actual = configurationClient.provideBucketRanges(type).firstOrNull()
+        Assert.assertNotNull(actual)
+        Assert.assertEquals(existingConfig[type]?.firstOrNull(), actual)
+      }
+
+      for (type in notExistingConfig) {
+        Assert.assertNull(configurationClient.provideBucketRanges(type).firstOrNull())
+      }
+
+      for (endpoint in existingEndpoints) {
+        Assert.assertEquals(endpoint.value, configurationClient.provideEndpointValue(endpoint.key))
+      }
+
+      for (endpoint in notExistingEndpoints) {
+        Assert.assertNull(configurationClient.provideEndpointValue(endpoint))
+      }
+
+      val options = configurationClient.provideOptions()
+      for (option in existingOptions) {
+        Assert.assertEquals(option.value, options[option.key])
+      }
+
+      for (option in notExistingOptions) {
+        Assert.assertNull(options[option])
+      }
     }
-    catch (e: Exception) {
-      exception = e
+    finally {
+      serverProcessing.serverStop()
     }
-    Assert.assertNotNull(exception)
-    Assert.assertTrue(exception is EventLogConfigParserException)
-  }
-
-  protected fun doTest(config: String,
-                       existingConfig: Map<EventLogBuildType, EventLogSendConfiguration> = emptyMap(),
-                       existingEndpoints: Map<String, String> = emptyMap(),
-                       notExistingConfig: Set<EventLogBuildType> = emptySet(),
-                       notExistingEndpoints: Set<String> = emptySet(),
-                       existingOptions: Map<String, String> = emptyMap(),
-                       notExistingOptions: Set<String> = emptySet()) {
-    val reader = BufferedReader(StringReader(config))
-    val settings = EventLogExternalSettings.parseSendSettings(reader, DEFAULT_VERSION)
-    Assert.assertNotNull(settings)
-
-    val sendEnabled = existingConfig.isNotEmpty()
-    Assert.assertEquals(sendEnabled, settings.isSendEnabled)
-
-    for (type in existingConfig.keys) {
-      val actual = settings.getConfiguration(type)
-      Assert.assertNotNull(actual)
-      Assert.assertEquals(existingConfig[type], actual)
-    }
-
-    for (type in notExistingConfig) {
-      Assert.assertNull(settings.getConfiguration(type))
-    }
-
-    for (endpoint in existingEndpoints) {
-      Assert.assertEquals(endpoint.value, settings.getEndpoint(endpoint.key))
-    }
-
-    for (endpoint in notExistingEndpoints) {
-      Assert.assertNull(settings.getEndpoint(endpoint))
-    }
-
-    val options = settings.options
-    for (option in existingOptions) {
-      Assert.assertEquals(option.value, options[option.key])
-    }
-
-    for (option in notExistingOptions) {
-      Assert.assertNull(options[option])
-    }
-  }
-
-  fun newConfig(buckets: List<EventLogBucketRange>): EventLogSendConfiguration {
-    return EventLogSendConfiguration(buckets)
   }
 }

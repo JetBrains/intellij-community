@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ReadAction;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +80,7 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
   }
 
   @Override
-  public void accept(final @NotNull RefVisitor visitor) {
+  public void accept(@NotNull RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor javaVisitor) {
       ReadAction.run(() -> javaVisitor.visitParameter(this));
     }
@@ -144,8 +143,7 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
   @Override
   public UParameter getUastElement() {
     // kotlin receiver parameter (psi <-> uast conversion isn't symmetric)
-    RefMethod method = ObjectUtils.tryCast(getOwner(), RefMethod.class);
-    if (method == null) return null;
+    if (!(getOwner() instanceof RefMethod method)) return null;
     UMethod uMethod = method.getUastElement();
     if (uMethod == null) return null;
     List<UParameter> parameters = uMethod.getUastParameters();
@@ -168,7 +166,7 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
             return VALUE_IS_NOT_CONST;
           }
           UDeclaration containingClass = UDeclarationKt.getContainingDeclaration(uField);
-          if (containingClass instanceof UClass && ((UClass)containingClass).getQualifiedName() != null) {
+          if (containingClass instanceof UClass uClass && uClass.getQualifiedName() != null) {
             PsiElement javaPsi = uField.getJavaPsi();
             if (javaPsi != null) {
               return new ConstValue(
@@ -180,8 +178,8 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
         }
       }
     }
-    if (expression instanceof ULiteralExpression) {
-      Object value = ((ULiteralExpression)expression).getValue();
+    if (expression instanceof ULiteralExpression literal) {
+      Object value = literal.getValue();
       if (value == null) {
         return null;
       }
@@ -219,27 +217,24 @@ public final class RefParameterImpl extends RefJavaElementImpl implements RefPar
 
   private static boolean isAccessible(@NotNull UField field, @NotNull PsiElement place) {
     UDeclaration fieldContainingClass = UDeclarationKt.getContainingDeclaration(field);
-    if (!(fieldContainingClass instanceof UClass)) return false;
-    String qName = ((UClass)fieldContainingClass).getQualifiedName();
+    if (!(fieldContainingClass instanceof UClass aClass)) return false;
+    String qName = aClass.getQualifiedName();
     if (qName == null) return false;
     String fieldQName = qName + "." + field.getName();
     return PsiResolveHelper.getInstance(place.getProject()).resolveReferencedVariable(fieldQName, place) != null;
   }
 
-  static @Nullable RefElement parameterFromExternalName(final RefManager manager, final String fqName) {
+  static @Nullable RefElement parameterFromExternalName(RefManager manager, String fqName) {
     final int idx = fqName.lastIndexOf(' ');
     if (idx > 0) {
       final String method = fqName.substring(0, idx);
       final RefJavaElement refMethod = RefMethodImpl.methodFromExternalName(manager, method);
       if (refMethod != null) {
-        final UMethod element = ObjectUtils.tryCast(refMethod.getUastElement(), UMethod.class);
-        if (element == null) return null;
-        final List<UParameter> parameters = element.getUastParameters();
+        if (!(refMethod.getUastElement() instanceof UMethod uMethod)) return null;
         int paramIdx = 0;
         final String paramName = fqName.substring(idx + 1);
-        for (UParameter parameter : parameters) {
-          final String name = parameter.getName();
-          if (name != null && name.equals(paramName)) {
+        for (UParameter parameter : uMethod.getUastParameters()) {
+          if (paramName.equals(parameter.getName())) {
             return manager.getExtension(RefJavaManager.MANAGER).getParameterReference(parameter, paramIdx, refMethod);
           }
           paramIdx++;

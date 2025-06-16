@@ -17,6 +17,7 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +25,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.MakeDefaultLastCaseFix;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,7 +84,7 @@ public final class DefaultNotLastCaseInSwitchInspection extends BaseInspection i
       for (int i = statements.length - 1; i >= 0; i--) {
         final PsiStatement child = statements[i];
         if (child instanceof PsiSwitchLabelStatementBase label) {
-          PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
+          PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(label);
           if (defaultElement != null) {
             if (labelSeen) {
               registerError(defaultElement.getFirstChild(), label, JavaElementKind.fromElement(statement).subject());

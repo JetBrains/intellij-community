@@ -25,8 +25,8 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   public static DocumentationProvider wrapProviders(Collection<? extends DocumentationProvider> providers) {
     List<DocumentationProvider> list = new ArrayList<>();
     for (DocumentationProvider provider : providers) {
-      if (provider instanceof CompositeDocumentationProvider) {
-        list.addAll(((CompositeDocumentationProvider)provider).getProviders());
+      if (provider instanceof CompositeDocumentationProvider composite) {
+        list.addAll(composite.getProviders());
       }
       else if (provider != null) {
         list.add(provider);
@@ -58,8 +58,8 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   @Override
   public boolean handleExternal(PsiElement element, PsiElement originalElement) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationHandler &&
-          ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
+      if (provider instanceof ExternalDocumentationHandler external &&
+          external.handleExternal(element, originalElement)) {
         LOG.debug("handleExternal: ", provider);
         return true;
       }
@@ -71,8 +71,8 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   @Override
   public boolean handleExternalLink(PsiManager psiManager, String link, PsiElement context) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationHandler &&
-          ((ExternalDocumentationHandler)provider).handleExternalLink(psiManager, link, context)) {
+      if (provider instanceof ExternalDocumentationHandler external &&
+          external.handleExternalLink(psiManager, link, context)) {
         LOG.debug("handleExternalLink: ", provider);
         return true;
       }
@@ -84,7 +84,7 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   @Override
   public boolean canFetchDocumentationLink(String link) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).canFetchDocumentationLink(link)) {
+      if (provider instanceof ExternalDocumentationHandler external && external.canFetchDocumentationLink(link)) {
         LOG.debug("canFetchDocumentationLink: ", provider);
         return true;
       }
@@ -96,9 +96,9 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   @Override
   public @NotNull @Nls String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).canFetchDocumentationLink(link)) {
+      if (provider instanceof ExternalDocumentationHandler external && external.canFetchDocumentationLink(link)) {
         LOG.debug("fetchExternalDocumentation: ", provider);
-        return ((ExternalDocumentationHandler)provider).fetchExternalDocumentation(link, element);
+        return external.fetchExternalDocumentation(link, element);
       }
     }
 
@@ -211,9 +211,9 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
 
   public @Nullable CodeDocumentationProvider getFirstCodeDocumentationProvider() {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof CodeDocumentationProvider) {
+      if (provider instanceof CodeDocumentationProvider code) {
         LOG.debug("getFirstCodeDocumentationProvider: ", provider);
-        return (CodeDocumentationProvider)provider;
+        return code;
       }
     }
     return null;
@@ -222,8 +222,8 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   @Override
   public @Nls String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationProvider) {
-        final String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, docUrls, onHover);
+      if (provider instanceof ExternalDocumentationProvider external) {
+        final String doc = external.fetchExternalDocumentation(project, element, docUrls, onHover);
         if (doc != null) {
           LOG.debug("fetchExternalDocumentation: ", provider);
           return doc;
@@ -247,8 +247,8 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   @Override
   public boolean canPromptToConfigureDocumentation(PsiElement element) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationProvider &&
-          ((ExternalDocumentationProvider)provider).canPromptToConfigureDocumentation(element)) {
+      if (provider instanceof ExternalDocumentationProvider external &&
+          external.canPromptToConfigureDocumentation(element)) {
         LOG.debug("canPromptToConfigureDocumentation: ", provider);
         return true;
       }
@@ -259,9 +259,9 @@ public final class CompositeDocumentationProvider implements DocumentationProvid
   @Override
   public void promptToConfigureDocumentation(PsiElement element) {
     for (DocumentationProvider provider : getAllProviders()) {
-      if (provider instanceof ExternalDocumentationProvider &&
-          ((ExternalDocumentationProvider)provider).canPromptToConfigureDocumentation(element)) {
-        ((ExternalDocumentationProvider)provider).promptToConfigureDocumentation(element);
+      if (provider instanceof ExternalDocumentationProvider external &&
+          external.canPromptToConfigureDocumentation(element)) {
+        external.promptToConfigureDocumentation(element);
         LOG.debug("promptToConfigureDocumentation: ", provider);
         break;
       }

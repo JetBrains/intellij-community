@@ -7,21 +7,21 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusOwner
+import com.intellij.util.messages.impl.PluginListenerDescriptor
 import org.jetbrains.annotations.TestOnly
 
 private val testDescriptor by lazy { DefaultPluginDescriptor("test") }
 
 @TestOnly
 fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T>, instance: T) {
-  (this as ComponentManagerImpl).registerServiceInstance(serviceInterface, instance, testDescriptor)
+  (this as ComponentManagerEx).registerServiceInstance(serviceInterface, instance, testDescriptor)
 }
 
 /**
@@ -30,7 +30,7 @@ fun <T : Any> ComponentManager.registerServiceInstance(serviceInterface: Class<T
  */
 @TestOnly
 fun ComponentManager.unregisterService(serviceInterface: Class<*>) {
-  (this as ComponentManagerImpl).unregisterService(serviceInterface)
+  (this as ComponentManagerEx).unregisterService(serviceInterface)
 }
 
 /**
@@ -45,13 +45,14 @@ fun <T : Any> ComponentManager.registerOrReplaceServiceInstance(serviceInterface
     replaceService(serviceInterface, instance, parentDisposable)
   }
   else {
-    (this as ComponentManagerImpl).registerServiceInstance(serviceInterface, instance, testDescriptor)
+    val impl = (this as ComponentManagerEx)
+    impl.registerServiceInstance(serviceInterface, instance, testDescriptor)
     if (instance is Disposable) {
       Disposer.register(parentDisposable, instance)
     }
     else {
       Disposer.register(parentDisposable) {
-        this.unregisterComponent(serviceInterface)
+        impl.unregisterComponent(serviceInterface)
       }
     }
   }
@@ -59,18 +60,18 @@ fun <T : Any> ComponentManager.registerOrReplaceServiceInstance(serviceInterface
 
 @TestOnly
 fun <T : Any> ComponentManager.replaceService(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
-  (this as ComponentManagerImpl).replaceServiceInstance(serviceInterface, instance, parentDisposable)
+  (this as ComponentManagerEx).replaceServiceInstance(serviceInterface, instance, parentDisposable)
 }
 
 @TestOnly
 fun <T : Any> ComponentManager.registerComponentInstance(componentInterface: Class<T>, instance: T, parentDisposable: Disposable?) {
-  (this as ComponentManagerImpl).replaceComponentInstance(componentInterface, instance, parentDisposable)
+  (this as ComponentManagerEx).replaceComponentInstance(componentInterface, instance, parentDisposable)
 }
 
 @TestOnly
 @JvmOverloads
 fun ComponentManager.registerComponentImplementation(key: Class<*>, implementation: Class<*>, shouldBeRegistered: Boolean = false) {
-  (this as ComponentManagerImpl).registerComponentImplementation(key, implementation, shouldBeRegistered)
+  (this as ComponentManagerEx).registerComponentImplementation(key, implementation, shouldBeRegistered)
 }
 
 @TestOnly
@@ -99,7 +100,7 @@ fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (
       else -> pluginDescriptor.moduleContainerDescriptor
     }
     containerDescriptor.services.forEach {
-      if ((componentManager as? ComponentManagerImpl)?.isServiceSuitable(it) != false && (it.os == null || it.os.isSuitableForOs())) {
+      if ((componentManager as? ComponentManagerEx)?.isServiceSuitable(it) != false && (it.os == null || it.os.isSuitableForOs())) {
         consumer(it)
       }
     }
@@ -108,7 +109,7 @@ fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (
 
 fun createSimpleMessageBusOwner(owner: String): MessageBusOwner {
   return object : MessageBusOwner {
-    override fun createListener(descriptor: ListenerDescriptor) = throw UnsupportedOperationException()
+    override fun createListener(descriptor: PluginListenerDescriptor) = throw UnsupportedOperationException()
 
     override fun isDisposed() = false
 

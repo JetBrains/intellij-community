@@ -10,6 +10,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.Collection;
@@ -77,13 +78,14 @@ public interface ProjectFileIndex extends FileIndex {
   @ApiStatus.Internal
   @RequiresReadLock
   @NotNull
-  Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion);
+  @Unmodifiable Set<Module> getModulesForFile(@NotNull VirtualFile file, boolean honorExclusion);
 
   /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
    */
   @RequiresReadLock
   @NotNull
+  @Unmodifiable
   List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file);
 
   /**
@@ -184,7 +186,7 @@ public interface ProjectFileIndex extends FileIndex {
    * <strong>Currently this method doesn't search for global libraries.</strong>
    */
   @ApiStatus.Experimental
-  @NotNull Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
+  @NotNull @Unmodifiable Collection<@NotNull LibraryEntity> findContainingLibraries(@NotNull VirtualFile fileOrDir);
 
   /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is ignored

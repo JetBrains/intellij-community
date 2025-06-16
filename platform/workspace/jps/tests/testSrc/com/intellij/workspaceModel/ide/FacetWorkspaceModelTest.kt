@@ -60,7 +60,7 @@ class FacetWorkspaceModelTest {
       projectModel.project.workspaceModel.updateProjectModel { builder ->
         val moduleEntity = builder.entities(ModuleEntity::class.java).first()
         builder.modifyModuleEntity(moduleEntity) {
-         this.facets += FacetEntity("myName", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, moduleEntity.entitySource)
+         this.facets += FacetEntity.invoke(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource)
         }
       }
     }
@@ -89,7 +89,7 @@ class FacetWorkspaceModelTest {
         val moduleEntity = builder.entities(ModuleEntity::class.java).first()
         Assert.assertTrue(moduleEntity.facets.isEmpty())
         builder.modifyModuleEntity(moduleEntity) {
-          this.facets = listOf(FacetEntity("myName", moduleEntity.symbolicId, MOCK_FACET_TYPE_ID, moduleEntity.entitySource))
+          this.facets = listOf(FacetEntity.invoke(moduleEntity.symbolicId, "myName", MOCK_FACET_TYPE_ID, moduleEntity.entitySource))
         }
       }
     }

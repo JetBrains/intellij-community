@@ -10,6 +10,7 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -75,16 +76,18 @@ public interface UsageView extends Disposable {
   UsageViewPresentation getPresentation();
 
   @NotNull
+  @Unmodifiable
   Set<Usage> getExcludedUsages();
 
   @NotNull
+  @Unmodifiable
   Set<Usage> getSelectedUsages();
 
   @NotNull
-  Set<Usage> getUsages();
+  @Unmodifiable Set<Usage> getUsages();
 
   @NotNull
-  List<Usage> getSortedUsages();
+  @Unmodifiable List<Usage> getSortedUsages();
 
   @NotNull
   JComponent getComponent();

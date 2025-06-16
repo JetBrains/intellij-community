@@ -1,12 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.NotClosedProperlyRecoverer;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageHelper;
 import com.intellij.testFramework.TemporaryDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -32,7 +32,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import static org.junit.Assert.*;
 
 /**
- * Tests VFS ability to recover from various corruptions
+ * Tests VFS's ability to recover from various corruptions
  */
 public class VFSCorruptionRecoveryTest {
 
@@ -436,12 +436,13 @@ public class VFSCorruptionRecoveryTest {
     //    .emulateImproperClose() doesn't stop the flusher, or not guaranteed to stop it early
     //    enough
 
+    int crashedProcessId = Integer.MAX_VALUE;//should be != current processId
     PersistentFSPaths paths = new PersistentFSPaths(cachesDir);
     Path recordsPath = paths.storagePath("records");
     try (SeekableByteChannel channel = Files.newByteChannel(recordsPath, WRITE)) {
       ByteBuffer oneFieldBuffer = ByteBuffer.allocate(Integer.BYTES)
-        .order(ByteOrder.nativeOrder());
-      oneFieldBuffer.putInt(PersistentFSHeaders.IN_USE_STAMP)
+        .order(ByteOrder.nativeOrder())
+        .putInt(crashedProcessId)
         .clear();
 
       channel.position(HEADER_CONNECTION_STATUS_OFFSET);

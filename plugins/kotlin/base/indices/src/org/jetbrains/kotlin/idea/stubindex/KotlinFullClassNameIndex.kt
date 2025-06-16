@@ -23,4 +23,8 @@ class KotlinFullClassNameIndex internal constructor() : StringStubIndexExtension
     override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
         return Helper[fqName, project, scope]
     }
+
+    override fun getVersion(): Int = super.getVersion() + 1
+
+    override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 }

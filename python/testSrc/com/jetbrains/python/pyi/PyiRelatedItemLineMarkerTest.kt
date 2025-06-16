@@ -3,10 +3,10 @@ package com.jetbrains.python.pyi
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.descendantsOfType
+import com.intellij.psi.util.parentOfType
 import com.jetbrains.python.fixtures.PyTestCase
-import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyQualifiedNameOwner
 
 class PyiRelatedItemLineMarkerTest : PyTestCase() {
 
@@ -96,6 +96,16 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
     assertEquals("Stub for item in foo.py", getMarkersInCurrentFile ("bar").singleOrNull()?.lineMarkerTooltip)
   }
 
+  // PY-38169
+  fun testNavigationToCollectionNotTyping() {
+    // ensure that `typing.Mapping` links to the definition in `_collections_abc.py`
+    runWithAdditionalFileInLibDir("_collections_abc.py", "class Mapping: ...") {
+      myFixture.copyDirectoryToProject(getTestName(false), "")
+      myFixture.configureByFile("typing.pyi")
+      assertContainsElements(getMarkersInCurrentFile("Mapping").map { it.lineMarkerTooltip }, "Stub for item in _collections_abc.py")
+    }
+  }
+
   override fun getTestDataPath(): String {
     return super.getTestDataPath() + "/pyi/lineMarkers"
   }
@@ -116,15 +126,16 @@ class PyiRelatedItemLineMarkerTest : PyTestCase() {
   }
 
   private fun getMarkersInCurrentFile(elementName: String): List<LineMarkerInfo<*>> {
-    val functions = PsiTreeUtil.findChildrenOfType(myFixture.file, PyFunction::class.java)
-    functions.forEach { assertEquals(elementName, it.name) }
-    assertNotEmpty(functions)
+    val definitions = myFixture.file.descendantsOfType<PyQualifiedNameOwner>()
+      .filter { it.name == elementName }
+      .toList()
+    assertNotEmpty(definitions)
 
     myFixture.doHighlighting()
 
     val result = DaemonCodeAnalyzerImpl
       .getLineMarkers(myFixture.editor.document, myFixture.project)
-      .filter { PsiTreeUtil.getParentOfType(it.element, PsiNameIdentifierOwner::class.java)?.name == elementName }
+      .filter { it.element?.parentOfType<PyQualifiedNameOwner>()?.name == elementName }
 
     assertProjectFilesNotParsed(myFixture.file)
     assertSdkRootsNotParsed(myFixture.file)

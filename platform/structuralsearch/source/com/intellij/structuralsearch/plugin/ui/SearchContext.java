@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -10,8 +10,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 /**
  * Context of the search to be done
@@ -27,7 +29,7 @@ public final class SearchContext {
   }
 
   public SearchContext(@NotNull DataContext context) {
-    myProject = ObjectUtils.coalesce(CommonDataKeys.PROJECT.getData(context), ProjectManager.getInstance().getDefaultProject());
+    myProject = ObjectUtils.chooseNotNull(CommonDataKeys.PROJECT.getData(context), ProjectManager.getInstance().getDefaultProject());
     PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (vFile != null && (file == null || !vFile.equals(file.getContainingFile().getVirtualFile()))) {
@@ -37,7 +39,9 @@ public final class SearchContext {
     myEditor = CommonDataKeys.EDITOR.getData(context);
   }
 
-  SearchContext(@NotNull Project project, PsiFile file, Editor editor) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public SearchContext(@NotNull Project project, PsiFile file, Editor editor) {
     myProject = project;
     myFile = file;
     myEditor = editor;

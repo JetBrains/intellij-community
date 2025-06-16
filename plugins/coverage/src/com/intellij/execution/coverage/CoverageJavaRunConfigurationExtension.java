@@ -15,9 +15,9 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.configurations.coverage.CoverageFragment;
 import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
@@ -62,7 +62,7 @@ final class CoverageJavaRunConfigurationExtension extends RunConfigurationExtens
     }
 
     if (runnerSettings instanceof CoverageRunnerData) {
-      handler.addProcessListener(new ProcessAdapter() {
+      handler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(final @NotNull ProcessEvent event) {
           new Task.Backgroundable(configuration.getProject(),

@@ -1,14 +1,4 @@
 <idea-plugin>
-  <actions>
-    <action id="ShowKotlinBytecode" class="org.jetbrains.kotlin.idea.jvm.k1.bytecode.ShowKotlinBytecodeAction">
-      <add-to-group group-id="KotlinToolsGroup"/>
-    </action>
-
-    <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.jvm.shared.actions.ConfigureKotlinInProjectAction">
-      <add-to-group group-id="KotlinToolsGroup"/>
-    </action>
-  </actions>
-
   <extensions defaultExtensionNs="com.intellij">
     <scratch.creationHelper language="kotlin"
                             implementationClass="org.jetbrains.kotlin.idea.jvm.shared.scratch.KotlinScratchFileCreationHelper"/>

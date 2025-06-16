@@ -28,12 +28,12 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor imple
   }
 
   @Override
-  public void visitFile(final @NotNull PsiFile file) {
+  public void visitFile(final @NotNull PsiFile psiFile) {
     if (myVisitAllFileRoots) {
-      final FileViewProvider viewProvider = file.getViewProvider();
+      final FileViewProvider viewProvider = psiFile.getViewProvider();
       final List<PsiFile> allFiles = viewProvider.getAllFiles();
       if (allFiles.size() > 1) {
-        if (file == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
+        if (psiFile == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
           for (PsiFile lFile : allFiles) {
             ProgressIndicatorProvider.checkCanceled();
             lFile.acceptChildren(this);
@@ -43,6 +43,6 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor imple
       }
     }
 
-    super.visitFile(file);
+    super.visitFile(psiFile);
   }
 }

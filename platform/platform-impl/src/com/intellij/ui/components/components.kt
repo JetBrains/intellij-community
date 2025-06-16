@@ -4,6 +4,7 @@ package com.intellij.ui.components
 
 import com.intellij.BundleBase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
+import com.intellij.util.Consumer
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
@@ -80,7 +82,7 @@ fun Label(
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL, method Row.link")
+@Deprecated("Use Kotlin UI DSL, method Row.link", level = DeprecationLevel.ERROR)
 fun Link(@Label text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit): JComponent {
   val result = ActionLink(text) { action() }
   style?.let { UIUtil.applyStyle(it, result) }
@@ -161,7 +163,7 @@ fun Panel(@BorderTitle title: String? = null, layout: LayoutManager2? = BorderLa
 }
 
 @ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL, method Panel.group")
+@Deprecated("Use Kotlin UI DSL, method Panel.group", level = DeprecationLevel.ERROR)
 fun Panel(title: @BorderTitle String? = null, hasSeparator: Boolean = true, layout: LayoutManager2? = BorderLayout()): JPanel {
   val panel = JPanel(layout)
   title?.let { setTitledBorder(it, panel, hasSeparator) }

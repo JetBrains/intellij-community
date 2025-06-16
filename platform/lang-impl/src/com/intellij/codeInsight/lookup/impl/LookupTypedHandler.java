@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,7 +68,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     }
 
-    if (originalEditor.isInsertMode() && beforeCharTyped(charTyped, project, originalEditor, editor, file)) {
+    if (originalEditor.isInsertMode() && beforeCharTyped(charTyped, project, originalEditor, editor, file, null)) {
       return;
     }
 
@@ -76,11 +77,13 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     }
   }
 
-  private static boolean beforeCharTyped(final char charTyped,
+  @ApiStatus.Internal
+  public static boolean beforeCharTyped(final char charTyped,
                                 Project project,
                                 final Editor originalEditor,
                                 final Editor editor,
-                                PsiFile file) {
+                                PsiFile file,
+                                @Nullable Runnable doUpdateDocument) {
     final LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(originalEditor);
     if (lookup == null){
       return false;
@@ -100,11 +103,17 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
       long modificationStamp = document.getModificationStamp();
 
       if (!lookup.performGuardedChange(() -> {
-          lookup.fireBeforeAppendPrefix(charTyped);
+        lookup.fireBeforeAppendPrefix(charTyped);
+        if (doUpdateDocument == null) {
           EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
-        })) {
+        }
+        else {
+          doUpdateDocument.run();
+        }
+      })) {
         return true;
       }
+
       lookup.appendPrefix(charTyped);
       if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
         final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();

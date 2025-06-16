@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -10,9 +9,7 @@ import java.lang.ref.WeakReference;
 /**
  * @deprecated use {@link ContainerUtil#createWeakValueMap()} instead
  */
-@Deprecated
-@ApiStatus.ScheduledForRemoval
-public final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
+final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
   private static final class MyWeakReference<K, T> extends WeakReference<T> implements MyReference<K, T> {
     private final K key;
 
@@ -30,9 +27,7 @@ public final class WeakValueHashMap<K,V> extends RefValueHashMap<K,V> {
   /**
    * @deprecated use {@link ContainerUtil#createWeakValueMap()} instead
    */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public WeakValueHashMap() {
+  WeakValueHashMap() {
   }
 
   @Override

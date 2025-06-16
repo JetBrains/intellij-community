@@ -57,7 +57,7 @@ public final class DirectByteBufferPool {
       return;
     }
 
-    // limit is set on allocate
+    // the limit is set on `allocate`
     buffer.rewind();
     buffer.order(ByteOrder.BIG_ENDIAN);
     // keep the only buffer for size

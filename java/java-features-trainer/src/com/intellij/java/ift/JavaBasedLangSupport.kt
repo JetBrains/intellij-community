@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ift
 
 import com.intellij.ide.impl.NewProjectUtil
@@ -14,7 +14,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.PlatformProjectOpenProcessor
+import com.intellij.platform.PROJECT_OPENED_BY_PLATFORM_PROCESSOR
 import training.lang.AbstractLangSupport
 import training.project.ProjectUtils
 import java.nio.file.Path
@@ -30,7 +30,7 @@ abstract class JavaBasedLangSupport : AbstractLangSupport() {
       // It is required to not run SetupJavaProjectFromSourcesActivity because
       // Projects created from wizard do not use it now
       this.beforeOpen = { project ->
-        project.putUserData(PlatformProjectOpenProcessor.PROJECT_OPENED_BY_PLATFORM_PROCESSOR, false)
+        project.putUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR, false)
         true
       }
     }

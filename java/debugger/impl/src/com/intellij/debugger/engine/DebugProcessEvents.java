@@ -509,7 +509,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
       if (event == null || vm == event.virtualMachine()) {
         try {
           preprocessEvent(suspendContext, null);
-          cancelRunToCursorBreakpoint();
+          cancelSteppingBreakpoints();
         }
         finally {
           DebuggerEventThread eventThread = myEventThreads.get(vm);
@@ -551,7 +551,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     RequestHint hint = getRequestHint(event);
     Object commandToken = getCommandToken(event);
 
-    deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(), event.thread());
+    removeStepRequests(suspendContext, thread);
 
     boolean shouldResume = false;
 
@@ -609,6 +609,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       return;
     }
+  }
+
+  public static void removeStepRequests(@NotNull SuspendContextImpl suspendContext, @Nullable ThreadReference thread) {
+    suspendContext.getDebugProcess().deleteStepRequests(suspendContext.getVirtualMachineProxy().eventRequestManager(), thread);
   }
 
   // Preload event info in "parallel" commands, to avoid sync jdwp requests after
@@ -697,7 +701,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
         long startTimeNs = System.nanoTime();
         long endTimeNs = 0;
         try {
-          requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
+          if (event.request().isEnabled()) {
+            requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
+          }
         }
         catch (final LocatableEventRequestor.EventProcessingException ex) {
           // stop timer here to prevent reporting dialog opened time
@@ -833,7 +839,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         if (thread.suspendCount() == 1) {
           // There are some errors in evaluation-resume-suspend logic
-          debugProcess.logError("This means resuming thead " + thread + " to the running state for " + suspendContext);
+          debugProcess.logError("This means resuming thread " + thread + " to the running state for " + suspendContext);
         }
         LOG.warn("Yet another thread has been stopped: " + suspendContext);
         suspendManager.scheduleResume(suspendContext);

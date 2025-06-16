@@ -23,6 +23,7 @@ import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.DefaultManifestFileProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -156,7 +157,7 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
     }
 
     @Override
-    public @NotNull <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
+    public @NotNull @Unmodifiable <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
       return myModelsProvider.getModifiableFacetModel(module).getFacetsByType(type);
     }
 

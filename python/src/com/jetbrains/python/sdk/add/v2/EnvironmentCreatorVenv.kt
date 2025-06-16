@@ -2,8 +2,6 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
@@ -15,24 +13,23 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.validationTooltip
-import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.PyError
-import com.jetbrains.python.errorProcessing.failure
+import com.jetbrains.python.venvReader.VirtualEnvReader
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.plus
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -57,7 +54,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
       }
     }
 
-  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor, errorSink: ErrorSink) {
+  override fun setupUI(panel: Panel, validationRequestor: DialogValidationRequestor) {
     val firstFixLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
       PythonNewProjectWizardCollector.logSuggestedVenvDirFixUsed()
       val newPath = suggestedLocation.resolve(suggestedVenvName)
@@ -74,14 +71,13 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     }
 
     with(panel) {
-      row(message("sdk.create.custom.base.python")) {
-        versionComboBox = pythonInterpreterComboBox(model.state.baseInterpreter,
-                                                    model,
-                                                    model::addInterpreter,
-                                                    model.interpreterLoading)
-          .align(Align.FILL)
-          .component
-      }
+      versionComboBox = pythonInterpreterComboBox(
+        title = message("sdk.create.custom.base.python"),
+        selectedSdkProperty = model.state.baseInterpreter,
+        model = model,
+        validationRequestor = validationRequestor,
+        onPathSelected = model::addInterpreter,
+      )
       row(message("sdk.create.custom.location")) {
         // TODO" Extract this logic to the presenter or view model, do not touch nio from EDT, cover with test
         textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(message("sdk.create.custom.venv.location.browse.title")))
@@ -93,7 +89,7 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
               if (!textField.isVisible) return@addInputRule null // We are hidden, hence valid
               locationValidationFailed.set(false)
               val locationPath = when (val path = validatePath(textField.text)) {
-                is com.jetbrains.python.Result.Failure -> return@addInputRule ValidationInfo(path.error) // Path is invalid
+                is com.jetbrains.python.Result.Failure -> return@addInputRule ValidationInfo(path.error.message) // Path is invalid
                 is com.jetbrains.python.Result.Success -> path.result
               }
               val pathExists = locationPath.exists()
@@ -135,62 +131,21 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
       }
       row("") {
         checkBox(message("available.to.all.projects"))
-          .bindSelected(model.state.makeAvailable)
+          .bindSelected(model.state.makeAvailableForAllProjects)
       }
     }
-
-    versionComboBox.showingScope("...") {
-      model.myProjectPathFlows.projectPathWithDefault.collect {
-        if (!locationModified) {
-
-          val suggestedVirtualEnvPath = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(it.toString())) // todo nullability issue
-          model.state.venvPath.set(suggestedVirtualEnvPath)
-        }
-      }
-    }
-    // todo venv path suggestion from controller
-    //model.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-    //  presenter.projectWithContextFlow.collectLatest { (projectPath, projectLocationContext) ->
-    //    withContext(presenter.uiContext) {
-    //      if (!locationModified) {
-    //        val suggestedVirtualEnvPath = runCatching {
-    //          suggestVirtualEnvPath(projectPath, projectLocationContext)
-    //        }.getOrLogException(LOG)
-    //        location.set(suggestedVirtualEnvPath.orEmpty())
-    //      }
-    //    }
-    //  }
-    //}
   }
 
-  override fun onShown() {
-    val modalityState = ModalityState.current().asContextElement()
-    model.scope.launch(Dispatchers.EDT + modalityState) {
-      // TODO: Check venv set
-      //
-      //val suggestedVirtualEnvPath = model.suggestVenvPath()!! // todo nullability issue
-      //model.state.venvPath.set(suggestedVirtualEnvPath)
+  override fun onShown(scope: CoroutineScope) {
+    versionComboBox.initialize(scope, model.baseInterpreters)
 
-      //val projectBasePath = state.projectPath.get()
+    model.projectPathFlows.projectPathWithDefault.onEach {
+      if (locationModified) return@onEach
 
-      //val basePath = if (model is PythonLocalAddInterpreterModel)
-      //  withContext(Dispatchers.IO) {
-      //    FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
-      //  }
-      //else {
-      //  ""
-      //  // todo fix for wsl and targets
-      //  //val suggestedVirtualEnvName = PathUtil.getFileName(projectBasePath)
-      //  //val userHome = presenter.projectLocationContext.fetchUserHomeDirectory()
-      //  //userHome?.resolve(DEFAULT_VIRTUALENVS_DIR)?.resolve(suggestedVirtualEnvName)?.toString().orEmpty()
-      //}
-      //
-      //model.state.venvPath.set(basePath)
-    }
-
-    versionComboBox.setItems(model.baseInterpreters)
-
-
+      val preferedFilePath = PySdkSettings.instance.getPreferredVirtualEnvBasePath(it.toString())
+      val suggestedVirtualEnvPath = FileUtil.toSystemDependentName(preferedFilePath)
+      model.state.venvPath.set(suggestedVirtualEnvPath)
+    }.launchIn(scope + Dispatchers.EDT)
   }
 
   private fun suggestVenvName(currentName: String): String {
@@ -200,26 +155,25 @@ class EnvironmentCreatorVenv(model: PythonMutableTargetAddInterpreterModel) : Py
     return currentName.removeSuffix(digitSuffix) + newSuffix
   }
 
-  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): com.jetbrains.python.Result<Sdk, PyError> =
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): PyResult<Sdk> =
     // todo remove project path, or move to controller
     try {
       val venvPath = Path.of(model.state.venvPath.get())
-      model.setupVirtualenv(venvPath, model.myProjectPathFlows.projectPathWithDefault.first())
+      model.setupVirtualenv(venvPath, moduleOrProject)
     }
     catch (e: InvalidPathException) {
-      failure(e.localizedMessage)
+      PyResult.localizedError(e.localizedMessage)
     }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
-    //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
-    val statisticsTarget = target.toStatisticsField() // todo fix for wsl
-    return InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
-                                     statisticsTarget,
-                                     model.state.inheritSitePackages.get(),
-                                     model.state.makeAvailable.get(),
-                                     false,
-      //presenter.projectLocationContext is WslContext,
-                                     false, // todo fix for wsl
-                                     InterpreterCreationMode.CUSTOM)
+    return InterpreterStatisticsInfo(
+      type = InterpreterType.VIRTUALENV,
+      target = target.toStatisticsField() ,
+      globalSitePackage = model.state.inheritSitePackages.get(),
+      makeAvailableToAllProjects = model.state.makeAvailableForAllProjects.get(),
+      previouslyConfigured = false,
+      isWSLContext = false, // todo fix for wsl
+      creationMode = InterpreterCreationMode.CUSTOM
+    )
   }
 }

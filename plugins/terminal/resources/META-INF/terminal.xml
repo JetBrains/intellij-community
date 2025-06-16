@@ -14,17 +14,40 @@
     <fileEditorProvider id="terminal-session-editor" implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.terminal.settings.TerminalLocalOptions"
+                        serviceImplementation="org.jetbrains.plugins.terminal.settings.impl.TerminalLocalOptionsImpl"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
+
+    <projectService serviceInterface="org.jetbrains.plugins.terminal.block.reworked.TerminalPortForwardingUiProvider"
+                    serviceImplementation="org.jetbrains.plugins.terminal.block.reworked.TerminalNoPortForwardingUiProvider"/>
+
+    <rdct.remoteSettingProvider implementation="org.jetbrains.plugins.terminal.TerminalRemoteSettingsInfoProvider"/>
+    <applicationSettings service="org.jetbrains.plugins.terminal.block.BlockTerminalOptions"/>
+    <applicationSettings service="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
+    <applicationSettings service="org.jetbrains.plugins.terminal.TerminalFontSettingsService"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.arrangement.TerminalCommandHistoryManager"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.terminal.fus.TerminalFocusRule"/>
     <statistics.applicationUsagesCollector implementation="org.jetbrains.plugins.terminal.fus.TerminalSettingsStateCollector"/>
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
+
+    <!--
+     Change of these keys in the Registry UI is actually no-op.
+     But change of default values of these keys affects the initial value of the Terminal Engine option
+     when migration is performed in `TerminalOptionsProvider#loadState`.
+     So, these keys still can be used to specify the initial value of Terminal Engine setting.
+     -->
     <registryKey key="terminal.new.ui" defaultValue="false"
-                 description="Enable new terminal (Gen1)"/>
-    <registryKey key="terminal.new.ui.reworked" defaultValue="true"
-                 description="Replace classic terminal with reworked terminal (Gen2)"/>
+                 description="No-op, use Terminal Engine option in Terminal settings instead"/>
+    <registryKey key="terminal.new.ui.reworked" defaultValue="false"
+                 description="No-op, use Terminal Engine option in Terminal settings instead"/>
+
+    <registryKey key="terminal.new.ui.option.visible" defaultValue="false"
+                 description="Whether Experimental 2024 terminal engine option visible in the settings"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
     <registryKey key="terminal.new.ui.powershell.win11" defaultValue="true"
@@ -42,6 +65,13 @@
     <registryKey key="terminal.classic.refresh.vfs.on.shell.command.finished" defaultValue="true"
                  description="Refresh VFS when shell commands are finished in the Classic Terminal.
                   May not work 100% reliably as it uses heuristics to determine when command is finished."/>
+    <registryKey key="terminal.use.EelApi" defaultValue="true"
+                 description="Use EelApi to launch a shell process. Launching a local shell works the same as before.
+                  For WSL environments, the shell process in WSL will be launched via IJEnt instead of using wsl.exe."/>
+    <registryKey key="terminal.new.ui.completion.popup" defaultValue="false"
+                 description="Disabled completion popUp for reworked terminal for development time"/>
+    <registryKey key="terminal.type.ahead" defaultValue="false"
+                 description="Early prototype of type-ahead for the reworked terminal"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
@@ -77,21 +107,24 @@
              id="terminalCommandSpec"
              order="before stats"
              implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
-    <inline.completion.provider implementation="org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletionProvider"/>
-    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.ReworkedTerminalFeedbackSurvey"/>
 
     <lang.fileViewProviderFactory language="Terminal Prompt"
                                   implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileViewProviderFactory"/>
     <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptErrorFilter"/>
 
+    <lang.parserDefinition language="TerminalOutput"
+                           implementationClass="org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputParserDefinition"/>
+
     <advancedSetting bundle="messages.TerminalBundle"  id="terminal.character.encoding" default="UTF-8" groupKey="group.advanced.settings.terminal"/>
     <applicationService serviceInterface="com.intellij.terminal.search.JediTermSearchComponentProvider"
                         serviceImplementation="org.jetbrains.plugins.terminal.search.JediTermSearchComponentProviderImpl"/>
     <advancedSetting id="new.terminal.output.capacity.kb" default="1024" groupKey="group.advanced.settings.terminal"/>
+
+    <postStartupActivity implementation="org.jetbrains.plugins.terminal.block.GenOneTerminalOptionHidingActivity"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
-    <localTerminalCustomizer implementation="org.jetbrains.plugins.terminal.TerminalCommandHandlerCustomizer"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.json.ShellDefaultCommandSpecsProvider"/>
     <commandSpecsProvider implementation="org.jetbrains.plugins.terminal.block.completion.spec.specs.ShellCodeBasedCommandSpecsProvider"/>
 
@@ -122,6 +155,11 @@
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalWidgetProvider" dynamic="true"
                     interface="org.jetbrains.plugins.terminal.TerminalWidgetProvider"/>
   </extensionPoints>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.plugins.terminal.TerminalNewUserTracker"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 
   <projectListeners>
     <listener class="org.jetbrains.plugins.terminal.block.prompt.TerminalLookupManagerListener"

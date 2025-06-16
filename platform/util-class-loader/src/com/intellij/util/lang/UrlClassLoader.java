@@ -94,6 +94,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   /** @deprecated use {@link #build()} (left for compatibility with `java.system.class.loader` setting) */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(createDefaultBuilderForJdk(parent), null, isParallelCapable);
@@ -388,7 +389,9 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   private static boolean isNotExcludedLangClasses(String fileNameWithoutExtension) {
     // these two classes from com.intellij.util.lang are located in intellij.platform.util module,
     // which shouldn't be loaded by appClassLoader (IDEA-331043)
-    return !fileNameWithoutExtension.endsWith("/CompoundRuntimeException") && !fileNameWithoutExtension.endsWith("/JavaVersion");
+    return !fileNameWithoutExtension.endsWith("/CompoundRuntimeException") &&
+           !fileNameWithoutExtension.endsWith("/JavaVersion") &&
+           !fileNameWithoutExtension.endsWith("/JavaVersion$Companion");
   }
 
   /**

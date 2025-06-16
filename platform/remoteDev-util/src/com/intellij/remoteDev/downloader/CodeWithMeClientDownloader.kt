@@ -2,8 +2,8 @@ package com.intellij.remoteDev.downloader
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.execution.process.ProcessListener
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -747,12 +747,16 @@ object CodeWithMeClientDownloader {
   fun runFrontendProcess(
     lifetime: Lifetime,
     url: String,
-    frontendInstallation: FrontendInstallation
+    frontendInstallation: FrontendInstallation,
+    enableBeforeRunHooks: Boolean = true,
   ): Lifetime {
-    try {
-      processBeforeRunHooks(frontendInstallation)
-    } catch (e: Throwable) {
-      LOG.error("Could not process hooks before launching client $frontendInstallation", e)
+    if (enableBeforeRunHooks) {
+      try {
+        processBeforeRunHooks(frontendInstallation)
+      }
+      catch (e: Throwable) {
+        LOG.error("Could not process hooks before launching client $frontendInstallation", e)
+      }
     }
     when (frontendInstallation) {
       is EmbeddedFrontendInstallation -> {
@@ -870,7 +874,7 @@ object CodeWithMeClientDownloader {
           override fun readerOptions(): BaseOutputReader.Options = BaseOutputReader.Options.forMostlySilentProcess()
         }
 
-        val listener = object : ProcessAdapter() {
+        val listener = object : ProcessListener {
           override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
             super.onTextAvailable(event, outputType)
             LOG.info("GUEST OUTPUT: ${event.text}")

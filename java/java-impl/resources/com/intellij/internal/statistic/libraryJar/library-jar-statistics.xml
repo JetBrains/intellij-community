@@ -157,6 +157,7 @@
   <technology name="lagom-java" class="com.lightbend.lagom.javadsl.api.Service"/>
   <technology name="lagom-scala" class="com.lightbend.lagom.scaladsl.api.Service"/>
   <technology name="langchain4j" class="dev.langchain4j.model.chat.ChatLanguageModel"/>
+  <technology name="langchain4j" class="dev.langchain4j.service.AiServices"/>
   <technology name="liquibase" class="liquibase.Liquibase"/>
   <technology name="log4j1" class="org.apache.log4j.Logger"/>
   <technology name="log4j2" class="org.apache.logging.log4j.Logger"/>
@@ -164,6 +165,8 @@
   <technology name="lombok" class="lombok.Getter"/>
   <technology name="mapstruct" class="org.mapstruct.Mapping"/>
   <technology name="mariadb" class="org.mariadb.jdbc.Driver"/>
+  <technology name="mcp-kotlin-sdk" class="io.modelcontextprotocol.kotlin.sdk.server.Server"/>
+  <technology name="mcp-kotlin-sdk" class="io.modelcontextprotocol.kotlin.sdk.client.Client"/>
   <technology name="micrometer" class="io.micrometer.core.annotation.Timed"/>
   <technology name="micronaut" class="io.micronaut.http.server.HttpServerConfiguration"/>
   <technology name="microprofile" class="org.eclipse.microprofile.config.Config"/>
@@ -179,6 +182,8 @@
   <technology name="mysql" class="com.mysql.jdbc.Driver"/>
   <technology name="netty" class="io.netty.channel.AbstractChannel"/>
   <technology name="okhttp3" class="okhttp3.Request"/>
+  <technology name="openai-java" class="com.openai.models.ChatModel"/>
+  <technology name="openai-kotlin-unofficial" class="com.aallam.openai.client.OpenAI"/>
   <technology name="openfeign" class="feign.RequestLine"/>
   <technology name="openjfx" class="javafx.css.Size"/>
   <technology name="openjpa" class="org.apache.openjpa.persistence.PersistenceProviderImpl"/>
@@ -227,6 +232,7 @@
   <technology name="sphinx" class="org.axonframework.commandhandling.CommandHandler"/>
   <technology name="spock" class="spock.mock.MockingApi"/>
   <technology name="spotbugs" class="edu.umd.cs.findbugs.annotations.Nullable"/>
+  <technology name="spring-ai" class="org.springframework.ai.chat.client.ChatClient"/>
   <technology name="spring-amqp" class="org.springframework.amqp.core.AbstractExchange"/>
   <technology name="spring-amqp" class="org.springframework.amqp.core.Message"/>
   <technology name="spring-batch" class="org.springframework.batch.core.Job"/>

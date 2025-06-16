@@ -1,4 +1,5 @@
 // IS_APPLICABLE: false
+// PROBLEM: none
 
 open class Base {
     open fun foo() {

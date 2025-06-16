@@ -14,12 +14,12 @@ import org.jetbrains.annotations.NotNull;
 
 public final class PyHighlightExitPointsHandlerFactory extends HighlightUsagesHandlerFactoryBase implements DumbAware {
   @Override
-  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement target) {
+  public HighlightUsagesHandlerBase createHighlightUsagesHandler(@NotNull Editor editor, @NotNull PsiFile psiFile, @NotNull PsiElement target) {
     final PyReturnStatement returnStatement = PsiTreeUtil.getParentOfType(target, PyReturnStatement.class);
     if (returnStatement != null) {
       final PyExpression returnExpr = returnStatement.getExpression();
       if (returnExpr == null || !PsiTreeUtil.isAncestor(returnExpr, target, false)) {
-        return new PyHighlightExitPointsHandler(editor, file, target);
+        return new PyHighlightExitPointsHandler(editor, psiFile, target);
       }
     }
     return null;

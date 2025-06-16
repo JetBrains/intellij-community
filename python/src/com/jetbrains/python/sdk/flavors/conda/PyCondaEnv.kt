@@ -1,13 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
-import com.intellij.execution.target.*
+import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.TargetEnvironmentConfiguration
+import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.execution.target.createProcessWithResult
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.failure
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.asPythonResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.conda.TargetCommandExecutor
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
@@ -25,6 +29,8 @@ import kotlin.io.path.exists
  * TODO: Once we get rid of [TargetCommandExecutor] and have access to [com.intellij.execution.target.TargetEnvironmentConfiguration] use it validate conda binary in [getEnvs]
  * @see `PyCondaTest`
  */
+@ApiStatus.Internal
+
 data class PyCondaEnv(
   val envIdentity: PyCondaEnvIdentity,
   val fullCondaPathOnTarget: FullPathOnTarget,
@@ -37,9 +43,9 @@ data class PyCondaEnv(
     /**
      * @return unparsed output of conda info --envs --json
      */
-    private suspend fun getEnvsInfo(command: TargetCommandExecutor, fullCondaPathOnTarget: FullPathOnTarget): Result<String> {
+    private suspend fun getEnvsInfo(command: TargetCommandExecutor, fullCondaPathOnTarget: FullPathOnTarget): PyResult<String> {
       val output = command.execute(listOf(fullCondaPathOnTarget, "info", "--envs", "--json")).await()
-      return if (output.exitCode == 0) Result.success(output.stdout) else failure(output.stderr)
+      return if (output.exitCode == 0) PyResult.success(output.stdout) else PyResult.localizedError(output.stderr)
     }
 
     /**
@@ -49,12 +55,12 @@ data class PyCondaEnv(
     suspend fun getEnvsDirs(
       command: TargetCommandExecutor,
       fullCondaPathOnTarget: FullPathOnTarget,
-    ): Result<Collection<String>> = withContext(Dispatchers.IO) {
-      val json = getEnvsInfo(command, fullCondaPathOnTarget).getOrElse { return@withContext Result.failure(it) }
-      return@withContext runCatching { // External command may return junk
+    ): PyResult<Collection<String>> = withContext(Dispatchers.IO) {
+      val json = getEnvsInfo(command, fullCondaPathOnTarget).getOr { return@withContext it }
+      runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
         info.envs_dirs
-      }
+      }.asPythonResult()
     }
 
     /**
@@ -64,8 +70,8 @@ data class PyCondaEnv(
     suspend fun getEnvs(
       command: TargetCommandExecutor,
       fullCondaPathOnTarget: FullPathOnTarget,
-    ): Result<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
-      val json = getEnvsInfo(command, fullCondaPathOnTarget).getOrElse { return@withContext Result.failure(it) }
+    ): PyResult<List<PyCondaEnv>> = withContext(Dispatchers.IO) {
+      val json = getEnvsInfo(command, fullCondaPathOnTarget).getOr { return@withContext it }
       return@withContext kotlin.runCatching { // External command may return junk
         val info = Gson().fromJson(json, CondaInfoJson::class.java)
         val fileSeparator = command.targetPlatform.await().platform.fileSeparator
@@ -82,13 +88,13 @@ data class PyCondaEnv(
                      fullCondaPathOnTarget)
 
         }
-      }
+      }.asPythonResult()
     }
 
-    suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): Result<Process> {
+    suspend fun createEnv(command: PyCondaCommand, newCondaEnvInfo: NewCondaEnvRequest): PyResult<Process> {
       val (_, env, commandLineBuilder) = withContext(Dispatchers.IO) {
         command.createRequestEnvAndCommandLine()
-      }.getOrElse { return Result.failure(it) }
+      }.getOr { return it }
 
 
       val commandLine = commandLineBuilder.apply {
@@ -96,8 +102,9 @@ data class PyCondaEnv(
         //addParameters("create", "-y", "-n", envName, *newCondaEnvInfo.createEnvArguments)
         addParameters(*newCondaEnvInfo.createEnvArguments)
       }.build()
-      val process = env.createProcessWithResult(commandLine).getOrElse { return Result.failure(it) }
-      return Result.success(process)
+
+      val processResult = env.createProcessWithResult(commandLine)
+      return processResult.asPythonResult()
     }
 
   }

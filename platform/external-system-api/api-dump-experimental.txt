@@ -5,6 +5,8 @@ com.intellij.openapi.externalSystem.ExternalSystemManager
 - *:getExtensionPointsForResolver():java.util.List
 com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectAware
 - *:adjustModificationType(java.lang.String,com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType):com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
+- *:isDisabledAutoReload(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext):Z
+- *:isDisabledReload(com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectReloadContext):Z
 - *:isIgnoredSettingsFileEvent(java.lang.String,com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext):Z
 *:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext
 - a:getEvent():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event

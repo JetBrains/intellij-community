@@ -37,6 +37,11 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
   }
 
   @Override
+  public boolean supportsNumberFormats() {
+    return true;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -67,6 +72,8 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
 
     private final DataGridSettings settings;
 
+    private final boolean supportsNumberFormats;
+
     private boolean isAllowedShowBigObjects;
 
     public DatabaseDisplayObjectFormatterConfig() {
@@ -79,8 +86,19 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
       @Nullable Set<BinaryDisplayType> allowedTypes,
       @Nullable DataGridSettings settings
     ) {
+      this(displayType, isModeDetectedAutomatically, true, allowedTypes, settings);
+    }
+
+    private DatabaseDisplayObjectFormatterConfig(
+      @Nullable DisplayType displayType,
+      boolean isModeDetectedAutomatically,
+      boolean supportsNumberFormats,
+      @Nullable Set<BinaryDisplayType> allowedTypes,
+      @Nullable DataGridSettings settings
+    ) {
       super(ObjectFormatterMode.DISPLAY);
       this.isAllowedShowBigObjects = false;
+      this.supportsNumberFormats = supportsNumberFormats;
       this.displayType = displayType;
       this.isModeDetectedAutomatically = isModeDetectedAutomatically;
       this.allowedTypes = allowedTypes;
@@ -115,6 +133,25 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
     }
 
     @Override
+    public boolean supportsNumberFormats() {
+      return this.supportsNumberFormats;
+    }
+
+    @NotNull
+    public DatabaseDisplayObjectFormatterConfig adjustForExtraction() {
+      if (supportsNumberFormats) {
+        return new DatabaseDisplayObjectFormatterConfig(
+          displayType,
+          isModeDetectedAutomatically,
+          false,
+          allowedTypes,
+          settings
+        );
+      }
+      return this;
+    }
+
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
@@ -122,12 +159,13 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
       DatabaseDisplayObjectFormatterConfig config = (DatabaseDisplayObjectFormatterConfig)o;
       return isModeDetectedAutomatically == config.isModeDetectedAutomatically &&
              displayType == config.displayType &&
+             supportsNumberFormats == config.supportsNumberFormats &&
              Objects.equals(allowedTypes, config.allowedTypes);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(super.hashCode(), displayType, isModeDetectedAutomatically, allowedTypes);
+      return Objects.hash(super.hashCode(), displayType, isModeDetectedAutomatically, supportsNumberFormats, allowedTypes);
     }
   }
 

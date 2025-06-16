@@ -1,1 +1,1 @@
-Function test.foo() has 1 usage that is not safe to delete.
+Usage of function test.foo() that is not safe to delete.

@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
-  name = "objectSerializer",
+  name = "object-serializer",
   module_name = "intellij.platform.objectSerializer",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -26,10 +26,10 @@ jvm_library(
 )
 
 jvm_library(
-  name = "objectSerializer_test_lib",
+  name = "object-serializer_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["testInternalSrc/**/*.kt", "testInternalSrc/**/*.java"], allow_empty = True),
-  associates = [":objectSerializer"],
+  associates = [":object-serializer"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ion",
@@ -51,8 +51,8 @@ jvm_library(
 )
 
 jvm_test(
-  name = "objectSerializer_test",
-  runtime_deps = [":objectSerializer_test_lib"]
+  name = "object-serializer_test",
+  runtime_deps = [":object-serializer_test_lib"]
 )
 ### auto-generated section `build intellij.platform.objectSerializer` end
 
@@ -88,8 +88,8 @@ jvm_library(
     "@lib//:junit4",
     "//platform/testFramework/extensions:testExtensions",
     "@lib//:assert_j",
-    "//platform/object-serializer:objectSerializer",
-    "//platform/object-serializer:objectSerializer_test_lib",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
     "//platform/util-ex",
     "//platform/object-serializer:objectSerializer-annotations",
     "@lib//:ion",

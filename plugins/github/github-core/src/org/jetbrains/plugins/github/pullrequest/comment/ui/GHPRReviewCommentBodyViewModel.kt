@@ -35,7 +35,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 
 private val LOG = logger<GHPRReviewCommentBodyViewModel>()
 
@@ -57,7 +57,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
   private val server: GithubServerPath = dataContext.repositoryDataService.repositoryMapping.repository.serverPath
   private val repository: GitRepository = dataContext.repositoryDataService.remoteCoordinates.repository
 
-  private val twVm by lazy { project.service<GHPRToolWindowViewModel>() }
+  private val vm by lazy { project.service<GHPRProjectViewModel>() }
 
   private val threadData = MutableStateFlow<ThreadData?>(null)
   private val canResolvedThread = MutableStateFlow(false)
@@ -190,7 +190,7 @@ class GHPRReviewCommentBodyViewModel internal constructor(
   }
 
   fun openPullRequestInfoAndTimeline(number: Long) {
-    twVm.projectVm.value?.openPullRequestInfoAndTimeline(number)
+    vm.connectedProjectVm.value?.openPullRequestInfoAndTimeline(number)
   }
 
   private fun createSuggestionBlock(htmlContent: String,

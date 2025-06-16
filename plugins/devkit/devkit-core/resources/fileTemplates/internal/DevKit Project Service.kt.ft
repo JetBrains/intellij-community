@@ -1,0 +1,18 @@
+#if (${PACKAGE_NAME} && ${PACKAGE_NAME} != "")package ${PACKAGE_NAME}
+
+#end
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.components.service
+
+#parse("File Header.java")
+@Service(Service.Level.PROJECT)
+internal class ${NAME}(private val project: Project) {
+    companion object {
+        fun getInstance(project: Project): ${NAME} = project.service()
+    }
+
+    fun doWork() {
+        TODO()
+    }
+}

@@ -3,8 +3,10 @@
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
 import com.google.gson.Gson
+import com.intellij.rt.debugger.JsonUtils
 import com.intellij.rt.debugger.coroutines.CoroutinesDebugHelper
 import com.sun.jdi.ArrayReference
+import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.StringReference
 import com.sun.jdi.ThreadReference
@@ -56,6 +58,40 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
         return calculateCoroutineInfoData(coroutinesInfo, coroutineInfoRefs, lastObservedThreadRefs, lastObservedFrameRefs)
     }
 
+    fun dumpCoroutinesWithStacktraces(): List<CoroutineInfoData>? {
+        val array = callMethodFromHelper(CoroutinesDebugHelper::class.java, executionContext, "dumpCoroutinesWithStacktracesAsJson", emptyList(), JsonUtils::class.java.name)
+
+        val arrayValues = (array as? ArrayReference)?.values ?: return null
+
+        if (arrayValues.size != 4) {
+            error("The result array of 'dumpCoroutinesWithStacktracesAsJson' should be of size 4")
+        }
+
+        val coroutinesInfoAsJsonString = arrayValues[0].safeAs<StringReference>()?.value()
+            ?: error("The first element of the result array must be a string")
+        val lastObservedThreadRefs = arrayValues[1].safeAs<ArrayReference>()?.toTypedList<ThreadReference?>()
+            ?: error("The second element of the result array must be an array")
+        val lastObservedFrameRefs = arrayValues[2].safeAs<ArrayReference>()?.toTypedList<ObjectReference?>()
+            ?: error("The third element of the result array must be an array")
+        val lastObservedStackTraceJsons = arrayValues[3].safeAs<ArrayReference>()?.toTypedList<StringReference>()
+            ?: error("The fourth element of the result array must be an array")
+
+        val coroutinesInfo = Gson().fromJson(coroutinesInfoAsJsonString, Array<CoroutineInfoFromJson>::class.java)
+        val lastObservedStackTraces: List<List<Location>> = lastObservedStackTraceJsons.map {
+            Gson().fromJson(it.value(), Array<StackTraceElementData>::class.java).map { ste ->
+                findOrCreateLocation(executionContext, ste.stackTraceElement())
+            }
+        }
+
+        if (lastObservedStackTraces.size != lastObservedFrameRefs.size ||
+            lastObservedFrameRefs.size != coroutinesInfo.size ||
+            coroutinesInfo.size != lastObservedThreadRefs.size) {
+            error("Arrays must have equal sizes")
+        }
+
+        return calculateCoroutineInfoDataWithStacktraces(coroutinesInfo, lastObservedThreadRefs, lastObservedFrameRefs, lastObservedStackTraces)
+    }
+
     private fun fallbackToOldMirrorDump(executionContext: DefaultExecutionContext): ArrayReference? {
         val debugProbesImpl = DebugProbesImpl.instance(executionContext)
         return if (debugProbesImpl != null && debugProbesImpl.isInstalled && debugProbesImpl.canDumpCoroutinesInfoAsJsonAndReferences()) {
@@ -84,6 +120,27 @@ internal class CoroutinesInfoFromJsonAndReferencesProvider(
         }
     }
 
+    private fun calculateCoroutineInfoDataWithStacktraces(
+        coroutineInfos: Array<CoroutineInfoFromJson>,
+        lastObservedThreadRefs: List<ThreadReference?>,
+        lastObservedFrameRefs: List<ObjectReference?>,
+        lastObservedStackTraces: List<List<Location>>
+    ): List<CoroutineInfoData> {
+        return coroutineInfos.mapIndexed { i, info ->
+            CoroutineInfoData(
+                name = info.name,
+                id = info.sequenceNumber,
+                state = info.state,
+                dispatcher = info.dispatcher,
+                lastObservedFrame = lastObservedFrameRefs[i],
+                lastObservedThread = lastObservedThreadRefs[i],
+                debugCoroutineInfoRef = null,
+                stackFrameProvider = null,
+                lastObservedStackTrace = lastObservedStackTraces[i]
+            )
+        }
+    }
+
     private data class CoroutineInfoFromJson(
         val name: String?,
         val id: Long?,
@@ -105,8 +162,20 @@ internal class CoroutineLibraryAgent2Proxy(
 
     override fun dumpCoroutinesInfo(): List<CoroutineInfoData> {
         val result = debugProbesImpl.dumpCoroutinesInfo(executionContext)
-        return result.map {
-            createCoroutineInfoDataFromMirror(it, stackFramesProvider)
+        return result.map { mirror ->
+            CoroutineInfoData(
+                name = mirror.context?.name,
+                id = mirror.sequenceNumber,
+                state = mirror.state,
+                dispatcher = mirror.context?.dispatcher,
+                lastObservedFrame = mirror.lastObservedFrame,
+                lastObservedThread = mirror.lastObservedThread,
+                debugCoroutineInfoRef = null,
+                stackFrameProvider = stackFramesProvider,
+                lastObservedStackTrace = mirror.lastObservedStackTrace.map {
+                    findOrCreateLocation(executionContext, it.stackTraceElement())
+                }
+            )
         }
     }
 

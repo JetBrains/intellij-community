@@ -14,6 +14,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -46,7 +47,7 @@ public final class SealedUtils {
    * @param psiClass class to add permits to
    * @param missingInheritors collection of fully-qualified names to add to permits list
    */
-  public static void fillPermitsList(@NotNull PsiClass psiClass, @NotNull Collection<String> missingInheritors) {
+  public static void fillPermitsList(@NotNull PsiClass psiClass, @NotNull @Unmodifiable Collection<String> missingInheritors) {
     PsiReferenceList permitsList = psiClass.getPermitsList();
     PsiFileFactory factory = PsiFileFactory.getInstance(psiClass.getProject());
     if (permitsList == null) {
@@ -74,17 +75,17 @@ public final class SealedUtils {
       .anyMatch(parent -> parent != null && parent.hasModifierProperty(PsiModifier.SEALED));
   }
 
-  public static Collection<PsiClass> findSameFileInheritorsClasses(@NotNull PsiClass psiClass, PsiClass @NotNull ... classesToExclude) {
+  public static @Unmodifiable Collection<PsiClass> findSameFileInheritorsClasses(@NotNull PsiClass psiClass, PsiClass @NotNull ... classesToExclude) {
     return getClasses(psiClass, Function.identity(), classesToExclude);
   }
 
-  public static Collection<String> findSameFileInheritors(@NotNull PsiClass psiClass, PsiClass @NotNull ... classesToExclude) {
+  public static @Unmodifiable Collection<String> findSameFileInheritors(@NotNull PsiClass psiClass, PsiClass @NotNull ... classesToExclude) {
     return getClasses(psiClass, PsiClass::getQualifiedName, classesToExclude);
   }
 
-  private static @NotNull <T> Collection<T> getClasses(@NotNull PsiClass psiClass,
-                                                       Function<PsiClass, T> mapper,
-                                                       PsiClass @NotNull ... classesToExclude) {
+  private static @NotNull @Unmodifiable <T> Collection<T> getClasses(@NotNull PsiClass psiClass,
+                                                                     Function<? super PsiClass, T> mapper,
+                                                                     PsiClass @NotNull ... classesToExclude) {
     GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile().getOriginalFile());
     return DirectClassInheritorsSearch.search(psiClass, fileScope)
       .filtering(inheritor -> !ArrayUtil.contains(inheritor, classesToExclude))

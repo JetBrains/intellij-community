@@ -17,6 +17,7 @@ java_library(
     "@lib//:ktor-client-encoding",
     "@lib//:ktor-client-content-negotiation",
     "@lib//:ktor-serialization-kotlinx-json",
+    "@lib//:kotlinx-serialization-json-io",
     "@lib//:ktor-client-auth",
   ],
   runtime_deps = [
@@ -26,7 +27,9 @@ java_library(
     "@lib//:ktor-client-encoding",
     "@lib//:ktor-client-content-negotiation",
     "@lib//:ktor-serialization-kotlinx-json",
+    "@lib//:kotlinx-serialization-json-io",
     "@lib//:ktor-client-auth",
+    "//libraries/io",
   ]
 )
 ### auto-generated section `build intellij.libraries.ktor.client` end

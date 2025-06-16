@@ -3,6 +3,7 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -85,7 +86,8 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: FeaturesProviderCache?): List<EventPair<*>>
+                                  cache: FeaturesProviderCache?,
+                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>>
 
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101

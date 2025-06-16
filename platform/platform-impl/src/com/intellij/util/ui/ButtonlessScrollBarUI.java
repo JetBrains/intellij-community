@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.UiDispatcherKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -493,6 +494,12 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
           scrollbar.repaint(((ButtonlessScrollBarUI)scrollbar.getUI()).getThumbBounds());
         }
       }
+
+      @Override
+      protected @NotNull UiDispatcherKind uiKind() {
+        // EditorImpl.getBackgroundColor requires read action, therefore, we use RELAX
+        return UiDispatcherKind.RELAX;
+      }
     };
   }
 
@@ -522,7 +529,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
       }
     };
 
-    macScrollbarFadeTimer = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+    // EditorImpl.getBackgroundColor requires read action, therefore, we use RELAX
+    macScrollbarFadeTimer = SingleEdtTaskScheduler.createSingleEdtTaskScheduler(UiDispatcherKind.RELAX);
     macScrollbarFadeAnimator = new Animator("Mac scrollbar fade animator", 30, 300, false) {
       @Override
       protected void paintCycleEnd() {

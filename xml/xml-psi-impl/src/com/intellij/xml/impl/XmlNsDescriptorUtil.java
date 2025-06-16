@@ -21,7 +21,7 @@ import com.intellij.util.AstLoadingFilter;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.index.XmlNamespaceIndex;
+import com.intellij.xml.impl.schema.XmlSchemaService;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -174,7 +174,7 @@ public final class XmlNsDescriptorUtil {
       XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
       if (xmlFile == null) {
         // try to auto-detect it
-        xmlFile = XmlNamespaceIndex.guessDtd(dtdUri, containingFile);
+        xmlFile = XmlSchemaService.getInstance().guessDtd(dtdUri, containingFile);
       }
       final String schemaFilePath = getFilePathForLogging(xmlFile);
 

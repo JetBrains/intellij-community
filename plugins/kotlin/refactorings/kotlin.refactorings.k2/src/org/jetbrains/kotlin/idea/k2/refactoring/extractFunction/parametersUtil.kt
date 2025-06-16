@@ -7,6 +7,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -392,6 +394,10 @@ private fun getReferencedClassifierSymbol(
     refInfo: ResolvedReferenceInfo<PsiNamedElement, KtReferenceExpression, KaType>,
     partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaCallableSymbol, KaCallableSignature<KaCallableSymbol>>?
 ): KaClassifierSymbol? {
+    if (partiallyAppliedSymbol?.symbol is KaNamedFunctionSymbol && originalDeclaration is KtConstructor<*>) {
+        // dataClass.copy(): do not replace with call to constructor
+        return null
+    }
     val referencedSymbol = (thisSymbol ?: (originalDeclaration as? KtNamedDeclaration)?.symbol
     ?: (originalDeclaration as? PsiMember)?.callableSymbol) ?: return null
     return when (referencedSymbol) {
@@ -437,8 +443,12 @@ private fun createOriginalType(
             append(functionSymbol.returnType.render(position = Variance.INVARIANT))
         }
 
-    org.jetbrains.kotlin.psi.KtPsiFactory(originalDeclaration.project).createTypeCodeFragment(typeString, originalDeclaration)
-        .getContentElement()?.type
+    // FIXME: KTIJ-34279
+    @OptIn(KaImplementationDetail::class)
+    KaBaseIllegalPsiException.allowIllegalPsiAccess {
+        org.jetbrains.kotlin.psi.KtPsiFactory(originalDeclaration.project).createTypeCodeFragment(typeString, originalDeclaration)
+            .getContentElement()?.type
+    }
 } else {
     parameterExpression?.expressionType ?: receiverToExtract?.type
 }) ?: builtinTypes.nullableAny

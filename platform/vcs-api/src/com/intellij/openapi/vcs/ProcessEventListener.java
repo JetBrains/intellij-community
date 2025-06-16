@@ -20,6 +20,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EventListener;
 
 public interface ProcessEventListener extends EventListener {
+
+  /**
+   * This method is invoked when git process is started
+   */
+  default void processStarted() {
+  }
+
   /**
    * This method is invoked when git process is terminated
    *

@@ -4,8 +4,8 @@
 package test
 
 public object Object {
-    public final val kotlin.Int.g: kotlin.Int /* compiled code */
-        public final get
+    public final val kotlin.Int.g: kotlin.Int /* compiled code */ /* hasBackingField: false */
+        public final get() {/* compiled code */ }
 
     public final fun <T, K, G> complexFun(a: T, b: K, c: G): G { /* compiled code */ }
 

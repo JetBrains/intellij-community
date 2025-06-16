@@ -26,7 +26,7 @@ public class LocalFileSystemStressTest extends BareTestFixtureTestCase {
   @Rule public TempDirectory tempDir = new TempDirectory();
 
   @Test
-  public void getPathForVeryDeepFileMustNotFailWithStackOverflowError_Stress() throws IOException {
+  public void getPathForVeryDeepFileMustNotFailWithStackOverflowError_Performance() throws IOException {
     VirtualFile tmpRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
     assertNotNull(tmpRoot);
     assertThat(tmpRoot.getFileSystem()).isInstanceOf(TempFileSystem.class);

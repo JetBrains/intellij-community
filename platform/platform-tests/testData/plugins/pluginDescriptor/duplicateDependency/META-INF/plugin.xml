@@ -1,5 +1,0 @@
-<idea-plugin>
-  <id>my.plugin</id>
-  <depends>foo</depends>
-  <depends optional="true">foo</depends>
-</idea-plugin>

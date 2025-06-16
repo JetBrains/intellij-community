@@ -68,7 +68,7 @@ class MavenProject(val file: VirtualFile) {
   @Internal
   fun updateFromReaderResult(
     readerResult: MavenProjectReaderResult,
-    settings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
   ): MavenProjectChanges {
     val keepPreviousPlugins = keepPreviousArtifacts
@@ -82,7 +82,7 @@ class MavenProject(val file: VirtualFile) {
       readerResult.activatedProfiles,
       setOf(),
       readerResult.nativeModelMap,
-      settings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       false,
       keepPreviousPlugins,
@@ -103,7 +103,7 @@ class MavenProject(val file: VirtualFile) {
     activatedProfiles: MavenExplicitProfiles,
     unresolvedArtifactIds: Set<MavenId>,
     nativeModelMap: Map<String, String>,
-    settings: MavenGeneralSettings,
+    effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
     keepPreviousPlugins: Boolean,
   ): MavenProjectChanges {
@@ -116,7 +116,7 @@ class MavenProject(val file: VirtualFile) {
       activatedProfiles,
       unresolvedArtifactIds,
       nativeModelMap,
-      settings,
+      effectiveRepositoryPath,
       keepPreviousArtifacts,
       true,
       keepPreviousPlugins,
@@ -129,7 +129,7 @@ class MavenProject(val file: VirtualFile) {
   }
 
   @Internal
-  fun updateState(dependencies: List<MavenArtifact>, properties: Properties, pluginInfos: List<MavenPluginInfo>): MavenProjectChanges {
+  fun updateState(dependencies: List<MavenArtifact>, properties: Properties, pluginInfos: List<MavenPluginWithArtifact>): MavenProjectChanges {
     val newState = myState.copy(
       dependencies = dependencies,
       properties = properties,
@@ -146,7 +146,7 @@ class MavenProject(val file: VirtualFile) {
 
   @Internal
   fun updatePluginArtifacts(pluginIdsToArtifacts: Map<MavenId, MavenArtifact?>) {
-    val newPluginInfos = myState.pluginInfos.map { MavenPluginInfo(it.plugin, pluginIdsToArtifacts[it.plugin.mavenId]) }
+    val newPluginInfos = myState.pluginInfos.map { MavenPluginWithArtifact(it.plugin, pluginIdsToArtifacts[it.plugin.mavenId]) }
     val newState = myState.copy(pluginInfos = newPluginInfos)
     setState(newState)
   }
@@ -238,7 +238,7 @@ class MavenProject(val file: VirtualFile) {
     get() = myState.parentId
 
   val packaging: @NlsSafe String
-    get() = myState.packaging!!
+    get() = myState.packaging ?: ""
 
   val finalName: @NlsSafe String
     get() = myState.finalName!!
@@ -616,7 +616,7 @@ class MavenProject(val file: VirtualFile) {
     }
 
   @get:ApiStatus.Experimental
-  val pluginInfos: List<MavenPluginInfo>
+  val pluginInfos: List<MavenPluginWithArtifact>
     get() {
       return myState.pluginInfos
     }
@@ -627,7 +627,7 @@ class MavenProject(val file: VirtualFile) {
     }
 
   @get:ApiStatus.Experimental
-  val declaredPluginInfos: List<MavenPluginInfo>
+  val declaredPluginInfos: List<MavenPluginWithArtifact>
     get() {
       return myState.declaredPluginInfos
     }
@@ -839,7 +839,7 @@ class MavenProject(val file: VirtualFile) {
       activatedProfiles: MavenExplicitProfiles,
       unresolvedArtifactIds: Set<MavenId>,
       nativeModelMap: Map<String, String>,
-      settings: MavenGeneralSettings,
+      effectiveRepositoryPath: Path,
       keepPreviousArtifacts: Boolean,
       keepPreviousProfiles: Boolean,
       keepPreviousPlugins: Boolean,
@@ -854,7 +854,7 @@ class MavenProject(val file: VirtualFile) {
       val newPluginRepositories = LinkedHashSet<MavenRemoteRepository>()
       val newDependencies = LinkedHashSet<MavenArtifact>()
       val newDependencyTree = LinkedHashSet<MavenArtifactNode>()
-      val newPluginInfos = LinkedHashSet<MavenPluginInfo>()
+      val newPluginInfos = LinkedHashSet<MavenPluginWithArtifact>()
       val newExtensions = LinkedHashSet<MavenArtifact>()
       val newAnnotationProcessors = LinkedHashSet<MavenArtifact>()
       val newManagedDeps = LinkedHashMap<String, MavenId>()
@@ -873,11 +873,11 @@ class MavenProject(val file: VirtualFile) {
       // either keep all previous plugins or only those that are present in the new list
       if (keepPreviousPlugins) {
         newPluginInfos.addAll(state.pluginInfos)
-        newPluginInfos.addAll(model.plugins.map { MavenPluginInfo(it, null) })
+        newPluginInfos.addAll(model.plugins.map { MavenPluginWithArtifact(it, null) })
       }
       else {
         model.plugins.forEach { newPlugin ->
-          newPluginInfos.add(state.pluginInfos.firstOrNull { it.plugin == newPlugin } ?: MavenPluginInfo(newPlugin, null))
+          newPluginInfos.add(state.pluginInfos.firstOrNull { it.plugin == newPlugin } ?: MavenPluginWithArtifact(newPlugin, null))
         }
       }
 
@@ -906,7 +906,7 @@ class MavenProject(val file: VirtualFile) {
       return state.copy(
         lastReadStamp = lastReadStamp,
         readingProblems = readingProblems,
-        localRepository = settings.effectiveRepositoryPath.toFile(),
+        localRepository = effectiveRepositoryPath.toFile(),
         activatedProfilesIds = activatedProfiles,
         mavenId = model.mavenId,
         parentId = model.parent?.mavenId,
@@ -951,7 +951,9 @@ class MavenProject(val file: VirtualFile) {
     private fun collectModulesRelativePathsAndNames(mavenModel: MavenModel, basePath: String, fileExtension: String?): Map<String, String> {
       val extension = fileExtension ?: ""
       val result = LinkedHashMap<String, String>()
-      for (module in mavenModel.modules) {
+      val modules = mavenModel.modules
+      if (null == modules) return result
+      for (module in modules) {
         var name = module
         name = name.trim { it <= ' ' }
 
@@ -980,10 +982,10 @@ class MavenProject(val file: VirtualFile) {
       return result
     }
 
-    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Collection<String> {
-      if (profiles == null) return emptyList()
+    private fun collectProfilesIds(profiles: Collection<MavenProfile>?): Set<String> {
+      if (profiles == null) return emptySet()
 
-      val result: MutableSet<String> = HashSet(profiles.size)
+      val result = HashSet<String>(profiles.size)
       for (each in profiles) {
         result.add(each.id)
       }

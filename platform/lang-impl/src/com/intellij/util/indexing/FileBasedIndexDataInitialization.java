@@ -27,6 +27,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -46,6 +47,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
   private final @NotNull RegisteredIndexes myRegisteredIndexes;
   private final @NotNull IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
   private volatile OrphanDirtyFilesQueue myOrphanDirtyFilesQueue;
+  private volatile @Nullable OrphanDirtyFilesQueueDiscardReason myOrphanDirtyFilesQueueRecreationReason;
   private final @NotNull IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
   private final @NotNull IndexConfiguration myState = new IndexConfiguration();
 
@@ -108,7 +110,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
     File[] projectQueueFiles = PersistentDirtyFilesQueue.getQueuesDir().toFile().listFiles();
     if (projectQueueFiles != null) {
       for (File file : projectQueueFiles) {
-        dirtyFiles.addAll(PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp()).getFileIds());
+        dirtyFiles.addAll(
+          PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp())
+            .getFileIds());
       }
     }
   }
@@ -128,7 +132,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
 
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
     for (FileBasedIndexInfrastructureExtension extension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-      FileBasedIndexInfrastructureExtension.InitializationResult result = extension.initialize(IndexStorageLayoutLocator.getCustomLayoutId());
+      FileBasedIndexInfrastructureExtension.InitializationResult result =
+        extension.initialize(IndexStorageLayoutLocator.getCustomLayoutId());
       myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
                                   result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
@@ -138,7 +143,10 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
       ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps("Indexes corrupted");
     }
 
-    myOrphanDirtyFilesQueue = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp());
+    var p = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(),
+                                                                ManagingFS.getInstance().getCreationTimestamp());
+    myOrphanDirtyFilesQueue = p.getFirst();
+    myOrphanDirtyFilesQueueRecreationReason = p.getSecond();
     Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions(myOrphanDirtyFilesQueue);
 
     PersistentIndicesConfiguration.loadConfiguration();
@@ -175,7 +183,9 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
       );
 
       myState.freeze();
-      FileBasedIndexDataInitializationResult result = new FileBasedIndexDataInitializationResult(myState, myCurrentVersionCorrupted, myOrphanDirtyFilesQueue);
+      FileBasedIndexDataInitializationResult result =
+        new FileBasedIndexDataInitializationResult(myState, myCurrentVersionCorrupted, myOrphanDirtyFilesQueue,
+                                                   myOrphanDirtyFilesQueueRecreationReason);
       myRegisteredIndexes.setInitializationResult(result); // memory barrier
       // check if rebuild was requested for any index during registration
       for (ID<?, ?> indexId : myState.getIndexIDs()) {
@@ -304,11 +314,16 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
     final IndexConfiguration myState;
     final boolean myWasCorrupted;
     final OrphanDirtyFilesQueue myOrphanDirtyFilesQueue;
+    final @Nullable OrphanDirtyFilesQueueDiscardReason myOrphanDirtyFilesQueueDiscardReason;
 
-    FileBasedIndexDataInitializationResult(@NotNull IndexConfiguration state, boolean currentVersionCorrupted, @NotNull OrphanDirtyFilesQueue queue) {
+    FileBasedIndexDataInitializationResult(@NotNull IndexConfiguration state,
+                                           boolean currentVersionCorrupted,
+                                           @NotNull OrphanDirtyFilesQueue queue,
+                                           @Nullable OrphanDirtyFilesQueueDiscardReason orphanDirtyFilesQueueDiscardReason) {
       myState = state;
       myWasCorrupted = currentVersionCorrupted;
       myOrphanDirtyFilesQueue = queue;
+      myOrphanDirtyFilesQueueDiscardReason = orphanDirtyFilesQueueDiscardReason;
     }
   }
 }

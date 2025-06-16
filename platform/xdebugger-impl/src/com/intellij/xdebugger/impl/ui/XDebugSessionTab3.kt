@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.debugger.ui.DebuggerContentInfo
-import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.execution.ui.layout.actions.CustomContentLayoutSettings
@@ -26,8 +26,8 @@ import javax.swing.Icon
 class XDebugSessionTab3(
   proxy: XDebugSessionProxy.Monolith,
   icon: Icon?,
-  environment: ExecutionEnvironment?
-) : XDebugSessionTabNewUI(proxy, icon, environment) {
+  environmentProxy: ExecutionEnvironmentProxy?
+) : XDebugSessionTabNewUI(proxy, icon, environmentProxy) {
 
   companion object {
     private const val VIEW_PROPORTION_KEY = "debugger.layout.watches.defaultThreadsProportion"
@@ -61,14 +61,13 @@ class XDebugSessionTab3(
       variablesView = getWatchesViewImpl(session!!, watchesIsVariables = true)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       myWatchesView = variablesView
-    } else {
-      variablesView = XVariablesView(session!!)
+    }
+    else {
+      variablesView = XVariablesView(proxy)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
       val watchesView = getWatchesViewImpl(session!!, watchesIsVariables = false)
       val watchesContent = createWatchesContent(proxy, watchesView)
-      if (watchesContent != null) {
-        myUi.addContent(watchesContent, 0, PlaceInGrid.right, false)
-      }
+      myUi.addContent(watchesContent, 0, PlaceInGrid.right, false)
     }
     applyVariablesTabLayoutSettings()
 

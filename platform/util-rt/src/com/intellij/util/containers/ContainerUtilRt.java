@@ -19,17 +19,6 @@ import java.util.*;
 public final class ContainerUtilRt {
 
   /**
-   * @deprecated Use {@link ArrayList#ArrayList()} instead
-   */
-  @NotNull
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  @Contract(value = " -> new", pure = true)
-  public static <T> ArrayList<T> newArrayList() {
-    return new ArrayList<>();
-  }
-
-  /**
    * @deprecated Use {@link com.intellij.util.containers.ContainerUtil#newArrayList(Object[])} instead
    */
   @Deprecated

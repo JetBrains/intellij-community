@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.scope;
 
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.codeInspection.accessStaticViaInstance.AccessStaticViaInstanceBase;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
@@ -292,7 +293,7 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
     if (element instanceof PsiMethod &&
         ((PsiMethod)element).isConstructor() &&
         myElement.getParent() instanceof PsiMethodReferenceExpression) {
-      name = PsiKeyword.NEW;
+      name = JavaKeywords.NEW;
     }
     return StringUtil.isNotEmpty(name) &&
            myMatcher.value(name) &&

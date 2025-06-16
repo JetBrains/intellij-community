@@ -9,9 +9,7 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.util.HashingUtil
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.editor.*
@@ -25,7 +23,10 @@ import com.intellij.util.containers.CollectionFactory.createCustomHashingStrateg
 import com.intellij.util.containers.CollectionFactory.createCustomHashingStrategySet
 import com.intellij.util.containers.HashingStrategy
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -48,7 +49,7 @@ interface EditorMappedViewModel : EditorMapped {
 private val LOG = Logger.getInstance("codereview.editor.inlays")
 
 @Deprecated("Use the suspending function renderInlays for thread safety",
-            ReplaceWith("cs.launchNow(Dispatchers.Main) {\n" +
+            ReplaceWith("cs.launchNow(Dispatchers.EDT) {\n" +
                         "  renderInlays(vmsFlow, HashingUtil.mappingStrategy(vmKeyExtractor), rendererFactory)\n" +
                         "}"))
 fun <VM : EditorMapped> EditorEx.controlInlaysIn(
@@ -56,7 +57,7 @@ fun <VM : EditorMapped> EditorEx.controlInlaysIn(
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
   rendererFactory: CodeReviewRendererFactory<VM>
-): Job = cs.launchNow(Dispatchers.Main) {
+): Job = cs.launchNow(Dispatchers.EDT) {
   doRenderInlays(vmsFlow, HashingUtil.mappingStrategy(vmKeyExtractor), rendererFactory)
 }
 
@@ -79,13 +80,13 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
   rendererFactory: RendererFactory<VM, JComponent>
 ): Nothing {
   val editor = this
-  withContext(Dispatchers.Main.immediate + CoroutineName("Editor component inlays for $this")) {
+  withContext(Dispatchers.EdtImmediate + CoroutineName("Editor component inlays for $this")) {
     val inlaysCs = this
     val controllersByVmKey = createCustomHashingStrategyMap<VM, Job>(vmHashingStrategy)
     val positionKeeper = EditorScrollingPositionKeeper(editor)
-    vmsFlow.map {
-      createCustomHashingStrategySet(vmHashingStrategy).apply { addAll(it) }
-    }.collect {
+    vmsFlow.collect { list ->
+      val set = createCustomHashingStrategySet(vmHashingStrategy).apply { addAll(list) }
+
       writeIntentReadAction {
         positionKeeper.savePosition()
       }
@@ -94,14 +95,14 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
       val iter = controllersByVmKey.iterator()
       while (iter.hasNext()) {
         val (key, job) = iter.next()
-        if (!it.contains(key)) {
+        if (!set.contains(key)) {
           iter.remove()
           job.cancelAndJoinSilently()
         }
       }
 
       //add new
-      for (vm in it) {
+      for (vm in list) {
         if (controllersByVmKey.containsKey(vm)) continue
         controllersByVmKey[vm] = inlaysCs.launchNow {
           controlInlay(vm, editor, rendererFactory)
@@ -120,7 +121,7 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
 }
 
 private suspend fun <VM : EditorMapped> controlInlay(vm: VM, editor: EditorEx, rendererFactory: RendererFactory<VM, JComponent>): Nothing {
-  withContext(Dispatchers.Main.immediate + CoroutineName("Scope for code review component editor inlay for $vm")) {
+  withContext(Dispatchers.EdtImmediate + CoroutineName("Scope for code review component editor inlay for $vm")) {
     var inlay: Inlay<*>? = null
     try {
       val lineFlow = vm.line

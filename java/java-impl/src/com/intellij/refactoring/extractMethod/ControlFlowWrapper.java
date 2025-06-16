@@ -13,10 +13,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ControlFlowWrapper {
   private static final Logger LOG = Logger.getInstance(ControlFlowWrapper.class);
 
@@ -71,7 +73,7 @@ public final class ControlFlowWrapper {
     }
   }
 
-  PsiStatement getFirstExitStatementCopy() {
+  public PsiStatement getFirstExitStatementCopy() {
     return myFirstExitStatementCopy;
   }
 
@@ -151,7 +153,7 @@ public final class ControlFlowWrapper {
     return myGenerateConditionalExit;
   }
 
-  Collection<PsiStatement> getExitStatements() {
+  public Collection<PsiStatement> getExitStatements() {
     return myExitStatements;
   }
 
@@ -166,7 +168,7 @@ public final class ControlFlowWrapper {
     return getOutputVariables(myGenerateConditionalExit);
   }
 
-  PsiVariable @NotNull [] getOutputVariables(boolean collectVariablesAtExitPoints) {
+  public PsiVariable @NotNull [] getOutputVariables(boolean collectVariablesAtExitPoints) {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toIntArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
@@ -277,8 +279,8 @@ public final class ControlFlowWrapper {
     return myInputVariables;
   }
 
-  PsiStatement getExitStatementCopy(PsiElement returnStatement,
-                                    final PsiElement[] elements) {
+  public PsiStatement getExitStatementCopy(PsiElement returnStatement,
+                                           final PsiElement[] elements) {
     PsiStatement exitStatementCopy = null;
     // replace all exit-statements such as break's or continue's with appropriate return
     for (PsiStatement exitStatement : myExitStatements) {
@@ -336,11 +338,11 @@ public final class ControlFlowWrapper {
     return ControlFlowUtil.getInitializedTwice(myControlFlow, start, myControlFlow.getSize());
   }
 
-  List<PsiVariable> getUsedVariables() {
+  public List<PsiVariable> getUsedVariables() {
     return getUsedVariables(myFlowEnd);
   }
 
-  List<PsiVariable> getUsedVariablesInBody(PsiElement codeFragment, PsiVariable[] outputVariables) {
+  public List<PsiVariable> getUsedVariablesInBody(PsiElement codeFragment, PsiVariable[] outputVariables) {
     final List<PsiVariable> variables = getUsedVariables(myFlowStart, myFlowEnd);
     if (skipVariablesFromExitStatements(outputVariables)) {
       removeParametersUsedInExitsOnly(codeFragment, variables);

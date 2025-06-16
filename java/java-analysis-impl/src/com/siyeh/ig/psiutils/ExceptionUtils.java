@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -31,13 +32,13 @@ public final class ExceptionUtils {
 
   private ExceptionUtils() { }
 
-  private static final Set<String> s_genericExceptionTypes = new HashSet<>(4);
+  private static final @Unmodifiable Set<String> s_genericExceptionTypes;
 
   static {
-    s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_THROWABLE);
-    s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_EXCEPTION);
-    s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION);
-    s_genericExceptionTypes.add(CommonClassNames.JAVA_LANG_ERROR);
+    s_genericExceptionTypes = Set.of(CommonClassNames.JAVA_LANG_THROWABLE,
+    CommonClassNames.JAVA_LANG_EXCEPTION,
+    CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION,
+    CommonClassNames.JAVA_LANG_ERROR);
   }
 
   public static @NotNull Set<PsiClassType> calculateExceptionsThrown(@Nullable PsiElement element) {

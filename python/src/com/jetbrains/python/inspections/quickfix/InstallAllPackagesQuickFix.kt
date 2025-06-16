@@ -7,7 +7,8 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.getConfirmedPackages
+import com.jetbrains.python.PyPsiPackageUtil.moduleToPackageName
+import com.jetbrains.python.packaging.PyPackageInstallUtils
 import com.jetbrains.python.packaging.pyRequirement
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.statistics.PyPackagesUsageCollector
@@ -19,7 +20,10 @@ class InstallAllPackagesQuickFix(private val packageNames: List<String>) : Local
     val element = descriptor.psiElement ?: return
     val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return
     val sdk = PythonSdkUtil.findPythonSdk(element) ?: return
-    val confirmedPackages = getConfirmedPackages(packageNames.map { pyRequirement(it) }, project)
+
+    val normalizedPackageNames = packageNames.map { moduleToPackageName(it) }
+    val pyRequirements = normalizedPackageNames.map { pyRequirement(it) }
+    val confirmedPackages = PyPackageInstallUtils.getConfirmedPackages(pyRequirements, project)
 
     if (confirmedPackages.isEmpty()) return
 

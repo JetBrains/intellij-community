@@ -32,6 +32,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +47,8 @@ import java.util.stream.Collectors;
 /**
  * @author Alexander Lobas
  */
-final class PluginUpdateDialog extends DialogWrapper {
+@ApiStatus.Internal
+public final class PluginUpdateDialog extends DialogWrapper {
   private final @NotNull Collection<PluginDownloader> myDownloaders;
   private final boolean myPlatformUpdate;
   private final MyPluginModel myPluginModel;
@@ -59,14 +61,14 @@ final class PluginUpdateDialog extends DialogWrapper {
 
   private @Nullable Runnable myFinishCallback;
 
-  PluginUpdateDialog(@Nullable Project project,
+  public PluginUpdateDialog(@Nullable Project project,
                      @NotNull Collection<PluginDownloader> downloaders,
                      @Nullable Collection<PluginNode> customRepositoryPlugins) {
     this(project, downloaders, customRepositoryPlugins, false);
     setTitle(IdeBundle.message("dialog.title.plugin.updates"));
   }
 
-  PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatesForPlugins) {
+  public PluginUpdateDialog(@Nullable Project project, @NotNull Collection<PluginDownloader> updatesForPlugins) {
     this(project, updatesForPlugins, null, true);
     setTitle(IdeBundle.message("updates.dialog.title", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
@@ -107,25 +109,27 @@ final class PluginUpdateDialog extends DialogWrapper {
     });
 
     //noinspection unchecked
-    myDetailsPage = new PluginDetailsPageComponent(myPluginModel, LinkListener.NULL, true);
+    myDetailsPage = new PluginDetailsPageComponent(new PluginModelFacade(myPluginModel), LinkListener.NULL, true);
     myDetailsPage.setOnlyUpdateMode();
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
 
     myPluginsPanel = new PluginsGroupComponent(eventHandler) {
       @Override
-      protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor, @NotNull PluginsGroup group) {
-        if (!(descriptor instanceof PluginNode)) {
-          PluginNode node = new PluginNode(descriptor.getPluginId(), descriptor.getName(), "0");
-          node.setDescription(descriptor.getDescription());
-          node.setChangeNotes(descriptor.getChangeNotes());
-          node.setVersion(descriptor.getVersion());
-          node.setVendor(descriptor.getVendor());
-          node.setOrganization(descriptor.getOrganization());
-          node.setDependencies(descriptor.getDependencies());
-          descriptor = node;
+      protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model, @NotNull PluginsGroup group) {
+        if (!(model.isFromMarketplace())) {
+          PluginNode node = new PluginNode(model.getPluginId(), model.getName(), "0");
+          node.setDescription(model.getDescription());
+          node.setChangeNotes(model.getChangeNotes());
+          node.setVersion(model.getVersion());
+          node.setVendor(model.getVendor());
+          node.setVendorDetails(model.getOrganization());
+          List<PluginDependencyImpl> dependencies =
+            ContainerUtil.map(model.getDependencies(), it -> new PluginDependencyImpl(it.getPluginId(), null, it.isOptional()));
+          node.setDependencies(dependencies);
+          model = new PluginUiModelAdapter(node);
         }
-        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, group, LinkListener.NULL, true);
+        @SuppressWarnings("unchecked") ListPluginComponent component = new ListPluginComponent(new PluginModelFacade(myPluginModel), model, group, LinkListener.NULL, true);
         component.setOnlyUpdateMode();
         component.getChooseUpdateButton().addActionListener(e -> updateButtons());
         return component;
@@ -135,7 +139,7 @@ final class PluginUpdateDialog extends DialogWrapper {
     myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
     for (PluginDownloader plugin : downloaders) {
-      myGroup.descriptors.add(plugin.getDescriptor());
+      myGroup.addDescriptor(plugin.getDescriptor());
     }
     myGroup.sortByName();
     myPluginsPanel.addGroup(myGroup);

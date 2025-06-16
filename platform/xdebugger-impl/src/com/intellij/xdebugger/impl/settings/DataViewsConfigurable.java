@@ -33,8 +33,4 @@ class DataViewsConfigurable extends SubCompositeConfigurable {
     return "reference.idesettings.debugger.dataviews";
   }
 
-  @Override
-  protected @NotNull XDebuggerDataViewSettings getSettings() {
-    return XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings();
-  }
 }

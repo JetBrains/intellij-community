@@ -30,6 +30,7 @@ internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionB
     private fun canRemoveItem(item: RecentProjectTreeItem): Boolean {
       return item is ProjectsGroupItem ||
              item is RecentProjectItem ||
+             item is ProviderRecentProjectItem ||
              item is CloneableProjectItem
     }
 
@@ -61,7 +62,8 @@ internal class RemoveSelectedProjectsAction : RecentProjectsWelcomeScreenActionB
             is ProjectsGroupItem -> recentProjectsManager.removeGroup(item.group)
             is RecentProjectItem -> recentProjectsManager.removePath(item.projectPath)
             is CloneableProjectItem -> cloneableProjectsService.removeCloneableProject(item.cloneableProject)
-            is ProviderRecentProjectItem, is RootItem -> Unit
+            is ProviderRecentProjectItem -> item.removeFromRecent()
+            is RootItem -> Unit
           }
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.dvcs.DvcsUtil
@@ -10,19 +10,22 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.project.projectId
+import com.intellij.platform.vcs.impl.shared.rpc.RepositoryId
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import git4idea.GitDisposable
 import git4idea.GitLocalBranch
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchesCollection
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder
+import git4idea.merge.GitResolvedMergeConflictsFilesHolder
+import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.status.GitStagingAreaHolder
-import git4idea.telemetry.GitTelemetrySpan
+import git4idea.telemetry.GitBackendTelemetrySpan
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
@@ -37,7 +40,6 @@ class GitRepositoryImpl private constructor(
   private val gitDir: VirtualFile,
   parentDisposable: Disposable,
 ) : RepositoryImpl(project, rootDir, parentDisposable), GitRepository {
-
   private val vcs = GitVcs.getInstance(project)
 
   private val repositoryFiles = GitRepositoryFiles.createInstance(rootDir, gitDir)
@@ -45,6 +47,7 @@ class GitRepositoryImpl private constructor(
 
   private val stagingAreaHolder: GitStagingAreaHolder
   private val untrackedFilesHolder: GitUntrackedFilesHolder
+  private val resolvedFilesHolder: GitResolvedMergeConflictsFilesHolder
   private val tagHolder: GitTagHolder
 
   @Volatile
@@ -53,7 +56,7 @@ class GitRepositoryImpl private constructor(
   @Volatile
   private var recentCheckoutBranches = emptyList<GitLocalBranch>()
 
-  private val coroutineScope = GitDisposable.getInstance(project).coroutineScope.childScope("GitRepositoryImpl")
+  private val coroutineScope = GitDisposable.getInstance(project).childScope("GitRepositoryImpl")
 
   /**
    * @see [git4idea.repo.GitRepositoryImpl.createInstance]
@@ -64,6 +67,9 @@ class GitRepositoryImpl private constructor(
 
     untrackedFilesHolder = GitUntrackedFilesHolder(this)
     Disposer.register(this, untrackedFilesHolder)
+
+    resolvedFilesHolder = GitResolvedMergeConflictsFilesHolder(this)
+    Disposer.register(this, resolvedFilesHolder)
 
     tagHolder = GitTagHolder(this)
     repoInfo = readRepoInfo()
@@ -84,6 +90,10 @@ class GitRepositoryImpl private constructor(
 
   override fun getUntrackedFilesHolder(): GitUntrackedFilesHolder {
     return untrackedFilesHolder
+  }
+
+  override fun getResolvedConflictsFilesHolder(): GitResolvedMergeConflictsFilesHolder {
+    return resolvedFilesHolder
   }
 
   override fun getIgnoredFilesHolder(): GitRepositoryIgnoredFilesHolder {
@@ -164,7 +174,7 @@ class GitRepositoryImpl private constructor(
   }
 
   private fun readRepoInfo(): GitRepoInfo {
-    return getInstance().getTracer(VcsScope).spanBuilder(GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()).use { span ->
+    return getInstance().getTracer(VcsScope).spanBuilder(GitBackendTelemetrySpan.Repository.ReadGitRepositoryInfo.getName()).use { span ->
       span.setAttribute("repository", DvcsUtil.getShortRepositoryName(this))
 
       val configFile = repositoryFiles.configFile
@@ -205,10 +215,15 @@ class GitRepositoryImpl private constructor(
     return "GitRepository $root : $repoInfo"
   }
 
+  override fun getRpcId(): RepositoryId {
+    return RepositoryId(projectId = project.projectId(), rootPath = root.path)
+  }
+
   companion object {
     private val LOG = Logger.getInstance(GitRepositoryImpl::class.java)
 
     @JvmStatic
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.")
     fun getInstance(
       root: VirtualFile,
@@ -261,13 +276,19 @@ class GitRepositoryImpl private constructor(
         val updater = GitRepositoryUpdater(this, this.repositoryFiles)
         updater.installListeners()
         notifyIfRepoChanged(this, null, initialRepoInfo)
+        tagHolder.reload()
         this.untrackedFilesHolder.invalidate()
+        this.resolvedConflictsFilesHolder.invalidate()
       }
     }
 
     private fun notifyIfRepoChanged(repository: GitRepository, previousInfo: GitRepoInfo?, info: GitRepoInfo) {
       val project = repository.project
       if (!project.isDisposed && info != previousInfo) {
+        project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).apply {
+          if (previousInfo == null) repositoryCreated(repository) else repositoryUpdated(repository)
+        }
+
         GitRepositoryManager.getInstance(project).notifyListenersAsync(repository, previousInfo, info)
         LOG.debug("Repository $repository changed")
       }

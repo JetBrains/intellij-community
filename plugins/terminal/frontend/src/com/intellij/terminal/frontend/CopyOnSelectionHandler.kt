@@ -1,17 +1,15 @@
 package com.intellij.terminal.frontend
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.openapi.editor.event.SelectionListener
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.ide.CopyPasteManager
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
-internal class CopyOnSelectionHandler(private val settings: JBTerminalSystemSettingsProviderBase) {
-  fun install(editor: EditorImpl) {
+internal class CopyOnSelectionHandler private constructor(private val settings: JBTerminalSystemSettingsProviderBase) {
+  private fun install(editor: Editor) {
     editor.selectionModel.addSelectionListener(MySelectionListener())
   }
 
@@ -22,15 +20,17 @@ internal class CopyOnSelectionHandler(private val settings: JBTerminalSystemSett
   }
 
   private fun copyToSystemSelectionClipboard(text: String): Boolean {
-    try {
-      if (!SystemInfo.isLinux) return false
-      val clipboard = Toolkit.getDefaultToolkit().systemSelection ?: return false
-      clipboard.setContents(StringSelection(text), null)
-      return true
+    return try {
+      val copyPasteManager = CopyPasteManager.getInstance()
+      if (copyPasteManager.isSystemSelectionSupported) {
+        copyPasteManager.setSystemSelectionContents(StringSelection(text))
+        true
+      }
+      else false
     }
     catch (e: Exception) {
       LOG.warn("Failed to copy to the system selection clipboard, falling back to the regular one", e)
-      return false
+      false
     }
   }
 
@@ -45,6 +45,12 @@ internal class CopyOnSelectionHandler(private val settings: JBTerminalSystemSett
       if (!settings.copyOnSelect() || e.editor?.contentComponent?.isFocusOwner != true) return
       val text = e.editor.selectionModel.selectedText ?: return
       copy(text)
+    }
+  }
+
+  companion object {
+    fun install(editor: Editor, settings: JBTerminalSystemSettingsProviderBase) {
+      CopyOnSelectionHandler(settings).install(editor)
     }
   }
 }

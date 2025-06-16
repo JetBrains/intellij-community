@@ -3,18 +3,26 @@ package com.intellij.debugger.streams.trace.impl
 
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
+import com.intellij.debugger.streams.core.trace.GenericEvaluationContext
 import com.intellij.debugger.streams.core.trace.XValueInterpreter
+import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue
+
+class JavaEvaluationContext(val context: EvaluationContextImpl) : GenericEvaluationContext {
+  override val project: Project
+    get() = context.project
+}
 
 class JavaValueInterpreter : XValueInterpreter {
   override suspend fun extract(session: XDebugSession, result: XValue): XValueInterpreter.Result {
     if (result is JavaValue) {
       val reference = result.descriptor.getValue()
       if (reference is com.sun.jdi.ArrayReference) {
-        return XValueInterpreter.Result.Array(JvmArrayReference(reference), hasInnerExceptions(reference), JavaDebuggerCommandLauncher(result.evaluationContext))
+        return XValueInterpreter.Result.Array(JvmArrayReference(reference), hasInnerExceptions(reference), JavaEvaluationContext(result.evaluationContext))
       } else if (reference is com.sun.jdi.ObjectReference) {
         val type = reference.referenceType()
         var classType = type as? com.sun.jdi.ClassType

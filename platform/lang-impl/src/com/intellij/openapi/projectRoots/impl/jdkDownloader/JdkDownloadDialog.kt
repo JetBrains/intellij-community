@@ -140,9 +140,11 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
   @NlsSafe
   fun JdkItem.versionGroupId() = this.presentableMajorVersionString
 
-  val groups =  allItems
+  val availableItems = allItems
     .filter { itemFilter.invoke(it) }
     .filter { Registry.`is`("jdk.downloader.show.other.arch", false) || CpuArch.fromString(it.arch) == CpuArch.CURRENT }
+
+  val groups = availableItems
     .groupBy { it.versionGroupId() }
     .mapValues { (jdkVersion, groupItems) ->
       val majorVersion = groupItems.first().jdkMajorVersion
@@ -159,7 +161,7 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
         .groupBy { it.product }
         .mapValues { (_, jdkItems) ->
           val comparator = Comparator.comparing(Function<JdkItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR)
-          //first try to find closest newer version
+          // first try to find the closest newer version
           jdkItems
             .filter { it.jdkMajorVersion >= majorVersion }
             .minWithOrNull(comparator)
@@ -179,14 +181,14 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Bo
                      excludedItems.sortedForUI())
     }
 
-  //assign parent relation
-  groups.values.forEach { parent -> parent.excludedItems.forEach { it.parent = groups.getValue(it.item.versionGroupId()) } }
+  // assign the parent relation
+  groups.values.forEach { parent -> parent.excludedItems.forEach { it.parent = groups[it.item.versionGroupId()] } }
 
   val versionItems = groups.values
     .sortedWith(Comparator.comparing(Function<JdkVersionItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR).reversed())
 
-  val defaultItem = allItems.firstOrNull { it.isDefaultItem } /*pick the newest default JDK */
-                    ?: allItems.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
+  val defaultItem = availableItems.firstOrNull { it.isDefaultItem } /* pick the newest default JDK */
+                    ?: availableItems.firstOrNull() /* pick just the newest JDK is no default was set (aka the JSON is broken) */
                     ?: error("There must be at least one JDK to install") /* totally broken JSON */
 
   val defaultJdkVersionItem = versionItems.firstOrNull { group -> group.includedItems.any { it.item == defaultItem } }
@@ -271,6 +273,7 @@ internal class JdkDownloadDialog(
           val itemArch = CpuArch.fromString(it.item.item.arch)
           when {
             itemArch != CpuArch.CURRENT -> warning(ProjectBundle.message("dialog.jdk.arch.validation", itemArch, CpuArch.CURRENT))
+            it.item.item.isPreview -> warning(ProjectBundle.message("dialog.jdk.preview.validation"))
             else -> null
           }
         }

@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -20,11 +21,11 @@ internal const val SETTINGS_SYNC_STORAGE_FOLDER: String = "settingsSync"
 
 @ApiStatus.Internal
 @Service
-class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
+class SettingsSyncMain(coroutineScope: CoroutineScope, appConfigPath: Path) : Disposable {
+  constructor(coroutineScope: CoroutineScope) : this(coroutineScope, PathManager.getConfigDir())
   val controls: SettingsSyncControls
 
   init {
-    val appConfigPath = PathManager.getConfigDir()
     val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore = componentStore, rootConfig = appConfigPath, enabledCondition = {
       isAvailable() && isSettingsSyncEnabledInSettings()
@@ -49,6 +50,7 @@ class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
     }
 
     fun getInstance(): SettingsSyncMain = service<SettingsSyncMain>()
+    suspend fun getInstanceAsync(): SettingsSyncMain = serviceAsync<SettingsSyncMain>()
 
     // Extracted to simplify testing, otherwise it is fast and is called from the service initializer
     internal fun init(

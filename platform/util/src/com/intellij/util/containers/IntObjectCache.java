@@ -1,12 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Arrays;
 import java.util.EventListener;
 import java.util.Iterator;
 
+@ApiStatus.Internal
 public final class IntObjectCache<T> implements Iterable<T> {
   private static final int DEFAULT_SIZE = 8192;
   public static final int MIN_SIZE = 4;

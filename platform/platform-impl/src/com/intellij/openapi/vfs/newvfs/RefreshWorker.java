@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -57,7 +57,9 @@ final class RefreshWorker {
 
   private static final int ourParallelism =
     MathUtil.clamp(Registry.intValue("vfs.refresh.worker.parallelism", 6), 1, Runtime.getRuntime().availableProcessors());
-  private static final Executor ourExecutor = ExecutorsKt.asExecutor(Dispatchers.getIO().limitedParallelism(ourParallelism));
+  private static final Executor ourExecutor = ExecutorsKt.asExecutor(
+    Dispatchers.getIO().limitedParallelism(ourParallelism, "RefreshWorkerDispatcher")
+  );
 
   private final boolean myIsRecursive;
   private final boolean myParallel;
@@ -528,7 +530,7 @@ final class RefreshWorker {
 
     events.add(new VFileCreateEvent(myRequestor, parent, childName, attributes.isDirectory(), attributes, symlinkTarget, children));
 
-    VFileEvent event = VirtualDirectoryImpl.generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
+    VFileEvent event = ((PersistentFSImpl)myPersistence).generateCaseSensitivityChangedEventForUnknownCase(parent, childName);
     if (event != null) {
       events.add(event);
     }
@@ -668,7 +670,7 @@ final class RefreshWorker {
           "update file=" + child +
           (oldTimestamp != newTimestamp ? " TS=" + oldTimestamp + "->" + newTimestamp : "") +
           (oldLength != newLength ? " len=" + oldLength + "->" + newLength : ""));
-        events.add(new VFileContentChangeEvent(myRequestor, child, child.getModificationStamp(), -1, oldTimestamp, newTimestamp, oldLength, newLength));
+        events.add(new VFileContentChangeEvent(myRequestor, child, child.getModificationStamp(), VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH, oldTimestamp, newTimestamp, oldLength, newLength));
       }
       child.markClean();
     }

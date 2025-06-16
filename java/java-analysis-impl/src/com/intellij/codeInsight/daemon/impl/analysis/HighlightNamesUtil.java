@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -25,6 +26,8 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,10 +45,10 @@ public final class HighlightNamesUtil {
     highlight(containingFile, holder, visitor -> psiElement.accept(visitor));
   }
 
-  public static void highlight(@NotNull PsiFile file, @NotNull HighlightInfoHolder holder, @NotNull Consumer<? super @NotNull JavaElementVisitor> consumer) {
+  public static void highlight(@NotNull PsiFile psiFile, @NotNull HighlightInfoHolder holder, @NotNull Consumer<? super @NotNull JavaElementVisitor> consumer) {
     JavaNamesHighlightVisitor visitor = new JavaNamesHighlightVisitor();
-    if (!visitor.suitableForFile(file)) return;
-    visitor.analyze(file, false, holder, () -> consumer.accept(visitor));
+    if (!visitor.suitableForFile(psiFile)) return;
+    visitor.analyze(psiFile, false, holder, () -> consumer.accept(visitor));
   }
 
   static @Nullable HighlightInfo highlightMethodName(@NotNull PsiMember methodOrClass,
@@ -260,10 +263,10 @@ public final class HighlightNamesUtil {
   }
 
   private static TextAttributes getScopeAttributes(@NotNull PsiElement element, @NotNull TextAttributesScheme colorsScheme) {
-    PsiFile file = element.getContainingFile();
-    if (file == null) return null;
+    PsiFile psiFile = element.getContainingFile();
+    if (psiFile == null) return null;
     TextAttributes result = null;
-    DependencyValidationManagerImpl validationManager = (DependencyValidationManagerImpl)DependencyValidationManager.getInstance(file.getProject());
+    DependencyValidationManagerImpl validationManager = (DependencyValidationManagerImpl)DependencyValidationManager.getInstance(psiFile.getProject());
     List<Pair<NamedScope,NamedScopesHolder>> scopes = validationManager.getScopeBasedHighlightingCachedScopes();
     for (Pair<NamedScope, NamedScopesHolder> scope : scopes) {
       NamedScope namedScope = scope.getFirst();
@@ -273,7 +276,7 @@ public final class HighlightNamesUtil {
         continue;
       }
       PackageSet packageSet = namedScope.getValue();
-      if (packageSet != null && packageSet.contains(file, scope.getSecond())) {
+      if (packageSet != null && packageSet.contains(psiFile, scope.getSecond())) {
         result = TextAttributes.merge(attributes, result);
       }
     }
@@ -356,6 +359,17 @@ public final class HighlightNamesUtil {
         range = referenceNameElement.getTextRange();
       }
     }
+    return generateClassNameHighlight(resolved, scheme, range);
+  }
+
+  static @NotNull HighlightInfo highlightModule(@Nullable PsiElement resolved, @NotNull PsiReference elementToHighlight, @NotNull TextAttributesScheme scheme) {
+    TextRange range = elementToHighlight.getElement().getTextRange();
+    return generateClassNameHighlight(resolved, scheme, range);
+  }
+
+  private static @NotNull HighlightInfo generateClassNameHighlight(@Nullable PsiElement resolved,
+                                                                   @NotNull TextAttributesScheme scheme,
+                                                                   TextRange range) {
     HighlightInfoType type = JavaHighlightInfoTypes.CLASS_NAME;
     TextAttributes attributes = mergeWithScopeAttributes(resolved, type, scheme);
     HighlightInfo.Builder builder = nameBuilder(type).range(range);
@@ -379,5 +393,14 @@ public final class HighlightNamesUtil {
 
   static HighlightInfo highlightClassKeyword(@NotNull PsiKeyword keyword) {
     return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD_CLASS_FILE).range(keyword).create();
+  }
+
+  public static @NotNull @NlsSafe String formatClass(@NotNull PsiClass aClass) {
+    return formatClass(aClass, true);
+  }
+
+  public static @NotNull String formatClass(@NotNull PsiClass aClass, boolean fqn) {
+    return PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME |
+                                             PsiFormatUtilBase.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtilBase.SHOW_FQ_NAME : 0));
   }
 }

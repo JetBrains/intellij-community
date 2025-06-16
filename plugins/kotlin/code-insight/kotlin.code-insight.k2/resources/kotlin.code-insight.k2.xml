@@ -143,6 +143,18 @@
                  defaultValue="true"
                  restartRequired="true"/>
 
+    <registryKey key="kotlin.k2.auto.import.from.subclass.objects.enabled"
+                 defaultValue="true"
+                 description="Enable auto-import of declarations inherited by objects in K2 Mode of Kotlin Plugin"/>
+
+    <registryKey key="kotlin.k2.auto.import.mismatched.arguments.factory.enabled"
+                 defaultValue="true"
+                 description="Enable auto-import for various diagnostics about mismatched value or type arguments in K2 Mode of Kotlin Plugin"/>
+
+    <registryKey key="kotlin.k2.auto.import.mismatched.arguments.factory.applicability.filter.enabled"
+                 defaultValue="true"
+                 description="Enable filtering of auto-import candidates by applicability check in K2 Mode of Kotlin Plugin"/>
+
     <!-- inlay hints -->
     <codeInsight.inlayActionHandler implementationClass="org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler"
                                     handlerId="kotlin.fqn.class"/>
@@ -207,7 +219,18 @@
             providerId="kotlin.values.hints"
             bundle="messages.KotlinBundle"
             nameKey="hints.settings.values.ranges"
-            descriptionKey="inlay.kotlin.values.hints"/>
+            descriptionKey="inlay.kotlin.values.hints">
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.value.ranges"
+              enabledByDefault="true"
+              nameKey="hints.settings.value.ranges"
+              descriptionKey="inlay.kotlin.value.ranges"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.value.kotlin.time"
+              enabledByDefault="true"
+              nameKey="hints.settings.value.kotlin.time"
+              descriptionKey="inlay.kotlin.value.kotlin.time"/>
+    </codeInsight.declarativeInlayProvider>
 
     <codeInsight.declarativeInlayProvider
             language="kotlin"
@@ -218,17 +241,26 @@
             bundle="messages.KotlinBundle"
             nameKey="hints.settings.parameters"
             descriptionKey="inlay.kotlin.parameters.hints">
-      <!--        <option bundle="messages.KotlinBundle"-->
-      <!--              optionId="hints.parameters.excluded"-->
-      <!--              enabledByDefault="false"-->
-      <!--              nameKey="hints.settings.excluded.parameters"-->
-      <!--              descriptionKey="inlay.kotlin.parameters.hints.excluded"/>-->
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.parameters.excluded"
+              enabledByDefault="false"
+              nameKey="hints.settings.excluded.parameters"
+              descriptionKey="inlay.kotlin.parameters.hints.excluded"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.parameters.compiled"
+              enabledByDefault="true"
+              nameKey="hints.settings.compiled.parameters"
+              descriptionKey="inlay.kotlin.parameters.hints.compiled"/>
     </codeInsight.declarativeInlayProvider>
 
-    <registryKey key="kotlin.k2.equals.in.parameter.names.inlay.hints"
-                 description="Use equals instead of colon in inlay hints for parameter names"
-                 defaultValue="true"
-                 restartRequired="false"/>
+    <codeInsight.declarativeInlayProviderCustomSettingsProvider
+            language="kotlin"
+            providerId="kotlin.parameters.hints"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsCustomSettingsProvider"/>
+
+    <codeInsight.parameterHintsExcludeListConfigProvider
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtParameterHintsExcludeListConfigProvider"/>
 
     <codeInsight.declarativeInlayProvider
             language="kotlin"
@@ -284,7 +316,7 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinEqualsHashCodeTemplatesManager"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager"/>
 
-    <testGenerator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinTestGenerator"/>
+    <testGenerator id="kotlinTestGenerator" language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinTestGenerator"/>
   </extensions>
   <actions>
     <group id="KotlinGenerateGroup">
@@ -305,6 +337,11 @@
               class="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinGenerateToStringAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
     </group>
+
+    <action id="KtAddToExcludeListAction"
+            class="org.jetbrains.kotlin.idea.k2.codeinsight.hints.KtAddToExcludeListAction">
+      <add-to-group group-id="InlayMenu"/>
+    </action>
   </actions>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <codeinsight.quickfix.registrar implementation="org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFromUsageQuickFixesRegistrar"/>

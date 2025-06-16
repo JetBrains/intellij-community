@@ -10,6 +10,7 @@ import com.intellij.psi.search.FilenameIndex;
 import com.intellij.util.indexing.FileBasedIndexDataInitialization.FileBasedIndexDataInitializationResult;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
@@ -82,6 +83,11 @@ public final class RegisteredIndexes {
   @NotNull
   OrphanDirtyFilesQueue getOrphanDirtyFilesQueue() {
     return getInitializationResult().myOrphanDirtyFilesQueue;
+  }
+
+  @Nullable
+  OrphanDirtyFilesQueueDiscardReason getOrphanDirtyFilesQueueDiscardReason() {
+    return getInitializationResult().myOrphanDirtyFilesQueueDiscardReason;
   }
 
   private @NotNull FileBasedIndexDataInitializationResult getInitializationResult() {

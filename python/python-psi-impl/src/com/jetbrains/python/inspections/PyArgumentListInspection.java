@@ -201,6 +201,7 @@ public final class PyArgumentListInspection extends PyInspection {
           if (inside_type != null && !PyTypeChecker.isUnknown(inside_type, context)) {
             if (((PyStarArgument)arg).isKeyword()) {
               if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING, context)) {
+                // TODO: check that the key type is compatible with `str`
                 holder.registerProblem(arg, PyPsiBundle.message("INSP.expected.dict.got.type", inside_type.getName()));
               }
             }

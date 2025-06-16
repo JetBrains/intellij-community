@@ -1,3 +1,11 @@
-public class X {
-  int <spot>count</spot> = 0;
+public class Counter {
+  private int <spot>count</spot>;
+
+  public int getCount() {
+    return count;
+  }
+
+  public void increment() {
+    count++;
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -13,10 +13,12 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
-class RemoveBreakpointGutterIconAction extends DumbAwareAction {
-  private final XBreakpointBase<?,?,?> myBreakpoint;
+import static com.intellij.xdebugger.impl.XDebuggerUtilImpl.performDebuggerAction;
 
-  RemoveBreakpointGutterIconAction(XBreakpointBase<?, ?, ?> breakpoint) {
+class RemoveBreakpointGutterIconAction extends DumbAwareAction {
+  private final XBreakpointProxy myBreakpoint;
+
+  RemoveBreakpointGutterIconAction(XBreakpointProxy breakpoint) {
     super(XDebuggerBundle.message("xdebugger.remove.line.breakpoint.action.text"));
     myBreakpoint = breakpoint;
     AnAction action = ActionManager.getInstance().getAction("ToggleLineBreakpoint");
@@ -25,11 +27,12 @@ class RemoveBreakpointGutterIconAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
-    InputEvent event = e.getInputEvent();
-    // for mouse events check that no modifiers applied
-    if (!(event instanceof MouseEvent) || event.getModifiersEx() == 0 || SwingUtilities.isMiddleMouseButton((MouseEvent)event)) {
-      XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint);
-    }
-    XDebuggerUtilImpl.reshowInlayRunToCursor(e);
+    performDebuggerAction(e, () -> {
+      InputEvent event = e.getInputEvent();
+      // for mouse events check that no modifiers applied
+      if (!(event instanceof MouseEvent) || event.getModifiersEx() == 0 || SwingUtilities.isMiddleMouseButton((MouseEvent)event)) {
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(myBreakpoint);
+      }
+    });
   }
 }

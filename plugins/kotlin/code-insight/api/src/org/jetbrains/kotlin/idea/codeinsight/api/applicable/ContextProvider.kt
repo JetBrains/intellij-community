@@ -1,10 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeinsight.api.applicable
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.psi.KtElement
 
 /**
@@ -30,9 +32,10 @@ interface ContextProvider<E : KtElement, C : Any> {
     fun KaSession.prepareContext(element: E): C?
 }
 
-internal fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
+@OptIn(KaExperimentalApi::class)
+fun <E : KtElement, C : Any> ContextProvider<E, C>.getElementContext(
     element: E,
-): C? = if (element.isPhysical) analyze(element) {
+): C? = if (element.containingFile.copyOrigin == null) analyze(element) {
     prepareContext(element)
 } else analyzeCopy(element, KaDanglingFileResolutionMode.PREFER_SELF) {
     prepareContext(element)

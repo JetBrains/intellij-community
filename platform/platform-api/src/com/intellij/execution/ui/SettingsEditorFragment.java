@@ -23,6 +23,7 @@ import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -361,6 +362,11 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   @Override
   protected void applyEditorTo(@NotNull Settings s) {
     myApply.accept(s, myComponent);
+  }
+  
+  @ApiStatus.Internal
+  public static <S> void applyEditorTo(@NotNull SettingsEditorFragment<S, ?> fragment, @NotNull S s) {
+    fragment.applyEditorTo(s);
   }
 
   @Override

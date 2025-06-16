@@ -9,8 +9,8 @@ import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinPsiDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinPsiDiagnosticBasedInspectionBase
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
@@ -39,16 +39,16 @@ abstract class RedundantModifierInspectionBase<DIAGNOSTIC : KaDiagnosticWithPsi<
 
     override fun isApplicableByPsi(element: KtModifierListOwner): Boolean = element.modifierList?.getModifier(modifierSet) != null
 
-    protected abstract class RemoveRedundantModifierQuickFixBase(
+    abstract class RemoveRedundantModifierQuickFixBase<ListOwner : KtModifierListOwner>(
         private val context: ModifierContext,
-    ) : KotlinModCommandQuickFix<KtModifierListOwner>() {
+    ) : KotlinModCommandQuickFix<ListOwner>() {
 
         override fun getName(): String =
             KotlinBundle.message("remove.redundant.0.modifier", context.modifier.value)
 
         override fun applyFix(
             project: Project,
-            element: KtModifierListOwner,
+            element: ListOwner,
             updater: ModPsiUpdater,
         ) {
             element.removeModifier(context.modifier)

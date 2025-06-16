@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -19,48 +18,45 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-internal class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
+internal open class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinSemanticAnalyzer(holder, session) {
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
-        highlightBinaryExpression(expression)
+        val operationReference = expression.operationReference as? KtReferenceExpression ?: return
+        if (operationReference.isAssignment()) return
+        expressionHighlightType(expression)
+            ?.let { highlightElement(operationReference, it) }
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {
-        highlightCallExpression(expression)
+        val callee = expression.calleeExpression ?: return
+        if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
+
+        expressionHighlightType(expression, callee)
+            ?.let { highlightElement(callee, it) }
     }
 
-    private fun highlightBinaryExpression(expression: KtBinaryExpression) {
-        val operationReference = expression.operationReference as? KtReferenceExpression ?: return
-        if (operationReference.isAssignment()) return
+    private fun expressionHighlightType(expression: KtBinaryExpression): HighlightInfoType? {
         with(session) {
-            val call = expression.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return
-            if (call is KaSimpleFunctionCall && (call.symbol as? KaNamedFunctionSymbol)?.isOperator == true) return
+            val call = expression.resolveToCall()?.successfulCallOrNull<KaCall>() ?: return null
+            if (call is KaSimpleFunctionCall && (call.symbol as? KaNamedFunctionSymbol)?.isOperator == true) return null
             val highlightInfoType = getDefaultHighlightInfoTypeForCall(call)
-            if (highlightInfoType != null) {
-                val builder = HighlightingFactory.highlightName(operationReference, highlightInfoType)
-                holder.add(builder?.create())
-            }
+            return highlightInfoType
         }
     }
 
     private fun KtReferenceExpression.isAssignment() =
         (this as? KtOperationReferenceExpression)?.operationSignTokenType == KtTokens.EQ
 
-    private fun highlightCallExpression(expression: KtCallExpression) {
-        val callee = expression.calleeExpression ?: return
-        if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return
-
+    private fun expressionHighlightType(expression: KtCallExpression, callee: KtExpression): HighlightInfoType? {
         with(session) {
-            val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return
-            val highlightInfoType = getHighlightInfoTypeForCallFromExtension(callee, call)
+            val call = expression.resolveToCall()?.singleCallOrNull<KaCall>() ?: return null
+            return getHighlightInfoTypeForCallFromExtension(callee, call)
                 ?: getDefaultHighlightInfoTypeForCall(call)
-                ?: return
-            holder.add(HighlightingFactory.highlightName(callee, highlightInfoType)?.create())
         }
     }
 
     private fun getDefaultHighlightInfoTypeForCall(call: KaCall): HighlightInfoType? {
         if (call !is KaSimpleFunctionCall) return null
-        return when (val function = call.symbol) {
+        val type = when (val function = call.symbol) {
             is KaConstructorSymbol -> KotlinHighlightInfoTypeSemanticNames.CONSTRUCTOR_CALL
             is KaAnonymousFunctionSymbol -> null
             is KaNamedFunctionSymbol -> when {
@@ -79,6 +75,7 @@ internal class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHolder, s
 
             else -> KotlinHighlightInfoTypeSemanticNames.FUNCTION_CALL //TODO ()
         }
+        return type
     }
 
     companion object {
@@ -86,8 +83,13 @@ internal class KotlinFunctionCallSemanticAnalyzer(holder: HighlightInfoHolder, s
             CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("suspend"))
 
         internal fun KaSession.getHighlightInfoTypeForCallFromExtension(expression: KtExpression, call: KaCall): HighlightInfoType? {
+            val session = this
             val highlightInfoType =
-                KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull { it.highlightCall(expression, call) }
+                KotlinCallHighlighterExtension.EP_NAME.extensionList.firstNotNullOfOrNull {
+                    with(it) {
+                        session.highlightCall(expression, call)
+                    }
+                }
             return highlightInfoType
         }
     }

@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
-import com.intellij.diff.*
+import com.intellij.diff.DiffContext
+import com.intellij.diff.DiffViewerEx
+import com.intellij.diff.EditorDiffViewer
+import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.FrameDiffTool.DiffViewer
 import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
@@ -17,6 +20,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.actions.EditorActionUtil
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
@@ -28,6 +32,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.pom.Navigatable
 import com.intellij.ui.JBColor
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBLayeredPane
@@ -62,7 +67,7 @@ class CombinedDiffViewer(
   private val context: DiffContext,
   blockListener: BlockListener,
   private val blockState: BlockState,
-  private val viewState: CombinedDiffUIState
+  private val viewState: CombinedDiffUIState,
 ) : CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
     UiDataProvider,
@@ -214,9 +219,11 @@ class CombinedDiffViewer(
     return newDiffBlock
   }
 
-  private fun registerNewDiffBlock(blockId: CombinedBlockId,
-                                   newBlock: CombinedCollapsibleDiffBlock<*>,
-                                   newViewer: DiffViewer) {
+  private fun registerNewDiffBlock(
+    blockId: CombinedBlockId,
+    newBlock: CombinedCollapsibleDiffBlock<*>,
+    newViewer: DiffViewer,
+  ) {
     Disposer.register(newBlock, Disposable {
       diffBlocks.remove(blockId)
       diffViewers.remove(blockId)?.also(Disposer::dispose)
@@ -260,7 +267,7 @@ class CombinedDiffViewer(
     val diffViewer = getCurrentDiffViewer()
     sink[CommonDataKeys.PROJECT] = project
     sink[DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE] = currentDiffIterable
-    sink[DiffDataKeys.NAVIGATABLE] = (diffViewer as? DiffViewerEx)?.navigatable
+    sink[DiffDataKeys.NAVIGATABLE] = ReadAction.compute<Navigatable, Exception> { (diffViewer as? DiffViewerEx)?.navigatable }
     sink[DiffDataKeys.DIFF_VIEWER] = diffViewer
     sink[COMBINED_DIFF_VIEWER] = this
     sink[DiffDataKeys.CURRENT_EDITOR] = diffViewer?.currentEditor
@@ -368,10 +375,12 @@ class CombinedDiffViewer(
     processBlocksState(blocksInViewport, beforeViewport.filterNotNull(), afterViewport.filterNotNull(), hiddenBlocks)
   }
 
-  private fun processBlocksState(inViewport: ArrayList<CombinedBlockId>,
-                                 beforeViewport: List<CombinedBlockId>,
-                                 afterViewport: List<CombinedBlockId>,
-                                 hidden: ArrayList<CombinedBlockId>) {
+  private fun processBlocksState(
+    inViewport: ArrayList<CombinedBlockId>,
+    beforeViewport: List<CombinedBlockId>,
+    afterViewport: List<CombinedBlockId>,
+    hidden: ArrayList<CombinedBlockId>,
+  ) {
     if (hidden.isNotEmpty()) {
       blockListeners.multicaster.blocksHidden(hidden)
     }
@@ -437,16 +446,20 @@ class CombinedDiffViewer(
 
   internal fun getDiffViewerForId(id: CombinedBlockId): DiffViewer? = diffViewers[id]
 
-  fun selectDiffBlock(blockId: CombinedBlockId,
-                      focusBlock: Boolean,
-                      scrollPolicy: ScrollPolicy? = ScrollPolicy.SCROLL_TO_BLOCK) {
+  fun selectDiffBlock(
+    blockId: CombinedBlockId,
+    focusBlock: Boolean,
+    scrollPolicy: ScrollPolicy? = ScrollPolicy.SCROLL_TO_BLOCK,
+  ) {
 
     selectDiffBlock(blockId, scrollPolicy, focusBlock)
   }
 
-  fun scrollToFirstChange(blockId: CombinedBlockId,
-                          focusBlock: Boolean,
-                          scrollPolicy: ScrollPolicy? = ScrollPolicy.SCROLL_TO_BLOCK) {
+  fun scrollToFirstChange(
+    blockId: CombinedBlockId,
+    focusBlock: Boolean,
+    scrollPolicy: ScrollPolicy? = ScrollPolicy.SCROLL_TO_BLOCK,
+  ) {
     if (blockId.isCollapsed) {
       selectDiffBlock(blockId, scrollPolicy, false, animated = false)
     }
@@ -457,12 +470,14 @@ class CombinedDiffViewer(
     }
   }
 
-  private fun selectDiffBlock(blockId: CombinedBlockId,
-                              scrollPolicy: ScrollPolicy? = null,
-                              focusBlock: Boolean = true,
-                              animated: Boolean = true,
-                              scrollType: ScrollType = ScrollType.CENTER,
-                              editorToFocus: Editor? = null) {
+  private fun selectDiffBlock(
+    blockId: CombinedBlockId,
+    scrollPolicy: ScrollPolicy? = null,
+    focusBlock: Boolean = true,
+    animated: Boolean = true,
+    scrollType: ScrollType = ScrollType.CENTER,
+    editorToFocus: Editor? = null,
+  ) {
     val doSelect = {
       blockState.currentBlock = blockId
       scrollSupport.scroll(scrollPolicy, blockId, animated = animated, scrollType = scrollType)
@@ -729,10 +744,12 @@ class CombinedDiffViewer(
       }
     }
 
-    fun scroll(scrollPolicy: ScrollPolicy?,
-               combinedBlockId: CombinedBlockId,
-               animated: Boolean = true,
-               scrollType: ScrollType = ScrollType.CENTER) {
+    fun scroll(
+      scrollPolicy: ScrollPolicy?,
+      combinedBlockId: CombinedBlockId,
+      animated: Boolean = true,
+      scrollType: ScrollType = ScrollType.CENTER,
+    ) {
       val isEditorBased = viewer.getDiffViewerForId(combinedBlockId)?.isEditorBased ?: false
       if (scrollPolicy == ScrollPolicy.SCROLL_TO_BLOCK || !isEditorBased) {
         scrollToDiffBlock(combinedBlockId)

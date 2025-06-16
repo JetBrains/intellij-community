@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -46,7 +46,7 @@ public class CommandRuntime {
 
   public @NotNull CommandExecutor runWithAuthenticationAttempt(@NotNull Command command) throws SvnBindException {
     Project project = myVcs.getProject();
-    if (!project.isDefault() && !TrustedProjects.isTrusted(project)) {
+    if (!project.isDefault() && !TrustedProjects.isProjectTrusted(project)) {
       throw new IllegalStateException("Shouldn't be possible to run a SVN command in the safe mode");
     }
 
@@ -68,7 +68,7 @@ public class CommandRuntime {
 
   public @NotNull CommandExecutor runLocal(@NotNull Command command, int timeout) throws SvnBindException {
     Project project = myVcs.getProject();
-    if (!project.isDefault() && !TrustedProjects.isTrusted(project)) {
+    if (!project.isDefault() && !TrustedProjects.isProjectTrusted(project)) {
       throw new IllegalStateException("Shouldn't be possible to run a SVN command in the safe mode");
     }
 

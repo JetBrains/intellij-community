@@ -5,6 +5,7 @@
     <!--suppress PluginXmlDynamicPlugin -->
     <extensionPoint name="registerToolWindowTaskProvider" interface="com.intellij.toolWindow.RegisterToolWindowTaskProvider"/>
     <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier"/>
+    <extensionPoint name="noProjectStateHandler" interface="com.intellij.openapi.wm.ex.NoProjectStateHandler"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -14,8 +15,6 @@
       testServiceImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
       headlessImplementation="com.intellij.openapi.fileEditor.impl.TestEditorManagerImpl"
     />
-    <uiDataRule implementation="com.intellij.openapi.fileEditor.ex.FileEditorManagerEx$DataRule"/>
-
     <projectService
       serviceInterface="com.intellij.problems.WolfTheProblemSolver"
       serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
@@ -87,8 +86,8 @@
     <postStartupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
-    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
+    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoClientState" client="all"/>
+    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoClientState" client="all"/>
 
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider"
@@ -150,6 +149,8 @@
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
     <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
 
+    <postStartupActivity implementation="com.intellij.openapi.application.impl.islands.IslandsFeedback"/>
+
     <applicationService
       serviceInterface="com.intellij.formatting.visualLayer.VisualFormattingLayerService"
       serviceImplementation="com.intellij.formatting.visualLayer.VisualFormattingLayerServiceImpl" />
@@ -183,13 +184,16 @@
                         serviceImplementation="com.intellij.toolWindow.xNext.toolbar.data.XNextToolbarManagerImpl"/>
 
     <!--XNext-->
-    <applicationService serviceImplementation="com.intellij.openapi.application.impl.InternalUICustomization"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.impl.InternalUICustomization"
+                        serviceImplementation="com.intellij.openapi.application.impl.islands.IslandsUICustomization"/>
     <!---->
+
+    <adEntityProvider implementation="com.intellij.openapi.editor.impl.ad.document.DefaultAdEntityProvider" />
 
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+    <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
 
     <listener class="com.intellij.openapi.editor.impl.VisibleEditorsTracker$MyCommandListener"
@@ -207,7 +211,7 @@
     <listener class="com.intellij.openapi.editor.impl.EditorLastActionTracker$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 
-    <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsModelConsumingListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsListener"
               topic="com.intellij.notification.Notifications"/>
@@ -226,7 +230,7 @@
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeEditorActionHandler"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
 
-    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector$MyAnActionListener"
+    <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
     <listener class="com.intellij.internal.statistic.EventLogApplicationLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="true" activeInTestMode="false"/>
@@ -265,10 +269,10 @@
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
   <projectListeners>
-    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+    <listener class="com.intellij.openapi.command.impl.UndoCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
 
-    <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsModelConsumingListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageServiceFileEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>

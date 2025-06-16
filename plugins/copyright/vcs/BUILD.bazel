@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//plugins/copyright",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/platform-api:ide",
     "//platform/util/progress",

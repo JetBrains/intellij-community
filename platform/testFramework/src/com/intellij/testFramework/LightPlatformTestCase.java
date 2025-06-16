@@ -337,8 +337,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
         assertEmpty("There are unsaved documents", Arrays.asList(unsavedDocuments));
       }
-      ActionUtil.performActionDumbAwareWithCallbacks(
-        new EmptyAction(true), AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT));
+      AnActionEvent event = AnActionEvent.createFromDataContext("", null, DataContext.EMPTY_CONTEXT);
+      ActionUtil.performAction(new EmptyAction(true), event);
 
       // startup activities
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();

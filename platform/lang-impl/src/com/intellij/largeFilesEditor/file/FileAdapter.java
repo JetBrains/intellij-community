@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.EOFException;
 import java.io.FileNotFoundException;
@@ -30,7 +31,8 @@ public final class FileAdapter {
 
   private volatile long cashedFileSize = UNDEFINED; // in bytes
 
-  FileAdapter(int pageSize, int maxPageBorderShift, @NotNull VirtualFile vFile) throws FileNotFoundException {
+  @VisibleForTesting
+  public FileAdapter(int pageSize, int maxPageBorderShift, @NotNull VirtualFile vFile) throws FileNotFoundException {
     this.pageSize = pageSize;
     this.maxPageBorderShift = maxPageBorderShift;
     this.vFile = vFile;
@@ -44,7 +46,8 @@ public final class FileAdapter {
     }
   }
 
-  void setCharset(Charset newCharset) {
+  @VisibleForTesting
+  public void setCharset(Charset newCharset) {
     randomAccessFileLock.lock();
     try {
       vFile.setCharset(newCharset);
@@ -54,7 +57,8 @@ public final class FileAdapter {
     }
   }
 
-  void closeFile() throws IOException {
+  @VisibleForTesting
+  public void closeFile() throws IOException {
     randomAccessFileLock.lock();
     try {
       if (randomAccessFile != null) {
@@ -70,7 +74,8 @@ public final class FileAdapter {
     return vFile.getCharset().name();
   }
 
-  long getPagesAmount() throws IOException {
+  @VisibleForTesting
+  public long getPagesAmount() throws IOException {
     return (getFileSize() + pageSize - 1) / pageSize;
   }
 
@@ -121,7 +126,8 @@ public final class FileAdapter {
    * @return text of the page if page exists or null if page doesn't
    * @throws NullPointerException - when access to physical file was not established
    */
-  String getPageText(long pageNumber) throws IOException {
+  @VisibleForTesting
+  public String getPageText(long pageNumber) throws IOException {
     randomAccessFileLock.lock();
     try {
       long pagesAmount = getPagesAmount();

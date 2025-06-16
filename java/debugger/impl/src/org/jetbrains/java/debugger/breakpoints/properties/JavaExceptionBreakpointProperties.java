@@ -27,7 +27,7 @@ public class JavaExceptionBreakpointProperties extends JavaBreakpointProperties<
   /**
    * @deprecated use {@link #JavaExceptionBreakpointProperties(String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public JavaExceptionBreakpointProperties(String qualifiedName, String packageName) {
     myQualifiedName = qualifiedName;
     myPackageName = packageName;

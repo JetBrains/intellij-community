@@ -67,6 +67,9 @@ open class KotlinFunctionBreakpointType protected constructor(@NotNull id: Strin
                                 && element.hasPrimaryConstructor()
                     )
 
+                is KtObjectDeclaration ->
+                    ApplicabilityResult.MAYBE_YES
+
                 else ->
                     ApplicabilityResult.UNKNOWN
             }

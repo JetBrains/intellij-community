@@ -65,10 +65,26 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                 }
             }
 
-            module("project.p1.iosMain") {
+            module("project.p1.iosArm64Main") {
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*[Cc]interop-withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
+                }
+            }
+
+            module("project.p1.iosX64Main") {
+                if (SystemInfo.isMac) {
+                    highlightingCheck(module)
+                    libraryDependencyByUrl(Regex(""".*[Cc]interop-withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
+                }
+            }
+
+            module("project.p1.iosSimulatorArm64Main") {
+                if (SystemInfo.isMac) {
+                    highlightingCheck(module)
+                    libraryDependencyByUrl(Regex(""".*[Cc]interop-withPosix.*"""), scope)
                     libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }

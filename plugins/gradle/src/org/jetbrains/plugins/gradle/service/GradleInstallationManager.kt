@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware.Companion.getExtensions
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -35,7 +36,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
-import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
+import org.jetbrains.plugins.gradle.util.resolveGradleJvmInfo
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -140,7 +141,7 @@ open class GradleInstallationManager : Disposable.Default {
     val settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath) ?: return getAvailableJavaHome(project)
     val gradleJvm = settings.gradleJvm
     val sdkLookupProvider = getGradleJvmLookupProvider(project, settings)
-    val sdkInfo = sdkLookupProvider.nonblockingResolveGradleJvmInfo(project, linkedProjectPath, gradleJvm)
+    val sdkInfo = runBlockingCancellable { sdkLookupProvider.resolveGradleJvmInfo(project, linkedProjectPath, gradleJvm) }
     if (sdkInfo is SdkLookupProvider.SdkInfo.Resolved) {
       return sdkInfo.homePath
     }

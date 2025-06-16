@@ -37,7 +37,7 @@ public class SuppressLocalInspectionTest extends LightQuickFixParameterizedTestC
 
   static class DummyUnavailableQuickFix extends IntentionAndQuickFixAction {
     @Override
-    public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
       return false;
     }
 
@@ -52,7 +52,7 @@ public class SuppressLocalInspectionTest extends LightQuickFixParameterizedTestC
     }
 
     @Override
-    public void applyFix(@NotNull Project project, PsiFile file, @Nullable Editor editor) {
+    public void applyFix(@NotNull Project project, PsiFile psiFile, @Nullable Editor editor) {
     }
   }
 

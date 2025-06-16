@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,6 +12,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -32,8 +33,12 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   private final Object myStateLock = new Object();
 
   public ProjectCodeStyleSettingsManager(@NotNull Project project) {
+    this(project, true);
+  }
+
+  public ProjectCodeStyleSettingsManager(@NotNull Project project, boolean loadExtensions) {
     myProject = project;
-    setMainProjectCodeStyle(null);
+    mySettingsMap.put(MAIN_PROJECT_CODE_STYLE_NAME, createSettings(loadExtensions));
     registerExtensionPointListeners(project);
   }
 
@@ -168,7 +173,7 @@ public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsMana
   }
 
   @Override
-  protected @NotNull Collection<CodeStyleSettings> enumSettings() {
+  protected @NotNull @Unmodifiable Collection<CodeStyleSettings> enumSettings() {
     return Collections.unmodifiableCollection(mySettingsMap.values());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -22,9 +22,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
-
-import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class PointlessNullCheckInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -42,7 +39,7 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     return new RemoveRedundantPolyadicOperandFix(expression.getText());
   }
@@ -64,8 +61,7 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
     private void checkOrChain(PsiPolyadicExpression expression) {
       final PsiExpression[] operands = expression.getOperands();
       for (int i = 0; i < operands.length - 1; i++) {
-        PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(operands[i]), PsiBinaryExpression.class);
-        if (binaryExpression == null) continue;
+        if (!(PsiUtil.skipParenthesizedExprDown(operands[i]) instanceof PsiBinaryExpression binaryExpression)) continue;
         final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (!tokenType.equals(JavaTokenType.EQEQ)) continue;
 
@@ -81,8 +77,7 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
     private void checkAndChain(PsiPolyadicExpression expression) {
       final PsiExpression[] operands = expression.getOperands();
       for (int i = 0; i < operands.length - 1; i++) {
-        PsiBinaryExpression binaryExpression = tryCast(PsiUtil.skipParenthesizedExprDown(operands[i]), PsiBinaryExpression.class);
-        if (binaryExpression == null) continue;
+        if (!(PsiUtil.skipParenthesizedExprDown(operands[i]) instanceof PsiBinaryExpression binaryExpression)) continue;
         IElementType tokenType = binaryExpression.getOperationTokenType();
         if (!tokenType.equals(JavaTokenType.NE)) continue;
 
@@ -101,9 +96,7 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
                                      PsiBinaryExpression binaryExpression,
                                      PsiExpression implicitCheckCandidate) {
       final PsiReferenceExpression explicitCheckReference = getReferenceFromNullCheck(binaryExpression);
-      if (explicitCheckReference == null) return false;
-      final PsiVariable variable = tryCast(explicitCheckReference.resolve(), PsiVariable.class);
-      if (variable == null) return false;
+      if (explicitCheckReference == null || !(explicitCheckReference.resolve() instanceof PsiVariable variable)) return false;
       final PsiReferenceExpression implicitCheckReference = getReferenceFromImplicitNullCheckExpression(implicitCheckCandidate);
       if (implicitCheckReference == null || !implicitCheckReference.isReferenceTo(variable)) return false;
       if (isVariableUsed(operands, i, j, variable)) return false;
@@ -117,16 +110,13 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
 
     private static @Nullable PsiReferenceExpression getReferenceFromNullCheck(PsiBinaryExpression expression) {
       PsiExpression comparedWithNull = ExpressionUtils.getValueComparedWithNull(expression);
-      return tryCast(PsiUtil.skipParenthesizedExprDown(comparedWithNull), PsiReferenceExpression.class);
+      return PsiUtil.skipParenthesizedExprDown(comparedWithNull) instanceof PsiReferenceExpression ref ? ref : null;
     }
 
     private @Nullable PsiReferenceExpression getReferenceFromImplicitNullCheckExpression(PsiExpression expression) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       PsiReferenceExpression checked = getReferenceFromBooleanCall(expression);
-      if (checked == null) {
-        checked = getReferenceFromOrChain(expression);
-      }
-      return checked;
+      return checked == null ? getReferenceFromOrChain(expression) : checked;
     }
 
     private static @Nullable PsiReferenceExpression getReferenceFromBooleanCall(PsiExpression expression) {
@@ -145,25 +135,22 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
       } else {
         contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
       }
-      if (contracts.isEmpty()) return null;
-      MethodContract contract = tryCast(contracts.get(0), StandardMethodContract.class);
-      if (contract == null || !contract.getReturnValue().equals(ContractReturnValue.returnFalse())) return null;
+      if (contracts.isEmpty() || !(contracts.get(0) instanceof StandardMethodContract contract)) return null;
+      if (!contract.getReturnValue().equals(ContractReturnValue.returnFalse())) return null;
       ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
       if (condition == null) return null;
       int idx = condition.getNullCheckedArgument(true).orElse(-1);
       if (idx == -1) return null;
       PsiExpression[] args = call.getArgumentList().getExpressions();
       if (args.length <= idx || method.isVarArgs() && idx == args.length - 1) return null;
-      PsiReferenceExpression reference = tryCast(args[idx], PsiReferenceExpression.class);
-      if (reference == null) return null;
-      PsiVariable target = tryCast(reference.resolve(), PsiVariable.class);
-      if (target == null) return null;
+      if (!(args[idx] instanceof PsiReferenceExpression reference)) return null;
+      if (!(reference.resolve() instanceof PsiVariable target)) return null;
       if (!SyntaxTraverser.psiTraverser(call).filter(PsiReference.class)
         .filter(ref -> !reference.equals(ref) && ref.isReferenceTo(target)).isEmpty()) {
         // variable is reused for something else
         return null;
       }
-      if (Stream.of(args).anyMatch(SideEffectChecker::mayHaveSideEffects)) return null;
+      if (ContainerUtil.or(args, SideEffectChecker::mayHaveSideEffects)) return null;
       return reference;
     }
 
@@ -173,9 +160,7 @@ public final class PointlessNullCheckInspection extends BaseInspection implement
       if (JavaTokenType.OROR != tokenType) return null;
       final PsiExpression[] operands = polyadicExpression.getOperands();
       final PsiReferenceExpression referenceExpression = getReferenceFromImplicitNullCheckExpression(operands[0]);
-      if (referenceExpression == null) return null;
-      final PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
-      if (variable == null) return null;
+      if (referenceExpression == null || !(referenceExpression.resolve() instanceof PsiVariable variable)) return null;
       for (int i = 1, operandsLength = operands.length; i < operandsLength; i++) {
         final PsiReferenceExpression reference2 = getReferenceFromImplicitNullCheckExpression(operands[i]);
         if (reference2 == null || !reference2.isReferenceTo(variable)) {

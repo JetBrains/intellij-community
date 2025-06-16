@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.reference.SoftReference;
 import com.intellij.usageView.UsageTreeColors;
@@ -105,9 +106,7 @@ public final class ChunkExtractor {
     int absoluteStartOffset = usageInfo2UsageAdapter.getNavigationOffset();
     if (absoluteStartOffset == -1) return TextChunk.EMPTY_ARRAY;
 
-    Document visibleDocument = myDocument instanceof DocumentWindow
-                               ? ((DocumentWindow)myDocument).getDelegate()
-                               : myDocument;
+    Document visibleDocument = PsiDocumentManagerBase.getTopLevelDocument(myDocument);
     int visibleStartOffset = myDocument instanceof DocumentWindow
                              ? ((DocumentWindow)myDocument).injectedToHost(absoluteStartOffset)
                              : absoluteStartOffset;

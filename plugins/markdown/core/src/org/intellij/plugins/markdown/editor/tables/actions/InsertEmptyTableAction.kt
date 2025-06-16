@@ -25,8 +25,8 @@ import net.miginfocom.swing.MigLayout
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.buildEmptyTable
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
-import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
@@ -76,7 +76,7 @@ class InsertEmptyTableAction: DumbAwareAction() {
     val project = event.project
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)
-    event.presentation.isEnabledAndVisible = project != null && editor != null && file?.language?.supportsMarkdown() == true
+    event.presentation.isEnabledAndVisible = project != null && editor != null && file?.language?.isMarkdownLanguage() == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

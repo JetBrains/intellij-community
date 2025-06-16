@@ -85,28 +85,28 @@ private class CompositeGroupProvider : InspectionGroupProvider {
 }
 
 @Internal
-class YamlInspectionProfileImpl private constructor(override val profileName: String?,
-                                                    override val inspectionToolsSupplier: InspectionToolsSupplier,
-                                                    override val inspectionProfileManager: BaseInspectionProfileManager,
-                                                    override val baseProfile: InspectionProfileImpl,
-                                                    override val configurations: List<YamlBaseConfig>,
-                                                    override val groups: List<YamlInspectionGroup>,
-                                                    private val groupProvider: InspectionGroupProvider) : YamlInspectionProfile, InspectionGroupProvider {
-
+class YamlInspectionProfileImpl private constructor(
+  override val profileName: String?,
+  override val inspectionToolsSupplier: InspectionToolsSupplier,
+  override val inspectionProfileManager: BaseInspectionProfileManager,
+  override val baseProfile: InspectionProfileImpl,
+  override val configurations: List<YamlBaseConfig>,
+  override val groups: List<YamlInspectionGroup>,
+  private val groupProvider: InspectionGroupProvider,
+) : YamlInspectionProfile, InspectionGroupProvider {
   companion object {
     @JvmStatic
-    fun loadFrom(reader: Reader,
-                 includeReaders: (Path) -> Reader,
-                 toolsSupplier: InspectionToolsSupplier,
-                 profileManager: BaseInspectionProfileManager
+    fun loadFromYamlRaw(
+      yaml: YamlInspectionProfileRaw,
+      baseProfile: InspectionProfileImpl,
+      toolsSupplier: InspectionToolsSupplier,
+      profileManager: BaseInspectionProfileManager
     ): YamlInspectionProfileImpl {
-      val profile = readConfig(reader, includeReaders)
-      val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
-      val configurations = profile.inspections.map(::createInspectionConfig)
+      val configurations = yaml.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
       groupProvider.addProvider(InspectionGroupProviderEP.createDynamicGroupProvider())
 
-      val groups = profile.groups.map { group -> createGroup(groupProvider, group) }
+      val groups = yaml.groups.map { group -> createGroup(groupProvider, group) }
       val customGroupProvider = object : InspectionGroupProvider {
         val groupMap = groups.associateBy { group -> group.groupId }
         override fun findGroup(groupId: String): YamlInspectionGroup? {
@@ -116,13 +116,24 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       groupProvider.addProvider(customGroupProvider)
 
       return YamlInspectionProfileImpl(
-        profile.name,
+        yaml.name,
         toolsSupplier,
         profileManager,
         baseProfile,
         configurations,
         groups,
         groupProvider)
+    }
+
+    @JvmStatic
+    fun loadFrom(reader: Reader,
+                 includeReaders: (Path) -> Reader,
+                 toolsSupplier: InspectionToolsSupplier,
+                 profileManager: BaseInspectionProfileManager
+    ): YamlInspectionProfileImpl {
+      val profile = readConfig(reader, includeReaders)
+      val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
+      return loadFromYamlRaw(profile, baseProfile, toolsSupplier, profileManager)
     }
 
     @JvmStatic

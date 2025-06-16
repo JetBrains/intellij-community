@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
-  name = "kotlin-gradle-gradle-tooling-impl_resources",
+  name = "impl_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
@@ -13,7 +13,7 @@ jvm_provided_library(
 )
 
 jvm_library(
-  name = "kotlin-gradle-gradle-tooling-impl",
+  name = "impl",
   module_name = "kotlin.gradle.gradle-tooling.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,31 +24,31 @@ jvm_library(
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
-    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/gradle/gradle-tooling",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     ":extensions_provided",
   ],
-  runtime_deps = [":kotlin-gradle-gradle-tooling-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 
 jvm_library(
-  name = "kotlin-gradle-gradle-tooling-impl_test_lib",
+  name = "impl_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  associates = [":kotlin-gradle-gradle-tooling-impl"],
+  associates = [":impl"],
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlin-reflect",
     "@lib//:kotlin-tooling-core",
     "@lib//:kotlin-gradle-plugin-idea-proto",
     "@lib//:kotlin-gradle-plugin-idea",
-    "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-gradle-tooling",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
-    "//plugins/kotlin/base/project-model:kotlin-base-project-model",
+    "//plugins/kotlin/gradle/gradle-tooling",
+    "//plugins/kotlin/base/frontend-agnostic",
+    "//plugins/kotlin/base/project-model",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "@lib//:junit4",
@@ -56,11 +56,11 @@ jvm_library(
     "@lib//:kotlin-test",
     "//platform/extensions",
   ],
-  runtime_deps = [":kotlin-gradle-gradle-tooling-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 
 jvm_test(
-  name = "kotlin-gradle-gradle-tooling-impl_test",
-  runtime_deps = [":kotlin-gradle-gradle-tooling-impl_test_lib"]
+  name = "impl_test",
+  runtime_deps = [":impl_test_lib"]
 )
 ### auto-generated section `build kotlin.gradle.gradle-tooling.impl` end

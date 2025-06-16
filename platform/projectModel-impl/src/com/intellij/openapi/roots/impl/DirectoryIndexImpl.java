@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
@@ -44,7 +43,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   private volatile boolean myDisposed;
   private volatile RootIndex myRootIndex;
 
-  DirectoryIndexImpl(@NotNull Project project) {
+  public DirectoryIndexImpl(@NotNull Project project) {
     myWorkspaceFileIndex = (WorkspaceFileIndexEx)WorkspaceFileIndex.getInstance(project);
     myProject = project;
     myConnection = project.getMessageBus().connect();
@@ -101,13 +100,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public @NotNull Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
-
-  @Override
-  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName,
-                                                        @NotNull GlobalSearchScope scope) {
-    return myWorkspaceFileIndex.getDirectoriesByPackageName(packageName, scope);
-  }
-
+  
   private RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
@@ -117,16 +110,10 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   @Override
-  public String getPackageName(@NotNull VirtualFile dir) {
-    checkAvailability();
-    return myWorkspaceFileIndex.getPackageName(dir);
-  }
-
-  @Override
   public @NotNull List<OrderEntry> getOrderEntries(@NotNull VirtualFile fileOrDir) {
     checkAvailability();
     if (myProject.isDefault()) return Collections.emptyList();
-    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, false);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(fileOrDir, true, true, true, true, true, false);
     WorkspaceFileSetWithCustomData<?> fileSet = fileInfo.findFileSet(data -> true);
     if (fileSet == null) return Collections.emptyList();
     return getRootIndex().getOrderEntries(fileSet.getRoot());

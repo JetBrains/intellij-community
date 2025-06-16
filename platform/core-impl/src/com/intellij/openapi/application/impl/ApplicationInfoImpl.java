@@ -18,8 +18,10 @@ import com.intellij.util.xml.dom.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -102,7 +104,9 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @NonInjectable
-  ApplicationInfoImpl(@NotNull XmlElement element) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public ApplicationInfoImpl(@NotNull XmlElement element) {
     // the behavior of this method must be consistent with the `idea/ApplicationInfo.xsd` schema
     for (XmlElement child : element.children) {
       switch (child.name) {
@@ -430,6 +434,15 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public @Nullable String getSplashImageUrl() {
+    if (getVersionName().equals("IntelliJ IDEA")) {
+      LocalDate startDate = LocalDate.of(2025, 5, 22);
+      LocalDate endDate = LocalDate.of(2025, 5, 31);
+      LocalDate nowDate = LocalDate.now();
+      String splashUrl = splashImageUrl;
+      if (splashUrl != null && nowDate.isAfter(startDate) && nowDate.isBefore(endDate)) {
+        return splashUrl.replace(".png", "_java_30.png");
+      }
+    }
     return isEap && eapSplashImageUrl != null ? eapSplashImageUrl : splashImageUrl;
   }
 

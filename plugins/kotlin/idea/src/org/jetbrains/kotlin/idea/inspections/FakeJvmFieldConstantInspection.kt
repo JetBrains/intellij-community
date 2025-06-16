@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
@@ -10,8 +9,9 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightFieldForSourceDeclarationSupport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase.Status.*
+import org.jetbrains.kotlin.idea.inspections.MayBeConstantInspection.Util.getStatus
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
@@ -83,7 +83,7 @@ class FakeJvmFieldConstantInspection : AbstractKotlinInspection() {
             if (!additionalTypeCheck(resolvedPropertyType)) return
             val fixes = mutableListOf<LocalQuickFix>()
             if (resolvedPropertyStatus == JVM_FIELD_MIGHT_BE_CONST) {
-                fixes += IntentionWrapper(AddConstModifierFix(resolvedProperty))
+                fixes += AddConstModifierFix(resolvedProperty).asQuickFix()
             }
             holder.registerProblem(
                 valueExpression,

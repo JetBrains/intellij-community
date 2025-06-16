@@ -13,4 +13,6 @@ public interface ObjectFormatterConfig {
   DataGridSettings getSettings();
 
   boolean isAllowedShowBigObjects();
+
+  boolean supportsNumberFormats();
 }

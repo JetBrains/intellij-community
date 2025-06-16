@@ -1,0 +1,14 @@
+load("@rules_java//java:defs.bzl", "java_library")
+
+# temp - wait for kotlin update branch merge
+
+java_library(
+    name = "tmh",
+    srcs = glob(["*.java"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:annotations",
+        "//:asm-all",
+        "//:jps",
+    ],
+)

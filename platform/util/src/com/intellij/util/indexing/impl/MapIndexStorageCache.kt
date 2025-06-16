@@ -1,33 +1,23 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl
 
-import com.github.benmanes.caffeine.cache.CacheLoader
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.LoadingCache
-import com.github.benmanes.caffeine.cache.RemovalListener
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ReflectionUtil
-import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.containers.SLRUCache
 import com.intellij.util.containers.hash.EqualityPolicy
+import com.intellij.util.containers.intcaches.SLRUIntObjectCache
 import com.intellij.util.io.IOCancellationCallbackHolder
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asExecutor
+import com.intellij.util.io.InlineKeyDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
-import java.util.concurrent.Executor
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.atomic.AtomicReferenceArray
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.BiConsumer
 import java.util.function.Function
 import kotlin.concurrent.withLock
 import kotlin.math.abs
-import kotlin.math.ceil
 
 @Internal
 interface MapIndexStorageCache<Key : Any, Value> {
@@ -105,7 +95,7 @@ interface MapIndexStorageCacheProvider {
 @Internal
 object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
   //RC: unfortunately, we can't create thread-unsafe cache now and rely on storage lock, because storage lock is RW, and we
-  // often _modify_ the cache under storage read operation/storage read lock
+  // often _modify_ the cache under storage _read_ operation (=storage _read_ lock)
   private const val THREAD_SAFE_IMPL = true
 
   init {
@@ -131,7 +121,15 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     hashingStrategy: EqualityPolicy<Key>,
     cacheSizeHint: Int,
   ): MapIndexStorageCache<Key, Value> {
-    val underlyingCache = SlruCache(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
+
+    val underlyingCache = if (hashingStrategy is InlineKeyDescriptor<Key>) {
+      //use specialized cache for Int keys, if actual Key type is convertable to Int:
+      SlruCacheForIntKeys(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
+    }
+    else {
+      SlruCache(valueReader, evictedValuesPersister, hashingStrategy, cacheSizeHint)
+    }
+
     return if (THREAD_SAFE_IMPL) {
       LockedCacheWrapper(underlyingCache)
     }
@@ -146,11 +144,7 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     hashingStrategy: EqualityPolicy<Key>,
     cacheSize: Int,
   ) : MapIndexStorageCache<Key, Value> {
-    private val cache = object : SLRUCache<Key, ChangeTrackingValueContainer<Value>>(
-      cacheSize,
-      ceil(cacheSize * 0.25).toInt(),
-      hashingStrategy
-    ) {
+    private val cache = object : SLRUCache<Key, ChangeTrackingValueContainer<Value>>(cacheSize, cacheSize / 4, hashingStrategy) {
       override fun createValue(key: Key): ChangeTrackingValueContainer<Value> {
         totalUncachedReads.incrementAndGet()
         return valueReader.apply(key)
@@ -158,7 +152,6 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
 
       override fun onDropFromCache(key: Key, valueContainer: ChangeTrackingValueContainer<Value>) {
         totalEvicted.incrementAndGet()
-
         evictedValuesPersister.accept(key, valueContainer)
       }
     }
@@ -181,6 +174,49 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
       cache.clear()
     }
   }
+
+  //MAYBE RC: currently we protect the cache with a lock _around_ all accesses. This could be relaxed: with some
+  //          (reasonable) effort cache itself could be made thread-safe-for-reads, with lock only on cache update.
+  //          According to OTel metrics, cache efficacy is quite high (80-90% cache-hits), so such an optimization
+  //          could reduce a number of lock acquisition/release operations ~5-10x -- even though most of locks
+  //          acquisitions now are uncontended, still it could make a visible effect.
+  private class SlruCacheForIntKeys<Key : Any, Value>(
+    val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
+    val evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
+    val converter: InlineKeyDescriptor<Key>,
+    cacheSize: Int,
+  ) : MapIndexStorageCache<Key, Value> {
+    private val cache = SLRUIntObjectCache<ChangeTrackingValueContainer<Value>>(
+      /* protectedQueueSize: */ cacheSize,
+      /* probationQueueSize: */ cacheSize / 4,
+      /* valueFactory:       */ { key: Int ->
+        totalUncachedReads.incrementAndGet()
+        valueReader.apply(converter.fromInt(key))
+      },
+      /* onEvict:            */ { key: Int, valueContainer: ChangeTrackingValueContainer<Value> ->
+        totalEvicted.incrementAndGet()
+        evictedValuesPersister.accept(converter.fromInt(key), valueContainer)
+      }
+    )
+
+    override fun read(key: Key): ChangeTrackingValueContainer<Value> {
+      totalReads.incrementAndGet()
+      return cache.getOrCreate(converter.toInt(key))
+    }
+
+    override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? {
+      totalReads.incrementAndGet()
+      return cache.getIfCached(converter.toInt(key))
+    }
+
+    override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> {
+      return cache.values()
+    }
+
+    override fun invalidateAll() {
+      cache.evictAll()
+    }
+  }
 }
 
 
@@ -191,6 +227,7 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
 internal class LockedCacheWrapper<Key : Any, Value>(private val underlyingCache: MapIndexStorageCache<Key, Value>) : MapIndexStorageCache<Key, Value> {
   private val cacheAccessLock = ReentrantLock()
 
+  //TODO RC: we would better need withLockCancellable here, but it requires dependency on platform.core
 
   override fun read(key: Key): ChangeTrackingValueContainer<Value> = cacheAccessLock.withLock { underlyingCache.read(key) }
 
@@ -198,7 +235,7 @@ internal class LockedCacheWrapper<Key : Any, Value>(private val underlyingCache:
 
   override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cacheAccessLock.withLock { underlyingCache.getCachedValues() }
 
-  override fun invalidateAll() = cacheAccessLock.withLock {
+  override fun invalidateAll() {
     while (!cacheAccessLock.tryLock(10, MILLISECONDS)) {
       IOCancellationCallbackHolder.checkCancelled()
     }
@@ -209,9 +246,17 @@ internal class LockedCacheWrapper<Key : Any, Value>(private val underlyingCache:
       cacheAccessLock.unlock()
     }
   }
+
+  override fun toString(): String {
+    return "LockedCacheWrapper(underlying: $underlyingCache)"
+  }
 }
 
-/** Implementation uses a very simple MRU-cache under the hood */
+/**
+ * Implementation uses a very simple MRU-cache under the hood.
+ * Cache itself is much faster, but cache efficacy worse than [SlruIndexStorageCacheProvider] and the total results
+ * are worse than [SlruIndexStorageCacheProvider].
+ */
 @Suppress("unused")
 @Internal
 class MRUIndexStorageCacheProvider : MapIndexStorageCacheProvider {
@@ -239,7 +284,7 @@ class MRUIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     hashingStrategy: EqualityPolicy<Key>,
     cacheSizeHint: Int,
   ): MapIndexStorageCache<Key, Value> {
-    val cache = MRUCache<Key, ChangeTrackingValueContainer<Value>>(
+    val cache = MRUCache(
       { key -> totalUncachedReads.incrementAndGet(); valueReader.apply(key) },
       { key, value -> totalEvicted.incrementAndGet(); evictedValuesPersister.accept(key, value) },
       hashingStrategy,
@@ -272,7 +317,7 @@ class MRUIndexStorageCacheProvider : MapIndexStorageCacheProvider {
     cacheSize: Int,
   ) {
 
-    data class CacheEntry<K : Any, V>(val key: K, val value: V)
+    private data class CacheEntry<K : Any, V>(val key: K, val value: V)
 
     private val table: AtomicReferenceArray<CacheEntry<Key, Value>?> = AtomicReferenceArray(cacheSize)
 
@@ -317,242 +362,6 @@ class MRUIndexStorageCacheProvider : MapIndexStorageCacheProvider {
         }
         table[i] = null
       }
-    }
-  }
-}
-
-
-/** Implementation uses [Caffeine] cache under the hood */
-@Suppress("unused")
-@Internal
-class CaffeineIndexStorageCacheProvider : MapIndexStorageCacheProvider {
-  /** Offload ValueContainer persistence to Dispatchers.IO */
-  private val OFFLOAD_IO = getBooleanProperty("indexes.storage-cache.offload-io", false)
-
-  init {
-    thisLogger().info("Caffeine cache will be used for indexes (offload IO: $OFFLOAD_IO)")
-  }
-
-  override fun <Key : Any, Value> createCache(
-    valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
-    evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
-    hashingStrategy: EqualityPolicy<Key>,
-    cacheSizeHint: Int,
-    ): MapIndexStorageCache<Key, Value> = CaffeineCache(valueReader, evictedValuesPersister, OFFLOAD_IO, hashingStrategy, cacheSizeHint)
-
-  //TODO RC: implement
-  override fun totalReads(): Long = 0
-  override fun totalReadsUncached(): Long = 0
-  override fun totalEvicted(): Long = 0
-
-  private class CaffeineCache<Key : Any, Value>(
-    valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
-    evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
-    offloadIO: Boolean,
-    private val equalityPolicy: EqualityPolicy<Key>,
-    cacheSize: Int,
-  ) : MapIndexStorageCache<Key, Value> {
-
-    private val cache: LoadingCache<KeyWithCustomEquality<Key>, ChangeTrackingValueContainer<Value>>
-
-    init {
-
-      val valuesLoader = CacheLoader<KeyWithCustomEquality<Key>, ChangeTrackingValueContainer<Value>> { wrappedKey ->
-        valueReader.apply(wrappedKey.key)
-      }
-
-      val onEvict = RemovalListener<KeyWithCustomEquality<Key>, ChangeTrackingValueContainer<Value>> { wrappedKey, container, _ ->
-        //key/value could be null only for weak keys/values, if an apt object is already collected.
-        // It is not our configuration, but let's guard anyway:
-        if (container != null && wrappedKey != null) {
-          evictedValuesPersister.accept(wrappedKey.key, container)
-        }
-      }
-
-      val evictionExecutor = if (offloadIO)
-        Dispatchers.IO.asExecutor()
-      else
-        Executor { it.run() } //SameThreadExecutor is not available in this module
-
-      //TODO RC: use maximumWeight() in terms of ValueContainer size (!= .size(), but actual memory content at the moment)
-      //TODO RC: for keys there equalityPolicy is the same as Key.equals()/hashCode() we could skip creating KeyWithCustomEquality
-      //         wrapper
-      cache = Caffeine.newBuilder()
-        .maximumSize(cacheSize.toLong())
-        .executor(evictionExecutor)
-        .removalListener(onEvict)
-        .build(valuesLoader)
-    }
-
-    override fun read(key: Key): ChangeTrackingValueContainer<Value> = cache.get(KeyWithCustomEquality(key, equalityPolicy))
-
-    override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cache.getIfPresent(KeyWithCustomEquality(key, equalityPolicy))
-
-    override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cache.asMap().values
-
-    override fun invalidateAll() = cache.invalidateAll()
-
-    /**
-     * Caffeine doesn't allow customizing equals/hashCode evaluation strategy, hence we need to create a wrapper around
-     * the actual Key, and customize equals/hashCode via equalityPolicy in the wrapper.
-     */
-    private class KeyWithCustomEquality<K>(val key: K, private val equality: EqualityPolicy<K>) {
-      override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        @Suppress("UNCHECKED_CAST")
-        other as KeyWithCustomEquality<K>
-
-        if (equality !== other.equality) {
-          return false
-        }
-        return equality.isEqual(key, other.key)
-      }
-
-      override fun hashCode(): Int = equality.getHashCode(key)
-    }
-  }
-}
-
-/**
- * Implementation uses single (per-provider) [Caffeine] cache, shared by all individual caches created by the same
- * provider.
- * Each individual cache is assigned an `subCacheId`, and its entries in the shared cache are keyed by
- * `SharedCacheKey(originalKey, subCacheId, ...)`
- */
-@Suppress("unused")
-@Internal
-class SharedCaffeineIndexStorageCacheProvider(totalCacheSize: Long = (256 * 1024)) : MapIndexStorageCacheProvider {
-
-  init {
-    thisLogger().info("Caffeine shared cache will be used for indexes (totalCacheSize: $totalCacheSize)")
-  }
-
-  //TODO RC: use maximumWeight() in terms of ValueContainer size (!= .size(), but actual memory content at the moment)
-  private val sharedCache: LoadingCache<SharedCacheKey<Any>, ChangeTrackingValueContainer<Any?>> = Caffeine.newBuilder()
-    .maximumSize(totalCacheSize)
-    .executor(Executor { it.run() })
-    .removalListener(RemovalListener<SharedCacheKey<Any>, ChangeTrackingValueContainer<Any?>> { sharedCacheKey, container, _ ->
-      //key/value could be null only for weak keys/values, if an apt object is already collected.
-      // It is not our configuration, but let's guard anyway:
-      if (container != null && sharedCacheKey != null) {
-        val cacheInfo = subCachesDescriptors.get()[sharedCacheKey.subCacheId]
-        check(cacheInfo != null) { "Cache registration info for ${sharedCacheKey} not found" }
-        cacheInfo.cacheAccessLock.withLock {
-          cacheInfo.evictedValuesPersister.accept(sharedCacheKey.key, container)
-        }
-      }
-    })
-    .build(CacheLoader { sharedCacheKey ->
-      val cacheInfo = subCachesDescriptors.get()[sharedCacheKey.subCacheId]
-      check(cacheInfo != null) { "Cache registration info for ${sharedCacheKey} not found" }
-      val valueReader = cacheInfo.valueReader
-      val key = sharedCacheKey.key
-      valueReader.apply(key)
-    })
-
-  /** Map[subCacheId -> SubCacheDescriptor], updated with CopyOnWrite */
-  private val subCachesDescriptors: AtomicReference<Int2ObjectMap<SubCacheDescriptor<in Any, in Any?>>> = AtomicReference(Int2ObjectOpenHashMap())
-
-
-  override fun <Key : Any, Value : Any?> createCache(
-    valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
-    evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
-    hashingStrategy: EqualityPolicy<Key>,
-    cacheSizeHint: Int,
-  ): MapIndexStorageCache<Key, Value> {
-    val newDescriptor = SubCacheDescriptor(valueReader, evictedValuesPersister)
-    while (true) { //CAS loop:
-      val currentDescriptors = subCachesDescriptors.get()
-      val updatedDescriptors = Int2ObjectOpenHashMap(currentDescriptors)
-      val subCacheId = updatedDescriptors.size + 1
-
-      check(!updatedDescriptors.containsKey(subCacheId)) { "Cache with id=$subCacheId already registered" }
-      run { //wrapped in .run() to avoid overly-smart-cast:
-        @Suppress("UNCHECKED_CAST") //TODO RC: sort out generics here:
-        updatedDescriptors[subCacheId] = newDescriptor as SubCacheDescriptor<Any, Any?>
-      }
-      if (subCachesDescriptors.compareAndSet(currentDescriptors, updatedDescriptors)) {
-        val caffeineSharedCache = CaffeineSharedCache(subCacheId, newDescriptor, sharedCache, hashingStrategy)
-        return caffeineSharedCache
-      }
-    }
-  }
-
-  override fun totalReads(): Long = sharedCache.stats().requestCount()
-
-  override fun totalReadsUncached(): Long = sharedCache.stats().loadCount()
-
-  override fun totalEvicted(): Long = sharedCache.stats().evictionCount()
-
-  /**
-   * 1. Caffeine doesn't allow customizing equals/hashCode evaluation strategy, hence the only way to customize
-   *    equals/hashCode is creating a wrapper around the actual Key, and use [equalityPolicy] in the wrapper's
-   *    equals/hashCode.
-   * 2. Since cache is shared, we need to differentiate keys-values from sub-caches -- this is [subCacheId]
-   *    is for
-   */
-  private class SharedCacheKey<out K>(
-    val key: K,
-    val subCacheId: Int,
-    private val equalityPolicy: EqualityPolicy<K>,
-  ) {
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (javaClass !== other?.javaClass) return false
-
-      @Suppress("UNCHECKED_CAST")
-      other as SharedCacheKey<K>
-
-      if (subCacheId != other.subCacheId) {
-        return false
-      }
-      return equalityPolicy.isEqual(key, other.key)
-    }
-
-    override fun hashCode(): Int = equalityPolicy.getHashCode(key) * 31 + subCacheId
-  }
-
-  //@JvmRecord
-  private data class SubCacheDescriptor<Key, Value>(
-    val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
-    val evictedValuesPersister: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
-    val cacheAccessLock: ReentrantLock = ReentrantLock(),
-  )
-
-  private class CaffeineSharedCache<Key : Any, Value>(
-    private val cacheId: Int,
-    private val subCacheDescriptor: SubCacheDescriptor<Key, Value>,
-    private val sharedCache: LoadingCache<SharedCacheKey<Any>, ChangeTrackingValueContainer<Any?>>,
-    private val equalityPolicy: EqualityPolicy<Key>,
-  ) : MapIndexStorageCache<Key, Value> {
-
-    override fun read(key: Key): ChangeTrackingValueContainer<Value> {
-      @Suppress("UNCHECKED_CAST")
-      return sharedCache.get(SharedCacheKey(key, cacheId, equalityPolicy)) as ChangeTrackingValueContainer<Value>
-    }
-
-    override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? {
-      @Suppress("UNCHECKED_CAST")
-      return sharedCache.getIfPresent(SharedCacheKey(key, cacheId, equalityPolicy)) as ChangeTrackingValueContainer<Value>?
-    }
-
-    override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> {
-      return sharedCache.asMap().entries
-        .filter { it.key.subCacheId == cacheId }
-        .map {
-          @Suppress("UNCHECKED_CAST")
-          it.value as ChangeTrackingValueContainer<Value>
-        }
-    }
-
-    override fun invalidateAll() {
-      sharedCache.invalidateAll(
-        sharedCache.asMap().keys.asSequence()
-          .filter { it.subCacheId == cacheId }
-          .toList()
-      )
     }
   }
 }

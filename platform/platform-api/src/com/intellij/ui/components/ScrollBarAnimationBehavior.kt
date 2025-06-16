@@ -6,6 +6,7 @@ package com.intellij.ui.components
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UiDispatcherKind
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceOrNull
 import kotlinx.coroutines.*
@@ -74,7 +75,7 @@ internal class MacScrollBarAnimationBehavior(
 
   init {
     // Can be called early in the lifecycle when there is no application yet.
-    var context = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.edtDispatcher()
+    var context = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.uiDispatcher(UiDispatcherKind.LEGACY, false)
     if (context == null) {
       context = object : CoroutineDispatcher() {
         override fun dispatch(context: CoroutineContext, block: Runnable) {

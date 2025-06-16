@@ -13,7 +13,7 @@ import javax.management.AttributeNotFoundException
 import javax.management.InstanceNotFoundException
 import kotlin.reflect.KClass
 
-open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : Driver {
+open class DriverImpl(host: JmxHost?, override val isRemDevMode: Boolean) : Driver {
   private val invoker: Invoker = JmxCallHandler.jmx(Invoker::class.java, host)
   private val sessionHolder = ThreadLocal<Session>()
 
@@ -97,10 +97,12 @@ open class DriverImpl(host: JmxHost?, override val isRemoteIdeMode: Boolean) : D
     }
 
     val ref = instance.getRef()
+
+    val targetClassPluginId = findRemoteMeta(clazz.java)?.let { getPluginId(it) }
     val refPluginId = instance.getRefPluginId()
 
     @Suppress("UNCHECKED_CAST")
-    return refBridge(clazz.java, ref, refPluginId) as T
+    return refBridge(clazz.java, ref, targetClassPluginId ?: refPluginId) as T
   }
 
   private fun convertArgsToPass(rdTarget: RdTarget, args: Array<out Any?>?): Array<Any?> {

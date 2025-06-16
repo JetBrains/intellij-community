@@ -3,6 +3,7 @@ package com.intellij.platform.syntax.element
 
 import com.intellij.platform.syntax.SyntaxElementType
 import org.jetbrains.annotations.ApiStatus
+import kotlin.jvm.JvmStatic
 
 /**
  * A set of most used basic token types

@@ -6,8 +6,8 @@ KotlinStackFrame (sourcePositionForGetterWithDelegatedInterface.kt:16)
     JavaValue[local] instance: sourcePositionForGetterWithDelegatedInterface.TestClass = sourcePositionForGetterWithDelegatedInterface.TestClass@hashCode (sourcePositionForGetterWithDelegatedInterface.kt:14)
         JavaValue[field] $$delegate_0: sourcePositionForGetterWithDelegatedInterface.Delegate = sourcePositionForGetterWithDelegatedInterface.Delegate@hashCode
             DummyMessageValueNode = No fields to display
-            JavaValue[getter] iInt: int (sourcePositionForGetterWithDelegatedInterface.kt:4)
-        JavaValue[getter] iInt: int (sourcePositionForGetterWithDelegatedInterface.kt:4)
+            JavaValue[getter sourcePositionForGetterWithDelegatedInterface.Delegate.getIInt()] iInt: int (sourcePositionForGetterWithDelegatedInterface.kt:4)
+        JavaValue[getter sourcePositionForGetterWithDelegatedInterface.TestClass.getIInt()] iInt: int (sourcePositionForGetterWithDelegatedInterface.kt:4)
 Disconnected from the target VM
 
 Process finished with exit code 0

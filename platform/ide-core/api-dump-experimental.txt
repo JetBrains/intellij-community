@@ -24,7 +24,7 @@ com.intellij.ide.dnd.DnDEvent$DropTargetHighlightingType
 - logIdeScriptUsageEvent(java.lang.Class):V
 - notifyByBalloon(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.MessageType,java.lang.String,javax.swing.Icon,javax.swing.event.HyperlinkListener):Z
 - openHttpConnection(java.lang.String):java.net.URLConnection
-- performActionDumbAwareWithCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
+- performAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
 - prepareURL(java.lang.String):V
 - revealFile(java.nio.file.Path):V
 - showErrorDialog(java.lang.String,java.lang.String):Z
@@ -48,6 +48,11 @@ f:com.intellij.openapi.project.ProjectUtil
 - f:focusedButton(java.lang.String):com.intellij.openapi.ui.MessageDialogBuilder$Message
 - f:show(com.intellij.openapi.project.Project,java.awt.Component):java.lang.String
 - bs:show$default(com.intellij.openapi.ui.MessageDialogBuilder$Message,com.intellij.openapi.project.Project,java.awt.Component,I,java.lang.Object):java.lang.String
+f:com.intellij.openapi.vfs.FilePermissionsKt
+- *sf:getProjectFilesRead():com.intellij.platform.ide.core.permissions.Permission
+- *sf:getProjectFilesWrite():com.intellij.platform.ide.core.permissions.Permission
+- *sf:readFilePermission(com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.ide.core.permissions.Permission
+- *sf:writeFilePermission(com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.ide.core.permissions.Permission
 *:com.intellij.openapi.wm.IconWidgetPresentation
 - com.intellij.openapi.wm.WidgetPresentation
 - a:icon():kotlinx.coroutines.flow.Flow
@@ -58,14 +63,23 @@ f:com.intellij.openapi.project.ProjectUtil
 *:com.intellij.openapi.wm.WidgetPresentation
 - getClickConsumer():kotlin.jvm.functions.Function1
 - getShortcutText(kotlin.coroutines.Continuation):java.lang.Object
-- bs:getShortcutText$suspendImpl(com.intellij.openapi.wm.WidgetPresentation,kotlin.coroutines.Continuation):java.lang.Object
 - getTooltipText(kotlin.coroutines.Continuation):java.lang.Object
-- bs:getTooltipText$suspendImpl(com.intellij.openapi.wm.WidgetPresentation,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.openapi.wm.WidgetPresentationDataContext
 - a:getCurrentFileEditor():kotlinx.coroutines.flow.StateFlow
 - a:getProject():com.intellij.openapi.project.Project
 *:com.intellij.openapi.wm.WidgetPresentationFactory
 - a:createPresentation(com.intellij.openapi.wm.WidgetPresentationDataContext,kotlinx.coroutines.CoroutineScope):com.intellij.openapi.wm.WidgetPresentation
+*:com.intellij.platform.ide.core.permissions.Permission
+- a:getId():java.lang.String
+- a:isGranted():Z
+*f:com.intellij.platform.ide.core.permissions.PermissionDeniedException
+- java.lang.IllegalStateException
+- <init>(java.util.List):V
+- f:getPermissions():java.util.List
+f:com.intellij.platform.ide.core.permissions.PermissionsKt
+- *sf:checkPermissionsGranted(com.intellij.platform.ide.core.permissions.Permission[]):V
+*:com.intellij.platform.ide.core.permissions.RequiresPermissions
+- a:getRequiredPermissions():java.util.Collection
 c:com.intellij.projectImport.ProjectAttachProcessor
 - *:attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.ui.AnimatedIcon

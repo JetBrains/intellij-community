@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapter;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.ContentHashEnumeratorOverDurableEnumerator;
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.content.ContentStorageAdapter;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.storage.lf.RefCountingContentStorageImplLF;
 import org.jetbrains.annotations.NotNull;

@@ -7,8 +7,9 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/build-scripts/dev-server:buildScripts-devBuildServer",
+    "@lib//:jetbrains-annotations",
     "//platform/boot",
+    "//platform/build-scripts/dev-server:buildScripts-devBuildServer",
     "//platform/util-class-loader:util-classLoader",
   ]
 )

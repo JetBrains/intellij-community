@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.application.Application;
@@ -11,6 +11,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DigestUtilKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -121,7 +122,9 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
     }
   }
 
-  static @NotNull X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull X509TrustManager createTrustManagerFromCertificates(@NotNull Collection<? extends X509Certificate> certificates) throws Exception {
     KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
     ks.load(null, null);
     for (X509Certificate certificate : certificates) {
@@ -155,12 +158,14 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
   }
 
   @VisibleForTesting
-  void addSystemTrustManager(X509TrustManager manager) {
+  @ApiStatus.Internal
+  public void addSystemTrustManager(X509TrustManager manager) {
     mySystemManagers.add(manager);
   }
 
   @VisibleForTesting
-  void removeSystemTrustManager(X509TrustManager manager) {
+  @ApiStatus.Internal
+  public void removeSystemTrustManager(X509TrustManager manager) {
     if (!mySystemManagers.remove(manager)) {
       throw new IllegalArgumentException("trust manager was not in the list of system trust managers: " + manager);
     }
@@ -592,7 +597,9 @@ public final class ConfirmingTrustManager extends ClientOnlyTrustManager {
       }
     }
 
-    boolean removeAllCertificates() {
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public boolean removeAllCertificates() {
       for (X509Certificate certificate : getCertificates()) {
         if (!removeCertificate(certificate)) {
           return false;

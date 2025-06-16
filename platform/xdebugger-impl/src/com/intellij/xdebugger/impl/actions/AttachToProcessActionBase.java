@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -43,6 +43,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class AttachToProcessActionBase extends AnAction implements DumbAware {
   private static final Key<Map<XAttachHost, LinkedHashSet<RecentItem>>> RECENT_ITEMS_KEY =
     Key.create("AttachToProcessAction.RECENT_ITEMS_KEY");
@@ -175,12 +176,16 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
 
     for (XAttachHostProvider hostProvider : getAvailableHosts()) {
       indicator.checkCanceled();
-      //noinspection unchecked
-      Set<XAttachHost> hosts = new HashSet<>(hostProvider.getAvailableHosts(project));
-
-      for (XAttachHost host : hosts) {
+      try {
         //noinspection unchecked
-        currentItems.add(new AttachHostItem(hostProvider.getPresentationGroup(), false, host, project, dataHolder));
+        Set<XAttachHost> hosts = new HashSet<>(hostProvider.getAvailableHosts(project));
+
+        for (XAttachHost host : hosts) {
+          //noinspection unchecked
+          currentItems.add(new AttachHostItem(hostProvider.getPresentationGroup(), false, host, project, dataHolder));
+        }
+      } catch(Exception e) {
+        LOG.error("Error getting available hosts from the hostProvider " + hostProvider + ": " + e.getMessage());
       }
     }
 
@@ -232,7 +237,9 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     return doCollectAttachProcessItems(project, host, getProcessInfos(host), indicator, getProvidersApplicableForHost(host));
   }
 
-  static @NotNull List<AttachToProcessItem> doCollectAttachProcessItems(final @NotNull Project project,
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull List<AttachToProcessItem> doCollectAttachProcessItems(final @NotNull Project project,
                                                                         @NotNull XAttachHost host,
                                                                         @NotNull List<? extends ProcessInfo> processInfos,
                                                                         @NotNull ProgressIndicator indicator,
@@ -305,7 +312,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
            : List.copyOf(recentItems.get(host));
   }
 
-  public static class RecentItem {
+  public static final class RecentItem {
     private final @NotNull XAttachHost myHost;
     private final @NotNull ProcessInfo myProcessInfo;
     private final @NotNull XAttachPresentationGroup myGroup;
@@ -408,10 +415,13 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     }
 
     @Nullable @NlsContexts.Separator
-    String getSeparatorTitle() {
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public String getSeparatorTitle() {
       return myIsFirstInGroup ? myGroupName : null;
     }
 
+    @ApiStatus.Internal
     public @NotNull UserDataHolder getDataHolder() {
       return myDataHolder;
     }
@@ -575,7 +585,8 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     }
   }
 
-  private static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
+  @ApiStatus.Internal
+  public static class MyBasePopupStep<T extends AttachItem> extends BaseListPopupStep<T> {
     final @NotNull Project myProject;
 
     MyBasePopupStep(@NotNull Project project,
@@ -606,7 +617,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     }
   }
 
-  public class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
+  public final class AttachListStep extends MyBasePopupStep<AttachItem> implements ListPopupStepEx<AttachItem> {
     public AttachListStep(@NotNull List<AttachItem> items, @Nullable @NlsContexts.PopupTitle String title, @NotNull Project project) {
       super(project, title, items);
     }

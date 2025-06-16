@@ -1,7 +1,9 @@
 <html>
 <body>
-Reports non-Basic Latin characters in literals and suggests replacing them with unicode entities.
-<p>Example:</p>
+Reports non-Basic Latin characters in literals and comments.
+The inspection provides a fix to replace such characters with Unicode escapes in literals,
+and with HTML entities in comments.
+<p><b>Example:</b></p>
 <pre><code>
   // © 2021
   char c = '©';
@@ -14,5 +16,7 @@ Reports non-Basic Latin characters in literals and suggests replacing them with 
   char c = '\u00a9';
   String s = "\u00c1\u00ee";
 </code></pre>
+<!-- tooltip end -->
+By default, this inspection does not highlight in the editor, but only provides a fix.
 </body>
 </html>

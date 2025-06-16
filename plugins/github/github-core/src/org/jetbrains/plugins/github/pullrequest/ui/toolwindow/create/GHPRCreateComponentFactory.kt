@@ -23,6 +23,7 @@ import com.intellij.collaboration.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -136,7 +137,7 @@ internal object GHPRCreateComponentFactory {
   }
 
   private suspend fun getRemoteBranchName(vm: GHPRCreateViewModel, suggestedName: String): String =
-    withContext(Dispatchers.Main) {
+    withContext(Dispatchers.EDT) {
       MessagesService.getInstance().showInputDialog(vm.project, null,
                                                     message("pull.request.create.input.remote.branch.name"),
                                                     message("pull.request.create.input.remote.branch.title"),

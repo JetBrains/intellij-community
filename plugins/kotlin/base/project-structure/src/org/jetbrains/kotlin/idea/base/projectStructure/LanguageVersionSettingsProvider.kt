@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.cli.common.arguments.JavaTypeEnhancementStateParser
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.cli.common.arguments.configureAnalysisFlags
+import org.jetbrains.kotlin.cli.common.arguments.configureLanguageFeatures
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.*
@@ -59,13 +61,12 @@ val Project.languageVersionSettings: LanguageVersionSettings
 
 val PsiElement.languageVersionSettings: LanguageVersionSettings
     get() {
-        if (project.serviceOrNull<ProjectFileIndex>() == null) {
-            return LanguageVersionSettingsImpl.DEFAULT
-        }
-
         return runReadAction {
             when (KotlinPluginModeProvider.currentPluginMode) {
                 KotlinPluginMode.K1 -> {
+                    if (project.serviceOrNull<ProjectFileIndex>() == null) {
+                        return@runReadAction LanguageVersionSettingsImpl.DEFAULT
+                    }
                     project.service<LanguageSettingsProvider>().getLanguageVersionSettings(this.moduleInfo, project)
                 }
                 KotlinPluginMode.K2 -> {
@@ -138,6 +139,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         val arguments = KotlinCommonCompilerArgumentsHolder.getInstance(project).settings
 
         val languageVersion = LanguageVersion.fromVersionString(arguments.languageVersion)
+            ?: DefaultKotlinLanguageVersionProvider.getInstance()?.getDefaultLanguageVersion()
             ?: KotlinPluginLayout.standaloneCompilerVersion.languageVersion
 
         val languageVersionForApiVersion = LanguageVersion.fromVersionString(arguments.apiVersion) ?: languageVersion
@@ -226,6 +228,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
 
             val kotlinVersion = LanguageVersion.fromVersionString(arguments.languageVersion)?.toKotlinVersion()
                 ?: settings.languageLevel?.toKotlinVersion()
+                ?: DefaultKotlinLanguageVersionProvider.getInstance()?.getDefaultLanguageVersion()?.toKotlinVersion()
                 ?: KotlinPluginLayout.standaloneCompilerVersion.kotlinVersion
 
             // TODO definitely wrong implementation, merge state properly
@@ -272,4 +275,17 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
     }
 
     override fun dispose() {}
+}
+
+internal interface DefaultKotlinLanguageVersionProvider {
+    fun getDefaultLanguageVersion(): LanguageVersion
+
+    companion object {
+        fun getInstance(): DefaultKotlinLanguageVersionProvider? =
+            serviceOrNull<DefaultKotlinLanguageVersionProvider>()
+    }
+}
+
+internal class DefaultKotlinLanguageVersionProviderWithLatestVersion : DefaultKotlinLanguageVersionProvider {
+    override fun getDefaultLanguageVersion(): LanguageVersion = LanguageVersion.LATEST_STABLE
 }

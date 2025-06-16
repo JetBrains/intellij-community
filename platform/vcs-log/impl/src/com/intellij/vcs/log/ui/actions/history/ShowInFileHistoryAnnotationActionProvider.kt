@@ -4,30 +4,28 @@ package com.intellij.vcs.log.ui.actions.history
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vcs.actions.AnnotationData
 import com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider
 import com.intellij.openapi.vcs.annotate.FileAnnotation
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.io.await
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.history.canShowFileHistory
-import com.intellij.vcs.log.history.showFileHistoryUi
-import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToHash
-import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.util.VcsLogUtil
+import com.intellij.vcs.log.VcsLogFileHistoryProvider
 import com.intellij.vcsUtil.VcsUtil
-import kotlinx.coroutines.launch
 
 private class ShowInFileHistoryAnnotationActionProvider : AnnotationGutterActionProvider {
   override fun createAction(annotation: FileAnnotation): AnAction {
-    return ShowInFileHistoryAnnotationAction(annotation)
+    val service = annotation.project.service<VcsLogFileHistoryProvider>()
+    return ShowInFileHistoryAnnotationAction(service, annotation)
   }
 }
 
-private class ShowInFileHistoryAnnotationAction(private val annotation: FileAnnotation) :
-  DumbAwareAction(VcsLogBundle.message("vcs.log.action.show.in.file.history.text")) {
+private class ShowInFileHistoryAnnotationAction(
+  private val service: VcsLogFileHistoryProvider,
+  private val annotation: FileAnnotation,
+) : DumbAwareAction(VcsLogBundle.message("vcs.log.action.show.in.file.history.text")) {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
@@ -40,9 +38,9 @@ private class ShowInFileHistoryAnnotationAction(private val annotation: FileAnno
 
     val annotationData = AnnotationData.extractFrom(project, file)
     val annotatedFilePath = annotationData?.filePath ?: VcsUtil.getFilePath(file)
-    val annotatedRevisionNumber = annotationData?.revisionNumber?.asString()
+    val annotatedRevisionNumber = annotationData?.revisionNumber
 
-    e.presentation.isEnabledAndVisible = canShowFileHistory(project, listOf(annotatedFilePath), annotatedRevisionNumber)
+    e.presentation.isEnabledAndVisible = service.canShowFileHistory(listOf(annotatedFilePath), annotatedRevisionNumber)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -52,23 +50,14 @@ private class ShowInFileHistoryAnnotationAction(private val annotation: FileAnno
 
     val annotationData = AnnotationData.extractFrom(project, file)
     val annotatedFilePath = annotationData?.filePath ?: VcsUtil.getFilePath(file)
-    val annotatedRevisionNumber = annotationData?.revisionNumber?.asString()
+    val annotatedRevisionNumber = annotationData?.revisionNumber
 
-    val ui = showFileHistoryUi(project, listOf(annotatedFilePath), annotatedRevisionNumber) ?: return
-    val future = ui.jumpToHash(lineRevisionNumber, false, true)
-
-    VcsProjectLog.getInstance(project).coroutineScope.launch {
-      withBackgroundProgress(project,
-                             VcsLogBundle.message("file.history.show.commit.in.history.process",
-                                                  VcsLogUtil.getShortHash(lineRevisionNumber)), true) {
-        future.await()
-      }
-    }
+    service.showFileHistory(listOf(annotatedFilePath), annotatedRevisionNumber, lineRevisionNumber)
   }
 
-  private fun getLineRevisionNumber(e: AnActionEvent): String? {
+  private fun getLineRevisionNumber(e: AnActionEvent): VcsRevisionNumber? {
     val lineNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.dataContext)
-    return annotation.getLineRevisionNumber(lineNumber)?.asString()
+    return annotation.getLineRevisionNumber(lineNumber)
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

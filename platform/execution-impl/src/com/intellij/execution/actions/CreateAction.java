@@ -9,7 +9,7 @@ import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ public class CreateAction extends BaseRunConfigurationAction {
 
   public CreateAction(@Nullable Icon icon) {
     super(ExecutionBundle.messagePointer("create.run.configuration.action.name"), Presentation.NULL_STRING, icon);
-    getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+    getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true);
   }
 
   @Override

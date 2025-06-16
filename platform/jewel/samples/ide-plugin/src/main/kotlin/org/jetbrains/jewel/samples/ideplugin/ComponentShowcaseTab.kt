@@ -424,6 +424,8 @@ private fun MarkdownExample(project: Project) {
                 |```kotlin
                 |fun hello() = "World"
                 |```
+                |
+                |    Indented code here!
                 """
                     .trimMargin(),
                 Modifier.fillMaxWidth()

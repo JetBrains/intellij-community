@@ -3,66 +3,48 @@ package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.MessageError
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
-import com.jetbrains.python.packaging.common.EmptyPythonPackageDetails
+import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.management.PythonPackageManagerService
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import io.github.z4kn4fein.semver.toVersion
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class CompositePythonRepositoryManager(
-  project: Project,
-  sdk: Sdk,
+  override val project: Project,
   private val managers: List<PythonRepositoryManager>,
-) : PythonRepositoryManager(project, sdk) {
+) : PythonRepositoryManager {
 
   override val repositories: List<PyPackageRepository> =
-    managers.flatMap { it.repositories }
+    managers.flatMap { it.repositories }.distinct()
 
-  override fun allPackages(): List<String> =
-    managers.flatMap { it.allPackages() }
+  override fun allPackages(): Set<String> =
+    repositories.flatMap { it.getPackages() }.toSet()
 
-  override fun packagesFromRepository(repository: PyPackageRepository): List<String> {
-    return findPackagesInRepository(repository)
-           ?: error("No packages for requested repository in cache")
+  override suspend fun getPackageDetails(pkg: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails> {
+    val manager = managers.firstOrNull { it.allPackages().contains(pkg.name) }
+                  ?: return PyResult.failure(MessageError(PyBundle.message("python.packaging.could.not.parse.response", pkg.name, pkg.toString())))
+    return manager.getPackageDetails(pkg)
   }
 
-  private fun findPackagesInRepository(repository: PyPackageRepository): List<String>? {
-    for (manager in managers) {
-      val packages = manager.packagesFromRepository(repository)
-      if (packages.isNotEmpty()) {
-        return packages
-      }
-    }
-    return null
-  }
-
-  override suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails {
-    for (manager in managers) {
-      if (manager.allPackages().contains(pkg.name)) {
-        return manager.getPackageDetails(pkg)
-      }
-    }
-    return EmptyPythonPackageDetails(pkg.name, PyBundle.message("python.packaging.could.not.parse.response", pkg.name, pkg.repository?.name))
-  }
-
-  override suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion? {
+  override suspend fun getLatestVersion(spec: PythonRepositoryPackageSpecification): PyPackageVersion? {
     var latestVersion: PyPackageVersion? = null
     for (manager in managers) {
       val version = manager.getLatestVersion(spec)
-      if (version != null &&
-          (latestVersion == null || version.presentableText.toVersion() > latestVersion.presentableText.toVersion())
-      ) {
+      if (version != null && (latestVersion == null || PyPackageVersionComparator.compare(version, latestVersion) > 0)) {
         latestVersion = version
       }
     }
@@ -76,34 +58,28 @@ internal class CompositePythonRepositoryManager(
 
   override suspend fun refreshCaches() {
     mutex.withLock {
-      managers.forEach { manager ->
+      managers.map { manager ->
         launchManagerRefresh(manager)
-      }
+      }.awaitAll()
+
       isInit.set(true)
     }
   }
 
-  private fun launchManagerRefresh(manager: PythonRepositoryManager) {
-    project.service<PythonPackageManagerService>().getServiceScope().launch {
+  private fun launchManagerRefresh(manager: PythonRepositoryManager): Deferred<Unit> {
+    return project.service<PythonPackageManagerService>().getServiceScope().async {
       cacheRefreshLimitSemaphore.withPermit {
         manager.refreshCaches()
       }
     }
   }
 
+  @Throws(IOException::class)
   override suspend fun initCaches() {
     if (!isInit.compareAndSet(false, true)) return
     mutex.withLock {
       managers.forEach { it.initCaches() }
     }
-  }
-
-  override fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails {
-    val repositoryWithPackage = managers.firstOrNull { it ->
-      it.allPackages().contains(spec.name)
-    } ?: error("No repository contains the package ${spec.name}")
-
-    return repositoryWithPackage.buildPackageDetails(rawInfo, spec)
   }
 
   override fun searchPackages(query: String, repository: PyPackageRepository): List<String> {

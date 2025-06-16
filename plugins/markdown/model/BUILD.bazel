@@ -14,6 +14,8 @@ jvm_library(
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/markdown/core:markdown",
+    "//platform/editor-ui-api:editor-ui",
+    "//xml/xml-psi-api:psi",
     "//xml/xml-psi-impl:psi-impl",
     "//platform/core-api:core",
     "//platform/core-impl",
@@ -22,9 +24,11 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-ui",
     "//xml/xml-parser:parser",
-    "//platform/backend",
     "@lib//:kotlin-stdlib",
   ],
-  runtime_deps = [":model_resources"]
+  runtime_deps = [
+    ":model_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.markdown.model` end

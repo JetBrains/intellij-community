@@ -30,6 +30,7 @@ import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
+import com.jetbrains.python.inspections.PyUnusedImportsInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyReferenceExpression;
@@ -460,7 +461,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
 
   private void configureMultiFileProject() {
     myFixture.copyDirectoryToProject(getTestName(true), "");
-    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class, PyUnusedImportsInspection.class);
     myFixture.configureByFile("main.py");
     myFixture.checkHighlighting(true, false, false);
   }

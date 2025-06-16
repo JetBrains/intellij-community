@@ -8,8 +8,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.ui.BrowserHyperlinkListener
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
-import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.nio.file.Path
@@ -27,9 +26,9 @@ fun JEditorPane.addGitLabHyperlinkListener(project: Project?) {
 
     if (e.description.startsWith(GitLabUIUtil.OPEN_MR_LINK_PREFIX) && project != null) {
       val mrIid = e.description.removePrefix(GitLabUIUtil.OPEN_MR_LINK_PREFIX)
-      val projectVm = project.service<GitLabToolWindowViewModel>().projectVm.value ?: return@onHyperlinkActivated
-      projectVm.showTab(GitLabReviewTab.ReviewSelected(mrIid), GitLabStatistics.ToolWindowOpenTabActionPlace.TIMELINE_LINK)
-      projectVm.filesController.openTimeline(mrIid, false)
+      val projectVm = project.service<GitLabProjectViewModel>().connectedProjectVm.value ?: return@onHyperlinkActivated
+      projectVm.openMergeRequestDetails(mrIid, GitLabStatistics.ToolWindowOpenTabActionPlace.TIMELINE_LINK)
+      projectVm.openMergeRequestTimeline(mrIid, false)
       return@onHyperlinkActivated
     }
 

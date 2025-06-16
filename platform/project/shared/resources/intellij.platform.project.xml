@@ -1,10 +1,6 @@
 <idea-plugin>
-  <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.project.projectIdResolver"
-                    interface="com.intellij.platform.project.ProjectIdResolver"
-                    dynamic="true" />
-  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <platform.entityTypes implementation="com.intellij.platform.project.ProjectEntitiesProvider"/>
+    <postStartupActivity implementation="com.intellij.platform.project.module.ModuleStateInitializer"/>
   </extensions>
 </idea-plugin>

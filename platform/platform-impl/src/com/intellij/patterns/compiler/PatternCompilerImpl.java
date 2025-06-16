@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.patterns.compiler;
 
@@ -548,7 +548,7 @@ public final class PatternCompilerImpl<T> implements PatternCompiler<T> {
     public LazyPresentablePattern(@NotNull Node node, @NotNull Set<Method> staticMethods) {
       myNode = node;
       myStaticMethods = staticMethods;
-      myHashCode = StringHash.calc(toString());
+      myHashCode = StringHash.buz(toString());
     }
 
     @Override

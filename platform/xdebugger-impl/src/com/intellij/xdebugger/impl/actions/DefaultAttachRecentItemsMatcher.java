@@ -1,14 +1,17 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.xdebugger.attach.XAttachDebugger;
 import com.intellij.xdebugger.attach.XAttachRecentItemsMatcher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class DefaultAttachRecentItemsMatcher implements XAttachRecentItemsMatcher {
   @Override
   public @NotNull List<? extends AttachToProcessActionBase.AttachToProcessItem> getMatchingAttachItems(AttachToProcessActionBase.@NotNull RecentItem recentItem,

@@ -1,15 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("IjentTunnelsUtil")
+@file:OptIn(IntellijInternalApi::class)
 
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.net.*
 import java.nio.ByteBuffer
@@ -31,6 +34,7 @@ private val LOG: Logger = Logger.getInstance(EelTunnelsApi::class.java)
  * This function returns when the server starts accepting connections.
  */
 @OptIn(DelicateCoroutinesApi::class)
+@ApiStatus.Internal
 fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress) {
   val serverSocket = ServerSocket()
   serverSocket.bind(InetSocketAddress("localhost", localPort), 1024)
@@ -54,14 +58,14 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
         connectionCounter++
         launch {
           socket.use {
-            tunnels.withConnectionToRemotePort(address, {
-              if (it is EelConnectionError.ConnectionProblem) {
-                LOG.debug("Failed to establish connection $connectionCounter ($localPort - $address: $it); closing socket")
-              }
-              else {
-                LOG.error("Failed to connect to remote port $localPort - $address: $it")
-              }
-            }) { (channelTo, channelFrom) ->
+            tunnels.getConnectionToRemotePort().hostAddress(address).withConnectionToRemotePort({
+                                                                                                  if (it is EelConnectionError.ConnectionProblem) {
+                                                                                                    LOG.debug("Failed to establish connection $connectionCounter ($localPort - $address: $it); closing socket")
+                                                                                                  }
+                                                                                                  else {
+                                                                                                    LOG.error("Failed to connect to remote port $localPort - $address: $it")
+                                                                                                  }
+                                                                                                }) { (channelTo, channelFrom) ->
               redirectClientConnectionDataToIJent(currentConnection, socket, channelTo)
               redirectIJentDataToClientConnection(currentConnection, socket, channelFrom)
             }
@@ -91,14 +95,15 @@ fun CoroutineScope.forwardLocalPort(tunnels: EelTunnelsApi, localPort: Int, addr
  * @return An address which remote server listens to. It is useful to get the actual port if the port of [address] was 0
  */
 @OptIn(DelicateCoroutinesApi::class)
+@ApiStatus.Internal
 fun CoroutineScope.forwardLocalServer(tunnels: EelTunnelsApi, localPort: Int, address: EelTunnelsApi.HostAddress): Deferred<EelTunnelsApi.ResolvedSocketAddress> {
   // todo: do not forward anything if it is local eel
   val remoteAddress = CompletableDeferred<EelTunnelsApi.ResolvedSocketAddress>()
   launch(blockingDispatcher.plus(CoroutineName("Local server on port $localPort (tunneling to $address)"))) {
-    tunnels.withAcceptorForRemotePort(address, {
-      LOG.error("Failed to start a server on $address (was forwarding $localPort): $it")
-      remoteAddress.cancel()
-    }) { acceptor ->
+    tunnels.getAcceptorForRemotePort().hostAddress(address).withAcceptorForRemotePort({
+                                                                                        LOG.error("Failed to start a server on $address (was forwarding $localPort): $it")
+                                                                                        remoteAddress.cancel()
+                                                                                      }) { acceptor ->
       remoteAddress.complete(acceptor.boundAddress)
       var connections = 0
       for ((sendChannel, receiveChannel) in acceptor.incomingConnections) {
@@ -123,68 +128,65 @@ fun CoroutineScope.forwardLocalServer(tunnels: EelTunnelsApi, localPort: Int, ad
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int, socket: Socket, channelToIJent: EelSendChannel<IOException>) = launch(CoroutineName("Reader for connection $connectionId")) {
+private fun CoroutineScope.redirectClientConnectionDataToIJent(connectionId: Int, socket: Socket, channelToIJent: EelSendChannel) = launch(CoroutineName("Reader for connection $connectionId")) {
 
-  val result = copy(
-    socket.consumeAsEelChannel(), channelToIJent,
-    onReadError = {
-      if (it is SocketTimeoutException && channelToIJent.closed) {
-        this@launch.cancel("Channel is closed normally")
-        OnError.EXIT
+  try {
+    copy(
+      socket.consumeAsEelChannel(), channelToIJent,
+      onReadError = {
+        if (it is SocketTimeoutException && channelToIJent.isClosed) {
+          this@launch.cancel("Channel is closed normally")
+          OnError.EXIT
+        }
+        else {
+          OnError.RETRY
+        }
+      },
+    )
+  }
+  catch (error: IOException) {
+    when (val error = error) {
+      is CopyError.InError -> {
+        if (!socket.isClosed) {
+          LOG.warn("Connection $connectionId closed", error.cause)
+          throw CancellationException("Closed because of a socket exception", error.cause)
+        }
       }
-      else {
-        OnError.RETRY
+      is CopyError.OutError -> {
+        LOG.warn("Connection $connectionId closed by IJent; ${error.cause}")
       }
-    },
-  )
+    }
+  }
   channelToIJent.close()
-  when (result) {
-    is EelResult.Ok -> Unit
-    is EelResult.Error -> {
-      when (val error = result.error) {
-        is CopyResultError.InError -> {
-          if (!socket.isClosed) {
-            LOG.warn("Connection $connectionId closed", error.inError)
-            throw CancellationException("Closed because of a socket exception", error.inError)
-          }
+}
+
+private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int, socket: Socket, backChannel: EelReceiveChannel) = launch(CoroutineName("Writer for connection $connectionId")) {
+
+  try {
+    copy(backChannel, socket.asEelChannel(), onReadError = {
+      if (it is SocketTimeoutException) OnError.RETRY else OnError.EXIT
+    })
+  }
+  catch (error: IOException) {
+    when (val error = error) {
+      is CopyError.InError -> {
+        LOG.warn("Error reading from channel", error.cause)
+      }
+      is CopyError.OutError -> {
+        val e = error.cause
+        if (!socket.isClosed) {
+          LOG.warn("Socket connection $connectionId closed", e)
         }
-        is CopyResultError.OutError -> {
-          LOG.warn("Connection $connectionId closed by IJent; ${error.outError}")
+        else {
+          LOG.debug("Socket connection $connectionId closed because of cancellation", e)
         }
       }
     }
   }
-}
-
-private fun CoroutineScope.redirectIJentDataToClientConnection(connectionId: Int, socket: Socket, backChannel: EelReceiveChannel<IOException>) = launch(CoroutineName("Writer for connection $connectionId")) {
-
-  val result = copy(backChannel, socket.asEelChannel(),
-                    onReadError = {
-                      if (it is SocketTimeoutException) OnError.RETRY else OnError.EXIT
-                    })
-
   backChannel.close()
-  when (result) {
-    is EelResult.Ok -> Unit
-    is EelResult.Error -> {
-      when (val error = result.error) {
-        is CopyResultError.InError -> {
-          LOG.warn("Error reading from channel", error.inError)
-        }
-        is CopyResultError.OutError -> {
-          val e = error.outError
-          if (!socket.isClosed) {
-            LOG.warn("Socket connection $connectionId closed", e)
-          }
-          else {
-            LOG.debug("Socket connection $connectionId closed because of cancellation", e)
-          }
-        }
-      }
-    }
-  }
 }
 
+@ApiStatus.Internal
 fun EelTunnelsApi.ResolvedSocketAddress.asInetAddress(): InetSocketAddress {
   val inetAddress = when (this) {
     is EelTunnelsApi.ResolvedSocketAddress.V4 -> InetAddress.getByAddress(ByteBuffer.allocate(4).putInt(bits.toInt()).toByteArray())

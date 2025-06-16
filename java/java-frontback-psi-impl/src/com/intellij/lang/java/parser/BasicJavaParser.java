@@ -5,6 +5,11 @@ import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 @ApiStatus.Experimental
 public abstract class BasicJavaParser {
 

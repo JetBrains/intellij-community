@@ -8,17 +8,33 @@ import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.concurrent.CompletableFuture
 import kotlin.properties.Delegates
 
-internal abstract class GHListLoaderBase<T>(private val progressManager: ProgressManager)
-  : GHListLoader<T> {
+internal abstract class GHListLoaderBase<T>(
+  private val parentCs: CoroutineScope,
+  private val progressManager: ProgressManager
+) : GHListLoader<T> {
 
   private var lastFuture = CompletableFuture.completedFuture(emptyList<T>())
   private var progressIndicator = NonReusableEmptyProgressIndicator()
+
+  init {
+    parentCs.launch {
+      try {
+        awaitCancellation()
+      }
+      finally {
+        progressIndicator.cancel()
+      }
+    }
+  }
 
   private val loadingStateChangeEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
   override var loading: Boolean by Delegates.observable(false) { _, _, _ ->
@@ -36,7 +52,7 @@ internal abstract class GHListLoaderBase<T>(private val progressManager: Progres
   override fun canLoadMore() = !loading && error == null
 
   override fun loadMore(update: Boolean) {
-    if (Disposer.isDisposed(this)) return
+    if (!parentCs.isActive) return
 
     val indicator = progressIndicator
     if (canLoadMore() || update) {
@@ -108,6 +124,4 @@ internal abstract class GHListLoaderBase<T>(private val progressManager: Progres
 
   override fun addErrorChangeListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(errorChangeEventDispatcher, disposable, listener)
-
-  override fun dispose() = progressIndicator.cancel()
 }

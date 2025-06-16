@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.util.containers.JBTreeTraverser;
@@ -31,7 +31,7 @@ public final class ComponentTreeEventDispatcher<T extends EventListener> {
 
   private ComponentTreeEventDispatcher(final @Nullable Component root, @NotNull Class<T> listenerClass) {
     myListenerClass = listenerClass;
-    myMulticaster = EventDispatcher.createMulticaster(listenerClass, null, () -> {
+    myMulticaster = EventDispatcher.createMulticaster(listenerClass, () -> {
       JBTreeTraverser<Component> traverser = uiTraverser(root);
       if (root == null) traverser = traverser.withRoots(Arrays.asList(Window.getWindows()));
       return traverser.postOrderDfsTraversal().filter(myListenerClass);

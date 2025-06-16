@@ -3,7 +3,6 @@ package com.intellij.collaboration.api.graphql
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.io.InputStream
 import java.time.Duration

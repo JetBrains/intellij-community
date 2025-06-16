@@ -29,6 +29,8 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = [":vcs-gitlab-yaml"],
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
     "//plugins/gitlab/gitlab-core:vcs-gitlab",
     "//plugins/gitlab/gitlab-core:vcs-gitlab_test_lib",
     "//plugins/yaml/backend",
@@ -36,10 +38,11 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/util/base",
     "//plugins/yaml",
+    "//plugins/yaml:yaml_test_lib",
     "//platform/analysis-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//json/tests:tests_test_lib",
+    "//json/backend/tests:tests_test_lib",
   ],
   runtime_deps = [":vcs-gitlab-yaml_resources"]
 )

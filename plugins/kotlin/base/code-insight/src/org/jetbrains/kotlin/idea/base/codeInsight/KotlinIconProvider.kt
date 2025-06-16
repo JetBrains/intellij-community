@@ -40,15 +40,20 @@ object KotlinIconProvider {
     private fun getBaseIcon(symbol: KaSymbol): Icon? {
         if (symbol is KaNamedFunctionSymbol) {
             val isAbstract = symbol.modality == KaSymbolModality.ABSTRACT
-
+            val suspend = symbol.isSuspend
             return when {
                 symbol.isExtension -> {
                     if (isAbstract) KotlinIcons.ABSTRACT_EXTENSION_FUNCTION else KotlinIcons.EXTENSION_FUNCTION
                 }
                 symbol.location == KaSymbolLocation.CLASS -> {
-                    IconManager.getInstance().getPlatformIcon(if (isAbstract) PlatformIcons.AbstractMethod else PlatformIcons.Method)
+                    if (suspend) {
+                        KotlinIcons.SUSPEND_METHOD
+                    } else {
+                        val platformIcon = if (isAbstract) PlatformIcons.AbstractMethod else PlatformIcons.Method
+                        IconManager.getInstance().getPlatformIcon(platformIcon)
+                    }
                 }
-                else -> KotlinIcons.FUNCTION
+                else -> if (suspend) KotlinIcons.SUSPEND_FUNCTION else KotlinIcons.FUNCTION
             }
         }
 
@@ -78,7 +83,10 @@ object KotlinIconProvider {
     }
 
     private fun getVisibilityIcon(symbol: KaSymbol): Icon? {
-        val visibility = (symbol as? KaDeclarationSymbol)?.visibility ?: return null
+        val visibility: KaSymbolVisibility =
+            (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty?.visibility
+                ?: (symbol as? KaDeclarationSymbol)?.visibility
+                ?: return null
         val id = when (visibility) {
             KaSymbolVisibility.PUBLIC -> PlatformIcons.Public
             KaSymbolVisibility.PROTECTED -> PlatformIcons.Protected

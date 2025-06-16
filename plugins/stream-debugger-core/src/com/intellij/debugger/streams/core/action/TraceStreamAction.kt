@@ -9,7 +9,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 /**
  * @author Vitaliy.Bibaev
  */
-class TraceStreamAction : AnAction() {
+open class TraceStreamAction : AnAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
     val chainStatus = TraceStreamRunner.getInstance(project).getChainStatus(DebuggerUIUtil.getSession(e))

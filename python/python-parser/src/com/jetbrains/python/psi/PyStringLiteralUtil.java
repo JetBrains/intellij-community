@@ -103,6 +103,13 @@ public final class PyStringLiteralUtil extends PyStringLiteralCoreUtil {
   }
 
   /**
+   * @return whether the given prefix contains either 't' or 'T' character
+   */
+  public static boolean isTemplatePrefix(@NotNull String prefix) {
+    return StringUtil.indexOfIgnoreCase(prefix, 't', 0) >= 0;
+  }
+
+  /**
    * @return alternative quote character, i.e. " for ' and ' for "
    */
   public static char flipQuote(char quote) {

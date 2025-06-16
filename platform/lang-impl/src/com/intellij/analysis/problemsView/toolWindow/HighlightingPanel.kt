@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeWithMe.ClientId
@@ -24,6 +24,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.CancellablePromise
 
@@ -96,7 +97,8 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
         ClientId.withClientId(session.clientId) {
           ApplicationManager.getApplication().assertIsNonDispatchThread()
           ApplicationManager.getApplication().assertReadAccessAllowed()
-          setCurrentFile(findSelectedFile())
+          val pair = findSelectedFile()
+          setCurrentFile(pair?.first, pair?.second)
         }
       }
     }.submit(AppExecutorUtil.getAppExecutorService())
@@ -107,15 +109,15 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
 
   private fun getCurrentDocument(): Document? = currentRoot?.document
 
-  fun setCurrentFile(pair: Pair<VirtualFile, Document>?) {
-    if (pair == null) {
+  @ApiStatus.Internal
+  fun setCurrentFile(virtualFile: VirtualFile?, document:Document?) {
+    if (virtualFile ==null || document == null) {
       if (treeModel.root == null) return
       treeModel.root = null
     }
     else {
-      val (file, document) = pair
-      if (currentRoot?.file == file) return
-      treeModel.root = ProblemsViewHighlightingFileRoot(this, file, document)
+      if (currentRoot?.file == virtualFile) return
+      treeModel.root = ProblemsViewHighlightingFileRoot(this, virtualFile, document)
       TreeUtil.promiseSelectFirstLeaf(tree)
     }
     powerSaveStateChanged()
@@ -174,7 +176,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     if (PowerSaveMode.isEnabled()) return Status(ProblemsViewBundle.message("problems.view.highlighting.power.save.mode"))
     val document = getCurrentDocument() ?: return statusAnalyzing(file)
 
-    // todo ijpl-339 it's not safe to take a random editor anymore
+    // todo IJPL-339 it's not safe to take a random editor anymore
     val editor = EditorFactory.getInstance().editors(document, project).findFirst().orElse(null) ?: return statusAnalyzing(file)
     val model = editor.markupModel as? EditorMarkupModel ?: return statusAnalyzing(file)
     val status = model.errorStripeRenderer?.status ?: return statusComplete(file)

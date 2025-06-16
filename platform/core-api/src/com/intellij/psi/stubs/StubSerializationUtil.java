@@ -26,7 +26,7 @@ public final class StubSerializationUtil {
    * @param root - serializer which couldn't deserialize stub
    * @return message for broken stub format
    */
-  static @NotNull @NonNls String brokenStubFormat(@NotNull ObjectStubSerializer<?, ?> root, @Nullable PsiFile file) {
+  public static @NotNull @NonNls String brokenStubFormat(@NotNull ObjectStubSerializer<?, ?> root, @Nullable PsiFile file) {
     String fileInfo = file == null ? "" : " in file " + file.getName();
     return "Broken stub format" + fileInfo + ", most likely version of " + root + " (" + root.getExternalId() + ") was not updated after serialization changes\n";
   }

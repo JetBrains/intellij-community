@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.maven.server` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
-
-jvm_resources(
-  name = "maven-server_resources",
-  files = glob(["src/main/resources/**/*"]),
-  strip_prefix = "src/main/resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
   name = "maven-server",
@@ -18,13 +12,12 @@ jvm_library(
     "//platform/util-rt",
     "//platform/util/jdom",
     "//plugins/maven-model",
-    "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+    "//platform/diagnostic/telemetry/rt",
   ],
   exports = [
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
     "//plugins/maven-model",
-  ],
-  runtime_deps = [":maven-server_resources"]
+  ]
 )
 ### auto-generated section `build intellij.maven.server` end

@@ -72,6 +72,13 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     if (index >= 0) remove(index);
   }
 
+  public void update(T item) {
+    int index = indexOf(item);
+    if (index >= 0) {
+      fireContentsChanged(this, index, index);
+    }
+  }
+
   public int indexOf(T item) {
     int index = Collections.binarySearch(myItems, item, myComparator);
     return index >= 0 ? index : -1;

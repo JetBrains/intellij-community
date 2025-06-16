@@ -7,16 +7,12 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.TestRoot
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
-import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners
-import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.addDependency
-import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptDefinitionsManager
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
-import org.jetbrains.kotlin.test.*
+import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.runner.RunWith
@@ -45,7 +41,7 @@ class ScriptTemplatesFromDependenciesProviderTest : AbstractScriptConfigurationT
             val attempts = 20
             // definitions are loaded in a background, spin some time to get them loaded
             for (attempt in 0 until attempts) {
-              definitions = ScriptDefinitionsManager.getInstance(project).allDefinitions
+              definitions = ScriptDefinitionsManager.getInstance(project).getDefinitions()
               if (definitions.any { it.name == "Custom Init Script" }) {
                 return@run definitions
               }

@@ -31,10 +31,10 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRPersistentInteractionState.PRState
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingErrorHandler
+import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineCommentViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.item.UpdateableGHPRTimelineReviewViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem as GHPRTimelineItemDTO
 
@@ -78,7 +78,7 @@ internal class GHPRTimelineViewModelImpl(
 ) : GHPRTimelineViewModel {
   private val cs = parentCs.childScope("GitHub Pull Request Timeline View Model", Dispatchers.Main)
 
-  private val twVm by lazy { project.service<GHPRToolWindowViewModel>() }
+  private val vm by lazy { project.service<GHPRProjectViewModel>() }
   private val securityService = dataContext.securityService
 
   private val detailsData = dataProvider.detailsData
@@ -91,7 +91,7 @@ internal class GHPRTimelineViewModelImpl(
   override val currentUser: GHUser = securityService.currentUser
 
   override val detailsVm = GHPRDetailsTimelineViewModel(project, parentCs, dataContext, dataProvider)
-  private val timelineLoader = dataProvider.acquireTimelineLoader(cs.nestedDisposable())
+  private val timelineLoader = dataProvider.acquireTimelineLoader(cs)
 
   override val loadingErrorHandler: GHLoadingErrorHandler =
     GHApiLoadingErrorHandler(project, securityService.account, timelineLoader::reset)
@@ -237,7 +237,7 @@ internal class GHPRTimelineViewModelImpl(
   }
 
   override fun openPullRequestInfoAndTimeline(number: Long) {
-    twVm.projectVm.value?.openPullRequestInfoAndTimeline(number)
+    vm.connectedProjectVm.value?.openPullRequestInfoAndTimeline(number)
   }
 }
 

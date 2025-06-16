@@ -1,13 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
-import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointProxy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,8 +35,8 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
   private Delegate myDelegate;
 
   @Override
-  public void init(Project project, final XBreakpointManager breakpointManager, @NotNull XBreakpointBase breakpoint) {
-    super.init(project, breakpointManager, breakpoint);
+  public void init(Project project, @NotNull XBreakpointProxy breakpoint) {
+    super.init(project, breakpoint);
 
     mySuspendCheckBox.addActionListener(new ActionListener() {
       @Override
@@ -74,7 +72,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         SuspendPolicy suspendPolicy = getSelectedSuspendPolicy();
-        ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).setSuspendPolicy(suspendPolicy);
+        myBreakpointType.setDefaultSuspendPolicy(suspendPolicy);
         updateSuspendPolicyFont();
 
         JRadioButton comp = SuspendPolicy.THREAD == suspendPolicy ? mySuspendThread : mySuspendAll;
@@ -109,7 +107,7 @@ public class XSuspendPolicyPanel extends XBreakpointPropertiesSubPanel {
   }
 
   private SuspendPolicy getDefaultSuspendPolicy() {
-    return ((XBreakpointManagerImpl)myBreakpointManager).getBreakpointDefaults(myBreakpointType).getSuspendPolicy();
+    return myBreakpointType.getDefaultSuspendPolicy();
   }
 
   private void changeEnableState(boolean selected) {

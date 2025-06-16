@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,8 +19,9 @@ import java.util.List;
  */
 public interface AttachSourcesProvider {
 
-  @NotNull Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
-                                                                @NotNull PsiFile psiFile);
+  @NotNull @Unmodifiable
+  Collection<? extends AttachSourcesAction> getActions(@NotNull List<? extends LibraryOrderEntry> orderEntries,
+                                                       @NotNull PsiFile psiFile);
 
   interface AttachSourcesAction {
 

@@ -1,3 +1,43 @@
+*:com.intellij.codeInsight.multiverse.CodeInsightContext
+*:com.intellij.codeInsight.multiverse.CodeInsightContextChangeListener
+- java.util.EventListener
+- a:contextsChanged():V
+*:com.intellij.codeInsight.multiverse.CodeInsightContextManager
+- *sf:Companion:com.intellij.codeInsight.multiverse.CodeInsightContextManager$Companion
+- a:getChangeFlow():kotlinx.coroutines.flow.Flow
+- a:getCodeInsightContext(com.intellij.psi.FileViewProvider):com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:getCodeInsightContexts(com.intellij.openapi.vfs.VirtualFile):java.util.List
+- getCurrentCodeInsightContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:getCurrentCodeInsightSession():com.intellij.codeInsight.multiverse.CodeInsightSession
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.CodeInsightContextManager
+- a:getPreferredContext(com.intellij.openapi.vfs.VirtualFile):com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:isSharedSourceSupportEnabled():Z
+- a:performCodeInsightSession(com.intellij.codeInsight.multiverse.CodeInsightContext,kotlin.jvm.functions.Function1):java.lang.Object
+*f:com.intellij.codeInsight.multiverse.CodeInsightContextManager$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.CodeInsightContextManager
+- f:getInstanceAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- f:getTopic():com.intellij.util.messages.Topic
+*:com.intellij.codeInsight.multiverse.CodeInsightContextPresentationProvider
+- a:getIcon(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):javax.swing.Icon
+- a:getPresentableText(com.intellij.codeInsight.multiverse.CodeInsightContext,com.intellij.openapi.project.Project):java.lang.String
+- a:isApplicable(com.intellij.codeInsight.multiverse.CodeInsightContext):Z
+*:com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+- a:getContexts(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.util.List
+- a:invalidationRequestFlow(com.intellij.openapi.project.Project):kotlinx.coroutines.flow.Flow
+*:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Invalidator
+- a:requestInvalidation(kotlin.coroutines.Continuation):java.lang.Object
+*f:com.intellij.codeInsight.multiverse.CodeInsightContexts
+- sf:anyContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- sf:defaultContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+- sf:isSharedSourceSupportEnabled(com.intellij.openapi.project.Project):Z
+- sf:isShowAllInheritorsEnabled():Z
+*:com.intellij.codeInsight.multiverse.CodeInsightSession
+- a:getContext():com.intellij.codeInsight.multiverse.CodeInsightContext
+*:com.intellij.codeInsight.multiverse.ModuleContext
+- com.intellij.codeInsight.multiverse.CodeInsightContext
+- a:getModule():com.intellij.openapi.module.Module
+*:com.intellij.codeInsight.multiverse.MultiverseEnabler
+- a:enableMultiverse(com.intellij.openapi.project.Project):Z
 *:com.intellij.ide.lightEdit.LightEditCompatible
 *e:com.intellij.ide.plugins.IdeaPluginOsRequirement
 - java.lang.Enum
@@ -50,14 +90,6 @@ com.intellij.lexer.RestartableLexer
 - hasType(I,com.intellij.psi.tree.IElementType):Z
 - hasType(I,com.intellij.psi.tree.TokenSet):Z
 - hasType(I,com.intellij.psi.tree.IElementType[]):Z
-*:com.intellij.model.ModelBranch
-- com.intellij.openapi.util.UserDataHolder
-- s:getFileBranch(com.intellij.openapi.vfs.VirtualFile):com.intellij.model.ModelBranch
-- a:obtainPsiCopy(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- s:performInBranch(com.intellij.openapi.project.Project,java.util.function.Consumer):com.intellij.model.ModelPatch
-*:com.intellij.model.ModelPatch
-- a:applyBranchChanges():V
-- a:getBranchChanges():java.util.Map
 *:com.intellij.model.Pointer
 - s:delegatingPointer(com.intellij.model.Pointer,java.util.function.Function):com.intellij.model.Pointer
 - a:dereference():java.lang.Object
@@ -183,13 +215,28 @@ com.intellij.openapi.application.Application
 - *:isWriteThread():Z
 - *:runWriteIntentReadAction(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 f:com.intellij.openapi.application.CoroutinesKt
+- *sf:backgroundWriteAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:getEdtImmediate(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
 - *sf:getUI(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
-- *sf:isBackgroundWriteAction(kotlin.coroutines.CoroutineContext):Z
+- *sf:getUiImmediate(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
+- *sf:readAndBackgroundWriteAction(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:ui(kotlinx.coroutines.Dispatchers):kotlin.coroutines.CoroutineContext
+- *sf:ui(kotlinx.coroutines.Dispatchers,com.intellij.openapi.application.UiDispatcherKind):kotlin.coroutines.CoroutineContext
+- *sf:ui(kotlinx.coroutines.Dispatchers,com.intellij.openapi.application.UiDispatcherKind,Z):kotlin.coroutines.CoroutineContext
+- *bs:ui$default(kotlinx.coroutines.Dispatchers,com.intellij.openapi.application.UiDispatcherKind,Z,I,java.lang.Object):kotlin.coroutines.CoroutineContext
 - *sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeIntentReadAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.openapi.application.ReadAction
 - com.intellij.openapi.application.BaseActionRunnable
 - *s:computeCancellable(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+*e:com.intellij.openapi.application.UiDispatcherKind
+- java.lang.Enum
+- sf:LEGACY:com.intellij.openapi.application.UiDispatcherKind
+- sf:RELAX:com.intellij.openapi.application.UiDispatcherKind
+- sf:STRICT:com.intellij.openapi.application.UiDispatcherKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.application.UiDispatcherKind
+- s:values():com.intellij.openapi.application.UiDispatcherKind[]
 *a:com.intellij.openapi.application.WriteIntentReadAction
 - <init>():V
 - *s:compute(com.intellij.openapi.util.Computable):java.lang.Object
@@ -214,6 +261,8 @@ f:com.intellij.openapi.command.CoroutinesKt
 - *sf:execute(com.intellij.openapi.command.WriteCommandAction$Builder,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:writeCommandAction(com.intellij.openapi.application.ReadAndWriteScope,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
 - *sf:writeCommandAction(com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.openapi.components.ServicesKt
+- *sf:serviceAsync(com.intellij.openapi.components.ComponentManager,java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.editor.markup.AttributesFlyweight
 - *s:create(java.awt.Color,java.awt.Color,I,java.awt.Color,com.intellij.openapi.editor.markup.EffectType,java.util.Map,java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
 - *:hasEffects():Z
@@ -239,13 +288,9 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - com.intellij.openapi.module.ModuleDescription
 - a:getContentRoots():java.util.List
 - a:getGroupPath():java.util.List
-*f:com.intellij.openapi.progress.CoroutinesKt
-- sf:blockingContext(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
-- sf:blockingContextScope(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
-- sf:checkCanceled(kotlin.coroutines.Continuation):java.lang.Object
-- *sf:coroutineToIndicator(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
-- sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
-- sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
+f:com.intellij.openapi.progress.CoroutinesKt
+- *sf:withCurrentThreadCoroutineScope(kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:withCurrentThreadCoroutineScopeBlocking(kotlin.jvm.functions.Function0):kotlin.Pair
 *f:com.intellij.openapi.progress.SuspenderKt
 - sf:asContextElement(com.intellij.openapi.progress.CoroutineSuspender):kotlin.coroutines.CoroutineContext$Element
 - sf:coroutineSuspender(Z):com.intellij.openapi.progress.CoroutineSuspender
@@ -255,12 +300,26 @@ a:com.intellij.openapi.progress.Task
 - com.intellij.openapi.progress.TaskInfo
 - *:getId():java.lang.Object
 a:com.intellij.openapi.project.DumbService
-- *a:suspendIndexingAndRun(java.lang.String,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
+- *a:suspendIndexingAndRun(java.lang.String,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.openapi.project.IncompleteDependenciesService
+- a:enterIncompleteState(java.lang.Object):com.intellij.openapi.project.IncompleteDependenciesService$IncompleteDependenciesAccessToken
+- a:getState():com.intellij.openapi.project.IncompleteDependenciesService$DependenciesState
+- a:getStateFlow():kotlinx.coroutines.flow.Flow
+*e:com.intellij.openapi.project.IncompleteDependenciesService$DependenciesState
+- java.lang.Enum
+- sf:COMPLETE:com.intellij.openapi.project.IncompleteDependenciesService$DependenciesState
+- sf:INCOMPLETE:com.intellij.openapi.project.IncompleteDependenciesService$DependenciesState
+- s:getEntries():kotlin.enums.EnumEntries
+- f:isComplete():Z
+- s:valueOf(java.lang.String):com.intellij.openapi.project.IncompleteDependenciesService$DependenciesState
+- s:values():com.intellij.openapi.project.IncompleteDependenciesService$DependenciesState[]
+*a:com.intellij.openapi.project.IncompleteDependenciesService$IncompleteDependenciesAccessToken
+- <init>():V
+- a:finish():V
 *:com.intellij.openapi.project.ProjectCustomDataSynchronizer
 - *sf:Companion:com.intellij.openapi.project.ProjectCustomDataSynchronizer$Companion
 - a:consumeValue(com.intellij.openapi.project.Project,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - consumeValueAny(com.intellij.openapi.project.Project,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
-- bs:consumeValueAny$suspendImpl(com.intellij.openapi.project.ProjectCustomDataSynchronizer,com.intellij.openapi.project.Project,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - a:getDataType():kotlin.reflect.KType
 - a:getId():java.lang.String
 - a:getValues(com.intellij.openapi.project.Project):kotlinx.coroutines.flow.Flow
@@ -270,9 +329,12 @@ a:com.intellij.openapi.project.DumbService
 - com.intellij.openapi.roots.ContentIterator
 - processFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
-c:com.intellij.openapi.vfs.VfsUtilCore
-- *s:isAncestorOrSelf(java.lang.String,com.intellij.openapi.vfs.VirtualFile):Z
-- *s:pathEqualsTo(com.intellij.openapi.vfs.VirtualFile,java.lang.String):Z
+*:com.intellij.openapi.vfs.FileVisibilityProvider
+- *sf:Companion:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:isVisible(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Boolean
+*f:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
+- f:isVisible(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,Z):Z
 a:com.intellij.openapi.vfs.VirtualFile
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.util.ModificationTracker
@@ -283,7 +345,6 @@ a:com.intellij.openapi.vfs.VirtualFile
 - *sf:Companion:com.intellij.openapi.vfs.VirtualFileCustomDataConsumer$Companion
 - a:consumeValue(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 - consumeValueAny(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
-- bs:consumeValueAny$suspendImpl(com.intellij.openapi.vfs.VirtualFileCustomDataConsumer,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,java.lang.Object,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.openapi.vfs.VirtualFileCustomDataConsumer$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.openapi.vfs.VirtualFileCustomDataProvider
@@ -428,6 +489,16 @@ com.intellij.psi.stubs.StubElement
 - a:getStubSerializer(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.ObjectStubSerializer
 *f:com.intellij.psi.stubs.StubElementRegistryService$Companion
 - f:getInstance():com.intellij.psi.stubs.StubElementRegistryService
+*:com.intellij.psi.stubs.StubRegistry
+- a:registerLightStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.LightStubElementFactory):V
+- a:registerStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubElementFactory):V
+- a:registerStubSerializer(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.ObjectStubSerializer):V
+- registerStubSerializingFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubSerializingElementFactory):V
+*:com.intellij.psi.stubs.StubRegistryExtension
+- a:register(com.intellij.psi.stubs.StubRegistry):V
+*:com.intellij.psi.stubs.StubSerializingElementFactory
+- com.intellij.psi.stubs.StubElementFactory
+- com.intellij.psi.stubs.StubSerializer
 com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 - com.intellij.psi.FileViewProvider
 - *:getContentElementType(com.intellij.lang.Language):com.intellij.psi.tree.IElementType
@@ -453,6 +524,7 @@ f:com.intellij.util.ExecutorsQuery
 - f:assertDoesNotAffectHighlighting():V
 com.intellij.util.Query
 - java.lang.Iterable
+- kotlin.jvm.internal.markers.KMappedMarker
 - *:filtering(java.util.function.Predicate):com.intellij.util.Query
 - *:flatMapping(java.util.function.Function):com.intellij.util.Query
 - *:interceptWith(com.intellij.util.QueryExecutionInterceptor):com.intellij.util.Query

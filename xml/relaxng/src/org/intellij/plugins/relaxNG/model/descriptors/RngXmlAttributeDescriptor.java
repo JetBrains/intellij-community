@@ -33,7 +33,6 @@ import com.intellij.xml.util.XmlEnumeratedValueReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.kohsuke.rngom.digested.DAttributePattern;
 import org.xml.sax.Locator;
 
 import javax.xml.namespace.QName;
@@ -78,39 +77,15 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   private final QName myName;
 
   RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor,
-                            DAttributePattern pattern,
+                            QName name,
                             Map<String, String> values,
-                            boolean optional) {
-    this(elementDescriptor, getName(pattern), values, optional, pattern.getLocation());
-  }
-
-  private static QName getName(DAttributePattern pattern) {
-    final Iterator<QName> iterator = pattern.getName().listNames().iterator();
-    return iterator.hasNext() ? iterator.next() : UNKNOWN;
-  }
-
-  private RngXmlAttributeDescriptor(RngElementDescriptor elementDescriptor,
-                                    QName name,
-                                    Map<String, String> values,
-                                    boolean optional,
-                                    Locator... locations) {
+                            boolean optional,
+                            List<Locator> locations) {
     myElementDescriptor = elementDescriptor;
     myValues = values;
     myOptional = optional;
     myName = name;
-    myDeclarations.addAll(Arrays.asList(locations));
-  }
-
-  public RngXmlAttributeDescriptor mergeWith(RngXmlAttributeDescriptor d) {
-    final QName name = d.myName.equals(UNKNOWN) ? myName : d.myName;
-
-    Map<String, String> values = new LinkedHashMap<>(myValues);
-    values.putAll(d.myValues);
-
-    Set<Locator> locations = CollectionFactory.createCustomHashingStrategySet(HASHING_STRATEGY);
-    locations.addAll(myDeclarations);
-    locations.addAll(d.myDeclarations);
-    return new RngXmlAttributeDescriptor(myElementDescriptor, name, values, myOptional || d.myOptional, locations.toArray(new Locator[0]));
+    myDeclarations.addAll(locations);
   }
 
   @Override

@@ -18,8 +18,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.platform.backend.observation.ActivityKey
-import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
@@ -28,11 +26,6 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 
 private class RepositoryLibrarySynchronizer : ProjectActivity {
-  private object LoadDependenciesActivityKey : ActivityKey {
-    override val presentableName: String
-      get() = "download-jars"
-  }
-
   init {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       throw ExtensionNotApplicableException.create()
@@ -41,11 +34,9 @@ private class RepositoryLibrarySynchronizer : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment && !CoreProgressManager.shouldKeepTasksAsynchronousInHeadlessMode()) {
-      project.trackActivity(LoadDependenciesActivityKey) {
-        val libs = collectLibrariesToSync(project)
-        if (!libs.isEmpty()) {
-          loadDependenciesSyncImpl(project, libs)}
-      }
+      val trackedQueue = project.serviceAsync<TrackedLibrarySynchronizationQueue>()
+      trackedQueue.subscribeToModelUpdates()
+      trackedQueue.loadDependencies()
       return
     }
 

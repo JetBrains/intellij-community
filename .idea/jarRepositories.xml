@@ -46,5 +46,10 @@
       <option name="name" value="8f9cf434-9624-468e-8d58-d8cf1473736c" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/public/p/compose/dev" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="amper-jetbrains-team-public" />
+      <option name="name" value="amper-jetbrains-team-public" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/amper/amper" />
+    </remote-repository>
   </component>
 </project>

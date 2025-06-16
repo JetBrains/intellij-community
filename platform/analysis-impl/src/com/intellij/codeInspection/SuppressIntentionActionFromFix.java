@@ -75,13 +75,13 @@ public final class SuppressIntentionActionFromFix extends SuppressIntentionActio
   }
 
   public ThreeState isShouldBeAppliedToInjectionHost() {
-    return myFix instanceof InjectionAwareSuppressQuickFix
-           ? ((InjectionAwareSuppressQuickFix)myFix).isShouldBeAppliedToInjectionHost()
+    return myFix instanceof InjectionAwareSuppressQuickFix injectionAware
+           ? injectionAware.isShouldBeAppliedToInjectionHost()
            : ThreeState.UNSURE;
   }
 
   public PsiElement getContainer(PsiElement element) {
-    return myFix instanceof ContainerBasedSuppressQuickFix ? ((ContainerBasedSuppressQuickFix)myFix).getContainer(element) : null;
+    return myFix instanceof ContainerBasedSuppressQuickFix cont ? cont.getContainer(element) : null;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages
 
 import com.intellij.ide.util.DirectoryUtil
@@ -26,7 +26,6 @@ import com.intellij.refactoring.move.MoveDialogBase
 import com.intellij.refactoring.move.MoveHandler
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.canBeOpenedInEditor
 import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.IncorrectOperationException
 import java.awt.Dimension
@@ -124,7 +123,9 @@ open class MoveClassesOrPackagesToNewDirectoryDialog(
             project = project,
             fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor(),
             fileChosen = { file -> FileUtil.toSystemDependentName(file.path) }
-          ).applyToComponent {
+          ).comment(RefactoringBundle.message("path.completion.shortcut", KeymapUtil.getFirstKeyboardShortcutText(
+            ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)
+          ))).applyToComponent {
             text = FileUtil.toSystemDependentName(directory.virtualFile.path)
             maximumSize = Dimension(400, preferredSize.height)
             textField.document.addDocumentListener(object : DocumentAdapter() {
@@ -135,12 +136,6 @@ open class MoveClassesOrPackagesToNewDirectoryDialog(
           }.columns(COLUMNS_LARGE)
             .resizableColumn()
             .align(AlignX.FILL).component
-        }
-        row("") {
-          cell(JBLabel())
-            .comment(RefactoringBundle.message("path.completion.shortcut", KeymapUtil.getFirstKeyboardShortcutText(
-              ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION)
-            )))
         }
         row {
           searchInCommentsAndStringsCheckBox = checkBox(RefactoringBundle.message("search.in.comments.and.strings"))

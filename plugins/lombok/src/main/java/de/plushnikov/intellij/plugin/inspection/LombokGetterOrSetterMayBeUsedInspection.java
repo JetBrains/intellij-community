@@ -50,6 +50,8 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
 
     @Override
     public void visitClass(@NotNull PsiClass psiClass) {
+      if (psiClass.isRecord()) return;
+
       List<Pair<PsiField, PsiMethod>> instanceCandidates = new ArrayList<>();
       List<Pair<PsiField, PsiMethod>> staticCandidates = new ArrayList<>();
       for (PsiMethod method : psiClass.getMethods()) {

@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -10,7 +10,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBinaryFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiFileWithStubSupport;
 import com.intellij.psi.impl.source.StubbedSpine;
@@ -76,29 +79,29 @@ public abstract class StubProcessingHelperBase {
   }
 
   private static @NotNull CodeInsightContext getCodeInsightContext(@NotNull VirtualFile file, @NotNull Project project, @Nullable GlobalSearchScope scope) {
-    if (!CodeInsightContextKt.isSharedSourceSupportEnabled(project)) {
-      return CodeInsightContextKt.anyContext();
+    if (!CodeInsightContexts.isSharedSourceSupportEnabled(project)) {
+      return CodeInsightContexts.anyContext();
     }
 
     if (scope == null) {
-      return CodeInsightContextKt.anyContext();
+      return CodeInsightContexts.anyContext();
     }
 
-    CodeInsightContextFileInfo fileInfo = CodeInsightContextAwareSearchScopesKt.getFileContextInfo(scope, file);
+    CodeInsightContextFileInfo fileInfo = CodeInsightContextAwareSearchScopes.getFileContextInfo(scope, file);
     if (fileInfo instanceof ActualContextFileInfo) {
       Collection<CodeInsightContext> contexts = ((ActualContextFileInfo)fileInfo).getContexts();
       if (contexts.size() > 1) {
-        // todo ijpl-339 we need to process the file twice in this case. Not supported yet
+        // todo IJPL-339 we need to process the file twice in this case. Not supported yet
         LOG.error("Multiple contexts for file " + file + " in scope " + scope + ". Contexts: " + contexts);
       }
       return contexts.iterator().next();
     }
     if (fileInfo instanceof NoContextFileInfo) {
-      return CodeInsightContextKt.anyContext();
+      return CodeInsightContexts.anyContext();
     }
     // fileInfo instanceof DoesNotContainFileInfo
     LOG.error("Provided scope does not contain file " + file + ", scope = " + scope);
-    return CodeInsightContextKt.anyContext();
+    return CodeInsightContexts.anyContext();
   }
 
   private static @Unmodifiable @NotNull List<StubbedSpine> getAllSpines(PsiFile psiFile) {

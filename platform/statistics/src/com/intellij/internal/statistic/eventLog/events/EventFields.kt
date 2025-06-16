@@ -461,6 +461,22 @@ object EventFields {
   }
 
   @JvmField
+  val AutomatedPluginVersion = object : PrimitiveEventField<PluginInfo?>() {
+    override val name: String
+      get() = "automated_plugin_version"
+
+    override val validationRule: List<String>
+      get() = listOf("{regexp#version}")
+
+    override fun addData(
+      fuData: FeatureUsageData,
+      value: PluginInfo?,
+    ) {
+      fuData.addAutomatedPluginVersion(value)
+    }
+  }
+
+  @JvmField
   val PluginInfoByDescriptor = object : PrimitiveEventField<IdeaPluginDescriptor>() {
 
     private val delegate

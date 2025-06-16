@@ -9,6 +9,7 @@ import com.intellij.execution.dashboard.actions.RunDashboardActionUtils;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.platform.execution.dashboard.RunDashboardManagerImpl;
@@ -18,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-final class HideConfigurationAction extends DumbAwareAction {
+final class HideConfigurationAction
+  extends DumbAwareAction
+  implements ActionRemoteBehaviorSpecification.Frontend{
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

@@ -22,7 +22,7 @@
       <descriptionDirectoryName>customDescriptionDirectory</descriptionDirectoryName>
     </intentionAction>
 
-    <java.error.fix errorCode="exception.unhandled" implementationClass="MyJavaErrorFix"/>
+    <java.errorFixProvider implementation="MyJavaErrorFix$MyProvider"/>
 
   </extensions>
 </idea-plugin>

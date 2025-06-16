@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi;
 
 import com.jetbrains.python.ast.PyAstWithItem;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,4 +19,6 @@ public interface PyWithItem extends PyAstWithItem, PyElement {
   default @Nullable PyExpression getTarget() {
     return (PyExpression)PyAstWithItem.super.getTarget();
   }
+
+  boolean isSuppressingExceptions(TypeEvalContext context);
 }

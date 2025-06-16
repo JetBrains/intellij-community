@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -48,7 +49,7 @@ public interface ImplicitReferenceProvider {
    * <p/>
    * This method is a shortcut, it's called only from the default implementation of {@link #getImplicitReference}.
    */
-  default @NotNull Collection<? extends @NotNull Symbol> resolveAsReference(@NotNull PsiElement element) {
+  default @NotNull @Unmodifiable Collection<? extends @NotNull Symbol> resolveAsReference(@NotNull PsiElement element) {
     return Collections.emptyList();
   }
 }

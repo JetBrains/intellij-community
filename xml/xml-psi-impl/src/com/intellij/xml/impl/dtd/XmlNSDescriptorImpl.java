@@ -17,7 +17,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
-import com.intellij.xml.impl.ExternalDocumentValidator;
+import com.intellij.xml.impl.ExternalDocumentValidatorService;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -190,7 +190,7 @@ public final class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<Xm
       );
       return;
     }
-    ExternalDocumentValidator.doValidation(document,host);
+    ExternalDocumentValidatorService.getInstance().doValidation(document, host);
   }
 
   @Override

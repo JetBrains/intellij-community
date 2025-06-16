@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -13,18 +14,23 @@ public final class FileStatusColorDescriptor {
   private final FileStatus myStatus;
   private Color myColor;
   private final Color myDefaultColor;
+  private final Color myUiThemeColor;
 
-  public FileStatusColorDescriptor(@NotNull FileStatus fileStatus, Color color, Color defaultColor) {
+  public FileStatusColorDescriptor(@NotNull FileStatus fileStatus,
+                                   @Nullable Color color,
+                                   @Nullable Color defaultColor,
+                                   @Nullable Color uiThemeColor) {
     myStatus = fileStatus;
     myColor = color;
     myDefaultColor = defaultColor;
+    myUiThemeColor = uiThemeColor;
   }
 
   public @NotNull FileStatus getStatus() {
     return myStatus;
   }
 
-  public Color getColor() {
+  public @Nullable Color getColor() {
     return myColor;
   }
 
@@ -40,7 +46,11 @@ public final class FileStatusColorDescriptor {
     myColor = myDefaultColor;
   }
 
-  public Color getDefaultColor() {
+  public @Nullable Color getDefaultColor() {
     return myDefaultColor;
+  }
+
+  public @Nullable Color getUiThemeColor() {
+    return myUiThemeColor;
   }
 }

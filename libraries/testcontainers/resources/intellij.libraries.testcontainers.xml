@@ -1,0 +1,5 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.libraries.junit4"/>
+  </dependencies>
+</idea-plugin>

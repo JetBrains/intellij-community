@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "ml-impl_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "ml-impl",
   module_name = "intellij.platform.ml.impl",
@@ -15,13 +21,14 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ngram-slp",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util-ex",
     "//platform/core-api:core",
     "//platform/projectModel-impl",
     "//platform/analysis-api:analysis",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
     "//platform/util/text-matching",
     "//platform/lang-impl",
     "@lib//:kotlinx-serialization-core",
@@ -34,11 +41,15 @@ jvm_library(
     "@lib//:jetbrains-mlapi-ml-tools-suspendable",
   ],
   exports = [
+    "@lib//:ngram-slp",
     "@lib//:jetbrains-mlapi-catboost-shadow-need-slf4j",
     "@lib//:jetbrains-mlapi-ml-tools",
     "@lib//:jetbrains-mlapi-ml-tools-suspendable",
   ],
-  runtime_deps = [":ml-impl_resources"]
+  runtime_deps = [
+    ":ml-impl_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(
@@ -49,6 +60,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:ngram-slp",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util-ex",
     "//platform/core-api:core",
@@ -56,7 +68,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
-    "//platform/platform-impl/internal:ide-internal",
+    "//platform/platform-impl/internal",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:assert_j",
@@ -74,7 +86,10 @@ jvm_library(
     "@lib//:jetbrains-mlapi-ml-tools-suspendable",
     "//platform/statistics/testFramework",
   ],
-  runtime_deps = [":ml-impl_resources"]
+  runtime_deps = [
+    ":ml-impl_resources",
+    ":ml-impl_test_resources",
+  ]
 )
 
 jvm_test(

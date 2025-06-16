@@ -282,6 +282,10 @@ public class PyElementVisitor extends PsiElementVisitor {
     visitPyElement(node);
   }
 
+  public void visitPyEllipsisLiteralExpression(@NotNull PyEllipsisLiteralExpression node) {
+    visitPyElement(node);
+  }
+
   public void visitPyBoolLiteralExpression(@NotNull PyBoolLiteralExpression node) {
     visitPyElement(node);
   }

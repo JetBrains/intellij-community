@@ -67,6 +67,7 @@ public abstract class SuspiciousPackagePrivateAccessInspectionTestCase extends L
   private static class ProjectWithDepModuleDescriptor extends ProjectDescriptor {
     private static final String DEP_MODULE_SOURCE_ROOT = "dep-module-src";
     private VirtualFile mySourceRoot;
+    private VirtualFile myTestSourceRoot;
 
     ProjectWithDepModuleDescriptor(@NotNull LanguageLevel languageLevel) {
       super(languageLevel);
@@ -84,6 +85,8 @@ public abstract class SuspiciousPackagePrivateAccessInspectionTestCase extends L
           model.setSdk(getSdk());
           mySourceRoot = createSourceRoot(depModule, DEP_MODULE_SOURCE_ROOT);
           model.addContentEntry(mySourceRoot).addSourceFolder(mySourceRoot, JavaSourceRootType.SOURCE);
+          myTestSourceRoot = createSourceRoot(depModule, "depTests");
+          model.addContentEntry(myTestSourceRoot).addSourceFolder(myTestSourceRoot, JavaSourceRootType.TEST_SOURCE);
         });
         ModuleRootModificationUtil.addDependency(mainModule, depModule);
       });
@@ -92,6 +95,9 @@ public abstract class SuspiciousPackagePrivateAccessInspectionTestCase extends L
     public void cleanUpSources() throws IOException {
       if (mySourceRoot != null) {
         WriteAction.run(() -> mySourceRoot.delete(this));
+      }
+      if (myTestSourceRoot != null) {
+        WriteAction.run(() -> myTestSourceRoot.delete(this));
       }
     }
 

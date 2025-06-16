@@ -2,6 +2,8 @@
 package com.jetbrains.python.refactoring.move.moduleMembers;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -61,7 +63,8 @@ public class PyMoveSymbolProcessor {
           updateSingleUsage(usageElement, newElement);
         }
       }
-      final PsiElement[] unwrappedElements = ContainerUtil.mapNotNull(myAllMovedElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
+      final PsiElement[] unwrappedElements =
+        ContainerUtil.mapNotNull(myAllMovedElements, SmartPsiElementPointer::getElement).toArray(PsiElement.EMPTY_ARRAY);
       PyClassRefactoringUtil.restoreNamedReferences(newElementBody, myMovedElement, unwrappedElements);
       final PyTrailingBlankLinesPostFormatProcessor postFormatProcessor = new PyTrailingBlankLinesPostFormatProcessor();
       if (PsiTreeUtil.nextVisibleLeaf(newElementBody) == null) {
@@ -87,7 +90,8 @@ public class PyMoveSymbolProcessor {
   }
 
   private void updateSingleUsage(@NotNull PsiElement usage, @NotNull PsiNamedElement newElement) {
-    final PsiFile usageFile = usage.getContainingFile();
+    PsiFile psiFile = usage.getContainingFile();
+    final PsiFile usageFile = psiFile;
     if (belongsToSomeMovedElement(usage)) {
       return;
     }
@@ -129,7 +133,33 @@ public class PyMoveSymbolProcessor {
     else if (usage instanceof PyStringLiteralExpression) {
       for (PsiReference ref : usage.getReferences()) {
         if (ref instanceof PyDunderAllReference) {
-          usage.delete();
+          PsiFile newFile = newElement.getContainingFile();
+          if (myMovedElement.getContainingFile().getName().equals(PyNames.INIT_DOT_PY)) {
+            // Update import statement in `__init__.py` if symbol is moved from there to another module
+            VirtualFile targetFile = newFile.getVirtualFile();
+            VirtualFile currentFile = psiFile.getVirtualFile();
+            if (targetFile != null && currentFile != null) {
+              VirtualFile currentDir = currentFile.getParent();
+              if (currentDir != null && !VfsUtilCore.isAncestor(currentDir, targetFile, true)) {
+                usage.delete();
+              }
+              PyPsiRefactoringUtil.insertImport(usage, newElement);
+            }
+          }
+          else if (ref.getElement().getContainingFile().getName().equals(PyNames.INIT_DOT_PY)) {
+            // Remove old import statement in `__init__.py` if symbol is moved from some ancestor module to another one
+            VirtualFile targetFile = newFile.getVirtualFile();
+            VirtualFile currentFile = psiFile.getVirtualFile();
+            if (targetFile != null && currentFile != null) {
+              VirtualFile currentDir = currentFile.getParent();
+              if (currentDir != null && !VfsUtilCore.isAncestor(currentDir, targetFile, true)) {
+                usage.delete();
+              }
+            }
+          }
+          else {
+            usage.delete();
+          }
         }
         else {
           if (ref.isReferenceTo(myMovedElement)) {
@@ -204,7 +234,7 @@ public class PyMoveSymbolProcessor {
       }
     }
     else {
-      final PsiReference ref = usage.getReference();  
+      final PsiReference ref = usage.getReference();
       if (ref != null) {
         resolvedElements.add(ref.resolve());
       }

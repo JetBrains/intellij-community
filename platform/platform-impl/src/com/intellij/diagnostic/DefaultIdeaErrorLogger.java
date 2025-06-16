@@ -33,7 +33,7 @@ public final class DefaultIdeaErrorLogger {
   }
 
   public static @Nullable ErrorReportSubmitter findSubmitter(@NotNull Throwable t, @Nullable IdeaPluginDescriptor plugin) {
-    if (t instanceof MessagePool.TooManyErrorsException || t instanceof AbstractMethodError) {
+    if (t instanceof MessagePool.TooManyErrorsException || t instanceof AbstractMethodError && plugin == null) {
       return null;
     }
 

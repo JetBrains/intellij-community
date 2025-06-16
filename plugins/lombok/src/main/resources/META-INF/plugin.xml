@@ -45,7 +45,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery"/>
@@ -84,7 +84,8 @@
     <fileBasedIndex implementation="de.plushnikov.intellij.plugin.lombokconfig.LombokConfigIndex"/>
 
     <custom.exception.handler implementation="de.plushnikov.intellij.plugin.handler.SneakyThrowsExceptionHandler"/>
-    <java.error.fix errorCode="exception.unhandled" implementationClass="de.plushnikov.intellij.plugin.handler.AddSneakyThrowsAnnotationCommandAction"/>
+    <java.errorFixProvider
+      implementation="de.plushnikov.intellij.plugin.handler.AddSneakyThrowsAnnotationCommandAction$AddSneakyThrowProvider"/>
 
     <implicit.resource.closer
       implementation="de.plushnikov.intellij.plugin.extension.LombokCleanUpImplicitResourceCloser"/>
@@ -126,6 +127,17 @@
       enabledByDefault="true"
       implementationClass="de.plushnikov.intellij.plugin.inspection.LombokInspection"
       key="inspection.lombok.display.name"
+      bundle="messages.LombokBundle"/>
+
+    <localInspection
+      language="JAVA"
+      groupPath="Java"
+      groupKey="inspection.lombok.group.name.lombok"
+      groupBundle="messages.LombokBundle"
+      shortName="LombokFlagUsage"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.LombokFlagUsageInspection"
+      key="inspection.lombok.flag.usage.display.name"
       bundle="messages.LombokBundle"/>
 
     <localInspection

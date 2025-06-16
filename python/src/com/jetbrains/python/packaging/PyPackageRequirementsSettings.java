@@ -1,18 +1,26 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
+import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
+
+@ApiStatus.Internal
 public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwareService<
   PyPackageRequirementsSettings.ServiceState,
   PyPackageRequirementsSettings,
@@ -20,20 +28,27 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   PyPackageRequirementsSettings.ModuleService> {
 
   private static final PyDefaultProjectAwareServiceClasses<
-        ServiceState,
-        PyPackageRequirementsSettings,
-        AppService,
-        ModuleService> SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
-  private static final String DEFAULT_REQUIREMENTS_PATH = "requirements.txt";
+    ServiceState,
+    PyPackageRequirementsSettings,
+    AppService,
+    ModuleService> SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
 
   protected PyPackageRequirementsSettings() {
     super(new ServiceState());
   }
 
+  /**
+   * @deprecated Use {@link {@link com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils#findRequirementsTxt(Sdk)}  instead.
+   */
+  @Deprecated(forRemoval = true)
   public final @NotNull String getRequirementsPath() {
     return getState().myRequirementsPath;
   }
 
+  /**
+   * @deprecated Use {@link com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils#saveRequirementsTxtPath(Project, Sdk, Path)}  instead.
+   */
+  @Deprecated(forRemoval = true)
   public void setRequirementsPath(@NotNull String path) {
     getState().myRequirementsPath = path;
   }
@@ -74,10 +89,6 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
     getState().myKeepMatchingSpecifier = forceUpdateVersionSpecifier;
   }
 
-  public final boolean isDefaultPath() {
-    return getRequirementsPath().equals(DEFAULT_REQUIREMENTS_PATH);
-  }
-
   public static @NotNull PyPackageRequirementsSettings getInstance(@Nullable Module module) {
     return SERVICE_CLASSES.getService(module);
   }
@@ -87,9 +98,14 @@ public abstract class PyPackageRequirementsSettings extends PyDefaultProjectAwar
   }
 
   public static final class ServiceState {
-    @OptionTag("requirementsPath") public @NotNull String myRequirementsPath = DEFAULT_REQUIREMENTS_PATH;
+    /**
+     * @deprecated Use {@link {@link com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils#findRequirementsTxt(Sdk)}  instead.
+     */
+    @Deprecated(forRemoval = true)
+    @OptionTag("requirementsPath") public @NotNull String myRequirementsPath = PythonSdkAdditionalData.REQUIREMENT_TXT_DEFAULT;
 
-    @OptionTag("versionSpecifier") public @NotNull PyRequirementsVersionSpecifierType myVersionSpecifier = PyRequirementsVersionSpecifierType.COMPATIBLE;
+    @OptionTag("versionSpecifier") public @NotNull PyRequirementsVersionSpecifierType myVersionSpecifier =
+      PyRequirementsVersionSpecifierType.COMPATIBLE;
 
     @OptionTag("removeUnused")
     public boolean myRemoveUnused = false;

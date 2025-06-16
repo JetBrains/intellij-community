@@ -4,14 +4,11 @@
 package org.jetbrains.bazel.jvm.abi
 
 import org.jetbrains.org.objectweb.asm.AnnotationVisitor
-import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
-import org.jetbrains.org.objectweb.asm.ClassWriter
 import org.jetbrains.org.objectweb.asm.FieldVisitor
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.commons.ClassRemapper
-import org.jetbrains.org.objectweb.asm.commons.Remapper
 import org.jetbrains.org.objectweb.asm.tree.FieldNode
 import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import kotlin.metadata.KmClass
@@ -31,29 +28,29 @@ import kotlin.metadata.jvm.localDelegatedProperties
 import kotlin.metadata.jvm.signature
 import kotlin.metadata.visibility
 
-internal fun createAbiForKotlin(classesToBeDeleted: HashSet<String>, item: JarContentToProcess): ByteArray? {
-  val classWriter = ClassWriter(0)
-  val innerClassesToKeep = HashSet<String>()
-  val remapper = ClassRemapper(classWriter, object : Remapper() {
-    override fun map(internalName: String): String {
-      innerClassesToKeep.add(internalName)
-      return internalName
-    }
-
-    override fun mapInnerClassName(name: String, ownerName: String?, innerName: String?): String? = innerName
-  })
-  val abiClassVisitor = KotlinAbiClassVisitor(
-    classesToBeDeleted = classesToBeDeleted,
-    treatInternalAsPrivate = false,
-    remapper = remapper,
-    innerClassesToKeep = innerClassesToKeep,
-  )
-  ClassReader(item.data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES)
-  if (abiClassVisitor.isApiClass) {
-    return classWriter.toByteArray()
-  }
-  return null
-}
+//internal fun createAbiForKotlin(classesToBeDeleted: HashSet<String>, item: JarContentToProcess): ByteArray? {
+//  val classWriter = ClassWriter(0)
+//  val innerClassesToKeep = HashSet<String>()
+//  val remapper = ClassRemapper(classWriter, object : Remapper() {
+//    override fun map(internalName: String): String {
+//      innerClassesToKeep.add(internalName)
+//      return internalName
+//    }
+//
+//    override fun mapInnerClassName(name: String, ownerName: String?, innerName: String?): String? = innerName
+//  })
+//  val abiClassVisitor = KotlinAbiClassVisitor(
+//    classesToBeDeleted = classesToBeDeleted,
+//    treatInternalAsPrivate = false,
+//    remapper = remapper,
+//    innerClassesToKeep = innerClassesToKeep,
+//  )
+//  ClassReader(item.data).accept(abiClassVisitor, ClassReader.SKIP_FRAMES)
+//  if (abiClassVisitor.isApiClass) {
+//    return classWriter.toByteArray()
+//  }
+//  return null
+//}
 
 private class InnerClassInfo(
   @JvmField val name: String,

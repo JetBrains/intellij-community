@@ -50,9 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @ApiStatus.Internal
 public final class InjectionRegistrarImpl implements MultiHostRegistrar {
@@ -63,6 +61,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
   private List<PlaceInfo> placeInfos;
   private boolean cleared = true;
   private String fileExtension;
+  @SuppressWarnings("rawtypes")
+  private Map<Key, Object> myUserData;
   private final Project myProject;
   private final DocumentEx myHostDocument;
   private final VirtualFile myHostVirtualFile;
@@ -120,6 +120,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     cleared = true;
     placeInfos = null;
     currentThread = null;
+    myUserData = null;
   }
 
   @Override
@@ -152,6 +153,19 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     PlaceInfo info = new PlaceInfo(nnPrefix, nnSuffix, host, rangeInsideHost);
     placeInfos.add(info);
 
+    return this;
+  }
+
+  @Override
+  public @NotNull <T> MultiHostRegistrar putInjectedFileUserData(@NotNull Key<T> key, @Nullable T data) {
+    if (myUserData == null) {
+      if (data == null) return this;
+      myUserData = new HashMap<>();
+    }
+    if (data == null)
+      myUserData.remove(key);
+    else
+      myUserData.put(key, data);
     return this;
   }
 
@@ -267,6 +281,13 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
         else {
           cacheEverything(place, documentWindow, viewProvider, psiFile);
         }
+        if (myUserData != null && !myUserData.isEmpty()) {
+          //noinspection rawtypes
+          for (Map.Entry<Key, Object> userData : myUserData.entrySet()) {
+            //noinspection unchecked
+            psiFile.putUserData(userData.getKey(), userData.getValue());
+          }
+        }
 
         DocumentWindowImpl retrieved = (DocumentWindowImpl)myDocumentManagerBase.getDocument(psiFile);
         assertEverythingIsAllright(myDocumentManagerBase, retrieved, psiFile);
@@ -325,10 +346,11 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       LeafPatcher patcher = new LeafPatcher(placeInfos, parsedNode.getTextLength());
       patcher.patch(parsedNode, placeInfos);
     };
-    if (viewProvider instanceof SingleRootInjectedFileViewProvider) {
-      ((SingleRootInjectedFileViewProvider)viewProvider).doNotInterruptMeWhileImPatchingLeaves(patch);
-    } else if (viewProvider instanceof MultipleRootsInjectedFileViewProvider) {
-      ((MultipleRootsInjectedFileViewProvider)viewProvider).doNotInterruptMeWhileImPatchingLeaves(patch);
+    if (viewProvider instanceof SingleRootInjectedFileViewProvider single) {
+      single.doNotInterruptMeWhileImPatchingLeaves(patch);
+    }
+    else if (viewProvider instanceof MultipleRootsInjectedFileViewProvider multi) {
+      multi.doNotInterruptMeWhileImPatchingLeaves(patch);
     }
     if (!((FileElement)parsedNode).textMatches(documentText)) {
       throw new PatchException("After patch: doc:\n'" + documentText + "'\n---PSI:\n'" + parsedNode.getText());
@@ -468,11 +490,10 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     for (int i = injected.size()-1; i>=0; i--) {
       DocumentWindowImpl oldDocument = (DocumentWindowImpl)injected.get(i);
       PsiFileImpl oldFile = (PsiFileImpl)documentManager.getCachedPsiFile(oldDocument);
-      FileViewProvider viewProvider;
       if (oldFile == null ||
           !oldFile.isValid() ||
-          !((viewProvider = oldFile.getViewProvider()) instanceof InjectedFileViewProvider) ||
-          ((InjectedFileViewProvider)viewProvider).isDisposed()
+          !(oldFile.getViewProvider() instanceof InjectedFileViewProvider injectedProvider) ||
+          injectedProvider.isDisposed()
         ) {
         injected.remove(i);
         Disposer.dispose(oldDocument);
@@ -538,7 +559,7 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
    *   (see call to {@link #parseFile(Language, Language, DocumentWindowImpl, VirtualFile, DocumentEx, PsiFile, Project, CharSequence, List, StringBuilder, String, PsiDocumentManagerBase)} )
    * - feed two injections, the old and the new created fake to the standard tree diff
    *   (see call to {@link BlockSupportImpl#mergeTrees(PsiFileImpl, ASTNode, ASTNode, ProgressIndicator, CharSequence)} )
-   * - return continuation which performs actual PSI replace, just like {@link DocumentCommitThread#doCommit(DocumentCommitThread.CommitTask, PsiFile, FileASTNode, ProperTextRange, List, PsiDocumentManagerBase)}
+   * - return continuation which performs actual PSI replace, just like {@link com.intellij.psi.impl.DocumentCommitThreadKt#doCommit}
    * does
    *   {@code null} means we failed to reparse and will have to kill the injection.
    * </pre>
@@ -676,8 +697,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
       assert parserDefinition != null : "Parser definition for language " + finalLanguage + " is null";
       PsiFileImpl psiFile = (PsiFileImpl)parserDefinition.createFile(viewProvider);
-      if (viewProvider instanceof TemplateLanguageFileViewProvider) {
-        IElementType elementType = ((TemplateLanguageFileViewProvider)viewProvider).getContentElementType(lang);
+      if (viewProvider instanceof TemplateLanguageFileViewProvider template) {
+        IElementType elementType = template.getContentElementType(lang);
         if (elementType != null) {
           psiFile.setContentElementType(elementType);
         }
@@ -741,8 +762,8 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     else {
       // inside
       toLookIn = newRoot.getPsi();
-      if (toLookIn instanceof PsiFile) {
-        FileViewProvider viewProvider = ((PsiFile)toLookIn).getViewProvider();
+      if (toLookIn instanceof PsiFile psiFile) {
+        FileViewProvider viewProvider = psiFile.getViewProvider();
         toLookIn = ObjectUtils.notNull(viewProvider.getPsi(hostPsiFile.getLanguage()), viewProvider.getPsi(viewProvider.getBaseLanguage()));
       }
       startToLook = newInjectionHostRange.getStartOffset() - oldRootRange.getStartOffset();

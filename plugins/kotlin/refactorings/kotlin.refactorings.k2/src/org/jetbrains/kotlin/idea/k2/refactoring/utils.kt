@@ -13,7 +13,10 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.KaSmartCastedReceiverValue
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
@@ -23,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinOptimizeImportsFacility
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.refactoring.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -50,6 +54,7 @@ fun PsiElement?.canDeleteElement(): Boolean {
     if (this is KtObjectDeclaration && isObjectLiteral()) return false
 
     if (this is KtParameter) {
+        if (parent is KtContextReceiverList) return true
         val parameterList = parent as? KtParameterList ?: return false
         val declaration = parameterList.parent as? KtDeclaration ?: return false
         return declaration !is KtPropertyAccessor
@@ -151,25 +156,29 @@ fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
  *
  * @param callableSignature The signature of the callable to be found, which includes
  * the symbol name, return type, receiver type, and value parameters.
+ * @param ignoreReturnType If true, the return type is not used for comparison.
  *
  * @return The matching callable symbol if found, null otherwise.
  */
 context(KaSession)
 fun KaDeclarationContainerSymbol.findCallableMemberBySignature(
-    callableSignature: KaCallableSignature<KaCallableSymbol>
-): KaCallableSymbol? = declaredMemberScope.findCallableMemberBySignature(callableSignature)
+    callableSignature: KaCallableSignature<KaCallableSymbol>,
+    ignoreReturnType: Boolean = false,
+): KaCallableSymbol? = declaredMemberScope.findCallableMemberBySignature(callableSignature, ignoreReturnType)
 
 /**
  * Finds a callable member of the class by its signature in the scope.
  *
  * @param callableSignature The signature of the callable to be found, which includes
  * the symbol name, return type, receiver type, and value parameters.
+ * @param ignoreReturnType If true, the return type is not used for comparison
  *
  * @return The matching callable symbol if found, null otherwise.
  */
 context(KaSession)
 fun KaScope.findCallableMemberBySignature(
-    callableSignature: KaCallableSignature<KaCallableSymbol>
+    callableSignature: KaCallableSignature<KaCallableSymbol>,
+    ignoreReturnType: Boolean = false,
 ): KaCallableSymbol? {
     fun KaType?.eq(anotherType: KaType?): Boolean {
         if (this == null || anotherType == null) return this == anotherType
@@ -190,6 +199,22 @@ fun KaScope.findCallableMemberBySignature(
 
         callable.receiverType.eq(callableSignature.receiverType) &&
                 parametersMatch() &&
-                callable.returnType.semanticallyEquals(callableSignature.returnType)
+                (ignoreReturnType || callable.returnType.semanticallyEquals(callableSignature.returnType))
     }
+}
+
+/**
+ * Returns the owner symbol of the given receiver value, or null if no owner could be found.
+ */
+context(KaSession)
+fun KaReceiverValue.getThisReceiverOwner(): KaSymbol? {
+    val symbol = when (this) {
+        is KaExplicitReceiverValue -> {
+            val thisRef = (KtPsiUtil.deparenthesize(expression) as? KtThisExpression)?.instanceReference ?: return null
+            thisRef.resolveExpression()
+        }
+        is KaImplicitReceiverValue -> symbol
+        is KaSmartCastedReceiverValue -> original.getThisReceiverOwner()
+    }
+    return symbol?.containingSymbol
 }

@@ -11,9 +11,6 @@ class KotlinUastIdentifiersTest : AbstractKotlinIdentifiersTest() {
         get() = KotlinPluginMode.K1
 
     @Test
-    fun testClassAnnotation() = doTest("ClassAnnotation")
-
-    @Test
     fun testLocalDeclarations() = doTest("LocalDeclarations")
 
     @Test

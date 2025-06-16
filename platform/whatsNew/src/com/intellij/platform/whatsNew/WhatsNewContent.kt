@@ -29,20 +29,29 @@ import com.intellij.ui.jcef.JBCefApp
 import com.intellij.util.application
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.accessibility.ScreenReader
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
 
-internal abstract class WhatsNewContent {
+internal abstract class WhatsNewContent() {
   companion object {
     suspend fun getWhatsNewContent(): WhatsNewContent? {
-      return if (WhatsNewInVisionContentProvider.getInstance().isAvailable()) {
-        WhatsNewVisionContent(WhatsNewInVisionContentProvider.getInstance().getContent().entities.first())
+      return if (WhatsNewInVisionContentProvider.getInstance().isAvailable() &&
+                 // JCEF is not accessible for screen readers (IJPL-59438), so also need to open the page in the browser
+                 !ScreenReader.isActive()) {
+        val provider = WhatsNewInVisionContentProvider.getInstance()
+        WhatsNewVisionContent(provider, provider.getContent().entities.first())
       } else {
         ExternalProductResourceUrls.getInstance().whatIsNewPageUrl?.toDecodedForm()?.let { WhatsNewUrlContent(it) }
       }
     }
+
+    suspend fun hasWhatsNewContent() = WhatsNewInVisionContentProvider.getInstance().isAvailable()
+                                       || ExternalProductResourceUrls.getInstance().whatIsNewPageUrl != null
+
   }
 
   // Year and release have to be strings, because this is the ApplicationInfo.xml format.
@@ -144,8 +153,12 @@ internal class WhatsNewUrlContent(val url: String) : WhatsNewContent() {
   }
 }
 
-internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page) : WhatsNewContent() {
+internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionContentProvider, page: WhatsNewInVisionContentProvider.Page)
+  : WhatsNewContent() {
   companion object {
+    const val WHATS_NEW_VISION_SCHEME = "whatsnew-vision"
+    const val LOCALHOST = "localhost"
+
     private const val THEME_KEY = "\$__VISION_PAGE_SETTINGS_THEME__$"
     private const val DARK_THEME = "dark"
     private const val LIGHT_THEME = "light"
@@ -153,16 +166,17 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
     private const val LANG_KEY = "\$__VISION_PAGE_SETTINGS_LANGUAGE_CODE__$"
     private const val ZOOM_KEY = "\$__VISION_PAGE_SETTINGS_ZOOM_IN_ACTION__$"
     private const val GIF_KEY = "\$__VISION_PAGE_SETTINGS_GIF_PLAYER_ACTION__$"
+    private const val MEDIA_BASE_PATH_KEY = "\$__VISION_PAGE_SETTINGS_MEDIA_BASE_PATH__$"
 
     private const val ZOOM_VALUE = "whatsnew.vision.zoom"
     private const val GIF_VALUE = "whatsnew.vision.gif"
+    private const val MEDIA_BASE_PATH_VALUE = "$WHATS_NEW_VISION_SCHEME://$LOCALHOST"
   }
 
   val content: String
   private val contentHash: String
   private val myActionWhiteList: Set<String>
   private val visionActionIds = setOf(GIF_VALUE, ZOOM_VALUE)
-
   init {
     var html = page.html
     val pattern = page.publicVars.distinctBy { it.value }
@@ -178,6 +192,7 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
         LANG_KEY -> getCurrentLanguageTag()
         ZOOM_KEY -> ZOOM_VALUE
         GIF_KEY -> GIF_VALUE
+        MEDIA_BASE_PATH_KEY -> MEDIA_BASE_PATH_VALUE
         else -> it.value
       }
     }
@@ -189,7 +204,15 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
   private fun getRequest(dataContext: DataContext?): HTMLEditorProvider.Request {
     val request = html(content)
     request.withQueryHandler(getHandler(dataContext))
+    request.withResourceHandler(getRequestHandler(dataContext))
     return request
+  }
+
+  @OptIn(DelicateCoroutinesApi::class)
+  private fun getRequestHandler(dataContext: DataContext?): HTMLEditorProvider.ResourceHandler? {
+    if(dataContext == null) return logger.error("dataContext is null").let { null }
+
+    return WhatsNewRequestHandler(contentProvider)
   }
 
   override fun getVersion(): ContentVersion {
@@ -259,6 +282,7 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
     val title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().fullProductName)
     withContext(Dispatchers.EDT) {
       logger.info("Opening What's New in editor.")
+      val disposable = Disposer.newDisposable(project)
       val editor = writeIntentReadAction { openEditor(project, title, getRequest(dataContext)) }
       editor?.let {
         project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
@@ -266,7 +290,6 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
 
         WhatsNewContentVersionChecker.saveLastShownContent(this@WhatsNewVisionContent)
 
-        val disposable = Disposer.newDisposable(project)
         val busConnection = application.messageBus.connect(disposable)
         busConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
           override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
@@ -276,7 +299,7 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
             }
           }
         })
-      }
+      } ?: Disposer.dispose(disposable)
     }
   }
 }

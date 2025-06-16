@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components.impl.stores
 
 import com.intellij.configurationStore.StateStorageManager
@@ -15,11 +15,16 @@ import java.nio.file.Path
 @Internal
 interface IComponentStore {
   val storageManager: StateStorageManager
+
   val isStoreInitialized: Boolean
+    get() = true
 
-  fun setPath(path: Path)
+  fun setPath(path: Path) {
+  }
 
-  fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
+  fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
+
+  suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId)
 
   fun unloadComponent(component: Any)
 
@@ -40,9 +45,11 @@ interface IComponentStore {
   fun removeComponent(name: String)
 
   @TestOnly
-  fun clearCaches()
+  fun clearCaches() {
+  }
 
-  fun release()
+  fun release() {
+  }
 }
 
 @Internal

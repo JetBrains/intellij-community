@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import kotlinx.coroutines.future.await
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
@@ -129,19 +130,24 @@ class ByteArrayProducingBodyPublisher(
   override fun contentLength(): Long = -1
 }
 
-@Deprecated("Should be replaced by a Ktor HTTP-client by 24.3")
+// Look here or elsewhere in this file if you're having trouble fixing "chunked transfer encoding, state: READING_LENGTH" errors ;)
+@ApiStatus.Internal
 class LazyBodyHandler<T>(
   private val delegate: BodyHandler<T>,
 ) : BodyHandler<suspend () -> T> {
-  override fun apply(responseInfo: ResponseInfo?): BodySubscriber<(suspend () -> T)?>? {
+  override fun apply(responseInfo: ResponseInfo?): BodySubscriber<(suspend () -> T)?> {
     val delegateSubscriber = delegate.apply(responseInfo)
 
-    return object : BodySubscriber<(suspend () -> T)?> by delegateSubscriber {
-      override fun getBody(): CompletionStage<(suspend () -> T)?>? {
-        return CompletableFuture.completedFuture {
+    return object : BodySubscriber<(suspend () -> T)?> {
+      override fun onSubscribe(subscription: Flow.Subscription?) = delegateSubscriber.onSubscribe(subscription)
+      override fun onNext(item: List<ByteBuffer?>?) = delegateSubscriber.onNext(item)
+      override fun onError(throwable: Throwable?) = delegateSubscriber.onError(throwable)
+      override fun onComplete() = delegateSubscriber.onComplete()
+
+      override fun getBody(): CompletionStage<(suspend () -> T)?>? =
+        CompletableFuture.completedFuture {
           delegateSubscriber.body.await()
         }
-      }
     }
   }
 }

@@ -375,11 +375,6 @@ public class DefaultActionGroup extends ActionGroup {
               "Otherwise, use `getChildActionsOrStubs()` or `getChildren(ActionManager)`");
   }
 
-  @Override
-  public final AnAction @NotNull [] getChildren(@Nullable AnActionEvent e, @NotNull ActionManager actionManager) {
-    return getChildren(actionManager);
-  }
-
   /**
    * Returns the group's unstubbed actions in the order determined by the constraints.
    *

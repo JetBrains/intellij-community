@@ -9,12 +9,12 @@ import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
@@ -41,6 +41,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.Result
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -566,9 +567,11 @@ class CancellationPropagationTest {
           assertSame(job, blockingJob.blockingJob)
           prepareThreadContext { prepared ->
             assertNull(prepared[BlockingJob])
+            assertNull(prepared[ThreadScopeCheckpoint])
           }
           runBlockingCancellable {
             assertNull(coroutineContext[BlockingJob])
+            assertNull(coroutineContext[ThreadScopeCheckpoint])
           }
         }
       }

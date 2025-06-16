@@ -10,6 +10,7 @@ object GHGQLQueries {
   const val updateIssueComment = "graphql/query/updateIssueComment.graphql"
   const val deleteIssueComment = "graphql/query/deleteIssueComment.graphql"
   const val issueSearch = "graphql/query/issueSearch.graphql"
+  const val metrics = "graphql/query/metrics.graphql"
   const val createPullRequest = "graphql/query/createPullRequest.graphql"
   const val findPullRequest = "graphql/query/findPullRequest.graphql"
   const val findPullRequestId = "graphql/query/findPullRequestId.graphql"

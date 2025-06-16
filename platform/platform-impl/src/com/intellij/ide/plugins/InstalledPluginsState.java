@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +81,9 @@ public final class InstalledPluginsState {
     }
   }
 
+  /**
+   * @return whether a plugin with a given id was installed during this IDE session, it required a restart, and it was not an update of an existing plugin.
+   */
   public boolean wasInstalled(@NotNull PluginId id) {
     synchronized (myLock) {
       return myInstalledPlugins.containsKey(id);
@@ -113,6 +117,7 @@ public final class InstalledPluginsState {
   /**
    * Should be called whenever a list of plugins is loaded from a repository to check if there is an updated version.
    */
+  @ApiStatus.Internal
   public void onDescriptorDownload(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId id = descriptor.getPluginId();
     IdeaPluginDescriptor existing = PluginManagerCore.getPlugin(id);
@@ -134,9 +139,11 @@ public final class InstalledPluginsState {
       }
     }
   }
+
   /**
    * Should be called whenever a new plugin is installed or an existing one is updated.
    */
+  @ApiStatus.Internal
   public void onPluginInstall(@NotNull IdeaPluginDescriptor descriptor, boolean isUpdate, boolean restartNeeded) {
     PluginId id = descriptor.getPluginId();
     synchronized (myLock) {
@@ -160,6 +167,7 @@ public final class InstalledPluginsState {
   }
 
 
+  @ApiStatus.Internal
   public void onPluginUninstall(@NotNull IdeaPluginDescriptor descriptor,
                                 boolean isDynamicallyUnloadable) {
     PluginId id = descriptor.getPluginId();
@@ -171,6 +179,7 @@ public final class InstalledPluginsState {
     PluginManagerUsageCollector.pluginRemoved(id);
   }
 
+  @ApiStatus.Internal
   public void resetChangesAppliedWithoutRestart() {
     // The plugins configurable may be recreated when installing a plugin that registers any configurables,
     // and this leads to a call of disposeUIResources() that lands here. In this case we must not forget
@@ -181,6 +190,7 @@ public final class InstalledPluginsState {
     }
   }
 
+  @ApiStatus.Internal
   public void trackPluginInstallation(Runnable runnable) {
     myInstallationInProgress = true;
     try {
@@ -191,16 +201,19 @@ public final class InstalledPluginsState {
     }
   }
 
+  @ApiStatus.Internal
   public void setShutdownCallback(Runnable runnable) {
     if (myShutdownCallback == null) {
       myShutdownCallback = runnable;
     }
   }
 
+  @ApiStatus.Internal
   public void clearShutdownCallback() {
     myShutdownCallback = null;
   }
 
+  @ApiStatus.Internal
   public void runShutdownCallback() {
     if (myShutdownCallback != null) {
       myShutdownCallback.run();
@@ -212,6 +225,7 @@ public final class InstalledPluginsState {
     return myRestartRequired;
   }
 
+  @ApiStatus.Internal
   public void setRestartRequired(boolean restartRequired) {
     myRestartRequired = restartRequired;
   }

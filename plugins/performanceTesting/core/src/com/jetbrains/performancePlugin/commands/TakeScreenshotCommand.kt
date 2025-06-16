@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.*
@@ -109,17 +110,20 @@ internal fun takeScreenshotOfAllWindowsBlocking(childFolder: String? = null) {
   runBlocking { takeScreenshotOfAllWindows(childFolder) }
 }
 
-internal fun takeFullScreenshot(childFolder: String? = null): String {
+internal fun takeFullScreenshot(childFolder: String? = null): String? {
   // don't try to take a screenshot when IDE in a headless mode
-  if (ApplicationManager.getApplication().isHeadlessEnvironment) return ""
+  if (ApplicationManager.getApplication().isHeadlessEnvironment) return null
   // On Wayland it triggers system dialog about granting permissions each time, and it can't be disabled.
-  if (SystemInfo.isWayland) return ""
+  if (SystemInfo.isWayland) return null
 
   var screenshotPath = File(PathManager.getLogPath() + "/screenshots/" + (childFolder ?: "default"))
   screenshotPath = getNextFolder(screenshotPath)
   val screenshotPathWithFile = screenshotPath.resolve("full_screen.png")
   takeScreenshotWithAwtRobot(screenshotPathWithFile.absolutePath, "png")
-  return screenshotPathWithFile.absolutePath
+  if (screenshotPathWithFile.exists()) {
+    return screenshotPathWithFile.absolutePath
+  }
+  return null
 }
 
 internal suspend fun takeScreenshotOfAllWindows(childFolder: String? = null) {

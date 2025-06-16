@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkEx
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.InvalidJavaHomeException
 import com.intellij.openapi.externalSystem.service.execution.InvalidSdkException
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
@@ -41,6 +41,7 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
@@ -48,10 +49,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.localEel
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.*
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.AlreadyDisposedException
@@ -74,11 +72,11 @@ import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.dom.MavenDomUtil
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenConstants.MODEL_VERSION_4_0_0
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenProjectProblem
-import org.jetbrains.idea.maven.model.MavenRemoteRepository
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerConnector
@@ -503,7 +501,7 @@ object MavenUtil {
       if (sdk != null && sdk.getSdkType() is JavaSdk) {
         val javaSdk = sdk.getSdkType() as JavaSdk
         val version: JavaSdkVersion? = javaSdk.getVersion(sdk)
-        val description = if (version == null) null else version.getDescription()
+        val description = if (version == null) null else version.description
         val shouldSetLangLevel = version != null && version.isAtLeast(JavaSdkVersion.JDK_1_6)
         conditions.setProperty("SHOULD_SET_LANG_LEVEL", shouldSetLangLevel.toString())
         properties.setProperty("COMPILER_LEVEL_SOURCE", description)
@@ -749,7 +747,7 @@ object MavenUtil {
   fun getSystemMavenHomeVariants(project: Project): MutableList<MavenHomeType> {
     val result = ArrayList<MavenHomeType>()
 
-    val eel = project.getEelDescriptor().upgradeBlocking()
+    val eel = project.getEelDescriptor().toEelApiBlocking()
     val envs = eel.exec.fetchLoginShellEnvVariablesBlocking()
 
     val m2home = envs.get(ENV_M2_HOME)
@@ -1082,7 +1080,7 @@ object MavenUtil {
   }
 
   fun resolveM2Dir(project: Project?): Path {
-    val eel = if (project != null) project.getEelDescriptor().upgradeBlocking() else null
+    val eel = if (project != null) project.getEelDescriptor().toEelApiBlocking() else null
     return eel.resolveM2Dir()
   }
 
@@ -1134,7 +1132,7 @@ object MavenUtil {
       return Path.of(forcedM2Home)
     }
 
-    val api = if (path == null) localEel else path.getEelApiBlocking()
+    val api = if (path == null|| path.getEelDescriptor() is LocalEelDescriptor) localEel else path.getEelApiBlocking()
     val result: Path = api.resolveM2Dir().resolve(REPOSITORY_DIR)
 
     try {
@@ -1461,22 +1459,21 @@ object MavenUtil {
   }
 
   fun isProjectTrustedEnoughToImport(project: Project): Boolean {
-    return ExternalSystemUtil.confirmLoadingUntrustedProject(project, SYSTEM_ID)
+    return ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, SYSTEM_ID)
   }
 
   /**
-   * @param project   Project required to restart connectors
-   * @param wait      if true, then maven server(s) restarted synchronously
-   * @param condition only connectors satisfied for this predicate will be restarted
+   * closes connectors and removes them out of maven server manager. Connector processes will be close asynchronouly
+   * @param project   Project required to shut down connectors
+   * @param condition only connectors satisfied for this predicate will be shut down
    */
   @JvmOverloads
   @JvmStatic
-  fun restartMavenConnectors(
+  fun shutdownMavenConnectors(
     project: Project,
-    wait: Boolean,
     condition: Predicate<MavenServerConnector> = Predicate { c: MavenServerConnector -> java.lang.Boolean.TRUE },
   ) {
-    getInstance().restartMavenConnectors(project, wait, condition)
+    getInstance().shutdownMavenConnectors(project, condition)
   }
 
   @JvmStatic
@@ -1792,8 +1789,47 @@ object MavenUtil {
     return MavenPathWrapper(path)
   }
 
-  @Throws(ExternalSystemJdkException::class)
-  fun getJdk(project: Project, name: String): Sdk {
+  internal fun MavenServerConnector.isCompatibleWith(project: Project, jdk: Sdk, multimoduleDirectory: String): Boolean {
+    if (Registry.`is`("maven.server.per.idea.project")) return true
+    if (this.project != project) return false
+
+    val cache = MavenDistributionsCache.getInstance(project)
+    val distribution = cache.getMavenDistribution(multimoduleDirectory)
+    val vmOptions = cache.getVmOptions(multimoduleDirectory)
+
+    if (!this.mavenDistribution.compatibleWith(distribution)) {
+      return false
+    }
+    if (!StringUtil.equals(this.jdk.name, jdk.name)) {
+      return false
+    }
+    return StringUtil.equals(this.vmOptions, vmOptions)
+  }
+
+  internal fun getJdkForImporter(project: Project): Sdk {
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project).settings
+    val jdkForImporterName = settings.importingSettings.jdkForImporter
+    var jdk: Sdk
+    try {
+      jdk = getJdk(project, jdkForImporterName)
+    }
+    catch (_: ExternalSystemJdkException) {
+      jdk = getJdk(project, MavenRunnerSettings.USE_PROJECT_JDK)
+      MavenProjectsManager.getInstance(project).syncConsole.addWarning(
+        SyncBundle.message("importing.jdk.changed"),
+        SyncBundle.message("importing.jdk.changed.description", jdkForImporterName, jdk.name)
+      )
+    }
+    if (JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_1_8)) {
+      return jdk
+    }
+    else {
+      MavenLog.LOG.info("Selected jdk [" + jdk.name + "] is not JDK1.8+ Will use internal jdk instead")
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
+    }
+  }
+
+  private fun getJdk(project: Project, name: String): Sdk {
     if (name == MavenRunnerSettings.USE_INTERNAL_JAVA || project.isDefault()) {
       return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk()
     }
@@ -1825,8 +1861,7 @@ object MavenUtil {
     throw InvalidSdkException(name)
   }
 
-
-  internal fun getSdkByExactName(name: String): Sdk? {
+  private fun getSdkByExactName(name: String): Sdk? {
     for (projectJdk in ProjectJdkTable.getInstance().getAllJdks()) {
       if (projectJdk.getName() == name) {
         if (projectJdk.getSdkType() is JavaSdkType) {
@@ -1864,53 +1899,14 @@ object MavenUtil {
     return settings.getMavenHomeType() is MavenWrapper
   }
 
-  fun suggestProjectSdk(rootProjectPath: Path): Sdk? {
+  fun suggestProjectSdk(project: Project): Sdk? {
     val projectJdkTable = ProjectJdkTable.getInstance()
     val sdkType = ExternalSystemJdkUtil.getJavaSdkType()
-    return projectJdkTable.getSdksOfType(sdkType).stream()
-      .filter { it: Sdk? -> isGoodSdk(it!!, rootProjectPath) }
-      .max(sdkType.versionComparator())
-      .orElse(null)
-  }
-
-  private fun isGoodSdk(sdk: Sdk, rootProjectPath: Path): Boolean {
-    val sdkRoot = sdk.getHomeDirectory()
-    if (sdkRoot == null) return false
-
-    val isWindowsProjectRoot = rootProjectPath.getRoot().toString() != "/"
-    val isWindowsSdkRoot = sdkRoot.toNioPath().getRoot().toString() != "/"
-    if (isWindowsSdkRoot != isWindowsProjectRoot) return false
-
-    //need better checking, can perform when IDEA-364602 is ready
-    return JdkUtil.checkForJdk(sdkRoot.toNioPath(), isWindowsProjectRoot)
-  }
-
-  fun getRemoteResolvedRepositories(project: Project): Set<MavenRemoteRepository> {
-    val projectsManager = MavenProjectsManager.getInstance(project)
-    val repositories = projectsManager.getRemoteRepositories()
-    val embeddersManager = projectsManager.getEmbeddersManager()
-
-    var baseDir = project.getBasePath()
-    val projects = projectsManager.getRootProjects()
-    if (!projects.isEmpty()) {
-      baseDir = getBaseDir(projects.get(0)!!.directoryFile).toString()
-    }
-    if (null == baseDir) {
-      baseDir = ""
-    }
-
-    val embedderWrapper = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, baseDir)
-    try {
-      val resolvedRepositories = embedderWrapper.resolveRepositories(repositories)
-      return if (resolvedRepositories.isEmpty()) repositories else resolvedRepositories
-    }
-    catch (e: Exception) {
-      MavenLog.LOG.warn("resolve remote repo error", e)
-    }
-    finally {
-      embeddersManager.release(embedderWrapper)
-    }
-    return repositories
+    return projectJdkTable.getSdksOfType(sdkType)
+      .filterNotNull()
+      .filter { it: Sdk -> JdkUtil.isCompatible(it, project) }
+      .filter { it: Sdk -> it.homeDirectory?.toNioPath()?.let { JdkUtil.checkForJdk(it) } == true }
+      .maxWithOrNull(sdkType.versionComparator())
   }
 
   @JvmStatic

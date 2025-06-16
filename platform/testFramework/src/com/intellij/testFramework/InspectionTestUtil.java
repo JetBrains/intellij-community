@@ -139,10 +139,10 @@ public final class InspectionTestUtil {
     compareToolResults(context, checkRange, testDir, Collections.singletonList(toolWrapper));
   }
 
-  static void compareToolResults(@NotNull GlobalInspectionContextImpl context,
-                                 boolean checkRange,
-                                 @NotNull String testDir,
-                                 @NotNull Collection<? extends InspectionToolWrapper<?,?>> toolWrappers) {
+  public static void compareToolResults(@NotNull GlobalInspectionContextImpl context,
+                                        boolean checkRange,
+                                        @NotNull String testDir,
+                                        @NotNull Collection<? extends InspectionToolWrapper<?, ?>> toolWrappers) {
     final Element root = new Element(GlobalInspectionContextBase.PROBLEMS_TAG_NAME);
 
     for (InspectionToolWrapper<?,?> toolWrapper : toolWrappers) {

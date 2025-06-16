@@ -10,6 +10,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.eel.EelDescriptor;
+import com.intellij.platform.eel.provider.EelProviderUtil;
+import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.terminal.ui.TerminalWidget;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,10 +21,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
-import org.jetbrains.plugins.terminal.ShellStartupOptions;
-import org.jetbrains.plugins.terminal.ShellStartupOptionsKt;
-import org.jetbrains.plugins.terminal.ShellTerminalWidget;
+import org.jetbrains.plugins.terminal.*;
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration;
 import org.jetbrains.plugins.terminal.util.ShellIntegration;
 import org.jetbrains.plugins.terminal.util.ShellNameUtil;
@@ -33,7 +33,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import static com.intellij.platform.eel.provider.EelNioBridgeServiceKt.asEelPath;
+import static com.intellij.platform.eel.provider.utils.EelPathUtils.transferLocalContentToRemote;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.LOGIN_CLI_OPTIONS;
 import static org.jetbrains.plugins.terminal.LocalTerminalDirectRunner.isBlockTerminalSupported;
 
@@ -68,7 +71,12 @@ public final class LocalShellIntegrationInjector {
     if (rcFilePath != null) {
       boolean isBlockTerminal = isBlockTerminalSupported(shellName);
       if (ShellNameUtil.isBash(shellName) || (SystemInfo.isMac && shellName.equals(ShellNameUtil.SH_NAME))) {
-        addRcFileArgument(envs, arguments, resultCommand, rcFilePath, "--rcfile");
+        final var useEel = TerminalStartupKt.shouldUseEelApi();
+        final var eelDescriptor = useEel ? Optional.ofNullable(options.getWorkingDirectory())
+          .map(e -> EelProviderUtil.getEelDescriptor(Path.of(e)))
+          .orElse(null) : null;
+
+        addRcFileArgument(envs, arguments, resultCommand, rcFilePath, "--rcfile", eelDescriptor);
         // remove --login to enable --rcfile sourcing
         boolean loginShell = arguments.removeAll(LOGIN_CLI_OPTIONS);
         setLoginShellEnv(envs, loginShell);
@@ -154,7 +162,7 @@ public final class LocalShellIntegrationInjector {
   }
 
   @VisibleForTesting
-  static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
+  public static @NotNull String findAbsolutePath(@NotNull String relativePath) throws IOException {
     String jarPath = PathUtil.getJarPathForClass(LocalTerminalDirectRunner.class);
     final File result;
     if (PluginManagerCore.isRunningFromSources()) {
@@ -194,9 +202,16 @@ public final class LocalShellIntegrationInjector {
   private static void addRcFileArgument(Map<String, String> envs,
                                         List<String> arguments,
                                         List<String> result,
-                                        String rcFilePath, String rcfileOption) {
+                                        String rcFilePath, String rcfileOption, @Nullable EelDescriptor eelDescriptor) {
     result.add(rcfileOption);
-    result.add(rcFilePath);
+    if (eelDescriptor != null) {
+      final var rcFile = Path.of(rcFilePath);
+      final var bashSupportDir = transferLocalContentToRemote(rcFile.getParent(), new EelPathUtils.TransferTarget.Temporary(eelDescriptor));
+      result.add(asEelPath(bashSupportDir.resolve(rcFile.getFileName().toString())).toString());
+    }
+    else {
+      result.add(rcFilePath);
+    }
     int idx = arguments.indexOf(rcfileOption);
     if (idx >= 0) {
       arguments.remove(idx);

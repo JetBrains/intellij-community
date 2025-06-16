@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ public final class PluginManager {
   public static final String INSTALLED_TXT = "installed.txt";
   public static final Pattern EXPLICIT_BIG_NUMBER_PATTERN = Pattern.compile("(.*)\\.(9{4,}+|10{4,}+)");
 
+  @RequiresBlockingContext
   public static @NotNull PluginManager getInstance() {
     return ApplicationManager.getApplication().getService(PluginManager.class);
   }
@@ -80,7 +82,7 @@ public final class PluginManager {
    */
   @ApiStatus.Internal
   public static @Nullable PluginId getPluginByClassNameAsNoAccessToClass(@NotNull String className) {
-    PluginDescriptor result = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className);
+    PluginDescriptor result = PluginUtils.getPluginDescriptorOrPlatformByClassName(className);
     PluginId id = result == null ? null : result.getPluginId();
     return (id == null || CORE_ID.equals(id)) ? null : id;
   }
@@ -150,7 +152,7 @@ public final class PluginManager {
   }
 
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
-    return PluginManagerCore.INSTANCE.getPluginSet().findEnabledPlugin(id);
+    return PluginManagerCore.getPluginSet().findEnabledPlugin(id);
   }
 
   /**
@@ -168,8 +170,8 @@ public final class PluginManager {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins(boolean showImplementationDetails) {
-    return filterVisiblePlugins(PluginManagerCore.INSTANCE.getPluginSet().allPlugins, showImplementationDetails);
+  public static @NotNull Stream<PluginMainDescriptor> getVisiblePlugins(boolean showImplementationDetails) {
+    return filterVisiblePlugins(PluginManagerCore.getPluginSet().allPlugins, showImplementationDetails);
   }
 
   @ApiStatus.Internal

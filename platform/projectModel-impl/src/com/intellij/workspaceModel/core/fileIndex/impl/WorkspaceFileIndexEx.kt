@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -20,6 +21,10 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import org.jetbrains.annotations.ApiStatus
 
 interface WorkspaceFileIndexEx : WorkspaceFileIndex {
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): WorkspaceFileIndexEx = WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx
+  }
   /**
    * An internal variant of [findFileSetWithCustomData] method which provides more information if [file] isn't included in the workspace
    * or if multiple file sets are associated with [file]. 
@@ -27,6 +32,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun getFileInfo(file: VirtualFile,
                   honorExclusion: Boolean,
                   includeContentSets: Boolean,
+                  includeContentNonIndexableSets: Boolean,
                   includeExternalSets: Boolean,
                   includeExternalSourceSets: Boolean,
                   includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
@@ -41,8 +47,9 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
    */
   fun <E: WorkspaceEntity> findContainingEntities(file: VirtualFile,
                                                   entityClass: Class<E>,
-                                                  honorExclusion: Boolean, 
-                                                  includeContentSets: Boolean, 
+                                                  honorExclusion: Boolean,
+                                                  includeContentSets: Boolean,
+                                                  includeContentNonIndexableSets: Boolean,
                                                   includeExternalSets: Boolean,
                                                   includeExternalSourceSets: Boolean,
                                                   includeCustomKindSets: Boolean): Collection<E>
@@ -56,6 +63,7 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
     file: VirtualFile,
     honorExclusion: Boolean,
     includeContentSets: Boolean,
+    includeContentNonIndexableSets: Boolean,
     includeExternalSets: Boolean,
     includeExternalSourceSets: Boolean,
     includeCustomKindSets: Boolean,
@@ -67,21 +75,22 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   val indexData: WorkspaceFileIndexData
 
   /**
-   * Processes [content][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isContent] files from the file sets located under 
+   * Processes [indexable][com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind.isIndexable] files from the file sets located under
    * [fileOrDir] directory using [processor].
    * @param customFilter determines whether an individual file or directory should be processed;
    * @param fileSetFilter determines whether files belonging to a specific file set should be processed;
    * @return `true` if all files were processed, or `false` if processing was stopped because [processor] returned 
    * [STOP][com.intellij.util.containers.TreeNodeProcessingResult.STOP]. 
    */
-  fun processContentFilesRecursively(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
-                                     fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
+  fun processIndexableFilesRecursively(fileOrDir: VirtualFile, processor: ContentIteratorEx, customFilter: VirtualFileFilter?,
+                                       fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean): Boolean
 
   /**
-   * Returns package name for [directory] if it's located under source root or classes root of Java library, or `null` otherwise.
+   * Returns package name for [fileOrDir] if it's a single file source root, or a directory located under source root or 
+   * classes root of a Java library. Returns `null` otherwise.
    * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getPackageNameByDirectory] instead.
    */
-  fun getPackageName(directory: VirtualFile): String?
+  fun getPackageName(fileOrDir: VirtualFile): String?
 
   /**
    * Returns a query producing directories which correspond to [packageName]. 
@@ -96,13 +105,22 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun getDirectoriesByPackageName(packageName: String, scope: GlobalSearchScope): Query<VirtualFile>
 
   /**
+   * Returns a query producing single file source root files which correspond to [packageName].
+   * This is an internal function, plugins must use [com.intellij.openapi.roots.PackageIndex.getFilesByPackageName] instead.
+   */
+  @ApiStatus.Experimental
+  fun getFilesByPackageName(packageName: String): Query<VirtualFile>
+
+  /**
    * Initialize the index data. The index must not be accessed before this function is called.
    */
+  @ApiStatus.Internal
   suspend fun initialize()
 
   /**
    * A blocking variant of [initialize]. It's temporary extracted to be used in CodeServer until suspending read actions are supported in it.
    */
+  @ApiStatus.Internal
   fun initializeBlocking()
 
   /**
@@ -161,7 +179,7 @@ sealed interface WorkspaceFileInternalInfo {
 
   /**
    * Returns file sets stored in this instance which satisfies the given [condition]
-   * todo ijpl-339 mark experimental
+   * todo IJPL-339 mark experimental
    */
   @ApiStatus.Internal
   fun findFileSets(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): List<WorkspaceFileSetWithCustomData<*>>
@@ -176,8 +194,8 @@ internal sealed interface MultipleWorkspaceFileSets : WorkspaceFileInternalInfo 
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-interface WorkspaceFileSetVisitor {
-  fun visitIncludedRoot(fileSet: WorkspaceFileSet)
+fun interface WorkspaceFileSetVisitor {
+  fun visitIncludedRoot(fileSet: WorkspaceFileSet, entityPointer: EntityPointer<WorkspaceEntity>)
 }
 
 @ApiStatus.Internal

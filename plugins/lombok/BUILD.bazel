@@ -7,13 +7,31 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_resources(
+  name = "lombok_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
+jvm_resources(
+  name = "lombok_test_resources_1",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
 jvm_library(
   name = "lombok",
   module_name = "intellij.lombok",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "lang/src/**/*.kt", "lang/src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/java/**/*.form", "lang/src/**/*.kt", "lang/src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/lombok/generated",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//java/openapi:java",
@@ -22,10 +40,14 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/core-ui",
     "//java/compiler/openapi:java-compiler",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "@lib//:guava",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//java/java-impl-inspections:impl-inspections",
     "//java/java-impl-refactorings:impl-refactorings",
+    "//java/codeserver/highlighting",
   ],
   runtime_deps = [":lombok_resources"]
 )
@@ -33,10 +55,17 @@ jvm_library(
 jvm_library(
   name = "lombok_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java"], allow_empty = True),
+  srcs = glob(["src/test/java/**/*.kt", "src/test/java/**/*.java", "src/test/java/**/*.form"], allow_empty = True),
   associates = [":lombok"],
   deps = [
     "//plugins/lombok/generated",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//java/openapi:java",
@@ -46,8 +75,11 @@ jvm_library(
     "//java/java-impl:impl",
     "//platform/core-ui",
     "//java/compiler/openapi:java-compiler",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "@lib//:guava",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/testFramework",
@@ -58,8 +90,13 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//java/java-tests:tests_test_lib",
+    "//java/codeserver/highlighting",
   ],
-  runtime_deps = [":lombok_resources"]
+  runtime_deps = [
+    ":lombok_resources",
+    ":lombok_test_resources",
+    ":lombok_test_resources_1",
+  ]
 )
 
 jvm_test(

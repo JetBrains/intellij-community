@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui
@@ -13,7 +13,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
@@ -102,17 +101,17 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     }
   }
 
-  override fun installIconPatcher() {
+  override suspend fun installIconPatcher() {
     if (isNewUI()) {
       installIconPatcher { createPathPatcher(it) }
     }
     else {
-      service<IconMapLoader>().loadIconMapping() // reset mappings
+      serviceAsync<IconMapLoader>().loadIconMapping() // reset mappings
     }
   }
 
-  private fun installIconPatcher(patcherProvider: (Map<ClassLoader, Map<String, String>>) -> IconPathPatcher) {
-    val iconMapping = service<IconMapLoader>().loadIconMapping() ?: return
+  private suspend fun installIconPatcher(patcherProvider: (Map<ClassLoader, Map<String, String>>) -> IconPathPatcher) {
+    val iconMapping = serviceAsync<IconMapLoader>().loadIconMapping() ?: return
     if (!isIconPatcherSet.compareAndSet(false, true)) {
       return
     }
@@ -165,16 +164,6 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
   override fun appClosing() {
     (ExperimentalUI.getInstance() as? ExperimentalUIImpl)?.appClosing()
   }
-}
-
-// TODO: create new impl for RMD or remove
-@ApiStatus.Internal
-interface ExperimentalUIJetBrainsClientDelegate {
-  companion object {
-    fun getInstance() = service<ExperimentalUIJetBrainsClientDelegate>()
-  }
-
-  fun changeUi(isEnabled: Boolean, updateLocally: (Boolean) -> Unit)
 }
 
 private fun resetLafSettingsToDefault() {

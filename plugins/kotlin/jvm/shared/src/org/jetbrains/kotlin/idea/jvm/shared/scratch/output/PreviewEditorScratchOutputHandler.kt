@@ -32,7 +32,7 @@ class PreviewEditorScratchOutputHandler(
     private val previewOutputBlocksManager: PreviewOutputBlocksManager,
     private val toolwindowHandler: ScratchOutputHandler,
     private val parentDisposable: Disposable
-) : ScratchOutputHandler {
+) : ScratchOutputHandlerAdapter() {
 
     override fun onStart(file: ScratchFile) {
         toolwindowHandler.onStart(file)
@@ -42,8 +42,12 @@ class PreviewEditorScratchOutputHandler(
         printToPreviewEditor(expression, output)
     }
 
-    override fun handle(file: ScratchFile, infos: List<ExplainInfo>, scope: CoroutineScope) {
-        previewOutputBlocksManager.addOutput(infos, scope)
+    override fun handle(file: ScratchFile, output: ScratchOutput) {
+        toolwindowHandler.handle(file, output)
+    }
+
+    override fun handle(file: ScratchFile, explanations: List<ExplainInfo>, scope: CoroutineScope) {
+        previewOutputBlocksManager.addOutput(explanations, scope)
     }
 
     override fun error(file: ScratchFile, message: String) {
@@ -108,19 +112,49 @@ class PreviewOutputBlocksManager(editor: Editor) {
         scope.launch {
             writeCommandAction(project, KotlinJvmBundle.message("command.name.processing.kotlin.scratch.output")) {
                 targetDocument.setText("")
-                infos.groupBy { it.line }.forEach { (line, values) ->
-                    if (line != null) {
-                        targetDocument.insertStringAtLine(
-                            line,
-                            values.joinToString(separator = " -> ") { it.variableValue.toString() })
-
-                        markupModel.highlightLines(line, line, getAttributesForOutputType(ScratchOutputType.RESULT))
-                    }
-                }
+                insertFormattedLines(infos)
             }
         }
+    }
 
+    private fun insertFormattedLines(infos: List<ExplainInfo>) {
+        infos.groupBy { it.line }.forEach { (lineNumber, valuesByLineNumber) ->
+            if (lineNumber == null) return@forEach
 
+            val formattedRow = valuesByLineNumber.groupBy { it.variableName }.map { (variableName, valuesByVariableName) ->
+                if (valuesByVariableName.size == 1) {
+                    "$variableName: ${valuesByVariableName.single().variableValue}"
+                } else {
+                    val lineResult = valuesByVariableName.last()
+                    val lineResultOffset = lineResult.offsets
+                    val collectionToLook = valuesByVariableName.dropLast(1)
+
+                    val intermediateValues = mutableListOf<Any>()
+
+                    for (value in collectionToLook) {
+                        if (lineResultOffset.containsExclusive(value.offsets)) continue
+                        if (lineResultOffset.second == value.offsets.second) continue
+
+                        value.variableValue?.let { intermediateValues.add(it) }
+                    }
+
+                    if (intermediateValues.isEmpty())  {
+                        "$variableName: ${lineResult.variableValue}"
+                    } else {
+                        val formatted = intermediateValues.joinToString(separator = " → ", prefix = "(", postfix = ") →") { it.toString() }
+                        "${lineResult.variableName}: $formatted ${lineResult.variableValue}"
+                    }
+                }
+            }.joinToString(separator = " | ")
+
+            targetDocument.insertStringAtLine(lineNumber = lineNumber, formattedRow)
+
+            markupModel.highlightLines(lineNumber, lineNumber, getAttributesForOutputType(ScratchOutputType.RESULT))
+        }
+    }
+
+    private fun Pair<Int, Int>.containsExclusive(other: Pair<Int, Int>): Boolean {
+        return first < other.first && other.second < second
     }
 
     fun clear() {

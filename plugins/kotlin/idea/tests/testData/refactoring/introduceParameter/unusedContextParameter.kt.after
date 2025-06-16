@@ -1,0 +1,10 @@
+// WITH_STDLIB
+// WITH_DEFAULT_VALUE: false
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+// LANGUAGE_VERSION: 2.2
+
+fun foo(i: Int) {
+    i
+}
+
+// IGNORE_K1

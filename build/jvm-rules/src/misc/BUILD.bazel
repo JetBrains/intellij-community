@@ -4,13 +4,12 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 kt_jvm_library(
     name = "worker-lib",
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     srcs = glob(["*.kt"]),
     deps = [
         "//src/worker-framework",
-        "//zip:build-zip",
-        "//:protobuf-java",
-        "@lib//:opentelemetry",
-        "@bazel_tools//src/main/protobuf:deps_java_proto",
+        "//zip",
+        "//:opentelemetry-api",
     ],
     visibility = ["//visibility:public"],
 )
@@ -22,7 +21,11 @@ java_binary(
     jvm_flags = [
         "-Djava.awt.headless=true",
         "-Dapple.awt.UIElement=true",
-        "-Dio.netty.allocator.type=pooled",
+        "-Dio.netty.allocator.useCachedMagazinesForNonEventLoopThreads=true",
+        # https://github.com/netty/netty/issues/11532
+        "-Dio.netty.tryReflectionSetAccessible=true",
+        # Set UTF-8 by default as per https://openjdk.org/jeps/400
+        "-Dfile.encoding=UTF-8",
     ],
     visibility = ["//visibility:public"],
 )

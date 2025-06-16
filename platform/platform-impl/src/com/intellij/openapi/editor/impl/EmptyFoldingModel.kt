@@ -16,11 +16,6 @@ class EmptyFoldingModel : FoldingModel, ModificationTracker {
   override fun addFoldRegion(startOffset: Int, endOffset: Int, placeholderText: String): FoldRegion? = null
   override fun removeFoldRegion(region: FoldRegion) = Unit
 
-  @Deprecated("Deprecated in Java")
-  override fun runBatchFoldingOperation(operation: Runnable, moveCaretFromCollapsedRegion: Boolean) {
-    operation.run()
-  }
-
   override fun runBatchFoldingOperation(operation: Runnable, allowMovingCaret: Boolean, keepRelativeCaretPosition: Boolean) {
     operation.run()
   }

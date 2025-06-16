@@ -230,7 +230,7 @@ public abstract class TestUtils {
       }
 
       @Override
-      public void visitFile(@NotNull PsiFile file) {
+      public void visitFile(@NotNull PsiFile psiFile) {
       }
     });
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,6 +25,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class CoreCommandProcessor extends CommandProcessorEx {
+  @ApiStatus.Internal
+  protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl");
+
   @ApiStatus.Internal
   public static final class CommandDescriptor implements CommandToken {
     public final @NotNull Runnable myCommand;
@@ -80,7 +84,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
             listener.commandStarted(event);
           }
           catch (Throwable e) {
-            CommandLog.LOG.error(e);
+            LOG.error(e);
           }
         }
       }
@@ -92,7 +96,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
             listener.beforeCommandFinished(event);
           }
           catch (Throwable e) {
-            CommandLog.LOG.error(e);
+            LOG.error(e);
           }
         }
       }
@@ -104,7 +108,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
             listener.commandFinished(event);
           }
           catch (Throwable e) {
-            CommandLog.LOG.error(e);
+            LOG.error(e);
           }
         }
       }
@@ -116,7 +120,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
             listener.undoTransparentActionStarted();
           }
           catch (Throwable e) {
-            CommandLog.LOG.error(e);
+            LOG.error(e);
           }
         }
       }
@@ -128,7 +132,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
             listener.beforeUndoTransparentActionFinished();
           }
           catch (Throwable e) {
-            CommandLog.LOG.error(e);
+            LOG.error(e);
           }
         }
       }
@@ -140,7 +144,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
             listener.undoTransparentActionFinished();
           }
           catch (Throwable e) {
-            CommandLog.LOG.error(e);
+            LOG.error(e);
           }
         }
       }
@@ -200,17 +204,17 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
 
-    if (CommandLog.LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled()) {
       String currentCommandName;
       if (myCurrentCommand != null) currentCommandName = myCurrentCommand.myName;
       else currentCommandName = "<null>";
-      CommandLog.LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
-                           ", in command = " + currentCommandName +
-                           ", in transparent action = " + isUndoTransparentActionInProgress());
+      LOG.debug("executeCommand: " + command + ", name = " + name + ", groupId = " + groupId +
+                ", in command = " + currentCommandName +
+                ", in transparent action = " + isUndoTransparentActionInProgress());
     }
 
     if (project != null && project.isDisposed()) {
-      CommandLog.LOG.error("Project "+project+" already disposed");
+      LOG.error("Project "+project+" already disposed");
       return;
     }
 
@@ -251,8 +255,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (project != null && project.isDisposed()) return null;
 
-    if (CommandLog.LOG.isDebugEnabled()) {
-      CommandLog.LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("startCommand: name = " + name + ", groupId = " + groupId);
     }
 
     if (myCurrentCommand != null) {
@@ -272,7 +276,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   @Override
   public void finishCommand(@NotNull CommandToken command, @Nullable Throwable throwable) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    CommandLog.LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
+    LOG.assertTrue(myCurrentCommand != null, "no current command in progress");
     fireCommandFinished();
   }
 
@@ -294,7 +298,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
       publisher.commandFinished(event);
     }
 
-    CommandLog.LOG.debug("finishCommand: name = " + event.getCommandName() + ", groupId = " + event.getCommandGroupId());
+    LOG.debug("finishCommand: name = " + event.getCommandName() + ", groupId = " + event.getCommandGroupId());
   }
 
   @Override
@@ -310,7 +314,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   @Override
   public void leaveModal() {
     ThreadingAssertions.assertEventDispatchThread();
-    CommandLog.LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
+    LOG.assertTrue(myCurrentCommand == null, "Command must not run: " + myCurrentCommand);
 
     myCurrentCommand = myInterruptedCommands.pop();
     if (myCurrentCommand != null) {
@@ -322,7 +326,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public void setCurrentCommandName(String name) {
     ThreadingAssertions.assertWriteIntentReadAccess();
     CommandDescriptor currentCommand = myCurrentCommand;
-    CommandLog.LOG.assertTrue(currentCommand != null);
+    LOG.assertTrue(currentCommand != null);
     currentCommand.myName = name;
   }
 
@@ -330,7 +334,7 @@ public class CoreCommandProcessor extends CommandProcessorEx {
   public void setCurrentCommandGroupId(Object groupId) {
     ThreadingAssertions.assertWriteIntentReadAccess();
     CommandDescriptor currentCommand = myCurrentCommand;
-    CommandLog.LOG.assertTrue(currentCommand != null);
+    LOG.assertTrue(currentCommand != null);
     currentCommand.myGroupId = groupId;
   }
 
@@ -375,8 +379,8 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public void runUndoTransparentAction(@NotNull Runnable action) {
-    if (CommandLog.LOG.isDebugEnabled()) {
-      CommandLog.LOG.debug("runUndoTransparentAction: " + action + ", in command = " + (myCurrentCommand != null) +
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("runUndoTransparentAction: " + action + ", in command = " + (myCurrentCommand != null) +
                            ", in transparent action = " + isUndoTransparentActionInProgress());
     }
     if (myUndoTransparentCount++ == 0) {
@@ -397,9 +401,9 @@ public class CoreCommandProcessor extends CommandProcessorEx {
 
   @Override
   public final AutoCloseable withUndoTransparentAction() {
-    if (CommandLog.LOG.isDebugEnabled()) {
-      CommandLog.LOG.debug("withUndoTransparentAction in command = " + (myCurrentCommand != null) +
-                           ", in transparent action = " + isUndoTransparentActionInProgress());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("withUndoTransparentAction in command = " + (myCurrentCommand != null) +
+                ", in transparent action = " + isUndoTransparentActionInProgress());
     }
     if (myUndoTransparentCount++ == 0) {
       eventPublisher.undoTransparentActionStarted();

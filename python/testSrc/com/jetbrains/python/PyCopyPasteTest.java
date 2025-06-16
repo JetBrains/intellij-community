@@ -4,30 +4,19 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.python.fixtures.PyTestCase;
+import org.jetbrains.annotations.NotNull;
 
 
 public class PyCopyPasteTest extends PyTestCase {
-  private boolean myOldEnabled;
-
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myOldEnabled = CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE;
-    CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = true;
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE = myOldEnabled;
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.INDENT_TO_CARET_ON_PASTE = true;
+      super.runTestRunnable(testRunnable);
+      return null;
+    });
   }
 
   public void testIndent1() {

@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -28,13 +20,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OoParentWit
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class OoChildAlsoWithPidEntityImpl(private val dataSource: OoChildAlsoWithPidEntityData) : OoChildAlsoWithPidEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class OoChildAlsoWithPidEntityImpl(private val dataSource: OoChildAlsoWithPidEntityData) : OoChildAlsoWithPidEntity,
+                                                                                                    WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java,
-                                                                                OoChildAlsoWithPidEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      OoParentWithPidEntity::class.java, OoChildAlsoWithPidEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -64,8 +56,8 @@ internal class OoChildAlsoWithPidEntityImpl(private val dataSource: OoChildAlsoW
   }
 
 
-  internal class Builder(result: OoChildAlsoWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoChildAlsoWithPidEntity, OoChildAlsoWithPidEntityData>(
-    result), OoChildAlsoWithPidEntity.Builder {
+  internal class Builder(result: OoChildAlsoWithPidEntityData?) :
+    ModifiableWorkspaceEntityBase<OoChildAlsoWithPidEntity, OoChildAlsoWithPidEntityData>(result), OoChildAlsoWithPidEntity.Builder {
     internal constructor() : this(OoChildAlsoWithPidEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -146,8 +138,9 @@ internal class OoChildAlsoWithPidEntityImpl(private val dataSource: OoChildAlsoW
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? OoParentWithPidEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENTENTITY_CONNECTION_ID, this
+          ) as? OoParentWithPidEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as OoParentWithPidEntity.Builder)
         }
         else {
@@ -208,7 +201,8 @@ internal class OoChildAlsoWithPidEntityData : WorkspaceEntityData<OoChildAlsoWit
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.OoChildAlsoWithPidEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.OoChildAlsoWithPidEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

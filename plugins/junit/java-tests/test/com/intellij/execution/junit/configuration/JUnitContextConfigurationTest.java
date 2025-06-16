@@ -53,7 +53,7 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
     checkClassName(qualifiedName, configuration);
     checkMethodName(METHOD_NAME, configuration);
     checkPackage(packageName, configuration);
-    checkGeneretedName(configuration, shortName + "." + METHOD_NAME);
+    checkGeneratedName(configuration, shortName + "." + METHOD_NAME);
   }
 
   public void testMethodInAbstractJUnit3TestCase() {
@@ -77,7 +77,7 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
     checkClassName(qualifiedName, configuration);
     checkMethodName(METHOD_NAME, configuration);
     checkPackage(packageName, configuration);
-    checkGeneretedName(configuration, shortName + "." + METHOD_NAME);
+    checkGeneratedName(configuration, shortName + "." + METHOD_NAME);
   }
 
   //fake parameterized by providing corresponding location
@@ -102,7 +102,7 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
     checkClassName(qualifiedName, configuration);
     checkMethodName(METHOD_NAME, configuration);
     checkPackage(packageName, configuration);
-    checkGeneretedName(configuration, shortName + "." + METHOD_NAME);
+    checkGeneratedName(configuration, shortName + "." + METHOD_NAME);
   }
 
   public void testJUnitMethodTest() {
@@ -113,7 +113,7 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
     checkClassName(CLASS_NAME, configuration);
     checkMethodName(METHOD_NAME, configuration);
     checkPackage(PACKAGE_NAME, configuration);
-    checkGeneretedName(configuration, SHORT_CLASS_NAME + "." + METHOD_NAME);
+    checkGeneratedName(configuration, SHORT_CLASS_NAME + "." + METHOD_NAME);
   }
 
   public void testJUnitClassTest() {
@@ -123,7 +123,7 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
     checkTestObject(JUnitConfiguration.TEST_CLASS, configuration);
     checkClassName(CLASS_NAME, configuration);
     checkPackage(PACKAGE_NAME, configuration);
-    checkGeneretedName(configuration, SHORT_CLASS_NAME);
+    checkGeneratedName(configuration, SHORT_CLASS_NAME);
   }
 
 
@@ -151,7 +151,7 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
     JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
     checkPackage(PACKAGE_NAME, configuration);
-    checkGeneretedName(configuration, PACKAGE_NAME + " in " + module.getName());
+    checkGeneratedName(configuration, PACKAGE_NAME + " in " + module.getName());
   }
 
   public void testJUnitDefaultPackage() {
@@ -164,7 +164,7 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
     JUnitConfiguration configuration = createJUnitConfiguration(defaultPackage, AllInPackageConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
     checkPackage("", configuration);
-    checkGeneretedName(configuration, "All in " + module.getName());
+    checkGeneratedName(configuration, "All in " + module.getName());
   }
 
   public void testReusingConfiguration() {
@@ -220,7 +220,7 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
     assertEquals("TestClass." + METHOD_NAME, configuration.suggestedName());
   }
 
-  private static void checkGeneretedName(JUnitConfiguration configuration, String name) {
+  private static void checkGeneratedName(JUnitConfiguration configuration, String name) {
     assertEquals(configuration.suggestedName(), configuration.getName());
     assertEquals(name, configuration.getName());
   }

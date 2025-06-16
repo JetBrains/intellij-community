@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -49,7 +49,7 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.codeInsight.multiverse.CodeInsightContextKt.isShowAllInheritorsEnabled;
+import static com.intellij.codeInsight.multiverse.CodeInsightContexts.isShowAllInheritorsEnabled;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override

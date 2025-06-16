@@ -17,8 +17,10 @@ internal fun readTooltipStyle(): TooltipStyle {
         metrics =
             TooltipMetrics.defaults(
                 contentPadding = JBUI.CurrentTheme.HelpTooltip.smallTextBorderInsets().toPaddingValues(),
-                showDelay = Registry.intValue("ide.tooltip.initialDelay").milliseconds,
+                showDelay = Registry.intValue("ide.tooltip.initialReshowDelay").milliseconds,
                 cornerSize = CornerSize(JBUI.CurrentTheme.Tooltip.CORNER_RADIUS.dp),
+                regularDisappearDelay = Registry.intValue("ide.helptooltip.regular.dismissDelay").milliseconds,
+                fullDisappearDelay = Registry.intValue("ide.helptooltip.full.dismissDelay").milliseconds,
             ),
         colors =
             TooltipColors(

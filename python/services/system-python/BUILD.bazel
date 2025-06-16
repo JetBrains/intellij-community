@@ -1,8 +1,20 @@
 ### auto-generated section `build intellij.python.community.services.systemPython` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "system-python_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "system-python_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 jvm_library(
-  name = "python-community-services-systemPython",
+  name = "system-python",
   module_name = "intellij.python.community.services.systemPython",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,19 +28,21 @@ jvm_library(
     "//platform/extensions",
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
-    "//python/services/shared:python-community-services-shared",
+    "//python/services/shared",
     "//python/services/internal-impl:python-community-services-internal-impl",
     "//platform/util",
-    "//python/installer:community-impl-installer",
+    "//python/installer",
+    "//python/python-venv:community-impl-venv",
   ],
-  exports = ["//python/services/shared:python-community-services-shared"]
+  exports = ["//python/services/shared"],
+  runtime_deps = [":system-python_resources"]
 )
 
 jvm_library(
-  name = "python-community-services-systemPython_test_lib",
+  name = "system-python_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
-  associates = [":python-community-services-systemPython"],
+  associates = [":system-python"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-sdk:sdk",
@@ -44,14 +58,15 @@ jvm_library(
     "//platform/testFramework/junit5:junit5_test_lib",
     "@lib//:junit5",
     "//platform/projectModel-api:projectModel",
-    "//python/testFramework:community-testFramework",
+    "//python/testFramework",
     "@lib//:hamcrest",
-    "//python/services/shared:python-community-services-shared",
+    "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
     "//python/services/internal-impl:python-community-services-internal-impl",
     "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
     "//platform/util",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
-    "//python/installer:community-impl-installer",
+    "//python/installer",
     "//python/python-venv:community-impl-venv",
     "//python/python-venv:community-impl-venv_test_lib",
     "//python/setup-test-environment:community-testFramework-testEnv",
@@ -59,11 +74,15 @@ jvm_library(
     "@lib//:io-mockk-jvm",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+  ],
+  runtime_deps = [
+    ":system-python_resources",
+    ":system-python_test_resources",
   ]
 )
 
 jvm_test(
-  name = "python-community-services-systemPython_test",
-  runtime_deps = [":python-community-services-systemPython_test_lib"]
+  name = "system-python_test",
+  runtime_deps = [":system-python_test_lib"]
 )
 ### auto-generated section `build intellij.python.community.services.systemPython` end

@@ -18,7 +18,7 @@ abstract class LegacyBridgeModifiableBase(val diff: MutableEntityStorage, cacheS
   }
 
   val entityStorageOnDiff = if (cacheStorageResult) VersionedEntityStorageOnBuilder(diff)
-  else DummyVersionedEntityStorage(diff)
+  else DummyVersionedEntityStorage(diff) // see https://github.com/JetBrains/intellij-community/pull/2984#issuecomment-2754569202
 
   private var committedOrDisposed = false
 

@@ -1089,7 +1089,11 @@ class JavaToJKTreeBuilder(
 
                 is PsiLabeledStatement -> {
                     val (labels, statement) = collectLabels()
-                    JKLabeledExpression(statement.toJK(), labels.map { JKNameIdentifier(it.text) }).asStatement()
+                    if (statement == this) {
+                        JKEmptyStatement()
+                    } else {
+                        JKLabeledExpression(statement.toJK(), labels.map { JKNameIdentifier(it.text) }).asStatement()
+                    }
                 }
 
                 is PsiEmptyStatement -> JKEmptyStatement()

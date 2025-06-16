@@ -1,13 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.daemon.impl.quickfix.ExtendsListModCommandFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -52,22 +48,23 @@ class StaticInheritanceFix extends ModCommandQuickFix {
 
     final PsiClass implementingClass = PsiUtil.getContainingClass(referenceElement);
     assert implementingClass != null;
-    final PsiFile file = implementingClass.getContainingFile();
 
-    return ModCommand.psiUpdate(ActionContext.from(descriptor), updater ->
-      processUsages(allFields, implementingClass, project, iface, file, updater));
+    ActionContext context = ActionContext.from(descriptor);
+    return ModCommand.psiUpdate(context, updater ->
+      processUsages(context, allFields, implementingClass, project, iface, updater));
   }
 
-  private void processUsages(@NotNull PsiField @NotNull [] allFields,
+  private void processUsages(@NotNull ActionContext context, 
+                             @NotNull PsiField @NotNull [] allFields,
                              PsiClass implementingClass,
                              Project project,
                              PsiClass iface,
-                             PsiFile file,
                              @NotNull ModPsiUpdater updater) {
     Map<PsiReferenceExpression, PsiClass> replacements = findReplacements(allFields, implementingClass, updater);
     PsiClassType classType = JavaPsiFacade.getInstance(project).getElementFactory().createType(iface);
-    IntentionAction fix = QuickFixFactory.getInstance().createExtendsListFix(updater.getWritable(implementingClass), classType, false);
-    fix.invoke(project, null, file);
+    PsiClass aClass = updater.getWritable(implementingClass);
+    var fix = new ExtendsListModCommandFix(aClass, classType, false);
+    ModCommandExecutor.getInstance().executeForFileCopy(fix.perform(context), aClass.getContainingFile());
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     replacements.forEach((referenceExpression, containingClass) -> {
       final PsiReferenceExpression qualified = (PsiReferenceExpression)

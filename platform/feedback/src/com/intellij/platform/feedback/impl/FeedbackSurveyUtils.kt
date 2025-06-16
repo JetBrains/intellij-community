@@ -11,16 +11,25 @@ import com.intellij.platform.feedback.impl.state.CommonFeedbackSurveyService
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.todayIn
 
 internal const val MAX_FEEDBACK_SURVEY_NUMBER_SHOWS: Int = 2
 
-internal fun FeedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast(): Boolean {
+private fun NotificationBasedFeedbackSurveyConfig.checkIsFeedbackCollectionDeadlineNotPast(): Boolean {
+  return checkIsFeedbackCollectionDeadlineNotPast(this.lastDayOfFeedbackCollection)
+}
+
+internal fun checkIsFeedbackCollectionDeadlineNotPast(lastDayOfFeedbackCollection: LocalDate): Boolean {
   return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayOfFeedbackCollection
 }
 
-internal fun FeedbackSurveyConfig.checkIsIdeEAPIfRequired(): Boolean {
+private fun NotificationBasedFeedbackSurveyConfig.checkIsIdeEAPIfRequired(): Boolean {
+  return checkIsIdeEAPIfRequired(this.requireIdeEAP)
+}
+
+internal fun checkIsIdeEAPIfRequired(requireIdeEAP: Boolean): Boolean {
   if (requireIdeEAP) {
     return ApplicationInfo.getInstance().isEAP
   }
@@ -55,7 +64,7 @@ internal fun showNotification(feedbackSurveyType: FeedbackSurveyType<*>, project
 }
 
 @RequiresBackgroundThread
-internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, project: Project): Boolean {
+internal fun isSuitableToShow(feedbackSurveyConfig: NotificationBasedFeedbackSurveyConfig, project: Project): Boolean {
   val commonConditionsForAllSurveys = if (Registry.`is`("platform.feedback.ignore.common.conditions.for.all.surveys", false)) {
     true
   }
@@ -71,19 +80,13 @@ internal fun isSuitableToShow(feedbackSurveyConfig: FeedbackSurveyConfig, projec
     return false
   }
 
-  return feedbackSurveyConfig.checkExtraConditionSatisfied(project)
+  return feedbackSurveyConfig.checkExtraConditionSatisfied(project) && feedbackSurveyConfig.checkExtraConditionSatisfiedForNotification(project)
 }
 
 private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyType<*>, project: Project, forTest: Boolean) {
   when (feedbackSurveyType) {
     is InIdeFeedbackSurveyType -> {
-      val inIdeFeedbackSurveyConfig = feedbackSurveyType.feedbackSurveyConfig as InIdeFeedbackSurveyConfig
-      val dialog = inIdeFeedbackSurveyConfig.createFeedbackDialog(project, forTest)
-      val isOk = dialog.showAndGet()
-      if (isOk && !forTest) {
-        inIdeFeedbackSurveyConfig.updateStateAfterDialogClosedOk(project)
-        updateCommonFeedbackSurveysStateAfterSent(inIdeFeedbackSurveyConfig)
-      }
+      feedbackSurveyType.feedbackSurveyConfig.showFeedbackDialog(project, forTest)
     }
     is ExternalFeedbackSurveyType -> {
       val externalFeedbackSurveyConfig = feedbackSurveyType.feedbackSurveyConfig as ExternalFeedbackSurveyConfig
@@ -96,7 +99,16 @@ private fun invokeRespondNotificationAction(feedbackSurveyType: FeedbackSurveyTy
   }
 }
 
-private fun updateCommonFeedbackSurveysStateAfterSent(feedbackSurveyConfig: FeedbackSurveyConfig) {
+private fun InIdeFeedbackSurveyConfig.showFeedbackDialog(project: Project, forTest: Boolean) {
+  val dialog = createFeedbackDialog(project, forTest)
+  val isOk = dialog.showAndGet()
+  if (isOk && !forTest) {
+    updateStateAfterDialogClosedOk(project)
+    CommonFeedbackSurveyService.feedbackSurveyAnswerSent(surveyId)
+  }
+}
+
+private fun updateCommonFeedbackSurveysStateAfterSent(feedbackSurveyConfig: NotificationBasedFeedbackSurveyConfig) {
   CommonFeedbackSurveyService.feedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId)
 }
 
@@ -104,7 +116,7 @@ private fun browseToSurvey(project: Project, feedbackSurveyConfig: ExternalFeedb
   BrowserUtil.browse(feedbackSurveyConfig.getUrlToSurvey(project), project)
 }
 
-private fun checkNumberShowsNotExceeded(feedbackSurveyConfig: FeedbackSurveyConfig): Boolean {
+private fun checkNumberShowsNotExceeded(feedbackSurveyConfig: NotificationBasedFeedbackSurveyConfig): Boolean {
   if (feedbackSurveyConfig.isIndefinite) return true
 
   return CommonFeedbackSurveyService.getNumberShowsOfFeedbackSurvey(feedbackSurveyConfig.surveyId) < MAX_FEEDBACK_SURVEY_NUMBER_SHOWS

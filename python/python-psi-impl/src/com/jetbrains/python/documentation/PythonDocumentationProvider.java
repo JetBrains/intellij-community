@@ -334,14 +334,14 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @return string representation of the type
    */
   public static @NotNull @NlsSafe String getTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return buildTypeModel(type, context).asString();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context)).toString();
   }
 
   /**
    * Returns the provided type in PEP 484 compliant format.
    */
   public static @NotNull String getTypeHint(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return buildTypeModel(type, context).asPep484TypeHint();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TypeHint(context)).toString();
   }
 
   /**
@@ -353,12 +353,12 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * such as bounds for TypeVar types in ' ≤: *bound*' format
    */
   public static @NotNull String getVerboseTypeName(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return buildTypeModel(type, context).asStringWithAdditionalInfo();
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.VerboseDocumentation(context)).toString();
   }
 
   /**
    * @param type      type which description will be calculated.
-   *                  Description is the same as {@link PythonDocumentationProvider#getTypeDescription(PyType, TypeEvalContext)} gives but
+   *                  Description is the same as {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)} gives but
    *                  types are converted to links.
    * @param typeOwner element that has the given type, can be {@code null} for synthetic parameters
    * @param context   type evaluation context
@@ -378,21 +378,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         return;
       }
     }
-    buildTypeModel(type, context).toBodyWithLinks(body, anchor);
-  }
-
-  /**
-   * @param type    type which description will be calculated
-   * @param context type evaluation context
-   * @return more user-friendly description than result of {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)}.
-   * {@code Any} is excluded from {@code Union[Any, ...]}-like types.
-   */
-  public static @NotNull String getTypeDescription(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return buildTypeModel(type, context).asDescription();
-  }
-
-  private static @NotNull PyTypeModelBuilder.TypeModel buildTypeModel(@Nullable PyType type, @NotNull TypeEvalContext context) {
-    return new PyTypeModelBuilder(context).build(type, true);
+    body.append(PyTypeVisitor.visit(type, new PyTypeRenderer.RichDocumentation(context, anchor)));
   }
 
   static @NotNull HtmlChunk describeDecorators(@NotNull PyDecoratable decoratable,

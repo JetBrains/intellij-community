@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -24,11 +24,14 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.platform.syntax.psi.CommonElementTypeConverterFactory;
+import com.intellij.platform.syntax.psi.ElementTypeConverters;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
@@ -46,6 +49,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.DefaultPicoContainer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
 
@@ -127,6 +131,8 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     registerExtensionPoint(app.getExtensionArea(), FileTypeFactory.FILE_TYPE_FACTORY_EP, FileTypeFactory.class);
     registerExtensionPoint(app.getExtensionArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
 
+    addExplicitExtensionForAnyLanguage(ElementTypeConverters.getInstance(), new CommonElementTypeConverterFactory());
+
     myLangParserDefinition = app.getExtensionArea().registerFakeBeanPoint(LanguageParserDefinitions.INSTANCE.getName(), getPluginDescriptor());
 
     if (myDefinitions.length > 0) {
@@ -156,8 +162,13 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         return definition;
       }
     });
-    LanguageParserDefinitions.INSTANCE.clearCache(language);
-    disposeOnTearDown(() -> LanguageParserDefinitions.INSTANCE.clearCache(language));
+    clearCachesOfLanguageExtension(language, LanguageParserDefinitions.INSTANCE);
+  }
+
+  @ApiStatus.Internal
+  public final void clearCachesOfLanguageExtension(Language language, LanguageExtension<?> instance) {
+    instance.clearCache(language);
+    disposeOnTearDown(() -> instance.clearCache(language));
   }
 
   public void configureFromParserDefinition(@NotNull ParserDefinition definition, String extension) {
@@ -186,13 +197,21 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     }
   }
 
+  protected final <T> void addExplicitExtensionForAnyLanguage(@NotNull LanguageExtension<T> collector, @NotNull T object) {
+    addExplicitExtensionImpl(collector, "any", object);
+  }
+
   protected final <T> void addExplicitExtension(@NotNull LanguageExtension<T> collector, @NotNull Language language, @NotNull T object) {
+    addExplicitExtensionImpl(collector, language.getID(), object);
+  }
+
+  private <T> void addExplicitExtensionImpl(@NotNull LanguageExtension<T> collector, @NotNull @NlsSafe String languageID, @NotNull T object) {
     ExtensionsAreaImpl area = app.getExtensionArea();
     PluginDescriptor pluginDescriptor = getPluginDescriptor();
     if (!area.hasExtensionPoint(collector.getName())) {
       area.registerFakeBeanPoint(collector.getName(), pluginDescriptor);
     }
-    LanguageExtensionPoint<T> extension = new LanguageExtensionPoint<>(language.getID(), object);
+    LanguageExtensionPoint<T> extension = new LanguageExtensionPoint<>(languageID, object);
     extension.setPluginDescriptor(pluginDescriptor);
     ExtensionTestUtil.addExtension(area, collector, extension);
   }

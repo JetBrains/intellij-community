@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
@@ -71,7 +72,7 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
 
         PureKotlinCodeBlockModificationListener.getInstance(project) //ensure pom listener is attached as well
 
-        (PsiManager.getInstance(project) as PsiManagerImpl).addTreeChangePreprocessor(this)
+        PsiManagerEx.getInstanceEx(project).addTreeChangePreprocessor(this)
 
         messageBusConnection.subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener {
             val kotlinTrackerInternalIDECount = modificationTrackerImpl.forLanguage(KotlinLanguage.INSTANCE).modificationCount

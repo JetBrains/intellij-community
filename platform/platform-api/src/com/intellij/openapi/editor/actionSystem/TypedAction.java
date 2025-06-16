@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -16,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
+
+import static com.intellij.openapi.editor.rd.LocalEditorSupportUtil.assertLocalEditorSupport;
 
 /**
  * Provides services for registering actions which are activated by typing in the editor.
@@ -61,8 +66,8 @@ public abstract class TypedAction {
   ) {
     var handler = bean.handler;
     if (handler != null) {
-       return handler;
-     }
+      return handler;
+    }
 
     try {
       var aClass = ApplicationManager.getApplication().<TypedActionHandler>loadClass(bean.implementationClass, pluginDescriptor);
@@ -172,7 +177,6 @@ public abstract class TypedAction {
    *
    * @param handler the handler to set.
    * @return the previously registered handler.
-   *
    * @see #getRawHandler()
    * @see #getHandler()
    * @see #setupHandler(TypedActionHandler)
@@ -187,12 +191,14 @@ public abstract class TypedAction {
   }
 
   public void beforeActionPerformed(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
+    assertLocalEditorSupport(editor);
     if (myRawHandler instanceof TypedActionHandlerEx) {
       ((TypedActionHandlerEx)myRawHandler).beforeExecute(editor, c, context, plan);
     }
   }
 
   public final void actionPerformed(@NotNull Editor editor, char charTyped, @NotNull DataContext dataContext) {
+    assertLocalEditorSupport(editor);
     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       myRawHandler.execute(editor, charTyped, dataContext);
     }

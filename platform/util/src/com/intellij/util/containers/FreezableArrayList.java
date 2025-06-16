@@ -18,7 +18,7 @@ import java.util.function.UnaryOperator;
  */
 @ApiStatus.Internal
 public class FreezableArrayList<T> extends ArrayList<T> {
-  FreezableArrayList(int initialCapacity) {
+  public FreezableArrayList(int initialCapacity) {
     super(initialCapacity);
   }
 
@@ -30,7 +30,7 @@ public class FreezableArrayList<T> extends ArrayList<T> {
   }
 
   @NotNull
-  List<T> freeze() {
+  @Unmodifiable List<T> freeze() {
     modCount = -1;
     return this;
   }

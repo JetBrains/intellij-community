@@ -14,13 +14,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "decoratedWindow_resources",
+  name = "decorated-window_resources",
   files = glob(["src/main/resources/**/*"]),
   strip_prefix = "src/main/resources"
 )
 
 jvm_library(
-  name = "decoratedWindow",
+  name = "decorated-window",
   module_name = "intellij.platform.jewel.decoratedWindow",
   visibility = ["//visibility:public"],
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java", "src/main/java/**/*.kt", "src/main/java/**/*.java"], allow_empty = True),
@@ -34,7 +34,7 @@ jvm_library(
     "//platform/jewel/foundation",
     "@lib//:jna",
   ],
-  runtime_deps = [":decoratedWindow_resources"],
+  runtime_deps = [":decorated-window_resources"],
   plugins = ["@lib//:compose-plugin"]
 )
 ### auto-generated section `build intellij.platform.jewel.decoratedWindow` end

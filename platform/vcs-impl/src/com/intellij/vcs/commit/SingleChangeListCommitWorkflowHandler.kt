@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -47,8 +47,11 @@ class SingleChangeListCommitWorkflowHandler(
     Disposer.register(this, commitMessagePolicy)
 
     workflow.addListener(this, this)
-    workflow.addCommitCustomListener(CommitCustomListener(), this)
-    workflow.addVcsCommitListener(ChangeListDescriptionCleaner(), this)
+    // SingleChangeListCommitWorkflowHandler is disposed when the dialog is disposed,
+    // while CommitterResultHandler are executed afterward.
+    // However, it's safe to pass no disposable for these listeners, as there is nothing to leak
+    workflow.addCommitCustomListener(CommitCustomListener(), null)
+    workflow.addVcsCommitListener(ChangeListDescriptionCleaner(), null)
 
     ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)

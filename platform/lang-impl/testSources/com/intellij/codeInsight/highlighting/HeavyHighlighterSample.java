@@ -23,8 +23,8 @@ public class HeavyHighlighterSample extends HeavyBraceHighlighter {
   private final static int BRACE_LENGTH = LEFT_BRACE.length();
 
   @Override
-  protected @Nullable Pair<TextRange, TextRange> matchBrace(@NotNull PsiFile file, int offset) {
-    Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+  protected @Nullable Pair<TextRange, TextRange> matchBrace(@NotNull PsiFile psiFile, int offset) {
+    Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     if (document == null) {
       return null;
     }

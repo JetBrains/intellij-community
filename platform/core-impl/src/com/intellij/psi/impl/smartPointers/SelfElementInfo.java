@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.FileViewProviderUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ReadAction;
@@ -31,7 +31,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   private int myStartOffset;
   private int myEndOffset;
 
-  // todo ijpl-339 layout of the object got bigger +8bytes
+  // todo IJPL-339 layout of the object got bigger +8bytes
 
   SelfElementInfo(@Nullable ProperTextRange range,
                   @NotNull Identikit identikit,
@@ -155,7 +155,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile,
                                                          @NotNull Project project,
                                                          @NotNull Language language) {
-    return restoreFileFromVirtual(virtualFile, CodeInsightContextKt.anyContext(), project, language);
+    return restoreFileFromVirtual(virtualFile, CodeInsightContexts.anyContext(), project, language);
   }
 
   @ApiStatus.Internal

@@ -96,9 +96,6 @@ f:org.jetbrains.jewel.foundation.TextColors
 - f:getSelected-0d7_KjU():J
 - hashCode():I
 f:org.jetbrains.jewel.foundation.TextColors$Companion
-org.jetbrains.jewel.foundation.actionSystem.DataProviderContext
-- a:lazy(java.lang.String,kotlin.jvm.functions.Function0):V
-- a:set(java.lang.String,java.lang.Object):V
 f:org.jetbrains.jewel.foundation.actionSystem.DataProviderNode
 - androidx.compose.ui.Modifier$Node
 - androidx.compose.ui.focus.FocusEventModifierNode
@@ -132,41 +129,6 @@ f:org.jetbrains.jewel.foundation.code.MimeType
 - s:hashCode-impl(java.lang.String):I
 - s:toString-impl(java.lang.String):java.lang.String
 - bf:unbox-impl():java.lang.String
-f:org.jetbrains.jewel.foundation.code.MimeType$Known
-- sf:$stable:I
-- sf:INSTANCE:org.jetbrains.jewel.foundation.code.MimeType$Known
-- f:fromMarkdownLanguageName-YABSuFg(java.lang.String):java.lang.String
-- f:getAGSL-9EQw4cI():java.lang.String
-- f:getAIDL-9EQw4cI():java.lang.String
-- f:getC-9EQw4cI():java.lang.String
-- f:getCPP-9EQw4cI():java.lang.String
-- f:getDART-9EQw4cI():java.lang.String
-- f:getGO-9EQw4cI():java.lang.String
-- f:getGRADLE-9EQw4cI():java.lang.String
-- f:getGRADLE_KTS-9EQw4cI():java.lang.String
-- f:getGROOVY-9EQw4cI():java.lang.String
-- f:getJAVA-9EQw4cI():java.lang.String
-- f:getJAVASCRIPT-9EQw4cI():java.lang.String
-- f:getJSON-9EQw4cI():java.lang.String
-- f:getKOTLIN-9EQw4cI():java.lang.String
-- f:getMANIFEST-9EQw4cI():java.lang.String
-- f:getPROGUARD-9EQw4cI():java.lang.String
-- f:getPROPERTIES-9EQw4cI():java.lang.String
-- f:getPROTO-9EQw4cI():java.lang.String
-- f:getPYTHON-9EQw4cI():java.lang.String
-- f:getREGEX-9EQw4cI():java.lang.String
-- f:getRESOURCE-9EQw4cI():java.lang.String
-- f:getRUST-9EQw4cI():java.lang.String
-- f:getSHELL-9EQw4cI():java.lang.String
-- f:getSQL-9EQw4cI():java.lang.String
-- f:getSVG-9EQw4cI():java.lang.String
-- f:getTEXT-9EQw4cI():java.lang.String
-- f:getTOML-9EQw4cI():java.lang.String
-- f:getTYPESCRIPT-9EQw4cI():java.lang.String
-- f:getUNKNOWN-9EQw4cI():java.lang.String
-- f:getVERSION_CATALOG-9EQw4cI():java.lang.String
-- f:getXML-9EQw4cI():java.lang.String
-- f:getYAML-9EQw4cI():java.lang.String
 f:org.jetbrains.jewel.foundation.code.MimeTypeKt
 - sf:isGradle-KcqRzx0(java.lang.String):Z
 - sf:isJava-KcqRzx0(java.lang.String):Z
@@ -177,8 +139,6 @@ f:org.jetbrains.jewel.foundation.code.MimeTypeKt
 - sf:isSql-KcqRzx0(java.lang.String):Z
 - sf:isVersionCatalog-KcqRzx0(java.lang.String):Z
 - sf:isXml-KcqRzx0(java.lang.String):Z
-org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighter
-- a:highlight-zTGadEY(java.lang.String,java.lang.String):kotlinx.coroutines.flow.Flow
 f:org.jetbrains.jewel.foundation.code.highlighting.CodeHighlighterKt
 - sf:getLocalCodeHighlighter():androidx.compose.runtime.ProvidableCompositionLocal
 f:org.jetbrains.jewel.foundation.code.highlighting.NoOpCodeHighlighter
@@ -266,11 +226,7 @@ org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
 - onSelectNextItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
 - onSelectPreviousItem(java.util.List,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState):V
 f:org.jetbrains.jewel.foundation.lazy.SelectableLazyColumnKt
-- sf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,androidx.compose.foundation.interaction.MutableInteractionSource,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
-org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
-- androidx.compose.foundation.lazy.LazyItemScope
-- a:isActive():Z
-- a:isSelected():Z
+- sf:SelectableLazyColumn(androidx.compose.ui.Modifier,org.jetbrains.jewel.foundation.lazy.SelectionMode,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,androidx.compose.foundation.layout.PaddingValues,Z,kotlin.jvm.functions.Function1,androidx.compose.foundation.layout.Arrangement$Vertical,androidx.compose.ui.Alignment$Horizontal,androidx.compose.foundation.gestures.FlingBehavior,org.jetbrains.jewel.foundation.lazy.tree.KeyActions,org.jetbrains.jewel.foundation.lazy.tree.PointerEventActions,kotlin.jvm.functions.Function1,androidx.compose.runtime.Composer,I,I,I):V
 a:org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey
 - sf:$stable:I
 - equals(java.lang.Object):Z
@@ -286,13 +242,6 @@ f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListKey$Selectable
 - sf:$stable:I
 - <init>(java.lang.Object):V
 - getKey():java.lang.Object
-org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope
-- a:item(java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
-- bs:item$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
-- a:items(I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4):V
-- bs:items$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,I,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4,I,java.lang.Object):V
-- a:stickyHeader(java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3):V
-- bs:stickyHeader$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.lang.Object,java.lang.Object,Z,kotlin.jvm.functions.Function3,I,java.lang.Object):V
 f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListScopeKt
 - sf:SelectableLazyItemScope(androidx.compose.foundation.lazy.LazyItemScope,Z,Z,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 - sf:items(org.jetbrains.jewel.foundation.lazy.SelectableLazyListScope,java.util.List,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function4):V
@@ -316,10 +265,12 @@ f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListState
 - f:getLayoutInfo():androidx.compose.foundation.lazy.LazyListLayoutInfo
 - f:getLazyListState():androidx.compose.foundation.lazy.LazyListState
 - getSelectedKeys():java.util.Set
+- f:isKeyboardNavigating():Z
 - isScrollInProgress():Z
 - scroll(androidx.compose.foundation.MutatePriority,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
 - f:scrollToItem(I,Z,I,kotlin.coroutines.Continuation):java.lang.Object
 - bs:scrollToItem$default(org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,I,Z,I,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+- f:setKeyboardNavigating(Z):V
 - f:setLastActiveItemIndex(java.lang.Integer):V
 - setSelectedKeys(java.util.Set):V
 f:org.jetbrains.jewel.foundation.lazy.SelectableLazyListStateKt
@@ -634,8 +585,6 @@ org.jetbrains.jewel.foundation.state.ToggleableComponentState
 - isSelectedOrIndeterminate():Z
 f:org.jetbrains.jewel.foundation.state.ToggleableComponentState$Companion
 - f:readToggleableState-VKZWuLQ(J):androidx.compose.ui.state.ToggleableState
-org.jetbrains.jewel.foundation.theme.JewelTheme
-- sf:Companion:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
 f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
 - f:getConsoleTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - f:getContentColor(androidx.compose.runtime.Composer,I):J
@@ -644,7 +593,6 @@ f:org.jetbrains.jewel.foundation.theme.JewelTheme$Companion
 - f:getGlobalColors(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.GlobalColors
 - f:getGlobalMetrics(androidx.compose.runtime.Composer,I):org.jetbrains.jewel.foundation.GlobalMetrics
 - f:getName(androidx.compose.runtime.Composer,I):java.lang.String
-- f:getTextStyle(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - f:isDark(androidx.compose.runtime.Composer,I):Z
 - f:isSwingCompatMode(androidx.compose.runtime.Composer,I):Z
 f:org.jetbrains.jewel.foundation.theme.JewelThemeKt
@@ -678,8 +626,6 @@ f:org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 - f:grayOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - f:green-vNxB06k(I):J
 - f:greenOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
-- f:grey-vNxB06k(I):J
-- f:greyOrNull-ijrfgN4(I):androidx.compose.ui.graphics.Color
 - hashCode():I
 - f:lookup-ijrfgN4(java.lang.String):androidx.compose.ui.graphics.Color
 - f:orange-vNxB06k(I):J

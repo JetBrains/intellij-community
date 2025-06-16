@@ -193,10 +193,11 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
   private val currentSnapshot: AtomicReference<StorageSnapshotCache> = AtomicReference()
   private val valuesCache: ValuesCache
     get() {
+      val pointer = currentPointer
       val snapshotCache = currentSnapshot.get()
-      if (snapshotCache == null || version != snapshotCache.storageVersion) {
+      if (snapshotCache == null || pointer.version != snapshotCache.storageVersion) {
         val cache = ValuesCache()
-        currentSnapshot.set(StorageSnapshotCache(version, cache, current))
+        currentSnapshot.set(StorageSnapshotCache(pointer.version, cache, pointer.storage))
         return cache
       }
       return snapshotCache.cache

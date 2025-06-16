@@ -13,13 +13,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-devkit-k2_resources",
+  name = "k2_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-devkit-k2",
+  name = "k2",
   module_name = "intellij.kotlin.devkit.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -28,6 +28,9 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/refactoring",
     "//platform/lang-impl",
     "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
@@ -36,6 +39,6 @@ jvm_library(
     "//plugins/devkit/devkit-core:core",
     "//plugins/kotlin/code-insight/intentions-k2:kotlin-code-insight-intentions-k2",
   ],
-  runtime_deps = [":kotlin-devkit-k2_resources"]
+  runtime_deps = [":k2_resources"]
 )
 ### auto-generated section `build intellij.kotlin.devkit.k2` end

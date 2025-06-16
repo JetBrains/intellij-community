@@ -118,6 +118,10 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
 
   fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: ((T) -> Boolean)?) {
     val oldList = schemeListRef.get()
+    if (LOG.isDebugEnabled) {
+      LOG.debug("setSchemes: old = ${oldList.list.size} schemes, ${collectExistingNames(oldList.list)}")
+      LOG.debug("setSchemes: new = ${newSchemes.size} schemes, ${collectExistingNames(newSchemes)}")
+    }
 
     // we must not use remove or removeAll to avoid "equals" call
     val newSchemesMutable = if (removeCondition == null) {

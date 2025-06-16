@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util
 
-import com.intellij.codeInsight.navigation.LOG
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -57,7 +57,7 @@ internal sealed class StorageId(@NonNls protected val projectName: String, @NonN
     val dirToDelete = try {
       Files.move(storagePath, tempFileNameForDeletion.toPath())
     } catch (e: IOException) {
-      LOG.warn("Failed to move $storagePath to $tempFileNameForDeletion", e)
+      Logger.getInstance(javaClass).warn("Failed to move $storagePath to $tempFileNameForDeletion", e)
       storagePath
     }
 
@@ -65,7 +65,7 @@ internal sealed class StorageId(@NonNls protected val projectName: String, @NonN
       FileUtil.delete(dirToDelete)
       true
     } catch (e: IOException) {
-      LOG.warn("Failed to delete $dirToDelete", e)
+      Logger.getInstance(javaClass).warn("Failed to delete $dirToDelete", e)
       false
     }
   }

@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/jewel/foundation",
     "//plugins/markdown/core:markdown",
     "//platform/compose",
@@ -21,8 +22,10 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util:util-ui",
     "//platform/platform-api:ide",
-    "//platform/jewel/markdown/ide-laf-bridge-styling:jewel-markdown-ideLafBridgeStyling",
-    "//platform/jewel/markdown/extension/gfm-tables:jewel-markdown-extension-gfmTables",
+    "//platform/jewel/markdown/ide-laf-bridge-styling",
+    "//platform/jewel/markdown/extensions/gfm-tables",
+    "//platform/jewel/markdown/extensions/gfm-strikethrough",
+    "//platform/jewel/markdown/extensions/autolink",
   ],
   runtime_deps = [":compose-preview_resources"],
   plugins = ["@lib//:compose-plugin"]

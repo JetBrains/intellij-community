@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.base.test.ensureFilesResolved
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
-import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
@@ -64,15 +63,6 @@ abstract class AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest : Abstra
         )
     }
 
-    override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
-        val file = files.first() as KtFile
-
-        withCustomCompilerOptions(file.text, project, module) {
-            ensureFilesResolved(file)
-            super.doMultiFileTest(files, globalDirectives)
-        }
-    }
-
     override fun getDefaultProjectDescriptor(): ProjectDescriptorWithStdlibSources =
         ProjectDescriptorWithStdlibSourcesAndExtraLibraries
 }
@@ -100,6 +90,9 @@ private object ProjectDescriptorWithStdlibSourcesAndExtraLibraries : ProjectDesc
 
         // annotations for Compose compiler plugin
         "org.jetbrains.compose.runtime:runtime-desktop:1.5.0",
+
+        // functions declarations for Kotlin DataFrame plugin
+        "org.jetbrains.kotlinx:dataframe-core:0.16.0-dev-6330",
     )
 
     // paths are relative to `community/plugins/kotlin/idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins`

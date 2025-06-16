@@ -1,0 +1,1 @@
+s = f"fo<caret>o"

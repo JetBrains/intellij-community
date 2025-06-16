@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.common;
 
 import com.intellij.diagnostic.JVMResponsivenessMonitor;
@@ -71,6 +71,7 @@ public final class ThreadLeakTracker {
       "BatchSpanProcessor_WorkerThread", // io.opentelemetry.sdk.trace.export.BatchSpanProcessor.WORKER_THREAD_NAME
       "Batik CleanerThread",
       "BC Entropy Daemon",
+      "CefBgThread",
       "CefHandlers-",
       "Cidr Symbol Building Thread", // ForkJoinPool com.jetbrains.cidr.lang.symbols.symtable.building.OCBuildingActivityExecutionService
       "Cleaner-0", // Thread[Cleaner-0,8,InnocuousThreadGroup], java.lang.ref.Cleaner in android layoutlib, Java9+
@@ -241,7 +242,13 @@ public final class ThreadLeakTracker {
            || isJMXRemoteCall(stackTrace)
            || isBuildLogCall(stackTrace)
            || isIjentMediatorThread(stackTrace)
+           || windowsCompletionPortLeakForDocker(stackTrace)
            || isSwingAccessibilityThread(stackTrace);
+  }
+
+  private static boolean windowsCompletionPortLeakForDocker(StackTraceElement[] trace) {
+    // IOCP on Windows leaked by a docker client
+    return trace[0].getClassName().equals("sun.nio.ch.Iocp");
   }
 
   private static boolean isSwingAccessibilityThread(StackTraceElement[] trace) {

@@ -16,7 +16,7 @@ import java.util.function.BiConsumer;
  * Null keys are NOT allowed
  * Null values are allowed
  */
-abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
+abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V>, ReferenceQueueable {
   private final MyMap myMap;
   private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<>();
   private final HardKey myHardKeyInstance = new HardKey(); // "singleton"
@@ -143,7 +143,8 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   // returns true if some refs were tossed
-  boolean processQueue() {
+  @Override
+  public boolean processQueue() {
     boolean processed = false;
     Key<K> wk;
     //noinspection unchecked

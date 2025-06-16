@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -22,20 +22,20 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.PythonExecution;
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.run.PythonScriptExecution;
 import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
-import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.venvReader.VirtualEnvReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
-public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase {
+/**
+ * @deprecated TODO: explain
+ */
+@SuppressWarnings("ALL")
+@Deprecated(forRemoval = true)
+@ApiStatus.Internal
+public abstract class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase {
   private static final Logger LOG = Logger.getInstance(PyTargetEnvironmentPackageManager.class);
 
   @Override
@@ -59,7 +65,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     getPythonProcessResult(pythonExecution, true, true, helpersAwareTargetRequest.getTargetEnvironmentRequest());
   }
 
-  PyTargetEnvironmentPackageManager(final @NotNull Sdk sdk) {
+  public PyTargetEnvironmentPackageManager(final @NotNull Sdk sdk) {
     super(sdk);
   }
 
@@ -113,7 +119,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw e.copyWith("pip", makeSafeToDisplayCommand(simplifiedArgs));
+      throw PyExecutionExceptionExtKt.copyWith(e, "pip", makeSafeToDisplayCommand(simplifiedArgs));
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
@@ -158,7 +164,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
       getPythonProcessResult(pythonExecution, !canModify, true, targetEnvironmentRequest);
     }
     catch (PyExecutionException e) {
-      throw e.copyWith("pip", args);
+      throw PyExecutionExceptionExtKt.copyWith(e, "pip", args);
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
@@ -175,10 +181,6 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
-    if (getSdk() instanceof PyLazySdk) {
-      return List.of();
-    }
-
     HelpersAwareTargetEnvironmentRequest helpersAwareRequest = getPythonTargetInterpreter();
     TargetEnvironmentRequest targetEnvironmentRequest = helpersAwareRequest.getTargetEnvironmentRequest();
     final String output;
@@ -251,7 +253,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     int exitCode = processOutput.getExitCode();
     if (processOutput.isTimeout()) {
       // TODO [targets] Make cancellable right away?
-      throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.timed.out"), path, args, processOutput);
+      throw PyExecutionException.createForTimeout(PySdkBundle.message("python.sdk.packaging.timed.out"), path, args);
     }
     else if (exitCode != 0) {
       throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.non.zero.exit.code", exitCode), path, args, processOutput);
@@ -347,7 +349,7 @@ public class PyTargetEnvironmentPackageManager extends PyPackageManagerImplBase 
     catch (IOException e) {
       String exePath = localCommandLine.getExePath();
       List<String> args = localCommandLine.getCommandLineList(exePath);
-      throw new PyExecutionException(e.getMessage(), exePath, args);
+      throw new PyExecutionException(e, null, exePath, args);
     }
   }
 

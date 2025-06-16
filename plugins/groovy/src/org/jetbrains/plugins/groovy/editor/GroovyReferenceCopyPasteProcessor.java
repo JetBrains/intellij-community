@@ -1,7 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.editor;
 
-import com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor;
+import com.intellij.codeInsight.editorActions.AbstractJavaCopyPasteReferenceProcessor;
 import com.intellij.codeInsight.editorActions.ReferenceData;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.RangeMarker;
@@ -20,9 +20,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
-public final class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcessor<GrReferenceElement> {
+public final class GroovyReferenceCopyPasteProcessor extends AbstractJavaCopyPasteReferenceProcessor<GrReferenceElement> {
   private static final Logger LOG = Logger.getInstance(GroovyReferenceCopyPasteProcessor.class);
 
   @Override
@@ -116,10 +117,10 @@ public final class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceP
 
   @Override
   protected void restoreReferences(ReferenceData @NotNull [] referenceData,
-                                   GrReferenceElement @NotNull [] refs,
+                                   List<GrReferenceElement> refs,
                                    @NotNull Set<? super String> imported) {
-    for (int i = 0; i < refs.length; i++) {
-      GrReferenceElement reference = refs[i];
+    for (int i = 0; i < refs.size(); i++) {
+      GrReferenceElement reference = refs.get(i);
       if (reference == null) continue;
       try {
         PsiManager manager = reference.getManager();

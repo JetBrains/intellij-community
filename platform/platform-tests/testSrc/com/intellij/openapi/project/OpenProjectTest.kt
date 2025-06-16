@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.ide.CommandLineProcessor
@@ -10,6 +10,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.checkDefaultProjectAsTemplate
 import com.intellij.util.io.createDirectories
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
@@ -52,7 +53,7 @@ internal class OpenProjectTest(private val opener: Opener) {
   val disposableRule = DisposableRule()
 
   @Test
-  fun `open valid existing project dir with ability to attach`() {
+  fun `open valid existing project dir with ability to attach`() = runBlocking(Dispatchers.Default) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(ModuleAttachProcessor()), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.resolve(".idea").createDirectories()
@@ -60,7 +61,7 @@ internal class OpenProjectTest(private val opener: Opener) {
   }
 
   @Test
-  fun `open clean existing project dir with ability to attach`() {
+  fun `open clean existing project dir with ability to attach`() = runBlocking(Dispatchers.Default) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(ModuleAttachProcessor()), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
@@ -68,7 +69,7 @@ internal class OpenProjectTest(private val opener: Opener) {
   }
 
   @Test
-  fun `open valid existing project dir with inability to attach`() {
+  fun `open valid existing project dir with inability to attach`() = runBlocking(Dispatchers.Default) {
     // Regardless of product (Idea vs PhpStorm), if .idea directory exists, but no modules, we must run configurators to add some module.
     // Maybe not fully clear why it is performed as part of project opening and silently, but it is existing behaviour.
     // So, existing behaviour should be preserved and any changes should be done not as part of task "use unified API to open project", but separately later.
@@ -79,14 +80,17 @@ internal class OpenProjectTest(private val opener: Opener) {
   }
 
   @Test
-  fun `open clean existing project dir with inability to attach`() {
+  fun `open clean existing project dir with inability to attach`() = runBlocking(Dispatchers.Default) {
     ExtensionTestUtil.maskExtensions(ProjectAttachProcessor.EP_NAME, listOf(), disposableRule.disposable)
     val projectDir = tempDir.newPath("project")
     projectDir.createDirectories()
     openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir, defaultProjectTemplateShouldBeApplied = true)
   }
 
-  private fun openUsingOpenFileActionAndAssertThatProjectContainsOneModule(projectDir: Path, defaultProjectTemplateShouldBeApplied: Boolean) {
+  private suspend fun openUsingOpenFileActionAndAssertThatProjectContainsOneModule(
+    projectDir: Path,
+    defaultProjectTemplateShouldBeApplied: Boolean,
+  ) {
     checkDefaultProjectAsTemplate { checkDefaultProjectAsTemplateTask ->
       val project = opener.opener(projectDir)!!
       project.useProject {

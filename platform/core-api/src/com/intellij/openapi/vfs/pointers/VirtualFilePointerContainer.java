@@ -27,7 +27,7 @@ public interface VirtualFilePointerContainer {
   void remove(@NotNull VirtualFilePointer pointer);
 
   @NotNull
-  List<VirtualFilePointer> getList();
+  @Unmodifiable List<VirtualFilePointer> getList();
 
   void addAll(@NotNull VirtualFilePointerContainer that);
 

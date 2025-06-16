@@ -282,13 +282,6 @@ public interface CodeStyleSettingsCustomizable {
 
   /**
    * @deprecated this is not locale-friendly,
-   * use {@link CodeStyleSettingsCustomizableOptions#getInstance} and {@link CodeStyleSettingsCustomizableOptions#SPACES_AROUND_OPERATORS}
-   */
-  @Deprecated(forRemoval = true)
-  @Nls String SPACES_AROUND_OPERATORS = CodeStyleSettingsCustomizableOptions.ourStaticInstance.SPACES_AROUND_OPERATORS;
-
-  /**
-   * @deprecated this is not locale-friendly,
    * use {@link CodeStyleSettingsCustomizableOptions#getInstance} and {@link CodeStyleSettingsCustomizableOptions#SPACES_BEFORE_PARENTHESES}
    */
   @Deprecated(forRemoval = true)
@@ -326,19 +319,6 @@ public interface CodeStyleSettingsCustomizable {
    */
   @Deprecated(forRemoval = true)
   @Nls String BLANK_LINES = CodeStyleSettingsCustomizableOptions.ourStaticInstance.BLANK_LINES;
-
-  /**
-   * @deprecated this is not locale-friendly,
-   * use {@link CodeStyleSettingsCustomizableOptions#getInstance} and {@link CodeStyleSettingsCustomizableOptions#WRAPPING_KEEP}
-   */
-  @Deprecated(forRemoval = true)
-  @Nls String WRAPPING_KEEP = CodeStyleSettingsCustomizableOptions.ourStaticInstance.WRAPPING_KEEP;
-  /**
-   * @deprecated this is not locale-friendly,
-   * use {@link CodeStyleSettingsCustomizableOptions#getInstance} and {@link CodeStyleSettingsCustomizableOptions#WRAPPING_BRACES}
-   */
-  @Deprecated(forRemoval = true)
-  @Nls String WRAPPING_BRACES = CodeStyleSettingsCustomizableOptions.ourStaticInstance.WRAPPING_BRACES;
 
   /**
    * @deprecated this is not locale-friendly,

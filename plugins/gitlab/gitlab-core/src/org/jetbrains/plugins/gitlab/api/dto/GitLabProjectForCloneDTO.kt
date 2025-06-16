@@ -18,6 +18,8 @@ data class GitLabProjectForCloneDTO(
   val nameWithNamespace: @Nls String,
   val fullPath: @NlsSafe String,
   val httpUrlToRepo: @NlsSafe String?,
+  val sshUrlToRepo: @NlsSafe String?,
+  val description: @NlsSafe String?
 )
 
 class GitLabProjectsForCloneDTO(

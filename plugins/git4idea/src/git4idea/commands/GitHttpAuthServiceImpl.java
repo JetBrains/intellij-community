@@ -4,12 +4,16 @@ package git4idea.commands;
 import com.intellij.externalProcessAuthHelper.AuthenticationGate;
 import com.intellij.externalProcessAuthHelper.AuthenticationMode;
 import com.intellij.openapi.project.Project;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
 
 class GitHttpAuthServiceImpl extends GitHttpAuthService {
+  GitHttpAuthServiceImpl(CoroutineScope coroutineScope) {
+    super(coroutineScope);
+  }
 
   @Override
   public @NotNull GitHttpGuiAuthenticator createAuthenticator(@NotNull Project project,

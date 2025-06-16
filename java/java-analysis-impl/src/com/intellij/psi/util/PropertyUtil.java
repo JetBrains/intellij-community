@@ -53,13 +53,13 @@ public final class PropertyUtil extends PropertyUtilBase {
     return getSimplyReturnedField(returnExprSupplier.get());
   }
 
-  public static boolean isSimpleGetter(@Nullable PsiMethod method) {
+  public static boolean isSimpleGetter(@NotNull PsiMethod method) {
     //noinspection TestOnlyProblems
     return isSimpleGetter(method, true);
   }
 
   @TestOnly
-  public static boolean isSimpleGetter(@Nullable PsiMethod method, boolean useIndex) {
+  public static boolean isSimpleGetter(@NotNull PsiMethod method, boolean useIndex) {
     return getFieldOfGetter(method, useIndex) != null;
   }
 

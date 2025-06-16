@@ -15,6 +15,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.impl.InternalUICustomization
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
@@ -44,6 +45,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.impl.JBTabsImpl
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
@@ -73,6 +75,7 @@ class EditorWindow internal constructor(
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")
 
     @JvmField
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use SINGLETON_EDITOR_IN_WINDOW instead")
     val HIDE_TABS: Key<Boolean> = FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW
 
@@ -463,7 +466,9 @@ class EditorWindow internal constructor(
         windowAdded()
         // wait for the file editor
         composite.waitForAvailable()
-        if (withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        // In the case of the JetBrains client, the project is opened under a modal dialog, and closing it removes the focus from the editor
+        val modalityState = if (PlatformUtils.isJetBrainsClient()) ModalityState.nonModal() else ModalityState.any()
+        if (withContext(Dispatchers.EDT + modalityState.asContextElement()) {
             focusEditorOnComposite(composite = composite, splitters = owner, toFront = false)
           }) {
           // update frame title only when the first file editor is ready to load (editor is not yet fully loaded at this moment)
@@ -481,6 +486,15 @@ class EditorWindow internal constructor(
     virtualFile: VirtualFile?,
     focusNew: Boolean,
     fileIsSecondaryComponent: Boolean = true,
+  ): EditorWindow? = split(orientation, forceSplit, virtualFile, focusNew, fileIsSecondaryComponent, null)
+
+  internal fun split(
+    orientation: Int,
+    forceSplit: Boolean,
+    virtualFile: VirtualFile?,
+    focusNew: Boolean,
+    fileIsSecondaryComponent: Boolean = true,
+    explicitlySetCompositeProvider: (() -> EditorComposite?)?,
   ): EditorWindow? {
     checkConsistency()
     if (tabCount < 1) {
@@ -495,7 +509,7 @@ class EditorWindow internal constructor(
           window = target,
           _file = virtualFile,
           entry = selectedComposite.takeIf { it.file == virtualFile }?.currentStateAsFileEntry(),
-          options = FileEditorOpenOptions(requestFocus = focusNew),
+          options = FileEditorOpenOptions(requestFocus = focusNew, explicitlyOpenCompositeProvider = null),
         )
       }
       return target
@@ -523,6 +537,7 @@ class EditorWindow internal constructor(
       splitter.firstComponent = newWindow.component
       splitter.secondComponent = existingEditor
     }
+    InternalUICustomization.getInstance()?.installEditorBackground(newWindow.component)
     normalizeProportionsIfNeed(existingEditor)
 
     // open only selected file in the new splitter instead of opening all tabs
@@ -536,6 +551,7 @@ class EditorWindow internal constructor(
         isExactState = true,
         pin = getComposite(nextFile)?.isPinned ?: false,
         selectAsCurrent = focusNew,
+        explicitlyOpenCompositeProvider = explicitlySetCompositeProvider
       ),
     ) ?: return newWindow
     if (!focusNew) {
@@ -953,7 +969,7 @@ class EditorWindow internal constructor(
 
   fun getComposite(inputFile: VirtualFile): EditorComposite? = findTabByFile(inputFile)?.composite
 
-  internal fun findCompositeAndTab(inputFile: VirtualFile): Pair<EditorComposite, TabInfo>? {
+  fun findCompositeAndTab(inputFile: VirtualFile): Pair<EditorComposite, TabInfo>? {
     val file = (inputFile as? BackedVirtualFile)?.originFile ?: inputFile
     for (tab in tabbedPane.tabs.tabs) {
       val composite = tab.composite

@@ -35,7 +35,7 @@ internal class AddActionDialog(private val customActionsSchema: CustomActionsSch
   private val actionsTree: JTree = Tree().apply {
     val rootGroup = ActionsTreeUtil.createMainGroup(null, null, QuickListsManager.getInstance().allQuickLists,
                                                     null, true) {
-      action -> action !is Separator &&
+      action -> action !is Separator && action !is NonCustomizableAction &&
                 action !is EmptyAction && action !is EmptyActionGroup &&
                 !(action is ActionStub && action.className == EmptyAction::class.qualifiedName) &&
                 !(action is ActionGroupStub && action.actionClass == EmptyActionGroup::class.qualifiedName)

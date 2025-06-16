@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -23,23 +23,14 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.EditorTextFieldCellRenderer.RendererComponent;
-import com.intellij.ui.EditorTextFieldCellRenderer.SimpleRendererComponent;
-import com.intellij.ui.GroupHeaderSeparator;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.ActionPopupOptions;
 import com.intellij.ui.popup.PopupFactoryImpl;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.Collection;
 import java.util.HashMap;
@@ -107,7 +98,8 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
       final var highlightInfoType = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
       if (standardSeverities.contains(highlightInfoType)) continue;
       final TextAttributesKey attributes = mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity).getAttributesKey();
-      group.add(new HighlightAction(severity.getDisplayName(), attributes, mySeverityRegistrar.getTextAttributesBySeverity(severity), this::onKeyChosen));
+      group.add(new HighlightAction(severity.getDisplayName(), attributes, mySeverityRegistrar.getTextAttributesBySeverity(severity),
+                                    this::onKeyChosen));
     }
 
     group.addSeparator();
@@ -150,33 +142,30 @@ public abstract class HighlightingChooser extends ComboBoxAction implements Dumb
     button.setPreferredSize(button.getMinimumSize());
     return button;
   }
-}
 
-final class HighlightAction extends DumbAwareAction {
-  private final TextAttributesKey myEditorAttributesKey;
-  private final TextAttributes myTextAttributes;
-  private final Consumer<? super TextAttributesKey> myActionPerformed;
+  static final class HighlightAction extends DumbAwareAction {
+    private final TextAttributesKey myEditorAttributesKey;
+    private final TextAttributes myTextAttributes;
+    private final Consumer<? super TextAttributesKey> myActionPerformed;
 
-  HighlightAction(@Nls String name, TextAttributesKey textAttributesKey, TextAttributes textAttributes, Consumer<? super TextAttributesKey> actionPerformed) {
-    super(name);
-    myEditorAttributesKey = textAttributesKey;
-    myTextAttributes = textAttributes;
-    myActionPerformed = actionPerformed;
-  }
+    HighlightAction(@Nls String name, TextAttributesKey textAttributesKey, TextAttributes textAttributes, Consumer<? super TextAttributesKey> actionPerformed) {
+      super(name);
+      myEditorAttributesKey = textAttributesKey;
+      myTextAttributes = textAttributes;
+      myActionPerformed = actionPerformed;
+    }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    myActionPerformed.accept(myEditorAttributesKey);
-  }
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      myActionPerformed.accept(myEditorAttributesKey);
+    }
 
-  public TextAttributesKey getEditorAttributesKey() {
-    return myEditorAttributesKey;
-  }
-
-  TextAttributes getTextAttributes() {
-    return myTextAttributes;
+    TextAttributes getTextAttributes() {
+      return myTextAttributes;
+    }
   }
 }
+
 
 final class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
 
@@ -194,54 +183,7 @@ final class HighlightPopup extends PopupFactoryImpl.ActionGroupPopup {
 
   @Override
   protected ListCellRenderer<?> getListElementRenderer() {
-    return new HighlightElementRenderer();
+    return HighlightingChooserUtilKt.getListCellRendererComponent();
   }
 }
 
-final class HighlightElementRenderer implements ListCellRenderer<PopupFactoryImpl.ActionItem> {
-
-  private final RendererComponent myTextComponent = new SimpleRendererComponent(null, null, true);
-  private final JPanel myTextPanel = new NonOpaquePanel();
-  private final JPanel mySeparatorPanel = new NonOpaquePanel();
-  private final JBLabel myLabel = new JBLabel();
-
-  HighlightElementRenderer() {
-    myTextComponent.getEditor().getContentComponent().setOpaque(false);
-    myTextPanel.add(myTextComponent);
-    myTextPanel.setBorder(
-      new CompoundBorder(new EmptyBorder(JBUI.CurrentTheme.ActionsList.cellPadding()),
-                         JBUI.Borders.empty(1, 0)) // Highlighted text visual fix
-    );
-
-    final var opaquePanel = new OpaquePanel(new BorderLayout(), JBUI.CurrentTheme.Popup.BACKGROUND);
-    final GroupHeaderSeparator separator = new GroupHeaderSeparator(JBUI.emptyInsets());
-    opaquePanel.add(separator);
-    mySeparatorPanel.add(opaquePanel, BorderLayout.NORTH);
-    myLabel.setBorder(
-      new CompoundBorder(new EmptyBorder(JBUI.CurrentTheme.ActionsList.cellPadding()),
-                         myLabel.getBorder()));
-    mySeparatorPanel.add(myLabel, BorderLayout.CENTER);
-  }
-
-  @Override
-  public Component getListCellRendererComponent(JList<? extends PopupFactoryImpl.ActionItem> list,
-                                                PopupFactoryImpl.ActionItem value,
-                                                int index,
-                                                boolean isSelected,
-                                                boolean cellHasFocus) {
-    if (value != null) {
-      final var action = value.getAction();
-      if (action instanceof HighlightAction highlightAction) {
-        final TextAttributes attributes = highlightAction.getTextAttributes();
-        myTextComponent.setText(action.getTemplateText(), attributes, false);
-        myTextComponent.setSize(myTextComponent.getPreferredSize());
-        return myTextPanel;
-      } else {
-        //noinspection DialogTitleCapitalization
-        myLabel.setText(action.getTemplateText());
-        return mySeparatorPanel;
-      }
-    }
-    return null;
-  }
-}

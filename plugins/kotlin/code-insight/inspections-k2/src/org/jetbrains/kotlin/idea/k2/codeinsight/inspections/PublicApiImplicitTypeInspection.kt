@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.options.OptPane
 import com.intellij.codeInspection.options.OptPane.checkbox
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.SpecifyExplicitTypeQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
@@ -52,10 +52,8 @@ class PublicApiImplicitTypeInspection(
 
                 analyze(declaration) {
                     if (shouldReportDeclarationVisibility(declaration)) {
-                        val fix = IntentionWrapper(
-                            SpecifyExplicitTypeQuickFix(declaration, CallableReturnTypeUpdaterUtils.getTypeInfo(declaration))
-                                .asIntention()
-                        )
+                        val typeInfo = CallableReturnTypeUpdaterUtils.getTypeInfo(declaration, useTemplate = holder.isOnTheFly)
+                        val fix = SpecifyExplicitTypeQuickFix(declaration, typeInfo).asQuickFix()
                         holder.registerProblem(nameIdentifier, problemText, fix)
                     }
                 }

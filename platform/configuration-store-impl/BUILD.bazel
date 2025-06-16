@@ -14,6 +14,10 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/util/concurrency",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/core-api:core",
     "//platform/platform-api:ide",
@@ -23,8 +27,8 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "@lib//:kotlinx-coroutines-core",
     "//platform/analysis-api:analysis",
-    "//platform/object-serializer:objectSerializer",
-    "//platform/service-container:serviceContainer",
+    "//platform/object-serializer",
+    "//platform/service-container",
     "//platform/ide-core-impl",
     "@lib//:snakeyaml-engine",
     "//platform/statistics",
@@ -41,6 +45,7 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/settings",
     "@lib//:kotlinx-serialization-core",
+    "//platform/workspace/storage",
     "@lib//:kotlinx-serialization-json",
   ],
   runtime_deps = [":configurationStore-impl_resources"]
@@ -49,7 +54,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.configurationStore.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "configurationStore-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "configurationStore-tests",
@@ -63,15 +74,19 @@ jvm_library(
   associates = ["//platform/configuration-store-impl:configurationStore-impl"],
   deps = [
     "@lib//:kotlin-stdlib",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/ide-core/plugins",
     "@lib//:assert_j",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework/extensions:testExtensions",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//platform/object-serializer:objectSerializer",
-    "//platform/object-serializer:objectSerializer_test_lib",
-    "//platform/service-container:serviceContainer",
-    "//platform/service-container:serviceContainer_test_lib",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
+    "//platform/service-container",
+    "//platform/service-container:service-container_test_lib",
     "//platform/ide-core-impl",
     "@lib//:kotlinx-coroutines-core",
     "//platform/statistics",
@@ -86,7 +101,8 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlinx-serialization-core",
     "//java/java-impl:impl",
-  ]
+  ],
+  runtime_deps = [":configurationStore-tests_test_resources"]
 )
 
 jvm_test(

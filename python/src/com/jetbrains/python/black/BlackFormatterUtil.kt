@@ -13,10 +13,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.pyi.PyiFileType
+import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
+import com.jetbrains.python.pyi.PyiFileType
 import org.jetbrains.annotations.SystemDependent
 import java.io.File
 
@@ -34,9 +35,7 @@ class BlackFormatterUtil {
 
     fun isBlackFormatterInstalledOnProjectSdk(project: Project, sdk: Sdk?): Boolean {
       val packageManager = sdk?.let { PythonPackageManager.forSdk(project, sdk) }
-      return packageManager?.let {
-        it.installedPackages.any { pyPackage -> pyPackage.name == PACKAGE_NAME }
-      } ?: false
+      return packageManager?.hasInstalledPackageSnapshot(PACKAGE_NAME) ?: false
     }
 
     fun detectBlackExecutable(): File? {

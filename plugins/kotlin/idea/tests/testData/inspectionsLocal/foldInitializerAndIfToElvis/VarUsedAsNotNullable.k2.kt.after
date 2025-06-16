@@ -1,0 +1,4 @@
+fun test(foo: Int?, bar: Int): Int {
+    val i = foo ?: return bar
+    return i
+}

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -13,6 +12,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -31,14 +31,16 @@ internal class DelegationToVarPropertyInspection : AbstractKotlinInspection() {
             val containingClass = parameter.containingClassOrObject as? KtClass ?: return
             val isUsedForOtherClass = containingClass != delegatedSuperTypeEntry.getStrictParentOfType<KtClass>()
 
-            val canChangeToVal = ReferencesSearch.search(parameter, LocalSearchScope(containingClass)).findAll().none {
-                val element = it.element
-                element != delegateExpression && !element.isMemberPropertyInitializer(containingClass) && element.hasAssignment()
-            }
+            val canChangeToVal = ReferencesSearch.search(parameter, LocalSearchScope(containingClass))
+                .asIterable()
+                .none {
+                    val element = it.element
+                    element != delegateExpression && !element.isMemberPropertyInitializer(containingClass) && element.hasAssignment()
+                }
             val canRemoveVar = canChangeToVal && !isUsedForOtherClass
 
             val fixes = listOfNotNull(
-                if (canChangeToVal) IntentionWrapper(ChangeVariableMutabilityFix(parameter, makeVar = false).asIntention()) else null,
+                if (canChangeToVal) ChangeVariableMutabilityFix(parameter, makeVar = false).asQuickFix() else null,
                 if (canRemoveVar) RemoveVarKeyword() else null,
             ).ifEmpty { return }
 

@@ -12,11 +12,14 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
 import com.intellij.task.impl.ProjectTaskManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
+import kotlin.sequences.any
 
 /**
  * Compilation dependencies should be resolved before launching the build process not to have:
@@ -35,6 +38,16 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
   override fun execute(context: CompileContext): Boolean {
     if (DisableCompilationDependenciesResolutionTask.EP_NAME.extensionList.any { it.shouldDisable(context.project) }) {
       log.info("Compilation dependencies resolution task is disabled for the project ${context.project.name}")
+      return true
+    }
+    
+    /* Optimization: don't process dependencies of affected modules recursively if there are no repository libraries configured */
+    val workspaceModelSnapshot = context.project.workspaceModel.currentSnapshot
+    val hasRepositoryLibraries = workspaceModelSnapshot.entities(LibraryPropertiesEntity::class.java).any {
+      it.library.typeId == RepositoryLibraryType.LIBRARY_TYPE_ID
+    }
+    if (!hasRepositoryLibraries) {
+      log.debug("Skip compilation dependencies resolution task for the project ${context.project.name} because there are no 'repository' libraries")
       return true
     }
 
@@ -93,9 +106,10 @@ internal class CompilationDependenciesResolutionTask : CompileTask {
  * Provides a way to opt out of this pre-compile task when it does not provide any values,
  * e.g., in Bazel plugin where Bazel resolves all the external dependencies.
  *
- * [related issue](https://youtrack.jetbrains.com/issue/IDEA-367562/CompilationDependenciesResolutionTask-takes-40s-in-a-project-with-no-maven-libraries-registered)
+ * The [corresponding issue](https://youtrack.jetbrains.com/issue/IDEA-367562) has been fixed, so there is no need to use this extension
+ * point anymore.
  */
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
 interface DisableCompilationDependenciesResolutionTask {
   companion object {
     val EP_NAME: ExtensionPointName<DisableCompilationDependenciesResolutionTask> =

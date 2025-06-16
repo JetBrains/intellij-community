@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
@@ -57,10 +58,10 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static final List<PatternContext> PATTERN_CONTEXTS = List.of(DEFAULT_CONTEXT, MEMBER_CONTEXT);
 
   private static final Set<String> PRIMITIVE_TYPES = Set.of(
-    PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
-    PsiKeyword.DOUBLE, PsiKeyword.LONG,
-    PsiKeyword.INT, PsiKeyword.FLOAT,
-    PsiKeyword.CHAR, PsiKeyword.BYTE
+    JavaKeywords.SHORT, JavaKeywords.BOOLEAN,
+    JavaKeywords.DOUBLE, JavaKeywords.LONG,
+    JavaKeywords.INT, JavaKeywords.FLOAT,
+    JavaKeywords.CHAR, JavaKeywords.BYTE
   );
 
   private static final Set<String> RESERVED_WORDS =
@@ -641,7 +642,13 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
         setParameterContext(parameter, parameter.getNameIdentifier(), parameter.getTypeElement());
       }
 
-      private void setParameterContext(@NotNull PsiElement element, PsiElement nameIdentifier, @Nullable PsiElement scopeElement) {
+      @Override
+      public void visitRecordComponent(@NotNull PsiRecordComponent recordComponent) {
+        super.visitRecordComponent(recordComponent);
+        setParameterContext(recordComponent, recordComponent.getNameIdentifier(), recordComponent.getTypeElement());
+      }
+
+      private void setParameterContext(@NotNull PsiElement element, PsiIdentifier nameIdentifier, @Nullable PsiElement scopeElement) {
         final ParameterInfo nameInfo = builder.findParameterization(nameIdentifier);
         if (nameInfo == null) return;
         nameInfo.setArgumentContext(false);
@@ -683,7 +690,7 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
       final PsiElement element = info.getElement();
       final Map<String, ParameterInfo> typeInfos = info.getUserData(PARAMETER_CONTEXT);
       if (typeInfos != null) {
-        if (element instanceof PsiParameter) {
+        if (element instanceof PsiParameter || element instanceof PsiRecordComponent) {
           final int parameterEnd = info.getStartIndex();
           final Integer length = info.getUserData(PARAMETER_LENGTH);
           assert length != null;
@@ -725,10 +732,11 @@ public final class JavaStructuralSearchProfile extends StructuralSearchProfile {
               addSeparatorTextMatchedInAnyOrder(currentElement,
                                                 parent instanceof PsiClass ? PsiMember.class : PsiJavaCodeReferenceElement.class, buf);
             }
-            else if (info.isStatementContext() ||
-                     info.isArgumentContext() ||
-                     parent instanceof PsiPolyadicExpression ||
-                     parent instanceof PsiArrayInitializerExpression) {
+            else if (info.isStatementContext()
+                     || info.isArgumentContext()
+                     || parent instanceof PsiPolyadicExpression
+                     || parent instanceof PsiArrayInitializerExpression
+                     || parent instanceof PsiExpressionList) {
               addSeparatorText(previous, currentElement, buf);
             }
             else {

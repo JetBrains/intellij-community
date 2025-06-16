@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PyLazySdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -34,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
+import static com.intellij.python.community.impl.venv.VenvKt.LEGACY_VIRTUALENV_ZIPAPP_NAME;
 import static com.intellij.python.community.impl.venv.VenvKt.VIRTUALENV_ZIPAPP_NAME;
 import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
 
@@ -42,8 +42,6 @@ import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
  */
 @Deprecated(forRemoval = true)
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String LEGACY_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz"; // virtualenv used to create virtual environments for python 2.7 & 3.6
-
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
 
   @Override
@@ -108,7 +106,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       for (PyRequirement req : requirements) {
         simplifiedArgs.addAll(req.getInstallOptions());
       }
-      throw e.copyWith("pip", makeSafeToDisplayCommand(simplifiedArgs));
+      throw PyExecutionExceptionExtKt.copyWith(e, "pip", makeSafeToDisplayCommand(simplifiedArgs));
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these requirements were installed: " + requirements);
@@ -134,7 +132,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       getHelperResult(args, !canModify, true);
     }
     catch (PyExecutionException e) {
-      throw e.copyWith("pip", args);
+      throw PyExecutionExceptionExtKt.copyWith(e, "pip", args);
     }
     finally {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
@@ -151,10 +149,6 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
 
   @Override
   protected @NotNull List<PyPackage> collectPackages() throws ExecutionException {
-    if (getSdk() instanceof PyLazySdk) {
-      return List.of();
-    }
-
     try {
       LOG.debug("Collecting installed packages for the SDK " + getSdk().getName(), new Throwable());
       String output = getHelperResult(List.of("list"), false, false);
@@ -197,7 +191,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       showSdkExecutionException(sdk, e, PySdkBundle.message("python.creating.venv.failed.title"));
     }
 
-    final Path binary =  VirtualEnvReader.getInstance().findPythonInPythonRoot(Paths.get(destinationDir));
+    final Path binary = VirtualEnvReader.getInstance().findPythonInPythonRoot(Paths.get(destinationDir));
     final String binaryFallback = destinationDir + mySeparator + "bin" + mySeparator + "python";
 
     return (binary != null) ? binary.toString() : binaryFallback;
@@ -240,7 +234,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
     final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir, pyArgs);
     final int exitCode = output.getExitCode();
     if (output.isTimeout()) {
-      throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.timed.out"), path, args, output);
+      throw PyExecutionException.createForTimeout(PySdkBundle.message("python.sdk.packaging.timed.out"), path, args);
     }
     else if (exitCode != 0) {
       throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.non.zero.exit.code", exitCode), path, args, output);
@@ -309,7 +303,7 @@ public class PyPackageManagerImpl extends PyPackageManagerImplBase {
       return result;
     }
     catch (IOException e) {
-      throw new PyExecutionException(e.getMessage(), helperPath, args);
+      throw new PyExecutionException(e, null, helperPath, args);
     }
   }
 }

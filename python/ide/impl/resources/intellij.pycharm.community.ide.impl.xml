@@ -21,8 +21,13 @@
                     serviceImplementation="com.intellij.pycharm.community.ide.impl.PyProjectScopeBuilder"
                     overrides="true"/>
 
-    <refactoring.elementListenerProvider implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector"/>
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollectorValidationRule"/>
+
+    <refactoring.elementListenerProvider
+      implementation="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectListenerProvider"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector"/>
     <registryKey defaultValue="5" description="Number of primary buttons on welcome screen (other go to 'more actions')"
                  key="welcome.screen.primaryButtonsCount" restartRequired="true" overrides="true"/>
     <applicationInitializedListener implementation="com.intellij.pycharm.community.ide.impl.PyCharmCorePluginConfigurator"/>
@@ -30,22 +35,43 @@
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmPythonIdeLanguageCustomization"
                         overrides="true"/>
 
+    <!--Settings -->
+    <backgroundPostStartupActivity id="PyCharmProjectConfigurableStartupActivity"
+                                   implementation="com.intellij.pycharm.community.ide.impl.PyCharmProjectConfigurableStartupActivity"/>
+
     <projectConfigurable groupId="project"
                          id="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurable"
                          bundle="messages.PyBundle"
                          key="configurable.PythonContentEntriesConfigurable.display.name"
-                         provider="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurableProvider"/>
-    <projectConfigurable groupId="project"
-                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
-                         bundle="messages.PyBundle"
-                         key="configurable.PyActiveSdkModuleConfigurable.python.interpreter.display.name"
-                         instance="com.intellij.pycharm.community.ide.impl.PyCharmPyActiveSdkModuleConfigurable"
-                         groupWeight="5"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
+                         provider="com.intellij.pycharm.community.ide.impl.configuration.PythonContentEntriesConfigurableProvider"
+                         groupWeight="15"/>
+
     <projectConfigurable groupId="project"
                          id="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurable"
                          bundle="messages.PyBundle"
-                         key="configurable.PyDependenciesConfigurable.display.name"
-                         provider="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurableProvider"/>
+                         key="configurable.PyDependenciesConfigurable.pycharm.display.name"
+                         provider="com.intellij.pycharm.community.ide.impl.configuration.PyDependenciesConfigurableProvider"
+                         groupWeight="5"/>
+
+    <groupConfigurable id="python.group.settings"
+                       parentId="root"
+                       weight="1000"
+                       bundle="messages.PyBundle"
+                       displayNameKey="settings.python.group.title"
+                       descriptionKey="settings.python.group.title"/>
+
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+                         bundle="messages.PyBundle"
+                         key="configurable.PyActiveSdkModuleConfigurable.pycharm.interpreter.display.name"
+                         instance="com.intellij.pycharm.community.ide.impl.PyCharmPyActiveSdkModuleConfigurable"
+                         groupWeight="200"/> <!-- id is used in InterpreterSettingsQuickFix.showPythonInterpreterSettings -->
+
+    <applicationConfigurable id="memory.settings" groupWeight="45"
+                             key="settings.memory.group.title"
+                             bundle="messages.PyBundle"
+                             instance="com.intellij.pycharm.community.ide.impl.settings.MemoryUsageConfigurable"
+                             groupId="root"/>
 
     <statusBarWidgetFactory id="pythonInterpreterWidget"
                             implementation="com.intellij.pycharm.community.ide.impl.configuration.PySdkStatusBarWidgetFactory"
@@ -86,7 +112,7 @@
     <applicationService serviceImplementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeCollector"/>
-    <notificationGroup id="PyCharm Professional Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
+    <notificationGroup id="PyCharm Advertiser" displayType="STICKY_BALLOON" isLogByDefault="false"
                        bundle="messages.PyCharmCommunityCustomizationBundle" key="notification.group.pro.advertiser"/>
 
     <ignoredFileProvider implementation="com.intellij.pycharm.community.ide.impl.configuration.PyTemporarilyIgnoredFileProvider"/>
@@ -96,6 +122,7 @@
     <defaultToolWindowLayout implementation="com.intellij.pycharm.community.ide.impl.PyToolWindowLayoutProvider" order="last"/>
 
     <codeInsight.codeVision.settings.defaults implementation="com.intellij.pycharm.community.ide.impl.PyCharmCodeVisionSettingsDefaults"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewEnvCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
@@ -109,8 +136,10 @@
                                       id="pipfile" order="before requirementsTxtOrSetupPy"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyPoetrySdkConfiguration"
                                       id="poetry"/>
+    <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyHatchSdkConfiguration"
+                                      id="hatch" order="after poetry"/>
     <projectSdkConfigurationExtension implementation="com.intellij.pycharm.community.ide.impl.configuration.PyUvSdkConfiguration"
-                                      id="uv" order="after poetry"/>
+                                      id="uv" order="after hatch"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">

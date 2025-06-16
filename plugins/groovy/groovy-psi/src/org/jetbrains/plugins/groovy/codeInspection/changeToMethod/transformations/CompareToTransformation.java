@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.changeToMethod.transformations;
 
 import com.intellij.psi.tree.IElementType;
@@ -10,7 +10,7 @@ import static java.lang.String.format;
 import static org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil.replaceExpression;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mCOMPARE_TO;
 
-class CompareToTransformation extends BinaryTransformation {
+final class CompareToTransformation extends BinaryTransformation {
 
   private final @NotNull IElementType myElementType;
 

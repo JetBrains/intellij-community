@@ -319,6 +319,15 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
         """
     );
   }
+  
+  // PY-46592
+  public void testUseParameterAfterDeletingAttribute() {
+    doTestByText("""
+        def func(foo, bar):
+            del foo.bar
+            print(bar)  # false positive
+        """);
+  }
 
   // PY-4537
   public void testReferencedAfterDeletion() {
@@ -435,6 +444,18 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
                        pass
                    """);
     });
+  }
+
+  // PY-80733
+  public void testTryExceptDoesNotRedirectBreak() {
+    doTestByText("""
+      while True:
+          try:
+              foo = could_raise()
+          except IndexError:
+              break
+      
+          print(foo)""");
   }
 
   @NotNull

@@ -15,19 +15,18 @@
  */
 package org.intellij.plugins.intelliLang.inject.java.validation;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaPsiStringTemplateUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.CollectionUtils;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
@@ -35,12 +34,11 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static java.util.Objects.requireNonNull;
 
 public class LanguageMismatch extends LocalInspectionTool {
   public boolean CHECK_NON_ANNOTATED_REFERENCES = true;
@@ -127,14 +125,14 @@ public class LanguageMismatch extends LocalInspectionTool {
               }
               // context implies language, but declaration isn't annotated
               final PsiAnnotation annotation = annotations[annotations.length - 1];
-              String fqn = Objects.requireNonNull(annotation.getQualifiedName());
-              List<LocalQuickFix> fixes = new SmartList<>();
+              String fqn = requireNonNull(annotation.getQualifiedName());
+              ModCommandAction fix = null;
               PsiModifierListOwner owner = AnnotationUtilEx.getAnnotatedElementFor(expression, AnnotationUtilEx.LookupType.PREFER_DECLARATION);
               if (owner != null && AddAnnotationPsiFix.isAvailable(owner, fqn)) {
-                fixes.add(new AddAnnotationFix(fqn, owner, annotation.getParameterList().getAttributes()));
+                fix = new AddAnnotationModCommandAction(fqn, owner, ((PsiAnnotation)annotation.copy()).getParameterList().getAttributes());
               }
-              holder.registerProblem(expression, IntelliLangBundle.message("inspection.language.problem.description", expected),
-                                     fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+              holder.problem(expression, IntelliLangBundle.message("inspection.language.problem.description", expected))
+                .maybeFix(fix).register();
             }
           }
         }

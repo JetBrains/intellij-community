@@ -57,6 +57,7 @@ public class IncrementalFindAction extends EditorAction implements ActionRemoteB
           if (!consoleViewEditor && editor.getSelectionModel().hasSelection()) {
             // selection is used as string to find without search model modification so save the pattern explicitly
             FindUtil.updateFindInFileModel(project, model, true);
+            FindUtil.updateFindNextModel(project, model);
           }
         }
       }

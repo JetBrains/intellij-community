@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
  * How to use: 1) implement this interface and register this implementation via {@code com.intellij.heavyBracesHighlighter} extension point. <p>
  * Example: <pre>{@code
  * class MyHeavyBraceHighlighter implements HeavyBraceHighlighter {
- *   Pair<TextRange, TextRange> matchBrace(PsiFile file, int offset) {
+ *   Pair<TextRange, TextRange> matchBrace(PsiFile psiFile, int offset) {
  *     // compute paired brace in background...
  *   }
  * }
@@ -47,16 +47,16 @@ public abstract class HeavyBraceHighlighter {
    * Null is returned if nothing matched or no available extensions ready.
    * This method is supposed to be called inside a background read action thread.
    *
-   * @param file   {@link PsiFile PsiFile} to match in.
+   * @param psiFile   {@link PsiFile PsiFile} to match in.
    * @param offset An offset in {@link PsiFile PsiFile} {@code file} to match in.
    * @return Nullable {@link Pair Pair} of {@link TextRange TextRange} result.
    */
-  public static @Nullable Pair<TextRange, TextRange> match(@NotNull PsiFile file, int offset) {
-    if (!file.isValid()) return null;
+  public static @Nullable Pair<TextRange, TextRange> match(@NotNull PsiFile psiFile, int offset) {
+    if (!psiFile.isValid()) return null;
 
     for (HeavyBraceHighlighter highlighter : EP_NAME.getExtensionList()) {
-      if (highlighter.isAvailable(file, offset)) {
-        Pair<TextRange, TextRange> pair = highlighter.matchBrace(file, offset);
+      if (highlighter.isAvailable(psiFile, offset)) {
+        Pair<TextRange, TextRange> pair = highlighter.matchBrace(psiFile, offset);
         if (pair != null) {
           return pair;
         }
@@ -72,7 +72,7 @@ public abstract class HeavyBraceHighlighter {
    * @return false if there is no way of matching anything for the given file and offset, true otherwise
    * @see PsiFile
    */
-  protected boolean isAvailable(@NotNull PsiFile file, int offset) {
+  protected boolean isAvailable(@NotNull PsiFile psiFile, int offset) {
     return true;
   }
 
@@ -84,5 +84,5 @@ public abstract class HeavyBraceHighlighter {
    * a {@link Pair Pair} of {@link TextRange TextRange} to highlight otherwise.
    * @see CaretModel
    */
-  protected abstract @Nullable Pair<TextRange, TextRange> matchBrace(@NotNull PsiFile file, int offset);
+  protected abstract @Nullable Pair<TextRange, TextRange> matchBrace(@NotNull PsiFile psiFile, int offset);
 }

@@ -1,31 +1,37 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.openapi.application.impl
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ReadAction.CannotReadException
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.util.concurrency.ImplicitBlockingContextTest
+import com.intellij.util.application
 import com.intellij.util.concurrency.Semaphore
-import com.intellij.util.concurrency.runWithImplicitBlockingContextEnabled
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.RepeatedTest
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 private const val REPETITIONS: Int = 100
 
-@ExtendWith(ImplicitBlockingContextTest.Enabler::class)
 abstract class SuspendingReadActionTest : CancellableReadActionTests() {
 
+
   @RepeatedTest(REPETITIONS)
-  fun context(): Unit = runWithImplicitBlockingContextEnabled {
+  fun context(): Unit {
     timeoutRunBlocking {
       val rootJob = coroutineContext.job
       val application = ApplicationManager.getApplication()
@@ -62,12 +68,7 @@ abstract class SuspendingReadActionTest : CancellableReadActionTests() {
           val suspendingJob = Cancellation.currentJob()!!
           assertReadActionWithoutCurrentJob(suspendingJob) // TODO consider explicitly turning off RA inside runBlockingCancellable
           withContext(Dispatchers.Default) {
-            if (isLockStoredInContext) {
-              assertNestedContext(coroutineContext.job)
-            }
-            else {
-              assertEmptyContext(coroutineContext.job)
-            }
+            assertNestedContext(coroutineContext.job)
           }
           assertReadActionWithoutCurrentJob(suspendingJob)
         }
@@ -229,17 +230,13 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
           throw assertThrows<CannotReadException> {
             runBlockingCancellable {
               throw assertThrows<CannotReadException> {
-                blockingContext {
-                  throw assertThrows<CannotReadException> {
-                    runBlockingCancellable {
+                throw assertThrows<CannotReadException> {
+                  runBlockingCancellable {
+                    throw assertThrows<CannotReadException> {
                       throw assertThrows<CannotReadException> {
-                        blockingContext {
-                          throw assertThrows<CannotReadException> {
-                            runBlockingCancellable {
-                              waitForPendingWrite().up()
-                              awaitCancellation()
-                            }
-                          }
+                        runBlockingCancellable {
+                          waitForPendingWrite().up()
+                          awaitCancellation()
                         }
                       }
                     }
@@ -412,7 +409,7 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     readActionBlocking {
-      assertSame(coroutineJob, Cancellation.currentJob()?.parent?.parent)
+      assertSame(coroutineJob, Cancellation.currentJob()?.parent)
     }
   }
 
@@ -425,6 +422,112 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       waitForPendingWrite().up()
       testNoExceptions()
     }
+  }
+
+  @Test
+  fun `pending read action do not cause thread starvation for default dispatcher`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val existingTimeout = setCompensationTimeout(1.seconds)
+    kotlin.coroutines.coroutineContext.job.invokeOnCompletion {
+      setCompensationTimeout(existingTimeout)
+    }
+    val operationsCount = Runtime.getRuntime().availableProcessors() * 2
+    val writeActionMayFinish = Job(coroutineContext.job).asCompletableFuture()
+    val writeActionStarted = Job(coroutineContext.job)
+    launch {
+      writeAction {
+        writeActionStarted.complete()
+        writeActionMayFinish.join()
+      }
+    }
+    launch(Dispatchers.IO) {
+      delay(5.seconds)
+      withContext(Dispatchers.Default) {
+        writeActionMayFinish.complete(Unit)
+      }
+    }
+    repeat(operationsCount) { index ->
+      launch {
+        writeActionStarted.join()
+        ReadAction.run<Throwable> {
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `pending read action is cancellable`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val job = Job()
+    launch {
+      writeAction {
+        job.asCompletableFuture().get()
+      }
+    }
+    delay(100)
+    val readHandle = launch {
+      application.runReadAction {
+      }
+    }
+    delay(100)
+    assertTrue(readHandle.isActive)
+    readHandle.cancelAndJoin()
+    assertFalse(readHandle.isActive)
+    job.complete()
+    // checking sanity that cancellation did not break anything
+    repeat(100) {
+      launch {
+        readAction {
+        }
+      }
+      launch { writeAction { } }
+    }
+  }
+
+  @Test
+  fun `pending write action is cancellable`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val job = Job(coroutineContext.job)
+    launch {
+      readAction {
+        job.asCompletableFuture().get()
+      }
+    }
+    delay(100)
+    val writeHandle = launch {
+      backgroundWriteAction {
+      }
+    }
+    delay(100)
+    assertTrue(writeHandle.isActive)
+    writeHandle.cancelAndJoin()
+    assertFalse(writeHandle.isActive)
+    job.complete()
+    val x = 1
+
+    // checking sanity that cancellation did not break anything
+    repeat(100) {
+      launch {
+        readAction {
+        }
+      }
+      launch { writeAction { } }
+    }
+  }
+  @IJIgnore(issue = "IDEA-370400")
+  @Test
+  fun `RA does not lead to leaking read access`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val waJob = Job()
+    val waEndJob = Job()
+    launch {
+      writeAction {
+        waJob.complete()
+        waEndJob.asCompletableFuture().join()
+      }
+    }
+    waJob.join()
+    assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
+    assertFalse((application as ApplicationEx).tryRunReadAction { })
+    assertFalse(ApplicationManager.getApplication().isReadAccessAllowed)
+    assertFalse(ApplicationManager.getApplication().isTopmostReadAccessAllowed)
+    waEndJob.complete()
   }
 }
 

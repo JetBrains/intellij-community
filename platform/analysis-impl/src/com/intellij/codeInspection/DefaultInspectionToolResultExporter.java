@@ -201,7 +201,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   private void exportResult(@NotNull RefEntity refEntity, @NotNull CommonProblemDescriptor descriptor, @NotNull Element element) {
-    PsiElement psiElement = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
+    PsiElement psiElement = descriptor instanceof ProblemDescriptor problemDescriptor ? problemDescriptor.getPsiElement() : null;
     try {
       @NonNls Element problemClassElement = new Element(INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT);
       problemClassElement.setAttribute(INSPECTION_RESULTS_ID_ATTRIBUTE, myToolWrapper.getShortName());
@@ -210,17 +210,15 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       HighlightSeverity severity = InspectionToolResultExporter.getSeverity(refEntity, psiElement, this);
 
       SeverityRegistrar severityRegistrar = myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar();
-      HighlightInfoType type = descriptor instanceof ProblemDescriptor
-                               ? ProblemDescriptorUtil
-                                 .highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar)
-                               : ProblemDescriptorUtil
-                                 .getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
+      HighlightInfoType type = descriptor instanceof ProblemDescriptor problemDescriptor
+                               ? ProblemDescriptorUtil.highlightTypeFromDescriptor(problemDescriptor, severity, severityRegistrar)
+                               : ProblemDescriptorUtil.getHighlightInfoType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING, severity, severityRegistrar);
       problemClassElement.setAttribute(INSPECTION_RESULTS_SEVERITY_ATTRIBUTE, type.getSeverity(psiElement).getName());
       problemClassElement.setAttribute(INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE, type.getAttributesKey().getExternalName());
 
       element.addContent(problemClassElement);
-      if (myToolWrapper instanceof GlobalInspectionToolWrapper) {
-        GlobalInspectionTool globalInspectionTool = ((GlobalInspectionToolWrapper)myToolWrapper).getTool();
+      if (myToolWrapper instanceof GlobalInspectionToolWrapper globalInspectionToolWrapper) {
+        GlobalInspectionTool globalInspectionTool = globalInspectionToolWrapper.getTool();
         QuickFix<?>[] fixes = descriptor.getFixes();
         if (fixes != null) {
           @NonNls Element hintsElement = new Element(INSPECTION_RESULTS_HINTS_ELEMENT);
@@ -251,17 +249,17 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       language.addContent(psiElement != null ? psiElement.getLanguage().getID() : "");
       element.addContent(language);
 
-      if (descriptor instanceof ProblemDescriptorBase) {
-        TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRangeForNavigation();
+      if (descriptor instanceof ProblemDescriptorBase base) {
+        TextRange textRange = base.getTextRangeForNavigation();
         if (textRange != null) {
-          int offset = textRange.getStartOffset() - ((ProblemDescriptorBase)descriptor).getLineStartOffset();
+          int offset = textRange.getStartOffset() - base.getLineStartOffset();
           int length = textRange.getLength();
           element.addContent(new Element("offset").addContent(String.valueOf(offset)));
           element.addContent(new Element("length").addContent(String.valueOf(length)));
         }
       }
-      if (descriptor instanceof UserDataHolder) {
-        var fingerprintData = ((UserDataHolder)descriptor).getUserData(ProblemDescriptorUserDataKt.FINGERPRINT_DATA);
+      if (descriptor instanceof UserDataHolder dataHolder) {
+        var fingerprintData = dataHolder.getUserData(ProblemDescriptorUserDataKt.FINGERPRINT_DATA);
         if (fingerprintData != null) {
           var fingerprintElement = new Element(INSPECTION_RESULTS_FINGERPRINT_DATA);
           for (var e : fingerprintData.entrySet()) {
@@ -270,8 +268,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
           element.addContent(fingerprintElement);
         }
       }
-      if (descriptor instanceof ExportedInspectionsResultModifier) {
-        ((ExportedInspectionsResultModifier)descriptor).modifyResult(element);
+      if (descriptor instanceof ExportedInspectionsResultModifier modifier) {
+        modifier.modifyResult(element);
       }
     }
     catch (ProcessCanceledException e) {
@@ -412,8 +410,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     }
 
     for (RefEntity element : elements) {
-      String groupName =
-        element instanceof RefElement ? element.getRefManager().getGroupName((RefElement)element) : element.getQualifiedName();
+      String groupName = element instanceof RefElement refElement ? element.getRefManager().getGroupName(refElement) : element.getQualifiedName();
       registerContentEntry(element, groupName);
     }
   }
@@ -480,14 +477,14 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   }
 
   private static void checkFromSameFile(RefEntity element, CommonProblemDescriptor[] descriptors) {
-    if (!(element instanceof RefElement)) return;
-    SmartPsiElementPointer<?> pointer = ((RefElement)element).getPointer();
+    if (!(element instanceof RefElement refElement)) return;
+    SmartPsiElementPointer<?> pointer = refElement.getPointer();
     if (pointer == null) return;
     VirtualFile entityFile = ensureNotInjectedFile(pointer.getVirtualFile());
     if (entityFile == null) return;
     for (CommonProblemDescriptor d : descriptors) {
-      if (d instanceof ProblemDescriptorBase) {
-        VirtualFile file = ((ProblemDescriptorBase)d).getContainingFile();
+      if (d instanceof ProblemDescriptorBase base) {
+        VirtualFile file = base.getContainingFile();
         if (file != null) {
           LOG.assertTrue(ensureNotInjectedFile(file).equals(entityFile),
                          "descriptor and containing entity files should be the same; descriptor: " + d.getDescriptionTemplate() + 
@@ -504,7 +501,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
   @Contract("null -> null")
   private static VirtualFile ensureNotInjectedFile(VirtualFile file) {
-    return file instanceof VirtualFileWindow ? ((VirtualFileWindow)file).getDelegate() : file;
+    return file instanceof VirtualFileWindow window ? window.getDelegate() : file;
   }
 
   @Override
@@ -564,8 +561,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
 
     private ProblemDescriptorKey(CommonProblemDescriptor desc) {
       descriptor = desc;
-      if (desc instanceof ProblemDescriptor) {
-        lineNumber = ((ProblemDescriptor)desc).getLineNumber();
+      if (desc instanceof ProblemDescriptor problemDescriptor) {
+        lineNumber = problemDescriptor.getLineNumber();
       }
       if (desc instanceof ProblemDescriptorBase descriptorBase) {
         file = descriptorBase.getContainingFile();

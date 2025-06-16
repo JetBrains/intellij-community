@@ -4,7 +4,7 @@ PyFile:Ellipsis.py
       PyReferenceExpression: d
         PsiElement(Py:IDENTIFIER)('d')
       PsiElement(Py:LBRACKET)('[')
-      PyNoneLiteralExpression
+      PyEllipsisLiteralExpression
         PsiElement(Py:DOT)('.')
         PsiElement(Py:DOT)('.')
         PsiElement(Py:DOT)('.')

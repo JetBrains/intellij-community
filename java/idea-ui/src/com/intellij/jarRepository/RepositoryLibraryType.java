@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.jps.entities.LibraryTypeId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
@@ -19,9 +20,10 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import javax.swing.*;
 
 public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
+  public static final LibraryTypeId LIBRARY_TYPE_ID = new LibraryTypeId("repository");
 
   public static final PersistentLibraryKind<RepositoryLibraryProperties>
-    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<>("repository") {
+    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<>(LIBRARY_TYPE_ID.getName()) {
     @Override
     public @NotNull RepositoryLibraryProperties createDefaultProperties() {
       return new RepositoryLibraryProperties();

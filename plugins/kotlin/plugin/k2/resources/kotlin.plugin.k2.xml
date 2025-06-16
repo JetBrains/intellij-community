@@ -3,8 +3,6 @@
   <module value="com.intellij.modules.kotlin.k2"/>
 
   <dependencies>
-    <plugin id="com.intellij.modules.platform"/>
-    <plugin id="com.intellij.modules.java"/>
     <plugin id="com.intellij.modules.java-capable"/>
   </dependencies>
 
@@ -27,11 +25,12 @@
   <xi:include href="jvm-debugger.xml"/>
   <xi:include href="jvm-debugger-k2.xml"/>
   <xi:include href="dep-spellchecker.xml"/>
-  <xi:include href="scripting-k2.xml"/>
+  <xi:include href="scripting-base.xml"/>
   <xi:include href="native.xml"/>
   <xi:include href="native-k2.xml"/>
   <xi:include href="facets-base.xml"/>
   <xi:include href="jvm.xml"/>
+  <xi:include href="searching-k2.xml"/>
 
   <xi:include href="extensions.xml"/>
 
@@ -104,7 +103,7 @@
 
     <registryKey key="kotlin.k2.show.fir.statusbar.icon"
                  description="Show K2 mode tree icon in the status bar"
-                 defaultValue="true"
+                 defaultValue="false"
                  restartRequired="false"/>
 
     <!-- shared completion -->
@@ -115,6 +114,20 @@
                             id="KotlinCompletionContributor"
                             order="first"
                             implementationClass="org.jetbrains.kotlin.idea.completion.KotlinFirCompletionContributor"/>
+
+    <completion.contributor language="kotlin"
+                            order="last, before default"
+                            implementationClass="org.jetbrains.kotlin.idea.completion.impl.k2.KotlinChainCompletionContributor"/>
+
+    <registryKey key="kotlin.k2.chain.completion.enabled"
+                 description="Allow chained completion items in Kotlin"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
+    <registryKey key="kotlin.k2.smart.completion.enabled"
+                 description="Enable smart completion for Kotlin in K2 mode"
+                 defaultValue="true"
+                 restartRequired="true"/>
 
     <weigher key="proximity" implementationClass="org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinxLibrariesWeigher"
              id="kotlin.preferKotlinx"
@@ -152,9 +165,6 @@
     <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
     <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmJsLibraryType"/>
     <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmWasiLibraryType"/>
-
-    <projectService serviceInterface="org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver"
-                    serviceImplementation="org.jetbrains.kotlin.idea.modules.IdeJavaModuleResolver"/>
   </extensions>
 
 
@@ -172,11 +182,6 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.migration.KotlinMigrationProjectService"/>
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.KotlinLibraryToSourceAnalysisStateComponent"/>
-
-    <targetElementEvaluator language="kotlin"
-                            implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
-    <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinTargetElementEvaluator"/>
-    <usageTargetProvider implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FirKotlinUsageTargetProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.util.FirPluginOracleService"
                     serviceImplementation="org.jetbrains.kotlin.idea.util.FirPluginOracleServiceFirImpl"/>
@@ -231,6 +236,8 @@
     <module name="kotlin.gradle.code-insight-toml"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="kotlin.gradle.gradle-java.k2"/>
+    <module name="kotlin.gradle.scripting.shared"/>
+    <module name="kotlin.gradle.scripting.k2"/>
 
     <module name="kotlin.onboarding"/>
     <module name="kotlin.onboarding.gradle"/>
@@ -246,6 +253,8 @@
 
     <module name="kotlin.jvm.shared"/>
     <module name="kotlin.jvm.k2"/>
+
+    <module name="kotlin.base.scripting.k2"/>
 
     <module name="kotlin.code-insight.intentions.shared"/>
     <module name="kotlin.code-insight.inspections.shared"/>

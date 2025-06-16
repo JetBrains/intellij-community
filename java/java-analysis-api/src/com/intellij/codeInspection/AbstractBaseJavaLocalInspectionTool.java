@@ -109,9 +109,9 @@ public abstract class AbstractBaseJavaLocalInspectionTool extends LocalInspectio
       }
 
       @Override
-      public void visitFile(@NotNull PsiFile file) {
-        super.visitFile(file);
-        addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
+      public void visitFile(@NotNull PsiFile psiFile) {
+        super.visitFile(psiFile);
+        addDescriptors(checkFile(psiFile, holder.getManager(), isOnTheFly));
       }
 
       private void addDescriptors(final ProblemDescriptor[] descriptors) {

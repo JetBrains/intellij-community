@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.diagnostic.PluginException;
@@ -14,10 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +39,8 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   }
 
   @TestOnly
-  CompositeFilter(@NotNull DumbService dumbService) {
+  @ApiStatus.Internal
+  public CompositeFilter(@NotNull DumbService dumbService) {
     myDumbService = dumbService;
     myFilters = new ArrayList<>();
   }
@@ -135,6 +133,7 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
     return true;
   }
 
+  @ApiStatus.Internal
   protected static boolean intersects(@NotNull List<? extends ResultItem> items, @NotNull ResultItem newItem) {
     TextRange newItemTextRange = null;
 

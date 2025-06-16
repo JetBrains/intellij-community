@@ -2,7 +2,7 @@
 package com.intellij.xdebugger.impl.ui
 
 import com.intellij.execution.actions.CreateAction
-import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
@@ -29,8 +29,8 @@ import javax.swing.Icon
 open class XDebugSessionTabNewUI(
   session: XDebugSessionProxy,
   icon: Icon?,
-  environment: ExecutionEnvironment?,
-) : XDebugSessionTab(session, icon, environment, false) {
+  environmentProxy: ExecutionEnvironmentProxy?,
+) : XDebugSessionTab(session, icon, environmentProxy, false) {
 
   private var mySingleContentSupplier: SingleContentSupplier? = null
   private var toolbarGroup: DefaultActionGroup? = null
@@ -90,12 +90,11 @@ open class XDebugSessionTabNewUI(
     toolbar.removeAll()
 
     val headerGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP)
-    val headerActions = (headerGroup as CustomisedActionGroup).defaultChildrenOrStubs
-    RunContentBuilder.addAvoidingDuplicates(toolbar, headerActions)
+    RunContentBuilder.addAvoidingDuplicates(toolbar, headerGroup)
 
     val more = RunContentBuilder.createToolbarMoreActionGroup(toolbar)
     val moreGroup = getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP)
-    RunContentBuilder.addAvoidingDuplicates(more, (moreGroup as CustomisedActionGroup).defaultChildrenOrStubs)
+    RunContentBuilder.addAvoidingDuplicates(more, moreGroup)
     more.addSeparator()
 
     // reversed because it was like this in the original tab

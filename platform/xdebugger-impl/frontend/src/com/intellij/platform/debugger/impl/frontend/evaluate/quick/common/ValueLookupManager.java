@@ -20,7 +20,6 @@ import com.intellij.platform.debugger.impl.frontend.evaluate.quick.XQuickEvaluat
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+import static com.intellij.platform.debugger.impl.frontend.actions.CustomQuickEvaluateActionProviderKt.getEnabledCustomQuickEvaluateActionHandler;
 import static com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController.DISABLE_VALUE_LOOKUP;
 
 @ApiStatus.Internal
@@ -107,14 +107,11 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
       requestHint(myXQuickEvaluateHandler, editor, point, e, type);
       return;
     }
-    // otherwise, handle plugin handlers
-    // for remote dev: specific DebuggerSupport with remote bridge will be used
-    for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
-      QuickEvaluateHandler handler = support.getQuickEvaluateHandler();
-      if (handler.isEnabled(myProject)) {
-        requestHint(handler, editor, point, e, type);
-        return;
-      }
+    // otherwise, handle custom plugin handlers
+    QuickEvaluateHandler customHandler = getEnabledCustomQuickEvaluateActionHandler(myProject);
+    if (customHandler != null) {
+      requestHint(customHandler, editor, point, e, type);
+      return;
     }
 
     // if no providers were triggered - hide

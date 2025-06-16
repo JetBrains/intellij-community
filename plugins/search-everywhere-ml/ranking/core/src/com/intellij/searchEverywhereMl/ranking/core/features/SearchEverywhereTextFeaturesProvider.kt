@@ -2,6 +2,7 @@ package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.find.impl.TextSearchContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -20,7 +21,8 @@ internal class SearchEverywhereTextFeaturesProvider : SearchEverywhereElementFea
                                   currentTime: Long,
                                   searchQuery: String,
                                   elementPriority: Int,
-                                  cache: FeaturesProviderCache?): List<EventPair<*>> {
+                                  cache: FeaturesProviderCache?,
+                                  correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     val item = element.asSafely<SearchEverywhereItem>() ?: return emptyList()
 
     return buildList {

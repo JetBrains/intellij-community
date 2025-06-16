@@ -34,6 +34,7 @@ import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -328,7 +329,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       for (WorkspaceDataService<?> service : workspaceServices) {
         final long importStartTime = System.currentTimeMillis();
         if (modifiableModelsProvider instanceof IdeModifiableModelsProviderImpl) {
-          MutableEntityStorage mutableStorage = ((IdeModifiableModelsProviderImpl)modifiableModelsProvider).getActualStorageBuilder();
+          MutableEntityStorage mutableStorage = modifiableModelsProvider.getActualStorageBuilder();
           ((WorkspaceDataService)service).importData(toImport, projectData, project, mutableStorage);
         }
         else {
@@ -440,7 +441,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   @Override
-  public @NotNull Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId) {
+  public @NotNull @Unmodifiable Collection<ExternalProjectInfo> getExternalProjectsData(@NotNull Project project, @NotNull ProjectSystemId projectSystemId) {
     if (!project.isDisposed()) {
       return ExternalProjectsDataStorage.getInstance(project).list(projectSystemId);
     }

@@ -23,10 +23,6 @@ class C {
         get() {
             return 4
         }
-
-    internal inline operator fun getValue(nothing: Nothing?, property: KProperty<*>): Int {
-        return 5
-    }
 }
 
 // MODULE: jvm-app(jvm-lib)
@@ -53,11 +49,6 @@ public fun main() {
 
     // EXPRESSION: c.memberProperty
     // RESULT: 4: I
-    //Breakpoint!
-    "".toString()
-
-    // EXPRESSION: val delegate by C(); delegate
-    // RESULT: 5: I
     //Breakpoint!
     "".toString()
 }

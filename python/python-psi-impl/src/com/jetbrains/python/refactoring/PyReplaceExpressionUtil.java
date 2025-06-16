@@ -425,7 +425,7 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
 
   private static boolean isNotAssociative(final @NotNull PyBinaryExpression binaryExpression) {
     final IElementType opType = getOperationType(binaryExpression);
-    return COMPARISON_OPERATIONS.contains(opType) || binaryExpression instanceof PySliceExpression ||
+    return COMPARISON_OPERATIONS.contains(opType) ||
            opType == DIV || opType == FLOORDIV || opType == PERC || opType == EXP || opType == MINUS;
   }
 
@@ -433,7 +433,6 @@ public final class PyReplaceExpressionUtil implements PyElementTypes {
     int priority = 0;
     if (expr instanceof PyReferenceExpression ||
         expr instanceof PySubscriptionExpression ||
-        expr instanceof PySliceExpression ||
         expr instanceof PyCallExpression) priority = 1;
     else if (expr instanceof PyPrefixExpression) {
       final IElementType opType = getOperationType(expr);

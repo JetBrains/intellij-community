@@ -1,0 +1,16 @@
+<problems>
+  <problem>
+    <file>multipleApplicableRanges.kt</file>
+    <line>4</line>
+    <offset>5</offset>
+    <description>An interpolation prefix can simplify the string</description>
+  </problem>
+  <problem>
+    <file>multipleApplicableRanges.kt</file>
+    <line>4</line>
+    <module>light_idea_test_case</module>
+    <description>An interpolation prefix can simplify the string</description>
+    <offset>11</offset>
+    <length>2</length>
+  </problem>
+</problems>

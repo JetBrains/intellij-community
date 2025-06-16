@@ -69,15 +69,15 @@ internal class FormatOnSaveAction : ActionOnSave() {
 
     var processor: AbstractLayoutCodeProcessor =
       object : ReformatCodeProcessor(project, allFiles.toTypedArray(), null, onlyChangedLines) {
-        override fun prepareTask(file: PsiFile, processChangedTextOnly: Boolean): FutureTask<Boolean> {
-          return if (filesToFormat.contains(file)) super.prepareTask(file, processChangedTextOnly) else emptyTask()
+        override fun prepareTask(psiFile: PsiFile, processChangedTextOnly: Boolean): FutureTask<Boolean> {
+          return if (filesToFormat.contains(psiFile)) super.prepareTask(psiFile, processChangedTextOnly) else emptyTask()
         }
       }
 
     if (OptimizeImportsOnSaveOptions.getInstance(project).isRunOnSaveEnabled) {
       processor = object : OptimizeImportsProcessor(processor) {
-        override fun prepareTask(file: PsiFile, processChangedTextOnly: Boolean): FutureTask<Boolean> {
-          return if (filesToOptimizeImports.contains(file)) super.prepareTask(file, processChangedTextOnly) else emptyTask()
+        override fun prepareTask(psiFile: PsiFile, processChangedTextOnly: Boolean): FutureTask<Boolean> {
+          return if (filesToOptimizeImports.contains(psiFile)) super.prepareTask(psiFile, processChangedTextOnly) else emptyTask()
         }
       }
     }

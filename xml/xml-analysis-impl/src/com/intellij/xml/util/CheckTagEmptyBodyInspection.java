@@ -2,11 +2,11 @@
 
 package com.intellij.xml.util;
 
+import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
@@ -21,19 +21,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public final class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
-  private final boolean enableInInjectedCode;
 
   public CheckTagEmptyBodyInspection() {
-    this(false);
-  }
-
-  public CheckTagEmptyBodyInspection(boolean enableInInjectedCode) {
-    this.enableInInjectedCode = enableInInjectedCode;
   }
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!enableInInjectedCode && InjectedLanguageManager.getInstance(holder.getProject()).isInjectedFragment(holder.getFile())) {
+    if (XmlHighlightVisitor.isInjectedWithoutValidation(holder.getFile())) {
       // not inside injected code
       return PsiElementVisitor.EMPTY_VISITOR;
     }

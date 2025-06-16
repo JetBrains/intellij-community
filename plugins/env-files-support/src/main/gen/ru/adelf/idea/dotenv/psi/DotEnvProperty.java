@@ -5,7 +5,7 @@ import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
 
-public interface DotEnvProperty extends DotEnvNamedElement {
+public interface DotEnvProperty extends PsiElement {
 
   @NotNull
   DotEnvKey getKey();
@@ -16,11 +16,5 @@ public interface DotEnvProperty extends DotEnvNamedElement {
   String getKeyText();
 
   String getValueText();
-
-  String getName();
-
-  PsiElement setName(@NotNull String newName);
-
-  PsiElement getNameIdentifier();
 
 }

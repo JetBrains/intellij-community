@@ -63,11 +63,6 @@ class KotlinGradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase(
         testArgsFileAssertion
             .describedAs("test run should enable assertions")
             .contains(ENABLE_ASSERTIONS_FLAG)
-        if (isGradleAtLeast("8.2")) {
-            assertThat(output)
-                .describedAs("KGP causes deprecation warnings since Gradle 8.2. If it is not a case anymore, then change the warning-mode to `fail` and remove this assertion")
-                .contains("Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0")
-        }
         assertThat(output)
             .describedAs("Build should be successful")
             .contains("BUILD SUCCESSFUL")

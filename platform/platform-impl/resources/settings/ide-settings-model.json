@@ -4294,7 +4294,7 @@
       ]
     },
     {
-      "name": "EventLogWhitelist",
+      "name": "EventLogAllowedList",
       "scope": "app",
       "pluginId": "com.intellij",
       "classFqn": "com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogMetadataSettingsPersistence",
@@ -4463,7 +4463,7 @@
       "name": "WebTypesNpmLoader",
       "scope": "app",
       "pluginId": "JavaScript",
-      "classFqn": "com.intellij.javascript.webSymbols.nodejs.WebTypesNpmLoader",
+      "classFqn": "com.intellij.javascript.polySymbols.nodejs.WebTypesNpmLoader",
       "storage": "web-types-npm-loader.xml",
       "properties": [
         {
@@ -8319,6 +8319,12 @@
         {
           "name": "always_enable_php_background_highlighting",
           "mapTo": "ALWAYS_ENABLE_PHP_BACKGROUND_HIGHLIGHTING",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "always_enable_blade_template_highlighting",
+          "mapTo": "ALWAYS_ENABLE_BLADE_TEMPLATE_HIGHLIGHTING",
           "type": "Boolean",
           "javaType": "boolean"
         }

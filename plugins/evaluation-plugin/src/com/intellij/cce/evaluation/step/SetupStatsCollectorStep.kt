@@ -13,10 +13,10 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.stats.completion.sender.StatisticSender
 import com.intellij.stats.completion.storage.FilePathProvider
 import com.intellij.stats.completion.storage.UniqueFilesProvider
@@ -42,7 +42,7 @@ class SetupStatsCollectorStep(private val experimentGroup: Int?,
     fun isStatsCollectorEnabled(): Boolean = PluginManagerCore.getPlugin(PluginId.getId(STATS_COLLECTOR_ID))?.isEnabled ?: false
   }
 
-  val serviceManager = ApplicationManager.getApplication() as ComponentManagerImpl
+  val serviceManager = ApplicationManager.getApplication() as ComponentManagerEx
   val initFileProvider: FilePathProvider? = serviceManager.getService(FilePathProvider::class.java)
   val initStatisticSender: StatisticSender? = serviceManager.getService(StatisticSender::class.java)
   val initExperimentStatus: ExperimentStatus? = serviceManager.getService(ExperimentStatus::class.java)

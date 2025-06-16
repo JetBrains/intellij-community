@@ -6,6 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@SuppressWarnings("MissingDeprecatedAnnotation")
+@Deprecated(forRemoval = true)
 public interface PySliceExpression extends PyAstSliceExpression, PyExpression {
   @Override
   default @NotNull PyExpression getOperand() {

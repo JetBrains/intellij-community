@@ -71,6 +71,7 @@ sealed interface MovePropertyToConstructorInfo {
             val constructorParameter = initializer?.findConstructorParameter()
 
             if (constructorParameter != null) {
+                if (!constructorParameter.isValidInConstructor()) return null
                 return ReplacementParameter(
                     constructorParameterToReplace = constructorParameter.createSmartPointer(),
                     propertyAnnotationsText = propertyAnnotationsText,

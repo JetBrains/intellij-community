@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.JavaParameters;
@@ -49,6 +49,14 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
+
+  private final IdentityHashMap<GradleBuildScriptClasspathModel, List<BuildScriptClasspathData.ClasspathEntry>> buildScriptEntriesMap =
+    new IdentityHashMap<>();
+
+  @Override
+  public void resolveFinished(@NotNull DataNode<ProjectData> projectDataNode) {
+    buildScriptEntriesMap.clear();
+  }
 
   @Override
   public void populateProjectExtraModels(@NotNull IdeaProject gradleProject, @NotNull DataNode<ProjectData> ideProject) {
@@ -149,10 +157,10 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
       buildScriptClasspathModel = resolverCtx.getExtraProject(gradleModule, GradleBuildScriptClasspathModel.class);
     final List<BuildScriptClasspathData.ClasspathEntry> classpathEntries;
     if (buildScriptClasspathModel != null) {
-      classpathEntries = ContainerUtil.map(
+      classpathEntries = buildScriptEntriesMap.computeIfAbsent(buildScriptClasspathModel, it -> ContainerUtil.map(
         buildScriptClasspathModel.getClasspath(),
         (Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>)model -> BuildScriptClasspathData.ClasspathEntry
-          .create(model.getClasses(), model.getSources(), model.getJavadoc()));
+          .create(model.getClasses(), model.getSources(), model.getJavadoc())));
     }
     else {
       classpathEntries = ContainerUtil.emptyList();
@@ -302,7 +310,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   private static @NotNull LanguageLevel setPreview(@NotNull LanguageLevel languageLevel, boolean isPreview) {
     if (languageLevel.isPreview() == isPreview) return languageLevel;
     com.intellij.util.lang.JavaVersion javaVersion = languageLevel.toJavaVersion();
-    return Arrays.stream(LanguageLevel.values())
+    return LanguageLevel.getEntries().stream()
       .filter(it -> it.isPreview() == isPreview)
       .filter(it -> it.toJavaVersion().equals(javaVersion))
       .findFirst()

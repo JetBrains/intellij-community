@@ -58,7 +58,7 @@ class GradleJvmTestFixture(
     }
   }
 
-  fun installProjectSettingsConfigurator(parentDisposable: Disposable = fixtureDisposable) {
+  fun installProjectSettingsConfigurator(parentDisposable: Disposable): GradleJvmTestFixture = apply {
     val listener = object : ExternalSystemSettingsListenerEx {
       override fun onProjectsLinked(
         project: Project,

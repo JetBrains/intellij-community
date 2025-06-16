@@ -1605,11 +1605,11 @@
     },
     {
       "key": "Settings.Spotlight.backgroundColor",
-      "description": "Color of the background of the highlighted items when searching in the Settings dialog",
+      "description": "Color of the overlay area around highlighted items when searching in the Settings dialog",
       "since": "2025.1"
     },
     {
-      "key": "Shortcut.backgroundColor",
+      "key": "Shortcut.background",
       "description": "Shortcut elements background",
       "since": "2024.2"
     },
@@ -1619,9 +1619,8 @@
       "since": "2024.2"
     },
     {
-      "key": "Shortcut.foregroundColor",
-      "description": "Shortcut elements foreground",
-      "since": "2024.2"
+      "key": "Shortcut.foreground",
+      "description": "Shortcut elements foreground"
     },
     {
       "key": "Shortcut.borderColor",
@@ -1637,6 +1636,18 @@
       "key": "Shortcut.borderRadius",
       "description": "Shortcut elements border radius in pixels",
       "since": "2024.2"
+    },
+    {
+      "key": "Abbreviation.background",
+      "description": "Abbreviation elements background"
+    },
+    {
+      "key": "Abbreviation.foreground",
+      "description": "Abbreviation elements foreground"
+    },
+    {
+      "key": "Abbreviation.borderColor",
+      "description": "Abbreviation elements border color"
     },
     {
       "key": "SidePanel.background",

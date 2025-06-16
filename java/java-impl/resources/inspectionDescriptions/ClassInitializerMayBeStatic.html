@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports instance initializers which may be made <code>static</code>.
+Reports instance initializers which can be made <code>static</code> without producing any errors.
 <p>
   An instance initializer may be static if it does not reference any of its class' non-static members.
-  Static initializers are executed once the class is resolved,
+  Static initializers are executed once when the class is resolved,
   while instance initializers are executed on each instantiation of the class.</p>
 <p>This inspection doesn't report instance empty initializers and initializers in anonymous classes.
 <p><b>Example:</b></p>

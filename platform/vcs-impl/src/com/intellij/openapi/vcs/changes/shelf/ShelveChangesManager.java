@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.google.common.collect.Lists;
@@ -39,12 +39,13 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean;
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.Shelve;
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.Shelve;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScopeKt;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -723,12 +724,13 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     return status;
   }
 
-  @NotNull
   @RequiresEdt
-  Map<ShelvedChangeList, Date> deleteShelves(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
-                                             @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
-                                             @NotNull List<ShelvedChange> changesToDelete,
-                                             @NotNull List<ShelvedBinaryFile> binariesToDelete) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull Map<ShelvedChangeList, Date> deleteShelves(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
+                                                             @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
+                                                             @NotNull List<ShelvedChange> changesToDelete,
+                                                             @NotNull List<ShelvedBinaryFile> binariesToDelete) {
     // filter changes
     List<ShelvedChangeList> shelvedListsFromChangesToDelete = new ArrayList<>(shelvedListsFromChanges);
     shelvedListsFromChangesToDelete.removeAll(shelvedListsToDelete);
@@ -1071,14 +1073,18 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     changeList.setChanges(createShelvedChangesFromFilePatches(myProject, changeList.getPath(), remainingPatches));
   }
 
-  void saveListAsScheme(@NotNull ShelvedChangeList list) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public void saveListAsScheme(@NotNull ShelvedChangeList list) {
     if (!list.getBinaryFiles().isEmpty() || !ContainerUtil.isEmpty(list.getChanges())) {
       // all newly create ShelvedChangeList have to be added to SchemesManger as new scheme
       schemeManager.addScheme(list, false);
     }
   }
 
-  @NotNull ShelvedChangeList createChangelistCopyWithChanges(@NotNull ShelvedChangeList changeList, @NotNull Path targetDir)
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public @NotNull ShelvedChangeList createChangelistCopyWithChanges(@NotNull ShelvedChangeList changeList, @NotNull Path targetDir)
     throws IOException {
     Path newPath = getPatchFileInConfigDir(targetDir);
     Files.createDirectories(newPath.getParent());
@@ -1114,7 +1120,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     return List.copyOf(ContainerUtil.filter(schemeManager.getAllSchemes(), ShelvedChangeList::isDeleted));
   }
 
-  void clearShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists, boolean updateView) {
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public void clearShelvedLists(@NotNull List<ShelvedChangeList> shelvedLists, boolean updateView) {
     if (shelvedLists.isEmpty()) return;
     for (ShelvedChangeList list : shelvedLists) {
       deleteResources(list);
@@ -1168,7 +1176,9 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     notifyStateChanged();
   }
 
-  void markChangeListAsDeleted(final @NotNull ShelvedChangeList changeList) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void markChangeListAsDeleted(final @NotNull ShelvedChangeList changeList) {
     changeList.setDeleted(true);
     changeList.updateDate();
     notifyStateChanged();
@@ -1472,6 +1482,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     }
   }
 
+  @ApiStatus.Internal
   public static final class State {
     @OptionTag("remove_strategy")
     public boolean myRemoveFilesFromShelf;

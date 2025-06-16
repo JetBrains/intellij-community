@@ -8,10 +8,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinAnnotationTypeNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
@@ -19,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 internal open class ClassifierImportCandidatesProvider(
-    override val positionContext: KotlinNameReferencePositionContext,
+    override val importContext: ImportContext,
 ) : AbstractImportCandidatesProvider() {
 
     protected open fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean =
@@ -43,10 +41,10 @@ internal open class ClassifierImportCandidatesProvider(
         name: Name,
         indexProvider: KtSymbolFromIndexProvider,
     ): List<ClassLikeImportCandidate> {
-        if (positionContext.explicitReceiver != null) return emptyList()
+        if (importContext.isExplicitReceiver) return emptyList()
 
         val fileSymbol = getFileSymbol()
-        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, positionContext.position)
+        val visibilityChecker = createUseSiteVisibilityChecker(fileSymbol, receiverExpression = null, importContext.position)
 
         return buildList {
             addAll(indexProvider.getKotlinClassesByName(name) { acceptsKotlinClass(it) })
@@ -58,8 +56,12 @@ internal open class ClassifierImportCandidatesProvider(
 }
 
 internal class AnnotationImportCandidatesProvider(
-    positionContext: KotlinAnnotationTypeNameReferencePositionContext,
-) : ClassifierImportCandidatesProvider(positionContext) {
+    importContext: ImportContext,
+) : ClassifierImportCandidatesProvider(importContext) {
+
+    init {
+        requireIsInstance<ImportPositionType.Annotation>(importContext.positionType)
+    }
 
     override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {
         val isPossiblyAnnotation = when (kotlinClass) {
@@ -80,8 +82,12 @@ internal class AnnotationImportCandidatesProvider(
 }
 
 internal class ConstructorReferenceImportCandidatesProvider(
-    positionContext: KotlinCallableReferencePositionContext,
-) : ClassifierImportCandidatesProvider(positionContext) {
+    importContext: ImportContext,
+) : ClassifierImportCandidatesProvider(importContext) {
+
+    init {
+        requireIsInstance<ImportPositionType.CallableReference>(importContext.positionType)
+    }
 
     override fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean {
         val possiblyHasAcceptableConstructor = when (kotlinClass) {

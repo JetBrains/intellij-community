@@ -1,0 +1,384 @@
+{
+  "license": {
+    "name": "CC-BY-SA 2.5",
+    "url": "https://creativecommons.org/licenses/by-sa/2.5/"
+  },
+  "author": {
+    "name": "Mozilla Contributors",
+    "url": "https://github.com/mdn/content"
+  },
+  "lang": "en-us",
+  "atRules": {
+    "viewport": {
+      "url": "$MDN_URL$/web/CSS/@viewport",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard note\">\n<p><strong>Note:</strong> See <a href=\"https://github.com/w3c/csswg-drafts/issues/4766\" class=\"external\" rel=\" noopener\">https://github.com/w3c/csswg-drafts/issues/4766</a> for discussion around @viewport's removal from the standards track.</p>\n</div>\n<p>The <strong><code>@viewport</code></strong> <a href=\"$MDN_URL$/Web/CSS\" data-flaw=\"link1\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\" data-flaw=\"link2\">at-rule</a> lets you configure the <a href=\"$MDN_URL$/Glossary/Viewport\">viewport</a> through which the document is viewed. It's primarily used for mobile devices, but is also used by desktop browsers that support features like \"snap to edge\" (such as Microsoft Edge).</p>\n<p>Lengths specified as percentages are calculated relative to the <strong>initial viewport</strong>, which is the viewport before any user agent or authored styles have had an opportunity to adjust the viewport. This is typically based on the size of the window on desktop browsers that aren't in full screen mode.</p>\n<p>On mobile devices (or desktop devices that are in full screen mode), the initial viewport is usually the portion of a device's screen that is available for application use. This may be either the full screen or the full screen area minus areas controlled by the operating system (such as a taskbar) or the application-available screen area (either the full screen or the screen minus any areas owned by the operating system or other applications).</p>\n<div class=\"code-example\"><pre class=\"brush: css no-line-numbers notranslate\"><code>@viewport {\n  width: 100vw; /*Sets the width of the actual viewport to the device width*/\n}\n</code></pre></div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong> The use of <code>&lt;meta name=\"viewport\"&gt;</code> tag overrides <code>@viewport</code></p>\n</div>"
+    }
+  },
+  "dataTypes": {
+    "calc-constant": {
+      "url": "$MDN_URL$/web/css/calc-constant",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Chrome": "99",
+        "ChromeAndroid": "99",
+        "Edge": "99",
+        "Firefox": "108",
+        "Opera": "85",
+        "Safari": "15.4",
+        "SafariIOS": "15.4"
+      },
+      "doc": "The <strong><code>&lt;calc-constant&gt;</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/CSS_Types\">data type</a> represents well-defined constants such as <code>e</code> and <code>pi</code>. Rather than require authors to manually type out several digits of these mathematical constants or calculate them, a few of them are provided directly by CSS for convenience.",
+      "values": {
+        "e": "The base of the natural logarithm, approximately equal to <code>2.7182818284590452354</code>.",
+        "pi": "The ratio of a circle's circumference to its diameter, approximately equal to <code>3.1415926535897932</code>.",
+        "infinity &amp; -infinity": "An infinite value, used to indicate the largest/smallest possible value.",
+        "NaN": "A value representing \"Not a Number\" canonical casing."
+      }
+    }
+  },
+  "functions": {
+    "color-contrast": {
+      "url": "$MDN_URL$/web/css/color_value/color-contrast",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>color-contrast()</code></strong> functional notation takes a <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>color</code></a> value and compares it to a list of other <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>color</code></a> values, selecting the one with the highest contrast from the list.",
+      "values": {
+        "color": "Any valid <a href=\"$MDN_URL$/Web/CSS/color_value\"><code>&lt;color&gt;</code></a>.",
+        "vs": "A literal token as a component of the syntax.",
+        "color-list": "A comma-separated list of at least two color values to compare with the first value."
+      }
+    }
+  },
+  "properties": {
+    "-webkit-line-clamp": {
+      "url": "$MDN_URL$/web/css/-webkit-line-clamp",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Chrome": "6",
+        "ChromeAndroid": "",
+        "Edge": "17",
+        "Firefox": "68",
+        "Opera": "15",
+        "Safari": "5",
+        "SafariIOS": "4.2"
+      },
+      "doc": "The <strong><code>-webkit-line-clamp</code></strong> CSS property allows limiting of the contents of a <a href=\"$MDN_URL$/Glossary/Block\">block</a> to the specified number of lines.\n<p>It only works in combination with the <a href=\"$MDN_URL$/Web/CSS/display\"><code>display</code></a> property set to <code>-webkit-box</code> or <code>-webkit-inline-box</code> and the <a href=\"$MDN_URL$/Web/CSS/box-orient\"><code>-webkit-box-orient</code></a> property set to <code>vertical</code>.\n<p>In most cases you will also want to set <a href=\"$MDN_URL$/Web/CSS/overflow\"><code>overflow</code></a> to <code>hidden</code>, otherwise the contents won't be clipped but an ellipsis will still be shown after the specified number of lines.\n<p>When applied to anchor elements, the truncating can happen in the middle of the text, not necessarily at the end.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> This property was originally implemented in WebKit and has some issues. It got standardized in <a href=\"https://drafts.csswg.org/css-overflow-4/#propdef--webkit-line-clamp\" class=\"external\" target=\"_blank\">CSS Overflow Module Level 4</a> for legacy support. The <a href=\"https://drafts.csswg.org/css-overflow-4/#propdef-line-clamp\" class=\"external\" target=\"_blank\">CSS Overflow Module Level 4</a> specification also defines a <a class=\"page-not-created\"  ><code>line-clamp</code></a> property, which is meant to replace this property and avoid its issues.\n</div>",
+      "formalSyntax": "none | &lt;integer [1,∞]&gt;",
+      "values": {
+        "none": "This value specifies that the content won't be clamped.",
+        "&lt;integer&gt;": "This value specifies the number of lines after which the content will be clamped. It must be greater than 0."
+      }
+    },
+    "-webkit-mask-attachment": {
+      "url": "$MDN_URL$/web/css/-webkit-mask-attachment",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard nonstandard\" id=\"sect1\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>If a <a href=\"$MDN_URL$/Web/CSS/mask-image\"><code>mask-image</code></a> is specified, <code>-webkit-mask-attachment</code> determines whether the mask image's position is fixed within the viewport, or scrolls along with its containing block.",
+      "formalSyntax": "&lt;attachment&gt;#",
+      "values": {
+        "scroll": "If <code>scroll</code> is specified, the mask image scrolls within the viewport along with the block that contains the mask image.",
+        "fixed": "If <code>fixed</code> is specified, the mask image does not scroll with its containing element, instead remaining stationary within the viewport."
+      }
+    },
+    "-webkit-overflow-scrolling": {
+      "url": "$MDN_URL$/web/css/-webkit-overflow-scrolling",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard nonstandard\" id=\"sect1\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <code>-webkit-overflow-scrolling</code> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property controls whether or not touch devices use momentum-based scrolling for a given element.",
+      "formalSyntax": "auto | touch",
+      "values": {
+        "auto": "Use \"regular\" scrolling, where the content immediately ceases to scroll when you remove your finger from the touchscreen.",
+        "touch": "Use momentum-based scrolling, where the content continues to scroll for a while after finishing the scroll gesture and removing your finger from the touchscreen. The speed and duration of the continued scrolling is proportional to how vigorous the scroll gesture was. Also creates a new stacking context."
+      }
+    },
+    "align-tracks": {
+      "url": "$MDN_URL$/web/css/align-tracks",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>align-tracks</code></strong> CSS property sets the alignment in the masonry axis for grid containers that have <a href=\"$MDN_URL$/Web/CSS/CSS_grid_layout/Masonry_layout\">masonry</a> in their block axis.",
+      "values": {
+        "start": "The items are packed flush to each other toward the start edge of the alignment container in the masonry axis.",
+        "end": "The items are packed flush to each other toward the end edge of the alignment container in the masonry axis.",
+        "center": "The items are packed flush to each other toward the center of the alignment container along the masonry axis.",
+        "normal": "Acts as <code>start</code>.",
+        "baseline first baseline\nlast baseline": "Specifies participation in first- or last-baseline alignment: aligns the alignment baseline of the box's first or last baseline set with the corresponding baseline in the shared first or last baseline set of all the boxes in its baseline-sharing group.\nThe fallback alignment for <code>first baseline</code> is <code>start</code>, the one for <code>last baseline</code> is <code>end</code>.",
+        "space-between": "The items are evenly distributed within the alignment container along the masonry axis. The spacing between each pair of adjacent items is the same. The first item is flush with the main-start edge, and the last item is flush with the main-end edge.",
+        "space-around": "The items are evenly distributed within the alignment container along the masonry axis. The spacing between each pair of adjacent items is the same. The empty space before the first and after the last item equals half of the space between each pair of adjacent items.",
+        "space-evenly": "The items are evenly distributed within the alignment container along the masonry axis. The spacing between each pair of adjacent items, the main-start edge and the first item, and the main-end edge and the last item, are all exactly the same.",
+        "stretch": "The items stretch along the masonry axis to fill the content box. Items with definite size do not stretch."
+      }
+    },
+    "at-rule": {
+      "url": "$MDN_URL$/web/css/at-rule",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "<strong>At-rules</strong> are <a href=\"$MDN_URL$/Web/CSS/Syntax#css_statements\">CSS statements</a> that instruct CSS how to behave. They begin with an at sign, '<code>@</code>' (<code>U+0040 COMMERCIAL AT</code>), followed by an identifier and includes everything up to the next semicolon, '<code>;</code>' (<code>U+003B SEMICOLON</code>), or the next <a href=\"$MDN_URL$/Web/CSS/Syntax#css_declarations_blocks\">CSS block</a>, whichever comes first."
+    },
+    "at-rule-functions": {
+      "url": "$MDN_URL$/web/css/at-rule-functions",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "<strong><a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/At-rule\">at-rule</a> functions</strong> are at-rule statements that represent complex rules or can invoke special data processing or calculations."
+    },
+    "cascade": {
+      "url": "$MDN_URL$/web/css/cascade",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "The <strong>cascade</strong> is an algorithm that defines how user agents combine property values originating from different sources. The cascade defines the origin and layer that takes precedence when declarations in more than one <a href=\"#origin_types\">origin</a>, <a href=\"$MDN_URL$/Web/CSS/@layer\">cascade layer</a>, or <a href=\"$MDN_URL$/Web/CSS/@scope\"><code>@scope</code></a> block set a value for a property on an element.\n<p>The cascade lies at the core of CSS, as emphasized by the name: <em><strong>Cascading</strong></em> Style Sheets. When a <a href=\"$MDN_URL$/Web/CSS/CSS_selectors\">selector</a> matches an element, the property value from the origin with the highest precedence gets applied, even if the selector from a lower precedence origin or layer has greater <a href=\"$MDN_URL$/Web/CSS/Specificity\">specificity</a>.\n<p>This article explains what the cascade is and the order in which <a href=\"$MDN_URL$/Glossary/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/API/CSSStyleDeclaration\">declarations</a> cascade, covering cascade layers and origin type. Understanding origin precedence is key to understanding the cascade."
+    },
+    "column_combinator": {
+      "url": "$MDN_URL$/web/css/column_combinator",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong>column combinator</strong> (<code>||</code>) is placed between two CSS selectors. It matches only those elements matched by the second selector that belong to the column elements matched by the first.\n<div>\n```css\n/* Table cells that belong to the \"selected\" column */\ncol.selected||td {\n  background: gray;\n}\n```\n</div>"
+    },
+    "comments": {
+      "url": "$MDN_URL$/web/css/comments",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "A CSS <strong>comment</strong> is used to add explanatory notes to the code or to prevent the browser from interpreting specific parts of the style sheet. By design, comments have no effect on the layout of a document."
+    },
+    "ime-mode": {
+      "url": "$MDN_URL$/web/CSS/ime-mode",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Firefox": "3"
+      },
+      "doc": "The <strong><code>ime-mode</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property controls the state of the input method editor (IME) for text fields. This property is obsolete.</p>\n<div class=\"code-example\"><pre class=\"brush:css no-line-numbers notranslate\"><code>/* Keyword values */\nime-mode: auto;\nime-mode: normal;\nime-mode: active;\nime-mode: inactive;\nime-mode: disabled;\n/* Global values */\nime-mode: inherit;\nime-mode: initial;\nime-mode: revert;\nime-mode: unset;\n</code></pre></div>\n<p>The <code>ime-mode</code> property is only partially and inconsistently implemented in browsers. It was introduced by Microsoft with Internet Explorer 5 as a proprietary extension: <a href=\"https://msdn.microsoft.com/library/ms530767(VS.85).aspx\" class=\"external\" rel=\" noopener\">-ms-ime-mode Attribute | imeMode Property</a>.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> In general, it's not appropriate for a public web site to change the IME mode. This property should only be used for private web applications or to undo the property if it was previously set by legacy code.</p>\n</div>",
+      "formalSyntax": "auto | normal | active | inactive | disabled",
+      "values": {
+        "auto": "No change is made to the current input method editor state. This is the default.",
+        "normal": "The IME state should be normal; this value can be used in a user style sheet to override the page's setting. <em>This value is not supported by Internet Explorer.</em>",
+        "active": "The input method editor is initially active; text entry is performed through it unless the user specifically dismisses it. <em>Not supported on Linux.</em>",
+        "inactive": "The input method editor is initially inactive, but the user may activate it if they wish. <em>Not supported on Linux.</em>",
+        "disabled": "The input method editor is disabled and may not be activated by the user."
+      }
+    },
+    "inheritance": {
+      "url": "$MDN_URL$/web/css/inheritance",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "In CSS, <strong>inheritance</strong> controls what happens when no value is specified for a property on an element.\n<p>CSS properties can be categorized in two types:\n<ul>\n<li><strong>inherited properties</strong>, which by default are set to the <a href=\"$MDN_URL$/Web/CSS/computed_value\">computed value</a> of the parent element</li>\n<li><strong>non-inherited properties</strong>, which by default are set to <a href=\"$MDN_URL$/Web/CSS/initial_value\">initial value</a> of the property</li>\n</ul>\n<p>Refer to <a href=\"$MDN_URL$/Web/CSS/Reference#index\">any CSS property</a> definition to see whether a specific property inherits by default (\"Inherited: yes\") or not (\"Inherited: no\")."
+    },
+    "initial-letter-align": {
+      "url": "$MDN_URL$/web/css/initial-letter-align",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>initial-letter-align</code></strong> CSS property specifies the alignment of initial letters within a paragraph.",
+      "formalSyntax": "[ border-box? [ alphabetic | ideographic | hanging | leading ]? ]!",
+      "values": {
+        "auto": "The user agent selects the value which corresponds to the language of the text. Western languages would default to alphabetic, CJK languages to ideographic, and some Indic languages to hanging.",
+        "alphabetic": "As described above, the cap height of the initial letter aligns with the cap height of the first line of text. The baseline of the initial letter aligns with the baseline of the Nth text baseline.",
+        "hanging": "The hanging baseline of the initial letter aligns with the hanging baseline of the first line of text.",
+        "ideographic": "The initial letter is centered in the N-line area."
+      }
+    },
+    "justify-tracks": {
+      "url": "$MDN_URL$/web/css/justify-tracks",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>justify-tracks</code></strong> CSS property sets the alignment in the masonry axis for grid containers that have <a href=\"$MDN_URL$/Web/CSS/CSS_grid_layout/Masonry_layout\">masonry</a> in their inline axis.",
+      "values": {
+        "start": "The items are packed flush to each other toward the start edge of the alignment container in the masonry axis.",
+        "end": "The items are packed flush to each other toward the end edge of the alignment container in the masonry axis.",
+        "center": "The items are packed flush to each other toward the center of the alignment container along the masonry axis.",
+        "normal": "Acts as <code>start</code>.",
+        "space-between": "The items are evenly distributed within the alignment container along the masonry axis. The spacing between each pair of adjacent items is the same. The first item is flush with the main-start edge, and the last item is flush with the main-end edge.",
+        "space-around": "The items are evenly distributed within the alignment container along the masonry axis. The spacing between each pair of adjacent items is the same. The empty space before the first and after the last item equals half of the space between each pair of adjacent items.",
+        "space-evenly": "The items are evenly distributed within the alignment container along the masonry axis. The spacing between each pair of adjacent items, the main-start edge and the first item, and the main-end edge and the last item, are all exactly the same.",
+        "stretch": "The items stretch along the masonry axis to fill the content box. Items with definite size do not stretch.",
+        "left": "The items are packed flush to each other toward the left edge of the alignment container.",
+        "right": "The items are packed flush to each other toward the right edge of the alignment container."
+      }
+    },
+    "masonry-auto-flow": {
+      "url": "$MDN_URL$/web/css/masonry-auto-flow",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Safari": "preview"
+      },
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>masonry-auto-flow</code></strong> CSS property modifies how items are placed when using <a href=\"$MDN_URL$/Web/CSS/CSS_grid_layout/Masonry_layout\">masonry</a> in <a href=\"$MDN_URL$/Web/CSS/CSS_grid_layout\">CSS Grid Layout</a>.",
+      "formalSyntax": "[ pack | next ] || [ definite-first | ordered ]",
+      "values": {
+        "pack": "As per the default masonry algorithm, items will be placed into the track with the most room.",
+        "next": "Items will be placed one after the other in the grid axis.",
+        "definite-first": "Display as in the default masonry algorithm, placing items with a definite place first before placing other masonry items.",
+        "ordered": "Ignore any items with a definite placement, and place everything according to order-modified document order."
+      }
+    },
+    "privacy_and_the__colon_visited_selector": {
+      "url": "$MDN_URL$/web/css/privacy_and_the__colon_visited_selector",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "Before about 2010, the <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/:visited\"><code>:visited</code></a> selector allowed websites to uncover a user's browsing history and figure out what sites the user had visited. This was done through <a href=\"$MDN_URL$/Web/API/Window/getComputedStyle\"><code>window.getComputedStyle</code></a> and other techniques. This process was quick to execute, and made it possible not only to determine where the user had been on the web, but could also be used to guess a lot of information about the user's identity.\n<p>To mitigate this problem, browsers have limited the amount of information that can be obtained from visited links."
+    },
+    "scroll-snap-coordinate": {
+      "url": "$MDN_URL$/web/CSS/scroll-snap-coordinate",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "The <strong><code>scroll-snap-coordinate</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property defines the x and y coordinate positions within an element that will align with its nearest ancestor scroll container's <a href=\"$MDN_URL$/Web/CSS/scroll-snap-destination\"><code>scroll-snap-destination</code></a> for each respective axis.</p>\n<div class=\"code-example\"><pre class=\"brush:css no-line-numbers notranslate\"><code>/* Keyword value */\nscroll-snap-coordinate: none;\n/* &lt;position&gt; values */\nscroll-snap-coordinate: 50px 50px;                   /* Single coordinate */\nscroll-snap-coordinate: 100px 100px, 100px bottom;   /* Multiple coordinates */\n/* Global values */\nscroll-snap-coordinate: inherit;\nscroll-snap-coordinate: initial;\nscroll-snap-coordinate: unset;</code></pre></div>\n<p>If the element has been transformed, the snap coordinates are likewise transformed, thus aligning the snap points with the element as it is displayed.</p>",
+      "formalSyntax": "none | &lt;position&gt;#\n  &lt;position&gt; = [ [ left | center | right ] || [ top | center | bottom ] | [ left | center | right | &lt;length-percentage&gt; ] [ top | center | bottom | &lt;length-percentage&gt; ]? | [ [ left | right ] &lt;length-percentage&gt; ] &amp;&amp; [ [ top | bottom ] &lt;length-percentage&gt; ] ]\n    &lt;length-percentage&gt; = &lt;length&gt; | &lt;percentage&gt;",
+      "values": {
+        "none": "Specifies that the element does not contribute to a snap point.",
+        "&lt;position&gt;": "Specifies the offset of the snap coordinates from the start edge of the element’s border box. For each pairing, the first value gives the x coordinate of the snap coordinate, the second value its y coordinate."
+      }
+    },
+    "scroll-snap-destination": {
+      "url": "$MDN_URL$/web/CSS/scroll-snap-destination",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "The <strong><code>scroll-snap-destination</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property defines the position in x and y coordinates within the scroll container's visual <a href=\"$MDN_URL$/Glossary/Viewport\">viewport</a> which element snap points align with.</p>\n<div class=\"code-example\"><pre class=\"brush:css no-line-numbers notranslate\"><code>/* &lt;position&gt; value */\nscroll-snap-destination: 400px 600px;\n/* Global values */\nscroll-snap-destination: inherit;\nscroll-snap-destination: initial;\nscroll-snap-destination: unset;\n</code></pre></div>",
+      "formalSyntax": "&lt;position&gt;\n  &lt;position&gt; = [ [ left | center | right ] || [ top | center | bottom ] | [ left | center | right | &lt;length-percentage&gt; ] [ top | center | bottom | &lt;length-percentage&gt; ]? | [ [ left | right ] &lt;length-percentage&gt; ] &amp;&amp; [ [ top | bottom ] &lt;length-percentage&gt; ] ]\n    &lt;length-percentage&gt; = &lt;length&gt; | &lt;percentage&gt;",
+      "values": {
+        "&lt;position&gt;": "Specifies the offset of the snap destination from the start edge of the scroll container’s visual viewport. The first value gives the x coordinate of the snap destination, the second value its y coordinate."
+      }
+    },
+    "scroll-snap-points-x": {
+      "url": "$MDN_URL$/web/CSS/scroll-snap-points-x",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "The <strong><code>scroll-snap-points-x</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property defines the horizontal positioning of snap points within the content of the scroll container they are applied to.</p>\n<div class=\"code-example\"><pre class=\"brush:css no-line-numbers notranslate\"><code>/* Keyword value */\nscroll-snap-points-x: none;\n/* Repeating snap points */\nscroll-snap-points-x: repeat(400px);\n/* Global values */\nscroll-snap-points-x: inherit;\nscroll-snap-points-x: initial;\nscroll-snap-points-x: unset;\n</code></pre></div>",
+      "formalSyntax": "none | repeat( &lt;length-percentage&gt; )\n  &lt;length-percentage&gt; = &lt;length&gt; | &lt;percentage&gt;",
+      "values": {
+        "none": "The scroll container does not define any snap points. Elements within the scroll container may still define snap points on behalf of the scroll container.",
+        "repeat(&lt;length-percentage&gt;)": "Defines an interval at which snap points are defined, starting from the container's relevant start edge. Only positive lengths are allowed. Percentages refer to the width of the container."
+      }
+    },
+    "scroll-snap-points-y": {
+      "url": "$MDN_URL$/web/CSS/scroll-snap-points-y",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "The <strong><code>scroll-snap-points-y</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property defines the vertical positioning of snap points within the content of the scroll container they are applied to.</p>\n<div class=\"code-example\"><pre class=\"brush:css no-line-numbers notranslate\"><code>/* Keyword value */\nscroll-snap-points-y: none;\n/* Repeated snap points */\nscroll-snap-points-y: repeat(400px);\n/* Global values */\nscroll-snap-points-y: inherit;\nscroll-snap-points-y: initial;\nscroll-snap-points-y: unset;\n</code></pre></div>",
+      "formalSyntax": "none | repeat( &lt;length-percentage&gt; )\n  &lt;length-percentage&gt; = &lt;length&gt; | &lt;percentage&gt;",
+      "values": {
+        "none": "The scroll container does not define any snap points. Elements within the scroll container may still define snap points on behalf of the scroll container.",
+        "repeat(&lt;length-percentage&gt;)": "Defines an interval at which snap points are defined, starting from the container's relevant start edge. Only positive lengths are allowed. Percentages refer to the width of the container."
+      }
+    },
+    "scroll-snap-type-x": {
+      "url": "$MDN_URL$/web/CSS/scroll-snap-type-x",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Safari": "9",
+        "SafariIOS": "9"
+      },
+      "doc": "The <strong><code>scroll-snap-type-x</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property defines how strictly snap points are enforced on the horizontal axis of the scroll container in case there is one.</p>\n<p>Specifying any precise animations or physics used to enforce those snap points is not covered by this property but instead left up to the user agent.</p>\n<div class=\"code-example\"><pre class=\"brush: css no-line-numbers notranslate\"><code>/* Keyword values */\nscroll-snap-type-x: none;\nscroll-snap-type-x: mandatory;\nscroll-snap-type-x: proximity;\n/* Global values */\nscroll-snap-type-x: inherit;\nscroll-snap-type-x: initial;\nscroll-snap-type-x: unset;\n</code></pre></div>",
+      "formalSyntax": "none | mandatory | proximity",
+      "values": {
+        "none": "When the visual <a href=\"$MDN_URL$/Glossary/Viewport\">viewport</a> of this scroll container is scrolled horizontally, it must ignore snap points.",
+        "mandatory": "The visual viewport of this scroll container will rest on a snap point if it isn't currently scrolled horizontally. That means it snaps on that point when the scroll action finished, if possible. If content is added, moved, deleted or resized the scroll offset will be adjusted to maintain the resting on that snap point.",
+        "proximity": "The visual viewport of this scroll container may come to rest on a snap point if it isn't currently scrolled horizontally considering the user agent's scroll parameters. If content is added, moved, deleted or resized the scroll offset may be adjusted to maintain the resting on that snap point."
+      }
+    },
+    "scroll-snap-type-y": {
+      "url": "$MDN_URL$/web/CSS/scroll-snap-type-y",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {},
+      "doc": "The <strong><code>scroll-snap-type-y</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> property defines how strictly snap points are enforced on the vertical axis of the scroll container in case there is one.</p>\n<p>Specifying any precise animations or physics used to enforce those snap points is not covered by this property but instead left up to the user agent.</p>\n<div class=\"code-example\"><pre class=\"brush: css no-line-numbers notranslate\"><code>/* Keyword values */\nscroll-snap-type-y: none;\nscroll-snap-type-y: mandatory;\nscroll-snap-type-y: proximity;\n/* Global values */\nscroll-snap-type-y: inherit;\nscroll-snap-type-y: initial;\nscroll-snap-type-y: unset;\n</code></pre></div>",
+      "formalSyntax": "none | mandatory | proximity",
+      "values": {
+        "none": "When the visual <a href=\"$MDN_URL$/Glossary/Viewport\">viewport</a> of this scroll container is scrolled vertically, it must ignore snap points.",
+        "mandatory": "The visual viewport of this scroll container will rest on a snap point if it isn't currently scrolled vertically. That means it snaps on that point when the scroll action finished, if possible. If content is added, moved, deleted or resized the scroll offset will be adjusted to maintain the resting on that snap point.",
+        "proximity": "The visual viewport of this scroll container may come to rest on a snap point if it isn't currently scrolled vertically considering the user agent's scroll parameters. If content is added, moved, deleted or resized the scroll offset may be adjusted to maintain the resting on that snap point."
+      }
+    },
+    "specificity": {
+      "url": "$MDN_URL$/web/css/specificity",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "<strong>Specificity</strong> is the algorithm used by browsers to determine the <a href=\"$MDN_URL$/Learn/CSS/First_steps/What_is_CSS#css_syntax\">CSS declaration</a> that is the most relevant to an element, which in turn, determines the property value to apply to the element. The specificity algorithm calculates the weight of a <a href=\"$MDN_URL$/Web/CSS/Reference#selectors\">CSS selector</a> to determine which rule from competing CSS declarations gets applied to an element.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Browsers consider specificity <strong>after</strong> determining <a href=\"$MDN_URL$/Web/CSS/Cascade\">cascade origin and importance</a>. In other words, for competing property declarations, specificity is relevant and compared only between selectors from the one <a href=\"$MDN_URL$/Web/CSS/@layer\">cascade origin and layer</a> that has precedence for the property. <a href=\"$MDN_URL$/Web/CSS/@scope#how_scope_conflicts_are_resolved\">Scoping proximity</a> and order of appearance become relevant when the selector specificities of the competing declarations in the cascade layer with precedence are equal.\n</div>"
+    },
+    "syntax": {
+      "url": "$MDN_URL$/web/css/syntax",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "The basic goal of the Cascading Stylesheet (<a href=\"$MDN_URL$/Web/CSS\">CSS</a>) language is to allow a browser engine to paint elements of the page with specific features, like colors, positioning, or decorations. The <em>CSS syntax</em> reflects this goal and its basic building blocks are:\n<ul>\n<li>The <strong>property</strong> which is an identifier, that is a human-readable <em>name</em>, that defines which feature is considered.</li>\n<li>The <strong>value</strong> which describe how the feature must be handled by the engine. Each property has a set of valid values, defined by a formal grammar, as well as a semantic meaning, implemented by the browser engine.</li>\n</ul>"
+    }
+  },
+  "pseudoClasses": {},
+  "pseudoElements": {
+    "-moz-page": {
+      "url": "$MDN_URL$/web/css/_doublecolon_-moz-page",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Firefox": ""
+      },
+      "doc": "<div class=\"notecard nonstandard\" id=\"sect1\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>::-moz-page</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-elements\">pseudo-element</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that represents an individual page when printed or in a print preview."
+    },
+    "-moz-page-sequence": {
+      "url": "$MDN_URL$/web/css/_doublecolon_-moz-page-sequence",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Firefox": ""
+      },
+      "doc": "<div class=\"notecard nonstandard\" id=\"sect1\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>::-moz-page-sequence</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-elements\">pseudo-element</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that represents the background of a print preview."
+    },
+    "-moz-scrolled-page-sequence": {
+      "url": "$MDN_URL$/web/css/_doublecolon_-moz-scrolled-page-sequence",
+      "status": [
+        "Obsolete"
+      ],
+      "compatibility": {
+        "Firefox": "1.5"
+      },
+      "doc": "<div class=\"notecard nonstandard\" id=\"sect1\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>::-moz-scrolled-page-sequence</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-elements\">pseudo-element</a> is a <a href=\"$MDN_URL$/Web/CSS/Mozilla_Extensions\">Mozilla extension</a> that represents the background of a print preview."
+    },
+    "cue-region": {
+      "url": "$MDN_URL$/web/css/_doublecolon_cue-region",
+      "status": [
+        "Obsolete"
+      ],
+      "doc": "<div class=\"notecard experimental\" id=\"sect1\"><p><strong>Experimental:</strong> <strong>This is an <a href=\"$MDN_URL$/MDN/Writing_guidelines/Experimental_deprecated_obsolete#experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</div>\n<p>The <strong><code>::cue-region</code></strong> <a href=\"$MDN_URL$/Web/CSS\">CSS</a> <a href=\"$MDN_URL$/Web/CSS/Pseudo-elements\">pseudo-element</a> matches <a href=\"$MDN_URL$/Web/API/WebVTT_API\" >WebVTT</a> cues within a selected element. This can be used to <a href=\"$MDN_URL$/Web/API/WebVTT_API#styling_webvtt_cues\">style captions and other cues</a> in media with VTT tracks.\n<div>\n```css\n::cue-region {\n  color: yellow;\n  font-weight: bold;\n}\n```\n</div>\n<p>The properties are applied to the entire set of cues as if they were a single unit. The only exception is that <code>background</code> and its longhand properties apply to each cue individually, to avoid creating boxes and obscuring unexpectedly large areas of the media."
+    }
+  }
+}

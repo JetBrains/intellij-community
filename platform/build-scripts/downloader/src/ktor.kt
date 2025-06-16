@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.intellij.build
 
 import io.ktor.client.HttpClient
@@ -22,9 +24,14 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
-import io.ktor.utils.io.*
+import io.ktor.utils.io.ByteReadChannel
+import io.ktor.utils.io.ByteWriteChannel
+import io.ktor.utils.io.copyAndClose
+import io.ktor.utils.io.copyTo
 import io.ktor.utils.io.core.use
 import io.ktor.utils.io.jvm.nio.writeSuspendSession
+import io.ktor.utils.io.reader
+import io.ktor.utils.io.writer
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -32,7 +39,12 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
@@ -45,7 +57,7 @@ import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.nio.file.attribute.FileTime
 import java.time.Instant
-import java.util.*
+import java.util.EnumSet
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
@@ -176,31 +188,39 @@ suspend fun postData(url: String, data: ByteArray): Unit = withContext(Dispatche
   }
 }
 
-suspend fun downloadAsText(url: String): String = spanBuilder("download").setAttribute("url", url).useWithScope {
-  withContext(Dispatchers.IO) {
-    httpClient.value.get(url).bodyAsText()
+suspend fun downloadAsText(url: String): String {
+  return spanBuilder("download").setAttribute("url", url).useWithScope {
+    withContext(Dispatchers.IO) {
+      httpClient.value.get(url).bodyAsText()
+    }
   }
 }
 
-fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path = runBlocking(Dispatchers.IO) {
-  downloadFileToCacheLocation(url, communityRoot)
+fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+  return runBlocking(Dispatchers.IO) {
+    downloadFileToCacheLocation(url, communityRoot)
+  }
 }
 
 fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot, credentialsProvider: () -> Credentials): Path = runBlocking(Dispatchers.IO) {
   downloadFileToCacheLocation(url, communityRoot, credentialsProvider)
 }
 
-suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path =
-  downloadFileToCacheLocation(url, communityRoot, token = null, credentialsProvider = null)
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, token = null, credentialsProvider = null)
+}
 
-suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path =
-  downloadFileToCacheLocation(url, communityRoot, token = token, credentialsProvider = null)
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path {
+  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, token = token, credentialsProvider = null)
+}
 
 suspend fun downloadFileToCacheLocation(
   url: String,
   communityRoot: BuildDependenciesCommunityRoot,
   credentialsProvider: () -> Credentials,
-): Path = downloadFileToCacheLocation(url, communityRoot, token = null, credentialsProvider)
+): Path {
+  return downloadFileToCacheLocation(url = url, communityRoot = communityRoot, token = null, credentialsProvider = credentialsProvider)
+}
 
 private suspend fun downloadFileToCacheLocation(
   url: String,
@@ -254,34 +274,7 @@ private suspend fun downloadFileToCacheLocation(
             }
           }
 
-          val effectiveClient = when {
-            token != null -> httpClient.value.config {
-              commonConfig()
-              Auth {
-                bearer {
-                  loadTokens {
-                    BearerTokens(token, "")
-                  }
-                }
-              }
-            }
-            credentialsProvider != null -> httpClient.value.config {
-              commonConfig()
-              Auth {
-                basic {
-                  credentials {
-                    sendWithoutRequest { true }
-                    val credentials = credentialsProvider()
-                    BasicAuthCredentials(credentials.username, credentials.password)
-                  }
-                }
-              }
-            }
-
-            else -> httpClient.value.config(commonConfig)
-          }
-
-          val response = effectiveClient.use { client ->
+          val response = getEffectiveClient(token = token, commonConfig = commonConfig, credentialsProvider = credentialsProvider).use { client ->
             doDownloadFileWithoutCaching(client = client, url = url, file = tempFile)
           }
 
@@ -305,9 +298,9 @@ private suspend fun downloadFileToCacheLocation(
             throw BuildDependenciesDownloader.HttpStatusException(builder.toString(), statusCode, url)
           }
 
-          val contentLength = headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: -1
+          val contentLength = headers.get(HttpHeaders.ContentLength)?.toLongOrNull() ?: -1
           check(contentLength > 0) { "Header '${HttpHeaders.ContentLength}' is missing or zero for $url" }
-          val contentEncoding = headers[HttpHeaders.ContentEncoding]
+          val contentEncoding = headers.get(HttpHeaders.ContentEncoding)
           if (contentEncoding != null && contentEncoding != "identity") {
             // There's a `Content-Encoding` in response while we explicitly asked the server not to use it.
             // We cannot compare `Content-Length` with local file size,
@@ -335,17 +328,51 @@ private suspend fun downloadFileToCacheLocation(
   }
 }
 
+private fun getEffectiveClient(
+  token: String?,
+  commonConfig: HttpClientConfig<*>.() -> Unit,
+  credentialsProvider: (() -> Credentials)?,
+): HttpClient {
+  return when {
+    token != null -> httpClient.value.config {
+      commonConfig()
+      Auth {
+        bearer {
+          loadTokens {
+            BearerTokens(token, "")
+          }
+        }
+      }
+    }
+    credentialsProvider != null -> httpClient.value.config {
+      commonConfig()
+      Auth {
+        basic {
+          credentials {
+            sendWithoutRequest { true }
+            val credentials = credentialsProvider()
+            BasicAuthCredentials(credentials.username, credentials.password)
+          }
+        }
+      }
+    }
+
+    else -> httpClient.value.config(commonConfig)
+  }
+}
+
 suspend fun downloadFileWithoutCaching(url: String, tempFile: Path) {
   doDownloadFileWithoutCaching(httpClient.get(), url, tempFile)
 }
 
-private suspend fun doDownloadFileWithoutCaching(client: HttpClient, url: String, file: Path): HttpResponse =
-  client.prepareGet(url).execute {
+private suspend fun doDownloadFileWithoutCaching(client: HttpClient, url: String, file: Path): HttpResponse {
+  return client.prepareGet(url).execute {
     coroutineScope {
       it.bodyAsChannel().copyAndClose(writeChannel(file))
     }
     it
   }
+}
 
 fun CoroutineScope.readChannel(file: Path): ByteReadChannel {
   return writer(CoroutineName("file-reader") + Dispatchers.IO, autoFlush = false) {
@@ -373,9 +400,10 @@ fun CoroutineScope.readChannel(file: Path): ByteReadChannel {
 
 private val WRITE_NEW_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
 
-private fun CoroutineScope.writeChannel(file: Path): ByteWriteChannel =
-  reader(CoroutineName("file-writer") + Dispatchers.IO, autoFlush = true) {
+private fun CoroutineScope.writeChannel(file: Path): ByteWriteChannel {
+  return reader(CoroutineName("file-writer") + Dispatchers.IO, autoFlush = true) {
     FileChannel.open(file, WRITE_NEW_OPERATION).use { fileChannel ->
       channel.copyTo(fileChannel)
     }
   }.channel
+}

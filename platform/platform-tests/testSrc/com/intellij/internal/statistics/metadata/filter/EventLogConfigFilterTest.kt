@@ -1,14 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics.metadata.filter
 
-import com.intellij.internal.statistic.config.EventLogExternalSettings
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType.RELEASE
 import com.intellij.internal.statistic.eventLog.filters.LogEventBucketsFilter
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
+import com.intellij.internal.statistics.TestEventLogUploadSettingsClient
+import com.intellij.internal.statistics.TestHttpServerProcessing
 import org.junit.Assert
 import org.junit.Test
-import java.io.BufferedReader
-import java.io.StringReader
 
 class EventLogConfigFilterTest {
   private fun doTestNoFilter(filters: String) {
@@ -20,7 +19,7 @@ class EventLogConfigFilterTest {
   }
 
   private fun toFilterInternal(filters: String): LogEventBucketsFilter? {
-    val reader = BufferedReader(StringReader("""
+    val config = """
 {
   "productCode": "IU",
   "versions": [
@@ -36,14 +35,20 @@ class EventLogConfigFilterTest {
       }
     }
   ]
-}""".trimIndent()))
-    val settings = EventLogExternalSettings.parseSendSettings(reader, "2019.2")
-    Assert.assertNotNull(settings)
-    val configuration = settings.getConfiguration(RELEASE)
-    if (configuration == null) {
-      return null
+}"""
+    val serverProcessing = TestHttpServerProcessing(config)
+    try {
+      serverProcessing.serverStart()
+      val testEventLogUploadSettingsClient = TestEventLogUploadSettingsClient(serverProcessing.getUrl())
+      val configuration = testEventLogUploadSettingsClient.provideBucketRanges(RELEASE)
+      if (configuration.isEmpty()) {
+        return null
+      }
+      return LogEventBucketsFilter(configuration)
     }
-    return LogEventBucketsFilter(configuration.buckets)
+    finally {
+      serverProcessing.serverStop()
+    }
   }
 
   @Test

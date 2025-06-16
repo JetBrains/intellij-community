@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
 abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase(),
@@ -92,7 +93,9 @@ abstract class AbstractKotlinInlayHintsProviderTest : DeclarativeInlayHintsProvi
         val options: Map<String, Boolean> = calculateOptions(fileContents)
 
         try {
-            doTestProvider("${file.name.substringBefore(".")}.kt", fileContents, inlayHintsProvider, options, file)
+            withCustomCompilerOptions(fileContents, project, module) {
+                doTestProvider("${file.name.substringBefore(".")}.kt", fileContents, inlayHintsProvider, options, file)
+            }
         } catch (e: FileComparisonFailedError) {
             throw FileComparisonFailedError(
                 e.message,

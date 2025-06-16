@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -77,7 +78,7 @@ class ProjectRefreshAction : DumbAwareAction() {
     fun refreshProject(project: Project) {
       val projectNotificationAware = ExternalSystemProjectNotificationAware.getInstance(project)
       val systemIds = projectNotificationAware.getSystemIds()
-      ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)
+      ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject(project, systemIds)
       val projectTracker = ExternalSystemProjectTracker.getInstance(project)
       projectTracker.scheduleProjectRefresh()
     }

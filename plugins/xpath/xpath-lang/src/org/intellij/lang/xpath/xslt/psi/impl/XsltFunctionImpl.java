@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.psi.impl;
 
 import com.intellij.icons.AllIcons;
@@ -25,13 +25,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.xml.namespace.QName;
 
-public class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, ItemPresentation {
+final class XsltFunctionImpl extends XsltElementImpl implements XsltFunction, ItemPresentation {
   private static final NotNullFunction<XmlTag,Parameter> PARAM_MAPPER = param -> {
     final XPathType type = XsltCodeInsightUtil.getDeclaredType(param);
     return new Parameter(type != null ? type : XPath2Type.SEQUENCE, Parameter.Kind.REQUIRED);
   };
 
-  protected XsltFunctionImpl(XmlTag target) {
+  XsltFunctionImpl(XmlTag target) {
     super(target);
   }
 

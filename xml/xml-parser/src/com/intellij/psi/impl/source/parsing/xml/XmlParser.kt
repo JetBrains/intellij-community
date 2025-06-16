@@ -14,10 +14,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.TripleFunction
 import com.intellij.util.diff.FlyweightCapableTreeStructure
 
-open class XmlParser :
-  PsiParser,
-  LightPsiParser {
-
+open class XmlParser : PsiParser, LightPsiParser {
   override fun parse(
     root: IElementType,
     builder: PsiBuilder,
@@ -36,44 +33,48 @@ open class XmlParser :
     XmlParsing(builder).parseDocument()
     file.done(root)
   }
+}
 
-  private companion object {
-    // tries to match an old and new XmlTag by name
-    private val REPARSE_XML_TAG_BY_NAME: TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> =
-      TripleFunction(::reparseXmlTagByName)
+// tries to match an old and new XmlTag by name
+private val REPARSE_XML_TAG_BY_NAME: TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState> =
+  TripleFunction(::reparseXmlTagByName)
 
-    private fun reparseXmlTagByName(
-      oldNode: ASTNode,
-      newNode: LighterASTNode,
-      structure: FlyweightCapableTreeStructure<LighterASTNode>,
-    ): ThreeState {
-      if (oldNode is PsiNamedElement
-          && oldNode.elementType === XmlElementType.XML_TAG
-          && newNode.tokenType === XmlElementType.XML_TAG
-      ) {
-        val oldName = oldNode.name
-        val childrenRef = Ref.create<Array<LighterASTNode>>()
-        val count = structure.getChildren(newNode, childrenRef)
-
-        if (count < 3)
-          return ThreeState.UNSURE
-
-        val children = childrenRef.get()!!
-        if (children[0].tokenType !== XmlTokenType.XML_START_TAG_START)
-          return ThreeState.UNSURE
-        if (children[1].tokenType !== XmlTokenType.XML_NAME)
-          return ThreeState.UNSURE
-        if (children[2].tokenType !== XmlTokenType.XML_TAG_END)
-          return ThreeState.UNSURE
-
-        val name = children[1] as LighterASTTokenNode
-        val newName = name.text
-
-        if (!Comparing.equal(oldName, newName))
-          return ThreeState.NO
-      }
-
-      return ThreeState.UNSURE
-    }
+private fun reparseXmlTagByName(
+  oldNode: ASTNode,
+  newNode: LighterASTNode,
+  structure: FlyweightCapableTreeStructure<LighterASTNode>,
+): ThreeState {
+  if (oldNode !is PsiNamedElement || oldNode.elementType !== XmlElementType.XML_TAG || newNode.tokenType !== XmlElementType.XML_TAG) {
+    return ThreeState.UNSURE
   }
+
+  val oldName = oldNode.name
+  val childrenRef = Ref.create<Array<LighterASTNode>>()
+  val count = structure.getChildren(newNode, childrenRef)
+
+  if (count < 3) {
+    return ThreeState.UNSURE
+  }
+
+  val children = childrenRef.get()!!
+  if (children[0].tokenType !== XmlTokenType.XML_START_TAG_START) {
+    return ThreeState.UNSURE
+  }
+  if (children[1].tokenType !== XmlTokenType.XML_NAME) {
+    return ThreeState.UNSURE
+  }
+  if (children[2].tokenType !== XmlTokenType.XML_TAG_END) {
+    return ThreeState.UNSURE
+  }
+
+  val name = children[1] as LighterASTTokenNode
+  val newName = name.text
+
+  // note: oldName is String, newName is CharSequence, so plain kotlin `==` can't be used!
+  if (Comparing.equal(oldName, newName)) {
+    return ThreeState.UNSURE
+  }
+
+  // different names => oldNode and newNode are not equal
+  return ThreeState.NO
 }

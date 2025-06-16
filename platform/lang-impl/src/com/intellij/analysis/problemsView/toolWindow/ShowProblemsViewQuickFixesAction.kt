@@ -99,14 +99,14 @@ internal class ShowProblemsViewQuickFixesAction : AnAction() {
     if (intentions.offset >= 0) editor.caretModel.moveToOffset(intentions.offset.coerceAtMost(editor.document.textLength))
     show(event, JBPopupFactory.getInstance().createListPopup(
       object : IntentionListStep(null, editor, intentions.file, intentions.file.project, intentions, IntentionSource.PROBLEMS_VIEW) {
-        override fun chooseActionAndInvoke(cachedAction: IntentionActionWithTextCaching, file: PsiFile, project: Project, editor: Editor?) {
+        override fun chooseActionAndInvoke(cachedAction: IntentionActionWithTextCaching, psiFile: PsiFile, project: Project, editor: Editor?) {
           editor?.contentComponent?.requestFocus()
           // hack until doWhenFocusSettlesDown will work as expected
           val modality = editor?.contentComponent?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
           getApplication().invokeLater(
             {
               IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({
-                                                                            super.chooseActionAndInvoke(cachedAction, file, project, editor)
+                                                                            super.chooseActionAndInvoke(cachedAction, psiFile, project, editor)
                                                                           }, modality)
             }, modality, project.disposed)
         }

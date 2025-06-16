@@ -7,6 +7,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -88,7 +89,7 @@ public final class StringPattern extends ObjectPattern<String, StringPattern> {
       }
 
       @Override
-      public Collection<String> getValues() {
+      public @Unmodifiable Collection<String> getValues() {
         return Collections.singleton(s);
       }
     });

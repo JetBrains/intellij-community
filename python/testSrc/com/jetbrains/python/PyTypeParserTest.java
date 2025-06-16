@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+
 
 public class PyTypeParserTest extends PyTestCase {
   public void testClassType() {
@@ -69,7 +71,7 @@ public class PyTypeParserTest extends PyTestCase {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyType type = PyTypeParser.getTypeByName(myFixture.getFile(), "None");
     assertNotNull(type);
-    assertInstanceOf(type, PyNoneType.class);
+    assertTrue(isNoneType(type));
   }
 
   public void testIntegerType() {

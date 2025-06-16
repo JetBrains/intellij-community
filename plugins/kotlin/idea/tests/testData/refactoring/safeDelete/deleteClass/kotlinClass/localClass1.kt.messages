@@ -1,1 +1,1 @@
-Class foo.A has 1 usage that is not safe to delete.
+Usage of class foo.A that is not safe to delete.

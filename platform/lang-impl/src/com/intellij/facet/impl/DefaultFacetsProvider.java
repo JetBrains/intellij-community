@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -21,7 +22,7 @@ public final class DefaultFacetsProvider implements FacetsProvider {
   }
 
   @Override
-  public @NotNull <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
+  public @NotNull @Unmodifiable <F extends Facet> Collection<F> getFacetsByType(Module module, FacetTypeId<F> type) {
     return FacetManager.getInstance(module).getFacetsByType(type);
   }
 

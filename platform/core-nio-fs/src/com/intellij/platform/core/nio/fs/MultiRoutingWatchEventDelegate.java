@@ -30,7 +30,7 @@ class MultiRoutingWatchEventDelegate<T> implements WatchEvent<T> {
     T context = myDelegate.context();
     if (context instanceof Path path) {
       //noinspection unchecked
-      return (T)myProvider.toDelegatePath(path);
+      return (T)myProvider.wrapDelegatePath(path);
     }
     return context;
   }

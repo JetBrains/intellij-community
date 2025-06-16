@@ -1106,7 +1106,7 @@ public class ClassWriter {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
         if (param < annotations.size()) {
           for (AnnotationExprent annotation : annotations.get(param)) {
-            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, type, param)) continue;
+            if (mt.paramAnnCollidesWithTypeAnnotation(annotation, param)) continue;
             result.add(annotation);
           }
         }

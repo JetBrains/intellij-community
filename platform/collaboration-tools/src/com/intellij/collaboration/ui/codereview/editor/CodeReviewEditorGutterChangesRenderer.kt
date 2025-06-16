@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
@@ -250,7 +251,7 @@ open class CodeReviewEditorGutterChangesRenderer(
     }
 
     suspend fun render(model: CodeReviewEditorGutterActionableChangesModel, editor: Editor) : Nothing {
-      withContext(Dispatchers.Main + CoroutineName("Editor gutter code review changes renderer")) {
+      withContext(Dispatchers.EDT + CoroutineName("Editor gutter code review changes renderer")) {
         val disposable = Disposer.newDisposable("Editor code review changes renderer disposable")
         editor.putUserData(CodeReviewEditorGutterActionableChangesModel.KEY, model)
         try {

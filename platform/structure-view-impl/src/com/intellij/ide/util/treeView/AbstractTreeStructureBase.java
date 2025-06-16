@@ -12,7 +12,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -84,13 +83,6 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   }
 
   public abstract @Unmodifiable @Nullable List<TreeStructureProvider> getProviders();
-
-  /** @deprecated Drop together with {@link TreeStructureProvider#getData(Collection, String)} */
-  @Deprecated(forRemoval = true)
-  @ApiStatus.Internal
-  public @Nullable Object getDataFromProviders(@NotNull List<AbstractTreeNode<?>> selectedNodes, @NotNull String dataId) {
-    return null;
-  }
 
   private @Unmodifiable @NotNull List<TreeStructureProvider> getProvidersDumbAware() {
     if (myProject == null) {

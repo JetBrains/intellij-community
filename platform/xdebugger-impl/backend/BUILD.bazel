@@ -2,23 +2,26 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "debugger-impl-backend_resources",
+  name = "backend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "debugger-impl-backend",
+  name = "backend",
   module_name = "intellij.platform.debugger.impl.backend",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core",
     "//platform/platform-api:ide",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/kernel/shared:kernel",
+    "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/kernel/backend",
@@ -34,9 +37,13 @@ jvm_library(
     "//platform/statistics",
     "//platform/util/coroutines",
     "//platform/execution-impl",
+    "//platform/platform-util-io:ide-util-io",
+    "//platform/execution-impl/backend",
+    "//platform/xdebugger-impl/shared",
+    "//platform/xdebugger-impl/rpc",
   ],
   runtime_deps = [
-    ":debugger-impl-backend_resources",
+    ":backend_resources",
     "//platform/backend",
   ]
 )

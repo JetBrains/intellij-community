@@ -2,7 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
-import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.plugins.parser.impl.PluginDescriptorBuilder
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
@@ -20,8 +20,9 @@ class BundledPluginsStateTest {
       getIdeaDescriptor(it.first, it.second)
     }
 
-    writePluginIdsToFile(pluginIds = pluginIds, configDir = dir)
-    assertThat(readPluginIdsFromFile(configDir = dir)).hasSameElementsAs(pluginIds.map { it.pluginId to it.category })
+    BundledPluginsState.writePluginIdsToFile(pluginIds = pluginIds, configDir = dir)
+    assertThat(BundledPluginsState.readPluginIdsFromFile(configDir = dir))
+      .hasSameElementsAs(pluginIds.map { BundledPluginsState.BundledPlugin(it.pluginId, it.category) })
   }
 
   @Test
@@ -31,10 +32,17 @@ class BundledPluginsStateTest {
       assertThat(CoreBundle.messageOrNull("plugin.category.${category.replace(' ', '.')}")).isEqualTo(category)
     }
   }
-}
 
-private fun getIdeaDescriptor(id: String, category: Category): IdeaPluginDescriptorImpl {
-  val descriptor = IdeaPluginDescriptorImpl(RawPluginDescriptor(), Path.of(""), true, PluginId.getId(id), null)
-  descriptor.category = category
-  return descriptor
+  companion object {
+    private fun getIdeaDescriptor(id: String, category: String?): IdeaPluginDescriptorImpl {
+      val descriptor = PluginMainDescriptor(
+        raw = PluginDescriptorBuilder.builder().apply {
+          this.category = category
+          this.id = id
+        }.build(),
+        pluginPath = Path.of(""),
+        isBundled = true)
+      return descriptor
+    }
+  }
 }

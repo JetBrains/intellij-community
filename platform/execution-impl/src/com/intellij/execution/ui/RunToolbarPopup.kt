@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -67,7 +67,6 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import javax.swing.JList
-import kotlin.collections.plus
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.math.max
@@ -75,11 +74,12 @@ import kotlin.math.max
 private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
 private const val DEBUG: String = ToolWindowId.DEBUG
 
-private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
+private val recentLimit: Int
+  get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
 @ApiStatus.Internal
 @JvmField
-val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.popup.parent.action")
+val RUN_CONFIGURATION_KEY: DataKey<RunnerAndConfigurationSettings> = DataKey.create("sub.popup.parent.action")
 
 @JvmField
 internal val RUN_CONFIGURATION_ID: Key<String> = Key.create("sub.popup.run.configuration.unique.id")
@@ -91,8 +91,7 @@ private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
 private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
 private const val TAG_HIDDEN = "hidden"             // hidden until search
 
-@ApiStatus.Internal
-class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
+private class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
     val selectedFile = e.getData(PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR)?.file
@@ -378,7 +377,7 @@ open class AllRunConfigurationsToggle : DumbAwareToggleAction(), ActionRemoteBeh
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Always
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
 
   override fun isSelected(e: AnActionEvent): Boolean = RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded
@@ -726,7 +725,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
 
   private var _state = State()
 
-  override fun getState() = _state
+  override fun getState(): State = _state
 
   override fun loadState(state: State) {
     _state = state
@@ -746,7 +745,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     fun getInstance(project: Project): RunConfigurationStartHistory = project.service()
 
     @Topic.ProjectLevel
-    val TOPIC = Topic("RunConfigurationStartHistory events", Listener::class.java)
+    val TOPIC: Topic<Listener> = Topic("RunConfigurationStartHistory events", Listener::class.java)
   }
 }
 

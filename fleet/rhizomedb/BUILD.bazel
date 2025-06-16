@@ -5,18 +5,21 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 create_kotlinc_options(
   name = "custom",
   allow_kotlin_package = True,
-  opt_in = ["kotlin.ExperimentalStdlibApi"]
+  opt_in = [
+    "kotlin.ExperimentalStdlibApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
+  ]
 )
 
 jvm_library(
   name = "rhizomedb",
   module_name = "fleet.rhizomedb",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom",
   deps = [
-    "//fleet/util/core:fleet-util-core",
-    "//fleet/multiplatform.shims:multiplatform-shims",
+    "//fleet/util/core",
+    "//fleet/multiplatform.shims",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",

@@ -1,13 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.TransferableIdeId
 import com.intellij.ide.startup.importSettings.providers.TransferSettingsProvider
-import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacSettingsProcessor
-import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacSettingsProcessor.Companion.getGeneralSettingsFile
-import com.intellij.ide.startup.importSettings.providers.vsmac.VSMacSettingsProcessor.Companion.vsPreferences
 import com.intellij.ide.startup.importSettings.transfer.backend.models.IdeVersion
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.VSMacSettingsProcessor.Companion.getGeneralSettingsFile
+import com.intellij.ide.startup.importSettings.transfer.backend.providers.vsmac.VSMacSettingsProcessor.Companion.vsPreferences
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.SmartList
@@ -15,14 +14,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.*
+import java.time.Instant
+import java.util.Date
 import kotlin.io.path.Path
+import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isHidden
+import kotlin.io.path.listDirectoryEntries
 
 private val logger = logger<VSMacTransferSettingsProvider>()
 
 class VSMacTransferSettingsProvider : TransferSettingsProvider {
 
-  override val transferableIdeId = TransferableIdeId.VisualStudioForMac
+  override val transferableIdeId: TransferableIdeId = TransferableIdeId.VisualStudioForMac
   override val name: String = "Visual Studio for Mac"
 
   override fun isAvailable(): Boolean = SystemInfoRt.isMac
@@ -55,21 +60,19 @@ class VSMacTransferSettingsProvider : TransferSettingsProvider {
       return null
     }
 
-    var max = 0L
+    var max = Instant.MIN
     var lastUsedVersion: String? = null
-    Files.list(pathToDir).use { files ->
-      for (path in files) {
-        if (!Files.isDirectory(path) && Files.isHidden(path)) continue
+    for (path in pathToDir.listDirectoryEntries()) {
+      if (!path.isDirectory() && path.isHidden()) continue
 
-        val maybeVersion = path.fileName.toString()
-        val recentlyUsedFile = getGeneralSettingsFile(maybeVersion)
+      val maybeVersion = path.fileName.toString()
+      val recentlyUsedFile = getGeneralSettingsFile(maybeVersion)
 
-        if (recentlyUsedFile.exists()) {
-          val lastModificationTime = recentlyUsedFile.lastModified()
-          if (max < lastModificationTime) {
-            max = lastModificationTime
-            lastUsedVersion = maybeVersion
-          }
+      if (recentlyUsedFile.exists()) {
+        val lastModificationTime = recentlyUsedFile.getLastModifiedTime().toInstant()
+        if (max < lastModificationTime) {
+          max = lastModificationTime
+          lastUsedVersion = maybeVersion
         }
       }
     }
@@ -81,7 +84,7 @@ class VSMacTransferSettingsProvider : TransferSettingsProvider {
     val recentlyUsedFile = getGeneralSettingsFile(version)
 
     return try {
-      Date(recentlyUsedFile.lastModified())
+      Date.from(recentlyUsedFile.getLastModifiedTime().toInstant())
     }
     catch (t: Throwable) {
       logger.warn(t)

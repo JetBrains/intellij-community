@@ -6,7 +6,7 @@ import org.jetbrains.jewel.ui.painter.ResourcePainterProvider
 
 /** [ResourcePainterProvider] to resolve resources in Intellij Module and Bridge module. */
 public fun bridgePainterProvider(path: String): ResourcePainterProvider =
-    ResourcePainterProvider(path, DirProvider::class.java.classLoader, SwingBridgeService::class.java.classLoader)
+    ResourcePainterProvider(path, DirProvider::class.java.classLoader, SwingBridgeReader::class.java.classLoader)
 
 /** [ResourcePainterProvider] to resolve resources in Intellij Module and Bridge module. */
 public fun bridgePainterProvider(iconKey: IconKey): ResourcePainterProvider {
@@ -14,6 +14,6 @@ public fun bridgePainterProvider(iconKey: IconKey): ResourcePainterProvider {
     return ResourcePainterProvider(
         iconKey.path(isNewUi),
         DirProvider::class.java.classLoader,
-        SwingBridgeService::class.java.classLoader,
+        SwingBridgeReader::class.java.classLoader,
     )
 }

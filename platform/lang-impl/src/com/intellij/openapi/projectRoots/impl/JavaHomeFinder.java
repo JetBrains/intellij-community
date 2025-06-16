@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 
 import java.io.File;
@@ -32,7 +33,7 @@ import java.util.List;
 
 import static com.intellij.openapi.projectRoots.impl.JavaHomeFinderEel.javaHomeFinderEel;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 
 @ApiStatus.Internal
 public abstract class JavaHomeFinder {
@@ -96,7 +97,7 @@ public abstract class JavaHomeFinder {
   }
 
   @ApiStatus.Internal
-  public static @NotNull List<String> suggestHomePaths(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
+  public static @NotNull @Unmodifiable List<String> suggestHomePaths(@NotNull EelDescriptor eelDescriptor, boolean forceEmbeddedJava) {
     return ContainerUtil.map(findJdks(eelDescriptor, forceEmbeddedJava), JdkEntry::path);
   }
 
@@ -198,7 +199,7 @@ public abstract class JavaHomeFinder {
   }
 
   private static @Nullable Path defaultJavaLocationUsingEel(Path path) {
-    EelApi eel = upgradeBlocking(getEelDescriptor(path));
+    EelApi eel = toEelApiBlocking(getEelDescriptor(path));
     EelPlatform platform = eel.getPlatform();
     String eelPath = null;
     if (platform instanceof EelPlatform.Windows) {

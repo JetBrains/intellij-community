@@ -75,6 +75,7 @@ class GitStashProvider(val project: Project, parent: Disposable) : SavedPatchesP
         listener()
       }
     }, disposable)
+    listener()
   }
 
   override fun isEmpty() = !stashTracker.isNotEmpty()

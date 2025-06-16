@@ -3,8 +3,12 @@ package com.intellij.modcommand;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 /**
  * A builder to create a template. Should be used together with {@link ModPsiUpdater}.
@@ -27,6 +31,17 @@ public interface ModTemplateBuilder {
    * @return this builder
    */
   @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull String varName, @NotNull Expression expression);
+
+  /**
+   * Add a new expression field
+   *
+   * @param element element to replace with an expression
+   * @param rangeInElement range of the element to replace with an expression
+   * @param expression expression to use
+   * @return this builder
+   */
+  @NotNull ModTemplateBuilder field(@NotNull PsiElement element, @NotNull TextRange rangeInElement, @NotNull String varName,
+                                    @NotNull Expression expression);
 
   /**
    * Add a new simple text field
@@ -58,4 +73,6 @@ public interface ModTemplateBuilder {
    * @return this builder
    */
   @NotNull ModTemplateBuilder finishAt(int offset);
+
+  @NotNull ModTemplateBuilder onTemplateFinished(@NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> templateFinishFunction);
 }

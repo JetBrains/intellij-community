@@ -30,18 +30,20 @@ public final class VcsActionPromoter implements ActionPromoter {
 
     boolean isInMessageEditor = isCommitMessageEditor(context);
     for (AnAction action : actions) {
-      boolean isMessageAction =
-        action instanceof ShowMessageHistoryAction ||
-        action instanceof PreviousWordWithSelectionAction ||
-        action instanceof NextWordWithSelectionAction;
-      boolean promote =
-        isMessageAction && isInMessageEditor ||
-        action instanceof CommitActionsPanel.DefaultCommitAction;
+      boolean isVcsGlobalAction = action instanceof CommitActionsPanel.DefaultCommitAction;
+      boolean isVcsMessageAction = action instanceof ShowMessageHistoryAction;
+      boolean isMessageAction = isVcsMessageAction ||
+                                action instanceof PreviousWordWithSelectionAction ||
+                                action instanceof NextWordWithSelectionAction;
+
+      boolean promote = isMessageAction && isInMessageEditor ||
+                        isVcsGlobalAction;
+      boolean demote = isVcsMessageAction && !isInMessageEditor;
       if (promote) {
         reorderedActions.remove(action);
         reorderedActions.add(0, action);
       }
-      else if (isMessageAction) {
+      else if (demote) {
         reorderedActions.remove(action);
         reorderedActions.add(action);
       }

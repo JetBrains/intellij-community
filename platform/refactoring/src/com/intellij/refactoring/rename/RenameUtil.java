@@ -320,7 +320,7 @@ public final class RenameUtil {
       TextRange replaceRange = TextRange.create(segment);
 
       // re-map usages to upper host from injected document to avoid duplicated replacements
-      while (document instanceof DocumentWindow documentWindow) {
+      if (document instanceof DocumentWindow documentWindow) {
         replaceRange = documentWindow.injectedToHost(replaceRange);
         document = documentWindow.getDelegate();
       }

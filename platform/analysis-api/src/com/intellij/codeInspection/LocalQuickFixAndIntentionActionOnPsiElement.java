@@ -23,16 +23,16 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
   }
 
   @Override
-  public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (file == null || myStartElement == null) return;
+  public final void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    if (psiFile == null || myStartElement == null) return;
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
     if (startElement == null || endElement == null) return;
-    invoke(project, file, editor, startElement, endElement);
+    invoke(project, psiFile, editor, startElement, endElement);
   }
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public final boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (myStartElement == null) return false;
     final PsiElement startElement = myStartElement.getElement();
     final PsiElement endElement = myEndElement == null ? startElement : myEndElement.getElement();
@@ -40,16 +40,16 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
            endElement != null &&
            startElement.isValid() &&
            (endElement == startElement || endElement.isValid()) &&
-           file != null &&
-           isAvailable(project, file, editor, startElement, endElement);
+           psiFile != null &&
+           isAvailable(project, psiFile, editor, startElement, endElement);
   }
 
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @Nullable Editor editor,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return isAvailable(project, file, startElement, endElement);
+    return isAvailable(project, psiFile, startElement, endElement);
   }
 
   /**
@@ -57,14 +57,14 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
    * @param editor the editor where the action is invoked or {@code null} if it's invoked from batch inspection results' tool window.
    */
   public abstract void invoke(@NotNull Project project,
-                              @NotNull PsiFile file,
+                              @NotNull PsiFile psiFile,
                               @Nullable Editor editor,
                               @NotNull PsiElement startElement,
                               @NotNull PsiElement endElement);
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    invoke(project, file, null, startElement, endElement);
+  public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    invoke(project, psiFile, null, startElement, endElement);
   }
 
   @Override

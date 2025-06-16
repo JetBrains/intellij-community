@@ -7,9 +7,9 @@ import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -33,7 +33,7 @@ public final class JavaDebuggerAutoAttach extends RunConfigurationExtension {
                                  @NotNull ProcessHandler handler,
                                  @Nullable RunnerSettings runnerSettings) {
     if (Registry.is("debugger.auto.attach.from.console") && !Registry.is("debugger.auto.attach.from.any.console")) {
-      handler.addProcessListener(new ProcessAdapter() {
+      handler.addProcessListener(new ProcessListener() {
         @Override
         public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
           Matcher matcher = JavaDebuggerConsoleFilterProvider.getConnectionMatcher(event.getText());

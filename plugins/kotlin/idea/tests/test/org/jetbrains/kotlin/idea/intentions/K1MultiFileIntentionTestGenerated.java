@@ -30,34 +30,34 @@ public class K1MultiFileIntentionTestGenerated extends AbstractK1MultiFileIntent
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("addJvmStaticToCompanionObjectFun/addJvmStaticToCompanionObjectFun.test")
-    public void testAddJvmStaticToCompanionObjectFun_AddJvmStaticToCompanionObjectFun() throws Exception {
-        runTest("testData/multiFileIntentions/addJvmStaticToCompanionObjectFun/addJvmStaticToCompanionObjectFun.test");
+    @TestMetadata("addJvmStatic/toCompanionObjectFun/addJvmStaticToCompanionObjectFun.test")
+    public void testAddJvmStatic_toCompanionObjectFun_AddJvmStaticToCompanionObjectFun() throws Exception {
+        runTest("testData/multiFileIntentions/addJvmStatic/toCompanionObjectFun/addJvmStaticToCompanionObjectFun.test");
     }
 
-    @TestMetadata("addJvmStaticToCompanionObjectProperty/addJvmStaticToCompanionObjectProperty.test")
-    public void testAddJvmStaticToCompanionObjectProperty_AddJvmStaticToCompanionObjectProperty() throws Exception {
-        runTest("testData/multiFileIntentions/addJvmStaticToCompanionObjectProperty/addJvmStaticToCompanionObjectProperty.test");
+    @TestMetadata("addJvmStatic/toCompanionObjectProperty/addJvmStaticToCompanionObjectProperty.test")
+    public void testAddJvmStatic_toCompanionObjectProperty_AddJvmStaticToCompanionObjectProperty() throws Exception {
+        runTest("testData/multiFileIntentions/addJvmStatic/toCompanionObjectProperty/addJvmStaticToCompanionObjectProperty.test");
     }
 
-    @TestMetadata("addJvmStaticToNamedCompanionObjectFun/addJvmStaticToNamedCompanionObjectFun.test")
-    public void testAddJvmStaticToNamedCompanionObjectFun_AddJvmStaticToNamedCompanionObjectFun() throws Exception {
-        runTest("testData/multiFileIntentions/addJvmStaticToNamedCompanionObjectFun/addJvmStaticToNamedCompanionObjectFun.test");
+    @TestMetadata("addJvmStatic/toNamedCompanionObjectFun/addJvmStaticToNamedCompanionObjectFun.test")
+    public void testAddJvmStatic_toNamedCompanionObjectFun_AddJvmStaticToNamedCompanionObjectFun() throws Exception {
+        runTest("testData/multiFileIntentions/addJvmStatic/toNamedCompanionObjectFun/addJvmStaticToNamedCompanionObjectFun.test");
     }
 
-    @TestMetadata("addJvmStaticToNamedCompanionObjectProperty/addJvmStaticToNamedCompanionObjectProperty.test")
-    public void testAddJvmStaticToNamedCompanionObjectProperty_AddJvmStaticToNamedCompanionObjectProperty() throws Exception {
-        runTest("testData/multiFileIntentions/addJvmStaticToNamedCompanionObjectProperty/addJvmStaticToNamedCompanionObjectProperty.test");
+    @TestMetadata("addJvmStatic/toNamedCompanionObjectProperty/addJvmStaticToNamedCompanionObjectProperty.test")
+    public void testAddJvmStatic_toNamedCompanionObjectProperty_AddJvmStaticToNamedCompanionObjectProperty() throws Exception {
+        runTest("testData/multiFileIntentions/addJvmStatic/toNamedCompanionObjectProperty/addJvmStaticToNamedCompanionObjectProperty.test");
     }
 
-    @TestMetadata("addJvmStaticToObjectFun/addJvmStaticToObjectFun.test")
-    public void testAddJvmStaticToObjectFun_AddJvmStaticToObjectFun() throws Exception {
-        runTest("testData/multiFileIntentions/addJvmStaticToObjectFun/addJvmStaticToObjectFun.test");
+    @TestMetadata("addJvmStatic/toObjectFun/addJvmStaticToObjectFun.test")
+    public void testAddJvmStatic_toObjectFun_AddJvmStaticToObjectFun() throws Exception {
+        runTest("testData/multiFileIntentions/addJvmStatic/toObjectFun/addJvmStaticToObjectFun.test");
     }
 
-    @TestMetadata("addJvmStaticToObjectProperty/addJvmStaticToObjectProperty.test")
-    public void testAddJvmStaticToObjectProperty_AddJvmStaticToObjectProperty() throws Exception {
-        runTest("testData/multiFileIntentions/addJvmStaticToObjectProperty/addJvmStaticToObjectProperty.test");
+    @TestMetadata("addJvmStatic/toObjectProperty/addJvmStaticToObjectProperty.test")
+    public void testAddJvmStatic_toObjectProperty_AddJvmStaticToObjectProperty() throws Exception {
+        runTest("testData/multiFileIntentions/addJvmStatic/toObjectProperty/addJvmStaticToObjectProperty.test");
     }
 
     @TestMetadata("convertMemberToExtension/addImports/addImports.test")

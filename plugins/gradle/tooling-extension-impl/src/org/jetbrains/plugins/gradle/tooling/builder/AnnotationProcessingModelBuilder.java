@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetResolutionContext;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollections;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
@@ -54,7 +55,7 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
           final Set<File> files = path.getFiles();
           if (!files.isEmpty()) {
             List<String> annotationProcessorArgs = new ArrayList<>();
-            List<String> args = options.getAllCompilerArgs();
+            List<String> args = GradleCollections.mapToString(options.getAllCompilerArgs());
             for (String arg : args) {
               if (arg.startsWith("-A")) {
                 annotationProcessorArgs.add(arg);

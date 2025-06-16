@@ -76,7 +76,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     List<Configurable> result = new ArrayList<>();
 
     result.add(new VcsGeneralSettingsConfigurable(myProject));

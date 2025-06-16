@@ -20,6 +20,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.api.data.pullrequest.isVisible
+import org.jetbrains.plugins.github.api.data.pullrequest.mapToRightSideLine
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
@@ -40,11 +42,17 @@ internal class GHPRReviewInEditorViewModelImpl(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   private val sharedBranchVm: GHPRReviewBranchStateSharedViewModel,
-  private val threadsVms: GHPRThreadsViewModels,
-  private val showDiff: (ChangesSelection) -> Unit
+  private val threadsVm: GHPRThreadsViewModels,
+  private val showDiff: (ChangesSelection) -> Unit,
 ) : GHPRReviewInEditorViewModel {
   private val cs = parentCs.childScope(javaClass.name)
   private val repository = dataContext.repositoryDataService.repositoryMapping.gitRepository
+
+  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
+  override val discussionsViewOption: StateFlow<DiscussionsViewOption> =
+    settings.editorReviewEnabledState.combineState(_discussionsViewOption) { enabled, viewOption ->
+      if (!enabled) DiscussionsViewOption.DONT_SHOW else viewOption
+    }
 
   private val changesComputationState =
     dataProvider.changesData.changesComputationState().onEach {
@@ -53,13 +61,24 @@ internal class GHPRReviewInEditorViewModelImpl(
       }
     }.stateIn(cs, SharingStarted.Lazily, ComputedResult.loading())
 
-  private val filesVmsMap = mutableMapOf<FilePath, StateFlow<GHPRReviewFileEditorViewModelImpl?>>()
+  /**
+   * Mappings of all threads in the current review.
+   * These reflect the visibility and locations of all threads in the review as applied to in-file reviews.
+   */
+  private val mappedThreads: StateFlow<Map<String, MappedGHPRReviewEditorThreadViewModel.MappingData>> =
+    threadsVm.threadMappingData.combineState(discussionsViewOption) { mappingDataMap, viewOption ->
+      mappingDataMap.mapValues { (_, mappingData) ->
+        val isVisible = mappingData.threadData.isVisible(viewOption)
 
-  private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
-  override val discussionsViewOption: StateFlow<DiscussionsViewOption> =
-    settings.editorReviewEnabledState.combineState(_discussionsViewOption) { enabled, viewOption ->
-      if (!enabled) DiscussionsViewOption.DONT_SHOW else viewOption
+        val diffData = mappingData.diffData
+                       ?: return@mapValues MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, null)
+        val line = mappingData.threadData.mapToRightSideLine(diffData)
+
+        MappedGHPRReviewEditorThreadViewModel.MappingData(isVisible, mappingData.change, line)
+      }
     }
+
+  private val filesVmsMap = mutableMapOf<FilePath, StateFlow<GHPRReviewFileEditorViewModelImpl?>>()
 
   override val updateRequired: StateFlow<Boolean> = sharedBranchVm.updateRequired
 
@@ -118,7 +137,12 @@ internal class GHPRReviewInEditorViewModelImpl(
 
   private fun CoroutineScope.createFileVm(change: RefComparisonChange, diffData: GitTextFilePatchWithHistory)
     : GHPRReviewFileEditorViewModelImpl =
-    GHPRReviewFileEditorViewModelImpl(project, this, dataContext, dataProvider, change, diffData, threadsVms, discussionsViewOption, ::showDiff)
+    GHPRReviewFileEditorViewModelImpl(
+      project, this, dataContext, dataProvider,
+      change, diffData,
+      threadsVm, mappedThreads,
+      ::showDiff
+    )
 }
 
 private fun GitBranchComparisonResult.createSelection(change: RefComparisonChange, lineIdx: Int?): ChangesSelection? {

@@ -5,13 +5,17 @@ import com.intellij.psi.PsiEnumConstant
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
+import org.jetbrains.kotlin.analysis.utils.errors.requireIsInstance
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtEnumEntry
 
-internal class EnumEntryImportCandidatesProvider(override val positionContext: KotlinNameReferencePositionContext) :
+internal class EnumEntryImportCandidatesProvider(override val importContext: ImportContext) :
     AbstractImportCandidatesProvider() {
+
+    init {
+        requireIsInstance<ImportPositionType.DefaultCall>(importContext.positionType)
+    }
 
     private fun acceptsKotlinEnumEntry(enumEntry: KtEnumEntry): Boolean {
         return !enumEntry.isImported() && enumEntry.canBeImported()
@@ -24,8 +28,6 @@ internal class EnumEntryImportCandidatesProvider(override val positionContext: K
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectCandidates(name: Name, indexProvider: KtSymbolFromIndexProvider): List<CallableImportCandidate> {
-        if (positionContext.explicitReceiver != null) return emptyList()
-
         val kotlinEnumEntries = indexProvider.getKotlinEnumEntriesByName(
             name = name,
             psiFilter = { acceptsKotlinEnumEntry(it) },
@@ -35,9 +37,9 @@ internal class EnumEntryImportCandidatesProvider(override val positionContext: K
             name = name,
             psiFilter = { it is PsiEnumConstant && acceptsJavaEnumEntry(it) },
         ).filterIsInstance<KaEnumEntrySymbol>()
-        
-        val visibilityChecker = createUseSiteVisibilityChecker(getFileSymbol(), receiverExpression = null, positionContext.position)
-        
+
+        val visibilityChecker = createUseSiteVisibilityChecker(getFileSymbol(), receiverExpression = null, importContext.position)
+
         return (kotlinEnumEntries + javaEnumEntries)
             .map { CallableImportCandidate.create(it) }
             .filter { it.isVisible(visibilityChecker) }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.focus;
 
+import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -15,6 +16,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,7 +85,9 @@ public final class FocusTracesDialog extends DialogWrapper {
     myRequestsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myRequestsTable.changeSelection(0, 0, false, true);
 
-    consoleView = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);
+    builder.setViewer(true);
+    consoleView = builder.getConsole();
     Disposer.register(getDisposable(), consoleView);
 
     init();
@@ -173,7 +177,7 @@ public final class FocusTracesDialog extends DialogWrapper {
         }
         prev = info.component.get();
         if (prev != null && prev.isDisplayable()) {
-          final Graphics g = prev.getGraphics();
+          final Graphics g = GraphicsUtil.safelyGetGraphics(prev);
           g.setColor(JBColor.RED);
           final Dimension sz = prev.getSize();
           UIUtil.drawDottedRectangle(g, 1, 1, sz.width - 2, sz.height - 2);

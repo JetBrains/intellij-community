@@ -82,6 +82,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/ImplementsDslInterface.kt");
         }
 
+        @TestMetadata("ImplicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/ImplicitReceiver.kt");
+        }
+
         @TestMetadata("NestedReceivers.kt")
         public void testNestedReceivers() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/NestedReceivers.kt");
@@ -95,6 +100,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("SubclassOfDslClass.kt")
         public void testSubclassOfDslClass() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
+        }
+
+        @TestMetadata("TopLevelFunctions.kt")
+        public void testTopLevelFunctions() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/TopLevelFunctions.kt");
         }
     }
 
@@ -148,6 +158,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("javaFields.kt")
         public void testJavaFields() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/javaFields.kt");
+        }
+
+        @TestMetadata("JavaIoImport.kt")
+        public void testJavaIoImport() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/JavaIoImport.kt");
         }
 
         @TestMetadata("JavaRecord.kt")
@@ -308,9 +323,19 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/AnnotationsInDumbMode.kt");
         }
 
+        @TestMetadata("AnnotationsUseSiteTargetAll.kt")
+        public void testAnnotationsUseSiteTargetAll() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/AnnotationsUseSiteTargetAll.kt");
+        }
+
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
+        }
+
+        @TestMetadata("DefinitelyNotNullType.kt")
+        public void testDefinitelyNotNullType() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/DefinitelyNotNullType.kt");
         }
 
         @TestMetadata("deprecation.kt")
@@ -371,6 +396,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("Object.kt")
         public void testObject() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/Object.kt");
+        }
+
+        @TestMetadata("Parameters.kt")
+        public void testParameters() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Parameters.kt");
         }
 
         @TestMetadata("PropertiesWithPropertyDeclarations.kt")

@@ -2154,6 +2154,15 @@ public abstract class PyCommonResolveTest extends PyCommonResolveTestCase {
                        """, PyTargetExpression.class, "Alias");
   }
 
+  // PY-81646
+  public void testResolveFromSliceExpression() {
+    assertResolvesTo("""
+                       def foo(arr, idx):
+                           _ = arr[:, idx]
+                       #               <ref>
+                       """, PyNamedParameter.class, "idx");
+  }
+
   private void assertResolvedElement(@NotNull LanguageLevel languageLevel, @NotNull String text, @NotNull Consumer<PsiElement> assertion) {
     runWithLanguageLevel(languageLevel, () -> {
       myFixture.configureByText(PythonFileType.INSTANCE, text);

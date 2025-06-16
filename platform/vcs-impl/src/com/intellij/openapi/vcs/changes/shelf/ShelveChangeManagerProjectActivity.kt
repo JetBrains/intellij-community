@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.shelf
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
@@ -13,9 +12,7 @@ import kotlinx.coroutines.launch
 private class ShelveChangeManagerProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val manager = project.serviceAsync<ShelveChangesManager>()
-    blockingContext {
-      manager.projectOpened()
-    }
+    manager.projectOpened()
   }
 }
 

@@ -22,7 +22,7 @@ class BackendXmlElementFactory :
     val elementType = node.elementType
 
     return when (elementType) {
-      is XmlStubBasedElementType<*, *>,
+      is XmlStubBasedElementType<*>,
         -> elementType.createPsi(node)
 
       else -> throw UnsupportedNodeElementTypeException(node)

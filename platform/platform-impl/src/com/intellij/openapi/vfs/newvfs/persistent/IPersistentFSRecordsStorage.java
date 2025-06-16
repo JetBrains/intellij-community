@@ -122,14 +122,16 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
 
     int getVersion() throws IOException;
 
-    int getGlobalModCount();
+    int getGlobalModCount() throws IOException;
 
-    //TODO int getErrorsAccumulated();
+    //TODO int getErrorsAccumulated() throws IOException;
+    //TODO byte getFlags() throws IOException;
   }
 
   interface HeaderForUpdate extends HeaderForRead {
     void setVersion(int version) throws IOException;
 
     //TODO void setErrorsAccumulated(int errors) throws IOException;
+    //TODO void setFlags(byte flags) throws IOException;
   }
 }

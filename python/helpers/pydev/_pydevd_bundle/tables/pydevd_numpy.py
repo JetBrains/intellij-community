@@ -29,6 +29,8 @@ def get_shape(table):
         return str((table.shape[0], len(table.dtype.names)))
     if table.ndim == 1:
         return str((table.shape[0], 1))
+    elif table.ndim == 0:
+        return str((0, 0))
     else:
         return str((table.shape[0], table.shape[1]))
 
@@ -43,6 +45,8 @@ def get_head(table):
 
 def get_column_types(table):
     # type: (np.ndarray) -> str
+    if table.ndim == 0:
+        return ""
     table = __create_table(table[:1])
     try:
         cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()

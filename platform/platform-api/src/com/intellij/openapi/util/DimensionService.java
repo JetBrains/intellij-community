@@ -157,8 +157,11 @@ public final class DimensionService extends SimpleModificationTracker implements
   }
 
   public synchronized void setSize(@NotNull @NonNls String key, Dimension size, @Nullable Project project) {
-    getWindowStateService(project).putSize(key, size);
-    Pair<String, Float> pair = keyPair(key, project);
+    @Nullable Project projectIfValid = project;
+    if (projectIfValid != null && projectIfValid.isDisposed()) projectIfValid = null;
+
+    getWindowStateService(projectIfValid).putSize(key, size);
+    Pair<String, Float> pair = keyPair(key, projectIfValid);
     if (size != null) {
       size = (Dimension)size.clone();
       float scale = pair.second;

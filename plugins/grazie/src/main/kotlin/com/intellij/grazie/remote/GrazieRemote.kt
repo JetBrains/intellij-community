@@ -21,14 +21,13 @@ object GrazieRemote {
   fun allAvailableLocally() = Lang.values().filter { isAvailableLocally(it) }
 
   /** Downloads [lang] to local storage */
-  fun download(lang: Lang, project: Project? = null): Boolean {
-    if (isAvailableLocally(lang)) return true
+  fun download(lang: Lang, project: Project? = null): Boolean = LangDownloader.download(lang, project)
 
-    return LangDownloader.download(lang, project)
-  }
+  /** Downloads [languages] asynchronously to local storage */
+  fun downloadAsync(languages: Collection<Lang>, project: Project): Unit = LangDownloader.downloadAsync(languages, project)
 
   /** Downloads all missing languages to local storage*/
-  fun downloadMissing(project: Project?) = GrazieConfig.get().missedLanguages.forEach { LangDownloader.download(it, project) }
+  fun downloadMissing(project: Project): Unit = LangDownloader.downloadAsync(GrazieConfig.get().missedLanguages, project)
 
   fun isValidBundleForLanguage(language: Lang, file: Path): Boolean {
     val actualChecksum = checksum(file)

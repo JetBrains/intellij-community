@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -32,13 +24,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.XParentEnti
 internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XParentEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val OPTIONALCHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java,
-                                                                                    XChildWithOptionalParentEntity::class.java,
-                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, true)
-    internal val CHILDCHILD_CONNECTION_ID: ConnectionId = ConnectionId.create(XParentEntity::class.java, XChildChildEntity::class.java,
-                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(XParentEntity::class.java, XChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val OPTIONALCHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      XParentEntity::class.java, XChildWithOptionalParentEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, true
+    )
+    internal val CHILDCHILD_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(XParentEntity::class.java, XChildChildEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -74,8 +66,8 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
   }
 
 
-  internal class Builder(result: XParentEntityData?) : ModifiableWorkspaceEntityBase<XParentEntity, XParentEntityData>(
-    result), XParentEntity.Builder {
+  internal class Builder(result: XParentEntityData?) : ModifiableWorkspaceEntityBase<XParentEntity, XParentEntityData>(result),
+                                                       XParentEntity.Builder {
     internal constructor() : this(XParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -182,8 +174,8 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<XChildEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+            .toList() as List<XChildEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<XChildEntity.Builder> ?: emptyList())
         }
         else {
@@ -229,8 +221,8 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(OPTIONALCHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<XChildWithOptionalParentEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(OPTIONALCHILDREN_CONNECTION_ID, this)!!
+            .toList() as List<XChildWithOptionalParentEntity.Builder>) +
           (this.entityLinks[EntityLink(true, OPTIONALCHILDREN_CONNECTION_ID)] as? List<XChildWithOptionalParentEntity.Builder>
            ?: emptyList())
         }
@@ -277,8 +269,8 @@ internal class XParentEntityImpl(private val dataSource: XParentEntityData) : XP
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<XChildChildEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDCHILD_CONNECTION_ID, this)!!
+            .toList() as List<XChildChildEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDCHILD_CONNECTION_ID)] as? List<XChildChildEntity.Builder> ?: emptyList())
         }
         else {
@@ -346,7 +338,8 @@ internal class XParentEntityData : WorkspaceEntityData<XParentEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.XParentEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

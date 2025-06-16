@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -42,6 +43,28 @@ public abstract class CodeStyleSettingsProvider implements CustomCodeStyleSettin
   public @NotNull Configurable createSettingsPage(@NotNull CodeStyleSettings settings, @NotNull CodeStyleSettings modelSettings) {
     //noinspection ConstantConditions
     return null;
+  }
+
+  /**
+   * @return the unique configurable id of the created configurable.
+   * By default, will be calculated from {@link #getLanguage} if available,
+   * or fall back to the legacy behavior of generating one from {@link #getConfigurableDisplayName}.
+   */
+  public @NotNull String getConfigurableId() {
+    var language = getLanguage();
+    if (language != null) {
+      return CodeStyleSettings.generateConfigurableIdByLanguage(language);
+    }
+
+    var logger = Logger.getInstance(this.getClass());
+    var displayName = getConfigurableDisplayName();
+    if (displayName == null) {
+      logger.error("Cannot determine id for configurable provider " + this.getClass() + ". Please override getConfigurableId or getLanguage.");
+      return "preferences.sourceCode.null"; // emulate legacy behavior
+    }
+
+    logger.error("Legacy configurable id calculation mode from localizable name will be used for configurable " + this.getClass() + ". Please override getConfigurableId or getLanguage.");
+    return "preferences.sourceCode." + displayName;
   }
 
   /**

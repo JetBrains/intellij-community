@@ -58,7 +58,9 @@
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.IndexHighlighter$Factory"/>
 
-    <postStartupActivity implementation="com.intellij.vcs.log.impl.VcsProjectLog$InitLogStartupActivity"/>
+    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsProjectLog"
+                    serviceImplementation="com.intellij.vcs.log.impl.IdeVcsProjectLog"/>
+    <postStartupActivity implementation="com.intellij.vcs.log.impl.IdeVcsProjectLog$InitLogStartupActivity"/>
 
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 

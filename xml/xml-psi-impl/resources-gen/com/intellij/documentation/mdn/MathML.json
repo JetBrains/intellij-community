@@ -10,7 +10,7 @@
   "lang": "en-us",
   "attrs": {
     "dir": {
-      "url": "$MDN_URL$/web/mathml/global_attributes/dir",
+      "url": "$MDN_URL$/web/mathml/reference/global_attributes/dir",
       "status": [
         "StandardTrack"
       ],
@@ -19,13 +19,19 @@
         "ChromeAndroid": "109",
         "Edge": "109",
         "Firefox": "70",
+        "FirefoxAndroid": "79",
+        "Opera": "95",
         "Safari": "8",
         "SafariIOS": "8"
       },
-      "doc": "The <strong><code>dir</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> is an <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute that indicates the directionality of the MathML element."
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>dir</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> is an <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute that indicates the directionality of the MathML element."
     },
     "displaystyle": {
-      "url": "$MDN_URL$/web/mathml/global_attributes/displaystyle",
+      "url": "$MDN_URL$/web/mathml/reference/global_attributes/displaystyle",
       "status": [
         "StandardTrack"
       ],
@@ -34,22 +40,32 @@
         "ChromeAndroid": "109",
         "Edge": "109",
         "Firefox": "83",
+        "FirefoxAndroid": "83",
+        "Opera": "95",
         "Safari": "14",
         "SafariIOS": "14"
       },
-      "doc": "The <strong><code>displaystyle</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> is a boolean setting the <a href=\"$MDN_URL$/Web/CSS/math-style\">math-style</a> of a MathML element."
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>displaystyle</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> is a boolean setting the <a href=\"$MDN_URL$/Web/CSS/math-style\">math-style</a> of a MathML element."
     },
     "href": {
-      "url": "$MDN_URL$/web/mathml/global_attributes/href",
+      "url": "$MDN_URL$/web/mathml/reference/global_attributes/href",
       "compatibility": {
         "Firefox": "7",
+        "FirefoxAndroid": "7",
         "Safari": "10",
         "SafariIOS": "10"
       },
-      "doc": "<div class=\"notecard nonstandard\" id=\"sect1\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>href</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> creates a hyperlink on the MathML element pointing to the specified URL."
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>href</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> creates a hyperlink on the MathML element pointing to the specified URL."
     },
     "mathbackground": {
-      "url": "$MDN_URL$/web/mathml/global_attributes/mathbackground",
+      "url": "$MDN_URL$/web/mathml/reference/global_attributes/mathbackground",
       "status": [
         "StandardTrack",
         "Deprecated"
@@ -59,13 +75,18 @@
         "ChromeAndroid": "109",
         "Edge": "109",
         "Firefox": "70",
+        "FirefoxAndroid": "79",
+        "Opera": "95",
         "Safari": "5",
         "SafariIOS": "4"
       },
-      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathbackground</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/background-color\">background-color</a> of a MathML element.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Use CSS for styling MathML whenever possible. The <code>mathbackground</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>background-color</code> property value, if set.\n</div>"
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathbackground</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/background-color\">background-color</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathbackground</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>background-color</code> property value, if set.\n</div>"
     },
     "mathcolor": {
-      "url": "$MDN_URL$/web/mathml/global_attributes/mathcolor",
+      "url": "$MDN_URL$/web/mathml/reference/global_attributes/mathcolor",
       "status": [
         "StandardTrack",
         "Deprecated"
@@ -75,13 +96,18 @@
         "ChromeAndroid": "109",
         "Edge": "109",
         "Firefox": "70",
+        "FirefoxAndroid": "79",
+        "Opera": "95",
         "Safari": "5",
         "SafariIOS": "4"
       },
-      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathcolor</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/color\">color</a> of a MathML element.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Use CSS for styling MathML whenever possible. The <code>mathcolor</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>color</code> property, if set.\n</div>"
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathcolor</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/color\">color</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathcolor</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>color</code> property, if set.\n</div>"
     },
     "mathsize": {
-      "url": "$MDN_URL$/web/mathml/global_attributes/mathsize",
+      "url": "$MDN_URL$/web/mathml/reference/global_attributes/mathsize",
       "status": [
         "StandardTrack",
         "Deprecated"
@@ -91,13 +117,18 @@
         "ChromeAndroid": "109",
         "Edge": "109",
         "Firefox": "70",
+        "FirefoxAndroid": "79",
+        "Opera": "95",
         "Safari": "5",
         "SafariIOS": "4.2"
       },
-      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathsize</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/font-size\">font-size</a> of a MathML element.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Use CSS for styling MathML whenever possible. The <code>mathsize</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>font-size</code> property, if set.\n</div>"
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>mathsize</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/font-size\">font-size</a> of a MathML element.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nUse CSS for styling MathML whenever possible. The <code>mathsize</code> attribute should only be included for applications that are not CSS-aware and will be overridden by the CSS <code>font-size</code> property, if set.\n</div>"
     },
     "scriptlevel": {
-      "url": "$MDN_URL$/web/mathml/global_attributes/scriptlevel",
+      "url": "$MDN_URL$/web/mathml/reference/global_attributes/scriptlevel",
       "status": [
         "StandardTrack"
       ],
@@ -105,14 +136,87 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "70"
+        "Firefox": "70",
+        "FirefoxAndroid": "79",
+        "Opera": "95"
       },
-      "doc": "The <strong><code>scriptlevel</code></strong> <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/math-depth\">math-depth</a> of a MathML element. It allows overriding rules from the <a href=\"$MDN_URL$/Web/CSS/Cascade#user-agent_stylesheets\">user agent stylesheet</a> that define automatic calculation of <a href=\"$MDN_URL$/Web/CSS/font-size\">font-size</a> within MathML formulas."
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "The <strong><code>scriptlevel</code></strong> <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">global attribute</a> sets the <a href=\"$MDN_URL$/Web/CSS/math-depth\">math-depth</a> of a MathML element. It allows overriding rules from the <a href=\"$MDN_URL$/Web/CSS/CSS_cascade/Cascade#user-agent_stylesheets\">user agent stylesheet</a> that define automatic calculation of <a href=\"$MDN_URL$/Web/CSS/font-size\">font-size</a> within MathML formulas."
     }
   },
   "tags": {
+    "annotation": {
+      "url": "$MDN_URL$/web/mathml/reference/element/annotation",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "109",
+        "ChromeAndroid": "109",
+        "Edge": "109",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
+        "Opera": "95",
+        "Safari": "5",
+        "SafariIOS": "4.2"
+      },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;annotation&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element contains an annotation to the MathML expression in a textual format, for example <a href=\"https://www.latex-project.org/\" class=\"external\" target=\"_blank\">LaTeX</a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAnnotations are not supposed to be rendered by browsers and are hidden by default. However, Firefox and Safari render some annotation formats if the first child of the <a href=\"$MDN_URL$/Web/MathML/Reference/Element/semantics\" ><code>&lt;semantics&gt;</code></a> element contains errors or is missing.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
+      "attrs": {
+        "encoding": {
+          "url": "$MDN_URL$/web/mathml/reference/element/annotation#encoding",
+          "doc": "The encoding of the semantic information in the annotation (e.g., <code>\"application/x-tex\"</code>)"
+        },
+        "src": {
+          "url": "$MDN_URL$/web/mathml/reference/element/annotation#src",
+          "doc": "The location of an external source for semantic information."
+        }
+      }
+    },
+    "annotation-xml": {
+      "url": "$MDN_URL$/web/mathml/reference/element/annotation-xml",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "109",
+        "ChromeAndroid": "109",
+        "Edge": "109",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
+        "Opera": "95",
+        "Safari": "5",
+        "SafariIOS": "4.2"
+      },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;annotation-xml&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element contains an annotation to the MathML expression in the <a href=\"$MDN_URL$/Glossary/XML\">XML</a> format, for example <a href=\"https://en.wikipedia.org/wiki/MathML#Content_MathML\" class=\"external\" target=\"_blank\">Content MathML</a> or <a href=\"$MDN_URL$/Glossary/SVG\">SVG</a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nAnnotations are not supposed to be rendered by browsers and are hidden by default. However, Firefox and Safari render some annotation formats if the first child of the <a href=\"$MDN_URL$/Web/MathML/Reference/Element/semantics\" ><code>&lt;semantics&gt;</code></a> element contains errors or is missing.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
+      "attrs": {
+        "encoding": {
+          "url": "$MDN_URL$/web/mathml/reference/element/annotation-xml#encoding",
+          "doc": "The encoding of the semantic information in the annotation (e.g., <code>\"application/mathml+xml\"</code>, <code>\"application/mathml-presentation+xml\"</code>, <code>\"application/mathml-content+xml\"</code>)"
+        },
+        "src": {
+          "url": "$MDN_URL$/web/mathml/reference/element/annotation-xml#src",
+          "doc": "The location of an external source for semantic information."
+        }
+      }
+    },
     "maction": {
-      "url": "$MDN_URL$/web/mathml/element/maction",
+      "url": "$MDN_URL$/web/mathml/reference/element/maction",
       "status": [
         "StandardTrack",
         "Deprecated"
@@ -122,14 +226,18 @@
         "ChromeAndroid": "109",
         "Edge": "109",
         "Firefox": "",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "8",
         "SafariIOS": "8"
       },
-      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;maction&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element allows to bind actions to mathematical expressions. By default, only the first child is rendered but some browsers may take into account <code>actiontype</code> and <code>selection</code> attributes to implement custom behaviors.\n<div class=\"notecard note\" id=\"sect2\">\n<p><strong>Note:</strong> Historically, this element provided a mechanism to make MathML formulas interactive. Nowadays, it is recommended to rely on <a href=\"$MDN_URL$/Web/JavaScript\">JavaScript</a> and other Web technologies to implement this use case.\n</div>",
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<p>The <strong><code>&lt;maction&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element allows to bind actions to mathematical expressions. By default, only the first child is rendered but some browsers may take into account <code>actiontype</code> and <code>selection</code> attributes to implement custom behaviors.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nHistorically, this element provided a mechanism to make MathML formulas interactive. Nowadays, it is recommended to rely on <a href=\"$MDN_URL$/Web/JavaScript\">JavaScript</a> and other Web technologies to implement this use case.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "actiontype": {
-          "url": "$MDN_URL$/web/mathml/element/maction#actiontype",
+          "url": "$MDN_URL$/web/mathml/reference/element/maction#actiontype",
           "status": [
             "Deprecated"
           ],
@@ -137,23 +245,29 @@
             "Safari": "8",
             "SafariIOS": "8"
           },
-          "doc": "The action which specifies what happens for this element. Special behavior\nfor the following values were implemented by some browsers:\n<ul>\n<li><code>statusline</code>: If there is a click on the <em>expression</em> or the reader moves the pointer over it, the <em>message</em> is sent to the browser's status line. The syntax is: <code>&lt;maction actiontype=\"statusline\"&gt; expression message &lt;/maction&gt;</code>.</li>\n<li>\n<code>toggle</code>: When there is a click on the subexpression, the rendering alternates the display of selected subexpressions. Therefore each click increments the <code>selection</code> value.\nThe syntax is: <code>&lt;maction actiontype=\"toggle\" selection=\"positive-integer\" &gt; expression1 expression2 expressionN &lt;/maction&gt;</code>.\n</li>\n</ul>"
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "The action which specifies what happens for this element. Special behavior\nfor the following values were implemented by some browsers:\n<ul>\n<li><code>statusline</code>: If there is a click on the <em>expression</em> or the reader moves the pointer over it, the <em>message</em> is sent to the browser's status line. The syntax is: <code>&lt;maction actiontype=\"statusline\"&gt; expression message &lt;/maction&gt;</code>.</li>\n<li><code>toggle</code>: When there is a click on the subexpression, the rendering alternates the display of selected subexpressions. Therefore each click increments the <code>selection</code> value.\nThe syntax is: <code>&lt;maction actiontype=\"toggle\" selection=\"positive-integer\" &gt; expression1 expression2 expressionN &lt;/maction&gt;</code>.</li>\n</ul>"
         },
         "selection": {
-          "url": "$MDN_URL$/web/mathml/element/maction#selection",
+          "url": "$MDN_URL$/web/mathml/reference/element/maction#selection",
           "status": [
             "Deprecated"
           ],
           "compatibility": {
             "Safari": "8",
             "SafariIOS": "8"
+          },
+          "baseline": {
+            "level": "NONE"
           },
           "doc": "The child element currently visible, only taken into account for <code>actiontype=\"toggle\"</code> or non-standard <code>actiontype</code> values. The default value is <code>1</code>, which is the first child element."
         }
       }
     },
     "math": {
-      "url": "$MDN_URL$/web/mathml/element/math",
+      "url": "$MDN_URL$/web/mathml/reference/element/math",
       "status": [
         "StandardTrack"
       ],
@@ -162,14 +276,22 @@
         "ChromeAndroid": "109",
         "Edge": "109",
         "Firefox": "4",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5.1",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>&lt;math&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is the top-level MathML element, used to write a single mathematical formula. It can be placed in HTML content where <a href=\"$MDN_URL$/Web/HTML/Content_categories#flow_content\">flow content</a> is permitted.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> See the <a href=\"$MDN_URL$/Web/MathML/Authoring#using_mathml\">Authoring MathML page</a> for tips to properly integrate MathML formulas in your web pages and the <a href=\"$MDN_URL$/Web/MathML/Examples\">Examples</a> page for more demos.\n</div>",
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;math&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is the top-level MathML element, used to write a single mathematical formula. It can be placed in HTML content where <a href=\"$MDN_URL$/Web/HTML/Guides/Content_categories#flow_content\">flow content</a> is permitted.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nSee the <a href=\"$MDN_URL$/Web/MathML/Guides/Authoring#using_mathml\">Authoring MathML page</a> for tips to properly integrate MathML formulas in your web pages and the <a href=\"$MDN_URL$/Web/MathML/Guides\">Guides</a> page for more demos.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles/math_role\">\n<code>math</code>\n</a>\n"
+      },
       "attrs": {
         "display": {
-          "url": "$MDN_URL$/web/mathml/element/math#display",
+          "url": "$MDN_URL$/web/mathml/reference/element/math#display",
           "status": [
             "StandardTrack"
           ],
@@ -177,37 +299,53 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "4",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "5.1",
             "SafariIOS": "5"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "This <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifies how the enclosed MathML markup should be rendered. It can have one of the following values:\n<ul>\n<li><code>block</code>, which means that this element will be displayed in its own block outside the current span of text and with <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> set to <code>normal</code>.</li>\n<li><code>inline</code>, which means that this element will be displayed inside the current span of text and with <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> set to <code>compact</code>.</li>\n</ul>\n<p>If not present, its default value is <code>inline</code>."
         }
       }
     },
     "menclose": {
-      "url": "$MDN_URL$/web/mathml/element/menclose",
+      "url": "$MDN_URL$/web/mathml/reference/element/menclose",
       "compatibility": {
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Safari": "7",
         "SafariIOS": "7"
       },
-      "doc": "<div class=\"notecard nonstandard\" id=\"sect1\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>&lt;menclose&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element renders its content inside an enclosing notation specified by the <code>notation</code> attribute.",
+      "baseline": {
+        "level": "NONE"
+      },
+      "doc": "<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>&lt;menclose&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element renders its content inside an enclosing notation specified by the <code>notation</code> attribute.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "notation": {
-          "url": "$MDN_URL$/web/mathml/element/menclose#notation",
+          "url": "$MDN_URL$/web/mathml/reference/element/menclose#notation",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "7",
             "SafariIOS": "7"
           },
-          "doc": "A list of notations, separated by white space, to apply to the child elements. The symbols are each drawn as if the others are not present, and therefore may overlap. Possible values are:\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Value</th>\n<th>Sample Rendering</th>\n<th>Rendering in your browser</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>longdiv</code> (default)</td>\n<td>\n<math>\n<menclose notation=\"longdiv\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>long division symbol</td>\n</tr>\n<tr>\n<td><code>actuarial</code></td>\n<td>\n<math>\n<menclose notation=\"actuarial\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td><a href=\"https://en.wikipedia.org/wiki/Actuarial_notation\" class=\"external\" target=\"_blank\">actuarial symbol</a></td>\n</tr>\n<tr>\n<td><code>box</code></td>\n<td>\n<math>\n<menclose notation=\"box\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>box</td>\n</tr>\n<tr>\n<td><code>roundedbox</code></td>\n<td>\n<math>\n<menclose notation=\"roundedbox\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>rounded box</td>\n</tr>\n<tr>\n<td><code>circle</code></td>\n<td>\n<math>\n<menclose notation=\"circle\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>circle</td>\n</tr>\n<tr>\n<td><code>left</code></td>\n<td>\n<math>\n<menclose notation=\"left\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>line to the left of the contents</td>\n</tr>\n<tr>\n<td><code>right</code></td>\n<td>\n<math>\n<menclose notation=\"right\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>line to the right of the contents</td>\n</tr>\n<tr>\n<td><code>top</code></td>\n<td>\n<math>\n<menclose notation=\"top\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>line above of the contents</td>\n</tr>\n<tr>\n<td><code>bottom</code></td>\n<td>\n<math>\n<menclose notation=\"bottom\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>line below of the contents</td>\n</tr>\n<tr>\n<td><code>updiagonalstrike</code></td>\n<td>\n<math>\n<menclose notation=\"updiagonalstrike\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>strikeout line through contents from lower left to upper right</td>\n</tr>\n<tr>\n<td><code>downdiagonalstrike</code></td>\n<td>\n<math>\n<menclose notation=\"downdiagonalstrike\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>strikeout line through contents from upper left to lower right</td>\n</tr>\n<tr>\n<td><code>verticalstrike</code></td>\n<td>\n<math>\n<menclose notation=\"verticalstrike\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>vertical strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>horizontalstrike</code></td>\n<td>\n<math>\n<menclose notation=\"horizontalstrike\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>horizontal strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>madruwb</code></td>\n<td>\n<math>\n<menclose notation=\"madruwb\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td><a href=\"https://en.wikipedia.org/wiki/Modern_Arabic_mathematical_notation#Arithmetic_and_algebra\" class=\"external\" target=\"_blank\">Arabic factorial symbol</a></td>\n</tr>\n<tr>\n<td><code>updiagonalarrow</code></td>\n<td>\n<math>\n<menclose notation=\"updiagonalarrow\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>diagonal arrow</td>\n</tr>\n<tr>\n<td><code>phasorangle</code></td>\n<td>\n<math>\n<menclose notation=\"phasorangle\">\n<msup>\n<mi>a</mi>\n<mn>2</mn>\n</msup>\n<mo>+</mo>\n<msup>\n<mi>b</mi>\n<mn>2</mn>\n</msup>\n</menclose>\n</math>\n</td>\n<td>phasor angle</td>\n</tr>\n</tbody>\n</table></figure>"
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "A list of notations, separated by white space, to apply to the child elements. The symbols are each drawn as if the others are not present, and therefore may overlap. Possible values are:\n<figure class=\"table-container\"><table>\n<thead>\n<tr>\n<th>Value</th>\n<th>Sample Rendering</th>\n<th>Rendering in your browser</th>\n<th>Description</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td><code>longdiv</code> (default)</td>\n<td><math><menclose notation=\"longdiv\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>long division symbol</td>\n</tr>\n<tr>\n<td><code>actuarial</code></td>\n<td><math><menclose notation=\"actuarial\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td><a href=\"https://en.wikipedia.org/wiki/Actuarial_notation\" class=\"external\" target=\"_blank\">actuarial symbol</a></td>\n</tr>\n<tr>\n<td><code>box</code></td>\n<td><math><menclose notation=\"box\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>box</td>\n</tr>\n<tr>\n<td><code>roundedbox</code></td>\n<td><math><menclose notation=\"roundedbox\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>rounded box</td>\n</tr>\n<tr>\n<td><code>circle</code></td>\n<td><math><menclose notation=\"circle\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>circle</td>\n</tr>\n<tr>\n<td><code>left</code></td>\n<td><math><menclose notation=\"left\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>line to the left of the contents</td>\n</tr>\n<tr>\n<td><code>right</code></td>\n<td><math><menclose notation=\"right\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>line to the right of the contents</td>\n</tr>\n<tr>\n<td><code>top</code></td>\n<td><math><menclose notation=\"top\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>line above of the contents</td>\n</tr>\n<tr>\n<td><code>bottom</code></td>\n<td><math><menclose notation=\"bottom\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>line below of the contents</td>\n</tr>\n<tr>\n<td><code>updiagonalstrike</code></td>\n<td><math><menclose notation=\"updiagonalstrike\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>strikeout line through contents from lower left to upper right</td>\n</tr>\n<tr>\n<td><code>downdiagonalstrike</code></td>\n<td><math><menclose notation=\"downdiagonalstrike\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>strikeout line through contents from upper left to lower right</td>\n</tr>\n<tr>\n<td><code>verticalstrike</code></td>\n<td><math><menclose notation=\"verticalstrike\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>vertical strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>horizontalstrike</code></td>\n<td><math><menclose notation=\"horizontalstrike\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>horizontal strikeout line through contents</td>\n</tr>\n<tr>\n<td><code>madruwb</code></td>\n<td><math><menclose notation=\"madruwb\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td><a href=\"https://en.wikipedia.org/wiki/Modern_Arabic_mathematical_notation#Arithmetic_and_algebra\" class=\"external\" target=\"_blank\">Arabic factorial symbol</a></td>\n</tr>\n<tr>\n<td><code>updiagonalarrow</code></td>\n<td><math><menclose notation=\"updiagonalarrow\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>diagonal arrow</td>\n</tr>\n<tr>\n<td><code>phasorangle</code></td>\n<td><math><menclose notation=\"phasorangle\"><msup><mi>a</mi><mn>2</mn></msup><mo>+</mo><msup><mi>b</mi><mn>2</mn></msup></menclose></math></td>\n<td>phasor angle</td>\n</tr>\n</tbody>\n</table></figure>"
         }
       }
     },
     "merror": {
-      "url": "$MDN_URL$/web/mathml/element/merror",
+      "url": "$MDN_URL$/web/mathml/reference/element/merror",
       "status": [
         "StandardTrack"
       ],
@@ -215,15 +353,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;merror&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to display contents as error messages. The intent of this element is to provide a standard way for programs that generate MathML from other input to report syntax errors."
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;merror&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to display contents as error messages. The intent of this element is to provide a standard way for programs that generate MathML from other input to report syntax errors.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      }
     },
     "mfenced": {
-      "url": "$MDN_URL$/web/mathml/element/mfenced",
+      "url": "$MDN_URL$/web/mathml/reference/element/mfenced",
       "status": [
         "Deprecated"
       ],
@@ -231,24 +377,27 @@
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "<div class=\"notecard deprecated\" id=\"sect1\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div><div class=\"notecard nonstandard\" id=\"sect2\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>&lt;mfenced&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element provides the possibility to add custom opening and closing brackets (such as parenthese) and separators (such as commas or semicolons) to an expression.\n<div class=\"notecard note\" id=\"sect3\">\n<p><strong>Note:</strong> Historically, the <code>&lt;mfenced&gt;</code> element was defined as a shorthand for writing fenced expressions and equivalent to an expanded form involving <code><a href=\"$MDN_URL$/Web/MathML/Element/mrow\" >&lt;mrow&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code> elements. Nowadays, it is recommended to use that equivalent form instead.\n</div>",
+      "doc": "<div class=\"notecard deprecated\"><p><strong>Deprecated:</strong> This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</div>\n<div class=\"notecard nonstandard\"><p><strong>Non-standard:</strong> This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</div>\n<p>The <strong><code>&lt;mfenced&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element provides the possibility to add custom opening and closing brackets (such as parentheses) and separators (such as commas or semicolons) to an expression.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nHistorically, the <code>&lt;mfenced&gt;</code> element was defined as a shorthand for writing fenced expressions and equivalent to an expanded form involving <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mrow\" ><code>&lt;mrow&gt;</code></a> and <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mo\" ><code>&lt;mo&gt;</code></a> elements. Nowadays, it is recommended to use that equivalent form instead.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "close": {
-          "url": "$MDN_URL$/web/mathml/element/mfenced#close",
-          "doc": "A string for the closing delimiter. The default value is <code>\")</code>\" and any white space is trimmed."
+          "url": "$MDN_URL$/web/mathml/reference/element/mfenced#close",
+          "doc": "A string for the closing delimiter. The default value is <code>\")\"</code> and any white space is trimmed."
         },
         "open": {
-          "url": "$MDN_URL$/web/mathml/element/mfenced#open",
+          "url": "$MDN_URL$/web/mathml/reference/element/mfenced#open",
           "doc": "A string for the opening delimiter. The default value is <code>\"(\"</code> and any white space is trimmed."
         },
         "separators": {
-          "url": "$MDN_URL$/web/mathml/element/mfenced#separators",
+          "url": "$MDN_URL$/web/mathml/reference/element/mfenced#separators",
           "doc": "A sequence of zero or more characters to be used for different separators, optionally divided by white space, which is ignored. The default value is \",\". By specifying more than one character, it is possible to set different separators for each argument in the expression. If there are too many separators, all excess is ignored. If there are too few separators in the expression, the last specified separator is repeated."
         }
       }
     },
     "mfrac": {
-      "url": "$MDN_URL$/web/mathml/element/mfrac",
+      "url": "$MDN_URL$/web/mathml/reference/element/mfrac",
       "status": [
         "StandardTrack"
       ],
@@ -256,15 +405,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5.1",
         "SafariIOS": "5"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;mfrac&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to display fractions. It can also be used\nto mark up fraction-like objects such as\n<a href=\"https://en.wikipedia.org/wiki/Binomial_coefficient\" class=\"external\" target=\"_blank\">binomial coefficients</a>\nand <a href=\"https://en.wikipedia.org/wiki/Legendre_symbol\" class=\"external\" target=\"_blank\">Legendre symbols</a>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "denomalign": {
-          "url": "$MDN_URL$/web/mathml/element/mfrac#denomalign",
+          "url": "$MDN_URL$/web/mathml/reference/element/mfrac#denomalign",
           "status": [
             "Deprecated"
           ],
@@ -272,10 +429,13 @@
             "Safari": "5.1",
             "SafariIOS": "5"
           },
+          "baseline": {
+            "level": "NONE"
+          },
           "doc": "The alignment of the denominator under the fraction. Possible values are: <code>left</code>, <code>center</code> (default), and <code>right</code>."
         },
         "linethickness": {
-          "url": "$MDN_URL$/web/mathml/element/mfrac#linethickness",
+          "url": "$MDN_URL$/web/mathml/reference/element/mfrac#linethickness",
           "status": [
             "StandardTrack"
           ],
@@ -283,15 +443,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "9",
             "SafariIOS": "9"
           },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the thickness of the horizontal fraction line."
         },
         "numalign": {
-          "url": "$MDN_URL$/web/mathml/element/mfrac#numalign",
+          "url": "$MDN_URL$/web/mathml/reference/element/mfrac#numalign",
           "status": [
             "Deprecated"
           ],
@@ -299,12 +464,15 @@
             "Safari": "5.1",
             "SafariIOS": "5"
           },
+          "baseline": {
+            "level": "NONE"
+          },
           "doc": "The alignment of the numerator over the fraction. Possible values are: <code>left</code>, <code>center</code> (default), and <code>right</code>."
         }
       }
     },
     "mi": {
-      "url": "$MDN_URL$/web/mathml/element/mi",
+      "url": "$MDN_URL$/web/mathml/reference/element/mi",
       "status": [
         "StandardTrack"
       ],
@@ -312,15 +480,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mi&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element indicates that the content should be rendered as an <strong>identifier</strong>, such as a function name, variable or symbolic constant.\n<p>By default <code>&lt;mi&gt;</code> elements that contain multiple characters are a rendered as normal text, while single character characters are rendered as italic: the same formatting behaviour as the <a href=\"$MDN_URL$/Web/CSS/text-transform\">CSS <code>text-transform</code></a> property with a value of <code>math-auto</code>.\nThe <code>mathvariant</code> attribute with a value of <code>normal</code> can be used to reset a single character to the normal font.\n<p>In order to use a particular form of a character such as bold/italic, serif, sans-serif, script/calligraphy, monospaced, double-struck, and so on, you should use the appropriate <a href=\"https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols\" class=\"external\" target=\"_blank\">Mathematical Alphanumeric Symbols</a>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> In a previous specification (MathML3), the <code>mathvariant</code> attribute was used to define logical classes that could apply the character formatting for mathematical alphanumeric symbols.\nThe associated values are now deprecated, and expected to be removed from browsers in future releases.\n</div>",
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mi&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element indicates that the content should be rendered as an <strong>identifier</strong>, such as a function name, variable or symbolic constant.\n<p>By default <code>&lt;mi&gt;</code> elements that contain multiple characters are a rendered as normal text, while single character characters are rendered as italic: the same formatting behavior as the <a href=\"$MDN_URL$/Web/CSS/text-transform\">CSS <code>text-transform</code></a> property with a value of <code>math-auto</code>.\nThe <code>mathvariant</code> attribute with a value of <code>normal</code> can be used to reset a single character to the normal font.\n<p>In order to use a particular form of a character such as bold/italic, serif, sans-serif, script/calligraphy, monospaced, double-struck, and so on, you should use the appropriate <a href=\"https://en.wikipedia.org/wiki/Mathematical_Alphanumeric_Symbols\" class=\"external\" target=\"_blank\">Mathematical Alphanumeric Symbols</a>.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nIn a previous specification (MathML3), the <code>mathvariant</code> attribute was used to define logical classes that could apply the character formatting for mathematical alphanumeric symbols.\nThe associated values are now deprecated, and expected to be removed from browsers in future releases.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "mathvariant": {
-          "url": "$MDN_URL$/web/mathml/element/mi#mathvariant",
+          "url": "$MDN_URL$/web/mathml/reference/element/mi#mathvariant",
           "status": [
             "StandardTrack"
           ],
@@ -329,15 +505,21 @@
             "ChromeAndroid": "109",
             "Edge": "109",
             "Firefox": "70",
+            "FirefoxAndroid": "79",
+            "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "The only value allowed in the current specification is <code>normal</code> (case insensitive):\n<dl>\n<dt id=\"normal\"><a href=\"#normal\"><code>normal</code></a></dt>\n<dd>\n<p>Use default/normal rendering, removing automatic styling of single characters to italic.\n</dd>\n</dl>\n<p>Deprecated legacy values are:\n<dl>\n<dt id=\"bold\"><a href=\"#bold\"><code>bold</code></a> </dt>\n<dd>\n<p>Try and use bold characters e.g. \"𝐀\".\n</dd>\n<dt id=\"italic\"><a href=\"#italic\"><code>italic</code></a> </dt>\n<dd>\n<p>Try and use italic characters e.g. \"𝐴\".\n</dd>\n<dt id=\"bold-italic\"><a href=\"#bold-italic\"><code>bold-italic</code></a> </dt>\n<dd>\n<p>Try and use bold-italic characters e.g. \"𝑨\".\n</dd>\n<dt id=\"double-struck\"><a href=\"#double-struck\"><code>double-struck</code></a> </dt>\n<dd>\n<p>Try and use double-struck characters e.g. \"𝔸\".\n</dd>\n<dt id=\"bold-fraktur\"><a href=\"#bold-fraktur\"><code>bold-fraktur</code></a> </dt>\n<dd>\n<p>Try and use bold-fraktur characters e.g. \"𝕬\".\n</dd>\n<dt id=\"script\"><a href=\"#script\"><code>script</code></a> </dt>\n<dd>\n<p>Try and use script characters e.g. \"𝒜\".\n</dd>\n<dt id=\"bold-script\"><a href=\"#bold-script\"><code>bold-script</code></a> </dt>\n<dd>\n<p>Try and use bold-script characters e.g. \"𝓐\".\n</dd>\n<dt id=\"fraktur\"><a href=\"#fraktur\"><code>fraktur</code></a> </dt>\n<dd>\n<p>Try and use fraktur characters e.g. \"𝔄\".\n</dd>\n<dt id=\"sans-serif\"><a href=\"#sans-serif\"><code>sans-serif</code></a> </dt>\n<dd>\n<p>Try and use sans-serif characters e.g. \"𝖠\".\n</dd>\n<dt id=\"bold-sans-serif\"><a href=\"#bold-sans-serif\"><code>bold-sans-serif</code></a> </dt>\n<dd>\n<p>Try and use bold-sans-serif characters e.g. \"𝗔\".\n</dd>\n<dt id=\"sans-serif-italic\"><a href=\"#sans-serif-italic\"><code>sans-serif-italic</code></a> </dt>\n<dd>\n<p>Try and use sans-serif-italic characters e.g. \"𝘈\".\n</dd>\n<dt id=\"sans-serif-bold-italic\"><a href=\"#sans-serif-bold-italic\"><code>sans-serif-bold-italic</code></a> </dt>\n<dd>\n<p>Try and use sans-serif-bold-italic characters e.g. \"𝘼\".\n</dd>\n<dt id=\"monospace\"><a href=\"#monospace\"><code>monospace</code></a> </dt>\n<dd>\n<p>Try and use monospace characters e.g. \"𝙰\".\n</dd>\n<dt id=\"initial\"><a href=\"#initial\"><code>initial</code></a> </dt>\n<dd>\n<p>Try and use initial characters e.g. \"𞸢\".\n</dd>\n<dt id=\"tailed\"><a href=\"#tailed\"><code>tailed</code></a> </dt>\n<dd>\n<p>Try and use tailed characters e.g. \"𞹂\".\n</dd>\n<dt id=\"looped\"><a href=\"#looped\"><code>looped</code></a> </dt>\n<dd>\n<p>Try and use looped characters e.g. \"𞺂\".\n</dd>\n<dt id=\"stretched\"><a href=\"#stretched\"><code>stretched</code></a> </dt>\n<dd>\n<p>Try and use stretched characters e.g. \"𞹢\".\n</dd>\n</dl>"
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "The only value allowed in the current specification is <code>normal</code> (case insensitive):\n<dl>\n<dt id=\"normal\"><a href=\"#normal\"><code>normal</code></a></dt>\n<dd>\n<p>Use default/normal rendering, removing automatic styling of single characters to italic.\n</dd>\n</dl>\n<p>Deprecated legacy values are:\n<dl>\n<dt id=\"bold\"><a href=\"#bold\"><code>bold</code> </a></dt>\n<dd>\n<p>Try and use bold characters e.g., \"𝐀\".\n</dd>\n<dt id=\"italic\"><a href=\"#italic\"><code>italic</code> </a></dt>\n<dd>\n<p>Try and use italic characters e.g., \"𝐴\".\n</dd>\n<dt id=\"bold-italic\"><a href=\"#bold-italic\"><code>bold-italic</code> </a></dt>\n<dd>\n<p>Try and use bold-italic characters e.g., \"𝑨\".\n</dd>\n<dt id=\"double-struck\"><a href=\"#double-struck\"><code>double-struck</code> </a></dt>\n<dd>\n<p>Try and use double-struck characters e.g., \"𝔸\".\n</dd>\n<dt id=\"bold-fraktur\"><a href=\"#bold-fraktur\"><code>bold-fraktur</code> </a></dt>\n<dd>\n<p>Try and use bold-fraktur characters e.g., \"𝕬\".\n</dd>\n<dt id=\"script\"><a href=\"#script\"><code>script</code> </a></dt>\n<dd>\n<p>Try and use script characters e.g., \"𝒜\".\n</dd>\n<dt id=\"bold-script\"><a href=\"#bold-script\"><code>bold-script</code> </a></dt>\n<dd>\n<p>Try and use bold-script characters e.g., \"𝓐\".\n</dd>\n<dt id=\"fraktur\"><a href=\"#fraktur\"><code>fraktur</code> </a></dt>\n<dd>\n<p>Try and use fraktur characters e.g., \"𝔄\".\n</dd>\n<dt id=\"sans-serif\"><a href=\"#sans-serif\"><code>sans-serif</code> </a></dt>\n<dd>\n<p>Try and use sans-serif characters e.g., \"𝖠\".\n</dd>\n<dt id=\"bold-sans-serif\"><a href=\"#bold-sans-serif\"><code>bold-sans-serif</code> </a></dt>\n<dd>\n<p>Try and use bold-sans-serif characters e.g., \"𝗔\".\n</dd>\n<dt id=\"sans-serif-italic\"><a href=\"#sans-serif-italic\"><code>sans-serif-italic</code> </a></dt>\n<dd>\n<p>Try and use sans-serif-italic characters e.g., \"𝘈\".\n</dd>\n<dt id=\"sans-serif-bold-italic\"><a href=\"#sans-serif-bold-italic\"><code>sans-serif-bold-italic</code> </a></dt>\n<dd>\n<p>Try and use sans-serif-bold-italic characters e.g., \"𝘼\".\n</dd>\n<dt id=\"monospace\"><a href=\"#monospace\"><code>monospace</code> </a></dt>\n<dd>\n<p>Try and use monospace characters e.g., \"𝙰\".\n</dd>\n<dt id=\"initial\"><a href=\"#initial\"><code>initial</code> </a></dt>\n<dd>\n<p>Try and use initial characters e.g., \"𞸢\".\n</dd>\n<dt id=\"tailed\"><a href=\"#tailed\"><code>tailed</code> </a></dt>\n<dd>\n<p>Try and use tailed characters e.g., \"𞹂\".\n</dd>\n<dt id=\"looped\"><a href=\"#looped\"><code>looped</code> </a></dt>\n<dd>\n<p>Try and use looped characters e.g., \"𞺂\".\n</dd>\n<dt id=\"stretched\"><a href=\"#stretched\"><code>stretched</code> </a></dt>\n<dd>\n<p>Try and use stretched characters e.g., \"𞹢\".\n</dd>\n</dl>"
         }
       }
     },
     "mmultiscripts": {
-      "url": "$MDN_URL$/web/mathml/element/mmultiscripts",
+      "url": "$MDN_URL$/web/mathml/reference/element/mmultiscripts",
       "status": [
         "StandardTrack"
       ],
@@ -345,15 +527,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mmultiscripts&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach an arbitrary number of subscripts and superscripts to an expression at once, generalizing the <code><a href=\"$MDN_URL$/Web/MathML/Element/msubsup\" >&lt;msubsup&gt;</a></code> element. Scripts can be either prescripts (placed before the expression) or postscripts (placed after it).\n<p>MathML uses the syntax below, that is a base expression, followed by an arbitrary number of postsubscript-postsuperscript pairs (attached in the given order) optionally followed by an <code>&lt;mprescripts&gt;</code> and an arbitrary number of presubscript-presuperscript pairs (attached in the given order). In addition, empty <code>&lt;mrow&gt;</code> elements can be used to represent absent scripts.\n<div>\n```html\n<mmultiscripts>\n  base\n  postsubscript1 postsuperscript1\n  postsubscript2 postsuperscript2\n  postsubscript3 postsuperscript3\n  ...\n  postsubscriptN postsuperscriptN\n  <mprescripts/>                ⎫\n  presubscript1 presuperscript1 ⎪\n  presubscript2 presuperscript2 ⎬ Optional\n  presubscript3 presuperscript3 ⎪\n  ...                           ⎪\n  presubscriptM presuperscriptM ⎭\n</mmultiscripts>\n```\n</div>",
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mmultiscripts&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach an arbitrary number of subscripts and superscripts to an expression at once, generalizing the <a href=\"$MDN_URL$/Web/MathML/Reference/Element/msubsup\" ><code>&lt;msubsup&gt;</code></a> element. Scripts can be either pre-scripts (placed <strong>before</strong> the expression) or post-scripts (placed <strong>after</strong> it).\n<p>MathML uses the syntax below, that is a base expression, followed by an arbitrary number of post-subscript and post-superscript pairs (attached in the given order) optionally followed by an <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mprescripts\" ><code>&lt;mprescripts&gt;</code></a> element and an arbitrary number of pre-subscript and pre-superscript pairs (attached in the given order). In addition, empty <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mrow\" ><code>&lt;mrow&gt;</code></a> elements can be used to represent absent scripts.\n<div>\n```html\n<mmultiscripts>\n  base\n  post-sub-script-1 post-sup-script-1\n  post-sub-script-2 post-sup-script-2\n  post-sub-script-3 post-sup-script-3\n  ...\n  post-sub-script-N post-sup-script-N\n  <mprescripts />                    ⎫\n  pre-sub-script-1 pre-sup-script-1  ⎪\n  pre-sub-script-2 pre-sup-script-2  ⎬ Optional\n  pre-sub-script-3 pre-sup-script-3  ⎪\n  ...                                ⎪\n  pre-sub-script-M pre-sup-script-N  ⎭\n</mmultiscripts>\n```\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "subscriptshift": {
-          "url": "$MDN_URL$/web/mathml/element/mmultiscripts#subscriptshift",
+          "url": "$MDN_URL$/web/mathml/reference/element/mmultiscripts#subscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -361,23 +551,29 @@
             "Safari": "7",
             "SafariIOS": "7"
           },
+          "baseline": {
+            "level": "NONE"
+          },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
         },
         "superscriptshift": {
-          "url": "$MDN_URL$/web/mathml/element/mmultiscripts#superscriptshift",
+          "url": "$MDN_URL$/web/mathml/reference/element/mmultiscripts#superscriptshift",
           "status": [
             "Deprecated"
           ],
           "compatibility": {
             "Safari": "7",
             "SafariIOS": "7"
+          },
+          "baseline": {
+            "level": "NONE"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
         }
       }
     },
     "mn": {
-      "url": "$MDN_URL$/web/mathml/element/mn",
+      "url": "$MDN_URL$/web/mathml/reference/element/mn",
       "status": [
         "StandardTrack"
       ],
@@ -385,15 +581,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mn&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element represents a <strong>numeric</strong> literal which is normally a sequence of digits with a possible separator (a dot or a comma). However, it is also allowed to have arbitrary text in it which is actually a numeric quantity, for example \"eleven\"."
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mn&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element represents a <strong>numeric</strong> literal which is normally a sequence of digits with a possible separator (a dot or a comma). However, it is also allowed to have arbitrary text in it which is actually a numeric quantity, for example \"eleven\".",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      }
     },
     "mo": {
-      "url": "$MDN_URL$/web/mathml/element/mo",
+      "url": "$MDN_URL$/web/mathml/reference/element/mo",
       "status": [
         "StandardTrack"
       ],
@@ -401,28 +605,40 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5",
         "SafariIOS": "4.2"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;mo&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element represents an <strong>operator</strong> in a broad sense. Besides operators in strict mathematical meaning, this element also includes \"operators\" like parentheses, separators like comma and semicolon, or \"absolute value\" bars.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "accent": {
-          "url": "$MDN_URL$/web/mathml/element/mo#accent",
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#accent",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be treated as an accent when used as an <a href=\"$MDN_URL$/Web/MathML/Element/munder\">under</a>- or <a href=\"$MDN_URL$/Web/MathML/Element/mover\">overscript</a> (i.e. drawn bigger and closer to the base expression)."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be treated as an accent when used as an <a href=\"$MDN_URL$/Web/MathML/Reference/Element/munder\">under</a>- or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mover\">overscript</a> (i.e., drawn bigger and closer to the base expression)."
         },
         "fence": {
-          "url": "$MDN_URL$/web/mathml/element/mo#fence",
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a fence (such as parentheses). There is no visual effect for this attribute."
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#fence",
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a fence (such as parentheses). There is no visual effect for this attribute."
         },
         "form": {
-          "url": "$MDN_URL$/web/mathml/element/mo#form",
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#form",
           "status": [
             "StandardTrack"
           ],
@@ -430,30 +646,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
-            "Opera": "95",
-            "Safari": "8",
-            "SafariIOS": "8"
-          }
-        },
-        "largeop": {
-          "url": "$MDN_URL$/web/mathml/element/mo#largeop",
-          "status": [
-            "StandardTrack"
-          ],
-          "compatibility": {
-            "Chrome": "109",
-            "ChromeAndroid": "109",
-            "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "8",
             "SafariIOS": "8"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be drawn bigger when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>normal</code>."
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "An <a href=\"$MDN_URL$/Glossary/Enumerated\">enumerated</a> attribute specifying how the operator is to be presented. For example, depending on the value, a different amount of space might be rendered on either side of the operator. It can have one of the following values:\n<ul>\n<li><code>prefix</code>: The operator appears before its operands. For example, in the expression <code>+ a</code>, the <code>+</code> is a prefix operator.</li>\n<li><code>infix</code>: The operator appears between its operands. In the expression <code>a + b</code>, the <code>+</code> is an infix operator.</li>\n<li><code>postfix</code>: The operator appears after its operands. For example, in the expression <code>a +</code>, the <code>+</code> is a postfix operator.</li>\n</ul>"
         },
-        "lspace": {
-          "url": "$MDN_URL$/web/mathml/element/mo#lspace",
+        "largeop": {
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#largeop",
           "status": [
             "StandardTrack"
           ],
@@ -461,15 +667,41 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "8",
             "SafariIOS": "8"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator should be drawn bigger when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>normal</code>."
+        },
+        "lspace": {
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#lspace",
+          "status": [
+            "StandardTrack"
+          ],
+          "compatibility": {
+            "Chrome": "109",
+            "ChromeAndroid": "109",
+            "Edge": "109",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
+            "Opera": "95",
+            "Safari": "8",
+            "SafariIOS": "8"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the amount of space before the operator."
         },
         "maxsize": {
-          "url": "$MDN_URL$/web/mathml/element/mo#maxsize",
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#maxsize",
           "status": [
             "StandardTrack"
           ],
@@ -477,15 +709,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "8",
             "SafariIOS": "8"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the maximum size of the operator when it is stretchy."
         },
         "minsize": {
-          "url": "$MDN_URL$/web/mathml/element/mo#minsize",
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#minsize",
           "status": [
             "StandardTrack"
           ],
@@ -493,19 +730,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "8",
             "SafariIOS": "8"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum size of the operator when it is stretchy."
         },
         "movablelimits": {
-          "url": "$MDN_URL$/web/mathml/element/mo#movablelimits",
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether attached under- and overscripts move to sub- and superscript positions when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>compact</code>."
-        },
-        "moveablelimits": {
-          "url": "$MDN_URL$/web/mathml/element/mo#moveablelimits",
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#movablelimits",
           "status": [
             "StandardTrack"
           ],
@@ -513,14 +751,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
-          }
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether attached under- and overscripts move to sub- and superscript positions when <a href=\"$MDN_URL$/Web/CSS/math-style\"><code>math-style</code></a> is set to <code>compact</code>."
         },
         "rspace": {
-          "url": "$MDN_URL$/web/mathml/element/mo#rspace",
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#rspace",
           "status": [
             "StandardTrack"
           ],
@@ -528,19 +772,24 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "8",
             "SafariIOS": "8"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the amount of space after the operator."
         },
         "separator": {
-          "url": "$MDN_URL$/web/mathml/element/mo#separator",
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a separator (such as commas). There is no visual effect for this attribute."
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#separator",
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator is a separator (such as commas). There is no visual effect for this attribute."
         },
         "stretchy": {
-          "url": "$MDN_URL$/web/mathml/element/mo#stretchy",
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#stretchy",
           "status": [
             "StandardTrack"
           ],
@@ -548,15 +797,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "5",
             "SafariIOS": "4.2"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator stretches to the size of the adjacent element."
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the operator stretches to the size of the adjacent element."
         },
         "symmetric": {
-          "url": "$MDN_URL$/web/mathml/element/mo#symmetric",
+          "url": "$MDN_URL$/web/mathml/reference/element/mo#symmetric",
           "status": [
             "StandardTrack"
           ],
@@ -564,17 +818,22 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "8",
             "SafariIOS": "8"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether a stretchy operator should be vertically symmetric around the imaginary math axis (centered fraction line)."
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether a stretchy operator should be vertically symmetric around the imaginary math axis (centered fraction line)."
         }
       }
     },
     "mover": {
-      "url": "$MDN_URL$/web/mathml/element/mover",
+      "url": "$MDN_URL$/web/mathml/reference/element/mover",
       "status": [
         "StandardTrack"
       ],
@@ -582,15 +841,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;mover&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach an accent or a limit over an expression. Use the following syntax: <code>&lt;mover&gt; base overscript &lt;/mover&gt;</code>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "accent": {
-          "url": "$MDN_URL$/web/mathml/element/mover#accent",
+          "url": "$MDN_URL$/web/mathml/reference/element/mover#accent",
           "status": [
             "StandardTrack"
           ],
@@ -598,17 +865,22 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e., drawn bigger and closer to the base expression)."
         }
       }
     },
     "mpadded": {
-      "url": "$MDN_URL$/web/mathml/element/mpadded",
+      "url": "$MDN_URL$/web/mathml/reference/element/mpadded",
       "status": [
         "StandardTrack"
       ],
@@ -616,15 +888,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;mpadded&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to add extra padding and to set the general adjustment of position and size of enclosed contents.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "depth": {
-          "url": "$MDN_URL$/web/mathml/element/mpadded#depth",
+          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#depth",
           "status": [
             "StandardTrack"
           ],
@@ -632,15 +912,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the <code>&lt;mpadded&gt;</code> element."
         },
         "height": {
-          "url": "$MDN_URL$/web/mathml/element/mpadded#height",
+          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#height",
           "status": [
             "StandardTrack"
           ],
@@ -648,15 +933,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired height (above the baseline) of the <code>&lt;mpadded&gt;</code> element."
         },
         "lspace": {
-          "url": "$MDN_URL$/web/mathml/element/mpadded#lspace",
+          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#lspace",
           "status": [
             "StandardTrack"
           ],
@@ -664,15 +954,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
           },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the horizontal location of the positioning point of the child content with respect to the positioning point of the <code>&lt;mpadded&gt;</code> element."
         },
         "voffset": {
-          "url": "$MDN_URL$/web/mathml/element/mpadded#voffset",
+          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#voffset",
           "status": [
             "StandardTrack"
           ],
@@ -681,14 +976,19 @@
             "ChromeAndroid": "109",
             "Edge": "109",
             "Firefox": "7",
+            "FirefoxAndroid": "7",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
           },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the vertical location of the positioning point of the child content with respect to the positioning point of the <code>&lt;mpadded&gt;</code> element."
         },
         "width": {
-          "url": "$MDN_URL$/web/mathml/element/mpadded#width",
+          "url": "$MDN_URL$/web/mathml/reference/element/mpadded#width",
           "status": [
             "StandardTrack"
           ],
@@ -696,17 +996,22 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired horizontal length of the <code>&lt;mpadded&gt;</code> element."
         }
       }
     },
     "mphantom": {
-      "url": "$MDN_URL$/web/mathml/element/mphantom",
+      "url": "$MDN_URL$/web/mathml/reference/element/mphantom",
       "status": [
         "StandardTrack"
       ],
@@ -714,15 +1019,47 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mphantom&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is rendered invisibly, but dimensions (such as height, width, and baseline position) are still kept."
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mphantom&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is rendered invisibly, but dimensions (such as height, width, and baseline position) are still kept.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      }
+    },
+    "mprescripts": {
+      "url": "$MDN_URL$/web/mathml/reference/element/mprescripts",
+      "status": [
+        "StandardTrack"
+      ],
+      "compatibility": {
+        "Chrome": "109",
+        "ChromeAndroid": "109",
+        "Edge": "109",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
+        "Opera": "95",
+        "Safari": "6",
+        "SafariIOS": "6"
+      },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mprescripts&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used within an <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mmultiscripts\" ><code>&lt;mmultiscripts&gt;</code></a> element to indicate the start of the pre-scripts elements (subscripts and superscripts that are placed <strong>before</strong> the base expression).",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      }
     },
     "mroot": {
-      "url": "$MDN_URL$/web/mathml/element/mroot",
+      "url": "$MDN_URL$/web/mathml/reference/element/mroot",
       "status": [
         "StandardTrack"
       ],
@@ -730,15 +1067,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mroot&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to display roots with an explicit index. Two arguments are accepted, which leads to the syntax: <code>&lt;mroot&gt; base index &lt;/mroot&gt;</code>."
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mroot&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to display roots with an explicit index. Two arguments are accepted, which leads to the syntax: <code>&lt;mroot&gt; base index &lt;/mroot&gt;</code>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      }
     },
     "mrow": {
-      "url": "$MDN_URL$/web/mathml/element/mrow",
+      "url": "$MDN_URL$/web/mathml/reference/element/mrow",
       "status": [
         "StandardTrack"
       ],
@@ -746,15 +1091,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mrow&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to group sub-expressions, which usually contain one or more <a href=\"$MDN_URL$/Web/MathML/Element/mo\">operators</a> with their respective operands (such as <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" >&lt;mi&gt;</a></code> and <code><a href=\"$MDN_URL$/Web/MathML/Element/mn\" >&lt;mn&gt;</a></code>). This element renders as a horizontal row containing its arguments.\n<p>When writing a MathML expression, you should group elements within an <code>&lt;mrow&gt;</code> in the same way as they are grouped in the mathematical interpretation of the expression. Proper grouping helps the rendering of the expression in several ways:\n<ul>\n<li>It can improve the display by possibly affecting spacing and preventing line breaks.</li>\n<li>It simplifies the interpretation of the expression by automated systems such as computer algebra systems and audio renderers.</li>\n</ul>"
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mrow&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to group sub-expressions, which usually contain one or more <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mo\">operators</a> with their respective operands (such as <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mi\" ><code>&lt;mi&gt;</code></a> and <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mn\" ><code>&lt;mn&gt;</code></a>). This element renders as a horizontal row containing its arguments.\n<p>When writing a MathML expression, you should group elements within an <code>&lt;mrow&gt;</code> in the same way as they are grouped in the mathematical interpretation of the expression. Proper grouping helps the rendering of the expression in several ways:\n<ul>\n<li>It can improve the display by possibly affecting spacing and preventing line breaks.</li>\n<li>It simplifies the interpretation of the expression by automated systems such as computer algebra systems and audio renderers.</li>\n</ul>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      }
     },
     "ms": {
-      "url": "$MDN_URL$/web/mathml/element/ms",
+      "url": "$MDN_URL$/web/mathml/reference/element/ms",
       "status": [
         "StandardTrack"
       ],
@@ -762,25 +1115,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "9",
         "SafariIOS": "9"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;ms&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element represents a <strong>string</strong> literal meant to be interpreted by programming languages and computer algebra systems.",
-      "attrs": {
-        "lquote": {
-          "url": "$MDN_URL$/web/mathml/element/ms#lquote",
-          "doc": "The opening quote to enclose the content. The default value is <code>&amp;quot;</code>."
-        },
-        "rquote": {
-          "url": "$MDN_URL$/web/mathml/element/ms#rquote",
-          "doc": "The closing quote to enclose the content. The default value is <code>&amp;quot;</code>."
-        }
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
       }
     },
     "mspace": {
-      "url": "$MDN_URL$/web/mathml/element/mspace",
+      "url": "$MDN_URL$/web/mathml/reference/element/mspace",
       "status": [
         "StandardTrack"
       ],
@@ -788,15 +1139,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "7",
         "SafariIOS": "7"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;mspace&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to display a blank space, whose size is set by its attributes.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "depth": {
-          "url": "$MDN_URL$/web/mathml/element/mspace#depth",
+          "url": "$MDN_URL$/web/mathml/reference/element/mspace#depth",
           "status": [
             "StandardTrack"
           ],
@@ -804,15 +1163,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "7",
             "SafariIOS": "7"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired depth (below the baseline) of the space."
         },
         "height": {
-          "url": "$MDN_URL$/web/mathml/element/mspace#height",
+          "url": "$MDN_URL$/web/mathml/reference/element/mspace#height",
           "status": [
             "StandardTrack"
           ],
@@ -820,15 +1184,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "7",
             "SafariIOS": "7"
           },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired height (above the baseline) of the space."
         },
         "width": {
-          "url": "$MDN_URL$/web/mathml/element/mspace#width",
+          "url": "$MDN_URL$/web/mathml/reference/element/mspace#width",
           "status": [
             "StandardTrack"
           ],
@@ -836,17 +1205,22 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "7",
             "SafariIOS": "7"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the desired width of the space."
         }
       }
     },
     "msqrt": {
-      "url": "$MDN_URL$/web/mathml/element/msqrt",
+      "url": "$MDN_URL$/web/mathml/reference/element/msqrt",
       "status": [
         "StandardTrack"
       ],
@@ -854,15 +1228,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5.1",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>&lt;msqrt&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to display square roots (no index is displayed). The square root accepts only one argument, which leads to the following syntax: <code>&lt;msqrt&gt; base &lt;/msqrt&gt;</code>."
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;msqrt&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to display square roots (no index is displayed). The square root accepts only one argument, which leads to the following syntax: <code>&lt;msqrt&gt; base &lt;/msqrt&gt;</code>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      }
     },
     "mstyle": {
-      "url": "$MDN_URL$/web/mathml/element/mstyle",
+      "url": "$MDN_URL$/web/mathml/reference/element/mstyle",
       "status": [
         "StandardTrack"
       ],
@@ -871,14 +1253,22 @@
         "ChromeAndroid": "109",
         "Edge": "109",
         "Firefox": "6",
+        "FirefoxAndroid": "6",
         "Opera": "95",
         "Safari": "5.1",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>&lt;mstyle&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to change the style of its children.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Historically, this element accepted almost all the MathML attributes and it was used to override the default attribute values of its descendants. It was later restricted to only a few relevant styling attributes that were used in existing web pages. Nowadays, these styling attributes are <a href=\"$MDN_URL$/Web/MathML/Global_attributes\">common to all MathML elements</a> and so <code>&lt;mstyle&gt;</code> is really just equivalent to an <a href=\"$MDN_URL$/Web/MathML/Element/mrow\"><code>&lt;mrow&gt;</code></a> element. However, <code>&lt;mstyle&gt;</code> may still be relevant for compatibility with MathML implementations outside browsers.\n</div>",
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mstyle&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to change the style of its children.\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nHistorically, this element accepted almost all the MathML attributes and it was used to override the default attribute values of its descendants. It was later restricted to only a few relevant styling attributes that were used in existing web pages. Nowadays, these styling attributes are <a href=\"$MDN_URL$/Web/MathML/Reference/Global_attributes\">common to all MathML elements</a> and so <code>&lt;mstyle&gt;</code> is really just equivalent to an <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mrow\"><code>&lt;mrow&gt;</code></a> element. However, <code>&lt;mstyle&gt;</code> may still be relevant for compatibility with MathML implementations outside browsers.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "background": {
-          "url": "$MDN_URL$/web/mathml/element/mstyle#background",
+          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#background",
           "status": [
             "Deprecated"
           ],
@@ -886,10 +1276,13 @@
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Use <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> instead."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/background-color\"><code>background-color</code></a> instead."
         },
         "color": {
-          "url": "$MDN_URL$/web/mathml/element/mstyle#color",
+          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#color",
           "status": [
             "Deprecated"
           ],
@@ -897,10 +1290,13 @@
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Use <a href=\"$MDN_URL$/Web/CSS/color\"><code>color</code></a> instead."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/color\"><code>color</code></a> instead."
         },
         "fontsize": {
-          "url": "$MDN_URL$/web/mathml/element/mstyle#fontsize",
+          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontsize",
           "status": [
             "Deprecated"
           ],
@@ -908,10 +1304,13 @@
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Use <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a> instead."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/font-size\"><code>font-size</code></a> instead."
         },
         "fontstyle": {
-          "url": "$MDN_URL$/web/mathml/element/mstyle#fontstyle",
+          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontstyle",
           "status": [
             "Deprecated"
           ],
@@ -919,10 +1318,13 @@
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Use <a href=\"$MDN_URL$/Web/CSS/font-style\"><code>font-style</code></a> instead."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/font-style\"><code>font-style</code></a> instead."
         },
         "fontweight": {
-          "url": "$MDN_URL$/web/mathml/element/mstyle#fontweight",
+          "url": "$MDN_URL$/web/mathml/reference/element/mstyle#fontweight",
           "status": [
             "Deprecated"
           ],
@@ -930,28 +1332,15 @@
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Use <a href=\"$MDN_URL$/Web/CSS/font-weight\"><code>font-weight</code></a> instead."
-        },
-        "scriptminsize": {
-          "url": "$MDN_URL$/web/mathml/element/mstyle#scriptminsize",
-          "status": [
-            "Deprecated"
-          ],
-          "compatibility": {},
-          "doc": "Specifies a minimum font size allowed due to changes in <code>scriptlevel</code>. The default value is <code>8pt</code>."
-        },
-        "scriptsizemultiplier": {
-          "url": "$MDN_URL$/web/mathml/element/mstyle#scriptsizemultiplier",
-          "status": [
-            "Deprecated"
-          ],
-          "compatibility": {},
-          "doc": "Specifies the multiplier to be used to adjust font size due to changes in <code>scriptlevel</code>. The default value is <code>0.71</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Use CSS property <a href=\"$MDN_URL$/Web/CSS/font-weight\"><code>font-weight</code></a> instead."
         }
       }
     },
     "msub": {
-      "url": "$MDN_URL$/web/mathml/element/msub",
+      "url": "$MDN_URL$/web/mathml/reference/element/msub",
       "status": [
         "StandardTrack"
       ],
@@ -959,28 +1348,39 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;msub&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach a subscript to an expression.\n<p>It uses the following syntax: <code>&lt;msub&gt; base subscript &lt;/msub&gt;</code>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "subscriptshift": {
-          "url": "$MDN_URL$/web/mathml/element/msub#subscriptshift",
+          "url": "$MDN_URL$/web/mathml/reference/element/msub#subscriptshift",
           "status": [
             "Deprecated"
           ],
           "compatibility": {
             "Safari": "7",
             "SafariIOS": "7"
+          },
+          "baseline": {
+            "level": "NONE"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
         }
       }
     },
     "msubsup": {
-      "url": "$MDN_URL$/web/mathml/element/msubsup",
+      "url": "$MDN_URL$/web/mathml/reference/element/msubsup",
       "status": [
         "StandardTrack"
       ],
@@ -988,15 +1388,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;msubsup&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach both a subscript and a superscript, together, to an expression.\n<p>It uses the following syntax: <code>&lt;msubsup&gt; base subscript superscript &lt;/msubsup&gt;</code>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "subscriptshift": {
-          "url": "$MDN_URL$/web/mathml/element/msubsup#subscriptshift",
+          "url": "$MDN_URL$/web/mathml/reference/element/msubsup#subscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -1004,23 +1412,29 @@
             "Safari": "7",
             "SafariIOS": "7"
           },
+          "baseline": {
+            "level": "NONE"
+          },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the subscript down."
         },
         "superscriptshift": {
-          "url": "$MDN_URL$/web/mathml/element/msubsup#superscriptshift",
+          "url": "$MDN_URL$/web/mathml/reference/element/msubsup#superscriptshift",
           "status": [
             "Deprecated"
           ],
           "compatibility": {
             "Safari": "7",
             "SafariIOS": "7"
+          },
+          "baseline": {
+            "level": "NONE"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
         }
       }
     },
     "msup": {
-      "url": "$MDN_URL$/web/mathml/element/msup",
+      "url": "$MDN_URL$/web/mathml/reference/element/msup",
       "status": [
         "StandardTrack"
       ],
@@ -1028,15 +1442,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;msup&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach a superscript to an expression.\n<p>It uses the following syntax: <code>&lt;msup&gt; base superscript &lt;/msup&gt;</code>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "superscriptshift": {
-          "url": "$MDN_URL$/web/mathml/element/msup#superscriptshift",
+          "url": "$MDN_URL$/web/mathml/reference/element/msup#superscriptshift",
           "status": [
             "Deprecated"
           ],
@@ -1044,12 +1466,15 @@
             "Safari": "7",
             "SafariIOS": "7"
           },
+          "baseline": {
+            "level": "NONE"
+          },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the minimum amount to shift the baseline of the superscript up."
         }
       }
     },
     "mtable": {
-      "url": "$MDN_URL$/web/mathml/element/mtable",
+      "url": "$MDN_URL$/web/mathml/reference/element/mtable",
       "status": [
         "StandardTrack"
       ],
@@ -1057,97 +1482,145 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5.1",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>&lt;mtable&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element allows you to create tables or matrices. Its children are <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code> elements (representing rows), each of them having <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" >&lt;mtd&gt;</a></code> elements as its children (representing cells). These elements are similar to <a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> elements of <a href=\"$MDN_URL$/Web/HTML\">HTML</a>.",
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mtable&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element allows you to create tables or matrices. Its children are <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtr\" ><code>&lt;mtr&gt;</code></a> elements (representing rows), each of them having <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtd\" ><code>&lt;mtd&gt;</code></a> elements as its children (representing cells). These elements are similar to <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/table\"><code>&lt;table&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/tr\"><code>&lt;tr&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/td\"><code>&lt;td&gt;</code></a> elements of <a href=\"$MDN_URL$/Web/HTML\">HTML</a>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "align": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#align",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#align",
           "compatibility": {
-            "Firefox": ""
+            "Firefox": "1",
+            "FirefoxAndroid": "4"
           },
-          "doc": "Specifies the <strong>vertical</strong> alignment of the table with respect to its environment.\nPossible values are:\n<ul>\n<li><code>axis</code> (default): The vertical center of the table aligns on the environment's axis (typically the minus sign).</li>\n<li><code>baseline</code>: The vertical center of the table aligns on the environment's baseline.</li>\n<li><code>bottom</code>: The bottom of the table aligns on the environments baseline.</li>\n<li><code>center</code>: See baseline.</li>\n<li><code>top</code>: The top of the table aligns on the environments baseline.</li>\n</ul>\n<p>In addition, values of the <code>align</code> attribute can end with a <em>rownumber</em> (e.g. <code>align=\"center 3\"</code>). This allows you to align the specified row of the table rather than the whole table. A negative Integer value counts rows from the bottom of the table."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies the <strong>vertical</strong> alignment of the table with respect to its environment.\nPossible values are:\n<ul>\n<li><code>axis</code> (default): The vertical center of the table aligns on the environment's axis (typically the minus sign).</li>\n<li><code>baseline</code>: The vertical center of the table aligns on the environment's baseline.</li>\n<li><code>bottom</code>: The bottom of the table aligns on the environments baseline.</li>\n<li><code>center</code>: See baseline.</li>\n<li><code>top</code>: The top of the table aligns on the environments baseline.</li>\n</ul>\n<p>In addition, values of the <code>align</code> attribute can end with a <em>row number</em> (e.g., <code>align=\"center 3\"</code>). This allows you to align the specified row of the table rather than the whole table. A negative Integer value counts rows from the bottom of the table."
         },
         "columnalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#columnalign",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#columnalign",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Specifies the horizontal alignment of the cells. Multiple values separated by space are allowed and apply to the corresponding columns (e.g. <code>columnalign=\"left right center\"</code>). Possible values are: <code>left</code>, <code>center</code> (default) and <code>right</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies the horizontal alignment of the cells. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnalign=\"left right center\"</code>). Possible values are: <code>left</code>, <code>center</code> (default) and <code>right</code>."
         },
         "columnlines": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#columnlines",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#columnlines",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Specifies column borders. Multiple values separated by space are allowed and apply to the corresponding columns (e.g. <code>columnlines=\"none none solid\"</code>). Possible values are: <code>none</code> (default), <code>solid</code> and <code>dashed</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies column borders. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnlines=\"none none solid\"</code>). Possible values are: <code>none</code> (default), <code>solid</code> and <code>dashed</code>."
         },
         "columnspacing": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#columnspacing",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#columnspacing",
           "compatibility": {
-            "Firefox": "33"
+            "Firefox": "33",
+            "FirefoxAndroid": "33"
           },
-          "doc": "Specifies the space between table columns. Multiple values separated by space are allowed and apply to the corresponding columns (e.g. <code>columnspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies the space between table columns. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "frame": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#frame",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#frame",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
+          },
+          "baseline": {
+            "level": "NONE"
           },
           "doc": "Specifies borders of the entire table. Possible values are: <code>none</code> (default), <code>solid</code> and <code>dashed</code>."
         },
         "framespacing": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#framespacing",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#framespacing",
           "compatibility": {
-            "Firefox": "33"
+            "Firefox": "33",
+            "FirefoxAndroid": "33"
+          },
+          "baseline": {
+            "level": "NONE"
           },
           "doc": "Specifies additional space added between the table and frame. The first value specifies the spacing on the right and left; the second value specifies the spacing above and below. Possible values are <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "rowalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#rowalign",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#rowalign",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Specifies the vertical alignment of the cells. Multiple values separated by space are allowed and apply to the corresponding rows (e.g. <code>rowalign=\"top bottom axis\"</code>). Possible values are: <code>axis</code>, <code>baseline</code> (default), <code>bottom</code>, <code>center</code> and <code>top</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies the vertical alignment of the cells. Multiple values separated by space are allowed and apply to the corresponding rows (e.g., <code>rowalign=\"top bottom axis\"</code>). Possible values are: <code>axis</code>, <code>baseline</code> (default), <code>bottom</code>, <code>center</code> and <code>top</code>."
         },
         "rowlines": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#rowlines",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#rowlines",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Specifies row borders. Multiple values separated by space are allowed and apply to the corresponding rows (e.g. <code>rowlines=\"none none solid\"</code>). Possible values are: <code>none</code> (default), <code>solid</code> and <code>dashed</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies row borders. Multiple values separated by space are allowed and apply to the corresponding rows (e.g., <code>rowlines=\"none none solid\"</code>). Possible values are: <code>none</code> (default), <code>solid</code> and <code>dashed</code>."
         },
         "rowspacing": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#rowspacing",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#rowspacing",
           "compatibility": {
-            "Firefox": "33"
+            "Firefox": "33",
+            "FirefoxAndroid": "33"
           },
-          "doc": "Specifies the space between table rows. Multiple values separated by space are allowed and apply to the corresponding rows (e.g. <code>rowspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies the space between table rows. Multiple values separated by space are allowed and apply to the corresponding rows (e.g., <code>rowspacing=\"1em 2em\"</code>). Possible values are <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a>."
         },
         "width": {
-          "url": "$MDN_URL$/web/mathml/element/mtable#width",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtable#width",
           "compatibility": {
-            "Firefox": "13"
+            "Firefox": "13",
+            "FirefoxAndroid": "14"
+          },
+          "baseline": {
+            "level": "NONE"
           },
           "doc": "A <a href=\"$MDN_URL$/Web/CSS/length-percentage\"><code>&lt;length-percentage&gt;</code></a> indicating the width of the entire table."
         }
       }
     },
     "mtd": {
-      "url": "$MDN_URL$/web/mathml/element/mtd",
+      "url": "$MDN_URL$/web/mathml/reference/element/mtd",
       "status": [
         "StandardTrack"
       ],
@@ -1155,24 +1628,36 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5.1",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>&lt;mtd&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element represents a cell in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\">HTML</a>.",
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mtd&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element represents a cell in a table or a matrix. It may only appear in a <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtr\" ><code>&lt;mtr&gt;</code></a> element. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/td\"><code>&lt;td&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\">HTML</a>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "columnalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtd#columnalign",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtd#columnalign",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Specifies the horizontal alignment of this cell and overrides values specified by <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code> or <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code>.\nPossible values are: <code>left</code>, <code>center</code> and <code>right</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies the horizontal alignment of this cell and overrides values specified by <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtable\" ><code>&lt;mtable&gt;</code></a> or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtr\" ><code>&lt;mtr&gt;</code></a>.\nPossible values are: <code>left</code>, <code>center</code> and <code>right</code>."
         },
         "columnspan": {
-          "url": "$MDN_URL$/web/mathml/element/mtd#columnspan",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtd#columnspan",
           "status": [
             "StandardTrack"
           ],
@@ -1180,24 +1665,33 @@
             "Chrome": "117",
             "ChromeAndroid": "117",
             "Edge": "117",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "103",
             "Safari": "5.1",
             "SafariIOS": "5"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-09-15"
           },
           "doc": "A non-negative integer value that indicates on how many columns does the cell extend."
         },
         "rowalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtd#rowalign",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtd#rowalign",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Specifies the vertical alignment of this cell and overrides values specified by <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code> or <code><a href=\"$MDN_URL$/Web/MathML/Element/mtr\" >&lt;mtr&gt;</a></code>.\nPossible values are: <code>axis</code>, <code>baseline</code>, <code>bottom</code>, <code>center</code> and <code>top</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Specifies the vertical alignment of this cell and overrides values specified by <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtable\" ><code>&lt;mtable&gt;</code></a> or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtr\" ><code>&lt;mtr&gt;</code></a>.\nPossible values are: <code>axis</code>, <code>baseline</code>, <code>bottom</code>, <code>center</code> and <code>top</code>."
         },
         "rowspan": {
-          "url": "$MDN_URL$/web/mathml/element/mtd#rowspan",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtd#rowspan",
           "status": [
             "StandardTrack"
           ],
@@ -1205,17 +1699,22 @@
             "Chrome": "117",
             "ChromeAndroid": "117",
             "Edge": "117",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "103",
             "Safari": "5.1",
             "SafariIOS": "5"
+          },
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-09-15"
           },
           "doc": "A non-negative integer value that indicates on how many rows does the cell extend."
         }
       }
     },
     "mtext": {
-      "url": "$MDN_URL$/web/mathml/element/mtext",
+      "url": "$MDN_URL$/web/mathml/reference/element/mtext",
       "status": [
         "StandardTrack"
       ],
@@ -1223,15 +1722,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
-      "doc": "The <strong><code>&lt;mtext&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to render arbitrary text with <em>no</em> notational meaning, such as comments or annotations.\n<p>To display text <em>with</em> notational meaning, use <code><a href=\"$MDN_URL$/Web/MathML/Element/mi\" >&lt;mi&gt;</a></code>, <code><a href=\"$MDN_URL$/Web/MathML/Element/mn\" >&lt;mn&gt;</a></code>, <code><a href=\"$MDN_URL$/Web/MathML/Element/mo\" >&lt;mo&gt;</a></code> or <code><a href=\"$MDN_URL$/Web/MathML/Element/ms\" >&lt;ms&gt;</a></code> instead."
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mtext&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to render arbitrary text with <em>no</em> notational meaning, such as comments or annotations.\n<p>To display text <em>with</em> notational meaning, use <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mi\" ><code>&lt;mi&gt;</code></a>, <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mn\" ><code>&lt;mn&gt;</code></a>, <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mo\" ><code>&lt;mo&gt;</code></a> or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/ms\" ><code>&lt;ms&gt;</code></a> instead.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      }
     },
     "mtr": {
-      "url": "$MDN_URL$/web/mathml/element/mtr",
+      "url": "$MDN_URL$/web/mathml/reference/element/mtr",
       "status": [
         "StandardTrack"
       ],
@@ -1239,35 +1746,51 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5.1",
         "SafariIOS": "5"
       },
-      "doc": "The <strong><code>&lt;mtr&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element represents a row in a table or a matrix. It may only appear in a <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code> element and its children are <code><a href=\"$MDN_URL$/Web/MathML/Element/mtd\" >&lt;mtd&gt;</a></code> elements representing cells. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\">HTML</a>.",
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;mtr&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element represents a row in a table or a matrix. It may only appear in a <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtable\" ><code>&lt;mtable&gt;</code></a> element and its children are <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtd\" ><code>&lt;mtd&gt;</code></a> elements representing cells. This element is similar to the <a href=\"$MDN_URL$/Web/HTML/Reference/Elements/tr\"><code>&lt;tr&gt;</code></a> element of <a href=\"$MDN_URL$/Web/HTML\">HTML</a>.",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "columnalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtr#columnalign",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtr#columnalign",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Overrides the horizontal alignment of cells specified by <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code> for this row. Multiple values separated by space are allowed and apply to the corresponding columns (e.g. <code>columnalign=\"left center right\"</code>). Possible values are: <code>left</code>, <code>center</code> and <code>right</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Overrides the horizontal alignment of cells specified by <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtable\" ><code>&lt;mtable&gt;</code></a> for this row. Multiple values separated by space are allowed and apply to the corresponding columns (e.g., <code>columnalign=\"left center right\"</code>). Possible values are: <code>left</code>, <code>center</code> and <code>right</code>."
         },
         "rowalign": {
-          "url": "$MDN_URL$/web/mathml/element/mtr#rowalign",
+          "url": "$MDN_URL$/web/mathml/reference/element/mtr#rowalign",
           "compatibility": {
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Safari": "5.1",
             "SafariIOS": "5"
           },
-          "doc": "Overrides the vertical alignment of cells specified by <code><a href=\"$MDN_URL$/Web/MathML/Element/mtable\" >&lt;mtable&gt;</a></code> for this row. Possible values are: <code>axis</code>, <code>baseline</code>, <code>bottom</code>, <code>center</code> and <code>top</code>."
+          "baseline": {
+            "level": "NONE"
+          },
+          "doc": "Overrides the vertical alignment of cells specified by <a href=\"$MDN_URL$/Web/MathML/Reference/Element/mtable\" ><code>&lt;mtable&gt;</code></a> for this row. Possible values are: <code>axis</code>, <code>baseline</code>, <code>bottom</code>, <code>center</code> and <code>top</code>."
         }
       }
     },
     "munder": {
-      "url": "$MDN_URL$/web/mathml/element/munder",
+      "url": "$MDN_URL$/web/mathml/reference/element/munder",
       "status": [
         "StandardTrack"
       ],
@@ -1275,15 +1798,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5.1",
         "SafariIOS": "5"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;munder&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach an accent or a limit under an expression. It uses the following syntax: <code>&lt;munder&gt; base underscript &lt;/munder&gt;</code>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "accentunder": {
-          "url": "$MDN_URL$/web/mathml/element/munder#accentunder",
+          "url": "$MDN_URL$/web/mathml/reference/element/munder#accentunder",
           "status": [
             "StandardTrack"
           ],
@@ -1291,17 +1822,22 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the under script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the under script should be treated as an accent (i.e., drawn bigger and closer to the base expression)."
         }
       }
     },
     "munderover": {
-      "url": "$MDN_URL$/web/mathml/element/munderover",
+      "url": "$MDN_URL$/web/mathml/reference/element/munderover",
       "status": [
         "StandardTrack"
       ],
@@ -1309,15 +1845,23 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "6",
         "SafariIOS": "6"
       },
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
       "doc": "The <strong><code>&lt;munderover&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element is used to attach accents or limits both under and over an expression.\n<p>It uses the following syntax: <code>&lt;munderover&gt; base underscript overscript &lt;/munderover&gt;</code>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
+      },
       "attrs": {
         "accent": {
-          "url": "$MDN_URL$/web/mathml/element/munderover#accent",
+          "url": "$MDN_URL$/web/mathml/reference/element/munderover#accent",
           "status": [
             "StandardTrack"
           ],
@@ -1325,15 +1869,20 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the over script should be treated as an accent (i.e., drawn bigger and closer to the base expression)."
         },
         "accentunder": {
-          "url": "$MDN_URL$/web/mathml/element/munderover#accentunder",
+          "url": "$MDN_URL$/web/mathml/reference/element/munderover#accentunder",
           "status": [
             "StandardTrack"
           ],
@@ -1341,17 +1890,22 @@
             "Chrome": "109",
             "ChromeAndroid": "109",
             "Edge": "109",
-            "Firefox": "",
+            "Firefox": "1",
+            "FirefoxAndroid": "4",
             "Opera": "95",
             "Safari": "10",
             "SafariIOS": "10"
           },
-          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the under script should be treated as an accent (i.e. drawn bigger and closer to the base expression)."
+          "baseline": {
+            "level": "LOW",
+            "lowDate": "2023-01-12"
+          },
+          "doc": "A <a href=\"$MDN_URL$/Web/MathML/Reference/Values#mathml-specific_types\"><code>&lt;boolean&gt;</code></a> indicating whether the under script should be treated as an accent (i.e., drawn bigger and closer to the base expression)."
         }
       }
     },
     "semantics": {
-      "url": "$MDN_URL$/web/mathml/element/semantics",
+      "url": "$MDN_URL$/web/mathml/reference/element/semantics",
       "status": [
         "StandardTrack"
       ],
@@ -1359,22 +1913,21 @@
         "Chrome": "109",
         "ChromeAndroid": "109",
         "Edge": "109",
-        "Firefox": "",
+        "Firefox": "1",
+        "FirefoxAndroid": "4",
         "Opera": "95",
         "Safari": "5",
         "SafariIOS": "4.2"
       },
-      "doc": "The <strong><code>&lt;semantics&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element associates annotations with a MathML expression, for example its text source as a <a href=\"https://en.wikipedia.org/wiki/Lightweight_markup_language\" class=\"external\" target=\"_blank\">lightweight markup language</a> or mathematical meaning expressed in a special <a href=\"$MDN_URL$/Glossary/XML\">XML</a> dialect. Typically, its structure is:\n<ul>\n<li>a first child which is a MathML expression to be annotated.</li>\n<li>subsequent <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> elements, the latter being reserved for XML formats such as <a href=\"https://en.wikipedia.org/wiki/OpenMath\" class=\"external\" target=\"_blank\">OpenMath</a>.</li>\n</ul>\n<p>By default, only the first child of the <code>&lt;semantics&gt;</code> element is rendered while the others have their <a href=\"$MDN_URL$/Web/CSS/display\">display</a> set to <code>none</code>.\n<div class=\"notecard note\" id=\"sect1\">\n<p><strong>Note:</strong> Legacy MathML specifications allowed renderers to decide the default rendering according to available annotations. The following rules for determining the visible child have been implemented in some browsers. See <a href=\"https://w3c.github.io/mathml/\" class=\"external\" target=\"_blank\">MathML 4</a> for the distinction between Presentation and Content MathML.\n<ul>\n<li>If no other rules apply: By default only the first child is rendered, which is supposed to be Presentation MathML.</li>\n<li>If the first child is a Presentation MathML element other than <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code>, render the first child.</li>\n<li>If no Presentation MathML is found, render the first <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> child element of <code>&lt;semantics&gt;</code> without a <code>src</code> attribute. For <code>&lt;annotation-xml&gt;</code> elements the <code>encoding</code> attribute must be equal to one of following values:\n<ul>\n<li><code>\"application/mathml-presentation+xml\"</code></li>\n<li><code>\"MathML-Presentation\"</code></li>\n<li><code>\"SVG1.1\"</code></li>\n<li><code>\"text/html\"</code></li>\n<li><code>\"image/svg+xml\"</code></li>\n<li><code>\"application/xml</code>\".</li>\n</ul>\n</li>\n</ul>\n<p>Note that <code>\"application/mathml+xml\"</code> is <em>not</em> mentioned here as it does not distinguish between Content or Presentation MathML.\n</div>",
-      "attrs": {
-        "encoding": {
-          "url": "$MDN_URL$/web/mathml/element/semantics#encoding",
-          "doc": "The encoding of the semantic information in the annotation (e.g. <code>\"MathML-Content\"</code>, <code>\"MathML-Presentation\"</code>, <code>\"application/openmath+xml\"</code>, <code>\"image/png\"</code>)"
-        },
-        "src": {
-          "url": "$MDN_URL$/web/mathml/element/semantics#src",
-          "doc": "The location of an external source for semantic information."
-        }
+      "baseline": {
+        "level": "LOW",
+        "lowDate": "2023-01-12"
+      },
+      "doc": "The <strong><code>&lt;semantics&gt;</code></strong> <a href=\"$MDN_URL$/Web/MathML\">MathML</a> element associates annotations with a MathML expression, for example its text source as a <a href=\"https://en.wikipedia.org/wiki/Lightweight_markup_language\" class=\"external\" target=\"_blank\">lightweight markup language</a> or mathematical meaning expressed in a special <a href=\"$MDN_URL$/Glossary/XML\">XML</a> dialect. Typically, its structure is:\n<ul>\n<li>a first child which is a MathML expression to be annotated.</li>\n<li>subsequent <a href=\"$MDN_URL$/Web/MathML/Reference/Element/annotation\" ><code>&lt;annotation&gt;</code></a> or <a href=\"$MDN_URL$/Web/MathML/Reference/Element/annotation-xml\" ><code>&lt;annotation-xml&gt;</code></a> elements, the latter being reserved for XML formats such as <a href=\"https://en.wikipedia.org/wiki/MathML#Content_MathML\" class=\"external\" target=\"_blank\">Content MathML</a> or <a href=\"$MDN_URL$/Glossary/SVG\">SVG</a>.</li>\n</ul>\n<p>By default, only the first child of the <code>&lt;semantics&gt;</code> element is rendered while the others have their <a href=\"$MDN_URL$/Web/CSS/display\">display</a> set to <code>none</code>.\n<div>\n```css\nsemantics > :not(:first-child) {\n  display: none;\n}\n```\n</div>\n<div class=\"notecard note\">\n<p><strong>Note:</strong>\nLegacy MathML specifications allowed renderers to decide the default rendering according to available annotations. The following rules for determining the visible child have been implemented in some browsers. See <a href=\"https://w3c.github.io/mathml/\" class=\"external\" target=\"_blank\">MathML 4</a> for the distinction between Presentation and Content MathML.\n<ul>\n<li>If no other rules apply: By default only the first child is rendered, which is supposed to be Presentation MathML.</li>\n<li>If the first child is a Presentation MathML element other than <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code>, render the first child.</li>\n<li>If no Presentation MathML is found, render the first <code>&lt;annotation&gt;</code> or <code>&lt;annotation-xml&gt;</code> child element of <code>&lt;semantics&gt;</code> without a <code>src</code> attribute. For <code>&lt;annotation-xml&gt;</code> elements the <code>encoding</code> attribute must be equal to one of following values:\n<ul>\n<li><code>\"application/mathml-presentation+xml\"</code></li>\n<li><code>\"MathML-Presentation\"</code></li>\n<li><code>\"SVG1.1\"</code></li>\n<li><code>\"text/html\"</code></li>\n<li><code>\"image/svg+xml\"</code></li>\n<li><code>\"application/xml\"</code></li>\n</ul>\n</li>\n</ul>\n<p>Note that <code>\"application/mathml+xml\"</code> is <em>not</em> mentioned here as it does not distinguish between Content or Presentation MathML.\n</div>",
+      "details": {
+        "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Reference/Roles\">Implicit ARIA role</a>": "None\n"
       }
     }
-  }
+  },
+  "tagAliases": {}
 }

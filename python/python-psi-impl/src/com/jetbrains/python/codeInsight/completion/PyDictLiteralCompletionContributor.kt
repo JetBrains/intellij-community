@@ -11,7 +11,7 @@ import com.intellij.ui.IconManager
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.impl.getMappedParameters
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypedDictType
@@ -50,7 +50,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
                                             result: CompletionResultSet) {
     val typeEvalContext = TypeEvalContext.codeCompletion(originalElement.project, originalElement.containingFile)
     val quote = getForcedQuote(possibleSequenceExpr, originalElement)
-    PyCallExpressionHelper.getMappedParameters(possibleSequenceExpr, PyResolveContext.defaultContext(typeEvalContext))?.forEach {
+    possibleSequenceExpr.getMappedParameters(PyResolveContext.defaultContext(typeEvalContext))?.forEach {
       addCompletionForTypedDictKeys(it.getType(typeEvalContext), possibleSequenceExpr, result, quote)
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.codeWithMe.ClientId
@@ -7,11 +7,8 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.ide.plugins.PluginUtil
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationType
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.*
@@ -20,7 +17,7 @@ import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.SystemInfoRt
@@ -28,7 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.util.ExceptionUtil
+import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -114,28 +111,7 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   catch (e: CancellationException) { throw e }
   catch (e: ProcessCanceledException) { throw e }
   catch (e: Throwable) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      LOG.error("Save settings failed", e)
-    }
-    else {
-      LOG.warn("Save settings failed", e)
-    }
-
-    val reason = if (ApplicationManager.getApplication().isInternal) "<p>" + ExceptionUtil.getThrowableText(e) + "</p>" else ""
-    val messagePostfix = IdeBundle.message("notification.content.please.restart.0", ApplicationNamesInfo.getInstance().fullProductName, reason)
-    val pluginId = PluginUtil.getInstance().findPluginId(e)
-    val message =
-      if (pluginId == null) IdeBundle.message("notification.content.failed.to.save.settings", messagePostfix)
-      else IdeBundle.message("notification.content.plugin.failed.to.save.settings", pluginId.idString, messagePostfix)
-    val notification = Notification(
-      "Settings Error",
-      IdeBundle.message("notification.title.unable.to.save.settings"),
-      message,
-      NotificationType.ERROR
-    )
-    blockingContext {
-      notification.notify(componentManager as? Project)
-    }
+    LOG.error("Save settings failed, please restart application", e)
   }
   finally {
     storeReloadManager?.unblockReloadingProjectOnExternalChanges()
@@ -143,18 +119,20 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   return false
 }
 
-fun <T> getStateSpec(persistentStateComponent: PersistentStateComponent<T>): State =
-  getStateSpecOrError(persistentStateComponent.javaClass)
+fun <T> getStateSpec(persistentStateComponent: PersistentStateComponent<T>): State {
+  return getStateSpecOrError(persistentStateComponent.javaClass)
+}
 
-fun getStateSpecOrError(componentClass: Class<out PersistentStateComponent<*>>): State =
-  getStateSpec(componentClass) ?: throw PluginException.createByClass("No @State annotation found in $componentClass", null, componentClass)
+fun getStateSpecOrError(componentClass: Class<out PersistentStateComponent<*>>): State {
+  return getStateSpec(componentClass)
+         ?: throw PluginException.createByClass("No @State annotation found in $componentClass", null, componentClass)
+}
 
 fun getStateSpec(originalClass: Class<*>): State? {
   var aClass = originalClass
   while (true) {
-    val stateSpec = aClass.getAnnotation(State::class.java)
-    if (stateSpec != null) {
-      return stateSpec
+    aClass.getAnnotation(State::class.java)?.let {
+      return it
     }
 
     aClass = aClass.superclass ?: break
@@ -171,16 +149,16 @@ fun getStateSpec(originalClass: Class<*>): State? {
  * *NB*: Don't use this method without a strict reason: the storage location is an implementation detail.
  */
 @Internal
-fun getPersistentStateComponentStorageLocation(clazz: Class<*>): Path? =
-  getDefaultStoragePathSpec(clazz)?.let { fileSpec ->
+fun getPersistentStateComponentStorageLocation(clazz: Class<*>): Path? {
+  return getDefaultStoragePathSpec(clazz)?.let { fileSpec ->
     ApplicationManager.getApplication().getService(IComponentStore::class.java).storageManager.expandMacro(fileSpec)
   }
+}
 
 /**
  * Returns the default storage file specification for the given [PersistentStateComponent] as defined by [Storage.value]
  */
-fun getDefaultStoragePathSpec(clazz: Class<*>): String? =
-  getStateSpec(clazz)?.let { getDefaultStoragePathSpec(it) }
+fun getDefaultStoragePathSpec(clazz: Class<*>): String? = getStateSpec(clazz)?.let { getDefaultStoragePathSpec(it) }
 
 fun getDefaultStoragePathSpec(state: State): String? {
   val storage = state.storages.find { !it.deprecated }
@@ -194,8 +172,7 @@ private fun getStoragePathSpec(storage: Storage): String {
 }
 
 @Internal
-fun getOsDependentStorage(storagePathSpec: String): String =
-  "${getPerOsSettingsStorageFolderName()}/${storagePathSpec}"
+fun getOsDependentStorage(storagePathSpec: String): String = "${getPerOsSettingsStorageFolderName()}/${storagePathSpec}"
 
 @Internal
 fun getPerOsSettingsStorageFolderName(): String = when {
@@ -274,6 +251,23 @@ fun forPoorJavaClientOnlySaveProjectIndEdtDoNotUseThisMethod(project: Project, f
     runWithModalProgressBlocking(project, IdeBundle.message("progress.saving.project", project.name)) {
       saveSettings(project, forceSavingAllSettings = forceSavingAllSettings)
     }
+  }
+}
+
+/**
+ * This is a temporary workaround for non-reactive settings in RD/CWM.
+ * If you modify settings from an action (not from the settings dialog),
+ * you can call this method to synchronize changed settings in Remote Development
+ * and CodeWithMe.
+ */
+@Internal
+fun saveSettingsForRemoteDevelopment(componentManager: ComponentManager) {
+  if (!AppMode.isRemoteDevHost() && !PlatformUtils.isJetBrainsClient())
+    return
+
+  currentThreadCoroutineScope().launch {
+    // Don't replace with `saveSettings()`, it can't save under a remote clientId
+    componentManager.stateStore.save(forceSavingAllSettings = true)
   }
 }
 

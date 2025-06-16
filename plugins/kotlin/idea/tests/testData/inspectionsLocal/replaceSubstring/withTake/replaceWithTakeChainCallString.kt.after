@@ -1,0 +1,7 @@
+// WITH_STDLIB
+
+// IGNORE_K1
+fun foo() {
+    "s".take(10).
+        substringAfterLast(',')
+}

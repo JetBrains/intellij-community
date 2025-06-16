@@ -404,6 +404,11 @@
 - a:removeListener(com.intellij.codeInsight.hints.presentation.PresentationListener):V
 - a:toString():java.lang.String
 - updateState(com.intellij.codeInsight.hints.presentation.InlayPresentation):Z
+*:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings$ExcludeListListener
+- *sf:Companion:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings$ExcludeListListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:excludeListChanged(com.intellij.lang.Language):V
+*f:com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings$ExcludeListListener$Companion
 *a:com.intellij.codeInspection.ui.CustomComponentExtensionWithSwingRenderer
 - com.intellij.codeInspection.options.CustomComponentExtension
 - p:<init>(java.lang.String):V
@@ -412,6 +417,22 @@
 *:com.intellij.execution.dashboard.RunDashboardChecker
 - a:countUniqueConfigurations(com.intellij.openapi.project.Project):I
 - a:getTypeId():java.lang.String
+*:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+*f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction
+- com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+- <init>(java.lang.String,D):V
+- f:component1():java.lang.String
+- f:component2():D
+- f:copy(java.lang.String,D):com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction
+- bs:copy$default(com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction,java.lang.String,D,I,java.lang.Object):com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$Correction
+- equals(java.lang.Object):Z
+- f:getConfidence():D
+- f:getCorrection():java.lang.String
+- f:getPresentationText():java.lang.String
+- hashCode():I
+*f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$NoCorrection
+- com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
+- sf:INSTANCE:com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult$NoCorrection
 com.intellij.ide.bookmark.BookmarksListProvider
 - *:getDescriptor(com.intellij.ide.util.treeView.AbstractTreeNode):com.intellij.openapi.fileEditor.OpenFileDescriptor
 com.intellij.ide.bookmark.BookmarksManager
@@ -440,6 +461,32 @@ com.intellij.ide.bookmark.BookmarksManager
 *:com.intellij.ide.util.projectWizard.ModuleNameGenerator
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getUi(java.lang.String,java.util.function.Consumer):javax.swing.JComponent
+*a:com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax
+- com.intellij.lang.parameterInfo.ParameterInfoHandler
+- <init>():V
+- pf:ParameterHtmlPresentation(java.lang.String,com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$ParameterHtmlPresentation
+- bs:ParameterHtmlPresentation$default(com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax,java.lang.String,com.intellij.openapi.util.TextRange,java.lang.String,I,java.lang.Object):com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$ParameterHtmlPresentation
+- pf:SignatureHtmlPresentation(java.util.List,Z):com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$SignatureHtmlPresentation
+- bs:SignatureHtmlPresentation$default(com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax,java.util.List,Z,I,java.lang.Object):com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$SignatureHtmlPresentation
+- pa:buildSignaturePresentations(com.intellij.psi.PsiElement):java.util.List
+- f:findElementForParameterInfo(com.intellij.lang.parameterInfo.CreateParameterInfoContext):com.intellij.psi.PsiElement
+- f:findElementForUpdatingParameterInfo(com.intellij.lang.parameterInfo.UpdateParameterInfoContext):com.intellij.psi.PsiElement
+- pa:findParameterOwner(com.intellij.psi.PsiFile,I):com.intellij.psi.PsiElement
+- p:getMismatchedParameters(com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$SignatureHtmlPresentation,com.intellij.psi.PsiElement):java.util.Set
+- pa:getParameterListSeparator():java.lang.String
+- p:getSignatureCurrentParameter(com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$SignatureHtmlPresentation,com.intellij.psi.PsiElement,com.intellij.lang.parameterInfo.ParameterInfoContext):I
+- p:isSignatureFullyMatched(com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$SignatureHtmlPresentation,com.intellij.psi.PsiElement):Z
+- f:showParameterInfo(com.intellij.psi.PsiElement,com.intellij.lang.parameterInfo.CreateParameterInfoContext):V
+- f:updateParameterInfo(com.intellij.psi.PsiElement,com.intellij.lang.parameterInfo.UpdateParameterInfoContext):V
+- f:updateUI(com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$ParameterInfoHandlerWithColoredSyntaxData,com.intellij.lang.parameterInfo.ParameterInfoUIContext):V
+*:com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$ParameterHtmlPresentation
+- getActualArgumentCodeRange():com.intellij.openapi.util.TextRange
+- getDefaultValue():java.lang.String
+- a:getNameAndType():java.lang.String
+*f:com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$ParameterInfoHandlerWithColoredSyntaxData
+*:com.intellij.lang.parameterInfo.ParameterInfoHandlerWithColoredSyntax$SignatureHtmlPresentation
+- getDeprecated():Z
+- a:getParameters():java.util.List
 *a:com.intellij.lang.surroundWith.ModCommandSurrounder
 - com.intellij.lang.surroundWith.Surrounder
 - <init>():V
@@ -515,59 +562,6 @@ a:com.intellij.psi.stubs.NamedStubBase
 - com.intellij.psi.stubs.StubBase
 - com.intellij.psi.stubs.NamedStub
 - *p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType,com.intellij.util.io.StringRef):V
-*f:com.intellij.psi.util.PartiallyKnownString
-- *sf:Companion:com.intellij.psi.util.PartiallyKnownString$Companion
-- <init>(com.intellij.psi.util.StringEntry):V
-- <init>(java.lang.String):V
-- <init>(java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
-- <init>(java.util.List):V
-- equals(java.lang.Object):Z
-- f:findIndexOfInKnown(java.lang.String):I
-- f:findIndexOfInKnown(java.lang.String,I):I
-- bs:findIndexOfInKnown$default(com.intellij.psi.util.PartiallyKnownString,java.lang.String,I,I,java.lang.Object):I
-- f:getConcatenationOfKnown():java.lang.String
-- f:getRangeInHost(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
-- f:getRangeOfTheHostContent(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
-- f:getSegments():java.util.List
-- f:getValueIfKnown():java.lang.String
-- hashCode():I
-- f:mapRangeToHostRange(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange
-- f:split(java.lang.String,kotlin.jvm.functions.Function2):java.util.List
-- bs:split$default(com.intellij.psi.util.PartiallyKnownString,java.lang.String,kotlin.jvm.functions.Function2,I,java.lang.Object):java.util.List
-- f:splitAtInKnown(I):kotlin.Pair
-*f:com.intellij.psi.util.PartiallyKnownString$Companion
-- f:getEmpty():com.intellij.psi.util.PartiallyKnownString
-f:com.intellij.psi.util.PartiallyKnownStringKt
-- *sf:splitToTextRanges(java.lang.CharSequence,java.lang.String,kotlin.jvm.functions.Function2):kotlin.sequences.Sequence
-- *bs:splitToTextRanges$default(java.lang.CharSequence,java.lang.String,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlin.sequences.Sequence
-*:com.intellij.psi.util.SplitEscaper
-- a:filter(I,I):Z
-*f:com.intellij.psi.util.SplitEscaper$AcceptAll
-- com.intellij.psi.util.SplitEscaper
-- sf:INSTANCE:com.intellij.psi.util.SplitEscaper$AcceptAll
-- filter(I,I):Z
-*a:com.intellij.psi.util.StringEntry
-- f:getHost():com.intellij.psi.PsiElement
-- a:getRange():com.intellij.openapi.util.TextRange
-- f:getRangeAlignedToHost():kotlin.Pair
-- a:getSourcePsi():com.intellij.psi.PsiElement
-*f:com.intellij.psi.util.StringEntry$Known
-- com.intellij.psi.util.StringEntry
-- <init>(java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
-- equals(java.lang.Object):Z
-- getRange():com.intellij.openapi.util.TextRange
-- getSourcePsi():com.intellij.psi.PsiElement
-- f:getValue():java.lang.String
-- hashCode():I
-*f:com.intellij.psi.util.StringEntry$Unknown
-- com.intellij.psi.util.StringEntry
-- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):V
-- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.Iterable):V
-- b:<init>(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.Iterable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- equals(java.lang.Object):Z
-- getRange():com.intellij.openapi.util.TextRange
-- getSourcePsi():com.intellij.psi.PsiElement
-- hashCode():I
 com.intellij.refactoring.RenameRefactoring
 - com.intellij.refactoring.Refactoring
 - *a:hasNonCodeUsages():Z

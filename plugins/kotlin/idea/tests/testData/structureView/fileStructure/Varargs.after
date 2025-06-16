@@ -1,0 +1,6 @@
+-Varargs.kt
+ -Bar
+  bar(vararg String): Unit
+  constructor Bar(vararg Int)
+  constructor Bar(vararg Int, String)
+ foo(vararg String): Unit

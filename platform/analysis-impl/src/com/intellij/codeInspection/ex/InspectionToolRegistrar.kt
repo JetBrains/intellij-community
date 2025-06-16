@@ -110,7 +110,8 @@ class InspectionToolRegistrar(coroutineScope: CoroutineScope) : InspectionToolsS
     for (listener in listeners) {
       listener.toolRemoved(inspectionToolWrapper)
     }
-    inconsistentInspectionNameCache.remove(inspectionToolWrapper.myTool?.javaClass ?: Int::class.java)
+    val key = if (inspectionToolWrapper.isInitialized) inspectionToolWrapper.tool.javaClass else Int::class.java
+    inconsistentInspectionNameCache.remove(key)
   }
 
   override fun createTools(): List<InspectionToolWrapper<*, *>> {

@@ -38,12 +38,12 @@ public final class TypeAssertionIntention extends PyBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile)) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile)) {
       return false;
     }
 
-    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(psiFile, editor.getCaretModel().getOffset());
     PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
     if (problemElement == null) return false;
     if (problemElement.getParent() instanceof PyWithItem) return false;
@@ -59,7 +59,7 @@ public final class TypeAssertionIntention extends PyBaseIntentionAction {
         (reference != null && reference.resolve() == null)) {
       return false;
     }
-    final PyType type = TypeEvalContext.codeAnalysis(file.getProject(), file).getType(problemElement);
+    final PyType type = TypeEvalContext.codeAnalysis(psiFile.getProject(), psiFile).getType(problemElement);
     return type == null;
   }
 

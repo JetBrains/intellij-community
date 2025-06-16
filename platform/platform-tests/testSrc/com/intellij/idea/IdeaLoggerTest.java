@@ -61,7 +61,7 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
         }
       }
     };
-    julLogger.setLevel(Level.FINE);
+    julLogger.setLevel(Level.INFO);
     IdeaLogger logger = new IdeaLogger(julLogger);
     assertTrue(IdeaLogger.isMutingFrequentExceptionsEnabled());
     return logger;

@@ -70,6 +70,9 @@ public interface ExtensionPoint extends DomElement {
   @Stubbed
   GenericAttributeValue<Boolean> getDynamic();
 
+  @Attribute("hasAttributes")
+  GenericAttributeValue<Boolean> getHasAttributes();
+
   @NotNull
   @Stubbed
   @SubTagList("with")

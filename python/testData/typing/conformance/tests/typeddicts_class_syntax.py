@@ -30,13 +30,13 @@ class BadTypedDict1(TypedDict):
         pass
 
     # Methods are not allowed, so this should generate an error.
-    @classmethod  # E
-    def method2(cls):
+    @classmethod  # E[method2]
+    def method2(cls):  # E[method2]
         pass
 
     # Methods are not allowed, so this should generate an error.
-    @staticmethod  # E
-    def method3():
+    @staticmethod  # E[method3]
+    def method3():  # E[method3]
         pass
 
 
@@ -54,7 +54,7 @@ class BadTypedDict3(TypedDict, other=True):  # E
 T = TypeVar("T")
 
 
-class GenericTypedDict(Generic[T]):
+class GenericTypedDict(TypedDict, Generic[T]):
     name: str
     value: T
 

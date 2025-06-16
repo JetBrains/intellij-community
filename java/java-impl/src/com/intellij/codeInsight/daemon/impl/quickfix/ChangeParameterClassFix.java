@@ -10,7 +10,10 @@ import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -24,13 +27,39 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.util.Collection;
 import java.util.List;
 
-public class ChangeParameterClassFix extends ExtendsListFix implements LowPriorityAction {
+import static java.util.Objects.requireNonNull;
+
+public class ChangeParameterClassFix extends LocalQuickFixAndIntentionActionOnPsiElement implements LowPriorityAction {
+  protected final @Nullable SmartPsiElementPointer<PsiClass> myClassToExtendFromPointer;
+  private final PsiClassType myTypeToExtendFrom;
+  private final @IntentionName String myName;
+
   public ChangeParameterClassFix(@NotNull PsiClass aClassToExtend, @NotNull PsiClassType parameterClass) {
-    super(aClassToExtend, parameterClass, true);
+    super(aClassToExtend);
+    @Nullable PsiClass classToExtendFrom = parameterClass.resolve();
+    myClassToExtendFromPointer = classToExtendFrom == null ? null : SmartPointerManager.createPointer(classToExtendFrom);
+    myTypeToExtendFrom = aClassToExtend instanceof PsiTypeParameter ? parameterClass
+                                                                    : (PsiClassType)GenericsUtil.eliminateWildcards(parameterClass);
+
+    @PropertyKey(resourceBundle = QuickFixBundle.BUNDLE) String messageKey;
+    if (classToExtendFrom != null && aClassToExtend.isInterface() == classToExtendFrom.isInterface() ||
+        aClassToExtend instanceof PsiTypeParameter) {
+      messageKey = "add.class.to.extends.list";
+    }
+    else {
+      messageKey = "add.interface.to.implements.list";
+    }
+
+    myName = QuickFixBundle.message(messageKey, aClassToExtend.getName(), classToExtendFrom == null
+                                                                          ? ""
+                                                                          : classToExtendFrom instanceof PsiTypeParameter
+                                                                            ? classToExtendFrom.getName()
+                                                                            : classToExtendFrom.getQualifiedName());
   }
 
   @Override
@@ -40,29 +69,32 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
 
   @Override
   public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
+                             @NotNull PsiFile psiFile,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+    final PsiClass myClass = (PsiClass)startElement;
 
-    return
-      super.isAvailable(project, file, startElement, endElement)
-      && classToExtendFrom != null
-      && classToExtendFrom.isValid()
-      && classToExtendFrom.getQualifiedName() != null
-      ;
+    return myTypeToExtendFrom.isValid() && BaseIntentionAction.canModify(myClass) &&
+           startElement.isPhysical() &&
+           classToExtendFrom != null &&
+           !classToExtendFrom.hasModifierProperty(PsiModifier.FINAL) &&
+           (classToExtendFrom.isInterface() ||
+            !myClass.isInterface() && myClass.getExtendsList() != null && (myClass.getExtendsList().getReferencedTypes().length == 0)) &&
+           classToExtendFrom.getQualifiedName() != null;
   }
 
   @Override
   public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
+                     @NotNull PsiFile psiFile,
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
     if (!FileModificationService.getInstance().prepareFileForWrite(startElement.getContainingFile())) return;
+    PsiClass classToExtendFrom = requireNonNull(myClassToExtendFromPointer).getElement();
     ApplicationManager.getApplication().runWriteAction(
-      () -> invokeImpl(myClass)
+      () -> new ExtendsListModCommandFix(myClass, classToExtendFrom, myTypeToExtendFrom, true).invokeImpl(myClass)
     );
     final Editor editor1 = CodeInsightUtil.positionCursorAtLBrace(project, myClass.getContainingFile(), myClass);
     if (editor1 == null) return;
@@ -91,11 +123,12 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiClass aClass = (PsiClass)getStartElement();
-    PsiFile fileCopy = (PsiFile)aClass.getContainingFile().copy();
-    PsiClass classCopy = PsiTreeUtil.findSameElementInCopy(aClass, fileCopy);
-    invokeImpl(classCopy);
+    PsiFile psiFileCopy = (PsiFile)aClass.getContainingFile().copy();
+    PsiClass classCopy = PsiTreeUtil.findSameElementInCopy(aClass, psiFileCopy);
+    PsiClass classToExtendFrom = requireNonNull(myClassToExtendFromPointer).getElement();
+    new ExtendsListModCommandFix(classCopy, classToExtendFrom, myTypeToExtendFrom, true).invokeImpl(classCopy);
     Collection<CandidateInfo> overrideImplement = OverrideImplementExploreUtil.getMethodsToOverrideImplement(classCopy, true);
     List<PsiMethodMember> toImplement = ContainerUtil.map(
       ContainerUtil.filter(overrideImplement,
@@ -103,7 +136,7 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
       PsiMethodMember::new
     );
     if (!toImplement.isEmpty()) {
-      boolean insertOverrideAnnotation = JavaCodeStyleSettings.getInstance(file).INSERT_OVERRIDE_ANNOTATION;
+      boolean insertOverrideAnnotation = JavaCodeStyleSettings.getInstance(psiFile).INSERT_OVERRIDE_ANNOTATION;
       var prototypes = OverrideImplementUtil.overrideOrImplementMethods(classCopy, toImplement, false, insertOverrideAnnotation);
       PsiElement brace = classCopy.getRBrace();
       if (brace == null) return IntentionPreviewInfo.EMPTY;
@@ -111,5 +144,10 @@ public class ChangeParameterClassFix extends ExtendsListFix implements LowPriori
       CodeStyleManager.getInstance(project).reformat(classCopy);
     }
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, aClass.getContainingFile().getText(), classCopy.getContainingFile().getText());
+  }
+
+  @Override
+  public @NotNull String getText() {
+    return myName;
   }
 }

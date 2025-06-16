@@ -13,6 +13,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DexDebugFacility
+import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
@@ -293,11 +294,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
     // Returns a property or a constructor if debugger stops at class declaration
     private suspend fun getElementForDeclarationLine(location: Location, file: KtFile, lineNumber: Int): KtElement? {
-        val contextElement = readAction {
+        val (locationElement, contextElement) = readAction {
             val lineStartOffset = file.getLineStartOffset(lineNumber) ?: return@readAction null
             val elementAt = file.findElementAt(lineStartOffset)
-            CodeFragmentContextTuner.getInstance().tuneContextElement(elementAt)
+            elementAt to CodeFragmentContextTuner.getInstance().tuneContextElement(elementAt)
         } ?: return null
+        
+        if (locationElement == null || contextElement == null) return null
 
         if (contextElement !is KtClass) return null
         val methodName = location.method().name()
@@ -309,7 +312,16 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
                     valueParameters.find { it.hasValOrVar() && it.name != null && JvmAbi.getterName(it.name!!) == methodName }
                 }
 
-                methodName == "<init>" -> contextElement.primaryConstructor
+                methodName == "<init>" -> {
+                    val locationParent = locationElement.parent
+                    if (locationParent is KtParameter && locationElement == locationParent.valOrVarKeyword) {
+                        // if location points to the val parameter from the primary constructor,
+                        // use this val parameter as a declaration in debugger
+                        locationParent
+                    } else {
+                        contextElement.primaryConstructor
+                    }
+                }
                 else -> null
             }
         }
@@ -604,18 +616,13 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     @RequiresReadLockAbsence
-    private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> {
-        try {
+    private fun findTargetClasses(candidates: List<ReferenceType>, sourcePosition: SourcePosition): List<ReferenceType> =
+        wrapIncompatibleThreadStateException {
             val matchingCandidates = candidates
                 .flatMap { referenceType -> debugProcess.findTargetClasses(referenceType, sourcePosition.line) }
 
-            return matchingCandidates.ifEmpty { candidates }
-        } catch (e: IncompatibleThreadStateException) {
-            return emptyList()
-        } catch (e: VMDisconnectedException) {
-            return emptyList()
-        }
-    }
+            matchingCandidates.ifEmpty { candidates }
+        } ?: emptyList()
 
     override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
         if (position.file !is KtFile) {

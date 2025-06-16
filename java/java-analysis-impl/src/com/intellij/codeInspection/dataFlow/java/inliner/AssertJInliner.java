@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_ASSERTION_ERROR;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_BOOLEAN;
@@ -58,6 +57,8 @@ public class AssertJInliner implements CallInliner {
       qualifier = MethodCallUtils.getQualifierMethodCall(qualifier);
     }
     if (!ASSERT_THAT.matches(qualifier)) return false;
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return false;
     PsiExpression valueToCheck = qualifier.getArgumentList().getExpressions()[0];
     builder.pushExpression(valueToCheck);
     for (PsiExpression arg : intermediateArgs) {
@@ -75,7 +76,8 @@ public class AssertJInliner implements CallInliner {
     // for analysis (see DataFlowInstructionVisitor#myFailingCalls)
     boolean container = field == SpecialField.COLLECTION_SIZE || field == SpecialField.ARRAY_LENGTH ||
                         field == SpecialField.STRING_LENGTH || field == SpecialField.OPTIONAL_VALUE;
-    switch (Objects.requireNonNull(call.getMethodExpression().getReferenceName())) {
+    String methodName = method.getName();
+    switch (methodName) {
       case "isNotNull", "have", "haveAtLeast", "haveAtLeastOne", "haveAtMost",
         "haveExactly", "hasOnlyElementsOfType", "hasOnlyElementsOfTypes" ->
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
@@ -83,9 +85,13 @@ public class AssertJInliner implements CallInliner {
       case "isPresent", "isNotEmpty", "isNotBlank", "contains", "containsSame", "containsInstanceOf" -> {
         builder.ensure(RelationType.NE, DfTypes.NULL, new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
         if (container) {
-          builder.unwrap(field);
-          builder.ensure(RelationType.NE, field == SpecialField.OPTIONAL_VALUE ? DfTypes.NULL : DfTypes.intValue(0),
-                         new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
+          boolean mayCheckNothing = methodName.startsWith("contains") && args.length == 0 ||
+                                    (args.length == 1 && method.isVarArgs() && !MethodCallUtils.isVarArgCall(call));
+          if (!mayCheckNothing) {
+            builder.unwrap(field);
+            builder.ensure(RelationType.NE, field == SpecialField.OPTIONAL_VALUE ? DfTypes.NULL : DfTypes.intValue(0),
+                           new ContractFailureProblem(call), JAVA_LANG_ASSERTION_ERROR);
+          }
         }
       }
       case "isNotPresent", "isEmpty" -> {

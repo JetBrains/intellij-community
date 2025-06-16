@@ -4,7 +4,7 @@
 package test
 
 public final class ClassWithDelegatedComponentFunctions public constructor(delegate: dependency.ComponentInterface) : dependency.ComponentInterface {
-    public open val component3: kotlin.Int /* compiled code */
+    public open val component3: kotlin.Int /* compiled code */ /* hasBackingField: false */
 
     public open operator fun component1(): kotlin.Int { /* compiled code */ }
 

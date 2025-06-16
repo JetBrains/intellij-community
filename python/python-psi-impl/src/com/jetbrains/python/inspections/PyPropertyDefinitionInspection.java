@@ -34,6 +34,7 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 import static com.jetbrains.python.codeInsight.typing.PyProtocolsKt.isProtocol;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 /**
  * Checks that arguments to property() and @property and friends are ok.
@@ -291,7 +292,7 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
       }
       else {
         final PyType type = myTypeEvalContext.getReturnType(callable);
-        final boolean hasReturns = !(type instanceof PyNoneType);
+        final boolean hasReturns = !isNoneType(type);
 
         if (allowed ^ hasReturns) {
           registerProblem(beingChecked, message);

@@ -13,6 +13,12 @@ fun Finder.tryToScrollDown() {
   }
 }
 
+fun Finder.tryToScrollRight() {
+  runCatching {
+    scrollBars().single { it.getOrientation() == JScrollBar.HORIZONTAL }.scrollToMaximum()
+  }
+}
+
 fun Finder.scrollBars(): List<JScrollBarUi> = xx(xQuery { byType(JScrollBar::class.java) }, JScrollBarUi::class.java).list()
 
 fun Finder.verticalScrollBar(f: JScrollBarUi.() -> Unit = {}) =
@@ -35,11 +41,14 @@ class JScrollBarUi(data: ComponentData) : UiComponent(data) {
   fun scrollBlockDown(times: Int) {
     fixture.scrollBlockDown(times)
   }
+
+  fun getScrollValue() = scrollBar.getValue()
 }
 
 @Remote("javax.swing.JScrollBar")
 interface JScrollBarComponent {
   fun getOrientation(): Int
+  fun getValue(): Int
 }
 
 @Remote("org.assertj.swing.fixture.JScrollBarFixture")

@@ -1,3 +1,5 @@
+@file:OptIn(IntellijInternalApi::class)
+
 package com.intellij.searchEverywhereMl.ranking.core.model
 
 import com.intellij.internal.ml.DecisionFunction
@@ -7,6 +9,7 @@ import com.intellij.internal.ml.catboost.CatBoostModelMetadataReader
 import com.intellij.internal.ml.catboost.CatBoostResourcesModelMetadataReader
 import com.intellij.internal.ml.catboost.NaiveCatBoostModel
 import com.intellij.internal.ml.models.local.LocalCatBoostModelMetadataReader
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.annotations.NonNls
 
 internal abstract class SearchEverywhereMlModel(private val featuresInfo: FeaturesInfo) : DecisionFunction {

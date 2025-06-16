@@ -13,10 +13,14 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/util/concurrency",
     "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "//platform/extensions",
     "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
     "//platform/util/jdom",
     "//platform/analysis-impl",
     "//platform/vcs-api/vcs-api-core:vcs-core",
@@ -38,10 +42,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-core",
     "//platform/backend/observation",
   ],
-  exports = [
-    "//platform/core-api:core",
-    "//platform/extensions",
-  ],
+  exports = ["//platform/extensions"],
   runtime_deps = [":inspect_resources"]
 )
 
@@ -51,14 +52,21 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":inspect"],
   deps = [
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-impl",
     "@lib//:junit4",
     "//platform/extensions",
     "//platform/analysis-api:analysis",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
     "//platform/util/jdom",
     "//platform/analysis-impl",
     "//platform/vcs-api/vcs-api-core:vcs-core",
+    "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/diff-api:diff",

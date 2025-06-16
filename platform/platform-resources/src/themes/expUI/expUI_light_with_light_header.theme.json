@@ -278,11 +278,6 @@
 
     "ManagedIdeBadgeBorder": "Gray11",
     "ManagedIdeBadgeBackground": "Gray13",
-    "ManagedIdeBadgeBackgroundHover": "Gray12",
-
-    "Settings.Spotlight": {
-      "borderColor": "#E08855FF",
-      "backgroundColor": "#F0F1F280"
-    }
+    "ManagedIdeBadgeBackgroundHover": "Gray12"
   }
 }

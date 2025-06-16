@@ -10,34 +10,26 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.*
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.labels.LinkListener
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.OpaquePanel
-import com.intellij.ui.icons.HiDPIImage
-import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Image
-import java.awt.Point
 import java.awt.event.MouseEvent
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import javax.imageio.ImageIO
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JList
 
 /**
  * @author Alexander Lobas
@@ -137,7 +129,7 @@ private class InProductNotificationAction(val days: Int) : LastAction(), CustomC
       }
     }
     else {
-      val dialog = InProductNotificationDialog(e.project, days)
+      val dialog = InProductNotificationDialog(e.project, days, 0)
       dialog.show()
       dialog.handleAction()
     }
@@ -217,123 +209,47 @@ private fun getDiscount() {
 }
 
 @Internal
-class InProductNotificationDialog(project: Project?, val days: Int) :
-  DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
+class InProductNotificationDialog(project: Project?, val days: Int, val time: Long) :
+  LicenseExpirationDialog(project, "/images/Expiration.png", 377, 242) {
 
   companion object {
     @JvmStatic
     fun enabled(): Boolean = Registry.`is`("edu.pack.in.product.notification.enabled", true)
+
+    @JvmStatic
+    private var showTime: Long = 0
   }
 
   init {
-    setInitialLocationCallback {
-      val rootPane: JRootPane? = SwingUtilities.getRootPane(window.parent) ?: SwingUtilities.getRootPane(window.owner)
-      if (rootPane == null || !rootPane.isShowing) {
-        return@setInitialLocationCallback null
-      }
-      val location = rootPane.locationOnScreen
-      Point(location.x + (rootPane.width - window.width) / 2, (location.y + rootPane.height * 0.25).toInt())
-    }
-
-    init()
-
-    val pane = contentPane as JComponent
-    pane.border = null
-    pane.isOpaque = true
-    pane.background = JBColor.white
-    UIUtil.uiChildren(pane).forEach { (it as JComponent).isOpaque = false }
-
-    setUndecorated(true)
-    rootPane.windowDecorationStyle = JRootPane.NONE
-    rootPane.border = PopupBorder.Factory.create(true, true)
-
-    object : MouseDragHelper<JComponent>(myDisposable, pane) {
-      var myLocation: Point? = null
-
-      override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
-        val target = dragComponent.findComponentAt(dragComponentPoint)
-        return target == null || target == dragComponent || target is JPanel || target is JBLabel
-      }
-
-      override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
-        if (myLocation == null) {
-          myLocation = window.location
-        }
-        window.location = Point(myLocation!!.x + dragToScreenPoint.x - startScreenPoint.x,
-                                myLocation!!.y + dragToScreenPoint.y - startScreenPoint.y)
-      }
-
-      override fun processDragCancel() {
-        myLocation = null
-      }
-
-      override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
-        myLocation = null
-      }
-
-      override fun processDragOutFinish(event: MouseEvent) {
-        myLocation = null
-      }
-
-      override fun processDragOutCancel() {
-        myLocation = null
-      }
-
-      override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, justStarted: Boolean) {
-        super.processDragOut(event, dragToScreenPoint, startScreenPoint, justStarted)
-        myLocation = null
-      }
-    }.start()
-
-    WindowRoundedCornersManager.configure(this)
+    initDialog(IdeBundle.message("in.product.notification.action.default.text"))
   }
 
-  override fun createCenterPanel(): JComponent {
-    val panel = JPanel(BorderLayout())
-    panel.isOpaque = false
-
-    val image = loadImage("/images/Expiration.png", 377, 242)
-    val label = JBLabel(JBImageIcon(image!!))
-
-    panel.add(label, BorderLayout.NORTH)
-
+  override fun createPanel(): JComponent {
     val configuration = JBHtmlPaneConfiguration.builder().customStyleSheet("h1 { margin: 0px; padding: 0px; }").build()
 
     val message = JBHtmlPane(JBHtmlPaneStyleConfiguration(), configuration)
-    message.isOpaque = false
     message.text = IdeBundle.message("in.product.notification.dialog.text", days)
-    message.border = JBUI.Borders.empty(28, 32, 16, 32)
     message.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
 
-    panel.add(message)
-
-    val buttons = JPanel(HorizontalLayout(17, SwingConstants.CENTER))
-    buttons.isOpaque = false
-    buttons.border = JBUI.Borders.empty(0, 32, 16, 32)
-
-    myOKAction.putValue(Action.NAME, IdeBundle.message("in.product.notification.action.renew.button"))
-    buttons.add(createJButtonForAction(myOKAction).also { it.isOpaque = false })
-
-    val listener = object : LinkListener<Any> {
-      override fun linkSelected(aSource: LinkLabel<Any?>, aLinkData: Any?) {
-        doCancelAction()
-      }
-    }
-    buttons.add(LinkLabel<Any>(IdeBundle.message("in.product.notification.action.dismiss.button"), null, listener))
-
-    panel.add(buttons, BorderLayout.SOUTH)
-
-    return panel
+    return message
   }
 
-  fun loadImage(path: String, width: Int, height: Int): Image? {
-    try {
-      val image = ImageIO.read(javaClass.getResourceAsStream(path))
-      return HiDPIImage(image, JBUI.scale(width).coerceAtLeast(width), JBUI.scale(height).coerceAtLeast(height), image.type)
+  override fun getOKActionText(): @Nls String = IdeBundle.message("in.product.notification.action.renew.button")
+
+  override fun getCancelActionText(): @Nls String = IdeBundle.message("in.product.notification.action.dismiss.button")
+
+  override fun show() {
+    if (time > 0) {
+      if (showTime > 0 && (time - showTime) < 360000) {
+        return
+      }
+      showTime = time
     }
-    catch (e: Exception) {
-      logger<InProductNotificationDialog>().error("Image $path is not loaded: $e")
-      return null
+
+    super.show()
+
+    if (time > 0) {
+      showTime = System.currentTimeMillis()
     }
   }
 

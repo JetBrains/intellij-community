@@ -333,6 +333,37 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                               """));
   }
 
+  // PY-76913
+  public void testClassVarAssignedValueMismatch() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar
+                                              
+                                              class Clazz:
+                                                  a: ClassVar[int] = <warning descr="Expected type 'int', got 'str' instead">"abc"</warning>
+                                                  b: ClassVar[int] = <warning descr="Expected type 'int', got 'float' instead">1.0</warning>
+                                                  d: ClassVar[list[str]] = <warning descr="Expected type 'list[str]', got 'list[int]' instead">[1, 2]</warning>
+                                                  e: ClassVar[dict[str, int]] = <warning descr="Expected type 'dict[str, int]', got 'dict[str, str]' instead">{"a": "b"}</warning>
+                                              """));
+  }
+
+  // PY-76913
+  public void testClassVarCorrectAssignedValues() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar
+                                              
+                                              class Clazz:
+                                                  a: ClassVar[int] = 1
+                                                  b: ClassVar[float] = 1.0
+                                                  c: ClassVar[bool] = True
+                                                  d: ClassVar[list[str]] = ["a", "b"]
+                                                  e: ClassVar[dict[str, int]] = {"a": 1}
+                                                  f: ClassVar[dict[str, int]] = {}
+                                                  g: ClassVar[list[int]] = []
+                                              """));
+  }
+
   @Override
   protected @NotNull Class<? extends PyInspection> getInspectionClass() {
     return PyClassVarInspection.class;

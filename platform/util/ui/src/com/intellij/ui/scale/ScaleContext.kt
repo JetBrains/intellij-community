@@ -2,6 +2,7 @@
 package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 import java.awt.Graphics2D
@@ -208,6 +209,7 @@ class ScaleContext : UserScaleContext {
 
   override fun toString(): String = "$usrScale, $sysScale, $objScale, $pixScale"
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use ScaleContextCache")
   open class Cache<T>(dataProvider: Function<in ScaleContext, out T>) : ScaleContextCache<T>(dataProvider::apply)
 }

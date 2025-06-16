@@ -13,11 +13,15 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/core-impl",
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "//platform/xdebugger-api:debugger",
     "@lib//:guava",
     "@lib//:gson",
@@ -28,12 +32,14 @@ jvm_library(
     "@lib//:netty-codec-http",
     "@lib//:fastutil-min",
     "@lib//:jackson",
+    "@lib//:jackson-jr-objects",
     "@lib//:netty-buffer",
     "@lib//:caffeine",
     "//platform/util/concurrency",
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/platform-util-netty:ide-util-netty",
+    "//platform/util/progress",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:netty-codec-compression",
   ],
@@ -44,7 +50,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.builtInServer.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "builtInServer-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "builtInServer-tests",
@@ -57,7 +69,13 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = ["//platform/built-in-server:builtInServer-impl"],
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/ide-core-impl",
+    "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
@@ -79,7 +97,8 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
-  ]
+  ],
+  runtime_deps = [":builtInServer-tests_test_resources"]
 )
 
 jvm_test(

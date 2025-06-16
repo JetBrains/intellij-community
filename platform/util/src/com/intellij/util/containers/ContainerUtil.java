@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -358,6 +358,7 @@ public final class ContainerUtil {
   /**
    * Use {@link com.intellij.concurrency.ConcurrentCollectionFactory#createConcurrentSet()} instead, if available
    */
+  @SuppressWarnings("unused")
   @Contract(pure = true)
   public static @NotNull <T> Set<@NotNull T> newConcurrentSet() {
     return ConcurrentHashMap.newKeySet();
@@ -471,18 +472,6 @@ public final class ContainerUtil {
   @Deprecated
   public static @Unmodifiable @NotNull <E> List<E> immutableList(E element) {
     return Collections.singletonList(element);
-  }
-
-  /**
-   * @return unmodifiable list (mutation methods throw UnsupportedOperationException) which contains {@code element}.
-   * This collection doesn't contain {@code modCount} field, unlike the {@link Collections#singletonList(Object)}, so it might be useful in extremely space-conscious places.
-   * @deprecated prefer {@link Collections#singletonList(Object)} or {@link List#of(Object)}.
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static @Unmodifiable @NotNull <E> ImmutableList<E> immutableSingletonList(E element) {
-    return ImmutableList.singleton(element);
   }
 
   /**
@@ -1654,7 +1643,7 @@ public final class ContainerUtil {
     return result.emptyOrFrozen();
   }
 
-  private static <K,V> Map<K,V> emptyOrFrozen(FreezableHashMap<? extends K, ? extends V> result) {
+  private static <K,V> @NotNull Map<K,V> emptyOrFrozen(@NotNull FreezableHashMap<? extends K, ? extends V> result) {
     //noinspection unchecked
     return result.isEmpty() ? Collections.emptyMap() :
            Options.RETURN_REALLY_UNMODIFIABLE_COLLECTION_FROM_METHODS_MARKED_UNMODIFIABLE ? (Map<K,V>)result.freeze()
@@ -2420,7 +2409,7 @@ public final class ContainerUtil {
    * @return read-only list consisting of the elements from all collections in order
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <E> List<E> flatten(Collection<E> @NotNull [] collections) {
+  public static @Unmodifiable @NotNull <E> List<E> flatten(Collection<E>... collections) {
     return flatten(Arrays.asList(collections));
   }
 

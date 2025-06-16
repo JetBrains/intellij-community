@@ -2,12 +2,9 @@ package com.intellij.cce.actions
 
 import com.intellij.cce.util.httpGet
 import com.intellij.openapi.diagnostic.fileLogger
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.SystemProperties
 import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.exists
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 
 sealed interface DatasetRef {
@@ -17,6 +14,9 @@ sealed interface DatasetRef {
   fun prepare(datasetContext: DatasetContext)
 
   fun resultPath(datasetContext: DatasetContext): Path = datasetContext.path(name)
+
+  val datasetName: String get() = name.split("_").dropLast(1).joinToString("_")
+  val chunkNamePrefix: String get() = name.split("_").last()
 
   companion object {
     private const val CONFIG_PROTOCOL = "config:"
@@ -95,9 +95,17 @@ internal data class ExistingRef(override val name: String) : DatasetRef {
 }
 
 internal data class RemoteFileRef(private val url: String) : DatasetRef {
-  override val name: String = url
-    .removePrefix("https://huggingface.co/datasets/JetBrains/eval_plugin/resolve/main/")
-    .replace("/", "_")
+  override val name: String = run {
+    if (url.startsWith("https://huggingface.co/datasets/")) {
+      url
+        .removePrefix("https://huggingface.co/datasets/")
+        .split("/resolve/main/")
+        .joinToString("_") { it.replace("/", "_") }
+    }
+    else {
+      throw IllegalArgumentException("HuggingFace url supposed to be used right now")
+    }
+  }
 
   override fun prepare(datasetContext: DatasetContext) {
     val path = datasetContext.path(name)
@@ -106,14 +114,28 @@ internal data class RemoteFileRef(private val url: String) : DatasetRef {
       return
     }
 
-    val readToken = System.getenv("AIA_EVALUATION_DATASET_READ_TOKEN") ?: ""
-    check(readToken.isNotBlank()) {
+    val readToken = getReadToken()
+    check(readToken?.isNotBlank() == true || !url.startsWith("https://huggingface.co/datasets/JetBrains")) {
       "Token for dataset $url should be configured"
     }
 
     LOG.info("Downloading dataset $url to $path")
     val content = httpGet(url, readToken)
-    path.toFile().writeText(content)
+    path.toFile().writeBytes(content)
+  }
+
+  private fun getReadToken(): String? {
+    val tokenFromEnv: String? = System.getenv("AIA_EVALUATION_DATASET_READ_TOKEN")
+    if (!tokenFromEnv.isNullOrEmpty()) {
+      return tokenFromEnv
+    }
+
+    val path = Path(SystemProperties.getUserHome(), ".ai-assistant-evaluation-huggingface-token")
+    if (path.exists()) {
+      return path.readText().trim(' ', '\n')
+    }
+
+    return null
   }
 }
 

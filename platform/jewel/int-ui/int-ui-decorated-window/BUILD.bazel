@@ -29,7 +29,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:jetbrains-annotations",
-    "//platform/jewel/decorated-window:decoratedWindow",
+    "//platform/jewel/decorated-window",
     "//platform/jewel/ui",
     "//libraries/compose-foundation-desktop",
     "//platform/jewel/foundation",

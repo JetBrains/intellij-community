@@ -2,10 +2,12 @@
 package com.intellij.execution.ui;
 
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.BiConsumer;
@@ -44,38 +46,62 @@ public abstract class RunConfigurationEditorFragment<Settings, C extends JCompon
                                                                                  @NotNull Predicate<? super RunnerAndConfigurationSettingsImpl> getter,
                                                                                  @NotNull BiConsumer<? super RunnerAndConfigurationSettingsImpl, ? super Boolean> setter,
                                                                                  int menuPosition) {
-    Ref<SettingsEditorFragment<?, ?>> ref = new Ref<>();
+    Ref<TagButtonRunConfigurationEditorFragment<Settings>> ref = new Ref<>();
     TagButton button = new TagButton(name, (e) -> {
       ref.get().setSelected(false);
-      ref.get().logChange(false, e);
+      ref.get().logFragmentChange(false, e);
     });
-    RunConfigurationEditorFragment<Settings, ?> fragment = new RunConfigurationEditorFragment<>(id, name, group, button, 0, getter) {
-      @Override
-      protected void disposeEditor() {
-        Disposer.dispose(myComponent);
-      }
-
-      @Override
-      public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
-        button.setVisible(getter.test(s));
-      }
-
-      @Override
-      public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
-        setter.accept(s, button.isVisible());
-      }
-
-      @Override
-      public boolean isTag() {
-        return true;
-      }
-
-      @Override
-      public int getMenuPosition() {
-        return menuPosition;
-      }
-    };
+    TagButtonRunConfigurationEditorFragment<Settings> fragment =
+      new TagButtonRunConfigurationEditorFragment<>(id, name, group, button, getter, setter, menuPosition);
     ref.set(fragment);
     return fragment;
+  }
+
+  private static class TagButtonRunConfigurationEditorFragment<Settings> extends RunConfigurationEditorFragment<Settings, TagButton> {
+    private final @NotNull Predicate<? super RunnerAndConfigurationSettingsImpl> myGetter;
+    private final @NotNull BiConsumer<? super RunnerAndConfigurationSettingsImpl, ? super Boolean> mySetter;
+    private final int myMenuPosition;
+
+    private TagButtonRunConfigurationEditorFragment(String id,
+                                                    @Nls String name,
+                                                    @Nls String group,
+                                                    TagButton button,
+                                                    @NotNull Predicate<? super RunnerAndConfigurationSettingsImpl> getter,
+                                                    @NotNull BiConsumer<? super RunnerAndConfigurationSettingsImpl, ? super Boolean> setter,
+                                                    int menuPosition) {
+      super(id, name, group, button, 0, getter);
+      myGetter = getter;
+      mySetter = setter;
+      myMenuPosition = menuPosition;
+    }
+
+    void logFragmentChange(boolean selected, @Nullable AnActionEvent e) {
+      logChange(selected, e);
+    }
+
+    @Override
+    protected void disposeEditor() {
+      Disposer.dispose(myComponent);
+    }
+
+    @Override
+    public void doReset(@NotNull RunnerAndConfigurationSettingsImpl s) {
+      component().setVisible(myGetter.test(s));
+    }
+
+    @Override
+    public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
+      mySetter.accept(s, component().isVisible());
+    }
+
+    @Override
+    public boolean isTag() {
+      return true;
+    }
+
+    @Override
+    public int getMenuPosition() {
+      return myMenuPosition;
+    }
   }
 }

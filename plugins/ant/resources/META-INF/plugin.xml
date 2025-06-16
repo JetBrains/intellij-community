@@ -12,7 +12,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
   <vendor>JetBrains</vendor>
 
   <resource-bundle>messages.AntActionsBundle</resource-bundle>
-  <depends>com.intellij.modules.java</depends>
+  <depends>com.intellij.java</depends>
   <depends>com.intellij.properties</depends>
 
   <extensionPoints>

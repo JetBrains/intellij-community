@@ -4,6 +4,7 @@ package com.intellij.concurrency;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.ReferenceQueueable;
 import com.intellij.util.containers.SimpleEntry;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,7 @@ import java.util.function.Supplier;
  * Base class for concurrent key:int -> (weak/soft) value:V map
  * Null values are NOT allowed
  */
-abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObjectMap<V> {
+abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObjectMap<V>, ReferenceQueueable {
   private final ConcurrentIntObjectHashMap<IntReference<V>> myMap = new ConcurrentIntObjectHashMap<>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
@@ -25,16 +26,19 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
     int getKey();
   }
 
-  private void processQueue() {
+  @Override
+  public boolean processQueue() {
+    boolean processed = false;
     while (true) {
       //noinspection unchecked
       IntReference<V> ref = (IntReference<V>)myQueue.poll();
       if (ref == null) {
-        return;
+        break;
       }
       int key = ref.getKey();
-      myMap.remove(key, ref);
+      processed |= myMap.remove(key, ref);
     }
+    return processed;
   }
 
 

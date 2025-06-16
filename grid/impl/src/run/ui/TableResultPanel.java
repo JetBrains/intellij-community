@@ -67,10 +67,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -171,7 +168,6 @@ public class TableResultPanel extends UserDataHolderBase
     myAutoscrollLocker = new JBAutoScroller.AutoscrollLocker();
     myDataHookUp = dataHookUp;
     myMainPanel = new GridMainPanel(this, sink -> uiDataSnapshot(sink));
-    myMainPanel.getComponent().putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, Boolean.TRUE);
     myColumnAttributes = new ColumnAttributes();
     myLocalFilterState = new LocalFilterState(this, true);
 
@@ -825,11 +821,11 @@ public class TableResultPanel extends UserDataHolderBase
   void showError(@NotNull ErrorInfo errorInfo, final @Nullable DataGridRequestPlace source) {
     hideErrorPanel();
     ErrorNotificationPanel.Builder builder =
-      ErrorNotificationPanel.create(errorInfo.getMessage(), errorInfo.getOriginalThrowable(), myMainPanel);
+      ErrorNotificationPanel.create(errorInfo.getMessage(), errorInfo.getOriginalThrowable());
     List<ErrorInfo.Fix> fixes = errorInfo.getFixes();
     if (!fixes.isEmpty()) {
       for (ErrorInfo.Fix fix : fixes) {
-        builder.addLink(fix.getName(), fix.getName(), () -> GridHelper.get(this).applyFix(myProject, fix, null));
+        builder.addLink(fix.getName(), null, () -> GridHelper.get(this).applyFix(myProject, fix, null));
       }
       builder.addSpace();
     }
@@ -845,7 +841,7 @@ public class TableResultPanel extends UserDataHolderBase
       int c = viewColumnIdx.asInteger() + 1;
       //noinspection DialogTitleCapitalization
       String title = DataGridBundle.message("action.row.choice.col.text", r, c, c < 1 ? 0 : 1);
-      builder.addLink("navigate", title, () -> {
+      builder.addLink(title, KeyEvent.VK_N, () -> {
         if (viewRowIdx.isValid(this) && viewColumnIdx.isValid(this)) {
           scrollToLocally(this, viewRowIdx, viewColumnIdx);
         }
@@ -878,6 +874,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   protected void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.setNull(CommonDataKeys.EDITOR);
     sink.set(PlatformDataKeys.COPY_PROVIDER, new GridCopyProvider(this));
     sink.set(PlatformDataKeys.PASTE_PROVIDER, new GridPasteProvider(this, GridUtil::retrieveDataFromText));
     sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new DeleteRowsAction());

@@ -12,15 +12,17 @@ interface VcsLogCommitSelection {
 
   /**
    * Rows in [com.intellij.vcs.log.graph.VisibleGraph]
+   *
+   * @see com.intellij.vcs.log.graph.VcsLogVisibleGraphIndex
    */
   val rows: IntArray
 
   /**
-   * Identifiers of the commits selected in the table.
+   * Identifiers of the selected commits in [com.intellij.vcs.log.graph.VisibleGraph]
    *
    * @see VcsLogDataProvider.getCommitIndex
    */
-  val ids: List<Int>
+  val ids: List<VcsLogCommitStorageIndex>
 
   /**
    * [CommitId] of the commits selected in the table.

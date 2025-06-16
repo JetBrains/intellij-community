@@ -16,8 +16,9 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/core-api:core",
     "//platform/ide-core",
-    "//platform/ide-core/plugins:ide-core-plugins",
+    "//platform/ide-core/plugins",
     "//platform/platform-util-io:ide-util-io",
+    "//jps/model-api:model",
     "//platform/util:util-ui",
     "//platform/util/jdom",
     "//platform/util",
@@ -28,6 +29,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/analysis-api:analysis",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/util/coroutines",
   ],
   runtime_deps = [":execution_resources"]
 )

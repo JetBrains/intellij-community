@@ -8,13 +8,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectServiceInitializer
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
-import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
+import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.platform.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
@@ -51,8 +49,8 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
   )
 }
 
-private class ModuleBridgeLoaderService : ProjectServiceInitializer {
-  override suspend fun execute(project: Project) {
+private class ModuleBridgeLoaderService : InitProjectActivity {
+  override suspend fun run(project: Project) {
     coroutineScope {
       val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
       val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
@@ -73,12 +71,15 @@ private class ModuleBridgeLoaderService : ProjectServiceInitializer {
             workspaceModel.ignoreCache() // sets `WorkspaceModelImpl#loadedFromCache` to `false`
             project.putUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES, true)
           }
-          loadModules(project = project,
-                      targetBuilder = null,
-                      targetUnloadedEntitiesBuilder = null,
-                      loadedFromCache = workspaceModel.loadedFromCache)
+          loadModules(
+            project = project,
+            targetBuilder = null,
+            targetUnloadedEntitiesBuilder = null,
+            loadedFromCache = workspaceModel.loadedFromCache,
+            workspaceModel = workspaceModel,
+          )
         }
-        val globalWorkspaceModel = GlobalWorkspaceModel.getInstance(project.getEelDescriptor())
+        val globalWorkspaceModel = GlobalWorkspaceModel.getInstanceAsync(project.getEelDescriptor())
         backgroundWriteAction {
           globalWorkspaceModel.applyStateToProject(project)
         }
@@ -87,10 +88,13 @@ private class ModuleBridgeLoaderService : ProjectServiceInitializer {
         LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
         val projectEntities = span("modules loading without cache") {
           val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
-          loadModules(project = project,
-                      targetBuilder = projectEntities?.builder,
-                      targetUnloadedEntitiesBuilder = projectEntities?.unloadedEntitiesBuilder,
-                      loadedFromCache = workspaceModel.loadedFromCache)
+          loadModules(
+            project = project,
+            targetBuilder = projectEntities?.builder,
+            targetUnloadedEntitiesBuilder = projectEntities?.unloadedEntitiesBuilder,
+            loadedFromCache = workspaceModel.loadedFromCache,
+            workspaceModel = workspaceModel,
+          )
           projectEntities
         }
         if (projectEntities?.builder != null) {
@@ -120,10 +124,13 @@ private class ModuleBridgeLoaderService : ProjectServiceInitializer {
   }
 }
 
-private suspend fun loadModules(project: Project,
-                                targetBuilder: MutableEntityStorage?,
-                                targetUnloadedEntitiesBuilder: MutableEntityStorage?,
-                                loadedFromCache: Boolean) {
+private suspend fun loadModules(
+  project: Project,
+  workspaceModel: WorkspaceModelImpl,
+  targetBuilder: MutableEntityStorage?,
+  targetUnloadedEntitiesBuilder: MutableEntityStorage?,
+  loadedFromCache: Boolean,
+) {
   span("modules instantiation") {
     val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
     if (targetBuilder != null && targetUnloadedEntitiesBuilder != null) {
@@ -143,6 +150,7 @@ private suspend fun loadModules(project: Project,
   }
 
   span("libraries instantiation") {
-    (serviceAsync<LibraryTablesRegistrar>().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries(targetBuilder)
+    (serviceAsync<LibraryTablesRegistrar>().getLibraryTable(project) as ProjectLibraryTableBridgeImpl)
+      .loadLibraries(targetBuilder, workspaceModel)
   }
 }

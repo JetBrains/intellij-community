@@ -15,6 +15,7 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.list.createTargetPresentationRenderer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
+import org.jetbrains.kotlin.idea.refactoring.memberInfo.AbstractKotlinMemberInfoModel
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberSelectionPanel
 import org.jetbrains.kotlin.psi.KtClassBody
@@ -64,46 +65,21 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
 
         override fun toDescriptor(): K2MoveSourceDescriptor.ElementSource = K2MoveSourceDescriptor.ElementSource(elements)
 
-        private fun isNestedDeclarationMove(): Boolean {
-            val singleElement = elements.singleOrNull() ?: return false
-            return singleElement.parent is KtClassBody
-        }
-
         override fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
-            if (isNestedDeclarationMove()) {
-                // We only want to move a single declaration, no choosing necessary.
-                return
-            }
-
-            fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
-                .mapNotNull { it.parent as? KtDeclarationContainer }
-                .toSet()
-
-            fun getAllDeclarations(container: Collection<KtDeclarationContainer>): Set<KtNamedDeclaration> = container
-                .flatMap { it.declarations }
-                .filterIsInstance<KtNamedDeclaration>()
-                .toSet()
-
-            fun memberInfos(
-                elementsToMove: Set<KtNamedDeclaration>,
-                allDeclaration: List<KtNamedDeclaration>
-            ): List<KotlinMemberInfo> = allDeclaration.map { declaration ->
-                KotlinMemberInfo(declaration, false).apply {
-                    isChecked = elementsToMove.contains(declaration)
-                }
-            }
-
             val project = elements.firstOrNull()?.project ?: return
-
+            val isNestedDeclarationMove = isNestedDeclarationMove()
+            val memberInfoModel = if (isNestedDeclarationMove) ReadOnlyKotlinMemberInfoModel else null
             val memberInfos = ActionUtil.underModalProgress(project, RefactoringBundle.message("move.title")) {
                 val containers = getDeclarationsContainers(elements)
                 val allDeclarations = getAllDeclarations(containers)
-                return@underModalProgress memberInfos(elements, allDeclarations.toList())
+                val shownDeclarations = if (isNestedDeclarationMove) allDeclarations.filter { it in elements } else allDeclarations
+                return@underModalProgress getMemberInfos(elements, shownDeclarations.toList())
             }
 
             panel.group(RefactoringBundle.message("move.declarations.group"), indent = false) {
                 row {
-                    memberSelectionPanel = cell(KotlinMemberSelectionPanel(memberInfo = memberInfos)).align(Align.FILL).component
+                    val selectionPanel = KotlinMemberSelectionPanel(memberInfo = memberInfos, memberInfoModel = memberInfoModel)
+                    memberSelectionPanel = cell(selectionPanel).align(Align.FILL).component
                     val table = memberSelectionPanel.table
                     table.addMemberInfoChangeListener {
                         elements = table.selectedMemberInfos.map { it.member }.toSet()
@@ -117,5 +93,36 @@ sealed interface K2MoveSourceModel<T : PsiElement> {
                 }.resizableRow()
             }.topGap(TopGap.NONE).bottomGap(BottomGap.SMALL).resizableRow()
         }
+
+        private fun isNestedDeclarationMove(): Boolean {
+            val singleElement = elements.singleOrNull() ?: return false
+            return singleElement.parent is KtClassBody
+        }
+
+        private fun getDeclarationsContainers(elementsToMove: Collection<KtNamedDeclaration>): Set<KtDeclarationContainer> = elementsToMove
+            .mapNotNull { it.parent as? KtDeclarationContainer }
+            .toSet()
+
+        private fun getAllDeclarations(container: Collection<KtDeclarationContainer>): Set<KtNamedDeclaration> = container
+            .flatMap { it.declarations }
+            .filterIsInstance<KtNamedDeclaration>()
+            .toSet()
+
+        private fun getMemberInfos(
+            elementsToMove: Set<KtNamedDeclaration>,
+            allDeclaration: List<KtNamedDeclaration>
+        ): List<KotlinMemberInfo> = allDeclaration.map { declaration ->
+            KotlinMemberInfo(declaration, false).apply {
+                isChecked = elementsToMove.contains(declaration)
+            }
+        }
+    }
+}
+
+private object ReadOnlyKotlinMemberInfoModel : AbstractKotlinMemberInfoModel() {
+    override fun isMemberEnabled(member: KotlinMemberInfo): Boolean = false
+
+    override fun isCheckedWhenDisabled(member: KotlinMemberInfo?): Boolean {
+        return member?.isChecked ?: false
     }
 }

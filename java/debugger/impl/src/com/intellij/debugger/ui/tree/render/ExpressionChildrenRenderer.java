@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.sun.jdi.BooleanValue;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
@@ -63,7 +64,9 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
         try {
           ValueDescriptor parentDescriptor = builder.getParentDescriptor();
-          Value childrenValue = evaluateChildren(evaluationContext.createEvaluationContext(value), parentDescriptor);
+          EvaluationContextImpl valueEvaluationContext = evaluationContextImpl.createEvaluationContext(value);
+          XEvaluationOrigin.setOrigin(valueEvaluationContext, XEvaluationOrigin.RENDERER);
+          Value childrenValue = evaluateChildren(valueEvaluationContext, parentDescriptor);
 
           DebuggerUtilsAsync.type(childrenValue)
             .thenAccept(type -> getChildrenRenderer(type, parentDescriptor).buildChildren(childrenValue, builder, evaluationContext));
@@ -155,7 +158,8 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
     evaluationContextImpl.getManagerThread().schedule(new PossiblySyncCommand(evaluationContextImpl.getSuspendContext()) {
       @Override
       public void syncAction(@NotNull SuspendContextImpl suspendContext) {
-        EvaluationContext evaluationContext = context.createEvaluationContext(value);
+        EvaluationContextImpl evaluationContext = evaluationContextImpl.createEvaluationContext(value);
+        XEvaluationOrigin.setOrigin(evaluationContext, XEvaluationOrigin.RENDERER);
 
         if (!StringUtil.isEmpty(myChildrenExpandable.getReferenceExpression().getText())) {
           try {

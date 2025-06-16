@@ -19,6 +19,7 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
+    <module name="intellij.platform.ml.impl"/>
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
 

@@ -77,8 +77,8 @@ public final class ConvertFieldToThreadLocalIntention extends BaseElementAtCaret
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    final PsiField psiField = PsiTreeUtil.getParentOfType(getElement(editor, file), PsiField.class);
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    final PsiField psiField = PsiTreeUtil.getParentOfType(getElement(editor, psiFile), PsiField.class);
     if (psiField == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = psiField.getType();
     if (type == PsiTypes.nullType()) return IntentionPreviewInfo.EMPTY;

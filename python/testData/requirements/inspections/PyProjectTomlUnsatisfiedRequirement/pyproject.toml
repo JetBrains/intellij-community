@@ -1,0 +1,7 @@
+[project]
+dependencies = [
+  "<warning descr="Package mypy is not installed">mypy</warning>"
+]
+
+[build-system]
+requires = ["<warning descr="Package poetry-core is not installed">poetry-core</warning>"]

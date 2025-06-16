@@ -2,63 +2,28 @@
 package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.LighterAST;
-import com.intellij.lang.LighterASTNode;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.impl.cache.RecordUtil;
-import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
 import com.intellij.psi.impl.source.BasicJavaElementType;
-import com.intellij.psi.impl.source.tree.LightTreeUtil;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
 import com.intellij.psi.impl.source.tree.java.TypeParameterElement;
-import com.intellij.psi.stubs.IndexSink;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubInputStream;
-import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.ICompositeElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.ParentProviderElementType;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
+import java.util.Collections;
+import java.util.Set;
 
-public class JavaTypeParameterElementType extends JavaStubElementType<PsiTypeParameterStub, PsiTypeParameter> {
+public class JavaTypeParameterElementType extends JavaStubElementType implements ICompositeElementType, ParentProviderElementType {
   public JavaTypeParameterElementType() {
-    super("TYPE_PARAMETER", BasicJavaElementType.BASIC_TYPE_PARAMETER);
+    super("TYPE_PARAMETER");
+  }
+
+  @Override
+  public @NotNull Set<IElementType> getParents() {
+    return Collections.singleton(BasicJavaElementType.BASIC_TYPE_PARAMETER);
   }
 
   @Override
   public @NotNull ASTNode createCompositeNode() {
     return new TypeParameterElement();
-  }
-
-  @Override
-  public PsiTypeParameter createPsi(final @NotNull PsiTypeParameterStub stub) {
-    return getPsiFactory(stub).createTypeParameter(stub);
-  }
-
-  @Override
-  public PsiTypeParameter createPsi(final @NotNull ASTNode node) {
-    return new PsiTypeParameterImpl(node);
-  }
-
-  @Override
-  public @NotNull PsiTypeParameterStub createStub(final @NotNull LighterAST tree, final @NotNull LighterASTNode node, final @NotNull StubElement<?> parentStub) {
-    final LighterASTNode id = LightTreeUtil.requiredChildOfType(tree, node, JavaTokenType.IDENTIFIER);
-    final String name = RecordUtil.intern(tree.getCharTable(), id);
-    return new PsiTypeParameterStubImpl(parentStub, name);
-  }
-
-  @Override
-  public void serialize(final @NotNull PsiTypeParameterStub stub, final @NotNull StubOutputStream dataStream) throws IOException {
-    String name = stub.getName();
-    dataStream.writeName(name);
-  }
-
-  @Override
-  public @NotNull PsiTypeParameterStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    return new PsiTypeParameterStubImpl(parentStub, dataStream.readNameString());
-  }
-
-  @Override
-  public void indexStub(final @NotNull PsiTypeParameterStub stub, final @NotNull IndexSink sink) {
   }
 }

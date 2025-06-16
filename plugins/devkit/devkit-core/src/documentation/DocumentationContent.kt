@@ -27,20 +27,54 @@ internal data class DocumentationContent(
   }
 }
 
+internal fun DocumentationItem.isIncludedInDocProvider(): Boolean {
+  return this.shouldBeRenderedIn(RenderContext.DOC_PROVIDER)
+}
+
 // allows for referencing elements by anchors in YAML
 internal data class ElementWrapper(
   var element: Element? = null
 )
 
+internal interface DocumentationItem {
+  val parent: DocumentationItem?
+  val renderContexts: List<RenderContext>
+  val internalNote: String?
+
+  /**
+   * Determines whether the current documentation item should be rendered in the specified render context.
+   * If any parent doesn't include the context, then this item is also not included, even if it overrides
+   * the [renderContexts].
+   *
+   * @param context The render context to check against.
+   * @return `true` if the documentation item should be rendered in the specified render context,
+   *         `false` otherwise.
+   */
+  fun shouldBeRenderedIn(context: RenderContext): Boolean {
+    generateSequence(this) { it.parent }.toList().reversed().forEach {
+      if (!it.renderContexts.contains(context)) {
+        return false
+      }
+    }
+    return true
+  }
+
+  fun getOwnOrParentInternalNote(): String? {
+      return internalNote ?: parent?.getOwnOrParentInternalNote()
+  }
+}
+
 internal data class Element(
   var name: String? = null,
   var descriptiveName: String? = null,
   var sdkDocsFixedPath: List<String> = emptyList(),
+  var namespace: String? = null,
   var since: String? = null,
   var until: String? = null,
   var deprecatedSince: String? = null,
   var deprecationNote: String? = null,
   var description: String? = null,
+  override var internalNote: String? = null,
   var sdkDocsSupportDetails: String? = null,
   var attributes: List<AttributeWrapper> = emptyList(),
   var containsItself: Boolean = false,
@@ -51,7 +85,9 @@ internal data class Element(
   var defaultValue: String? = null,
   var examples: List<String> = emptyList(),
   var path: List<String> = emptyList(),
-) {
+  override var parent: DocumentationItem? = null,
+  override var renderContexts: List<RenderContext> = RenderContext.entries, // included in all by default
+) : DocumentationItem {
 
   fun isWildcard(): Boolean {
     return name == "*"
@@ -83,9 +119,12 @@ internal data class Attribute(
   var deprecationNote: String? = null,
   var requirement: Requirement? = null,
   var description: String? = null,
+  override var internalNote: String? = null,
   var defaultValue: String? = null,
   var path: List<String> = emptyList(),
-) {
+  override var parent: DocumentationItem? = null,
+  override var renderContexts: List<RenderContext> = RenderContext.entries, // included in all by default
+) : DocumentationItem {
   fun getPresentableName(): String {
     val elementName = path[path.lastIndex - 1]
     return "$elementName@$name"
@@ -106,4 +145,9 @@ internal enum class Required {
   NO,
   YES_FOR_PAID,
   UNKNOWN
+}
+
+internal enum class RenderContext {
+  SDK_DOCS,
+  DOC_PROVIDER
 }

@@ -54,38 +54,38 @@ c:com.intellij.ide.projectView.PresentationData
 - java.lang.Cloneable
 - <init>():V
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon,com.intellij.openapi.editor.colors.TextAttributesKey):V
-- addText(com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment):V
-- addText(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
+- f:addText(com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment):V
+- f:addText(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - applyFrom(com.intellij.ide.projectView.PresentationData):V
 - clear():V
-- clearText():V
+- f:clearText():V
 - clone():com.intellij.ide.projectView.PresentationData
 - copyFrom(com.intellij.ide.projectView.PresentationData):V
 - equals(java.lang.Object):Z
 - f:getBackground():java.awt.Color
-- getColoredText():java.util.List
+- f:getColoredText():java.util.List
 - getEqualityObjects():java.lang.Object[]
-- getForcedTextForeground():java.awt.Color
+- f:getForcedTextForeground():java.awt.Color
 - getIcon(Z):javax.swing.Icon
 - getLocationPrefix():java.lang.String
 - getLocationString():java.lang.String
 - getLocationSuffix():java.lang.String
 - getPresentableText():java.lang.String
 - getTextAttributesKey():com.intellij.openapi.editor.colors.TextAttributesKey
-- getTooltip():java.lang.String
-- hasSeparatorAbove():Z
+- f:getTooltip():java.lang.String
+- f:hasSeparatorAbove():Z
 - hashCode():I
-- isChanged():Z
-- setAttributesKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
+- f:isChanged():Z
+- f:setAttributesKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - f:setBackground(java.awt.Color):V
-- setChanged(Z):V
-- setForcedTextForeground(java.awt.Color):V
-- setIcon(javax.swing.Icon):V
-- setLocationString(java.lang.String):V
-- setPresentableText(java.lang.String):V
-- setSeparatorAbove(Z):V
-- setTooltip(java.lang.String):V
-- updateFrom(com.intellij.navigation.ItemPresentation):V
+- f:setChanged(Z):V
+- f:setForcedTextForeground(java.awt.Color):V
+- f:setIcon(javax.swing.Icon):V
+- f:setLocationString(java.lang.String):V
+- f:setPresentableText(java.lang.String):V
+- f:setSeparatorAbove(Z):V
+- f:setTooltip(java.lang.String):V
+- f:updateFrom(com.intellij.navigation.ItemPresentation):V
 com.intellij.ide.projectView.RootsProvider
 - a:getRoots():java.util.Collection
 com.intellij.ide.projectView.SettingsProvider
@@ -138,7 +138,6 @@ com.intellij.ide.structureView.StructureViewBuilder
 - sf:PROVIDER:com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
 - createStructureViewSuspend(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- bs:createStructureViewSuspend$suspendImpl(com.intellij.ide.structureView.StructureViewBuilder,com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - s:getProvider():com.intellij.ide.structureView.StructureViewBuilderProvider
 com.intellij.ide.structureView.StructureViewBuilderProvider
 - a:getStructureViewBuilder(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureViewBuilder
@@ -904,7 +903,7 @@ a:com.intellij.ide.util.treeView.PresentableNodeDescriptor
 - p:shouldUpdateData():Z
 - f:update():Z
 - pa:update(com.intellij.ide.projectView.PresentationData):V
-c:com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment
+f:com.intellij.ide.util.treeView.PresentableNodeDescriptor$ColoredFragment
 - <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - <init>(java.lang.String,java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - equals(java.lang.Object):Z
@@ -1040,7 +1039,6 @@ a:com.intellij.openapi.actionSystem.ActionGroup
 - <init>(java.util.function.Supplier,Z):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
-- getChildren(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.actionSystem.ActionManager):com.intellij.openapi.actionSystem.AnAction[]
 - f:isPopup():Z
 - f:isPrimary(com.intellij.openapi.actionSystem.AnAction):Z
 - f:isSearchable():Z
@@ -1224,6 +1222,7 @@ c:com.intellij.openapi.actionSystem.AnActionEventVisitor
 - visitGestureInitEvent(com.intellij.openapi.actionSystem.AnActionEvent):V
 - visitGesturePerformedEvent(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.actionSystem.AnActionResult
+- isFailed():Z
 - isIgnored():Z
 - isPerformed():Z
 c:com.intellij.openapi.actionSystem.CommonDataKeys
@@ -1296,9 +1295,6 @@ f:com.intellij.openapi.actionSystem.KeyboardShortcut
 com.intellij.openapi.actionSystem.OverridingAction
 f:com.intellij.openapi.actionSystem.Presentation
 - java.lang.Cloneable
-- sf:DEFAULT_WEIGHT:D
-- sf:EVEN_HIGHER_WEIGHT:D
-- sf:HIGHER_WEIGHT:D
 - sf:NULL_STRING:java.util.function.Supplier
 - sf:NULL_TEXT_WITH_MNEMONIC:java.util.function.Supplier
 - sf:PROP_DESCRIPTION:java.lang.String
@@ -1311,7 +1307,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - sf:PROP_SELECTED_ICON:java.lang.String
 - sf:PROP_TEXT:java.lang.String
 - sf:PROP_TEXT_WITH_SUFFIX:java.lang.String
-- sf:PROP_VALUE:com.intellij.openapi.util.Key
 - sf:PROP_VISIBLE:java.lang.String
 - <init>():V
 - <init>(java.lang.String):V
@@ -1337,7 +1332,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - getTextWithMnemonic():java.lang.String
 - getTextWithMnemonic(java.util.function.Supplier,Z):java.util.function.Supplier
 - getTextWithPossibleMnemonic():java.util.function.Supplier
-- getWeight():D
 - isApplicationScope():Z
 - isDisableGroupIfEmpty():Z
 - isEnabled():Z
@@ -1411,8 +1405,6 @@ com.intellij.openapi.actionSystem.ex.CustomComponentAction
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation):javax.swing.JComponent
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
 - updateCustomComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.Presentation):V
-com.intellij.openapi.actionSystem.ex.InlineActionsHolder
-- getInlineActions():java.util.List
 com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware
 - a:alwaysShowIconInMainMenu():Z
 com.intellij.openapi.actionSystem.remoting.ActionWithMergeId
@@ -1546,64 +1538,6 @@ e:com.intellij.openapi.editor.CaretVisualAttributes$Weight
 - getDelta():I
 - s:valueOf(java.lang.String):com.intellij.openapi.editor.CaretVisualAttributes$Weight
 - s:values():com.intellij.openapi.editor.CaretVisualAttributes$Weight[]
-f:com.intellij.openapi.editor.DefaultLanguageHighlighterColors
-- sf:BLOCK_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:BRACES:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:BRACKETS:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:CLASS_NAME:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:CLASS_REFERENCE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:COMMA:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:CONSTANT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:DOC_CODE_BLOCK:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:DOC_CODE_INLINE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:DOC_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:DOC_COMMENT_GUIDE:com.intellij.openapi.editor.colors.ColorKey
-- sf:DOC_COMMENT_LINK:com.intellij.openapi.editor.colors.ColorKey
-- sf:DOC_COMMENT_MARKUP:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:DOC_COMMENT_TAG:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:DOC_COMMENT_TAG_VALUE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:DOC_TIPS_SHORTCUT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:DOT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:FUNCTION_CALL:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:FUNCTION_DECLARATION:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:GLOBAL_VARIABLE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:HIGHLIGHTED_REFERENCE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:IDENTIFIER:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INLAY_DEFAULT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INLAY_TEXT_WITHOUT_BACKGROUND:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INLINE_PARAMETER_HINT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INLINE_PARAMETER_HINT_CURRENT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INLINE_PARAMETER_HINT_HIGHLIGHTED:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INLINE_REFACTORING_SETTINGS_DEFAULT:com.intellij.openapi.editor.colors.ColorKey
-- sf:INLINE_REFACTORING_SETTINGS_FOCUSED:com.intellij.openapi.editor.colors.ColorKey
-- sf:INLINE_REFACTORING_SETTINGS_HOVERED:com.intellij.openapi.editor.colors.ColorKey
-- sf:INLINE_SUGGESTION:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INSTANCE_FIELD:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INSTANCE_METHOD:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INTERFACE_NAME:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:INVALID_STRING_ESCAPE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:KEYWORD:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:LABEL:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:LINE_COMMENT:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:LOCAL_VARIABLE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:MARKUP_ATTRIBUTE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:MARKUP_ENTITY:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:MARKUP_TAG:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:METADATA:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:NUMBER:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:OPERATION_SIGN:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:PARAMETER:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:PARENTHESES:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:PREDEFINED_SYMBOL:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:REASSIGNED_LOCAL_VARIABLE:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:REASSIGNED_PARAMETER:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:SEMICOLON:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:STATIC_FIELD:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:STATIC_METHOD:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:STRING:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:TEMPLATE_LANGUAGE_COLOR:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:VALID_STRING_ESCAPE:com.intellij.openapi.editor.colors.TextAttributesKey
-- <init>():V
 com.intellij.openapi.editor.Editor
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.Editor[]
@@ -1867,15 +1801,10 @@ com.intellij.openapi.editor.FoldingModel
 - a:isOffsetCollapsed(I):Z
 - a:removeFoldRegion(com.intellij.openapi.editor.FoldRegion):V
 - runBatchFoldingOperation(java.lang.Runnable):V
-- a:runBatchFoldingOperation(java.lang.Runnable,Z):V
 - a:runBatchFoldingOperation(java.lang.Runnable,Z,Z):V
 - runBatchFoldingOperationDoNotCollapseCaret(java.lang.Runnable):V
 com.intellij.openapi.editor.GutterMarkPreprocessor
 - a:processMarkers(java.util.List):java.util.List
-com.intellij.openapi.editor.HighlighterColors
-- sf:BAD_CHARACTER:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:NO_HIGHLIGHTING:com.intellij.openapi.editor.colors.TextAttributesKey
-- sf:TEXT:com.intellij.openapi.editor.colors.TextAttributesKey
 f:com.intellij.openapi.editor.IndentGuideDescriptor
 - f:codeConstructStartLine:I
 - f:endLine:I

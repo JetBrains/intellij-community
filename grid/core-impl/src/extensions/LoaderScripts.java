@@ -2,6 +2,7 @@ package com.intellij.database.extensions;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,10 @@ public final class LoaderScripts {
   private static final Pattern FILE_PATTERN = Pattern.compile("(.+?)(?:\\.(\\w+))?\\.\\w+");
 
   private LoaderScripts() {
+  }
+
+  public static Job unpackPluginResources() {
+    return ExtensionsService.getInstance().unpackPluginResources(getPluginId());
   }
 
   public static @Nullable String getScriptsDirectoryWithoutUnpack() {

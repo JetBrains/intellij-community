@@ -26,6 +26,8 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
 
   private final @Nullable List<String> mySlots;
 
+  private final @Nullable List<String> myMatchArgs;
+
   private final @Nullable String myDocString;
 
   private final @NotNull List<String> mySuperClassesText;
@@ -40,6 +42,7 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
                          @NotNull List<String> superClassesText,
                          @Nullable QualifiedName metaClass,
                          @Nullable List<String> slots,
+                         @Nullable List<String> matchArgs,
                          @Nullable String docString,
                          @Nullable String deprecationMessage,
                          @NotNull IStubElementType stubElementType,
@@ -51,6 +54,7 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
     mySuperClassesText = superClassesText;
     myMetaClass = metaClass;
     mySlots = slots;
+    myMatchArgs = matchArgs;
     myDocString = docString;
     myDeprecationMessage = deprecationMessage;
     myCustomStub = customStub;
@@ -74,6 +78,11 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
   @Override
   public @Nullable List<String> getSlots() {
     return mySlots;
+  }
+
+  @Override
+  public @Nullable List<String> getMatchArgs() {
+    return myMatchArgs;
   }
 
   @Override
@@ -104,6 +113,7 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
            ", mySuperClasses=" + mySuperClasses +
            ", myMetaClass=" + myMetaClass +
            ", mySlots=" + mySlots +
+           ", myMatchArgs=" + myMatchArgs +
            ", myDocString='" + (myDocString != null ? StringUtil.escapeStringCharacters(myDocString) : null) + '\'' +
            ", mySuperClassesText=" + mySuperClassesText +
            ", myDeprecationMessage='" + (myDeprecationMessage != null ? StringUtil.escapeStringCharacters((myDeprecationMessage)) : null) + '\'' +

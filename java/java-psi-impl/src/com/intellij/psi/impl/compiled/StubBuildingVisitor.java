@@ -452,7 +452,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   private boolean isGroovyClosure(String canonicalMethodName) {
     if (canonicalMethodName != null && canonicalMethodName.startsWith("_closure")) {
-      PsiClassReferenceListStub extendsList = myResult.findChildStubByType(JavaStubElementTypes.EXTENDS_LIST);
+      PsiClassReferenceListStub extendsList =
+        (PsiClassReferenceListStub)myResult.findChildStubByElementType(JavaStubElementTypes.EXTENDS_LIST);
       if (extendsList != null) {
         String[] names = extendsList.getReferencedNames();
         return names.length == 1 && "groovy.lang.Closure".equals(names[0]);

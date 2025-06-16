@@ -24,5 +24,3 @@ interface S {
     fun a() = Unit
     fun b() = Unit
 }
-
-// IGNORE_K2

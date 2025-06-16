@@ -127,7 +127,7 @@ internal open class CallableIdentifierInsertionHandler : QuotedNamesAwareInserti
 
         when (val importStrategy = lookupObject.options.importingStrategy) {
             is ImportStrategy.AddImport -> {
-                addImportIfRequired(targetFile, importStrategy.nameToImport)
+                addImportIfRequired(context, importStrategy.nameToImport)
             }
 
             is ImportStrategy.InsertFqNameAndShorten -> {

@@ -110,6 +110,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("../testData/keywords/AfterTryInAssignment.kt");
     }
 
+    @TestMetadata("AllowValInWhen.kt")
+    public void testAllowValInWhen() throws Exception {
+        runTest("../testData/keywords/AllowValInWhen.kt");
+    }
+
     @TestMetadata("BeforeClass.kt")
     public void testBeforeClass() throws Exception {
         runTest("../testData/keywords/BeforeClass.kt");
@@ -148,6 +153,16 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("CompanionObjectBeforeObject.kt")
     public void testCompanionObjectBeforeObject() throws Exception {
         runTest("../testData/keywords/CompanionObjectBeforeObject.kt");
+    }
+
+    @TestMetadata("ContextParameter.kt")
+    public void testContextParameter() throws Exception {
+        runTest("../testData/keywords/ContextParameter.kt");
+    }
+
+    @TestMetadata("ContextReceiver.kt")
+    public void testContextReceiver() throws Exception {
+        runTest("../testData/keywords/ContextReceiver.kt");
     }
 
     @TestMetadata("ContinuePrefixMatching.kt")
@@ -268,6 +283,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("InEnumScope2.kt")
     public void testInEnumScope2() throws Exception {
         runTest("../testData/keywords/InEnumScope2.kt");
+    }
+
+    @TestMetadata("InFunctionDefinition.kt")
+    public void testInFunctionDefinition() throws Exception {
+        runTest("../testData/keywords/InFunctionDefinition.kt");
     }
 
     @TestMetadata("InFunctionExpressionBody.kt")
@@ -418,6 +438,21 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("NoFinalInParameterList.kt")
     public void testNoFinalInParameterList() throws Exception {
         runTest("../testData/keywords/NoFinalInParameterList.kt");
+    }
+
+    @TestMetadata("NoValInBinaryExpression.kt")
+    public void testNoValInBinaryExpression() throws Exception {
+        runTest("../testData/keywords/NoValInBinaryExpression.kt");
+    }
+
+    @TestMetadata("NoValInParenthesizedExpression.kt")
+    public void testNoValInParenthesizedExpression() throws Exception {
+        runTest("../testData/keywords/NoValInParenthesizedExpression.kt");
+    }
+
+    @TestMetadata("NoValInUnaryExpression.kt")
+    public void testNoValInUnaryExpression() throws Exception {
+        runTest("../testData/keywords/NoValInUnaryExpression.kt");
     }
 
     @TestMetadata("NoValVarInFunctionParameters.kt")
@@ -723,6 +758,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("TopScope3-.kt")
     public void testTopScope3_() throws Exception {
         runTest("../testData/keywords/TopScope3-.kt");
+    }
+
+    @TestMetadata("UseSiteTargetAll.kt")
+    public void testUseSiteTargetAll() throws Exception {
+        runTest("../testData/keywords/UseSiteTargetAll.kt");
     }
 
     @TestMetadata("UseSiteTargetForPrimaryConstructorParameter.kt")

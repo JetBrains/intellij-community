@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * @author Vitaliy.Bibaev
  */
-public class FirstStateImpl extends StateBase implements NextAwareState {
+final class FirstStateImpl extends StateBase implements NextAwareState {
   private final StreamCall myNextCall;
   private final Map<TraceElement, List<TraceElement>> myToNext;
 

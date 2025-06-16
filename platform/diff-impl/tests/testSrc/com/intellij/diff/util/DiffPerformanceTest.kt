@@ -4,9 +4,11 @@ package com.intellij.diff.util
 
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import com.intellij.util.containers.Enumerator
 import com.intellij.util.containers.Interner
 import com.intellij.util.diff.Diff
 import com.intellij.util.diff.FilesTooBigForDiffException
+import com.intellij.util.diff.UniqueLCS
 import junit.framework.TestCase
 import java.util.*
 
@@ -44,11 +46,14 @@ class DiffPerformanceTest : TestCase() {
   private val heavy_altered_1000 = heavy_alter(arr_1000)
   private val heavy_altered_100 = heavy_alter(arr_100)
 
+  private val reversed_200000 = arr_200000.reversedArray()
   private val reversed_50000 = arr_50000.reversedArray()
   private val reversed_5000 = arr_5000.reversedArray()
   private val reversed_2000 = arr_2000.reversedArray()
   private val reversed_1000 = arr_1000.reversedArray()
   private val reversed_100 = arr_100.reversedArray()
+
+  private val very_heavy_altered_200000 = very_heavy_alter(arr_200000)
 
   override fun setUp() {
     if (needWarmUp) {
@@ -191,6 +196,67 @@ class DiffPerformanceTest : TestCase() {
   }
 
 
+  fun `test altered 200000 unique`() {
+    testCpu(30) {
+      buildChangesUnique(arr_200000, altered_200000)
+    }
+  }
+
+  fun `test heavy altered unique 200000`() {
+    testCpu(10) {
+      buildChangesUnique(arr_200000, heavy_altered_200000)
+    }
+  }
+
+  fun `test very heavy altered unique 200000`() {
+    testCpu(10) {
+      buildChangesUnique(arr_200000, very_heavy_altered_200000)
+    }
+  }
+
+  fun `test reversed 50000 unique`() {
+    testCpu(10) {
+      buildChangesUnique(arr_50000, reversed_50000)
+    }
+  }
+
+  fun `test reversed 200000 unique`() {
+    testCpu(3) {
+      buildChangesUnique(arr_200000, reversed_200000)
+    }
+  }
+
+  fun `test altered 50000 unique`() {
+    testCpu(200) {
+      buildChangesUnique(arr_50000, altered_50000)
+    }
+  }
+
+  fun `test heavy altered unique 50000`() {
+    testCpu(30) {
+      buildChangesUnique(arr_50000, heavy_altered_50000)
+    }
+  }
+
+  fun `test altered 20000 unique`() {
+    testCpu(200) {
+      buildChangesUnique(arr_20000, altered_20000)
+    }
+  }
+
+  fun `test heavy altered unique 20000`() {
+    testCpu(150) {
+      buildChangesUnique(arr_20000, heavy_altered_20000)
+    }
+  }
+
+  private fun buildChangesUnique(array1: Array<String>, array2: Array<String>) {
+    val enumerator = Enumerator<String>(array1.size + array2.size)
+    val intArray1 = enumerator.enumerate(array1)
+    val intArray2 = enumerator.enumerate(array2)
+    UniqueLCS(intArray1, intArray2).execute()
+  }
+
   private fun generateData(size: Int): List<String> {
     return (1..size).map { interner.intern("${it % 200}") }
   }
@@ -207,6 +273,16 @@ class DiffPerformanceTest : TestCase() {
     val altered = arr.copyOf()
     for (i in 1..altered.lastIndex step 20) {
       altered[i] = interner.intern("${i % 200}")
+    }
+    altered[0] = "===" // avoid "common prefix/suffix" optimisation
+    altered[altered.lastIndex] = "==="
+    return altered
+  }
+
+  private fun very_heavy_alter(arr: Array<String>): Array<String> {
+    val altered = arr.copyOf()
+    for (i in 1..altered.lastIndex step 5) {
+      altered[i] = interner.intern("${i % 20}")
     }
     altered[0] = "===" // avoid "common prefix/suffix" optimisation
     altered[altered.lastIndex] = "==="

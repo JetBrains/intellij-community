@@ -67,8 +67,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
     static final int ERRORS_ACCUMULATED_OFFSET              = 32;  // int32
 
+    static final int FLAGS_OFFSET                           = 36;  // int32
 
-    //reserve couple int32 header fields for the generations to come
     //Header size must be int64-aligned, so records start on int64-aligned offset
     public static final int HEADER_SIZE                            = 40;
 
@@ -386,7 +386,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     }
 
     @Override
-    public int getGlobalModCount() {
+    public int getGlobalModCount() throws IOException {
       return records.getGlobalModCount();
     }
 
@@ -397,7 +397,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   // ==== records operations:  ================================================================ //
-
 
   @Override
   public int allocateRecord() throws IOException {
@@ -705,6 +704,27 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
+  public int getFlags() throws IOException {
+    return getIntHeaderField(FileHeader.FLAGS_OFFSET);
+  }
+
+  @Override
+  public boolean updateFlags(int flagsToAdd, int flagsToRemove) throws IOException {
+    ByteBuffer headerBuffer = headerPage().rawPageBuffer();
+
+    while (true) {//CAS-loop
+      int currentFlags = (int)INT_HANDLE.getVolatile(headerBuffer, FileHeader.FLAGS_OFFSET);
+      int newFlags = (currentFlags & ~flagsToRemove) | flagsToAdd;
+      if (newFlags == currentFlags) {
+        return false;
+      }
+      if (INT_HANDLE.compareAndSet(headerBuffer, FileHeader.FLAGS_OFFSET, currentFlags, newFlags)) {
+        return true;
+      }
+    }
+  }
+
+  @Override
   public int recordsCount() {
     return allocatedRecordsCount();
   }
@@ -805,7 +825,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
   /** Without recordId bounds checking */
   @VisibleForTesting
-  long recordOffsetInFileUnchecked(int recordId) {
+  public long recordOffsetInFileUnchecked(int recordId) {
     //recordId is 1-based, convert to 0-based recordNo:
     int recordNo = recordId - 1;
 

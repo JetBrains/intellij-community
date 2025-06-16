@@ -7,20 +7,24 @@ import com.intellij.cce.evaluable.AIA_RESPONSE
 import com.intellij.cce.evaluable.AIA_USER_PROMPT
 import com.intellij.cce.evaluable.LLM_JUDGE_RESPONSE
 import com.intellij.cce.evaluable.REFERENCE_PROPERTY
-import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.LLMJudge
+import com.intellij.cce.metric.util.CloudSemanticSimilarityCalculator
 import com.intellij.cce.metric.util.computeBleuScore
 import com.intellij.cce.workspace.info.SessionIndividualScore
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import org.apache.commons.lang3.StringUtils
 import org.apache.commons.text.similarity.LevenshteinDistance
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
+abstract class SimilarityMetric(override val showByDefault: Boolean) : ConfidenceIntervalMetric<Pair<Double, Double>>() {
   override val supportsIndividualScores: Boolean = true
   private var totalMatched: Double = 0.0
   private var totalExpected: Double = 0.0
-  private var sample: MutableList<Pair<Double, Double>> = mutableListOf()
 
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
@@ -29,9 +33,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
   override val maximumSessions: Int
     get() = 10000
 
-  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { values ->
-    values.sumOf { it.first } / values.sumOf { it.second }
-  }
+  override fun compute(sample: List<Pair<Double, Double>>): Double = if(sample.isNotEmpty()) sample.sumOf { it.first } / sample.sumOf { it.second } else 0.0
 
   override fun evaluateWithIndividualScores(sessions: List<Session>): MetricEvaluationResult {
     val sessionIndividualScores = mutableMapOf<String, SessionIndividualScore>()
@@ -50,7 +52,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
         metricScores.computeIfAbsent(name) { mutableListOf() }.add(similarity)
         postCompute(lookup, similarity, additionalInfo)
         matched += similarity
-        sample.add(Pair(similarity, currentExpected))
+        coreSample.add(Pair(similarity, currentExpected))
       }
 
       sessionIndividualScores[session.id] = SessionIndividualScore(
@@ -77,7 +79,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
         expected += currentExpected
         val similarity = computeSimilarity(lookup, expectedText) ?: 0.0
         matched += similarity
-        sample.add(Pair(similarity, currentExpected))
+        coreSample.add(Pair(similarity, currentExpected))
       }
     }
     totalMatched += matched
@@ -201,5 +203,44 @@ class LLMJudgeScore(showByDefault: Boolean = true, private val llmJudge: LLMJudg
 
   companion object {
     const val NAME: String = "LLM Judge Score"
+  }
+}
+
+class SemanticSimilarityScore(showByDefault: Boolean = true, val cloudSemanticSimilarityCalculator: CloudSemanticSimilarityCalculator) : SimilarityMetric(showByDefault) {
+  override val name: String
+    get() = NAME
+  private val project: Project
+    get() = ProjectManager.getInstance().defaultProject
+  override val description: String = "Calculates the Semantic Similarity score between the expected text and the proposal via cosine similarity of text embeddings."
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
+    val rawProposals = (lookup.additionalInfo["raw_proposals"] as? List<*> ?: emptyList<Any>())
+    val resultProposals = (lookup.additionalInfo["result_proposals"] as? List<*> ?: emptyList<Any>())
+    val accountForCacheProposals = rawProposals.ifEmpty { resultProposals }
+
+    val proposals = (accountForCacheProposals).mapNotNull { proposal ->
+      val proposalMap = proposal as? Map<String, String> ?: emptyMap()
+      proposalMap["first"] as? String
+    }.ifEmpty { return null }
+
+    val similarityScore = runBlockingCancellable {
+      proposals.map { proposal ->
+        async {
+          cloudSemanticSimilarityCalculator.calculateCosineSimilarity(
+            project,
+            proposal,
+            lookup.prefix + expectedText
+          )
+        }
+      }.awaitAll()
+    }.average()
+
+    return similarityScore
+  }
+
+  override fun computeExpected(lookup: Lookup, expectedText: String): Double = 1.0
+
+  companion object {
+    const val NAME: String = "Semantic Similarity Score"
   }
 }

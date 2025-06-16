@@ -13,7 +13,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.ProjectGeneratorPeer
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.newProjectWizard.collector.PyProjectTypeGenerator
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector.logPythonNewProjectGenerated
@@ -32,18 +34,22 @@ import kotlin.reflect.jvm.jvmName
 
 /**
  * Extend this class to register a new project generator.
- * [typeSpecificSettings] are settings defaults.
- * [typeSpecificUI] is a UI to display these settings and bind then using Kotlin DSL UI
- * [allowedInterpreterTypes] limits a list of allowed interpreters (all interpreters are allowed by default)
- * [newProjectName] is a default name of the new project ([getName]Project is default)
- *
  * To test this class, see [setUiServices]
+ *
+ * @property [typeSpecificSettings] are settings defaults.
+ * @property [typeSpecificUI] is a UI to display these settings and bind then using Kotlin DSL UI
+ * @property [allowedInterpreterTypes] limits a list of allowed interpreters (all interpreters are allowed by default)
+ * @property [newProjectName] is a default name of the new project ([getName]Project is default)
+ * @property [supportsNotEmptyModuleStructure] is supports Python module structure creation (/src, /test, pyproject.toml, etc.)
+ * during SDK creation using project management tools (uv, hatch, poetry).
+ * Some generators might not support the existing structure and can only work with empty directories.
  */
 abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   private val typeSpecificSettings: TYPE_SPECIFIC_SETTINGS,
   private val typeSpecificUI: PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>?,
   private val allowedInterpreterTypes: Set<PythonInterpreterSelectionMode>? = null,
   private val _newProjectName: @NlsSafe String? = null,
+  private val supportsNotEmptyModuleStructure: Boolean = false,
 ) : DirectoryProjectGenerator<PyV3BaseProjectSettings>, PyProjectTypeGenerator {
   private val baseSettings = PyV3BaseProjectSettings()
   private var uiServices: PyV3UIServices = PyV3UIServicesProd
@@ -64,12 +70,11 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
   override fun generateProject(project: Project, baseDir: VirtualFile, settings: PyV3BaseProjectSettings, module: Module) {
     val coroutineScope = project.service<MyService>().coroutineScope
     coroutineScope.launch {
-      val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir).getOr {
+      val (sdk, interpreterStatistics) = settings.generateAndGetSdk(module, baseDir, supportsNotEmptyModuleStructure).getOr {
         withContext(Dispatchers.EDT) {
-          // TODO: Migrate to python Result using PyError as exception not to make this dynamic check
           uiServices.errorSink.emit(it.error)
         }
-        return@launch // Since we failed to generate project, we do not need to go any further
+        return@launch // Since we failed to generate a project, we do not need to go any further
       }
 
       withContext(Dispatchers.EDT) {
@@ -84,12 +89,14 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
                                    this@PyV3ProjectBaseGenerator,
                                    emptyList())
 
-      // Project view must be expanded (PY-75909) but it can't be unless it contains some files.
-      // Either base settings (which create venv) might generate some or type specific settings (like Django) may.
+      // The project view must be expanded (PY-75909), but it can't be unless it contains some files.
+      // Either base settings (which create venv) might generate some or type-specific settings (like Django) may.
       // So we expand it right after SDK generation, but if there are no files yet, we do it again after project generation
       uiServices.expandProjectTreeView(project)
-      typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
-        uiServices.errorSink.emit(it)
+      withBackgroundProgress(project, PyBundle.message("python.project.model.progress.title.generating"), cancellable = true) {
+        typeSpecificSettings.generateProject(module, baseDir, sdk).onFailure {
+          uiServices.errorSink.emit(it)
+        }
       }
       uiServices.expandProjectTreeView(project)
     }
@@ -104,7 +111,7 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
       is Result.Success -> {
         ValidationResult.OK
       }
-      is Result.Failure -> ValidationResult(pathOrError.error)
+      is Result.Failure -> ValidationResult(pathOrError.error.message)
     }
 
 

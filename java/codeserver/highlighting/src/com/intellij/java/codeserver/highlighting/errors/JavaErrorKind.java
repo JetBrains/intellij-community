@@ -9,6 +9,8 @@ import org.jetbrains.annotations.*;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.ToIntBiFunction;
+import java.util.function.ToIntFunction;
 
 /**
  * A kind of Java compilation error
@@ -25,9 +27,11 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
   /**
    * @param psi PSI element associated with an error
    * @param context a context in which the error should be rendered
-   * @return rendered localized error description
+   * @return user-readable localized error description (plain text)
    */
-  @NotNull HtmlChunk description(@NotNull Psi psi, Context context);
+  default @NotNull @Nls String description(@NotNull Psi psi, Context context) {
+    return JavaCompilationErrorBundle.message(key());
+  }
 
   /**
    * @param psi PSI element associated with an error
@@ -40,19 +44,22 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
 
   /**
    * @param psi PSI element associated with an error
-   * @return error message anchor (must be within the psi). Note that anchor does not depend on context, only on psi
+   * @param context a context in which the error should be rendered
+   * @return range within the file to highlight
    */
-  default @NotNull PsiElement anchor(@NotNull Psi psi) {
-    return psi;
+  default @NotNull TextRange range(@NotNull Psi psi, Context context) {
+    return psi.getTextRange();
   }
 
   /**
    * @param psi PSI element associated with an error
    * @param context a context in which the error should be rendered
-   * @return range within anchor to highlight; or null if the whole anchor should be highlighted
+   * @return navigation shift (non-negative) relative to the start of reported {@link #range(PsiElement, Object)}.
+   * If navigation to an error is supported, this could be used to navigate to a specific offset withing the range,
+   * instead of its beginning.
    */
-  default @Nullable TextRange range(@NotNull Psi psi, Context context) {
-    return null;
+  default @Range(from = 0, to = Integer.MAX_VALUE) int navigationShift(@NotNull Psi psi, Context context) {
+    return 0;
   }
   
   /**
@@ -70,34 +77,28 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
    */
   final class Simple<Psi extends PsiElement> implements JavaErrorKind<Psi, Void> {
     private final @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String myKey;
-    private final @NotNull Function<? super Psi, ? extends HtmlChunk> myDescription;
-    private final @NotNull Function<? super Psi, ? extends HtmlChunk> myTooltip;
-    private final @NotNull Function<? super Psi, ? extends PsiElement> myAnchor;
-    private final @NotNull Function<? super Psi, ? extends TextRange> myRange;
-    private final @NotNull Function<? super Psi, JavaErrorHighlightType> myHighlightType;
+    private final @Nullable Function<? super Psi, @Nls String> myDescription;
+    private final @Nullable Function<? super Psi, ? extends HtmlChunk> myTooltip;
+    private final @Nullable Function<? super Psi, ? extends @NotNull TextRange> myRange;
+    private final @Nullable Function<? super Psi, JavaErrorHighlightType> myHighlightType;
+    private final @Nullable ToIntFunction<? super Psi> myNavigationShift;
 
     private Simple(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key,
-                   @NotNull Function<? super Psi, ? extends HtmlChunk> description,
-                   @NotNull Function<? super Psi, ? extends HtmlChunk> tooltip,
-                   @NotNull Function<? super Psi, ? extends PsiElement> anchor,
-                   @NotNull Function<? super Psi, ? extends TextRange> range,
-                   @NotNull Function<? super Psi, JavaErrorHighlightType> type) {
+                   @Nullable Function<? super Psi, @Nls String> description,
+                   @Nullable Function<? super Psi, ? extends HtmlChunk> tooltip,
+                   @Nullable Function<? super Psi, ? extends TextRange> range,
+                   @Nullable Function<? super Psi, JavaErrorHighlightType> type,
+                   @Nullable ToIntFunction<? super Psi> navigationShift) {
       myKey = key;
       myDescription = description;
       myTooltip = tooltip;
-      myAnchor = anchor;
       myRange = range;
       myHighlightType = type;
+      myNavigationShift = navigationShift;
     }
 
     Simple(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
-      this(key,
-           psi -> HtmlChunk.raw(JavaCompilationErrorBundle.message(key)),
-           psi -> HtmlChunk.empty(),
-           Function.identity(),
-           psi -> null,
-           psi -> JavaErrorHighlightType.ERROR
-      );
+      this(key, null, null, null, null, null);
     }
 
     private <T> @NotNull T checkNotNull(T val, String name) {
@@ -113,27 +114,42 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     @Override
-    public @NotNull HtmlChunk description(@NotNull Psi psi, Void unused) {
+    public @NotNull String description(@NotNull Psi psi, Void unused) {
+      if (myDescription == null) {
+        return JavaErrorKind.super.description(psi, null);
+      }
       return checkNotNull(myDescription.apply(psi), "description");
     }
 
     @Override
     public @NotNull HtmlChunk tooltip(@NotNull Psi psi, Void unused) {
+      if (myTooltip == null) {
+        return JavaErrorKind.super.tooltip(psi, null);
+      }
       return checkNotNull(myTooltip.apply(psi), "tooltip");
     }
 
     @Override
-    public @NotNull PsiElement anchor(@NotNull Psi psi) {
-      return checkNotNull(myAnchor.apply(psi), "anchor");
-    }
-
-    @Override
-    public @Nullable TextRange range(@NotNull Psi psi, Void unused) {
+    public @NotNull TextRange range(@NotNull Psi psi, Void unused) {
+      if (myRange == null) {
+        return JavaErrorKind.super.range(psi, null);
+      }
       return myRange.apply(psi);
     }
 
     @Override
+    public @Range(from = 0, to = Integer.MAX_VALUE) int navigationShift(@NotNull Psi psi, Void unused) {
+      if (myNavigationShift == null) {
+        return 0;
+      }
+      return myNavigationShift.applyAsInt(psi); 
+    }
+
+    @Override
     public @NotNull JavaErrorHighlightType highlightType(@NotNull Psi psi, Void unused) {
+      if (myHighlightType == null) {
+        return JavaErrorKind.super.highlightType(psi, null);
+      }
       return checkNotNull(myHighlightType.apply(psi), "highlightType");
     }
 
@@ -142,22 +158,43 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *
      * @param anchor a function that determines the {@link PsiElement} to be used 
      *               as an anchor for a given Psi object.
+     *               Anchor can be used as a more convenient way to define a reporting range.
      * @return a new Simple instance with the updated anchor function.
      */
     Simple<Psi> withAnchor(@NotNull Function<? super Psi, ? extends PsiElement> anchor) {
-      return new Simple<>(myKey, myDescription, myTooltip, anchor, myRange, myHighlightType);
+      return withAbsoluteRange(psi -> anchor.apply(psi).getTextRange());
     }
 
     /**
      * Creates a new instance of Simple with the specified range function.
      *
      * @param range a function that determines the {@link TextRange} for a given Psi object.
-     *              The range is relative to anchor returned from {@link #anchor(PsiElement)}
+     *              The range is absolute in the current file.
      * @return a new Simple instance with the updated range function.
      */
-    Simple<Psi> withRange(@NotNull Function<? super Psi, ? extends TextRange> range) {
-      return new Simple<>(myKey, myDescription, myTooltip, myAnchor, range, myHighlightType);
+    Simple<Psi> withAbsoluteRange(@NotNull Function<? super Psi, ? extends TextRange> range) {
+      if (myRange != null) {
+        throw new IllegalStateException("Range function is already set for " + key());
+      }
+      return new Simple<>(myKey, myDescription, myTooltip, range, myHighlightType, myNavigationShift);
     }
+
+    /**
+     * Creates a new instance of Simple with the specified range function.
+     *
+     * @param range a function that determines the {@link TextRange} for a given Psi object.
+     *              The range is relative to the input PSI element.
+     *              Returning null assumes that the whole range of the PSI element should be used.
+     * @return a new Simple instance with the updated range function.
+     */
+    Simple<Psi> withRange(@NotNull Function<? super Psi, ? extends @Nullable TextRange> range) {
+      return withAbsoluteRange(psi -> {
+        TextRange res = range.apply(psi);
+        return res == null ? psi.getTextRange() : res.shiftRight(psi.getTextRange().getStartOffset());
+      });
+    }
+    
+    
 
     /**
      * Creates a new instance of Simple with the specified highlight type function.
@@ -166,7 +203,10 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      * @return a new Simple instance with the updated highlight type function.
      */
     Simple<Psi> withHighlightType(@NotNull Function<? super Psi, JavaErrorHighlightType> type) {
-      return new Simple<>(myKey, myDescription, myTooltip, myAnchor, myRange, type);
+      if (myHighlightType != null) {
+        throw new IllegalStateException("Highlight type function is already set for " + key());
+      }
+      return new Simple<>(myKey, myDescription, myTooltip, myRange, type, myNavigationShift);
     }
 
     /**
@@ -180,14 +220,26 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     /**
-     * Creates a new instance of Simple with the specified description function.
+     * Creates a new instance of Simple with the specified navigation shift function.
      *
-     * @param description a Function that generates a description as an HtmlChunk 
-     *                    based on the provided Psi object.
-     * @return a new Simple instance with the updated description function.
+     * @param navigationShift a function that determines the navigation shift for a given Psi object.
+     * @return a new Simple instance with the updated navigation shift function.
      */
-    Simple<Psi> withDescription(@NotNull Function<? super Psi, ? extends HtmlChunk> description) {
-      return new Simple<>(myKey, description, myTooltip, myAnchor, myRange, myHighlightType);
+    Simple<Psi> withNavigationShift(@NotNull ToIntFunction<? super Psi> navigationShift) {
+      if (myNavigationShift != null) {
+        throw new IllegalStateException("Navigation shift function is already set for " + key());
+      }
+      return new Simple<>(myKey, myDescription, myTooltip, myRange, myHighlightType, navigationShift);
+    }
+
+    /**
+     * Creates a new instance of Simple with the specified navigation shift.
+     *
+     * @param navigationShift the constant navigation shift.
+     * @return a new Simple instance with the updated navigation shift.
+     */
+    Simple<Psi> withNavigationShift(int navigationShift) {
+      return withNavigationShift(psi -> navigationShift);
     }
 
     /**
@@ -196,16 +248,19 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      * @param description a Function that computes a description based on the given Psi and Context.
      * @return a new Simple instance with the specified description function.
      */
-    Simple<Psi> withRawDescription(@NotNull Function<? super Psi, @Nls String> description) {
-      return withDescription(psi -> HtmlChunk.raw(description.apply(psi)));
+    Simple<Psi> withDescription(@NotNull Function<? super Psi, @Nls String> description) {
+      if (myDescription != null) {
+        throw new IllegalStateException("Description function is already set for " + key());
+      }
+      return new Simple<>(myKey, description, myTooltip, myRange, myHighlightType, myNavigationShift);
     }
 
     <Context> Parameterized<Psi, Context> parameterized() {
-      return new Parameterized<>(myKey, (psi, ctx) -> myDescription.apply(psi),
-                                 (psi, ctx) -> myTooltip.apply(psi),
-                                 myAnchor,
-                                 (psi, ctx) -> myRange.apply(psi),
-                                 (psi, ctx) -> myHighlightType.apply(psi));
+      return new Parameterized<>(myKey, myDescription == null ? null : (psi, ctx) -> myDescription.apply(psi),
+                                 myTooltip == null ? null : (psi, ctx) -> myTooltip.apply(psi),
+                                 myRange == null ? null : (psi, ctx) -> myRange.apply(psi),
+                                 myHighlightType == null ? null : (psi, ctx) -> myHighlightType.apply(psi),
+                                 myNavigationShift == null ? null : (psi, ctx) -> myNavigationShift.applyAsInt(psi));
     }
 
     /**
@@ -230,40 +285,35 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
    */
   final class Parameterized<Psi extends PsiElement, Context> implements JavaErrorKind<Psi, Context> {
     private final @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String myKey;
-    private final @NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> myDescription;
-    private final @NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> myTooltip;
-    private final @NotNull Function<? super Psi, ? extends PsiElement> myAnchor;
-    private final @NotNull BiFunction<? super Psi, ? super Context, ? extends TextRange> myRange;
-    private final @NotNull BiFunction<? super Psi, ? super Context, JavaErrorHighlightType> myHighlightType;
+    private final @Nullable BiFunction<? super Psi, ? super Context, @Nls String> myDescription;
+    private final @Nullable BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> myTooltip;
+    private final @Nullable BiFunction<? super Psi, ? super Context, ? extends TextRange> myRange;
+    private final @Nullable BiFunction<? super Psi, ? super Context, JavaErrorHighlightType> myHighlightType;
+    private final @Nullable ToIntBiFunction<? super Psi, ? super Context> myNavigationShift;
 
     private Parameterized(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key,
-                          @NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> description,
-                          @NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> tooltip,
-                          @NotNull Function<? super Psi, ? extends PsiElement> anchor,
-                          @NotNull BiFunction<? super Psi, ? super Context, ? extends TextRange> range,
-                          @NotNull BiFunction<? super Psi, ? super Context, JavaErrorHighlightType> type) {
+                          @Nullable BiFunction<? super Psi, ? super Context, @Nls String> description,
+                          @Nullable BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> tooltip,
+                          @Nullable BiFunction<? super Psi, ? super Context, ? extends TextRange> range,
+                          @Nullable BiFunction<? super Psi, ? super Context, JavaErrorHighlightType> type,
+                          @Nullable ToIntBiFunction<? super Psi, ? super Context> navigationShift) {
       myKey = key;
       myDescription = description;
       myTooltip = tooltip;
-      myAnchor = anchor;
       myRange = range;
       myHighlightType = type;
+      myNavigationShift = navigationShift;
     }
 
+    Parameterized(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
+      this(key, null, null, null, null, null);
+    }
+    
     private <T> @NotNull T checkNotNull(T val, String name) {
       if (val == null) {
         throw new NullPointerException("Function '" + name + "' returns null for key " + key());
       }
       return val;
-    }
-    
-    Parameterized(@NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
-      this(key,
-           (psi, ctx) -> HtmlChunk.raw(JavaCompilationErrorBundle.message(key)),
-           (psi, ctx) -> HtmlChunk.empty(),
-           Function.identity(),
-           (psi, ctx) -> null,
-           (psi, ctx) -> JavaErrorHighlightType.ERROR);
     }
 
     @Override
@@ -272,27 +322,42 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     @Override
-    public @NotNull HtmlChunk description(@NotNull Psi psi, Context context) {
+    public @NotNull String description(@NotNull Psi psi, Context context) {
+      if (myDescription == null) {
+        return JavaErrorKind.super.description(psi, context);
+      }
       return checkNotNull(myDescription.apply(psi, context), "description");
     }
 
     @Override
     public @NotNull HtmlChunk tooltip(@NotNull Psi psi, Context context) {
-        return checkNotNull(myTooltip.apply(psi, context), "tooltip");
+      if (myTooltip == null) {
+        return JavaErrorKind.super.tooltip(psi, context);
+      }
+      return checkNotNull(myTooltip.apply(psi, context), "tooltip");
     }
 
     @Override
-    public @NotNull PsiElement anchor(@NotNull Psi psi) {
-      return checkNotNull(myAnchor.apply(psi), "anchor");
-    }
-
-    @Override
-    public @Nullable TextRange range(@NotNull Psi psi, Context context) {
+    public @NotNull TextRange range(@NotNull Psi psi, Context context) {
+      if (myRange == null) {
+        return JavaErrorKind.super.range(psi, context);
+      }
       return myRange.apply(psi, context);
     }
 
     @Override
+    public @Range(from = 0, to = Integer.MAX_VALUE) int navigationShift(@NotNull Psi psi, Context context) {
+      if (myNavigationShift == null) {
+        return 0;
+      }
+      return myNavigationShift.applyAsInt(psi, context);
+    }
+
+    @Override
     public @NotNull JavaErrorHighlightType highlightType(@NotNull Psi psi, Context context) {
+      if (myHighlightType == null) {
+        return JavaErrorKind.super.highlightType(psi, context);
+      }
       return checkNotNull(myHighlightType.apply(psi, context), "highlightType");
     }
 
@@ -309,22 +374,64 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     /**
      * Creates a new instance of Parameterized with a specified anchor function.
      *
-     * @param anchor a BiFunction that computes an anchor based on the given Psi and Context
+     * @param anchor a Function that computes an anchor based on the given Psi and Context.
+     *               Anchor can be used as a more convenient way to define a reporting range.
      * @return a new Parameterized instance with the specified anchor function
      */
     Parameterized<Psi, Context> withAnchor(@NotNull Function<? super Psi, ? extends PsiElement> anchor) {
-      return new Parameterized<>(myKey, myDescription, myTooltip, anchor, myRange, myHighlightType);
+      return withAbsoluteRange((psi, ctx) -> anchor.apply(psi).getTextRange());
     }
 
     /**
      * Creates a new instance of Parameterized with the specified range function.
      *
      * @param range a BiFunction that determines the {@link TextRange} for a given Psi object.
-     *              The range is relative to anchor returned from {@link #anchor(PsiElement)}
+     *              The range is absolute in the current file.
+     * @return a new Parameterized instance with the updated range function.
+     */
+    Parameterized<Psi, Context> withAbsoluteRange(@NotNull BiFunction<? super Psi, ? super Context, ? extends @NotNull TextRange> range) {
+      if (myRange != null) {
+        throw new IllegalStateException("Range function is already set for " + key());
+      }
+      return new Parameterized<>(myKey, myDescription, myTooltip, range, myHighlightType, myNavigationShift);
+    }
+
+    /**
+     * Creates a new instance of Parameterized with the specified range function.
+     *
+     * @param range a BiFunction that determines the {@link TextRange} for a given Psi object.
+     *              The range is relative to the input PSI element.
+     *              Returning null assumes that the whole range of the PSI element should be used.
      * @return a new Parameterized instance with the updated range function.
      */
     Parameterized<Psi, Context> withRange(@NotNull BiFunction<? super Psi, ? super Context, ? extends TextRange> range) {
-      return new Parameterized<>(myKey, myDescription, myTooltip, myAnchor, range, myHighlightType);
+      return withAbsoluteRange((psi, ctx) -> {
+        TextRange res = range.apply(psi, ctx);
+        return res == null ? psi.getTextRange() : res.shiftRight(psi.getTextRange().getStartOffset());
+      });
+    }
+
+    /**
+     * Creates a new instance of Parameterized with the specified navigation shift function.
+     *
+     * @param navigationShift a function that determines the navigation shift for a given Psi and Context object.
+     * @return a new Parameterized instance with the updated navigation shift function.
+     */
+    Parameterized<Psi, Context> withNavigationShift(@NotNull ToIntBiFunction<? super Psi, ? super Context> navigationShift) {
+      if (myNavigationShift != null) {
+        throw new IllegalStateException("Navigation shift function is already set for " + key());
+      }
+      return new Parameterized<>(myKey, myDescription, myTooltip, myRange, myHighlightType, navigationShift);
+    }
+
+    /**
+     * Creates a new instance of Parameterized with the specified navigation shift.
+     *
+     * @param navigationShift the constant navigation shift.
+     * @return a new Parameterized instance with the updated navigation shift.
+     */
+    Parameterized<Psi, Context> withNavigationShift(int navigationShift) {
+      return withNavigationShift((psi, ctx) -> navigationShift);
     }
 
     /**
@@ -334,7 +441,10 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      * @return a new Parameterized instance with the updated highlight type function.
      */
     Parameterized<Psi, Context> withHighlightType(@NotNull BiFunction<? super Psi, ? super Context, JavaErrorHighlightType> type) {
-      return new Parameterized<>(myKey, myDescription, myTooltip, myAnchor, myRange, type);
+      if (myHighlightType != null) {
+        throw new IllegalStateException("Highlight type function is already set for " + key());
+      }
+      return new Parameterized<>(myKey, myDescription, myTooltip, myRange, type, myNavigationShift);
     }
 
     /**
@@ -348,23 +458,16 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
     }
 
     /**
-     * Creates a new instance of Parameterized with a specified description function.
-     *
-     * @param description a BiFunction that computes a description based on the given Psi and Context.
-     * @return a new Parameterized instance with the specified description function.
-     */
-    Parameterized<Psi, Context> withDescription(@NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> description) {
-      return new Parameterized<>(myKey, description, myTooltip, myAnchor, myRange, myHighlightType);
-    }
-
-    /**
      * Creates a new instance of Parameterized with a specified tooltip function.
      *
      * @param tooltip a BiFunction that computes a tooltip based on the given Psi and Context.
      * @return a new Parameterized instance with the specified tooltip function.
      */
     Parameterized<Psi, Context> withTooltip(@NotNull BiFunction<? super Psi, ? super Context, ? extends HtmlChunk> tooltip) {
-      return new Parameterized<>(myKey, myDescription, tooltip, myAnchor, myRange, myHighlightType);
+      if (myTooltip != null) {
+        throw new IllegalStateException("Tooltip function is already set for " + key());
+      }
+      return new Parameterized<>(myKey, myDescription, tooltip, myRange, myHighlightType, myNavigationShift);
     }
 
     /**
@@ -374,8 +477,11 @@ public sealed interface JavaErrorKind<Psi extends PsiElement, Context> {
      *                    based on the given Psi and Context.
      * @return a new Parameterized instance with the specified raw description function.
      */
-    Parameterized<Psi, Context> withRawDescription(@NotNull BiFunction<? super Psi, ? super Context, @Nls String> description) {
-      return withDescription((psi, context) -> HtmlChunk.raw(description.apply(psi, context)));
+    Parameterized<Psi, Context> withDescription(@NotNull BiFunction<? super Psi, ? super Context, @Nls String> description) {
+      if (myDescription != null) {
+        throw new IllegalStateException("Description function is already set for " + key());
+      }
+      return new Parameterized<>(myKey, description, myTooltip, myRange, myHighlightType, myNavigationShift);
     }
 
     @Override

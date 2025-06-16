@@ -2,7 +2,9 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionTest;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -26,6 +28,22 @@ public class Py3TypeTest extends PyTestCase {
       
       expr = MyClass().attr
       """);
+  }
+
+  // PY-78964
+  public void testFunctionReturnTypeTryFinally() {
+    doTest("str",
+           """
+             def test():
+                 try:
+                     return 42
+                 finally:
+                     return "str"
+             
+                 return True
+             
+             expr = test()
+             """);
   }
 
   // PY-20710
@@ -87,6 +105,78 @@ public class Py3TypeTest extends PyTestCase {
            expr = l()
            """);
   }
+
+  //// PY-76659
+  //public void testRecursiveResolve() {
+  //  doTest("int",
+  //         """
+  //           x = 42
+  //           while x:
+  //               x = x + 1
+  //           expr = x""");
+  //}
+  //
+  //// PY-76659
+  //public void testRecursiveResolve2() {
+  //  doTest("int",
+  //         """
+  //           x = 42
+  //           b: bool = ...
+  //           while x:
+  //               if b:
+  //                   x = x + 1
+  //                   expr = x
+  //               else:
+  //                   x = x - 1
+  //           """);
+  //}
+  //
+  //// PY-76659
+  //public void testDeclareAfterUse() {
+  //  doTest("int | Any",
+  //         """
+  //           from typing import Any, TypeGuard
+  //
+  //           def is_positive_integer(value: Any) -> TypeGuard[int]:
+  //               return isinstance(value, int) and value > 0
+  //
+  //           def bar() -> object:
+  //               return 321
+  //
+  //           def foo():
+  //               for i in range(1, 100):
+  //                   if i > 1:
+  //                       expr = x
+  //                   x = bar()
+  //                   if not is_positive_integer(x):
+  //                       break
+  //           """);
+  //}
+  //
+  //// PY-76659
+  //public void testClassChain() {
+  //  doTest("B | C | D | A",
+  //         """
+  //           class A:
+  //               def bar() -> "B":
+  //                   return B()
+  //           class B:
+  //               def bar() -> "C":
+  //                   return C()
+  //           class C:
+  //               def bar() -> "D":
+  //                   return D()
+  //           class D:
+  //               def bar() -> A:
+  //                   return A()
+  //
+  //           def foo(b):
+  //               x = A()
+  //               while b:
+  //                   x = x.bar()
+  //
+  //               expr = x""");
+  //}
 
   // PY-6702
   public void testYieldFromType() {
@@ -624,6 +714,12 @@ public class Py3TypeTest extends PyTestCase {
                  if (v == abc):
                      expr = v
              """);
+    doTest("Literal[\"abba\"]",
+           """
+             from typing import Literal
+             if ((v := input()) == "abba"):
+                 expr = v
+             """);
   }
 
   public void testLiteralTypeNarrowingIn() {
@@ -670,6 +766,12 @@ public class Py3TypeTest extends PyTestCase {
              def f(v: object):
                  if v in (-1, None):
                      expr = v
+             """);
+    doTest("Literal[\"abba\"]",
+           """
+             from typing import Literal
+             if (a := input()) in ("abba", False):
+                 expr = a
              """);
   }
 
@@ -760,7 +862,7 @@ public class Py3TypeTest extends PyTestCase {
              async for expr in a:
                  print(expr)""");
   }
-  
+
   // PY-60714
   public void testAsyncIteratorUnwrapsCoroutineFromAnext() {
     doTest("bytes", """
@@ -852,7 +954,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-24445
   public void testIsSubclassInsideListComprehension() {
-    doTest("list[Type[A]]",
+    doTest("list[type[A]]",
            "class A: pass\n" +
            "expr = [e for e in [] if issubclass(e, A)]");
   }
@@ -1896,6 +1998,48 @@ public class Py3TypeTest extends PyTestCase {
              def foo(arg: State):
                  expr = arg.value
              """);
+  }
+
+  // PY-79330
+  public void testEnumAutoValueType() {
+    doTest("int",
+           """
+             from enum import auto, Enum
+             
+             class MyEnum(Enum):
+                 FOO = auto()
+                 BAR = FOO
+             
+             def foo(e: MyEnum):
+                 expr = e.value""");
+  }
+
+  // PY-79330
+  public void testEnumAutoValueTypeCustomGenerateNextValue() {
+    doTest("str",
+           """
+             from enum import auto, Enum
+             
+             class MyEnumBase(Enum):
+                 @staticmethod
+                 def _generate_next_value_(name: str, start: int, count: int, last_values: list[str]) -> str: ...
+             
+             class MyEnumDerived(MyEnumBase):
+                 FOO = auto()
+             
+             def foo(e: MyEnumDerived):
+                 expr = e.value""");
+  }
+
+  // PY-79330
+  public void testEnumAutoValueTypeCustomGenerateNextValueMultiFile() {
+    doMultiFileTest("str",
+                    """
+                      from my_enum import MyEnumDerived
+                      
+                      def foo(e: MyEnumDerived):
+                          expr = e.value
+                      """);
   }
 
   // PY-16622
@@ -3438,6 +3582,221 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
+  public void testShadowingReturnInsideFinally() {
+    doTest("str", """
+      def f():
+          try:
+              return 42
+          finally:
+              return "foo"
+      expr = f()
+      """);
+  }
+
+  public void testNonShadowingReturnInsideFinally() {
+    doTest("str | int", """
+      def f(p):
+          try:
+              return 42
+          finally:
+              if p:
+                  return "foo"
+      expr = f()
+      """);
+  }
+
+  public void testReturnInsideExceptElse() {
+    doTest("str | bool", """
+      def f(p):
+          try:
+              e1()
+          except Exception:
+              return "foo"
+          else:
+              return True
+          finally:
+              pass
+      expr = f()
+      """);
+  }
+
+  public void testMetaclassDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
+    doTest("object", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def call(cls, p) -> object: ...
+      
+          __call__ = call
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
+  public void testMetaclassNotAnnotatedDunderCall() {
+    doTest("MyClass", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__(cls, p: int): ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p: int) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
+    doTest("MyClass", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__[T](cls: type[T], *args, **kwargs) -> T: ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, p) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
+  public void testMetaclassGenericDunderCallReturnTypeIncompatibleWithClassBeingConstructed() {
+    doTest("int", """
+      from typing import Self
+      
+      
+      class Meta(type):
+          def __call__[T](cls, x: T) -> T: ...
+      
+      
+      class MyClass(metaclass=Meta):
+          def __new__(cls, x) -> Self: ...
+      
+      
+      expr = MyClass(1)
+      """);
+  }
+
+  public void testMetaclassDunderCallReturnTypeCompatibleWithClassBeingConstructed() {
+    doTest("Base", """
+      from typing import Any, Self
+
+
+      class Meta(type):
+          def __call__(self, *args: Any, **kwds: Any) -> 'Derived': ...
+
+
+      class Base(metaclass=Meta):
+          def __new__(cls, *args: Any, **kwds: Any) -> Self: ...
+
+
+      class Derived(Base):
+          ...
+
+
+      expr = Base()
+      """);
+  }
+
+  // PY-79967
+  public void testTypeOfTemplateStringInferredAsTemplateForPython314() {
+    runWithLanguageLevel(LanguageLevel.PYTHON314, () -> {
+      doTest("Template", """
+        expr = t"template string"
+        """);
+    });
+  }
+
+  // PY-79967
+  public void testTypeOfTemplateStringInferredAsStrForPython314() {
+    runWithLanguageLevel(LanguageLevel.PYTHON313, () -> {
+      doTest("str", """
+        expr = t"template string"
+        """);
+    });
+  }
+
+  // PY-79967
+  public void testInterpolationExpressionTypeFromTemplateString() {
+    runWithLanguageLevel(LanguageLevel.PYTHON314, () -> {
+      doTest("str", """
+        name = "John"
+        expr = t"Hello, {name}!".interpolations[0].expression
+        """);
+    });
+  }
+
+  public void testSliceExpression() {
+    doTest("int", """
+      from typing import overload
+      
+      class A[T]:
+          @overload
+          def __getitem__(self, s: str) -> str: ...
+      
+          @overload
+          def __getitem__(self, s: slice) -> T: ...
+      
+          def __getitem__(self, s: str | slice) -> str | T: ...
+      
+      expr = A[int]()[0:2]
+      """);
+  }
+
+  // PY-80436
+  public void testEllipsis() {
+    doTest("EllipsisType", "expr = ...");
+    doTest("EllipsisType", "expr = Ellipsis");
+  }
+
+  // PY-80166, PY-80167
+  public void testVarianceObtainedFromTypeVarDeclaration() {
+    doTestTypeVarVariance(PyTypeVarType.Variance.INVARIANT, """
+      from typing import TypeVar
+      T = TypeVar("T")
+      expr: T
+      """);
+    doTestTypeVarVariance(PyTypeVarType.Variance.COVARIANT, """
+      from typing import TypeVar
+      T_co = TypeVar("T_co", covariant=True)
+      expr: T_co
+      """);
+    doTestTypeVarVariance(PyTypeVarType.Variance.CONTRAVARIANT, """
+      from typing import TypeVar
+      T_contra = TypeVar("T_contra", contravariant=True)
+      expr: T_contra
+      """);
+    doTestTypeVarVariance(PyTypeVarType.Variance.INFER_VARIANCE, """
+      from typing import TypeVar
+      T_inf = TypeVar("T_inf", infer_variance=True)
+      expr: T_inf
+      """);
+    doTestTypeVarVariance(PyTypeVarType.Variance.INVARIANT, """
+      from typing import TypeVar
+      T_wrong = TypeVar("T_wrong", covariant=True, contravariant=True)
+      expr: T_wrong
+      """);
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestTypeVarVariance(PyTypeVarType.Variance.INFER_VARIANCE, """
+      def foo[T]():
+        expr: T
+      """);
+    });
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
@@ -3450,6 +3809,15 @@ public class Py3TypeTest extends PyTestCase {
     assertType(expectedType, expr, TypeEvalContext.codeAnalysis(project, containingFile));
     assertProjectFilesNotParsed(containingFile);
     assertType(expectedType, expr, TypeEvalContext.userInitiated(project, containingFile));
+  }
+
+  private void doTestTypeVarVariance(PyTypeVarType.Variance variance, String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+    assertNotNull(expr);
+    PyType type = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()).getType(expr);
+    assertInstanceOf(type, PyTypeVarType.class);
+    assertEquals(variance, ((PyTypeVarType)type).getVariance());
   }
 
   private void doMultiFileTest(@NotNull String expectedType, @NotNull String text) {

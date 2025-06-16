@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.serialization.serializer
 
 import com.esotericsoftware.kryo.kryo5.Kryo
@@ -110,12 +110,12 @@ internal class HashMultimapSerializer : Serializer<HashMultimap<*, *>>(false, tr
 
   @Suppress("UNCHECKED_CAST")
   override fun read(kryo: Kryo, input: Input, type: Class<out HashMultimap<*, *>>): HashMultimap<*, *> {
-    val res = HashMultimap.create<Any, Any>()
-    val map = kryo.readClassAndObject(input) as HashMap<*, Collection<*>>
+    val result = HashMultimap.create<Any, Any>()
+    val map = kryo.readClassAndObject(input) as HashMap<Any, Collection<Any>>
     map.forEach { (key, values) ->
-      res.putAll(key, values)
+      result.putAll(key, values)
     }
-    return res
+    return result
   }
 }
 
@@ -128,7 +128,7 @@ internal class Int2IntWithDefaultMapSerializer : Serializer<Int2IntWithDefaultMa
   @Suppress("UNCHECKED_CAST")
   override fun read(kryo: Kryo, input: Input, type: Class<out Int2IntWithDefaultMap>): Int2IntWithDefaultMap {
     val des = kryo.readClassAndObject(input) as Map<Int, Int>
-    val res = Int2IntWithDefaultMap()
+    val res = Int2IntWithDefaultMap(des.size)
     des.forEach { key, value ->
       res.put(key, value)
     }

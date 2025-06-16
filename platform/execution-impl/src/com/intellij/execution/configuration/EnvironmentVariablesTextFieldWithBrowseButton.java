@@ -178,11 +178,11 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   public void addEnvFilePathsChangeListener(@NotNull ChangeListener changeListener) {
-    myListeners.add(changeListener);
+    myEnvFilePathsChangeListeners.add(changeListener);
   }
 
   public void removeEnvFilePathsChangeListener(@NotNull ChangeListener changeListener) {
-    myListeners.remove(changeListener);
+    myEnvFilePathsChangeListeners.remove(changeListener);
   }
 
   @Override

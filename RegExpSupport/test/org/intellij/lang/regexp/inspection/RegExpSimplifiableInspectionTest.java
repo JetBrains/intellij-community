@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -35,6 +35,15 @@ public class RegExpSimplifiableInspectionTest extends RegExpInspectionTestCase {
 
   public void testDigitRange2() {
     highlightTest("[0-9abc]"); // no warn; replacing with \d is not equivalent in Unicode context
+  }
+
+  public void testIntersection() {
+    highlightTest("^[\\p{ASCII}&&[^@]]+@[\\p{ASCII}&&[^@]]+$");
+    highlightTest("[\\W&&\\S]");
+  }
+
+  public void testIncomplete() {
+    highlightTest(".{<EOLError descr=\"Number expected\"></EOLError>");
   }
 
   public void testSingleElementClass() {

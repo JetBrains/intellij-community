@@ -44,7 +44,7 @@ internal class GHPRListPanelController(
       }
     }
     scope.launch {
-      combineAndCollect(listVm.loading, listVm.searchVm.searchState) { isLoading, searchValue ->
+      combineAndCollect(listVm.isLoading, listVm.searchVm.searchState) { isLoading, searchValue ->
         updateEmptyText(isLoading, searchValue)
       }
     }
@@ -86,7 +86,7 @@ internal class GHPRListPanelController(
 
   private fun createErrorStatusPresenter(project: Project, account: GithubAccount): ErrorStatusPresenter.Text<Throwable> {
     val errorHandler = GHApiLoadingErrorHandler(project, account) {
-      listVm.refresh()
+      listVm.reload()
     }
 
     return ErrorStatusPresenter.simple(

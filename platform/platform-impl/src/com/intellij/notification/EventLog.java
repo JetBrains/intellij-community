@@ -2,8 +2,10 @@
 
 package com.intellij.notification;
 
+import com.intellij.notification.impl.NotificationsToolWindowFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,10 +19,11 @@ public final class EventLog {
   }
 
   public static @Nullable ToolWindow getEventLog(@Nullable Project project) {
-    return ActionCenter.getToolWindow(project);
+    return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID);
   }
 
   public static void toggleLog(final @Nullable Project project, final @Nullable Notification notification) {
+    if (project == null) return;
     ActionCenter.toggleLog(project);
   }
 }

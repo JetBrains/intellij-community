@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -49,7 +49,6 @@ import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jsoup.Jsoup;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -91,6 +90,7 @@ public final class AboutDialog extends DialogWrapper {
     String appName = getFullNameForAboutDialog();
     setResizable(false);
     setTitle(IdeBundle.message("about.popup.about.app", appName));
+    setShouldUseWriteIntentReadAction(false);
 
     init();
   }
@@ -209,7 +209,7 @@ public final class AboutDialog extends DialogWrapper {
     for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensionList()) {
       String description = aboutInfoProvider.getDescription();
       if (description != null) {
-        lines.add(cleanupDescriptionText(description, false));
+        lines.add(description);
         lines.add("");
       }
     }
@@ -300,7 +300,7 @@ public final class AboutDialog extends DialogWrapper {
     for (var aboutInfoProvider : EP_NAME.getExtensionList()) {
       var description = aboutInfoProvider.getExtendedDescription();
       if (description != null) {
-        text.append(cleanupDescriptionText(description, true)).append('\n');
+        text.append(description).append('\n');
       }
     }
 
@@ -341,17 +341,6 @@ public final class AboutDialog extends DialogWrapper {
     }
 
     return text.toString();
-  }
-
-  private static @NotNull String cleanupDescriptionText(@NotNull String description, boolean allowMultiline) {
-    var textOnly = Jsoup.parse(description).text().trim();
-    if (allowMultiline) {
-      return textOnly;
-    } else {
-      return textOnly.replace("\r\n", " ")
-        .replace("\r", " ")
-        .replace("\n", " ");
-    }
   }
 
   private static void showOssInfo(JComponent component) {

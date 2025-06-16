@@ -11,7 +11,6 @@ import com.intellij.cce.interpreter.InterpretationOrder
 interface EvaluationChunk {
   val datasetName: String
   val name: String
-  val presentationText: String
 
   val sessionsExist: Boolean get() = true
 
@@ -20,5 +19,17 @@ interface EvaluationChunk {
     filter: InterpretFilter,
     order: InterpretationOrder,
     sessionHandler: (Session) -> Unit
-  ): List<Session>
+  ): Result
+
+  fun iterate(iterationCount: Int): List<EvaluationChunk> = List(iterationCount) { iteration ->
+    val iterationLabel = if (iterationCount > 1) "Iteration $iteration" else ""
+    if (iterationLabel.isNotEmpty()) IterationChunk("${name} - $iterationLabel", this) else this
+  }
+
+  data class Result(
+    val sessions: List<Session>,
+    val presentationText: String?
+  )
 }
+
+private class IterationChunk(override val name: String, private val chunk: EvaluationChunk) : EvaluationChunk by chunk

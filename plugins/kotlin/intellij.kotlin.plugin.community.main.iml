@@ -22,6 +22,8 @@
     <orderEntry type="module" module-name="kotlin.base.analysis-api-platform" exported="" />
     <orderEntry type="module" module-name="kotlin.base.project-structure" exported="" />
     <orderEntry type="module" module-name="kotlin.base.scripting" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.base.scripting.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" exported="" />
     <orderEntry type="module" module-name="kotlin.base.facet" exported="" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" exported="" />
@@ -194,7 +196,6 @@
     <orderEntry type="library" exported="" name="kotlinc.sam-with-receiver-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.assignment-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-gradle-statistics" level="project" />
-    <orderEntry type="library" exported="" name="kotlinc.android-extensions-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.parcelize-compiler-plugin" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" exported="" name="kotlinx-collections-immutable" level="project" />
@@ -218,5 +219,8 @@
     <orderEntry type="module" module-name="kotlin.jsr223" exported="" />
     <orderEntry type="module" module-name="kotlin.k2.internal" exported="" />
     <orderEntry type="module" module-name="kotlin.base.fir.scripting" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.shared" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.gradle.scripting.k2" exported="" />
   </component>
 </module>

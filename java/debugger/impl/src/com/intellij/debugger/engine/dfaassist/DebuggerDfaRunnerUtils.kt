@@ -6,19 +6,16 @@ import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow
 import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaRunner.Larva
 import com.intellij.debugger.engine.dfaassist.DebuggerDfaRunner.Pupa
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.engine.events.SuspendContextCommandImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyEx
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
@@ -28,10 +25,9 @@ import com.intellij.util.ThreeState
 import com.intellij.xdebugger.impl.dfaassist.DfaResult
 import com.sun.jdi.*
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.concurrent.ExecutionException
 
 
 @Throws(EvaluateException::class)
@@ -46,7 +42,7 @@ private suspend fun hatch(proxy: StackFrameProxyEx, pointer: SmartPsiElementPoin
   } ?: return null
 
   try {
-    val match = syncReadAction { provider.locationMatches(e, proxy.location()) }
+    val match = provider.locationMatches(e, proxy.location())
     if (!match) return null
   }
   catch (iea: IllegalArgumentException) {
@@ -97,7 +93,7 @@ private suspend fun resolveJdiValue(
     // Assume that assertions are enabled if we cannot fetch the status
     return location.virtualMachine().mirrorOf(status == ThreeState.NO)
   }
-  return syncReadAction { provider.getJdiValueForDfaVariable(proxy, variableValue, anchor) }
+  return provider.getJdiValueForDfaVariable(proxy, variableValue, anchor)
 }
 
 private suspend fun makePupa(proxy: StackFrameProxyEx, pointer: SmartPsiElementPointer<PsiElement?>): Pupa? {
@@ -160,31 +156,31 @@ suspend fun createDfaRunner(
 
 internal fun scheduleDfaUpdate(assist: DfaAssist, newContext: DebuggerContextImpl, element: PsiElement) {
   val pointer = SmartPointerManager.createPointer<PsiElement?>(element)
-  newContext.getManagerThread()!!.schedule(object : SuspendContextCommandImpl(newContext.suspendContext) {
-    override suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) {
-      val proxy = suspendContext.getFrameProxy()
-      if (proxy == null) {
-        assist.cleanUp()
-        return
-      }
-      val runnerPupa = makePupa(proxy, pointer)
-      if (runnerPupa == null) {
-        assist.cleanUp()
-        return
-      }
-      val project = suspendContext.debugProcess.project
-      val job = suspendContext.coroutineScope.launch {
-        assist.cancelComputation()
-        val hints = constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
-          runnerPupa.transform()?.computeHints() ?: DfaResult.EMPTY
-        }
-        withContext(Dispatchers.EDT) {
-          assist.displayInlaysInternal(hints)
-        }
-      }
-      assist.setComputation(job)
+  val suspendContext = newContext.suspendContext ?: return
+  executeOnDMT(suspendContext) {
+    val proxy = suspendContext.getFrameProxy()
+    if (proxy == null) {
+      assist.cleanUp()
+      return@executeOnDMT
     }
-  })
+    val runnerPupa = makePupa(proxy, pointer)
+    if (runnerPupa == null) {
+      assist.cleanUp()
+      return@executeOnDMT
+    }
+    val project = suspendContext.debugProcess.project
+    val hintsJob = suspendContext.coroutineScope.async {
+      constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+        runnerPupa.transform()?.computeHints() ?: DfaResult.EMPTY
+      }
+    }
+    assist.cancelComputation()
+    assist.setComputation(hintsJob)
+    val hints = hintsJob.await()
+    withContext(Dispatchers.EDT) {
+      assist.displayInlaysInternal(hints)
+    }
+  }
 }
 
 private data class LarvaData(
@@ -196,12 +192,3 @@ private data class LarvaData(
   val offset: Int,
   val dfaVariableValues: List<DfaVariableValue>,
 )
-
-private suspend fun <T> syncReadAction(action: () -> T): T = blockingContext {
-  try {
-    ReadAction.nonBlocking(action).executeSynchronously()
-  }
-  catch (e: ExecutionException) {
-    throw e.cause ?: e
-  }
-}

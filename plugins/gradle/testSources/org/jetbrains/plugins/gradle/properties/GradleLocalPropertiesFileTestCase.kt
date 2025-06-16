@@ -2,10 +2,12 @@
 package org.jetbrains.plugins.gradle.properties
 
 import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_CACHE_DIR_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_LOCAL_PROPERTIES_FILE_NAME
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import java.util.Properties
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.outputStream
 
@@ -29,7 +31,6 @@ abstract class GradleLocalPropertiesFileTestCase {
   }
 
   fun asserGradleLocalPropertiesFile(assertion: GradleLocalProperties. () -> Unit) {
-    val properties = GradleLocalPropertiesFile.getProperties(projectPath)
-    properties.assertion()
+    GradleLocalPropertiesFile.getProperties(projectPath).assertion()
   }
 }

@@ -19,8 +19,8 @@ import static com.intellij.ui.JBColor.namedColor;
 
 @ApiStatus.Internal
 public class CurrentBranchHighlighter implements VcsLogHighlighter {
-  private static final JBColor CURRENT_BRANCH_BG = namedColor("VersionControl.Log.Commit.currentBranchBackground",
-                                                              new JBColor(new Color(228, 250, 255), new Color(63, 71, 73)));
+  public static final JBColor CURRENT_BRANCH_BG = namedColor("VersionControl.Log.Commit.currentBranchBackground",
+                                                             new JBColor(new Color(228, 250, 255), new Color(63, 71, 73)));
   private final @NotNull VcsLogData myLogData;
   private final @NotNull Map<VirtualFile, Boolean> myIsHighlighted = new HashMap<>();
 

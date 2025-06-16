@@ -33,7 +33,7 @@ class GrazieRuleSettingsAction(private val ruleName: String, private val rule: R
     return if (other is GrazieAddExceptionQuickFix) 1 else 0
   }
 
-  override fun applyFix(project: Project, file: PsiFile?, editor: Editor?) {
+  override fun applyFix(project: Project, psiFile: PsiFile?, editor: Editor?) {
     val state1 = GrazieConfig.get()
 
     val ok: Boolean
@@ -48,7 +48,7 @@ class GrazieRuleSettingsAction(private val ruleName: String, private val rule: R
     }
 
     val result = if (!ok) "canceled" else analyzeStateChange(state1, GrazieConfig.get())
-    GrazieFUSCounter.quickFixInvoked(rule, project, "rule.settings:$result")
+    GrazieFUSCounter.settingsUpdated("rule.settings:$result", rule, project)
   }
 
   private fun analyzeStateChange(state1: GrazieConfig.State, state2: GrazieConfig.State): String {

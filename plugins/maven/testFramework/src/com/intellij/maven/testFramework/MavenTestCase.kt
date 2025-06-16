@@ -4,8 +4,8 @@ package com.intellij.maven.testFramework
 import com.intellij.UtilBundle
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.ide.DataManager
+import com.intellij.maven.testFramework.wsl2.JdkWslTestInstaller
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.*
@@ -90,7 +90,6 @@ import kotlin.io.path.*
 abstract class MavenTestCase : UsefulTestCase() {
   protected var mavenProgressIndicator: MavenProgressIndicator? = null
     private set
-  private var myWSLDistribution: WSLDistribution? = null
   private var myPathTransformer: RemotePathTransformerFactory.Transformer? = null
 
   private lateinit var ourTempDir: Path
@@ -147,7 +146,6 @@ abstract class MavenTestCase : UsefulTestCase() {
     setUpFixtures()
     myProject = myTestFixture!!.project
     myPathTransformer = RemotePathTransformerFactory.createForProject(project)
-    setupWslDistribution()
     setupCustomJdk()
     ensureTempDirCreated()
 
@@ -166,6 +164,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     mavenGeneralSettings.isAlwaysUpdateSnapshots = true
 
     MavenUtil.cleanAllRunnables()
+    MavenSettingsCache.getInstance(project).reload()
 
     EdtTestUtil.runInEdtAndWait<IOException> {
       restoreSettingsFile()
@@ -186,16 +185,17 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   private fun setupCustomJdk() {
     var jdkPath: String? = null
-    if (myWSLDistribution != null) {
-      jdkPath = System.getProperty("wsl.jdk.path") ?: "/usr/lib/jvm/java-11-openjdk-amd64"
-      assertTrue(myWSLDistribution!!.getWindowsPath(myWSLDistribution!!.userHome!!).toNioPathOrNull()!!.isDirectory())
-      // SDK might be null; if so, jdkPath will be used to create a JDK instance
-      myJdk = findExisingJdkByPath(myWSLDistribution!!.getWindowsPath(jdkPath))
-    }
     if (isProjectInEelEnvironment()) {
       jdkPath = getEelFixtureEngineJavaHome()
     }
     if (myJdk == null && jdkPath != null) {
+      if (isProjectInWslEelEnvironment()) {
+        val definition = getTeamcityJavaItemDefinition()
+        if(definition!= null) {
+          val jdkToInstall = JdkWslTestInstaller.readJdkItem(Path.of(definition))
+          JdkWslTestInstaller(Path.of(jdkPath), jdkToInstall).checkOrInstallJDK()
+        }
+      }
       myJdk = JavaSdk.getInstance().createJdk("Maven Test JDK", jdkPath)
       val jdkTable = ProjectJdkTable.getInstance()
       WriteAction.runAndWait<RuntimeException> { jdkTable.addJdk(myJdk!!) }
@@ -214,21 +214,21 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  private fun setupWslDistribution() {
-    val wslMsId = System.getProperty("wsl.distribution.name")
-    if (wslMsId == null) return
-    val distributions = WslDistributionManager.getInstance().installedDistributions
-    if (distributions.isEmpty()) throw IllegalStateException("no WSL distributions configured!")
-    myWSLDistribution = distributions.firstOrNull { it.msId == wslMsId }
-                        ?: throw IllegalStateException("Distribution $wslMsId was not found")
-  }
 
   private fun isProjectInEelEnvironment(): Boolean {
     return System.getenv("EEL_FIXTURE_ENGINE") != null
   }
 
+  private fun isProjectInWslEelEnvironment(): Boolean {
+    return "wsl".equals(System.getenv("EEL_FIXTURE_ENGINE"), true)
+  }
+
   private fun getEelFixtureEngineJavaHome(): String {
     return System.getenv("EEL_FIXTURE_ENGINE_JAVA_HOME") ?: throw IllegalArgumentException("The system environment variable EEL_FIXTURE_ENGINE_JAVA_HOME should be explicitly specified")
+  }
+
+  private fun getTeamcityJavaItemDefinition(): String? {
+    return System.getenv("TEAMCITY_WSL_JDK_DEFINITION")
   }
 
   protected fun waitForMavenUtilRunnablesComplete() {
@@ -236,6 +236,22 @@ abstract class MavenTestCase : UsefulTestCase() {
       { "Waiting for MavenUtils runnables completed" + MavenUtil.uncompletedRunnables },
       { MavenUtil.noUncompletedRunnables() }, 15)
   }
+
+  private fun isNetworkNameError(t: Throwable, message: String): Boolean {
+    return (t.message ?: "").contains("The network name cannot be found") &&
+           message.contains("Couldn't read shelf information")
+  }
+
+  private fun isJdkAnnotationsError(t: Throwable, category: String): Boolean {
+    return "JDK annotations not found" == t.message &&
+           "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl" == category
+  }
+
+  private fun isLicenseError(message: String): Boolean {
+    return "LicenseManager is not installed" == message
+  }
+
+
 
   override fun runBare(testRunnable: ThrowableRunnable<Throwable>) {
     LoggedErrorProcessor.executeWith<Throwable>(object : LoggedErrorProcessor() {
@@ -245,13 +261,12 @@ abstract class MavenTestCase : UsefulTestCase() {
         details: Array<String>,
         t: Throwable?,
       ): Set<Action> {
-        val intercept = t != null && ((t.message ?: "").contains("The network name cannot be found") &&
-                                      message.contains("Couldn't read shelf information") ||
-                                      "JDK annotations not found" == t.message && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl" == category)
+        val intercept = t != null && (isNetworkNameError(t, message) || isJdkAnnotationsError(t, category) || isLicenseError(message))
         return if (intercept) Action.NONE else Action.ALL
       }
     }) { super.runBare(testRunnable) }
   }
+  
 
   private fun findExisingJdkByPath(jdkPath: String): Sdk? {
     val sdk = ProjectJdkTable.getInstance().allJdks.find { jdkPath == it.homePath }!!
@@ -271,7 +286,6 @@ abstract class MavenTestCase : UsefulTestCase() {
         mavenProgressTracker?.assertProgressTasksCompleted()
       },
       ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() },
-      ThrowableRunnable { tearDownEmbedders() },
       ThrowableRunnable { checkAllMavenConnectorsDisposed() },
       ThrowableRunnable { myProject = null },
       ThrowableRunnable { tearDownJdk() },
@@ -284,11 +298,6 @@ abstract class MavenTestCase : UsefulTestCase() {
       },
       ThrowableRunnable { doTearDownFixtures() },
       ThrowableRunnable { deleteDirOnTearDown(myDir) },
-      ThrowableRunnable {
-        if (myWSLDistribution != null && basePath != null) {
-          deleteDirOnTearDown(basePath.toNioPathOrNull())
-        }
-      },
       ThrowableRunnable { super.tearDown() }
     ).run()
   }
@@ -308,23 +317,22 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
   }
 
-  private fun tearDownEmbedders() {
-    val manager = MavenProjectsManager.getInstanceIfCreated(myProject!!)
-    if (manager == null) return
-    manager.embeddersManager.releaseInTests()
-  }
-
-
   private fun ensureTempDirCreated() {
     ourTempDir = when {
+      isProjectInWslEelEnvironment() -> {
+        val fileSystemMount = getFileSystemMount()
+        if (fileSystemMount.isBlank()) {
+          throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
+        }
+        Path(fileSystemMount).resolve("/tmp/mavenTests")
+      }
       isProjectInEelEnvironment() -> {
         val fileSystemMount = getFileSystemMount()
         if (fileSystemMount.isBlank()) {
           throw IllegalArgumentException("The EEL_FIXTURE_MOUNT environment variable is not specified")
         }
-        Path("$fileSystemMount/mavenTests")
+        Path(fileSystemMount).resolve("mavenTests")
       }
-      myWSLDistribution != null -> myWSLDistribution!!.getWindowsPath("/tmp").toNioPathOrNull()!!.resolve("mavenTests")
       else -> FileUtil.getTempDirectory().toNioPathOrNull()!!.resolve("mavenTests")
     }
     FileUtil.delete(ourTempDir)
@@ -332,18 +340,11 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected open fun setUpFixtures() {
-    val wslDistributionName = System.getProperty("wsl.distribution.name")
-    myTestFixture = when {
-      wslDistributionName != null -> setupWsl(wslDistributionName)
-      else -> IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
-    }
-    myTestFixture!!.setUp()
+    val fixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, useDirectoryBasedProjectFormat()).fixture
+    myTestFixture = fixture
+    fixture.setUp()
   }
 
-  private fun setupWsl(wslDistributionName: String): IdeaProjectTestFixture {
-    val path = generateTemporaryPath(FileUtil.sanitizeFileName(name, false), Paths.get("\\\\wsl$\\${wslDistributionName}\\tmp"))
-    return IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(name, path, useDirectoryBasedProjectFormat()).fixture
-  }
 
   protected open fun useDirectoryBasedProjectFormat(): Boolean {
     return false
@@ -382,14 +383,19 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected val mavenImporterSettings: MavenImportingSettings
     get() = MavenProjectsManager.getInstance(myProject!!).importingSettings
 
+  protected val repositoryPathCanonical: String
+    get() = repositoryPath.toCanonicalPath()
+
   protected var repositoryPath: Path
-    get() = mavenGeneralSettings.effectiveRepositoryPath
+    get() = MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()
     set(path) {
       mavenGeneralSettings.setLocalRepository(path.toCanonicalPath())
+      MavenSettingsCache.getInstance(project).reload()
     }
 
   protected fun resetRepositoryFile() {
     mavenGeneralSettings.setLocalRepository(null)
+    MavenSettingsCache.getInstance(project).reload()
   }
 
   protected val projectPath: Path
@@ -410,8 +416,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
   }
 
-  protected fun updateSettingsXml(content: String): VirtualFile {
-    return updateSettingsXmlFully(createSettingsXmlContent(content))
+  protected suspend fun updateSettingsXml(content: String): VirtualFile {
+    return updateSettingsXmlFully(createSettingsXmlContent(content)).also {
+      MavenSettingsCache.getInstance(project).reloadAsync()
+    }
   }
 
   protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
@@ -425,7 +433,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun restoreSettingsFile() {
-    updateSettingsXml("""
+    updateSettingsXmlFully(createSettingsXmlContent("""
       <mirrors>
         <mirror>
           <id>central-mirror</id>
@@ -433,7 +441,7 @@ abstract class MavenTestCase : UsefulTestCase() {
           <mirrorOf>central</mirrorOf>
         </mirror>
       </mirrors>
-    """.trimIndent())
+    """.trimIndent()))
   }
 
   protected fun createModule(name: String, type: ModuleType<*>): Module {

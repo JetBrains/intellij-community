@@ -6,90 +6,63 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeInsight.navigation.impl.NavigationRequestor
 import com.intellij.codeInsight.navigation.impl.gtdTargetNavigatable
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.ide.ui.UISettings
-import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileNavigator
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
-import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
-import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
-import com.intellij.platform.backend.navigation.impl.SharedSourceNavigationRequest
-import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.navigation.navigateBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
 
-internal fun navigateToLookupItem(project: Project): Boolean {
+internal fun navigateToLookupItem(project: Project, editor: Editor): Boolean {
   val activeLookup: Lookup? = LookupManager.getInstance(project).activeLookup
   if (activeLookup == null) {
     return false
   }
   val currentItem = activeLookup.currentItem
-  navigateRequestLazy(project) {
+  navigateRequestLazy(project, {
     TargetElementUtil.targetElementFromLookupElement(currentItem)
       ?.gtdTargetNavigatable()
       ?.navigationRequest()
-  }
+  }, editor)
   return true
 }
 
 /**
  * Obtains a [NavigationRequest] instance from [requestor] on a background thread, and calls [navigateRequest].
  */
-internal fun navigateRequestLazy(project: Project, requestor: NavigationRequestor) {
+internal fun navigateRequestLazy(project: Project, requestor: NavigationRequestor, editor: Editor) {
   EDT.assertIsEdt()
   @Suppress("DialogTitleCapitalization")
   val request = underModalProgress(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
     requestor.navigationRequest()
   }
   if (request != null) {
-    navigateRequest(project, request)
+    val dataContext = editor.component.let { DataManager.getInstance().getDataContext(it) }
+    navigateRequest(project, request, dataContext = dataContext)
   }
 }
 
 @Internal
 @RequiresEdt
-fun navigateRequest(project: Project, request: NavigationRequest) {
+@JvmOverloads
+fun navigateRequest(project: Project, request: NavigationRequest, dataContext: DataContext? = null) {
   EDT.assertIsEdt()
   IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
-  when (request) {
-    is SourceNavigationRequest -> {
-      // TODO support pure source request without OpenFileDescriptor
-      val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
-      val openFileDescriptor = if (request is SharedSourceNavigationRequest && isSharedSourceSupportEnabled(project)) {
-        OpenFileDescriptor(project, request.file, request.context, offset)
-      }
-      else {
-        OpenFileDescriptor(project, request.file, offset)
-      }
-      if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
-        openFileDescriptor.isUsePreviewTab = true
-      }
-      FileNavigator.getInstance().navigate(openFileDescriptor, true)
-    }
-    is DirectoryNavigationRequest -> {
-      PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, true)
-    }
-    is RawNavigationRequest -> {
-      request.navigatable.navigate(true)
-    }
-    else -> {
-      error("unsupported request ${request.javaClass.name}")
-    }
-  }
+  navigateBlocking(project, request, NavigationOptions.requestFocus(), dataContext)
 }
 
 internal fun notifyNowhereToGo(project: Project, editor: Editor, file: PsiFile, offset: Int) {

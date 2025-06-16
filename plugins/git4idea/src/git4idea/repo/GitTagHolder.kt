@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.dvcs.DvcsUtil
@@ -25,10 +25,10 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
 import git4idea.config.GitVcsSettings
+import git4idea.remoteApi.GitRepositoryFrontendSynchronizer
 import git4idea.util.StringScanner
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -48,12 +48,8 @@ class GitTagHolder(val repository: GitRepository) {
   private val updateSemaphore = OverflowSemaphore(overflow = BufferOverflow.DROP_OLDEST)
   private var isEnabled: Boolean
 
-  private val isLoadingFlow = MutableStateFlow(false)
-  val isLoading: Boolean get() = isLoadingFlow.value
-
   init {
     isEnabled = GitVcsSettings.getInstance(repository.project).showTags()
-    reload()
 
     repository.project.messageBus.connect(cs)
       .subscribe(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED, object : DvcsBranchManagerListener {
@@ -85,6 +81,7 @@ class GitTagHolder(val repository: GitRepository) {
       val tags = loadTagsForRepo()
       tagsWithHashes = tags.first
       hashToTagCache = tags.second
+      BackgroundTaskUtil.syncPublisher(repository.project, GitRepositoryFrontendSynchronizer.TOPIC).tagsLoaded(repository)
       BackgroundTaskUtil.syncPublisher(repository.project, GIT_TAGS_LOADED).tagsLoaded(repository)
     }
     else {
@@ -93,23 +90,17 @@ class GitTagHolder(val repository: GitRepository) {
     }
   }
 
-  private suspend fun loadTagsForRepo(): Pair<MutableMap<GitTag, Hash>, Map<String, GitTag>> {
-    isLoadingFlow.emit(true)
+  private fun loadTagsForRepo(): Pair<MutableMap<GitTag, Hash>, Map<String, GitTag>> {
     val tags = mutableMapOf<GitTag, Hash>()
     val cache = mutableMapOf<String, GitTag>()
-    try {
-      if (Registry.`is`("git.read.branches.from.disk")) {
-        readPackedTags(repositoryFiles.packedRefsPath, tags, cache)
-        GitRefUtil.readFromRefsFiles(repositoryFiles.refsTagsFile,
-                                     GitTag.REFS_TAGS_PREFIX,
-                                     repositoryFiles) { tag, hash -> putValue(tag, hash, tags, cache) }
-      }
-      else {
-        readTagsFromGit(tags, cache)
-      }
+    if (Registry.`is`("git.read.branches.from.disk")) {
+      readPackedTags(repositoryFiles.packedRefsPath, tags, cache)
+      GitRefUtil.readFromRefsFiles(repositoryFiles.refsTagsFile,
+                                   GitTag.REFS_TAGS_PREFIX,
+                                   repositoryFiles) { tag, hash -> putValue(tag, hash, tags, cache) }
     }
-    finally {
-      isLoadingFlow.emit(false)
+    else {
+      readTagsFromGit(tags, cache)
     }
     return tags to cache
   }

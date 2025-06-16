@@ -56,16 +56,16 @@ object ModuleAssertions {
     assertContainsUnordered(expectedNames, actualNames)
   }
 
-  fun assertModuleEntity(project: Project, name: String, assertion: (ModuleEntity) -> Unit) =
+  fun assertModuleEntity(project: Project, name: String, assertion: (ModuleEntity) -> Unit) {
     assertModuleEntity(project.workspaceModel.currentSnapshot, name, assertion)
+  }
 
   fun assertModuleEntity(storage: EntityStorage, name: String, assertion: (ModuleEntity) -> Unit) {
     storage.entities<ModuleEntity>()
       .find { it.name == name }
       .let { module ->
         Assertions.assertNotNull(module, "Cannot find '$name' module")
-        Assertions.assertEquals(name, module!!.name)
-        assertion(module)
+        assertion(module!!)
       }
   }
 }

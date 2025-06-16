@@ -2,6 +2,7 @@
 package com.intellij.ide.gdpr
 
 import com.intellij.DynamicBundle
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.gdpr.ui.HtmlRtfPane
 import com.intellij.idea.AppExitCodes
@@ -20,6 +21,8 @@ import com.intellij.util.ui.SwingHelper
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.BorderLayout
 import java.awt.event.ActionListener
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
@@ -141,10 +144,10 @@ class AgreementUiBuilder internal constructor() {
       val html = SwingHelper.createHtmlLabel(text, null, null)
       html.border = JBUI.Borders.empty(10, 16, 10, 0)
       html.isOpaque = true
-      html.isFocusable = ScreenReader.isActive()
       val eapLabelStyleSheet = (html.document as HTMLDocument).styleSheet
       eapLabelStyleSheet.addRule("a {text-decoration:none;}")
       eapPanel.add(html, BorderLayout.CENTER)
+      ui.bottomPanel?.accessibleContext?.accessibleName = html.document.getText(0, html.document.length)
       ui.bottomPanel?.add(JBUI.Borders.empty(14, 30, 0, 30).wrap(eapPanel), BorderLayout.NORTH)
     }
 
@@ -229,7 +232,18 @@ private class AgreementUi(@NlsSafe private val htmlText: String,
     val line = CustomLineBorder(UIManager.getColor("DialogWrapper.southPanelDivider") ?: JBColor.border(), 0, 0, 1, 0)
     scrollPane.border = CompoundBorder(line, JBUI.Borders.empty())
     centerPanel.add(scrollPane, BorderLayout.CENTER)
-    bottomPanel = JPanel(BorderLayout())
+    bottomPanel = object : JPanel(BorderLayout()) {
+      override fun getAccessibleContext(): AccessibleContext? {
+        if (accessibleContext == null) {
+          accessibleContext = object : AccessibleJPanel() {
+            override fun getAccessibleRole(): AccessibleRole? {
+              return AccessibilityUtils.GROUPED_ELEMENTS
+            }
+          }
+        }
+        return accessibleContext
+      }
+    }
     JBUI.Borders.empty(16, 30, 8, 30).wrap(bottomPanel)
     centerPanel.add(bottomPanel!!, BorderLayout.SOUTH)
     scrollPane.preferredSize = JBUI.size(600, 356)

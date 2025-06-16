@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import java.util.Arrays;
@@ -75,7 +76,7 @@ public abstract class PropertiesHighlighter extends SyntaxHighlighterBase {
       return myTextAttributesKey;
     }
 
-    Supplier<@Nls String> getMessagePointer() {
+    public Supplier<@Nls String> getMessagePointer() {
       return myMessagePointer;
     }
 
@@ -83,7 +84,8 @@ public abstract class PropertiesHighlighter extends SyntaxHighlighterBase {
       return myTokenType;
     }
 
-    static PropertiesComponent getByTokenType(IElementType tokenType) {
+    @ApiStatus.Internal
+    public static PropertiesComponent getByTokenType(IElementType tokenType) {
       return elementTypeToComponent.get(tokenType);
     }
 
@@ -91,13 +93,13 @@ public abstract class PropertiesHighlighter extends SyntaxHighlighterBase {
       return textAttributeKeyToComponent.get(textAttributesKey);
     }
 
-    static @Nls String getDisplayName(TextAttributesKey key) {
+    public static @Nls String getDisplayName(TextAttributesKey key) {
       final PropertiesComponent component = getByTextAttribute(key);
       if (component == null) return null;
       return component.getMessagePointer().get();
     }
 
-    static @Nls HighlightSeverity getSeverity(TextAttributesKey key) {
+    public static @Nls HighlightSeverity getSeverity(TextAttributesKey key) {
       final PropertiesComponent component = getByTextAttribute(key);
       return component == PROPERTIES_INVALID_STRING_ESCAPE
              ? HighlightSeverity.WARNING

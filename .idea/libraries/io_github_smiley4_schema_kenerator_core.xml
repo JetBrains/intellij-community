@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="io.github.smiley4.schema.kenerator.core" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.github.smiley4:schema-kenerator-core:2.1.2">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2.1.2/schema-kenerator-core-2.1.2.jar">
+          <sha256sum>233ab1c77dfe17d0e5f3f5bbb7c4df88a63c8d2510d9455e0a78b4375ba1d3d3</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2.1.2/schema-kenerator-core-2.1.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2.1.2/schema-kenerator-core-2.1.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

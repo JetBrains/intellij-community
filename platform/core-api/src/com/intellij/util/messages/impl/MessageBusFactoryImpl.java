@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl;
 
 import com.intellij.util.messages.MessageBus;
@@ -12,17 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public final class MessageBusFactoryImpl extends MessageBusFactory {
   @Override
   public @NotNull MessageBus createMessageBus(@NotNull MessageBusOwner owner, @Nullable MessageBus parentBus) {
-    if (parentBus == null) {
-      return new RootBus(owner);
-    }
-
-    CompositeMessageBus parent = (CompositeMessageBus)parentBus;
-    if (parent.getParent() == null) {
-      return new CompositeMessageBus(owner, parent);
-    }
-    else {
-      return new MessageBusImpl(owner, parent);
-    }
+    return parentBus == null ? new RootBus(owner) : new MessageBusImpl(owner, (CompositeMessageBus)parentBus);
   }
 
   public static @NotNull RootBus createRootBus(@NotNull MessageBusOwner owner) {

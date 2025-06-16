@@ -1,7 +1,6 @@
 // ERROR: Initializer type mismatch: expected 'Int', actual 'Unit'.
 // ERROR: 'when' expression must be exhaustive. Add an 'else' branch.
 // ERROR: Return type mismatch: expected 'Int', actual 'Unit'.
-// ERROR: Type mismatch: inferred type is 'Unit', but 'Int' was expected.
 object C {
     @JvmStatic
     fun main(args: Array<String>) {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +16,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implements StandardProgressIndicator {
   private volatile @Nullable Throwable myCancellationRequester;
+
+  private static final Throwable PLACEHOLDER = new Throwable(
+    "Dummy throwable that indicates cancellation of EmptyProgressIndicator.\nSet `ide.rich.cancellation.traces` to `true` to get real origin of cancellation.");
 
   @Obsolete
   @Contract(pure = true)
@@ -33,7 +37,8 @@ public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implement
 
   @Override
   public final void cancel() {
-    myCancellationRequester = new Throwable("Origin of cancellation of " + this);
+    myCancellationRequester =
+      Registry.is("ide.rich.cancellation.traces", false) ? new Throwable("Origin of cancellation of " + this) : PLACEHOLDER;
     ProgressManager.canceled(this);
   }
 

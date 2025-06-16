@@ -11,11 +11,6 @@ jvm_resources(
 java_library(
   name = "toml",
   visibility = ["//visibility:public"],
-  runtime_deps = [
-    ":toml_resources",
-    "//plugins/toml/core",
-    "//plugins/toml/json",
-    "//plugins/toml/grazie",
-  ]
+  runtime_deps = [":toml_resources"]
 )
 ### auto-generated section `build intellij.toml` end

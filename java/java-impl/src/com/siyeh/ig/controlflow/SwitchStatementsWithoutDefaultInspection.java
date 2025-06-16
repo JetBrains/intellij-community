@@ -30,10 +30,10 @@ import com.siyeh.ig.psiutils.SwitchUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
-import static com.intellij.codeInsight.daemon.impl.analysis.PatternsInSwitchBlockHighlightingModel.evaluateSwitchCompleteness;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.siyeh.ig.psiutils.SwitchUtils.SwitchExhaustivenessState;
+import static com.siyeh.ig.psiutils.SwitchUtils.evaluateSwitchCompleteness;
 
 public final class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -73,10 +73,12 @@ public final class SwitchStatementsWithoutDefaultInspection extends AbstractBase
           infoMode = true;
         }
         else {
-          CompletenessResult completenessResult = evaluateSwitchCompleteness(statement, true);
-          if (completenessResult == CompletenessResult.UNEVALUATED ||
-              completenessResult == CompletenessResult.COMPLETE_WITH_UNCONDITIONAL) return;
-          if (m_ignoreFullyCoveredEnums && completenessResult == CompletenessResult.COMPLETE_WITHOUT_UNCONDITIONAL) {
+          SwitchExhaustivenessState completenessResult = evaluateSwitchCompleteness(statement, true);
+          if (completenessResult == SwitchExhaustivenessState.UNNECESSARY ||
+              completenessResult == SwitchExhaustivenessState.MALFORMED ||
+              completenessResult == SwitchExhaustivenessState.EMPTY ||
+              completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_NO_DEFAULT) return;
+          if (m_ignoreFullyCoveredEnums && completenessResult == SwitchExhaustivenessState.EXHAUSTIVE_CAN_ADD_DEFAULT) {
             if (!isOnTheFly) return;
             infoMode = true;
           }

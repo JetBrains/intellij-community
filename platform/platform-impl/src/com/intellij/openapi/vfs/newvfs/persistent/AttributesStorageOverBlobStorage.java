@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
@@ -6,9 +6,9 @@ import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.platform.util.io.storages.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.platform.util.io.storages.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,8 +18,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.checkAttributeValueSize;
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.LOG;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.checkAttributeValueSize;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
@@ -756,11 +756,11 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
 
   //@GuardedBy("lock")
   @VisibleForTesting
-  int updateAttribute(int attributesRecordId,
-                      int fileId,
-                      int attributeId,
-                      byte[] newValueBytes,
-                      int newValueSize) throws IOException {
+  public int updateAttribute(int attributesRecordId,
+                             int fileId,
+                             int attributeId,
+                             byte[] newValueBytes,
+                             int newValueSize) throws IOException {
     checkAttributeId(attributeId);
     int updatedAttributesRecordId;
     if (newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
@@ -935,7 +935,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
 
   //@GuardedBy("lock")
   @VisibleForTesting
-  byte[] readAttributeValue(int attributesRecordId,
+  public byte[] readAttributeValue(int attributesRecordId,
                             int fileId,
                             int attributeId) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
@@ -965,10 +965,10 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
 
   //@GuardedBy("lock")
   @VisibleForTesting
-  <R> R readAttributeValue(int attributesRecordId,
-                           int fileId,
-                           int attributeId,
-                           ByteBufferReader<R> reader) throws IOException {
+  public <R> R readAttributeValue(int attributesRecordId,
+                                  int fileId,
+                                  int attributeId,
+                                  ByteBufferReader<R> reader) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
       AttributesRecord attributesRecord = new AttributesRecord(buffer);
       attributesRecord.checkBackrefFile(attributesRecordId, fileId);
@@ -998,7 +998,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
 
   //@GuardedBy("lock")
   @VisibleForTesting
-  boolean hasAttribute(int attributesRecordId,
+  public boolean hasAttribute(int attributesRecordId,
                        int fileId,
                        int attributeId) throws IOException {
     if (!storage.hasRecord(attributesRecordId)) {
@@ -1028,8 +1028,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
 
   //@GuardedBy("lock")
   @VisibleForTesting
-  boolean deleteAttributes(int attributesRecordId,
-                           int fileId) throws IOException {
+  public boolean deleteAttributes(int attributesRecordId, int fileId) throws IOException {
     if (attributesRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       return false;
     }
@@ -1195,7 +1194,7 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
    * into buffer[...offset..(offset+newGapSize)...] keeping data before & after the gap intact.
    */
   @VisibleForTesting
-  static ByteBuffer resizeGap(ByteBuffer buffer,
+  public static ByteBuffer resizeGap(ByteBuffer buffer,
                               int offset,
                               int oldGapSize,
                               int newGapSize) {

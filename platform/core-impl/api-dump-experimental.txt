@@ -2,7 +2,26 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - com.intellij.extapi.psi.ASTDelegatePsiElement
 - *:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
 - *pf:getElementTypeImpl():com.intellij.psi.tree.IElementType
+- *f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
+- *f:getRequiredStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
 - *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType):com.intellij.psi.PsiElement
+- *f:getStubOrPsiChild(com.intellij.psi.tree.IElementType,java.lang.Class):com.intellij.psi.PsiElement
+*f:com.intellij.ide.plugins.IdeaPluginDescriptorExtensions
+- *sf:getContentModuleName(com.intellij.ide.plugins.IdeaPluginDescriptor):java.lang.String
+- *sf:getContentModules(com.intellij.ide.plugins.IdeaPluginDescriptor):java.util.List
+- *sf:getMainDescriptor(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.IdeaPluginDescriptor
+- *sf:getModuleDependencies(com.intellij.ide.plugins.IdeaPluginDescriptor):com.intellij.ide.plugins.ModuleDependencies
+- *sf:isRequiredContentModule(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
+*f:com.intellij.ide.plugins.ModuleDependencies
+- <init>(java.util.List,java.util.List):V
+- f:getModules():java.util.List
+- f:getPlugins():java.util.List
+*f:com.intellij.ide.plugins.ModuleDependencies$ModuleReference
+- <init>(java.lang.String):V
+- f:getName():java.lang.String
+*f:com.intellij.ide.plugins.ModuleDependencies$PluginReference
+- <init>(com.intellij.openapi.extensions.PluginId):V
+- f:getId():com.intellij.openapi.extensions.PluginId
 *:com.intellij.ide.plugins.PluginEnabler
 - sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
 - a:disable(java.util.Collection):Z
@@ -15,6 +34,14 @@ c:com.intellij.extapi.psi.StubBasedPsiElementBase
 - com.intellij.ide.plugins.PluginEnabler
 - a:isIgnoredDisabledPlugins():Z
 - a:setIgnoredDisabledPlugins(Z):V
+f:com.intellij.ide.plugins.PluginManagerCore
+- *sf:isLoaded(com.intellij.openapi.extensions.PluginDescriptor):Z
+*:com.intellij.ide.plugins.PluginNonLoadReason
+- a:getDetailedMessage():java.lang.String
+- a:getLogMessage():java.lang.String
+- a:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
+- a:getShortMessage():java.lang.String
+- a:getShouldNotifyUser():Z
 *c:com.intellij.lang.impl.TokenSequence
 - com.intellij.lexer.TokenList
 - asLexer():com.intellij.lexer.Lexer
@@ -44,6 +71,14 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.fileEditor.FileDocumentManager
 - *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z
+*f:com.intellij.psi.DummyBlockType
+- sf:DUMMY_BLOCK:com.intellij.psi.tree.IElementType
+- <init>():V
+*c:com.intellij.psi.DummyBlockType$DummyBlock
+- com.intellij.psi.impl.source.tree.CompositePsiElement
+- <init>():V
+- getLanguage():com.intellij.lang.Language
+- getReferences():com.intellij.psi.PsiReference[]
 com.intellij.psi.impl.PsiFileEx
 - com.intellij.psi.PsiFile
 - *s:isBatchReferenceProcessingEnabled(com.intellij.psi.PsiFile):Z

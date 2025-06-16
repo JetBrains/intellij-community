@@ -15,6 +15,13 @@ import java.util.*
 
 
 class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
+
+  private val processedRepositoryModels = IdentityHashMap<RepositoryModels, Unit>()
+
+  override fun resolveFinished(projectDataNode: DataNode<ProjectData>) {
+    processedRepositoryModels.clear()
+  }
+
   override fun populateProjectExtraModels(gradleProject: IdeaProject, ideProject: DataNode<ProjectData>) {
     val repositories = resolverCtx.getRootModel(RepositoryModels::class.java)
     addRepositoriesToProject(ideProject, repositories)
@@ -36,7 +43,7 @@ class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
 
   private fun addRepositoriesToProject(ideProject: DataNode<ProjectData>,
                                        repositories: RepositoryModels?) {
-    if (repositories != null) {
+    if (repositories != null && !processedRepositoryModels.containsKey(repositories)) {
       val knownRepositories = ExternalSystemApiUtil.getChildren(ideProject, MavenRepositoryData.KEY)
         .asSequence()
         .map { it.data }
@@ -47,6 +54,7 @@ class MavenRepositoriesProjectResolver: AbstractProjectResolverExtension() {
         .filter { !knownRepositories.contains(it) }
         .distinct()
         .forEach { ideProject.addChild(DataNode(MavenRepositoryData.KEY, it, ideProject)) }
+      processedRepositoryModels[repositories] = Unit
     }
   }
 }

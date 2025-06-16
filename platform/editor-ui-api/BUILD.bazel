@@ -14,6 +14,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//jps/model-api:model",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
     "//platform/indexing-api:indexing",

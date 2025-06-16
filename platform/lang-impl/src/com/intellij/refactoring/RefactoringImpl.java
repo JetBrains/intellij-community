@@ -18,7 +18,7 @@ public abstract class RefactoringImpl<T extends BaseRefactoringProcessor> implem
 
   @Override
   public boolean isPreviewUsages() {
-    return myProcessor.isPreviewUsages();
+    return BaseRefactoringProcessorAccessor.isPreviewUsages(myProcessor);
   }
 
   @Override
@@ -33,22 +33,22 @@ public abstract class RefactoringImpl<T extends BaseRefactoringProcessor> implem
 
   @Override
   public UsageInfo[] findUsages() {
-    return myProcessor.findUsages();
+    return BaseRefactoringProcessorAccessor.findUsages(myProcessor);
   }
 
   @Override
   public boolean preprocessUsages(Ref<UsageInfo[]> usages) {
-    return myProcessor.preprocessUsages(usages);
+    return BaseRefactoringProcessorAccessor.preprocessUsages(myProcessor, usages);
   }
 
   @Override
   public boolean shouldPreviewUsages(UsageInfo[] usages) {
-    return myProcessor.isPreviewUsages(usages);
+    return BaseRefactoringProcessorAccessor.isPreviewUsages(myProcessor, usages);
   }
 
   @Override
   public void doRefactoring(UsageInfo[] usages) {
-    myProcessor.execute(usages);
+    BaseRefactoringProcessorAccessor.execute(myProcessor, usages);
   }
 
   @Override

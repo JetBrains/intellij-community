@@ -17,7 +17,7 @@ public class ShGenerateUntilLoop extends ShBaseGenerateAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     TemplateManager templateManager = TemplateManager.getInstance(project);
     Template template = TemplateSettings.getInstance().getTemplateById("shell_until");
     if (template == null) return;

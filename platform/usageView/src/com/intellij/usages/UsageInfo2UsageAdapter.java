@@ -5,7 +5,8 @@ import com.intellij.ide.SelectInEditorManager;
 import com.intellij.ide.TypePresentationService;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.findUsages.LanguageFindUsages;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -29,7 +30,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +49,7 @@ import java.util.concurrent.CompletableFuture;
 public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
                                                UsageInLibrary, UsageInFile, PsiElementUsage,
                                                MergeableUsage,
-                                               RenameableUsage, DataProvider, UsagePresentation {
+                                               RenameableUsage, UiCompatibleDataProvider, UsagePresentation, UsageDocumentProcessor {
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
   @SuppressWarnings("StaticNonFinalField")
@@ -252,17 +256,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return getUsageInfo().getSegment();
   }
 
-  // must iterate in start offset order
-  public boolean processRangeMarkers(@NotNull Processor<? super Segment> processor) {
-    for (UsageInfo usageInfo : getMergedInfos()) {
-      Segment segment = usageInfo.getSegment();
-      if (segment != null && !processor.process(segment)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
+  @Override
   public Document getDocument() {
     PsiFile file = getUsageInfo().getFile();
     if (file == null) return null;
@@ -537,14 +531,9 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (UsageView.USAGE_INFO_KEY.is(dataId)) {
-      return getUsageInfo();
-    }
-    if (UsageView.USAGE_INFO_LIST_KEY.is(dataId)) {
-      return Arrays.asList(getMergedInfos());
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(UsageView.USAGE_INFO_KEY, getUsageInfo());
+    sink.set(UsageView.USAGE_INFO_LIST_KEY, Arrays.asList(getMergedInfos()));
   }
 
   private long myModificationStamp;

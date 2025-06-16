@@ -7,7 +7,6 @@ import org.jetbrains.plugins.textmate.plist.PListValue.Companion.integer
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.real
 import org.jetbrains.plugins.textmate.plist.PListValue.Companion.string
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -81,6 +80,34 @@ class XmlPlistReaderTest {
   }
 
   @Test
+  fun parseEmptyElements() {
+    val plist = read("""
+      <dict>
+        <key>name</key>
+        <string/>
+        <key>lastname</key>
+        <string></string>
+        <key>age</key>
+        <integer></integer>
+        <key>day_of_birth</key>
+        <integer/>
+        <key>age_real</key>
+        <real></real>
+        <key>day_of_birth_real</key>
+        <real/>
+      </dict>""".trimIndent())
+    val inner = mapOf(
+      "name" to string(""),
+      "lastname" to string(""),
+      "age" to integer(0),
+      "day_of_birth" to integer(0),
+      "age_real" to real(0.0),
+      "day_of_birth_real" to real(0.0))
+    assertEquals(Plist(inner), plist)
+  }
+
+
+  @Test
   fun plistWithoutDictRoot() {
     val plist = read("<key>someKey</key><string>someValue</string>")
     assertEquals(Plist.EMPTY_PLIST, plist)
@@ -100,7 +127,7 @@ class XmlPlistReaderTest {
   }
 
   private fun read(string: String?): Plist {
-    return XmlPlistReader().read(ByteArrayInputStream(prepareText(string).toByteArray(Charsets.UTF_8)))
+    return XmlPlistReaderForTests().read(prepareText(string).encodeToByteArray())
   }
 
   companion object {

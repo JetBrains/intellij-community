@@ -17,11 +17,11 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.siyeh.InspectionGadgetsBundle;
@@ -72,7 +72,7 @@ public final class UnnecessarySuperConstructorInspection extends BaseInspection 
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
-      if (methodExpression.isQualified() || !PsiKeyword.SUPER.equals(methodExpression.getReferenceName())) {
+      if (methodExpression.isQualified() || !JavaKeywords.SUPER.equals(methodExpression.getReferenceName())) {
         return;
       }
       if (!call.getArgumentList().isEmpty()) {

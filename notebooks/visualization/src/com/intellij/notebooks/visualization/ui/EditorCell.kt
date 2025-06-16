@@ -1,58 +1,56 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
+import com.intellij.notebooks.visualization.NotebookCellLines.CellType
+import com.intellij.notebooks.visualization.NotebookCellLines.Interval
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
 import com.intellij.notebooks.visualization.UpdateContext
-import com.intellij.notebooks.visualization.execution.ExecutionEvent
 import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKey
-import com.intellij.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor
+import com.intellij.notebooks.visualization.ui.providers.frame.EditorCellFrameManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
+import com.intellij.openapi.util.UserDataHolderBase
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
-private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, EditorCellExtension>>("CELL_EXTENSION_CONTAINER_KEY")
 
 class EditorCell(
   val notebook: EditorNotebook,
   var intervalPointer: NotebookIntervalPointer,
-  private val editor: EditorImpl,
+  val editor: EditorImpl,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
+  val isUnfolded: AtomicBooleanProperty = AtomicBooleanProperty(true)
+  val isSelected: AtomicBooleanProperty = AtomicBooleanProperty(false)
+  val isHovered: AtomicBooleanProperty = AtomicBooleanProperty(false)
 
-  val source = AtomicProperty<String>(getSource())
+  //Enable NotebookVisibleCellsBatchUpdater if this field is required
+  //val isInViewportRectangle: AtomicBooleanProperty = AtomicBooleanProperty(false)
 
-  val type = interval.type
+  val source: AtomicProperty<String> = AtomicProperty(interval.getContentText(editor))
+  val gutterAction: AtomicProperty<AnAction?> = AtomicProperty(null)
+  val executionStatus: AtomicProperty<ExecutionStatus> = AtomicProperty<ExecutionStatus>(ExecutionStatus())
 
-  val interval get() = intervalPointer.get() ?: error("Invalid interval")
-
-  val view: EditorCellView?
-    get() = NotebookCellInlayManager.get(editor)!!.views[this]
-
-  var visible = AtomicBooleanProperty(true)
-
-  val selected = AtomicBooleanProperty(false)
-
-  val gutterAction = AtomicProperty<AnAction?>(null)
-
-  val executionStatus = AtomicProperty<ExecutionStatus>(ExecutionStatus())
-
-  val outputs = EditorCellOutputs(editor, this)
-
-  private fun getSource(): String {
-    val document = editor.document
-    if (interval.lines.first + 1 >= document.lineCount) return ""
-    val startOffset = document.getLineStartOffset(interval.lines.first + 1)
-    val endOffset = document.getLineEndOffset(interval.lines.last)
-    if (startOffset >= endOffset) return ""  // possible for empty cells
-    return document.getText(TextRange(startOffset, endOffset))
+  val cellFrameManager: EditorCellFrameManager? = EditorCellFrameManager.create(this)?.also {
+    Disposer.register(this, it)
   }
+
+  val outputs: EditorCellOutputs = EditorCellOutputs(this)
+
+  val interval: Interval
+    get() = intervalPointer.get() ?: error("Invalid interval")
+  val intervalOrNull: Interval?
+    get() = intervalPointer.get()
+  val type: CellType
+    get() = interval.type
+  val view: EditorCellView?
+    get() = NotebookCellInlayManager.get(editor)?.views[this]
+
 
   override fun dispose() {
     cleanupExtensions()
@@ -75,65 +73,21 @@ class EditorCell(
   }
 
   fun updateInput() {
-    source.set(getSource())
+    source.set(interval.getContentText(editor))
+  }
+
+  fun checkAndRebuildInlays() {
+    view?.checkAndRebuildInlays()
   }
 
   fun onViewportChange() {
     view?.onViewportChanges()
   }
 
-  fun setGutterAction(action: AnAction?) {
-    gutterAction.set(action)
-  }
-
-  inline fun <reified T : NotebookCellInlayController> getController(): T? {
-    val lazyFactory = getLazyFactory(T::class)
-    if (lazyFactory != null) {
-      createLazyControllers(lazyFactory)
-    }
-    return view?.getExtension<T>()
-  }
-
-  @PublishedApi
-  internal fun createLazyControllers(factory: NotebookCellInlayController.LazyFactory) {
-    factory.cellOrdinalsInCreationBlock.add(interval.ordinal)
-    editor.updateManager.update { ctx ->
-      update(ctx)
-    }
-    factory.cellOrdinalsInCreationBlock.remove(interval.ordinal)
-  }
-
-  @PublishedApi
-  internal fun <T : NotebookCellInlayController> getLazyFactory(type: KClass<T>): NotebookCellInlayController.LazyFactory? {
-    return NotebookCellInlayController.Factory.EP_NAME.extensionList
-      .filterIsInstance<NotebookCellInlayController.LazyFactory>()
-      .firstOrNull { it.getControllerClass() == type.java }
-  }
-
-  fun updateOutputs() = editor.updateManager.update {
+  fun updateOutputs(): Unit = editor.updateManager.update {
     outputs.updateOutputs()
   }
 
-  fun onExecutionEvent(event: ExecutionEvent) {
-    when (event) {
-      is ExecutionEvent.ExecutionStarted -> {
-        executionStatus.set(executionStatus.get().copy(status = event.status, startTime = event.startTime))
-      }
-      is ExecutionEvent.ExecutionStopped -> {
-        executionStatus.set(executionStatus.get().copy(status = event.status, endTime = event.endTime, count = event.executionCount))
-      }
-      is ExecutionEvent.ExecutionSubmitted -> {
-        executionStatus.set(executionStatus.get().copy(status = event.status))
-      }
-      is ExecutionEvent.ExecutionReset -> {
-        executionStatus.set(executionStatus.get().copy(status = event.status))
-      }
-    }
-  }
-
-  fun requestCaret() {
-    view?.requestCaret()
-  }
 
   inline fun <reified T : EditorCellExtension> getExtension(): T? {
     return getExtension(T::class)
@@ -148,7 +102,7 @@ class EditorCell(
   fun <T : EditorCellExtension> addExtension(cls: KClass<T>, extension: T) {
     var map = CELL_EXTENSION_CONTAINER_KEY.get(this)
     if (map == null) {
-      map = mutableMapOf<KClass<*>, EditorCellExtension>()
+      map = mutableMapOf()
       CELL_EXTENSION_CONTAINER_KEY.set(this, map)
     }
     map[cls] = extension
@@ -173,35 +127,8 @@ class EditorCell(
     val startTime: ZonedDateTime? = null,
     val endTime: ZonedDateTime? = null,
   )
-}
 
-class EditorCellOutputs(private val editor: EditorEx, private val cell: EditorCell) {
-
-  val scrollingEnabled = AtomicBooleanProperty(true)
-
-  val outputs = AtomicProperty<List<EditorCellOutput>>(getOutputs())
-
-  fun updateOutputs() {
-    val outputDataKeys = getOutputs()
-    updateOutputs(outputDataKeys)
+  companion object {
+    private val CELL_EXTENSION_CONTAINER_KEY = Key<MutableMap<KClass<*>, EditorCellExtension>>("CELL_EXTENSION_CONTAINER_KEY")
   }
-
-  private fun updateOutputs(newOutputs: List<EditorCellOutput>) = runInEdt {
-    outputs.set(newOutputs)
-  }
-
-  private fun getOutputs(): List<EditorCellOutput> =
-    NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
-      .mapNotNull { it.extract(editor as EditorImpl, cell.interval) }
-      .firstOrNull()
-      ?.takeIf { it.isNotEmpty() }
-      ?.map { EditorCellOutput(it) }
-    ?: emptyList()
-
-}
-
-class EditorCellOutput(dataKey: NotebookOutputDataKey) {
-
-  val dataKey = AtomicProperty<NotebookOutputDataKey>(dataKey)
-
 }

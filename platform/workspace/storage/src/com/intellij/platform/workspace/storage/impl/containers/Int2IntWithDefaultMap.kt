@@ -4,6 +4,7 @@
 package com.intellij.platform.workspace.storage.impl.containers
 
 import com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap.Companion.DEFAULT_VALUE
+import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntCollection
@@ -26,7 +27,9 @@ internal class Int2IntWithDefaultMap private constructor(internal val backingMap
     }
   }
 
-  constructor() : this(Int2IntOpenHashMap().also { it.defaultReturnValue(DEFAULT_VALUE) })
+  constructor(expectedSize: Int = Hash.DEFAULT_INITIAL_SIZE) : this(
+    Int2IntOpenHashMap(expectedSize).also { it.defaultReturnValue(DEFAULT_VALUE) }
+  )
 
   companion object {
     const val DEFAULT_VALUE: Int = -1

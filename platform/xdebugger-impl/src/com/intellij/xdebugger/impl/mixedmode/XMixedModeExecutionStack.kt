@@ -10,7 +10,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.mixedMode.nativeThreadId
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.frame.XStackFrameContainerEx
-import com.intellij.xdebugger.impl.util.adviseOnFrameChanged
+import com.intellij.xdebugger.impl.util.notifyOnFrameChanged
 import com.intellij.xdebugger.mixedMode.MixedModeStackBuilder
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager
 import kotlinx.coroutines.CompletableDeferred
@@ -44,9 +44,9 @@ class XMixedModeExecutionStack(
 
   init {
     // we need to track when the current frame is changed to show the correct thread after rebuildAllViews
-    (session as XDebugSessionImpl).adviseOnFrameChanged { stack, frame ->
-      if (stack !is XMixedModeExecutionStack) return@adviseOnFrameChanged
-      if (stack.getNativeThreadId() != getNativeThreadId()) return@adviseOnFrameChanged
+    (session as XDebugSessionImpl).notifyOnFrameChanged { stack, frame ->
+      if (stack !is XMixedModeExecutionStack) return@notifyOnFrameChanged
+      if (stack.getNativeThreadId() != getNativeThreadId()) return@notifyOnFrameChanged
 
       currentFrame = frame
     }
@@ -94,7 +94,7 @@ class XMixedModeExecutionStack(
       highLevelExecutionStack?.executionLineIconRenderer
   }
 
-  suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
+  private suspend fun computeStackFramesInternal(firstFrameIndex: Int, container: XStackFrameContainer) {
     logger.info("Preparation for frame computation completed")
 
     val lowLevelAcc = XAccumulatingStackFrameContainer()

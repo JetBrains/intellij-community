@@ -74,8 +74,7 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
       if (raw ||
           expr instanceof PyAstTargetExpression ||
           expr instanceof PyAstReferenceExpression ||
-          expr instanceof PyAstSubscriptionExpression ||
-          expr instanceof PyAstSliceExpression) {
+          expr instanceof PyAstSubscriptionExpression) {
         targets.add(expr);
       }
     }

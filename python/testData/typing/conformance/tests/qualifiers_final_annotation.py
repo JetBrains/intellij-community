@@ -138,18 +138,33 @@ N(x="", y="")  # E
 def func2() -> None:
     global ID1
 
-    ID1 = 2 # E: cannot modify Final value
+    ID1 = 2  # E: cannot modify Final value
 
     x: Final = 3
 
-    x += 1 # E: cannot modify Final value
+    x += 1  # E: cannot modify Final value
 
     a = (x := 4)  # E: cannot modify Final value
 
-    for x in [1, 2, 3]: # E: cannot modify Final value
+    for x in [1, 2, 3]:  # E: cannot modify Final value
         pass
 
-    with open("FileName") as x: # E: cannot modify Final value
+    with open("FileName") as x:  # E: cannot modify Final value
         pass
 
     (a, x) = (1, 2)  # E: cannot modify Final value
+
+
+# > If a module declares a ``Final`` variable and another module imports that
+# > variable in an import statement by name or wildcard, the imported symbol
+# > inherits the ``Final`` type qualifier. Any attempt to assign a different value
+# > to this symbol should be flagged as an error by a type checker.
+
+
+from _qualifiers_final_annotation_1 import TEN
+
+TEN = 9  # E: Cannot redefine Final value
+
+from _qualifiers_final_annotation_2 import *
+
+PI = 3.14159  # E: Cannot redefine Final value

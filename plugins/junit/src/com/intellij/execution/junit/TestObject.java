@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -83,6 +83,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private static final String LAUNCHER_MODULE_NAME = "org.junit.platform.launcher";
   private static final String JUPITER_ENGINE_NAME  = "org.junit.jupiter.engine";
   private static final String VINTAGE_ENGINE_NAME  = "org.junit.vintage.engine";
+  private static final String SUITE_ENGINE_NAME    = "org.junit.platform.suite.engine";
 
   protected static final Logger LOG = Logger.getInstance(TestObject.class);
 
@@ -367,6 +368,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         }
         else if (isModularized) {
           ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, JUPITER_ENGINE_NAME);
+        }
+      }
+
+      if (JUnitUtil.hasPackageWithDirectories(psiFacade, "org.junit.platform.suite.api", globalSearchScope)) {
+        if (!JUnitUtil.hasPackageWithDirectories(psiFacade, SUITE_ENGINE_NAME, globalSearchScope)) {
+          String suiteVersion = ObjectUtils.notNull(getLibraryVersion("org.junit.platform.suite.engine.SuiteTestEngine", globalSearchScope, project), launcherVersion);
+          downloadDependenciesWhenRequired(project, additionalDependencies,
+                                           new RepositoryLibraryProperties("org.junit.platform", "junit-platform-suite-engine", suiteVersion));
+        }
+        else if (isModularized) {
+          ensureSpecifiedModuleOnModulePath(javaParameters, globalSearchScope, psiFacade, SUITE_ENGINE_NAME);
         }
       }
 

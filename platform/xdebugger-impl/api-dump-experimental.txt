@@ -1,5 +1,3 @@
-*:com.intellij.xdebugger.attach.XAttachRecentItemsMatcher
-- a:getMatchingAttachItems(com.intellij.xdebugger.impl.actions.AttachToProcessActionBase$RecentItem,java.util.List,Z,com.intellij.openapi.project.Project,com.intellij.openapi.util.UserDataHolder):java.util.List
 *:com.intellij.xdebugger.impl.ThreadsActionsProvider
 - getFreezeActiveThreadHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getFreezeInactiveThreadsAmongSelectedHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler

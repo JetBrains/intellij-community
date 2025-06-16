@@ -17,10 +17,10 @@ jvm_library(
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//jps/jps-builders:build",
-    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/compiler/instrumentation-util",
     "@lib//:asm",
     "//platform/util/jdom",
-    "//jps/jps-builders-6:build-javac-rt",
+    "@rules_jvm//jps-builders-6:build-javac-rt",
     "//platform/util",
     "@lib//:jetbrains-annotations",
   ],
@@ -43,6 +43,8 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/devkit/jps-plugin:jps",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
     "//jps/model-impl",
     "//jps/jps-builders:build-tests_test_lib",
     "//java/testFramework",
@@ -51,7 +53,7 @@ jvm_library(
     "@lib//:asm",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "//java/compiler/instrumentation-util",
   ]
 )
 

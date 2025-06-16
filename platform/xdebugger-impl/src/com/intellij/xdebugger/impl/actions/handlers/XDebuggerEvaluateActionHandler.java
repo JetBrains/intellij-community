@@ -5,6 +5,7 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
@@ -16,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.ComponentUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -27,6 +27,7 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.ApiStatus;
@@ -37,13 +38,26 @@ import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
 
+import static com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandlerKt.getAvailableCustomEvaluateHandler;
+import static com.intellij.xdebugger.impl.actions.handlers.XDebuggerCustomEvaluateHandlerKt.showCustomEvaluateDialog;
+
 @ApiStatus.Internal
 public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   @Override
-  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    final XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
+  public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
+    XDebuggerCustomEvaluateHandler customHandler = getAvailableCustomEvaluateHandler(project, event);
+    if (customHandler != null) {
+      showCustomEvaluateDialog(customHandler, project, event);
+      return;
+    }
+    super.perform(project, event);
+  }
+
+  @Override
+  protected void perform(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+    final XDebuggerEditorsProvider editorsProvider = session.getEditorsProvider();
     final XStackFrame stackFrame = session.getCurrentStackFrame();
-    final XDebuggerEvaluator evaluator = session.getDebugProcess().getEvaluator();
+    final XDebuggerEvaluator evaluator = session.getCurrentEvaluator();
     if (evaluator == null) {
       return;
     }
@@ -124,7 +138,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     return expressionTextPromise.then(expression -> Pair.create(expression, finalMode));
   }
 
-  public static void showDialog(@NotNull XDebugSession session,
+  private static void showDialog(@NotNull XDebugSessionProxy session,
                                  VirtualFile file,
                                  XDebuggerEditorsProvider editorsProvider,
                                  XStackFrame stackFrame,
@@ -180,7 +194,17 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
   }
 
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
-    return session.getDebugProcess().getEvaluator() != null;
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
+    // enable action if custom evaluate handler will handle the action
+    if (getAvailableCustomEvaluateHandler(project, event) != null) {
+      return true;
+    }
+
+    return super.isEnabled(project, event);
+  }
+
+  @Override
+  protected boolean isEnabled(@NotNull XDebugSessionProxy session, @NotNull DataContext dataContext) {
+    return session.getCurrentEvaluator() != null;
   }
 }

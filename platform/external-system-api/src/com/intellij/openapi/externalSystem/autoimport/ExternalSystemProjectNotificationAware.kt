@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
@@ -38,6 +38,11 @@ interface ExternalSystemProjectNotificationAware {
   fun isNotificationVisible(): Boolean
 
   /**
+   * Checks that notifications should be shown with defined [systemId].
+   */
+  fun isNotificationVisible(systemId: ProjectSystemId): Boolean
+
+  /**
    * Gets list of project ids which should be reloaded.
    */
   fun getSystemIds(): Set<ProjectSystemId>
@@ -56,14 +61,16 @@ interface ExternalSystemProjectNotificationAware {
     val TOPIC: Topic<Listener> = Topic.create("ExternalSystemProjectNotificationAware", Listener::class.java)
 
     @JvmStatic
-    fun getInstance(project: Project): ExternalSystemProjectNotificationAware =
-      project.getService(ExternalSystemProjectNotificationAware::class.java)
+    fun getInstance(project: Project): ExternalSystemProjectNotificationAware {
+      return project.getService(ExternalSystemProjectNotificationAware::class.java)
+    }
 
-    /**
-     * Function for simple subscription onto notification change events
-     * @see ExternalSystemProjectNotificationAware.Listener.onNotificationChanged
-     */
-    fun whenNotificationChanged(project: Project, listener: () -> Unit): Unit = whenNotificationChanged(project, null, listener)
+    @Deprecated("Use ExternalSystemProjectNotificationAware#TOPIC directly")
+    fun whenNotificationChanged(project: Project, listener: () -> Unit) {
+      whenNotificationChanged(project, null, listener)
+    }
+
+    @Deprecated("Use ExternalSystemProjectNotificationAware#TOPIC directly")
     fun whenNotificationChanged(project: Project, parentDisposable: Disposable?, listener: () -> Unit) {
       val aProject = project
       val messageBus = ApplicationManager.getApplication().messageBus
@@ -77,9 +84,10 @@ interface ExternalSystemProjectNotificationAware {
       })
     }
 
+    @Deprecated("Use ExternalSystemProjectNotificationAware.isNotificationVisible instead")
     fun isNotificationVisibleProperty(project: Project, systemId: ProjectSystemId): ObservableProperty<Boolean> {
       return object : ObservableProperty<Boolean> {
-        override fun get() = systemId in getInstance(project).getSystemIds()
+        override fun get() = getInstance(project).isNotificationVisible(systemId)
         override fun afterChange(parentDisposable: Disposable?, listener: (Boolean) -> Unit) {
           whenNotificationChanged(project, parentDisposable) {
             listener(get())

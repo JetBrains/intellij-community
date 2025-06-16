@@ -6,6 +6,7 @@ import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.injection.Injectable
@@ -89,14 +90,20 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
+    protected fun isInjectLanguageActionAvailable(): Boolean =
+        InjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file)
+
+    protected val injectedFile: PsiFile?
+        get() = (editor as? EditorWindow)?.injectedFile
+
     protected fun assertInjectionPresent(languageId: String?, unInjectShouldBePresent: Boolean) {
         assertFalse(
             "Injection action is available. There's probably no injection at caret place",
-            InjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file)
+            isInjectLanguageActionAvailable()
         )
 
         if (languageId != null) {
-            val injectedFile = (editor as? EditorWindow)?.injectedFile
+            val injectedFile = injectedFile
             assertEquals("Wrong injection language", languageId, injectedFile?.language?.id)
         }
 
@@ -113,7 +120,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
 
         assertTrue(
             "Injection action is not available. There's probably some injection but nothing was expected.",
-            InjectLanguageAction().isAvailable(project, myFixture.editor, myFixture.file)
+            isInjectLanguageActionAvailable()
         )
     }
 

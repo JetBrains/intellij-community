@@ -13,13 +13,13 @@ kt_javac_options(
 )
 
 jvm_resources(
-  name = "ui-jcef_resources",
+  name = "ui.jcef_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "ui-jcef",
+  name = "ui.jcef",
   module_name = "intellij.platform.ui.jcef",
   visibility = ["//visibility:public"],
   srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"], allow_empty = True),
@@ -28,6 +28,8 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:jcef",
+    "//platform/credential-store",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/util:util-ui",
     "//platform/util",
@@ -46,6 +48,6 @@ jvm_library(
     "@lib//:jna",
   ],
   exports = ["@lib//:jcef"],
-  runtime_deps = [":ui-jcef_resources"]
+  runtime_deps = [":ui.jcef_resources"]
 )
 ### auto-generated section `build intellij.platform.ui.jcef` end

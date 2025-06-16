@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.serviceContainer.NonInjectable;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -11,23 +13,28 @@ import java.util.List;
 
 @Service(Service.Level.APP)
 final class LanguageCodeStyleSettingsProviderService implements Disposable {
-
-  public static LanguageCodeStyleSettingsProviderService getInstance() {
+  static LanguageCodeStyleSettingsProviderService getInstance() {
     return ApplicationManager.getApplication().getService(LanguageCodeStyleSettingsProviderService.class);
   }
 
   private volatile List<LanguageCodeStyleSettingsProvider> allProviders;
   private final Object lock = new Object();
 
-  @SuppressWarnings("PublicConstructorInNonPublicClass")
-  public LanguageCodeStyleSettingsProviderService() {
-    LanguageCodeStyleSettingsProvider.EP_NAME.addChangeListener(() -> {
+  @SuppressWarnings("unused")
+  LanguageCodeStyleSettingsProviderService(@NotNull CoroutineScope coroutineScope) {
+    LanguageCodeStyleSettingsProvider.EP_NAME.addChangeListener(coroutineScope, () -> {
       allProviders = null;
-    }, this);
+      LanguageCodeStyleSettingsProvider.cleanSettingsPagesProvidersCache();
+    });
 
-    LanguageCodeStyleSettingsContributor.EP_NAME.addChangeListener(() -> {
+    LanguageCodeStyleSettingsContributor.EP_NAME.addChangeListener(coroutineScope, () -> {
       allProviders = null;
-    }, this);
+    });
+  }
+
+  @SuppressWarnings("unused")
+  @NonInjectable
+  LanguageCodeStyleSettingsProviderService() {
   }
 
   public @NotNull List<LanguageCodeStyleSettingsProvider> getAllProviders() {

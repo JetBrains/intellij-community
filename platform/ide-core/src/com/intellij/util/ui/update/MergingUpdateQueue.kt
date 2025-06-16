@@ -18,10 +18,12 @@ import com.intellij.util.Alarm
 import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -155,6 +157,13 @@ open class MergingUpdateQueue @JvmOverloads constructor(
         threadToUse = thread,
         coroutineScope = coroutineScope,
       )
+    }
+
+    if (coroutineScope != null) {
+      coroutineScope.coroutineContext[Job]?.invokeOnCompletion {
+        val stuckUpdates = flushScheduledUpdates() ?: return@invokeOnCompletion
+        stuckUpdates.forEachGuaranteed(Update::setRejected)
+      }
     }
 
     if (isActive) {
@@ -335,7 +344,12 @@ open class MergingUpdateQueue @JvmOverloads constructor(
       try {
         val all = flushScheduledUpdates() ?: return@scheduleTask
 
-        coroutineContext.ensureActive()
+        try {
+          coroutineContext.ensureActive()
+        } catch (e : CancellationException) {
+          all.forEachGuaranteed(Update::setRejected)
+          throw e
+        }
 
         for (update in all) {
           update.setProcessed()
@@ -354,8 +368,16 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
   @Internal
   protected open suspend fun executeUpdates(updates: List<Update>) {
-    for (update in updates) {
-      coroutineContext.ensureActive()
+    var i = 0
+    while (i < updates.size) {
+      try {
+        coroutineContext.ensureActive()
+      } catch (e : CancellationException) {
+        updates.subList(i, updates.size).forEachGuaranteed(Update::setRejected)
+        throw e
+      }
+
+      val update = updates[i++]
 
       if (isExpired(update)) {
         update.setRejected()

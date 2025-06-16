@@ -264,50 +264,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addDependency")
-    public static class AddDependency extends AbstractHighLevelQuickFixMultiModuleTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
-
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("class")
-        public void testClass() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/class/");
-        }
-
-        @TestMetadata("import")
-        public void testImport() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/import/");
-        }
-
-        @TestMetadata("topLevelFunction")
-        public void testTopLevelFunction() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction/");
-        }
-
-        @TestMetadata("topLevelFunction2")
-        public void testTopLevelFunction2() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelFunction2/");
-        }
-
-        @TestMetadata("topLevelProperty")
-        public void testTopLevelProperty() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty/");
-        }
-
-        @TestMetadata("topLevelProperty2")
-        public void testTopLevelProperty2() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addDependency/topLevelProperty2/");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addMissingActualMembers")
     public static class AddMissingActualMembers extends AbstractHighLevelQuickFixMultiModuleTest {
         @java.lang.Override
@@ -812,6 +768,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/annotation2/");
         }
 
+        @TestMetadata("annotation3")
+        public void testAnnotation3() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/annotation3/");
+        }
+
         @TestMetadata("class")
         public void testClass() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/class/");
@@ -840,6 +801,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("companion")
         public void testCompanion() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/companion/");
+        }
+
+        @TestMetadata("conflictingFunction")
+        public void testConflictingFunction() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/conflictingFunction/");
         }
 
         @TestMetadata("createWithImport")
@@ -912,6 +878,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/function2/");
         }
 
+        @TestMetadata("functionAlreadyExists")
+        public void testFunctionAlreadyExists() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/functionAlreadyExists/");
+        }
+
         @TestMetadata("functionInInterface")
         public void testFunctionInInterface() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/functionInInterface/");
@@ -942,9 +913,24 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/inlineClass2/");
         }
 
+        @TestMetadata("inlineClass3")
+        public void testInlineClass3() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/inlineClass3/");
+        }
+
+        @TestMetadata("inlineClass4")
+        public void testInlineClass4() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/inlineClass4/");
+        }
+
         @TestMetadata("innerClassWithTypeParam")
         public void testInnerClassWithTypeParam() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/innerClassWithTypeParam/");
+        }
+
+        @TestMetadata("innerClassWithTypeParam1")
+        public void testInnerClassWithTypeParam1() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/innerClassWithTypeParam1/");
         }
 
         @TestMetadata("innerClassWithTypeParam2")
@@ -957,9 +943,24 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/innerEnum/");
         }
 
+        @TestMetadata("innerEnum1")
+        public void testInnerEnum1() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/innerEnum1/");
+        }
+
+        @TestMetadata("internalFunction")
+        public void testInternalFunction() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/internalFunction/");
+        }
+
         @TestMetadata("memberFunctionAndNestedClass")
         public void testMemberFunctionAndNestedClass() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/memberFunctionAndNestedClass/");
+        }
+
+        @TestMetadata("memberFunctionAndNestedClass1")
+        public void testMemberFunctionAndNestedClass1() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createExpect/memberFunctionAndNestedClass1/");
         }
 
         @TestMetadata("nestedClass")
@@ -1614,11 +1615,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("movePropertyToConstructor")
         public void testMovePropertyToConstructor() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/movePropertyToConstructor/");
-        }
-
-        @TestMetadata("notMakeAbstractFromActual")
-        public void testNotMakeAbstractFromActual() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/notMakeAbstractFromActual/");
         }
 
         @TestMetadata("safeDeleteForbiddenFromActual")

@@ -6,10 +6,11 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.runInDumbMode
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.testFramework.DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.application
 import kotlinx.coroutines.*
@@ -77,7 +78,7 @@ object DumbModeTestUtils {
         val dumbTaskStarted = CompletableDeferred<Boolean>()
         val context = coroutineContext.contextModality()?.asContextElement()?.let { it + Job() } ?: Job()
         CoroutineScope(context).launch {
-          DumbServiceImpl.getInstance(project).runInDumbMode {
+          DumbService.getInstance(project).runInDumbMode {
             dumbTaskStarted.complete(true)
             finishDumbTask.await()
           }
@@ -167,7 +168,7 @@ object DumbModeTestUtils {
       PlatformTestUtil.waitWithEventsDispatching("Dumb mode didn't finish", { !DumbService.isDumb(project) }, 10)
     }
     else {
-      DumbServiceImpl.getInstance(project).waitForSmartMode(10_000)
+      DumbService.getInstance(project).waitForSmartMode(10_000)
     }
     assertFalse("Dumb mode didn't finish", DumbService.isDumb(project))
   }

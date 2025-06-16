@@ -22,19 +22,15 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddThrowsAnnotationIntention.Context
 import org.jetbrains.kotlin.idea.util.addAnnotation
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.wasm.isWasm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
-import org.jetbrains.kotlin.resolve.annotations.JVM_THROWS_ANNOTATION_FQ_NAME
-import org.jetbrains.kotlin.resolve.annotations.KOTLIN_THROWS_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.types.Variance.INVARIANT
 
 private val KOTLIN_ARRAY_OF_FQ_NAME = FqName("kotlin.arrayOf")
-private val KOTLIN_THROWS_ANNOTATION_CLASS_ID = ClassId.topLevel(KOTLIN_THROWS_ANNOTATION_FQ_NAME)
-private val JVM_THROWS_ANNOTATION_CLASS_ID = ClassId.topLevel(JVM_THROWS_ANNOTATION_FQ_NAME)
 
 /**
  * Creates a `@Throws` annotation entry for an exception at the caret,
@@ -113,7 +109,7 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
 
     private fun createNewAnnotation(existingAnnotation: KtAnnotationEntry?, declaration: KtDeclaration, argumentText: String) {
         existingAnnotation?.delete()
-        declaration.addAnnotation(KOTLIN_THROWS_ANNOTATION_CLASS_ID, argumentText, searchForExistingEntry = false)
+        declaration.addAnnotation(JvmStandardClassIds.Annotations.ThrowsAlias, argumentText, searchForExistingEntry = false)
     }
 
     private fun addToExistingAnnotation(throwsAnnotation: KtAnnotationEntry, argumentText: String) {
@@ -182,7 +178,7 @@ private fun KtDeclaration.findExistingThrowsAnnotation(): KtAnnotationEntry? {
     val annotations = this.annotationEntries + (parent as? KtProperty)?.annotationEntries.orEmpty()
     return annotations.find { annotation ->
         val classId = annotation.typeReference?.type?.symbol?.classId
-        classId == KOTLIN_THROWS_ANNOTATION_CLASS_ID || classId == JVM_THROWS_ANNOTATION_CLASS_ID
+        classId == JvmStandardClassIds.Annotations.ThrowsAlias || classId == JvmStandardClassIds.Annotations.Throws
     }
 }
 

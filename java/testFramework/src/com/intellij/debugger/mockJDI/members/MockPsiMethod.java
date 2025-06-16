@@ -36,15 +36,16 @@ public class MockPsiMethod extends MockMirror implements Method {
 
   @Override
   public @Unmodifiable List<String> argumentTypeNames() {
-    return ContainerUtil.map(myPsiMethod.getParameterList().getParameters(), parameter -> parameter.getType().getCanonicalText());
+    return ReadAction.compute(() -> ContainerUtil.map(myPsiMethod.getParameterList().getParameters(),
+                                                      parameter -> parameter.getType().getCanonicalText()));
   }
 
   @Override
   public @Unmodifiable List<Type> argumentTypes() {
-    return ContainerUtil.map(
+    return ReadAction.compute(() -> ContainerUtil.map(
       myPsiMethod.getParameterList().getParameters(),
       parameter -> MockType.createType(myVirtualMachine, parameter.getType())
-    );
+    ));
   }
 
   @Override
@@ -139,7 +140,7 @@ public class MockPsiMethod extends MockMirror implements Method {
 
   @Override
   public String name() {
-    return myPsiMethod.getName();
+    return ReadAction.compute(() -> myPsiMethod.getName());
   }
 
   @Override

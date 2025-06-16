@@ -14,6 +14,7 @@ import com.intellij.util.containers.BooleanStack;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntStack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.List;
 public class LightStubBuilder implements StubBuilder {
   private static final Logger LOG = Logger.getInstance(LightStubBuilder.class);
 
+  @ApiStatus.Internal
   public static final ThreadLocal<LighterAST> FORCED_AST = new ThreadLocal<>();
 
   @Override

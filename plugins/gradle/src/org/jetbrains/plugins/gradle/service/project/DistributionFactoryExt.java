@@ -20,7 +20,7 @@ import org.gradle.tooling.internal.protocol.InternalBuildProgressListener;
 import org.gradle.util.GradleVersion;
 import org.gradle.util.internal.DistributionLocator;
 import org.gradle.wrapper.GradleUserHomeLookup;
-import org.gradle.wrapper.SystemPropertiesHandler;
+import org.gradle.wrapper.PropertiesFileHandler;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.reflect.Field;
 import java.net.URI;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -142,7 +143,12 @@ public final class DistributionFactoryExt extends DistributionFactory {
                                                        ConnectionParameters connectionParameters,
                                                        BuildCancellationToken cancellationToken) {
       if (installedDistribution == null) {
-        final DistributionInstaller installer = new DistributionInstaller(progressLoggerFactory, progressListener, clock);
+        final DistributionInstaller installer = new DistributionInstaller(
+          progressLoggerFactory,
+          progressListener,
+          clock,
+          (int)Duration.ofSeconds(30).toMillis()
+        );
         File installDir;
         try {
           cancellationToken.addCallback(() -> installer.cancel());
@@ -174,9 +180,9 @@ public final class DistributionFactoryExt extends DistributionFactory {
       }
 
       systemProperties.putAll(
-        SystemPropertiesHandler.getSystemProperties(new File(determineRootDir(connectionParameters), "gradle.properties")));
+        PropertiesFileHandler.getSystemProperties(new File(determineRootDir(connectionParameters), "gradle.properties")));
       systemProperties.putAll(
-        SystemPropertiesHandler.getSystemProperties(new File(determineRealUserHomeDir(connectionParameters), "gradle.properties")));
+        PropertiesFileHandler.getSystemProperties(new File(determineRealUserHomeDir(connectionParameters), "gradle.properties")));
       return systemProperties;
     }
 

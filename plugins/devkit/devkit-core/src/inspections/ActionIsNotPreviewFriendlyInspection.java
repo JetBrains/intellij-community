@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
@@ -77,9 +77,10 @@ public final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspec
                                  new RemoveAnnotationQuickFix(annotation, field));
         }
       } else {
-        holder.registerProblem(psiAnchor,
-                               DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"),
-                               new AddAnnotationFix(FileModifier.SafeFieldForPreview.class.getCanonicalName(), field));
+        holder.problem(psiAnchor,
+                       DevKitBundle.message("inspection.message.field.may.prevent.intention.preview.to.work.properly"))
+          .fix(new AddAnnotationModCommandAction(FileModifier.SafeFieldForPreview.class.getCanonicalName(), field))
+          .register();
       }
     }
     return holder.getResultsArray();

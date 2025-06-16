@@ -7,9 +7,12 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//platform/core-impl",
+    "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
     "//uast/uast-common:uast",
     "@lib//:kotlin-stdlib",
     "@lib//:stream_ex",

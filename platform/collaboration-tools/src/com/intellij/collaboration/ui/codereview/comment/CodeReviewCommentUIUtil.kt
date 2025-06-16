@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.OverlaidOffsetIconsIcon
@@ -42,22 +43,19 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Insets
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
+import java.awt.KeyboardFocusManager
+import java.awt.event.*
+import javax.swing.*
 
 object CodeReviewCommentUIUtil {
 
-  const val INLAY_PADDING = 10
+  const val INLAY_PADDING: Int = 10
   private const val EDITOR_INLAY_PANEL_ARC = 10
 
-  val COMMENT_BUBBLE_BORDER_COLOR: Color = JBColor.namedColor("Review.ChatItem.BubblePanel.Border",
-                                                              JBColor.namedColor("EditorTabs.underTabsBorderColor",
-                                                                          JBColor.border()))
+  val COMMENT_BUBBLE_BORDER_COLOR: Color = JBColor.namedColor(
+    "Review.ChatItem.BubblePanel.Border",
+    JBColor.namedColor("EditorTabs.underTabsBorderColor", JBColor.border())
+  )
 
   fun getInlayPadding(componentType: CodeReviewChatItemUIUtil.ComponentType): Insets {
     val paddingInsets = componentType.paddingInsets
@@ -71,6 +69,9 @@ object CodeReviewCommentUIUtil {
   @ApiStatus.Internal
   fun createEditorInlayPanel(component: JComponent, tint: Color? = null): JPanel {
     val borderColor = JBColor.lazy {
+      if (UIUtil.isFocusAncestor(component))
+        return@lazy JBUI.CurrentTheme.Focus.focusColor()
+
       val scheme = EditorColorsManager.getInstance().globalScheme
       scheme.getColor(EditorColors.TEARLINE_COLOR) ?: JBColor.border()
     }
@@ -79,6 +80,15 @@ object CodeReviewCommentUIUtil {
         val scheme = EditorColorsManager.getInstance().globalScheme
         tint?.let { ColorUtil.blendColorsInRgb(scheme.defaultBackground, it, 0.1) } ?: scheme.defaultBackground
       }
+
+      isFocusCycleRoot = true
+      isFocusTraversalPolicyProvider = true
+      focusTraversalPolicy = LayoutFocusTraversalPolicy()
+
+      // Escape to the editor / diff
+      setFocusTraversalKeys(KeyboardFocusManager.UP_CYCLE_TRAVERSAL_KEYS,
+                            setOf(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)))
+
       add(UiDataProvider.wrapComponent(component) { sink ->
         suppressOuterEditorData(sink)
       })
@@ -91,14 +101,22 @@ object CodeReviewCommentUIUtil {
     return roundedPanel
   }
 
+  /**
+   * We suppress the outer editor context because this will cause registered editor actions not to be usable.
+   * This means they don't steal key events from this component.
+   * Specifically; the TAB key tends to escape the focused component if Editor is registered.
+   */
   private fun suppressOuterEditorData(sink: DataSink) {
-    arrayOf(CommonDataKeys.EDITOR, CommonDataKeys.HOST_EDITOR, CommonDataKeys.EDITOR_EVEN_IF_INACTIVE,
-            CommonDataKeys.CARET,
-            CommonDataKeys.VIRTUAL_FILE, CommonDataKeys.VIRTUAL_FILE_ARRAY,
-            CommonDataKeys.LANGUAGE,
-            CommonDataKeys.PSI_FILE, CommonDataKeys.PSI_ELEMENT,
-            PlatformCoreDataKeys.FILE_EDITOR,
-            PlatformCoreDataKeys.PSI_ELEMENT_ARRAY).forEach {
+    arrayOf(
+      CommonDataKeys.EDITOR,
+      CommonDataKeys.HOST_EDITOR,
+      CommonDataKeys.CARET,
+      CommonDataKeys.VIRTUAL_FILE, CommonDataKeys.VIRTUAL_FILE_ARRAY,
+      CommonDataKeys.LANGUAGE,
+      CommonDataKeys.PSI_FILE, CommonDataKeys.PSI_ELEMENT,
+      PlatformCoreDataKeys.FILE_EDITOR,
+      PlatformCoreDataKeys.PSI_ELEMENT_ARRAY
+    ).forEach {
       sink.setNull(it)
     }
   }
@@ -143,9 +161,11 @@ object CodeReviewCommentUIUtil {
     return button
   }
 
-  fun createFoldedThreadControlsIn(cs: CoroutineScope,
-                                   vm: CodeReviewFoldableThreadViewModel,
-                                   avatarIconsProvider: IconsProvider<CodeReviewUser>): JComponent {
+  fun createFoldedThreadControlsIn(
+    cs: CoroutineScope,
+    vm: CodeReviewFoldableThreadViewModel,
+    avatarIconsProvider: IconsProvider<CodeReviewUser>,
+  ): JComponent {
     val authorsLabel = JLabel().apply {
       bindVisibilityIn(cs, vm.repliesState.map { it.repliesCount > 0 })
       bindIconIn(cs, vm.repliesState.map {

@@ -226,8 +226,8 @@ public abstract class CreateClassFix {
       }
 
       @Override
-      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!super.isAvailable(project, editor, file)) return false;
+      public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+        if (!super.isAvailable(project, editor, psiFile)) return false;
 
         final PsiElement qualifier = myRefElement.getQualifier();
         if (qualifier != null && resolveQualifier(qualifier) == null) {

@@ -42,7 +42,10 @@ import org.jetbrains.idea.svn.info.Info;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.Date;
@@ -750,16 +753,15 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     private @Nls @NotNull String cutString(@Nls @NotNull String text, double maxWidth) {
       FontMetrics m = getFontMetrics(getFont());
-      Graphics g = getGraphics();
       String suffix = ELLIPSIS;
 
-      if (m.getStringBounds(text, g).getWidth() < maxWidth) return text;
+      if (UIUtil.computeStringWidth(this, m, text) < maxWidth) return text;
 
-      double suffixWidth = m.getStringBounds(suffix, g).getWidth();
+      double suffixWidth = UIUtil.computeStringWidth(this, m, suffix);
       if (suffixWidth >= maxWidth) return suffix;
 
       for (int i = 1; i < text.length(); i++) {
-        if ((m.getStringBounds(text, 0, i, g).getWidth() + suffixWidth) >= maxWidth) {
+        if ((UIUtil.computeStringWidth(this, m, text) + suffixWidth) >= maxWidth) {
           return text.substring(0, i - 1) + suffix;
         }
       }

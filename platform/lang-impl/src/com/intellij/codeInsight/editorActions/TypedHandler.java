@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -152,9 +152,7 @@ public final class TypedHandler extends TypedActionHandlerBase {
 
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     final Document originalDocument = originalEditor.getDocument();
-    for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
-      delegate.newTypingStarted(charTyped, originalEditor, dataContext);
-    }
+    fireNewTypingStarted(originalEditor, charTyped, dataContext);
     originalEditor.getCaretModel().runForEachCaret(caret -> {
       if (psiDocumentManager.isDocumentBlockedByPsi(originalDocument)) {
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(originalDocument); // to clean up after previous caret processing
@@ -246,6 +244,12 @@ public final class TypedHandler extends TypedActionHandlerBase {
         editor.putUserData(CompletionPhase.AUTO_POPUP_TYPED_EVENT, null);
       }
     });
+  }
+
+  private static void fireNewTypingStarted(@NotNull Editor originalEditor, char charTyped, @NotNull DataContext dataContext) {
+    for (TypedHandlerDelegate delegate : TypedHandlerDelegate.EP_NAME.getExtensionList()) {
+      delegate.newTypingStarted(charTyped, originalEditor, dataContext);
+    }
   }
 
   private static void setTypedEvent(@NotNull Editor editor, char charTyped, @Nullable TypedEvent.TypedHandlerPhase phase) {

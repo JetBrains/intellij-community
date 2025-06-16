@@ -33,6 +33,8 @@ class GitLabProjectConnection(
   val projectData = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, currentUser, tokenRefreshFlow)
   val imageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
 
+  val serverVersion: GitLabVersion? = glMetadata?.version
+
   override suspend fun close() {
     try {
       (scope.coroutineContext[Job] ?: error("Missing job")).cancelAndJoin()

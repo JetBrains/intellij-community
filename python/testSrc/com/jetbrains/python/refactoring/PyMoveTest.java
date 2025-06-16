@@ -312,6 +312,16 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolTest("func", "b.py");
   }
 
+  // PY-54168
+  public void testMoveFromInitPyPreserveDunderAll() {
+    doMoveSymbolTest("MyClass", "my_class.py");
+  }
+
+  // PY-54168
+  public void testMoveInHierarchyUpdatesDunderAllInInitPy() {
+    doMoveSymbolTest("MyClass", "new.py");
+  }
+
   // PY-15343
   public void testDunderAllSingleElementTuple() {
     doMoveSymbolTest("func", "b.py");

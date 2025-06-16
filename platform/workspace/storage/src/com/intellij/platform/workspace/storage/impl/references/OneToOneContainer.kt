@@ -3,10 +3,17 @@ package com.intellij.platform.workspace.storage.impl.references
 
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.impl.containers.IntIntUniqueBiMap
+import java.util.concurrent.ConcurrentHashMap
 
 internal class ImmutableOneToOneContainer(collection: Map<ConnectionId, IntIntUniqueBiMap>)
   : ImmutableReferenceContainer<IntIntUniqueBiMap>(collection) {
-  constructor() : this(HashMap())
+
+  // IJPL-148735: yes, we indeed use ConcurrentHashMap in immutable object.
+  // For example, toMutableContainer leaks this collection (not a copy) to the
+  // outer world, and anyone can mutate immutable object now.
+  // Even if we have at most one writer, readers may get ConcurrentModificationException.
+  // We should make sure that code that attempts to mutate immutable objects does not compile in the first place.
+  constructor() : this(ConcurrentHashMap())
 
   override fun toMutableContainer(): MutableOneToOneContainer {
     return MutableOneToOneContainer(collection as MutableMap)

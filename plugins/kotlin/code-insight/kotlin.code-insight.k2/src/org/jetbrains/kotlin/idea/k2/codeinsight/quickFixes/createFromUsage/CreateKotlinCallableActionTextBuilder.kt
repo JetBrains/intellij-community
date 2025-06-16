@@ -15,15 +15,16 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaClassTypeQua
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaClassTypeQualifier
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction.ParamCandidate
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.hasAbstractDeclaration
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtTypeWithNullability
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.Variance
@@ -50,10 +51,11 @@ object CreateKotlinCallableActionTextBuilder {
         }
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun descriptionOfCallableAsString(request: CreateMethodFromKotlinUsageRequest): String = when {
         request.isAbstractClassOrInterface -> KotlinBundle.message("text.abstract")
         request.isExtension -> KotlinBundle.message("text.extension")
-        request.receiverExpression != null || request.receiverType != null -> KotlinBundle.message("text.member")
+        request.receiverExpression != null || request.receiverTypePointer != null -> KotlinBundle.message("text.member")
         else -> ""
     }
 
@@ -65,18 +67,19 @@ object CreateKotlinCallableActionTextBuilder {
             val receiverTypeText: String
 
             val renderer = if (request.isExtension) RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT else RAW_RENDERER_OPTION_FOR_CREATE_FROM_USAGE_TEXT
-            if (request.receiverExpression == null) {
-                if (request.receiverType == null) return "" to ""
+            val receiverType = request.receiverTypePointer?.restore()
+            if (request.receiverExpression == null || request.receiverExpression.expressionType is KaErrorType) {
+                if (receiverType == null) return "" to ""
                 receiverSymbol = null
-                receiverTypeText = request.receiverType.render(renderer, Variance.INVARIANT)
+                receiverTypeText = receiverType.render(renderer, Variance.INVARIANT)
             } else {
                 receiverSymbol = request.receiverExpression.resolveExpression()
-                val receiverType = request.receiverType ?: request.receiverExpression.expressionType
+                val receiverType = receiverType ?: request.receiverExpression.expressionType
                 val recPackageFqName = request.receiverExpression.expressionType?.convertToClass()?.classIdIfNonLocal?.packageFqName
                 val addedPackage = if (recPackageFqName == container.containingKtFile.packageFqName || recPackageFqName == null || recPackageFqName.asString().startsWith("kotlin")) "" else recPackageFqName.asString()+"."
                 // Since receiverExpression.getKtType() returns `kotlin/Unit` for a companion object, we first try the symbol resolution and its type rendering.
                 val renderedReceiver = receiverSymbol?.renderAsReceiver(request.isAbstractClassOrInterface, receiverType, renderer)
-                    ?: receiverType?.render(renderer, Variance.INVARIANT)
+                    ?: receiverType?.render(renderer, Variance.IN_VARIANCE)
                     ?: request.receiverExpression.text
                 receiverTypeText = addedPackage + renderedReceiver
             }
@@ -94,7 +97,7 @@ object CreateKotlinCallableActionTextBuilder {
     private fun KaSymbol.renderAsReceiver(isAbstract: Boolean, ktType: KaType?, renderer: KaTypeRenderer): String? {
         return when (this) {
             is KaCallableSymbol -> ktType?.selfOrSuperTypeWithAbstractMatch(isAbstract)
-                ?.render(renderer, Variance.INVARIANT)
+                ?.render(renderer, Variance.IN_VARIANCE)
 
             is KaClassLikeSymbol -> classId?.shortClassName?.asString() ?: render(KaDeclarationRendererForSource.WITH_SHORT_NAMES)
             else -> null
@@ -148,7 +151,7 @@ object CreateKotlinCallableActionTextBuilder {
     @OptIn(KaExperimentalApi::class)
     fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
         val ktType = if (expectedType is ExpectedKotlinType) expectedType.kaType else expectedType.toKtTypeWithNullability(container)
-        if (ktType == null || ktType == builtinTypes.unit) return null
+        if (ktType == null || ktType.isUnitType) return null
         return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }
 

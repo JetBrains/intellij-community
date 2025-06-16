@@ -1,13 +1,20 @@
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` start
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+create_kotlinc_options(
+  name = "custom",
+  opt_in = ["kotlinx.serialization.ExperimentalSerializationApi"]
+)
+
 jvm_library(
-  name = "buildScripts-testFramework",
+  name = "testFramework",
   module_name = "intellij.platform.buildScripts.testFramework",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  kotlinc_opts = ":custom",
   deps = [
-    "//platform/build-scripts:buildScripts",
+    "//platform/build-scripts",
     "@lib//:kotlin-stdlib",
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
@@ -16,6 +23,7 @@ jvm_library(
     "@lib//:grpc-protobuf",
     "@lib//:grpc-stub",
     "@lib//:jackson-jr-objects",
+    "//platform/core-api:core",
     "//jps/model-api:model",
     "//platform/util",
     "//platform/runtime/repository",
@@ -26,14 +34,25 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
-    "//tools/reproducibleBuilds.diff:reproducibleBuilds-diff",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
+    "@lib//:kaml",
+    "//platform/build-scripts/downloader",
+    "//tools/reproducibleBuilds.diff",
     "//jps/jps-builders:build",
     "//platform/runtime/product",
     "@lib//:devkit-runtime-module-repository-jps",
+    "@lib//:aalto-xml",
+    "//platform/platform-impl/bootstrap",
+    "//platform/core-impl",
+    "//platform/util-class-loader:util-classLoader",
+    "//platform/plugins/testFramework",
+    "//platform/plugins/parser/impl",
     "//platform/util/xmlDom",
     "@lib//:tc_service_messages",
     "//platform/buildData",
+    "//platform/util/zip",
+    "//platform/distribution-content:distributionContent-testFramework",
   ]
 )
 ### auto-generated section `build intellij.platform.buildScripts.testFramework` end

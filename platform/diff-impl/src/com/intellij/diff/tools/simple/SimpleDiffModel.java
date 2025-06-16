@@ -7,7 +7,6 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +20,7 @@ import java.util.List;
 public class SimpleDiffModel {
   @ApiStatus.Internal protected final @NotNull SimpleDiffViewer myViewer;
 
-  private final @NotNull List<SimpleDiffChange> myValidChanges = new ArrayList<>();
-  private final @NotNull List<SimpleDiffChange> myAllChanges = new ArrayList<>();
+  private final @NotNull SimpleDiffChangesHolder myDiffChangesHolder = new SimpleDiffChangesHolder();
   private @NotNull ThreeState myIsContentsEqual = ThreeState.UNSURE;
 
   @ApiStatus.Internal protected final @NotNull List<@Nullable SimpleDiffChangeUi> myPresentations = new ArrayList<>();
@@ -36,11 +34,15 @@ public class SimpleDiffModel {
   }
 
   public @NotNull List<SimpleDiffChange> getChanges() {
-    return Collections.unmodifiableList(myValidChanges);
+    return getChanges(Side.LEFT);
+  }
+
+  public @NotNull List<SimpleDiffChange> getChanges(Side side) {
+    return myDiffChangesHolder.getValidChanges(side);
   }
 
   public @NotNull @Unmodifiable List<SimpleDiffChange> getAllChanges() {
-    return ContainerUtil.filter(myAllChanges, it -> !it.isDestroyed());
+    return myDiffChangesHolder.getAllChanges();
   }
 
   public void setChanges(@NotNull List<? extends SimpleDiffChange> changes, boolean isContentsEqual) {
@@ -55,8 +57,7 @@ public class SimpleDiffModel {
       myPresentations.add(changeUi);
     }
 
-    myValidChanges.addAll(changes);
-    myAllChanges.addAll(changes);
+    myDiffChangesHolder.addAll(changes);
     myIsContentsEqual = ThreeState.fromBoolean(isContentsEqual);
   }
 
@@ -64,8 +65,7 @@ public class SimpleDiffModel {
     for (SimpleDiffChangeUi changeUi : myPresentations) {
       if (changeUi != null) changeUi.destroyHighlighter();
     }
-    myValidChanges.clear();
-    myAllChanges.clear();
+    myDiffChangesHolder.clear();
     myPresentations.clear();
     myIsContentsEqual = ThreeState.UNSURE;
   }
@@ -74,7 +74,7 @@ public class SimpleDiffModel {
     SimpleDiffChangeUi changeUi = myPresentations.set(change.getIndex(), null);
     if (changeUi != null) changeUi.destroyHighlighter();
 
-    myValidChanges.remove(change);
+    myDiffChangesHolder.invalidateChanges(List.of(change));
     change.markDestroyed();
   }
 
@@ -85,13 +85,13 @@ public class SimpleDiffModel {
   }
 
   public void handleBeforeDocumentChange(@NotNull Side side, @NotNull DocumentEvent e) {
-    if (myValidChanges.isEmpty()) return;
+    if (getChanges().isEmpty()) return;
 
     LineRange lineRange = DiffUtil.getAffectedLineRange(e);
     int shift = DiffUtil.countLinesShift(e);
 
     Set<SimpleDiffChange> invalidated = new HashSet<>();
-    for (SimpleDiffChange change : myValidChanges) {
+    for (SimpleDiffChange change : getChanges()) {
       if (change.processDocumentChange(lineRange.start, lineRange.end, shift, side)) {
         invalidated.add(change);
 
@@ -100,7 +100,7 @@ public class SimpleDiffModel {
       }
     }
 
-    myValidChanges.removeAll(invalidated);
+    myDiffChangesHolder.invalidateChanges(invalidated);
   }
 
   public void paintPolygons(@NotNull Graphics2D g, @NotNull JComponent divider) {

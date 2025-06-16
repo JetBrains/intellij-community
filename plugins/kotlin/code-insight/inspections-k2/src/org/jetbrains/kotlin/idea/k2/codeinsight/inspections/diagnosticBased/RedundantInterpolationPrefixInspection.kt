@@ -41,7 +41,7 @@ internal class RedundantInterpolationPrefixInspection :
     override fun KaSession.prepareContextByDiagnostic(
         element: KtElement,
         diagnostic: KaFirDiagnostic.RedundantInterpolationPrefix
-    ): Unit? = Unit
+    ): Unit = Unit
 
     override fun getProblemDescription(
         element: KtElement,

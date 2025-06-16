@@ -41,19 +41,25 @@ interface BuildContext : CompilationContext {
   fun getExtraExecutablePattern(os: OsFamily): List<String>
 
   /**
-   * IDE build number without product code (e.g. '162.500.10').
+   * IDE build number without product code (e.g. '251.500.10').
    * [org.jetbrains.intellij.build.impl.SnapshotBuildNumber.VALUE] by default.
+   * May not match [com.intellij.util.text.SemVer].
    */
   val buildNumber: String
 
   /**
    * Build number used for all plugins being built.
-   * [buildNumber] by default.
+   *
+   * The value is [buildNumber] having:
+   * * `SNAPSHOT` suffix replaced with `${DATE}` to match [com.intellij.util.text.SemVer];
+   * * `.0` appended if [BuildContext.isNightlyBuild] to match [com.intellij.util.text.SemVer].
+   *
+   * See also [org.jetbrains.intellij.build.impl.PluginLayout.PluginLayoutSpec.withCustomVersion].
    */
-  val pluginBuildNumber: String get() = buildNumber
+  val pluginBuildNumber: String
 
   /**
-   * Build number with product code (e.g. 'IC-162.500.10')
+   * Build number with product code (e.g. 'IC-251.500.10')
    */
   val fullBuildNumber: String
 
@@ -119,7 +125,7 @@ interface BuildContext : CompilationContext {
   /**
    * @return sorted [DistFile] collection
    */
-  fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
+  fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?, libcImpl: LibcImpl?): Collection<DistFile>
 
   fun patchInspectScript(path: Path)
 
@@ -138,7 +144,7 @@ interface BuildContext : CompilationContext {
   fun findApplicationInfoModule(): JpsModule
 
   suspend fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
-    proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
+    proprietaryBuildTools.signTool.signFiles(files, context = this, options)
   }
 
   suspend fun getFrontendModuleFilter(): FrontendModuleFilter
@@ -157,13 +163,17 @@ interface BuildContext : CompilationContext {
     prepareForBuild: Boolean = true,
   ): BuildContext
 
-  suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
-
   fun reportDistributionBuildNumber()
 
   suspend fun cleanupJarCache()
 
-  suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
+  /**
+   * Creates an instance of [IntellijProductRunner] which can be used to run the IDE being built with some command.
+   * @param additionalPluginModules main modules of non-bundled plugins, which should be loaded inside the IDE process
+   * @param forceUseDevBuild if `true`, the 'dev build' approach will be used to run the IDE even if it uses the module-based loader
+   * which supports running the IDE without running the build scripts.
+   */
+  suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList(), forceUseDevBuild: Boolean = false): IntellijProductRunner
 
   suspend fun runProcess(
     args: List<String>,
@@ -201,7 +211,7 @@ suspend inline fun <T> BuildContext.executeStep(
     }
     catch (e: Throwable) {
       span.recordException(e)
-      options.buildStepListener.onFailure(stepId = stepId, failure = e, messages = messages)
+      options.buildStepListener.onFailure(stepId, e, messages)
       null
     }
     finally {
@@ -230,14 +240,7 @@ data class LocalDistFileContent(@JvmField val file: Path, val isExecutable: Bool
 data class InMemoryDistFileContent(@JvmField val data: ByteArray) : DistFileContent {
   override fun readAsStringForDebug(): String = String(data, 0, data.size.coerceAtMost(1024), Charsets.UTF_8)
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is InMemoryDistFileContent) return false
-
-    if (!data.contentEquals(other.data)) return false
-
-    return true
-  }
+  override fun equals(other: Any?): Boolean = this === other || other is InMemoryDistFileContent && data.contentEquals(other.data)
 
   override fun hashCode(): Int = data.contentHashCode()
 
@@ -248,5 +251,6 @@ data class DistFile(
   @JvmField val content: DistFileContent,
   @JvmField val relativePath: String,
   @JvmField val os: OsFamily? = null,
+  @JvmField val libcImpl: LibcImpl? = null,
   @JvmField val arch: JvmArchitecture? = null,
 )

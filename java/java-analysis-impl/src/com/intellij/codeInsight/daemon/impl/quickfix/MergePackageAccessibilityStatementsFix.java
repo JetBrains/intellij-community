@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import one.util.streamex.StreamEx;
@@ -42,7 +42,7 @@ public class MergePackageAccessibilityStatementsFix
   protected @NotNull String getReplacementText(@NotNull List<? extends PsiPackageAccessibilityStatement> statementsToMerge) {
     final List<String> moduleNames = getModuleNames(statementsToMerge);
     if (!moduleNames.isEmpty()) {
-      return getKeyword() + ' ' + myPackageName + ' ' + PsiKeyword.TO + ' ' + joinUniqueNames(moduleNames);
+      return getKeyword() + ' ' + myPackageName + ' ' + JavaKeywords.TO + ' ' + joinUniqueNames(moduleNames);
     }
     else {
       return getKeyword() + ' ' + myPackageName;
@@ -90,8 +90,8 @@ public class MergePackageAccessibilityStatementsFix
 
   private @NotNull String getKeyword() {
     return switch (myRole) {
-      case OPENS -> PsiKeyword.OPENS;
-      case EXPORTS -> PsiKeyword.EXPORTS;
+      case OPENS -> JavaKeywords.OPENS;
+      case EXPORTS -> JavaKeywords.EXPORTS;
     };
   }
 }

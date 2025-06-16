@@ -1742,7 +1742,7 @@
     <inspection_tool class="IntegerMultiplicationImplicitCastToLong" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="ignoreNonOverflowingCompileTimeConstants" value="true" />
     </inspection_tool>
-    <inspection_tool class="IntentionDescriptionNotFoundInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="IntentionDescriptionNotFoundInspection" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="InterceptionAnnotationWithoutRuntimeRetention" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InterfaceMayBeAnnotatedFunctional" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="InterfaceMethodClashesWithObject" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -2638,7 +2638,7 @@
     </inspection_tool>
     <inspection_tool class="NonDefaultConstructor" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="NonExceptionNameEndsWithException" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="NonExtendableApiUsage" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="NonExtendableApiUsage" enabled="true" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NonFinalClone" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NonFinalFieldInEnum" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="NonFinalFieldInImmutable" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -2777,7 +2777,7 @@
     </inspection_tool>
     <inspection_tool class="OverridableMethodCallDuringObjectConstruction" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OverriddenMethodCallDuringObjectConstruction" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="OverrideOnly" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="OverrideOnly" enabled="true" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OverridingDeprecatedMember" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="OverwrittenKey" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PackageAccessibility" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -3924,225 +3924,6 @@
     </inspection_tool>
     <inspection_tool class="SuspiciousPackagePrivateAccess" enabled="true" level="ERROR" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false" />
-      <option name="MODULES_SETS_LOADED_TOGETHER">
-        <modules-set>
-          <module name="intellij.css.impl" />
-          <module name="intellij.css.psi" />
-          <module name="intellij.css" />
-          <module name="intellij.css.analysis" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.spring.core" />
-          <module name="intellij.spring" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.ruby" />
-          <module name="intellij.ruby.core" />
-          <module name="intellij.ruby.psi" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.javascript.debugger" />
-          <module name="intellij.javascript.chrome.connector" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.spring.mvc.impl" />
-          <module name="intellij.spring.mvc" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.javascript.impl" />
-          <module name="intellij.javascript.psi.impl" />
-          <module name="intellij.javascript.analysis.impl" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.java.impl" />
-          <module name="intellij.java.analysis.impl" />
-          <module name="intellij.java.execution" />
-          <module name="intellij.java" />
-          <module name="intellij.java.psi" />
-          <module name="intellij.java.ui" />
-          <module name="intellij.java.psi.impl" />
-          <module name="intellij.java.analysis" />
-          <module name="intellij.java.impl.refactorings" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.spring.boot.core" />
-          <module name="intellij.spring.boot" />
-          <module name="intellij.spring.boot.run" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.properties" />
-          <module name="intellij.properties.psi.impl" />
-          <module name="intellij.properties.psi" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.xml.dom.impl" />
-          <module name="intellij.xml.dom" />
-          <module name="intellij.xml.psi" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.xml.impl" />
-          <module name="intellij.xml.psi.impl" />
-          <module name="intellij.xml.analysis.impl" />
-          <module name="intellij.xml" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.groovy" />
-          <module name="intellij.groovy.psi" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.jboss.arquillian.junit" />
-          <module name="intellij.jboss.arquillian" />
-          <module name="intellij.jboss.arquillian.testng" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.javaee.impl" />
-          <module name="intellij.javaee" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.android.profilers.ui" />
-          <module name="intellij.android.profilers" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.struts2" />
-          <module name="intellij.struts2.dom" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.java.testFramework" />
-          <module name="intellij.platform.testFramework" />
-          <module name="intellij.platform.execution.impl" />
-          <module name="intellij.platform.lang.impl" />
-          <module name="intellij.platform.util" />
-          <module name="intellij.platform.indexing" />
-          <module name="intellij.platform.editor.ex" />
-          <module name="intellij.platform.core.impl" />
-          <module name="intellij.platform.lang" />
-          <module name="intellij.platform.jps.model.impl" />
-          <module name="intellij.platform.ide.impl" />
-          <module name="intellij.platform.ide" />
-          <module name="intellij.platform.core" />
-          <module name="intellij.platform.projectModel.impl" />
-          <module name="intellij.platform.analysis" />
-          <module name="intellij.platform.analysis.impl" />
-          <module name="intellij.platform.vcs" />
-          <module name="intellij.platform.editor" />
-          <module name="intellij.platform.util.rt" />
-          <module name="intellij.treeProjectModel.ide" />
-          <module name="intellij.platform.commercial" />
-          <module name="intellij.platform.projectModel" />
-          <module name="intellij.platform.indexing.impl" />
-          <module name="intellij.javaee.testFramework" />
-          <module name="intellij.platform.jps.model" />
-          <module name="intellij.platform.vcs.core" />
-          <module name="intellij.platform.main" />
-          <module name="intellij.platform.diff.impl" />
-          <module name="intellij.platform.testFramework.core" />
-          <module name="intellij.platform.concurrency" />
-          <module name="intellij.platform.core.ui" />
-          <module name="intellij.platform.util.ui" />
-          <module name="intellij.platform.ide.util.io" />
-          <module name="intellij.platform.configurationStore.impl" />
-          <module name="intellij.platform.codeStyle" />
-          <module name="intellij.platform.codeStyle.impl" />
-          <module name="intellij.platform.lang.core" />
-          <module name="intellij.platform.ide.core" />
-          <module name="intellij.platform.ide.core.impl" />
-          <module name="intellij.codeServer.db.connectivity" />
-          <module name="intellij.codeServer.core" />
-          <module name="intellij.platform.refactoring" />
-          <module name="intellij.platform.util.jdom" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.xslt.debugger.impl.rt" />
-          <module name="intellij.xslt.debugger.rt" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.javaee.web.impl" />
-          <module name="intellij.javaee.web" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.android.wizard" />
-          <module name="intellij.android.wizard.model" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.php.impl" />
-          <module name="intellij.php" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.rubyMotion.plugin" />
-          <module name="intellij.rubyMotion" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.java.compiler.impl" />
-          <module name="intellij.java.compiler" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.java.compiler.instrumentationUtil.java8" />
-          <module name="intellij.java.compiler.instrumentationUtil" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.duplicates" />
-          <module name="intellij.platform.duplicates.analysis" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.vcs.perforce" />
-          <module name="intellij.vcs.perforce.util" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.gradle.java" />
-          <module name="intellij.gradle.common" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.python.community.impl" />
-          <module name="intellij.python.psi" />
-          <module name="intellij.pycharm.community" />
-          <module name="intellij.python.psi.impl" />
-          <module name="intellij.python.syntax.core" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.appcode" />
-          <module name="intellij.cidr.common" />
-          <module name="intellij.cidr.cocoaCommon" />
-          <module name="intellij.swift" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.database.sql.dialects" />
-          <module name="intellij.database.sql.impl" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.vcs.git" />
-          <module name="intellij.vcs.git.rt" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.marketplace.core" />
-          <module name="intellij.platform.commercial.license" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.maven.server.m3.impl" />
-          <module name="intellij.maven.server.m3.common" />
-          <module name="intellij.maven.server.m30.impl" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.graph.impl" />
-          <module name="intellij.platform.graph" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.util.ex" />
-          <module name="intellij.platform.util.zip" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.bootstrap" />
-          <module name="intellij.platform.util.classLoader" />
-          <module name="intellij.platform.boot" />
-          <module name="intellij.platform.util.ex" />
-          <module name="intellij.platform.util.zip" />
-          <module name="intellij.platform.util.rt.java8" />
-          <module name="intellij.platform.util.immutableKeyValueStore" />
-        </modules-set>
-        <modules-set>
-          <module name="intellij.platform.diagnostic" />
-          <module name="intellij.platform.util.base" />
-        </modules-set>
-      </option>
     </inspection_tool>
     <inspection_tool class="SuspiciousReturnByteInputStream" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SuspiciousSystemArraycopy" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -4332,7 +4113,7 @@
       <option name="IGNORE_UNCHECKED_CAST" value="false" />
       <option name="IGNORE_UNCHECKED_OVERRIDING" value="false" />
     </inspection_tool>
-    <inspection_tool class="UNUSED_IMPORT" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="UNUSED_IMPORT" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UastHintedVisitorAdapterHints" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UastIncorrectHttpHeaderInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UastIncorrectMimeTypeInspection" enabled="false" level="ERROR" enabled_by_default="false" />

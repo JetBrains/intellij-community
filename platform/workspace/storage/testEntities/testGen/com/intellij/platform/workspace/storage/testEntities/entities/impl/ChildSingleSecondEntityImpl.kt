@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -29,13 +28,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ParentSingl
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSecondEntityData) : ChildSingleSecondEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSecondEntityData) : ChildSingleSecondEntity,
+                                                                                                  WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ParentSingleAbEntity::class.java,
-                                                                                ChildSingleAbstractBaseEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      ParentSingleAbEntity::class.java, ChildSingleAbstractBaseEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -69,8 +68,8 @@ internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSe
   }
 
 
-  internal class Builder(result: ChildSingleSecondEntityData?) : ModifiableWorkspaceEntityBase<ChildSingleSecondEntity, ChildSingleSecondEntityData>(
-    result), ChildSingleSecondEntity.Builder {
+  internal class Builder(result: ChildSingleSecondEntityData?) :
+    ModifiableWorkspaceEntityBase<ChildSingleSecondEntity, ChildSingleSecondEntityData>(result), ChildSingleSecondEntity.Builder {
     internal constructor() : this(ChildSingleSecondEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -155,8 +154,9 @@ internal class ChildSingleSecondEntityImpl(private val dataSource: ChildSingleSe
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? ParentSingleAbEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENTENTITY_CONNECTION_ID, this
+          ) as? ParentSingleAbEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)]!! as ParentSingleAbEntity.Builder)
         }
         else {
@@ -227,7 +227,8 @@ internal class ChildSingleSecondEntityData : WorkspaceEntityData<ChildSingleSeco
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleSecondEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ChildSingleSecondEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

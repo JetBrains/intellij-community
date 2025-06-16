@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.lang.java.JavaLanguage
@@ -85,6 +85,11 @@ fun KtDeclaration.isAbstract(): Boolean = when {
     this is KtProperty -> initializer == null && delegate == null && accessors.isEmpty()
     this is KtNamedFunction -> !hasBody()
     else -> false
+}
+
+fun KtNamedDeclaration.isCompanionMemberOf(klass: KtClassOrObject): Boolean {
+    val containingObject = containingClassOrObject as? KtObjectDeclaration ?: return false
+    return containingObject.isCompanion() && containingObject.containingClassOrObject == klass
 }
 
 fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
@@ -419,5 +424,20 @@ fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
     call.lambdaArguments.firstOrNull()?.let {
         if (it.getArgumentExpression() is KtLabeledExpression) appendFixedText(" ")
         appendNonFormattedText(it.text)
+    }
+}
+
+@ApiStatus.Internal
+fun PsiElement.removeOverrideModifier() {
+    when (this) {
+        is KtNamedFunction, is KtProperty -> {
+            (this as KtModifierListOwner).modifierList?.getModifier(KtTokens.OVERRIDE_KEYWORD)?.delete()
+        }
+
+        is PsiMethod -> {
+            modifierList.annotations.firstOrNull { annotation ->
+                annotation.qualifiedName == "java.lang.Override"
+            }?.delete()
+        }
     }
 }

@@ -39,7 +39,7 @@ abstract class QuickFixWithReferenceToElement<T : PsiElement>(
   var referencedElement: SmartPsiElementPointer<T> = referencedElement.createSmartPointer()
     private set
 
-  override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
+  override fun isAvailable(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
     return referencedElement.element != null
   }
 

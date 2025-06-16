@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -83,7 +84,6 @@ object CodeWriter {
     }
     if (ktClasses.isEmpty()) return
 
-    waitSmartMode(project)
     val classLoader = CodegenJarLoader.getInstance(project).getClassLoader()
     val serviceLoader = ServiceLoader.load(CodeGenerator::class.java, classLoader).findFirst()
     if (serviceLoader.isEmpty) error("Can't load generator")
@@ -93,6 +93,7 @@ object CodeWriter {
       return
     }
 
+    waitSmartMode(project)
     executeCommand(project, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name)) {
       val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
@@ -194,11 +195,13 @@ object CodeWriter {
     kotlinCustomSettings.NAME_COUNT_TO_USE_STAR_IMPORT = Int.MAX_VALUE
   }
 
-  // Documentation for IndexNotReadyException says that it's enough to run completeJustSubmittedTasks only once
-  //  however, in practive this is not enough
+  /**
+   * Documentation for [com.intellij.openapi.project.IndexNotReadyException] says that it's enough to run completeJustSubmittedTasks only
+   * once. However, in practive this is not enough.
+   */
   private suspend fun waitSmartMode(project: Project) {
     for (i in 1..100) {
-      if (i == 99) error("99 updates")
+      if (i == 100) error("99 delays were not enough to wait for smart mode")
       if (DumbService.isDumb(project)) {
         DumbService.getInstance(project).completeJustSubmittedTasks()
         delay(1.seconds)

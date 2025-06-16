@@ -8,30 +8,31 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-kotlinx-serialization-k2_resources",
+  name = "k2_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-kotlinx-serialization-k2",
+  name = "k2",
   module_name = "kotlin.compiler-plugins.kotlinx-serialization.k2",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/code-insight/api",
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-analysis-api",
     "@lib//:kotlinc-analysis-api-k2",
     "@lib//:kotlinc-kotlinx-serialization-compiler-plugin",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
+    "@lib//:kotlinc-kotlin-compiler-fir-provided",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/frontend-independent",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/core-impl",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:kotlin-compiler-plugins-kotlinx-serialization-common",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-api-utils",
     "//java/java-psi-api:psi",
     "//platform/editor-ui-api:editor-ui",
@@ -41,6 +42,6 @@ jvm_library(
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//plugins/kotlin/refactorings/kotlin.refactorings.k2:kotlin-refactorings-k2",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-kotlinx-serialization-k2_resources"]
+  runtime_deps = [":k2_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.k2` end

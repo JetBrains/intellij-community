@@ -28,6 +28,7 @@ import traceback
 from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, execfile
 from _pydevd_bundle.pydevd_utils import VariableWithOffset, eval_expression
+from _pydevd_bundle.pydevd_constants import IS_PY313_OR_GREATER
 
 SENTINEL_VALUE = []
 DEFAULT_DF_FORMAT = "s"
@@ -515,7 +516,10 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
         else:
             if pydevd_save_locals.is_save_locals_available():
                 if is_complex(attr):
-                    Exec('%s=%s' % (attr, expression), frame.f_locals, frame.f_locals)
+                    if IS_PY313_OR_GREATER:
+                        Exec('%s=%s' % (attr, expression), frame.f_globals, frame.f_locals)
+                    else:
+                        Exec('%s=%s' % (attr, expression), frame.f_locals, frame.f_locals)
                     return value
                 frame.f_locals[attr] = value
                 pydevd_save_locals.save_locals(frame)
@@ -548,6 +552,9 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
+
+    if rows == 0 and cols == 0:
+        return xml
 
     # there is no obvious rule for slicing (at least 5 choices)
     if len(array) == 1 and (rows > 1 or cols > 1):
@@ -605,6 +612,11 @@ def array_to_meta_xml(array, name, format):
     type = array.dtype.kind
     slice = name
     l = len(array.shape)
+
+    if l == 0:
+        rows, cols = 0, 0
+        bounds = (0, 0)
+        return array, slice_to_xml(name, rows, cols, format, "", bounds), rows, cols, format
 
     try:
         import numpy as np
@@ -817,7 +829,7 @@ def array_data_to_xml(rows, cols, get_row, format):
 
 def slice_to_xml(slice, rows, cols, format, type, bounds):
     return '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-           (slice, rows, cols, quote(format), type, quote(str(bounds[1])), quote(str(bounds[0])))
+           (quote(slice), rows, cols, quote(format), type, quote(str(bounds[1])), quote(str(bounds[0])))
 
 
 def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):

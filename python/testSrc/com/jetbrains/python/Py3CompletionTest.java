@@ -506,6 +506,37 @@ public class Py3CompletionTest extends PyTestCase {
     doNegativeTest();
   }
 
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsArgument() {
+    doTest();
+  }
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsKeywordArgument() {
+    doTest();
+  }
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsPositionalVarargArgument() {
+    doTest();
+  }
+
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsKeywordVarargArgument() {
+    doTest();
+  }
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsAssignedValue() {
+    doTest();
+  }
+
+  // PY-80850
+  public void testFStringLikeCompletionAddsTPrefixWhereTemplateStringIsExpectedAsAssignedValueWithUnpacking() {
+    doTest();
+  }
+    
   // PY-46056
   public void testImportCompletionHintForSameDirectoryModuleInOrdinaryPackage() {
     doTestVariantTailText("ordinaryPackage/sample.py", "logging", null);
@@ -767,6 +798,37 @@ public class Py3CompletionTest extends PyTestCase {
       """, ignored -> {
       doTest();
     });
+  }
+
+  // PY-81420
+  public void testTypeVarDefaultType() {
+    final List<String> suggested =
+      doTestByText("""
+                     from typing import TypeVar, Generic
+                     T = TypeVar('T', default=str)
+                     class Test(Generic[T]):
+                        def foo(self, x: T):
+                            x.<caret>
+                     """);
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "find", "join");
+  }
+
+  // PY-81420
+  public void testTypeVarDefaultTypeNewSyntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> {
+        final List<String> suggestedNew =
+          doTestByText("""
+                     class Test[T = str]:
+                         def foo(self, x: T):
+                             x.<caret>
+                     """);
+        assertNotNull(suggestedNew);
+        assertContainsElements(suggestedNew, "find", "join");
+      }
+    );
   }
 
   private void doTestVariants(String @NotNull ... expected) {

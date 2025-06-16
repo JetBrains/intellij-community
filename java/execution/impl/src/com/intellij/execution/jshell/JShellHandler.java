@@ -93,7 +93,7 @@ public final class JShellHandler {
     myMessageReader = new MessageReader<>(is, Response.class);
     myMessageWriter = new MessageWriter<>(processHandler.getProcessInput());
 
-    processHandler.addProcessListener(new ProcessAdapter() {
+    processHandler.addProcessListener(new ProcessListener() {
       @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType == ProcessOutputTypes.STDOUT) {

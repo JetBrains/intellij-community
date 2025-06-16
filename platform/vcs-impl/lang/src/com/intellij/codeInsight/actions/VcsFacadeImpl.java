@@ -4,7 +4,6 @@ package com.intellij.codeInsight.actions;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.tools.util.text.LineOffsets;
 import com.intellij.diff.tools.util.text.LineOffsetsUtil;
-import com.intellij.model.ModelPatch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -420,8 +419,8 @@ public final class VcsFacadeImpl extends VcsFacade {
   }
 
   @Override
-  public JComponent createPatchPreviewComponent(@NotNull Project project, @NotNull ModelPatch patch) {
-    List<Change> changes = EntryStream.of(patch.getBranchChanges()).mapKeyValue((file, content) -> {
+  public JComponent createPatchPreviewComponent(@NotNull Project project, @NotNull Map<VirtualFile, CharSequence> patch) {
+    List<Change> changes = EntryStream.of(patch).mapKeyValue((file, content) -> {
       FilePath filePath = VcsUtil.getFilePath(file);
       ContentRevision current = new CurrentContentRevision(filePath);
       ContentRevision changed = new SimpleContentRevision(content.toString(), filePath, VcsBundle.message("patched.version.name"));

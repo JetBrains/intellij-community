@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -29,16 +21,16 @@ import com.intellij.platform.workspace.storage.testEntities.entities.OoParentWit
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPidEntityData) : OoParentWithPidEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPidEntityData) : OoParentWithPidEntity,
+                                                                                              WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDONE_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java,
-                                                                            OoChildForParentWithPidEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_ONE, false)
-    internal val CHILDTHREE_CONNECTION_ID: ConnectionId = ConnectionId.create(OoParentWithPidEntity::class.java,
-                                                                              OoChildAlsoWithPidEntity::class.java,
-                                                                              ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CHILDONE_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      OoParentWithPidEntity::class.java, OoChildForParentWithPidEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
+    )
+    internal val CHILDTHREE_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      OoParentWithPidEntity::class.java, OoChildAlsoWithPidEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false
+    )
 
     private val connections = listOf<ConnectionId>(
       CHILDONE_CONNECTION_ID,
@@ -72,8 +64,8 @@ internal class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPid
   }
 
 
-  internal class Builder(result: OoParentWithPidEntityData?) : ModifiableWorkspaceEntityBase<OoParentWithPidEntity, OoParentWithPidEntityData>(
-    result), OoParentWithPidEntity.Builder {
+  internal class Builder(result: OoParentWithPidEntityData?) :
+    ModifiableWorkspaceEntityBase<OoParentWithPidEntity, OoParentWithPidEntityData>(result), OoParentWithPidEntity.Builder {
     internal constructor() : this(OoParentWithPidEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -144,8 +136,9 @@ internal class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPid
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILDONE_CONNECTION_ID,
-                                                                             this) as? OoChildForParentWithPidEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
+            CHILDONE_CONNECTION_ID, this
+          ) as? OoChildForParentWithPidEntity.Builder)
           ?: (this.entityLinks[EntityLink(true, CHILDONE_CONNECTION_ID)] as? OoChildForParentWithPidEntity.Builder)
         }
         else {
@@ -181,8 +174,9 @@ internal class OoParentWithPidEntityImpl(private val dataSource: OoParentWithPid
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(CHILDTHREE_CONNECTION_ID,
-                                                                             this) as? OoChildAlsoWithPidEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getOneChildBuilder(
+            CHILDTHREE_CONNECTION_ID, this
+          ) as? OoChildAlsoWithPidEntity.Builder)
           ?: (this.entityLinks[EntityLink(true, CHILDTHREE_CONNECTION_ID)] as? OoChildAlsoWithPidEntity.Builder)
         }
         else {
@@ -243,7 +237,8 @@ internal class OoParentWithPidEntityData : WorkspaceEntityData<OoParentWithPidEn
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.OoParentWithPidEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.OoParentWithPidEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

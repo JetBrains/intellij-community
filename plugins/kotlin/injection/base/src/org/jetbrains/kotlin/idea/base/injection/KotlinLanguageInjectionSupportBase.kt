@@ -45,7 +45,7 @@ abstract class KotlinLanguageInjectionSupportBase : AbstractLanguageInjectionSup
         }
     }
 
-    override fun isApplicableTo(host: PsiLanguageInjectionHost?) = host is KtElement
+    override fun isApplicableTo(host: PsiLanguageInjectionHost?): Boolean = (host as? KtElement)?.isWritable == true
 
     override fun useDefaultInjector(host: PsiLanguageInjectionHost?): Boolean = false
 
@@ -135,7 +135,7 @@ abstract class KotlinLanguageInjectionSupportBase : AbstractLanguageInjectionSup
         // Find the place where injection can be stated with annotation or comment
         val modifierListOwner = findElementToInjectWithAnnotation(ktHost)
 
-        if (modifierListOwner != null && canInjectWithAnnotation(ktHost)) {
+        if (modifierListOwner != null && modifierListOwner.isWritable && canInjectWithAnnotation(ktHost)) {
             project.executeWriteCommand(KotlinBaseInjectionBundle.message("command.action.add.injection.annotation")) {
                 modifierListOwner.addAnnotation(FqName(AnnotationUtil.LANGUAGE), "\"${language.id}\"")
             }
@@ -145,10 +145,12 @@ abstract class KotlinLanguageInjectionSupportBase : AbstractLanguageInjectionSup
 
         // Find the place where injection can be done with one-line comment
         val commentBeforeAnchor: PsiElement =
-            modifierListOwner?.firstNonCommentChild() ?: findElementToInjectWithComment(ktHost) ?: return false
+            modifierListOwner?.takeIf(PsiElement::isWritable)?.firstNonCommentChild()
+                ?: findElementToInjectWithComment(ktHost)
+                ?: return false
 
         val psiFactory = KtPsiFactory(project)
-        val injectComment = psiFactory.createComment("//language=" + language.id)
+        val injectComment = psiFactory.createComment("// language=\"${language.id}\"")
 
         project.executeWriteCommand(KotlinBaseInjectionBundle.message("command.action.add.injection.comment")) {
             commentBeforeAnchor.parent.addBefore(injectComment, commentBeforeAnchor)

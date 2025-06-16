@@ -3,7 +3,6 @@ package com.intellij.cce.evaluation
 
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry
 import kotlin.system.measureTimeMillis
 
 class EvaluationProcess private constructor (
@@ -13,6 +12,7 @@ class EvaluationProcess private constructor (
 ) {
   companion object {
     fun build(environment: EvaluationEnvironment, stepFactory: StepFactory, init: Builder.() -> Unit): EvaluationProcess {
+      environment.initialize(stepFactory.datasetContext)
       val builder = Builder()
       builder.init()
       return builder.build(environment, stepFactory)
@@ -52,13 +52,7 @@ class EvaluationProcess private constructor (
       val isTestingEnvironment = ApplicationManager.getApplication().isUnitTestMode
 
       if (!isTestingEnvironment && (shouldGenerateActions || shouldInterpretActions)) {
-        factory.setupSdkStep()?.let { steps.add(it) }
-
-        if (!Registry.`is`("evaluation.plugin.disable.sdk.check")) {
-          factory.checkSdkConfiguredStep()?.let {
-            steps.add(it)
-          }
-        }
+        factory.setupEnvironmentSteps().forEach { steps.add(it) }
       }
 
       if (shouldInterpretActions) {

@@ -11,15 +11,17 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.HashMapZipFile;
+import com.intellij.util.lang.JavaVersion;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
 import kotlin.metadata.jvm.JvmMetadataUtil;
+import kotlinx.coroutines.Deferred;
 import net.n3.nanoxml.IXMLBuilder;
 import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,6 +32,7 @@ import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
+import org.jetbrains.jps.dependency.DependencyGraph;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
 import org.jetbrains.jps.javac.ast.JavacReferenceCollector;
 import org.jetbrains.jps.model.JpsModel;
@@ -38,8 +41,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,6 +82,11 @@ public final class ClasspathBootstrap {
     "jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED",
     "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
     "jdk.compiler/com.sun.tools.javac.jvm=ALL-UNNAMED"
+  };
+
+  private static final String[] FORBIDDEN_JARS = {
+    "app.jar",
+    "app-client.java"
   };
 
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
@@ -124,10 +131,17 @@ public final class ClasspathBootstrap {
       if (LOG.isTraceEnabled()) {
         LOG.trace(pathString + " added to classpath to include " + aClass.getName());
       }
-      if (pathString.endsWith("app.jar") && path.getFileName().toString().equals("app.jar")) {
-        if (path.getParent().equals(Paths.get(PathManager.getLibPath()))) {
-          LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
-        }
+      assertPathDoesNotContainTheWholeWorld(pathString, path, aClass);
+    }
+  }
+
+  private static void assertPathDoesNotContainTheWholeWorld(@NotNull String pathString, @NotNull Path path, @NotNull Class<?> aClass) {
+    for (String jarName : FORBIDDEN_JARS) {
+      if (pathString.endsWith(jarName) &&
+          path.getFileName().toString().equals(jarName) &&
+          path.getParent().equals(Paths.get(PathManager.getLibPath()))
+      ) {
+        LOG.error("Due to " + aClass.getName() + " requirement, inappropriate " + pathString + " is added to build process classpath");
       }
     }
   }
@@ -145,22 +159,25 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, BuildMain.class);
     addToClassPath(cp, ExternalJavacProcess.class);  // intellij.platform.jps.build.javac.rt part
     addToClassPath(cp, JavacReferenceCollector.class);  // jps-javac-extension library
+    addToClassPath(cp, DependencyGraph.class);  // dep-graph
 
     // intellij.platform.util
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
     addToClassPath(cp, HashMapZipFile.class); // intellij.platform.util.zip
 
     ClassPathUtil.addKotlinStdlib(cp);
+    addToClassPath(cp, Deferred.class);  // kotlinx.coroutines, used intellij.platform.util, EnvironmentUtil
     addToClassPath(cp, JvmMetadataUtil.class);  // kotlin metadata parsing
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);
     getNettyForJpsClasspath(path -> cp.add(path.toString()));
 
     addToClassPath(cp, ClassWriter.class);  // asm
     addToClassPath(cp, ClassVisitor.class);  // asm-commons
-    addToClassPath(cp, RuntimeModuleRepository.class); // intellij.platform.runtime.repository
     addToClassPath(cp, JpsModel.class);  // intellij.platform.jps.model
     addToClassPath(cp, JpsModelImpl.class);  // intellij.platform.jps.model.impl
     addToClassPath(cp, JpsProjectLoader.class);  // intellij.platform.jps.model.serialization
+    addToClassPath(cp, JavaVersion.class); // intellij.platform.util.multiplatform
+    addToClassPath(cp, Strings.class); // intellij.platform.base.kmp
     addToClassPath(cp, AlienFormFileException.class);  // intellij.java.guiForms.compiler
     addToClassPath(cp, GridConstraints.class);  // intellij.java.guiForms.rt
     addToClassPath(cp, CellConstraints.class);  // jGoodies-forms

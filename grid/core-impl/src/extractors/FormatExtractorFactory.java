@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 public class FormatExtractorFactory implements DataExtractorFactory {
   private final CsvFormat myFormat;
 
-  FormatExtractorFactory(@NotNull CsvFormat format) {
+  public FormatExtractorFactory(@NotNull CsvFormat format) {
     myFormat = format;
   }
 

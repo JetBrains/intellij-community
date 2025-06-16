@@ -13,12 +13,14 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
 internal object MergeStatisticsCollector : CounterUsagesCollector() {
-  private val GROUP: EventLogGroup = EventLogGroup("vcs.merge", 3)
+  private val GROUP: EventLogGroup = EventLogGroup("vcs.merge", 4)
 
   private val MERGE_RESULT: EnumEventField<MergeResult> = EventFields.Enum("result", MergeResult::class.java)
   private val SOURCE: EnumEventField<MergeResultSource> = EventFields.Enum("source", MergeResultSource::class.java)
   private val CHANGES: IntEventField = EventFields.Int("changes")
   private val AUTO_RESOLVABLE = EventFields.Int("autoResolvable")
+  private val AUTO_RESOLVABLE_WITH_SEMANTICS = EventFields.Int("autoResolvableWithSemantics")
+  private val FILE_LANGUAGE = EventFields.Language("fileLanguage", "Stores information about the base file")
   private val CONFLICTS = EventFields.Int("conflicts")
   private val EDITED = EventFields.Int("edited")
   private val UNRESOLVED = EventFields.Int("unresolved")
@@ -27,7 +29,7 @@ internal object MergeStatisticsCollector : CounterUsagesCollector() {
   private val AI_UNDONE = EventFields.Int("undoneAfterAi")
   private val AI_EDITED = EventFields.Int("editedAfterAi")
 
-  private val FILE_MERGED_EVENT: VarargEventId = GROUP.registerVarargEvent("file.merged", MERGE_RESULT, SOURCE, CHANGES, EventFields.DurationMs, AUTO_RESOLVABLE, CONFLICTS, EDITED, UNRESOLVED, AI_RESOLVED, AI_ROLLED_BACK, AI_UNDONE, AI_EDITED)
+  private val FILE_MERGED_EVENT: VarargEventId = GROUP.registerVarargEvent("file.merged", MERGE_RESULT, SOURCE, CHANGES, EventFields.DurationMs, AUTO_RESOLVABLE, AUTO_RESOLVABLE_WITH_SEMANTICS, FILE_LANGUAGE, CONFLICTS, EDITED, UNRESOLVED, AI_RESOLVED, AI_ROLLED_BACK, AI_UNDONE, AI_EDITED)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -43,6 +45,7 @@ internal object MergeStatisticsCollector : CounterUsagesCollector() {
       add(CHANGES.with(aggregator.changes))
       add(EventFields.DurationMs.with(System.currentTimeMillis() - aggregator.initialTimestamp))
       add(AUTO_RESOLVABLE.with(aggregator.autoResolvable))
+      add(AUTO_RESOLVABLE_WITH_SEMANTICS.with(aggregator.autoResolvableWithSemantics))
       add(CONFLICTS.with(aggregator.conflicts))
       add(EDITED.with(aggregator.edited()))
       add(UNRESOLVED.with(aggregator.unresolved))
@@ -50,6 +53,7 @@ internal object MergeStatisticsCollector : CounterUsagesCollector() {
       add(AI_ROLLED_BACK.with(aggregator.rolledBackAfterAI()))
       add(AI_UNDONE.with(aggregator.undoneAfterAI()))
       add(AI_EDITED.with(aggregator.editedAfterAI()))
+      add(FILE_LANGUAGE.with(aggregator.language))
     }
   }
 }

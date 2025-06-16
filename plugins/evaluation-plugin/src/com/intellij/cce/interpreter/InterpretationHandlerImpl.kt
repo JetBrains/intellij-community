@@ -6,13 +6,17 @@ import com.intellij.cce.actions.ActionStat
 import com.intellij.cce.util.Progress
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import org.jetbrains.concurrency.errorIfNotMessage
 import java.io.File
 import java.util.*
+import kotlin.coroutines.cancellation.CancellationException
 
 class InterpretationHandlerImpl(
   private val indicator: Progress,
   private val sessionsCount: Int,
-  private val sessionsLimit: Int?) : InterpretationHandler {
+  private val sessionsLimit: Int?,
+  private val strictSessionsLimit: Boolean?,
+) : InterpretationHandler {
   private companion object {
     val LOG = Logger.getInstance(InterpretationHandlerImpl::class.java)
   }
@@ -37,7 +41,7 @@ class InterpretationHandlerImpl(
 
   override fun onErrorOccurred(error: Throwable, sessionsSkipped: Int) {
     completed += sessionsSkipped
-    if (!ApplicationManager.getApplication().isUnitTestMode) LOG.error("Actions interpretation error", error)
+    if (!ApplicationManager.getApplication().isUnitTestMode) LOG.errorIfNotMessage(error)
   }
 
   override fun isCancelled(): Boolean {
@@ -55,6 +59,9 @@ class InterpretationHandlerImpl(
     }
     return false
   }
+
+  override fun isStrictLimitExceeded(): Boolean =
+    if (strictSessionsLimit == true) isLimitExceeded() else false
 
   private fun updateProgress(path: String, fileSessionsLeft: Int) {
     val actualSessionsCount = sessionsLimit ?: sessionsCount

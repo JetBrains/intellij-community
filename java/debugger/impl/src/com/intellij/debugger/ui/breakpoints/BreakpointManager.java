@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class BreakpointManager
@@ -41,13 +41,9 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.XDebuggerSupport;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XDependentBreakpointManager;
-import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
+import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import com.jetbrains.jdi.EventRequestManagerImpl;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.ThreadReference;
@@ -149,14 +145,12 @@ public class BreakpointManager {
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
     DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
       XBreakpoint xBreakpoint = breakpoint.myXBreakpoint;
-      if (xBreakpoint instanceof XLineBreakpointImpl) {
-        RangeHighlighter highlighter = ((XLineBreakpointImpl<?>)xBreakpoint).getHighlighter();
+      if (xBreakpoint instanceof XLineBreakpointImpl<?> xLineBreakpoint) {
+        RangeHighlighter highlighter = xLineBreakpoint.getHighlighter();
         if (highlighter != null) {
           GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
           if (renderer != null) {
-            DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
-              myProject, editor, breakpoint.myXBreakpoint, renderer
-            );
+            EditBreakpointAction.HANDLER.editBreakpoint(myProject, editor, XBreakpointProxyKt.asProxy(xLineBreakpoint), renderer);
           }
         }
       }
@@ -259,7 +253,7 @@ public class BreakpointManager {
   /**
    * @deprecated use {@link #addExceptionBreakpoint(String)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable ExceptionBreakpoint addExceptionBreakpoint(final @NotNull String exceptionClassName, final String packageName) {
     return addExceptionBreakpoint(exceptionClassName);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JavaHomeFinderEel")
 
 package com.intellij.openapi.projectRoots.impl
@@ -10,7 +10,7 @@ import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.upgradeBlocking
+import com.intellij.platform.eel.provider.toEelApiBlocking
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.util.suspendingLazy
@@ -54,7 +54,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
 
   private val isCaseSensitive = service<ScopeService>().suspendingLazy {
     val testDir = eel.fs.user.home
-    val type = when (val stat = eel.fs.stat(testDir, EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)) {
+    val type = when (val stat = eel.fs.stat(testDir).resolveAndFollow().eelIt()) {
       is EelResult.Ok -> stat.value.type
       is EelResult.Error -> error(stat)
     }
@@ -77,7 +77,7 @@ private class EelSystemInfoProvider(private val eel: EelApi) : JavaHomeFinder.Sy
 }
 
 internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
-  val eel = descriptor.upgradeBlocking()
+  val eel = descriptor.toEelApiBlocking()
   val systemInfoProvider = EelSystemInfoProvider(eel)
 
   val parentFinder = when (eel.platform) {
@@ -89,7 +89,9 @@ internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
         processRunner = { cmd ->
           runBlockingMaybeCancellable {
             // TODO Introduce Windows Registry access in EelApi
-            val process = eel.exec.execute(EelExecApi.ExecuteProcessOptions.Builder(cmd.first()).args(cmd.drop(1)).build()).getOr {
+            val process = try {
+              eel.exec.spawnProcess(cmd.first()).args(cmd.drop(1)).eelIt()
+            } catch (_ : ExecuteProcessException) {
               // registry reading can fail, in this case we return no output just like `com.intellij.openapi.util.io.WindowsRegistryUtil.readRegistry`
               return@runBlockingMaybeCancellable ""
             }
@@ -105,7 +107,9 @@ internal fun javaHomeFinderEel(descriptor: EelDescriptor): JavaHomeFinderBasic {
     is EelPlatform.Darwin -> JavaHomeFinderMac(systemInfoProvider)
 
     is EelPlatform.Linux -> {
-      val checkPaths = JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS.toMutableSet()
+      val checkPaths = JavaHomeFinder.DEFAULT_JAVA_LINUX_PATHS.map {
+        EelPath.parse(it, descriptor).asNioPath().toString()
+      }.toMutableSet()
       val userHome = eel.fs.user.home
       checkPaths.add(userHome.resolve(".jdks").asNioPath().toString())
       JavaHomeFinderBasic(systemInfoProvider).checkSpecifiedPaths(*checkPaths.toTypedArray())

@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.directorySeparators
 
 internal class ArrayListEelAbsolutePath private constructor(
   override val descriptor: EelDescriptor,
@@ -51,7 +53,7 @@ internal class ArrayListEelAbsolutePath private constructor(
   }
 
   override fun resolve(other: String): EelPath {
-    val delimiters = this.os.directorySeparators
+    val delimiters = this.platform.directorySeparators
     val otherParts = other.split(*delimiters).filter(String::isNotEmpty)
     for (name in otherParts) {
       if (name.isNotEmpty()) {
@@ -115,12 +117,6 @@ internal class ArrayListEelAbsolutePath private constructor(
     return nameCount - other.nameCount
   }
 
-  override val os: EelPath.OS
-    get() = when (this._root) {
-      Root.Unix -> EelPath.OS.UNIX
-      is Root.Windows -> EelPath.OS.WINDOWS
-    }
-
   override fun equals(other: Any?): Boolean =
     other is EelPath &&
     nameCount == other.nameCount &&
@@ -140,9 +136,9 @@ internal class ArrayListEelAbsolutePath private constructor(
     fun build(parts: List<String>, descriptor: EelDescriptor): EelPath {
       require(parts.isNotEmpty()) { "Can't build an absolute path from no path parts" }
 
-      val windowsRoot = when (descriptor.operatingSystem) {
-        EelPath.OS.WINDOWS -> findAbsoluteUncPath(parts.first(), descriptor) ?: findAbsoluteTraditionalDosPath(parts.first(), descriptor)
-        EelPath.OS.UNIX -> null
+      val windowsRoot = when (descriptor.osFamily) {
+        EelOsFamily.Windows -> findAbsoluteUncPath(parts.first(), descriptor) ?: findAbsoluteTraditionalDosPath(parts.first(), descriptor)
+        EelOsFamily.Posix -> null
       }
       when (windowsRoot) {
         null -> {
@@ -174,9 +170,9 @@ internal class ArrayListEelAbsolutePath private constructor(
 
     @Throws(EelPathException::class)
     fun parseOrNull(raw: String, descriptor: EelDescriptor): ArrayListEelAbsolutePath? =
-      when (descriptor.operatingSystem) {
-        EelPath.OS.WINDOWS -> findAbsoluteUncPath(raw, descriptor) ?: findAbsoluteTraditionalDosPath(raw, descriptor)
-        EelPath.OS.UNIX -> findAbsoluteUnixPath(raw, descriptor)
+      when (descriptor.osFamily) {
+        EelOsFamily.Windows -> findAbsoluteUncPath(raw, descriptor) ?: findAbsoluteTraditionalDosPath(raw, descriptor)
+        EelOsFamily.Posix -> findAbsoluteUnixPath(raw, descriptor)
       }
 
     /** https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths */

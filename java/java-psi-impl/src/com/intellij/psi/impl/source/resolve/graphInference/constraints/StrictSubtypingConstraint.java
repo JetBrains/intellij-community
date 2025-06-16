@@ -57,7 +57,16 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     }
 
     if (PsiTypes.nullType().equals(myT) || myT == null) return false;
-    if (PsiTypes.nullType().equals(myS) || myS == null || myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return true;
+    if (PsiTypes.nullType().equals(myS)) {
+      InferenceVariable inferenceVariable = session.getInferenceVariable(myT);
+      if (inferenceVariable != null) {
+        InferenceVariable.addBound(myT, myS, InferenceBound.LOWER, session);
+      }
+      return true;
+    }
+    else if (myS == null || myT.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      return true;
+    }
 
     if (PsiTypes.voidType().equals(myS) ^ PsiTypes.voidType().equals(myT)) return false;
 
@@ -195,17 +204,13 @@ public class StrictSubtypingConstraint implements ConstraintFormula {
     if (o == null || getClass() != o.getClass()) return false;
 
     StrictSubtypingConstraint that = (StrictSubtypingConstraint)o;
-
-    if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
-    if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
-
-    return true;
+    return ConstraintUtil.typesEqual(myS, that.myS) && ConstraintUtil.typesEqual(myT, that.myT);
   }
 
   @Override
   public int hashCode() {
-    int result = myS != null ? myS.hashCode() : 0;
-    result = 31 * result + (myT != null ? myT.hashCode() : 0);
+    int result = ConstraintUtil.typeHashCode(myT);
+    result = 31 * result + ConstraintUtil.typeHashCode(myS);
     return result;
   }
 

@@ -1,20 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
-import com.intellij.ide.util.projectWizard.ProjectConfigurator
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.Panel
-import org.jetbrains.annotations.ApiStatus
-
 
 /**
- * Creates step which delegates all calls to [steps] in order from first to last.
+ * Creates a step which delegates all calls to [steps] in order from first to last.
  *
  * Needed to build one horizontal step from several dependent vertical steps.
  * For example, you can merge base, comment, main and assets steps into one step,
  * which will be shown on one wizard page.
  *
  * @see NewProjectWizardStep
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/new-project-wizard.html#chaining-steps">
+ *   New Project Wizard API: Chaining Steps (IntelliJ Platform Docs)</a>
  */
 class NewProjectWizardChainStep<S : NewProjectWizardStep> : AbstractNewProjectWizardStep {
 
@@ -29,7 +28,7 @@ class NewProjectWizardChainStep<S : NewProjectWizardStep> : AbstractNewProjectWi
   }
 
   /**
-   * Appends new child step into steps chain.
+   * Appends a new child step into the step chain.
    */
   fun <NS : NewProjectWizardStep> nextStep(create: (S) -> NS): NewProjectWizardChainStep<NS> {
     return NewProjectWizardChainStep(create(step), steps)
@@ -45,11 +44,6 @@ class NewProjectWizardChainStep<S : NewProjectWizardStep> : AbstractNewProjectWi
     for (step in steps) {
       step.setupProject(project)
     }
-  }
-
-  @ApiStatus.Internal
-  override fun createProjectConfigurator(): ProjectConfigurator? {
-    return steps.firstNotNullOfOrNull { it.createProjectConfigurator() }
   }
 
   companion object {

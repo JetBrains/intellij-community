@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.codeInsight.daemon.impl
@@ -36,6 +36,7 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -104,6 +105,9 @@ open class TrafficLightRenderer private constructor(
         incErrorCount(highlighter, 1)
       }
 
+      // assumption: range highlighters for errors/warnings don't transmute into each other, across different severity layers
+      // see com.intellij.codeInsight.daemon.impl.ManagedHighlighterRecycler.pickupHighlighterFromGarbageBin how range highlighter recycling work
+
       override fun afterRemoved(highlighter: RangeHighlighterEx) {
         incErrorCount(highlighter, -1)
       }
@@ -132,9 +136,22 @@ open class TrafficLightRenderer private constructor(
       EditorContextManager.getEditorContext(editor, project)
     }
     else {
-      // todo ijpl-339 choose proper file here?
+      // todo IJPL-339 choose proper file here?
       defaultContext()
     }
+  }
+  private fun getContext(highlighter: RangeHighlighter): CodeInsightContext {
+    val context: CodeInsightContext = if (isSharedSourceSupportEnabled(project)) {
+      highlighter.codeInsightContext ?: run {
+        // todo IJPL-339 please improve this code if context can indeed be null
+        // logger<TrafficLightRenderer>().error("highlightInfo's rangeHighlighter must have a context")
+        defaultContext()
+      }
+    }
+    else {
+      defaultContext()
+    }
+    return context
   }
 
   open val errorCounts: IntArray
@@ -168,17 +185,7 @@ open class TrafficLightRenderer private constructor(
     val info = HighlightInfo.fromRangeHighlighter(highlighter) ?: return
     val infoSeverity = info.severity
     if (infoSeverity > HighlightSeverity.TEXT_ATTRIBUTES) {
-      val context: CodeInsightContext = if (isSharedSourceSupportEnabled(project)) {
-        highlighter.codeInsightContext ?: run {
-          // todo ijpl-339 please improve this code if context can indeed be null
-          // logger<TrafficLightRenderer>().error("highlightInfo's rangeHighlighter must have a context")
-          defaultContext()
-        }
-      }
-      else {
-        defaultContext()
-      }
-      val highlightKey = HighlightKey(infoSeverity, context)
+      val highlightKey = HighlightKey(infoSeverity, getContext(highlighter))
       synchronized(errorCount) {
         val oldVal = errorCount.getInt(highlightKey)
         errorCount.put(highlightKey, Math.max(0, oldVal + delta))
@@ -421,8 +428,13 @@ open class TrafficLightRenderer private constructor(
         AllIcons.General.InspectionsOKEmpty
       }
       return if (isDumb) {
+        val indexingMessage = if (Registry.`is`("editor.show.indexing.as.analyzing"))
+          DaemonBundle.message("iw.status.analyzing")
+        else
+          message("heavyProcess.type.indexing")
+
         AnalyzerStatus(AllIcons.General.InspectionsPause, title, details, uiController)
-          .withTextStatus(message("heavyProcess.type.indexing"))
+          .withTextStatus(indexingMessage)
           .withState(InspectionsState.INDEXING)
           .withAnalyzingType(AnalyzingType.SUSPENDED)
       }
@@ -644,13 +656,13 @@ open class TrafficLightRenderer private constructor(
       val settings = HighlightingSettingsPerFile.getInstance(project)
       for (psiRoot in viewProvider.getAllFiles()) {
         val setting = settings.getHighlightingSettingForRoot(psiRoot)
-        settingMap.put(psiRoot.getLanguage(), setting)
+        settingMap[psiRoot.getLanguage()] = setting
       }
 
       val virtualFile = psiFile.getVirtualFile()!!
       val inLib = fileIndex.isInLibrary(virtualFile) && !fileIndex.isInContent(virtualFile)
       val shouldHighlight = ProblemHighlightFilter.shouldHighlightFile(psiFile)
-      return TrafficLightRendererInfo(settingMap, inLib, shouldHighlight)
+      return TrafficLightRendererInfo(java.util.Map.copyOf(settingMap), inLib, shouldHighlight)
     }
 
     private fun toPercent(progress: Double, finished: Boolean): Int {

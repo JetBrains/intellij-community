@@ -14,9 +14,10 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
 import com.intellij.ide.ProhibitAWTEvents
-import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.RawPluginDescriptor.ActionDescriptorAction
-import com.intellij.ide.plugins.RawPluginDescriptor.ActionDescriptorGroup
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.idea.IdeaLogger
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
@@ -29,8 +30,8 @@ import com.intellij.openapi.actionSystem.ex.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil.getActionUnavailableMessage
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
@@ -43,9 +44,7 @@ import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.UpdateResult
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.ProjectType
 import com.intellij.openapi.util.*
@@ -54,9 +53,9 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.awaitFocusSettlesDown
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
+import com.intellij.platform.plugins.parser.impl.elements.ActionElement.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.icons.IconLoadMeasurer
@@ -68,6 +67,7 @@ import com.intellij.util.concurrency.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.with
 import com.intellij.util.containers.without
+import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xml.dom.XmlElement
@@ -77,6 +77,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -99,6 +100,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val DEFAULT_ACTION_GROUP_CLASS_NAME = DefaultActionGroup::class.java.name
 
+@ApiStatus.Internal
 open class ActionManagerImpl protected constructor(private val coroutineScope: CoroutineScope) : ActionManagerEx() {
   private val notRegisteredInternalActionIds = ArrayList<String>()
   private val actionPopupMenuListeners = ContainerUtil.createLockFreeCopyOnWriteList<ActionPopupMenuListener>()
@@ -320,7 +322,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   final override fun createActionToolbar(place: String,
                                          group: ActionGroup,
                                          horizontal: Boolean,
-                                         separatorCreator: Function<in String, out Component>): ActionToolbar {
+                                         separatorCreator: Function<in String?, out Component>): ActionToolbar {
     val toolbar = createActionToolbarImpl(place = place,
                                           group = group,
                                           horizontal = horizontal,
@@ -339,30 +341,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     val startTime = System.nanoTime()
-    var lastBundleName: String? = null
-    var lastBundle: ResourceBundle? = null
     for (descriptor in elements) {
       val bundleName = descriptor.resourceBundle
                        ?: if (PluginManagerCore.CORE_ID == module.pluginId) "messages.ActionsBundle" else module.resourceBundleBaseName
       val element = descriptor.element
-      var bundle: ResourceBundle?
-      when (bundleName) {
-        null -> bundle = null
-        lastBundleName -> bundle = lastBundle
-        else -> {
-          try {
-            bundle = DynamicBundle.getResourceBundle(module.classLoader, bundleName)
-            lastBundle = bundle
-            lastBundleName = bundleName
-          }
-          catch (e: MissingResourceException) {
-            LOG.error(PluginException("Cannot resolve resource bundle $bundleName for action $element", e, module.pluginId))
-            bundle = null
-          }
+
+      val bundleSupplier = {
+        bundleName?.let {
+          DynamicBundle.getResourceBundle(module.classLoader, bundleName)
         }
       }
-
-      val bundleSupplier = { bundleName?.let { DynamicBundle.getResourceBundle(module.classLoader, it) } ?: bundle }
 
       when (descriptor) {
         is ActionDescriptorAction -> {
@@ -375,7 +363,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                keymapToOperations = keymapToOperations,
                                classLoader = module.classLoader)
         }
-        is ActionDescriptorGroup -> {
+        is ActionElementGroup -> {
           processGroupElement(className = descriptor.className,
                               id = descriptor.id,
                               element = element,
@@ -387,17 +375,17 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
         else -> {
           when (descriptor.name) {
-            ActionDescriptorName.separator -> processSeparatorNode(parentGroup = null,
-                                                                   element = element,
-                                                                   module = module,
-                                                                   bundleSupplier = bundleSupplier,
-                                                                   actionRegistrar = actionRegistrar)
-            ActionDescriptorName.reference -> processReferenceNode(element = element,
-                                                                   module = module,
-                                                                   bundleSupplier = bundleSupplier,
-                                                                   actionRegistrar = actionRegistrar)
-            ActionDescriptorName.unregister -> processUnregisterNode(element = element, module = module, actionRegistrar = actionRegistrar)
-            ActionDescriptorName.prohibit -> processProhibitNode(element = element, module = module, actionRegistrar = actionRegistrar)
+            ActionElementName.separator -> processSeparatorNode(parentGroup = null,
+                                                                element = element,
+                                                                module = module,
+                                                                bundleSupplier = bundleSupplier,
+                                                                actionRegistrar = actionRegistrar)
+            ActionElementName.reference -> processReferenceNode(element = element,
+                                                                module = module,
+                                                                bundleSupplier = bundleSupplier,
+                                                                actionRegistrar = actionRegistrar)
+            ActionElementName.unregister -> processUnregisterNode(element = element, module = module, actionRegistrar = actionRegistrar)
+            ActionElementName.prohibit -> processProhibitNode(element = element, module = module, actionRegistrar = actionRegistrar)
             else -> LOG.error("${descriptor.name} is unknown")
           }
         }
@@ -897,9 +885,9 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       val descriptor = descriptors[i]
       val element = descriptor.element
       when (descriptor.name) {
-        ActionDescriptorName.action -> unloadActionElement(element)
-        ActionDescriptorName.group -> unloadGroupElement(element)
-        ActionDescriptorName.reference -> {
+        ActionElementName.action -> unloadActionElement(element)
+        ActionElementName.group -> unloadGroupElement(element)
+        ActionElementName.reference -> {
           val action = processReferenceElement(element = element, module = module, actionRegistrar = actionPostInitRegistrar) ?: return
           val actionId = getReferenceActionId(element)
           for ((name, attributes) in element.children) {
@@ -1130,29 +1118,36 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  override fun performWithActionCallbacks(action: AnAction,
-                                          event: AnActionEvent,
-                                          runnable: Runnable) {
+  override fun performWithActionCallbacks(
+    action: AnAction,
+    event: AnActionEvent,
+    runnable: Runnable,
+  ): AnActionResult {
     val project = event.project
     PerformWithDocumentsCommitted.commitDocumentsIfNeeded(action, event)
     fireBeforeActionPerformed(action, event)
     val component = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
     val actionId = getId(action)
                    ?: if (action is EmptyAction) runnable.javaClass.name else action.javaClass.name
+    if (event.presentation.getClientProperty(ActionUtil.SKIP_ACTION_EXECUTION) == true) {
+      LOG.debug("Action execution was skipped: action=$actionId")
+      fireAfterActionPerformed(action, event, AnActionResult.IGNORED)
+      return AnActionResult.IGNORED
+    }
     if (component != null && !UIUtil.isShowing(component) &&
         event.place != ActionPlaces.TOUCHBAR_GENERAL &&
         ClientProperty.get(component, ActionUtil.ALLOW_ACTION_PERFORM_WHEN_HIDDEN) != true) {
       LOG.warn("Action is not performed because target component is not showing: " +
                "action=$actionId, component=${component.javaClass.name}")
       fireAfterActionPerformed(action, event, AnActionResult.IGNORED)
-      return
+      return AnActionResult.IGNORED
     }
     val container =
-      if (!event.presentation.isApplicationScope && project is ComponentManagerImpl) project
-      else ApplicationManager.getApplication() as ComponentManagerImpl
+      if (!event.presentation.isApplicationScope && project is ComponentManagerEx) project
+      else ApplicationManager.getApplication() as ComponentManagerEx
     val cs = container.pluginCoroutineScope(action.javaClass.classLoader)
     val coroutineName = CoroutineName("${action.javaClass.name}#actionPerformed@${event.place}")
-    // save stack frames using an explicit continuation trick & inline blockingContext
+    // save stack frames using an explicit continuation trick and inline blockingContext
     lateinit var continuation: CancellableContinuation<Unit>
     cs.launch(Dispatchers.Unconfined + coroutineName, CoroutineStart.UNDISPATCHED) {
       suspendCancellableCoroutine { continuation = it }
@@ -1162,7 +1157,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                              ModalityState.current().asContextElement() +
                              ClientId.coroutineContext() +
                              ActionContextElement.create(actionId, event.place, event.inputEvent, component)
-      installThreadContext(coroutineContext.minusKey(ContinuationInterceptor), replace = true).use { _ ->
+      val coroutineContext2 = coroutineContext + ThreadScopeCheckpoint(coroutineContext) // permit `currentThreadCoroutineScope` inside
+      installThreadContext(coroutineContext2.minusKey(ContinuationInterceptor), replace = true).use { _ ->
         SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use { _ ->
           runnable.run()
         }
@@ -1187,12 +1183,13 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       result.failureCause is IndexNotReadyException -> {
         LOG.info(result.failureCause)
         if (project != null) {
-          val dumbServiceImpl = DumbService.getInstance(project) as DumbServiceImpl
-          dumbServiceImpl.showDumbModeNotificationForFailedAction(getActionUnavailableMessage(event.presentation.text), getId(action))
+          DumbService.getInstance(project)
+            .showDumbModeNotificationForFailedAction(getActionUnavailableMessage(event.presentation.text), getId(action))
         }
       }
       else -> throw result.failureCause
     }
+    return result
   }
 
   @TestOnly
@@ -1230,9 +1227,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
         finally {
           if (!result.isProcessed) {
-            blockingContext {
-              result.setRejected()
-            }
+            result.setRejected()
           }
         }
       }
@@ -1308,27 +1303,24 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
 private fun doPerformAction(action: AnAction,
                             event: AnActionEvent,
-                            result: ActionCallback) {
+                            callback: ActionCallback) {
   (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-    ActionUtil.lastUpdateAndCheckDumb(action, event, false)
-    if (!event.presentation.isEnabled) {
-      result.setRejected()
-      return@performUserActivity
-    }
-    addAwtListener(AWTEvent.WINDOW_EVENT_MASK, result) {
+    addAwtListener(AWTEvent.WINDOW_EVENT_MASK, callback) {
       if (it.id == WindowEvent.WINDOW_OPENED || it.id == WindowEvent.WINDOW_ACTIVATED) {
-        if (!result.isProcessed) {
+        if (!callback.isProcessed) {
           val we = it as WindowEvent
           IdeFocusManager.findInstanceByComponent(we.window).doWhenFocusSettlesDown(
-            result.createSetDoneRunnable(), ModalityState.defaultModalityState())
+            callback.createSetDoneRunnable(), ModalityState.defaultModalityState())
         }
       }
     }
+    var result = AnActionResult.IGNORED
     try {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+      result = ActionUtil.performAction(action, event)
     }
     finally {
-      result.setDone()
+      if (result.isIgnored) callback.setRejected()
+      else callback.setDone()
     }
   }
 }
@@ -1337,32 +1329,29 @@ private fun tryToExecuteNow(action: AnAction,
                             place: String,
                             contextComponent: Component?,
                             inputEvent: InputEvent?,
-                            result: ActionCallback) {
+                            callback: ActionCallback) {
   val presentationFactory = PresentationFactory()
   @Suppress("DEPRECATION")
   val dataContext = DataManager.getInstance().let {
     if (contextComponent == null) it.dataContext else it.getDataContext(contextComponent)
   }
   val wrappedContext = Utils.createAsyncDataContext(dataContext)
-  val componentAdjusted = PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext) ?: contextComponent
   val actionProcessor = object : ActionProcessor() {}
   val inputEventAdjusted = inputEvent ?: KeyEvent(
-    componentAdjusted ?: JLabel(), KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
-  val event = Utils.runWithInputEventEdtDispatcher(componentAdjusted) block@{
-    Utils.runUpdateSessionForInputEvent(
-      listOf(action), inputEventAdjusted, wrappedContext, place, actionProcessor, presentationFactory) { rearranged, updater, events ->
-      val presentation = updater(action)
-      val event = events[presentation]
-      if (event == null || !presentation.isEnabled) {
-        null
-      }
-      else {
-        UpdateResult(action, event, 0L)
-      }
+    contextComponent ?: JLabel(), KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
+  val updateResult = Utils.runUpdateSessionForInputEvent(
+    listOf(action), inputEventAdjusted, wrappedContext, place, actionProcessor, presentationFactory) { _, updater, events ->
+    val presentation = updater(action)
+    val event = events[presentation]
+    if (event == null || !presentation.isEnabled) {
+      null
     }
-  }?.event
-  if (event != null && event.presentation.isEnabled) {
-    doPerformAction(action, event, result)
+    else {
+      UpdateResult(action, event, 0L)
+    }
+  }
+  if (updateResult != null && updateResult.event.presentation.isEnabled) {
+    doPerformAction(action, updateResult.event, callback)
   }
 }
 
@@ -1371,7 +1360,7 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
                                         contextComponent: Component?,
                                         inputEvent: InputEvent?,
                                         actionManager: ActionManagerImpl,
-                                        result: ActionCallback) {
+                                        callback: ActionCallback) {
   (if (contextComponent != null) IdeFocusManager.findInstanceByComponent(contextComponent)
   else IdeFocusManager.getGlobalInstance()).awaitFocusSettlesDown()
 
@@ -1391,7 +1380,7 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
   if (event != null && event.presentation.isEnabled) {
     //todo fix all clients and move locks into them
     writeIntentReadAction {
-      doPerformAction(action, event, result)
+      doPerformAction(action, event, callback)
     }
   }
 }

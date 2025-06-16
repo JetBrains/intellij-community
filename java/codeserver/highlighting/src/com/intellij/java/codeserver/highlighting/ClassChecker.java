@@ -7,6 +7,7 @@ import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
 import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -14,6 +15,7 @@ import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
@@ -196,6 +198,10 @@ final class ClassChecker {
       parent = element;
 
       if (element instanceof PsiDeclarationStatement) element = PsiTreeUtil.getChildOfType(element, PsiClass.class);
+
+      if (myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASS_NAME_OUT_OF_SCOPE) &&
+          element instanceof PsiImplicitClass) return;
+
       if (element instanceof PsiClass psiClass && name.equals(psiClass.getName())) {
         myVisitor.report(JavaErrorKinds.CLASS_DUPLICATE.create(aClass, psiClass));
       }
@@ -350,7 +356,8 @@ final class ClassChecker {
       if (nameIdentifier == null) return;
       if (psiClass.isEnum()) return;
 
-      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(psiClass).findAll();
+      Collection<PsiClass> inheritors = DirectClassInheritorsSearch.searchAllSealedInheritors(
+        psiClass, GlobalSearchScope.allScope(myVisitor.project()).union(GlobalSearchScope.fileScope(myVisitor.file()))).findAll();
       if (inheritors.isEmpty()) {
         myVisitor.report(JavaErrorKinds.CLASS_SEALED_NO_INHERITORS.create(psiClass));
         return;
@@ -400,8 +407,24 @@ final class ClassChecker {
     PsiMethod[] methods = implicitClass.getMethods();
     boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()) && PsiMethodUtil.isMainMethod(method));
     if (!hasMainMethod) {
+      //don't show errors if there is a package, this package will be highlighted
+      if (file.getPackageStatement() != null) return;
+      //don't show errors if the file contains broken {}
+      if(hasErrorElementWithBraces(file)) return;
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_NO_MAIN_METHOD.create(file, implicitClass));
     }
+  }
+
+  private static boolean hasErrorElementWithBraces(@NotNull PsiElement parentElement) {
+    Ref<Boolean> result = new Ref<>(false);
+    PsiWalkingState.processAll(parentElement, el -> {
+      if (el instanceof PsiErrorElement element &&
+          (element.getText().contains("}") || element.getText().contains("{"))) {
+        result.set(true);
+        return false;
+      } else return true;
+    });
+    return result.get();
   }
 
   void checkImplicitClassMember(@NotNull PsiMember member) {
@@ -446,7 +469,9 @@ final class ClassChecker {
   }
 
   void checkPackageNotAllowedInImplicitClass(@NotNull PsiPackageStatement statement) {
-    if (myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASSES) && JavaImplicitClassUtil.isFileWithImplicitClass(myVisitor.file())) {
+    if (myVisitor.isApplicable(JavaFeature.IMPLICIT_CLASSES) &&
+        JavaImplicitClassUtil.isFileWithImplicitClass(myVisitor.file()) &&
+        !hasErrorElementWithBraces(myVisitor.file())) {
       myVisitor.report(JavaErrorKinds.CLASS_IMPLICIT_PACKAGE.create(statement));
     }
   }
@@ -762,7 +787,7 @@ final class ClassChecker {
   void checkEnumSuperConstructorCall(@NotNull PsiMethodCallExpression expr) {
     PsiReferenceExpression methodExpression = expr.getMethodExpression();
     PsiElement refNameElement = methodExpression.getReferenceNameElement();
-    if (refNameElement != null && PsiKeyword.SUPER.equals(refNameElement.getText())) {
+    if (refNameElement != null && JavaKeywords.SUPER.equals(refNameElement.getText())) {
       PsiMember constructor = PsiUtil.findEnclosingConstructorOrInitializer(expr);
       if (constructor instanceof PsiMethod) {
         PsiClass aClass = constructor.getContainingClass();

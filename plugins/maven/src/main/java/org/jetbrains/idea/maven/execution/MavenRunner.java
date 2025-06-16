@@ -1,9 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -56,7 +56,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
     ProgramRunner.Callback callback = descriptor -> {
       ProcessHandler handler = descriptor.getProcessHandler();
       if (handler == null) return;
-      handler.addProcessListener(new ProcessAdapter() {
+      handler.addProcessListener(new ProcessListener() {
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (event.getExitCode() == 0 && onComplete != null) {
@@ -105,7 +105,7 @@ public final class MavenRunner implements PersistentStateComponent<MavenRunnerSe
       ProgramRunner.Callback callback = descriptor -> {
         ProcessHandler handler = descriptor.getProcessHandler();
         if (handler != null) {
-          handler.addProcessListener(new ProcessAdapter() {
+          handler.addProcessListener(new ProcessListener() {
             @Override
             public void startNotified(@NotNull ProcessEvent event) {
               if (onAttach != null) {

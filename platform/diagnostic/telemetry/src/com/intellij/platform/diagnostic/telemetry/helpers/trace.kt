@@ -2,6 +2,7 @@
 package com.intellij.platform.diagnostic.telemetry.helpers
 
 import com.intellij.openapi.util.ThrowableNotNullFunction
+import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.util.ThrowableConsumer
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
@@ -96,4 +97,14 @@ inline fun <T> Span.useWithoutActiveScope(operation: (Span) -> T): T {
   finally {
     end()
   }
+}
+
+/**
+ * Workaround issue with [operation] lifetime being longer than [io.opentelemetry.sdk.trace.SpanProcessor]s, making the span existence never logged.
+ * [Span] is not passed to the [operation] as argument to avoid registering the similarly ignored events.
+ */
+@Internal
+inline fun <T> IJTracer.spanWithExplicitStart(spanName: String, operation: () -> T): T {
+  this.spanBuilder("$spanName: started").startSpan().end()
+  return this.spanBuilder(spanName).use { operation() }
 }

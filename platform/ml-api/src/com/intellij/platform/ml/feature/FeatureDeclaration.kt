@@ -76,26 +76,32 @@ class FeatureDeclaration<T>(
     inline fun <reified T : Enum<*>> enum(name: String) = FeatureDeclaration(name, FeatureValueType.Enum(T::class.java))
     inline fun <reified T : Enum<*>> enum(name: String, noinline descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Enum(T::class.java), descriptionProvider)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the declaration with description")
     fun int(name: String) = FeatureDeclaration(name, FeatureValueType.Int)
     fun int(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Int, descriptionProvider)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the declaration with description")
     fun double(name: String) = FeatureDeclaration(name, FeatureValueType.Double)
     fun double(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Double, descriptionProvider)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the declaration with description")
     fun float(name: String) = FeatureDeclaration(name, FeatureValueType.Float)
     fun float(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Float, descriptionProvider)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the declaration with description")
     fun long(name: String) = FeatureDeclaration(name, FeatureValueType.Long)
     fun long(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Long, descriptionProvider)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the declaration with description")
     fun aClass(name: String) = FeatureDeclaration(name, FeatureValueType.Class)
     fun aClass(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Class, descriptionProvider)
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use the declaration with description")
     fun boolean(name: String) = FeatureDeclaration(name, FeatureValueType.Boolean)
     fun boolean(name: String, descriptionProvider: () -> String) = FeatureDeclaration(name, FeatureValueType.Boolean, descriptionProvider)

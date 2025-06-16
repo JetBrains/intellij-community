@@ -7,6 +7,7 @@ import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,7 +113,8 @@ public abstract class PsiDiamondType extends PsiType {
       return myErrorMessage != null;
     }
 
-    protected void addInferredType(PsiType psiType) {
+    @ApiStatus.Internal
+    public void addInferredType(PsiType psiType) {
       if (myErrorMessage != null) return;
       if (psiType == null) {
         myErrorMessage = JavaPsiBundle.message("diamond.error.cannot.infer.type.arguments", myNewExpressionPresentableText);
@@ -188,4 +190,9 @@ public abstract class PsiDiamondType extends PsiType {
   }
 
   public abstract @Nullable JavaResolveResult getStaticFactory();
+
+  /**
+   * @return array of potentially applicable static factories
+   */
+  public abstract JavaResolveResult @NotNull[] getStaticFactories();
 }

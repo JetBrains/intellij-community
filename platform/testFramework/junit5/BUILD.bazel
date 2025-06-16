@@ -1,10 +1,26 @@
 ### auto-generated section `build intellij.platform.testFramework.junit5` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
   name = "junit5_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
+)
+
+jvm_resources(
+  name = "junit5_test_resources",
+  files = glob(["test-resources/**/*"]),
+  strip_prefix = "test-resources"
+)
+
+jvm_provided_library(
+  name = "junit5_provided",
+  lib = "//libraries/junit5"
+)
+
+jvm_provided_library(
+  name = "junit5-launcher_provided",
+  lib = "//libraries/junit5-launcher"
 )
 
 jvm_library(
@@ -13,28 +29,33 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
-    "//platform/core-impl",
+    "@lib//:junit5Jupiter",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:junit5Launcher-provided",
-    "@lib//:junit5",
-    "//platform/analysis-api:analysis",
-    "@lib//:junit5Jupiter",
-    "//platform/util",
-    "//platform/util-ex",
-    "//platform/core-api:core",
-    "//platform/ide-core-impl",
-    "//platform/projectModel-impl",
-    "//platform/platform-impl:ide-impl",
-    "//platform/testFramework/common",
-    "//java/java-runtime:rt",
-    "//platform/util/coroutines",
     "@lib//:opentest4j",
+    "//java/java-runtime:rt",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/execution",
+    "//platform/ide-core-impl",
+    "//platform/platform-impl:ide-impl",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
+    "//platform/testFramework/common",
     "//platform/testFramework/core",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util-ex",
     "//platform/util/jdom",
+    ":junit5_provided",
+    ":junit5-launcher_provided",
   ],
-  exports = ["//platform/testFramework/common"],
   runtime_deps = [":junit5_resources"]
 )
 
@@ -44,30 +65,39 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":junit5"],
   deps = [
-    "//platform/core-impl",
+    "@lib//:junit5Jupiter",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-coroutines-core",
-    "@lib//:junit5Launcher-provided",
-    "@lib//:junit5",
+    "@lib//:opentest4j",
+    "@lib//:junit5Params",
+    "//java/java-runtime:rt",
+    "//libraries/junit5",
+    "//libraries/junit5-launcher",
     "//platform/analysis-api:analysis",
-    "@lib//:junit5Jupiter",
-    "//platform/util",
-    "//platform/util-ex",
     "//platform/core-api:core",
+    "//platform/core-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/eel",
+    "//platform/eel-provider",
+    "//platform/execution",
     "//platform/ide-core-impl",
-    "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/projectModel-impl",
     "//platform/testFramework/common",
-    "//java/java-runtime:rt",
-    "//platform/util/coroutines",
-    "@lib//:junit5Params",
-    "@lib//:opentest4j",
     "//platform/testFramework/core",
+    "//platform/util",
+    "//platform/util/coroutines",
+    "//platform/util-ex",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":junit5_resources"]
+  runtime_deps = [
+    ":junit5_resources",
+    ":junit5_test_resources",
+  ]
 )
 
 jvm_test(

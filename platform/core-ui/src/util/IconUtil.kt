@@ -49,7 +49,7 @@ import kotlin.math.min
 import kotlin.math.roundToLong
 
 private val ICON_NULLABLE_FUNCTION = { key: FileIconKey ->
-  IconUtil.computeFileIcon(file = key.file, flags = key.flags, project = key.project)
+  computeFileIcon(file = key.file, flags = key.flags, project = key.project)
 }
 
 private val toolbarDecoratorIconsFolder: @NonNls String
@@ -440,18 +440,23 @@ object IconUtil {
     return scaleByIcon(icon = icon, ancestor = ancestor, defaultIcon = defaultIcon) { it.iconWidth }
   }
 
+  /**
+   * @param keepGray if false - the saturation is fully taken from [color]
+   * @param keepBrightness if false - the brightness is fully taken from [color].
+   *                       If left true - 'gray color + gray icon' will produce a nearly black resulting icon.
+   */
   @JvmOverloads
   @JvmStatic
-  fun colorize(source: Icon, color: Color, keepGray: Boolean = false): Icon {
+  fun colorize(source: Icon, color: Color, keepGray: Boolean = false, keepBrightness: Boolean = true): Icon {
     return filterIcon(icon = source, filterSupplier = object : RgbImageFilterSupplier {
-      override fun getFilter() = ColorFilter(color = color, keepGray = keepGray)
+      override fun getFilter() = ColorFilter(color = color, keepGray = keepGray, keepBrightness = keepBrightness)
     })
   }
 
   @JvmOverloads
   @JvmStatic
-  fun colorize(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false): Icon {
-    return filterIcon(g = g, source = source, filter = ColorFilter(color = color, keepGray = keepGray))
+  fun colorize(g: Graphics2D?, source: Icon, color: Color, keepGray: Boolean = false, keepBrightness: Boolean = true): Icon {
+    return filterIcon(g = g, source = source, filter = ColorFilter(color = color, keepGray = keepGray, keepBrightness = keepBrightness))
   }
 
   @JvmStatic
@@ -650,7 +655,8 @@ class CropIcon internal constructor(val sourceIcon: Icon, val crop: Rectangle) :
   override fun hashCode(): Int = Objects.hash(sourceIcon, crop)
 }
 
-private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImageFilter() {
+@Internal
+class ColorFilter(val color: Color, val keepGray: Boolean, val keepBrightness: Boolean) : RGBImageFilter() {
   private val base = Color.RGBtoHSB(color.red, color.green, color.blue, null)
 
   override fun filterRGB(x: Int, y: Int, rgba: Int): Int {
@@ -659,7 +665,9 @@ private class ColorFilter(color: Color, private val keepGray: Boolean) : RGBImag
     val b = rgba and 0xff
     val hsb = FloatArray(3)
     Color.RGBtoHSB(r, g, b, hsb)
-    val rgb = Color.HSBtoRGB(base[0], base[1] * if (keepGray) hsb[1] else 1.0f, base[2] * hsb[2])
+    val rgb = Color.HSBtoRGB(base[0],
+                             base[1] * if (keepGray) hsb[1] else 1.0f,
+                             base[2] * if (keepBrightness) hsb[2] else 1.0f)
     return rgba and -0x1000000 or (rgb and 0xffffff)
   }
 }

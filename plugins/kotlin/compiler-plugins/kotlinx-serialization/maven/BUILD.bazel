@@ -2,24 +2,24 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-kotlinx-serialization-maven_resources",
+  name = "maven_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-kotlinx-serialization-maven",
+  name = "maven",
   module_name = "kotlin.compiler-plugins.kotlinx-serialization.maven",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/maven",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compiler-plugins-compiler-plugin-support-common",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven:kotlin-compiler-plugins-compiler-plugin-support-maven",
-    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common:kotlin-compiler-plugins-kotlinx-serialization-common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common",
+    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
+    "//plugins/kotlin/compiler-plugins/kotlinx-serialization/common",
     "//plugins/maven",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-kotlinx-serialization-maven_resources"]
+  runtime_deps = [":maven_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.kotlinx-serialization.maven` end

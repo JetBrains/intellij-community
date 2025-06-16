@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.lang.java.parser.BasicExpressionParser;
+import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -140,6 +141,10 @@ public final class BasicJavaAstTreeUtil {
 
 
   public static @Nullable ASTNode findChildByType(@Nullable ASTNode astNode, IElementType... targets) {
+    return findChildByType(astNode, ParentAwareTokenSet.create(targets));
+  }
+
+  public static @Nullable ASTNode findChildByType(@Nullable ASTNode astNode, Collection<IElementType> targets) {
     return findChildByType(astNode, ParentAwareTokenSet.create(targets));
   }
 
@@ -668,7 +673,7 @@ public final class BasicJavaAstTreeUtil {
     if (expr == null) {
       return null;
     }
-    ASTNode ASTNode = findChildByType(expr, BasicExpressionParser.ASSIGNMENT_OPS.getTypes());
+    ASTNode ASTNode = findChildByType(expr, JavaBinaryOperations.ASSIGNMENT_OPS.getTypes());
     if (ASTNode == null) {
       return null;
     }

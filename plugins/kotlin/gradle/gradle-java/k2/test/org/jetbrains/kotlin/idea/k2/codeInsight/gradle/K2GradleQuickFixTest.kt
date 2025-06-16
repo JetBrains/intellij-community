@@ -93,7 +93,7 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "2.1+")
+    @PluginTargetVersions(pluginVersion = "2.1.0 <=> 2.1.255")
     fun testEnableMultiDollarInterpolationKmp() {
         doMultiFileQuickFixTest(
             ignoreChangesInBuildScriptFiles = false,
@@ -141,6 +141,33 @@ class K2GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
     @Test
     @PluginTargetVersions(pluginVersion = "2.1+")
     fun testEnableUpdatedAnnotationDefaultingRuleField() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1.0 <=> 2.1.255")
+    fun testEnableContextParametersKotlin22() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1.0 <=> 2.1.255")
+    fun testEnableContextParametersNoFixKotlin21() {
+        doMultiFileQuickFixTest(
+            ignoreChangesInBuildScriptFiles = false,
+            additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }
+        )
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1.0 <=> 2.1.255")
+    fun testEnableContextParametersNoFixKotlin22WithAFlag() {
         doMultiFileQuickFixTest(
             ignoreChangesInBuildScriptFiles = false,
             additionalResultFileFilter = { file -> file.name != "settings.gradle.kts" }

@@ -182,7 +182,7 @@ public final class PassExecutorService implements Disposable {
     }
 
     if (LOG.isDebugEnabled()) {
-      log(updateProgress, null, "submitPasses: "+virtualFile.getName() + " ----- starting " + threadsToStartCountdown.get() + " passes. Free:"+freePasses+"; editorBound:"+editorBoundPasses+"; documentBound:"+documentBoundPasses);
+      log(updateProgress, null, "submitPasses: "+fileEditor + " ----- starting " + threadsToStartCountdown.get() + " passes. Free:"+freePasses+"; editorBound:"+editorBoundPasses+"; documentBound:"+documentBoundPasses);
     }
 
     for (ScheduledPass dependentPass : dependentPasses) {
@@ -524,7 +524,7 @@ public final class PassExecutorService implements Disposable {
             pass.applyInformationToEditor();
             repaintErrorStripeAndIcon(fileEditor);
             if (pass instanceof TextEditorHighlightingPass text) {
-              text.markUpToDateIfStillValid();
+              text.markUpToDateIfStillValid(updateProgress);
             }
             log(updateProgress, pass, " Applied");
           }
@@ -600,9 +600,8 @@ public final class PassExecutorService implements Disposable {
         String message = StringUtil.repeatSymbol(' ', IdeaForkJoinWorkerThreadFactory.getThreadNum() * 4)
                          + " " + (pass == null ? "" : pass + " ")
                          + StringUtil.join(info, Functions.TO_STRING(), " ")
-                         + "; progress=" + (progressIndicator == null ? null : System.identityHashCode(progressIndicator))
-                         + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
-                         + (docText.isEmpty() ? "": " " + docText);
+                         + "; progress=" + progressIndicator
+                         + (docText.isEmpty() ? "" : " " + docText);
         LOG.debug(message);
       }
     }
@@ -612,7 +611,7 @@ public final class PassExecutorService implements Disposable {
   boolean waitFor(long millis) {
     return waitFor(millis, mySubmittedPasses.get());
   }
-  private boolean waitFor(long millis, @NotNull Map<? extends ScheduledPass, ? extends Job> map) {
+  private static boolean waitFor(long millis, @NotNull Map<? extends ScheduledPass, ? extends Job> map) {
     long deadline = System.currentTimeMillis() + millis;
     try {
       for (Job job : map.values()) {

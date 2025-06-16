@@ -1,6 +1,6 @@
 import p.List;
 
-public static void main(Strin<caret>g[] args) {
-    List a = null;
+void main() {
+    List a = nu<caret>ll;
     System.out.println("Hello, world!");
 }

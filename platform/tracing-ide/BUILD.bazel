@@ -14,10 +14,13 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
+    "//platform/projectModel-api:projectModel",
     "//platform/tracing:tracing-rt",
     "//platform/lang-api:lang",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
   ],
   runtime_deps = [":tracing-ide_resources"]
 )

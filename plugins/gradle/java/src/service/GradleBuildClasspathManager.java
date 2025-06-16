@@ -51,26 +51,33 @@ public class GradleBuildClasspathManager {
 
     final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
     final Map<String, VirtualFile> localVFCache = new HashMap<>();
+    final IdentityHashMap<List<String>, List<VirtualFile>> moduleClasspathCache = new IdentityHashMap<>();
+    final Map<VirtualFile, VirtualFile> jarRootCache = new HashMap<>();
+
 
     for (final ExternalProjectBuildClasspathPojo projectBuildClasspathPojo : buildClasspathManager.getProjectBuildClasspath().values()) {
       final List<VirtualFile> projectBuildClasspath = new ArrayList<>();
       for (String path : projectBuildClasspathPojo.getProjectBuildClasspath()) {
-        final VirtualFile virtualFile = localVFCache.computeIfAbsent(path, it -> ExternalSystemUtil.findLocalFileByPath(it)) ;
+        final VirtualFile virtualFile = localVFCache.computeIfAbsent(path, it -> ExternalSystemUtil.findLocalFileByPath(it));
         ContainerUtil.addIfNotNull(projectBuildClasspath,
                                    virtualFile == null || virtualFile.isDirectory()
                                    ? virtualFile
-                                   : jarFileSystem.getJarRootForLocalFile(virtualFile));
+                                   : jarRootCache.computeIfAbsent(virtualFile, it -> jarFileSystem.getJarRootForLocalFile(it)));
       }
 
-      for (final ExternalModuleBuildClasspathPojo moduleBuildClasspathPojo : projectBuildClasspathPojo.getModulesBuildClasspath().values()) {
-        final List<VirtualFile> moduleBuildClasspath = new ArrayList<>(projectBuildClasspath);
-            for (String path : moduleBuildClasspathPojo.getEntries()) {
-              final VirtualFile virtualFile = localVFCache.computeIfAbsent(path, it -> ExternalSystemUtil.findLocalFileByPath(it)) ;
-              ContainerUtil.addIfNotNull(moduleBuildClasspath,
-                                         virtualFile == null || virtualFile.isDirectory()
-                                         ? virtualFile
-                                         : jarFileSystem.getJarRootForLocalFile(virtualFile));
-            }
+      for (final ExternalModuleBuildClasspathPojo moduleBuildClasspathPojo : projectBuildClasspathPojo.getModulesBuildClasspath()
+        .values()) {
+        List<VirtualFile> moduleBuildClasspath = moduleClasspathCache.computeIfAbsent(moduleBuildClasspathPojo.getEntries(), entries -> {
+          final List<VirtualFile> classpath = new ArrayList<>(projectBuildClasspath);
+          for (String path : entries) {
+            final VirtualFile virtualFile = localVFCache.computeIfAbsent(path, it -> ExternalSystemUtil.findLocalFileByPath(it));
+            ContainerUtil.addIfNotNull(classpath,
+                                       virtualFile == null || virtualFile.isDirectory()
+                                       ? virtualFile
+                                       : jarRootCache.computeIfAbsent(virtualFile, it -> jarFileSystem.getJarRootForLocalFile(it)));
+          }
+          return classpath;
+        });
 
         map.put(moduleBuildClasspathPojo.getPath(), moduleBuildClasspath);
       }

@@ -19,114 +19,172 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../idea/tests/testData/codeInsight/hints/lambda")
-public class KtLambdasHintsProviderGenerated extends AbstractKtLambdasHintsProvider {
-    @java.lang.Override
-    @org.jetbrains.annotations.NotNull
-    public final KotlinPluginMode getPluginMode() {
-        return KotlinPluginMode.K2;
+public abstract class KtLambdasHintsProviderGenerated extends AbstractKtLambdasHintsProvider {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/hints/lambda/context")
+    public static class Context extends AbstractKtLambdasHintsProvider {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ContextAndExplicitParameter.kt")
+        public void testContextAndExplicitParameter() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/context/ContextAndExplicitParameter.kt");
+        }
+
+        @TestMetadata("ContextAndIt.kt")
+        public void testContextAndIt() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/context/ContextAndIt.kt");
+        }
+
+        @TestMetadata("ContextAndThis.kt")
+        public void testContextAndThis() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/context/ContextAndThis.kt");
+        }
+
+        @TestMetadata("ContextNoNewLine.kt")
+        public void testContextNoNewLine() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/context/ContextNoNewLine.kt");
+        }
+
+        @TestMetadata("ContextSingle.kt")
+        public void testContextSingle() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/context/ContextSingle.kt");
+        }
+
+        @TestMetadata("ContextThisAndExplicitParameter.kt")
+        public void testContextThisAndExplicitParameter() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/context/ContextThisAndExplicitParameter.kt");
+        }
+
+        @TestMetadata("ContextThisAndIt.kt")
+        public void testContextThisAndIt() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/context/ContextThisAndIt.kt");
+        }
+
+        @TestMetadata("ContextTriple.kt")
+        public void testContextTriple() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/context/ContextTriple.kt");
+        }
     }
 
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/codeInsight/hints/lambda")
+    public static class Uncategorized extends AbstractKtLambdasHintsProvider {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
-    @TestMetadata("AnnotatedStatement.kt")
-    public void testAnnotatedStatement() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/AnnotatedStatement.kt");
-    }
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("DisabledHints.kt")
-    public void testDisabledHints() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/DisabledHints.kt");
-    }
+        @TestMetadata("AnnotatedStatement.kt")
+        public void testAnnotatedStatement() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/AnnotatedStatement.kt");
+        }
 
-    @TestMetadata("Elvis.kt")
-    public void testElvis() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/Elvis.kt");
-    }
+        @TestMetadata("DisabledHints.kt")
+        public void testDisabledHints() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/DisabledHints.kt");
+        }
 
-    @TestMetadata("If.kt")
-    public void testIf() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/If.kt");
-    }
+        @TestMetadata("Elvis.kt")
+        public void testElvis() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/Elvis.kt");
+        }
 
-    @TestMetadata("IfBranchValue.kt")
-    public void testIfBranchValue() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/IfBranchValue.kt");
-    }
+        @TestMetadata("If.kt")
+        public void testIf() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/If.kt");
+        }
 
-    @TestMetadata("ImplicitIt.kt")
-    public void testImplicitIt() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitIt.kt");
-    }
+        @TestMetadata("IfBranchValue.kt")
+        public void testIfBranchValue() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/IfBranchValue.kt");
+        }
 
-    @TestMetadata("ImplicitSingleLine.kt")
-    public void testImplicitSingleLine() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitSingleLine.kt");
-    }
+        @TestMetadata("ImplicitIt.kt")
+        public void testImplicitIt() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitIt.kt");
+        }
 
-    @TestMetadata("ImplicitThis.kt")
-    public void testImplicitThis() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitThis.kt");
-    }
+        @TestMetadata("ImplicitSingleLine.kt")
+        public void testImplicitSingleLine() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitSingleLine.kt");
+        }
 
-    @TestMetadata("ImplicitThisAndIt.kt")
-    public void testImplicitThisAndIt() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitThisAndIt.kt");
-    }
+        @TestMetadata("ImplicitThis.kt")
+        public void testImplicitThis() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitThis.kt");
+        }
 
-    @TestMetadata("ImplicitThisAndNamedSingleParameter.kt")
-    public void testImplicitThisAndNamedSingleParameter() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitThisAndNamedSingleParameter.kt");
-    }
+        @TestMetadata("ImplicitThisAndIt.kt")
+        public void testImplicitThisAndIt() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitThisAndIt.kt");
+        }
 
-    @TestMetadata("Label.kt")
-    public void testLabel() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/Label.kt");
-    }
+        @TestMetadata("ImplicitThisAndNamedSingleParameter.kt")
+        public void testImplicitThisAndNamedSingleParameter() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/ImplicitThisAndNamedSingleParameter.kt");
+        }
 
-    @TestMetadata("LabeledStatement.kt")
-    public void testLabeledStatement() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/LabeledStatement.kt");
-    }
+        @TestMetadata("Label.kt")
+        public void testLabel() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/Label.kt");
+        }
 
-    @TestMetadata("Nested.kt")
-    public void testNested() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/Nested.kt");
-    }
+        @TestMetadata("LabeledStatement.kt")
+        public void testLabeledStatement() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/LabeledStatement.kt");
+        }
 
-    @TestMetadata("NoHintForSingleExpression.kt")
-    public void testNoHintForSingleExpression() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/NoHintForSingleExpression.kt");
-    }
+        @TestMetadata("Nested.kt")
+        public void testNested() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/Nested.kt");
+        }
 
-    @TestMetadata("OneLineIf.kt")
-    public void testOneLineIf() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/OneLineIf.kt");
-    }
+        @TestMetadata("NoHintForSingleExpression.kt")
+        public void testNoHintForSingleExpression() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/NoHintForSingleExpression.kt");
+        }
 
-    @TestMetadata("PostfixPrefixExpr.kt")
-    public void testPostfixPrefixExpr() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/PostfixPrefixExpr.kt");
-    }
+        @TestMetadata("OneLineIf.kt")
+        public void testOneLineIf() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/OneLineIf.kt");
+        }
 
-    @TestMetadata("Qualified.kt")
-    public void testQualified() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/Qualified.kt");
-    }
+        @TestMetadata("PostfixPrefixExpr.kt")
+        public void testPostfixPrefixExpr() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/PostfixPrefixExpr.kt");
+        }
 
-    @TestMetadata("ReturnFunType.kt")
-    public void testReturnFunType() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/ReturnFunType.kt");
-    }
+        @TestMetadata("Qualified.kt")
+        public void testQualified() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/Qualified.kt");
+        }
 
-    @TestMetadata("SimpleCase.kt")
-    public void testSimpleCase() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/SimpleCase.kt");
-    }
+        @TestMetadata("ReturnFunType.kt")
+        public void testReturnFunType() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/ReturnFunType.kt");
+        }
 
-    @TestMetadata("When.kt")
-    public void testWhen() throws Exception {
-        runTest("../../idea/tests/testData/codeInsight/hints/lambda/When.kt");
+        @TestMetadata("SimpleCase.kt")
+        public void testSimpleCase() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/SimpleCase.kt");
+        }
+
+        @TestMetadata("When.kt")
+        public void testWhen() throws Exception {
+            runTest("../../idea/tests/testData/codeInsight/hints/lambda/When.kt");
+        }
     }
 }

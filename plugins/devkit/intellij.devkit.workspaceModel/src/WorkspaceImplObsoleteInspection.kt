@@ -52,9 +52,9 @@ private class RegenerateWorkspaceModelFix(psiElement: PsiElement) : LocalQuickFi
 
   override fun getFamilyName() = name
 
-  override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+  override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
     val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
-    val module = projectFileIndex.getModuleForFile(file.virtualFile)
+    val module = projectFileIndex.getModuleForFile(psiFile.virtualFile)
     WorkspaceModelGenerator.getInstance(project).generate(module!!)
   }
 }

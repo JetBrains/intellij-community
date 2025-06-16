@@ -1,6 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package org.jetbrains.idea.devkit.kotlin.inspections
 
+import com.intellij.openapi.util.IntellijInternalApi
 import org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection
 import org.junit.Before
 import org.junit.Test

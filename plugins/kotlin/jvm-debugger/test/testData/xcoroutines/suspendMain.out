@@ -37,6 +37,15 @@ Thread stack trace:
 		($this$startCoroutine, completion)
 	KotlinStackFrame runSuspend:!LINE_NUMBER!, RunSuspendKt (kotlin.coroutines.jvm.internal)
 		(block, run)
+Coroutine Creation Stack Trace
+	CreationCoroutineStackFrame createCoroutineUnintercepted:!LINE_NUMBER!, IntrinsicsKt__IntrinsicsJvmKt (kotlin.coroutines.intrinsics)
+		($result, $this$coroutineScope, this)
+	CreationCoroutineStackFrame startCoroutine:!LINE_NUMBER!, ContinuationKt (kotlin.coroutines)
+		($result, $this$coroutineScope, this)
+	CreationCoroutineStackFrame runSuspend:!LINE_NUMBER!, RunSuspendKt (kotlin.coroutines.jvm.internal)
+		($result, $this$coroutineScope, this)
+	CreationCoroutineStackFrame FRAME:main:-1, SuspendMainKt (continuation)
+		($result, $this$coroutineScope, this)
 Disconnected from the target VM
 
 Process finished with exit code 0

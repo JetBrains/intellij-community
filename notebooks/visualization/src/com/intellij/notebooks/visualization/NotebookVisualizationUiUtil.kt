@@ -10,13 +10,23 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.keyFMap.KeyFMap
 import java.awt.Graphics
+import java.awt.Graphics2D
 import javax.swing.JComponent
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.reflect.KProperty
 
 infix fun IntRange.hasIntersectionWith(other: IntRange): Boolean =
   !(first > other.last || last < other.first)
+
+inline fun Graphics.useG2D(handler: (Graphics2D) -> Unit) {
+  val g2d = this.create() as Graphics2D
+  try {
+    handler(g2d)
+  }
+  finally {
+    g2d.dispose()
+  }
+}
 
 inline fun <T, G : Graphics> G.use(handler: (g: G) -> T): T =
   try {
@@ -25,22 +35,6 @@ inline fun <T, G : Graphics> G.use(handler: (g: G) -> T): T =
   finally {
     dispose()
   }
-
-inline fun <T> trimLists(left: List<T>, right: List<T>, comparator: (T, T) -> Boolean): Pair<List<T>, List<T>> {
-  val minSize = min(left.size, right.size)
-
-  var trimLeft = 0
-  while (trimLeft < minSize && comparator(left[trimLeft], right[trimLeft])) {
-    ++trimLeft
-  }
-
-  var trimRight = 0
-  while (trimRight < minSize - trimLeft && comparator(left[left.size - trimRight - 1], right[right.size - trimRight - 1])) {
-    ++trimRight
-  }
-
-  return left.run { subList(trimLeft, size - trimRight) } to right.run { subList(trimLeft, size - trimRight) }
-}
 
 /**
  * Creates a document listener that will be automatically unregistered when the editor is disposed.

@@ -18,9 +18,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracke
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.path.EelPath;
-import com.intellij.platform.eel.provider.EelProviderUtil;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -147,7 +144,7 @@ public final class ExternalSystemJdkUtil {
                                             Stream.of(ModuleManager.getInstance(project).getModules()).map(module -> ModuleRootManager
                                               .getInstance(module).getSdk()));
     return projectSdks
-      .filter(sdk -> sdk != null && sdk.getSdkType() == javaSdkType && isValidJdk(sdk))
+      .filter(sdk -> sdk != null && sdk.getSdkType() == javaSdkType && isValidJdk(sdk) && JdkUtil.isCompatible(sdk, project))
       .findFirst().orElse(null);
   }
 
@@ -215,8 +212,7 @@ public final class ExternalSystemJdkUtil {
     }
     try {
       Path path = Path.of(homePath);
-      EelDescriptor descriptor = EelProviderUtil.getEelDescriptor(path);
-      return JdkUtil.checkForJdk(path, descriptor.getOperatingSystem() == EelPath.OS.WINDOWS) && JdkUtil.checkForJre(homePath);
+      return JdkUtil.checkForJdk(path) && JdkUtil.checkForJre(homePath);
     }
     catch (InvalidPathException exception) {
       return false;

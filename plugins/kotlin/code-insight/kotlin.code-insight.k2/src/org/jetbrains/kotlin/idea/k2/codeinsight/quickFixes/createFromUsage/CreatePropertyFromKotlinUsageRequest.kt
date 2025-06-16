@@ -27,7 +27,8 @@ internal class CreatePropertyFromKotlinUsageRequest (
     referenceExpression: KtNameReferenceExpression,
     private val modifiers: Collection<JvmModifier>,
     receiverType: KaType?,
-    val isExtension: Boolean
+    val isExtension: Boolean,
+    val isConst: Boolean = false,
 ) : CreateFieldRequest {
     private val referencePointer = referenceExpression.createSmartPointer()
     private val returnType: List<ExpectedType> = initializeReturnType(referenceExpression)
@@ -72,5 +73,5 @@ internal class CreatePropertyFromKotlinUsageRequest (
 
     override fun getModifiers(): Collection<JvmModifier> = modifiers
 
-    override fun isConstant(): Boolean = false
+    override fun isConstant(): Boolean = isConst
 }

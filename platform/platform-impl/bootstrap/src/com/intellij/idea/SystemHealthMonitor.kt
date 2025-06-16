@@ -4,7 +4,6 @@ package com.intellij.idea
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.wsl.WslIjentAvailabilityService
-import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.EditCustomVmOptionsAction
@@ -37,7 +36,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.SystemProperties
-import com.intellij.util.lang.JavaVersion
+import com.intellij.util.currentJavaVersion
 import com.intellij.util.system.CpuArch
 import com.intellij.util.ui.IoErrorText
 import kotlinx.coroutines.*
@@ -64,9 +63,10 @@ internal object SystemHealthMonitor {
 
     checkCorruptedVmOptionsFile()
     checkIdeDirectories()
+    checkRuntimeArch()
 
     withContext(Dispatchers.IO) {
-      checkRuntime()
+      checkRuntimeVersion()
     }
 
     checkReservedCodeCacheSize()
@@ -135,22 +135,25 @@ internal object SystemHealthMonitor {
     }
   }
 
-  private suspend fun checkRuntime() {
+  private fun checkRuntimeArch() {
     if (!CpuArch.isEmulated()) {
       return
     }
 
     LOG.info("${CpuArch.CURRENT} appears to be emulated")
-    if (SystemInfo.isMac && CpuArch.isIntel64()) {
+    if (CpuArch.isIntel64()) {
       val downloadAction = ExternalProductResourceUrls.getInstance().downloadPageUrl?.let { downloadPageUrl ->
-        NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
+        NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.arch.mismatch.download")) {
           BrowserUtil.browse(downloadPageUrl.toExternalForm())
         }
       }
-      showNotification("bundled.jre.m1.arch.message", suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
+      val key = if (SystemInfo.isMac) "bundled.jre.arch.mismatch.mac" else "bundled.jre.arch.mismatch.win"
+      showNotification(key, suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
     }
-    var jreHome = SystemProperties.getJavaHome()
+  }
 
+  private suspend fun checkRuntimeVersion() {
+    val jreHome = SystemProperties.getJavaHome()
     if (PathManager.isUnderHomeDirectory(jreHome) || isModernJBR()) {
       return
     }
@@ -159,8 +162,7 @@ internal object SystemHealthMonitor {
     var switchAction: NotificationAction? = null
     val directory = PathManager.getCustomOptionsDirectory()
     if (directory != null && (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
-      val scriptName = ApplicationNamesInfo.getInstance().scriptName
-      val configName = scriptName + (if (!SystemInfo.isWindows) "" else if (CpuArch.isIntel64()) "64.exe" else ".exe") + ".jdk"
+      val configName = "${ApplicationNamesInfo.getInstance().scriptName}${if (SystemInfo.isWindows) "64.exe" else ""}.jdk"
       val configFile = Path.of(directory, configName)
       if (Files.isRegularFile(configFile)) {
         switchAction = NotificationAction.createSimpleExpiring(IdeBundle.message("action.SwitchToJBR.text")) {
@@ -178,12 +180,12 @@ internal object SystemHealthMonitor {
         }
       }
     }
-    jreHome = jreHome.removeSuffix("/Contents/Home")
-    showNotification("bundled.jre.version.message", suppressable = false, switchAction,
-                     JavaVersion.current(), System.getProperty("java.vendor"), jreHome)
+    showNotification(
+      "bundled.jre.version.message", suppressable = false, switchAction,
+      currentJavaVersion(), System.getProperty("java.vendor"), shorten(jreHome.removeSuffix("/Contents/Home"))
+    )
   }
 
-  // when can't detect a JBR version, give a user the benefit of the doubt
   private fun isModernJBR(): Boolean {
     if (!SystemInfo.isJetBrainsJvm) {
       return false
@@ -191,7 +193,7 @@ internal object SystemHealthMonitor {
 
     // when can't detect a JBR version, give a user the benefit of the doubt
     val jbrVersion = JdkVersionDetector.getInstance().detectJdkVersionInfo(PathManager.getBundledRuntimePath())
-    return jbrVersion == null || JavaVersion.current() >= jbrVersion.version
+    return jbrVersion == null || currentJavaVersion() >= jbrVersion.version
   }
 
   private suspend fun isJbrOperational(): Boolean {
@@ -308,15 +310,14 @@ internal object SystemHealthMonitor {
     }
   }
 
-  private suspend fun checkEelVmOptions() {
+  private fun checkEelVmOptions() {
+    // TODO: remove this check
     if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return
 
     val changedOptions = MultiRoutingFileSystemVmOptionsSetter.ensureInVmOptions()
     when {
-      changedOptions.isEmpty() -> {
-        IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
-      }
-
+      changedOptions.isEmpty() -> Unit
+      
       PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
         logger<MultiRoutingFileSystemVmOptionsSetter>().warn(
           changedOptions.joinToString(

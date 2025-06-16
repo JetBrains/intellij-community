@@ -15,6 +15,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
 
   public void testLayoutOnDemandImportsFromTheSamePackageFirst() {
     myFixture.addClass("package a.a; public class A {}");
+    myFixture.addClass("package a.a; public class C {}");
     myFixture.addClass("package a.b; public class A {}");
     myFixture.addClass("package a.b; public class B {}");
     myFixture.addClass("package a.b; public class Boolean {}");
@@ -22,12 +23,14 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       package a;
       
       import a.a.A;
+      import a.a.C;
       import a.b.B;
       import a.b.Boolean;
       
       class Main {
           A a;
           B b;
+          C c;
           Boolean bool;
       }""";
     myFixture.configureByText(JavaFileType.INSTANCE, code);
@@ -48,6 +51,7 @@ public class LightOptimizeImportsTest extends LightJavaCodeInsightFixtureTestCas
       class Main {
           A a;
           B b;
+          C c;
           Boolean bool;
       }""";
     myFixture.checkResult(result);

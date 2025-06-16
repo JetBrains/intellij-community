@@ -3,6 +3,7 @@ package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController;
 import com.intellij.ide.plugins.newui.MyPluginModel;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.NotABooleanOptionDescription;
@@ -105,7 +106,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         }
       });
 
-    Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginIdSet(descriptors);
+    Set<PluginId> pluginIds = PluginUtils.toPluginIdSet(descriptors);
 
     DisabledPluginsState.Companion.addDisablePluginListener(new Runnable() {
       @Override
@@ -142,6 +143,8 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
 
       PluginManagerCore.INSTANCE.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, dependency ->
         PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
+        (PluginManagerCore.ULTIMATE_PLUGIN_ID.equals(dependency.getPluginId()) &&
+         PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) ||
         dependency.isEnabled() ||
         !result.add(dependency) ?
         FileVisitResult.SKIP_SUBTREE /* if descriptor has already been added/enabled, no need to process its dependencies */ :
@@ -159,7 +162,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     for (IdeaPluginDescriptor descriptor : descriptors) {
       result.add(descriptor);
 
-      result.addAll(MyPluginModel.getDependents(descriptor, applicationInfo, pluginIdMap));
+      result.addAll(DefaultUiPluginManagerController.INSTANCE.getDependents(descriptor.getPluginId(), applicationInfo, pluginIdMap));
     }
 
     return Collections.unmodifiableSet(result);

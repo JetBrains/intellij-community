@@ -1,11 +1,12 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.fixture
 
+import com.intellij.execution.RunManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -24,6 +25,9 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryEntryOptions
+import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -40,7 +44,8 @@ import kotlin.io.path.exists
 fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path> = testFixture {
   val tempDir = withContext(Dispatchers.IO) {
     if (root == null) {
-      Files.createTempDirectory(prefix)
+      it.eel?.fs?.createTemporaryDirectory(CreateTemporaryEntryOptions.Builder().prefix(prefix).build())?.getOrThrow()?.asNioPath()
+      ?: Files.createTempDirectory(prefix)
     }
     else {
       if (!root.exists()) {
@@ -49,9 +54,10 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ"): TestFixture<Path
       Files.createTempDirectory(root, prefix)
     }
   }
-  initialized(tempDir) {
+  val realTempDir = tempDir.toRealPath()
+  initialized(realTempDir) {
     withContext(Dispatchers.IO) {
-      tempDir.delete(recursively = true)
+      realTempDir.delete(recursively = true)
     }
   }
 }
@@ -62,11 +68,15 @@ fun projectFixture(
   openProjectTask: OpenProjectTask = OpenProjectTask.build(),
   openAfterCreation: Boolean = false,
 ): TestFixture<Project> = testFixture {
+  // Background service preloading might trigger service loading after a project gets disposed leading to a test failure.
+  val openProjectTask = openProjectTask.copy(preloadServices = false)
   val path = pathFixture.init()
   val project = ProjectManagerEx.getInstanceEx().newProjectAsync(path, openProjectTask)
   if (openAfterCreation) {
     ProjectManagerEx.getInstanceEx().openProject(path, openProjectTask.withProject(project))
   }
+  // Wait until components fully loaded. Otherwise, we might start loading then when a project is already disposed when a test is too fast.
+  project.serviceAsync<RunManager>()
   initialized(project) {
     ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false)
   }
@@ -160,7 +170,7 @@ fun TestFixture<PsiDirectory>.psiFileFixture(
   val file = readAction {
     PsiManager.getInstance(project).findFile(virtualFile) ?: error("Fail to find file $virtualFile")
   }
-  initialized(file) {/*nothing*/}
+  initialized(file) {/*nothing*/ }
 }
 
 @TestOnly

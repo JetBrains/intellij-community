@@ -9,6 +9,7 @@ import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -54,7 +55,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   }
 
   @Override
-  public @NotNull List<ModuleType<?>> getRegisteredTypes() {
+  public @NotNull @Unmodifiable List<ModuleType<?>> getRegisteredTypes() {
     List<ModuleType<?>> result = new ArrayList<>(myModuleTypes.keySet());
     EP_NAME.forEachExtensionSafe(ep -> {
       ModuleType<?> moduleType = ep.getModuleType();

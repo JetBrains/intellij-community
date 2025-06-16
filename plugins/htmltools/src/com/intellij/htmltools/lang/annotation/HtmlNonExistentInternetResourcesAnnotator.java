@@ -111,13 +111,13 @@ public final class HtmlNonExistentInternetResourcesAnnotator extends WebReferenc
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
       return true;
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      myDisableInspectionToolAction.invoke(project, editor, file);
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+      myDisableInspectionToolAction.invoke(project, editor, psiFile);
     }
 
     @Override

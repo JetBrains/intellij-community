@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -15,10 +15,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupVirtualFile;
 
@@ -67,11 +64,12 @@ public final class TestDataUtil {
   }
 
   @TestOnly
-  static @Nullable TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
+  public static @Nullable TestDataGroupVirtualFile getTestDataGroup(@NotNull String fileName1, @NotNull String fileName2) {
     return getTestDataGroup(new TestDataFile.LazyResolved(fileName1), new TestDataFile.LazyResolved(fileName2));
   }
 
-  static @Nullable TestDataGroupVirtualFile getTestDataGroup(@NotNull TestDataFile testDataFile1, @NotNull TestDataFile testDataFile2) {
+  @VisibleForTesting
+  public static @Nullable TestDataGroupVirtualFile getTestDataGroup(@NotNull TestDataFile testDataFile1, @NotNull TestDataFile testDataFile2) {
     VirtualFile file1 = testDataFile1.getVirtualFile();
     VirtualFile file2 = testDataFile2.getVirtualFile();
     if (file1 == null || file2 == null) {

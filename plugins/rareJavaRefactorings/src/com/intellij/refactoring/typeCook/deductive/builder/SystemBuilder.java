@@ -2,6 +2,7 @@
 package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -339,11 +340,11 @@ public class SystemBuilder {
           else {
             LOG.assertTrue(expr instanceof PsiMethodCallExpression); //either this(); or super();
             final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expr).getMethodExpression();
-            if (PsiKeyword.THIS.equals(methodExpression.getText())) {
+            if (JavaKeywords.THIS.equals(methodExpression.getText())) {
               aType = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(aClass);
             }
             else {
-              LOG.assertTrue(PsiKeyword.SUPER.equals(methodExpression.getText()));
+              LOG.assertTrue(JavaKeywords.SUPER.equals(methodExpression.getText()));
               PsiClass placeClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
               qualifierSubstitutor = TypeConversionUtil.getClassSubstitutor(aClass, placeClass, PsiSubstitutor.EMPTY);
               aType = JavaPsiFacade.getElementFactory(myManager.getProject()).createType(aClass, qualifierSubstitutor);

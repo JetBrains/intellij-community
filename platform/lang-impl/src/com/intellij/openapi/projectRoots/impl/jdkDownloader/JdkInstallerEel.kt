@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.fs.createTemporaryDirectory
+import com.intellij.platform.eel.fs.move
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
@@ -33,7 +34,7 @@ object JdkInstallerEel {
         val archiveName = downloadFile.name
 
         downloadFileEelCopy = eel.fs
-          .createTemporaryDirectory(EelFileSystemApi.CreateTemporaryEntryOptions.Builder().prefix("download-jdk-").build()).getOrThrow()
+          .createTemporaryDirectory().prefix("download-jdk-").getOrThrow()
           .resolve(archiveName)
 
         EelPathUtils.walkingTransfer(downloadFile, downloadFileEelCopy.asNioPath(), false, false)
@@ -91,6 +92,6 @@ object JdkInstallerEel {
       thisLogger().info("Could not unpack JDK in $packageRootResolved. File system entry is not a directory. ")
       return
     }
-    eel.fs.move(packageRootResolved, targetDir, EelFileSystemApi.ReplaceExistingDuringMove.REPLACE_EVERYTHING, true)
+    eel.fs.move(packageRootResolved, targetDir).replaceEverything().followLinks(true).getOrThrow()
   }
 }

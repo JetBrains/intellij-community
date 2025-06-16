@@ -8,11 +8,14 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.ui.IconDeferrer
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
@@ -41,7 +44,9 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val projectPath = getProjectPath(event)!!
+    val project = event.project
+    val selectedItem = getSelectedItem(event)
+    val projectPath = getProjectPath(project, selectedItem) ?: return
     val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return
 
     val ui = ProjectIconUI(projectPath)
@@ -93,16 +98,21 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
     }
   }
 
-  fun getProjectPath(event: AnActionEvent): String? {
-    val selectedItem = getSelectedItem(event)
+  private fun getProjectPath(project: Project?, selectedItem: RecentProjectTreeItem?): String? {
     if (selectedItem is RecentProjectItem) {
       return selectedItem.projectPath
     }
-    return event.project?.let { ProjectWindowCustomizerService.projectPath(it) }
+    if (project != null && selectedItem == null) {
+      return ProjectWindowCustomizerService.projectPath(project)
+    }
+    return null
   }
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = getProjectPath(event) != null
+    val project = event.project
+    val selectedItem = getSelectedItem(event)
+    event.presentation.isEnabled = getProjectPath(project, selectedItem) != null
+    event.presentation.isVisible = selectedItem !is ProviderRecentProjectItem
   }
 }
 

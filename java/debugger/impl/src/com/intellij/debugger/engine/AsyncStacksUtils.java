@@ -35,7 +35,9 @@ import com.intellij.platform.eel.provider.utils.EelPathUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.build.BuildDependenciesJps;
@@ -56,12 +58,23 @@ public final class AsyncStacksUtils {
   public static final String CAPTURE_STORAGE_CLASS_NAME = "com.intellij.rt.debugger.agent.CaptureStorage";
   public static final String CAPTURE_AGENT_CLASS_NAME = "com.intellij.rt.debugger.agent.CaptureAgent";
   private static final String AGENT_JAR_NAME = "debugger-agent.jar";
+  private static final Key<Boolean> ASYNC_STACKS_ENABLED = Key.create("ASYNC_STACKS_ENABLED");
+
+  @ApiStatus.Internal
+  public static Boolean isAsyncStacksEnabled(XDebugSessionImpl session) {
+    return ASYNC_STACKS_ENABLED.get(session.getSessionData(), true);
+  }
+
+  @ApiStatus.Internal
+  public static void setAsyncStacksEnabled(XDebugSessionImpl session, Boolean state) {
+    ASYNC_STACKS_ENABLED.set(session.getSessionData(), state);
+  }
 
   public static boolean isAgentEnabled() {
     return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
   }
 
-  public static @Nullable List<StackFrameItem> getAgentRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
+  public static @Nullable List<@Nullable StackFrameItem> getAgentRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
     if (!isAgentEnabled() || !frame.threadProxy().equals(suspendContext.getThread())) { // only for the current thread for now
       return null;
     }
@@ -313,7 +326,7 @@ public final class AsyncStacksUtils {
 
             Path communityRoot = Path.of(PathManager.getCommunityHomePath());
             Path iml = BuildDependenciesJps.getProjectModule(communityRoot, "intellij.java.debugger.agent.holder");
-            Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(
+            Path downloadedAgent = BuildDependenciesJps.INSTANCE.getModuleLibrarySingleRootSync(
               iml,
               "debugger-agent",
               "https://cache-redirector.jetbrains.com/intellij-dependencies",

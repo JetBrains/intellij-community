@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
+@Deprecated("Use plugin-level (Gradle common, Gradle-Java, Gradle-Kotlin, etc) GradleCoroutineScopeService instead")
 class GradleCoroutineScopeProvider(val cs: CoroutineScope) {
   companion object {
     @JvmStatic

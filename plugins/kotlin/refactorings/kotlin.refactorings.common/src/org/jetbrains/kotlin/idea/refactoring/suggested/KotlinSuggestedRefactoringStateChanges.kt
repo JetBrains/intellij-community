@@ -64,7 +64,7 @@ class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefact
             return Signature.create(name, null, emptyList(), null)
         }
 
-        val parameters = anchor.valueParameters.map { it.extractParameterData() ?: return null }
+        val parameters = (anchor.modifierList?.contextReceiverList?.contextParameters().orEmpty() + anchor.valueParameters).map { it.extractParameterData() ?: return null }
         val type = anchor.typeReference?.text
         val receiverType = anchor.receiverTypeReference?.text
         val signature = Signature.create(
@@ -78,8 +78,8 @@ class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefact
     }
 
     override fun parameterMarkerRanges(anchor: PsiElement): List<TextRange?> {
-        if (anchor !is KtFunction) return emptyList()
-        return anchor.valueParameters.map { it.colon?.textRange }
+        if (anchor !is KtCallableDeclaration) return emptyList()
+        return (anchor.modifierList?.contextReceiverList?.contextParameters().orEmpty() + (anchor as? KtFunction)?.valueParameters.orEmpty()).map { it.colon?.textRange }
     }
 
     private fun KtParameter.extractParameterData(): Parameter? {
@@ -90,7 +90,7 @@ class KotlinSuggestedRefactoringStateChanges(refactoringSupport: SuggestedRefact
             Any(),
             name ?: return null,
             typeReference?.text ?: return null,
-            KotlinParameterAdditionalData(defaultValue?.text/*TODO: strip comments etc*/, modifiers)
+            KotlinParameterAdditionalData(defaultValue?.text/*TODO: strip comments etc*/, modifiers, isContextParameter)
         )
     }
 

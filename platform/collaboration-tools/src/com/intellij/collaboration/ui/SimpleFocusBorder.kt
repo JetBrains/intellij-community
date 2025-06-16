@@ -2,8 +2,6 @@
 package com.intellij.collaboration.ui
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
-import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.UIUtil
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -18,10 +16,8 @@ internal class SimpleFocusBorder : Border {
   }
 
   override fun getBorderInsets(c: Component): Insets {
-    val bw = if (UIUtil.isUnderDefaultMacTheme()) JBUIScale.scale(3).toFloat() else DarculaUIUtil.BW.float
-    val g = c.graphics
-    val f = if (g is Graphics2D && UIUtil.isRetina(g)) 0.5f else 1.0f
-    val lw = if (UIUtil.isUnderDefaultMacTheme()) JBUIScale.scale(f) else DarculaUIUtil.LW.float
+    val bw = DarculaUIUtil.BW.float
+    val lw = DarculaUIUtil.LW.float
     val insets = (bw + lw).toInt()
     return Insets(insets, insets, insets, insets)
   }

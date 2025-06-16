@@ -47,7 +47,6 @@ import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.jetbrains.python.PyBundle;
@@ -290,7 +289,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     // Now we have to wait for the main debuggee process to finish. Otherwise, `XDebugSession` will terminate it,
     // which causes the process to finish with a non-zero exit code or the `KeyboardInterrupt` exception.
     // This issue happens frequently with multiprocess debugging.
-    getProcessHandler().waitFor();
     handleStop(); // In case of normal debug, we stop the session
   }
 
@@ -582,7 +580,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void setUnitTestDebuggingMode() {
-    ExecutionEnvironment environment = ((XDebugSessionImpl)getSession()).getExecutionEnvironment();
+    ExecutionEnvironment environment = getSession().getExecutionEnvironment();
     if (environment == null) return;
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof AbstractPythonTestRunConfiguration
@@ -783,18 +781,18 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       final PySourcePosition pyPosition = myPositionConverter.convertToPython(position);
       String type =
         ReadAction.compute(() -> {
-          String t = PyLineBreakpointType.ID;
+          String breakpointTypeId = PyLineBreakpointType.ID;
           final Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
           if (document != null) {
             for (XBreakpointType<?, ?> breakpointType : XBreakpointType.EXTENSION_POINT_NAME.getExtensionList()) {
               if (breakpointType instanceof PyBreakpointType &&
-                  ((PyBreakpointType)breakpointType).canPutInDocument(getSession().getProject(), document)) {
-                t = breakpointType.getId();
+                  ((PyBreakpointType)breakpointType).isBreakpointTypeAllowedInDocument(getSession().getProject(), document)) {
+                breakpointTypeId = breakpointType.getId();
                 break;
               }
             }
           }
-          return t;
+          return breakpointTypeId;
         });
       myDebugger.setTempBreakpoint(type, pyPosition.getFile(), pyPosition.getLine());
 
@@ -834,6 +832,13 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
+  public String execTableImageCommand(String command, TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
+    final PyStackFrame frame = currentFrame();
+    return myDebugger.execTableImageCommand(frame.getThreadId(), frame.getFrameId(), command, commandType, tableCommandParameters);
+  }
+
+  @Override
   public boolean isFrameCached(@NotNull XStackFrame contextFrame) {
     synchronized (myFrameCacheObject) {
       final PyStackFrame frame = (PyStackFrame)contextFrame;
@@ -845,7 +850,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   public @Nullable XValueChildrenList loadFrame(final @Nullable XStackFrame contextFrame) throws PyDebuggerException {
     final PyStackFrame frame = contextFrame == null ? currentFrame() : (PyStackFrame)contextFrame;
     synchronized (myFrameCacheObject) {
-      // Do not reload frame every time it is needed, because due to a bug in pdb, reloading frame clears all variable changes.
+      // Do not reload the frame every time it is needed, because due to a bug in pdb, reloading frame clears all variable changes.
       if (!myStackFrameCache.containsKey(frame.getThreadFrameId())) {
         XValueChildrenList values = myDebugger.loadFrame(frame.getThreadId(), frame.getFrameId(), ProcessDebugger.GROUP_TYPE.DEFAULT);
         // Could be null when the current function is called for a thread that is already dead.
@@ -1198,7 +1203,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             }
           }
           else {
-            ((XDebugSessionImpl)getSession()).positionReached(suspendContext, isFailedTestStop(threadInfo));
+            getSession().positionReached(suspendContext, isFailedTestStop(threadInfo));
           }
         }
         else {

@@ -12,6 +12,8 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -43,6 +45,9 @@ interface GHPRCompactReviewThreadViewModel : GHPRReviewThreadViewModel,
   override val canChangeResolvedState: StateFlow<Boolean>
   override fun changeResolvedState()
 
+  val focusRequests: Flow<Unit>
+  fun requestFocus()
+
   sealed interface CommentItem {
     data class Comment(val vm: GHPRReviewThreadCommentViewModel) : CommentItem
     data class Expander(val collapsedCount: Int, val expand: () -> Unit) : CommentItem
@@ -56,7 +61,7 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
   parentCs: CoroutineScope,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
-  initialData: GHPullRequestReviewThread
+  initialData: GHPullRequestReviewThread,
 ) : GHPRCompactReviewThreadViewModel {
   private val cs = parentCs.childScope(javaClass.name)
   private val reviewData: GHPRReviewDataProvider = dataProvider.reviewData
@@ -98,6 +103,13 @@ internal class UpdateableGHPRCompactReviewThreadViewModel(
         GHPRCompactReviewThreadViewModel.CommentItem.Comment(comments.last())
       )
     }
+  }
+
+  private val _focusRequestsChannel = Channel<Unit>(1, BufferOverflow.DROP_OLDEST)
+  override val focusRequests: Flow<Unit> get() = _focusRequestsChannel.receiveAsFlow()
+
+  override fun requestFocus() {
+    _focusRequestsChannel.trySend(Unit)
   }
 
   override fun startWritingReply() {

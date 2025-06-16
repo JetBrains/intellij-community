@@ -1,4 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -12,7 +14,6 @@ import com.intellij.ide.ui.laf.createBaseLaF
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.setUserInteractiveQosForEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
@@ -24,6 +25,7 @@ import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.isWindowIconAlreadyExternallySet
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.updateAppWindowIcon
+import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.accessibility.ScreenReader
 import kotlinx.coroutines.*
@@ -228,6 +230,7 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
 
     if (StartupUiUtil.isXToolkit()) {
       launch(CoroutineName("frame class updating")) {
+        appInfoDeferred.join()
         try {
           val toolkit = Toolkit.getDefaultToolkit()
           val aClass = toolkit.javaClass
@@ -237,7 +240,8 @@ internal fun CoroutineScope.scheduleUpdateFrameClassAndWindowIconAndPreloadSyste
               .invoke(AppUIUtil.getFrameClass())
           }
         }
-        catch (_: Throwable) {
+        catch (t: Throwable) {
+          logger<AppStarter>().warn("Failed to set WM frame class in XToolkit: $t")
         }
       }
     }

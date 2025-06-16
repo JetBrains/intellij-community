@@ -163,6 +163,9 @@ class SettingsSyncBridge(
         if (fileExists)
           remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
       }
+      // we call updateOnSuccess, because the suspend methods below will be suspended on modality (if settings dialog is opened)
+      // but we need to show the status in the configurable. By that time, we already know that communication was successful
+      SettingsSyncStatusTracker.getInstance().updateOnSuccess()
 
       when (initMode) {
         is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
@@ -552,20 +555,16 @@ class SettingsSyncBridge(
   }
 
   @TestOnly
-  fun waitForAllExecuted() {
-    runBlocking {
-      processPendingEvents(force = true)
-      val startTime = System.currentTimeMillis()
-      while (System.currentTimeMillis() - startTime < 10000 && queueSize > 0) {
-        delay(10)
-      }
-      if (queueSize > 0) {
-        LOG.warn("Queue size > 0 !!!!!!")
-      }
+  suspend fun waitForAllExecuted() {
+    processPendingEvents(force = true)
+    val startTime = System.currentTimeMillis()
+    while (System.currentTimeMillis() - startTime < 10000 && queueSize > 0) {
+      delay(10)
+    }
+    if (queueSize > 0) {
+      LOG.warn("Queue size > 0 !!!!!!")
     }
   }
-
-
 
   @TestOnly
   internal fun stop() {

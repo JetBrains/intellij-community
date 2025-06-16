@@ -194,7 +194,7 @@ fun addDefaultEnvironments(sdk: Sdk,
  *
  * @param envs    map of envs to add variable
  */
-private fun setCorrectStdOutEncoding(envs: Map<String, String>) {
+fun setCorrectStdOutEncoding(envs: Map<String, String>) {
   val defaultCharset = PydevConsoleRunnerImpl.CONSOLE_CHARSET
   val encoding = defaultCharset.name()
   PythonEnvUtil.setPythonIOEncoding(PythonEnvUtil.setPythonUnbuffered(envs), encoding)

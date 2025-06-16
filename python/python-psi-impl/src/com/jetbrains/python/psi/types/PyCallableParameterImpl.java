@@ -178,7 +178,7 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
         final PyType argumentType = getArgumentType(context);
         if (!typeFilter.test(argumentType)) {
           sb.append(": ");
-          sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+          sb.append(PythonDocumentationProvider.getTypeName(argumentType, context));
           renderedAsTyped = true;
         }
       }

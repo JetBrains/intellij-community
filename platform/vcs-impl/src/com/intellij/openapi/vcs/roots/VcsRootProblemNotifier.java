@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.notification.Notification;
@@ -235,9 +235,7 @@ public final class VcsRootProblemNotifier {
   }
 
   @VisibleForTesting
-  @NlsContexts.NotificationContent
-  @NotNull
-  String getInvalidRootDescriptionItem(@NotNull VcsRootError rootError, @NotNull String vcsName) {
+  public @NlsContexts.NotificationContent @NotNull String getInvalidRootDescriptionItem(@NotNull VcsRootError rootError, @NotNull String vcsName) {
     return VcsBundle.message("roots.notification.content.directory.registered.as.root.but.no.repositories.were.found.there",
                              ROOT_TO_PRESENTABLE.fun(rootError), vcsName);
   }
@@ -304,16 +302,14 @@ public final class VcsRootProblemNotifier {
 
 
   @VisibleForTesting
-  @NotNull
-  String getPresentableMapping(@NotNull VcsDirectoryMapping directoryMapping) {
+  public @NotNull String getPresentableMapping(@NotNull VcsDirectoryMapping directoryMapping) {
     if (directoryMapping.isDefaultMapping()) return directoryMapping.toString();
 
     return getPresentableMapping(directoryMapping.getDirectory());
   }
 
   @VisibleForTesting
-  @NotNull
-  String getPresentableMapping(@NotNull String mapping) {
+  public @NotNull String getPresentableMapping(@NotNull String mapping) {
     FilePath filePath = VcsUtil.getFilePath(mapping, true);
     String presentablePath = VcsUtil.getPresentablePath(myProject, filePath, false, false);
     return escapeXmlEntities(presentablePath);

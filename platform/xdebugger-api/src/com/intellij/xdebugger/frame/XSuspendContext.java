@@ -2,6 +2,8 @@
 package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +30,16 @@ public abstract class XSuspendContext {
 
   public void computeExecutionStacks(XExecutionStackContainer container) {
     container.addExecutionStack(Arrays.asList(getExecutionStacks()), true);
+  }
+
+  /**
+   * Returns coroutine scope tied to the lifetime of this suspend context.
+   * <p>
+   * The scope is canceled when this suspend context is resumed.
+   */
+  @ApiStatus.Internal
+  public @Nullable CoroutineScope getCoroutineScope() {
+    return null;
   }
 
   public interface XExecutionStackContainer extends XValueCallback, Obsolescent {

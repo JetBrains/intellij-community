@@ -13,6 +13,7 @@ import java.util.List;
 
 public final class SingleTargetRequestResultProcessor extends RequestResultProcessor {
   private final PsiElement myTarget;
+  private final PsiReferenceService myService = PsiReferenceService.getService();
 
   public SingleTargetRequestResultProcessor(@NotNull PsiElement target) {
     super(target);
@@ -27,9 +28,8 @@ public final class SingleTargetRequestResultProcessor extends RequestResultProce
       return false;
     }
 
-    PsiReferenceService service = PsiReferenceService.getService();
     PsiReferenceService.Hints hints = new PsiReferenceService.Hints(myTarget, offsetInElement);
-    List<PsiReference> references = service.getReferences(element, hints);
+    List<PsiReference> references = myService.getReferences(element, hints);
     for (int i = 0; i < references.size(); i++) {
       PsiReference ref = references.get(i);
       ProgressManager.checkCanceled();

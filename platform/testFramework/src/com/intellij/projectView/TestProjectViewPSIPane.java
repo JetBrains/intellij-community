@@ -19,7 +19,7 @@ public final class TestProjectViewPSIPane extends AbstractProjectViewPaneWithAsy
   private final TestProjectTreeStructure myTestTreeStructure;
   private final int myWeight;
 
-  TestProjectViewPSIPane(Project project, TestProjectTreeStructure treeStructure, int weight) {
+  public TestProjectViewPSIPane(Project project, TestProjectTreeStructure treeStructure, int weight) {
     super(project);
     myTestTreeStructure = treeStructure;
     myWeight = weight;

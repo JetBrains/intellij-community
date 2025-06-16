@@ -3,21 +3,25 @@ package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.ui.GraphicsUtil
-import org.jetbrains.annotations.ApiStatus
+import java.awt.BasicStroke
 import java.awt.Color
 import java.awt.Graphics2D
 
-@ApiStatus.Internal
 class RoundWithBackgroundBorderedPresentation(
-  val presentation: RoundWithBackgroundPresentation,
+  presentation: RoundWithBackgroundPresentation,
   val borderColor: Color? = null,
-) : InlayPresentation by presentation {
+  val borderWidth: Int = 1,
+) : StaticDelegatePresentation(presentation) {
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
-    presentation.paint(g, attributes)
+    val roundWithBackgroundPresentation = presentation as RoundWithBackgroundPresentation
+    roundWithBackgroundPresentation.paint(g, attributes)
+    val borderColor = borderColor ?: attributes.effectColor
     if (borderColor != null) {
       val config = GraphicsUtil.setupAAPainting(g)
       g.color = borderColor
-      g.drawRoundRect(0, 0, width, height, presentation.arcWidth, presentation.arcHeight)
+      g.stroke = BasicStroke(borderWidth.toFloat())
+      g.drawRoundRect(0, 0, width, height,
+                      roundWithBackgroundPresentation.arcWidth, roundWithBackgroundPresentation.arcHeight)
       config.restore()
     }
   }

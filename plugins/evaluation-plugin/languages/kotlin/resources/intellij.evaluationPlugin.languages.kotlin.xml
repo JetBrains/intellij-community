@@ -6,6 +6,7 @@
   <extensions defaultExtensionNs="com.intellij.cce">
     <!--<completionEvaluationVisitor implementation="com.intellij.cce.visitor.KotlinCompletionEvaluationVisitor"/>-->
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinMultiLineEvaluationVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinTextCompletionEvaluationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinCompletionContextEvaluationVisitor"/>
     <lineCompletionVisitorFactory implementation="com.intellij.cce.kotlin.visitor.KotlinLineCompletionVisitorFactory"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.kotlin.visitor.KotlinDocGenerationVisitor"/>

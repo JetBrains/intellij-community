@@ -2,7 +2,6 @@ package org.jetbrains.jewel.intui.standalone.styling
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -21,7 +20,6 @@ private val SimpleListItemStyle.Companion.LazyTree: IntUiDefaultSimpleListItemLa
     get() = IntUiDefaultSimpleListItemLazyTreeStyleFactory
 
 public object IntUiDefaultSimpleListItemLazyTreeStyleFactory {
-    @Composable
     public fun light(
         content: Color = Color.Unspecified,
         contentActive: Color = content,
@@ -43,7 +41,6 @@ public object IntUiDefaultSimpleListItemLazyTreeStyleFactory {
             contentSelectedActive = contentSelectedActive,
         )
 
-    @Composable
     public fun dark(
         content: Color = Color.Unspecified,
         contentActive: Color = content,
@@ -66,14 +63,12 @@ public object IntUiDefaultSimpleListItemLazyTreeStyleFactory {
         )
 }
 
-@Composable
 public fun LazyTreeStyle.Companion.light(
     colors: SimpleListItemColors = SimpleListItemStyle.LazyTree.light(),
     metrics: LazyTreeMetrics = LazyTreeMetrics.defaults(),
     icons: LazyTreeIcons = LazyTreeIcons.defaults(),
 ): LazyTreeStyle = LazyTreeStyle(colors, metrics, icons)
 
-@Composable
 public fun LazyTreeStyle.Companion.dark(
     colors: SimpleListItemColors = SimpleListItemStyle.LazyTree.dark(),
     metrics: LazyTreeMetrics = LazyTreeMetrics.defaults(),

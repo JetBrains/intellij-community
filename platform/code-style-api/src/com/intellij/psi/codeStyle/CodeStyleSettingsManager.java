@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
@@ -19,16 +19,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.messages.MessageBus;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -49,7 +44,12 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   private static final WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
 
   public @NotNull CodeStyleSettings createSettings() {
-    CodeStyleSettings newSettings = new CodeStyleSettings(true, false);
+    return createSettings(true);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CodeStyleSettings createSettings(boolean loadExtensions) {
+    CodeStyleSettings newSettings = new CodeStyleSettings(loadExtensions, false);
     registerSettings(newSettings);
     return newSettings;
   }
@@ -168,10 +168,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }
   }
 
-  private @NotNull Collection<CodeStyleSettings> getAllSettings() {
-    List<CodeStyleSettings> allSettings = new ArrayList<>(enumSettings());
-    allSettings.addAll(ourReferencedSettings.toStrongList());
-    return allSettings;
+  private @NotNull @Unmodifiable Collection<CodeStyleSettings> getAllSettings() {
+    return ourReferencedSettings.toStrongList();
   }
 
   @Override
@@ -229,7 +227,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     }, disposable);
   }
 
-  protected @NotNull Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
+  protected @NotNull @Unmodifiable Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
 
   @ApiStatus.Internal
   public final void registerFileTypeIndentOptions(@NotNull Collection<? extends CodeStyleSettings> allSettings,

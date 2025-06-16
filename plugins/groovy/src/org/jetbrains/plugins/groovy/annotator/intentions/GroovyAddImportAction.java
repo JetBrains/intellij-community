@@ -38,7 +38,7 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
 
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiFile containingFile = ref.getContainingFile();
     if (!(containingFile instanceof GroovyFile)) {
       return IntentionPreviewInfo.EMPTY;

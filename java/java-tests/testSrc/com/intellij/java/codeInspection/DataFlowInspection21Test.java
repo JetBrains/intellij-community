@@ -154,8 +154,15 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testGetterVsDirectAccessObjectEquals() { doTest(); }
   public void testSetterAndGetter() { doTest(); }
   public void testStaticEqualsContract() { doTest(); }
+  public void testNewExpressionAnnotations() { doTest(); }
   
   public void testJSpecifyLocalWithGenerics() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
+  public void testJSpecifyCallExplicitTypeParameters() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
@@ -171,5 +178,28 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
     doTest();
+  }
+  
+  public void testJsr305NicknameAsTypeAnnotation() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
+  
+  public void testSwitchNoUnreachableBranchesDueToUnresolvedType() {
+    doTest();
+  }
+  
+  public void testObjectUtilsNullMethods() {
+    doTest();
+  }
+
+  public void testJSpecifyReturnFromGenericFunctions() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+  
+  public void testPassthroughGenericParameter() {
+    doTestWith((dfi, cvi) -> dfi.TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = true);
   }
 }

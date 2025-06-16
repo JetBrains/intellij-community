@@ -14,6 +14,8 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//plugins/copyright",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//plugins/sh/core",
     "//platform/core-impl",
@@ -26,16 +28,13 @@ jvm_library(
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-java_library(
-  name = "copyright-tests",
-  visibility = ["//visibility:public"]
-)
-
 jvm_library(
   name = "copyright-tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//plugins/sh",
     "//plugins/copyright",
     "//plugins/copyright:copyright_test_lib",

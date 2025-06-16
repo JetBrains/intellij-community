@@ -5,6 +5,7 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.*
 import com.intellij.modcommand.ModCommand.chooseAction
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
@@ -15,8 +16,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntention.*
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpect
-import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils.withExpectedActuals
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -97,6 +97,7 @@ sealed class ChangeVisibilityModifierIntention(
     }
 
     override fun isApplicableByPsi(element: KtDeclaration): Boolean {
+        if (element is KtTypeParameter) return false
         val modifierList = element.modifierList
         if (modifierList?.hasModifier(modifier) == true) return false
         if (KtPsiUtil.isLocal((element as? KtPropertyAccessor)?.property ?: element)) return false
@@ -143,8 +144,8 @@ sealed class ChangeVisibilityModifierIntention(
         updater: ModPsiUpdater,
     ) {
         val psiFactory = KtPsiFactory(actionContext.project)
-        val declarations = element.actualsForExpect() + element.expectDeclarationIfAny() + element
-        declarations.filterNotNull().forEach {
+        val declarations = withExpectedActuals(PsiTreeUtil.findSameElementInCopy(element, updater.getOriginalFile(element.containingFile)))
+        declarations.forEach {
             val declaration = updater.getWritable(it)
             declaration.setVisibility(modifier)
             if (declaration is KtPropertyAccessor) {

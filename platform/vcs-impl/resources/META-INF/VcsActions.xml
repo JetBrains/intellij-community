@@ -344,6 +344,7 @@
       <reference ref="Vcs.ShowDiffWithLocal.Before"/>
       <reference ref="Vcs.EditSource"/>
       <reference ref="Vcs.OpenRepositoryVersion"/>
+      <separator/>
       <reference ref="Vcs.RevertSelectedChanges"/>
       <reference ref="Vcs.ApplySelectedChanges"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
@@ -694,5 +695,11 @@
     <action id="MarkFileDirty" internal="true" class="com.intellij.openapi.vcs.changes.actions.MarkFileDirtyAction">
       <add-to-group group-id="Internal.VFS"/>
     </action>
+  </actions>
+
+  <actions resource-bundle="messages.VcsBundle">
+    <action id="Vcs.Commit.CloseDialog"
+            class="com.intellij.openapi.vcs.changes.actions.CloseCommitDialogAction"
+            use-shortcut-of="EditorEscape"/>
   </actions>
 </idea-plugin>

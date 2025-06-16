@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.SmartList;
@@ -8,13 +8,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.WeakHashMap;
 import java.util.*;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
- * Pass custom map using {@link #MultiMap(Map)} if needed.
+ * A map where each key can be associated with multiple values.
+ * <p>
+ * Uses {@link java.util.HashMap} by defaults. A different map implementation can be passed using the {@link #MultiMap(Map)} constructor.
  * @see BidirectionalMultiMap
  */
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
@@ -304,7 +306,7 @@ public class MultiMap<K, V> implements Serializable {
     return new MultiMap<K, V>(new ConcurrentHashMap<>()) {
       @Override
       protected @NotNull Collection<V> createCollection() {
-        return ContainerUtil.newConcurrentSet();
+        return ConcurrentHashMap.newKeySet();
       }
 
       @Override

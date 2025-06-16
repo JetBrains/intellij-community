@@ -3,6 +3,7 @@ package com.intellij.externalSystem
 
 import com.intellij.java.library.MavenCoordinates
 import com.intellij.openapi.externalSystem.model.project.LibraryData
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataServiceExtension
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
@@ -16,13 +17,15 @@ class JavaLibraryDataServiceExtension : LibraryDataServiceExtension {
     return null
   }
 
-  override fun prepareNewLibrary(libraryData: LibraryData,
-                                 libraryModel: Library.ModifiableModel) {
+  override fun prepareNewLibrary(modelsProvider: IdeModifiableModelsProvider, library: Library, libraryData: LibraryData) {
+    val libraryModel = modelsProvider.getModifiableLibraryModel(library)
     val properties = (libraryModel as? LibraryEx)?.properties
     val coords = getMavenCoordinates(libraryData)
     if (properties is ImportedLibraryProperties && coords != null) {
       (libraryModel as? LibraryEx.ModifiableModelEx)?.properties = ImportedLibraryProperties(coords)
     }
+
+    modelsProvider.setLibraryCoordinates(library, libraryData)
   }
 
   private fun getMavenCoordinates(libraryData: LibraryData): MavenCoordinates? {

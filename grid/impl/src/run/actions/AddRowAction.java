@@ -58,6 +58,7 @@ public class AddRowAction extends DumbAwareAction implements GridAction {
     boolean canAddRow = grid != null &&
                         grid.isEditable() &&
                         grid.isReady() &&
+                        grid.getDataHookup().isForSingleSource() &&
                         grid.getDataSupport().hasRowMutator() &&
                         grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumnCount() != 0;
 

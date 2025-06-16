@@ -1,16 +1,18 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import java.io.IOException
 import com.intellij.platform.eel.channels.EelReceiveChannel
 import com.intellij.platform.eel.channels.EelSendChannel
 import kotlinx.coroutines.Deferred
+import org.jetbrains.annotations.ApiStatus
 
 /**
- * Represents some process that was launched via [EelExecApi.executeProcess].
+ * Represents some process that was launched via [EelExecApi.spawnProcess].
  *
  */
-interface EelProcess: KillableProcess {
+@ApiStatus.Experimental
+sealed interface EelProcess {
+  @get:ApiStatus.Experimental
   val pid: EelApi.Pid
 
   /**
@@ -19,15 +21,38 @@ interface EelProcess: KillableProcess {
    *
    * Note that each chunk of data is individually and immediately flushed into the process without any intermediate buffer storage.
    */
-  val stdin: EelSendChannel<IOException>
-  val stdout: EelReceiveChannel<IOException>
-  val stderr: EelReceiveChannel<IOException>
+  @get:ApiStatus.Experimental
+  val stdin: EelSendChannel
+
+  @get:ApiStatus.Experimental
+  val stdout: EelReceiveChannel
+
+  @get:ApiStatus.Experimental
+  val stderr: EelReceiveChannel
+
+  @get:ApiStatus.Experimental
   val exitCode: Deferred<Int>
 
+  /**
+   * Sends `SIGKILL` on Unix.
+   *
+   * Calls [`TerminateProcess`](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)
+   * on Windows.
+   */
+  suspend fun kill()
+
+  /**
+   * Sends `SIGINT` on Unix.
+   * Sends `CTRL+C` on Windows by attaching a console.
+   *
+   * Warning: This signal can be ignored.
+   */
+  suspend fun interrupt()
 
   /**
    * Converts to the JVM [Process] which can be used instead of [EelProcess] for compatibility reasons.
    * Note: After conversion, this [EelProcess] shouldn't be used: Use result [Process] instead
+   * If the process was launched with PTY, `com.pty4j.PtyProcess` instance is returned.
    */
   fun convertToJavaProcess(): Process
 
@@ -39,4 +64,17 @@ interface EelProcess: KillableProcess {
     class NoPty : ResizePtyError("Process has no PTY")
     data class Errno(val errno: Int, override val message: String) : ResizePtyError("[$errno] $message")
   }
+}
+
+@ApiStatus.Internal
+interface EelPosixProcess : EelProcess {
+  /**
+   * Sends `SIGTERM` on Unix.
+   */
+  suspend fun terminate()
+}
+
+@ApiStatus.Internal
+interface EelWindowsProcess : EelProcess {
+  // Nothing yet.
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -144,9 +145,9 @@ public abstract class ProjectView {
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 
-  public abstract @NotNull Collection<String> getPaneIds();
+  public abstract @NotNull @Unmodifiable Collection<String> getPaneIds();
 
-  public abstract @NotNull Collection<SelectInTarget> getSelectInTargets();
+  public abstract @NotNull @Unmodifiable Collection<SelectInTarget> getSelectInTargets();
 
   public abstract @NotNull String getDefaultViewId();
 }

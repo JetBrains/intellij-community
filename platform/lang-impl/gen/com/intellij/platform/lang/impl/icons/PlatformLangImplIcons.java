@@ -16,4 +16,5 @@ public final class PlatformLangImplIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, PlatformLangImplIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Logo = load("com/intellij/util/indexing/diagnostic/presentation/res/logo.svg", -625559545, 0);
+  /** 16x16 */ public static final @NotNull Icon IndentDetection = load("icons/expui/indentDetection.svg", -211634758, 2);
 }

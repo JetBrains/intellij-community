@@ -3,14 +3,14 @@ package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.impl.source.xml.stub.XmlAttributeStubImpl;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class XmlStubBasedAttribute extends XmlStubBasedAttributeBase<XmlAttributeStubImpl> {
 
   public XmlStubBasedAttribute(@NotNull XmlAttributeStubImpl stub,
-                               @NotNull IStubElementType<? extends XmlAttributeStubImpl, ? extends XmlStubBasedAttribute> nodeType) {
+                               @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 

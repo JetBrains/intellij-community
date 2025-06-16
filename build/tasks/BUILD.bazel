@@ -1,11 +1,5 @@
 ### auto-generated section `build intellij.idea.community.build.tasks` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
-
-jvm_resources(
-  name = "tasks_resources",
-  files = glob(["resources/**/*"]),
-  strip_prefix = "resources"
-)
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
   name = "tasks",
@@ -28,18 +22,17 @@ jvm_library(
     "//java/java-runtime:rt",
     "//platform/util-rt",
     "//platform/diagnostic/telemetry",
-    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/diagnostic/telemetry.exporters",
     "//platform/util-ex",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
     "@lib//:hash4j",
     "@lib//:tc_service_messages",
     "@lib//:opentelemetry-extension-kotlin",
-    "@rules_jvm//zip:build-zip",
+    "@rules_jvm//zip",
   ],
   runtime_deps = [
-    ":tasks_resources",
     "@lib//:slf4j-api",
     "@lib//:slf4j-jdk14",
     "@lib//:bouncy-castle-provider",
@@ -69,7 +62,7 @@ jvm_library(
     "//platform/util-rt:util-rt_test_lib",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
-    "//platform/diagnostic/telemetry.exporters:telemetry-exporters",
+    "//platform/diagnostic/telemetry.exporters",
     "//platform/util-ex",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -77,15 +70,14 @@ jvm_library(
     "@lib//:assert_j",
     "@lib//:memoryfilesystem",
     "@lib//:junit5",
-    "//platform/build-scripts/downloader:buildScripts-downloader",
+    "//platform/build-scripts/downloader",
     "@lib//:jetbrains-annotations",
     "//platform/util/base",
     "@lib//:hash4j",
     "@lib//:tc_service_messages",
     "@lib//:opentelemetry-extension-kotlin",
-    "@rules_jvm//zip:build-zip",
-  ],
-  runtime_deps = [":tasks_resources"]
+    "@rules_jvm//zip",
+  ]
 )
 
 jvm_test(

@@ -7,9 +7,11 @@ graph TD
   style KaLibraryModule_1 fill:#CB6040
   style KaSourceModule_2 fill:#608BC1
   style KaSourceModule_3 fill:#31511E
+  KaLibraryModule_1 --> KaLibraryFallbackDependenciesModule_1
   KaSourceModule_3 --> KaLibraryModule_1
   KaSourceModule_3 --> KaSourceModule_2
   KaSourceModule_3 --friend--> KaSourceModule_2
   linkStyle 0 stroke:black
   linkStyle 1 stroke:black
-  linkStyle 2 stroke:#E6C767
+  linkStyle 2 stroke:black
+  linkStyle 3 stroke:#E6C767

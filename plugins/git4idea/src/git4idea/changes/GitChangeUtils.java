@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -417,8 +417,23 @@ public final class GitChangeUtils {
     GitCommandResult result = Git.getInstance().getUnmergedFiles(repository);
     VirtualFile root = repository.getRoot();
 
+    Set<FilePath> unmergedPaths = parseLsResult(result, root);
+
+    return new ArrayList<>(unmergedPaths);
+  }
+
+  public static @NotNull List<FilePath> getResolvedFiles(@NotNull GitRepository repository) throws VcsException {
+    GitCommandResult result = Git.getInstance().getResolvedFiles(repository);
+    VirtualFile root = repository.getRoot();
+
+    Set<FilePath> resolvedPaths = parseLsResult(result, root);
+
+    return new ArrayList<>(resolvedPaths);
+  }
+
+  private static @NotNull Set<FilePath> parseLsResult(@NotNull GitCommandResult result, @NotNull VirtualFile root) throws VcsException {
     String output = result.getOutputOrThrow();
-    Set<FilePath> unmergedPaths = new HashSet<>();
+    Set<FilePath> resultedPaths = new HashSet<>();
     for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
       if (s.isEol()) {
         s.nextLine();
@@ -428,10 +443,9 @@ public final class GitChangeUtils {
       String relative = s.line();
       String path = GitUtil.unescapePath(relative);
       FilePath filePath = VcsUtil.getFilePath(root, path, false);
-      unmergedPaths.add(filePath);
+      resultedPaths.add(filePath);
     }
-
-    return new ArrayList<>(unmergedPaths);
+    return resultedPaths;
   }
 
   public static @NotNull Collection<Change> getDiffWithWorkingDir(@NotNull Project project,

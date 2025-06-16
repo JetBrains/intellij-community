@@ -17,6 +17,8 @@ jvm_library(
     "//platform/diagnostic",
     "@lib//:kotlinx-collections-immutable",
     "@lib//:jetbrains-annotations",
+    "@lib//:kotlinx-serialization-core",
+    "@lib//:kotlinx-serialization-json",
   ],
   exports = ["@lib//:kotlinx-coroutines-core"]
 )

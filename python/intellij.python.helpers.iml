@@ -4,7 +4,6 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/helpers">
       <sourceFolder url="file://$MODULE_DIR$/helpers" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/helpers/pydev" type="java-resource" relativeOutputPath="pydev" />
       <sourceFolder url="file://$MODULE_DIR$/helpers/third_party/thriftpy" type="java-resource" />
       <excludeFolder url="file://$MODULE_DIR$/helpers/env" />
       <excludeFolder url="file://$MODULE_DIR$/helpers/pydev/build" />

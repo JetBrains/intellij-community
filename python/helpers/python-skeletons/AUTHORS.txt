@@ -1,7 +1,0 @@
-The current maintainer:
-
-* Andrey Vlasovskikh <andrey.vlasovskikh@jetbrains.com>
-
-Contributors:
-
-TODO: The list of contributors

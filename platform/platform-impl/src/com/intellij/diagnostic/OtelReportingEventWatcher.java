@@ -5,14 +5,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import io.opentelemetry.api.metrics.*;
 import org.HdrHistogram.Histogram;
-import org.HdrHistogram.SingleWriterRecorder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
-import static java.util.concurrent.TimeUnit.HOURS;
 
 /**
  * Gather stats about {@linkplain com.intellij.openapi.application.impl.FlushQueue} tasks and {@linkplain EventQueue} events
@@ -20,21 +18,7 @@ import static java.util.concurrent.TimeUnit.HOURS;
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public final class OtelReportingEventWatcher implements EventWatcher, Disposable {
-  private final SingleWriterRecorder waitingTimesHistogram = new SingleWriterRecorder(2);
-  private final SingleWriterRecorder queueSizesHistogram = new SingleWriterRecorder(2);
-  private final SingleWriterRecorder executionTimeHistogram = new SingleWriterRecorder(2);
-  private final SingleWriterRecorder awtEventDispatchTimeHistogram = new SingleWriterRecorder(2);
-
-  // ========== cached histograms copies (for thread-safe reading without interrupting writing)
-  //@GuardedBy("this")
-  private Histogram intervalWaitingTimes = null;
-  //@GuardedBy("this")
-  private Histogram intervalQueueSizes = null;
-  //@GuardedBy("this")
-  private Histogram intervalExecutionTimes = null;
-  //@GuardedBy("this")
-  private Histogram intervalAWTDispatchTimes = null;
+public final class OtelReportingEventWatcher extends PreciseEventWatcher implements Disposable {
 
   // ========== FlushQueue measurements:
 
@@ -129,60 +113,8 @@ public final class OtelReportingEventWatcher implements EventWatcher, Disposable
   }
 
   @Override
-  public void runnableTaskFinished(final @NotNull Runnable runnable,
-                                   final long waitedInQueueNs,
-                                   final int queueSize,
-                                   final long executionDurationNs,
-                                   final boolean wasInSkippedItems) {
-    //wasInSkippedItems is true for tasks that couldn't be executed in order because of modalityState mismatch, and
-    // was delayed. Such a delay is huge compared to usual task queue waiting times, and 'skipped' tasks dominate
-    // waiting time stats -- which is undesirable, since we want waiting times to be a metric of queue utilization,
-    // not modal dialogs opening times. What is why I excluded skippedItems from stats: this leads to a bias in
-    // queue stats, but even with such a bias queue stats still somehow describes queue utilization -- while total
-    // (non-skipped+skipped) stats describes mostly user behavior in relation to a modal dialogs.
-    //FIXME RC: Better approach would be to gather wasInSkippedItems=true tasks statistics separately, because they
-    //          naturally have much longer waiting times, better not to be mixed with regular (not bypassed) tasks
-    //          waiting times. Also, it could be beneficial to collect for 'skipped' tasks their waiting times since
-    //          re-appending to a queue (see apt TODOs in FlushQueue)
-    if (!wasInSkippedItems) {
-      waitingTimesHistogram.recordValue(waitedInQueueNs);
-      queueSizesHistogram.recordValue(queueSize);
-      executionTimeHistogram.recordValue(executionDurationNs);
-    }
-  }
-
-  private long awtEventExecutionStartedNs = -1;
-
-  @Override
-  public void edtEventStarted(@NotNull AWTEvent event, long startedAtMs) {
-    com.intellij.util.ui.EDT.assertIsEdt();
-    this.awtEventExecutionStartedNs = System.nanoTime();
-  }
-
-  @Override
-  public void edtEventFinished(final @NotNull AWTEvent event,
-                               final long finishedAtMs) {
-    if (this.awtEventExecutionStartedNs <= 0) {
-      return;// missed call to .edtEventStarted()
-    }
-    final long awtEventExecutionDurationNs = System.nanoTime() - this.awtEventExecutionStartedNs;
-    if (awtEventExecutionDurationNs > HOURS.toNanos(1) || awtEventExecutionDurationNs < 0) {
-      return;// _likely_ missed call to .edtEventStarted()
-    }
-    awtEventDispatchTimeHistogram.recordValue(awtEventExecutionDurationNs);
-    awtTotalTimeNs.add(awtEventExecutionDurationNs);
-  }
-
-  @Override
-  public void reset() {
-    this.awtEventExecutionStartedNs = -1;
-  }
-
-  @Override
-  public void logTimeMillis(final @NotNull String processId,
-                            final long startedAtMs,
-                            final @NotNull Class<? extends Runnable> runnableClass) {
-    //nothing
+  protected void edtEventFinishedExt(@NotNull AWTEvent event, long executionDurationNs) {
+    awtTotalTimeNs.add(executionDurationNs);
   }
 
   @Override
@@ -194,10 +126,10 @@ public final class OtelReportingEventWatcher implements EventWatcher, Disposable
     //RC: this method should be called from myExecutor (single) thread only, hence synchronization here
     //    is only to be sure
 
-    intervalWaitingTimes = waitingTimesHistogram.getIntervalHistogram(intervalWaitingTimes);
-    intervalQueueSizes = queueSizesHistogram.getIntervalHistogram(intervalQueueSizes);
-    intervalExecutionTimes = executionTimeHistogram.getIntervalHistogram(intervalExecutionTimes);
-    intervalAWTDispatchTimes = awtEventDispatchTimeHistogram.getIntervalHistogram(intervalAWTDispatchTimes);
+    Histogram intervalWaitingTimes = getWaitingTimeHistogram();
+    Histogram intervalQueueSizes = getQueueSizeHistogram();
+    Histogram intervalExecutionTimes = getExecutionTimeHistogram();
+    Histogram intervalAWTDispatchTimes = getAWTEventDispatchTimeHistogram();
 
     tasksExecutedCounter.record(intervalWaitingTimes.getTotalCount());
 

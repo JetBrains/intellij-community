@@ -31,7 +31,7 @@ public class JavaAnalysisScope extends AnalysisScope {
     myType = PACKAGE;
   }
 
-  JavaAnalysisScope(@NotNull PsiJavaFile psiFile) {
+  public JavaAnalysisScope(@NotNull PsiJavaFile psiFile) {
     super(psiFile);
   }
 

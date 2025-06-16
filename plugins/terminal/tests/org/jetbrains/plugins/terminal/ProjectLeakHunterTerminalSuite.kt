@@ -9,7 +9,7 @@ import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecSuggestio
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandTreeBuilderTest
 import org.jetbrains.plugins.terminal.block.completion.ShellMakefileCompletionTest
 import org.jetbrains.plugins.terminal.block.completion.ml.ShMLModelMetadataTest
-import org.jetbrains.plugins.terminal.classic.BasicShellTerminalIntegrationTest
+import org.jetbrains.plugins.terminal.classic.ClassicTerminalBasicTest
 import org.junit.runners.Suite
 
 /**
@@ -39,7 +39,7 @@ import org.junit.runners.Suite
   TerminalTextHighlighterTest::class,
   ShellBaseGeneratorsTest::class,
   ShellCommandTreeBuilderTest::class,
-  BasicShellTerminalIntegrationTest::class,
+  ClassicTerminalBasicTest::class,
   TerminalStateSerializationTest::class,
   //CommandEndMarkerListeningStringCollectorTest::class, // JUnit 5
 

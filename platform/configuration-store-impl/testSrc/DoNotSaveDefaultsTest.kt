@@ -4,11 +4,11 @@ package com.intellij.configurationStore
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.project.ProjectStoreOwner
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
 import com.intellij.testFramework.TemporaryDirectory
@@ -34,23 +34,23 @@ internal class DoNotSaveDefaultsTest {
 
   @Test fun testApp() = useAppConfigDir {
     runBlocking {
-      doTest(ApplicationManager.getApplication() as ComponentManagerImpl)
+      doTest(ApplicationManager.getApplication() as ComponentManagerEx)
     }
   }
 
   @Test fun testProject() = runBlocking {
     createOrLoadProject(tempDir, directoryBased = false) { project ->
-      doTest(project as ComponentManagerImpl)
+      doTest(project as ComponentManagerEx)
     }
   }
 
   @Test fun `project - load empty state`() = runBlocking {
     createOrLoadProject(tempDir, directoryBased = false) { project ->
-      doTest(project as ComponentManagerImpl, isTestEmptyState = true)
+      doTest(project as ComponentManagerEx, isTestEmptyState = true)
     }
   }
 
-  private suspend fun doTest(componentManager: ComponentManagerImpl, isTestEmptyState: Boolean = false) {
+  private suspend fun doTest(componentManager: ComponentManagerEx, isTestEmptyState: Boolean = false) {
     // wake up (edt, some configurables want read action)
     withContext(Dispatchers.EDT) {
       for (instance in componentManager.instances(createIfNeeded = true) { aClass ->

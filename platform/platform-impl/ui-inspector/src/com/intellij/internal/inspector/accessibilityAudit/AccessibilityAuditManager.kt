@@ -1,21 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector.accessibilityAudit
 
-import javax.accessibility.AccessibleContext
 import org.jetbrains.annotations.ApiStatus
+import javax.accessibility.Accessible
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class AccessibilityAuditManager : AccessibilityAudit {
-  override val failedInspections = mutableListOf<UiInspectorAccessibilityInspection>()
-  var isRunning = false
+  override val failedInspections: MutableList<UiInspectorAccessibilityInspection> = mutableListOf()
+  var isRunning: Boolean = false
     private set
 
-  override fun runAccessibilityTests(ac: AccessibleContext) {
-    isRunning = true
-    failedInspections.clear()
-
-    val inspections = listOf(
+  private val inspections by lazy {
+    listOf(
       AccessibleActionNotNullInspection(),
       AccessibleEditableTextNotNullInspection(),
       AccessibleNameAndDescriptionNotEqualInspection(),
@@ -23,15 +20,19 @@ class AccessibilityAuditManager : AccessibilityAudit {
       AccessibleNameNotEmptyForIcon(),
       AccessibleStateSetContainsFocusableInspection(),
       AccessibleTextNotNullInspection(),
-      AccessibleValueNotNullInspection()
+      AccessibleValueNotNullInspection(),
+      ImplementsAccessibleInterfaceInspection(),
+      ComponentWithIconHasNonDefaultAccessibleNameInspection(),
     )
-
-    for (inspection in inspections) {
-      if (!inspection.passesInspection(ac)) {
-        failedInspections.add(inspection)
-      }
-    }
   }
+
+  override fun runAccessibilityTests(a: Accessible?) {
+    isRunning = true
+    failedInspections.clear()
+    inspections.filterTo(failedInspections) { !it.passesInspection(a) }
+  }
+
+  val severityCount: SeverityCount get() = SeverityCount.from(failedInspections)
 
   override fun clearAccessibilityTestsResult() {
     isRunning = false

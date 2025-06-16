@@ -7,6 +7,7 @@ create_kotlinc_options(
   opt_in = [
     "kotlinx.coroutines.ExperimentalCoroutinesApi",
     "kotlin.ExperimentalStdlibApi",
+    "kotlin.concurrent.atomics.ExperimentalAtomicApi",
   ]
 )
 
@@ -14,23 +15,21 @@ jvm_library(
   name = "rpc",
   module_name = "fleet.rpc",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
+  srcs = glob(["srcCommonMain/**/*.kt", "srcCommonMain/**/*.java", "srcJvmMain/**/*.kt", "srcJvmMain/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   kotlinc_opts = ":custom",
+  exported_compiler_plugins = ["@lib//:rpc-plugin"],
   deps = [
-    "//fleet/reporting/api:fleet-reporting-api",
-    "//fleet/preferences",
-    "//fleet/multiplatform.shims:multiplatform-shims",
+    "//fleet/reporting/api",
+    "//fleet/reporting/shared",
+    "//fleet/multiplatform.shims",
     "@lib//:kotlin-reflect",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
-    "@lib//:kotlinx-coroutines-slf4j",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-datetime-jvm",
-    "//fleet/util/core:fleet-util-core",
-    "@lib//:opentelemetry",
-    "@lib//:opentelemetry-semconv",
+    "//fleet/util/core",
   ]
 )
 ### auto-generated section `build fleet.rpc` end

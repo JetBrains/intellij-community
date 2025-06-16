@@ -42,7 +42,8 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
       currentCommand = null
 
       val exitCode = Param.EXIT_CODE.getIntValue(args.getOrNull(1))
-      dispatcher.multicaster.commandFinished(command, exitCode)
+      val currentDirectory = Param.CURRENT_DIRECTORY.getDecodedValue(args.getOrNull(2))
+      dispatcher.multicaster.commandFinished(command, exitCode, currentDirectory)
     }
   }
 
@@ -56,7 +57,8 @@ internal class TerminalShellIntegrationController(terminalController: Terminal) 
 
   private enum class Param {
     COMMAND,
-    EXIT_CODE;
+    EXIT_CODE,
+    CURRENT_DIRECTORY;
 
     private val paramNameWithSeparator: String = "${paramName()}="
 

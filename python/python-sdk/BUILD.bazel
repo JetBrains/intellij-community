@@ -20,6 +20,8 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
     "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-util-io:ide-util-io",
     "//python/openapi:community",
@@ -38,8 +40,12 @@ jvm_library(
     "//platform/progress/shared:ide-progress",
     "//platform/eel-impl",
     "//platform/eel-provider",
+    "//python/impl.helperLocator:community-helpersLocator",
   ],
-  runtime_deps = [":sdk_resources"]
+  runtime_deps = [
+    ":sdk_resources",
+    "//platform/backend",
+  ]
 )
 
 jvm_library(
@@ -55,6 +61,8 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/analysis-impl",
     "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-util-io:ide-util-io",
     "//python/openapi:community",
@@ -76,6 +84,7 @@ jvm_library(
     "@lib//:junit5",
     "//platform/eel-impl",
     "//platform/eel-provider",
+    "//python/impl.helperLocator:community-helpersLocator",
   ],
   runtime_deps = [":sdk_resources"]
 )

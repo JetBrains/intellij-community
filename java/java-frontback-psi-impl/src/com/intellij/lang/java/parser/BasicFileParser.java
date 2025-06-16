@@ -3,11 +3,11 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.AbstractBundle;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
@@ -21,6 +21,11 @@ import java.util.function.Predicate;
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicFileParser {
   protected final TokenSet IMPORT_LIST_STOPPER_SET;
   private final BasicJavaParser myParser;
@@ -107,7 +112,7 @@ public class BasicFileParser {
     if (IMPORT_LIST_STOPPER_SET.contains(type) || BasicDeclarationParser.isRecordToken(b, type)) return true;
     if (type == JavaTokenType.IDENTIFIER) {
       String text = b.getTokenText();
-      if (PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text)) return true;
+      if (JavaKeywords.OPEN.equals(text) || JavaKeywords.MODULE.equals(text)) return true;
     }
     return false;
   }
@@ -203,7 +208,7 @@ public class BasicFileParser {
 
     //if it is `module` we should expect either `;` or `identifier`
     if (isOk && !isModule && !isStatic && builder.getTokenType() != JavaTokenType.SEMICOLON &&
-        PsiKeyword.MODULE.equals(identifierText)) {
+        JavaKeywords.MODULE.equals(identifierText)) {
       BasicJavaParserUtil.error(builder, JavaPsiBundle.message("expected.identifier.or.semicolon"));
     }
     else if (isOk) {
@@ -221,7 +226,7 @@ public class BasicFileParser {
       return myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT;
     }
     if (type == JavaTokenType.IDENTIFIER &&
-        PsiKeyword.MODULE.equals(builder.getTokenText()) &&
+        JavaKeywords.MODULE.equals(builder.getTokenText()) &&
         builder.lookAhead(1) == JavaTokenType.IDENTIFIER) {
       builder.remapCurrentToken(JavaTokenType.MODULE_KEYWORD);
       builder.advanceLexer();

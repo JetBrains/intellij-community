@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScript
 import org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules.KaScriptModuleImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.K2KaModuleFactory
-import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -30,13 +29,25 @@ internal class K2ScriptingKaModuleFactory : K2KaModuleFactory {
             return null
         }
 
-        if (ktFile.isScript()) {
-            val project = file.project
-            val virtualFile = file.originalFile.virtualFile
-            return KaScriptModuleImpl(project, virtualFile)
-        }
+        return when {
+            !ktFile.isScript() -> {
+                null
+            }
+            ktFile.isCompiled -> {
+                /*
+                For compiled scripts we should not create any KaScriptModule
+                as we do not treat them as scripts, a proper module for them
+                should be KaScriptDependencyModule.
+                */
+                null
+            }
+            else -> {
+                val project = file.project
+                val virtualFile = file.originalFile.virtualFile
 
-        return null
+                KaScriptModuleImpl(project, virtualFile)
+            }
+        }
     }
 
     override fun createSpecialLibraryModule(libraryEntity: LibraryEntity, project: Project): KaLibraryModule? {

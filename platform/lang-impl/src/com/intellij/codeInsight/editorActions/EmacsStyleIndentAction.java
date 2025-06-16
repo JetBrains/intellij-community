@@ -27,17 +27,17 @@ public final class EmacsStyleIndentAction extends BaseCodeInsightAction implemen
   }
 
   @Override
-  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-    PsiElement context = ObjectUtils.notNull(file.findElementAt(editor.getCaretModel().getOffset()), file);
+  protected boolean isValidForFile(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+    PsiElement context = ObjectUtils.notNull(psiFile.findElementAt(editor.getCaretModel().getOffset()), psiFile);
     return LanguageFormatting.INSTANCE.forContext(context) != null;
   }
 
   private static final class Handler implements CodeInsightActionHandler {
     @Override
-    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-      EmacsProcessingHandler emacsProcessingHandler = LanguageEmacsExtension.INSTANCE.forLanguage(file.getLanguage());
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+      EmacsProcessingHandler emacsProcessingHandler = LanguageEmacsExtension.INSTANCE.forLanguage(psiFile.getLanguage());
       if (emacsProcessingHandler != null) {
-        EmacsProcessingHandler.Result result = emacsProcessingHandler.changeIndent(project, editor, file);
+        EmacsProcessingHandler.Result result = emacsProcessingHandler.changeIndent(project, editor, psiFile);
         if (result == EmacsProcessingHandler.Result.STOP) {
           return;
         }
@@ -49,7 +49,7 @@ public final class EmacsStyleIndentAction extends BaseCodeInsightAction implemen
       for (int line = startLine; line <= endLine; line++) {
         int lineStart = document.getLineStartOffset(line);
         CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-        int newPos = codeStyleManager.adjustLineIndent(file, lineStart);
+        int newPos = codeStyleManager.adjustLineIndent(psiFile, lineStart);
         if (startLine == endLine && editor.getCaretModel().getOffset() < newPos) {
           editor.getCaretModel().moveToOffset(newPos);
           editor.getSelectionModel().removeSelection();

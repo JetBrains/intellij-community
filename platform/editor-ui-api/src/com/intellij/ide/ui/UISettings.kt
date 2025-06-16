@@ -322,7 +322,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   var wideScreenSupport: Boolean
-    get() = state.wideScreenSupport || notRoamableOptions.xNextStripe
+    get() = state.wideScreenSupport
             set(value) {
       state.wideScreenSupport = value
     }
@@ -544,6 +544,14 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.showBreakpointsOverLineNumbers
     set(value) {
       state.showBreakpointsOverLineNumbers = value
+    }
+
+  @get:Internal
+  @set:Internal
+  var showProgressesInEditor: Boolean
+    get() = state.showProgressesInEditor && notRoamableOptions.xNextStripe
+    set(value) {
+      state.showProgressesInEditor = value
     }
 
   var currentIdeScale: Float

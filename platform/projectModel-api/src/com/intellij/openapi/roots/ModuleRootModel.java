@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
@@ -135,6 +136,7 @@ public interface ModuleRootModel {
    * @return list of source roots
    */
   @NotNull
+  @Unmodifiable
   List<VirtualFile> getSourceRoots(@NotNull JpsModuleSourceRootType<?> rootType);
 
   /**
@@ -144,7 +146,7 @@ public interface ModuleRootModel {
    * @return list of source roots
    */
   @NotNull
-  List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
+  @Unmodifiable List<VirtualFile> getSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes);
 
   /**
    * Returns an array consisting of source roots of all types from all content entries.

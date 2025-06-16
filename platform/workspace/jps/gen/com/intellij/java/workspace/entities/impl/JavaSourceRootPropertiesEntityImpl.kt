@@ -27,13 +27,13 @@ import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSourceRootPropertiesEntityData) : JavaSourceRootPropertiesEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSourceRootPropertiesEntityData) :
+  JavaSourceRootPropertiesEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(SourceRootEntity::class.java,
-                                                                              JavaSourceRootPropertiesEntity::class.java,
-                                                                              ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val SOURCEROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      SourceRootEntity::class.java, JavaSourceRootPropertiesEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false
+    )
 
     private val connections = listOf<ConnectionId>(
       SOURCEROOT_CONNECTION_ID,
@@ -66,8 +66,9 @@ internal class JavaSourceRootPropertiesEntityImpl(private val dataSource: JavaSo
   }
 
 
-  internal class Builder(result: JavaSourceRootPropertiesEntityData?) : ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(
-    result), JavaSourceRootPropertiesEntity.Builder {
+  internal class Builder(result: JavaSourceRootPropertiesEntityData?) :
+    ModifiableWorkspaceEntityBase<JavaSourceRootPropertiesEntity, JavaSourceRootPropertiesEntityData>(result),
+    JavaSourceRootPropertiesEntity.Builder {
     internal constructor() : this(JavaSourceRootPropertiesEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {

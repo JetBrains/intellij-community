@@ -9,8 +9,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.Configurable;
+  import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogPanel;
@@ -159,11 +158,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   protected void setHelpTooltip(@NotNull JButton helpButton) {
     //noinspection SpellCheckingInspection
     if (UISettings.isIdeHelpTooltipEnabled() ) {
-      if (!myIsModal) {
-        ((SettingsEditor)editor).setHelpTooltip(helpButton);
-      } else {
-        new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
-      }
+      new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }
     else {
       super.setHelpTooltip(helpButton);
@@ -178,6 +173,11 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   @Override
   protected String getDimensionServiceKey() {
     return dimensionServiceKey;
+  }
+
+  @Override
+  public @Nullable Dimension getInitialSize() {
+    return editor.getDialogInitialSize();
   }
 
   @Override
@@ -279,7 +279,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
   }
 
 
-  private final class ApplyActionWrapper extends AbstractAction {
+  private static final class ApplyActionWrapper extends AbstractAction {
     private final @NotNull Action delegate;
 
     ApplyActionWrapper(@NotNull Action delegate) {
@@ -309,7 +309,6 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     @Override
     public void actionPerformed(ActionEvent e) {
       delegate.actionPerformed(e);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.TOPIC).afterApply(editor);
     }
 
     @Override

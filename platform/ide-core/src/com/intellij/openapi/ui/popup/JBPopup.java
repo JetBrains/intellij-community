@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -14,8 +15,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.Icon;
+import javax.swing.JComponent;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.event.InputEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
@@ -228,7 +233,15 @@ public interface JBPopup extends Disposable, LightweightWindow {
 
   void setAdText(@PopupAdvertisement String s, @JdkConstants.HorizontalAlignment int alignment);
 
-  void setDataProvider(@NotNull DataProvider dataProvider);
+  /**
+   * @deprecated Use {@link #setUiDataProvider(UiDataProvider)}
+   */
+  @Deprecated(forRemoval = true)
+  default void setDataProvider(@NotNull DataProvider dataProvider) {
+  }
+
+  default void setUiDataProvider(@NotNull UiDataProvider dataProvider) {
+  }
 
   /**
    * This callback is called when new key event from the event queue is being processed.

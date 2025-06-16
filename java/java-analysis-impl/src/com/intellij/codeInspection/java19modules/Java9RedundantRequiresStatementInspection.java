@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java19modules;
 
 import com.intellij.analysis.AnalysisScope;
@@ -8,6 +8,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -112,9 +113,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
 
   private static class DeleteRedundantRequiresStatementFix extends PsiUpdateModCommandQuickFix {
     private final String myRequiredModuleName;
-    @SafeFieldForPreview
     private final Set<String> myImportedPackages;
-    @SafeFieldForPreview
     private final Set<String> myDependencies;
 
     DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages,
@@ -182,7 +181,7 @@ public final class Java9RedundantRequiresStatementInspection extends GlobalJavaB
       if (parent instanceof PsiJavaModule currentModule) {
         PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(currentModule.getProject()).getParserFacade();
         for (String dependencyName : myDependencies) {
-          PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(PsiKeyword.REQUIRES + ' ' + dependencyName, null);
+          PsiStatement requiresStatement = parserFacade.createModuleStatementFromText(JavaKeywords.REQUIRES + ' ' + dependencyName, null);
           currentModule.addAfter(requiresStatement, statementToDelete);
         }
       }

@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "kotlin-uast-uast-kotlin-base",
+  name = "uast-kotlin-base",
   module_name = "kotlin.uast.uast-kotlin-base",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),

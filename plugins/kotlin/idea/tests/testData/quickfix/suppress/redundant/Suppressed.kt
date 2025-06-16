@@ -14,4 +14,5 @@ fun a(i: Int) {
 
 // IGNORE_K2
 // TOOL: com.intellij.codeInspection.RedundantSuppressInspection
-// K1_TOOL: org.jetbrains.kotlin.idea.inspections.MoveVariableDeclarationIntoWhenInspection
+// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.MoveVariableDeclarationIntoWhenInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.MoveVariableDeclarationIntoWhenInspection

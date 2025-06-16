@@ -1,1 +1,5 @@
-Constructor B(Int) has 5 usages that are not safe to delete.
+Usage of constructor B(Int) that is not safe to delete.
+Usage of constructor B(Int) that is not safe to delete.
+Usage of constructor B(Int) that is not safe to delete.
+Usage of constructor B(Int) that is not safe to delete.
+Usage of constructor B(Int) that is not safe to delete.

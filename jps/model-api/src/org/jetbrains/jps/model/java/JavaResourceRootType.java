@@ -25,4 +25,9 @@ public final class JavaResourceRootType extends JpsElementTypeBase<JavaResourceR
   public @NotNull JavaResourceRootProperties createDefaultProperties() {
     return JpsJavaExtensionService.getInstance().createResourceRootProperties("", false);
   }
+
+  @Override
+  public String toString() {
+    return "JavaResourceRootType(forTests=" + myForTests + ")";
+  }
 }

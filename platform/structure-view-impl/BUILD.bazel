@@ -28,11 +28,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/statistics",
   ],
-  exports = [
-    "//platform/editor-ui-api:editor-ui",
-    "//platform/util",
-    "//platform/extensions",
-  ],
+  exports = ["//platform/util"],
   runtime_deps = [":structureView-impl_resources"]
 )
 ### auto-generated section `build intellij.platform.structureView.impl` end

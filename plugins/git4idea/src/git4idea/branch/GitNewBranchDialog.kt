@@ -31,6 +31,7 @@ import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
 import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.util.ui.JBUI
+import com.intellij.vcs.git.shared.ui.GitBranchesTreeIconProvider
 import git4idea.GitBranchesUsageCollector.branchDialogRepositoryManuallySelected
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
@@ -38,7 +39,6 @@ import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
-import git4idea.ui.branch.GitBranchesTreeIconProvider
 import git4idea.validators.*
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
@@ -49,6 +49,7 @@ data class GitNewBranchOptions @JvmOverloads constructor(
   @get:JvmName("shouldReset") val reset: Boolean = false,
   @get:JvmName("shouldSetTracking") val setTracking: Boolean = false,
   @get:JvmName("repositories") val repositories: Collection<GitRepository> = emptyList(),
+  @get:JvmName("shouldUnsetUpstream") val unsetUpstream: Boolean = false,
 )
 
 
@@ -60,16 +61,18 @@ enum class GitBranchOperationType(@Nls val text: String, @Nls val description: S
   RENAME(GitBundle.message("new.branch.dialog.operation.rename.name"))
 }
 
-internal class GitNewBranchDialog @JvmOverloads constructor(private val project: Project,
-                                                            private var repositories: Collection<GitRepository>,
-                                                            @NlsContexts.DialogTitle dialogTitle: String,
-                                                            initialName: String?,
-                                                            private val showCheckOutOption: Boolean = true,
-                                                            private val showResetOption: Boolean = false,
-                                                            private val showSetTrackingOption: Boolean = false,
-                                                            private val localConflictsAllowed: Boolean = false,
-                                                            private val operation: GitBranchOperationType = if (showCheckOutOption) CREATE else CHECKOUT)
-  : DialogWrapper(project, true) {
+internal class GitNewBranchDialog @JvmOverloads constructor(
+  private val project: Project,
+  private var repositories: Collection<GitRepository>,
+  @NlsContexts.DialogTitle dialogTitle: String,
+  initialName: String?,
+  private val showCheckOutOption: Boolean = true,
+  private val showResetOption: Boolean = false,
+  private val showSetTrackingOption: Boolean = false,
+  private val showUnsetUpstreamOption: Boolean = false,
+  private val localConflictsAllowed: Boolean = false,
+  private val operation: GitBranchOperationType = if (showCheckOutOption) CREATE else CHECKOUT,
+) : DialogWrapper(project, true) {
 
   companion object {
     private const val NAME_SEPARATOR = '/'
@@ -80,6 +83,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   private var checkout = true
   private var reset = false
   private var tracking = showSetTrackingOption
+  private var unsetUpstream = false
   private var branchName = initialName.orEmpty()
   private val validator = GitRefNameValidator.getInstance()
 
@@ -88,7 +92,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
   private val allRepositories = GitRepositoryManager.getInstance(project).repositories
   private val initialRepositories = repositories.toList()
 
-  private val iconProvider = GitBranchesTreeIconProvider(project)
   private val warningVisibilityProperty = AtomicBooleanProperty(false)
   private var repositoryManuallySelected = false
 
@@ -100,7 +103,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
 
   fun showAndGetOptions(): GitNewBranchOptions? {
     if (!showAndGet()) return null
-    return GitNewBranchOptions(validator.cleanUpBranchName(branchName).trim(), checkout, reset, tracking, repositories)
+    return GitNewBranchOptions(validator.cleanUpBranchName(branchName).trim(), checkout, reset, tracking, repositories, unsetUpstream)
   }
 
   override fun createCenterPanel() = panel {
@@ -112,7 +115,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
                                                   /*forceAutoPopup*/ false,
                                                   /*showHint*/ false)
       .apply {
-        minimumSize = JBUI.size(332, 0)
+        minimumSize = JBUI.size(240, 0)
         setupCleanBranchNameAndAdjustCursorIfNeeded()
       }
     row(GitBundle.message("new.branch.dialog.branch.name")) {
@@ -164,6 +167,11 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
           .bindSelected(::tracking)
           .component
       }
+      if (showUnsetUpstreamOption) {
+        checkBox(GitBundle.message("new.branch.dialog.unset.upstream.branch.checkbox"))
+          .bindSelected(::unsetUpstream)
+          .component
+      }
     }
     row("") { //align all cells to the right
       icon(AllIcons.General.Warning).gap(RightGap.SMALL).align(AlignY.TOP)
@@ -187,7 +195,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
           icon(AllIcons.Empty)
         }
         else if (repo != null) {
-          icon(iconProvider.forRepository(repo))
+          icon(GitBranchesTreeIconProvider.forRepository(project, repo.rpcId))
           text(DvcsUtil.getShortRepositoryName(repo))
         }
       }

@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.fixture
 
+import com.intellij.platform.eel.EelApi
 import org.jetbrains.annotations.ApiStatus.OverrideOnly
 import org.jetbrains.annotations.TestOnly
 import kotlin.reflect.KProperty
@@ -53,6 +54,14 @@ sealed interface TestFixture<out T> {
 }
 
 sealed interface TestContext {
+
+  /**
+   * Eel this fixture runs on.
+   * It is usually null (local), unless a test is parametrized with eel.
+   * See [EelForFixturesProvider] implementors.
+   */
+  val eel: EelApi?
+
   /**
    * Unique test or container ID, for example [org.junit.jupiter.api.extension.ExtensionContext.getUniqueId]
    */

@@ -1,14 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
-import com.intellij.openapi.util.ThreadLocalCachedIntArray;
-import com.intellij.psi.search.UsageSearchContext;
+import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import com.intellij.util.io.ToByteArraySequenceExternalizer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +21,11 @@ import java.util.Map;
  * This allows optimizing away boxing, and deal with primitives directly.
  */
 @ApiStatus.Internal
-public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndexEntry, Integer>> {
+public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndexEntry, Integer>>,
+                                                    ToByteArraySequenceExternalizer<Map<IdIndexEntry, Integer>> {
+
+  /** Serialized form of an empty map: single '\0' byte (=map size, as varint, see {@link DataInputOutputUtil#writeINT(DataOutput, int)})) */
+  private static final ByteArraySequence EMPTY_MAP_SERIALIZED = new ByteArraySequence(new byte[1]);
 
   private final DataExternalizer<Map<IdIndexEntry, Integer>> fallbackExternalizer;
 
@@ -33,50 +33,42 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
     fallbackExternalizer = externalizer;
   }
 
-  private static final ThreadLocalCachedIntArray intsArrayPool = new ThreadLocalCachedIntArray();
-
   @Override
   public void save(@NotNull DataOutput out,
                    @NotNull Map<IdIndexEntry, Integer> entries) throws IOException {
     int size = entries.size();
-    
+
     if (size == 0) {//fast path:
       DataInputOutputUtil.writeINT(out, size);
       return;
     }
 
-    if (!(entries instanceof IdEntryToScopeMap idToScopeMap)) {
+    if (!(entries instanceof IdEntryToScopeMapImpl idToScopeMap)) {
       fallbackExternalizer.save(out, entries);
       return;
     }
 
-    DataInputOutputUtil.writeINT(out, size);
+    //RC: actually, we shouldn't get here, since AbstractForwardIndexAccessor should use the .save(Map)->ByteArraySequence
+    //    version for serializing IdEntryToScopeMapImpl -- but other use-cases may still call this method directly,
+    //    so we keep this code here instead of throwing an exception.
+    idToScopeMap.writeTo(out);
+  }
 
-    //Store Map[IdHash -> ScopeMask] as inverted Map[ScopeMask -> List[IdHashes]] because sorted List[IdHashes] could
-    // be stored with diff-compression, which is significant space reduction especially with long lists
-    // (resulting binary format is fully compatible with that default InputMapExternalizer produces)
 
-    Int2ObjectMap<IntSet> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
-    idToScopeMap.forEach((idHash, scopeMask) -> {
-      scopeMaskToHashes.computeIfAbsent(scopeMask, __ -> new IntOpenHashSet()).add(idHash);
-      return true;
-    });
-
-    //MAYBE RC: use IntArrayList() instead of IntOpenHashSet() -- we sort the resulting set anyway, so we could
-    //          very well skip duplicates after the sort, in O(N)
-    for (int scopeMask : scopeMaskToHashes.keySet()) {
-      out.writeByte(scopeMask & UsageSearchContext.ANY);
-
-      IntSet idHashes = scopeMaskToHashes.get(scopeMask);
-      int hashesCount = idHashes.size();
-      if (hashesCount == 0) {
-        throw new IllegalStateException("hashesCount(scope: " + scopeMask + ")(=" + hashesCount + ") must be > 0");
-      }
-
-      int[] buffer = intsArrayPool.getBuffer(hashesCount);
-      idHashes.toArray(buffer);
-      IdIndexEntriesExternalizer.save(out, buffer, hashesCount);
+  @Override
+  public ByteArraySequence save(Map<IdIndexEntry, Integer> entries) throws IOException {
+    if (entries.isEmpty()) {
+      //Many IdIndexer impls use Collections.emptyMap() instead of IdDataConsumer.getResult() (=IdEntryToScopeMapImpl),
+      // so we need to support this case specifically:
+      return EMPTY_MAP_SERIALIZED;
     }
+    
+    if (entries instanceof IdEntryToScopeMapImpl idToScopeMap) {
+      //return cached serialized form:
+      return idToScopeMap.asByteArraySequence();
+    }
+
+    throw new IllegalStateException(entries + " must be an instance of IdEntryToScopeMapImpl");
   }
 
   @Override
@@ -94,7 +86,7 @@ public class IdIndexEntryMapExternalizer implements DataExternalizer<Map<IdIndex
     while (((InputStream)in).available() > 0) {
       int occurenceMask = in.readByte();
 
-      //copied from IdIndexEntriesExternalizer
+      //decode diff-compressed array (see DataInputOutputUtil.writeDiffCompressed() for a format):
       int hashesCount = DataInputOutputUtil.readINT(in);
       if (hashesCount <= 0) {
         throw new IOException("hashesCount: " + hashesCount + " must be >0");

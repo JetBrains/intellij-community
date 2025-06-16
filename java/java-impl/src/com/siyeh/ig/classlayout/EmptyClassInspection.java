@@ -129,9 +129,9 @@ public final class EmptyClassInspection extends BaseInspection {
 
   private class EmptyClassVisitor extends BaseInspectionVisitor {
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      super.visitFile(file);
-      if (!(file instanceof PsiJavaFile javaFile)) {
+    public void visitFile(@NotNull PsiFile psiFile) {
+      super.visitFile(psiFile);
+      if (!(psiFile instanceof PsiJavaFile javaFile)) {
         return;
       }
       if (javaFile.getClasses().length != 0) {
@@ -141,7 +141,7 @@ public final class EmptyClassInspection extends BaseInspection {
       if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName) || PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
         return;
       }
-      registerError(file, file);
+      registerError(psiFile, psiFile);
     }
 
     @Override

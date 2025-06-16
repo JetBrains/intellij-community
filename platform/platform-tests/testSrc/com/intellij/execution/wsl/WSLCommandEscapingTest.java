@@ -3,6 +3,7 @@ package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.testFramework.fixtures.TestFixtureRule;
@@ -285,7 +286,9 @@ public final class WSLCommandEscapingTest {
                                              List<String> command,
                                              WSLCommandLineOptions options) throws ExecutionException {
     var wsl = wslRule.getWsl();
-    GeneralCommandLine commandLine = new GeneralCommandLine(command).withEnvironment(env);
+    GeneralCommandLine commandLine = (
+      WSLDistribution.mustRunCommandLineWithIjent(options) ? new PtyCommandLine(command) : new GeneralCommandLine(command))
+      .withEnvironment(env);
     ProcessOutput output;
     if (options.isExecuteCommandInShell()) {
       output = WslExecution.executeInShellAndGetCommandOnlyStdout(wsl, commandLine, options, 10_000);
@@ -295,7 +298,7 @@ public final class WSLCommandEscapingTest {
       output = new CapturingProcessHandler(commandLine).runProcess(10_000);
     }
     String expected = stringify(false, "", 0, expectedOut);
-    String actual = stringify(output.isTimeout(), output.getStderr(), output.getExitCode(), output.getStdout());
+    String actual = stringify(output.isTimeout(), output.getStderr(), output.getExitCode(), output.getStdout().replace("\r", ""));
     assertEquals(expected, actual);
   }
 

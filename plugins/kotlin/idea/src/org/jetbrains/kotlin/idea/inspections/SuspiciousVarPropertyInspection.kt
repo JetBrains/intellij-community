@@ -2,13 +2,13 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ChangeVariableMutabilityFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -30,7 +30,7 @@ class SuspiciousVarPropertyInspection : AbstractKotlinInspection() {
                 property.valOrVarKeyword,
                 KotlinBundle.message("suspicious.var.property.its.setter.does.not.influence.its.getter.result"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(ChangeVariableMutabilityFix(property, makeVar = false, deleteInitializer = true).asIntention())
+                ChangeVariableMutabilityFix(property, makeVar = false, deleteInitializer = true).asQuickFix(),
             )
         })
 

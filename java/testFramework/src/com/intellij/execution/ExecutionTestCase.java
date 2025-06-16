@@ -8,6 +8,7 @@ import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
@@ -169,15 +170,19 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
 
   @RequiresWriteLock
   protected void setupModuleRoots() {
+    setupModuleRoots(myModule);
+  }
+
+  protected final void setupModuleRoots(Module module) {
     final String modulePath = getTestAppPath();
     final String srcPath = getSrcPath(modulePath);
     VirtualFile moduleDir = LocalFileSystem.getInstance().findFileByPath(modulePath.replace(File.separatorChar, '/'));
     VirtualFile srcDir = LocalFileSystem.getInstance().findFileByPath(srcPath.replace(File.separatorChar, '/'));
 
-    final ModuleRootManager rootManager = ModuleRootManager.getInstance(myModule);
-    PsiTestUtil.removeAllRoots(myModule, rootManager.getSdk());
-    PsiTestUtil.addContentRoot(myModule, moduleDir);
-    PsiTestUtil.addSourceRoot(myModule, srcDir);
+    final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
+    PsiTestUtil.removeAllRoots(module, rootManager.getSdk());
+    PsiTestUtil.addContentRoot(module, moduleDir);
+    PsiTestUtil.addSourceRoot(module, srcDir);
   }
 
   protected OutputChecker getChecker() {

@@ -71,7 +71,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiReferenceExpression element = myReferenceExpression.getElement();
     if (element == null) return IntentionPreviewInfo.EMPTY;
     PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
@@ -86,7 +86,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) {
     PsiReferenceExpression element = myReferenceExpression.getElement();
     if(element==null) return;
     if (CreateFromUsageUtils.isValidReference(element, false)) return;

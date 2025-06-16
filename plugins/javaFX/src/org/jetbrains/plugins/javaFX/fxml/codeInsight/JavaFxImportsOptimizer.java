@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
-import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.ASTNode;
@@ -48,10 +47,9 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     collectNamesToImport(names, demandedForNested, (XmlFile)file);
     names.sort((o1, o2) -> StringUtil.compare(o1.name(), o2.name(), true));
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
-    JavaProjectCodeInsightSettings javaProjectCodeInsightSettings = JavaProjectCodeInsightSettings.getSettings(file.getProject());
     final @NotNull List<ImportHelper.Import> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final Map<String, Boolean> onDemand = new HashMap<>();
-    ImportHelper.collectOnDemandImports(sortedNames, settings, javaProjectCodeInsightSettings, onDemand, new HashMap<>());
+    ImportHelper.collectOnDemandImports(sortedNames, settings, onDemand, new HashMap<>());
     for (String s : demandedForNested) {
       onDemand.put(s, false);
     }

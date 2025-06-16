@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.xml.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "tests",
@@ -14,11 +20,20 @@ jvm_library(
   associates = ["//xml/impl"],
   deps = [
     "@lib//:junit4",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
+    "//platform/structure-view-impl:structureView-impl",
     "//java/testFramework",
     "@lib//:xerces",
     "//java/idea-ui:ui",
     "//java/java-impl:impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//xml/xml-psi-api:psi",
     "//xml/testFramework",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -42,9 +57,13 @@ jvm_library(
     "@lib//:jackson",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    "//images/backend.svg:backend-svg",
+    "//images/backend.svg",
+    "//platform/polySymbols:polySymbols-testFramework",
   ],
-  runtime_deps = ["//plugins/IntelliLang/xml-support:xml-langInjection"]
+  runtime_deps = [
+    ":tests_test_resources",
+    "//plugins/IntelliLang/xml-support:xml-langInjection",
+  ]
 )
 
 jvm_test(

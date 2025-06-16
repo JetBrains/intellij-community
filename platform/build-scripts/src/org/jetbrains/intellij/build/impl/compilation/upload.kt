@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl.compilation
@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.http2Client.upload
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.LongAdder
@@ -89,15 +88,13 @@ internal suspend fun uploadArchives(
         }
       }
 
-      val uploadedSize = uploadFile(
-        urlPath = urlPath,
-        file = item.archive,
-        httpConnection = httpConnection,
-        zstdCompressContextPool = zstdCompressContextPool,
-        uncompressedBytes = uncompressedBytes,
-      )
+      // Using ZSTD dictionary doesn't make the difference, even slightly worse (default compression level 3).
+      // That's because in our case, we compress a relatively large archive of class files.
+      val result = httpConnection.upload(path = urlPath, file = item.archive, zstdCompressContextPool = zstdCompressContextPool)
+      require(result.fileSize > 0)
+      uncompressedBytes.add(result.fileSize)
       uploadedCount.increment()
-      uploadedBytes.add(uploadedSize)
+      uploadedBytes.add(result.uploadedSize)
     }
   }
 
@@ -132,25 +129,6 @@ internal suspend fun uploadArchives(
 
 private suspend fun getFoundAndMissingFiles(metadataJson: String, urlPathPrefix: String, connection: Http2ClientConnection): CheckFilesResponse {
   return connection.post(path = "$urlPathPrefix/check-files", data = metadataJson, contentType = HttpHeaderValues.APPLICATION_JSON)
-}
-
-// Using ZSTD dictionary doesn't make the difference, even slightly worse (default compression level 3).
-// That's because in our case, we compress a relatively large archive of class files.
-private suspend fun uploadFile(
-  urlPath: String,
-  file: Path,
-  httpConnection: Http2ClientConnection,
-  zstdCompressContextPool: ZstdCompressContextPool,
-  uncompressedBytes: LongAdder,
-): Long {
-  val result = httpConnection.upload(
-    path = urlPath,
-    file = file,
-    zstdCompressContextPool = zstdCompressContextPool,
-  )
-  require(result.fileSize > 0)
-  uncompressedBytes.add(result.fileSize)
-  return result.uploadedSize
 }
 
 @Serializable

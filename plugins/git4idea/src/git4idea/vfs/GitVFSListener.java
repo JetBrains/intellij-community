@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -183,7 +183,7 @@ public final class GitVFSListener extends VcsVFSListener {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           List<FilePath> dirtyPaths = new ArrayList<>();
-          List<File> toRefresh = new ArrayList<>();
+          List<Path> toRefresh = new ArrayList<>();
           //perform adding
           for (Map.Entry<VirtualFile, List<FilePath>> toAddEntry :
             GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, selectedToAdd).entrySet()) {
@@ -209,7 +209,7 @@ public final class GitVFSListener extends VcsVFSListener {
           }
 
           VcsFileUtil.markFilesDirty(myProject, dirtyPaths);
-          RefreshVFsSynchronously.refreshFiles(toRefresh);
+          RefreshVFsSynchronously.INSTANCE.refreshFiles(toRefresh);
         }
         catch (VcsException ex) {
           GitVcsConsoleWriter.getInstance(myProject).showMessage(ex.getMessage());
@@ -235,18 +235,18 @@ public final class GitVFSListener extends VcsVFSListener {
     GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached", "-r");
   }
 
-  private Set<File> executeForceMove(@NotNull VirtualFile root,
+  private Set<Path> executeForceMove(@NotNull VirtualFile root,
                                      @NotNull List<? extends FilePath> files,
                                      @Unmodifiable @NotNull Map<FilePath, MovedFileInfo> filesToMove) {
-    Set<File> toRefresh = new HashSet<>();
+    Set<Path> toRefresh = new HashSet<>();
     for (FilePath file : files) {
       MovedFileInfo info = filesToMove.get(file);
       GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MV);
       h.addParameters("-f");
       h.addRelativePaths(info.getOldPath(), info.getNewPath());
       Git.getInstance().runCommand(h);
-      toRefresh.add(new File(info.myOldPath));
-      toRefresh.add(new File(info.myNewPath));
+      toRefresh.add(Path.of(info.myOldPath));
+      toRefresh.add(Path.of(info.myNewPath));
     }
 
     return toRefresh;

@@ -6,6 +6,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -21,7 +22,7 @@ public interface VirtualFileEnumeration {
 
   int @NotNull [] asArray();
 
-  default @Nullable Collection<VirtualFile> getFilesIfCollection() {
+  default @Nullable @Unmodifiable Collection<VirtualFile> getFilesIfCollection() {
     return null;
   }
 

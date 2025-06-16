@@ -70,8 +70,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
       }
 
       private boolean isInScope(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement) {
-          SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
+        if (refEntity instanceof RefElement refElement) {
+          SmartPsiElementPointer pointer = refElement.getPointer();
           if (pointer != null) {
             VirtualFile virtualFile = pointer.getVirtualFile();
             if (virtualFile != null && !scope.contains(virtualFile)) return false;
@@ -81,8 +81,8 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
             return owner == null || isInScope(owner);
           }
         }
-        if (refEntity instanceof RefModule) {
-          return scope.containsModule(((RefModule)refEntity).getModule());
+        if (refEntity instanceof RefModule refModule) {
+          return scope.containsModule(refModule.getModule());
         }
         return true;
       }
@@ -127,13 +127,13 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * Only called when {@link #isGlobalSimpleInspectionTool()} returns true.
    * Processes and reports problems for a single psi file without using the reference graph.
    *
-   * @param file           the file to check
+   * @param psiFile           the file to check
    * @param manager        the inspection manager instance for the project on which the inspection was run.
    * @param problemsHolder used to register problems found.
    * @param globalContext  the context for the current global inspection run.
    * @param processor      the collector for problems reported by the inspection (see also {@code problemsHolder}).
    */
-  public void checkFile(@NotNull PsiFile file,
+  public void checkFile(@NotNull PsiFile psiFile,
                         @NotNull InspectionManager manager,
                         @NotNull ProblemsHolder problemsHolder,
                         @NotNull GlobalInspectionContext globalContext,

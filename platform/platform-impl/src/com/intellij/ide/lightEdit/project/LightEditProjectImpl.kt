@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.project
 
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -7,16 +7,18 @@ import com.intellij.ide.lightEdit.LightEditUtil.PROJECT_NAME
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.ProjectServiceInitializer
+import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.project.impl.schedulePreloadServices
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
 import com.intellij.platform.project.ProjectEntitiesStorage
-import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.serviceContainer.getComponentManagerImpl
 import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Path
@@ -25,9 +27,11 @@ private val projectPath: Path
   get() = Path.of(PathManager.getConfigPath() + File.separator + "light-edit")
 
 internal class LightEditProjectImpl private constructor(projectPath: Path) :
-  ProjectImpl(parent = ApplicationManager.getApplication() as ComponentManagerImpl,
-              filePath = projectPath,
-              projectName = PROJECT_NAME), LightEditCompatible {
+  ProjectImpl(
+    parent = ApplicationManager.getApplication().getComponentManagerImpl(),
+    filePath = projectPath,
+    projectName = PROJECT_NAME,
+  ), LightEditCompatible {
   constructor() : this(projectPath)
 
   init {
@@ -36,13 +40,12 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
     componentStore.setPath(projectPath, null)
     runUnderModalProgressIfIsEdt {
       val project = this@LightEditProjectImpl
-      ProjectServiceInitializer.initEssential(project)
-      ProjectEntitiesStorage.getInstance().createEntity(project)
+      ProjectManagerImpl.initEssentialProjectPreInit(project)
+      ApplicationManager.getApplication().serviceAsync<ProjectEntitiesStorage>().createEntity(project)
       schedulePreloadServices(project)
       launch {
         project.createComponentsNonBlocking()
       }
-      ProjectServiceInitializer.initNonEssential(project)
     }
   }
 

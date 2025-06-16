@@ -2,16 +2,17 @@
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
 
@@ -24,14 +25,10 @@ private class UnknownSdkStartupChecker : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    blockingContext {
-      checkUnknownSdks(project)
-    }
+    checkUnknownSdks(project)
 
-    WorkspaceModel.getInstance(project).eventLog.collect { event ->
-      if (event.getChanges(SdkEntity::class.java).any() || event.getChanges(ContentRootEntity::class.java).any()) {
-        checkUnknownSdks(project)
-      }
+    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
+      checkUnknownSdks(project)
     }
 
     UnknownSdkResolver.EP_NAME.addExtensionPointListener(object: ExtensionPointListener<UnknownSdkResolver> {
@@ -44,12 +41,26 @@ private class UnknownSdkStartupChecker : ProjectActivity {
       }
     }, project)
 
-    ProjectRootManagerEx.getInstanceEx(project).addProjectJdkListener {
-      checkUnknownSdks(project)
+    project.workspaceModel.eventLog.collect { event ->
+      if (event.getChanges(SdkEntity::class.java).any() || event.getChanges(ContentRootEntity::class.java).any()) {
+        checkUnknownSdks(project)
+      }
     }
   }
 
   private fun checkUnknownSdks(project: Project) {
+    project.service<UnknownSdkCheckerService>().checkUnknownSdks()
+  }
+}
+
+/**
+ * A service responsible for checking and tracking unknown SDKs in the project.
+ * This service is automatically triggered during project startup and monitors SDK changes.
+ * It coordinates with [UnknownSdkTracker] to detect and handle unresolved or missing SDK configurations.
+ */
+@Service(Service.Level.PROJECT)
+class UnknownSdkCheckerService(private val project: Project) {
+  fun checkUnknownSdks() {
     if (project.isDisposed || project.isDefault) return
     //TODO: workaround for tests, right not it can happen that project.earlyDisposable is null with @NotNull annotation
     if (project is ProjectEx && kotlin.runCatching { project.earlyDisposable }.isFailure) return

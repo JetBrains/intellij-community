@@ -201,7 +201,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
       ReadAction.nonBlocking(() -> {
           //noinspection unchecked
           Settings clone = (Settings)mySettings.clone();
-          fragment.applyEditorTo(clone);
+          SettingsEditorFragment.applyEditorTo(fragment, clone);
           return fragment.isInitiallyVisible(clone);
         })
         .finishOnUiThread(ModalityState.defaultModalityState(), visible -> {

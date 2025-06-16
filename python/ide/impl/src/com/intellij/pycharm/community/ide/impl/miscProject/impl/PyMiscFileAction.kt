@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.miscProject.impl
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -7,13 +7,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.ui.Messages
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.Result
+import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -30,7 +31,7 @@ internal class PyMiscFileAction(private val miscFileType: MiscFileType) : AnActi
 
   @RequiresEdt
   override fun actionPerformed(e: AnActionEvent) {
-    MiscProjectUsageCollector.projectCreated()
+    MiscProjectUsageCollector.projectCreated(miscFileType)
     when (val r = createMiscProject(
       miscFileType,
       confirmInstallation = {
@@ -44,7 +45,9 @@ internal class PyMiscFileAction(private val miscFileType: MiscFileType) : AnActi
       scopeProvider = { it.service<MyService>().scope })) {
       is Result.Success -> Unit
       is Result.Failure -> {
-        Messages.showErrorDialog(null as Project?, r.error, PyCharmCommunityCustomizationBundle.message("misc.project.error.title"))
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), "..") {
+          ShowingMessageErrorSync.emit(r.error)
+        }
       }
     }
   }

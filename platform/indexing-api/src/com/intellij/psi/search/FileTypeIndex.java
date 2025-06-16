@@ -15,6 +15,7 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -44,7 +45,7 @@ public final class FileTypeIndex {
     return ContainerUtil.getFirstItem(data.keySet());
   }
 
-  public static @NotNull Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
+  public static @NotNull @Unmodifiable Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
     return FileBasedIndex.getInstance().getContainingFiles(NAME, fileType, scope);
   }
 

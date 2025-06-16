@@ -1,0 +1,22 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+
+interface IFace {
+    context(string: String) fun foo()
+}
+
+open class OpenClass : IFace {
+    context(string: String) override fun foo() {
+        string.length
+        withContext()
+        string.withReceiver()
+    }
+}
+
+class FinalClass : OpenClass(), IFace {
+    context(string: String) override fun foo() {}
+}
+
+context(c: String)
+fun withContext() {}
+
+fun String.withReceiver() {}

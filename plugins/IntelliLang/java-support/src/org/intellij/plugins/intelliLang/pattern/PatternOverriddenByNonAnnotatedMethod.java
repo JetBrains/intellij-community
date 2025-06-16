@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.pattern;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Pair;
@@ -51,9 +51,10 @@ public class PatternOverriddenByNonAnnotatedMethod extends LocalInspectionTool {
             PsiAnnotation annotation = annotationFromHierarchy[annotationFromHierarchy.length - 1];
             String annotationClassname = annotation.getQualifiedName();
             PsiNameValuePair[] argList = annotation.getParameterList().getAttributes();
-            holder.registerProblem(psiIdentifier,
-                                   IntelliLangBundle.message("inspection.pattern.overridden.by.non.annotated.method.description"),
-                                   new AddAnnotationFix(Objects.requireNonNull(annotationClassname), method, argList));
+            holder.problem(psiIdentifier,
+                                   IntelliLangBundle.message("inspection.pattern.overridden.by.non.annotated.method.description"))
+              .fix(new AddAnnotationModCommandAction(Objects.requireNonNull(annotationClassname), method, argList))
+              .register();
           }
         }
       }

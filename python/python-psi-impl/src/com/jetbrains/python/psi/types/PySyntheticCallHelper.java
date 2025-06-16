@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.*;
  * This class allows inferring types of function calls based on types without using real PSI
  * Use it in cases when a real PSI call does not exist in code
  */
+@ApiStatus.Internal
 public final class PySyntheticCallHelper {
 
   private PySyntheticCallHelper() { }

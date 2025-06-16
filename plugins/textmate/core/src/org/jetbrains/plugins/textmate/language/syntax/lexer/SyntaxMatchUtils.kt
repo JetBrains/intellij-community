@@ -89,7 +89,7 @@ internal object SyntaxMatchUtils {
         if (groupIndex >= 0 && matchData.count() > groupIndex) {
           append(string, lastPosition, matcher.range.start)
           val range = matchData.byteOffset(groupIndex)
-          val capturedText = String(matchingString.bytes, range.start, range.length, Charsets.UTF_8)
+          val capturedText = matchingString.bytes.decodeToString(range.start, range.end)
           val replacement = capturedText.trimStart('.')
           val command = matcher.groups[3]?.value
           when (command) {

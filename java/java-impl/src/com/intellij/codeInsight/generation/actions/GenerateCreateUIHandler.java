@@ -32,14 +32,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GenerateCreateUIHandler implements CodeInsightActionHandler {
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final PsiElement element = PsiUtilBase.getElementAtCaret(editor);
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null) return;
 
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     String annotation = "";
-    if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, file)) {
+    if (PsiUtil.isAvailable(JavaFeature.ANNOTATIONS, psiFile)) {
       annotation = "@SuppressWarnings({\"MethodOverridesStaticMethodOfSuperclass\", \"UnusedDeclaration\"})";
     }
     final PsiMethod createUI = factory.createMethodFromText(annotation +

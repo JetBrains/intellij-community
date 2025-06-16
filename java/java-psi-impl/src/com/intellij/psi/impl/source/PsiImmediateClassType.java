@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -22,6 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaTypeNullabilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +32,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   private final PsiSubstitutor mySubstitutor;
   private final PsiManager myManager;
   private final @Nullable PsiElement myPsiContext;
+  private final @Nullable TypeNullability myNullability;
   private String myCanonicalText;
   private String myCanonicalTextAnnotated;
   private String myPresentableText;
@@ -111,11 +114,21 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
                                @Nullable LanguageLevel level,
                                @NotNull TypeAnnotationProvider provider,
                                @Nullable PsiElement context) {
+    this(aClass, substitutor, level, provider, context, null);
+  }
+
+  PsiImmediateClassType(@NotNull PsiClass aClass,
+                        @NotNull PsiSubstitutor substitutor,
+                        @Nullable LanguageLevel level,
+                        @NotNull TypeAnnotationProvider provider,
+                        @Nullable PsiElement context,
+                        @Nullable TypeNullability nullability) {
     super(level, provider);
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
     myPsiContext = context;
+    myNullability = nullability;
     substitutor.ensureValid();
   }
 
@@ -132,6 +145,17 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   @Override
   public @Nullable PsiElement getPsiContext() {
     return myPsiContext;
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    if (myNullability != null) return myNullability;
+    return JavaTypeNullabilityUtil.getTypeNullability(this);
+  }
+
+  @Override
+  public @NotNull PsiClassType withNullability(@NotNull TypeNullability nullability) {
+    return new PsiImmediateClassType(myClass, mySubstitutor, myLanguageLevel, getAnnotationProvider(), myPsiContext, nullability);
   }
 
   @Override

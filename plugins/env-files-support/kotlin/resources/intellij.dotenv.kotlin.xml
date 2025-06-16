@@ -1,6 +1,7 @@
 <idea-plugin package="ru.adelf.idea.dotenv.kotlin">
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
+    <module name="intellij.dotenv.java"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="kotlin" implementationClass="ru.adelf.idea.dotenv.kotlin.KotlinEnvCompletionContributor"/>

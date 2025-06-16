@@ -45,6 +45,7 @@ public abstract class ScratchFileCreationHelper {
     public String filePrefix;
     public Factory<Integer> fileCounter;
     public String fileExtension;
+    public @NotNull RootType defaultRootType = ScratchRootType.getInstance();
     
     public ScratchFileService.Option createOption = ScratchFileService.Option.create_new_always;
     public IdeView ideView;

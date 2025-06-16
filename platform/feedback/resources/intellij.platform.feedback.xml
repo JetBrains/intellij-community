@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.platform.feedback">
+<idea-plugin>
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.feedback.idleFeedbackSurvey" interface="com.intellij.platform.feedback.FeedbackSurvey"
                     dynamic="true"/>
@@ -14,6 +14,9 @@
 
     <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
                        key="notification.group.feedback"/>
+
+    <notificationGroup displayType="STICKY_BALLOON" id="STICKY:Feedback In IDE" bundle="messages.CommonFeedbackMessagesBundle"
+                       key="notification.group.feedback.sticky"/>
 
     <typedHandler implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
     <editorFactoryMouseListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
@@ -45,11 +48,6 @@
     <registryKey key="csat.survey.user.created.date" defaultValue="" description="ISO Formatted date when user created such as 2011-12-03"/>
     <registryKey key="csat.survey.show.probability" defaultValue="" description="Override probability of survey, double value from 0 to 1"/>
   </extensions>
-
-  <applicationListeners>
-    <listener class="com.intellij.platform.feedback.localization.LocalizationFeedbackStartupListener"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-  </applicationListeners>
 
   <actions>
     <group id="FeedbackDialogGroup" internal="true">

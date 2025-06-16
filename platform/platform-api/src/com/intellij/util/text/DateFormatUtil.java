@@ -52,8 +52,6 @@ public final class DateFormatUtil {
   @Deprecated(forRemoval = true) public static final long MONTH = 30 * DAY;
   /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
   @Deprecated(forRemoval = true) public static final long YEAR = 365 * DAY;
-  /** @deprecated use {@link java.util.concurrent.TimeUnit#toMillis} */
-  @Deprecated(forRemoval = true) public static final long DAY_FACTOR = DAY;
 
   public static final String TIME_SHORT_12H = "h:mm\u202Fa";
   public static final String TIME_SHORT_24H = "HH:mm";

@@ -1,12 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.namecache;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.io.DataEnumeratorEx;
@@ -15,6 +15,7 @@ import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +52,6 @@ public final class SLRUFileNameCache implements FileNameCache {
   public SLRUFileNameCache(@NotNull DataEnumeratorEx<String> namesEnumerator) {
     this(namesEnumerator, isFileNameSanityCheckEnabledByDefault());
   }
-
 
   public SLRUFileNameCache(@NotNull DataEnumeratorEx<String> namesEnumerator,
                            boolean checkFileNamesSanity) {
@@ -159,7 +159,8 @@ public final class SLRUFileNameCache implements FileNameCache {
 
   private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
 
-  static void assertShortFileName(@NotNull String name) throws IllegalArgumentException {
+  @VisibleForTesting
+  public static void assertShortFileName(@NotNull String name) throws IllegalArgumentException {
     //TODO RC: those verification rules are very wierd, they seems to be just cherry-picked to solve
     //         specific problems. We should either abandon verification altogether, or formulate simple
     //         and consistent rules.

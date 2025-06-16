@@ -31,6 +31,7 @@ public abstract class ModuleRootManagerEx extends ModuleRootManager {
   public abstract void dropCaches();
 
   public static ModuleRootManagerEx getInstanceEx(@NotNull Module module) {
-    return (ModuleRootManagerEx) module.getComponent(ModuleRootManager.class);
+    ProjectRootManager projectRootManager = ProjectRootManager.getInstance(module.getProject());
+    return (ModuleRootManagerEx)projectRootManager.getModuleRootManager(module);
   }
 }

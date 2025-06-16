@@ -1,29 +1,37 @@
+- name: lib/axis.jar
+  library: axis-1.4
+  module: intellij.tasks.core
+  files:
+  - name: $PROJECT_DIR$/community/plugins/tasks/tasks-core/lib/axis-1.jar
+  - name: $PROJECT_DIR$/community/plugins/tasks/tasks-core/lib/axis-jaxrpc-1.jar
+  - name: $PROJECT_DIR$/community/plugins/tasks/tasks-core/lib/wsdl4j-1.jar
+  - name: $PROJECT_DIR$/community/plugins/tasks/tasks-core/lib/axis-saaj-1.jar
+- name: lib/commons-discovery.jar
+  library: commons-discovery
+  module: intellij.tasks.core
+  files:
+  - name: $MAVEN_REPOSITORY$/commons-discovery/commons-discovery/0/commons-discovery-0.jar
+- name: lib/http-client.jar
+  library: http-client-3.1
+  module: intellij.tasks.compatibility
+  files:
+  - name: $PROJECT_DIR$/community/lib/commons-httpclient-3.jar
+- name: lib/jsonpath.jar
+  library: jsonpath
+  files:
+  - name: $MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2/json-path-2.jar
+  - name: $MAVEN_REPOSITORY$/net/minidev/json-smart/2/json-smart-2.jar
+  - name: $MAVEN_REPOSITORY$/net/minidev/accessors-smart/2/accessors-smart-2.jar
+  reason: <- intellij.tasks.core
 - name: lib/tasks-core.jar
-  projectLibraries:
-  - name: XmlRPC
-    files:
-    - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
-    reason: <- intellij.tasks.jira
-  - name: jsonpath
-    files:
-    - name: $MAVEN_REPOSITORY$/com/jayway/jsonpath/json-path/2/json-path-2.jar
-    - name: $MAVEN_REPOSITORY$/net/minidev/json-smart/2/json-smart-2.jar
-    - name: $MAVEN_REPOSITORY$/net/minidev/accessors-smart/2/accessors-smart-2.jar
-    reason: <- intellij.tasks.core
   modules:
   - name: intellij.tasks
   - name: intellij.tasks.compatibility
-    libraries:
-      http-client-3.1:
-      - name: $PROJECT_DIR$/community/lib/commons-httpclient-3.jar
   - name: intellij.tasks.jira
   - name: intellij.tasks.java
   - name: intellij.tasks.core
-    libraries:
-      axis-1.4:
-      - name: $PROJECT_DIR$/community/plugins/tasks/tasks-core/lib/axis-1.jar
-      - name: $PROJECT_DIR$/community/plugins/tasks/tasks-core/lib/axis-jaxrpc-1.jar
-      - name: $PROJECT_DIR$/community/plugins/tasks/tasks-core/lib/wsdl4j-1.jar
-      - name: $PROJECT_DIR$/community/plugins/tasks/tasks-core/lib/axis-saaj-1.jar
-      commons-discovery:
-      - name: $MAVEN_REPOSITORY$/commons-discovery/commons-discovery/0/commons-discovery-0.jar
+- name: lib/xmlrpc.jar
+  library: XmlRPC
+  files:
+  - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
+  reason: <- intellij.tasks.jira

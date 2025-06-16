@@ -11,7 +11,7 @@ import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.*
 import com.intellij.platform.workspace.storage.impl.indices.EntityStorageInternalIndex
-import com.intellij.platform.workspace.storage.impl.indices.MultimapStorageIndex
+import com.intellij.platform.workspace.storage.impl.indices.ImmutableMultimapStorageIndex
 import com.intellij.platform.workspace.storage.impl.indices.SymbolicIdInternalIndex
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.impl.references.ImmutableAbstractOneToOneContainer
@@ -36,6 +36,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentHashSetOf
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayDeque
 
 internal interface StorageRegistrar {
@@ -77,7 +78,7 @@ internal class StorageClassesRegistrar(
     kryo.register(ObjectOpenHashSet::class.java, ObjectOpenHashSetSerializer())
     kryo.register(SymbolicIdInternalIndex::class.java, serializerUtil.getSymbolicIdIndexSerializer())
     kryo.register(EntityStorageInternalIndex::class.java, serializerUtil.getEntityStorageIndexSerializer())
-    kryo.register(MultimapStorageIndex::class.java, serializerUtil.getMultimapStorageIndexSerializer())
+    kryo.register(ImmutableMultimapStorageIndex::class.java, serializerUtil.getMultimapStorageIndexSerializer())
     kryo.register(BidirectionalLongMultiMap::class.java, serializerUtil.getEntityId2JarDirSerializer())
     kryo.register(Object2ObjectOpenCustomHashMap::class.java, serializerUtil.getVfu2EntityIdSerializer())
 
@@ -92,7 +93,7 @@ internal class StorageClassesRegistrar(
     kryo.register(SymbolicIdInternalIndex::class.java)
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
-    kryo.register(MultimapStorageIndex::class.java)
+    kryo.register(ImmutableMultimapStorageIndex::class.java)
     kryo.register(SerializableEntityId::class.java)
 
     registerRefsTableClasses(kryo)
@@ -147,6 +148,7 @@ internal class StorageClassesRegistrar(
     kryo.register(Hashtable::class.java)
     kryo.register(WeakHashMap::class.java)
     kryo.register(IdentityHashMap::class.java)
+    kryo.register(ConcurrentHashMap::class.java)
 
     kryo.register(SmartList::class.java).instantiator = ObjectInstantiator { SmartList<Any>() }
     kryo.register(LinkedHashMap::class.java).instantiator = ObjectInstantiator { LinkedHashMap<Any, Any>() }

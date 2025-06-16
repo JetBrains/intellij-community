@@ -43,11 +43,11 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    final PsiElement leaf = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (leaf == null) return false;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
-    return isAvailable(file, owner);
+    return isAvailable(psiFile, owner);
   }
 
   public boolean isAvailable(PsiFile file, PsiModifierListOwner owner) {
@@ -90,21 +90,21 @@ public final class MakeInferredAnnotationExplicit extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    final PsiElement leaf = psiFile.findElementAt(editor.getCaretModel().getOffset());
     assert leaf != null;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     assert owner != null;
     if (myNeedToAddDependency) {
-      makeAnnotationsExplicit(project, file, owner);
+      makeAnnotationsExplicit(project, psiFile, owner);
     } else {
       doMakeAnnotationExplicit(project, owner, getAnnotationsToAdd(owner));
     }
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiElement leaf = psiFile.findElementAt(editor.getCaretModel().getOffset());
     if (leaf == null) return IntentionPreviewInfo.EMPTY;
     PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     if (owner == null) return IntentionPreviewInfo.EMPTY;

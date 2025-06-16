@@ -9,13 +9,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "gradle-native-tooling_resources",
+  name = "tooling_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "gradle-native-tooling",
+  name = "tooling",
   module_name = "intellij.gradle.native.tooling",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -27,25 +27,31 @@ jvm_library(
     "@lib//:gradle",
     "//platform/object-serializer:objectSerializer-annotations",
   ],
-  runtime_deps = [":gradle-native-tooling_resources"]
+  runtime_deps = [":tooling_resources"]
 )
 ### auto-generated section `build intellij.gradle.native.tooling` end
 
 ### auto-generated section `build intellij.gradle.native.tooling.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "gradle-native-tooling-tests_test",
+jvm_library(
+  name = "gradle-native-tooling-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["testSources/**/*.kt", "testSources/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:junit4",
-    "//plugins/gradle/native/tooling:gradle-native-tooling",
+    "//plugins/gradle/native/tooling",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-    "//platform/object-serializer:objectSerializer",
-    "//platform/object-serializer:objectSerializer_test_lib",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
     "//plugins/gradle/tooling-extension-api:toolingExtension",
   ]
+)
+
+jvm_test(
+  name = "gradle-native-tooling-tests_test",
+  runtime_deps = [":gradle-native-tooling-tests_test_lib"]
 )
 ### auto-generated section `build intellij.gradle.native.tooling.tests` end

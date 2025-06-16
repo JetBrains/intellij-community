@@ -4,7 +4,6 @@ package com.intellij.codeInsight.codeVision
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import kotlinx.coroutines.Dispatchers
@@ -26,9 +25,7 @@ open class CodeVisionInitializer(project: Project) {
     override suspend fun execute(project: Project) {
       val host = project.serviceAsync<CodeVisionHost>()
       withContext(Dispatchers.EDT) {
-        blockingContext {
-          host.initialize()
-        }
+        host.initialize()
       }
     }
   }

@@ -142,6 +142,6 @@ class ConcreteHasProperty4:
 
 
 hp1: HasPropertyProto = ConcreteHasProperty1()  # OK
-hp2: HasPropertyProto = ConcreteHasProperty2()  # OK
+hp2: HasPropertyProto = ConcreteHasProperty2()  # E
 hp3: HasPropertyProto = ConcreteHasProperty3()  # E
 hp4: HasPropertyProto = ConcreteHasProperty4()  # E

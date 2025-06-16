@@ -2,12 +2,14 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "ide-remote",
+  name = "remote",
   module_name = "intellij.platform.ide.remote",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/platform-util-io:ide-util-io",
     "//platform/lang-core",

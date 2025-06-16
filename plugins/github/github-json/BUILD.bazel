@@ -15,7 +15,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/github/github-core:vcs-github",
-    "//json",
+    "//json/backend",
     "//platform/core-api:core",
     "//platform/util",
     "//platform/analysis-api:analysis",

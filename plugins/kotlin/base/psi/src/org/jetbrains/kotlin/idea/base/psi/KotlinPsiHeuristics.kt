@@ -48,7 +48,7 @@ object KotlinPsiHeuristics {
         return result
     }
 
-    private val KtFile.aliasImportMap by userDataCached("ALIAS_IMPORT_MAP_KEY") { file ->
+    private val KtFile.aliasImportMap: HashMultimap<String, String> by userDataCached("ALIAS_IMPORT_MAP_KEY") { file ->
         HashMultimap.create<String, String>().apply {
             for (import in file.importList?.imports.orEmpty()) {
                 val aliasName = import.aliasName ?: continue
@@ -66,18 +66,18 @@ object KotlinPsiHeuristics {
 
     @JvmStatic
     fun isProbablyNothing(type: KtUserType): Boolean {
-        val referencedName = type.referencedName
-
+        val referencedName = type.referencedName ?: return false
         if (referencedName == "Nothing") {
             return true
         }
 
         // TODO: why don't use PSI-less stub for calculating aliases?
         val file = type.containingKotlinFileStub?.psi as? KtFile ?: return false
-
         // TODO: support type aliases
-        if (!file.hasImportAlias()) return false
-        return file.aliasImportMap[referencedName].contains("Nothing")
+        if (file.hasImportAlias()) {
+            return file.aliasImportMap.get(referencedName).contains("Nothing")
+        }
+        return false
     }
 
     @JvmStatic

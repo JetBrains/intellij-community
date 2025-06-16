@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.asSafely
 import com.intellij.util.containers.addAllIfNotNull
 import com.intellij.util.ui.*
 import com.intellij.util.ui.ExtendableHTMLViewFactory.Extensions.icons
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.Color
+import java.awt.Font
 import java.awt.Graphics
 import java.awt.Image
 import java.awt.event.ActionEvent
@@ -76,6 +78,13 @@ import kotlin.math.roundToInt
  * - `<samp>` - show a piece of text in editor font. Similar to `<code>`,
  *     but without any special formatting except for the font.
  * - `<hr>` - a horizontal line, no shade, with support for colors
+ * - `<details>`/`<summary>` - collapsible section:
+ *     ```html
+ *     <details>
+ *       <summary>Contents always visible, clickable chevron to the right to expand section</summary>
+ *       <p>The rest of the contents visible after expanding the section</p>
+ *     </details>
+ *     ```
  *
  * ### CSS Support
  *
@@ -110,7 +119,7 @@ import kotlin.math.roundToInt
  */
 @Experimental
 @Suppress("LeakingThis")
-open class JBHtmlPane : JEditorPane, Disposable {
+open class JBHtmlPane : JEditorPane, Disposable, ExtendableHTMLViewFactory.ScaledHtmlJEditorPane {
 
   private val service: ImplService = ApplicationManager.getApplication().service()
   private var myText: @Nls String = "" // getText() surprisingly crashes…, let's cache the text
@@ -182,7 +191,8 @@ open class JBHtmlPane : JEditorPane, Disposable {
       ExtendableHTMLViewFactory.Extensions.HIDPI_IMAGES.takeIf {
         !myPaneConfiguration.extensions.contains(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)
       },
-      ExtendableHTMLViewFactory.Extensions.BLOCK_HR_SUPPORT
+      ExtendableHTMLViewFactory.Extensions.BLOCK_HR_SUPPORT,
+      ExtendableHTMLViewFactory.Extensions.DETAILS_SUMMARY_SUPPORT,
     )
 
     val editorKit = HTMLEditorKitBuilder()
@@ -234,6 +244,13 @@ open class JBHtmlPane : JEditorPane, Disposable {
     }
   }
 
+  override fun setFont(font: Font?) {
+    super.setFont(font)
+    editorKit.asSafely<HTMLEditorKit>()?.let {
+      updateDocumentationPaneDefaultCssRules(it)
+    }
+  }
+
   override fun setEditorKit(kit: EditorKit) {
     throw UnsupportedOperationException("Cannot change EditorKit for JBHtmlPane")
   }
@@ -249,7 +266,7 @@ open class JBHtmlPane : JEditorPane, Disposable {
    * font size, ignoring CSS settings. Such an example is the list
    * view rendering logic.
    */
-  protected open val contentsScaleFactor: Float
+  override val contentsScaleFactor: Float
     get() = JBUIScale.scale(1.0f)
 
   /**

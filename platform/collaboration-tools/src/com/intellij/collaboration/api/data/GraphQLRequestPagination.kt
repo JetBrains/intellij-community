@@ -13,7 +13,7 @@ class GraphQLRequestPagination private constructor(
   constructor(since: Date? = null, pageSize: Int = DEFAULT_PAGE_SIZE) : this(null, since, pageSize)
 
   override fun toString(): String {
-    return "afterCursor=$afterCursor&since=$since&per_page=$pageSize"
+    return "afterCursor=$afterCursor&since=$since&pageSize=$pageSize"
   }
 
   companion object {

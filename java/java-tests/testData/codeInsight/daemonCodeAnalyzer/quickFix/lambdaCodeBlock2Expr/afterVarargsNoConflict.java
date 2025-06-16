@@ -12,12 +12,12 @@ class Test {
     return null;
   }
 
-  public Object query(String s, final ResultSetExtractor rse, Object.. args) {
+  public Object query(String s, final ResultSetExtractor rse, Object... args) {
     return null;
   }
 }
 
 interface ResultSetExtractor {
-  Object extractData(ResultSet var1);
+  void extractData(ResultSet var1);
 }
 class ResultSet {}

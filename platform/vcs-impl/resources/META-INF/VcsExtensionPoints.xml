@@ -74,6 +74,10 @@
                     interface="com.intellij.openapi.vcs.changes.ChangesViewNodeAction"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
+    <extensionPoint name="vcs.changes.changesViewConflictsBannerCustomizer"
+                    interface="com.intellij.openapi.vcs.merge.ChangesViewConflictsBannerCustomizer"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
     <extensionPoint name="editChangelistSupport"
                     interface="com.intellij.openapi.vcs.changes.ui.EditChangelistSupport"
                     area="IDEA_PROJECT"/>
@@ -115,6 +119,15 @@
 
     <extensionPoint name="vcs.unversionedFilesHolder"
                     interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.resolvedConflictsFilesHolder"
+                    interface="com.intellij.openapi.vcs.changes.VcsManagedFilesHolder$Provider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint name="vcs.pathsToRefreshProvider"
+                    interface="com.intellij.vcs.commit.VcsPathsToRefreshProvider"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
@@ -207,6 +220,9 @@
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.filePathIconProvider"
                     interface="com.intellij.openapi.vcs.changes.FilePathIconProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.vcs.changes.ui.shareProjectAction"
+                    interface="com.intellij.openapi.vcs.changes.ui.ShareProjectActionProvider"
+                    dynamic="true"/>
 
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="vcs.actions.ScheduleForAdditionActionExtension"
@@ -257,6 +273,10 @@
 
     <extensionPoint name="vcs.diffRevisionMetadataProvider"
                     interface="com.intellij.openapi.diff.impl.DiffRevisionMetadataProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.fileListenerIgnoredFilesProvider"
+                    interface="com.intellij.openapi.vcs.VcsFileListenerIgnoredFilesProvider"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

@@ -1,19 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update
 
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil.equalsCaseSensitive
 import com.intellij.openapi.vcs.changes.ContentRevision
-import com.intellij.openapi.vcs.update.UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.io.File
+import java.nio.file.Path
 import kotlin.system.measureTimeMillis
 
 interface FilePathChange {
@@ -23,28 +25,33 @@ interface FilePathChange {
   class Simple(override val beforePath: FilePath?, override val afterPath: FilePath?) : FilePathChange
 }
 
+@ApiStatus.Internal
 object RefreshVFsSynchronously {
   private val TRACE_LOG = Logger.getInstance("#trace.RefreshVFsSynchronously")
   private val TIME_LOG = Logger.getInstance("#time.RefreshVFsSynchronously")
 
   @JvmStatic
   fun trace(message: @NonNls String) {
-    if (TRACE_LOG.isDebugEnabled) {
-      TRACE_LOG.debug("RefreshVFsSynchronously: $message")
-    }
+    TRACE_LOG.debug { "RefreshVFsSynchronously: $message" }
   }
 
-  @JvmStatic
   fun updateAllChanged(updatedFiles: UpdatedFiles) {
     val collector = FilesCollector()
-    iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, collector)
+    UpdateFilesHelper.iterateFileGroupFilesDeletedOnServerFirst(updatedFiles, collector)
     refreshDeletedFiles(collector.deletedFiles)
     refreshFiles(collector.files)
   }
 
-  @JvmStatic
-  fun refreshFiles(files: Collection<File>) {
-    if (files.isEmpty()) return
+  fun findVirtualFilesWithRefresh(files: List<File>): List<VirtualFile> {
+    refreshFiles(files.map { it.toPath() })
+    return files.mapNotNull { VfsUtil.findFileByIoFile(it, false) }
+  }
+
+  fun refreshFiles(files: Collection<Path>) {
+    if (files.isEmpty()) {
+      return
+    }
+
     if (TRACE_LOG.isDebugEnabled) {
       TRACE_LOG.debug("RefreshVFsSynchronously#refreshFiles: $files", Throwable())
     }
@@ -70,77 +77,83 @@ object RefreshVFsSynchronously {
     markDirtyAndRefresh(isRecursive = true, files)
   }
 
-  private fun refreshDeletedFiles(files: Collection<File>) {
+  private fun refreshDeletedFiles(files: Collection<Path>) {
     if (files.isEmpty()) return
     if (TRACE_LOG.isDebugEnabled) {
       TRACE_LOG.debug("RefreshVFsSynchronously#refreshDeletedFiles: $files", Throwable())
     }
-    val toRefresh = files.mapNotNullTo(mutableSetOf()) { findValidParent(it.parentFile) }
+    val toRefresh = files.mapNotNullTo(LinkedHashSet()) { findValidParent(it.parent) }
     markDirtyAndRefresh(isRecursive = true, toRefresh)
   }
 
   private fun markDirtyAndRefresh(isRecursive: Boolean, files: Collection<VirtualFile>) {
     val time = measureTimeMillis {
       runWithProgressText {
-        markDirtyAndRefresh(false, isRecursive, false, *files.toTypedArray())
+        VfsUtil.markDirtyAndRefresh(false, isRecursive, false, *files.toTypedArray())
       }
     }
-    if (TIME_LOG.isDebugEnabled) {
-      TIME_LOG.debug("VFS refresh took ${time}ms, ${files.size} files, isRecursive=$isRecursive")
-    }
+    TIME_LOG.debug { "VFS refresh took ${time}ms, ${files.size} files, isRecursive=$isRecursive" }
   }
 
-  private fun runWithProgressText(task: () -> Unit) {
-    val indicator = ProgressManager.getInstance().progressIndicator
-    if (indicator == null) {
-      task()
-      return
-    }
-
-    val oldText = indicator.text
-    if (oldText.isNullOrEmpty()) {
-      indicator.text = IdeCoreBundle.message("file.synchronize.progress")
-      task()
-      indicator.text = oldText
-    }
-    else {
-      val oldText2 = indicator.text2
-      indicator.text2 = IdeCoreBundle.message("file.synchronize.progress")
-      task()
-      indicator.text2 = oldText2
-    }
-  }
-
-  private fun findValidParent(file: File?): VirtualFile? =
-    generateSequence(file) { it.parentFile }
-      .mapNotNull { LocalFileSystem.getInstance().findFileByIoFile(it) }
+  private fun findValidParent(file: Path?): VirtualFile? {
+    return generateSequence(file) { it.parent }
+      .mapNotNull { LocalFileSystem.getInstance().findFileByNioFile(it) }
       .firstOrNull { it.isValid }
+  }
 
   @JvmStatic
-  fun updateChangesForRollback(changes: List<Change>) = refresh(changes, REVERSED_CHANGE_WRAPPER)
+  fun updateChangesForRollback(changes: List<Change>) {
+    refresh(changes, REVERSED_CHANGE_WRAPPER)
+  }
 
   @JvmStatic
-  fun updateChanges(changes: Collection<Change>) = refresh(changes, CHANGE_WRAPPER)
+  fun updateChanges(changes: Collection<Change>) {
+    refresh(changes, CHANGE_WRAPPER)
+  }
 
-  fun refresh(changes: Collection<FilePathChange>, isRollback: Boolean = false) =
+  fun refresh(changes: Collection<FilePathChange>, isRollback: Boolean = false) {
     refresh(changes, if (isRollback) REVERSED_FILE_PATH_CHANGE_WRAPPER else FILE_PATH_CHANGE_WRAPPER)
+  }
 
   private fun <T> refresh(changes: Collection<T>, wrapper: Wrapper<T>) {
-    val files = mutableSetOf<File>()
-    val deletedFiles = mutableSetOf<File>()
+    val files = LinkedHashSet<Path>()
+    val deletedFiles = LinkedHashSet<Path>()
     changes.forEach { change ->
       val beforePath = wrapper.getBeforePath(change)
       val afterPath = wrapper.getAfterPath(change)
 
       beforePath?.let {
-        (if (wrapper.isBeforePathDeleted(change)) deletedFiles else files) += it.ioFile
+        (if (wrapper.isBeforePathDeleted(change)) deletedFiles else files).add(it.ioFile.toPath())
       }
       afterPath?.let {
-        if (it != beforePath) files += it.ioFile
+        if (it != beforePath) {
+          files.add(it.ioFile.toPath())
+        }
       }
     }
     refreshFiles(files)
     refreshDeletedFiles(deletedFiles)
+  }
+}
+
+private fun runWithProgressText(task: () -> Unit) {
+  val indicator = ProgressManager.getInstance().progressIndicator
+  if (indicator == null) {
+    task()
+    return
+  }
+
+  val oldText = indicator.text
+  if (oldText.isNullOrEmpty()) {
+    indicator.text = IdeCoreBundle.message("file.synchronize.progress")
+    task()
+    indicator.text = oldText
+  }
+  else {
+    val oldText2 = indicator.text2
+    indicator.text2 = IdeCoreBundle.message("file.synchronize.progress")
+    task()
+    indicator.text2 = oldText2
   }
 }
 
@@ -175,11 +188,11 @@ private interface Wrapper<T> {
 }
 
 private class FilesCollector : UpdateFilesHelper.Callback {
-  val files = mutableSetOf<File>()
-  val deletedFiles = mutableSetOf<File>()
+  @JvmField val files = LinkedHashSet<Path>()
+  @JvmField val deletedFiles = LinkedHashSet<Path>()
 
   override fun onFile(filePath: String, groupId: String) {
-    val file = File(filePath)
+    val file = Path.of(filePath)
     if (FileGroup.REMOVED_FROM_REPOSITORY_ID == groupId || FileGroup.MERGED_WITH_TREE_CONFLICT.endsWith(groupId)) {
       deletedFiles.add(file)
     }

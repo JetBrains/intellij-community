@@ -29,6 +29,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -197,6 +198,7 @@ public abstract class ASTDelegatePsiElement extends PsiElementBase {
   /**
    * @deprecated Use {@link #findChildByType(TokenSet)} instead
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   protected @Nullable PsiElement findChildByFilter(@NotNull TokenSet tokenSet) {
     ASTNode[] nodes = getNode().getChildren(tokenSet);

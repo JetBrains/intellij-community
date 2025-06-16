@@ -4,6 +4,8 @@ package com.intellij.ide.startup.importSettings
 enum class TransferableIdeId {
   DummyIde,
   VSCode,
+  Cursor,
+  Windsurf,
   VisualStudio,
   VisualStudioForMac
 }

@@ -7,6 +7,12 @@ jvm_resources(
   strip_prefix = "resources"
 )
 
+jvm_resources(
+  name = "ide-metrics-benchmark_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "ide-metrics-benchmark",
   module_name = "intellij.tools.ide.metrics.benchmark",
@@ -17,6 +23,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-databind",
     "@lib//:jackson-module-kotlin",
+    "//platform/core-api:core",
     "//platform/diagnostic/telemetry",
     "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
     "//tools/intellij.tools.ide.util.common:ide-util-common",
@@ -37,6 +44,7 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-databind",
     "@lib//:jackson-module-kotlin",
+    "//platform/core-api:core",
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "@lib//:junit4",
@@ -50,7 +58,10 @@ jvm_library(
     "@lib//:opentelemetry",
     "//platform/boot",
   ],
-  runtime_deps = [":ide-metrics-benchmark_resources"]
+  runtime_deps = [
+    ":ide-metrics-benchmark_resources",
+    ":ide-metrics-benchmark_test_resources",
+  ]
 )
 
 jvm_test(

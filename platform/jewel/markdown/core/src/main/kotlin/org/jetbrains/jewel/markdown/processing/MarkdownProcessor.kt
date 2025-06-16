@@ -55,6 +55,9 @@ import org.jetbrains.jewel.markdown.scrolling.ScrollingSynchronizer
  *   provided by the [MarkdownParserFactory], but you can provide your own if you need to customize the parser — e.g.,
  *   to ignore certain tags. If [markdownMode] is `MarkdownMode.WithEditor`, make sure you set
  *   `includeSourceSpans(IncludeSourceSpans.BLOCKS)` on the parser.
+ * @param languageRecognizer A lambda that can recognize code language names (e.g., when used for fenced code blocks)
+ *   and convert them into a [MimeType]. By default, this uses [MimeType.Known.fromMarkdownLanguageName], but you can
+ *   provide your own implementation to, for example, support languages that Jewel doesn't recognize yet.
  */
 @ExperimentalJewelApi
 public class MarkdownProcessor(
@@ -62,6 +65,7 @@ public class MarkdownProcessor(
     private val markdownMode: MarkdownMode = MarkdownMode.Standalone,
     private val commonMarkParser: Parser =
         MarkdownParserFactory.create(optimizeEdits = markdownMode is MarkdownMode.EditorPreview, extensions),
+    private val languageRecognizer: (String) -> MimeType? = { MimeType.Known.fromMarkdownLanguageName(it) },
 ) {
     /** The [block-level processor extensions][MarkdownBlockProcessorExtension]s used by this processor. */
     public val blockExtensions: List<MarkdownBlockProcessorExtension> =
@@ -74,9 +78,14 @@ public class MarkdownProcessor(
     public val delimitedInlineExtensions: List<MarkdownDelimitedInlineProcessorExtension> =
         extensions.mapNotNull { it.delimitedInlineProcessorExtension }
 
-    private var currentState = State(emptyList(), emptyList(), emptyList())
+    private var currentState = State("", emptyList())
 
-    @TestOnly internal fun getCurrentIndexesInTest() = currentState.indexes
+    @TestOnly
+    internal fun getCurrentIndexesInTest() = buildList {
+        for (block in currentState.blocks) {
+            block.traverseAll { node -> add(node.sourceSpans) }
+        }
+    }
 
     private val scrollingSynchronizer: ScrollingSynchronizer? =
         (markdownMode as? MarkdownMode.EditorPreview)?.scrollingSynchronizer
@@ -109,137 +118,109 @@ public class MarkdownProcessor(
 
     @VisibleForTesting
     internal fun processWithQuickEdits(@Language("Markdown") rawMarkdown: String): List<Block> {
-        val (previousLines, previousBlocks, previousIndexes) = currentState
-        val newLines = rawMarkdown.lines()
-        val nLinesDelta = newLines.size - previousLines.size
-
-        // Find a block prior to the first one changed in case some elements merge during the update
-        var firstBlock = 0
-        var firstLine = 0
-        var currFirstBlock = 0
-        var currFirstLine = 0
-        outerLoop@ for ((i, spans) in previousIndexes.withIndex()) {
-            val (_, end) = spans
-            for (j in currFirstLine..end) {
-                if (j < 0 || j >= newLines.size || newLines[j] != previousLines[j]) {
-                    break@outerLoop
-                }
-            }
-            firstBlock = currFirstBlock
-            firstLine = currFirstLine
-            currFirstBlock = i + 1
-            currFirstLine = end + 1
+        val (previousText, previousBlocks) = currentState
+        if (previousText == rawMarkdown) return previousBlocks
+        // make sure we have at least one element
+        if (previousBlocks.isEmpty()) {
+            val newBlocks = parseRawMarkdown(rawMarkdown)
+            currentState = State(rawMarkdown, newBlocks)
+            return newBlocks
         }
-
-        // Find a block following the last one changed in case some elements merge during the update
-        var lastBlock = previousBlocks.size
-        var lastLine = previousLines.size
-        var currLastBlock = lastBlock
-        var currLastLine = lastLine
-        outerLoop@ for ((i, spans) in previousIndexes.withIndex().reversed()) {
-            val (begin, _) = spans
-            for (j in begin until currLastLine) {
-                val newIndex = j + nLinesDelta
-                if (newIndex < 0 || newIndex >= newLines.size || previousLines[j] != newLines[newIndex]) {
-                    break@outerLoop
-                }
-            }
-            lastBlock = currLastBlock
-            lastLine = currLastLine
-            currLastBlock = i
-            currLastLine = begin
-        }
-
-        if (firstLine > lastLine + nLinesDelta) {
-            // no change
-            return previousBlocks
-        }
-
-        val updatedText = newLines.subList(firstLine, lastLine + nLinesDelta).joinToString("\n", postfix = "\n")
-        val updatedBlocks: List<Block> = parseRawMarkdown(updatedText)
-        val updatedIndexes =
-            updatedBlocks.map { node ->
-                // special case for a bug where LinkReferenceDefinition is a Node,
-                // but it takes over sourceSpans from the following Block
-                if (node.sourceSpans.isEmpty()) {
-                    node.sourceSpans = node.previous.sourceSpans
-                }
-
-                val firstLineIndex = node.sourceSpans.first().lineIndex + firstLine
-                val lastLineIndex = node.sourceSpans.last().lineIndex + firstLine
-
-                firstLineIndex to lastLineIndex
-            }
-
-        val suffixIndexes =
-            previousIndexes.subList(lastBlock, previousBlocks.size).map {
-                (it.first + nLinesDelta) to (it.second + nLinesDelta)
-            }
-
-        val newBlocks =
-            previousBlocks.subList(0, firstBlock) +
-                updatedBlocks +
-                previousBlocks.subList(lastBlock, previousBlocks.size)
-
-        val newIndexes = previousIndexes.subList(0, firstBlock) + updatedIndexes + suffixIndexes
-
-        // Processor only re-parses the changed part of the document, which has two outcomes:
-        //   1. sourceSpans in updatedBlocks start from line index 0, not from the actual line
+        val blocksInfo = findChangedBlocks(previousText, rawMarkdown, previousBlocks)
+        val firstBlock = blocksInfo.firstBlock
+        val blockAfterLast = blocksInfo.blockAfterLast
+        val updatedBlocks = parseRawMarkdown(blocksInfo.updatedText)
+        val firstBlockOffset =
+            if (firstBlock == -1) SourceSpan.of(0, 0, 0, 0) else previousBlocks[firstBlock].sourceSpans.first()
+        // sourceSpans in updatedBlocks start from line index 0, not from the actual line
         //      the update part starts in the document;
-        //   2. sourceSpans in blocks after the changed part remain unchanged
-        //      (therefore irrelevant too).
-        //
-        // Addressing the second outcome is easy, as all the lines there were just shifted by
-        // nLinesDelta.
-
-        for (i in lastBlock until newBlocks.size) {
-            newBlocks[i].traverseAll { node ->
-                node.sourceSpans =
-                    node.sourceSpans.map { span ->
-                        SourceSpan.of(span.lineIndex + nLinesDelta, span.columnIndex, span.inputIndex, span.length)
-                    }
-            }
-        }
-
-        // The first outcome is a bit trickier. Consider a fresh new block with the following
-        // structure:
-        //
-        //             indexes spans
-        // Block A     [10-20] (0-10)
-        //   block A1  [ n/a ] (0-2)
-        //   block A2  [ n/a ] (3-10)
-        // Block B     [21-30] (11-20)
-        //   block B1  [ n/a ] (11-16)
-        //   block B2  [ n/a ] (17-20)
-        //
-        // There are two updated blocks with two children each.
-        // Note that at this point the indexes are updated, yet they only exist for the topmost
-        // blocks.
-        // So, to calculate actual spans for, for example, block B2 (B2s), we need to also take into
-        // account
-        // the first index of the block B (Bi) and the first span of the block B (Bs) and use the
-        // formula
-        // B2s = (B2s - Bs) + Bi
-        for ((block, indexes) in updatedBlocks.zip(updatedIndexes)) {
-            val firstSpanLineIndex = block.sourceSpans.firstOrNull()?.lineIndex ?: continue
-            val firstIndex = indexes.first
+        for (block in updatedBlocks) {
             block.traverseAll { node ->
                 node.sourceSpans =
                     node.sourceSpans.map { span ->
                         SourceSpan.of(
-                            span.lineIndex - firstSpanLineIndex + firstIndex,
+                            span.lineIndex + firstBlockOffset.lineIndex,
                             span.columnIndex,
-                            span.inputIndex,
+                            span.inputIndex + firstBlockOffset.inputIndex,
+                            span.length,
+                        )
+                    }
+            }
+        }
+        val nCharsDelta = rawMarkdown.length - previousText.length
+        val suffixBlocks = previousBlocks.subList(blockAfterLast, previousBlocks.size)
+        // Addressing the remaining blocks which shift by lines delta between new and old text.
+        for (block in suffixBlocks) {
+            block.traverseAll { node ->
+                node.sourceSpans =
+                    node.sourceSpans.map { span ->
+                        SourceSpan.of(
+                            span.lineIndex + blocksInfo.nLinesDelta,
+                            span.columnIndex,
+                            span.inputIndex + nCharsDelta,
                             span.length,
                         )
                     }
             }
         }
 
-        currentState = State(newLines, newBlocks, newIndexes)
+        val prefixBlocks = if (firstBlock == -1) emptyList() else previousBlocks.subList(0, firstBlock.coerceAtLeast(0))
+        val newBlocks = prefixBlocks + updatedBlocks + suffixBlocks
+        currentState = State(rawMarkdown, newBlocks)
 
         return newBlocks
     }
+
+    /**
+     * Identifies the range of `Block` objects in `previousBlocks` affected by changes between `previousText` and
+     * `updatedText`.
+     *
+     * This function is designed to intelligently handle changes occurring near block boundaries. It includes a block
+     * *before* the actual textual change to accommodate potential block merging.
+     */
+    @VisibleForTesting
+    internal fun findChangedBlocks(
+        previousText: String,
+        fullUpdatedText: String,
+        previousBlocks: List<Block>,
+    ): FindChangedBlocksResult {
+        val previousStartIndexes = previousBlocks.map { block -> block.sourceSpans.first().inputIndex }
+        val previousEndIndexes =
+            previousBlocks.map { block -> block.sourceSpans.last().let { it.inputIndex + it.length } }
+        val nCharsDelta = fullUpdatedText.length - previousText.length
+        val commonPrefix = previousText.commonPrefixWith(fullUpdatedText)
+        val prefixPos = commonPrefix.length
+        // remove prefixes to avoid overlap
+        val commonSuffix =
+            previousText.removePrefix(commonPrefix).commonSuffixWith(fullUpdatedText.removePrefix(commonPrefix))
+        val suffixPos = previousText.length - commonSuffix.length
+        val nLinesDelta =
+            fullUpdatedText
+                .subSequence(prefixPos, fullUpdatedText.length - commonSuffix.length)
+                .lineSequence()
+                .count() - previousText.subSequence(prefixPos, suffixPos).lineSequence().count()
+        // if modification starts at the edge, include the previous block by using less instead of less equal
+        val firstBlock = previousStartIndexes.indexOfLast { it < prefixPos }
+        val blockAfterLast =
+            previousEndIndexes.indexOfFirst { suffixPos <= it }.let { if (it == -1) previousBlocks.size else it + 1 }
+        val changedText =
+            fullUpdatedText.substring(
+                if (firstBlock == -1) 0 else previousStartIndexes[firstBlock],
+                if (blockAfterLast == previousBlocks.size) {
+                    fullUpdatedText.length
+                } else {
+                    previousStartIndexes[blockAfterLast] - 1 + nCharsDelta
+                },
+            )
+        return FindChangedBlocksResult(firstBlock, blockAfterLast, changedText, nLinesDelta)
+    }
+
+    internal data class FindChangedBlocksResult(
+        val firstBlock: Int,
+        val blockAfterLast: Int,
+        val updatedText: String,
+        val nLinesDelta: Int,
+    )
 
     private fun parseRawMarkdown(@Language("Markdown") rawMarkdown: String): List<Block> {
         val document =
@@ -265,15 +246,21 @@ public class MarkdownProcessor(
             }
 
             else -> null
-        }.also { block ->
+        }.let { block ->
             if (scrollingSynchronizer != null && this is Block && block != null) {
                 postProcess(scrollingSynchronizer, this, block)
+            } else {
+                block
             }
         }
 
-    private fun postProcess(scrollingSynchronizer: ScrollingSynchronizer, block: Block, mdBlock: MarkdownBlock) {
-        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return
-        scrollingSynchronizer.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex)
+    private fun postProcess(
+        scrollingSynchronizer: ScrollingSynchronizer,
+        block: Block,
+        mdBlock: MarkdownBlock,
+    ): MarkdownBlock {
+        val spans = block.sourceSpans.takeIf { it.isNotEmpty() } ?: return mdBlock
+        return scrollingSynchronizer.acceptBlockSpans(mdBlock, spans.first().lineIndex..spans.last().lineIndex)
     }
 
     private fun Paragraph.toMarkdownParagraph(): MarkdownBlock.Paragraph =
@@ -288,10 +275,7 @@ public class MarkdownProcessor(
     }
 
     private fun FencedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.FencedCodeBlock =
-        CodeBlock.FencedCodeBlock(
-            content = literal.removeSuffix("\n"),
-            mimeType = MimeType.Known.fromMarkdownLanguageName(info),
-        )
+        CodeBlock.FencedCodeBlock(content = literal.removeSuffix("\n"), mimeType = languageRecognizer(info))
 
     private fun IndentedCodeBlock.toMarkdownCodeBlockOrNull(): CodeBlock.IndentedCodeBlock =
         CodeBlock.IndentedCodeBlock(literal.trimEnd('\n'))
@@ -363,5 +347,6 @@ public class MarkdownProcessor(
     public fun withExtension(extension: MarkdownProcessorExtension): MarkdownProcessor =
         MarkdownProcessor(extensions + extension, markdownMode, commonMarkParser)
 
-    private data class State(val lines: List<String>, val blocks: List<Block>, val indexes: List<Pair<Int, Int>>)
+    /** Store parsed blocks and previous text to find changed characters */
+    private data class State(val text: String, val blocks: List<Block>)
 }

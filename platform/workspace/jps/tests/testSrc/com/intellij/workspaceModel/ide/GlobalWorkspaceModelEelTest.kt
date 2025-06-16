@@ -4,7 +4,9 @@ package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
@@ -12,7 +14,6 @@ import com.intellij.platform.testFramework.junit5.eel.fixture.tempDirFixture
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.testEntities.entities.StringEntity
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -20,20 +21,30 @@ import com.intellij.util.application
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelRegistry
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 
 @TestApplication
 class GlobalWorkspaceModelEelTest {
-  val eel = eelFixture(EelPath.OS.UNIX)
+  val eel = eelFixture(EelPlatform.Linux(EelPlatform.Arch.Unknown))
 
   val eelTempDir = eel.tempDirFixture()
   val eelProject = projectFixture(eelTempDir)
 
   val localProject = projectFixture()
 
+  fun assumeRegistryValueSet() {
+    /**
+     * Cannot use [com.intellij.testFramework.junit5.RegistryKey] here because here we need to have registry value
+     * even before [com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache] is initialized
+     * (see [com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelSeparationListener])
+     */
+    Assumptions.assumeTrue(Registry.get("ide.workspace.model.per.environment.model.separation").asBoolean())
+  }
+
   @Test
-  @RegistryKey("ide.workspace.model.per.environment.model.separation", "true")
   fun `global workspace model entities are separated`(): Unit = timeoutRunBlocking {
+    assumeRegistryValueSet()
     application.service<GlobalWorkspaceModelRegistry>().dropCaches()
 
     val globalWorkspaceModelEel = GlobalWorkspaceModel.getInstance(eelProject.get().getEelDescriptor())
@@ -51,9 +62,9 @@ class GlobalWorkspaceModelEelTest {
   }
 
   @Test
-  @RegistryKey("ide.workspace.model.per.environment.model.separation", "true")
   @SystemProperty("ide.tests.permit.global.workspace.model.serialization", "true")
   fun `global workspace model entities are serialized separately`(): Unit = timeoutRunBlocking {
+    assumeRegistryValueSet()
     application.service<GlobalWorkspaceModelRegistry>().dropCaches()
 
     val globalWorkspaceModelEel = GlobalWorkspaceModel.getInstance(eelProject.get().getEelDescriptor())

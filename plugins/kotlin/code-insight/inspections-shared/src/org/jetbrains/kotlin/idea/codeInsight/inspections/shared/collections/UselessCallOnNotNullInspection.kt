@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.collections
 
-import com.intellij.codeInspection.IntentionWrapper
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithDotCallFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -48,7 +48,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         if (newName != null && (notNullType || safeExpression != null)) {
             val fixes = listOfNotNull(
                 createRenameUselessCallFix(expression, newName),
-                safeExpression?.let { IntentionWrapper(ReplaceWithDotCallFix(safeExpression).asIntention()) }
+                safeExpression?.let { LocalQuickFix.from(ReplaceWithDotCallFix(safeExpression)) }
             )
             val descriptor = holder.manager.createProblemDescriptor(
                 expression,
@@ -74,7 +74,7 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
                 safeExpression.operationTokenNode.psi,
                 KotlinBundle.message("this.call.is.useless.with"),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                IntentionWrapper(ReplaceWithDotCallFix(safeExpression).asIntention())
+                ReplaceWithDotCallFix(safeExpression).asQuickFix(),
             )
         }
     }
@@ -96,15 +96,13 @@ class UselessCallOnNotNullInspection : AbstractUselessCallInspection() {
         }
         val codeFragment = KtPsiFactory(expression.project).createExpressionCodeFragment(copiedExpression.text, expression)
         val contentElement = codeFragment.getContentElement() as? KtQualifiedExpression ?: return nonInvertedFix
-        return analyze(codeFragment) {
-            // After changing to the inverted name, we make sure that if the function is inverted, we are calling the correct function.
-            // (Relevant if, for example, a different List.isEmpty() is already defined in the same scope, we do not want to use it)
-            val invertedName = contentElement.invertSelectorFunction()?.callExpression?.calleeExpression?.text
-            if (invertedName != null && !expression.isUsingLabelInScope(invertedName)) {
-                RenameUselessCallFix(invertedName, invert = true)
-            } else {
-                nonInvertedFix
-            }
+        // After changing to the inverted name, we make sure that if the function is inverted, we are calling the correct function.
+        // (Relevant if, for example, a different List.isEmpty() is already defined in the same scope, we do not want to use it)
+        val invertedName = contentElement.invertSelectorFunction()?.callExpression?.calleeExpression?.text
+        return if (invertedName != null && !expression.isUsingLabelInScope(invertedName)) {
+            RenameUselessCallFix(invertedName, invert = true)
+        } else {
+            nonInvertedFix
         }
     }
 }

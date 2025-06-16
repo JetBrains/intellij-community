@@ -9,6 +9,7 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.PomRenameableTarget
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 
 interface UrlPathReferenceTarget : PomRenameableTarget<Any?> {
   val context: UrlPathContext
@@ -20,7 +21,7 @@ interface UrlPathReferenceTarget : PomRenameableTarget<Any?> {
   fun toElement(reference: UrlPathReference): PsiElement
 }
 
-class UrlPathReference @JvmOverloads internal constructor(
+class UrlPathReference @JvmOverloads @ApiStatus.Internal constructor(
   val context: UrlPathContext,
   host: PsiElement,
   range: TextRange,

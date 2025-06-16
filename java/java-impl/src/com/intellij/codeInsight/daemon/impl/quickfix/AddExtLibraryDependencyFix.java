@@ -53,12 +53,12 @@ final class AddExtLibraryDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) {
     return !project.isDisposed() && !myCurrentModule.isDisposed();
   }
 
   @Override
-  public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @Nullable Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     ModalityState modality = ModalityState.defaultModalityState();
     JavaProjectModelModificationService.getInstance(project)
       .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
@@ -86,7 +86,7 @@ final class AddExtLibraryDependencyFix extends OrderEntryFix {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     if (myQualifiedClassName == null) {
       return new IntentionPreviewInfo.Html(
         HtmlChunk.text(

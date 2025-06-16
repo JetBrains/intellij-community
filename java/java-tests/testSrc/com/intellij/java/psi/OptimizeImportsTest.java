@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
@@ -62,12 +62,18 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     super.setUp();
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     boolean preserveModuleImports = javaSettings.isPreserveModuleImports();
+    boolean deleteUnusedModuleImports = javaSettings.isDeleteUnusedModuleImports();
     PackageEntryTable table = javaSettings.IMPORT_LAYOUT_TABLE;
+    int classOnDemand = javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND;
+    int namesOnDemand = javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND;
     Disposer.register(getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
+        javaSettings.setDeleteUnusedModuleImports(deleteUnusedModuleImports);
         javaSettings.setPreserveModuleImports(preserveModuleImports);
         javaSettings.IMPORT_LAYOUT_TABLE = table;
+        javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = classOnDemand;
+        javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = namesOnDemand;
       }
     });
     myFixture.enableInspections(new UnusedDeclarationInspection());
@@ -167,6 +173,18 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
   public void testConflictModuleImport(){
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+    myFixture.addClass("package p1; public class List {}");
+    myFixture.addClass("package p1; public class A1 {}");
+    myFixture.addClass("package p1; public class A2 {}");
+    myFixture.addClass("package p1; public class A3 {}");
+    myFixture.addClass("package p1; public class A4 {}");
+    myFixture.addClass("package p1; public class A5 {}");
+    doTest();
+  }
+
+  public void testConflictModuleImportDoNotDeleteModule(){
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
     myFixture.addClass("package p1; public class List {}");
     myFixture.addClass("package p1; public class A1 {}");
     myFixture.addClass("package p1; public class A2 {}");
@@ -218,6 +236,17 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
       myFixture.addClass("package p1; public class A5 {}");
       doTest();
     });
+  }
+
+
+  public void testDontShowOnDemandIfAllSingles() {
+    myFixture.addClass("package p1; public class List<T> {}");
+    myFixture.addClass("package p2; public class List<T> {}");
+    myFixture.addClass("package p2; public class Something {}");
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+    javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
+    javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 1;
+    doTest();
   }
 
   public void testConflictStaticImport(){
@@ -400,7 +429,7 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     myFixture.type('A'); // make file dirty
     myFixture.type('\b');
     IntentionAction fix = ReadAction.nonBlocking(() -> QuickFixFactory.getInstance().createOptimizeImportsFix(true, myFixture.getFile())).submit(
-      AppExecutorUtil.getAppExecutorService()).get();
+      AppExecutorUtil.getAppExecutorService()).get().asIntention();
     myFixture.doHighlighting(); // wait until highlighting is finished to .isAvailable() return true
     boolean old = CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).isOptimizeImportsOnTheFly();
     CodeInsightWorkspaceSettings.getInstance(myFixture.getProject()).setOptimizeImportsOnTheFly(true);
@@ -640,6 +669,51 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     });
   }
 
+  public void testIncorrectOrderWithoutModuleImport() {
+
+    myFixture.addClass("package ccc; public class CCC {}");
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+    javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+    javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
+    javaSettings.setPreserveModuleImports(true);
+    doTest();
+  }
+
+  public void testIncorrectOrderWithoutModuleImportConfigWithModule() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package ccc; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
+  public void testIncorrectOrderWithoutModuleImportMixStaticAndNonStatic() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
+
+      myFixture.addClass("package ccc; public class CCC {}");
+      JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
+
+      javaSettings.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
+      javaSettings.IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+      javaSettings.setPreserveModuleImports(true);
+      doTest();
+    });
+  }
+
   public void testImportModuleOverOtherImports() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.getMinimumLevel(), () -> {
       myFixture.addClass("package aaa; public class AAA {}");
@@ -694,7 +768,8 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   }
 
 
-  public void testDoNotInsertImportForClassVisibleByInheritanceWithModuleConflict() {
+  public void testDoNotInsertImportForClassVisibleByInheritanceWithModuleConflictDoNotDeleteModule() {
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
     myFixture.addClass("""
                          package one;
                          public interface Super {
@@ -723,6 +798,49 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
                          """);
     doTest();
   }
+
+  public void testDoNotInsertImportForClassVisibleByInheritanceWithModuleConflict() {
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(true);
+    myFixture.addClass("""
+                         package one;
+                         public interface Super {
+                           class List {}
+                         
+                           List x();
+                         }
+                         """);
+    myFixture.addClass("""
+                         package two;
+                         public class List {}
+                         public class One {}
+                         public class Two {}
+                         public class Three {}
+                         public class Four {}
+                         public class Five {}
+                         """);
+    myFixture.addClass("""
+                         package three;
+                         public class List {}
+                         public class Six {}
+                         public class Seven {}
+                         public class Eight {}
+                         public class Nine {}
+                         public class Ten {}
+                         """);
+    doTest();
+  }
+
+  public void testNotDeleteModuleImport() {
+    JavaCodeStyleSettings.getInstance(getProject()).setDeleteUnusedModuleImports(false);
+    doTest();
+  }
+
+  public void testUnresolvedReferenceAfterParenthesis() {
+    doTest();
+  }
+
+  public void testInvalidExtendsList() { doTest(); }
+  
   private void doTest() {
     doTest(".java");
   }

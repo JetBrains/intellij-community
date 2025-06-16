@@ -23,7 +23,7 @@ internal class GHEnterpriseServerMetadataLoader(serviceCs: CoroutineScope) {
     .build<GithubServerPath, Deferred<GHEnterpriseServerMeta>>()
 
   suspend fun loadMetadata(server: GithubServerPath): GHEnterpriseServerMeta {
-    require(!server.isGithubDotCom) { "Cannot retrieve server metadata from github.com" }
+    require(!server.isGithubDotCom && !server.isGheDataResidency) { "Cannot retrieve server metadata from github.com" }
     return cache.get(server) {
       val metaUrl = server.toApiUrl() + "/meta"
       cs.async {

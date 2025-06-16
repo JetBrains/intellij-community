@@ -7,9 +7,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel.LoadingState
 
-internal interface GitLabMergeRequestDetailsLoadingViewModel {
+@ApiStatus.Internal
+interface GitLabMergeRequestDetailsLoadingViewModel {
   val mergeRequestId: String
   val mergeRequestLoadingFlow: Flow<LoadingState>
 
@@ -23,7 +25,8 @@ internal interface GitLabMergeRequestDetailsLoadingViewModel {
   }
 }
 
-internal class GitLabMergeRequestDetailsLoadingViewModelImpl(
+@ApiStatus.Internal
+class GitLabMergeRequestDetailsLoadingViewModelImpl(
   parentScope: CoroutineScope,
   override val mergeRequestId: String,
   detailsVm: Flow<Result<GitLabMergeRequestDetailsViewModel>>

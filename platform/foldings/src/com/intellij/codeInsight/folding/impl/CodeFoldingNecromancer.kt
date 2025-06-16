@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
-import com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY
+import com.intellij.openapi.editor.impl.FoldingKeys.ZOMBIE_REGION_KEY
 import com.intellij.openapi.editor.impl.zombie.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -24,6 +24,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
 import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -89,7 +90,9 @@ private class CodeFoldingNecromancer(
         val editor = recipe.editorSupplier()
         withContext(Dispatchers.EDT) {
           runReadAction { // set to editor with RA IJPL-159083
-            foldingState.setToEditor(editor)
+            SlowOperations.knownIssue("IJPL-165088").use {
+              foldingState.setToEditor(editor)
+            }
           }
         }
       }

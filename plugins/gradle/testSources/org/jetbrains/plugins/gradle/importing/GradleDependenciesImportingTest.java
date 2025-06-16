@@ -8,17 +8,16 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,11 +28,8 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.GradleManager;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
@@ -45,6 +41,8 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.function.BiPredicate;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
@@ -797,6 +795,34 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     assertModules("project", "project.api", "project.impl");
 
     assertModuleModuleDepScope("project.impl", "project.api", DependencyScope.TEST);
+  }
+
+  @Test
+  @TargetVersions("5.6+")
+  public void testCustomSourceSetOnTestFixtureDependency() throws Exception {
+    createSettingsFile(including("common", "consumer"));
+    createProjectSubFile("common/build.gradle", createBuildScriptBuilder()
+      .withPlugin("java-library")
+      .withPlugin("java-test-fixtures")
+      .generate());
+
+    createProjectSubFile("consumer/build.gradle", createBuildScriptBuilder()
+      .withPlugin("java-library")
+      .withPlugin("java-test-fixtures")
+      .addPostfix("""
+                    sourceSets { customTest }
+                    dependencies {
+                      customTestImplementation(testFixtures(project(':common')))
+                    }
+                    """)
+      .generate());
+
+    importProject();
+
+    assertModules("project",
+                  "project.common", "project.common.main", "project.common.test", "project.common.testFixtures",
+                  "project.consumer", "project.consumer.main", "project.consumer.test", "project.consumer.testFixtures", "project.consumer.customTest");
+    assertProductionOnTestDependencies("project.consumer.customTest", "project.common.testFixtures");
   }
 
 
@@ -2373,22 +2399,22 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     return moduleLibDeps.iterator().next();
   }
 
-  private void runTask(String task) {
-    ExternalSystemTaskId taskId = ExternalSystemTaskId.create(GradleConstants.SYSTEM_ID, ExternalSystemTaskType.EXECUTE_TASK, myProject);
-    String projectPath = getProjectPath();
-    GradleExecutionSettings settings = new GradleManager().getExecutionSettingsProvider().fun(new Pair<>(myProject, projectPath));
-    settings.setTasks(Arrays.asList(task));
-    new GradleTaskManager().executeTasks(projectPath, taskId, settings, new ExternalSystemTaskNotificationListener() {
-      @Override
-      public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-        if (stdOut) {
-          System.out.print(text);
-        }
-        else {
-          System.err.print(text);
-        }
-      }
-    });
+  private void runTask(String task) throws ExecutionException, InterruptedException {
+    ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
+    settings.setTaskNames(Collections.singletonList(task));
+    settings.setExternalProjectPath(getProjectPath());
+    settings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.toString());
+
+    CompletableFuture<Boolean> taskResult = new CompletableFuture<>();
+    TaskExecutionSpec spec = TaskExecutionSpec.create()
+      .withProject(myProject)
+      .withSystemId(GradleConstants.SYSTEM_ID)
+      .withSettings(settings)
+      .withCallback(taskResult)
+      .withProgressExecutionMode(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+      .build();
+    ExternalSystemUtil.runTask(spec);
+    assertTrue(String.format("Gradle task '%s' execution failed", task), taskResult.get());
   }
 
   private static void checkIfSourcesOrJavadocsCanBeAttached(String binaryPath,

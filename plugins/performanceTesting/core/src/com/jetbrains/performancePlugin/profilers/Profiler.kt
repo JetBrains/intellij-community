@@ -1,8 +1,8 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.profilers
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.util.SystemProperties
 import java.io.File
@@ -45,9 +45,7 @@ interface Profiler {
   fun startProfiling(activityName: String, options: List<String>)
 
   suspend fun startProfilingAsync(activityName: String, options: List<String>) {
-    blockingContext {
-      startProfiling(activityName, options)
-    }
+    startProfiling(activityName, options)
   }
 
   @Throws(Exception::class)
@@ -56,9 +54,7 @@ interface Profiler {
   fun stopProfileWithNotification(arguments: String): String
 
   suspend fun stopProfileAsyncWithNotification(arguments: String): String? {
-    return blockingContext {
-      stopProfileWithNotification(arguments)
-    }
+    return stopProfileWithNotification(arguments)
   }
 
   @Throws(IOException::class)

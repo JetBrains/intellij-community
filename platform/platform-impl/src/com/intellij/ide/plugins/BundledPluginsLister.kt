@@ -62,22 +62,21 @@ private class BundledPluginsLister : ModernApplicationStarter() {
           plugin.pluginAliases.mapTo(layout) {
             LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
           }
-          for (module in plugin.content.modules) {
-            val descriptor = module.requireDescriptor()
+          for (module in plugin.contentModules) {
             layout.add(LayoutItemDescriptor(
-              name = module.name,
+              name = module.moduleName,
               kind = if (plugin.pluginId == PluginManagerCore.CORE_ID) {
                 ProductInfoLayoutItemKind.productModuleV2
               }
               else {
                 ProductInfoLayoutItemKind.moduleV2
               },
-              classPath = descriptor.jarFiles?.map { file ->
+              classPath = module.jarFiles?.map { file ->
                 file.relativeTo(homeDir).invariantSeparatorsPathString
               } ?: emptyList(),
             ))
 
-            descriptor.pluginAliases.mapTo(layout) {
+            module.pluginAliases.mapTo(layout) {
               LayoutItemDescriptor(name = it.idString, kind = ProductInfoLayoutItemKind.pluginAlias, classPath = emptyList())
             }
           }

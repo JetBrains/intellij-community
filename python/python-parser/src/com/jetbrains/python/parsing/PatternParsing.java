@@ -357,6 +357,10 @@ public class PatternParsing extends Parsing {
       buildTokenElement(PyElementTypes.NONE_LITERAL_EXPRESSION, myBuilder);
       return true;
     }
+    else if (atToken(PyTokenTypes.ELLIPSIS_LITERAL)) {
+      buildTokenElement(PyElementTypes.ELLIPSIS_LITERAL_EXPRESSION, myBuilder);
+      return true;
+    }
     else if (atAnyOfTokens(PyTokenTypes.PLUS, PyTokenTypes.MINUS) || atAnyOfTokens(PyTokenTypes.NUMERIC_LITERALS)) {
       parseComplexNumber();
       return true;

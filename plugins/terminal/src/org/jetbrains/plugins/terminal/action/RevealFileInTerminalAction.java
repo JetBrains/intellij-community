@@ -12,6 +12,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.TerminalEngine;
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 
 /**
@@ -30,6 +32,10 @@ public final class RevealFileInTerminalAction extends DumbAwareAction {
   }
 
   private static boolean isAvailable(@NotNull AnActionEvent e) {
+    if (TerminalOptionsProvider.getInstance().getTerminalEngine() == TerminalEngine.REWORKED) {
+      return false;
+    }
+
     Project project = e.getProject();
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return project != null && !LightEdit.owns(project) && getSelectedFile(e) != null &&

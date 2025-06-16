@@ -45,7 +45,6 @@ public class PyBlock implements ASTBlock {
                                                                       PyElementTypes.PARAMETER_LIST,
                                                                       PyElementTypes.TUPLE_EXPRESSION,
                                                                       PyElementTypes.PARENTHESIZED_EXPRESSION,
-                                                                      PyElementTypes.SLICE_EXPRESSION,
                                                                       PyElementTypes.SUBSCRIPTION_EXPRESSION,
                                                                       PyElementTypes.GENERATOR_EXPRESSION,
                                                                       PyElementTypes.SEQUENCE_PATTERN,
@@ -758,8 +757,9 @@ public class PyBlock implements ASTBlock {
   }
 
   private boolean isSliceOperand(@NotNull ASTNode child) {
-    if (myNode.getPsi() instanceof PyAstSliceExpression sliceExpression) {
-      final PyAstExpression operand = sliceExpression.getOperand();
+    if (myNode.getPsi() instanceof PyAstSubscriptionExpression subscription &&
+        subscription.getIndexExpression() instanceof PyAstSliceItem) {
+      final PyAstExpression operand = subscription.getOperand();
       return operand.getNode() == child;
     }
     return false;
@@ -1151,8 +1151,8 @@ public class PyBlock implements ASTBlock {
   private static boolean isEllipsis(@NotNull PyAstStatement statement) {
     if (statement instanceof PyAstExpressionStatement) {
       final PyAstExpression expression = ((PyAstExpressionStatement)statement).getExpression();
-      if (expression instanceof PyAstNoneLiteralExpression) {
-        return ((PyAstNoneLiteralExpression)expression).isEllipsis();
+      if (expression instanceof PyAstEllipsisLiteralExpression) {
+        return true;
       }
     }
 

@@ -38,6 +38,11 @@ public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T 
     JpsElementCollection<? extends S> collection = getCollection(parent);
     if (collection == null) return null;
 
+    if (collection instanceof JpsNamedElementCollection<?>) {
+      S element = ((JpsNamedElementCollection<? extends S>)collection).findChild(myElementName);
+      return element != null ? resolve(element) : null;
+    }
+
     final List<? extends S> elements = collection.getElements();
     for (S element : elements) {
       if (element.getName().equals(myElementName)) {
@@ -50,7 +55,18 @@ public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T 
     return null;
   }
 
-  protected abstract @Nullable JpsElementCollection<? extends S> getCollection(@NotNull JpsCompositeElement parent);
+  /**
+   * @deprecated override {@link #getNamedElementCollection} instead to speed up {@link #resolve()}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
+  protected @Nullable JpsElementCollection<? extends S> getCollection(@NotNull JpsCompositeElement parent) {
+    return getNamedElementCollection(parent);
+  }
+  
+  protected @Nullable JpsNamedElementCollection<? extends S> getNamedElementCollection(@NotNull JpsCompositeElement parent) {
+    return null;
+  }
 
   protected abstract @Nullable T resolve(S element);
 

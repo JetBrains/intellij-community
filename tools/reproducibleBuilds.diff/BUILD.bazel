@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "reproducibleBuilds-diff_resources",
+  name = "reproducibleBuilds.diff_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "reproducibleBuilds-diff",
+  name = "reproducibleBuilds.diff",
   module_name = "intellij.tools.reproducibleBuilds.diff",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -18,7 +18,7 @@ jvm_library(
     "@lib//:gson",
   ],
   runtime_deps = [
-    ":reproducibleBuilds-diff_resources",
+    ":reproducibleBuilds.diff_resources",
     "@lib//:commons-compress",
   ]
 )

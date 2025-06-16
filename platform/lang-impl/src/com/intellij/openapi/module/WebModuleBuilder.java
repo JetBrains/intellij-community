@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -78,23 +79,29 @@ public class WebModuleBuilder<T> extends ModuleBuilder {
   public @Nullable Module commitModule(@NotNull Project project, @Nullable ModifiableModuleModel model) {
     Module module = super.commitModule(project, model);
     if (module != null && myTemplate != null) {
-      VirtualFile dir = getModuleDir(module);
-      myTemplate.generateProject(module.getProject(), dir, myGeneratorPeerLazyValue.getValue().getSettings(), module);
+      VirtualFile projectDir = getModuleDir(module);
+      // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+      // @see com.intellij.ide.util.projectWizard.ProjectBuilder#postCommit for more details
+      StartupManager.getInstance(project).runAfterOpened(
+        () -> generateProject(module, projectDir)
+      );
     }
     return module;
   }
 
-  @ApiStatus.Internal
   @Override
-  public @Nullable ProjectConfigurator createProjectConfigurator() {
-    return (project, dir) -> {
-      if (myTemplate != null) {
-        Module module = ModuleUtilCore.findModuleForFile(dir, project);
-        if (module != null) {
-          myTemplate.configureModule(module, dir, myGeneratorPeerLazyValue.getValue().getSettings());
-        }
-      }
-    };
+  @ApiStatus.Internal
+  public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    Module module = ModuleUtilCore.findModuleForFile(projectDir, project);
+    if (module != null && myTemplate != null) {
+      generateProject(module, projectDir);
+    }
+  }
+
+  private void generateProject(@NotNull Module module, @NotNull VirtualFile projectDir) {
+    var project = module.getProject();
+    var settings = myGeneratorPeerLazyValue.getValue().getSettings();
+    myTemplate.generateProject(project, projectDir, settings, module);
   }
 
   private static @NotNull VirtualFile getModuleDir(@NotNull Module module) {

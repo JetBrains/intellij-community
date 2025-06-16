@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.icons.AllIcons;
@@ -9,7 +9,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
@@ -21,6 +20,7 @@ import com.intellij.xdebugger.impl.XWatch;
 import com.intellij.xdebugger.impl.XWatchImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.pinned.items.PinToTopParentValue;
@@ -203,7 +203,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
     @Override
     protected void evaluated() {
       ApplicationManager.getApplication().invokeLater(() -> {
-        XDebugSession session = XDebugView.getSession(getTree());
+        XDebugSessionProxy session = XDebugView.getSessionProxy(getTree());
         if (session != null) {
           session.rebuildViews();
         }

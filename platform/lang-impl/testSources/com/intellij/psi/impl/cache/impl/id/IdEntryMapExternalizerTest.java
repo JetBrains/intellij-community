@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
@@ -53,6 +54,32 @@ class IdEntryMapExternalizerTest {
       externalizersAreEquivalent(defaultMapImpl, defaultMapExternalizer, optimizedMapExternalizer);
     }
   }
+
+
+  @Test
+  void generatedMapsSerializedIdentically_ByBothSaveMethodsOfOptimizedExternalizer() throws IOException {
+    IdEntryToScopeMapImpl[] generatedMaps = generateMaps().toArray(IdEntryToScopeMapImpl[]::new);
+    for (IdEntryToScopeMapImpl generatedMap : generatedMaps) {
+
+      byte[] directSave = optimizedMapExternalizer.save(generatedMap).toBytes();
+      byte[] safeViaDataOutput = serializeToBytes(generatedMap, optimizedMapExternalizer);
+      assertThat("optimizedExternalizer: binary format must be the same for .save(Map) and .save(DataOutput)",
+                 directSave,
+                 equalTo(safeViaDataOutput));
+    }
+  }
+
+  @Test
+  void emptyMapSerializedIdentically_ByBothSaveMethodsOfOptimizedExternalizer() throws IOException {
+    Map<IdIndexEntry, Integer> emptyMap = Collections.emptyMap();
+    byte[] directSave = optimizedMapExternalizer.save(emptyMap).toBytes();
+      byte[] safeViaDataOutput = serializeToBytes(emptyMap, optimizedMapExternalizer);
+      assertThat("optimizedExternalizer: binary format must be the same for .save(Map) and .save(DataOutput)",
+                 directSave,
+                 equalTo(safeViaDataOutput));
+  }
+
+
   // ================================================ infra ================================================================ //
 
   private static Stream<IdEntryToScopeMapImpl> generateMaps() {

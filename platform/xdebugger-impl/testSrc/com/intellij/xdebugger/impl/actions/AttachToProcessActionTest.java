@@ -14,6 +14,7 @@ import com.intellij.xdebugger.attach.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -661,7 +662,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
   }
 
   @NotNull
-  private static List<XAttachDebugger> createDebuggers(String... names) {
+  private static @Unmodifiable List<XAttachDebugger> createDebuggers(String... names) {
     return ContainerUtil.map(names, s -> new XAttachDebugger() {
       @NotNull
       @Override

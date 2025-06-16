@@ -45,7 +45,7 @@ object GitLessonsUtil {
   // Git tool window must show to reset it
   fun LessonContext.resetGitLogWindow() {
     prepareRuntimeTask {
-      val vcsLogUi = VcsProjectLog.getInstance(project).mainLogUi
+      val vcsLogUi = VcsProjectLog.getInstance(project).mainUi
       vcsLogUi?.filterUi?.clearFilters()
       PropertiesComponent.getInstance(project).setValue("Vcs.Log.Text.Filter.History", null)
 
@@ -75,7 +75,7 @@ object GitLessonsUtil {
       connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
         override fun toolWindowShown(toolWindow: ToolWindow) {
           if (toolWindow.id == ToolWindowId.VCS) {
-            VcsProjectLog.getInstance(project).mainLogUi?.refresher?.setValid(true, false)
+            VcsProjectLog.getInstance(project).mainUi?.refresher?.setValid(true, false)
             connection.disconnect()
           }
         }

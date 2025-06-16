@@ -8,6 +8,13 @@ private const val ktGroup = "org.jetbrains.kotlin"
 internal const val BOOTSTRAP_VERSION = "2.2.255-dev-255"
 
 // see .idea/jarRepositories.xml
+// This is the new repository where artifacts SINCE `2.2.20-dev-2414` are published to.
+private val INTELLIJ_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
+    "intellij-dependencies",
+    "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies",
+)
+
+// This is the old repository which artifacts BEFORE `2.2.20-dev-2414` were published to.
 private val KOTLIN_IDE_DEPS_REPOSITORY = JpsRemoteRepository(
     "kotlin-ide-plugin-deps",
     "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies"
@@ -33,7 +40,6 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
 
     return buildLibraryList(isCommunity) {
         kotlincForIdeWithStandardNaming("kotlinc.allopen-compiler-plugin", kotlincCoordinates)
-        kotlincForIdeWithStandardNaming("kotlinc.android-extensions-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-k2-tests", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-k2", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.analysis-api-fe10", kotlincCoordinates)
@@ -61,10 +67,12 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.scripting-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.compose-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.js-plain-objects-compiler-plugin", kotlincCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-dataframe-compiler-plugin", kotlincCoordinates)
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincCoordinates)
 
         if (!isCommunity) {
             kotlincForIdeWithStandardNaming("kotlinc.kotlin-objcexport-header-generator", kotlincCoordinates)
+            kotlincForIdeWithStandardNaming("kotlinc.kotlin-swift-export", kotlincCoordinates)
         }
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)
@@ -73,9 +81,9 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincCoordinates, transitive = true)
 
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates)
-        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide")
-        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates, repository = KOTLIN_IDE_DEPS_REPOSITORY)
+        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide", repository = KOTLIN_IDE_DEPS_REPOSITORY)
+        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates, repository = KOTLIN_IDE_DEPS_REPOSITORY)
 
         // TODO: KTIJ-32993
         kotlincWithStandardNaming("kotlinc.kotlin-dist", kotlincCoordinates, postfix = "-for-ide", jpsLibraryName = "kotlinc.kotlin-ide-dist")
@@ -105,9 +113,10 @@ private fun buildLibraryList(isCommunity: Boolean, builder: LibraryListBuilder.(
 private fun LibraryListBuilder.kotlincForIdeWithStandardNaming(
     name: String,
     coordinates: ArtifactCoordinates,
-    includeSources: Boolean = true
+    includeSources: Boolean = true,
+    repository: JpsRemoteRepository = INTELLIJ_DEPENDENCIES_REPOSITORY,
 ) {
-    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide")
+    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide", repository = repository)
 }
 
 private fun LibraryListBuilder.kotlincWithStandardNaming(
@@ -117,7 +126,7 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
     postfix: String = "",
     transitive: Boolean = false,
     excludes: List<MavenId> = emptyList(),
-    repository: JpsRemoteRepository = KOTLIN_IDE_DEPS_REPOSITORY,
+    repository: JpsRemoteRepository = INTELLIJ_DEPENDENCIES_REPOSITORY,
     jpsLibraryName: String = name,
 ) {
     require(name.startsWith("kotlinc."))

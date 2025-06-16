@@ -11,18 +11,25 @@ jvm_library(
   name = "externalSystem-impl",
   module_name = "intellij.platform.externalSystem.impl",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api:externalSystem",
+    "//jps/model-api:model",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-impl",
     "//platform/execution-impl",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "//platform/testRunner",
     "//platform/configuration-store-impl:configurationStore-impl",
     "@lib//:kotlin-reflect",
-    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/xdebugger-api:debugger",
     "//platform/statistics",
@@ -51,7 +58,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.platform.externalSystem.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "externalSystem-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "externalSystem-tests",
@@ -64,17 +77,22 @@ jvm_library(
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   associates = ["//platform/external-system-impl:externalSystem-impl"],
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-api:externalSystem",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//platform/object-serializer:objectSerializer",
-    "//platform/object-serializer:objectSerializer_test_lib",
+    "//platform/object-serializer",
+    "//platform/object-serializer:object-serializer_test_lib",
     "//platform/testFramework/extensions:testExtensions",
     "//java/testFramework",
-    "//platform/observable:ide-observable",
+    "//platform/observable",
     "//platform/configuration-store-impl:configurationStore-tests_test_lib",
     "//java/compiler:compiler-tests_test_lib",
-    "//java/compiler/impl:java-compiler-impl",
+    "//java/compiler/impl",
     "@lib//:kotlin-reflect",
     "//java/openapi:java",
     "@lib//:junit4",
@@ -86,7 +104,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/workspace/storage",
     "//platform/platform-util-io:ide-util-io",
-    "//platform/external-system-api/testFramework:externalSystem-testFramework",
+    "//platform/external-system-api/testFramework",
     "//platform/util/jdom",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
@@ -95,7 +113,10 @@ jvm_library(
     "//platform/backend/observation",
     "//platform/backend/observation:observation_test_lib",
     "//plugins/gradle",
-  ]
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+    "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+  ],
+  runtime_deps = [":externalSystem-tests_test_resources"]
 )
 
 jvm_test(

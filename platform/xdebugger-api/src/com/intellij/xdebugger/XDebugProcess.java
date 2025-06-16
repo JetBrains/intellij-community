@@ -66,8 +66,7 @@ public abstract class XDebugProcess {
   public abstract @NotNull XDebuggerEditorsProvider getEditorsProvider();
 
   /**
-   * Called when {@link XDebugSession} is initialized and breakpoints are registered in
-   * {@link XBreakpointHandler}
+   * Called when a tab for {@link XDebugSession} is initialized in the 'Debug' tool window.
    */
   public void sessionInitialized() {
   }

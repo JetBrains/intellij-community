@@ -2,21 +2,28 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "ide-internal_resources",
+  name = "internal_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "ide-internal",
+  name = "internal",
   module_name = "intellij.platform.ide.internal",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
-    "//platform/ui.jcef:ui-jcef",
-    "//platform/platform-impl/bootstrap:ide-bootstrap",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/ui.jcef",
+    "//platform/platform-impl/bootstrap",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl/ui:ide-ui",
+    "//platform/platform-impl/ui",
     "//platform/core-ui",
     "//platform/statistics",
     "//platform/editor-ui-ex:editor-ex",
@@ -30,7 +37,7 @@ jvm_library(
     "//platform/util/coroutines",
     "//platform/statistics/uploader",
     "//platform/util/jdom",
-    "//platform/service-container:serviceContainer",
+    "//platform/service-container",
     "@lib//:guava",
     "@lib//:miglayout-swing",
     "@lib//:kotlinx-serialization-json",
@@ -39,7 +46,10 @@ jvm_library(
     "@lib//:gson",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlin-reflect",
+    "@lib//:jna",
+    "//platform/workspace/storage",
+    "@lib//:jbr-api",
   ],
-  runtime_deps = [":ide-internal_resources"]
+  runtime_deps = [":internal_resources"]
 )
 ### auto-generated section `build intellij.platform.ide.internal` end

@@ -1,4 +1,18 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.jvm.k1">
+  <dependencies>
+    <module name="kotlin.jvm.shared"/>
+    <module name="kotlin.base.scripting.k1"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.scratchFileLanguageProvider"
+            beanClass="com.intellij.lang.LanguageExtensionPoint"
+            dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.kotlin.idea.jvm.k1.scratch.ScratchFileLanguageProvider"/>
+    </extensionPoint>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <fileEditorProvider id="KtsScratchFileEditorProvider"
                         implementation="org.jetbrains.kotlin.idea.jvm.k1.scratch.K1ScratchFileEditorProvider"/>
@@ -31,7 +45,12 @@
     <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin"/>
   </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea.jvm.shared.bytecode">
+    <compilationConfigurationEnricher implementation="org.jetbrains.kotlin.idea.jvm.k1.bytecode.K1CompilationConfigurationEnricher"/>
+  </extensions>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <quickFixContributor implementation="org.jetbrains.kotlin.idea.jvm.k1.quickfix.JvmQuickFixRegistrar"/>
     <scratchFileLanguageProvider language="kotlin"
                                  implementationClass="org.jetbrains.kotlin.idea.jvm.k1.scratch.KtScratchFileLanguageProvider"/>
 

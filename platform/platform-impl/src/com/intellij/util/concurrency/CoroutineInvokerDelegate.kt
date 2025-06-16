@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -54,9 +53,7 @@ internal class EdtCoroutineInvokerDelegate(
       delay(delay.toLong())
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         yield()
-        blockingContext { // We shouldn't really be blocking the EDT, but we still need this for ProgressManager.checkCanceled.
-          runnable()
-        }
+        runnable()
       }
     }
   }
@@ -74,9 +71,7 @@ internal abstract class BgtCoroutineInvokerDelegate(
       }
     }
     else {
-      blockingContext {
-        runnable()
-      }
+      runnable()
     }
   }
 }

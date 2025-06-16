@@ -6,7 +6,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.externalSystem.service.ui.project.path.ExternalProject
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.execution.MavenPomFileChooserDescriptor
 import org.jetbrains.idea.maven.execution.RunnerBundle
@@ -25,17 +24,13 @@ class MavenWorkingDirectoryInfo(private val project: Project) : WorkingDirectory
   override suspend fun collectExternalProjects(): List<ExternalProject> {
     val externalProjects = ArrayList<ExternalProject>()
     val projectsManager = MavenProjectsManager.getInstance(project)
-    val mavenProjects = blockingContext {
-      projectsManager.projects
-    }
+    val mavenProjects = projectsManager.projects
     for (mavenProject in mavenProjects) {
       val module = readAction {
         projectsManager.findModule(mavenProject)
       }
       if (module != null) {
-        val path = blockingContext {
-          mavenProject.directoryFile.path
-        }
+        val path = mavenProject.directoryFile.path
         externalProjects.add(ExternalProject(module.name, path))
       }
     }

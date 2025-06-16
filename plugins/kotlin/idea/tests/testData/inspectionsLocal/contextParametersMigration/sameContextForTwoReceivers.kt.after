@@ -9,5 +9,5 @@ class C1 {
 
 context(c1: C1)
 fun f() {
-    with(c1) { c1.f1() }
+    with(c1) { f1() }
 }

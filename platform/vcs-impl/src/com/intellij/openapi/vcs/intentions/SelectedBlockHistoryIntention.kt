@@ -22,12 +22,12 @@ class SelectedBlockHistoryIntention : IntentionAction, LowPriorityAction {
 
   override fun getText(): String = familyName
 
-  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
+  override fun isAvailable(project: Project, editor: Editor, psiFile: PsiFile): Boolean {
     val selection = getSelection(editor) ?: return false
     return SelectedBlockHistoryAction.isEnabled(project, selection)
   }
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+  override fun invoke(project: Project, editor: Editor, psiFile: PsiFile) {
     val selection = getSelection(editor) ?: return
     SelectedBlockHistoryAction.showHistoryForSelection(selection, project)
   }

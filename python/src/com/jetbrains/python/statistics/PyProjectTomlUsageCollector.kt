@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
 import com.jetbrains.python.packaging.PyRequirementParser
+import com.jetbrains.python.packaging.normalizePackageName
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import org.toml.lang.psi.*

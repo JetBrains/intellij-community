@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -51,7 +52,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class CreateSubclassAction extends BaseIntentionAction {
+public class CreateSubclassAction extends BaseIntentionAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
   private @IntentionName String myText = decapitalize(JavaBundle.message("intention.implement.abstract.class.default.text"));
 
@@ -66,9 +67,9 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     final int position = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(position);
+    PsiElement element = psiFile.findElementAt(position);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
     if (psiClass == null || psiClass.isAnnotationType() || psiClass.isEnum() || psiClass instanceof PsiAnonymousClass ||
         psiClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -103,7 +104,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
     }
 
-    if (shouldCreateInnerClass(psiClass) && !canModify(file)) {
+    if (shouldCreateInnerClass(psiClass) && !canModify(psiFile)) {
       return false;
     }
 
@@ -124,18 +125,18 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
+  public void invoke(final @NotNull Project project, Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
 
     LOG.assertTrue(psiClass != null);
     if (shouldCreateInnerClass(psiClass)) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       createInnerClass(psiClass);
       return;
     }
     if (PsiUtil.isLocalClass(psiClass)) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       createLocalClass(psiClass);
       return;
     }

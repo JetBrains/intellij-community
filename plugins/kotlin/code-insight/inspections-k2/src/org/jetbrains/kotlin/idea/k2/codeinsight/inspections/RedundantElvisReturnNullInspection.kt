@@ -59,12 +59,23 @@ internal class RedundantElvisReturnNullInspection : KotlinApplicableInspectionBa
         return isTargetOfReturn && element.operationToken == KtTokens.ELVIS
     }
 
-    // The LHS of the binary expression must be nullable.
-    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? =
-        element.left
-            ?.expressionType
-            ?.isMarkedNullable
-            ?.asUnit
+    override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
+        val outerReturn = element.getStrictParentOfType<KtReturnExpression>() ?: return null
+        val innerReturn = element.right as? KtReturnExpression ?: return null
+
+        val outerReturnTarget = outerReturn.targetSymbol ?: return null
+        val innerReturnTarget = innerReturn.targetSymbol ?: return null
+
+        // Returns point to different targets, we cannot remove the inner return
+        if (outerReturnTarget != innerReturnTarget) return null
+
+        // The LHS of the binary expression must be nullable.
+        // In case it is not, USELESS_ELVIS inspection is going to be reported by the compiler,
+        // so we don't need to report anything from here.
+        if (element.left?.expressionType?.isMarkedNullable != true) return null
+
+        return Unit
+    }
 
     override fun createQuickFix(
         element: KtBinaryExpression,

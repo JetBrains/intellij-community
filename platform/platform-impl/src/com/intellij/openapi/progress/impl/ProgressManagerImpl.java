@@ -21,6 +21,7 @@ import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
@@ -188,13 +189,17 @@ public final class ProgressManagerImpl extends CoreProgressManager implements Di
    * An absolutely guru method, very dangerous, don't use unless you're desperate,
    * because hooks will be executed on every checkCanceled and can dramatically slow down everything in the IDE.
    */
-  void addCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void addCheckCanceledHook(@NotNull CheckCanceledHook hook) {
     if (myHooks.add(hook)) {
       updateShouldCheckCanceled();
     }
   }
 
-  void removeCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public void removeCheckCanceledHook(@NotNull CheckCanceledHook hook) {
     if (myHooks.remove(hook)) {
       updateShouldCheckCanceled();
     }

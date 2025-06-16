@@ -24,7 +24,7 @@ class BackendHtmlElementFactory:
     val elementType = node.elementType
 
     return when {
-      elementType is XmlStubBasedElementType<*, *>
+      elementType is XmlStubBasedElementType<*>
         -> elementType.createPsi(node)
 
       elementType is HtmlCustomEmbeddedContentTokenType

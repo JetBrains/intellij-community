@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -743,7 +743,8 @@ public class VfsUtilCore {
    * @param file the file
    * @return virtual files that represents paths from root to the passed file
    */
-  static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
+  @ApiStatus.Internal
+  public static VirtualFile @NotNull [] getPathComponents(@NotNull VirtualFile file) {
     List<VirtualFile> componentsList = new ArrayList<>();
     while (file != null) {
       componentsList.add(file);
@@ -820,7 +821,6 @@ public class VfsUtilCore {
    * @return true if the {@code file} path is equal to the {@code path},
    * according to the file's parent directories case sensitivity.
    */
-  @ApiStatus.Experimental
   public static boolean pathEqualsTo(@NotNull VirtualFile file, @NotNull @SystemIndependent String path) {
     path = FileUtil.toCanonicalPath(path);
     int li = path.length();
@@ -853,7 +853,6 @@ public class VfsUtilCore {
    * @return true if the {@code ancestorPath} is equal one of {@code file}'s parents.
    * Corresponding directories case sensitivities are taken into account automatically.
    */
-  @ApiStatus.Experimental
   public static boolean isAncestorOrSelf(@NotNull @SystemIndependent String ancestorPath, @NotNull VirtualFile file) {
     ancestorPath = FileUtil.toCanonicalPath(ancestorPath);
     if (ancestorPath.isEmpty()) {

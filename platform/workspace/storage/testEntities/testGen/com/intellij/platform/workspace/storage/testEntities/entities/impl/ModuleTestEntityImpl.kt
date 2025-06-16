@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.EntityLink
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -32,11 +24,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestE
 internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData) : ModuleTestEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java,
-                                                                                ContentRootTestEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, false)
-    internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CONTENTROOTS_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleTestEntity::class.java, ContentRootTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val FACETS_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ModuleTestEntity::class.java, FacetTestEntity::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOTS_CONNECTION_ID,
@@ -70,8 +61,8 @@ internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData
   }
 
 
-  internal class Builder(result: ModuleTestEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestEntity, ModuleTestEntityData>(
-    result), ModuleTestEntity.Builder {
+  internal class Builder(result: ModuleTestEntityData?) : ModifiableWorkspaceEntityBase<ModuleTestEntity, ModuleTestEntityData>(result),
+                                                          ModuleTestEntity.Builder {
     internal constructor() : this(ModuleTestEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -167,8 +158,8 @@ internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<ContentRootTestEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CONTENTROOTS_CONNECTION_ID, this)!!
+            .toList() as List<ContentRootTestEntity.Builder>) +
           (this.entityLinks[EntityLink(true, CONTENTROOTS_CONNECTION_ID)] as? List<ContentRootTestEntity.Builder> ?: emptyList())
         }
         else {
@@ -214,8 +205,8 @@ internal class ModuleTestEntityImpl(private val dataSource: ModuleTestEntityData
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<FacetTestEntity.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(FACETS_CONNECTION_ID, this)!!
+            .toList() as List<FacetTestEntity.Builder>) +
           (this.entityLinks[EntityLink(true, FACETS_CONNECTION_ID)] as? List<FacetTestEntity.Builder> ?: emptyList())
         }
         else {
@@ -283,7 +274,8 @@ internal class ModuleTestEntityData : WorkspaceEntityData<ModuleTestEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.ModuleTestEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

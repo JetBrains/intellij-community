@@ -70,10 +70,10 @@ public interface PyElementTypes {
   PyElementType IMAGINARY_LITERAL_EXPRESSION = new PyElementType("IMAGINARY_LITERAL_EXPRESSION", Companion.getINSTANCE().getImaginaryLiteralExpressionConstructor());
   PyElementType STRING_LITERAL_EXPRESSION = new PyElementType("STRING_LITERAL_EXPRESSION", Companion.getINSTANCE().getStringLiteralExpressionConstructor());
   PyElementType NONE_LITERAL_EXPRESSION = new PyElementType("NONE_LITERAL_EXPRESSION", Companion.getINSTANCE().getNoneLiteralExpressionConstructor());
+  PyElementType ELLIPSIS_LITERAL_EXPRESSION = new PyElementType("ELLIPSIS_LITERAL_EXPRESSION", Companion.getINSTANCE().getEllipsisLiteralExpressionConstructor());
   PyElementType BOOL_LITERAL_EXPRESSION = new PyElementType("BOOL_LITERAL_EXPRESSION", Companion.getINSTANCE().getBoolLiteralExpressionConstructor());
   PyElementType PARENTHESIZED_EXPRESSION = new PyElementType("PARENTHESIZED_EXPRESSION", Companion.getINSTANCE().getParenthesizedExpressionConstructor());
   PyElementType SUBSCRIPTION_EXPRESSION = new PyElementType("SUBSCRIPTION_EXPRESSION", Companion.getINSTANCE().getSubscriptionExpressionConstructor());
-  PyElementType SLICE_EXPRESSION = new PyElementType("SLICE_EXPRESSION", Companion.getINSTANCE().getSliceExpressionConstructor());
   PyElementType SLICE_ITEM = new PyElementType("SLICE_ITEM", Companion.getINSTANCE().getSliceItemConstructor());
   PyElementType BINARY_EXPRESSION = new PyElementType("BINARY_EXPRESSION", Companion.getINSTANCE().getBinaryExpressionConstructor());
   PyElementType PREFIX_EXPRESSION = new PyElementType("PREFIX_EXPRESSION", Companion.getINSTANCE().getPrefixExpressionConstructor());

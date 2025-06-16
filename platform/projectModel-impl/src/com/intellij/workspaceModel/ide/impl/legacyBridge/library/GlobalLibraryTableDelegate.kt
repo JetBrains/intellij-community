@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -126,7 +125,7 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
           if (library != null) {
             // TODO There won't be any content in libraryImpl as EntityStore's current was already changed
             dispatcher.multicaster.afterLibraryRemoved(library)
-            Disposer.dispose(library)
+            LibraryBridgeImpl.disposeLibrary(library)
           }
         }
         is EntityChange.Replaced -> {
@@ -194,7 +193,7 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
 
   override fun dispose() {
     for (library in getLibraries()) {
-      Disposer.dispose(library)
+      LibraryBridgeImpl.disposeLibrary(library)
     }
   }
 

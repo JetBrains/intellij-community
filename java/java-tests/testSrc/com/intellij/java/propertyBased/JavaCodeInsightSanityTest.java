@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
+import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.PathManager;
@@ -150,7 +151,7 @@ public class JavaCodeInsightSanityTest extends LightJavaCodeInsightFixtureTestCa
     PropertyChecker.checkScenarios(actionsOnJavaFiles(
       MadTestingUtil.randomEditsWithPsiAccessorChecks(
         method ->
-          //method.getName().equals("getReferences") && method.getDeclaringClass().equals(PsiLiteralExpressionImpl.class) ||
+          method.getName().equals("getElementType") && method.getDeclaringClass().equals(StubBasedPsiElementBase.class) ||
           method.getName().equals("getOrCreateInitializingClass") && method.getDeclaringClass().equals(PsiEnumConstantImpl.class)
       )
     ));

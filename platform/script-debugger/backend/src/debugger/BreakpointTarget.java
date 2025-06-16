@@ -87,7 +87,7 @@ public abstract class BreakpointTarget {
 
     public ScriptName(@NotNull Script script) {
       this.script = script;
-      this.name = script.getUrl().toDecodedForm();
+      this.name = script.getUrl().toExternalForm();
     }
 
     public @NotNull String getName() {

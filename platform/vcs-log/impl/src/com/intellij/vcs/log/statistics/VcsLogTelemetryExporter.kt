@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.openapi.vcs.VcsKey
-import com.intellij.openapi.vcs.VcsScope
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogFilter
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogHistory
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogFilter
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogHistory
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LIST
@@ -18,6 +17,7 @@ import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_SORT
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_NAME
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
+import com.intellij.platform.vcs.impl.shared.telemetry.VcsScope
 import com.intellij.util.indexing.diagnostic.dto.toMillis
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILE_HISTORY_COLLECTING_RENAMES
@@ -32,8 +32,8 @@ import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.VCS_
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.VCS_LOG_FILTER
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.sdk.metrics.export.MetricExporter
-import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.ExceptionEventData
+import io.opentelemetry.sdk.trace.data.SpanData
 
 private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {

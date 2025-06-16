@@ -95,7 +95,7 @@ internal object WrongAnnotationTargetFixFactories {
             element: KtAnnotationEntry,
             updater: ModPsiUpdater,
         ) {
-            element.addUseSiteTarget(listOf(useSiteTarget), null)
+            element.addUseSiteTarget(useSiteTarget)
         }
     }
 
@@ -108,7 +108,7 @@ internal object WrongAnnotationTargetFixFactories {
             element: KtAnnotationEntry,
             updater: ModPsiUpdater
         ) {
-            element.addUseSiteTarget(listOf(useSiteTarget), null)
+            element.addUseSiteTarget(useSiteTarget)
         }
 
         override fun getFamilyName(): @IntentionFamilyName String {

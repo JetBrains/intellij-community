@@ -2,11 +2,8 @@
 package com.intellij.openapi.externalSystem.util.environment
 
 import com.intellij.util.EnvironmentUtil
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class SystemEnvironment : Environment {
-
+private class SystemEnvironment : Environment {
   override fun property(name: String): String? {
     return System.getProperty(name)
   }

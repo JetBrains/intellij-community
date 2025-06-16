@@ -15,7 +15,8 @@ public class InternalProblem implements Problem {
   private final @NotNull InternalProblemDefinition definition;
   private final @NotNull InternalContextualLabel contextualLabel;
   private final @NotNull InternalDetails details;
-  private final @NotNull List<Location> location;
+  private final @NotNull List<Location> originLocations;
+  private final @NotNull List<Location> contextualLocations;
   private final @NotNull List<Solution> solutions;
   private final @Nullable InternalFailure failure;
   private final @NotNull InternalAdditionalData additionalData;
@@ -24,7 +25,8 @@ public class InternalProblem implements Problem {
     @NotNull InternalProblemDefinition definition,
     @NotNull InternalContextualLabel contextualLabel,
     @NotNull InternalDetails details,
-    @NotNull List<Location> location,
+    @NotNull List<Location> originLocations,
+    @NotNull List<Location> contextualLocations,
     @NotNull List<Solution> solutions,
     @Nullable InternalFailure failure,
     @NotNull InternalAdditionalData additionalData
@@ -32,7 +34,8 @@ public class InternalProblem implements Problem {
     this.definition = definition;
     this.contextualLabel = contextualLabel;
     this.details = details;
-    this.location = location;
+    this.originLocations = originLocations;
+    this.contextualLocations = contextualLocations;
     this.solutions = solutions;
     this.failure = failure;
     this.additionalData = additionalData;
@@ -54,8 +57,13 @@ public class InternalProblem implements Problem {
   }
 
   @Override
-  public @NotNull List<Location> getLocations() {
-    return location;
+  public @NotNull List<Location> getOriginLocations() {
+    return originLocations;
+  }
+
+  @Override
+  public @NotNull List<Location> getContextualLocations() {
+    return contextualLocations;
   }
 
   @Override

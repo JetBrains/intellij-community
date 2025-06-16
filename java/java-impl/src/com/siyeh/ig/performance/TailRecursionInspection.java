@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -27,7 +28,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.graph.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -62,8 +62,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     if (containingMethod.isVarArgs()) {
       return false;
     }
-    final PsiParameter[] parameters = containingMethod.getParameterList().getParameters();
-    for (final PsiParameter parameter : parameters) {
+    for (PsiParameter parameter : containingMethod.getParameterList().getParameters()) {
       if (parameter.hasModifierProperty(PsiModifier.FINAL)) {
         return false;
       }
@@ -71,29 +70,28 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
     return true;
   }
 
-  private static final class RemoveTailRecursionFix extends PsiUpdateModCommandQuickFix {
+  private static final class RemoveTailRecursionFix extends ModCommandQuickFix {
     @Override
     public @NotNull String getFamilyName() {
       return InspectionGadgetsBundle.message("tail.recursion.replace.quickfix");
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement tailCallToken, @NotNull ModPsiUpdater updater) {
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(tailCallToken, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, true, PsiClass.class, PsiLambdaExpression.class);
       if (method == null) {
-        return;
+        return ModCommand.nop();
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return ModCommand.nop();
       }
       final PsiCodeBlock body = method.getBody();
       if (body == null) {
-        return;
+        return ModCommand.nop();
       }
-      final @NonNls StringBuilder builder = new StringBuilder();
-      builder.append('{');
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
+      final @NonNls StringBuilder builder = new StringBuilder("{");
       final String thisVariableName;
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
       if (methodReturnsContainingClassType(method, containingClass)) {
@@ -110,7 +108,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         thisVariableName = null;
       }
       final boolean tailCallIsContainedInLoop;
-      if (ControlFlowUtils.isInLoop(tailCallToken)) {
+      if (ControlFlowUtils.isInLoop(element)) {
         tailCallIsContainedInLoop = true;
         builder.append(method.getName()).append(':');
       }
@@ -126,7 +124,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
       builder.append('}');
       final PsiCodeBlock block = JavaPsiFacade.getElementFactory(project).createCodeBlockFromText(builder.toString(), method);
       removeEmptyElse(block);
-      CodeStyleManager.getInstance(project).reformat(body.replace(block));
+      return ModCommand.psiUpdate(body, e -> CodeStyleManager.getInstance(project).reformat(e.replace(block)));
     }
 
     private static void removeEmptyElse(PsiElement element) {
@@ -258,9 +256,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         PsiExpression current = tailCall;
         List<String> conditions = new ArrayList<>();
         while (true) {
-          PsiPolyadicExpression parent =
-            ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(current.getParent()), PsiPolyadicExpression.class);
-          if (parent == null) {
+          if (!(PsiUtil.skipParenthesizedExprUp(current.getParent()) instanceof PsiPolyadicExpression parent)) {
             break;
           }
           PsiExpression[] operands = parent.getOperands();
@@ -280,10 +276,10 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         // When replacing recursion with iteration, new values are assigned to the parameters,
         // instead of calling the method with the new values. Care needs to be taken to not clobber
         // the value of a parameter which is used later (in some expression assigned to a different
-        // parameter). To achieve this a simple graph of the dependencies between the parameters is
-        // built and analysed/ordered. If the graph is a directed acyclic graph, the assignments
+        // parameter). To achieve this, a simple graph of the dependencies between the parameters is
+        // built and sorted. If the graph is a directed acyclic graph, the assignments
         // are ordered in such a way that making a defensive copy is unnecessary (topological
-        // ordering). If the graph has a cycle, a copy of the value of at least one parameter needs
+        // ordering). If the graph has a cycle, a copy of at least one parameter needs
         // to be made before assigning a new value.
         final DFSTBuilder<Integer> builder = new DFSTBuilder<>(graph);
         final List<Integer> sortedNodes = builder.getSortedNodes();
@@ -296,7 +292,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           assert argument != null;
           if (argument instanceof PsiReferenceExpression referenceExpression) {
             if (parameter.equals(referenceExpression.resolve())) {
-              // parameter keeps same value
+              // parameter keeps the same value
               continue;
             }
           }
@@ -304,7 +300,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           boolean copy = false;
           while (dependants.hasNext()) {
             if (!seen.contains(dependants.next())) {
-              // current parameter which depends on value of parameter 'index' has not yet received its value (cycle)
+              // the current parameter which depends on the value of parameter 'index' has not yet received its value (cycle)
               // if 'dependants' was some collection instead of an iterator this would have been a nice containsAll expression
               copy = true;
               break;
@@ -351,9 +347,9 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
         final PsiCodeBlock body = method.getBody();
         assert body != null;
         if (isVoidReturn(element)) {
-          final PsiElement prevElement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(element);
-          final PsiExpressionStatement prevExpressionStatement = ObjectUtils.tryCast(prevElement, PsiExpressionStatement.class);
-          tailCall = getTailCall(prevExpressionStatement, method);
+          final PsiExpressionStatement prevElement =
+            PsiTreeUtil.skipWhitespacesAndCommentsBackward(element) instanceof PsiExpressionStatement s ? s : null;
+          tailCall = getTailCall(prevElement, method);
           if (tailCall != null) {
             out.append("continue;");
             return;
@@ -364,7 +360,7 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           out.append(element.getText());
         }
         else {
-          for (final PsiElement child : children) {
+          for (PsiElement child : children) {
             replaceTailCalls(child, method, thisVariableName, tailCallIsContainedInLoop, isReturnAtTheEndOfWhileLoop, out);
           }
         }
@@ -484,13 +480,12 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
           }
         }
       }
-      tailCall = ObjectUtils.tryCast(returnValue, PsiMethodCallExpression.class);
+      tailCall = returnValue instanceof PsiMethodCallExpression call ? call : null;
     }
-    else if (element instanceof PsiExpressionStatement &&
-             (ControlFlowUtils.blockCompletesWithStatement(Objects.requireNonNull(method.getBody()), (PsiStatement)element) ||
+    else if (element instanceof PsiExpressionStatement statement &&
+             (ControlFlowUtils.blockCompletesWithStatement(Objects.requireNonNull(method.getBody()), statement) ||
               isBeforeVoidReturn(element, method))) {
-      final PsiExpression expression = ((PsiExpressionStatement)element).getExpression();
-      tailCall = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
+      tailCall = statement.getExpression() instanceof PsiMethodCallExpression e ? e : null;
     }
     if (tailCall == null) return null;
     final JavaResolveResult resolveResult = tailCall.resolveMethodGenerics();
@@ -498,12 +493,11 @@ public final class TailRecursionInspection extends BaseInspection implements Cle
   }
 
   private static boolean isBeforeVoidReturn(PsiElement element, PsiMethod method) {
-    PsiReturnStatement returnStatement =
-      ObjectUtils.tryCast(PsiTreeUtil.skipWhitespacesAndCommentsForward(element), PsiReturnStatement.class);
-    return isVoidReturn(returnStatement) && PsiTypes.voidType().equals(method.getReturnType());
+    return PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiReturnStatement statement
+      && isVoidReturn(statement) && PsiTypes.voidType().equals(method.getReturnType());
   }
 
   private static boolean isVoidReturn(PsiElement element) {
-    return element instanceof PsiReturnStatement && ((PsiReturnStatement)element).getReturnValue() == null;
+    return element instanceof PsiReturnStatement statement && statement.getReturnValue() == null;
   }
 }

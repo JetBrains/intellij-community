@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.jvm.shared.scratch.ScratchFile
 class InlayScratchOutputHandler(
     private val textEditor: TextEditor,
     private val toolWindowHandler: ScratchOutputHandler
-) : ScratchOutputHandler {
+) : ScratchOutputHandlerAdapter() {
     private val maxLineLength = 120
     private val maxInsertOffset = 60
     private val minSpaceCount = 4

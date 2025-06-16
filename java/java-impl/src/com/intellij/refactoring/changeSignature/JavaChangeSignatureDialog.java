@@ -88,7 +88,10 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     this(project, new JavaMethodDescriptor(method), allowDelegation, context);
   }
 
-  protected JavaChangeSignatureDialog(@NotNull Project project, @NotNull JavaMethodDescriptor descriptor, boolean allowDelegation, PsiElement context) {
+  public JavaChangeSignatureDialog(@NotNull Project project,
+                                   @NotNull JavaMethodDescriptor descriptor,
+                                   boolean allowDelegation,
+                                   PsiElement context) {
     super(project, descriptor, allowDelegation, context);
   }
 
@@ -771,7 +774,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         PsiAnnotation converted = ContractConverter.convertContract(method, oldNames, parameters);
         if (converted != null && converted != annotation) {
           String text = converted.getText();
-          return text.replaceFirst("@" + converted.getQualifiedName(), "@Contract");
+          return text.replaceFirst("^@" + converted.getQualifiedName(), "@Contract");
         }
       }
       catch (ContractConverter.ContractConversionException ignored) {

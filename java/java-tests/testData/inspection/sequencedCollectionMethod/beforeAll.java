@@ -4,6 +4,8 @@ import java.util.*;
 interface Foo extends SequencedCollection<String> {}
 
 public class Test {
+  private static final int SOME_CONSTANT = 0;
+
   public static void main(Foo foo, String[] args) {
     List<String> list = List.of(args);
 
@@ -14,6 +16,11 @@ public class Test {
     var e5 = list.remove(list.size() - 1);
     list.remove("e");
     list.get(1);
+
+    var e6 = list.get(SOME_CONSTANT);
+    var e7 = list.remove(SOME_CONSTANT);
+    list.add(0, "hello");
+    list.add(SOME_CONSTANT, "world");
   }
   
   void testAdd(List<String> list) {

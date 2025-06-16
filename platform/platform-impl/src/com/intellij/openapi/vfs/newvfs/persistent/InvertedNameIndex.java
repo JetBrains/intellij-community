@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.util.io.DataEnumerator;
@@ -60,7 +60,7 @@ public final class InvertedNameIndex {
     }
   }
 
-  void updateFileName(int fileId, int newNameId, int oldNameId) {
+  public void updateFileName(int fileId, int newNameId, int oldNameId) {
     rwLock.writeLock().lock();
     try {
       if (oldNameId != NULL_NAME_ID) {
@@ -75,7 +75,8 @@ public final class InvertedNameIndex {
     }
   }
 
-  void clear() {
+  @VisibleForTesting
+  public void clear() {
     rwLock.writeLock().lock();
     try {
       singularMapping.clear();
@@ -124,8 +125,7 @@ public final class InvertedNameIndex {
   }
 
   @VisibleForTesting
-  boolean forEachFileIds(final @NotNull IntSet nameIds,
-                         final @NotNull IntPredicate processor) {
+  public boolean forEachFileIds(final @NotNull IntSet nameIds, final @NotNull IntPredicate processor) {
     final IntIterator it = nameIds.iterator();
     while (it.hasNext()) {
       final int nameId = it.nextInt();
@@ -225,7 +225,8 @@ public final class InvertedNameIndex {
     }
   }
 
-  void checkConsistency() {
+  @VisibleForTesting
+  public void checkConsistency() {
     rwLock.readLock().lock();
     try {
       IntIterator keyIt1 = singularMapping.keySet().intIterator();

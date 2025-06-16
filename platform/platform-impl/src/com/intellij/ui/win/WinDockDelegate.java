@@ -4,6 +4,7 @@ package com.intellij.ui.win;
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
@@ -36,7 +36,7 @@ public final class WinDockDelegate implements SystemDock.Delegate {
   public void updateRecentProjectsMenu() {
     final var stackTraceHolder = new Throwable("Asynchronously launched from here");
 
-    ForkJoinPool.commonPool().execute(() -> {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         final var wsi = wsiFuture.get(30, TimeUnit.SECONDS);
         if (wsi == null) {
@@ -133,7 +133,7 @@ public final class WinDockDelegate implements SystemDock.Delegate {
     final var stackTraceHolder = new Throwable("Asynchronously launched from here");
 
     //                                                          Not AppExecutorUtil.getAppExecutorService() for class loading optimization
-    final @NotNull Future<@Nullable WinShellIntegration> wsiFuture = ForkJoinPool.commonPool().submit(() -> {
+    final @NotNull Future<@Nullable WinShellIntegration> wsiFuture = ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         if (!Registry.is("windows.jumplist")) {
           return null;

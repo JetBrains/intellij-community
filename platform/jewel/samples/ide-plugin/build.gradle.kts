@@ -1,3 +1,4 @@
+import io.gitlab.arturbosch.detekt.Detekt
 import java.net.URI
 
 plugins {
@@ -33,23 +34,17 @@ repositories {
 dependencies {
     intellijPlatform {
         intellijIdeaCommunity(libs.versions.idea)
-        instrumentationTools()
+
+        bundledModule("intellij.platform.jewel.foundation")
+        bundledModule("intellij.platform.jewel.ui")
+        bundledModule("intellij.platform.jewel.ideLafBridge")
+        bundledModule("intellij.platform.jewel.markdown.core")
+        bundledModule("intellij.platform.jewel.markdown.ideLafBridgeStyling")
+        bundledModule("intellij.libraries.compose.foundation.desktop")
+        bundledModule("intellij.libraries.skiko")
     }
 
-    implementation(projects.ideLafBridge) { exclude(group = "org.jetbrains.kotlinx") }
-
-    implementation(projects.markdown.ideLafBridgeStyling) { exclude(group = "org.jetbrains.kotlinx") }
-
-    implementation(compose.desktop.currentOs) {
-        exclude(group = "org.jetbrains.compose.material")
-        exclude(group = "org.jetbrains.kotlinx")
-    }
-    implementation(project(":samples:showcase")) { exclude(group = "org.jetbrains.kotlinx") }
-
-    // TODO remove once https://youtrack.jetbrains.com/issue/IJPL-166436 is fixed
-    implementation("androidx.lifecycle:lifecycle-common-jvm:2.8.5") { exclude(group = "org.jetbrains.kotlinx") }
-    implementation("androidx.lifecycle:lifecycle-runtime-desktop:2.8.5") { exclude(group = "org.jetbrains.kotlinx") }
-    // END TODO
+    implementation(projects.samples.showcase) { exclude(group = "org.jetbrains.kotlinx") }
 }
 
 intellijPlatform {
@@ -58,4 +53,8 @@ intellijPlatform {
     autoReload = false
 }
 
-tasks { runIde { jvmArgs = listOf("-Xmx3g") } }
+tasks {
+    runIde { jvmArgs = listOf("-Xmx3g") }
+
+    withType<Detekt>() { exclude("**/AndroidStudioReleases.kt") }
+}

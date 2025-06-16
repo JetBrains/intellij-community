@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Companion.suggestNameByName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.extractDataClassParameterNames
+import org.jetbrains.kotlin.idea.codeinsight.utils.extractDataClassParameters
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2ExtractableSubstringInfo
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -100,7 +100,7 @@ private fun suggestDestructuringNames(
 ): SuggestedNames? {
     return analyzeInModalWindow(expression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
         val expressionType = expression.expressionType?.lowerBoundIfFlexible() as? KaClassType ?: return@analyzeInModalWindow null
-        val dataClassParameterNames = extractDataClassParameterNames(expressionType) ?: emptyList()
+        val dataClassParameterNames = extractDataClassParameters(expressionType)?.map { it.name.asString() } ?: emptyList()
         val applicableComponents = extractApplicableComponents(expression, expressionType, dataClassParameterNames)
         val usedNames = mutableSetOf<String>()
         val combinedValidator: (String) -> Boolean = { validator.validate(it) && !usedNames.contains(it) }
@@ -124,7 +124,7 @@ private fun suggestDestructuringNames(
     }
 }
 
-private fun KaSession.suggestNamesForDataClassParameters(
+private fun suggestNamesForDataClassParameters(
     parameterNames: List<String>,
     usedNames: MutableSet<String>,
     validator: (String) -> Boolean,

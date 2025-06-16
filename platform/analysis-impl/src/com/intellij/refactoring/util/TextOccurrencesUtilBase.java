@@ -97,8 +97,8 @@ public final class TextOccurrencesUtilBase {
       if (offset < 0) break;
       final PsiReference referenceAt = scope.findReferenceAt(offset);
       if (!allowReferences && referenceAt != null
-          && (referenceAt.resolve() != null || referenceAt instanceof PsiPolyVariantReference
-                                               && ((PsiPolyVariantReference)referenceAt).multiResolve(true).length > 0)) {
+          && (referenceAt.resolve() != null || referenceAt instanceof PsiPolyVariantReference poly
+                                               && poly.multiResolve(true).length > 0)) {
         continue;
       }
 

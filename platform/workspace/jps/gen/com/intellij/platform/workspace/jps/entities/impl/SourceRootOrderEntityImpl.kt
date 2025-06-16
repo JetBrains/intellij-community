@@ -5,7 +5,6 @@ package com.intellij.platform.workspace.jps.entities.impl
 
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootOrderEntity
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -35,13 +34,12 @@ import org.jetbrains.annotations.NonNls
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrderEntityData) : SourceRootOrderEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrderEntityData) : SourceRootOrderEntity,
+                                                                                              WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CONTENTROOTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ContentRootEntity::class.java,
-                                                                                     SourceRootOrderEntity::class.java,
-                                                                                     ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val CONTENTROOTENTITY_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(ContentRootEntity::class.java, SourceRootOrderEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ONE, false)
 
     private val connections = listOf<ConnectionId>(
       CONTENTROOTENTITY_CONNECTION_ID,
@@ -69,8 +67,8 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
   }
 
 
-  internal class Builder(result: SourceRootOrderEntityData?) : ModifiableWorkspaceEntityBase<SourceRootOrderEntity, SourceRootOrderEntityData>(
-    result), SourceRootOrderEntity.Builder {
+  internal class Builder(result: SourceRootOrderEntityData?) :
+    ModifiableWorkspaceEntityBase<SourceRootOrderEntity, SourceRootOrderEntityData>(result), SourceRootOrderEntity.Builder {
     internal constructor() : this(SourceRootOrderEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -174,8 +172,9 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(CONTENTROOTENTITY_CONNECTION_ID,
-                                                                           this) as? ContentRootEntity.Builder)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            CONTENTROOTENTITY_CONNECTION_ID, this
+          ) as? ContentRootEntity.Builder)
           ?: (this.entityLinks[EntityLink(false, CONTENTROOTENTITY_CONNECTION_ID)]!! as ContentRootEntity.Builder)
         }
         else {

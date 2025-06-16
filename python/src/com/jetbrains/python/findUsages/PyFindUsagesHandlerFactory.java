@@ -99,7 +99,8 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
 
     @Override
     public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile, boolean toShowInNewTab, boolean mustOpenInNewTab) {
-      return new CommonFindUsagesDialog(myElement,
+      PsiFileSystemItem element = myElement;
+      return new CommonFindUsagesDialog(element,
                                         getProject(),
                                         getFindUsagesOptions(),
                                         toShowInNewTab,
@@ -108,11 +109,11 @@ public final class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory i
                                         this) {
         @Override
         public void configureLabelComponent(final @NonNls @NotNull SimpleColoredComponent coloredComponent) {
-          coloredComponent.append(myElement instanceof PsiDirectory
+          coloredComponent.append(element instanceof PsiDirectory
                                   ? PyBundle.message("python.find.module.usages.dialog.label.prefix.package")
                                   : PyBundle.message("python.find.module.usages.dialog.label.prefix.module"));
           coloredComponent.append(" ");
-          coloredComponent.append(myElement.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          coloredComponent.append(element.getName(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       };
     }

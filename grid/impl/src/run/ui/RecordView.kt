@@ -8,6 +8,7 @@ import com.intellij.database.run.ui.grid.editors.GridCellEditorFactoryProvider
 import com.intellij.database.run.ui.treetable.TreeTableResultView
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.observable.util.addMouseHoverListener
 import com.intellij.openapi.observable.util.whenTextChangedFromUi
 import com.intellij.openapi.util.NlsSafe
@@ -278,6 +279,10 @@ class RecordView(
             })
 
             isEditable = isCellEditable(grid, rowIdx, columnInfo.idx)
+
+            if (!isEditable) {
+              toolTipText = EditorBundle.message("editing.viewer.hint")
+            }
           }
           val label = JLabel(columnInfo.name).apply {
             this.icon = icon; toolTipText = tooltip

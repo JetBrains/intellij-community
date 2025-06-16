@@ -4,6 +4,7 @@ import com.intellij.ide.extensionResources.ExtensionsRootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.Strings;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,11 @@ import java.nio.file.Path;
 import java.util.function.Predicate;
 
 final class ExtensionsServiceImpl extends ExtensionsService {
+  @Override
+  public @NotNull Job unpackPluginResources(PluginId id) {
+    return ExtensionsRootType.getInstance().updateBundledResources(id);
+  }
+
   @Override
   public @Nullable Path extensionsRootTypeFindResource(PluginId id, String path) throws IOException {
     return ExtensionsRootType.getInstance().findResource(id, path);

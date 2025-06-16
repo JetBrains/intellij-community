@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.UiDispatcherKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -19,6 +20,7 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SingleEdtTaskScheduler;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -49,7 +51,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
 
   private final Disposable disposable = Disposer.newDisposable();
   private boolean myDisposed = false;
-  private final SingleEdtTaskScheduler delayAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler(); // determines a moment when a tool window should become transparent
+  // determines a moment when a tool window should become transparent
+  private final SingleEdtTaskScheduler delayAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler(UiDispatcherKind.STRICT);
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
   private int myCurrentFrame; // current frame in transparency animation
@@ -156,7 +159,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     }
 
     // this prevents annoying flick
-    paint(getGraphics());
+    // todo: do we really need this?
+    paint(GraphicsUtil.safelyGetGraphics(this));
 
     ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(UISettingsListener.TOPIC, uiSettingsListener);
   }

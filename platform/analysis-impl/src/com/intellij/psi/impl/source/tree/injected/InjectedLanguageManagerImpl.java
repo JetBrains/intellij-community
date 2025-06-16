@@ -14,13 +14,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Segment;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
@@ -34,6 +32,9 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 
+import static com.intellij.openapi.project.DumbService.getDumbAwareExtensions;
+import static java.util.Collections.singletonList;
+
 @SuppressWarnings("deprecation")
 @ApiStatus.Internal
 public final class InjectedLanguageManagerImpl extends InjectedLanguageManager implements Disposable {
@@ -46,7 +47,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   private final PsiDocumentManager myDocManager;
 
   public static InjectedLanguageManagerImpl getInstanceImpl(Project project) {
-    return (InjectedLanguageManagerImpl)InjectedLanguageManager.getInstance(project);
+    return (InjectedLanguageManagerImpl)getInstance(project);
   }
 
   public InjectedLanguageManagerImpl(Project project) {
@@ -94,11 +95,11 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   @Override
   public PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider) {
     //noinspection removal
-    if (!(injectedProvider instanceof InjectedFileViewProvider)) {
+    if (!(injectedProvider instanceof InjectedFileViewProvider injected)) {
       return null;
     }
     //noinspection removal
-    return ((InjectedFileViewProvider)injectedProvider).getShreds().getHostPointer().getElement();
+    return injected.getShreds().getHostPointer().getElement();
   }
 
   @Override
@@ -106,10 +107,10 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     PsiFile file = injectedElement.getContainingFile();
     VirtualFile virtualFile = file == null ? null : file.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) {
-      // use utility method in case the file's overridden getContext()
+      // use a utility method in case the file's overridden getContext()
       PsiElement host = FileContextUtil.getFileContext(file);
-      if (host instanceof PsiLanguageInjectionHost) {
-        return (PsiLanguageInjectionHost)host;
+      if (host instanceof PsiLanguageInjectionHost injectionHost) {
+        return injectionHost;
       }
     }
     return InjectedLanguageUtilBase.findInjectionHost(file);
@@ -139,7 +140,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       return null;
     }
     Document document = PsiDocumentManager.getInstance(file.getProject()).getCachedDocument(file);
-    return document instanceof DocumentWindow ? (DocumentWindow)document : null;
+    return document instanceof DocumentWindow w ? w : null;
   }
 
   // used only from tests => no need for complex synchronization
@@ -339,7 +340,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       offset += shred.getPrefix().length() + shred.getRangeInsideHost().getLength() + shred.getSuffix().length();
     }
     //noinspection unchecked,ConstantConditions
-    return count == 0 ? Collections.emptyList() : count == 1 ? Collections.singletonList((TextRange)result) : (List<TextRange>)result;
+    return count == 0 ? Collections.emptyList() : count == 1 ? singletonList((TextRange)result) : (List<TextRange>)result;
   }
 
   @Override
@@ -351,6 +352,18 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   @Override
   public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
     return InjectedLanguageUtilBase.findInjectedElementNoCommit(hostFile, hostDocumentOffset);
+  }
+
+  @Override
+  public boolean shouldInspectionsBeLenient(@NotNull PsiElement injectedContext) {
+    var file = injectedContext.getContainingFile();
+    return isInjectedViewProvider(file.getViewProvider()) && file.getUserData(LENIENT_INSPECTIONS) == Boolean.TRUE;
+  }
+
+  @Override
+  public boolean isFrankensteinInjection(@NotNull PsiElement injectedContext) {
+    var file = injectedContext.getContainingFile();
+    return isInjectedViewProvider(file.getViewProvider()) && file.getUserData(FRANKENSTEIN_INJECTION) == Boolean.TRUE;
   }
 
   @Override
@@ -481,8 +494,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
       return null;
     }
 
-    if (element instanceof PsiLanguageInjectionHost
-        && !((PsiLanguageInjectionHost)element).isValidHost()) {
+    if (element instanceof PsiLanguageInjectionHost host && !host.isValidHost()) {
       return null;
     }
 
@@ -504,7 +516,7 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
 
   @Override
   public @Nullable List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host) {
-    if (!(host instanceof PsiLanguageInjectionHost) || !((PsiLanguageInjectionHost) host).isValidHost()) {
+    if (!(host instanceof PsiLanguageInjectionHost injectionHost) || !injectionHost.isValidHost()) {
       return null;
     }
     PsiElement inTree = InjectedLanguageUtilBase.loadTree(host, host.getContainingFile());
@@ -523,8 +535,9 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     return toolId == INJECTION_BACKGROUND_TOOL_ID || toolId == INJECTION_SYNTAX_TOOL_ID;
   }
 
-  private static class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector {
+  private static final class PsiManagerRegisteredInjectorsAdapter implements MultiHostInjector, DumbAware {
     static final PsiManagerRegisteredInjectorsAdapter INSTANCE = new PsiManagerRegisteredInjectorsAdapter();
+
     @Override
     public void getLanguagesToInject(@NotNull MultiHostRegistrar injectionPlacesRegistrar, @NotNull PsiElement context) {
       PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)context;
@@ -532,14 +545,15 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
         .startInjecting(language)
         .addPlace(prefix, suffix, host, rangeInsideHost)
         .doneInjecting();
-      for (LanguageInjector injector : LanguageInjector.EXTENSION_POINT_NAME.getExtensionList()) {
+
+      for (LanguageInjector injector : getDumbAwareExtensions(context.getProject(), LanguageInjector.EXTENSION_POINT_NAME)) {
         injector.getLanguagesToInject(host, placesRegistrar);
       }
     }
 
     @Override
     public @NotNull List<Class<? extends PsiElement>> elementsToInjectIn() {
-      return Collections.singletonList(PsiLanguageInjectionHost.class);
+      return singletonList(PsiLanguageInjectionHost.class);
     }
   }
 }

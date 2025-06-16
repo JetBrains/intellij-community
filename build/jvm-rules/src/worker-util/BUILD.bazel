@@ -5,8 +5,10 @@ kt_jvm_library(
     srcs = glob(["*.kt"]),
     kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
     deps = [
-      "@lib//:kotlin-stdlib",
-      "@lib//:fastutil-min",
+      "//:kotlin-stdlib",
+      "//:intellij-deps-fastutil-for-patched-kotlin",
+      "//:kotlinx-collections-immutable",
+      "//:collection",
     ],
     visibility = ["//visibility:public"],
 )

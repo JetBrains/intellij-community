@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2025 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,16 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeCastFix;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -37,7 +39,7 @@ public final class PrimitiveArrayArgumentToVariableArgMethodInspection extends B
   }
 
   @Override
-  public @Nullable String getAlternativeID() {
+  public @NotNull String getAlternativeID() {
     return "PrimitiveArrayArgumentToVariableArgMethod"; // keep old suppression working
   }
 
@@ -59,7 +61,8 @@ public final class PrimitiveArrayArgumentToVariableArgMethodInspection extends B
   @Override
   protected @NotNull LocalQuickFix buildFix(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[0];
-    final PsiType type = (PsiType)infos[1];
+    Project project = argument.getProject();
+    final PsiType type = PsiType.getJavaLangObject(PsiManager.getInstance(project), GlobalSearchScope.allScope(project));
     return LocalQuickFix.from(new AddTypeCastFix(type, argument));
   }
 
@@ -92,46 +95,41 @@ public final class PrimitiveArrayArgumentToVariableArgMethodInspection extends B
         return;
       }
       final PsiExpression lastArgument = arguments[arguments.length - 1];
-      final PsiType argumentType = lastArgument.getType();
-      if (!isPrimitiveArrayType(argumentType)) {
+      if (!isConfusingArgument(call, lastArgument, arguments)) {
         return;
       }
-      final JavaResolveResult result = call.resolveMethodGenerics();
-      final PsiMethod method = (PsiMethod)result.getElement();
-      if (method == null || AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != arguments.length) {
-        return;
-      }
-      final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiParameter lastParameter = parameters[parameters.length - 1];
-      if (!lastParameter.isVarArgs()) {
-        return;
-      }
-      final PsiEllipsisType parameterType = (PsiEllipsisType)lastParameter.getType();
-      if (isDeepPrimitiveArrayType(parameterType, result.getSubstitutor())) {
-        return;
-      }
-      registerError(lastArgument, lastArgument, parameterType.getComponentType());
+      registerError(lastArgument, lastArgument);
     }
   }
 
-  static boolean isPrimitiveArrayType(PsiType type) {
-    if (!(type instanceof PsiArrayType)) {
+  public static boolean isConfusingArgument(@NotNull PsiCall call, PsiExpression argument, PsiExpression[] arguments) {
+    if (!isPrimitiveArrayType(argument.getType())) {
       return false;
     }
-    final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return TypeConversionUtil.isPrimitiveAndNotNull(componentType);
+    final JavaResolveResult result = call.resolveMethodGenerics();
+    final PsiMethod method = (PsiMethod)result.getElement();
+    if (method == null || !method.isVarArgs()
+        || AnnotationUtil.isAnnotated(method, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
+      return false;
+    }
+    final PsiParameterList parameterList = method.getParameterList();
+    int count = parameterList.getParametersCount();
+    if (count != arguments.length) {
+      return false;
+    }
+    final PsiParameter lastParameter = parameterList.getParameter(count - 1);
+    if (lastParameter == null || !lastParameter.isVarArgs()) {
+      return false;
+    }
+    final PsiEllipsisType parameterType = (PsiEllipsisType)lastParameter.getType();
+    final PsiType componentType = parameterType.getComponentType();
+    if (!TypeUtils.isJavaLangObject(result.getSubstitutor().substitute(componentType))) {
+      return false;
+    }
+    return true;
   }
 
-  static boolean isDeepPrimitiveArrayType(PsiType type, PsiSubstitutor substitutor) {
-    if (!(type instanceof PsiEllipsisType)) {
-      return false;
-    }
-    final PsiType componentType = type.getDeepComponentType();
-    final PsiType substitute = substitutor.substitute(componentType);
-    return TypeConversionUtil.isPrimitiveAndNotNull(substitute.getDeepComponentType());
+  private static boolean isPrimitiveArrayType(PsiType type) {
+    return type instanceof PsiArrayType arrayType && TypeConversionUtil.isPrimitiveAndNotNull(arrayType.getComponentType());
   }
 }

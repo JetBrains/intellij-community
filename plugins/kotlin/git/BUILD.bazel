@@ -19,8 +19,8 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/base/code-insight:kotlin-base-code-insight",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/code-insight",
     "//platform/core-api:core",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/platform-api:ide",

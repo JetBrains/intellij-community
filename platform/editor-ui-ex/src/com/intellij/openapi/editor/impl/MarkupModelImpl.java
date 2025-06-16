@@ -219,12 +219,13 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public void addMarkupModelListener(@NotNull Disposable parentDisposable, final @NotNull MarkupModelListener listener) {
-    myListeners.add(listener);
-    Disposer.register(parentDisposable, () -> removeMarkupModelListener(listener));
+    List<MarkupModelListener> listeners = myListeners;
+    listeners.add(listener);
+    Disposer.register(parentDisposable, () -> removeMarkupModelListener(listeners, listener));
   }
 
-  private void removeMarkupModelListener(@NotNull MarkupModelListener listener) {
-    boolean success = myListeners.remove(listener);
+  private static void removeMarkupModelListener(@NotNull List<MarkupModelListener> listeners, @NotNull MarkupModelListener listener) {
+    boolean success = listeners.remove(listener);
     LOG.assertTrue(success);
   }
 

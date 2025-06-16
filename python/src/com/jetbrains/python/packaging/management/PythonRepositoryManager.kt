@@ -1,30 +1,29 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageVersion
 import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 
 @ApiStatus.Experimental
-abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
-  abstract val repositories: List<PyPackageRepository>
+interface PythonRepositoryManager {
+  val project: Project
+  val repositories: List<PyPackageRepository>
 
-  abstract fun allPackages(): List<String>
+  fun allPackages(): Set<String>
+  fun searchPackages(query: String): Map<PyPackageRepository, List<String>>
+  fun searchPackages(query: String, repository: PyPackageRepository): List<String>
 
-  abstract fun packagesFromRepository(repository: PyPackageRepository): List<String>
-  abstract suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails
-  abstract suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion?
+  suspend fun getPackageDetails(pkg: PythonRepositoryPackageSpecification): PyResult<PythonPackageDetails>
+  suspend fun getLatestVersion(spec: PythonRepositoryPackageSpecification): PyPackageVersion?
 
-  abstract suspend fun refreshCaches()
-
-  abstract suspend fun initCaches()
-
-  abstract fun buildPackageDetails(rawInfo: String?, spec: PythonPackageSpecification): PythonPackageDetails
-
-  abstract fun searchPackages(query: String, repository: PyPackageRepository): List<String>
-  abstract fun searchPackages(query: String): Map<PyPackageRepository, List<String>>
+  @Throws(IOException::class)
+  suspend fun refreshCaches()
+  @Throws(IOException::class)
+  suspend fun initCaches()
 }

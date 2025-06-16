@@ -6,6 +6,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.settingsSync.core.communicator.RemoteCommunicatorHolder
 import com.intellij.settingsSync.core.communicator.SettingsSyncCommunicatorProvider
+import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -13,6 +14,8 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -36,6 +39,7 @@ internal abstract class SettingsSyncTestBase {
   protected lateinit var application: ApplicationImpl
   protected lateinit var configDir: Path
   protected lateinit var remoteCommunicator: MockRemoteCommunicator
+  protected lateinit var authService: MockAuthService
   protected lateinit var updateChecker: SettingsSyncUpdateChecker
   protected lateinit var bridge: SettingsSyncBridge
 
@@ -65,12 +69,16 @@ internal abstract class SettingsSyncTestBase {
         providerEP.unregisterExtension(it)
       }
     }
+
+    authService = MockAuthService(SettingsSyncUserData("mockId", MOCK_CODE, "", ""))
+
     val mockCommunicatorProvider = MockCommunicatorProvider(
-      remoteCommunicator
+      remoteCommunicator,
+      authService
     )
     providerEP.registerExtension(mockCommunicatorProvider, disposable)
     SettingsSyncLocalSettings.getInstance().providerCode = mockCommunicatorProvider.providerCode
-    SettingsSyncLocalSettings.getInstance().userId = "dummyUserId"
+    SettingsSyncLocalSettings.getInstance().userId = DUMMY_USER_ID
 
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
@@ -83,7 +91,9 @@ internal abstract class SettingsSyncTestBase {
   fun cleanup() {
     remoteCommunicator.deleteAllFiles()
     if (::bridge.isInitialized) {
-      bridge.waitForAllExecuted()
+      runBlocking {
+        bridge.waitForAllExecuted()
+      }
       bridge.stop()
     }
     RemoteCommunicatorHolder.invalidateCommunicator()
@@ -94,7 +104,7 @@ internal abstract class SettingsSyncTestBase {
     coroutineName: String? = null,
     action: suspend CoroutineScope.() -> T,
   ): T {
-    return timeoutRunBlocking(timeout, coroutineName) {
+    return timeoutRunBlocking(timeout, coroutineName, context = Dispatchers.Default) {
       val retval = action()
       cleanup()
       retval
@@ -130,7 +140,7 @@ internal abstract class SettingsSyncTestBase {
     }
   }
 
-  protected fun executeAndWaitUntilPushed(testExecution: () -> Unit): SettingsSnapshot {
+  protected suspend fun executeAndWaitUntilPushed(testExecution: suspend () -> Unit): SettingsSnapshot {
     val snapshot = remoteCommunicator.awaitForPush {
       testExecution()
       bridge.waitForAllExecuted()
@@ -146,4 +156,4 @@ internal fun CountDownLatch.wait(): Boolean {
 
 private fun isTestingAgainstRealCloudServer() = System.getenv("SETTINGS_SYNC_TEST_CLOUD") == "real"
 
-private fun getDefaultTimeoutInSeconds(): Long = 2
+internal fun getDefaultTimeoutInSeconds(): Long = 2

@@ -25,6 +25,135 @@ public class PyUnreachableCodeInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest());
   }
 
+  // PY-81674
+  public void testFinallyEarlyExit() {
+    doTestByText("""
+def f():
+    try:
+        print("Hello, world!")
+    finally:
+        assert False
+        <warning descr="This code is unreachable">print("Goodbye, world!")</warning>
+        
+    <warning descr="This code is unreachable">print("This is unreachable")</warning>
+                   """);
+  }
+  
+  // PY-81674
+  public void testConsecutiveTerminating() {
+    doTestByText("""
+def f1():
+    exit()
+    <warning descr="This code is unreachable">raise Exception()</warning>
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    <warning descr="This code is unreachable">assert False</warning>
+    
+def f2():
+    raise Exception()
+    <warning descr="This code is unreachable">assert False</warning>
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    <warning descr="This code is unreachable">exit()</warning>
+    
+def f3():
+    assert False
+    <warning descr="This code is unreachable">exit()</warning>
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    <warning descr="This code is unreachable">raise Exception()</warning>
+                   """);
+  }
+
+  // PY-81674
+  public void testNoNestedWarnings() {
+    doTestByText("""
+from enum import Enum
+
+class Foo(Enum):
+    A = 0
+    B = 1
+
+<warning descr="This code is unreachable">print(exit())</warning>
+
+<warning descr="This code is unreachable">def unreachable(foo: Foo) -> None:
+    if foo is Foo.A:
+        ...
+    elif foo is Foo.B:
+        ...
+    else:
+        print("also unreachable")</warning>
+                   """);
+  }
+
+  // PY-81593
+  public void testReachabilityLogicalOperatorChaining() {
+    doTestByText("""
+def react(char1: str, char2: str) -> bool:
+    return char1 != char2 and char1.lower() == char2.lower()
+    #                         ^^^^^ Reachable
+                   """);
+  }
+
+  // PY-81593
+  public void testReachabilityInLoopWithImplicitTypeNarrowing() {
+    doTestByText("""
+class Dot:
+    def __init__(self):
+        self.closest: int | None = None
+
+def largest_area(dots: list[Dot]) -> int:
+    for dot in dots:
+        if dot.closest is None:
+            continue
+        print("reachable")
+
+    return 42
+                   """);
+  }
+  
+  // PY-79986
+  public void testForInsideFinally() {
+    doTestByText("""
+def bar():
+    try:
+        return
+    finally:
+        for i in range(10):
+            print("reachable")
+                   """);
+  }
+
+  // TODO: Test pattern matching more when we have Never type
+  // PY-79770
+  public void testBasicPatternMatching() {
+    doTestByText("""
+def foo(param: int) -> int:
+    match param:
+        case _:
+            return 41
+                   """);
+  }
+  
+  // PY-80471
+  public void testIfTrueForLoop() {
+    doTestByText("""
+if True:
+    for i in []:
+        pass
+else:
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+                   """);
+  }
+
+  // PY-80471
+  public void testIfTrueWhileLoop() {
+    doTestByText("""
+if True:
+    while expr:
+        break
+else:
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+                   """);
+  }
+
   // PY-51564
   public void testWithNotContext() {
     doTestByText("""
@@ -62,13 +191,23 @@ class A(TestCase):
   public void testWith() {
     doTestByText(
       """
+from typing import Literal
+
 class Suppress:
     def __enter__(self): ...
     def __exit__(self, exc_type, exc_value, traceback) -> bool: ...
 
+class Suppress2:
+    def __enter__(self): ...
+    def __exit__(self, exc_type, exc_value, traceback) -> Literal[True]: ...
+
 class NoSuppress:
     def __enter__(self): ...
     def __exit__(self, exc_type, exc_value, traceback) -> bool | None: ...
+
+class NoSuppress2:
+    def __enter__(self): ...
+    def __exit__(self, exc_type, exc_value, traceback) -> Literal[False]: ...
 
 def sup(b):
     with Suppress():
@@ -82,13 +221,39 @@ def sup(b):
         assert False
     print("reachable")
 
-def nosup(b):
+def sup2(b):
+    with Suppress2():
+        a = 42
+        raise ValueError("Something went wrong")
+    print("reachable")
+    
+    with Suppress2():
+        assert b
+        a = 42
+        assert False
+    print("reachable")
+
+def nosupRaise(b):
     with NoSuppress():
         a = 42
         raise ValueError("Something went wrong")
     <warning descr="This code is unreachable">print("unreachable")</warning>
     
+def nosupAssert(b):
     with NoSuppress():
+        assert b
+        a = 42
+        assert False
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+
+def nosup2Raise(b):
+    with NoSuppress2():
+        a = 42
+        raise ValueError("Something went wrong")
+    <warning descr="This code is unreachable">print("unreachable")</warning>
+    
+def nosup2Assert(b):
+    with NoSuppress2():
         assert b
         a = 42
         assert False
@@ -151,12 +316,13 @@ async def sup(b):
         assert False
     print("reachable")
 
-async def nosup(b):
+async def nosupRaise(b):
     async with AsyncNoSuppress():
         a = 42
         raise ValueError("Something went wrong")
     <warning descr="This code is unreachable">print("unreachable")</warning>
     
+async def nosupAssertFalse(b):
     async with AsyncNoSuppress():
         assert b
         a = 42

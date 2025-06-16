@@ -1,0 +1,129 @@
+package com.jetbrains.python.codeInsight.controlflow
+
+import com.intellij.codeInsight.controlflow.ControlFlow
+import com.intellij.codeInsight.controlflow.ControlFlowUtil
+import com.intellij.codeInsight.controlflow.Instruction
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+
+@ApiStatus.Internal
+class PyDataFlow(controlFlow: ControlFlow, private val context: TypeEvalContext) : ControlFlow by controlFlow {
+  private val reachability: BooleanArray = BooleanArray(instructions.size)
+
+  init {
+    buildReachability()
+  }
+
+  private fun buildReachability() {
+    val toBeProcessed: Queue<Instruction> = ArrayDeque<Instruction>()
+    toBeProcessed.add(instructions[0])
+    while (!toBeProcessed.isEmpty()) {
+      val instruction = toBeProcessed.poll()
+      reachability[instruction.num()] = true
+      for (successor in getReachableSuccessors(instruction)) {
+        if (!reachability[successor.num()]) {
+          toBeProcessed.add(successor)
+        }
+      }
+    }
+  }
+
+  private fun getReachableSuccessors(instruction: Instruction): Collection<Instruction> {
+    if (instruction is CallInstruction && instruction.isNoReturnCall(context)) return emptyList()
+    if (instruction is PyWithContextExitInstruction && !instruction.isSuppressingExceptions(context)) return emptyList()
+    return instruction.allSucc().filter { next: Instruction ->
+      if (next is ReadWriteInstruction && next.access.isAssertTypeAccess) {
+        val type = next.getType(context, null)
+        return@filter !(type != null && type.get() is PyNeverType)
+      }
+      return@filter true
+    }
+  }
+
+  fun isUnreachable(instruction: Instruction): Boolean {
+    if (instruction.num() >= reachability.size) return false
+    return !reachability[instruction.num()]
+  }
+}
+
+/**
+ * Checks if inspections should flag a Python element as unreachable.
+ *
+ * This method considers special cases where code might be technically unreachable
+ * but should not be reported as an issue.
+ * In particular, the first terminating statement in a sequence is considered valid
+ * and should not be reported as unreachable.
+ *
+ * Terminating statements include:
+ * - `raise` statements
+ * - `assert False`
+ * - calls to functions annotated with `NoReturn`
+ */
+fun PsiElement.isUnreachableForInspection(context: TypeEvalContext): Boolean {
+  return isUnreachableByControlFlow(context) && !isFirstTerminatingStatement(context)
+}
+
+/**
+ * Determines if the element is unreachable by control flow analysis.
+ * If the element does not have corresponding instruction in CFG, searches for the nearest parent that has.
+ */
+fun PsiElement.isUnreachableByControlFlow(context: TypeEvalContext): Boolean {
+  return PyUtil.getParameterizedCachedValue(this, context) { this.isUnreachableByControlFlowNoCache(it) }
+}
+
+private fun PsiElement.isUnreachableByControlFlowNoCache(context: TypeEvalContext): Boolean {
+  val scope = ScopeUtil.getScopeOwner(this)
+  if (scope != null) {
+    val flow = ControlFlowCache.getDataFlow(scope, context)
+    val instructions = flow.instructions
+    val idx = ControlFlowUtil.findInstructionNumberByElement(instructions, this)
+    if (idx < 0 || instructions[idx].isAuxiliary()) {
+      val parent = this.parent
+      return parent != null && parent.isUnreachableByControlFlow(context)
+    }
+    return flow.isUnreachable(instructions[idx])
+  }
+  return false
+}
+
+private fun PsiElement.isFirstTerminatingStatement(context: TypeEvalContext): Boolean {
+  if (this.isTerminatingStatement(context)) {
+    val prevSibling = prevSiblingOfType<PyElement>() ?: return true
+    return !prevSibling.isTerminatingStatement(context) && !prevSibling.isUnreachableByControlFlow(context)
+  }
+  return false
+}
+
+private fun PsiElement.isTerminatingStatement(context: TypeEvalContext): Boolean {
+  return when (this) {
+    is PyRaiseStatement -> true
+    is PyAssertStatement -> getArguments().firstOrNull()?.asBooleanNoResolve() == false
+    is PyExpressionStatement -> expression is PyCallExpression && context.getType(expression) is PyNeverType
+    else -> false
+  }
+}
+
+private fun Instruction.isAuxiliary(): Boolean {
+  return when (this) {
+    is PyRaiseInstruction -> true
+    is PyWithContextExitInstruction -> true
+    is PyFinallyFailExitInstruction -> true
+    is ReadWriteInstruction -> access.isAssertTypeAccess
+    else -> false
+  }
+}
+
+private fun PyExpression.asBooleanNoResolve(): Boolean? {
+  return PyEvaluator.evaluateAsBooleanNoResolve(this)
+}
+
+private inline fun <reified T: PsiElement> PsiElement.prevSiblingOfType(): T? {
+  return PsiTreeUtil.getPrevSiblingOfType(this, T::class.java)
+}

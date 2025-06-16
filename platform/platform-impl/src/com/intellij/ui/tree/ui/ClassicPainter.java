@@ -9,6 +9,7 @@ import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +22,8 @@ public final class ClassicPainter implements Control.Painter {
   private final Integer myRightIndent;
   private final Integer myLeafIndent;
 
-  ClassicPainter(@Nullable Boolean paintLines, @Nullable Integer leftIndent, @Nullable Integer rightIndent, @Nullable Integer leafIndent) {
+  @VisibleForTesting
+  public ClassicPainter(@Nullable Boolean paintLines, @Nullable Integer leftIndent, @Nullable Integer rightIndent, @Nullable Integer leafIndent) {
     myPaintLines = paintLines;
     myLeftIndent = leftIndent;
     myRightIndent = rightIndent;

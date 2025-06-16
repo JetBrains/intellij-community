@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.build.events.BuildEventsNls;
@@ -14,11 +14,15 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.ui.content.Content;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.execution.ui.RunContentDescriptorParentCoroutineScopeKt.createRunContentDescriptorCoroutineScope;
+import static kotlinx.coroutines.CoroutineScopeKt.cancel;
 
 /**
  * Holds information about the UI and content shown in the Run tool window.
@@ -42,6 +46,7 @@ public class RunContentDescriptor implements Disposable {
   private long myExecutionId = 0;
   private Computable<JComponent> myFocusComputable = null;
   private boolean myAutoFocusContent = false;
+  private final CoroutineScope myCoroutineScope = createRunContentDescriptorCoroutineScope();
 
   private Content myContent;
   private String myContentToolWindowId;
@@ -100,11 +105,26 @@ public class RunContentDescriptor implements Disposable {
   public RunContentDescriptor(@NotNull RunProfile profile, @NotNull ExecutionResult executionResult, @NotNull RunnerLayoutUi ui) {
     this(executionResult.getExecutionConsole(),
          executionResult.getProcessHandler(),
-         ui.getComponent(),
          profile.getName(),
          profile.getIcon(),
+         ui,
+         executionResult instanceof DefaultExecutionResult res ? res.getRestartActions() : null);
+  }
+
+  @ApiStatus.Internal
+  public RunContentDescriptor(@Nullable ExecutionConsole executionConsole,
+                              @Nullable ProcessHandler processHandler,
+                              @TabTitle String displayName,
+                              @Nullable Icon icon,
+                              @NotNull RunnerLayoutUi ui,
+                              AnAction @Nullable [] restartActions) {
+    this(executionConsole,
+         processHandler,
+         ui.getComponent(),
+         displayName,
+         icon,
          null,
-         executionResult instanceof DefaultExecutionResult ? ((DefaultExecutionResult)executionResult).getRestartActions() : null);
+         restartActions);
     myRunnerLayoutUi = ui;
   }
 
@@ -125,6 +145,7 @@ public class RunContentDescriptor implements Disposable {
 
   @Override
   public void dispose() {
+    cancel(myCoroutineScope, null);
     myExecutionConsole = null;
     myComponent = null;
     myProcessHandler = null;
@@ -254,6 +275,11 @@ public class RunContentDescriptor implements Disposable {
     myExecutionId = executionId;
   }
 
+  @ApiStatus.Internal
+  public CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
+  }
+
   @Override
   public String toString() {
     return getClass().getSimpleName() + "#" + hashCode() + "(" + getDisplayName() + ", " + getProcessHandler() + ")";
@@ -302,6 +328,7 @@ public class RunContentDescriptor implements Disposable {
   public boolean isHiddenContent() {
     return false;
   }
+
 
   public @NotNull RunContentDescriptorReusePolicy getReusePolicy() {
     return myReusePolicy;

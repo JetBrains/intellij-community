@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.actions.AsyncStacksToggleAction;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
@@ -150,7 +149,7 @@ public class JavaExecutionStack extends XExecutionStack {
   }
 
   public @NotNull List<XStackFrame> createStackFrames(@NotNull StackFrameProxyImpl stackFrameProxy) {
-    return createFrames(new StackFrameDescriptorImpl(stackFrameProxy, myTracker));
+    return createFrames(new StackFrameDescriptorImpl(myTracker, stackFrameProxy));
   }
 
   private @NotNull CompletableFuture<List<XStackFrame>> createStackFramesAsync(@NotNull StackFrameProxyImpl stackFrameProxy) {
@@ -281,24 +280,26 @@ public class JavaExecutionStack extends XExecutionStack {
 
       if (!myHiddenFrames.isEmpty()) {
         var placeholder = new XFramesView.HiddenStackFramesItem(myHiddenFrames);
+        myAdded++;
         myContainer.addStackFrames(Collections.singletonList(placeholder), false);
         myHiddenFrames.clear();
       }
     }
 
     private void rememberHiddenFrame(XStackFrame frame) {
-      if (!XFramesView.shouldFoldHiddenFrames()) return;
+      if (!XFramesView.shouldFoldHiddenFrames() || myAdded < mySkip) return;
 
       myHiddenFrames.add(frame);
     }
 
     private void addStackFrames(List<XStackFrame> frames, boolean last) {
       flushHiddenFrames();
+      myAdded += frames.size();
       myContainer.addStackFrames(frames, last);
     }
 
     private boolean addFrameIfNeeded(XStackFrame frame, boolean last) {
-      if (++myAdded > mySkip) {
+      if (myAdded >= mySkip) {
         addStackFrames(Collections.singletonList(frame), last);
         return true;
       }
@@ -354,8 +355,9 @@ public class JavaExecutionStack extends XExecutionStack {
           List<StackFrameItem> relatedStack = null;
           var creationStack = myCreationStack;
           XStackFrame topFrame = ContainerUtil.getFirstItem(frames);
-          if (AsyncStacksToggleAction.isAsyncStacksEnabled(
-            (XDebugSessionImpl)suspendContext.getDebugProcess().getXdebugProcess().getSession()) &&
+          JavaDebugProcess xdebugProcess = suspendContext.getDebugProcess().getXdebugProcess();
+          if (xdebugProcess != null &&
+              AsyncStacksUtils.isAsyncStacksEnabled((XDebugSessionImpl)xdebugProcess.getSession()) &&
               topFrame instanceof JavaStackFrame frame) {
             if (creationStack == null) {
               creationStack = DebugUtilsKt.computeSafeIfAny(CreationStackTraceProvider.EP,

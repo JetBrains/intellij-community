@@ -41,7 +41,7 @@ internal class DbMutableDocument(
     private set
     get() {
       val res = MutableBoundedOpenMap.emptyBounded<MutableDocument, DocumentComponent>()
-      val components = entities(DocumentComponentEntity.Companion.DocumentAttr, dbDocument)
+      val components = entities(DocumentComponentEntity.DocumentAttr, dbDocument)
       for (c in components) {
         val key = c.getKey()
         res.update(key as DocumentComponentKey<DocumentComponent>) { existing ->
@@ -88,7 +88,7 @@ internal class DbMutableDocument(
   override fun removeAnchor(anchorId: AnchorId) {
     intermediateAnchorStorage = intermediateAnchorStorage.removeAnchor(anchorId)
     with(changeScope) {
-      entity(LocalAnchor.Companion.AnchorIdAttr, anchorId)?.delete()
+      entity(LocalAnchor.AnchorIdAttr, anchorId)?.delete()
     }
   }
 
@@ -116,7 +116,7 @@ internal class DbMutableDocument(
   override fun removeRangeMarker(markerId: RangeMarkerId) {
     intermediateAnchorStorage = intermediateAnchorStorage.removeRangeMarker(markerId)
     with(changeScope) {
-      entity(LocalRangeMarker.Companion.RangeMarkerIdAttr, markerId)?.delete()
+      entity(LocalRangeMarker.RangeMarkerIdAttr, markerId)?.delete()
     }
   }
 
@@ -126,17 +126,17 @@ internal class DbMutableDocument(
   ) {
     with(changeScope) {
       val storage = ensureLocalAnchorStorageCreated(dbDocument)
-      storage[LocalAnchorStorageEntity.Companion.AnchorStorageAttr] = storage.anchorStorage.batchUpdate(anchorIds, anchorOffsets, rangeIds, ranges)
+      storage[LocalAnchorStorageEntity.AnchorStorageAttr] = storage.anchorStorage.batchUpdate(anchorIds, anchorOffsets, rangeIds, ranges)
       anchorIds.forEach { anchorId ->
-        entity(LocalAnchor.Companion.AnchorIdAttr, anchorId) ?: LocalAnchor.Companion.new {
-          it[LocalAnchor.Companion.AnchorIdAttr] = anchorId
-          it[LocalAnchor.Companion.AnchorStorageAttr] = storage
+        entity(LocalAnchor.AnchorIdAttr, anchorId) ?: LocalAnchor.new {
+          it[LocalAnchor.AnchorIdAttr] = anchorId
+          it[LocalAnchor.AnchorStorageAttr] = storage
         }
       }
       rangeIds.forEach { rangeMarkerId ->
-        entity(LocalRangeMarker.Companion.RangeMarkerIdAttr, rangeMarkerId) ?: LocalRangeMarker.Companion.new {
-          it[LocalRangeMarker.Companion.RangeMarkerIdAttr] = rangeMarkerId
-          it[LocalRangeMarker.Companion.AnchorStorageAttr] = storage
+        entity(LocalRangeMarker.RangeMarkerIdAttr, rangeMarkerId) ?: LocalRangeMarker.new {
+          it[LocalRangeMarker.RangeMarkerIdAttr] = rangeMarkerId
+          it[LocalRangeMarker.AnchorStorageAttr] = storage
         }
       }
     }

@@ -12,8 +12,8 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.*;
@@ -84,7 +84,7 @@ public final class KeyHashLog<Key> implements Closeable {
     int id = myKeyHashToVirtualFileMapping.getCurrentLength();
 
     final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS;
-    if (useCachedHashIds && id == myLastScannedId) {
+    if (useCachedHashIds && id == myLastScannedId && filter.getFilteringScopeType() == IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES) {
       if (myInvalidatedSessionIds.remove(id) == null) {
         try {
           hashMaskSet = loadProjectHashes(sessionProjectCacheFile);
@@ -374,7 +374,7 @@ public final class KeyHashLog<Key> implements Closeable {
   }
 
   @VisibleForTesting
-  boolean isRequiresCompaction() {
+  public boolean isRequiresCompaction() {
     return Files.exists(getCompactionMarker());
   }
 

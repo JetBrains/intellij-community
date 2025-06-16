@@ -1,17 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.use
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
-import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
-import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
+import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatConfigurationCacheIsSupported
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
@@ -19,7 +17,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsOlderTh
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 
-class GradleTestExecutionTest : GradleExecutionTestCase() {
+class GradleTestExecutionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
@@ -612,10 +610,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   @AllGradleVersionsSource
   fun `test test task execution with additional gradle listeners`(gradleVersion: GradleVersion) {
     val extension = object : GradleExecutionHelperExtension {
-      override fun prepareForExecution(id: ExternalSystemTaskId,
-                                       operation: LongRunningOperation,
-                                       settings: GradleExecutionSettings,
-                                       buildEnvironment: BuildEnvironment?) {
+      override fun configureOperation(operation: LongRunningOperation, context: GradleExecutionContext) {
         operation.addProgressListener(ProgressListener {})
       }
     }

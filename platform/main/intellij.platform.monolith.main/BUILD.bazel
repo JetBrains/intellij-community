@@ -7,6 +7,7 @@ java_library(
   runtime_deps = [
     "//platform/main/intellij.platform.frontend.main:frontend-main",
     "//platform/main/intellij.platform.backend.main:backend-main",
+    "//platform/monolith",
     "//platform/navbar/monolith",
   ]
 )

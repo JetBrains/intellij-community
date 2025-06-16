@@ -337,9 +337,9 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
         val managerEx = ActionManagerEx.getInstanceEx()
         val action = managerEx.getAction(actionId)
         val event = AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, Presentation(), managerEx, 0)
-        ActionUtil.performDumbAwareUpdate(action, event, false)
+        ActionUtil.updateAction(action, event)
         if (event.presentation.isEnabled) {
-            ActionUtil.performActionDumbAwareWithCallbacks(action, event)
+            ActionUtil.performAction(action, event)
             return true
         }
         return false

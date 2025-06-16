@@ -11,7 +11,7 @@ jvm_library(
   name = "projectModel",
   module_name = "intellij.platform.projectModel",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
     "//platform/util",
@@ -23,10 +23,6 @@ jvm_library(
     "//platform/workspace/jps",
     "//platform/backend/workspace",
     "//platform/util/xmlDom",
-  ],
-  exports = [
-    "//platform/core-api:core",
-    "//jps/model-api:model",
   ],
   runtime_deps = [":projectModel_resources"]
 )

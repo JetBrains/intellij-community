@@ -2,9 +2,14 @@
   <dependencies>
     <plugin id="com.intellij.properties"/>
     <plugin id="com.intellij.java"/>
-    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.json.backend"/>
+    <module name="intellij.properties.backend"/>
+    <module name="intellij.properties.backend.psi"/>
   </dependencies>
+
   <resource-bundle>messages.DevKitBundle</resource-bundle>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectTypesProvider implementation="org.jetbrains.idea.devkit.DevKitProjectTypeProvider"/>
 
@@ -38,7 +43,7 @@
 
     <dom.fileMetaData implementation="org.jetbrains.idea.devkit.dom.impl.PluginDescriptorDomFileDescription"
                       rootTagName="idea-plugin"
-                      stubVersion="17"/>
+                      stubVersion="18"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Extensions"
                   extenderClass="org.jetbrains.idea.devkit.dom.impl.ExtensionsDomExtender"/>
     <dom.extender domClass="org.jetbrains.idea.devkit.dom.Action"
@@ -119,6 +124,8 @@
 
     <registryKey defaultValue="false" description="Enables experimental new remote dev module in intellij repository"
                  key="devkit.new.remdev.module.action"/>
+    <registryKey key="devkit.obsolete.new.file.actions.enabled" defaultValue="false"
+                 description="Enables old-fashioned File-New actions for plugin modules"/>
 
     <localInspection language="XML" shortName="PluginXmlValidity" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
@@ -493,12 +500,27 @@
                      level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PotentialDeadlockInServiceInitializationInspection"/>
 
+    <localInspection language="UAST" shortName="PathAnnotationInspection"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
+                     enabledByDefault="false" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.path.PathAnnotationInspection"
+                     key="inspection.path.annotation.display.name"/>
+
     <localInspection language="JVM"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WEAK WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.CanBeDumbAwareInspection"
                      key="inspection.can.be.dumb.aware.name"/>
+
+    <localInspection isInternal="true"
+                     language="XML" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.MissingFrontendOrBackendRuntimeDependencyInspection"
+                     key="inspection.remote.dev.missing.runtime.dependency.name"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -511,6 +533,7 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.IconsUastReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.RegistryKeyIdReferenceContributor"/>
+    <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.PluginXmlRegistryKeyIdReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ActionOrGroupIdReferenceContributor"/>
     <referenceInjector implementation="org.jetbrains.idea.devkit.references.ActionOrGroupIdReferenceInjector"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.ActionWithoutIdReferencesQueryExecutor"/>
@@ -532,6 +555,7 @@
     <stacktrace.fold substring="at com.intellij.openapi.application.TransactionGuardImpl"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.WriteAction."/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport"/>
+    <stacktrace.fold substring="at com.intellij.platform.locking.impl.NestedLocksThreadingSupport"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl$1.call("/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl$2.run"/>
     <stacktrace.fold substring="at com.intellij.openapi.application.impl.ApplicationImpl.runReadAction("/>
@@ -641,7 +665,8 @@
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
     <registryKey key="kotlin.commit.message.validation.enabled" defaultValue="true"
                  description="Enables commit messages validation for kotlin plugin"/>
-
+    <registryKey key="kotlin.build.tools.code.ownership.commit.message.enabled" defaultValue="true"
+                 description="Enables commit messages validation for Kotlin Build Tools code ownership"/>
     <codeInsight.declarativeInlayProvider
       providerId="devkit.threading"
       bundle="messages.DevKitBundle"
@@ -664,6 +689,8 @@
 
     <properties.extendedUseScopeProvider implementation="org.jetbrains.idea.devkit.references.BundleExtendedUseScopeProvider"/>
     <properties.spellcheckerMnemonicsTokenizer implementation="org.jetbrains.idea.devkit.spellchecker.DevKitMnemonicsTokenizer"/>
+
+    <useScopeEnlarger implementation="org.jetbrains.idea.devkit.references.DomTargetUseScopeEnlarger"/>
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
@@ -699,6 +726,18 @@
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="org.jetbrains.idea.devkit.inspections.metaInformation.MetaInformationJsonSchemaProviderFactory"/>
     <ProviderFactory implementation="org.jetbrains.idea.devkit.documentation.DescriptorDocumentationYamlSchemaProviderFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <internalFileTemplate name="DevKit Application Service"/>
+    <internalFileTemplate name="DevKit Project Service"/>
+    <internalFileTemplate name="DevKit Application State"/>
+    <internalFileTemplate name="DevKit Project State"/>
+    <internalFileTemplate name="DevKit Project Activity"/>
+    <internalFileTemplate name="DevKit Background Project Activity"/>
+    <internalFileTemplate name="DevKit Action"/>
+    <internalFileTemplate name="DevKit Toggle Action"/>
+    <internalFileTemplate name="DevKit MessageBundle"/>
   </extensions>
 
   <extensionPoints>
@@ -788,12 +827,28 @@
       <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
     </group>
 
-    <group id="DevkitNewActions" icon="AllIcons.Nodes.Plugin" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
-      <action class="org.jetbrains.idea.devkit.actions.NewActionAction" id="NewAction"/>
+    <!-- Available under the registry key, scheduled for removal -->
+    <group id="DevkitObsoleteNewActions" icon="AllIcons.Nodes.Plugin" popup="true"
+           class="org.jetbrains.idea.devkit.actions.obsolete.ObsoleteNewActionsGroup">
+      <action class="org.jetbrains.idea.devkit.actions.obsolete.NewActionAction" id="NewAction"/>
       <separator/>
-      <action id="DevKit.NewMessageBundle" class="org.jetbrains.idea.devkit.actions.NewMessageBundleAction"/>
+      <action id="DevKit.NewMessageBundle" class="org.jetbrains.idea.devkit.actions.obsolete.NewMessageBundleAction"/>
       <separator/>
       <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
+
+    <group id="DevkitNewActions" class="com.intellij.ide.actions.NonTrivialActionGroup">
+      <action id="DevKit.NewAction" class="org.jetbrains.idea.devkit.actions.templates.NewActionAction"
+              icon="AllIcons.Actions.RunAnything"/>
+      <action id="DevKit.NewService" class="org.jetbrains.idea.devkit.actions.templates.NewServiceAction"
+              icon="org.jetbrains.idea.devkit.DevKitIcons.Service"/>
+      <action id="DevKit.NewState" class="org.jetbrains.idea.devkit.actions.templates.NewPersistentStateAction"
+              icon="AllIcons.Ide.ConfigFile"/>
+      <action id="DevKit.NewMessageBundleObject" class="org.jetbrains.idea.devkit.actions.templates.NewMessageBundleAction"
+              icon="AllIcons.Nodes.ResourceBundle"/>
+      <action id="DevKit.NewStartupActivity" class="org.jetbrains.idea.devkit.actions.templates.NewStartupActivityAction"
+              icon="AllIcons.Toolwindows.ToolWindowRun"/>
+      <add-to-group group-id="NewGroup" relative-to-action="CreateResourceBundle" anchor="before"/>
     </group>
 
     <action id="NewRemoteDevModule" class="org.jetbrains.idea.devkit.actions.NewRemoteDevModuleAction" icon="AllIcons.Nodes.Module">

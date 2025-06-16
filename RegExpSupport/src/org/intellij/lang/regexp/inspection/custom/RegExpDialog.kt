@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom
 
 import com.intellij.find.FindBundle
@@ -6,9 +6,11 @@ import com.intellij.find.FindModel
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileType
@@ -22,16 +24,14 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.ui.EditorTextField
-import com.intellij.ui.JBColor
-import com.intellij.ui.OnePixelSplitter
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import org.intellij.lang.regexp.RegExpBundle
 import org.intellij.lang.regexp.RegExpFileType
 import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.InspectionPattern
+import org.intellij.lang.regexp.inspection.custom.RegExpInspectionConfiguration.RegExpFlag
 import java.awt.Dimension
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -43,6 +43,7 @@ import javax.swing.border.CompoundBorder
 
 class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaultPattern: InspectionPattern? = null) : DialogWrapper(project, true) {
   private var searchContext: FindModel.SearchContext = FindModel.SearchContext.ANY
+  private var flags: Int = RegExpFlag.UNICODE_CASE.id
   private var replace: Boolean = false
     set(value) {
       field = value
@@ -63,6 +64,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
 
   private lateinit var fileCombo: ComboBox<FileType>
   private lateinit var filterButton: ActionButton
+  private lateinit var flagsButton: ActionButton
   private lateinit var searchEditor: EditorTextField
   private lateinit var replaceLabel: JLabel
   private lateinit var replaceButton: JButton
@@ -74,6 +76,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     get() = InspectionPattern(
       searchEditor.text,
       fileCombo.item,
+      flags,
       searchContext,
       if (replace) replaceEditor.text else null
     )
@@ -87,6 +90,8 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
 
     defaultPattern?.let { pattern ->
       searchEditor.text = pattern.regExp
+      flags = pattern.flags
+      searchEditor.fileType = if ((flags and RegExpFlag.LITERAL.id) != 0) PlainTextFileType.INSTANCE else RegExpFileType.INSTANCE
       searchContext = pattern.searchContext
       fileCombo.item = pattern.fileType() ?: UnknownFileType.INSTANCE
       pattern.replacement?.let { replaceEditor.text = it }
@@ -99,6 +104,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
 
     panel {
       row {
+        @Suppress("DialogTitleCapitalization")
         label(RegExpBundle.message("regexp.dialog.search.template"))
           .resizableColumn()
           .align(AlignX.FILL)
@@ -117,6 +123,9 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
           .gap(RightGap.SMALL)
           .component
         filterButton = actionButton(MyFilterAction())
+          .gap(RightGap.SMALL)
+          .component
+        flagsButton = actionButton(SelectRegExpFlagsAction())
           .component
       }
     }.customize(UnscaledGaps(0, intelliJSpacingConfiguration.horizontalSmallGap, 0, intelliJSpacingConfiguration.horizontalSmallGap))
@@ -154,6 +163,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
             replaceEditorFocusedLast = true
           }
         }) }
+        .customize(UnscaledGaps(intelliJSpacingConfiguration.verticalComponentGap, 0, 0, 0))
         .component
     }.resizableRow()
   }
@@ -207,6 +217,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
       return super.createEditor().apply {
         setHorizontalScrollbarVisible(true)
         setVerticalScrollbarVisible(true)
+        backgroundColor = EditorColorsManager.getInstance().getGlobalScheme().defaultBackground
         val outerBorder = JBUI.Borders.customLine(JBColor.border(), 1, 0, if (search) 1 else 0, 0)
         scrollPane.border = CompoundBorder(
           outerBorder,
@@ -233,7 +244,11 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     }
   }
 
-  private inner class MyFilterAction : DumbAwareAction(FindBundle.messagePointer("find.popup.show.filter.popup"), Presentation.NULL_STRING, AllIcons.General.Filter) {
+  private inner class MyFilterAction : DumbAwareAction(
+    FindBundle.messagePointer("find.popup.show.filter.popup"),
+    Presentation.NULL_STRING,
+    LayeredIcon.create(AllIcons.General.Filter, AllIcons.General.Dropdown)
+  ) {
     val myGroup: ActionGroup
     var listPopup: ListPopup? = null
     init {
@@ -241,7 +256,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
         shortcutSet = CustomShortcutSet(it)
       }
       myGroup = DefaultActionGroup().apply {
-        FindModel.SearchContext.values().forEach { add(MyToggleAction(it, this@MyFilterAction)) }
+        FindModel.SearchContext.entries.forEach { add(MyToggleAction(it, this@MyFilterAction)) }
         isPopup = true
       }
     }
@@ -252,7 +267,8 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     }
   }
 
-  private inner class MyToggleAction(val context: FindModel.SearchContext, val action: MyFilterAction) : ToggleAction(FindInProjectUtil.getPresentableName(context)), DumbAware {
+  private inner class MyToggleAction(val context: FindModel.SearchContext, val action: MyFilterAction)
+    : ToggleAction(FindInProjectUtil.getPresentableName(context)), DumbAware {
     override fun isSelected(e: AnActionEvent): Boolean {
       return searchContext == context
     }
@@ -265,6 +281,53 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
       searchContext = context
       action.listPopup?.closeOk(null)
       filterButton.repaint()
+    }
+  }
+
+  private inner class SelectRegExpFlagsAction : DumbAwareAction(RegExpBundle.messagePointer("regexp.dialog.regexp.flags"), Presentation.NULL_STRING, LayeredIcon.GEAR_WITH_DROPDOWN) {
+    val myGroup: ActionGroup = DefaultActionGroup().apply {
+      RegExpFlag.entries.forEach {
+        if (it == RegExpFlag.LITERAL) addSeparator()
+        add(ToggleFlagAction(it))
+      }
+      isPopup = true
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      JBPopupFactory.getInstance()
+        .createActionGroupPopup(RegExpBundle.message("regexp.dialog.regexp.flags"), myGroup, e.dataContext, true, null, 10)
+        .showUnderneathOf(filterButton)
+    }
+  }
+
+  private inner class ToggleFlagAction(val flag: RegExpFlag) : ToggleAction(flag.text), DumbAware {
+
+    init {
+      templatePresentation.putClientProperty(ActionUtil.SECONDARY_TEXT, flag.mnemonic?.toString())
+      templatePresentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, flag.description)
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+    override fun isSelected(e: AnActionEvent): Boolean = (flags and flag.id) != 0
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      if ((flags and flag.id != 0) == state) return
+      if (flag == RegExpFlag.LITERAL) {
+        searchEditor.fileType = if (state) PlainTextFileType.INSTANCE else RegExpFileType.INSTANCE
+      }
+      flags = flags xor flag.id
+    }
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      if (flags and RegExpFlag.LITERAL.id != 0
+          && flag != RegExpFlag.CASE_INSENSITIVE
+          && flag != RegExpFlag.UNICODE_CASE
+          && flag != RegExpFlag.CANONICAL_EQUIVALENCE
+          && flag != RegExpFlag.LITERAL) {
+        e.presentation.isEnabled = false
+      }
     }
   }
 }

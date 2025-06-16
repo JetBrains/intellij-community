@@ -32,6 +32,10 @@
       "moveToLeftTop.svg": "actions/moveToLeftTop.svg",
       "moveToRightBottom.svg": "actions/moveToRightBottom.svg",
       "moveToRightTop.svg": "actions/moveToRightTop.svg",
+      "moveToWindow.svg": [
+        "actions/moveToWindow.svg",
+        "actions/MoveTo2.svg"
+      ],
       "newFolder.svg": "actions/newFolder.svg",
       "playFirst.svg": "actions/play_first.svg",
       "playBack.svg": "actions/play_back.svg",
@@ -50,6 +54,7 @@
       "selectAll.svg": "actions/selectall.svg",
       "shortcutFilter.svg": "actions/shortcutFilter.svg",
       "stopRefresh.svg": "actions/stopRefresh.svg",
+      "stopWatch.svg": "actions/stopWatch.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
       "report.svg": "actions/report.svg",
       "realIntentionBulb.svg": "actions/realIntentionBulb.svg",
@@ -62,10 +67,14 @@
       "synchronizeScrolling.svg": "actions/synchronizeScrolling.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
       "suggestedRefactoringBulb.svg": "actions/suggestedRefactoringBulb.svg",
-      "toggleVisibility.svg": "actions/toggleVisibility.svg",
+      "toggleVisibility.svg": [
+        "actions/toggleVisibility.svg",
+        "actions/showCode.svg"
+      ],
       "undeploy.svg": "nodes/undeploy.svg",
       "unselectAll.svg": "actions/unselectall.svg",
-      "uninstall.svg": "actions/uninstall.svg"
+      "uninstall.svg": "actions/uninstall.svg",
+      "unshare.svg": "actions/unshare.png"
     },
     "bookmarks": {
       "addBookmarksList.svg": "actions/addList.svg",
@@ -254,6 +263,7 @@
       "editorConfig.svg": "nodes/editorconfig.svg",
       "diagram.svg": "fileTypes/diagram.svg",
       "html.svg": "fileTypes/html.svg",
+      "http.svg": "fileTypes/http.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
       "idl.svg": "fileTypes/idl.svg",
       "i18n.svg": "fileTypes/i18n.svg",
@@ -448,7 +458,8 @@
       ],
       "show.svg": [
         "actions/groupBy.svg",
-        "actions/show.svg"
+        "actions/show.svg",
+        "actions/share.png"
       ],
       "showAsTree.svg": "actions/showAsTree.svg",
       "splitHorizontally.svg": "actions/splitHorizontally.svg",
@@ -985,7 +996,8 @@
     },
     "webReferences": {
       "server.svg": "webreferences/server.svg",
-      "openApi.svg": "webreferences/openapi.svg"
+      "openApi.svg": "webreferences/openapi.svg",
+      "messageQueue.svg": "webreferences/messageQueue.svg"
     },
     "welcome": {
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",

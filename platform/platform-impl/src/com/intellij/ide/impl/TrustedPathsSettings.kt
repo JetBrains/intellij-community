@@ -13,10 +13,9 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-@Suppress("unused") // Used externally
 fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isProjectPathTrusted(path)
 
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 @State(name = "Trusted.Paths.Settings",
        category = SettingsCategory.TOOLS,
        exportable = true,

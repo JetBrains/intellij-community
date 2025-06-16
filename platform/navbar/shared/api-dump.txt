@@ -9,6 +9,5 @@ com.intellij.platform.navbar.NavBarVmItem
 - a:children(kotlin.coroutines.Continuation):java.lang.Object
 - a:equals(java.lang.Object):Z
 - expand(kotlin.coroutines.Continuation):java.lang.Object
-- bs:expand$suspendImpl(com.intellij.platform.navbar.NavBarVmItem,kotlin.coroutines.Continuation):java.lang.Object
 - a:getPresentation():com.intellij.platform.navbar.NavBarItemPresentation
 - a:hashCode():I

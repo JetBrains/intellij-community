@@ -3,6 +3,7 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,8 +11,7 @@ import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import kotlinx.coroutines.Job;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -28,14 +28,16 @@ public final class ModalityStateEx extends ModalityState {
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  ModalityStateEx(@NotNull List<?> modalEntities) {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public ModalityStateEx(@NotNull List<?> modalEntities) {
     if (modalEntities.contains(null)) {
       throw new IllegalArgumentException("Must not pass null modality: " + modalEntities);
     }
     myModalEntities.addAll(modalEntities);
   }
 
-  private @NotNull List<@NotNull Object> getModalEntities() {
+  private @NotNull @Unmodifiable List<@NotNull Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
@@ -108,20 +110,32 @@ public final class ModalityStateEx extends ModalityState {
     );
   }
 
-  void cancelAllEntities() {
+  void cancelAllEntities(@NonNls String reason) {
     for (Object entity : myModalEntities) {
       // DialogWrapperDialog is not accessible here
       if (entity instanceof Dialog) {
-        ((Dialog)entity).setVisible(false);
-        if (entity instanceof Disposable) {
-          Disposer.dispose((Disposable)entity);
+        Dialog dialog = (Dialog)entity;
+        Logger.getInstance(ModalityStateEx.class).info("Closing the dialog " + dialog + ". Cause: " + reason);
+
+        dialog.setVisible(false);
+        if (dialog instanceof Disposable) { // see com.intellij.openapi.ui.impl.AbstractDialog
+          Disposer.dispose((Disposable)dialog);
         }
       }
       else if (entity instanceof ProgressIndicator) {
-        ((ProgressIndicator)entity).cancel();
+        ProgressIndicator indicator = (ProgressIndicator)entity;
+        if (!indicator.isCanceled()) {
+          Logger.getInstance(ModalityStateEx.class).info("Cancelling indicator " + indicator + ". Cause: " + reason);
+          indicator.cancel();
+        }
       }
       else if (entity instanceof JobProvider) {
-        ((JobProvider)entity).getJob().cancel(new CancellationException("force leave modal"));
+        JobProvider jobProvider = (JobProvider)entity;
+        Job job = jobProvider.getJob();
+        if (!job.isCancelled()) {
+          Logger.getInstance(ModalityStateEx.class).info("Cancelling job " + jobProvider + ". Cause: " + reason);
+          job.cancel(new CancellationException("force leave modal"));
+        }
       }
     }
   }

@@ -48,7 +48,26 @@ public abstract class EditorColorsManager {
 
   public abstract @Nullable EditorColorsScheme getActiveVisibleScheme();
 
-  public abstract EditorColorsScheme getScheme(@NotNull String schemeName);
+  public abstract @Nullable EditorColorsScheme getScheme(@NotNull String schemeName);
+
+  /**
+   * Returns the default scheme, falling back to the global scheme.
+   * <p>
+   *   This is a compatibility hack used to somehow deal with the fact that
+   *   {@code getScheme(getDefaultSchemeName())} is nullable,
+   *   and some legacy code expects that it's not, throwing NPEs sometimes.
+   *   And it's better to fall back to the global scheme than to throw an NPE.
+   * </p>
+   * @return the default scheme or the global scheme
+   */
+  @ApiStatus.Internal
+  public @NotNull EditorColorsScheme getDefaultScheme() {
+    var result = getScheme(getDefaultSchemeName());
+    if (result == null) {
+      result = getGlobalScheme();
+    }
+    return result;
+  }
 
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
 

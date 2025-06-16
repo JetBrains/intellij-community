@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
+import com.intellij.configurationStore.saveSettingsForRemoteDevelopment
 import com.intellij.dvcs.DvcsUtil.disableActionIfAnyRepositoryIsFresh
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.dvcs.getCommonCurrentBranch
@@ -15,13 +16,18 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions
+import com.intellij.vcs.git.shared.branch.GitInOutCountersInProject
 import com.intellij.vcs.log.VcsLogProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.util.VcsLogUtil.HEAD
 import git4idea.GitRemoteBranch
 import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialName
-import git4idea.branch.*
+import git4idea.branch.GitBranchType
+import git4idea.branch.GitBranchUtil
+import git4idea.branch.GitBrancher
+import git4idea.branch.GitRefType
 import git4idea.commands.Git
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchSupport
@@ -94,8 +100,7 @@ internal object BranchesDashboardActions {
       val selectedNodes = selection.selectedNodeDescriptors
 
       return when {
-        selectedNodes.size == 1 && (selectedRefs.size == 1 || headSelected) ->
-          ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup
+        selectedNodes.size == 1 && (selectedRefs.size == 1 || headSelected) -> GitSingleRefActions.getSingleRefActionGroup()
         selectedNodes.size == 2 && selectedRefs.size == 1 && headSelected -> HeadAndBranchActions()
         selectedNodes.size == selectedRefs.size && selectedRefs.size > 1 -> MultipleLocalBranchActions()
         selectedNodes.isNotEmpty() && selectedRemotes.size == selectedNodes.size ->
@@ -338,7 +343,7 @@ internal object BranchesDashboardActions {
                           ?: branches.single().repositories.singleOrNull()
                           ?: return null
           val currentBranch = guessRepo.currentBranch ?: return null
-          branches.single() to BranchInfo(currentBranch, true, false, IncomingOutgoingState.EMPTY, listOf(guessRepo))
+          branches.single() to BranchInfo(currentBranch, true, false, GitInOutCountersInProject.EMPTY, listOf(guessRepo))
         }
         branches.size == 2 -> {
           branches[0] to branches[1]
@@ -502,6 +507,11 @@ internal object BranchesDashboardActions {
       e.presentation.text =
         if (GroupBranchByRepositoryAction.isEnabledAndVisible(e)) groupByDirectory.get() //NON-NLS
         else groupingSeparator() + " " + groupByDirectory.get() //NON-NLS
+    }
+
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+      super.setSelected(e, state)
+      e.project?.let { saveSettingsForRemoteDevelopment(it) }
     }
   }
 

@@ -45,6 +45,8 @@ internal object DebuggerPreferenceKeys {
 
     val REGISTRY by debuggerPreferenceKey(emptyList<String>())
 
+    val JVM_DEFAULT_MODE by debuggerPreferenceKey("")
+
     val values: List<DebuggerPreferenceKey<*>> by lazy {
         DebuggerPreferenceKeys::class.declaredMemberProperties
             .filter { (it.returnType.javaType as? ParameterizedType)?.rawType == DebuggerPreferenceKey::class.java }

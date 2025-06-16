@@ -1378,7 +1378,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
 
       TextCompletionUtil.installCompletionHint(editor);
       editor.putUserData(STRUCTURAL_SEARCH_DIALOG, StructuralSearchDialog.this);
-      editor.putUserData(AI_SUPPORT_KEY, !myReplace);
       editor.setEmbeddedIntoDialogWrapper(true);
       editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, Boolean.TRUE);
       return editor;

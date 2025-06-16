@@ -66,6 +66,7 @@ public final class GitCommand {
   public static final GitCommand UPDATE_REF = write("update-ref");
   public static final GitCommand HASH_OBJECT = write("hash-object");
   public static final GitCommand VERSION = read("version");
+  public static final GitCommand WORKTREE = read("worktree");
 
   /**
    * Name of environment variable that specifies editor for the git

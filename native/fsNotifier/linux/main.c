@@ -367,9 +367,7 @@ static void inotify_callback(const char* path, uint32_t event) {
 }
 
 static void report_event(const char* event, const char* path) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wincompatible-pointer-types"
-  char* copy = path, *p;
+  char* copy = (char*)path, *p;
   for (p = copy; *p != '\0'; ++p) {
     if (*p == '\n') {
       if (copy == path) {
@@ -379,7 +377,6 @@ static void report_event(const char* event, const char* path) {
       *p = '\0';
     }
   }
-#pragma clang diagnostic pop
 
   fputs(event, stdout);
   fputc('\n', stdout);

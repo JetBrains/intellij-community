@@ -1,9 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.imports
 
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMember
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -79,7 +81,11 @@ private fun KaSession.resolveReferencedType(reference: KtReference): KaType? {
     val psiFactory = KtPsiFactory.contextual(reference.element)
     val psiType = psiFactory.createTypeCodeFragment(originalReferenceName.asString(), context = reference.element).getContentElement()
 
-    return psiType?.type
+    // FIXME: KTIJ-34288
+    @OptIn(KaImplementationDetail::class)
+    return KaBaseIllegalPsiException.allowIllegalPsiAccess {
+         psiType?.type
+    }
 }
 
 /**
@@ -146,5 +152,9 @@ private fun KaSession.resolveReferencedName(reference: KtReference): KaSymbol? {
     val psiFactory = KtPsiFactory.contextual(reference.element)
     val psiExpression = psiFactory.createExpressionCodeFragment(originalReferenceName.asString(), context = reference.element).getContentElement()
 
-    return psiExpression?.mainReference?.resolveToSymbol()
+    // FIXME: KTIJ-34283
+    @OptIn(KaImplementationDetail::class)
+    return KaBaseIllegalPsiException.allowIllegalPsiAccess {
+        psiExpression?.mainReference?.resolveToSymbol()
+    }
 }

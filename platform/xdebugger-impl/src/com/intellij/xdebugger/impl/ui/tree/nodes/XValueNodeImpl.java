@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
@@ -11,14 +12,14 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.CoroutineUtilsKt;
 import com.intellij.xdebugger.impl.XSourceKind;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
@@ -43,6 +44,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValueNodeEx, XCompositeNode, XValueNodePresentationConfigurator.ConfigurableXValueNode, RestorableStateNode {
+  private static final Logger LOG = Logger.getInstance(XValueNodeImpl.class);
+
   public static final Comparator<XValueNodeImpl> COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName());
 
   private static final int MAX_NAME_LENGTH = 100;
@@ -122,18 +125,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void updateInlineDebuggerData() {
     try {
-      XDebugSession session = XDebugView.getSession(getTree());
-      final XSourcePosition mainPosition;
-      final XSourcePosition altPosition;
-      if (session instanceof XDebugSessionImpl) {
-        XStackFrame currentFrame = session.getCurrentStackFrame();
-        mainPosition = ((XDebugSessionImpl)session).getFrameSourcePosition(currentFrame, XSourceKind.MAIN);
-        altPosition = ((XDebugSessionImpl)session).getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
-      }
-      else {
-        mainPosition = session == null ? null : session.getCurrentPosition();
-        altPosition = null;
-      }
+      XDebugSessionProxy session = XDebugView.getSessionProxy(getTree());
+      if (session == null) return;
+      XStackFrame currentFrame = session.getCurrentStackFrame();
+      if (currentFrame == null) return;
+      final XSourcePosition mainPosition = session.getFrameSourcePosition(currentFrame, XSourceKind.MAIN);
+      final XSourcePosition altPosition = session.getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
       if (mainPosition == null && altPosition == null) {
         return;
       }
@@ -142,6 +139,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         @Override
         public void computed(XSourcePosition position) {
           if (isObsolete() || position == null) return;
+          LOG.info("Inline debugger data computed: " + position.getLine() + " " + position.getFile());
           VirtualFile file = position.getFile();
           // filter out values from other files
           VirtualFile mainFile = mainPosition != null ? mainPosition.getFile() : null;
@@ -159,9 +157,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         }
       };
 
-      if (getValueContainer().computeInlineDebuggerData(callback) == ThreeState.UNSURE) {
-        getValueContainer().computeSourcePosition(callback::computed);
-      }
+      CoroutineUtilsKt.updateInlineDebuggerData(session, getValueContainer(), callback);
     }
     catch (Exception ignore) {
     }

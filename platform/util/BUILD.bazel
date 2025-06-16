@@ -36,26 +36,40 @@ jvm_library(
     "@lib//:kotlinx-coroutines-core",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
-    "@lib//:caffeine",
     "//platform/util/coroutines",
+    "//platform/util/multiplatform",
     ":troveCompileOnly_provided",
   ],
   exports = [
     "@lib//:jetbrains-annotations",
     "//platform/util-rt",
     "//platform/util/base",
+    "//platform/util/multiplatform",
   ],
   runtime_deps = [
     ":util_resources",
     "@lib//:commons-io",
     "@lib//:commons-codec",
+    "@lib//:commons-lang3",
   ]
 )
 ### auto-generated section `build intellij.platform.util` end
 
 ### auto-generated section `build intellij.platform.util.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "util-tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
+
+jvm_resources(
+  name = "util-tests_test_resources_1",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "util-tests",
@@ -67,6 +81,11 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/util/concurrency",
+    "//platform/util/concurrency:concurrency_test_lib",
+    "//platform/core-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
     "//platform/util",
     "//platform/core-impl",
     "@lib//:kotlin-stdlib",
@@ -94,8 +113,8 @@ jvm_library(
     "//platform/boot",
     "//platform/testFramework/junit5",
     "//platform/testFramework/junit5:junit5_test_lib",
-    "//platform/testFramework/junit5.jimfs:junit5-jimfs",
-    "//platform/testFramework/junit5.jimfs:junit5-jimfs_test_lib",
+    "//platform/testFramework/junit5.jimfs",
+    "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
     "@lib//:kotlinx-coroutines-debug",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
@@ -104,6 +123,10 @@ jvm_library(
     "@lib//:mockito",
     "@lib//:mockito-kotlin",
     "@lib//:jimfs",
+  ],
+  runtime_deps = [
+    ":util-tests_test_resources",
+    ":util-tests_test_resources_1",
   ]
 )
 
@@ -124,6 +147,7 @@ kt_javac_options(
   add_exports = [
     "java.desktop/sun.font=ALL-UNNAMED",
     "java.desktop/sun.awt.image=ALL-UNNAMED",
+    "java.desktop/sun.swing=ALL-UNNAMED",
   ]
 )
 

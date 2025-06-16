@@ -79,8 +79,8 @@ public class LocalQuickFixBackedByIntentionAction implements LocalQuickFix, Icon
 
   @Override
   public Icon getIcon(@IconFlags int flags) {
-    if (myAction instanceof Iconable) {
-      return ((Iconable)myAction).getIcon(flags);
+    if (myAction instanceof Iconable iconable) {
+      return iconable.getIcon(flags);
     }
     return null;
   }

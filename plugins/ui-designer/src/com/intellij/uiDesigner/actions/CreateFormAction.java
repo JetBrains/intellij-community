@@ -22,17 +22,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 
-
-public class CreateFormAction extends AbstractCreateFormAction {
+final class CreateFormAction extends AbstractCreateFormAction {
   private static final Logger LOG = Logger.getInstance(CreateFormAction.class);
 
   private String myLastClassName = null;
   private String myLastLayoutManager = null;
-
-  public CreateFormAction() {
-    super(UIDesignerBundle.messagePointer("action.gui.form.text"),
-          UIDesignerBundle.messagePointer("action.gui.form.description"), PlatformIcons.UI_FORM_ICON);
-  }
 
   @Override
   protected PsiElement @NotNull [] invokeDialog(@NotNull Project project, @NotNull PsiDirectory directory) {

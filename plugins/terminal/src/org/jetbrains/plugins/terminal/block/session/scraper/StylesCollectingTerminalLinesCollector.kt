@@ -28,7 +28,7 @@ class StylesCollectingTerminalLinesCollector(
         if (entry.style != TextStyle.EMPTY) {
           val endOffset = delegate.length()
           val startOffset = endOffset - nonNullText.length
-          val style = StyleRange(startOffset, endOffset, entry.style)
+          val style = StyleRange(startOffset.toLong(), endOffset.toLong(), entry.style)
           stylesConsumer(style)
         }
       }

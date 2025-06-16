@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "community-impl_resources",
+  name = "impl_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "community-impl",
+  name = "impl",
   module_name = "intellij.platform.ijent.community.impl",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,6 +24,6 @@ jvm_library(
     "//platform/ijent",
     "//platform/eel-provider",
   ],
-  runtime_deps = [":community-impl_resources"]
+  runtime_deps = [":impl_resources"]
 )
 ### auto-generated section `build intellij.platform.ijent.community.impl` end

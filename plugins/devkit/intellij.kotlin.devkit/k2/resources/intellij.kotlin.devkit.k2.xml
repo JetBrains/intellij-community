@@ -4,6 +4,7 @@
     <plugin id="com.intellij.modules.kotlin.k2"/>
     <module name="intellij.kotlin.devkit"/>
     <module name="kotlin.refactorings.move.k2"/>
+    <module name="kotlin.code-insight.intentions.k2"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

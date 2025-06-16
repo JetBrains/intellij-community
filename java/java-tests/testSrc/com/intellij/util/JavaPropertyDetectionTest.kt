@@ -197,8 +197,7 @@ class JavaPropertyDetectionTest : LightJavaCodeInsightFixtureTestCase() {
   private fun doTest(text: String, memberType: PropertyMemberType, expectedDecision: Boolean) {
     assertNotEquals(PropertyMemberType.FIELD, memberType)
     myFixture.configureByText(JavaFileType.INSTANCE, text)
-    val method = PsiTreeUtil.getNonStrictParentOfType(myFixture.elementAtCaret, PsiMethod::class.java)
-    assertNotNull(method)
+    val method = PsiTreeUtil.getNonStrictParentOfType(myFixture.elementAtCaret, PsiMethod::class.java)!!
     //use index
     assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method) else PropertyUtil.isSimpleSetter(method))
     //use ast

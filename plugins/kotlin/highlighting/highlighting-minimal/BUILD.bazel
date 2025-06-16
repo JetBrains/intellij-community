@@ -13,19 +13,20 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "@lib//:kotlinc-kotlin-compiler-common",
-    "//java/java-frontback-impl:frontback-impl",
     "//platform/editor-ui-api:editor-ui",
     "//platform/analysis-impl",
     "//platform/core-ui",
     "//plugins/kotlin/base/resources:kotlin-base-resources",
     "//platform/util:util-ui",
     "//platform/lang-impl",
+    "//java/java-frontback-psi-impl:frontback-psi-impl",
   ],
   runtime_deps = [
     ":kotlin-highlighting-minimal_resources",
-    "//plugins/kotlin/base/frontend-agnostic:kotlin-base-frontend-agnostic",
+    "//plugins/kotlin/base/frontend-agnostic",
   ]
 )
 ### auto-generated section `build kotlin.highlighting.minimal` end

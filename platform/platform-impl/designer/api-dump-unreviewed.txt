@@ -1,7 +1,3 @@
-com.intellij.designer.DesignerEditorPanelFacade
-- a:getClientProperty(java.lang.Object):java.lang.Object
-- a:getContentSplitter():com.intellij.openapi.ui.ThreeComponentsSplitter
-- a:putClientProperty(java.lang.Object,java.lang.Object):V
 f:com.intellij.designer.LightFillLayout
 - java.awt.LayoutManager2
 - <init>():V
@@ -21,8 +17,6 @@ f:com.intellij.designer.LightToolWindow
 - <init>(com.intellij.designer.LightToolWindowContent,java.lang.String,javax.swing.Icon,javax.swing.JComponent,javax.swing.JComponent,com.intellij.openapi.ui.ThreeComponentsSplitter,com.intellij.openapi.wm.ToolWindowAnchor,com.intellij.designer.LightToolWindowManager,com.intellij.openapi.project.Project,java.lang.String,I,java.util.List):V
 - dispose():V
 - getContent():java.lang.Object
-com.intellij.designer.LightToolWindowContent
-- a:dispose():V
 a:com.intellij.designer.LightToolWindowManager
 - com.intellij.openapi.Disposable
 - sf:EDITOR_MODE:java.lang.String
@@ -101,7 +95,6 @@ a:com.intellij.designer.model.Property
 - setImportant(Z):V
 - setValue(com.intellij.designer.model.PropertiesContainer,java.lang.Object):V
 - showAsDefault(com.intellij.designer.model.PropertiesContainer):Z
-com.intellij.designer.model.PropertyContext
 a:com.intellij.designer.model.QuickFix
 - java.lang.Runnable
 - <init>(java.lang.String,javax.swing.Icon):V
@@ -129,9 +122,6 @@ com.intellij.designer.propertyTable.PropertyEditorListener
 - a:editingCanceled(com.intellij.designer.propertyTable.PropertyEditor):V
 - a:preferredSizeChanged(com.intellij.designer.propertyTable.PropertyEditor):V
 - a:valueCommitted(com.intellij.designer.propertyTable.PropertyEditor,Z,Z):V
-com.intellij.designer.propertyTable.PropertyRenderer
-- a:getComponent(com.intellij.designer.model.PropertiesContainer,com.intellij.designer.model.PropertyContext,java.lang.Object,Z,Z):javax.swing.JComponent
-- a:updateUI():V
 a:com.intellij.designer.propertyTable.PropertyTable
 - com.intellij.ui.table.JBTable
 - p:myContainers:java.util.List

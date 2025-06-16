@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
 import org.jetbrains.idea.maven.importing.MavenImportUtil.annotationProcessorOptions
 import org.jetbrains.idea.maven.importing.MavenImportUtil.declaredAnnotationProcessors
-import org.jetbrains.idea.maven.importing.MavenImportUtil.getAllCompilerConfigs
+import org.jetbrains.idea.maven.importing.MavenImportUtil.compilerConfigsForCompilePhase
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getAnnotationProcessorDirectory
 import org.jetbrains.idea.maven.importing.MavenImportUtil.procMode
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
@@ -88,7 +88,7 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
 
       val infos = ArrayList<MavenArtifactInfo>()
 
-      mavenProject.getAllCompilerConfigs()
+      mavenProject.compilerConfigsForCompilePhase()
         .mapNotNull { MavenJDOMUtil.findChildByPath(it, "annotationProcessorPaths") }
         .forEach { infos.addAll(getProcessorArtifactInfos(it, mavenProject)) }
 

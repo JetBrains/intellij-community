@@ -1,4 +1,4 @@
-// "Replace 'runBlocking' with its inline execution" "true"
+// "Replace 'runBlocking' with inline code" "true"
 // WITH_COROUTINES
 
 import kotlinx.coroutines.runBlocking

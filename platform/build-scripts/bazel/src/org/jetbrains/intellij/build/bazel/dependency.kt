@@ -14,7 +14,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 import org.jetbrains.jps.model.module.JpsTestModuleProperties
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
-import java.util.*
+import java.util.TreeSet
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
@@ -57,9 +57,8 @@ internal fun generateDeps(
 
     if (element is JpsModuleDependency) {
       val dependencyModule = element.moduleReference.resolve()!!
-      // todo runtime dependency (getBazelDependencyLabel() is null only because fake "main" modules do not have content roots, and we don't know where to create BUILD file)
       val dependencyModuleDescriptor = context.getKnownModuleDescriptorOrError(dependencyModule)
-      val label = context.getBazelDependencyLabel(module = dependencyModuleDescriptor, dependent = module) ?: continue
+      val label = context.getBazelDependencyLabel(module = dependencyModuleDescriptor, dependent = module)
 
       // intellij.platform.configurationStore.tests uses internal symbols from intellij.platform.configurationStore.impl
       val dependencyModuleName = dependencyModule.name
@@ -78,8 +77,7 @@ internal fun generateDeps(
         isExported = isExported,
       )
 
-      if (dependencyModuleName == "intellij.libraries.compose.desktop" ||
-          dependencyModuleName == "intellij.libraries.compose.foundation.desktop" ||
+      if (dependencyModuleName == "intellij.libraries.compose.foundation.desktop" ||
           dependencyModuleName == "intellij.android.adt.ui.compose" ||
           dependencyModuleName == "intellij.platform.jewel.markdown.ideLafBridgeStyling" ||
           dependencyModuleName == "intellij.ml.llm.libraries.compose.runtime" ||
@@ -88,7 +86,7 @@ internal fun generateDeps(
       }
     }
     else if (element is JpsLibraryDependency) {
-      val untypedLib = element.library!!
+      val untypedLib = element.library ?: error("library dependency '$element' from module ${module.module.name} is not resolved")
       val lib = untypedLib.asTyped(JpsRepositoryLibraryType.INSTANCE)
       if (lib == null) {
         val files = untypedLib.getPaths(JpsOrderRootType.COMPILED)
@@ -229,16 +227,36 @@ internal fun generateDeps(
       "Do not export jetbrains-jewel-markdown-laf-bridge-styling (module=$dependentModuleName})"
     }
   }
+
+  fun checkForDuplicates(listMoniker: String, list: List<String>) {
+    if (list.distinct() == list) {
+      return
+    }
+
+    val duplicates = list
+      .groupBy { it }
+      .filter { it.value.size > 1 }
+      .map { it.key }
+      .sorted()
+    error("Duplicate $listMoniker ${duplicates} for module '${module.module.name}',\ncheck ${module.imlFile}")
+  }
+
+  checkForDuplicates("bazel deps", deps)
+  checkForDuplicates("bazel associates", associates)
+  checkForDuplicates("bazel runtimeDeps", runtimeDeps)
+  checkForDuplicates("bazel exports", exports)
+  checkForDuplicates("bazel provided", provided)
+
   return ModuleDeps(deps = deps, associates = associates, runtimeDeps = runtimeDeps, exports = exports, provided = provided, plugins = plugins.toList())
 }
 
 private fun getFileMavenFileDescription(lib: JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>, jar: Path): MavenFileDescription {
   require(jar.isAbsolute) {
-    "jar path must be absolute: $jar"
+    "jar path for jps library ${lib.name} must be absolute: $jar"
   }
 
   require(jar == jar.normalize()) {
-    "jar path must not contain redundant . and .. segments: $jar"
+    "jar path for jps library ${lib.name} must not contain redundant . and .. segments: $jar"
   }
 
   val libraryDescriptor = lib.properties.data
@@ -283,7 +301,7 @@ private fun addDep(
       JpsJavaDependencyScope.COMPILE -> {
         deps.add(dependencyLabel)
 
-        if (dependencyModuleDescriptor != null && dependencyModuleDescriptor.testSources.isNotEmpty()) {
+        if (dependencyModuleDescriptor != null && !dependencyModuleDescriptor.testSources.isEmpty()) {
           deps.add(getLabelForTest(dependencyLabel))
         }
       }
@@ -292,17 +310,26 @@ private fun addDep(
           deps.add(dependencyLabel)
         }
         else {
-          val hasTestSource = dependencyModuleDescriptor.testSources.isNotEmpty()
-
-          if (isExported && hasTestSource) {
-            println("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
+          if (hasOnlyTestResources(dependencyModuleDescriptor)) {
+            // module with only test resources
+            runtimeDeps.add(addSuffix(dependencyLabel, TEST_RESOURCES_TARGET_SUFFIX))
+            if (isExported) {
+              throw RuntimeException("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
+            }
           }
+          else {
+            val hasTestSource = !dependencyModuleDescriptor.testSources.isEmpty()
 
-          if (dependencyModuleDescriptor.sources.isNotEmpty() || !hasTestSource) {
-            deps.add(dependencyLabel)
-          }
-          if (hasTestSource) {
-            deps.add(getLabelForTest(dependencyLabel))
+            if (isExported && hasTestSource) {
+              println("Do not export test dependency (module=${dependentModule.module.name}, exported=${dependencyModuleDescriptor.module.name})")
+            }
+
+            if (!dependencyModuleDescriptor.sources.isEmpty() || !hasTestSource) {
+              deps.add(dependencyLabel)
+            }
+            if (hasTestSource) {
+              deps.add(getLabelForTest(dependencyLabel))
+            }
           }
         }
       }
@@ -356,7 +383,30 @@ private fun addDep(
   }
 }
 
+private fun addSuffix(s: String, @Suppress("SameParameterValue") labelSuffix: String): String {
+  val lastSlashIndex = s.lastIndexOf('/')
+  return (if (s.indexOf(':', lastSlashIndex) == -1) {
+    s + ":" + s.substring(lastSlashIndex + 1)
+  }
+  else {
+    s
+  }) + labelSuffix
+}
+
+internal fun hasOnlyTestResources(moduleDescriptor: ModuleDescriptor): Boolean {
+  return !moduleDescriptor.testResources.isEmpty() &&
+         moduleDescriptor.sources.isEmpty() &&
+         moduleDescriptor.resources.isEmpty() &&
+         moduleDescriptor.testSources.isEmpty()
+}
+
 internal const val TEST_LIB_NAME_SUFFIX = "_test_lib"
+
+internal const val PRODUCTION_RESOURCES_TARGET_SUFFIX = "_resources"
+internal val PRODUCTION_RESOURCES_TARGET_REGEX = Regex("^(?!.+${Regex.escape(TEST_RESOURCES_TARGET_SUFFIX)}).+${Regex.escape(PRODUCTION_RESOURCES_TARGET_SUFFIX)}(_[0-9]+)?$")
+
+internal const val TEST_RESOURCES_TARGET_SUFFIX = "_test_resources"
+internal val TEST_RESOURCES_TARGET_REGEX = Regex("^.+${Regex.escape(TEST_RESOURCES_TARGET_SUFFIX)}(_[0-9]+)?$")
 
 private fun getLabelForTest(dependencyLabel: String): String {
   if (dependencyLabel.contains(':')) {
@@ -369,11 +419,11 @@ private fun getLabelForTest(dependencyLabel: String): String {
 
 private val camelCaseToSnakeCasePattern = Regex("(?<=.)[A-Z]")
 
-private fun camelToSnakeCase(s: String): String {
+internal fun camelToSnakeCase(s: String, replacement: Char = '_'): String {
   return when {
     s.startsWith("JUnit") -> "junit" + s.removePrefix("JUnit")
     s.all { it.isUpperCase() } -> s.lowercase()
-    else -> s.replace(" ", "").replace("_RC", "_rc").replace("SNAPSHOT", "snapshot").replace(camelCaseToSnakeCasePattern, "_$0").lowercase()
+    else -> s.replace(" ", "").replace("_RC", "_rc").replace("SNAPSHOT", "snapshot").replace(camelCaseToSnakeCasePattern, "${replacement}$0").lowercase()
   }
 }
 

@@ -2,7 +2,7 @@
 package org.jetbrains.idea.devkit.spellchecker
 
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl
-import com.intellij.lang.properties.spellchecker.MnemonicsTokenizer
+import com.intellij.lang.properties.spellchecker.tokenizer.MnemonicsTokenizer
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.IntelliJProjectUtil.isIntelliJPlatformProject

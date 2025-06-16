@@ -43,7 +43,7 @@ public final class FoldingUtil {
     List<FoldRegion> list = new ArrayList<>();
     FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
     for (FoldRegion region : allRegions) {
-      if (region.getStartOffset() <= offset && offset <= region.getEndOffset()) {
+      if (region.getTextRange().containsInclusive(offset)) {
         list.add(region);
       }
     }

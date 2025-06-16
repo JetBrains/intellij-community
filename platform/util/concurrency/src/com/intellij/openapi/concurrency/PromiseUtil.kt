@@ -15,7 +15,17 @@ import kotlin.time.Duration
 @Throws(java.util.concurrent.TimeoutException::class)
 @ApiStatus.Internal
 fun <R> Promise<R>.waitForPromise(timeout: Duration): R? {
-  return blockingGet(timeout.inWholeMilliseconds.toInt())
+  return blockingGet(timeout.inWholeMilliseconds.toIntExactOrTruncate())
+}
+
+private fun Long.toIntExactOrTruncate(): Int {
+  if (this > Int.MAX_VALUE) {
+    return Int.MAX_VALUE
+  }
+  if (this < Int.MIN_VALUE) {
+    return Int.MIN_VALUE
+  }
+  return toInt()
 }
 
 /**

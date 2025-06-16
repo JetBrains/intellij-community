@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public interface ImageEditorActions {
-  @NonNls String GROUP_TOOLBAR = "Images.EditorToolbar";
+  @NonNls String GROUP_TOOLBAR = "Images.ScientificEditorToolbar";
   @NonNls String GROUP_POPUP = "Images.EditorPopupMenu";
   @NonNls String ACTION_PLACE = "Images.Editor";
 }

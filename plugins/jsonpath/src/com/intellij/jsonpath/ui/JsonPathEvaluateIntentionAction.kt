@@ -17,25 +17,25 @@ import javax.swing.Icon
 internal class JsonPathEvaluateIntentionAction : AbstractIntentionAction(), HighPriorityAction, Iconable {
   override fun getText(): String = JsonPathBundle.message("jsonpath.evaluate.intention")
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    if (file == null) return
+  override fun invoke(project: Project, editor: Editor?, psiFile: PsiFile?) {
+    if (psiFile == null) return
 
     val manager = InjectedLanguageManager.getInstance(project)
-    val jsonPath = if (manager.isInjectedFragment(file)) {
-      manager.getUnescapedText(file)
+    val jsonPath = if (manager.isInjectedFragment(psiFile)) {
+      manager.getUnescapedText(psiFile)
     }
     else {
-      file.text
+      psiFile.text
     }
 
     JsonPathEvaluateManager.getInstance(project).evaluateExpression(jsonPath)
   }
 
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (editor == null || file == null) return false
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
+    if (editor == null || psiFile == null) return false
 
-    return file.language == JsonPathLanguage.INSTANCE
-           && file.getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY) != true
+    return psiFile.language == JsonPathLanguage.INSTANCE
+           && psiFile.getUserData(JSON_PATH_EVALUATE_EXPRESSION_KEY) != true
   }
 
   override fun getIcon(flags: Int): Icon = AllIcons.FileTypes.Json

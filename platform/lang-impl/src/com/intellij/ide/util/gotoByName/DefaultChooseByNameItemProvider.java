@@ -10,11 +10,10 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -24,6 +23,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.text.EditDistance;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -318,7 +319,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     for (String separator : model.getSeparators()) {
       fullName = StringUtil.replace(fullName, separator, UNIVERSAL_SEPARATOR);
     }
-    return matchName(fullMatcher, fullName);
+    MatchResult result = matchName(fullMatcher, fullName);
+    if (Registry.is("search.everywhere.fuzzy.class.search.enabled", false) && result == null) {
+      LevenshteinCalculator levenshteinMatcher = new LevenshteinCalculator(fullMatcher.getPattern());
+      float distance = levenshteinMatcher.distanceToStringPath(fullName, true, true);
+      result = distance >= LevenshteinCalculator.MIN_ACCEPTABLE_DISTANCE
+               ? new MatchResult(fullName, LevenshteinCalculator.weightFromDistance(distance), false) : null;
+    }
+    return result;
   }
 
   @Override
@@ -430,6 +438,158 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
       int o1Weight = isCompiledWithoutSource(o1) ? 1 : 0;
       int o2Weight = isCompiledWithoutSource(o2) ? 1 : 0;
       return o1Weight - o2Weight;
+    }
+  }
+
+  /*
+   * Checks whether each component of a given pattern appears in a file path,
+   * verifying for approximate matches using the Levenshtein distance.
+   */
+  @ApiStatus.Internal
+  protected static final class LevenshteinCalculator {
+    private final List<String> patternComponents;
+    private final @Nullable List<String> invertedPatternComponents;
+    public static final float MIN_ACCEPTABLE_DISTANCE = 0.7f;
+    private static final String SEPARATOR_CHARACTERS = "[ /*\u0000]+";
+
+    private static final int MIN_WEIGHT = 1;
+    private static final int MAX_WEIGHT = 5000;
+
+    public LevenshteinCalculator(@NotNull String pattern) {
+      this.patternComponents = normalizeString(pattern);
+      this.invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
+    }
+
+    public LevenshteinCalculator(@NotNull List<String> patternComponents) {
+      this.patternComponents = patternComponents;
+      this.invertedPatternComponents = patternComponents.size() == 2 ? List.of(patternComponents.get(1), patternComponents.get(0)) : null;
+    }
+
+    /**
+     * Returns the average Levenshtein distance between the pattern and the file path.
+     * Average distance is calculated as an average distance between
+     * file path and pattern components that have a match, that is, between those with
+     * a Levenshtein distance at least {@link #MIN_ACCEPTABLE_DISTANCE}.
+     * Returns 0 if there is a component in the pattern that does not have a match.
+     * <p>
+     * Assumes that all components of the pattern appear in the file path in the same order.
+     * If the pattern consists of two parts, it also considers that the user may have entered them in reverse order.
+     *
+     * @param file {@link VirtualFile}, the path to which is compared with the pattern
+     * @param lastMatches a flag indicating whether the last elements in path and pattern should be compared directly
+     * @param inverted a flag indicating whether the pattern can be in reverse order
+     * @return the distance as the average distance of all the matches
+     */
+    public float distanceToVirtualFile(VirtualFile file, boolean lastMatches, boolean inverted) {
+      return distanceToStringPath(file.getPath(), lastMatches, inverted);
+    }
+
+    /**
+     * Returns the average Levenshtein distance between the pattern and the path.
+     * Average distance is calculated as an average distance between
+     * path and pattern components that have a match, that is, between those with
+     * a Levenshtein distance at least {@link #MIN_ACCEPTABLE_DISTANCE}.
+     * Returns 0 if there is a component in the pattern that does not have a match.
+     * <p>
+     * Assumes that all components of the pattern appear in the file path in the same order.
+     * If the pattern consists of two parts and {@code inverted} is true, it also considers that the user may have entered them in reverse order.
+     *
+     * @param path        path which is compared with the pattern
+     * @param lastMatches a flag indicating whether the last elements in path and pattern should be compared directly
+     * @param inverted    a flag indicating whether the pattern can be in reverse order
+     * @return the distance as the average distance of all the matches
+     */
+    public float distanceToStringPath(String path, boolean lastMatches, boolean inverted) {
+      List<String> pathComponents = normalizeString(path);
+      return Math.max(distanceBetweenComponents(patternComponents, pathComponents, lastMatches),
+                      (!inverted && invertedPatternComponents == null)
+                      ? 0
+                      : distanceBetweenComponents(invertedPatternComponents, pathComponents, lastMatches));
+    }
+
+    public static List<String> normalizeString(String string) {
+      String trimmedString = string.replaceAll("^" + SEPARATOR_CHARACTERS, "");
+      if (trimmedString.isEmpty()) {
+        return Collections.emptyList();
+      }
+      return Arrays.asList(trimmedString.split(SEPARATOR_CHARACTERS));
+    }
+
+    public static float distanceBetweenStrings(String string, String other) {
+      int maxLength = Math.max(string.length(), other.length());
+      int limit = (int)((1 - MIN_ACCEPTABLE_DISTANCE) * maxLength);
+      int distance = EditDistance.optimalAlignment(string.toLowerCase(Locale.ROOT), other.toLowerCase(Locale.ROOT), true, limit, false);
+      if (distance > limit) {
+        return 0;
+      }
+      return 1.0f - ((float)distance / maxLength);
+    }
+
+    private static float distanceBetweenComponents(List<String> patternComponents, List<String> pathComponents, boolean lastMatches) {
+      if (pathComponents.isEmpty() || patternComponents.isEmpty()) {
+        return 0;
+      }
+
+      int pathCompIndex = pathComponents.size() - 1;
+      int patternCompIndex = patternComponents.size() - 1;
+      float distance;
+      float avgDistance = 0;
+      boolean hasUnmatchedPatternComp = false;
+      MinusculeMatcher matcher;
+
+      String lastPatternComp = patternComponents.get(patternCompIndex);
+      String lastFileComp = pathComponents.get(pathCompIndex);
+
+      if (lastMatches) {
+        matcher = buildPatternMatcher(lastPatternComp, true);
+        if (matcher.matches(lastFileComp) && patternComponents.size() > 1) {
+          distance = 1;
+        }
+        else {
+          distance = distanceBetweenStrings(lastPatternComp, lastFileComp);
+        }
+        if (distance < MIN_ACCEPTABLE_DISTANCE) {
+          return 0;
+        }
+        else {
+          avgDistance += distance;
+          patternCompIndex--;
+          pathCompIndex--;
+        }
+      }
+
+      while (patternCompIndex >= 0 && pathCompIndex >= 0 && !hasUnmatchedPatternComp) {
+        while (pathCompIndex >= 0) {
+          String lowerCasePatternComp = patternComponents.get(patternCompIndex).toLowerCase(Locale.ROOT);
+          String lowerCasePathComp = pathComponents.get(pathCompIndex).toLowerCase(Locale.ROOT);
+          matcher = buildPatternMatcher(lowerCasePatternComp, true);
+          if (matcher.matches(lowerCasePathComp)) {
+            distance = 1;
+          }
+          else {
+            distance = distanceBetweenStrings(lowerCasePatternComp, lowerCasePathComp);
+          }
+          if (distance >= MIN_ACCEPTABLE_DISTANCE) {
+            avgDistance += distance;
+            pathCompIndex--;
+            break;
+          }
+          else if (pathCompIndex == 0) {
+            hasUnmatchedPatternComp = true;
+            break;
+          }
+          pathCompIndex--;
+        }
+        patternCompIndex--;
+      }
+
+      hasUnmatchedPatternComp |= patternCompIndex >= 0;
+
+      return hasUnmatchedPatternComp ? 0 : avgDistance / patternComponents.size();
+    }
+
+    public static int weightFromDistance(double distance) {
+      return (int)(MIN_WEIGHT + distance * (MAX_WEIGHT - MIN_WEIGHT));
     }
   }
 }

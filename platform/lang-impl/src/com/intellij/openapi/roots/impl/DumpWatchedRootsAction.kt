@@ -16,16 +16,16 @@ internal class DumpWatchedRootsAction : DumbAwareAction() {
   @Suppress("HardCodedStringLiteral")
   override fun actionPerformed(e: AnActionEvent) {
     val projects = ProjectManager.getInstance().openProjects
-    val roots2Project = MultiMap<String, Project>()
+    val roots2Project = MultiMap<Pair<String, Boolean>, Project>()
     for (project in projects) {
-      val roots = (ProjectRootManager.getInstance(project) as ProjectRootManagerComponent).rootsToWatch.map { it.rootPath }
+      val roots = (ProjectRootManager.getInstance(project) as ProjectRootManagerComponent).rootsToWatch.map { it.rootPath to it.isToWatchRecursively }
       for (root in roots) {
         roots2Project.putValue(root, project)
       }
     }
 
     val roots = roots2Project.entrySet().map {
-      Root(it.key, it.value.map { p -> p.name + "-" + p.locationHash }.sorted())
+      Root(it.key.first, it.key.second, it.value.map { p -> p.name + "-" + p.locationHash }.sorted())
     }.sortedBy { it.path }
 
     val baseListPopupStep = object : BaseListPopupStep<Root>("Registered Roots", roots) {
@@ -33,7 +33,8 @@ internal class DumpWatchedRootsAction : DumbAwareAction() {
       override fun isSpeedSearchEnabled() = true
 
       override fun getTextFor(value: Root?): String {
-        return "${StringUtil.shortenPathWithEllipsis("${value?.path}", 100)}  (${value?.projects?.joinToString(separator = ",")})"
+        return if (value == null) ""
+        else "${StringUtil.shortenPathWithEllipsis(value.path, 100)} ${if (value.recursive) "recursive" else "non-recursive" }  (${value.projects.joinToString(separator = ",")})"
       }
     }
     val popup = JBPopupFactory.getInstance().createListPopup(baseListPopupStep)
@@ -44,5 +45,5 @@ internal class DumpWatchedRootsAction : DumbAwareAction() {
     return ActionUpdateThread.BGT
   }
 
-  private data class Root(val path: String, val projects: List<String>)
+  private data class Root(val path: String, val recursive: Boolean, val projects: List<String>)
 }

@@ -16,9 +16,9 @@
 
 package org.intellij.plugins.xsltDebugger;
 
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -175,7 +175,7 @@ final class EDTGuard implements InvocationHandler {
         }
       }
     };
-    process.addProcessListener(new ProcessAdapter() {
+    process.addProcessListener(new ProcessListener() {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         synchronized (d) {

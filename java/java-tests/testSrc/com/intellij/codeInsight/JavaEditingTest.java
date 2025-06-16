@@ -106,14 +106,11 @@ public class JavaEditingTest extends AbstractBasicJavaEditingTest {
   }
 
   public void testSmartIndentOnEnterWithinNonLastStatement() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean oldValue = settings.SMART_INDENT_ON_ENTER;
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.SMART_INDENT_ON_ENTER = true;
       doTest(JavaFileType.INSTANCE, '\n');
-    }
-    finally {
-      settings.SMART_INDENT_ON_ENTER = oldValue;
-    }
+      return null;
+    });
   }
 
   public void testEmacsTabWithSelection() {

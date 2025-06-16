@@ -88,6 +88,7 @@ public final class CustomRegExpInspection extends LocalInspectionTool implements
         if (UnknownFileType.INSTANCE != fileType && file.getFileType() != fileType) continue;
         final FindModel model = new FindModel();
         model.setRegularExpressions(true);
+        model.setRegExpFlags(pattern.flags);
         model.setStringToFind(pattern.regExp());
         final String replacement = pattern.replacement();
         if (replacement != null) {

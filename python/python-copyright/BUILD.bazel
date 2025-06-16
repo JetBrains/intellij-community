@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//plugins/copyright",
     "@lib//:kotlin-stdlib",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/core-api:core",
     "//python:python-community-impl",

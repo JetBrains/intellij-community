@@ -1,11 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.impl.source.AbstractBasicJavaElementTypeFactory;
 import com.intellij.psi.impl.source.BasicElementTypes;
 import com.intellij.psi.impl.source.WhiteSpaceAndCommentSetHolder;
@@ -20,9 +20,14 @@ import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.error;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.semicolon;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class BasicModuleParser {
   private static final Set<String> STATEMENT_KEYWORDS =
-    ContainerUtil.newHashSet(PsiKeyword.REQUIRES, PsiKeyword.EXPORTS, PsiKeyword.USES, PsiKeyword.PROVIDES);
+    ContainerUtil.newHashSet(JavaKeywords.REQUIRES, JavaKeywords.EXPORTS, JavaKeywords.USES, JavaKeywords.PROVIDES);
 
   private final BasicJavaParser myParser;
   private final AbstractBasicJavaElementTypeFactory.JavaElementTypeContainer myJavaElementTypeContainer;
@@ -40,19 +45,19 @@ public class BasicModuleParser {
 
     IElementType type = builder.getTokenType();
     String text = type == JavaTokenType.IDENTIFIER ? builder.getTokenText() : null;
-    if (!(PsiKeyword.OPEN.equals(text) || PsiKeyword.MODULE.equals(text))) {
+    if (!(JavaKeywords.OPEN.equals(text) || JavaKeywords.MODULE.equals(text))) {
       module.rollbackTo();
       return null;
     }
 
     PsiBuilder.Marker modifierList = firstAnnotation != null ? firstAnnotation.precede() : builder.mark();
-    if (PsiKeyword.OPEN.equals(text)) {
+    if (JavaKeywords.OPEN.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.OPEN_KEYWORD);
       text = builder.getTokenText();
     }
     BasicJavaParserUtil.done(modifierList, myJavaElementTypeContainer.MODIFIER_LIST, builder, myWhiteSpaceAndCommentSetHolder);
 
-    if (PsiKeyword.MODULE.equals(text)) {
+    if (JavaKeywords.MODULE.equals(text)) {
       mapAndAdvance(builder, JavaTokenType.MODULE_KEYWORD);
     }
     else {
@@ -164,11 +169,11 @@ public class BasicModuleParser {
 
   private PsiBuilder.Marker parseStatement(PsiBuilder builder) {
     String kw = builder.getTokenText();
-    if (PsiKeyword.REQUIRES.equals(kw)) return parseRequiresStatement(builder);
-    if (PsiKeyword.EXPORTS.equals(kw)) return parseExportsStatement(builder);
-    if (PsiKeyword.OPENS.equals(kw)) return parseOpensStatement(builder);
-    if (PsiKeyword.USES.equals(kw)) return parseUsesStatement(builder);
-    if (PsiKeyword.PROVIDES.equals(kw)) return parseProvidesStatement(builder);
+    if (JavaKeywords.REQUIRES.equals(kw)) return parseRequiresStatement(builder);
+    if (JavaKeywords.EXPORTS.equals(kw)) return parseExportsStatement(builder);
+    if (JavaKeywords.OPENS.equals(kw)) return parseOpensStatement(builder);
+    if (JavaKeywords.USES.equals(kw)) return parseUsesStatement(builder);
+    if (JavaKeywords.PROVIDES.equals(kw)) return parseProvidesStatement(builder);
     return null;
   }
 
@@ -179,7 +184,7 @@ public class BasicModuleParser {
     PsiBuilder.Marker modifierList = builder.mark();
     while (true) {
       if (expect(builder, BasicElementTypes.BASIC_MODIFIER_BIT_SET)) continue;
-      if (builder.getTokenType() == JavaTokenType.IDENTIFIER && PsiKeyword.TRANSITIVE.equals(builder.getTokenText())) {
+      if (builder.getTokenType() == JavaTokenType.IDENTIFIER && JavaKeywords.TRANSITIVE.equals(builder.getTokenText())) {
         mapAndAdvance(builder, JavaTokenType.TRANSITIVE_KEYWORD);
         continue;
       }
@@ -214,7 +219,7 @@ public class BasicModuleParser {
     boolean hasError = false;
 
     if (parseClassOrPackageRef(builder) != null) {
-      if (PsiKeyword.TO.equals(builder.getTokenText())) {
+      if (JavaKeywords.TO.equals(builder.getTokenText())) {
         mapAndAdvance(builder, JavaTokenType.TO_KEYWORD);
 
         while (true) {
@@ -268,7 +273,7 @@ public class BasicModuleParser {
       hasError = true;
     }
 
-    if (PsiKeyword.WITH.equals(builder.getTokenText())) {
+    if (JavaKeywords.WITH.equals(builder.getTokenText())) {
       builder.remapCurrentToken(JavaTokenType.WITH_KEYWORD);
       hasError = myParser.getReferenceParser().parseReferenceList(builder, JavaTokenType.WITH_KEYWORD, myJavaElementTypeContainer.PROVIDES_WITH_LIST, JavaTokenType.COMMA);
     }

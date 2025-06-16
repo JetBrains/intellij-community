@@ -30,13 +30,17 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AncestorListenerAdapter
 import com.intellij.util.ui.JBUI
-import kotlinx.coroutines.*
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
-import sun.swing.SwingUtilities2
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Graphics
@@ -113,7 +117,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
 
     override fun getPreferredSize(): Dimension {
       val fm = getFontMetrics(font)
-      val w = SwingUtilities2.stringWidth(this, fm, titleString) + JBUI.scale(5)
+      val w = UIUtil.computeStringWidth(this, fm, titleString) + JBUI.scale(5)
       return Dimension(min(parent.width, w), super.getPreferredSize().height)
     }
 

@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -33,7 +32,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
-import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.CoroutineScopeKt;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +52,6 @@ public abstract class VcsVFSListener implements Disposable {
 
   private final ProjectLevelVcsManager myVcsManager;
   private final VcsIgnoreManager myVcsIgnoreManager;
-  private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
 
   protected static final class MovedFileInfo {
     public final @NotNull String myOldPath;
@@ -414,24 +411,11 @@ public abstract class VcsVFSListener implements Disposable {
     myAddOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.ADD, vcs);
     myRemoveOption = myVcsManager.getStandardConfirmation(VcsConfiguration.StandardConfirmation.REMOVE, vcs);
 
-    myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
-
     myProjectConfigurationFilesProcessor = createProjectConfigurationFilesProcessor();
     myExternalFilesProcessor = createExternalFilesProcessor();
     myIgnoreFilesProcessor = createIgnoreFilesProcessor();
 
     awaitCancellationAndDispose(coroutineScope, this);
-  }
-
-  /**
-   * @deprecated Use {@link #VcsVFSListener(AbstractVcs, CoroutineScope)} followed by {@link #installListeners()}
-   */
-  @Deprecated(forRemoval = true)
-  protected VcsVFSListener(@NotNull Project project, @NotNull AbstractVcs vcs) {
-    //noinspection UsagesOfObsoleteApi
-    this(vcs, childScope(((ComponentManagerEx)project).getCoroutineScope(), "VcsVFSListener", EmptyCoroutineContext.INSTANCE, true));
-    installListeners();
-    myShouldCancelScope = true;
   }
 
   protected void installListeners() {
@@ -484,15 +468,11 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private boolean allowedDeletion(@NotNull VFileEvent event) {
-    if (myVcsFileListenerContextHelper.isDeletionContextEmpty()) return true;
-
-    return !myVcsFileListenerContextHelper.isDeletionIgnored(getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isDeletionAllowed(myProject, getEventFilePath(event));
   }
 
   private boolean allowedAddition(@NotNull VFileEvent event) {
-    if (myVcsFileListenerContextHelper.isAdditionContextEmpty()) return true;
-
-    return !myVcsFileListenerContextHelper.isAdditionIgnored(getEventFilePath(event));
+    return VcsFileListenerIgnoredFilesProvider.isAdditionAllowed(myProject, getEventFilePath(event));
   }
 
   @RequiresBackgroundThread

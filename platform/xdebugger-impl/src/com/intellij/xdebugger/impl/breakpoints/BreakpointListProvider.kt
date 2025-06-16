@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.icons.AllIcons
@@ -22,8 +22,8 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule
+import com.intellij.xdebugger.impl.actions.EditBreakpointAction
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider.BreakpointsListener
 import org.jetbrains.annotations.PropertyKey
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
@@ -42,8 +42,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
   override fun getDescriptor(node: AbstractTreeNode<*>): OpenFileDescriptor? {
     val item = node.equalityObject as? BreakpointItem ?: return null
-    val breakpoint = item.breakpoint as? XBreakpoint<*> ?: return null
-    return breakpoint.sourcePosition?.let { OpenFileDescriptor(project, it.file, it.line, 0) }
+    val breakpoint = item.breakpoint ?: return null
+    return breakpoint.getSourcePosition()?.let { OpenFileDescriptor(project, it.file, it.line, 0) }
   }
 
   override fun getEditActionText(): String = ActionsBundle.actionText("EditBreakpoint")
@@ -51,13 +51,12 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
   override fun performEdit(selection: Any, parent: JComponent) {
     val node = selection as? ItemNode ?: return
     val breakpoint = node.value ?: return
-    val support = XBreakpointUtil.getDebuggerSupport(project, breakpoint) ?: return
     val bounds = (parent as? JTree)?.run { getPathBounds(leadSelectionPath) }
     val visible = parent.visibleRect.apply {
       x = bounds?.run { x + width }?.coerceIn(x, x + width) ?: (x + width / 2)
       y = bounds?.run { y + height / 2 }?.coerceIn(y, y + height) ?: (y + height / 2)
     }
-    support.editBreakpointAction.editBreakpoint(project, parent, visible.location, breakpoint)
+    EditBreakpointAction.HANDLER.editBreakpoint(project, parent, visible.location, breakpoint)
   }
 
   override fun getDeleteActionText() = message("xdebugger.remove.line.breakpoint.action.text")
@@ -68,13 +67,18 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
   }
 
 
-  private class RootNode(project: Project, key: String) : BreakpointsListener, Comparator<Any>, AbstractTreeNode<String>(project, key) {
+  private class RootNode(project: Project, key: String) : Comparator<Any>, AbstractTreeNode<String>(project, key) {
     private val map = mutableMapOf<Any, Any>()
     private val valid = AtomicBoolean()
-    private val providers = XBreakpointUtil.collectPanelProviders().onEach { it.addListener(this, project, project) }
     private val icon16x12 = JBUIScale.scaleIcon(SizedIcon(AllIcons.Debugger.Db_set_breakpoint, 16, 12))
     private val cache = AbstractTreeNodeCache<Any, AbstractTreeNode<*>>(this) {
       if (it is BreakpointItem) ItemNode(project, it) else if (it is XBreakpointGroup) GroupNode(project, it) else null
+    }
+
+    init {
+      XBreakpointUtil.subscribeOnBreakpointsChanges(project, project) {
+        breakpointsUpdater.cancelAndRequest()
+      }
     }
 
     fun hasVisibleBreakpoints() = valid.get()
@@ -92,8 +96,6 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
       else -> 1
     }
 
-    override fun breakpointsChanged() = breakpointsUpdater.cancelAndRequest()
-
     override fun getChildren() = cache.getNodes(getKeys(value))
 
     override fun update(presentation: PresentationData) {
@@ -108,8 +110,7 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
 
       val breakpoints = mutableMapOf<Any, Any>()
       ReadAction.run<Exception> {
-        val items = mutableListOf<BreakpointItem>()
-        providers.forEach { it.provideBreakpointItems(project, items) }
+        val items = XBreakpointUtil.getAllBreakpointItems(project)
 
         val manager = XDebuggerManager.getInstance(project).breakpointManager as? XBreakpointManagerImpl
         val selectedRules = manager?.breakpointsDialogSettings?.selectedGroupingRules
@@ -122,7 +123,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
           if (item.canNavigate() || Registry.`is`("ide.bookmark.show.all.breakpoints", false)) {
             var any = item as Any
             for (rule in enabledRules) {
-              rule.getGroup(item.breakpoint, emptyList())?.let {
+              val breakpoint = item.breakpoint ?: continue
+              rule.getGroup(breakpoint)?.let {
                 breakpoints[any] = it
                 any = it
               }

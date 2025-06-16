@@ -13,15 +13,19 @@ import java.util.concurrent.atomic.AtomicReference
 
 @Internal
 @Experimental
-@JvmOverloads
-fun Job.cancelOnDispose(disposable: Disposable, disposeOnCompletion: Boolean = true) {
+fun Job.cancelOnDispose(disposable: Disposable) {
   val childDisposable = Disposable { cancel("disposed") }
   Disposer.register(disposable, childDisposable)
-  if (disposeOnCompletion) {
-    job.invokeOnCompletion {
-      Disposer.dispose(childDisposable)
-    }
+  invokeOnCompletion {
+    Disposer.dispose(childDisposable)
   }
+}
+
+@Internal
+@Experimental
+@Deprecated("Use `cancelOnDispose`", ReplaceWith("cancelOnDispose(disposable)"))
+fun Job.cancelOnDispose(disposable: Disposable, disposeOnCompletion: Boolean = true) {
+  cancelOnDispose(disposable)
 }
 
 /**

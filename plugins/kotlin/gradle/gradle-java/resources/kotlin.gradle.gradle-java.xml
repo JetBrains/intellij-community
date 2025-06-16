@@ -9,12 +9,6 @@
     <module name="kotlin.base.external-build-system"/>
   </dependencies>
 
-  <projectListeners>
-    <listener
-            class="org.jetbrains.kotlin.idea.gradleJava.scripting.ProjectGradleSettingsListener"
-            topic="org.jetbrains.plugins.gradle.settings.GradleSettingsListener"/>
-  </projectListeners>
-
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.gradleProjectImportHandler" area="IDEA_PROJECT"
@@ -55,7 +49,6 @@
 
     <pluginDescriptions implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradlePluginDescription"/>
 
-    <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModelResolver" order="first"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.PrepareKotlinIdeImportTaskResolver" order="first" />
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectResolverExtension" order="first"/>
     <projectResolve implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinTestTasksResolver"/>
@@ -66,8 +59,6 @@
     <taskManager implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinCoroutineDebugGradleTaskManagerExtension"/>
 
     <orderEnumerationHandlerFactory implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleOrderEnumerationHandler$Factory" order="first"/>
-
-    <syncContributor implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptSyncContributor"/>
 
     <executionEnvironmentProvider implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinGradleAppEnvProvider"/>
     <initScriptGenerator implementation="org.jetbrains.kotlin.idea.gradleJava.execution.KotlinMppGradleInitScriptGenerator"/>
@@ -89,10 +80,7 @@
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectSettingsDataService"/>
     <externalProjectDataService implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.kpm.KotlinFragmentDataService"/>
 
-    <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslSyncListener"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonJvmCriteriaMigrationNotificationListener"/>
-
-    <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptNotificationProvider"/>
 
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinJvmTestClassGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMultiplatformJvmTestClassGradleConfigurationProducer"/>
@@ -110,6 +98,8 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestMethodGradleConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinAllInPackageGradleConfigurationProducer"
+                              order="before allInPackageGradleConfigurationProducer"/>
 
     <registryKey
             key="kotlin.gradle.testing.enabled"
@@ -125,24 +115,10 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator"/>
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
-
-    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource"/>
-    <kotlinScriptLazyResolveProhibitionCondition implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptLazyResolveProhibitionCondition"/>
-
-    <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptAdditionalIdeaDependenciesProvider"/>
-
-    <experimentalFeature implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsImportingFeature"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
     <gradleBuildScriptSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleBuildScriptSupport"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin.scripting.idea">
-    <listener order="first" implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptListener"/>
-    <loader order="first" implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.legacy.GradleLegacyScriptConfigurationLoader"/>
-    <scriptingSupport implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager"/>
-    <settings.provider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.settings.GradleSettingsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.kpm">
@@ -169,11 +145,6 @@
   </extensions>
 
   <actions resource-bundle="messages.KotlinIdeaGradleBundle">
-    <action id="LoadKtGradleConfiguration"
-            class="org.jetbrains.kotlin.idea.gradleJava.scripting.LoadKtGradleConfigurationAction"
-            icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
-      <add-to-group group-id="ExternalSystem.ProjectRefreshActionGroup" anchor="first"/>
-    </action>
     <action id="Gradle.MigrateToDaemonJvmCriteria"
             class="org.jetbrains.kotlin.idea.gradleJava.toolchain.GradleDaemonJvmCriteriaMigrationAction"/>
   </actions>

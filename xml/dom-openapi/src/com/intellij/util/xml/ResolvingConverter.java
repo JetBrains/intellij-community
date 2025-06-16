@@ -38,7 +38,7 @@ public abstract class ResolvingConverter<T> extends Converter<T> implements Reso
    * @return additional reference variants. They won't resolve to anywhere, but won't be highlighted as errors.
    * They will also appear in the completion dropdown.
    */
-  public @NotNull Set<String> getAdditionalVariants(final @NotNull ConvertContext context) {
+  public @NotNull @Unmodifiable Set<String> getAdditionalVariants(final @NotNull ConvertContext context) {
     return Collections.emptySet();
   }
 

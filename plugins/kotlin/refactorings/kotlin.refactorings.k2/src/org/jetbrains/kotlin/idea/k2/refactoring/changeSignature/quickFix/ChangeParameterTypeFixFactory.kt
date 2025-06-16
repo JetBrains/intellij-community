@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -119,6 +120,7 @@ object ChangeParameterTypeFixFactory {
         targetType: KaType,
         functionLikeSymbol: KaFunctionSymbol
     ): ChangeParameterTypeFix? {
+        if (functionLikeSymbol.origin != KaSymbolOrigin.SOURCE) return null
         val isPrimaryConstructorParameter = functionLikeSymbol is KaConstructorSymbol && functionLikeSymbol.isPrimary
         val functionName = getDeclarationName(functionLikeSymbol) ?: return null
 

@@ -10,10 +10,10 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.Label
-import com.intellij.ui.components.Link
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
@@ -145,12 +145,6 @@ private fun <T : JComponent> CellBuilder<T>.intApplyToComponent(task: T.() -> Un
   return also { task(component) }
 }
 
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun <T : JTextComponent> CellBuilder<T>.withTextBinding(modelBinding: PropertyBinding<String>): CellBuilder<T> {
-  return withBindingInt(JTextComponent::getText, JTextComponent::setText, modelBinding)
-}
-
 // separate class to avoid row related methods in the `cell { } `
 @CellMarker
 @ApiStatus.ScheduledForRemoval
@@ -171,17 +165,6 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @ApiStatus.Internal
-  fun label(@Label text: String,
-            style: UIUtil.ComponentStyle? = null,
-            fontColor: UIUtil.FontColor? = null,
-            bold: Boolean = false): CellBuilder<JLabel> {
-    val label = Label(text, style, fontColor, bold)
-    return component(label)
-  }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun label(@Label text: String,
             font: JBFont,
             fontColor: UIUtil.FontColor? = null): CellBuilder<JLabel> {
@@ -194,7 +177,8 @@ abstract class Cell : BaseBuilder {
   fun link(text: @LinkLabel String,
            style: UIUtil.ComponentStyle? = null,
            action: () -> Unit): CellBuilder<JComponent> {
-    val result = Link(text, style, action)
+    val result = ActionLink(text) { action() }
+    style?.let { UIUtil.applyStyle(it, result) }
     return component(result)
   }
 
@@ -271,14 +255,6 @@ abstract class Cell : BaseBuilder {
         modelBinding
       )
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun textField(prop: KMutableProperty0<String>, columns: Int? = null): CellBuilder<JBTextField> = textFieldInt(prop.intToBinding(), columns)
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun textField(getter: () -> String, setter: (String) -> Unit, columns: Int? = null): CellBuilder<JBTextField> = textFieldInt(PropertyBinding(getter, setter), columns)
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)

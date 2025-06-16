@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging
 
 import com.intellij.notification.NotificationAction
@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -20,7 +21,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.components.dialog
@@ -29,11 +29,17 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonFileType
+import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
-import java.nio.file.Paths
-import java.util.Locale
+import com.jetbrains.python.util.runWithModalBlockingOrInBackground
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
+import kotlin.io.path.Path
 
 
 /**
@@ -43,17 +49,21 @@ import java.util.Locale
  * @param unhandledLines lines that we failed to analyze
  * @param unchangedInBaseFiles packages with different versions to notify the user about if modification of base files is not allowed
  */
-data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
-                                        val baseFilesOutput: Map<VirtualFile, List<String>>,
-                                        val unhandledLines: List<String>,
-                                        val unchangedInBaseFiles: List<String>) {
+@ApiStatus.Internal
+
+data class PyRequirementsAnalysisResult(
+  val currentFileOutput: List<String>,
+  val baseFilesOutput: Map<VirtualFile, List<String>>,
+  val unhandledLines: List<String>,
+  val unchangedInBaseFiles: List<String>,
+) {
   companion object {
-    fun empty() = PyRequirementsAnalysisResult(emptyList(), emptyMap(), emptyList(), emptyList())
+    fun empty(): PyRequirementsAnalysisResult = PyRequirementsAnalysisResult(emptyList(), emptyMap(), emptyList(), emptyList())
   }
 
-  fun withImportedPackages(importedPackages: Map<String, PyPackage>, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
+  fun withImportedPackages(importedPackages: MutableMap<String, PythonPackage>, settings: PyPackageRequirementsSettings): PyRequirementsAnalysisResult {
     val newCurrentFile = currentFileOutput + importedPackages.values.map {
-      if (settings.specifyVersion) "${it.name}${settings.versionSpecifier.separator}${it.version}" else it.name
+      if (settings.specifyVersion) "${it.presentableName}${settings.versionSpecifier.separator}${it.version}" else it.presentableName
     }
     return PyRequirementsAnalysisResult(newCurrentFile, baseFilesOutput, unhandledLines, unchangedInBaseFiles)
   }
@@ -62,7 +72,7 @@ data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
 private class PyCollectImportsTask(
   private val module: Module,
   private val psiManager: PsiManager,
-  @NlsContexts.DialogTitle title: String
+  @NlsContexts.DialogTitle title: String,
 ) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
 
   override fun compute(indicator: ProgressIndicator): Set<String> {
@@ -101,35 +111,32 @@ internal fun syncWithImports(module: Module) {
   val settings = PyPackageRequirementsSettings.getInstance(module)
 
   if (!ApplicationManager.getApplication().isUnitTestMode) {
-    val proceed = showSyncSettingsDialog(module.project, settings)
+    val proceed = showSyncSettingsDialog(module.project, settings, sdk)
     if (!proceed) return
   }
 
-  var requirementsFile = PyPackageUtil.findRequirementsTxt(module)
+  val requirementsFile = PyPackageUtil.findRequirementsTxt(module) ?: runWriteAction {
+    PythonRequirementTxtUtils.createRequirementsTxtPath(module, sdk)
+  }
+
+  if (requirementsFile == null) {
+    val text = PyBundle.message("python.requirements.error.create.requirements.file")
+    showNotification(notificationGroup, NotificationType.WARNING, text, module.project)
+    return
+  }
+
   val matchResult = prepareRequirementsText(module, sdk, settings)
 
-  val psiManager = PsiManager.getInstance(module.project)
   WriteCommandAction.runWriteCommandAction(module.project, PyBundle.message("python.requirements.action.name"), null, {
-    if (requirementsFile == null) {
-      val path = Paths.get(settings.requirementsPath)
-      val location = when {
-        path.parent != null -> LocalFileSystem.getInstance().findFileByPath(path.parent.toString())!!
-        else -> module.rootManager.contentRoots.first()
-      }
-      val root = psiManager.findDirectory(location)!!
-
-      var psiFile = root.findFile(path.fileName.toString())
-      if (psiFile == null) psiFile = root.createFile(path.fileName.toString())
-
-      requirementsFile = psiFile.virtualFile
-    }
     val documentManager = FileDocumentManager.getInstance()
-    documentManager.getDocument(requirementsFile!!)!!.setText(matchResult.currentFileOutput.joinToString("\n"))
+    documentManager.getDocument(requirementsFile)!!.setText(matchResult.currentFileOutput.joinToString("\n"))
     matchResult.baseFilesOutput.forEach { (file, content) ->
       documentManager.getDocument(file)!!.setText(content.joinToString("\n"))
     }
   })
-  psiManager.findFile(requirementsFile!!)?.navigate(true)
+  val psiManager = PsiManager.getInstance(module.project)
+  psiManager.findFile(requirementsFile)?.navigate(true)
+
   if (matchResult.unhandledLines.isNotEmpty()) {
     val text = PyBundle.message("python.requirements.warning.unhandled.lines", matchResult.unhandledLines.joinToString(", "))
     showNotification(notificationGroup, NotificationType.WARNING, text, module.project)
@@ -140,11 +147,13 @@ internal fun syncWithImports(module: Module) {
   }
 }
 
-private fun showNotification(notificationGroup: NotificationGroup,
-                             type: NotificationType,
-                             @NlsContexts.NotificationContent text: String,
-                             project: Project,
-                             action: NotificationAction? = null) {
+private fun showNotification(
+  notificationGroup: NotificationGroup,
+  type: NotificationType,
+  @NlsContexts.NotificationContent text: String,
+  project: Project,
+  action: NotificationAction? = null,
+) {
   val notification = notificationGroup.createNotification(PyBundle.message("python.requirements.balloon"), text, type)
   if (action != null) notification.addAction(action)
   notification.notify(project)
@@ -158,11 +167,14 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
   val task = PyCollectImportsTask(module, psiManager, dialogTitle)
   task.queue()
 
-  val installedPackages = PyPackageManager.getInstance(sdk).refreshAndGetPackages(false)
+  val installedPackages = runWithModalBlockingOrInBackground(module.project, PyBundle.message("python.packaging.list.packages")) {
+    PythonPackageManager.forSdk(module.project, sdk).listInstalledPackages()
+  }
+
   val importedPackages = task.result.asSequence()
     .flatMap { topLevelPackage ->
       val alias = PyPsiPackageUtil.moduleToPackageName(topLevelPackage, default = "")
-      sequence {  
+      sequence {
         yield(topLevelPackage)
         if (alias.isNotEmpty()) yield(alias)
       }.mapNotNull { name -> installedPackages.find { StringUtil.equalsIgnoreCase(it.name, name) } }
@@ -181,18 +193,27 @@ private fun prepareRequirementsText(module: Module, sdk: Sdk, settings: PyPackag
   return analysisResult.withImportedPackages(importedPackages, settings)
 }
 
-private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirementsSettings): Boolean {
+private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirementsSettings, sdk: Sdk): Boolean {
   val ref = Ref.create(false)
   val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
   val panel = panel {
-    row(PyBundle.message("form.integrated.tools.package.requirements.file")) {
-      textFieldWithBrowseButton(fileChooserDescriptor = descriptor)
-        .bindText(settings::getRequirementsPath, settings::setRequirementsPath)
-        .align(AlignX.FILL)
-        .focused()
+    val sdkAdditionalData = sdk.sdkAdditionalData as? PythonSdkAdditionalData
+    if (sdkAdditionalData != null) {
+      row(PyBundle.message("form.integrated.tools.package.requirements.file")) {
+        textFieldWithBrowseButton(fileChooserDescriptor = descriptor)
+          .bindText({
+                      sdkAdditionalData.requiredTxtPath?.toString() ?: ""
+                    }, { stringPath ->
+                      sdkAdditionalData.requiredTxtPath = runCatching {
+                        stringPath.ifBlank { null }?.let { Path(it) }
+                      }.getOrNull()
+                    })
+          .align(AlignX.FILL)
+          .focused()
+      }
     }
     row(PyBundle.message("python.requirements.version.label")) {
-      comboBox(PyRequirementsVersionSpecifierType.values().asList())
+      comboBox(PyRequirementsVersionSpecifierType.entries)
         .bindItem(settings::getVersionSpecifier, settings::setVersionSpecifier)
         .align(AlignX.FILL)
     }
@@ -222,6 +243,6 @@ private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirem
 
 private fun addImports(file: PyFile, imported: MutableSet<String>) {
   (file.importTargets.asSequence().mapNotNull { it.importedQName?.firstComponent } +
-  file.fromImports.asSequence().mapNotNull { it.importSourceQName?.firstComponent })
+   file.fromImports.asSequence().mapNotNull { it.importSourceQName?.firstComponent })
     .forEach { imported.add(it) }
 }

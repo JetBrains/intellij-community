@@ -13,14 +13,12 @@ import kotlinx.coroutines.withContext
 import org.jdom.Attribute
 import org.jdom.DataConversionException
 import org.jdom.Element
-import org.jetbrains.annotations.ApiStatus
 
 private const val FIRST_EDITOR = "first_editor"
 private const val SECOND_EDITOR = "second_editor"
 private const val SPLIT_LAYOUT = "split_layout"
 private const val VERTICAL_SPLIT = "is_vertical_split"
 
-@ApiStatus.Experimental
 abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEditorProvider): AsyncFileEditorProvider {
   private val mainProvider: TextEditorProvider = TextEditorProvider.getInstance()
   private val editorTypeId = createSplitEditorProviderTypeId(mainProvider.editorTypeId, previewProvider.editorTypeId)
@@ -106,7 +104,7 @@ abstract class TextEditorWithPreviewProvider(private val previewProvider: FileEd
     try {
       return booleanValue
     }
-    catch (ignored: DataConversionException) {
+    catch (_: DataConversionException) {
       return default
     }
   }
@@ -154,7 +152,6 @@ private suspend fun createEditorBuilder(
   }
 }
 
-@ApiStatus.Internal
 fun createSplitEditorProviderTypeId(first: String, second: String): String {
   return "split-provider[$first;$second]"
 }

@@ -11,9 +11,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -137,7 +137,7 @@ public class EditorSearchSession implements SearchSession,
       boolean myIsReplace = myFindModel.isReplaceState();
 
       @Override
-      public void findModelChanged(FindModel findModel1) {
+      public void findModelChanged(@NotNull FindModel findModel1) {
         if (myReentrantLock) return;
         try {
           myReentrantLock = true;
@@ -160,6 +160,7 @@ public class EditorSearchSession implements SearchSession,
           mySearchResults.clear();
           EditorSearchSession.this.updateResults(FindSettings.getInstance().isScrollToResultsDuringTyping());
           FindUtil.updateFindInFileModel(EditorSearchSession.this.getProject(), myFindModel, !ConsoleViewUtil.isConsoleViewEditor(editor));
+          FindUtil.updateFindNextModel(getProject(), getFindModel());
         }
         finally {
           myReentrantLock = false;
@@ -244,7 +245,7 @@ public class EditorSearchSession implements SearchSession,
     group.setPopup(true);
     group.getTemplatePresentation().setText(ApplicationBundle.message("editorsearch.more.popup"));
     group.getTemplatePresentation().setIcon(AllIcons.Actions.More);
-    group.getTemplatePresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE);
+    group.getTemplatePresentation().putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, Boolean.TRUE);
     return group;
   }
 
@@ -554,7 +555,7 @@ public class EditorSearchSession implements SearchSession,
     myLivePreviewController.dispose();
   }
 
-  private void updateResults(final boolean allowedToChangedEditorSelection) {
+  private void updateResults(boolean allowedToChangedEditorSelection) {
     final String text = myFindModel.getStringToFind();
     if (text.isEmpty()) {
       nothingToSearchFor(allowedToChangedEditorSelection);
@@ -577,16 +578,6 @@ public class EditorSearchSession implements SearchSession,
           myComponent.setStatusText(ApplicationBundle.message("editorsearch.empty.string.matches"));
           return;
         }
-      }
-
-
-      final FindManager findManager = FindManager.getInstance(getProject());
-      if (allowedToChangedEditorSelection) {
-        findManager.setFindWasPerformed();
-        FindModel copy = new FindModel();
-        copy.copyFrom(myFindModel);
-        copy.setReplaceState(false);
-        findManager.setFindNextModel(copy);
       }
       if (myLivePreviewController != null) {
         myLivePreviewController.updateInBackground(myFindModel, allowedToChangedEditorSelection);

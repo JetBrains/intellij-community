@@ -5,7 +5,11 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -80,6 +84,39 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("test")
     assertEvent { it.message.contains("Unrecognized option: -aaaaT1") || it.message.contains("Unable to parse maven.config") }
   }
+
+  @Test
+  fun `test maven sync with old JDK`() = runBlocking {
+    assumeMaven4()
+    val sdk = createTestSdk11()
+    writeAction {
+      ProjectJdkTable.getInstance(project).addJdk(sdk, testRootDisposable)
+      ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+    }
+    try {
+      // If you want to set it as the project SDK
+      createAndImportProject()
+      assertModules("test")
+      assertEvent { it.message.contains("Maven JDK Version for Importer Is Too Low") }
+    }
+    finally {
+      writeAction {
+        ProjectJdkTable.getInstance().removeJdk(sdk)
+        ProjectRootManager.getInstance(project).setProjectSdk(null)
+      }
+    }
+
+  }
+
+  private suspend fun createTestSdk11(): Sdk {
+    val sdk: Sdk = ProjectJdkTable.getInstance().createSdk(getTestName(true) + "-jdk11", JavaSdk.getInstance())
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.homePath = "jdk11-home-path"
+    sdkModificator.versionString = "11"
+    writeAction { sdkModificator.commitChanges() }
+    return sdk
+  }
+
 
   private fun loggedErrorProcessor(search: String) = object : LoggedErrorProcessor() {
     override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> =

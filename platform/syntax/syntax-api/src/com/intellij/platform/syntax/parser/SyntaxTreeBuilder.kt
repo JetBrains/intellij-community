@@ -2,6 +2,7 @@
 package com.intellij.platform.syntax.parser
 
 import com.intellij.platform.syntax.SyntaxElementType
+import com.intellij.platform.syntax.SyntaxElementTypeSet
 import com.intellij.platform.syntax.lexer.TokenList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -156,7 +157,7 @@ interface SyntaxTreeBuilder {
    */
   fun setDebugMode(dbgMode: Boolean)
 
-  fun enforceCommentTokens(tokens: Set<SyntaxElementType>)
+  fun enforceCommentTokens(tokens: SyntaxElementTypeSet)
 
   /**
    * @return latest left done node for context dependent parsing.
@@ -170,28 +171,49 @@ interface SyntaxTreeBuilder {
 
   // todo extract to separate interface???
   /**
-   * A view of token list being used for parsing.
-   * The lexemes can mutate during parsing.
+   * A view of the token list being used for parsing.
+   * The tokens can mutate during parsing.
    */
-  val lexemes: TokenList
+  val tokens: TokenList
 
   fun isWhitespaceOrComment(elementType: SyntaxElementType): Boolean = false
 
   fun hasErrorsAfter(marker: Marker): Boolean
 
   interface Production {
-    fun getTokenType(): SyntaxElementType
+    /**
+     * The token type of this production
+     */
+    fun getNodeType(): SyntaxElementType
 
+    /**
+     * The start offset of the production in the char sequence
+     */
     fun getStartOffset(): Int
 
+    /**
+     * The end offset of the production in the char sequence
+     */
     fun getEndOffset(): Int
 
-    fun getStartIndex(): Int
+    /**
+     * The index of the first production's token in the token sequence
+     */
+    fun getStartTokenIndex(): Int
 
-    fun getEndIndex(): Int
+    /**
+     * The index of the last production's token in the token sequence
+     */
+    fun getEndTokenIndex(): Int
 
+    /**
+     * The error message attached to the production, if any
+     */
     fun getErrorMessage(): @Nls String?
 
+    /**
+     * true if the production is collapsed, meaning that its subtree should be parsed on demand
+     */
     fun isCollapsed(): Boolean
 
     // TODO invent a better name/way to distinguish CompositeMarker and ErrorLeaf markers.

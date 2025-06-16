@@ -4,7 +4,7 @@ import com.intellij.codeInspection.test.TestOnlyInspection
 import com.intellij.jvm.analysis.testFramework.JvmInspectionTestBase
 
 abstract class TestOnlyInspectionTestBase : JvmInspectionTestBase() {
-  override val inspection = TestOnlyInspection()
+  override val inspection: TestOnlyInspection = TestOnlyInspection()
 
   override fun setUp() {
     super.setUp()

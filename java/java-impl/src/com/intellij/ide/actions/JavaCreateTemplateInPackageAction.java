@@ -32,6 +32,11 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> extends CreateTemplateInPackageAction<T> {
+
+  protected JavaCreateTemplateInPackageAction(@Nullable Set<? extends JpsModuleSourceRootType<?>> sourceRootTypes) {
+    super(sourceRootTypes);
+  }
+
   protected JavaCreateTemplateInPackageAction(String text, String description, Icon icon, boolean inSourceOnly) {
     super(text, description, icon, inSourceOnly ? JavaModuleSourceRootTypes.SOURCES : null);
   }

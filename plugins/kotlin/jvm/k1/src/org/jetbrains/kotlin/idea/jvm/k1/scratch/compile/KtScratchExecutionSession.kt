@@ -167,7 +167,7 @@ class KtScratchExecutionSession(
             }
 
             try {
-                val compilerTarget = KaCompilerTarget.Jvm(isTestMode = false)
+                val compilerTarget = KaCompilerTarget.Jvm(isTestMode = false, compiledClassHandler = null, debuggerExtension = null)
                 val allowedErrorFilter: (KaDiagnostic) -> Boolean = { false }
 
                 compileToDirectory(psiFile, configuration, compilerTarget, allowedErrorFilter, tmpDir)

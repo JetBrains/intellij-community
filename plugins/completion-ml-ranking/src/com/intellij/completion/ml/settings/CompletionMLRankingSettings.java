@@ -97,7 +97,7 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
 
   @Override
   public void loadState(@NotNull State state) {
-    myState.rankingEnabled = state.rankingEnabled;
+    myState.rankingEnabled = state.rankingEnabled && state.language2state.containsValue(true);
     myState.showDiff = state.showDiff;
     myState.language2state.putAll(state.language2state);
   }
@@ -134,9 +134,9 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
   }
 
   public static final class State {
-    public boolean rankingEnabled;
-    public boolean showDiff;
-    public boolean decorateRelevant;
+    public boolean rankingEnabled = true;
+    public boolean showDiff = true;
+    public boolean decorateRelevant = true;
     public final Map<String, Boolean> language2state = new HashMap<>();
 
     public State() {
@@ -152,14 +152,13 @@ public final class CompletionMLRankingSettings implements PersistentStateCompone
             if (useMLRanking)
               LOG.info("ML Completion enabled, experiment group=" + experimentInfo.getVersion() + " for: " + language.getDisplayName());
           } else {
-            language2state.put(ranker.getId(), ranker.isEnabledByDefault());
+            language2state.put(ranker.getId(), true);
             if (isEAP) {
               decorateRelevant |= ranker.getDecoratingPolicy() != DecoratingItemsPolicy.Companion.getDISABLED();
             }
           }
         }
       }
-      rankingEnabled = language2state.containsValue(true);
     }
   }
 }

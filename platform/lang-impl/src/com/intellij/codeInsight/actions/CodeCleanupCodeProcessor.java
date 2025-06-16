@@ -40,11 +40,11 @@ public final class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor 
 
 
   @Override
-  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile file, final boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile psiFile, final boolean processChangedTextOnly) {
     return new FutureTask<>(() -> {
-      if (!file.isValid()) return false;
-      Collection<TextRange> ranges = getRanges(file, processChangedTextOnly);
-      GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), myProfile, file);
+      if (!psiFile.isValid()) return false;
+      Collection<TextRange> ranges = getRanges(psiFile, processChangedTextOnly);
+      GlobalInspectionContextBase.cleanupElements(myProject, null, descriptor -> isInRanges(ranges, descriptor), myProfile, psiFile);
       return true;
     });
   }

@@ -10,7 +10,10 @@ class GradleDaemonJvmPropertiesFileTest : GradleDaemonJvmPropertiesFileTestCase(
 
   @Test
   fun testNotPresentProjectGradleDaemonJvmPropertiesFile() {
-    Assertions.assertNull(GradleDaemonJvmPropertiesFile.getProperties(projectPath))
+    assertGradleDaemonJvmPropertiesFile {
+      Assertions.assertNull(version)
+      Assertions.assertNull(vendor)
+    }
   }
 
   @Test

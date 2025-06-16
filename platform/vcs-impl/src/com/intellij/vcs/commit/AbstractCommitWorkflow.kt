@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.BundleBase
@@ -12,7 +12,6 @@ import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.withCurrentJob
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -217,11 +216,21 @@ abstract class AbstractCommitWorkflow(val project: Project) {
   fun addListener(listener: CommitWorkflowListener, parent: Disposable) =
     eventDispatcher.addListener(listener, parent)
 
-  fun addVcsCommitListener(listener: CommitterResultHandler, parent: Disposable) =
-    commitEventDispatcher.addListener(listener, parent)
+  fun addVcsCommitListener(listener: CommitterResultHandler, parent: Disposable?) {
+    if (parent != null) {
+      commitEventDispatcher.addListener(listener, parent)
+    } else {
+      commitEventDispatcher.addListener(listener)
+    }
+  }
 
-  fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable) =
-    commitCustomEventDispatcher.addListener(listener, parent)
+  fun addCommitCustomListener(listener: CommitterResultHandler, parent: Disposable?) {
+    if (parent != null) {
+      commitCustomEventDispatcher.addListener(listener, parent)
+    } else {
+      commitCustomEventDispatcher.addListener(listener)
+    }
+  }
 
   internal suspend fun executeSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return withModalProgress(project, message("commit.checks.on.commit.progress.text")) {
@@ -523,9 +532,8 @@ private class ProxyCommitCheck(val checkinHandler: CheckinHandler,
   override fun isEnabled(): Boolean = true
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
-    val result = blockingContext {
-      @Suppress("DEPRECATION") checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
-    }
+    @Suppress("DEPRECATION")
+    val result = checkinHandler.beforeCheckin(commitInfo.executor, commitInfo.commitContext.additionalDataConsumer)
     if (result == null || result == CheckinHandler.ReturnResult.COMMIT) return null
     return UnknownCommitProblem(result)
   }

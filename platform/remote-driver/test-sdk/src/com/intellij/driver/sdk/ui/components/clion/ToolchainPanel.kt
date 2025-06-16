@@ -11,21 +11,35 @@ import java.awt.event.KeyEvent
 fun Finder.toolchainPanel(action: ToolchainPanel.() -> Unit = {}) = x(ToolchainPanel::class.java) { byClass("DialogRootPane") }.apply(action)
 
 class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
+  fun ToolchainPanel.getToolchainField(name: String): JTextFieldUI =
+    textField("//div[@accessiblename='$name:' and @class='ExtendableTextField']")
+
   fun addNewToolchain(toolchain: Toolchain) {
     if (toolchain.name == ToolchainNames.DEFAULT) {
-      jBlist(xQuery { byClass("JBList") }).clickItem(toolchain.name.toString())
+      getToolchainList().clickItem(toolchain.name.toString())
     }
     else {
-      actionButtonByXpath(xQuery { byAttribute("myicon", "add.svg") }).click()
+      addToolchain()
       popupMenu().select(toolchain.toString())
-      while (!jBlist(xQuery { byClass("JBList") }).items.first().contains("$toolchain (default)")) {
+      while (!getToolchainList().items.first().contains("$toolchain (default)")) {
         moveToolchainUp()
       }
     }
   }
 
+  fun getToolchainList(): JListUiComponent =
+    jBlist(xQuery { byClass("JBList") })
+
+  fun addToolchain()  {
+    actionButtonByXpath(xQuery { byTooltip("Add") }).click()
+  }
+
   fun moveToolchainUp() {
     actionButtonByXpath(xQuery { byTooltip("Up") }).click()
+  }
+
+  fun removeToolchain() {
+    actionButtonByXpath(xQuery { byTooltip("Remove") }).click()
   }
 
   fun moveToolchainDown() {
@@ -34,23 +48,21 @@ class ToolchainPanel(data: ComponentData) : SettingsDialogUiComponent(data) {
 
   fun setupToolchains(toolchain: Toolchain) {
     if (toolchain.buildTool != Make.DEFAULT) {
-      writeTextField("Build Tool:", toolchain.buildTool.getMakePath())
+      getToolchainField("Build Tool").text = toolchain.buildTool.getMakePath()
     }
-    writeTextField("C Compiler:", toolchain.compiler.getCCompilerPath())
-    writeTextField("C++ Compiler:", toolchain.compiler.getCppCompilerPath())
-
+    getToolchainField("C Compiler").text = toolchain.compiler.getCCompilerPath()
+    getToolchainField("C++ Compiler").text = toolchain.compiler.getCppCompilerPath()
     if (toolchain !is Toolchain.Default) {
-      setDebugger(toolchain.debugger.getDebuggerPath())
+      setDebugger(toolchain.debugger)
     }
   }
 
-  private fun setDebugger(debugger: String) {
-    textField(xQuery { and(byAccessibleName("Debugger:"), byClass("ExtendableTextField")) }).click()
+  private fun setDebugger(debugger: Debugger) {
+    getToolchainField("Debugger").click()
     keyboard { key(KeyEvent.VK_DOWN) }
-    driver.ui.popup("//div[@class='CustomComboPopup']").waitFound().list().clickItem(debugger)
-  }
-
-  private fun writeTextField(accessibleName: String, text: String) {
-    textField(xQuery { and(byAccessibleName(accessibleName), byClass("ExtendableTextField")) }).text = text
+    driver.ui.popup("//div[@class='CustomComboPopup']").waitFound().list().clickItem(debugger.getDebuggerFieldName())
+    if (debugger.name.startsWith("CUSTOM")) {
+      getToolchainField("Debugger").text = debugger.getDebuggerPath()
+    }
   }
 }

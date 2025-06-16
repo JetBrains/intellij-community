@@ -108,10 +108,10 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (file instanceof PsiCompiledElement) return false;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    if (psiFile instanceof PsiCompiledElement) return false;
 
-    PsiClass targetClass = getTargetClass(editor, file);
+    PsiClass targetClass = getTargetClass(editor, psiFile);
     return targetClass != null && isValidForClass(targetClass);
   }
 
@@ -157,8 +157,8 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-      final PsiClass targetClass = findTargetClass(editor, file);
+    public void invoke(@NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+      final PsiClass targetClass = findTargetClass(editor, psiFile);
       final List<TestFramework> frameworks = new ArrayList<>(TestIntegrationUtils.findSuitableFrameworks(targetClass));
       for (Iterator<TestFramework> iterator = frameworks.iterator(); iterator.hasNext(); ) {
         if (myMethodKind.getFileTemplateDescriptor(iterator.next()) == null) {
@@ -168,7 +168,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
       if (frameworks.isEmpty()) return;
       final Consumer<TestFramework> consumer = framework -> {
         if (framework == null) return;
-        doGenerate(editor, file, targetClass, framework);
+        doGenerate(editor, psiFile, targetClass, framework);
       };
 
       chooseAndPerform(editor, frameworks, consumer);

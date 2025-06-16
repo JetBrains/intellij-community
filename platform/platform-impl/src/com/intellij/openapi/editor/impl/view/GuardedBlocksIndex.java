@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
 import java.util.List;
@@ -100,7 +101,8 @@ public final class GuardedBlocksIndex {
 
   // Document independent for unit test purpose
   public static sealed class Builder permits DocumentBuilder {
-    @NotNull GuardedBlocksIndex build(int start, int end, @NotNull List<RangeMarker> guardedBlocks) {
+    @VisibleForTesting
+    public @NotNull GuardedBlocksIndex build(int start, int end, @NotNull List<RangeMarker> guardedBlocks) {
       assert 0 <= start && start <= end;
       List<Offset> offsetList = guardedBlocks.stream().flatMap(r -> {
         int rangeStart = r.getStartOffset();

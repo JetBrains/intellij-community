@@ -59,18 +59,12 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
 
     void applyTo(@NotNull ToolWindow window) {
       switch (this) {
-        case DockPinned -> {
-          window.setType(ToolWindowType.DOCKED, null);
-          window.setAutoHide(false);
-        }
-        case DockUnpinned -> {
-          window.setType(ToolWindowType.DOCKED, null);
-          window.setAutoHide(true);
-        }
+        case DockPinned, DockUnpinned -> window.setType(ToolWindowType.DOCKED, null);
         case Undock -> window.setType(ToolWindowType.SLIDING, null);
         case Float -> window.setType(ToolWindowType.FLOATING, null);
         case Window -> window.setType(ToolWindowType.WINDOWED, null);
       }
+      window.setAutoHide(this == DockUnpinned || this == Undock);
     }
   }
 

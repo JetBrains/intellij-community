@@ -13,14 +13,14 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Version
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.VersionUtil
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.BlackFormatterUtil.Companion.PACKAGE_NAME
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.getInstalledPackage
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import kotlinx.coroutines.*
 import java.util.regex.Pattern
 
@@ -106,24 +106,16 @@ class BlackFormatterVersionService(private val project: Project, val serviceScop
     }
   }
 
-  fun getVersionForPackage(sdk: Sdk?, project: Project): Version {
+  suspend fun getVersionForPackage(sdk: Sdk?, project: Project): Version {
     return getBlackFormatterPackageInfo(sdk, project)?.let { pythonPackage ->
       parseVersionString(pythonPackage.version)
     } ?: UNKNOWN_VERSION
   }
 
-  private fun getBlackFormatterPackageInfo(sdk: Sdk?, project: Project): PythonPackage? {
-    val packageManager = sdk?.let { PythonPackageManager.forSdk(project, sdk) } ?: return null
-    if (packageManager.installedPackages.isEmpty()) {
-      runBlockingCancellable {
-        withBackgroundProgress(project, PyBundle.message("black.getting.black.version"), cancellable = true) {
-          packageManager.reloadPackages()
-        }
-      }
-    }
-    return packageManager.let {
-      it.installedPackages.firstOrNull { pyPackage -> pyPackage.name == PACKAGE_NAME }
-    }
+  private suspend fun getBlackFormatterPackageInfo(sdk: Sdk?, project: Project): PythonPackage? {
+    sdk ?: return null
+    val manager = PythonPackageManager.forSdk(project, sdk)
+    return manager.getInstalledPackage(PACKAGE_NAME)
   }
 
   private fun subscribeOnChanges() {

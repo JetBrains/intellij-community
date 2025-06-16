@@ -24,10 +24,10 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/eel",
+    "//platform/eel-provider",
   ],
   exports = [
     "//python/python-psi-api:psi",
-    "//platform/analysis-api:analysis",
     "//platform/platform-util-io:ide-util-io",
   ],
   runtime_deps = [":community_resources"]
@@ -51,6 +51,7 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "@lib//:junit5",
     "//platform/eel",
+    "//platform/eel-provider",
   ],
   runtime_deps = [":community_resources"]
 )

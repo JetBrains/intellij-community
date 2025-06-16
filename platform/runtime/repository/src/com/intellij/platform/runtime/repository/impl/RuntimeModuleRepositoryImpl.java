@@ -8,7 +8,6 @@ import com.intellij.platform.runtime.repository.RuntimeModuleRepository;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor;
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleRepositoryData;
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization;
-import com.intellij.platform.runtime.repository.serialization.impl.JarFileSerializer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,15 +21,15 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   private final Map<RuntimeModuleId, ResolveResult> myResolveResults;
   private volatile RawRuntimeModuleRepositoryData myMainData;
   private volatile List<RawRuntimeModuleRepositoryData> myAdditionalData;
-  private final Path myDescriptorsJarPath;
+  private final Path myDescriptorsFilePath;
   private final Map<String, RuntimeModuleId> myInternedModuleIds;
 
-  public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsJarPath) {
-    this(descriptorsJarPath, null);
+  public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsFilePath) {
+    this(descriptorsFilePath, null);
   }
 
-  public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsJarPath, @Nullable RawRuntimeModuleRepositoryData preloadedMainData) {
-    myDescriptorsJarPath = descriptorsJarPath;
+  public RuntimeModuleRepositoryImpl(@NotNull Path descriptorsFilePath, @Nullable RawRuntimeModuleRepositoryData preloadedMainData) {
+    myDescriptorsFilePath = descriptorsFilePath;
     myResolveResults = new ConcurrentHashMap<>();
     myInternedModuleIds = new ConcurrentHashMap<>();
     myMainData = preloadedMainData;
@@ -144,11 +143,11 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
   public @NotNull List<@NotNull Path> getBootstrapClasspath(@NotNull String bootstrapModuleName) {
     if (myMainData == null) {
       try {
-        String[] bootstrapClasspath = JarFileSerializer.loadBootstrapClasspath(myDescriptorsJarPath, bootstrapModuleName);
+        String[] bootstrapClasspath = RuntimeModuleRepositorySerialization.loadBootstrapClasspath(myDescriptorsFilePath, bootstrapModuleName);
         if (bootstrapClasspath != null) {
           List<Path> result = new ArrayList<>(bootstrapClasspath.length);
           for (String relativePath : bootstrapClasspath) {
-            result.add(myDescriptorsJarPath.getParent().resolve(relativePath));
+            result.add(myDescriptorsFilePath.getParent().resolve(relativePath));
           }
           return result;
         }
@@ -174,12 +173,18 @@ public class RuntimeModuleRepositoryImpl implements RuntimeModuleRepository {
 
   @Override
   public String toString() {
-    return "RuntimeModuleRepository{descriptorsJarPath=" + myDescriptorsJarPath + '}';
+    return "RuntimeModuleRepository{descriptorsFilePath=" + myDescriptorsFilePath + '}';
   }
 
   private RawRuntimeModuleRepositoryData getMainData() {
     if (myMainData == null) {
-      myMainData = RuntimeModuleRepositorySerialization.loadFromJar(myDescriptorsJarPath);
+      Path fallbackJarPath = RuntimeModuleRepositorySerialization.getFallbackJarPath(myDescriptorsFilePath);
+      if (fallbackJarPath != null) {
+        myMainData = RuntimeModuleRepositorySerialization.loadFromJar(fallbackJarPath);
+      }
+      else {
+        myMainData = RuntimeModuleRepositorySerialization.loadFromCompactFile(myDescriptorsFilePath);
+      }
     }
     return myMainData;
   }

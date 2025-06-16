@@ -1,8 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.shared
 
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.roots.impl.ProjectFileIndexFacade
 import com.intellij.openapi.util.Key
@@ -70,6 +73,20 @@ internal fun isComposeEnabledInModule(module: Module): Boolean {
   return foundClasses.isNotEmpty()
 }
 
+private const val ANDROID_SDK_TYPE_NAME: String = "Android SDK"
+
+internal fun isAndroidSdkConfiguredInModule(module: Module): Boolean {
+  val sdkType = ModuleRootManager.getInstance(module).sdk?.sdkType ?: return false
+  return sdkType.name == ANDROID_SDK_TYPE_NAME
+}
+
+private const val ANDROID_JETPACK_COMPOSE_PLUGIN_ID: String = "androidx.compose.plugins.idea"
+
+internal fun isAndroidJetpackComposePluginLoaded(): Boolean {
+  val androidJetpackComposePluginId = PluginId.findId(ANDROID_JETPACK_COMPOSE_PLUGIN_ID) ?: return false
+  return PluginManagerCore.isLoaded(androidJetpackComposePluginId)
+}
+
 internal fun isModifierEnabledInModule(module: Module): Boolean {
   val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(/*includeTests = */true)
   val foundClasses = KotlinFullClassNameIndex[COMPOSE_MODIFIER_CLASS_ID.asFqNameString(), module.project, moduleScope]
@@ -107,7 +124,7 @@ internal fun KtDeclaration.returnTypeFqName(): FqName? =
     if (this !is KtCallableDeclaration) null
     else analyze(this) { this@returnTypeFqName.returnType.expandedSymbol?.classId?.asSingleFqName() }
 
-internal fun KtElement.callReturnTypeFqName() =
+internal fun KtElement.callReturnTypeFqName(): FqName? =
   analyze(this) {
     val call = resolveToCall()?.calls?.firstOrNull() as? KaCallableMemberCall<*, *>
     call?.let { it.symbol.returnType.expandedSymbol?.classId?.asSingleFqName() }

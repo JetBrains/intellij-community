@@ -226,6 +226,15 @@ public class MultiProcessDebugger implements ProcessDebugger {
   }
 
   @Override
+  public @Nullable String execTableImageCommand(String threadId,
+                                           String frameId,
+                                           String command,
+                                           TableCommandType commandType, TableCommandParameters tableCommandParameters)
+    throws PyDebuggerException {
+    return debugger(threadId).execTableImageCommand(threadId, frameId, command, commandType, tableCommandParameters);
+  }
+
+  @Override
   public List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
     throws PyDebuggerException {
     return debugger(threadId).getSmartStepIntoVariants(threadId, frameId, startContextLine, endContextLine);
@@ -589,13 +598,17 @@ public class MultiProcessDebugger implements ProcessDebugger {
 
     public void disconnect() {
       myShouldAccept = false;
-      if (myServerSocket != null && !myServerSocket.isClosed()) {
-        try {
-          myServerSocket.close();
+      if (myServerSocket != null) {
+        synchronized (this) {
+          if (!myServerSocket.isClosed()) {
+            try {
+              myServerSocket.close();
+            }
+            catch (IOException ignore) {
+            }
+          }
+          myServerSocket = null;
         }
-        catch (IOException ignore) {
-        }
-        myServerSocket = null;
       }
     }
   }

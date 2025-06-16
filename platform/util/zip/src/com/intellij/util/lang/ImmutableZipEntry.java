@@ -20,8 +20,8 @@ public final class ImmutableZipEntry {
   static final byte STORED = 0;
   static final byte DEFLATED = 8;
 
-  final int uncompressedSize;
-  final int compressedSize;
+  public final int uncompressedSize;
+  public final int compressedSize;
   private final byte method;
 
   public final String name;

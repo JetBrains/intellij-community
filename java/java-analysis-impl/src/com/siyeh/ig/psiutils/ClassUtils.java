@@ -224,7 +224,7 @@ public final class ClassUtils {
    * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
    * @deprecated use {@link PsiUtil#getContainingClass(PsiElement)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @Nullable PsiClass getContainingClass(PsiElement element) {
     return PsiUtil.getContainingClass(element);
   }

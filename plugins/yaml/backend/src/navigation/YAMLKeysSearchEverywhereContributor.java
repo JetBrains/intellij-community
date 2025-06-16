@@ -92,9 +92,16 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
     }
     assert myProject != null;
 
-    GlobalSearchScope filter = SearchEverywhereManager.getInstance(myProject).isEverywhere()
-                               ? ProjectScope.getAllScope(myProject)
-                               : ProjectScope.getProjectScope(myProject);
+    GlobalSearchScope filter;
+    try {
+      filter = SearchEverywhereManager.getInstance(myProject).isEverywhere()
+               ? ProjectScope.getAllScope(myProject)
+               : ProjectScope.getProjectScope(myProject);
+    }
+    catch (IllegalStateException e) {
+      filter = ProjectScope.getProjectScope(myProject);
+    }
+
     Plow.ofSequence(searchForKey(pattern, filter, myProject))
       .cancellable()
       .mapNotNull(keyData -> new YAMLKeyNavigationItem(myProject,

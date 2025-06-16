@@ -14,6 +14,12 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
     "//python:python-community-impl",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//platform/platform-impl:ide-impl",
@@ -25,6 +31,7 @@ jvm_library(
     "//platform/execution-impl",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
+    "//python/services/system-python",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )
@@ -36,6 +43,12 @@ jvm_library(
   associates = [":featuresTrainer"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
     "//python:python-community-impl",
     "//plugins/ide-features-trainer:featuresTrainer",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",
@@ -53,6 +66,16 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//python:pycharm-community",
+    "//python/services/system-python",
+    "//python/services/system-python:system-python_test_lib",
+    "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+    "//platform/testFramework/junit5",
+    "//platform/testFramework/junit5:junit5_test_lib",
+    "//python/python-venv:community-impl-venv",
+    "//python/python-venv:community-impl-venv_test_lib",
+    "//python/services/internal-impl:python-community-services-internal-impl",
+    "//python/services/internal-impl:python-community-services-internal-impl_test_lib",
+    "//python/pluginCore:community-plugin",
   ],
   runtime_deps = [":featuresTrainer_resources"]
 )

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -98,9 +99,10 @@ final class JavaErrorFormatUtil {
     throw new IllegalArgumentException("Record special method expected: " + method);
   }
   
-  static @Nullable TextRange getRange(@NotNull PsiElement element) {
+  static @NotNull TextRange getRange(@NotNull PsiElement element) {
     if (element instanceof PsiMember member) {
-      return getMemberDeclarationTextRange(member);
+      TextRange range = getMemberDeclarationTextRange(member);
+      return range == null ? TextRange.create(0, element.getTextLength()) : range;
     }
     if (element instanceof PsiJavaModule module) {
       return getModuleRange(module);
@@ -117,8 +119,8 @@ final class JavaErrorFormatUtil {
         return nameElement.getTextRangeInParent();
       }
     }
-    if (element instanceof PsiReferenceExpression refExpression) {
-      PsiElement nameElement = refExpression.getReferenceNameElement();
+    if (element instanceof PsiJavaCodeReferenceElement ref) {
+      PsiElement nameElement = ref.getReferenceNameElement();
       if (nameElement != null) {
         return nameElement.getTextRangeInParent();
       }
@@ -127,7 +129,7 @@ final class JavaErrorFormatUtil {
     if (PsiUtil.isJavaToken(nextSibling, JavaTokenType.SEMICOLON)) {
       return TextRange.create(0, element.getTextLength() + 1);
     }
-    return null;
+    return TextRange.create(0, element.getTextLength());
   }
 
   static @NotNull TextRange getMethodDeclarationTextRange(@NotNull PsiMethod method) {
@@ -158,7 +160,8 @@ final class JavaErrorFormatUtil {
   static @NotNull TextRange getFieldDeclarationTextRange(@NotNull PsiField field) {
     PsiModifierList modifierList = field.getModifierList();
     TextRange range = field.getTextRange();
-    int start = modifierList == null ? range.getStartOffset() : stripAnnotationsFromModifierList(modifierList);
+    int start = modifierList == null || modifierList.getParent() != field ? 
+                range.getStartOffset() : stripAnnotationsFromModifierList(modifierList);
     int end = field.getNameIdentifier().getTextRange().getEndOffset();
     return new TextRange(start, end).shiftLeft(range.getStartOffset());
   }
@@ -210,7 +213,7 @@ final class JavaErrorFormatUtil {
   }
 
   static @NotNull String formatType(@Nullable PsiType type) {
-    return type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+    return type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
   static @NlsSafe @NotNull String format(@NotNull PsiElement element) {

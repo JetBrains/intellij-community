@@ -7,12 +7,25 @@ jvm_resources(
   strip_prefix = "xpath-lang/resources"
 )
 
+jvm_resources(
+  name = "xpath_test_resources",
+  files = glob(["xpath-lang/testData/**/*"]),
+  strip_prefix = "xpath-lang/testData"
+)
+
 jvm_library(
   name = "xpath",
   module_name = "intellij.xpath",
   visibility = ["//visibility:public"],
-  srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
+  srcs = glob(["xpath-lang/src/**/*.kt", "xpath-lang/src/**/*.java", "xpath-lang/src/**/*.form", "xpath-view/src/**/*.kt", "xpath-view/src/**/*.java", "xpath-view/src/**/*.form", "xpath-lang/gen/**/*.kt", "xpath-lang/gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
@@ -24,6 +37,7 @@ jvm_library(
     "//xml/impl",
     "//platform/editor-ui-ex:editor-ex",
     "//RegExpSupport:regexp",
+    "//xml/xml-psi-api:psi",
     "//plugins/xpath/xslt-rt:rt",
     "@lib//:jaxen",
     "//platform/util/nanoxml",
@@ -42,9 +56,16 @@ jvm_library(
 jvm_library(
   name = "xpath_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java"], allow_empty = True),
+  srcs = glob(["xpath-lang/test/**/*.kt", "xpath-lang/test/**/*.java", "xpath-lang/test/**/*.form"], allow_empty = True),
   associates = [":xpath"],
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
     "//xml/openapi:xml",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
@@ -58,6 +79,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//RegExpSupport:regexp",
     "//RegExpSupport:regexp_test_lib",
+    "//xml/xml-psi-api:psi",
     "//plugins/xpath/xslt-rt:rt",
     "@lib//:jaxen",
     "@lib//:junit4",
@@ -72,7 +94,10 @@ jvm_library(
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
   ],
-  runtime_deps = [":xpath_resources"]
+  runtime_deps = [
+    ":xpath_resources",
+    ":xpath_test_resources",
+  ]
 )
 
 jvm_test(

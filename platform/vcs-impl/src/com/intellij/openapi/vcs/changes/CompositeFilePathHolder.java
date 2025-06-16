@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
@@ -112,6 +112,31 @@ public abstract class CompositeFilePathHolder implements FileHolder {
     @Override
     public UnversionedFilesCompositeHolder copy() {
       UnversionedFilesCompositeHolder result = new UnversionedFilesCompositeHolder(myProject);
+      result.copyFrom(this);
+      return result;
+    }
+  }
+
+  public static class ResolvedFilesCompositeHolder extends CompositeFilePathHolder {
+    public ResolvedFilesCompositeHolder(@NotNull Project project) {
+      super(project);
+    }
+
+    @Override
+    protected @NotNull FilePathHolder createHolderForVcs(@NotNull Project project, @NotNull AbstractVcs vcs) {
+      VcsManagedFilesHolder.Provider provider = VcsManagedFilesHolder.VCS_RESOLVED_CONFLICTS_FILES_HOLDER_EP
+        .findFirstSafe(project, ep -> ep.getVcs().equals(vcs));
+      if (provider != null) {
+        return provider.createHolder();
+      }
+      else {
+        return new FilePathHolderImpl(project);
+      }
+    }
+
+    @Override
+    public ResolvedFilesCompositeHolder copy() {
+      ResolvedFilesCompositeHolder result = new ResolvedFilesCompositeHolder(myProject);
       result.copyFrom(this);
       return result;
     }

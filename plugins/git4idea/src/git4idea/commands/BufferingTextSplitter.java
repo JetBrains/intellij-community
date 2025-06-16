@@ -3,6 +3,7 @@ package git4idea.commands;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 @ApiStatus.Internal
 public final class BufferingTextSplitter {
@@ -11,7 +12,8 @@ public final class BufferingTextSplitter {
 
   private final @NotNull LineConsumer myLineConsumer;
 
-  BufferingTextSplitter(@NotNull LineConsumer lineConsumer) {
+  @VisibleForTesting
+  public BufferingTextSplitter(@NotNull LineConsumer lineConsumer) {
     myLineConsumer = lineConsumer;
   }
 

@@ -1208,6 +1208,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
     if (changeInfo.isReturnTypeChanged() && methodDocComment != null) {
       CanonicalTypes.Type type = changeInfo.getNewReturnType();
       PsiDocTag aReturn = methodDocComment.findTagByName("return");
+      PsiDocComment oldMethodDocComment = (PsiDocComment)methodDocComment.copy();
       if (PsiTypes.voidType().equalsToText(type.getTypeText())) {
         if (aReturn != null) {
           aReturn.delete();
@@ -1219,7 +1220,7 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
           methodDocComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
         }
       }
-      CommonJavaRefactoringUtil.formatJavadocIgnoringSettings(method, methodDocComment);
+      CommonJavaRefactoringUtil.formatJavadocIgnoringSettings(method, methodDocComment, oldMethodDocComment);
     }
   }
 

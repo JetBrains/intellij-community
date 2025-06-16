@@ -63,7 +63,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     Editor editor = getEditor();
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     PsiMethodCallExpression expression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
-    for (JavaResolveResult result : expression.getMethodExpression().multiResolve(true)) {
+    for (JavaResolveResult result : expression.multiResolve(true)) {
       assertFalse(result.isValidResult());
     }
   }
@@ -356,7 +356,7 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   private static void assertAmbiguous(PsiMethodCallExpression call) {
     assertNull(call.getText(), call.resolveMethod());
-    assertSize(2, call.getMethodExpression().multiResolve(false));
+    assertSize(2, call.multiResolve(false));
     assertNull(call.getText(), call.getType());
   }
 

@@ -41,7 +41,7 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return myClass.isValid();
   }
 
@@ -53,7 +53,7 @@ public class GrMoveClassToCorrectPlaceFix extends Intention {
 
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     final GrTypeDefinition containingClass = PsiTreeUtil.getParentOfType(myClass, GrTypeDefinition.class);
     PsiNamedElement target;
     if (containingClass != null) {

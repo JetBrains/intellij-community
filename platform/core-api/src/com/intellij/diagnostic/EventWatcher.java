@@ -30,6 +30,8 @@ public interface EventWatcher {
   //      it in details.
   boolean isEnabledDetailed = SystemProperties.getBooleanProperty("idea.event.queue.dispatch.listen", false);
 
+  boolean isEnabledFus = SystemProperties.getBooleanProperty("idea.event.queue.dispatch.report-fus-stats", true);
+
   static boolean isDetailedWatcherEnabled() {
     return isEnabledDetailed;
   }

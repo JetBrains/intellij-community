@@ -19,7 +19,8 @@ import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
 import kotlin.io.path.name
 
-internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter(): IjentNioPosixFileAttributesWithDosAdapter? {
+@ApiStatus.Internal
+fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter(): IjentNioPosixFileAttributesWithDosAdapter? {
   val cachedAttrs = get() as IjentNioPosixFileAttributes?
 
   return if (cachedAttrs != null) {
@@ -34,6 +35,7 @@ internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter()
   }
 }
 
+@ApiStatus.Internal
 internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded(): BasicFileAttributes? {
   if (SystemInfo.isWindows) {
     return getCachedFileAttributesAndWrapToDosAttributesAdapter()
@@ -43,7 +45,8 @@ internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIf
   }
 }
 
-internal fun <A : BasicFileAttributes> FileSystemProvider.readAttributesUsingDosAttributesAdapter(
+@ApiStatus.Internal
+fun <A : BasicFileAttributes> FileSystemProvider.readAttributesUsingDosAttributesAdapter(
   path: Path,
   ijentPath: IjentNioPath,
   type: Class<A>,

@@ -46,6 +46,22 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         )
     }
 
+    fun testInjectionLanguageOnLibraryDeclaration() {
+        doInjectLanguageOrReferenceTest(
+            before = """
+            val s = buildString { 
+                append("<caret>val x = 1")
+            }
+        """.trimIndent(),
+            after = """
+            val s = buildString { 
+                // language="kotlin"
+                append("val x = 1")
+            }
+        """.trimIndent()
+        )
+    }
+
     fun testInjectionOnJavaPredefinedMethodWithAnnotation() = doInjectionPresentTest(
         """
         val test1 = java.util.regex.Pattern.compile("<caret>pattern")
@@ -177,7 +193,7 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         """,
         """
         fun test() {
-            //language=file-reference
+            // language="file-reference"
             "<caret>"
         }
         """
@@ -216,7 +232,7 @@ abstract class KotlinInjectionTestBase : AbstractInjectionTest() {
         """,
         """
         fun test() {
-            //language=file-reference
+            // language="file-reference"
             "<caret>"
         }
         """

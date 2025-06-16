@@ -1,6 +1,6 @@
 <idea-plugin package="com.intellij.terminal.frontend">
   <dependencies>
-    <plugin id="com.intellij.platform.experimental.frontend"/>
+    <module name="intellij.platform.frontend"/>
   </dependencies>
 
   <extensionPoints>
@@ -19,6 +19,13 @@
                          id="terminalFindPrevious" order="first"/>
     <editorActionHandler action="Replace" implementationClass="com.intellij.terminal.frontend.action.TerminalReplaceHandler"
                          id="terminalReplace" order="first"/>
+
+    <applicationService
+      serviceInterface="org.jetbrains.plugins.terminal.fus.FrontendLatencyService"
+      serviceImplementation="com.intellij.terminal.frontend.fus.FrontendLatencyServiceImpl"/>
+    <applicationService
+      serviceInterface="org.jetbrains.plugins.terminal.fus.TerminalFocusFusService"
+      serviceImplementation="com.intellij.terminal.frontend.fus.TerminalFocusFusServiceImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -42,15 +49,45 @@
       <keyboard-shortcut first-keystroke="control V" keymap="$default"/>
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
+    <action id="Terminal.PasteSelection" class="com.intellij.terminal.frontend.action.TerminalPasteSelectionAction"
+            use-shortcut-of="EditorPasteFromX11">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">
       <override-text place="GoToAction"/>
     </action>
+    <action id="Terminal.CommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCommandCompletionAction">
+      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+    </action>
+    <action id="Terminal.EnterCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionEnterAction">
+      <keyboard-shortcut first-keystroke="ENTER" keymap="$default"/>
+    </action>
+    <action id="Terminal.UpCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionUpAction">
+      <keyboard-shortcut first-keystroke="UP" keymap="$default"/>
+    </action>
+    <action id="Terminal.DownCommandCompletion" class="com.intellij.terminal.frontend.action.TerminalCompletionDownAction">
+      <keyboard-shortcut first-keystroke="DOWN" keymap="$default"/>
+    </action>
     <action id="Terminal.Escape" class="com.intellij.terminal.frontend.action.TerminalEscapeAction" use-shortcut-of="EditorEscape"/>
+    <action id="Terminal.OpenInReworkedTerminal" class="com.intellij.terminal.frontend.action.RevealFileInReworkedTerminalAction"
+            icon="org.jetbrains.plugins.terminal.TerminalIcons.OpenTerminal_13x13" use-shortcut-of="Terminal.OpenInTerminal">
+      <add-to-group group-id="RevealGroup" anchor="last"/>
+      <override-text place="RevealInPopup"/>
+      <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
+    </action>
 
-    <action id="Terminal.EnableNewUi" class="com.intellij.terminal.frontend.action.EnableBlockTerminalUiAction"/>
+    <group id="Terminal.Engine" popup="true">
+      <action id="Terminal.UseReworkedEngine" class="com.intellij.terminal.frontend.action.TerminalReworkedEngineAction"/>
+      <action id="Terminal.UseClassicEngine" class="com.intellij.terminal.frontend.action.TerminalClassicEngineAction"/>
+      <action id="Terminal.UseNewTerminalEngine" class="com.intellij.terminal.frontend.action.TerminalNewTerminalEngineAction"/>
+    </group>
 
     <group id="Terminal.ToolWindowActions">
-      <reference ref="Terminal.EnableNewUi"/>
+      <reference ref="Terminal.Engine"/>
+      <action id="Terminal.Settings" class="com.intellij.terminal.frontend.action.TerminalSettingsAction" icon="AllIcons.General.Settings"/>
+      <action id="Terminal.Feedback" class="com.intellij.terminal.frontend.action.TerminalFeedbackAction">
+        <override-text place="GoToAction"/>
+      </action>
     </group>
 
     <group id="Terminal.OutputContextMenu">
@@ -92,4 +129,8 @@
       <reference ref="Terminal.LineDown"/>
     </group>
   </actions>
+  <projectListeners>
+    <listener class="com.intellij.terminal.frontend.TerminalLookupManagerListener"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+  </projectListeners>
 </idea-plugin>

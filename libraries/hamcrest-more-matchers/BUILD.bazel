@@ -1,0 +1,21 @@
+### auto-generated section `build intellij.libraries.hamcrest.more.matchers` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_jvm//:jvm.bzl", "jvm_resources")
+
+jvm_resources(
+  name = "hamcrest-more-matchers_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+java_library(
+  name = "hamcrest-more-matchers",
+  visibility = ["//visibility:public"],
+  exports = ["@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers"],
+  runtime_deps = [
+    ":hamcrest-more-matchers_resources",
+    "//libraries/hamcrest",
+    "@lib//:libraries-hamcrest-more-matchers-github-seregamorph-hamcrest-more-matchers",
+  ]
+)
+### auto-generated section `build intellij.libraries.hamcrest.more.matchers` end

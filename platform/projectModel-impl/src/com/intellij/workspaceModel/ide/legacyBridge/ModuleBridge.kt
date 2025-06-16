@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.legacyBridge
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.openapi.application.Application
+import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -11,9 +10,10 @@ import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.Internal
-interface ModuleBridge : ModuleEx {
+interface ModuleBridge : ModuleEx, ComponentStoreOwner {
   val moduleEntityId: ModuleId
 
   /**
@@ -37,15 +37,12 @@ interface ModuleBridge : ModuleEx {
 
   fun onImlFileMoved(newModuleFileUrl: VirtualFileUrl)
 
-  fun registerComponents(corePlugin: IdeaPluginDescriptor?,
-                         modules: List<IdeaPluginDescriptorImpl>,
-                         precomputedExtensionModel: PrecomputedExtensionModel?,
-                         app: Application?,
-                         listenerCallbacks: MutableList<in Runnable>?)
+  fun initServiceContainer(precomputedExtensionModel: PrecomputedExtensionModel)
 
-  fun callCreateComponents()
+  fun markContainerAsCreated()
+}
 
-  suspend fun callCreateComponentsNonBlocking()
-
-  fun initFacets()
+@ApiStatus.Internal
+interface ModuleStore : IComponentStore {
+  fun setPath(path: Path, isNew: Boolean)
 }

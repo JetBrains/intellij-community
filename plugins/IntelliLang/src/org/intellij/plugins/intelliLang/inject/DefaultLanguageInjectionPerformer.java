@@ -44,10 +44,13 @@ final class DefaultLanguageInjectionPerformer implements FallbackInjectionPerfor
 
     List<InjectorUtils.InjectionInfo> infos =
       List.of(new InjectorUtils.InjectionInfo(host, injectedLanguage, manipulator.getRangeInElement(host)));
-    InjectorUtils.registerInjection(language, containingFile, infos, registrar);
-    if (support != null) {
-      InjectorUtils.registerSupport(support, false, context, language);
-    }
+    InjectorUtils.registerInjection(
+      language, containingFile, infos, registrar, it -> {
+        if (support != null) {
+          InjectorUtils.registerSupport(it, support, true);
+        }
+      }
+    );
     return true;
   }
 

@@ -22,16 +22,15 @@ final class ZipResourceFile implements ResourceFile {
   private final ZipFile zipFile;
   private final boolean defineClassUsingBytes;
 
-  ZipResourceFile(@NotNull Path file, boolean defineClassUsingBytes) {
+  ZipResourceFile(@NotNull Path file, boolean defineClassUsingBytes, @Nullable ZipFilePool zipFilePool) {
     this.defineClassUsingBytes = defineClassUsingBytes;
 
-    ZipFilePool pool = ZipFilePool.POOL;
     try {
-      if (pool == null) {
+      if (zipFilePool == null) {
         zipFile = ZipFile.load(file);
       }
       else {
-        Object zipFile = pool.loadZipFile(file);
+        Object zipFile = zipFilePool.loadZipFile(file);
         this.zipFile = (ZipFile)zipFile;
       }
     }

@@ -107,8 +107,8 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor impleme
         }
       }
       if (isMember && !(element1 instanceof PsiAnonymousClass || element1.getParent() instanceof PsiAnonymousClass)) {
-        PsiFile file = element1.getContainingFile();
-        Document document = file == null ? null : PsiDocumentManager.getInstance(file.getProject()).getLastCommittedDocument(file);
+        PsiFile psiFile = element1.getContainingFile();
+        Document document = psiFile == null ? null : PsiDocumentManager.getInstance(psiFile.getProject()).getLastCommittedDocument(psiFile);
         boolean drawSeparator = false;
 
         if (document != null) {

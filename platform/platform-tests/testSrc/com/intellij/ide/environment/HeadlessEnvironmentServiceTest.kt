@@ -7,7 +7,6 @@ import com.intellij.ide.environment.impl.HeadlessEnvironmentService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.readText
@@ -52,10 +51,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
     EnvironmentUtil.setPathTemporarily(configurationFilePath, testRootDisposable)
     val file = VfsUtil.findFile(configurationFilePath, true)!!
     val text = file.readText().replace("\"\"", "\"a-value\"")
-    blockingContext {
-      runWriteAction {
-        file.writeText(text)
-      }
+    runWriteAction {
+      file.writeText(text)
     }
     val value = getExistingKey(dummyKey)
     assertEquals("a-value", value)
@@ -115,10 +112,8 @@ class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
   }
 
   private fun runTestWithFile(text: String, action: suspend () -> Unit) = runTestWithMaskedServices {
-    blockingContext {
-      runWriteAction {
-        configurationFilePath.write(text)
-      }
+    runWriteAction {
+      configurationFilePath.write(text)
     }
     EnvironmentUtil.setPathTemporarily(configurationFilePath, testRootDisposable)
     try {

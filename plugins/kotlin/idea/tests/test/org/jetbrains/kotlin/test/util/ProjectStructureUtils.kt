@@ -17,10 +17,22 @@ import com.intellij.testFramework.IndexingTestUtil
 import java.io.File
 
 fun HeavyPlatformTestCase.projectLibrary(
-        libraryName: String = "TestLibrary",
-        classesRoot: VirtualFile? = null,
-        sourcesRoot: VirtualFile? = null,
-        kind: PersistentLibraryKind<*>? = null
+    libraryName: String = "TestLibrary",
+    classesRoot: VirtualFile? = null,
+    sourcesRoot: VirtualFile? = null,
+    kind: PersistentLibraryKind<*>? = null
+): LibraryEx = multiRootProjectLibrary(
+    libraryName = libraryName,
+    classRoots = classesRoot?.let { listOf(it) } ?: emptyList(),
+    sourceRoots = sourcesRoot?.let { listOf(it) } ?: emptyList(),
+    kind = kind
+)
+
+fun HeavyPlatformTestCase.multiRootProjectLibrary(
+    libraryName: String = "TestLibrary",
+    classRoots: List<VirtualFile> = emptyList(),
+    sourceRoots: List<VirtualFile> = emptyList(),
+    kind: PersistentLibraryKind<*>? = null
 ): LibraryEx {
     return runWriteAction {
         val modifiableModel = ProjectLibraryTable.getInstance(project).modifiableModel
@@ -30,8 +42,8 @@ fun HeavyPlatformTestCase.projectLibrary(
             modifiableModel.commit()
         }
         with(library.modifiableModel) {
-            classesRoot?.let { addRoot(it, OrderRootType.CLASSES) }
-            sourcesRoot?.let { addRoot(it, OrderRootType.SOURCES) }
+            classRoots.forEach { addRoot(it, OrderRootType.CLASSES) }
+            sourceRoots.forEach { addRoot(it, OrderRootType.SOURCES) }
             commit()
         }
         library

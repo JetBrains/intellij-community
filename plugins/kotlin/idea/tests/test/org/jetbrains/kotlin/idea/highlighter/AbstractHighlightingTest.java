@@ -13,7 +13,7 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager;
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager;
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;

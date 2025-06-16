@@ -12,7 +12,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
-final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
+final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V>, ReferenceQueueable {
   private final Int2ObjectMap<MyReference<V>> myMap = new Int2ObjectOpenHashMap<>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<>();
 
@@ -25,15 +25,18 @@ final class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     }
   }
 
-  private void processQueue() {
+  @Override
+  public boolean processQueue() {
+    boolean processed = false;
     while (true) {
       MyReference<?> ref = (MyReference<?>)myQueue.poll();
       if (ref == null) {
-        return;
+        break;
       }
       int key = ref.key;
-      myMap.remove(key);
+      processed |= myMap.remove(key, ref);
     }
+    return processed;
   }
 
   @Override

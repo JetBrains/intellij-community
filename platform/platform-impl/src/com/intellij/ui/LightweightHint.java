@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TooltipEvent;
-import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -261,7 +262,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       .setBelongsToGlobalPopupStack(myBelongsToGlobalPopupStack)
       .setCancelCallback(() -> {
         //maybe readaction
-        WriteIntentReadAction.run((Runnable)this::onPopupCancel);
+        ReadAction.run(this::onPopupCancel);
         return true;
       })
       .setCancelOnOtherWindowOpen(myCancelOnOtherWindowOpen)
@@ -343,6 +344,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
    * @return bounds of hint component in the parent component's layered pane coordinate system.
    */
   public final Rectangle getBounds() {
+    if (myParentComponent == null) return new Rectangle(0, 0, 0, 0);
     Rectangle bounds = new Rectangle(myComponent.getBounds());
     final JLayeredPane layeredPane = myParentComponent.getRootPane().getLayeredPane();
     return SwingUtilities.convertRectangle(myComponent, bounds, layeredPane);
@@ -371,10 +373,12 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   }
 
   @Override
+  @RequiresEdt
   public void hide() {
     hide(false);
   }
 
+  @RequiresEdt
   public void hide(boolean ok) {
     if (isVisible()) {
       if (myIsRealPopup) {

@@ -79,6 +79,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     val WINDOW_DIMENSION_KEY: Key<String> = FileEditorManagerKeys.WINDOW_DIMENSION_KEY
 
     @JvmField
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Prefer using FileEditorManagerKeys.REOPEN_WINDOW",
                 replaceWith = ReplaceWith("FileEditorManagerKeys.REOPEN_WINDOW",
                                           imports = ["com.intellij.openapi.fileEditor.FileEditorManagerKeys"]))

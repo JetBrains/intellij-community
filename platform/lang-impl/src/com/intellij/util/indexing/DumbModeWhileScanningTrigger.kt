@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor
@@ -51,7 +52,7 @@ class DumbModeWhileScanningTrigger(private val project: Project, private val cs:
         manyFilesChanged.first { it }
         dumbModeForScanningIsActive.value = true
         try {
-          DumbServiceImpl.getInstance(project).runInDumbMode("Waiting for scanning to complete") {
+          DumbService.getInstance(project).runInDumbMode("Waiting for scanning to complete") {
             // this is kind of trigger with memory: to start dumb mode it's enough to have many changed files, but to end dumb mode
             // we also should wait for all the scanning tasks to finish.
             manyFilesChanged

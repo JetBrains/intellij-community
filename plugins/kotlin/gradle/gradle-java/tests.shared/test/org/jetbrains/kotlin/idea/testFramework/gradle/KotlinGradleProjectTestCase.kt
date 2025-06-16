@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.testFramework.gradle
 import com.intellij.testFramework.RunAll
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
@@ -27,10 +28,10 @@ abstract class KotlinGradleProjectTestCase : GradleProjectTestCase() {
     companion object {
 
         val KOTLIN_PROJECT: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("kotlin-plugin-project") { gradleVersion ->
-            withSettingsFile(gradleVersion, useKotlinDsl = true) {
+            withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 setProjectName("kotlin-plugin-project")
             }
-            withBuildFile(gradleVersion, useKotlinDsl = true) {
+            withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
                 withKotlinJvmPlugin()
                 withJUnit()
             }

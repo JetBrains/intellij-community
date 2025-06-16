@@ -4,8 +4,7 @@
 // ACTION: Convert to 'buildString' call
 // ACTION: Convert to lazy property
 // ACTION: Convert to raw string literal
+// ACTION: Create test
 
 @Suppress("SpellCheckingInspection")
 val str = "<caret>kjsghkjshtiurhuig"
-
-// IGNORE_K2

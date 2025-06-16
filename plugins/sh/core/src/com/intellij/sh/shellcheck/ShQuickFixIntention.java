@@ -31,8 +31,8 @@ public class ShQuickFixIntention implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return timestamp == file.getModificationStamp();
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return timestamp == psiFile.getModificationStamp();
   }
 
   @Override
@@ -46,7 +46,7 @@ public class ShQuickFixIntention implements IntentionAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     if (editor == null) return;
     class Replacement {
       final String replacement;

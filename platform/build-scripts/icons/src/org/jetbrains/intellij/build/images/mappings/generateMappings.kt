@@ -5,11 +5,24 @@ import org.jetbrains.intellij.build.images.IconsClassGenerator
 import org.jetbrains.intellij.build.images.IntellijIconClassGeneratorConfig
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
-import org.jetbrains.intellij.build.images.sync.*
+import org.jetbrains.intellij.build.images.sync.Context
+import org.jetbrains.intellij.build.images.sync.GIT
+import org.jetbrains.intellij.build.images.sync.Icon
+import org.jetbrains.intellij.build.images.sync.commitAndPush
+import org.jetbrains.intellij.build.images.sync.execute
+import org.jetbrains.intellij.build.images.sync.findGitRepoRoot
+import org.jetbrains.intellij.build.images.sync.isAncestorOf
+import org.jetbrains.intellij.build.images.sync.jpsProject
+import org.jetbrains.intellij.build.images.sync.protectStdErr
+import org.jetbrains.intellij.build.images.sync.stageFiles
 import org.jetbrains.jps.util.JpsPathUtil
-import java.nio.file.*
+import java.nio.file.FileVisitResult
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.*
+import java.util.TreeMap
 import kotlin.io.path.exists
 import kotlin.io.path.name
 
@@ -148,7 +161,7 @@ private fun loadNonGeneratedIcons(): Sequence<Mapping> {
   val toSkip = iconRepo.resolve("idea")
   val iconsRoots = mutableSetOf<Path>()
   Files.walkFileTree(iconRepo, object : SimpleFileVisitor<Path>() {
-    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult? {
+    override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
       return if (dir.startsWith(toSkip) || dir.name == ".git") {
         FileVisitResult.SKIP_SUBTREE
       }

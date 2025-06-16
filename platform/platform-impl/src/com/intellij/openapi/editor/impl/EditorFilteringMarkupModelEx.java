@@ -17,6 +17,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FilteringProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,8 @@ public final class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   private final Condition<RangeHighlighter> IS_AVAILABLE = this::isAvailable;
 
-  EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
+  @ApiStatus.Internal
+  public EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
     myEditor = editor;
     myDelegate = delegate;
   }

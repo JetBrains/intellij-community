@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.requests.DiffRequest;
@@ -50,7 +50,7 @@ public final class InitialScrollPositionSupport {
     protected abstract @Nullable EditorsVisiblePositions getVisiblePositions();
   }
 
-  private abstract static class SideInitialScrollHelper extends InitialScrollHelperBase {
+  protected abstract static class SideInitialScrollHelper extends InitialScrollHelperBase {
     @Override
     protected LogicalPosition @Nullable [] getCaretPositions() {
       return doGetCaretPositions(getEditors());

@@ -4,7 +4,6 @@ fun buz() {
     Bar.<caret>
 }
 
-// IGNORE_K2
 // EXIST: bconst
 // EXIST: bval
 // EXIST: FooBar

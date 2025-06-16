@@ -6,7 +6,6 @@ import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.ui.laf.setEarlyUiLaF
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -15,6 +14,7 @@ import com.intellij.ui.User32Ex
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
 import com.intellij.ui.mac.foundation.ID
+import com.intellij.util.ui.RawSwingDispatcher
 import com.sun.jna.platform.win32.WinDef
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus

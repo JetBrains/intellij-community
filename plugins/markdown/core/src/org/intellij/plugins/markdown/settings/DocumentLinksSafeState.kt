@@ -7,7 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 @State(name = "MarkdownDocumentLinksSafeState", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
-internal class DocumentLinksSafeState: SimplePersistentStateComponent<DocumentLinksSafeState.State>(State()) {
+@ApiStatus.Internal
+class DocumentLinksSafeState: SimplePersistentStateComponent<DocumentLinksSafeState.State>(State()) {
   @ApiStatus.Internal
   class State: BaseState() {
     @get:XCollection(propertyElementName = "allowed-protocols", elementName = "protocol", valueAttributeName = "value")

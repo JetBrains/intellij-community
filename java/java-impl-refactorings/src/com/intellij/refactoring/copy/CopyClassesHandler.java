@@ -24,7 +24,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -353,31 +352,26 @@ public final class CopyClassesHandler extends CopyHandlerDelegateBase implements
   private static <E extends IncorrectOperationException> void runWriteAction(@NotNull Project project,
                                                                              @NotNull @NlsContexts.ProgressTitle String title,
                                                                              @NotNull ThrowableConsumer<@Nullable ProgressIndicator, E> consumer) throws E {
-    if (Registry.is("run.refactorings.under.progress")){
-      ApplicationEx application = ApplicationManagerEx.getApplicationEx();
-      AtomicReference<Throwable> thrown = new AtomicReference<>();
-      if (!application.runWriteActionWithCancellableProgressInDispatchThread(title, project, null, progress -> {
-        try {
-          consumer.consume(progress);
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          thrown.set(e);
-        }
-      })) {
-        return;
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
+    AtomicReference<Throwable> thrown = new AtomicReference<>();
+    if (!application.runWriteActionWithCancellableProgressInDispatchThread(title, project, null, progress -> {
+      try {
+        consumer.consume(progress);
       }
-      Throwable throwable = thrown.get();
-      if (throwable instanceof IncorrectOperationException) {
-        throw (IncorrectOperationException) throwable;
-      } else if (throwable != null) {
-        throw new IncorrectOperationException(throwable);
+      catch (ProcessCanceledException e) {
+        throw e;
       }
+      catch (Throwable e) {
+        thrown.set(e);
+      }
+    })) {
+      return;
     }
-    else {
-      WriteAction.run(() -> consumer.consume(null));
+    Throwable throwable = thrown.get();
+    if (throwable instanceof IncorrectOperationException) {
+      throw (IncorrectOperationException) throwable;
+    } else if (throwable != null) {
+      throw new IncorrectOperationException(throwable);
     }
   }
 

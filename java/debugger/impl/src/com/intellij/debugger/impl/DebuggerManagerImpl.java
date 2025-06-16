@@ -1,25 +1,22 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.NameMapper;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.KillableColoredProcessHandler;
-import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.RunContentWithExecutorListener;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -28,23 +25,21 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManagerListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 @State(name = "DebuggerManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -201,37 +196,32 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
       // so we need to call debugProcess.stop() explicitly for graceful termination.
       // RemoteProcessHandler on the other hand will call debugProcess.stop() as a part of destroyProcess() and detachProcess() implementation,
       // so we shouldn't add the listener to avoid calling stop() twice
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void processWillTerminate(@NotNull ProcessEvent event, boolean willBeDestroyed) {
           ProcessHandler processHandler = event.getProcessHandler();
           final DebugProcessImpl debugProcess = getDebugProcess(processHandler);
           if (debugProcess != null) {
-            // if current thread is a "debugger manager thread", stop will execute synchronously
-            // it is KillableColoredProcessHandler responsibility to terminate VM
-            debugProcess.stop(willBeDestroyed &&
-                              !(processHandler instanceof KillableColoredProcessHandler &&
-                                ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
+            if (Registry.is("debugger.stop.on.graceful.exit")) {
+              // it is KillableColoredProcessHandler responsibility to terminate VM
+              debugProcess.stop(willBeDestroyed &&
+                                !(processHandler instanceof KillableColoredProcessHandler &&
+                                  ((KillableColoredProcessHandler)processHandler).shouldKillProcessSoftly()));
 
-            // wait at most 10 seconds: the problem is that debugProcess.stop() can hang if there are troubles in the debuggee
-            // if processWillTerminate() is called from AWT thread debugProcess.waitFor() will block it and the whole app will hang
-            if (!DebuggerManagerThreadImpl.isManagerThread()) {
-              if (SwingUtilities.isEventDispatchThread()) {
-                ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-                  ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-                  indicator.setIndeterminate(false);
-                  int wait = 0;
-                  while (wait < WAIT_KILL_TIMEOUT && !indicator.isCanceled()) {
-                    indicator.setFraction((double)wait / WAIT_KILL_TIMEOUT);
-                    debugProcess.waitFor(200);
-                    wait += 200;
-                  }
-                }, JavaDebuggerBundle.message("waiting.for.debugger.response"), true, debugProcess.getProject());
-              }
-              else {
+              // still need to wait in tests for results stability
+              if (ApplicationManager.getApplication().isUnitTestMode()) {
+                assert !DebuggerManagerThreadImpl.isManagerThread() && !DebuggerManagerThreadImpl.isManagerThread();
                 debugProcess.waitFor(WAIT_KILL_TIMEOUT);
               }
             }
+          }
+        }
+
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          DebugProcessImpl debugProcess = getDebugProcess(event.getProcessHandler());
+          if (debugProcess != null) {
+            debugProcess.stop(false);
           }
         }
       });
@@ -273,7 +263,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
       debugProcess.addDebugProcessListener(listener);
     }
     else {
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
@@ -293,7 +283,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
       debugProcess.removeDebugProcessListener(listener);
     }
     else {
-      processHandler.addProcessListener(new ProcessAdapter() {
+      processHandler.addProcessListener(new ProcessListener() {
         @Override
         public void startNotified(@NotNull ProcessEvent event) {
           DebugProcessImpl debugProcess = getDebugProcess(processHandler);
@@ -373,7 +363,7 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     }
   }
 
-  public static class DebuggerRunContentWithExecutorListener implements RunContentWithExecutorListener {
+  public static class DebuggerRunContentWithExecutorListener implements XDebuggerManagerListener {
     private final Project myProject;
 
     public DebuggerRunContentWithExecutorListener(Project project) {
@@ -381,26 +371,20 @@ public final class DebuggerManagerImpl extends DebuggerManagerEx implements Pers
     }
 
     @Override
-    public void contentSelected(@Nullable RunContentDescriptor descriptor, @NotNull Executor executor) {
-      if (executor == DefaultDebugExecutor.getDebugExecutorInstance()) {
-        DebuggerSession session = descriptor == null ? null : getSession(descriptor);
+    public void currentSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
+      if (currentSession != null) {
+        DebuggerSession session =
+          currentSession.getDebugProcess() instanceof JavaDebugProcess javaDebugProcess ? javaDebugProcess.getDebuggerSession() : null;
         DebuggerStateManager manager = getInstanceEx(myProject).getContextManager();
-        if (session != null) {
-          manager.setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.Event.CONTEXT, null);
-        }
-        else {
-          manager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
-        }
+        DebuggerInvocationUtil.invokeLater(myProject, () -> {
+          if (session != null) {
+            manager.setState(session.getContextManager().getContext(), session.getState(), DebuggerSession.Event.CONTEXT, null);
+          }
+          else {
+            manager.setState(DebuggerContextImpl.EMPTY_CONTEXT, DebuggerSession.State.DISPOSED, DebuggerSession.Event.CONTEXT, null);
+          }
+        });
       }
-    }
-
-    private DebuggerSession getSession(RunContentDescriptor descriptor) {
-      for (JavaDebugProcess process : XDebuggerManager.getInstance(myProject).getDebugProcesses(JavaDebugProcess.class)) {
-        if (Comparing.equal(process.getProcessHandler(), descriptor.getProcessHandler())) {
-          return process.getDebuggerSession();
-        }
-      }
-      return null;
     }
   }
 }

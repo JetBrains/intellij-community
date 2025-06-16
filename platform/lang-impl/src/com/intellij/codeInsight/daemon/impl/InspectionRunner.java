@@ -7,6 +7,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -27,10 +28,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,12 +94,13 @@ class InspectionRunner {
   }
 
   @Unmodifiable
-  @NotNull List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
-                                                     @Nullable HighlightSeverity minimumSeverity,
-                                                     boolean addRedundantSuppressions,
-                                                     @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
-                                                     @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
-                                                     @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
+  @NotNull
+  List<? extends InspectionContext> inspect(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                            @Nullable HighlightSeverity minimumSeverity,
+                                            boolean addRedundantSuppressions,
+                                            @NotNull ApplyIncrementallyCallback applyIncrementallyCallback,
+                                            @NotNull Consumer<? super InspectionContext> contextFinishedCallback,
+                                            @Nullable Condition<? super LocalInspectionToolWrapper> enabledToolsPredicate) {
     if (!shouldInspect(myPsiFile)) {
       return Collections.emptyList();
     }
@@ -144,7 +144,7 @@ class InspectionRunner {
                                     "\n"+" inside:"+restrictedInside.size()+ ": "+restrictedInside+
                                     "\n"+"; outside:"+restrictedOutside.size()+": "+restrictedOutside);
     }
-    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, session -> {
+    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, null, session -> {
       for (LocalInspectionToolWrapper toolWrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(toolWrapper)) {
         LocalInspectionTool tool = toolWrapper.getTool();
@@ -555,14 +555,14 @@ class InspectionRunner {
     private int resultCount;
     final ToolStampInfo toolStamps;
 
-    InspectionProblemHolder(@NotNull PsiFile file,
+    InspectionProblemHolder(@NotNull PsiFile psiFile,
                             @NotNull LocalInspectionToolWrapper toolWrapper,
                             boolean isOnTheFly,
                             @NotNull InspectionProfileWrapper inspectionProfileWrapper,
                             @NotNull AtomicInteger toolWasProcessed,
                             @NotNull ToolStampInfo toolStamps,
                             @NotNull ApplyIncrementallyCallback applyIncrementallyCallback) {
-      super(InspectionManager.getInstance(file.getProject()), file, isOnTheFly);
+      super(InspectionManager.getInstance(psiFile.getProject()), psiFile, isOnTheFly);
       myToolWrapper = toolWrapper;
       myProfileWrapper = inspectionProfileWrapper;
       this.applyIncrementallyCallback = applyIncrementallyCallback;
@@ -570,6 +570,28 @@ class InspectionRunner {
       this.toolStamps = toolStamps;
     }
 
+    @Override
+    public void registerProblem(@NotNull ProblemDescriptor problemDescriptor) {
+      PsiElement psiElement = problemDescriptor.getPsiElement();
+      if (psiElement != null && !isInPsiFile(psiElement)) {
+        ExternallyDefinedPsiElement external = PsiTreeUtil.getParentOfType(psiElement, ExternallyDefinedPsiElement.class, false);
+        if (external != null) {
+          PsiElement newTarget = external.getProblemTarget();
+          if (newTarget != null) {
+            redirectProblem(problemDescriptor, newTarget);
+            return;
+          }
+        }
+        if (isOnTheFly()) {
+          LOG.error(PluginException.createByClass("Inspection '"+myToolWrapper+"' ("+myToolWrapper.getTool().getClass()+")" +
+           " generated invalid ProblemDescriptor '" + problemDescriptor + "'." +
+           " It contains PsiElement with getContainingFile(): '" + psiElement.getContainingFile() + "' (" + psiElement.getContainingFile().getClass() + ")" +
+           "; but expected: '" + getFile() + "' (" + getFile().getClass() + ")", null, myToolWrapper.getTool().getClass()));
+        }
+      }
+
+      saveProblem(problemDescriptor);
+    }
     @Override
     protected void saveProblem(@NotNull ProblemDescriptor descriptor) {
       synchronized (this) {
@@ -604,14 +626,14 @@ class InspectionRunner {
     }
   }
 
-  private static boolean shouldInspect(@NotNull PsiFile file) {
+  private static boolean shouldInspect(@NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(file.getProject());
+    HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(psiFile.getProject());
     // for ESSENTIAL mode, it depends on the current phase: when we run regular LocalInspectionPass then don't, when we run Save All handler then run everything
     return highlightingLevelManager != null
-           && highlightingLevelManager.shouldInspect(file)
-           && !highlightingLevelManager.runEssentialHighlightingOnly(file);
+           && highlightingLevelManager.shouldInspect(psiFile)
+           && !highlightingLevelManager.runEssentialHighlightingOnly(psiFile);
   }
 
   @NotNull

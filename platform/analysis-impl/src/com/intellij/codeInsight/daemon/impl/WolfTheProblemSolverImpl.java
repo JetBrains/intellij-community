@@ -102,9 +102,9 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   void clearSyntaxErrorFlag(@NotNull PsiTreeChangeEvent event) {
-    PsiFile file = event.getFile();
-    if (file == null) return;
-    VirtualFile virtualFile = file.getVirtualFile();
+    PsiFile psiFile = event.getFile();
+    if (psiFile == null) return;
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return;
     ProblemFileInfo info = myProblems.get(virtualFile);
     if (info != null) {
@@ -112,7 +112,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  void startCheckingIfVincentSolvedProblemsYet(@NotNull ProgressIndicator progress, @NotNull ProgressableTextEditorHighlightingPass pass)
+  public void startCheckingIfVincentSolvedProblemsYet(@NotNull ProgressIndicator progress,
+                                                      @NotNull ProgressableTextEditorHighlightingPass pass)
     throws ProcessCanceledException {
     if (!myProject.isOpen()) return;
 
@@ -407,7 +408,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   @TestOnly
-  void waitForFilesQueuedForInvalidationAreProcessed() {
+  public void waitForFilesQueuedForInvalidationAreProcessed() {
     myWolfListeners.waitForFilesQueuedForInvalidationAreProcessed();
   }
   @TestOnly

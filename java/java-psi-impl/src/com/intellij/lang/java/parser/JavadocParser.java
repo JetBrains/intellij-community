@@ -7,7 +7,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Please, use {@link BasicJavaDocParser}
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
  */
 @ApiStatus.ScheduledForRemoval
 @Deprecated

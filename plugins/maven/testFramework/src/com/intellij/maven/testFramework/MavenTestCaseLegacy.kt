@@ -214,7 +214,6 @@ abstract class MavenTestCaseLegacy : UsefulTestCase() {
         mavenProgressTracker?.assertProgressTasksCompleted()
       },
       ThrowableRunnable { MavenServerManager.getInstance().closeAllConnectorsAndWait() },
-      ThrowableRunnable { tearDownEmbedders() },
       ThrowableRunnable { checkAllMavenConnectorsDisposed() },
       ThrowableRunnable { myProject = null },
       ThrowableRunnable {
@@ -249,13 +248,6 @@ abstract class MavenTestCaseLegacy : UsefulTestCase() {
       }
     }
   }
-
-  private fun tearDownEmbedders() {
-    val manager = MavenProjectsManager.getInstanceIfCreated(myProject!!)
-    if (manager == null) return
-    manager.embeddersManager.releaseInTests()
-  }
-
 
   private fun ensureTempDirCreated() {
     if (ourTempDir != null) return
@@ -335,7 +327,7 @@ abstract class MavenTestCaseLegacy : UsefulTestCase() {
     }
 
   protected val repositoryFile: Path
-    get() = mavenGeneralSettings.effectiveRepositoryPath
+    get() = MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()
 
   protected val projectPath: String
     get() = myProjectRoot!!.path

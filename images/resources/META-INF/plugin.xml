@@ -5,7 +5,8 @@
   <description>Adds support for image file type preview, SVG file type contents language</description>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.images.themeFilter" interface="org.intellij.images.thumbnail.actions.ThemeFilter"
+                    dynamic="true"/>
   </extensionPoints>
 
   <resource-bundle>messages.ImagesBundle</resource-bundle>
@@ -23,11 +24,14 @@
                         serviceImplementation="org.intellij.images.fileTypes.impl.ImageFileTypeManagerImpl"/>
     <applicationService serviceInterface="org.intellij.images.options.OptionsManager"
                         serviceImplementation="org.intellij.images.options.impl.OptionsManagerImpl"/>
+    <applicationService serviceImplementation="org.intellij.images.scientific.utils.BinarizationThresholdConfig"/>
     <projectService serviceInterface="org.intellij.images.thumbnail.ThumbnailManager"
                     serviceImplementation="org.intellij.images.thumbnail.impl.ThumbnailManagerImpl"/>
     <!-- ImageIO.getReaderFormatNames() -->
-    <fileType name="Image" implementationClass="org.intellij.images.fileTypes.impl.ImageFileType" fieldName="INSTANCE" extensions="bigtiff;bmp;dcx;gif;icns;ico;jbig2;jpeg;jpg;pam;pbm;pcx;pgm;png;pnm;ppm;psd;rgbe;tga;tif;tiff;wbmp;xbm;xpm" />
-    <fileType name="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgFileType" fieldName="INSTANCE" extensions="svg" language="SVG"/>
+    <fileType name="Image" implementationClass="org.intellij.images.fileTypes.impl.ImageFileType" fieldName="INSTANCE"
+              extensions="bigtiff;bmp;dcx;gif;icns;ico;jbig2;jpeg;jpg;pam;pbm;pcx;pgm;png;pnm;ppm;psd;rgbe;tga;tif;tiff;wbmp;xbm;xpm"/>
+    <fileType name="SVG" implementationClass="org.intellij.images.fileTypes.impl.SvgFileType" fieldName="INSTANCE" extensions="svg"
+              language="SVG"/>
     <fileLookupInfoProvider implementation="org.intellij.images.completion.ImageLookupInfoProvider"/>
     <documentationProvider implementation="org.intellij.images.fileTypes.ImageDocumentationProvider"/>
     <ApplicationLoadListener implementation="org.intellij.images.util.imageio.ImageReaderSpiRegistrar"/>
@@ -39,9 +43,14 @@
     <registryKey key="ide.images.show.chessboard" defaultValue="false" description="Enable chessboard"/>
     <registryKey key="ide.images.chessboard.cell.size" defaultValue="5" description="Option for default chessboard cell size"/>
     <registryKey key="ide.images.show.grid" defaultValue="false" description="Show grid by default"/>
-    <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3" description="Hide grid if zoom factor is less than value"/>
+    <registryKey key="ide.images.show.grid.only.when.zoom.factor.equal.or.more.than" defaultValue="3"
+                 description="Hide grid if zoom factor is less than value"/>
     <registryKey key="ide.images.show.grid.after.every.x.pixels" defaultValue="1" description="Pixels between grid lines"/>
-    <registryKey key="ide.images.change.background.action.enabled" defaultValue="false" description="Show action for changing background in the editor toolbar"/>
+    <registryKey key="ide.images.change.background.action.enabled" defaultValue="false"
+                 description="Show action for changing background in the editor toolbar"/>
+    <registryKey key="ide.images.sci.mode.channels.operations" defaultValue="true"
+                 description="Show combobox for image channels operations"/>
+    <statistics.counterUsagesCollector implementationClass="org.intellij.images.scientific.statistics.ScientificImageActionsCollector"/>
   </extensions>
 
   <actions>
@@ -143,6 +152,26 @@
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
+    <group id="Images.ScientificGroup">
+      <action class="org.intellij.images.scientific.action.SaveImageAction"
+              id="Images.SaveImageAction"
+              icon="AllIcons.Actions.MenuSaveall">
+      </action>
+      <action class="org.intellij.images.scientific.action.CopyImageAction"
+              id="Images.CopyImageAction"
+              icon="AllIcons.Actions.Copy">
+      </action>
+      <action class="org.intellij.images.scientific.action.RotateImageAction"
+              id="Images.RotateImageAction"
+              icon="org.intellij.images.ImagesIcons.Rotate">
+      </action>
+      <action class="org.intellij.images.scientific.action.NormalizeImageAction"
+              id="Images.NormalizeImageAction"
+              icon="org.intellij.images.ImagesIcons.NormalizeImage">
+      </action>
+      <group id="Images.ImageOperationsGroup"
+             class="org.intellij.images.scientific.action.ImageOperationsActionGroup"/>
+    </group>
     <group id="Images.EditorToolbar">
       <reference ref="Images.ToggleTransparencyChessboard"/>
       <reference ref="Images.Editor.ToggleGrid"/>
@@ -155,6 +184,11 @@
       <reference ref="Images.ChangeBackground"/>
       <separator/>
       <reference ref="TextEditorWithPreview.SplitGroup"/>
+    </group>
+    <group id="Images.ScientificEditorToolbar">
+      <reference ref="Images.EditorToolbar"/>
+      <separator/>
+      <reference ref="Images.ScientificGroup"/>
     </group>
     <group id="Images.EditorPopupMenu">
       <reference ref="CutCopyPasteGroup"/>

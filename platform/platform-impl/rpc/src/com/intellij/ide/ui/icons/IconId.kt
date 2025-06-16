@@ -24,6 +24,20 @@ fun Icon.rpcId(): IconId {
   return IconId(serializedIcon, icon)
 }
 
+@ApiStatus.Internal
+fun Icon.rpcIdOrNull(): IconId? {
+  val icon = this
+
+  val serializedIcon = try {
+    serializeToRpc(icon)
+  } catch (e: Exception) {
+    LOG.debug("Cannot serialize icon $icon", e)
+    return null
+  }
+
+  return IconId(serializedIcon, icon)
+}
+
 /**
  * Retrieves the [Icon] associated with the given [IconId].
  */

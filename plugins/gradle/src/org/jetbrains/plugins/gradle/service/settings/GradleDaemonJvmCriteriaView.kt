@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.openapi.Disposable
@@ -25,7 +25,7 @@ import javax.swing.JPanel
 @ApiStatus.Internal
 class GradleDaemonJvmCriteriaView(
   criteria: GradleDaemonJvmCriteria,
-  private val versionsDropdownList: IntRange,
+  private val versionsDropdownList: List<Int>,
   private val vendorDropdownList: List<JvmVendor.KnownJvmVendor>,
   private val displayAdvancedSettings: Boolean,
   disposable: Disposable,

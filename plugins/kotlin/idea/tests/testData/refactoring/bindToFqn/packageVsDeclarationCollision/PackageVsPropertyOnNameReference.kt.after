@@ -1,5 +1,5 @@
-// IGNORE_K2
 // BIND_TO foo.property
+// BIND_RESULT property
 package foo
 
 val foo: Int = 10

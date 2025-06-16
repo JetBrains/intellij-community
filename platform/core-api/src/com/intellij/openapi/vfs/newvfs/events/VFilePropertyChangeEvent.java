@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.util.Comparing;
@@ -15,7 +15,7 @@ import java.util.Objects;
 
 public final class VFilePropertyChangeEvent extends VFileEvent {
   private final VirtualFile myFile;
-  private final String myPropertyName;
+  private final @VirtualFile.PropName String myPropertyName;
   private final Object myOldValue;
   private final Object myNewValue;
 
@@ -23,21 +23,25 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   @SuppressWarnings("unused")
-  public VFilePropertyChangeEvent(Object requestor,
-                                  @NotNull VirtualFile file,
-                                  @VirtualFile.PropName @NotNull String propertyName,
-                                  @Nullable Object oldValue,
-                                  @Nullable Object newValue,
-                                  boolean isFromRefresh) {
+  public VFilePropertyChangeEvent(
+    Object requestor,
+    @NotNull VirtualFile file,
+    @VirtualFile.PropName @NotNull String propertyName,
+    @Nullable Object oldValue,
+    @Nullable Object newValue,
+    boolean isFromRefresh
+  ) {
     this(requestor, file, propertyName, oldValue, newValue);
   }
 
   @ApiStatus.Internal
-  public VFilePropertyChangeEvent(Object requestor,
-                                  @NotNull VirtualFile file,
-                                  @VirtualFile.PropName @NotNull String propertyName,
-                                  @Nullable Object oldValue,
-                                  @Nullable Object newValue) {
+  public VFilePropertyChangeEvent(
+    Object requestor,
+    @NotNull VirtualFile file,
+    @VirtualFile.PropName @NotNull String propertyName,
+    @Nullable Object oldValue,
+    @Nullable Object newValue
+  ) {
     super(requestor);
     myFile = file;
     myPropertyName = propertyName;
@@ -113,8 +117,7 @@ public final class VFilePropertyChangeEvent extends VFileEvent {
     return myOldValue;
   }
 
-  @VirtualFile.PropName
-  public @NotNull String getPropertyName() {
+  public @NotNull @VirtualFile.PropName String getPropertyName() {
     return myPropertyName;
   }
 

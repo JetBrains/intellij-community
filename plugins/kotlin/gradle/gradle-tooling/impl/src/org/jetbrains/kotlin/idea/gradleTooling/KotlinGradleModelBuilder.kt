@@ -6,6 +6,7 @@ import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyM
 import com.intellij.gradle.toolingExtension.impl.model.dependencyDownloadPolicyModel.GradleDependencyDownloadPolicyCache
 import com.intellij.gradle.toolingExtension.impl.model.dependencyModel.GradleDependencyResolver
 import com.intellij.gradle.toolingExtension.impl.util.GradleModelProviderUtil
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -16,6 +17,7 @@ import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
 import org.gradle.tooling.BuildController
 import org.gradle.tooling.model.gradle.GradleBuild
+import org.jetbrains.kotlin.idea.gradleTooling.AndroidAwareGradleModelProvider.Companion.isAgpApplied
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinTaskProperties
 import org.jetbrains.kotlin.tooling.core.Interner
@@ -134,10 +136,12 @@ class AndroidAwareGradleModelProvider(
     companion object {
         fun parseParameter(project: Project, parameterValue: String?): Result {
             return Result(
-                hasProjectAndroidBasePlugin = project.plugins.findPlugin("com.android.base") != null,
+                hasProjectAndroidBasePlugin = project.isAgpApplied(),
                 requestedVariantNames = parameterValue?.splitToSequence(',')?.map { it.lowercase(Locale.getDefault()) }?.toSet()
             )
         }
+
+        fun Project.isAgpApplied(): Boolean = plugins.hasPlugin("com.android.base")
     }
 }
 
@@ -222,6 +226,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, parameter?.value)
         if (androidVariantRequest.shouldSkipBuildAllCall()) return null
         val kotlinPluginId = kotlinPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
+            ?: project.getAgpBuildInKotlinPluginId()
         val platformPluginId = platformPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
         val target = project.getTarget()
 
@@ -269,6 +274,22 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         )
     }
 
+    // Since AGP 8.12.0-alpha02 Kotlin support was introduced without the need to apply the "kotlin-android" plugin.
+    // But AGP still applies 'KotlinBaseApiPlugin', so we are trying to detect it here by using the interface name from KGP-API
+    // which 'KotlinBaseApiPlugin' implements.
+    private fun Project.getAgpBuildInKotlinPluginId(): String? = if (isAgpApplied() &&
+        plugins
+            .matching { plugin ->
+                plugin::class.java.superclass.interfaces.any {
+                    it.name == "org.jetbrains.kotlin.gradle.plugin.KotlinJvmFactory"
+                }
+            }.isNotEmpty()
+    ) {
+        "kotlin-android"
+    } else {
+        null
+    }
+
     private fun downloadKotlinStdlibSourcesIfNeeded(project: Project, context: ModelBuilderContext) {
         // If `idea.gradle.download.sources.force` is `true`, then sources will be downloaded anyway (so no need to do it again here)
         // if it is `false`, then we have to skip any source downloading here
@@ -292,9 +313,6 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         project.configurations.forEachUsedKotlinLibrary {
             kotlinStdlib.dependencies.add(it)
         }
-        project.buildscript.configurations.forEachUsedKotlinLibrary {
-            kotlinStdlib.dependencies.add(it)
-        }
         if (kotlinStdlib.dependencies.isEmpty()) {
             return
         }
@@ -315,27 +333,23 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
     }
 
     private fun downloadKotlinStdlibSources(project: Project, context: ModelBuilderContext) {
-        val stdlibSourcesConfiguration = "kotlinStdlibSourcesResolvableConfiguration"
-        val projectConfigurations = project.configurations
-        var kotlinStdlib =
-            projectConfigurations.findByName(stdlibSourcesConfiguration)
-
-        if (kotlinStdlib == null) {
-            kotlinStdlib = projectConfigurations.create(stdlibSourcesConfiguration) {
-                it.isCanBeConsumed = false
-            }
-            projectConfigurations.forEachUsedDependency(kotlinStdlib) {
-                kotlinStdlib.dependencies.add(it)
-            }
-            project.buildscript.configurations.forEachUsedDependency(kotlinStdlib) {
-                kotlinStdlib.dependencies.add(it)
+        JavaPluginUtil.getSourceSetContainer(project)?.forEach {
+            val compileClasspath = (it.compileClasspath as? Configuration)
+            if (compileClasspath != null && compileClasspath.isCanBeResolved) {
+                downloadSourcesForCompileClasspathKoltinSdlibDependencies(context, project, compileClasspath)
             }
         }
+    }
 
+    private fun downloadSourcesForCompileClasspathKoltinSdlibDependencies(
+        context: ModelBuilderContext,
+        project: Project,
+        compileClassPathConfiguration: Configuration?
+    ) {
         val stdlibDependencyGroups =
             setOf("org.jetbrains.kotlin", "org.jetbrains.kotlinx")
         GradleDependencyResolver(context, project, GradleDependencyDownloadPolicy.SOURCES)
-            .resolveDependencies(kotlinStdlib, stdlibDependencyGroups)
+            .resolveDependencies(compileClassPathConfiguration, stdlibDependencyGroups)
     }
 
     private fun ConfigurationContainer.forEachUsedDependency(

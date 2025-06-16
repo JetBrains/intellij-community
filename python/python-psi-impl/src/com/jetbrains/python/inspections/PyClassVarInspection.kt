@@ -9,11 +9,9 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PySelfType
-import com.jetbrains.python.psi.types.PyTypeParameterType
-import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.*
 
 class PyClassVarInspection : PyInspection() {
 
@@ -27,6 +25,7 @@ class PyClassVarInspection : PyInspection() {
     override fun visitPyTargetExpression(node: PyTargetExpression) {
         checkClassVarReassignment(node)
         checkClassVarDeclaration(node)
+        checkAssignedValue(node)
     }
 
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -89,6 +88,24 @@ class PyClassVarInspection : PyInspection() {
                                 PyPsiBundle.message("INSP.class.var.can.not.include.type.variables"))
               }
             }
+          }
+        }
+      }
+    }
+
+    private fun checkAssignedValue(node: PyTargetExpression) {
+      if (!node.hasAssignedValue()) return
+      node.annotation?.value?.let { annotationValue ->
+        if (annotationValue is PySubscriptionExpression && resolvesToClassVar(annotationValue.operand)) {
+          val expectedType = myTypeEvalContext.getType(node)
+          val actualType = node.findAssignedValue()?.let { myTypeEvalContext.getType(it) }
+          if (expectedType != null && actualType != null &&
+              !PyTypeChecker.match(expectedType, actualType, myTypeEvalContext)) {
+            val expectedName = PythonDocumentationProvider.getTypeName(expectedType, myTypeEvalContext)
+            val actualName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
+            registerProblem(node.findAssignedValue(),
+                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                                expectedName, actualName))
           }
         }
       }

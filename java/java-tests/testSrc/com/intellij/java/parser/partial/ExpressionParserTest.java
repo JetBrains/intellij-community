@@ -2,7 +2,7 @@
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
-import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.java.syntax.parser.JavaParser;
 
 public class ExpressionParserTest extends AbstractBasicExpressionParserTest {
   public ExpressionParserTest() {
@@ -11,11 +11,11 @@ public class ExpressionParserTest extends AbstractBasicExpressionParserTest {
 
   @Override
   protected void doParserTest(String text) {
-    doParserTest(text, builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
+    doParserTest(text, (builder, languageLevel) -> new JavaParser(languageLevel).getExpressionParser().parse(builder));
   }
 
   @Override
   protected void doParserTest() {
-    doParserTest(builder -> JavaParser.INSTANCE.getExpressionParser().parse(builder));
+    doParserTest((builder, languageLevel) -> new JavaParser(languageLevel).getExpressionParser().parse(builder));
   }
 }

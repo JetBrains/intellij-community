@@ -4,6 +4,7 @@ package com.intellij.ui.table;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.client.ClientSystemInfo;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
@@ -530,7 +531,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       if (myBusyIcon != null) {
         remove(myBusyIcon);
-        myBusyIcon.dispose();
+        Disposer.dispose(myBusyIcon);
         myBusyIcon = null;
       }
     }

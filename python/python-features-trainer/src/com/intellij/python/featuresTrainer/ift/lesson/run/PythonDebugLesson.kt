@@ -56,9 +56,6 @@ class PythonDebugLesson : CommonDebugLesson("python.debug.workflow") {
     print("The average is ", average)
   """.trimIndent())
 
-
-  override val breakpointXRange: (width: Int) -> IntRange = { IntRange(13, it - 17) }
-
   override fun LessonContext.applyProgramChangeTasks() {
     highlightButtonById("Rerun")
 

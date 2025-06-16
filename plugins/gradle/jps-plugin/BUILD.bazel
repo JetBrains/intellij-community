@@ -37,6 +37,7 @@ jvm_library(
   kotlinc_opts = "@community//:k11",
   associates = [":jps"],
   deps = [
+    "//platform/core-api:core",
     "//platform/util",
     "//jps/jps-builders:build",
     "//jps/model-impl",

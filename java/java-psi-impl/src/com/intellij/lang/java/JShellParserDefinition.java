@@ -2,12 +2,6 @@
 package com.intellij.lang.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
-import com.intellij.lang.java.parser.JShellParser;
-import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -21,18 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Eugene Zhuravlev
  */
 public final class JShellParserDefinition extends JavaParserDefinition {
-  public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType("JSHELL_FILE", JShellLanguage.INSTANCE);
-
-  private static final PsiParser PARSER = new PsiParser() {
-    @Override
-    public @NotNull ASTNode parse(@NotNull IElementType rootElement, @NotNull PsiBuilder builder) {
-      JavaParserUtil.setLanguageLevel(builder, LanguageLevel.HIGHEST);
-      final PsiBuilder.Marker r = builder.mark();
-      JShellParser.INSTANCE.getFileParser().parse(builder);
-      r.done(rootElement);
-      return builder.getTreeBuilt();
-    }
-  };
+  public static final IFileElementType FILE_ELEMENT_TYPE = new JShellFileElementType();
 
   @Override
   public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
@@ -51,10 +34,5 @@ public final class JShellParserDefinition extends JavaParserDefinition {
       return ((IJShellElementType)type).createPsi(node);
     }
     return super.createElement(node);
-  }
-
-  @Override
-  public @NotNull PsiParser createParser(Project project) {
-    return PARSER;
   }
 }

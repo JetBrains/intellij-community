@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -12,7 +12,9 @@ import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
 
@@ -22,6 +24,7 @@ import java.util.Arrays;
  * <p/>
  * Immutable.
  */
+@ApiStatus.Internal
 public final class LineSet {
   private static final int MODIFIED_MASK = 0x4;
   private static final int SEPARATOR_MASK = 0x3;
@@ -53,8 +56,8 @@ public final class LineSet {
     return new LineSet(starts.toIntArray(), flags.toByteArray(), text.length());
   }
 
-  @NotNull
-  LineSet update(@NotNull CharSequence prevText, int start, int end, @NotNull CharSequence replacement, boolean wholeTextReplaced) {
+  @VisibleForTesting
+  public @NotNull LineSet update(@NotNull CharSequence prevText, int start, int end, @NotNull CharSequence replacement, boolean wholeTextReplaced) {
     if (myLength == 0) {
       return createLineSet(replacement, !wholeTextReplaced);
     }
@@ -243,7 +246,8 @@ public final class LineSet {
     return getLineCount() == 0 ? this : clearModificationFlags(0, getLineCount());
   }
 
-  int getSeparatorLength(int index) {
+  @VisibleForTesting
+  public int getSeparatorLength(int index) {
     checkLineIndex(index);
     return getSeparatorLengthUnsafe(index);
   }

@@ -120,8 +120,7 @@ final class TextPainter extends BasePainter {
 
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     myMethodSeparatorColor = colorsManager.isDarkEditor()
-                             ? colorsManager.getScheme(EditorColorsManager.getDefaultSchemeName())
-                               .getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
+                             ? colorsManager.getDefaultScheme().getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
                              : null;
   }
 

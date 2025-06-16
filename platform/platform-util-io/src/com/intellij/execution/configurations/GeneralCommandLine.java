@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.platform.eel.EelApi;
@@ -38,7 +39,7 @@ import java.util.function.Function;
 
 import static com.intellij.execution.util.ExecUtil.startProcessBlockingUsingEel;
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.upgradeBlocking;
+import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -155,6 +156,18 @@ public class GeneralCommandLine implements UserDataHolder {
   @ApiStatus.Obsolete(since = "2024.2")
   public void setExePath(@NotNull String exePath) {
     withExePath(exePath);
+  }
+
+  /**
+   * Turns the command line into parameters of a new one.
+   * Case in point &ndash; running a process with lower priority: {@code commandLine.withWrappingCommand("nice", "-n", "10")}.
+   */
+  @ApiStatus.Experimental
+  public @NotNull GeneralCommandLine withWrappingCommand(@NotNull String command, @NotNull String @NotNull ... args) {
+    if (myExePath == null || myExePath.isBlank()) throw new IllegalStateException("Executable is not set yet");
+    myProgramParams.prepend(myExePath);
+    myProgramParams.prependAll(args);
+    return withExePath(command);
   }
 
   /** Please use {@link #getWorkingDirectory()}. */
@@ -460,12 +473,17 @@ public class GeneralCommandLine implements UserDataHolder {
       return null;
     }
 
-    if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
-      eelApi = upgradeBlocking(getEelDescriptor(exePath));
+    // IJPL-177172: do not use eel for absolute Windows paths (e.g., C:\...).
+    // Fallback to the legacy WSL behavior where a local exe is executed in a remote working directory.
+    if (SystemInfo.isWindows && OSAgnosticPathUtil.isAbsoluteDosPath(exe)) {
+      eelApi = null;
+    }
+    else if (getEelDescriptor(exePath) != LocalEelDescriptor.INSTANCE) { // fast check
+      eelApi = toEelApiBlocking(getEelDescriptor(exePath));
     }
     else if (workingDirectory != null) {
       if (getEelDescriptor(workingDirectory) != LocalEelDescriptor.INSTANCE) { // also try to compute non-local EelApi from working dir
-        eelApi = upgradeBlocking(getEelDescriptor(workingDirectory));
+        eelApi = toEelApiBlocking(getEelDescriptor(workingDirectory));
       }
       else {
         eelApi = null;
@@ -556,7 +574,7 @@ public class GeneralCommandLine implements UserDataHolder {
     else {
       ptyOptions = null;
     }
-    return startProcessBlockingUsingEel(eelApi.getExec(), processBuilder, ptyOptions);
+    return startProcessBlockingUsingEel(eelApi.getExec(), processBuilder, ptyOptions, isPassParentEnvironment());
   }
 
   /** @deprecated please override {@link #createProcess(ProcessBuilder)} instead. */

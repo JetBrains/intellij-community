@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -56,7 +57,7 @@ public final class JavaConstructorCallElement extends LookupElementDecorator<Loo
         }
       }
       if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_VOID, type)) {
-        return new Arguments(PsiKeyword.NULL, PsiKeyword.NULL);
+        return new Arguments(JavaKeywords.NULL, JavaKeywords.NULL);
       }
     }
     return null;

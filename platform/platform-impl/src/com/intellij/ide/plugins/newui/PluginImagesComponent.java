@@ -123,7 +123,7 @@ public final class PluginImagesComponent extends JPanel {
     myParent = parent;
   }
 
-  public void show(@NotNull IdeaPluginDescriptor descriptor) {
+  public void show(@NotNull PluginUiModel model) {
     Object state;
 
     synchronized (myLock) {
@@ -132,7 +132,7 @@ public final class PluginImagesComponent extends JPanel {
       myShowState = null;
     }
 
-    loadImages(descriptor, state);
+    loadImages(model, state);
     fullRepaint();
   }
 
@@ -165,15 +165,15 @@ public final class PluginImagesComponent extends JPanel {
     }
   }
 
-  private void loadImages(@NotNull IdeaPluginDescriptor descriptor, @NotNull Object state) {
-    if (!(descriptor instanceof PluginNode node) ||
-        node.getExternalPluginIdForScreenShots() == null ||
+  private void loadImages(@NotNull PluginUiModel model, @NotNull Object state) {
+    if (!model.isFromMarketplace() ||
+        model.getExternalPluginIdForScreenShots() == null ||
         ApplicationManager.getApplication().isHeadlessEnvironment()) {
       handleImages(state, null);
       return;
     }
 
-    List<String> screenShots = node.getScreenShots();
+    List<String> screenShots = model.getScreenShots();
     if (ContainerUtil.isEmpty(screenShots)) {
       handleImages(state, null);
       return;
@@ -181,7 +181,7 @@ public final class PluginImagesComponent extends JPanel {
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       List<BufferedImage> images = new ArrayList<>();
-      File parentDir = new File(PathManager.getPluginTempPath(), "imageCache/" + node.getExternalPluginIdForScreenShots());
+      File parentDir = new File(PathManager.getPluginTempPath(), "imageCache/" + model.getExternalPluginIdForScreenShots());
 
       for (String screenShot : screenShots) {
         try {
@@ -201,7 +201,7 @@ public final class PluginImagesComponent extends JPanel {
             BufferedImage image = ImageIO.read(stream);
             if (image == null) {
               Logger.getInstance(PluginImagesComponent.class)
-                .info("=== Plugin: " + node.getPluginId() + " screenshot: " + name + " not loaded ===");
+                .info("=== Plugin: " + model.getPluginId() + " screenshot: " + name + " not loaded ===");
             }
             else {
               images.add(image);
@@ -209,7 +209,7 @@ public final class PluginImagesComponent extends JPanel {
             }
           }
           catch (IOException e) {
-            throw new IOException("Unable to read image for plugin " + node.getExternalPluginIdForScreenShots()
+            throw new IOException("Unable to read image for plugin " + model.getExternalPluginIdForScreenShots()
                                   + " file " + imageFile.getAbsolutePath(), e);
           }
         }

@@ -1,5 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.gitlab.community"
-             allow-bundled-update="true">
+<idea-plugin package="org.jetbrains.plugins.gitlab.community" allow-bundled-update="false">
 
   <!-- Warn: remember to sync the following {name, id, vendor, category, description} tags
              with plugin.xml in intellij.vcs.gitlab.ultimate module-->
@@ -42,6 +41,7 @@
 
   <content>
     <module name="intellij.vcs.gitlab" loading="embedded"/>
+    <module name="intellij.vcs.gitlab.git"/>
     <module name="intellij.vcs.gitlab.yaml"/>
   </content>
 

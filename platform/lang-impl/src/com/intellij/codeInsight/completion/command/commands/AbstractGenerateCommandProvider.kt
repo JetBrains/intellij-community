@@ -17,7 +17,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.containers.JBIterable
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 /**
  * Abstract base class that provides a framework for generating completion commands
@@ -58,6 +57,7 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
     val lineStartOffset = document.getLineStartOffset(lineNumber)
     val immutableCharSequence = document.immutableCharSequence
     for (i in lineStartOffset..offset) {
+      if (i >= immutableCharSequence.length) break
       if (!immutableCharSequence[i].isWhitespace()) {
         return false
       }
@@ -79,21 +79,15 @@ abstract class AbstractGenerateCommandProvider : CommandProvider, DumbAware {
     var customName: String? = null,
     var customI18nName: @Nls String? = null,
   ) : CompletionCommand() {
-    override val name: String
-      get() = customName ?: ("Generate \'" + action.templateText + "\'")
-    override val i18nName: @Nls String
+    override val presentableName: @Nls String
       get() = customI18nName ?: (CodeInsightBundle.message("command.completion.generate.text", action.templateText))
-    override val icon: Icon?
-      get() = null
 
     override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
       if (editor == null) return
       val dataContext = DataManager.getInstance().getDataContext(editor.getComponent())
       val presentation: Presentation = action.templatePresentation.clone()
       val event = AnActionEvent.createEvent(action, dataContext, presentation, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
-      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
-      }
+      ActionUtil.performAction(action, event)
     }
   }
 }

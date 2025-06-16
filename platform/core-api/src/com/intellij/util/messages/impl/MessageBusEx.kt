@@ -23,5 +23,5 @@ interface MessageBusEx : MessageBus {
   @TestOnly
   fun clearAllSubscriberCache()
 
-  fun setLazyListeners(map: ConcurrentMap<String, MutableList<ListenerDescriptor>>)
+  fun setLazyListeners(map: ConcurrentMap<String, MutableList<PluginListenerDescriptor>>)
 }

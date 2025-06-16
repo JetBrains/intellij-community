@@ -3,6 +3,7 @@ package com.intellij.ui.components.panels;
 
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,15 +17,22 @@ public class Wrapper extends JPanel implements NullableComponent {
     setOpaque(false);
   }
 
-  public Wrapper(JComponent wrapped) {
+  public Wrapper(@Nullable JComponent wrapped) {
     setLayout(new BorderLayout());
-    add(wrapped, BorderLayout.CENTER);
+    if (wrapped != null) {
+      add(wrapped, BorderLayout.CENTER);
+    }
     setOpaque(false);
   }
 
-  public Wrapper(LayoutManager layout, JComponent wrapped) {
+  /**
+   * WARNING: the layout will be overwritten by {@link #setContent}
+   */
+  public Wrapper(LayoutManager layout, @Nullable JComponent wrapped) {
     super(layout);
-    add(wrapped);
+    if (wrapped != null) {
+      add(wrapped);
+    }
     setOpaque(false);
   }
 
@@ -33,17 +41,23 @@ public class Wrapper extends JPanel implements NullableComponent {
     setOpaque(false);
   }
 
+  /**
+   * WARNING: the layout will be overwritten by {@link #setContent}
+   */
   public Wrapper(LayoutManager layout) {
     super(layout);
     setOpaque(false);
   }
 
+  /**
+   * WARNING: the layout will be overwritten by {@link #setContent}
+   */
   public Wrapper(LayoutManager layout, boolean isDoubleBuffered) {
     super(layout, isDoubleBuffered);
     setOpaque(false);
   }
 
-  public void setContent(JComponent wrapped) {
+  public void setContent(@Nullable JComponent wrapped) {
     if (wrapped == getTargetComponent()) {
       return;
     }
@@ -99,12 +113,12 @@ public class Wrapper extends JPanel implements NullableComponent {
     }
   }
 
-  public final Wrapper setVerticalSizeReferent(JComponent verticalSizeReferent) {
+  public final Wrapper setVerticalSizeReferent(@Nullable JComponent verticalSizeReferent) {
     myVerticalSizeReferent = verticalSizeReferent;
     return this;
   }
 
-  public final Wrapper setHorizontalSizeReferent(JComponent horizontalSizeReferent) {
+  public final Wrapper setHorizontalSizeReferent(@Nullable JComponent horizontalSizeReferent) {
     myHorizontalSizeReferent = horizontalSizeReferent;
     return this;
   }
@@ -121,6 +135,9 @@ public class Wrapper extends JPanel implements NullableComponent {
     return size;
   }
 
+  /**
+   * WARNING: the layout will be overwritten by {@link #setContent}
+   */
   public static final class North extends Wrapper {
     public North(JComponent wrapped) {
       super(new BorderLayout());

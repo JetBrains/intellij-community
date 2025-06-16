@@ -19,6 +19,7 @@ interface Editor {
   fun getVirtualFile(): VirtualFile
   fun getLineHeight(): Int
   fun offsetToVisualPosition(offset: Int): VisualPosition
+  fun offsetToLogicalPosition(offset: Int): LogicalPosition
   fun visualPositionToXY(visualPosition: VisualPosition): Point
   fun offsetToXY(offset: Int): Point
   fun getInlayModel(): InlayModel
@@ -26,6 +27,7 @@ interface Editor {
   fun logicalPositionToOffset(logicalPosition: LogicalPosition): Int
   fun getSelectionModel(): SelectionModel
   fun getSoftWrapModel(): SoftWrapModel
+  fun visualLineToY(visualLine: Int): Int
 }
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
@@ -127,7 +129,7 @@ fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEd
 
 fun Driver.openFile(relativePath: String, project: Project = singleProject(), waitForCodeAnalysis: Boolean = true) = step("Open file $relativePath") {
   withContext {
-    val openedFile = if (!isRemoteIdeMode) {
+    val openedFile = if (!isRemDevMode) {
       val fileToOpen = findFile(relativePath = relativePath, project = project)
       if (fileToOpen == null) {
         throw IllegalArgumentException("Fail to find file $relativePath")

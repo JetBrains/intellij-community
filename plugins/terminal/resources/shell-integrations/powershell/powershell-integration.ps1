@@ -16,8 +16,12 @@ Get-ChildItem env:_INTELLIJ_FORCE_PREPEND_* | ForEach-Object {
 }
 # `JEDITERM_SOURCE` is executed in its own scope now. That means, it can only run code, and export env vars. It can't export PS variables.
 # It might be better to source it. See MSDN for the difference between "Call operator &"  and "Script scope and dot sourcing"
-if (($Env:JEDITERM_SOURCE -ne $null) -and (Test-Path $Env:JEDITERM_SOURCE)) {
-  & $Env:JEDITERM_SOURCE
+if ($Env:JEDITERM_SOURCE -ne $null) {
+  if (Test-Path "$Env:JEDITERM_SOURCE" -ErrorAction SilentlyContinue) {
+      & "$Env:JEDITERM_SOURCE"
+    } else { # If file doesn't exist it might be a script
+      Invoke-Expression "$Env:JEDITERM_SOURCE"
+    }
   Remove-Item "env:JEDITERM_SOURCE"
 }
 

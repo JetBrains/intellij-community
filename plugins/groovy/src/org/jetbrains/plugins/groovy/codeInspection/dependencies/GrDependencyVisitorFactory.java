@@ -23,9 +23,9 @@ final class GrDependencyVisitorFactory extends DependencyVisitorFactory {
     GroovyElementVisitor visitor = new MyVisitor(processor, options);
     return new PsiElementVisitor() {
       @Override
-      public void visitFile(@NotNull PsiFile file) {
-        if (file instanceof GroovyFile) {
-          ((GroovyFile)file).accept(visitor);
+      public void visitFile(@NotNull PsiFile psiFile) {
+        if (psiFile instanceof GroovyFile) {
+          ((GroovyFile)psiFile).accept(visitor);
         }
       }
     };

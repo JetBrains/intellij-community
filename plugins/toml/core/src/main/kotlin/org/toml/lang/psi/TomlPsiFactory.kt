@@ -34,6 +34,9 @@ class TomlPsiFactory(private val project: Project, private val markGenerated: Bo
 
     fun createNewline(): PsiElement = createWhitespace("\n")
 
+    fun createComma(): PsiElement =
+        createFromText<TomlInlineTable>("a = { b = 1, c = 2}")?.entries?.firstOrNull()?.nextSibling ?: error("Failed to create comma")
+
     fun createWhitespace(ws: String): PsiElement =
         PsiParserFacade.getInstance(project).createWhiteSpaceFromText(ws)
 

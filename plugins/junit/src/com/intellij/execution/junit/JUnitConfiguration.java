@@ -668,7 +668,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public boolean needPrepareTarget() {
-    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk();
+    return TargetEnvironmentAwareRunProfile.super.needPrepareTarget() || runsUnderWslJdk() || runsUnderRemoteJdk();
   }
 
   public static class Data implements Cloneable {

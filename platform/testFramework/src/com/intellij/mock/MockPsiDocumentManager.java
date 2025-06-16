@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
-import com.intellij.codeInsight.multiverse.CodeInsightContextKt;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -23,7 +23,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
 
   @Override
   public @Nullable PsiFile getCachedPsiFile(@NotNull Document document) {
-    return getCachedPsiFile(document, CodeInsightContextKt.anyContext());
+    return getCachedPsiFile(document, CodeInsightContexts.anyContext());
   }
 
   @Override
@@ -92,7 +92,7 @@ public class MockPsiDocumentManager extends PsiDocumentManager {
 
   @Override
   public @Nullable PsiFile getPsiFile(@NotNull Document document) {
-    return getPsiFile(document, CodeInsightContextKt.anyContext());
+    return getPsiFile(document, CodeInsightContexts.anyContext());
   }
 
   @Override

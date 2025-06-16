@@ -26,7 +26,7 @@ internal class FileBackedSourceMap private constructor(
                                baseUrlIsFile: Boolean): FileBackedSourceMap? {
       val text = filePath.readText()
       val data = SourceMapDataCache.getOrCreate(text, filePath.toString()) ?: return null
-      return FileBackedSourceMap(filePath, data, SourceResolver(data.sourceMapData.sources, trimFileScheme, baseUrl, baseUrlIsFile))
+      return FileBackedSourceMap(filePath, data, SourceResolver(data.sourceMapData.sources, baseUrl, baseUrlIsFile))
     }
   }
 }
@@ -42,6 +42,8 @@ private class FileBackedSourceMapData(private val filePath: Path, initialData: S
   override val hasNameMappings: Boolean = initialData.sourceMapData.hasNameMappings
   override val mappings: List<MappingEntry>
     get() = getData().sourceMapData.mappings
+  override val ignoreList: List<Int>
+    get() = getData().sourceMapData.ignoreList
 
   val sourceIndexToMappings: Array<MappingList?>
     get() = getData().sourceIndexToMappings

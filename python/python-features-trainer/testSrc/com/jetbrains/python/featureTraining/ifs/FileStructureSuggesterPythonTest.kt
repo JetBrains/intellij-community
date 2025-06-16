@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.python.featuresTrainer.ifs
+package com.jetbrains.python.featureTraining.ifs
 
-import junit.framework.TestCase
 import training.featuresSuggester.FeatureSuggesterTestUtils.focusEditor
 import training.featuresSuggester.FeatureSuggesterTestUtils.logicalPositionToOffset
 import training.featuresSuggester.FeatureSuggesterTestUtils.performFindInFileAction
@@ -70,7 +69,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(myFixture.project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
@@ -82,7 +81,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(myFixture.project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
@@ -94,7 +93,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(myFixture.project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
@@ -106,7 +105,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(myFixture.project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
@@ -118,7 +117,7 @@ class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(myFixture.project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 }

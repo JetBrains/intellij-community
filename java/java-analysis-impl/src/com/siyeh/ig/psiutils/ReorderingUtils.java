@@ -17,6 +17,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -354,12 +355,12 @@ public final class ReorderingUtils {
     }
   }
 
-  private static final List<Function<PsiExpression, ExceptionProblem>> PROBLEM_EXTRACTORS = Arrays.asList(
+  private static final @Unmodifiable List<Function<PsiExpression, ExceptionProblem>> PROBLEM_EXTRACTORS = List.of(
     NullDereferenceExceptionProblem::from, ClassCastExceptionProblem::from, ArrayIndexExceptionProblem::from,
     ContractFailExceptionProblem::from
   );
 
-  static @NotNull List<ExceptionProblem> fromExpression(PsiExpression expression) {
+  private static @NotNull List<ExceptionProblem> fromExpression(PsiExpression expression) {
     List<ExceptionProblem> problems = new ArrayList<>();
     for (Function<PsiExpression, ExceptionProblem> extractor : PROBLEM_EXTRACTORS) {
       ExceptionProblem exceptionProblem = extractor.apply(expression);
@@ -381,7 +382,7 @@ public final class ReorderingUtils {
     return false;
   }
 
-  private static boolean isConditionNecessary(PsiExpression condition, List<ExceptionProblem> problems, boolean negated) {
+  private static boolean isConditionNecessary(PsiExpression condition, @Unmodifiable List<? extends ExceptionProblem> problems, boolean negated) {
     condition = PsiUtil.skipParenthesizedExprDown(condition);
     if (condition == null) return false;
     if (BoolUtils.isNegation(condition)) {

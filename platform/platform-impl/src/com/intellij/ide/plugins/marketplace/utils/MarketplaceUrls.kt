@@ -22,6 +22,7 @@ object MarketplaceUrls {
 
   @JvmStatic
   fun getPluginManagerUrl() = MarketplaceCustomizationService.getInstance().getPluginManagerUrl().trimEnd('/')
+
   @JvmStatic
   fun getPluginManagerHost() = URL(getPluginManagerUrl()).host!!
 
@@ -79,7 +80,7 @@ object MarketplaceUrls {
   fun getPluginReviewNoteUrl() = "${getPluginManagerUrl()}/docs/marketplace/reviews-policy.html" // plugin manager url?
 
   @JvmStatic
-  fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null) = buildString {
+  fun getPluginWriteReviewUrl(pluginId: PluginId, version: String? = null): String = buildString {
     append("${getPluginManagerUrl()}/intellij/${pluginId.urlEncode()}/review/new")
     append("?build=$IDE_BUILD_FOR_REQUEST")
     version?.let {
@@ -92,7 +93,7 @@ object MarketplaceUrls {
     descriptor: IdeaPluginDescriptor,
     uuid: String,
     buildNumber: BuildNumber?,
-    currentVersion: IdeaPluginDescriptor?
+    currentVersion: IdeaPluginDescriptor?,
   ): String {
     val updatedFrom = currentVersion?.version ?: ""
     val parameters = hashMapOf(

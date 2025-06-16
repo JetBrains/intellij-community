@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.sourceRoots
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
@@ -233,10 +235,14 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
 
             else -> {
                 val commonModuleId = ModuleId(name, CommonPlatforms.defaultCommonPlatform, isTest)
+                val additionalImplementedModules = rootInfos.firstOrNull { it.moduleId == nameAndPlatform }
+                    ?.additionalImplementedModules
+                    ?.map { it.ideaModuleName() }
+                    .orEmpty()
 
                 module.createMultiplatformFacetM1(
                     platform,
-                    implementedModuleNames = listOf(commonModuleId.ideaModuleName()),
+                    implementedModuleNames = listOf(commonModuleId.ideaModuleName()) + additionalImplementedModules,
                     pureKotlinSourceFolders = pureKotlinSourceFolders,
                     additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
@@ -298,6 +304,7 @@ private val platformNames = mapOf(
     listOf("java", "jvm") to JvmPlatforms.defaultJvmPlatform,
     listOf("java8", "jvm8") to JvmPlatforms.jvm8,
     listOf("java6", "jvm6") to JvmPlatforms.jvm6,
+    listOf("nativeCommon") to TargetPlatform(setOf(NativePlatformWithTarget(KonanTarget.LINUX_X64), NativePlatformWithTarget(KonanTarget.MACOS_X64))),
     listOf("js", "javascript") to JsPlatforms.defaultJsPlatform,
     listOf("wasm") to WasmPlatforms.unspecifiedWasmPlatform,
     listOf("native") to NativePlatforms.unspecifiedNativePlatform
@@ -305,12 +312,18 @@ private val platformNames = mapOf(
 
 private fun parseDirName(dir: File): RootInfo {
     val parts = dir.name.split("_")
-    return RootInfo(parseModuleId(parts), parseIsTestRoot(parts), dir, parseDependencies(parts))
+    return RootInfo(parseModuleId(parts), parseIsTestRoot(parts), dir, parseDependencies(parts), parseImplementations(parts))
 }
 
 private fun parseDependencies(parts: List<String>) =
     parts.filter { it.startsWith("dep(") && it.endsWith(")") }.map {
         parseDependency(it)
+    }
+
+private fun parseImplementations(parts: List<String>): List<ModuleId> =
+    parts.filter { it.startsWith("impl(") && it.endsWith(")") }.map {
+        val implString =  it.removePrefix("impl(").removeSuffix(")")
+        parseModuleId(implString.split("-"))
     }
 
 private fun parseDependency(it: String): Dependency {
@@ -382,7 +395,8 @@ private data class RootInfo(
     val moduleId: ModuleId,
     val isTestRoot: Boolean,
     val moduleRoot: File,
-    val dependencies: List<Dependency>
+    val dependencies: List<Dependency>,
+    val additionalImplementedModules: List<ModuleId>,
 )
 
 private sealed class Dependency

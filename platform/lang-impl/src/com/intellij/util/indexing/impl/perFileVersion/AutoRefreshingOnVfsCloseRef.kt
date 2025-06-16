@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion
 
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
@@ -8,7 +8,7 @@ import java.io.Closeable
 
 /**
  * Reference to FastFileAttribute (e.g. [com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor]
- * or [com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes.Int4FileAttribute]) will be invalidated on VFS close.
+ * or [com.intellij.openapi.vfs.newvfs.persistent.mapped.FastFileAttributes.Int4FileAttribute]) will be invalidated on VFS close.
  * [AutoRefreshingOnVfsCloseRef] tracks VFS close events and recreates references automatically after VFS re-mounted.
  */
 @ApiStatus.Internal

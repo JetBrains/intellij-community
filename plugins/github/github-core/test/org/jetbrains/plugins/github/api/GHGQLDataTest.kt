@@ -197,6 +197,7 @@ class GHGQLDTOTest(val testCase: TestCase) {
   //region: DTO x Fragment x Schema checking
   @Test
   fun `test dto class matches the query + fragments + schema`() {
+    verifyQueryParams()
     verifyQuery()?.let { (gqlTypedef, fragment) ->
       val javaType = mapper.typeFactory.constructType(clazz)
 
@@ -218,6 +219,22 @@ class GHGQLDTOTest(val testCase: TestCase) {
         """.trimIndent() + errors.joinToString(separator = "\n")
       }
       .isEmpty()
+  }
+
+  private fun verifyQueryParams() {
+    (pluginQuery.variablesObject.keys - query!!.variableDefinitions.map { it.name }.toSet()).forEach { name ->
+      errors += "Variable `$name` is not used in the query."
+    }
+    (query!!.variableDefinitions.map { it.name }.toSet() - pluginQuery.variablesObject.keys).forEach { name ->
+      val variableDef = query!!.variableDefinitions.find { it.name == name }!!
+      // it's okay to miss nullable or defaulted variables
+      if (variableDef.defaultValue != null || variableDef.type !is GQLNonNullType) return@forEach
+
+      errors += "Variable `$name` is not supplied in the variables object."
+    }
+
+    // for those variables that are present in both, check the types
+    // TODO: but we can't easily re-use what's already here: input type-checking != output type-checking
   }
 
   private fun verifyQuery(): Pair<GQLTypeDefinition, List<GQLSelection>>? {
@@ -500,6 +517,7 @@ private object TestCases {
       GHGQLRequests.PullRequest.mergeabilityData(DUMMY_REPO_COORDINATES, DUMMY_NUMBER),
       GHGQLRequests.PullRequest.search(DUMMY_SERVER_PATH, DUMMY_TEXT, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.search(DUMMY_SERVER_PATH, DUMMY_TEXT, null),
+      GHGQLRequests.PullRequest.metrics(DUMMY_REPO_COORDINATES),
       GHGQLRequests.PullRequest.reviewThreads(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, DUMMY_PAGINATION),
       GHGQLRequests.PullRequest.reviewThreads(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, null),
       GHGQLRequests.PullRequest.commits(DUMMY_REPO_COORDINATES, DUMMY_NUMBER, DUMMY_PAGINATION),
@@ -867,6 +885,101 @@ internal class MetaTest {
   }
 
   @Test
+  fun `supplying missing parameters is problematic`() {
+    `dto testing fails for`(
+      pluginQuery = simple(ListHolderWithDefault::class.java, variablesObject = mapOf(
+        "param" to "value"
+      )),
+      schema = """
+        type Query {
+          l: [String!]
+        }
+      """.trimIndent(),
+      query = """
+        query {
+          l        
+        }
+      """.trimIndent(),
+      expectedErrors = listOf(
+        "Variable `param` is not used in the query."
+      )
+    )
+  }
+
+  @Test
+  fun `failing to supply required parameters is problematic`() {
+    `dto testing fails for`(
+      pluginQuery = simple(ListHolderWithDefault::class.java, variablesObject = mapOf()),
+      schema = """
+        type Query {
+          l: [String!]
+        }
+      """.trimIndent(),
+      query = """
+        query(${"\$param"}: String!) {
+          l        
+        }
+      """.trimIndent(),
+      expectedErrors = listOf(
+        "Variable `param` is not supplied in the variables object."
+      )
+    )
+  }
+
+  @Test
+  fun `failing to supply defaulted parameters is fine`() {
+    `dto testing succeeds for`(
+      pluginQuery = simple(ListHolderWithDefault::class.java, variablesObject = mapOf()),
+      schema = """
+        type Query {
+          l: [String!]
+        }
+      """.trimIndent(),
+      query = """
+        query(${"\$param"}: String! = "default") {
+          l
+        }
+      """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `failing to supply nullable parameters is fine`() {
+    `dto testing succeeds for`(
+      pluginQuery = simple(ListHolderWithDefault::class.java, variablesObject = mapOf()),
+      schema = """
+        type Query {
+          l: [String!]
+        }
+      """.trimIndent(),
+      query = """
+        query(${"\$param"}: String) {
+          l        
+        }
+      """.trimIndent(),
+    )
+  }
+
+  @Test
+  fun `correctly supplying parameters is fine`() {
+    `dto testing succeeds for`(
+      pluginQuery = simple(ListHolderWithDefault::class.java, variablesObject = mapOf(
+        "param" to "value"
+      )),
+      schema = """
+        type Query {
+          l: [String!]
+        }
+      """.trimIndent(),
+      query = """
+        query(${"\$param"}: String!) {
+          l        
+        }
+      """.trimIndent(),
+    )
+  }
+
+  @Test
   fun `missing fields in schema are caught`() {
     `fragment testing fails for`(
       schema = """
@@ -1082,9 +1195,10 @@ internal class MetaTest {
   }
 
   //region: Boilerplate
-  private fun simple(clazz: Class<*>): GQLQuery<*> = GQLQuery.Parsed("", "", Any(), clazz)
+  private fun simple(clazz: Class<*>, variablesObject: Map<String, Any?> = mapOf()): GQLQuery<*> =
+    GQLQuery.Parsed("", "", variablesObject, clazz)
   private fun traversed(clazz: Class<*>, vararg pathFromData: String): GQLQuery<*> =
-    GQLQuery.TraversedParsed("", "", Any(), clazz, *pathFromData)
+    GQLQuery.TraversedParsed("", "", mapOf(), clazz, *pathFromData)
 
   private fun `fragment testing fails for`(query: String, schema: String, expectedErrors: List<String>? = null) {
     val test = createQueryTest(query, schema)

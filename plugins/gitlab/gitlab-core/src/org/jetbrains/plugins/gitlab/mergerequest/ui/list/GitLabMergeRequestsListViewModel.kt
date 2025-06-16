@@ -14,13 +14,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersViewModel
 
-internal interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
+@ApiStatus.Internal
+interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   val filterVm: GitLabMergeRequestsFiltersViewModel
   val avatarIconsProvider: IconsProvider<GitLabUserDTO>
 
@@ -32,8 +34,6 @@ internal interface GitLabMergeRequestsListViewModel : ReviewListViewModel {
   val error: Flow<Throwable?>
 
   fun requestMore()
-
-  override fun refresh()
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -70,6 +70,12 @@ internal class GitLabMergeRequestsListViewModelImpl(
   override fun refresh() {
     scope.launch {
       loaderFlow.first().refresh()
+    }
+  }
+
+  override fun reload() {
+    scope.launch {
+      loaderFlow.first().reload()
     }
   }
 

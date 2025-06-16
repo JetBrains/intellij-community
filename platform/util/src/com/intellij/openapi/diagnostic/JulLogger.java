@@ -21,6 +21,8 @@ import static com.intellij.openapi.diagnostic.AsyncLogKt.shutdownLogProcessing;
 public class JulLogger extends Logger {
 
   private static final boolean CLEANER_DELAYED;
+  public static final long LOG_FILE_SIZE_LIMIT = Long.getLong("idea.log.limit", 10_000_000);
+  public static final int LOG_FILE_COUNT = Integer.getInteger("idea.log.count", 12);
 
   static {
     boolean delayed = false;
@@ -117,13 +119,10 @@ public class JulLogger extends Logger {
                                                 @Nullable Runnable onRotate,
                                                 @Nullable Filter filter,
                                                 @Nullable Path inMemoryLogPath) {
-    long limit = Long.getLong("idea.log.limit", 10_000_000);
-    int count = Integer.getInteger("idea.log.count", 12);
-
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     IdeaLogRecordFormatter layout = new IdeaLogRecordFormatter();
 
-    rootLogger.addHandler(configureFileHandler(logFilePath, appendToFile, onRotate, limit, count, layout, filter));
+    rootLogger.addHandler(configureFileHandler(logFilePath, appendToFile, onRotate, LOG_FILE_SIZE_LIMIT, LOG_FILE_COUNT, layout, filter));
 
     if (inMemoryLogPath != null) {
       rootLogger.addHandler(configureInMemoryHandler(inMemoryLogPath));

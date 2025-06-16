@@ -13,7 +13,7 @@ public class LombokDumbModeApplication {
                 .name("2")
                 .surname("3")
                 .email("4")
-                .<error descr="Incompatible types. Found: 'capture<?>', required: 'UserDao'">name</error>("1")<error descr="';' expected">a</error>
+                .name("1")<error descr="';' expected">a</error>
                 .<info descr="Not resolved until the project is fully loaded">id</info>(1)
                 .<info descr="Not resolved until the project is fully loaded">build</info>();
 

@@ -6,7 +6,9 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.pom.java.LanguageLevel
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.java.JavaFeature
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
@@ -34,9 +36,24 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     JPS_DEPENDENCY_PROBLEM
   }
 
+  /**
+   * Access mode to determine whether the target is accessible
+   */
+  enum class JpmsModuleAccessMode {
+    /**
+     * Consider the target as accessible if the source actually reads the target
+     */
+    READ,
+
+    /**
+     * Consider the target as accessible if it's exported to the source (even if the source doesn't read it)
+     */
+    EXPORT
+  }
+
   fun checkAccess(
     place: PsiFileSystemItem,
-    isAccessible: (JpmsModuleAccessInfo) -> Boolean,
+    accessMode: JpmsModuleAccessMode,
   ): JpmsModuleAccessProblem? {
     val targetModule = target.module
     if (targetModule != null) {
@@ -53,7 +70,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
           return null  // a target is not on the mandatory module path
         }
 
-        if (!accessibleFromJdkModules(place, isAccessible) &&
+        if (!accessibleFromJdkModules(place, accessMode) &&
             !inAddedModules(currentJpsModule, targetModule.name) &&
             !hasUpgrade(currentJpsModule, targetModule.name, target.packageName, place)) {
           return JpmsModuleAccessProblem.PACKAGE_NOT_IN_GRAPH
@@ -69,7 +86,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
 
       if (current.module != null &&
           targetModule.name != PsiJavaModule.JAVA_BASE &&
-          !isAccessible(this) &&
+          !this.isAccessible(accessMode) &&
           !inAddedReads(current.module, targetModule)) {
         return when {
           PsiNameHelper.isValidModuleName(targetModule.name, current.module) -> JpmsModuleAccessProblem.PACKAGE_DOES_NOT_READ
@@ -82,7 +99,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
       if (autoModule.module == null) {
         return JpmsModuleAccessProblem.TO_UNNAMED
       }
-      else if (!isAccessible(JpmsModuleAccessInfo(current, autoModule)) &&
+      else if (!JpmsModuleAccessInfo(current, autoModule).isAccessible(accessMode) &&
                !inAddedReads(current.module, null) &&
                !inSameMultiReleaseModule(current, target)) {
         return JpmsModuleAccessProblem.TO_UNNAMED
@@ -90,6 +107,13 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     }
 
     return null
+  }
+
+  private fun isAccessible(accessMode: JpmsModuleAccessMode): Boolean {
+    return when (accessMode) {
+      JpmsModuleAccessMode.READ -> isAccessible()
+      JpmsModuleAccessMode.EXPORT -> isExported()
+    }
   }
 
   /**
@@ -115,7 +139,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
           return JpmsModuleAccessProblem.JPS_DEPENDENCY_PROBLEM
         }
 
-        if (!accessibleFromJdkModules(place, { it.isAccessible() }) &&
+        if (!accessibleFromJdkModules(place, JpmsModuleAccessMode.READ) &&
             !inAddedModules(currentJpsModule, targetModule.name)) {
           return JpmsModuleAccessProblem.NOT_IN_GRAPH
         }
@@ -148,7 +172,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     val currentJpsModule = current.jpsModule ?: return false
     return inAddedExports(currentJpsModule, targetModule.name, target.packageName, current.name)
   }
-  
+
   fun isAccessible(): Boolean {
     val currentModule = current.module ?: return false
     val targetModule = target.module ?: return false
@@ -157,16 +181,15 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
 
   private fun accessibleFromJdkModules(
     place: PsiElement,
-    isAccessible: (JpmsModuleAccessInfo) -> Boolean,
+    accessMode: JpmsModuleAccessMode,
   ): Boolean {
     val jpsModule = current.jpsModule ?: return false
     val targetModule = target.module ?: return false
     if (targetModule.name == PsiJavaModule.JAVA_BASE) return true
 
     if (!isJdkModule(jpsModule, targetModule)) return false
-    val languageLevel = PsiUtil.getLanguageLevel(place)
     // https://bugs.openjdk.org/browse/JDK-8197532
-    val jdkModulePred: (PsiJavaModule) -> Boolean = if (languageLevel >= LanguageLevel.JDK_11) {
+    val jdkModulePred: (PsiJavaModule) -> Boolean = if (PsiUtil.isAvailable(JavaFeature.AUTO_ROOT_MODULES, place)) {
       { module -> module.exports.any { e -> e.moduleNames.isEmpty() } }
     }
     else {
@@ -177,7 +200,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
       if (javaSE != null) {
         { module ->
           (!module.name.startsWith("java.") && module.exports.any { e -> e.moduleNames.isEmpty() }) ||
-          isAccessible(JpmsModuleAccessInfo(JpmsModuleInfo.CurrentModuleInfo(javaSE, current.name) { jpsModule }, target))
+          JpmsModuleAccessInfo(JpmsModuleInfo.CurrentModuleInfo(javaSE, current.name) { jpsModule }, target).isAccessible(accessMode)
         }
       }
       else {
@@ -189,16 +212,21 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
   }
 
   private fun isJdkModule(jpsModule: Module, psiModule: PsiJavaModule): Boolean {
-    val sdkHomePath = ModuleRootManager.getInstance(jpsModule).getSdk()?.homePath?.replace('\\', '/')
-    val moduleFilePath = psiModule.containingFile?.virtualFile?.path?.replace('\\', '/')
+    val sdkHomePath = toLocalVirtualFile(ModuleRootManager.getInstance(jpsModule).getSdk()?.homeDirectory)
+    val moduleFilePath = toLocalVirtualFile(psiModule.containingFile?.virtualFile)
+
     if (sdkHomePath != null && moduleFilePath != null) {
-      return moduleFilePath.startsWith("$sdkHomePath!") ||
-             moduleFilePath.startsWith(if (sdkHomePath.last() == '/') sdkHomePath else "$sdkHomePath/")
+      return VfsUtilCore.isAncestor(sdkHomePath, moduleFilePath, false)
     }
     else {
       return psiModule.name.startsWith("java.") ||
              psiModule.name.startsWith("jdk.")
     }
+  }
+
+  private fun toLocalVirtualFile(file: VirtualFile?): VirtualFile? {
+    if (file == null) return null
+    return VfsUtilCore.getVirtualFileForJar(file) ?: file
   }
 
   private fun inSameMultiReleaseModule(current: JpmsModuleInfo, target: JpmsModuleInfo): Boolean {
@@ -241,7 +269,7 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
     if (options.isEmpty()) return false
     val prefix = "${targetName}/${packageName}="
-    return JavaCompilerConfigurationProxy.optionValues(options, JavaModuleSystem.ADD_EXPORTS_OPTION)
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_EXPORTS_OPTION)
       .filter { it.startsWith(prefix) }
       .map { it.substring(prefix.length) }
       .flatMap { it.splitToSequence(",") }
@@ -250,22 +278,31 @@ data class JpmsModuleAccessInfo(val current: JpmsModuleInfo.CurrentModuleInfo, v
 
   private fun inAddedModules(module: Module, moduleName: String): Boolean {
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
-    return JavaCompilerConfigurationProxy.optionValues(options, JavaModuleSystem.ADD_MODULES_OPTION)
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_MODULES_OPTION)
       .flatMap { it.splitToSequence(",") }
-      .any { it == moduleName || it == JavaModuleSystem.ALL_SYSTEM || it == JavaModuleSystem.ALL_MODULE_PATH }
+      .any { it == moduleName || it == ALL_SYSTEM || it == ALL_MODULE_PATH }
   }
 
   private fun inAddedReads(fromJavaModule: PsiJavaModule, toJavaModule: PsiJavaModule?): Boolean {
     val fromModule = ModuleUtilCore.findModuleForPsiElement(fromJavaModule) ?: return false
     val options = JavaCompilerConfigurationProxy.getAdditionalOptions(fromModule.project, fromModule)
-    return JavaCompilerConfigurationProxy.optionValues(options, JavaModuleSystem.ADD_READS_OPTION)
+    return JavaCompilerConfigurationProxy.optionValues(options, ADD_READS_OPTION)
       .flatMap { it.splitToSequence(",") }
       .any {
         val (optFromModuleName, optToModuleName) = it.split("=").apply { it.first() to it.last() }
         fromJavaModule.name == optFromModuleName &&
-        (toJavaModule?.name == optToModuleName || (optToModuleName == JavaModuleSystem.ALL_UNNAMED && isUnnamedModule(toJavaModule)))
+        (toJavaModule?.name == optToModuleName || (optToModuleName == ALL_UNNAMED && isUnnamedModule(toJavaModule)))
       }
   }
 
   private fun isUnnamedModule(module: PsiJavaModule?) = module == null || module is LightJavaModule
+
+  companion object {
+    const val ALL_UNNAMED: String = "ALL-UNNAMED"
+    const val ALL_SYSTEM: String = "ALL-SYSTEM"
+    const val ALL_MODULE_PATH: String = "ALL-MODULE-PATH"
+    const val ADD_EXPORTS_OPTION: String = "--add-exports"
+    const val ADD_MODULES_OPTION: String = "--add-modules"
+    const val ADD_READS_OPTION: String = "--add-reads"
+  }
 }

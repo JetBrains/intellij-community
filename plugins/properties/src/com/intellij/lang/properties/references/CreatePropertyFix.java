@@ -67,17 +67,17 @@ public class CreatePropertyFix implements IntentionAction, LocalQuickFix {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @Nullable PsiFile psiFile) {
     return myElement != null && myElement.retrieve() != null;
   }
 
   @Override
-  public void invoke(final @NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    invokeAction(project, file, myElement.retrieve(), myKey, myPropertiesFiles);
+  public void invoke(final @NotNull Project project, @Nullable Editor editor, @NotNull PsiFile psiFile) {
+    invokeAction(project, psiFile, myElement.retrieve(), myKey, myPropertiesFiles);
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     String fileName = myPropertiesFiles != null && !myPropertiesFiles.isEmpty() ? myPropertiesFiles.get(0).getName() : "";
     return new IntentionPreviewInfo.CustomDiff(PropertiesFileType.INSTANCE, fileName, myKey + "=", myKey + "=...");
   }

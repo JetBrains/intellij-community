@@ -3,17 +3,15 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_resources")
 
 jvm_resources(
-  name = "java-resources-en_resources",
-  files = glob(["resources/**/*"]),
-  strip_prefix = "resources"
+  name = "java-resources-en_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources",
+  visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "java-resources-en",
   visibility = ["//visibility:public"],
-  runtime_deps = [
-    ":java-resources-en_resources",
-    "//platform/backend",
-  ]
+  runtime_deps = ["//platform/backend"]
 )
 ### auto-generated section `build intellij.java.resources.en` end

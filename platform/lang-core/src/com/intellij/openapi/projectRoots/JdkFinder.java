@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -43,5 +44,5 @@ public interface JdkFinder {
    * @return suggested sdk home paths (sorted)
    */
   @NotNull
-  List<@NotNull String> suggestHomePaths(@Nullable Project project);
+  @Unmodifiable List<@NotNull String> suggestHomePaths(@Nullable Project project);
 }

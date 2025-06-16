@@ -26,9 +26,8 @@ import org.intellij.lang.xpath.xslt.util.ParamMatcher;
 import org.intellij.lang.xpath.xslt.util.TemplateMatcher;
 import org.jetbrains.annotations.NotNull;
 
-public class XsltStylesheetImpl extends XsltElementImpl implements XsltStylesheet {
-
-  public XsltStylesheetImpl(XmlTag target) {
+final class XsltStylesheetImpl extends XsltElementImpl implements XsltStylesheet {
+  XsltStylesheetImpl(XmlTag target) {
     super(target);
   }
 

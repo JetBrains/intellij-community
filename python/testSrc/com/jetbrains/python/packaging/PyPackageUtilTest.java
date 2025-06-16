@@ -18,12 +18,15 @@ package com.jetbrains.python.packaging;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.sdk.PythonSdkAdditionalDataUtils;
+import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +42,9 @@ public class PyPackageUtilTest extends PyTestCase {
     super.setUp();
 
     myFixture.copyDirectoryToProject("packaging/PyPackageUtil/" + getTestName(false), "");
+    Module module = myFixture.getModule();
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    PythonSdkAdditionalDataUtils.associateSdkWithModulePath(sdk, module);
   }
 
   public void testAbsentSetupPyReading() {
@@ -146,9 +152,9 @@ public class PyPackageUtilTest extends PyTestCase {
           final Map<String, List<PyRequirement>> extrasRequirements = PyPackageUtil.findSetupPyExtrasRequire(module);
 
           final ImmutableMap<String, List<PyRequirement>> expected = ImmutableMap.of(
-            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1")),
-            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2")),
-            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3"), PyRequirementsKt.pyRequirement("r4"))
+            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1",null)),
+            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2",null)),
+            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3",null), PyRequirementsKt.pyRequirement("r4",null))
           );
 
           assertEquals(expected, extrasRequirements);

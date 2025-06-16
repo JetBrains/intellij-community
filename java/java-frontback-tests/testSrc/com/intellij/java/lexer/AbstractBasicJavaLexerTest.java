@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.lexer;
 
-import com.intellij.testFramework.LexerTestCase;
+import com.intellij.testFramework.syntax.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class AbstractBasicJavaLexerTest extends LexerTestCase {
@@ -238,6 +238,21 @@ public abstract class AbstractBasicJavaLexerTest extends LexerTestCase {
   public void testUnicodeLiterals() {
     doTest("Ɐ Σx dΦ",
            "IDENTIFIER ('Ɐ')\nWHITE_SPACE (' ')\nIDENTIFIER ('Σx')\nWHITE_SPACE (' ')\nIDENTIFIER ('dΦ')");
+  }
+
+  public void testLastSymbol() {
+    doTest("\u001a",
+           "WHITE_SPACE ('\u001a')");
+    doTest(" \u001a",
+           "WHITE_SPACE (' \u001a')");
+    doTest(" \u001a   ",
+           "WHITE_SPACE (' ')\nBAD_CHARACTER ('\u001A')\nWHITE_SPACE ('   ')");
+    doTest("    \u001a",
+           "WHITE_SPACE ('    \u001a')");
+    doTest("   \u001asomething",
+           "WHITE_SPACE ('   ')\nBAD_CHARACTER ('\u001a')\nIDENTIFIER ('something')");
+    doTest("   something\u001a",
+           "WHITE_SPACE ('   ')\nIDENTIFIER ('something\u001A')");
   }
 
   public void testTextBlockLiterals() {

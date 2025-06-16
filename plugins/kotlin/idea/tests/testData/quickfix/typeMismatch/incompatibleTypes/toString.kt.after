@@ -7,3 +7,4 @@ fun test(s: String, i: Int) {
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddToStringFix
 // IGNORE_K2
+// Task for K2: KTIJ-33284

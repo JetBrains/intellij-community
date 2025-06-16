@@ -38,6 +38,7 @@ object K2CreateParameterFromUsageBuilder {
     fun generateCreateParameterAction(element: KtElement): List<IntentionAction>? {
         val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return null
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return null
+        if (refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression } != null) return null
 
         val qualifiedElement = refExpr.getQualifiedElement()
         if (qualifiedElement == refExpr) {

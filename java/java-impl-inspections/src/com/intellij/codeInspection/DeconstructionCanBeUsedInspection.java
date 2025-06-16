@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.modcommand.ModPsiUpdater;
@@ -121,7 +121,20 @@ public final class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLoc
         String s = StringUtil.substringAfter(firstRef.getText(), ".");
         VariableNameGenerator generator = new VariableNameGenerator(patternVariable, VariableKind.PARAMETER).byName(s);
         s = generator.generate(false);
-        deconstructionList.add((type != null ? type.getCanonicalText() : "var") + " " + s);
+        String stringType;
+        if (type != null) {
+          //example: if (obj instanceof Example<?> example)
+          if (type instanceof PsiCapturedWildcardType || type instanceof PsiWildcardType) {
+            stringType = "Object";
+          }
+          else {
+            stringType = type.getCanonicalText();
+          }
+        }
+        else {
+          stringType = "var";
+        }
+        deconstructionList.add(stringType + " " + s);
         for (PsiReferenceExpression expression : expressions) {
           PsiLocalVariable variable = getVariableFromInitializer(expression);
           if (variable != null) {

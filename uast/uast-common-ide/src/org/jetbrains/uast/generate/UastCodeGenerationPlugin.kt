@@ -21,7 +21,7 @@ interface UastCodeGenerationPlugin {
     private val extensionPointName = ExtensionPointName<UastCodeGenerationPlugin>("org.jetbrains.uast.generate.uastCodeGenerationPlugin")
 
     @JvmStatic
-    fun byLanguage(language: Language): UastCodeGenerationPlugin? = extensionPointName.extensionList.asSequence().firstOrNull { it.language == language }
+    fun byLanguage(language: Language): UastCodeGenerationPlugin? = extensionPointName.extensionList.firstOrNull { it.language == language }
   }
 
   /**

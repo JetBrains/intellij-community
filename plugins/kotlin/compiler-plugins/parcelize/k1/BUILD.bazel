@@ -9,13 +9,13 @@ create_kotlinc_options(
 )
 
 jvm_resources(
-  name = "kotlin-compiler-plugins-parcelize-k1_resources",
+  name = "k1_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "kotlin-compiler-plugins-parcelize-k1",
+  name = "k1",
   module_name = "kotlin.compiler-plugins.parcelize.k1",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -30,17 +30,17 @@ jvm_library(
     "//java/java-psi-impl:psi-impl",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
-    "//plugins/kotlin/base/fe10/analysis:kotlin-base-fe10-analysis",
-    "//plugins/kotlin/base/fe10/code-insight:kotlin-base-fe10-code-insight",
-    "//plugins/kotlin/base/project-structure:kotlin-base-project-structure",
-    "//plugins/kotlin/base/util:kotlin-base-util",
-    "//plugins/kotlin/code-insight/api:kotlin-code-insight-api",
+    "//plugins/kotlin/base/fe10/analysis",
+    "//plugins/kotlin/base/fe10/code-insight",
+    "//plugins/kotlin/base/project-structure",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/code-insight/api",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/compiler-plugins/parcelize/common:kotlin-compiler-plugins-parcelize-common",
+    "//plugins/kotlin/compiler-plugins/parcelize/common",
     "//plugins/kotlin/idea",
     "//platform/editor-ui-api:editor-ui",
     "@lib//:kotlinc-kotlin-compiler-ir",
   ],
-  runtime_deps = [":kotlin-compiler-plugins-parcelize-k1_resources"]
+  runtime_deps = [":k1_resources"]
 )
 ### auto-generated section `build kotlin.compiler-plugins.parcelize.k1` end

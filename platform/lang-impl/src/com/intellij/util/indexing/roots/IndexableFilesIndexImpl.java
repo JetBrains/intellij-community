@@ -17,32 +17,28 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
-import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.storage.EntityStorage;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.AdditionalIndexableFileSet;
-import com.intellij.util.indexing.IndexableFilesIndex;
-import com.intellij.util.indexing.IndexableSetContributor;
-import com.intellij.util.indexing.ProjectEntityIndexingService;
+import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
 import static com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl.Companion;
 
+/**
+ * @deprecated Use {@link IndexingIteratorsProviderImpl IndexingIteratorsProviderImpl}
+ */
 @ApiStatus.Experimental
 @ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
   private final @NotNull Project project;
   private final AdditionalIndexableFileSet filesFromIndexableSetContributors;
@@ -59,20 +55,8 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
 
   @Override
   public boolean shouldBeIndexed(@NotNull VirtualFile file) {
-    if (WorkspaceFileIndex.getInstance(project).isInWorkspace(file)) return true;
+    if (WorkspaceFileIndex.getInstance(project).isIndexable(file)) return true;
     return filesFromIndexableSetContributors.isInSet(file);
-  }
-
-  @Override
-  public @Unmodifiable @NotNull Collection<? extends IndexableSetOrigin> getOrigins(@NotNull Collection<VirtualFile> files) {
-    if (files.isEmpty()) return Collections.emptyList();
-    OriginClassifier classifier = OriginClassifier.classify(project, files);
-    Collection<IndexableFilesIterator> iterators =
-      ProjectEntityIndexingService.Companion.getInstance(project).createIteratorsForOrigins(classifier.entityStorage, classifier.myEntityPointers,
-                                                                        classifier.sdks, classifier.libraryIds,
-                                                                        classifier.filesFromAdditionalLibraryRootsProviders,
-                                                                        classifier.filesFromIndexableSetContributors);
-    return ContainerUtil.map(iterators, iterator -> iterator.getOrigin());
   }
 
   @Override
@@ -95,10 +79,8 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
     settings.setRetainCondition(contributor -> contributor.getStorageKind() == EntityStorageKind.MAIN);
     WorkspaceIndexingRootsBuilder builder =
       WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(entityStorage, settings);
-    WorkspaceIndexingRootsBuilder.Iterators iteratorsFromRoots =
-      builder.getIteratorsFromRoots(libraryOrigins, entityStorage, project);
-    iterators.addAll(iteratorsFromRoots.getContentIterators());
-    iterators.addAll(iteratorsFromRoots.getExternalIterators());
+    List<IndexableFilesIterator> iteratorsFromRoots = builder.getIteratorsFromRoots(entityStorage, project, libraryOrigins);
+    iterators.addAll(iteratorsFromRoots);
 
     ModuleDependencyIndex moduleDependencyIndex = ModuleDependencyIndex.getInstance(project);
     if (!Registry.is("ide.workspace.model.sdk.remove.custom.processing")) {
@@ -118,18 +100,18 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
         ProgressManager.checkCanceled();
         iterators.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(sdk));
       }
-    }
 
-    LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
-    Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());
-    libs = SequencesKt.plus(libs, tablesRegistrar.getLibraryTable());
-    for (LibraryTable libraryTable : SequencesKt.asIterable(libs)) {
-      for (Library library : libraryTable.getLibraries()) {
-        ProgressManager.checkCanceled();
-        if (moduleDependencyIndex.hasDependencyOn(library)) {
-          for (IndexableFilesIterator iterator : Companion.createIteratorList(library)) {
-            if (libraryOrigins.add(iterator.getOrigin())) {
-              iterators.add(iterator);
+      LibraryTablesRegistrar tablesRegistrar = LibraryTablesRegistrar.getInstance();
+      Sequence<LibraryTable> libs = SequencesKt.asSequence(tablesRegistrar.getCustomLibraryTables().iterator());
+      libs = SequencesKt.plus(libs, tablesRegistrar.getLibraryTable());
+      for (LibraryTable libraryTable : SequencesKt.asIterable(libs)) {
+        for (Library library : libraryTable.getLibraries()) {
+          ProgressManager.checkCanceled();
+          if (moduleDependencyIndex.hasDependencyOn(library)) {
+            for (IndexableFilesIterator iterator : Companion.createIteratorList(library)) {
+              if (libraryOrigins.add(iterator.getOrigin())) {
+                iterators.add(iterator);
+              }
             }
           }
         }
@@ -143,7 +125,6 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
         addedFromDependenciesIndexedStatusService = true;
         ProgressManager.checkCanceled();
         iterators.addAll(cacheService.saveLibsAndInstantiateLibraryIterators());
-        iterators.addAll(iteratorsFromRoots.getCustomIterators());
         ProgressManager.checkCanceled();
         iterators.addAll(cacheService.saveIndexableSetsAndInstantiateIterators());
         cacheService.saveExcludePolicies();
@@ -157,23 +138,11 @@ public final class IndexableFilesIndexImpl implements IndexableFilesIndex {
         }
       }
 
-      iterators.addAll(iteratorsFromRoots.getCustomIterators());
-
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
         iterators.add(new IndexableSetContributorFilesIterator(contributor, project));
         iterators.add(new IndexableSetContributorFilesIterator(contributor));
       }
     }
     return iterators;
-  }
-
-  @Override
-  public @NotNull Collection<IndexableFilesIterator> getModuleIndexingIterators(@NotNull ModuleEntity entity,
-                                                                                @NotNull EntityStorage entityStorage) {
-    ModuleBridge module = ModuleEntityUtils.findModule(entity, entityStorage);
-    if (module == null) {
-      return Collections.emptyList();
-    }
-    return IndexableEntityProviderMethods.INSTANCE.createModuleContentIterators(module);
   }
 }

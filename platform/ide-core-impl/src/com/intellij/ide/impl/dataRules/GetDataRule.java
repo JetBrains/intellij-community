@@ -11,7 +11,13 @@ import org.jetbrains.annotations.Nullable;
  * Provides data for given {@link com.intellij.openapi.actionSystem.DataKey}.
  * <p/>
  * Must be registered with {@code key} value matching {@code DataKey#getName()}.
+ *
+ * @deprecated Use {@link com.intellij.openapi.actionSystem.UiDataRule} instead.
+ *
+ * @see com.intellij.openapi.actionSystem.DataSink#lazy
+ * @see com.intellij.openapi.actionSystem.DataSink#lazyValue
  */
+@Deprecated(forRemoval = true)
 public interface GetDataRule {
   ExtensionPointName<KeyedLazyInstance<GetDataRule>> EP_NAME = new ExtensionPointName<>("com.intellij.getDataRule");
 

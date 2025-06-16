@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -181,7 +181,7 @@ public abstract class ExecutableValidator {
     if (myProject.isDisposed()) {
       return false;
     }
-    if (!myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+    if (!myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       return notify(new SafeModeErrorNotification());
     }
 
@@ -209,7 +209,7 @@ public abstract class ExecutableValidator {
     if (myProject.isDisposed()) {
       return false;
     }
-    if (!myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+    if (!myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       Messages.showErrorDialog(parentComponent, myNotificationSafeModeDescription, myNotificationErrorTitle);
       return false;
     }
@@ -235,7 +235,7 @@ public abstract class ExecutableValidator {
   }
 
   public boolean isExecutableValid() {
-    if (!myProject.isDefault() && !TrustedProjects.isTrusted(myProject)) {
+    if (!myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       return false;
     }
     return isExecutableValid(getCurrentExecutable());

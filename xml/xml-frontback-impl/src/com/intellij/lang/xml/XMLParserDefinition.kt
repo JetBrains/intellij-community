@@ -51,28 +51,25 @@ open class XMLParserDefinition :
 
   override fun spaceExistenceTypeBetweenTokens(left: ASTNode, right: ASTNode): SpaceRequirements =
     canStickTokensTogether(left, right)
-
-  companion object {
-    @JvmStatic
-    fun canStickTokensTogether(left: ASTNode, right: ASTNode): SpaceRequirements =
-      when {
-        left.elementType === XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
-        || right.elementType === XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
-          -> SpaceRequirements.MUST_NOT
-
-        left.elementType === XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
-        && right.elementType === XmlTokenType.XML_NAME
-          -> SpaceRequirements.MUST
-
-        left.elementType === XmlTokenType.XML_NAME
-        && right.elementType === XmlTokenType.XML_NAME
-          -> SpaceRequirements.MUST
-
-        left.elementType === XmlTokenType.XML_TAG_NAME
-        && right.elementType === XmlTokenType.XML_NAME
-          -> SpaceRequirements.MUST
-
-        else -> SpaceRequirements.MAY
-      }
-  }
 }
+
+fun canStickTokensTogether(left: ASTNode, right: ASTNode): SpaceRequirements =
+  when {
+    left.elementType === XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+    || right.elementType === XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN
+      -> SpaceRequirements.MUST_NOT
+
+    left.elementType === XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER
+    && right.elementType === XmlTokenType.XML_NAME
+      -> SpaceRequirements.MUST
+
+    left.elementType === XmlTokenType.XML_NAME
+    && right.elementType === XmlTokenType.XML_NAME
+      -> SpaceRequirements.MUST
+
+    left.elementType === XmlTokenType.XML_TAG_NAME
+    && right.elementType === XmlTokenType.XML_NAME
+      -> SpaceRequirements.MUST
+
+    else -> SpaceRequirements.MAY
+  }

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,8 @@ public abstract class ArgumentFixerActionFactory {
         Map<Integer, PsiType> potentialCasts = new HashMap<>();
         for (int i = 0; i < expressions.length; i++) {
           PsiExpression expression = expressions[i];
-          PsiType exprType = expression.getType();
+          PsiType exprType = PsiUtil.skipParenthesizedExprDown(expression) instanceof PsiFunctionalExpression fn ? 
+                             fn.getFunctionalInterfaceType() : expression.getType();
           PsiType originalParameterType = PsiTypesUtil.getParameterType(parameters, i, true);
           PsiType parameterType = substitutor.substitute(originalParameterType);
           if (!PsiTypesUtil.isDenotableType(parameterType, call)) continue;

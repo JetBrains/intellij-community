@@ -1,18 +1,19 @@
 0(1) element: null
 1(2) element: PyWithStatement
 2(4) READ ACCESS: context_manager
-3(15) exit context manager: context_manager
+3(16) exit context manager: context_manager
 4(5,3) element: PyIfStatement
 5(6,7,3) READ ACCESS: c
-6(12) element: null. Condition: c:false
+6(13) element: null. Condition: c:false
 7(8) element: null. Condition: c:true
 8(3,9) ASSERTTYPE ACCESS: c
 9(10) element: PyStatementList
-10(11,3) raise: PyRaiseStatement
-11(17,3) READ ACCESS: ValueError
-12(13,3) element: PyAssignmentStatement
-13(14,3) READ ACCESS: c
-14(15,3) WRITE ACCESS: val
-15(16) element: PyPrintStatement
-16(17) READ ACCESS: val
-17() element: null
+10(11,3) element: PyRaiseStatement
+11(12,3) READ ACCESS: ValueError
+12(18,3) raise: PyRaiseStatement
+13(14,3) element: PyAssignmentStatement
+14(15,3) READ ACCESS: c
+15(16,3) WRITE ACCESS: val
+16(17) element: PyPrintStatement
+17(18) READ ACCESS: val
+18() element: null

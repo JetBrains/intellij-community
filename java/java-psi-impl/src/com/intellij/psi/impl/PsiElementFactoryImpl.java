@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.java.syntax.parser.JavaParser;
 import com.intellij.lang.*;
-import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.Disposable;
@@ -736,7 +736,9 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     return statements[0];
   }
 
-  private static final JavaParserUtil.ParserWrapper CATCH_SECTION = builder -> JavaParser.INSTANCE.getStatementParser().parseCatchBlock(builder);
+  private static final JavaParserUtil.ParserWrapper CATCH_SECTION = (builder, languageLevel) -> {
+    new JavaParser(languageLevel).getStatementParser().parseCatchBlock(builder);
+  };
 
   @Override
   public @NotNull PsiCatchSection createCatchSection(@NotNull PsiType exceptionType,

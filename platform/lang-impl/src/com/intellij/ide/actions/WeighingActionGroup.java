@@ -18,8 +18,8 @@ import java.util.List;
 @ApiStatus.Internal
 public abstract class WeighingActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
   public static final Key<Double> WEIGHT_KEY = Key.create("WeighingActionGroup.WEIGHT");
-  public static final Double DEFAULT_WEIGHT = Presentation.DEFAULT_WEIGHT;
-  public static final Double HIGHER_WEIGHT = Presentation.HIGHER_WEIGHT;
+  public static final Double DEFAULT_WEIGHT = 0.;
+  public static final Double HIGHER_WEIGHT = 42.;
 
   @Override
   public abstract @NotNull ActionGroup getDelegate();

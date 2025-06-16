@@ -11,7 +11,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonBinary
 import java.nio.file.Path
 
-data object TypeVanillaPython3 : PythonType<PythonBinary>("python3") {
+open class TypeVanillaPython(tag: String) : PythonType<PythonBinary>(tag) {
   override suspend fun createSdkFor(python: PythonBinary): Sdk = createSdk(python)
 
   fun createSdk(python: PythonBinary): Sdk =
@@ -28,3 +28,5 @@ data object TypeVanillaPython3 : PythonType<PythonBinary>("python3") {
     })
   }
 }
+
+object TypeVanillaPython3 : TypeVanillaPython("python3")

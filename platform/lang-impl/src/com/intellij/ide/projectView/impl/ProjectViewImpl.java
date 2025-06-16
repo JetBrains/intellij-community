@@ -75,7 +75,6 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -1193,18 +1192,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public void select(final Object element, VirtualFile file, boolean requestFocus) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("select: element=" + element + ", file=" + file + ", requestFocus=" + requestFocus);
-    }
-    final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane != null) {
-      myAutoScrollOnFocusEditor.set(!requestFocus);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Delegating to AbstractProjectViewPane, auto scroll enabled="
-                                                 + myAutoScrollOnFocusEditor.get());
-      }
-      viewPane.select(element, file, requestFocus);
-    }
+    selectCB(element, file, requestFocus);
   }
 
   void select(
@@ -1245,17 +1233,15 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (LOG.isDebugEnabled()) {
       LOG.debug("ProjectViewImpl.selectCB: element=" + element + ", file=" + file + ", requestFocus=" + requestFocus);
     }
-    final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-    if (viewPane instanceof AbstractProjectViewPane.ProjectViewPaneWithAsyncSelect asyncPane) {
-      myAutoScrollOnFocusEditor.set(!requestFocus);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Delegating to ProjectViewPaneWithAsyncSelect, auto scroll enabled="
-                                                 + myAutoScrollOnFocusEditor.get());
-      }
-      return asyncPane.selectCB(element, file, requestFocus);
+    AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
+    if (viewPane == null) {
+      return ActionCallback.DONE;
     }
-    select(element, file, requestFocus);
-    return ActionCallback.DONE;
+    myAutoScrollOnFocusEditor.set(!requestFocus);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Auto scroll enabled=" + myAutoScrollOnFocusEditor.get());
+    }
+    return project.getService(SelectInProjectViewImpl.class).selectCB(viewPane, element, file, requestFocus);
   }
 
   @Override
@@ -1283,7 +1269,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return target.target();
   }
 
-  ProjectViewSelectInTarget getProjectViewSelectInTarget(@NotNull AbstractProjectViewPane pane) {
+  @ApiStatus.Internal
+  public ProjectViewSelectInTarget getProjectViewSelectInTarget(@NotNull AbstractProjectViewPane pane) {
     SelectInTarget target = getSelectInTarget(pane.getId());
     return target instanceof ProjectViewSelectInTarget
            ? (ProjectViewSelectInTarget)target
@@ -1429,19 +1416,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public @NotNull String getDefaultViewId() {
-    //noinspection SpellCheckingInspection
-    if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) && !Boolean.getBoolean("studio.projectview")) {
-      // the default in Android Studio unless studio.projectview is set: issuetracker.google.com/37091465
-      return ANDROID_VIEW_ID;
-    }
-    else {
-      for (AbstractProjectViewPane extension : AbstractProjectViewPane.EP.getExtensions(project)) {
-        if (extension.isDefaultPane(project)) {
-          return extension.getId();
-        }
+    for (AbstractProjectViewPane extension : AbstractProjectViewPane.EP.getExtensions(project)) {
+      if (extension.isDefaultPane(project)) {
+        return extension.getId();
       }
-      return ProjectViewPane.ID;
     }
+    return ProjectViewPane.ID;
   }
 
   private void readPaneState(@NotNull Element panesElement) {
@@ -1898,13 +1878,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
-  public @NotNull Collection<String> getPaneIds() {
+  public @NotNull @Unmodifiable Collection<String> getPaneIds() {
     return Collections.unmodifiableCollection(idToPane.keySet());
   }
 
   @Override
   @CalledInAny
-  public @NotNull Collection<SelectInTarget> getSelectInTargets() {
+  public @NotNull @Unmodifiable Collection<SelectInTarget> getSelectInTargets() {
     ensurePanesLoaded();
     return mySelectInTargets.values().stream().sorted(TARGET_WEIGHT_COMPARATOR).map(MySelectInTarget::target).toList();
   }

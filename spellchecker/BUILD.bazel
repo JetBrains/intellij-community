@@ -13,31 +13,37 @@ jvm_resources(
   strip_prefix = "compatibilityResources"
 )
 
+jvm_resources(
+  name = "spellchecker_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
+
 jvm_library(
   name = "spellchecker",
   module_name = "intellij.spellchecker",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//platform/lang-impl",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/projectModel-api:projectModel",
     "//xml/openapi:xml",
     "//platform/refactoring",
     "//xml/dom-openapi:dom",
     "@lib//:guava",
     "//platform/statistics",
-    "@lib//:ai-grazie-spell-gec-engine-local",
-    "@lib//:spellchecker-ai-grazie-nlp-detect",
-    "@lib//:spellchecker-ai-grazie-spell-hunspell-en",
-    "@lib//:spellchecker-ai-grazie-utils-lucene-lt-compatibility",
+    "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:spellchecker-java-string-similarity",
-    "@lib//:lucene-core",
-    "@lib//:lucene-analysis-common",
     "//platform/core-ui",
+    "//libraries/lucene.common",
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:caffeine",
@@ -51,9 +57,12 @@ jvm_library(
 jvm_library(
   name = "spellchecker_test_lib",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   associates = [":spellchecker"],
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/analysis-impl",
     "//platform/lang-impl",
@@ -61,6 +70,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/projectModel-api:projectModel",
     "//xml/openapi:xml",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
@@ -69,14 +79,10 @@ jvm_library(
     "@lib//:guava",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
-    "@lib//:ai-grazie-spell-gec-engine-local",
-    "@lib//:spellchecker-ai-grazie-nlp-detect",
-    "@lib//:spellchecker-ai-grazie-spell-hunspell-en",
-    "@lib//:spellchecker-ai-grazie-utils-lucene-lt-compatibility",
+    "//libraries/ai.grazie.spell.gec.engine.local",
     "@lib//:spellchecker-java-string-similarity",
-    "@lib//:lucene-core",
-    "@lib//:lucene-analysis-common",
     "//platform/core-ui",
+    "//libraries/lucene.common",
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:caffeine",
@@ -86,6 +92,7 @@ jvm_library(
   runtime_deps = [
     ":spellchecker_resources",
     ":spellchecker_resources_1",
+    ":spellchecker_test_resources",
   ]
 )
 

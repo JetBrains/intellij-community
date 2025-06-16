@@ -241,8 +241,7 @@ class ActionMacroManager internal constructor(private val coroutineScope: Corout
     }
 
     override fun dispose() {
-      @Suppress("SSBasedInspection")
-      icon.dispose()
+      Disposer.dispose(icon)
       balloon?.let {
         Disposer.dispose(it)
       }

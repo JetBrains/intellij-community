@@ -4,6 +4,7 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -17,6 +18,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
 
@@ -26,6 +29,15 @@ public final class JpsMavenSettings {
   private static final String M2_DIR = ".m2";
   private static final String CONF_DIR = "conf";
   private static final String SETTINGS_XML = "settings.xml";
+  /**
+   * [<a href="https://maven.apache.org/configure.html">https://maven.apache.org/configure.html</a>]
+   */
+  private static final String MAVEN_OPTS = "MAVEN_OPTS";
+
+  /**
+   * [<a href="https://maven.apache.org/ref/4.0.0-rc-1/api/maven-api-core/apidocs/constant-values.html#org.apache.maven.api.Constants.MAVEN_REPO_LOCAL">https://maven.apache.org/ref/4.0.0-rc-1/api/maven-api-core/apidocs</a>]
+   */
+  private static final String MAVEN_REPO_LOCAL = "maven.repo.local";
 
   @SuppressWarnings("HttpUrlsUsage")
   private static final List<Namespace> KNOWN_NAMESPACES = List.of(
@@ -69,29 +81,47 @@ public final class JpsMavenSettings {
     return null;
   }
 
-  public static @Nullable String getMavenRepositoryPath() {
-    String defaultMavenFolder = SystemProperties.getUserHome() + File.separator + M2_DIR;
-    // Check user local settings
+  public static @NotNull String getMavenRepositoryPath() {
+    String property = findMavenRepositoryProperty(EnvironmentUtil.getValue(MAVEN_OPTS));
+    if (isNotEmpty(property)) {
+      return property;
+    }
+
     File userSettingsFile = getUserMavenSettingsXml();
-    if (userSettingsFile.exists()) {
-      String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
-      if (isNotEmpty(fromUserSettings) && new File(fromUserSettings).exists()) {
-        return fromUserSettings;
+    File settingsFile = userSettingsFile.exists() ? userSettingsFile : getGlobalMavenSettingsXml();
+
+    if (settingsFile != null && settingsFile.exists()) {
+      String fromSettings = getRepositoryFromSettings(settingsFile);
+      if (isNotEmpty(fromSettings)) {
+        return fromSettings;
       }
     }
 
-    // Check global maven local settings
-    File globalSettingsFile = getGlobalMavenSettingsXml();
-    if (globalSettingsFile != null && globalSettingsFile.exists()) {
-      String fromGlobalSettings = getRepositoryFromSettings(globalSettingsFile);
-      if (isNotEmpty(fromGlobalSettings) && new File(fromGlobalSettings).exists()) {
-        return fromGlobalSettings;
-      }
-    }
-
-    String defaultMavenRepository = defaultMavenFolder + File.separator + REPOSITORY_PATH;
-    return Files.exists(Path.of(defaultMavenFolder)) ? defaultMavenRepository : null;
+    return SystemProperties.getUserHome() + File.separator + M2_DIR + File.separator + REPOSITORY_PATH;
   }
+
+  private static String findMavenRepositoryProperty(String mavenOpts) {
+    if (mavenOpts == null) {
+      return null;
+    }
+
+    // -Dmaven.repo.local=/path/to/repo     -> [1]:"maven.repo.local" [2]:"" [3]:"/path/to/repo"
+    // -Dmaven.repo.local="/my custom/path" -> [1]:"maven.repo.local" [2]:"/my custom/path" [3]:""
+    Pattern propertyPattern = Pattern.compile("-D([^=\\s]+)(?:=(?:\"([^\"]+)\"|(\\S+)))?");
+    Matcher matcher = propertyPattern.matcher(mavenOpts);
+    Map<String, String> properties = new HashMap<>();
+
+    while (matcher.find()) {
+      String key = matcher.group(1);
+      String quotedValue = matcher.group(2);
+      String unquotedValue = matcher.group(3);
+      String value = quotedValue != null && !quotedValue.isEmpty() ? quotedValue : unquotedValue;
+      properties.put(key, value);
+    }
+
+    return properties.get(MAVEN_REPO_LOCAL);
+  }
+
 
   /**
    * Load remote repositories authentication settings from Maven's settings.xml.

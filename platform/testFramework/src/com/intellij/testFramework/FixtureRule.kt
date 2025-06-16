@@ -291,7 +291,7 @@ inline fun statement(crossinline runnable: () -> Unit): Statement = object : Sta
 
 /**
  * Do not optimize test load speed.
- * @see IProjectStore.setOptimiseTestLoadSpeed
+ * @see IProjectStore.isOptimiseTestLoadSpeed
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 annotation class RunsInActiveStoreMode
@@ -329,7 +329,7 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
 /**
  * Closes a project after [action].
  */
-fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
+inline fun <T> Project.useProject(save: Boolean = false, action: (Project) -> T): T {
   try {
     return action(this)
   }
@@ -394,7 +394,8 @@ private inline fun <R> closeOpenedProjectsIfFailImpl(closeProject: Project.() ->
   }
 }
 
-private fun Project.closeProject(save: Boolean = false) {
+@PublishedApi
+internal fun Project.closeProject(save: Boolean = false) {
   invokeAndWaitIfNeeded {
     if (save) {
       saveWorkspaceModel()
@@ -557,9 +558,13 @@ private suspend fun createOrLoadProject(projectPath: Path, loadComponentState: B
   }
 }
 
-suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
-  val options = createTestOpenProjectOptions()
-    .copy(beforeInit = { it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true) })
+suspend fun loadProject(projectPath: Path, beforeInit: (Project) -> Unit = {}, task: suspend (Project) -> Unit) {
+  val options = createTestOpenProjectOptions().copy(
+    beforeInit = {
+      it.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
+      beforeInit(it)
+    }
+  )
   createOrLoadProject(projectPath, loadComponentState = true, options, task)
 }
 

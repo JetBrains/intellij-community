@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * When the logic for separation changes, we need to rebalance existing workspace model entities from a singleton cache to multiple
@@ -12,8 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * The logic of rebalancing may be sophisticated, so to ensure correctness and simplify maintenance,
  * we simply require the user to reimport the project
  */
-@ApiStatus.Internal
-class GlobalWorkspaceModelSeparationListener : RegistryValueListener {
+internal class GlobalWorkspaceModelSeparationListener : RegistryValueListener {
   override fun afterValueChanged(value: RegistryValue) {
     if (value.key != "ide.workspace.model.per.environment.model.separation") {
       return

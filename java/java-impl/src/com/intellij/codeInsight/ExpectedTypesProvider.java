@@ -731,7 +731,7 @@ public final class ExpectedTypesProvider {
         PsiTypeElement typeElement = local.getTypeElement();
         if (typeElement.isInferredType()) {
           myHops++;
-          List<PsiReferenceExpression> refs = StreamEx.of(VariableAccessUtils.getVariableReferences(variable))
+          List<PsiReferenceExpression> refs = StreamEx.of(VariableAccessUtils.getVariableReferencesNoCache(variable))
             // Remove invalid refs from initializer/annotations to avoid possible SOE
             .remove(ref -> PsiTreeUtil.isAncestor(variable, ref, true))
             .toList();

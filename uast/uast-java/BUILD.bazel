@@ -9,6 +9,7 @@ jvm_library(
   kotlinc_opts = "@community//:k11",
   deps = [
     "//java/java-psi-api:psi",
+    "//platform/core-api:core",
     "//uast/uast-common:uast",
     "@lib//:kotlin-stdlib",
     "//java/java-psi-impl:psi-impl",

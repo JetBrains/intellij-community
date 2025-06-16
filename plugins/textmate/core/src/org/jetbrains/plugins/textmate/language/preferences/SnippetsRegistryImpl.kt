@@ -2,40 +2,44 @@ package org.jetbrains.plugins.textmate.language.preferences
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparatorCore
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigher
-import java.util.concurrent.ConcurrentHashMap
+import org.jetbrains.plugins.textmate.update
+import kotlin.concurrent.atomics.AtomicReference
 
-class SnippetsRegistryImpl(private val weigher: TextMateSelectorWeigher) : SnippetsRegistry {
-  private val mySnippets: MutableMap<String?, PersistentList<TextMateSnippet>> = ConcurrentHashMap<String?, PersistentList<TextMateSnippet>>()
+class SnippetsRegistryBuilder(private val weigher: TextMateSelectorWeigher) {
+  private val snippets = AtomicReference(persistentMapOf<String, PersistentList<TextMateSnippet>>())
 
   fun register(snippet: TextMateSnippet) {
-    mySnippets.compute(snippet.key) { k, v ->
-      v?.add(snippet) ?: persistentListOf(snippet)
+    snippets.update {
+      it.put(snippet.key, it[snippet.key]?.add(snippet) ?: persistentListOf(snippet))
     }
   }
 
+  fun build(): SnippetsRegistry {
+    return SnippetsRegistryImpl(weigher, snippets.load())
+  }
+}
+
+class SnippetsRegistryImpl(
+  private val weigher: TextMateSelectorWeigher,
+  private val snippets: Map<String, List<TextMateSnippet>>,
+) : SnippetsRegistry {
   override fun findSnippet(key: String, scope: TextMateScope?): Collection<TextMateSnippet> {
     if (scope == null) {
-      return listOf<TextMateSnippet>()
+      return emptyList()
     }
-    val snippets = mySnippets[key]
-    if (snippets == null) {
-      return listOf<TextMateSnippet>()
-    }
+    val snippets = snippets[key] ?: return emptyList()
     return TextMateScopeComparatorCore(weigher, scope, TextMateSnippet::scopeSelector).sortAndFilter(snippets)
   }
 
   override fun getAvailableSnippets(scopeSelector: TextMateScope?): Collection<TextMateSnippet> {
     if (scopeSelector == null) {
-      return listOf<TextMateSnippet>()
+      return emptyList()
     }
     return TextMateScopeComparatorCore(weigher, scopeSelector, TextMateSnippet::scopeSelector)
-      .sortAndFilter(mySnippets.values.flatMap { it })
-  }
-
-  fun clear() {
-    mySnippets.clear()
+      .sortAndFilter(snippets.values.flatMap { it })
   }
 }

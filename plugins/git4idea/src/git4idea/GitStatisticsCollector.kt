@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea
 
 import com.google.common.collect.HashMultiset
 import com.intellij.dvcs.branch.DvcsSyncSettings.Value
-import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.addBoolIfDiffers
 import com.intellij.internal.statistic.beans.addIfDiffers
@@ -27,7 +27,7 @@ import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.ui.VcsLogUiImpl
+import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.*
@@ -49,12 +49,12 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 19)
+  private val GROUP = EventLogGroup("git.configuration", 20)
 
   override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): Set<MetricEvent> {
-    if (!project.isTrusted()) return emptySet()
+    if (!TrustedProjects.isProjectTrusted(project)) return emptySet()
 
     val set = HashSet<MetricEvent>()
 
@@ -189,7 +189,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private fun addGitLogMetrics(project: Project, metrics: MutableSet<MetricEvent>) {
     val projectLog = project.serviceIfCreated<VcsProjectLog>() ?: return
-    val ui = projectLog.mainLogUi ?: return
+    val ui = projectLog.mainUi ?: return
 
     addPropertyMetricIfDiffers(metrics, ui, SHOW_GIT_BRANCHES_LOG_PROPERTY, SHOW_GIT_BRANCHES_IN_LOG)
     addPropertyMetricIfDiffers(metrics, ui, CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY, UPDATE_BRANCH_FILTERS_ON_SELECTION)
@@ -197,7 +197,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private fun addPropertyMetricIfDiffers(
     metrics: MutableSet<MetricEvent>,
-    ui: VcsLogUiImpl,
+    ui: MainVcsLogUi,
     property: VcsLogUiProperties.VcsLogUiProperty<Boolean>,
     eventId: VarargEventId,
   ) {
@@ -289,6 +289,7 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
   private val FILTER_BY_REPOSITORY_IN_POPUP = GROUP.registerVarargEvent("filterByRepositoryInPopup", EventFields.Enabled)
 
   private val ALL_IDE_CONFIG_NAMES = listOf(
+    ".air",
     ".fleet",
     ".idea",
     ".project",

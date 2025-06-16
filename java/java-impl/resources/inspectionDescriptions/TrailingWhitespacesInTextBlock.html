@@ -2,6 +2,23 @@
 <body>
 Reports text blocks with trailing whitespace characters.
 Trailing whitespace is considered incidental and will be stripped away by the Java compiler.
+<p><b>Example (where spaces are indicated with dots):</b></p>
+<pre><code>
+..String.count.=."""
+....one
+....two....
+....three
+....""";
+</code></pre>
+<p>Two quick-fixes are provided.
+  One to remove the trailing whitespace, and one to escape the trailing whitespace so that it will not be removed by the compiler:</p>
+<pre><code>
+..String.count.=."""
+....one
+....two...\s
+....three
+....""";
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2021.1</small></p>
 </body>

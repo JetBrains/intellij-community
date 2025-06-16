@@ -5,11 +5,12 @@ import com.intellij.build.FilePosition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.util.io.HttpRequests
@@ -74,7 +75,16 @@ internal class MavenWrapperSupport {
       indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.downloading.from", urlString) }
       try {
         HttpRequests.request(urlString)
+          .tuner{
+            val username = Environment.getVariable("MVNW_USERNAME")
+            val password = Environment.getVariable("MVNW_PASSWORD")
+            if (!username.isNullOrBlank() && !password.isNullOrBlank()) {
+              indicator?.apply { text = SyncBundle.message("maven.sync.wrapper.downloading.auth") }
+              it.setRequestProperty("Authorization", "Basic " + Base64.getEncoder().encodeToString("$username:$password".toByteArray()))
+            }
+          }
           .forceHttps(false)
+          .useProxy(true)
           .connectTimeout(30_000)
           .readTimeout(30_000)
           .saveToFile(partFile, indicator)
@@ -102,7 +112,7 @@ internal class MavenWrapperSupport {
       throw IllegalStateException(SyncBundle.message("zip.is.not.correct", zipFile.toAbsolutePath()))
     }
     val mavenHome = dirs[0]
-    if (mavenHome.getEelDescriptor().operatingSystem == EelPath.OS.UNIX) {
+    if (mavenHome.getEelDescriptor().osFamily.isPosix) {
       makeMavenBinRunnable(mavenHome)
     }
     return mavenHome
@@ -207,7 +217,14 @@ internal class MavenWrapperSupport {
 
         val stream = ByteArrayInputStream(wrapperProperties.contentsToByteArray(true))
         properties.load(stream)
-        return properties.getProperty(DISTRIBUTION_URL_PROPERTY)
+        val configuredProperty = properties.getProperty(DISTRIBUTION_URL_PROPERTY)
+        val urlBase = Environment.getVariable("MVNW_REPOURL")
+        val configuredUrlBaseEnd = configuredProperty?.indexOf("/org/apache/maven") ?: -1
+        if (!urlBase.isNullOrBlank() && configuredUrlBaseEnd >= 0) {
+          return (if (urlBase.endsWith('/')) urlBase.substring(0, urlBase.length - 1) else urlBase) + configuredProperty.substring(configuredUrlBaseEnd)
+        }
+
+        return configuredProperty
       }
       catch (e: IOException) {
         MavenLog.LOG.warn("exception reading wrapper url", e)

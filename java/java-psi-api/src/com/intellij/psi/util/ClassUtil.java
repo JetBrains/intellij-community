@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
+import com.intellij.ide.util.JavaAnonymousClassesHelper;
+import com.intellij.ide.util.JavaLocalClassesHelper;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
@@ -213,6 +215,12 @@ public final class ClassUtil {
     return Character.isDigit(name.charAt(0));
   }
 
+  /**
+   * Returns the binary class name for top-level and nested classes.
+   *
+   * @deprecated Does not work for anonymous classes and local classes. Use {@link #getBinaryClassName} instead.
+   */
+  @Deprecated
   public static @Nullable @NlsSafe String getJVMClassName(@NotNull PsiClass aClass) {
     final PsiClass containingClass = aClass.getContainingClass();
     if (containingClass != null) {
@@ -223,6 +231,42 @@ public final class ClassUtil {
       return parentName + "$" + aClass.getName();
     }
     return aClass.getQualifiedName();
+  }
+
+  /**
+   * Returns the binary class name, i.e. the string that would be returned by {@link Class#getName}. See JLS 13.1.
+   *
+   * <ul>
+   *   <li><b>Top-level classes</b> return the qualified name of the class, e.g. {@code com.example.Foo}</li>
+   *   <li><b>Nested classes</b>, i.e. named classes nested directly within the body of another class, return the binary name of the outer
+   *     class, followed by a {@code $} plus the name of the nested class, e.g. {@code com.example.Foo$Inner}</li>
+   *   <li><b>Anonymous classes</b>, i.e. unnamed classes created with a {@code new} expression, return the binary name of the class they
+   *     are within, followed by a {@code $} plus a number indexing which anonymous class within the outer class we are referring to, e.g.
+   *     {@code com.example.Foo$1}</li>
+   *   <li><b>Local classes</b>, i.e. named classes within a method, return the binary name of the class they are within, followed by a
+   *     {@code $} plus a number and then the local class' name. The number indexes which local class with that same name within the outer
+   *     class we are referring to (multiple local classes within the same class may have the same name if they are in different methods).
+   *     E.g. {@code com.example.Foo$1Local}</li>
+   * </ul>
+   */
+  public static @Nullable @NlsSafe String getBinaryClassName(@NotNull PsiClass aClass) {
+    if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
+      PsiClass parentClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class);
+      if (parentClass == null) {
+        return null;
+      }
+      String parentName = getBinaryClassName(parentClass);
+      if (parentName == null) {
+        return null;
+      }
+      if (aClass instanceof PsiAnonymousClass) {
+        return parentName + JavaAnonymousClassesHelper.getName((PsiAnonymousClass) aClass);
+      } else {
+        return parentName + JavaLocalClassesHelper.getName(aClass);
+      }
+    }
+
+    return getJVMClassName(aClass);
   }
 
   /**

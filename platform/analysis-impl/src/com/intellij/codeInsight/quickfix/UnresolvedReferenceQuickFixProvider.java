@@ -1,9 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.quickfix;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -93,8 +93,8 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
         return;
       }
       boolean wasRegistered = registerReferenceFixes(reference, registrar);
-      if (wasRegistered && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        DaemonCodeAnalyzer.getInstance(myProject).restart(reference.getElement().getContainingFile());
+      if (wasRegistered) {
+        DaemonCodeAnalyzerEx.getInstanceEx(myProject).rescheduleShowIntentionsPass(referenceElement.getContainingFile(), builder);
       }
     };
 

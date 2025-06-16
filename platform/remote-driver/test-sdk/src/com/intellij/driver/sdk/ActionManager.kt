@@ -3,8 +3,10 @@ package com.intellij.driver.sdk
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
+import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RdTarget
+import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.openapi.diagnostic.fileLogger
 import java.awt.event.InputEvent
@@ -20,6 +22,8 @@ interface ActionManager {
     place: String?,
     now: Boolean,
   ): ActionCallback
+
+  fun getKeyboardShortcut(actionId: String): KeyboardShortcut?
 }
 
 @Remote("com.intellij.openapi.actionSystem.ex.ActionUtil")
@@ -41,6 +45,17 @@ interface ShortcutSet {
 @Remote("com.intellij.openapi.actionSystem.Shortcut")
 interface Shortcut
 
+@Remote("com.intellij.openapi.actionSystem.KeyboardShortcut")
+interface KeyboardShortcut : Shortcut {
+  fun getFirstKeyStroke(): KeyStroke
+}
+
+@Remote("javax.swing.KeyStroke")
+interface KeyStroke {
+  fun getKeyCode(): Int
+  fun getModifiers(): Int
+}
+
 @Remote(value = "com.intellij.openapi.util.ActionCallback")
 interface ActionCallback {
   fun isRejected(): Boolean
@@ -57,8 +72,14 @@ fun Driver.invokeGlobalBackendAction(actionId: String, project: Project? = null,
   invokeAction(actionId, now, component = targetComponent, rdTarget = RdTarget.BACKEND)
 }
 
+fun UiComponent.invokeActionByShortcut(actionId: String) {
+  val shortcut = checkNotNull(driver.service<ActionManager>().getKeyboardShortcut(actionId)) { "Action $actionId has no shortcut or not exists" }
+  val keyStroke = shortcut.getFirstKeyStroke()
+  robot.pressAndReleaseKey(keyStroke.getKeyCode(), keyStroke.getModifiers())
+}
+
 fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Component? = null, place: String? = null, rdTarget: RdTarget? = null) {
-  val target = rdTarget ?: if (isRemoteIdeMode) RdTarget.FRONTEND else RdTarget.DEFAULT
+  val target = rdTarget ?: if (isRemDevMode) RdTarget.FRONTEND else RdTarget.DEFAULT
   val actionManager = service<ActionManager>(target)
   val action = withContext(OnDispatcher.EDT) {
     actionManager.getAction(actionId)
@@ -66,9 +87,37 @@ fun Driver.invokeAction(actionId: String, now: Boolean = true, component: Compon
   checkNotNull(action) { "Action $actionId was not found" }
   fileLogger().info("Invoking action $actionId on $target")
   val actionCallback = step("Invoke action ${action.getTemplateText()}") {
-    withContext(OnDispatcher.EDT) {
+    withContext(OnDispatcher.EDT, semantics = LockSemantics.READ_ACTION) {
       actionManager.tryToExecute(action, null, component, place, now)
     }
   }
   check(!actionCallback.isRejected()) { "Action $actionId was rejected with error: ${actionCallback.getError()}" }
+}
+
+fun Driver.invokeActionWithRetries(
+  actionId: String,
+) {
+  doWithRetries {
+    invokeAction(actionId)
+  }
+}
+
+private fun doWithRetries(
+  maxAttempts: Int = 10,
+  delayMs: Long = 500,
+  action: () -> Unit,
+) {
+  var currentAttempt = 0
+  while (true) {
+    try {
+      action()
+      break
+    }
+    catch (e: RuntimeException) {
+      if (currentAttempt++ > maxAttempts) {
+        throw e
+      }
+      Thread.sleep(delayMs)
+    }
+  }
 }

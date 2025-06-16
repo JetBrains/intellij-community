@@ -215,7 +215,7 @@ public final class GradleUtil {
   }
 
   public static @NotNull URI getWrapperDistributionUri(@NotNull GradleVersion gradleVersion) {
-    var gradleServicesUrl = GradleEnvironment.Urls.GRADLE_SERVICES_URL;
+    var gradleServicesUrl = GradleEnvironment.Urls.getGradleServicesUrl();
     var distributionSource = gradleVersion.isSnapshot() ? "distributions-snapshots" : "distributions";
     var gradleVersionString = gradleVersion.getVersion();
     try {

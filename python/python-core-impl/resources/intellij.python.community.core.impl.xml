@@ -1,0 +1,6 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.sdk"/>
+  </dependencies>
+</idea-plugin>

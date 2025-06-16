@@ -1,0 +1,70 @@
+- name: lib/io.github.smiley4.schema.kenerator.core.jar
+  library: io.github.smiley4.schema.kenerator.core
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-core/2/schema-kenerator-core-2.jar
+  reason: <- intellij.mcpserver
+- name: lib/io.github.smiley4.schema.kenerator.jsonschema.jar
+  library: io.github.smiley4.schema.kenerator.jsonschema
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-jsonschema/2/schema-kenerator-jsonschema-2.jar
+  reason: <- intellij.mcpserver
+- name: lib/io.github.smiley4.schema.kenerator.serialization.jar
+  library: io.github.smiley4.schema.kenerator.serialization
+  files:
+  - name: $MAVEN_REPOSITORY$/io/github/smiley4/schema-kenerator-serialization/2/schema-kenerator-serialization-2.jar
+  reason: <- intellij.mcpserver
+- name: lib/io.ktor.utils.jar
+  library: io.ktor.utils
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3/ktor-utils-jvm-3.jar
+  reason: <- intellij.mcpserver
+- name: lib/ktor-server-cio.jar
+  library: ktor-server-cio
+  files:
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-cio-jvm/3/ktor-server-cio-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-core-jvm/3/ktor-server-core-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/com/typesafe/config/1/config-1.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3/ktor-http-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3/ktor-serialization-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3/ktor-events-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3/ktor-http-cio-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3/ktor-io-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3/ktor-websockets-jvm-3.jar
+  - name: $MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3/ktor-network-jvm-3.jar
+  reason: <- intellij.mcpserver
+- name: lib/mcpserver-frontend.jar
+  projectLibraries:
+  - name: io.github.oshai.kotlin.logging.jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/io/github/oshai/kotlin-logging-jvm/7/kotlin-logging-jvm-7.jar
+    reason: <- intellij.mcpserver.stdio
+  - name: io.modelcontextprotocol.kotlin.sdk
+    files:
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0/kotlin-sdk-jvm-0.jar
+    reason: <- intellij.mcpserver.stdio
+  - name: ktor-client-cio
+    files:
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/3/ktor-client-cio-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/3/ktor-client-core-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/3/ktor-http-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/3/ktor-events-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-websocket-serialization-jvm/3/ktor-websocket-serialization-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-serialization-jvm/3/ktor-serialization-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-sse-jvm/3/ktor-sse-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/3/ktor-http-cio-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/3/ktor-network-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/3/ktor-io-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/3/ktor-websockets-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/3/ktor-network-tls-jvm-3.jar
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/3/ktor-utils-jvm-3.jar
+    reason: <- intellij.mcpserver.stdio
+  - name: ktor-server-sse-jvm
+    files:
+    - name: $MAVEN_REPOSITORY$/io/ktor/ktor-server-sse-jvm/3/ktor-server-sse-jvm-3.jar
+    reason: <- intellij.mcpserver.stdio
+  modules:
+  - name: intellij.mcpserver.stdio
+    reason: <- intellij.mcpserver
+- name: lib/mcpserver.jar
+  modules:
+  - name: intellij.mcpserver

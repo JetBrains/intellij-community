@@ -1,5 +1,6 @@
 package com.intellij.settingsSync.core
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
@@ -10,7 +11,7 @@ import java.io.InputStream
 import java.util.UUID
 import kotlin.io.path.inputStream
 
-abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator {
+abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator, Disposable {
   companion object {
     private val LOG = logger<AbstractServerCommunicator>()
   }
@@ -116,38 +117,37 @@ abstract class AbstractServerCommunicator() : SettingsSyncRemoteCommunicator {
     val defaultMessage = "Unknown during checking $CROSS_IDE_SYNC_MARKER_FILE"
     try {
       snapshotFilePath = currentSnapshotFilePath()?.first ?: return SettingsSyncPushResult.Error(defaultMessage)
-    }
-    catch (ioe: IOException) {
-      return SettingsSyncPushResult.Error(ioe.message ?: defaultMessage)
-    }
 
-    val versionToPush: String?
-    if (force) {
-      // get the latest server version: pushing with it will overwrite the file in any case
-      versionToPush = getLatestVersion(snapshotFilePath)
-      writeFileInternal(snapshotFilePath, versionToPush, inputStream)
-    }
-    else {
-      if (knownServerVersion != null) {
-        versionToPush = knownServerVersion
+      val versionToPush: String?
+      if (force) {
+        // get the latest server version: pushing with it will overwrite the file in any case
+        versionToPush = getLatestVersion(snapshotFilePath)
       }
       else {
-        val serverVersion = getLatestVersion(snapshotFilePath)
-        if (serverVersion == null) {
-          // no file on the server => just push it there
-          versionToPush = null
+        if (knownServerVersion != null) {
+          versionToPush = knownServerVersion
         }
         else {
-          // we didn't store the server version locally yet => reject the push to avoid overwriting the server version;
-          // the next update after the rejected push will store the version information, and subsequent push will be successful.
-          return SettingsSyncPushResult.Rejected
+          val serverVersion = getLatestVersion(snapshotFilePath)
+          if (serverVersion == null) {
+            // no file on the server => just push it there
+            versionToPush = null
+          }
+          else {
+            // we didn't store the server version locally yet => reject the push to avoid overwriting the server version;
+            // the next update after the rejected push will store the version information, and subsequent push will be successful.
+            return SettingsSyncPushResult.Rejected
+          }
         }
       }
-      writeFileInternal(snapshotFilePath, versionToPush, inputStream)
-    }
 
-    // errors are thrown as exceptions, and are handled above
-    return SettingsSyncPushResult.Success(versionToPush)
+      val pushedVersion = writeFileInternal(snapshotFilePath, versionToPush, inputStream)
+      // errors are thrown as exceptions, and are handled above
+      return SettingsSyncPushResult.Success(pushedVersion)
+    }
+    catch (e: Throwable) {
+      return SettingsSyncPushResult.Error(e.message ?: defaultMessage)
+    }
   }
 
   override fun checkServerState(): ServerState {

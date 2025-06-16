@@ -7,6 +7,7 @@ import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.impl.LaterInvocator
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 
 private const val ourRestartParameter = "--restart"
 
@@ -19,16 +20,16 @@ class ExitStarter private constructor() : ApplicationStarterBase(0, 1, 2) {
     get() = true
 
   override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
-    forceExitApplication(args.any { ourRestartParameter == it })
+    forceExitApplication("ExitStarter requested exit", args.any { ourRestartParameter == it })
     return CliResult.OK
   }
 
   companion object {
-    fun forceExitApplication(restart: Boolean = false) {
+    fun forceExitApplication(reason: @NonNls String, restart: Boolean = false) {
       val application = ApplicationManager.getApplication()
       // We need to invoke the method in Modality.any() to execute the method even (especially) if the modality stack is not empty
       // The method pops elements from modality stack until it's empty
-      application.invokeLater({ LaterInvocator.forceLeaveAllModals() }, ModalityState.any())
+      application.invokeLater({ LaterInvocator.forceLeaveAllModals(reason) }, ModalityState.any())
       application.invokeLater({ application.exit(true, true, restart) }, ModalityState.nonModal())
     }
   }

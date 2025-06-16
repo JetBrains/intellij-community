@@ -10,7 +10,9 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.CommonProcessors
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Deprecated with the move to ViewModel-based approach")
 abstract class CreateDiffCommentAction : DumbAwareAction(messagePointer("action.CodeReview.CreateDiffComment.text")) {
   override fun getActionUpdateThread(): ActionUpdateThread {

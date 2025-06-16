@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
+import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionDocumentChangesTrackerImpl
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsListener
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker
 import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.UserFactorsListener
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionInvalidationListener
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -15,7 +17,7 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantsComputer
-import com.intellij.codeInsight.inline.completion.utils.SafeInlineCompletionExecutor
+import com.intellij.codeInsight.inline.edit.InlineEditRequestExecutor
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.inlinePrompt.isInlinePromptShown
 import com.intellij.openapi.Disposable
@@ -63,7 +65,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   protected val parentDisposable: Disposable,
 ) {
-  private val executor = SafeInlineCompletionExecutor(scope)
+  private val executor = InlineEditRequestExecutor.create(scope)
   private val eventListeners = EventDispatcher.create(InlineCompletionEventListener::class.java)
   private val completionState: InlineCompletionState = InlineCompletionState()
 
@@ -80,28 +82,27 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
     val logsListener = InlineCompletionLogsListener(editor)
     addEventListener(logsListener)
     invalidationListeners.addListener(logsListener)
+    addEventListener(UserFactorsListener())
+
+    Disposer.register(parentDisposable, /* child = */ executor)
   }
 
   /**
    * Frontend always starts a session. Backend never starts a session. Instead, the backend will send a notification to the frontend.
    */
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun startSessionOrNull(
     request: InlineCompletionRequest,
     provider: InlineCompletionProvider
   ): InlineCompletionSession?
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun doHide(context: InlineCompletionContext, finishType: FinishType)
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun createSessionManager(): InlineCompletionSessionManager
 
   @ApiStatus.Internal
-  @ApiStatus.NonExtendable
   protected abstract fun afterInsert(providerId: InlineCompletionProviderID)
 
   fun addEventListener(listener: InlineCompletionEventListener) {
@@ -175,9 +176,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
       val newSession = startSessionOrNull(request, provider) ?: return
       newSession.guardCaretModifications()
 
-      executor.switchJobSafely(newSession::assignJob) {
-        invokeRequest(request, newSession)
-      }
+      switchAndInvokeRequest(request, newSession)
     }
     finally {
       completionState.isInvokingEvent = false
@@ -238,7 +237,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   }
 
   fun cancel(finishType: FinishType = FinishType.OTHER) {
-    executor.cancel()
     application.invokeAndWait {
       InlineCompletionContext.getOrNull(editor)?.let {
         hide(it, finishType)
@@ -406,6 +404,10 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
         return false
       }
     }
+    val editorType = InlineCompletionEditorType.get(editor)
+    if (!isEditorTypeSupported(editorType)) {
+      return false
+    }
     return isEnabled(event)
   }
 
@@ -558,7 +560,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   protected fun switchAndInvokeRequest(request: InlineCompletionRequest, newSession: InlineCompletionSession) {
     ThreadingAssertions.assertEventDispatchThread()
-    executor.switchJobSafely(newSession::assignJob) {
+    executor.switchRequest(onJobCreated = newSession::assignJob) {
       invokeRequest(request, newSession)
     }
   }
@@ -599,7 +601,7 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
   @TestOnly
   suspend fun awaitExecution() {
     ThreadingAssertions.assertEventDispatchThread()
-    executor.awaitAll()
+    executor.awaitActiveRequest()
   }
 
   @ApiStatus.Internal // TODO (remove?)

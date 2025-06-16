@@ -3,6 +3,7 @@ package com.intellij.debugger.impl
 
 import com.intellij.debugger.engine.DebugProcessEvents
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -25,6 +26,22 @@ class HelperClassNotAvailableException(message: String) : EvaluateException(mess
  * Exception thrown when a specified method cannot be found during evaluation.
  */
 class MethodNotFoundException(message: String) : EvaluateException(message)
+
+
+inline fun <T> wrapIncompatibleThreadStateException(block: () -> T): T? = try {
+  block()
+}
+catch (e: EvaluateException) {
+  if (e.cause is IncompatibleThreadStateException) {
+    null
+  }
+  else {
+    throw e
+  }
+}
+catch (_: IncompatibleThreadStateException) {
+  null
+}
 
 internal inline fun <T, E : Exception> suppressExceptions(
   defaultValue: T?,
@@ -71,7 +88,7 @@ inline fun <T : Any, R> computeSafeIfAny(ep: ExtensionPointName<T>, processor: (
 fun preloadAllClasses(vm: VirtualMachine) {
   DebuggerManagerThreadImpl.assertIsManagerThread()
   val allClasses = DebuggerUtilsAsync.allCLasses(vm)
-  if (!Registry.`is`("debugger.preload.types.hierarchy", true)) return
+  if (!Registry.`is`("debugger.preload.types.hierarchy", true) || DebuggerUtils.isAndroidVM(vm)) return
 
   val channel = Channel<ReferenceType>(capacity = Channel.UNLIMITED)
   try {

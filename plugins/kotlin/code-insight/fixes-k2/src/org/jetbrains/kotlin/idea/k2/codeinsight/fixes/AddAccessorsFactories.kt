@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUt
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils.addAccessors
 import org.jetbrains.kotlin.psi.KtProperty
 
-object AddAccessorsFactories {
+internal object AddAccessorsFactories {
 
     val addAccessorsToUninitializedProperty =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.MustBeInitialized ->

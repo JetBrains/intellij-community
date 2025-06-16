@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.inline.completion.logs
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEapSupport
+import com.intellij.codeInsight.inline.completion.statistics.LocalStatistics
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -115,30 +117,38 @@ class InlineCompletionLogsContainer() {
    * Await for this function completion before exit from the inline completion request and process next typings or next requests.
    * Should be very fast.
    */
-  fun logCurrent() {
+  fun logCurrent(extraLogger: CustomRequestIdLogger? = null) {
     cancelAsyncAdds()
 
-
-    InlineCompletionLogs.Session.SESSION_EVENT.log(project = project, // log function is asynchronous, so it's ok to launch it even on EDT
-                                                   logs.filter { it.value.isNotEmpty() }.mapNotNull { (phase, logs) ->
-
-        // for release, log only basic fields for most of the requests and very rarely log everything.
-        val filteredEvents = if (forceFullLogs.get() || InlineCompletionEapSupport.getInstance().isEap() || random < (1f / 100f * fullLogsShare.get())) {
-          logs
-        } else {
-          logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
-        }
-
-        val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
-        if (logPhaseObject != null) {
-          logPhaseObject.with(ObjectEventData(filteredEvents.toList()))
-        } else {
-          logger.error("ObjectEventField is not found for $phase, FUS event may be configured incorrectly!")
-          null
-        }
+    val filteredEvents = logs.filter { it.value.isNotEmpty() }.mapValues { (_, logs) ->
+      // for release, log only basic fields for most of the requests and very rarely log everything.
+      if (getShouldSendFullLogs()) {
+        logs
+      } else {
+        logs.filter { pair -> InlineCompletionLogs.Session.isBasic(pair) }
       }
-    )
+    }
+
+    // log function is asynchronous, so it's ok to launch it even on EDT
+    InlineCompletionLogs.Session.SESSION_EVENT.log(project = project, filteredEvents.mapNotNull { (phase, events) ->
+      val logPhaseObject = InlineCompletionLogs.Session.phases[phase]
+      if (logPhaseObject != null) {
+        logPhaseObject.with(ObjectEventData(events.toList()))
+      } else {
+        logger.error("ObjectEventField is not found for $phase, FUS event may be configured incorrectly!")
+        null
+      }
+    })
+    extraLogger?.log(project, filteredEvents)
+    logs.map { it.value }.flatten().forEach { LocalStatistics.getInstance().saveIfRegistered(it) }
     logs.forEach { (_, events) -> events.clear() }
+  }
+
+  private fun getShouldSendFullLogs(): Boolean {
+    return (forceFullLogs.get() // random pass from a filter model
+            || InlineCompletionEapSupport.getInstance().isEap() // collect all logs from eap users
+            || ApplicationManager.getApplication().isUnitTestMode
+            || random < (1f / 100f * fullLogsShare.get())) // occasionally send all logs in release
   }
 
   /**

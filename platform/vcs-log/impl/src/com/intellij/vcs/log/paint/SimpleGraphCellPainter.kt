@@ -11,6 +11,7 @@ import com.intellij.vcs.log.graph.EdgePrintElement
 import com.intellij.vcs.log.graph.NodePrintElement
 import com.intellij.vcs.log.graph.PrintElement
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.Ellipse2D
 import java.awt.geom.Line2D
@@ -22,7 +23,8 @@ import kotlin.math.sqrt
 /**
  * @author erokhins
  */
-internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : GraphCellPainter {
+@ApiStatus.Internal
+open class SimpleGraphCellPainter(private val colorGenerator: ColorGenerator) : GraphCellPainter {
   protected open val rowHeight: Int get() = PaintParameters.ROW_HEIGHT
 
   override fun paint(g2: Graphics2D, printElements: Collection<PrintElement>) {
@@ -160,27 +162,34 @@ internal open class SimpleGraphCellPainter(private val colorGenerator: ColorGene
       }
     }
 
-    private fun paintCircle(g2: Graphics2D, position: Int, isSelected: Boolean) {
-      val x0 = elementWidth * position + elementCenter
+    private fun paintCircle(g2: Graphics2D, element: NodePrintElement, isSelected: Boolean) {
+      val x0 = elementWidth * element.positionInCurrentRow + elementCenter
       val y0 = rowCenter
       val radius = if (isSelected) selectedCircleRadius else circleRadius
       val diameter = if (isSelected) selectedCircleDiameter else circleDiameter
 
       val circle = Ellipse2D.Double(x0 - radius, y0 - radius, diameter, diameter)
-      g2.fill(circle)
+      when (element.nodeType) {
+        NodePrintElement.Type.FILL -> g2.fill(circle)
+        NodePrintElement.Type.OUTLINE -> {
+          g2.color = NEUTRAL_COLOR
+          g2.draw(circle)
+        }
+      }
     }
 
     fun paintElement(g2: Graphics2D, element: PrintElement, color: Color, isSelected: Boolean) {
       g2.color = color
       when (element) {
         is EdgePrintElement -> paintEdge(g2, element, isSelected)
-        is NodePrintElement -> paintCircle(g2, element.positionInCurrentRow, isSelected)
+        is NodePrintElement -> paintCircle(g2, element, isSelected)
       }
     }
   }
 
   companion object {
     private val MARK_COLOR: Color = JBColor.BLACK
+    private val NEUTRAL_COLOR: Color = JBColor.GRAY
     private const val ARROW_ANGLE_COS2 = 0.7
     private const val ARROW_LENGTH = 0.3
 

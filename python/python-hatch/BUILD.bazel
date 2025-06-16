@@ -31,6 +31,8 @@ jvm_library(
     "//python/openapi:community",
     "//python/python-exec-service:community-execService",
     "@lib//:io-github-z4kn4fein-semver-jvm",
+    "//platform/projectModel-api:projectModel",
+    "//python/python-sdk:sdk",
   ],
   runtime_deps = [":hatch_resources"]
 )

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.spellchecker
@@ -83,7 +83,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
     fullConfigurationReload()
 
     LocalFileSystem.getInstance().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
-    BUNDLED_EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
+    BUNDLED_EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
     RuntimeDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
     CustomDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker!!) }
   }

@@ -18,9 +18,9 @@ jvm_library(
     "@lib//:maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0-provided",
     "@lib//:maven-artifact_resolver-m31-org-codehaus-plexus-plexus-component-annotations-1-5-5-provided",
     "@lib//:maven-artifact_resolver-m31-org-eclipse-aether-aether-api-0-9-0-_m2-provided",
-    "//plugins/maven/artifact-resolver/common:maven-artifactResolver-common",
+    "//plugins/maven/artifact-resolver/common",
   ],
-  exports = ["//plugins/maven/artifact-resolver/common:maven-artifactResolver-common"],
+  exports = ["//plugins/maven/artifact-resolver/common"],
   runtime_deps = [":artifactResolver-m31_resources"]
 )
 ### auto-generated section `build intellij.maven.artifactResolver.m31` end

@@ -7,6 +7,6 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   kotlinc_opts = "@community//:k8",
-  deps = ["//java/compiler/instrumentation-util:java-compiler-instrumentationUtil"]
+  deps = ["//java/compiler/instrumentation-util"]
 )
 ### auto-generated section `build intellij.java.compiler.instrumentationUtil.java8` end

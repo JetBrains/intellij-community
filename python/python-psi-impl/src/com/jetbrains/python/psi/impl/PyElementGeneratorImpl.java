@@ -319,12 +319,6 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public PyPassStatement createPassStatement() {
-    final PyStatementList statementList = createPassStatementList();
-    return (PyPassStatement)statementList.getStatements()[0];
-  }
-
-  @Override
   public @NotNull PyDecoratorList createDecoratorList(final String @NotNull ... decoratorTexts) {
     assert decoratorTexts.length > 0;
     StringBuilder functionText = new StringBuilder();
@@ -337,11 +331,6 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
     final PyDecoratorList decoratorList = function.getDecoratorList();
     assert decoratorList != null;
     return decoratorList;
-  }
-
-  private PyStatementList createPassStatementList() {
-    final PyFunction function = createFromText(LanguageLevel.getDefault(), PyFunction.class, "def foo():\n\tpass");
-    return function.getStatementList();
   }
 
   @Override
@@ -365,8 +354,8 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  public @NotNull PyNoneLiteralExpression createEllipsis() {
-    return createFromText(LanguageLevel.PYTHON30, PyNoneLiteralExpression.class, "...", new int[]{0, 0});
+  public @NotNull PyEllipsisLiteralExpression createEllipsis() {
+    return createFromText(LanguageLevel.PYTHON30, PyEllipsisLiteralExpression.class, "...", new int[]{0, 0});
   }
 
   @Override

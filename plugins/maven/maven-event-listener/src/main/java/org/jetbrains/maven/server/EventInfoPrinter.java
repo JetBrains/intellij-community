@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.maven.server;
 
 import java.util.function.Consumer;
@@ -13,11 +13,10 @@ public final class EventInfoPrinter {
   }
 
   private void print(Object type, CharSequence... args) {
-    //noinspection UseOfSystemOutOrSystemErr
     myPrinter.accept(printToBuffer(type, args).toString());
   }
 
-  StringBuilder printToBuffer(Object type, CharSequence... args) {
+  public static StringBuilder printToBuffer(Object type, CharSequence... args) {
     StringBuilder out = new StringBuilder();
     out.append(PREFIX);
     out.append(Thread.currentThread().getId());
@@ -35,7 +34,7 @@ public final class EventInfoPrinter {
     return out;
   }
 
-  private void appendReplacingNewLines(StringBuilder out, CharSequence value) {
+  private static void appendReplacingNewLines(StringBuilder out, CharSequence value) {
     if (value == null) {
       out.append("null");
       return;

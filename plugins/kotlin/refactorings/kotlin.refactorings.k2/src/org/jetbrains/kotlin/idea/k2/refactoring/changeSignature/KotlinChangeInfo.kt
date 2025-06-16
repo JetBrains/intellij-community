@@ -45,10 +45,16 @@ class KotlinChangeInfo(
     }
 
     override fun removeParameter(index: Int) {
-        val parameterInfo = newParameters.removeAt(index)
+        val parameterInfo = newParameters.filter { !it.isContextParameter }.toTypedArray()[index]
+        newParameters.remove(parameterInfo)
         if (parameterInfo == receiverParameterInfo) {
             receiverParameterInfo = null
         }
+    }
+
+    fun removeContextParameter(index: Int) {
+        val parameterInfo = newParameters.filter { it.isContextParameter }.toTypedArray()[index]
+        newParameters.remove(parameterInfo)
     }
 
     override fun clearParameters() {
@@ -70,7 +76,7 @@ class KotlinChangeInfo(
     val parametersToRemove: BooleanArray
         get() {
             val originalReceiver = methodDescriptor.receiver
-            val hasReceiver = methodDescriptor.receiver != null
+            val hasReceiver = originalReceiver != null
             val receiverShift = if (hasReceiver) 1 else 0
 
             val toRemove = BooleanArray(receiverShift + methodDescriptor.parametersCount) { true }
@@ -79,6 +85,7 @@ class KotlinChangeInfo(
             }
 
             for (parameter in newParameters) {
+                if (parameter.wasContextParameter) continue
                 parameter.oldIndex.takeIf { it >= 0 }?.let { oldIndex ->
                     toRemove[oldIndex] = false
                 }
@@ -123,10 +130,12 @@ class KotlinChangeInfo(
     }
 
     private val isParameterSetOrOrderChangedLazy: Boolean by lazy {
-        val signatureParameters = receiverParameterInfo?.let { newParameters.filter { it != receiverParameterInfo } } ?: newParameters
+        val (contextParameters, signatureParameters) = getNonReceiverParameters().partition { it.isContextParameter }
         methodDescriptor.receiver?.oldIndex != receiverParameterInfo?.oldIndex ||
                 signatureParameters.size != methodDescriptor.parametersCount ||
-                signatureParameters.indices.any { i -> signatureParameters[i].oldIndex != i }
+                signatureParameters.indices.any { i -> signatureParameters[i].oldIndex != i } ||
+                contextParameters.any { it.isNewParameter || !it.wasContextParameter } ||
+                methodDescriptor.parameters.filter { it.isContextParameter }.size != contextParameters.size
     }
     override fun isParameterSetOrOrderChanged(): Boolean {
         return isParameterSetOrOrderChangedLazy

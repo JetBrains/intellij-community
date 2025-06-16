@@ -23,13 +23,19 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 import org.jetbrains.jewel.markdown.rendering.MarkdownBlockRenderer
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling
 
+/**
+ * Provide Markdown styling, for scenarios where you do not have access to a [Project].
+ *
+ * By default, this means no code syntax highlighting will be available. If you do have a [codeHighlighter] instance to
+ * use instead, you should provide it. If you have access to a [Project], you should be using the other
+ * [ProvideMarkdownStyling] overload instead, as that will provide syntax highlighting by default.
+ */
 @ExperimentalJewelApi
 @Composable
 public fun ProvideMarkdownStyling(
-    themeName: String = JewelTheme.name,
-    markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
+    markdownStyling: MarkdownStyling = remember(JewelTheme.instanceUuid) { MarkdownStyling.create() },
     markdownMode: MarkdownMode = MarkdownMode.Standalone,
-    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
+    markdownProcessor: MarkdownProcessor = remember(markdownMode) { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
     codeHighlighter: CodeHighlighter = remember { NoOpCodeHighlighter },
@@ -46,14 +52,19 @@ public fun ProvideMarkdownStyling(
     }
 }
 
+/**
+ * Provide Markdown styling, for scenarios where you have access to a [Project].
+ *
+ * The [project] is used to access the [CodeHighlighterFactory] and obtain a [CodeHighlighter] that supports code syntax
+ * highlighting.
+ */
 @ExperimentalJewelApi
 @Composable
 public fun ProvideMarkdownStyling(
     project: Project,
-    themeName: String = JewelTheme.name,
-    markdownStyling: MarkdownStyling = remember(themeName) { MarkdownStyling.create() },
+    markdownStyling: MarkdownStyling = remember(JewelTheme.instanceUuid) { MarkdownStyling.create() },
     markdownMode: MarkdownMode = MarkdownMode.Standalone,
-    markdownProcessor: MarkdownProcessor = remember { MarkdownProcessor(markdownMode = markdownMode) },
+    markdownProcessor: MarkdownProcessor = remember(markdownMode) { MarkdownProcessor(markdownMode = markdownMode) },
     markdownBlockRenderer: MarkdownBlockRenderer =
         remember(markdownStyling) { MarkdownBlockRenderer.create(markdownStyling) },
     content: @Composable () -> Unit,
@@ -61,7 +72,6 @@ public fun ProvideMarkdownStyling(
     val codeHighlighter = remember { project.service<CodeHighlighterFactory>().createHighlighter() }
 
     ProvideMarkdownStyling(
-        themeName = themeName,
         markdownStyling = markdownStyling,
         markdownMode = markdownMode,
         markdownProcessor = markdownProcessor,

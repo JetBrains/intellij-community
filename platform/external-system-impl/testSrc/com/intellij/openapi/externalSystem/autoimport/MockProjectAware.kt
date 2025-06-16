@@ -23,6 +23,7 @@ import com.intellij.platform.backend.observation.trackActivityBlocking
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
@@ -58,13 +59,6 @@ class MockProjectAware(
 
   val modificationTypeAdjustingRule: AtomicReference<(String, ExternalSystemModificationType) -> ExternalSystemModificationType> =
     AtomicReference { _, type -> type }
-
-  fun resetAssertionCounters() {
-    settingsAccessCounter.set(0)
-    reloadCounter.set(0)
-    subscribeCounter.set(0)
-    unsubscribeCounter.set(0)
-  }
 
   fun registerSettingsFile(file: VirtualFile) {
     registerSettingsFile(file.toNioPath())
@@ -159,6 +153,25 @@ class MockProjectAware(
     else {
       action()
     }
+  }
+
+  private val isDisabledReload = AtomicBoolean(false)
+  private val isDisabledAutoReload = AtomicBoolean(false)
+
+  override fun isDisabledReload(context: ExternalSystemProjectReloadContext): Boolean {
+    return isDisabledReload.get()
+  }
+
+  fun setDisabledReload(isDisabledReload: Boolean) {
+    this.isDisabledReload.set(isDisabledReload)
+  }
+
+  override fun isDisabledAutoReload(context: ExternalSystemProjectReloadContext): Boolean {
+    return isDisabledAutoReload.get()
+  }
+
+  fun setDisabledAutoReload(isDisabledAutoReload: Boolean) {
+    this.isDisabledAutoReload.set(isDisabledAutoReload)
   }
 
   private val LOG = Logger.getInstance(MockProjectAware::class.java)

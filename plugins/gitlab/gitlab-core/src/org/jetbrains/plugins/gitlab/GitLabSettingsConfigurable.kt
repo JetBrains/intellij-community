@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabProjectDefaultAccountHolder
@@ -60,6 +61,11 @@ internal class GitLabSettingsConfigurable(private val project: Project)
           .bindSelected({ glSettings.isAutomaticallyMarkAsViewed }, { glSettings.isAutomaticallyMarkAsViewed = it })
       }
 
+      row {
+        checkBox(message("settings.cloneUsingSsh"))
+          .bindSelected({ glSettings.isCloneGitUsingSsh }, { glSettings.isCloneGitUsingSsh = it })
+      }
+
       addWarningForMemoryOnlyPasswordSafeAndGet(
         scope,
         service<GitLabAccountManager>().canPersistCredentials,
@@ -69,12 +75,14 @@ internal class GitLabSettingsConfigurable(private val project: Project)
   }
 }
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 @State(name = "GitLabSettings", storages = [Storage("gitlab.xml")], category = SettingsCategory.TOOLS)
-internal class GitLabSettings : SerializablePersistentStateComponent<GitLabSettings.State>(State()) {
+class GitLabSettings : SerializablePersistentStateComponent<GitLabSettings.State>(State()) {
   @Serializable
   data class State(
-    val isAutomaticallyMarkAsViewed: Boolean = false
+    val isAutomaticallyMarkAsViewed: Boolean = false,
+    val isCloneGitUsingSsh: Boolean = false,
   )
 
   var isAutomaticallyMarkAsViewed: Boolean
@@ -83,7 +91,13 @@ internal class GitLabSettings : SerializablePersistentStateComponent<GitLabSetti
       updateState { it.copy(isAutomaticallyMarkAsViewed = value) }
     }
 
+  var isCloneGitUsingSsh: Boolean
+    get() = state.isCloneGitUsingSsh
+    set(value) {
+      updateState { it.copy(isCloneGitUsingSsh = value) }
+    }
+
   companion object {
-    fun getInstance() = ApplicationManager.getApplication().service<GitLabSettings>()
+    fun getInstance(): GitLabSettings = ApplicationManager.getApplication().service<GitLabSettings>()
   }
 }

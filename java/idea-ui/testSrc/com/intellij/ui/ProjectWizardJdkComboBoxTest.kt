@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils
@@ -16,6 +17,7 @@ import com.intellij.platform.testFramework.junit5.eel.fixture.eelFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.utils.io.deleteRecursively
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
@@ -23,7 +25,7 @@ import java.nio.file.Path
 
 @TestApplication
 class ProjectWizardJdkComboBoxTest {
-  val eelFixture = eelFixture(EelPath.OS.UNIX)
+  val eelFixture = eelFixture(EelPlatform.Linux(EelPlatform.Arch.Unknown))
 
   @Test
   fun `changing eel changes available sdks`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
@@ -46,7 +48,7 @@ class ProjectWizardJdkComboBoxTest {
     val jdkTable = ProjectJdkTable.getInstance()
     val javaSdkType = SimpleJavaSdkType.getInstance()
     Disposer.register(disposable) {
-      Files.delete(path)
+      path.deleteRecursively()
     }
     val sdk = jdkTable.createSdk(name, javaSdkType)
     val modificator = sdk.sdkModificator

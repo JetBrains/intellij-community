@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.impl.FoldingKeys;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -28,8 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_BITTEN_KEY;
-import static com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY;
+import static com.intellij.openapi.editor.impl.FoldingKeys.*;
 
 final class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
@@ -163,7 +163,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
       newRegions.add(region);
 
       if (descriptor.isNonExpandable()) {
-        region.putUserData(FoldingModelImpl.SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
+        region.putUserData(FoldingKeys.SELECT_REGION_ON_CARET_NEARBY, Boolean.TRUE);
       }
       else {
         boolean expandStatus;
@@ -355,7 +355,7 @@ final class UpdateFoldRegionsOperation implements Runnable {
     if (!(foldingModel instanceof FoldingModelImpl foldingModelImpl) ||
         (foldingModelImpl.getIsZombieRaised().compareAndSet(true, false))) {
       for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-        if (region.getUserData(ZOMBIE_REGION_KEY) != null) {
+        if (region.getUserData(ZOMBIE_REGION_KEY) != null && region.getUserData(AUTO_CREATED_ZOMBIE) == null) {
           if (zombieMap == null) {
             zombieMap = new HashMap<>();
             zombies = new ArrayList<>();

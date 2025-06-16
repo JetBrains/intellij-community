@@ -2,11 +2,6 @@
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-java_library(
-  name = "groovy-tests",
-  visibility = ["//visibility:public"]
-)
-
 jvm_library(
   name = "groovy-tests_test_lib",
   visibility = ["//visibility:public"],
@@ -15,6 +10,9 @@ jvm_library(
     "//plugins/groovy",
     "//plugins/groovy:groovy_test_lib",
     "//java/testFramework",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//jvm/jvm-analysis-testFramework:analysis-testFramework",

@@ -22,11 +22,12 @@ open class PyCharmCommunityProperties(protected val communityHome: Path) : PyCha
     scrambleMainJar = false
     buildSourcesArchive = true
 
-    productLayout.productApiModules = listOf("intellij.xml.dom")
+    productLayout.productApiModules = listOf()
     productLayout.productImplementationModules = listOf(
       "intellij.platform.starter",
       "intellij.pycharm.community",
-      "intellij.platform.whatsNew"
+      "intellij.platform.whatsNew",
+      "intellij.xml.impl",
     )
     productLayout.bundledPluginModules +=
       sequenceOf(

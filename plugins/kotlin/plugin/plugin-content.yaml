@@ -1,12 +1,26 @@
+- name: lib/completion-ranking-kotlin.jar
+  library: completion-ranking-kotlin
+  module: kotlin.ml-completion
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/frontend-split/kotlin-frontend.jar
   modules:
-  - name: kotlin.frontend
+  - name: kotlin.frontend.split
+- name: lib/jackson-dataformat-toml.jar
+  library: jackson-dataformat-toml
+  files:
+  - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2/jackson-dataformat-toml-2.jar
+  reason: withProjectLibrary
+- name: lib/javax-inject.jar
+  library: javax-inject
+  files:
+  - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar
+  reason: withProjectLibrary
 - name: lib/jps/kotlin-jps-plugin.jar
-  projectLibraries:
-  - name: kotlinc.kotlin-jps-plugin-classpath
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2/kotlin-jps-plugin-classpath-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.kotlin-jps-plugin-classpath
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-plugin-classpath/2/kotlin-jps-plugin-classpath-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlin-base-jps.jar
   modules:
   - name: kotlin.base.jps
@@ -32,14 +46,9 @@
   - name: kotlin.formatter.minimal
 - name: lib/kotlin-plugin.jar
   projectLibraries:
-  - name: jackson-dataformat-toml
+  - name: kotlin-metadata
     files:
-    - name: $MAVEN_REPOSITORY$/com/fasterxml/jackson/dataformat/jackson-dataformat-toml/2/jackson-dataformat-toml-2.jar
-    reason: withProjectLibrary
-  - name: javax-inject
-    files:
-    - name: $MAVEN_REPOSITORY$/javax/inject/javax.inject/1/javax.inject-1.jar
-    reason: withProjectLibrary
+    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-metadata-jvm/2/kotlin-metadata-jvm-2.jar
   - name: kotlinc.analysis-api
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-for-ide/2/analysis-api-for-ide-2.jar
@@ -82,11 +91,6 @@
   - name: kotlinc.symbol-light-classes
     files:
     - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2/symbol-light-classes-for-ide-2.jar
-  - name: vavr
-    files:
-    - name: $MAVEN_REPOSITORY$/io/vavr/vavr/0/vavr-0.jar
-    - name: $MAVEN_REPOSITORY$/io/vavr/vavr-match/0/vavr-match-0.jar
-    reason: withProjectLibrary
   modules:
   - name: kotlin.plugin.common
   - name: kotlin.plugin.k1
@@ -102,6 +106,8 @@
   - name: kotlin.base.project-structure
   - name: kotlin.base.external-build-system
   - name: kotlin.base.scripting
+  - name: kotlin.base.scripting.k1
+  - name: kotlin.base.scripting.k2
   - name: kotlin.base.analysis-api-platform
   - name: kotlin.base.analysis
   - name: kotlin.base.code-insight
@@ -164,6 +170,9 @@
   - name: kotlin.gradle.gradle-java
   - name: kotlin.gradle.gradle-java.k1
   - name: kotlin.gradle.gradle-java.k2
+  - name: kotlin.gradle.scripting.k1
+  - name: kotlin.gradle.scripting.k2
+  - name: kotlin.gradle.scripting.shared
   - name: kotlin.gradle.code-insight-groovy
   - name: kotlin.gradle.code-insight-toml
   - name: kotlin.native
@@ -181,9 +190,6 @@
   - name: kotlin.scripting
   - name: kotlin.coverage
   - name: kotlin.ml-completion
-    libraries:
-      completion-ranking-kotlin:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
   - name: kotlin.copyright
   - name: kotlin.spellchecker
   - name: kotlin.jvm-decompiler
@@ -270,6 +276,7 @@
   - name: kotlin.jsr223
   - name: kotlin.k2.internal
   - name: kotlin-ultimate.common-native
+  - name: kotlin-ultimate.native-debugger
   - name: kotlin-ultimate.javascript.debugger
   - name: kotlin-ultimate.javascript.nodeJs
   - name: kotlin-ultimate.ultimate-plugin
@@ -277,92 +284,83 @@
   - name: kotlin-ultimate.profiler
   - name: kotlin.plugin
 - name: lib/kotlinc.allopen-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.allopen-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2/allopen-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
-- name: lib/kotlinc.android-extensions-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.android-extensions-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/android-extensions-compiler-plugin-for-ide/2/android-extensions-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.allopen-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2/allopen-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.assignment-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.assignment-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2/assignment-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.assignment-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2/assignment-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.compose-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.compose-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2/compose-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.compose-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/compose-compiler-plugin-for-ide/2/compose-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.js-plain-objects-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.js-plain-objects-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2/js-plain-objects-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.js-plain-objects-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2/js-plain-objects-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-compiler-common.jar
-  projectLibraries:
-  - name: kotlinc.kotlin-compiler-common
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.kotlin-compiler-common
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2/kotlin-compiler-common-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-compiler-fe10.jar
-  projectLibraries:
-  - name: kotlinc.kotlin-compiler-fe10
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.kotlin-compiler-fe10
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fe10-for-ide/2/kotlin-compiler-fe10-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-compiler-ir.jar
-  projectLibraries:
-  - name: kotlinc.kotlin-compiler-ir
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2/kotlin-compiler-ir-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.kotlin-compiler-ir
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2/kotlin-compiler-ir-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/kotlinc.kotlin-dataframe-compiler-plugin.jar
+  library: kotlinc.kotlin-dataframe-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dataframe-compiler-plugin-for-ide/2/kotlin-dataframe-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.kotlin-jps-common.jar
-  projectLibraries:
-  - name: kotlinc.kotlin-jps-common
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2/kotlin-jps-common-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.kotlin-jps-common
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2/kotlin-jps-common-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.kotlinx-serialization-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.kotlinx-serialization-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2/kotlinx-serialization-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.kotlinx-serialization-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2/kotlinx-serialization-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.lombok-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.lombok-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2/lombok-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.lombok-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/lombok-compiler-plugin-for-ide/2/lombok-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.noarg-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.noarg-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2/noarg-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.noarg-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2/noarg-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.parcelize-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.parcelize-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2/parcelize-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.parcelize-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/2/parcelize-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.sam-with-receiver-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.sam-with-receiver-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2/sam-with-receiver-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.sam-with-receiver-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/2/sam-with-receiver-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
 - name: lib/kotlinc.scripting-compiler-plugin.jar
-  projectLibraries:
-  - name: kotlinc.scripting-compiler-plugin
-    files:
-    - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2/scripting-compiler-plugin-for-ide-2.jar
-    reason: withProjectLibrary
+  library: kotlinc.scripting-compiler-plugin
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/kotlin/scripting-compiler-plugin-for-ide/2/scripting-compiler-plugin-for-ide-2.jar
+  reason: withProjectLibrary
+- name: lib/vavr.jar
+  library: vavr
+  files:
+  - name: $MAVEN_REPOSITORY$/io/vavr/vavr/0/vavr-0.jar
+  - name: $MAVEN_REPOSITORY$/io/vavr/vavr-match/0/vavr-match-0.jar
+  reason: withProjectLibrary

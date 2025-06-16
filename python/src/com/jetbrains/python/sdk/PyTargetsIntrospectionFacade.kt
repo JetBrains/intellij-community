@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
 import com.intellij.execution.ExecutionException
@@ -11,10 +11,17 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
+import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PythonHelper
-import com.jetbrains.python.run.*
+import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.run.buildTargetedCommandLine
+import com.jetbrains.python.run.execute
+import com.jetbrains.python.run.prepareHelperScriptExecution
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 
 class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
   private val pyRequest: HelpersAwareTargetEnvironmentRequest =
@@ -34,8 +41,8 @@ class PyTargetsIntrospectionFacade(val sdk: Sdk, val project: Project) {
     // PythonExecution doesn't support launching a bare interpreter without a script or module
     val cmdBuilder = TargetedCommandLineBuilder(targetEnvRequest)
     sdk.configureBuilderToRunPythonOnTarget(cmdBuilder)
-    val sdkFlavor = sdk.sdkFlavor
-    cmdBuilder.addParameter(PythonSdkFlavor.PYTHON_VERSION_ARG)
+    sdk.sdkFlavor
+    cmdBuilder.addParameter(PYTHON_VERSION_ARG)
     val cmd = cmdBuilder.build()
 
     val environment = targetEnvRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))

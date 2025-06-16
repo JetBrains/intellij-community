@@ -2,19 +2,21 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "java-codeserver-core_resources",
+  name = "core_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "java-codeserver-core",
+  name = "core",
   module_name = "intellij.java.codeserver.core",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:jetbrains-annotations",
     "@lib//:stream_ex",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
     "//platform/util",
     "//platform/projectModel-api:projectModel",
     "//platform/indexing-api:indexing",
@@ -23,8 +25,9 @@ jvm_library(
     "//java/java-frontback-psi-api:frontback-psi",
     "//java/java-psi-api:psi",
     "//java/java-psi-impl:psi-impl",
+    "//platform/workspace/storage",
     "//java/java-indexing-api:indexing",
   ],
-  runtime_deps = [":java-codeserver-core_resources"]
+  runtime_deps = [":core_resources"]
 )
 ### auto-generated section `build intellij.java.codeserver.core` end

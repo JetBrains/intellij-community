@@ -46,8 +46,17 @@ final class JvmClassNameReferenceInjector extends ReferenceInjector {
     String className = host.evaluateToString();
     if (className == null) className = "";
 
-    return new JavaClassReferenceSet(className, element, range.getStartOffset(), false, getReferenceProvider())
-      .getReferences();
+    return new JavaClassReferenceSet(className, element, range.getStartOffset(), false, getReferenceProvider()) {
+      @Override
+      public boolean isAllowDollarInNames() {
+        return true;
+      }
+
+      @Override
+      protected boolean isStaticSeparator(char c, boolean strict) {
+        return !strict && (c == DOT || c == DOLLAR);
+      }
+    }.getReferences();
   }
 
   private static @NotNull JavaClassReferenceProvider getReferenceProvider() {

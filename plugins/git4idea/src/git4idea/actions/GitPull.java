@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 import static git4idea.GitNotificationIdsHolder.PULL_FAILED;
 import static java.util.Collections.singletonList;
 
-public class GitPull extends GitMergeAction {
+final class GitPull extends GitMergeAction {
   private static final Logger LOG = Logger.getInstance(GitPull.class);
   private static final @NonNls String INTERACTIVE = "interactive";
 
@@ -113,7 +113,7 @@ public class GitPull extends GitMergeAction {
     return INTERACTIVE.equals(value);
   }
 
-  protected @NotNull Supplier<GitLineHandler> getHandlerProvider(Project project, GitPullDialog dialog) {
+  @NotNull Supplier<GitLineHandler> getHandlerProvider(Project project, GitPullDialog dialog) {
     GitRemote remote = dialog.getSelectedRemote();
     String remoteName = remote.getName();
 

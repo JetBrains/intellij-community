@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.Nullability
@@ -230,11 +230,11 @@ object ExtractMethodHelper {
   fun guessMethodName(options: ExtractOptions): List<String> {
     val project = options.project
     val variableNames: MutableSet<String> = LinkedHashSet()
-    val codeStyleManager = JavaCodeStyleManager.getInstance(project) as JavaCodeStyleManagerImpl
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
     val returnType = options.dataOutput.type
 
     val expression = options.elements.singleOrNull() as? PsiExpression
-    if (expression != null || returnType !is PsiPrimitiveType) {
+    if (expression != null && PsiTypes.voidType() != expression.type || returnType !is PsiPrimitiveType) {
       codeStyleManager.suggestVariableName(VariableKind.FIELD, null, expression, returnType).names
         .forEach { name ->
           variableNames += codeStyleManager.variableNameToPropertyName(name, VariableKind.FIELD)

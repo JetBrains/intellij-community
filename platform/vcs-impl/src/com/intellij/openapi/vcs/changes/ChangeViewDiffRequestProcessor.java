@@ -26,10 +26,10 @@ import com.intellij.openapi.vcs.changes.actions.diff.PresentableGoToChangePopupA
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.PresentableChange;
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +68,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   /**
    * @deprecated Use {@link #iterateSelectedChanges()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.OverrideOnly
   public @NotNull Stream<? extends Wrapper> getSelectedChanges() {
     throw new UnsupportedOperationException();
@@ -77,7 +77,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   /**
    * @deprecated Use {@link #iterateAllChanges()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.OverrideOnly
   public @NotNull Stream<? extends Wrapper> getAllChanges() {
     throw new UnsupportedOperationException();
@@ -414,6 +414,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
+      if (o == null) return false;
       if (getClass() != o.getClass()) return false;
 
       Wrapper wrapper = (Wrapper)o;
@@ -484,6 +485,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
+      if (o == null) return false;
       if (getClass() != o.getClass()) return false;
 
       ChangeWrapper wrapper = (ChangeWrapper)o;

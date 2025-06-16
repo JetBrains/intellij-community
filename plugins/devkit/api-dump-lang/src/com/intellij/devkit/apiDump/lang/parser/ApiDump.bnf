@@ -46,9 +46,12 @@ File ::= ClassDeclaration*
 
 ClassDeclaration ::= ClassHeader Member* {
   methods = [ resolvePsiClass getNavigationElement ]
+  recoverWhile = consumeUntilNextLine
 }
 
-Member ::= Method | Constructor | Field | Companion | SuperType
+Member ::= Method | Constructor | Field | Companion | SuperType {
+  recoverWhile = consumeUntilNextLine
+}
 
 ClassHeader ::= Modifiers? TypeReference
 
@@ -115,3 +118,5 @@ ConstructorReference ::= LESS 'init' MORE
 SuperType ::= MINUS TypeReference
 
 Companion ::= MemberStart 'Companion' COLON TypeReference
+
+private consumeUntilNextLine ::= <<consumeUntilNextLineImpl>>

@@ -28,7 +28,7 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
-import com.intellij.xml.impl.ExternalDocumentValidator;
+import com.intellij.xml.impl.ExternalDocumentValidatorService;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -958,7 +958,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   @Override
   public void validate(@NotNull XmlDocument context, @NotNull Validator.ValidationHost host) {
-    ExternalDocumentValidator.doValidation(context,host);
+    ExternalDocumentValidatorService.getInstance().doValidation(context, host);
   }
 
   public XmlTag getTag() {

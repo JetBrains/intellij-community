@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 
 public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
@@ -151,20 +153,32 @@ public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClas
   private static PsiClass @NotNull [] getOrCalculateDirectSubClasses(@NotNull Project project,
                                                                      @NotNull PsiClass baseClass,
                                                                      @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+    List<PsiClass> sealedInheritors =
+      ReadAction.compute(() -> DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> processSealed(baseClass)));
+    if (sealedInheritors != null) {
+      if (parameters.restrictSealedHierarchy()) {
+        // Do not cache: this list is fast to compute
+        return sealedInheritors.toArray(PsiClass.EMPTY_ARRAY);
+      }
+    }
     ConcurrentMap<PsiClass, PsiClass[]> map = HighlightingCaches.getInstance(project).DIRECT_SUB_CLASSES;
     PsiClass[] cache = map.get(baseClass);
-    if (cache != null) {
-      return cache;
+    if (cache == null) {
+      final String baseClassName = ReadAction.compute(baseClass::getName);
+      if (StringUtil.isEmpty(baseClassName)) {
+        return PsiClass.EMPTY_ARRAY;
+      }
+      cache = calculateDirectSubClasses(project, baseClass, baseClassName, parameters);
+      // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
+      if (ReadAction.compute(baseClass::isPhysical)) {
+        cache = ConcurrencyUtil.cacheOrGet(map, baseClass, cache);
+      }
     }
-
-    final String baseClassName = ReadAction.compute(baseClass::getName);
-    if (StringUtil.isEmpty(baseClassName)) {
-      return PsiClass.EMPTY_ARRAY;
-    }
-    cache = calculateDirectSubClasses(project, baseClass, baseClassName, parameters);
-    // for non-physical elements ignore the cache completely because non-physical elements created so often/unpredictably so I can't figure out when to clear caches in this case
-    if (ReadAction.compute(baseClass::isPhysical)) {
-      cache = ConcurrencyUtil.cacheOrGet(map, baseClass, cache);
+    if (sealedInheritors != null) {
+      // Do not cache invalid sealed inheritors
+      return Stream.concat(sealedInheritors.stream(), Stream.of(cache))
+        .distinct()
+        .toArray(PsiClass[]::new);
     }
     return cache;
   }
@@ -186,6 +200,7 @@ public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClas
                                                                 @NotNull PsiClass baseClass,
                                                                 @NotNull String baseClassName,
                                                                 @NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+    DumbService dumbService = DumbService.getInstance(project);
     SearchScope useScope;
     CompilerDirectHierarchyInfo info = performSearchUsingCompilerIndices(parameters, project);
     useScope = ReadAction.compute(() -> {
@@ -194,7 +209,6 @@ public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClas
       return resultScope.intersectWith(info.getDirtyScope());
     });
 
-    DumbService dumbService = DumbService.getInstance(project);
     GlobalSearchScope globalUseScope = ReadAction.compute(
       () -> new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
     Collection<PsiReferenceList> candidates =
@@ -305,6 +319,36 @@ public final class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClas
       result.addAll(anonymous);
       return result.toArray(PsiClass.EMPTY_ARRAY);
     }
+  }
+
+  private static @Nullable List<PsiClass> processSealed(@NotNull PsiClass baseClass) {
+    if (!baseClass.hasModifierProperty(PsiModifier.SEALED)) return null;
+    PsiReferenceList permitsList = baseClass.getPermitsList();
+    if (permitsList == null) {
+      // all inheritors are in the current file
+      PsiFile file = baseClass.getContainingFile();
+      List<PsiClass> result = new ArrayList<>();
+      if (file instanceof PsiClassOwner owner) {
+        ArrayDeque<PsiClass> queue = new ArrayDeque<>();
+        Collections.addAll(queue, owner.getClasses());
+        while (!queue.isEmpty()) {
+          PsiClass aClass = queue.pop();
+          if (aClass.isInheritor(baseClass, false)) {
+            result.add(aClass);
+          }
+          Collections.addAll(queue, aClass.getInnerClasses());
+          for (PsiField field : aClass.getFields()) {
+            if (field instanceof PsiEnumConstant constant) {
+              ContainerUtil.addIfNotNull(queue, constant.getInitializingClass());
+            }
+          }
+        }
+      }
+      return result;
+    }
+    return Arrays.stream(permitsList.getReferencedTypes()).map(PsiClassType::resolve)
+      .filter(Predicates.nonNull())
+      .toList();
   }
 
   private static VirtualFile getJarFile(@NotNull PsiClass aClass) {

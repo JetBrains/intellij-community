@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -45,10 +46,16 @@ private class MyVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
         if (jump.getLabelName() != null) return // break or continue already has a label. It can't be ambiguous in this case
         val loop = jump.parents.filterIsInstance<KtLoopExpression>().firstOrNull() ?: return
         val loopKeyword = loop.loopKeyword ?: return
-        val problematicCallExpr = findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump)?.calleeExpression?.text ?: return
+        val ambiguousCallInfo = findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump) ?: return
+        val problematicCallExpr = ambiguousCallInfo.calleeExpression.text
+
+        val description = if (ambiguousCallInfo.isDeclaredInSourceModule)
+            KotlinBundle.message("ambiguous.non.local.break.or.continue.use.label.or.contract", jump.text, loopKeyword, problematicCallExpr, problematicCallExpr)
+        else KotlinBundle.message("ambiguous.non.local.break.or.continue.use.label", jump.text, loopKeyword, problematicCallExpr)
+
         holder.registerProblem(
             jump,
-            KotlinBundle.message("ambiguous.non.local.break.or.continue", jump.text, loopKeyword, problematicCallExpr),
+            description,
             AddLoopLabelFix(loop, jump)
         )
     }
@@ -62,30 +69,39 @@ private val KtLoopExpression.loopKeyword: String?
         else -> null
     }
 
-private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump: KtExpressionWithLabel): KtCallExpression? = jump.parents
+private class AmbiguousCallInfo(
+    val calleeExpression: KtExpression,
+    val isDeclaredInSourceModule: Boolean,
+)
+
+private fun findCallExprThatCausesUnlabeledNonLocalBreakOrContinueAmbiguity(jump: KtExpressionWithLabel): AmbiguousCallInfo? = jump.parents
     .takeWhile { it !is KtLoopExpression }
-    .mapNotNull { functionLiteral ->
-        functionLiteral.findMatchingCallExpr()?.takeIf { doesCauseAmbiguityForUnlabeledNonLocalBreakOrContinue(it, functionLiteral) }
-    }
+    .mapNotNull { checkAmbiguityForUnlabeledNonLocalBreakOrContinue(it) }
     .firstOrNull()
 
+private fun checkAmbiguityForUnlabeledNonLocalBreakOrContinue(functionLiteral: PsiElement): AmbiguousCallInfo? {
+    val callExpression = functionLiteral.findMatchingCallExpr() ?: return null
+    analyze(callExpression) {
+        val successfulCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
+        val calleeExpression = callExpression.calleeExpression as? KtReferenceExpression ?: return null
+        val lambdaParamName = successfulCall.argumentMapping[functionLiteral]?.takeIf(::isInlinedParameter)?.name ?: return null
+        val calleeExpressionSymbol = calleeExpression.mainReference.resolveToSymbol()
+            ?.let { it as? KaNamedFunctionSymbol }
+            ?.takeIf(KaNamedFunctionSymbol::isInline) ?: return null
+        if (calleeExpressionSymbol.hasNoCallsInPlaceContract(lambdaParamName)) {
+            val isDeclaredInSourceModule = calleeExpressionSymbol.containingModule is KaSourceModule
+            return AmbiguousCallInfo(calleeExpression, isDeclaredInSourceModule)
+        }
+    }
+    return null
+}
+
 @OptIn(KaExperimentalApi::class)
-private fun doesCauseAmbiguityForUnlabeledNonLocalBreakOrContinue(callExpr: KtCallExpression, functionLiteral: PsiElement): Boolean =
-    true == analyze(callExpr) {
-        callExpr.resolveToCall()?.successfulCallOrNull<KaFunctionCall<*>>()?.argumentMapping?.get(functionLiteral)
-            ?.takeIf(::isInlinedParameter)
-            ?.name
-            ?.let { lambdaParameterName ->
-                (callExpr.calleeExpression as? KtReferenceExpression)?.mainReference?.resolveToSymbol()
-                    ?.let { it as? KaNamedFunctionSymbol }
-                    ?.takeIf(KaNamedFunctionSymbol::isInline)
-                    ?.contractEffects
-                    ?.none {
-                        it is KaContractCallsInPlaceContractEffectDeclaration &&
-                                (it.valueParameterReference.symbol as? KaValueParameterSymbol)?.name == lambdaParameterName &&
-                                it.occurrencesRange in setOf(AT_MOST_ONCE, EXACTLY_ONCE)
-                    }
-            }
+private fun KaNamedFunctionSymbol.hasNoCallsInPlaceContract(lambdaParameterName: Name): Boolean =
+    contractEffects.none {
+        it is KaContractCallsInPlaceContractEffectDeclaration
+                && (it.valueParameterReference.symbol as? KaValueParameterSymbol)?.name == lambdaParameterName
+                && it.occurrencesRange in setOf(AT_MOST_ONCE, EXACTLY_ONCE)
     }
 
 private fun PsiElement.findMatchingCallExpr(): KtCallExpression? =

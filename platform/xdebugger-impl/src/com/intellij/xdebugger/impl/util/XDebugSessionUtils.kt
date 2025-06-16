@@ -9,15 +9,10 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun XDebugSession.advise(listener: XDebugSessionListener) {
-  addSessionListener(listener)
-}
-
-@ApiStatus.Internal
-fun XDebugSession.adviseOnFrameChanged(action: (XExecutionStack, XStackFrame) -> Unit) {
-  advise(object : XDebugSessionListener {
+fun XDebugSession.notifyOnFrameChanged(action: (XExecutionStack, XStackFrame) -> Unit) {
+  addSessionListener(object : XDebugSessionListener {
     override fun stackFrameChanged() {
-      val session = (this@adviseOnFrameChanged as? XDebugSessionImpl) ?: return
+      val session = (this@notifyOnFrameChanged as? XDebugSessionImpl) ?: return
       val currentExecutionStack = session.currentExecutionStack ?: return
       action(currentExecutionStack, currentStackFrame ?: return)
     }
@@ -25,36 +20,36 @@ fun XDebugSession.adviseOnFrameChanged(action: (XExecutionStack, XStackFrame) ->
 }
 
 @ApiStatus.Internal
-fun XDebugSession.adviseOnSessionPaused(action: () -> Unit) {
-  advise(object : XDebugSessionListener {
+fun XDebugSession.notifyOnSessionPaused(action: () -> Unit) {
+  addSessionListener(object : XDebugSessionListener {
     override fun sessionPaused() = action()
   })
 }
 
 @ApiStatus.Internal
-fun XDebugSession.adviseOnSessionResumed(action: () -> Unit) {
-  advise(object : XDebugSessionListener {
+fun XDebugSession.notifyOnSessionResumed(action: () -> Unit) {
+  addSessionListener(object : XDebugSessionListener {
     override fun sessionResumed() = action()
   })
 }
 
 @ApiStatus.Internal
-fun XDebugSession.adviseOnSessionStopped(action: () -> Unit) {
-  advise(object : XDebugSessionListener {
+fun XDebugSession.notifyOnSessionStopped(action: () -> Unit) {
+  addSessionListener(object : XDebugSessionListener {
     override fun sessionStopped() = action()
   })
 }
 
 @ApiStatus.Internal
-fun XDebugSession.adviseOnBeforeSessionResume(action: () -> Unit) {
-  advise(object : XDebugSessionListener {
+fun XDebugSession.notifyOnBeforeSessionResume(action: () -> Unit) {
+  addSessionListener(object : XDebugSessionListener {
     override fun beforeSessionResume() = action()
   })
 }
 
 @ApiStatus.Internal
-fun XDebugSession.adviseOnSettingsChanged(action: () -> Unit) {
-  advise(object : XDebugSessionListener {
+fun XDebugSession.notifyOnSettingsChanged(action: () -> Unit) {
+  addSessionListener(object : XDebugSessionListener {
     override fun settingsChanged() = action()
   })
 }

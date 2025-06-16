@@ -1,10 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ijent
 
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.platform.eel.EelPosixProcess
+import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.provider.utils.asOutputStream
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
-import com.intellij.platform.ijent.IjentChildProcess
 import com.intellij.platform.ijent.spi.IjentThreadPool
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.*
@@ -17,7 +19,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal class IjentChildProcessAdapterDelegate(
   val coroutineScope: CoroutineScope,
-  val ijentChildProcess: IjentChildProcess,
+  val ijentChildProcess: EelProcess,
 ) {
   val inputStream: InputStream = ijentChildProcess.stdout.consumeAsInputStream(coroutineScope.coroutineContext)
 
@@ -62,7 +64,10 @@ internal class IjentChildProcessAdapterDelegate(
 
   fun destroy() {
     coroutineScope.launch {
-      ijentChildProcess.terminate()
+      when (ijentChildProcess) {
+        is EelPosixProcess -> ijentChildProcess.terminate()
+        is EelWindowsProcess -> ijentChildProcess.kill()
+      }
     }
   }
 
@@ -80,4 +85,10 @@ internal class IjentChildProcessAdapterDelegate(
     }
     return true
   }
+
+  fun supportsNormalTermination(): Boolean =
+    when (ijentChildProcess) {
+      is EelPosixProcess -> true
+      is EelWindowsProcess -> false
+    }
 }

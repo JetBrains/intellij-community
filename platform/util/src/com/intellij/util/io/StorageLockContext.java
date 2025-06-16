@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -28,7 +28,6 @@ import static com.intellij.util.io.PageCacheUtils.*;
  */
 @ApiStatus.Internal
 public final class StorageLockContext {
-
   private static final FilePageCache DEFAULT_FILE_PAGE_CACHE = new FilePageCache(FILE_PAGE_CACHE_OLD_CAPACITY_BYTES);
   private static final @Nullable FilePageCacheLockFree DEFAULT_FILE_PAGE_CACHE_NEW = LOCK_FREE_PAGE_CACHE_ENABLED ?
                                                                                      new FilePageCacheLockFree(
@@ -68,7 +67,7 @@ public final class StorageLockContext {
   }
 
   @VisibleForTesting
-  StorageLockContext(@Nullable FilePageCacheLockFree newFilePageCache,
+  public StorageLockContext(@Nullable FilePageCacheLockFree newFilePageCache,
                      boolean useReadWriteLock,
                      boolean cacheChannels,
                      boolean disableAssertions) {
@@ -166,14 +165,12 @@ public final class StorageLockContext {
     lock.writeLock().unlock();
   }
 
-  @ApiStatus.Internal
-  @NotNull
-  FilePageCache getBufferCache() {
+  @VisibleForTesting
+  public @NotNull FilePageCache getBufferCache() {
     return legacyFilePageCache;
   }
 
   /** @throws UnsupportedOperationException if new FilePageCache implementation is absent (disabled) */
-  @ApiStatus.Internal
   public @NotNull FilePageCacheLockFree pageCache() {
     if (newFilePageCache == null) {
       if (LOCK_FREE_PAGE_CACHE_ENABLED) {
@@ -192,7 +189,6 @@ public final class StorageLockContext {
     return defaultPageContentLockingStrategy;
   }
 
-  @ApiStatus.Internal
   public void checkWriteAccess() {
     if (!disableAssertions && IndexDebugProperties.DEBUG) {
       if (lock.writeLock().isHeldByCurrentThread()) return;
@@ -200,7 +196,6 @@ public final class StorageLockContext {
     }
   }
 
-  @ApiStatus.Internal
   public void checkReadAccess() {
     if (!disableAssertions && IndexDebugProperties.DEBUG) {
       if (lock.getReadHoldCount() > 0 || lock.writeLock().isHeldByCurrentThread()) return;
@@ -217,7 +212,6 @@ public final class StorageLockContext {
     }
   }
 
-  @ApiStatus.Internal
   public int readLockHolds() {
     return lock.getReadHoldCount();
   }
@@ -228,33 +222,27 @@ public final class StorageLockContext {
     }
   }
 
-  @ApiStatus.Internal
   public static void forceDirectMemoryCache() {
     DEFAULT_FILE_PAGE_CACHE.flushBuffers();
   }
 
-  @ApiStatus.Internal
   public static @NotNull FilePageCacheStatistics getStatistics() {
     return DEFAULT_FILE_PAGE_CACHE.getStatistics();
   }
 
-  @ApiStatus.Internal
   public static @Nullable com.intellij.util.io.pagecache.FilePageCacheStatistics getNewCacheStatistics() {
     return DEFAULT_FILE_PAGE_CACHE_NEW != null ? DEFAULT_FILE_PAGE_CACHE_NEW.getStatistics() : null;
   }
 
-  @ApiStatus.Internal
   public static void assertNoBuffersLocked() {
     DEFAULT_FILE_PAGE_CACHE.assertNoBuffersLocked();
   }
 
-  @ApiStatus.Internal
   public static long getCacheMaxSize() {
     return DEFAULT_FILE_PAGE_CACHE.getMaxSize();
   }
 
   /** for monitoring purposes only */
-  @ApiStatus.Internal
   public static ReentrantReadWriteLock defaultContextLock() {
     return DEFAULT_CONTEXT.lock;
   }

@@ -6,18 +6,17 @@ import com.intellij.debugger.memory.filtering.ClassInstancesProvider
 import com.intellij.debugger.memory.ui.InstancesWindow
 import com.intellij.java.debugger.impl.shared.rpc.JavaDebuggerLuxActionsApi
 import com.intellij.openapi.application.EDT
-import com.intellij.xdebugger.impl.rhizome.XValueEntity
+import com.intellij.xdebugger.impl.rpc.models.BackendXValueModel
 import com.intellij.xdebugger.impl.rpc.XValueId
-import com.jetbrains.rhizomedb.entity
 import com.sun.jdi.ReferenceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 internal class BackendJavaDebuggerLuxActionsApi : JavaDebuggerLuxActionsApi {
   override suspend fun showInstancesDialog(xValueId: XValueId) {
-    val xValueEntity = entity(XValueEntity.XValueId, xValueId) ?: return
-    val xValue = xValueEntity.xValue
-    val session = xValueEntity.sessionEntity.session
+    val xValueModel = BackendXValueModel.findById(xValueId) ?: return
+    val xValue = xValueModel.xValue
+    val session = xValueModel.session
     val objectRef = DebuggerTreeAction.getObjectReference(xValue) ?: return
     val referenceType: ReferenceType = objectRef.referenceType()
     withContext(Dispatchers.EDT) {

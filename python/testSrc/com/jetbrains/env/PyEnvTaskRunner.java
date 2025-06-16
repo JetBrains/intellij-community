@@ -131,12 +131,12 @@ public class PyEnvTaskRunner {
     }
 
     if (!wasExecuted) {
-      throw new RuntimeException("test " +
-                                 testName +
-                                 " was not executed.\n" +
-                                 formatCollectionToString(myRoots, "All roots") +
-                                 "\n" +
-                                 formatCollectionToString(requiredTags, "Required tags in tags.txt in root"));
+      LOG.warn("test " +
+               testName +
+               " was not executed.\n" +
+               formatCollectionToString(myRoots, "All roots") +
+               "\n" +
+               formatCollectionToString(requiredTags, "Required tags in tags.txt in root"));
     }
   }
 

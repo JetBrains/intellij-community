@@ -3,8 +3,26 @@ package org.jetbrains.plugins.javaFX.wizard
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
-import com.intellij.ide.starters.local.*
-import com.intellij.ide.starters.shared.*
+import com.intellij.ide.starters.local.DependencyConfig
+import com.intellij.ide.starters.local.GeneratorAsset
+import com.intellij.ide.starters.local.GeneratorTemplateFile
+import com.intellij.ide.starters.local.Library
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.starters.local.Starter
+import com.intellij.ide.starters.local.StarterModuleBuilder
+import com.intellij.ide.starters.local.StarterPack
+import com.intellij.ide.starters.shared.CustomizedMessages
+import com.intellij.ide.starters.shared.GRADLE_PROJECT
+import com.intellij.ide.starters.shared.GROOVY_STARTER_LANGUAGE
+import com.intellij.ide.starters.shared.JAVA_STARTER_LANGUAGE
+import com.intellij.ide.starters.shared.JUNIT_TEST_RUNNER
+import com.intellij.ide.starters.shared.KOTLIN_STARTER_LANGUAGE
+import com.intellij.ide.starters.shared.LibraryLink
+import com.intellij.ide.starters.shared.LibraryLinkType
+import com.intellij.ide.starters.shared.MAVEN_PROJECT
+import com.intellij.ide.starters.shared.StarterLanguage
+import com.intellij.ide.starters.shared.StarterProjectType
+import com.intellij.ide.starters.shared.StarterTestRunner
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
@@ -89,6 +107,7 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
     files.add("src/main/resources/${packagePath}/hello-view.fxml")
     files.add("src/main/${samplesLanguage}/${packagePath}/HelloController.${samplesExt}")
     files.add("src/main/${samplesLanguage}/${packagePath}/HelloApplication.${samplesExt}")
+    files.add("src/main/${samplesLanguage}/${packagePath}/Launcher.${samplesExt}")
 
     return files
   }
@@ -160,6 +179,8 @@ internal class JavaFxModuleBuilder : StarterModuleBuilder() {
                                        ftManager.getJ2eeTemplate(JavaFxModuleTemplateGroup.JAVAFX_MODULE_INFO_JAVA)))
     }
 
+    assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/${packagePath}/Launcher.${samplesExt}",
+                                     ftManager.getJ2eeTemplate("javafx-Launcher-${samplesLanguage}.${samplesExt}")))
     assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/${packagePath}/HelloApplication.${samplesExt}",
                                      ftManager.getJ2eeTemplate("javafx-HelloApplication-${samplesLanguage}.${samplesExt}")))
     assets.add(GeneratorTemplateFile("src/main/${samplesLanguage}/${packagePath}/HelloController.${samplesExt}",

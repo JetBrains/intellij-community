@@ -24,43 +24,43 @@ interface KotlinForwardDeclarationsWorkspaceEntity : WorkspaceEntity {
     val forwardDeclarationRoots: Set<VirtualFileUrl>
     val library: LibraryEntity
 
-    //region generated code
-    @GeneratedCodeApiVersion(3)
-    interface Builder : WorkspaceEntity.Builder<KotlinForwardDeclarationsWorkspaceEntity> {
-        override var entitySource: EntitySource
-        var forwardDeclarationRoots: MutableSet<VirtualFileUrl>
-        var library: LibraryEntity.Builder
-    }
+  //region generated code
+  @GeneratedCodeApiVersion(3)
+  interface Builder : WorkspaceEntity.Builder<KotlinForwardDeclarationsWorkspaceEntity> {
+    override var entitySource: EntitySource
+    var forwardDeclarationRoots: MutableSet<VirtualFileUrl>
+    var library: LibraryEntity.Builder
+  }
 
-    companion object : EntityType<KotlinForwardDeclarationsWorkspaceEntity, Builder>() {
-        @JvmOverloads
-        @JvmStatic
-        @JvmName("create")
-        operator fun invoke(
-            forwardDeclarationRoots: Set<VirtualFileUrl>,
-            entitySource: EntitySource,
-            init: (Builder.() -> Unit)? = null,
-        ): Builder {
-            val builder = builder()
-            builder.forwardDeclarationRoots = forwardDeclarationRoots.toMutableWorkspaceSet()
-            builder.entitySource = entitySource
-            init?.invoke(builder)
-            return builder
-        }
+  companion object : EntityType<KotlinForwardDeclarationsWorkspaceEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(
+      forwardDeclarationRoots: Set<VirtualFileUrl>,
+      entitySource: EntitySource,
+      init: (Builder.() -> Unit)? = null,
+    ): Builder {
+      val builder = builder()
+      builder.forwardDeclarationRoots = forwardDeclarationRoots.toMutableWorkspaceSet()
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
     }
-    //endregion
+  }
+  //endregion
 }
 
 //region generated code
 fun MutableEntityStorage.modifyKotlinForwardDeclarationsWorkspaceEntity(
-    entity: KotlinForwardDeclarationsWorkspaceEntity,
-    modification: KotlinForwardDeclarationsWorkspaceEntity.Builder.() -> Unit,
+  entity: KotlinForwardDeclarationsWorkspaceEntity,
+  modification: KotlinForwardDeclarationsWorkspaceEntity.Builder.() -> Unit,
 ): KotlinForwardDeclarationsWorkspaceEntity {
-    return modifyEntity(KotlinForwardDeclarationsWorkspaceEntity.Builder::class.java, entity, modification)
+  return modifyEntity(KotlinForwardDeclarationsWorkspaceEntity.Builder::class.java, entity, modification)
 }
 
 var LibraryEntity.Builder.kotlinForwardDeclarationsWorkspaceEntity: @Child KotlinForwardDeclarationsWorkspaceEntity.Builder?
-        by WorkspaceEntity.extensionBuilder(KotlinForwardDeclarationsWorkspaceEntity::class.java)
+  by WorkspaceEntity.extensionBuilder(KotlinForwardDeclarationsWorkspaceEntity::class.java)
 //endregion
 
 val LibraryEntity.kotlinForwardDeclarationsWorkspaceEntity: @Child KotlinForwardDeclarationsWorkspaceEntity?

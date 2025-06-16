@@ -130,6 +130,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
             val indexesCleanupJob = scanAndIndexProjectAfterOpen(
               project = project,
               orphanQueue = registeredIndexes.orphanDirtyFilesQueue,
+              orphanQueueDiscardReason = registeredIndexes.orphanDirtyFilesQueueDiscardReason,
               additionalOrphanDirtyFiles = emptySet(),
               projectDirtyFilesQueue = projectDirtyFilesQueue,
 

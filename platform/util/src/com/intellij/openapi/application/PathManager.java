@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.SystemInfoRt;
@@ -484,6 +484,8 @@ public final class PathManager {
     LINUX,
     WINDOWS,
     MACOS,
+    // placeholder for BSD-like systems
+    GENERIC_UNIX,
   }
 
   @ApiStatus.Internal
@@ -496,6 +498,9 @@ public final class PathManager {
     }
     else if (SystemInfoRt.isLinux) {
       return OS.LINUX;
+    }
+    else if (SystemInfoRt.isUnix) {
+      return OS.GENERIC_UNIX;
     }
     else {
       throw new UnsupportedOperationException("Unsupported OS:" + SystemInfoRt.OS_NAME);
@@ -951,7 +956,7 @@ public final class PathManager {
       return dir;
     }
 
-    if (os == OS.LINUX) {
+    if (os == OS.LINUX || os == OS.GENERIC_UNIX) {
       return getUnixPlatformPath(userHome, selector, xdgVar, xdgDfl, xdgSub);
     }
 
@@ -967,6 +972,7 @@ public final class PathManager {
     return dir;
   }
 
+  @NotNull
   private static String vendorName() {
     String property = System.getProperty(PROPERTY_VENDOR_NAME);
     if (property == null) {
@@ -978,7 +984,10 @@ public final class PathManager {
         property = (String)lookup.findVirtual(impl, "getShortCompanyName", MethodType.methodType(String.class)).invoke(instance);
       }
       catch (Throwable ignored) { }
-      System.setProperty(PROPERTY_VENDOR_NAME, property != null ? property : "JetBrains");
+      if (property == null) {
+        property = "JetBrains";
+      }
+      System.setProperty(PROPERTY_VENDOR_NAME, property);
     }
     return property;
   }

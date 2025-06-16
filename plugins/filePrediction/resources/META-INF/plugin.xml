@@ -5,7 +5,9 @@
   <resource-bundle>messages.FilePredictionBundle</resource-bundle>
 
   <description><![CDATA[Predicts next file which will be open in IDE to start long running analysis and pre-load caches.]]></description>
-
+  <dependencies>
+    <module name="intellij.platform.ml.impl"/>
+  </dependencies>
   <depends optional="true" config-file="file-prediction-java.xml">com.intellij.java</depends>
   <depends optional="true" config-file="file-prediction-vcs.xml">Git4Idea</depends>
 

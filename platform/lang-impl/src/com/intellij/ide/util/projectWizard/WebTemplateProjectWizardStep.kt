@@ -4,6 +4,7 @@ package com.intellij.ide.util.projectWizard
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.wizard.AbstractNewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
+import com.intellij.ide.wizard.setupProjectFromBuilder
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyValue
@@ -11,7 +12,6 @@ import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import javax.swing.JLabel
 
@@ -46,23 +46,13 @@ open class WebTemplateProjectWizardStep<T>(
   }
 
   override fun setupProject(project: Project) {
-    webModuleBuilder().commitModule(project, null)
-  }
-
-  private fun webModuleBuilder(): WebModuleBuilder<T> {
     val moduleName = parent.name
     val projectPath = Path.of(parent.path, moduleName)
-
-    return WebModuleBuilder(template, peer).apply {
-      contentEntryPath = projectPath.toString()
-      moduleFilePath = projectPath.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION).toString()
-      name = moduleName
-    }
-  }
-
-  @ApiStatus.Internal
-  override fun createProjectConfigurator(): ProjectConfigurator? {
-    return webModuleBuilder().createProjectConfigurator()
+    val builder = WebModuleBuilder(template, peer)
+    builder.contentEntryPath = projectPath.toString()
+    builder.moduleFilePath = projectPath.resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION).toString()
+    builder.name = moduleName
+    setupProjectFromBuilder(project, builder)
   }
 
   init {

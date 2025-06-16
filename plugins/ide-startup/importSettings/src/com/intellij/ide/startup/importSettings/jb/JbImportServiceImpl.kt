@@ -39,7 +39,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.time.LocalDate
 import java.time.ZoneId
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -61,20 +60,21 @@ internal data class JbProductInfo(
 ) : Product {
   override val origin = SettingsImportOrigin.JetBrainsProduct
   private val descriptorsMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
-  private val descriptors2ProcessCnt = AtomicInteger()
+  private val descriptorsPrefetchTask = AtomicReference<Deferred<Unit>>()
   private var keymapRef: AtomicReference<String> = AtomicReference()
   val activeKeymap: String?
     get() = keymapRef.get()
 
   val nonDefaultName: Boolean = !JbImportServiceImpl.IDE_NAME_PATTERN.matcher(configDir.name).matches()
 
-  internal fun prefetchData(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
+  internal fun prefetchData(coroutineScope: CoroutineScope, context: PluginDescriptorLoadingContext) {
     prefetchPluginDescriptors(coroutineScope, context)
+      .let { descriptorsPrefetchTask.set(it) }
     prefetchKeymap(coroutineScope)
   }
 
   private fun prefetchKeymap(coroutineScope: CoroutineScope) {
-    coroutineScope.async {
+    coroutineScope.async(CoroutineName("Keymap prefetch")) {
       val keymapFilePath = configDir.resolve("${PathManager.OPTIONS_DIRECTORY}/${getPerOsSettingsStorageFolderName()}/${KeymapManagerImpl.KEYMAP_STORAGE}")
       if (keymapFilePath.exists()) {
         val element = JDOMUtil.load(keymapFilePath)
@@ -91,31 +91,25 @@ internal data class JbProductInfo(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
-    logger.debug("Prefetching plugin descriptors from $pluginDir")
-    val descriptorDeferreds = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
-    descriptors2ProcessCnt.set(descriptorDeferreds.size)
-    logger.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
-    val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
-    val disabledPlugins = if (Files.exists(disabledPluginsFile)) tryReadPluginIdsFromFile(disabledPluginsFile, logger) else setOf()
-    for (def in descriptorDeferreds) {
-      def.invokeOnCompletion {
-        val descr = def.getCompleted()
-        if (descr != null) {
-          if (disabledPlugins.contains(descr.pluginId)) {
-            logger.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
-          }
-          else {
-            descriptorsMap[descr.pluginId] = descr
-          }
+  private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: PluginDescriptorLoadingContext): Deferred<Unit> {
+    return coroutineScope.async(CoroutineName("Plugins prefetch")) {
+      logger.debug("Prefetching plugin descriptors from $pluginDir")
+      val descriptorsDeferred = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
+      val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
+      val disabledPlugins = if (Files.exists(disabledPluginsFile)) PluginStringSetFile.readIdsSafe(disabledPluginsFile, logger) else setOf()
+      val descriptors = descriptorsDeferred.await().plugins
+      logger.debug { "There are ${descriptors.size} plugins in $pluginDir" }
+      for (descr in descriptors) {
+        if (disabledPlugins.contains(descr.pluginId)) {
+          logger.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
         }
-        if (descriptors2ProcessCnt.decrementAndGet() == 0) {
-          // checking for plugins compatibility:
-          for (entry in descriptorsMap) {
-            if (!isCompatible(entry.value)) {
-              descriptorsMap.remove(entry.key)
-            }
-          }
+        else {
+          descriptorsMap[descr.pluginId] = descr
+        }
+      }
+      for ((id, descriptor) in descriptorsMap) {
+        if (!isCompatible(descriptor)) {
+          descriptorsMap.remove(id)
         }
       }
     }
@@ -128,7 +122,7 @@ internal data class JbProductInfo(
     }
 
     // check for incompatibilities
-    for (ic in descriptor.incompatibilities) {
+    for (ic in descriptor.incompatiblePlugins) {
       if (PluginManagerCore.getPluginSet().isPluginEnabled(ic)) {
         logger.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
                                      "because it is incompatible with ${ic}")
@@ -137,7 +131,7 @@ internal data class JbProductInfo(
     }
 
     // check for missing dependencies
-    for (dependency in descriptor.pluginDependencies) {
+    for (dependency in descriptor.dependencies) {
       if (dependency.isOptional)
         continue
       if (!(PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId) || descriptorsMap.containsKey(dependency.pluginId))) {
@@ -146,12 +140,13 @@ internal data class JbProductInfo(
         return false
       }
     }
+    // FIXME v2 plugin dependencies are not checked
     return true
   }
 
   fun getPluginsDescriptors(): ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl> {
-    if (descriptors2ProcessCnt.get() != 0) {
-      logger.warn("There are $descriptors2ProcessCnt custom plugins that are not yet processed!")
+    if (descriptorsPrefetchTask.get()?.isCompleted != true) {
+      logger.warn("Plugins prefetch is still in progress!")
     }
     return descriptorsMap
   }
@@ -273,9 +268,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       PathManager.getConfigDir().parent,
       PathManager.getConfigDir().fileSystem.getPath(PathManager.getDefaultConfigPathFor("X")).parent
     )
-    val context = DescriptorListLoadingContext(customDisabledPlugins = Collections.emptySet(),
-                                               customBrokenPluginVersions = emptyMap(),
-                                               productBuildNumber = { PluginManagerCore.buildNumber })
+    val context = PluginDescriptorLoadingContext(getBuildNumberForDefaultDescriptorVersion = { PluginManagerCore.buildNumber })
     for (parentDir in parentDirs) {
       if (!parentDir.exists() || !parentDir.isDirectory()) {
         logger.info("Parent dir $parentDir doesn't exist or not a directory. Skipping it")
@@ -350,9 +343,9 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val productInfo = products[itemId] ?: error("Can't find product")
     val plugins = arrayListOf<ChildSetting>()
     val pluginNames = arrayListOf<String>()
-    for (entry in productInfo.getPluginsDescriptors()) {
-      plugins.add(JbChildSetting(entry.key.idString, entry.value.name))
-      pluginNames.add(entry.value.name)
+    for ((id, descriptor) in productInfo.getPluginsDescriptors()) {
+      plugins.add(JbChildSetting(id.idString, descriptor.name))
+      pluginNames.add(descriptor.name)
     }
     logger.info("Found ${pluginNames.size} custom plugins: ${pluginNames.joinToString()}")
     val pluginsCategory = JbSettingsCategoryConfigurable(SettingsCategory.PLUGINS, StartupImportIcons.Icons.Plugin,

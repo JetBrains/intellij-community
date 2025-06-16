@@ -2,7 +2,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.java.parser.BasicExpressionParser;
+import com.intellij.lang.java.parser.JavaBinaryOperations;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -117,13 +117,13 @@ public final class ReplaceExpressionUtil {
       else if (opType == JavaTokenType.LT || opType == JavaTokenType.GT || opType == JavaTokenType.LE || opType == JavaTokenType.GE) {
         return 8;
       }
-      else if (BasicExpressionParser.SHIFT_OPS.contains(opType)) {
+      else if (JavaBinaryOperations.SHIFT_OPS.contains(opType)) {
         return 9;
       }
-      else if (BasicExpressionParser.ADDITIVE_OPS.contains(opType)) {
+      else if (JavaBinaryOperations.ADDITIVE_OPS.contains(opType)) {
         return 10;
       }
-      else if (BasicExpressionParser.MULTIPLICATIVE_OPS.contains(opType)) {
+      else if (JavaBinaryOperations.MULTIPLICATIVE_OPS.contains(opType)) {
         return 11;
       }
       return 8;

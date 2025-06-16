@@ -3,13 +3,13 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighers
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -28,6 +28,14 @@ class KotlinFirCompletionContributor : CompletionContributor() {
             KDocTagCompletionProvider
         )
         extend(CompletionType.BASIC, psiElement(KDocTokens.TAG_NAME), KDocTagCompletionProvider)
+
+        if (RegistryManager.getInstance().`is`("kotlin.k2.smart.completion.enabled")) {
+            extend(
+                CompletionType.SMART,
+                psiElement(),
+                KotlinFirCompletionProvider,
+            )
+        }
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {
@@ -68,17 +76,18 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     ) {
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
             ?: return
+        val position = parameters.position
 
-        if (shouldSuppressCompletion(parameters, result.prefixMatcher)) return
-        val positionContext = KotlinPositionContextDetector.detect(parameters.position)
-
-        val resultSet = result.withRelevanceSorter(parameters, positionContext)
-            .withPrefixMatcher(parameters)
+        // no completion inside number literals
+        if (AFTER_NUMBER_LITERAL.accepts(position)) return
+        val positionContext = KotlinPositionContextDetector.detect(position)
 
         Completions.complete(
             parameters = parameters,
             positionContext = positionContext,
-            sink = LookupElementSink(resultSet, parameters),
+            resultSet = result
+                .withRelevanceSorter(parameters, positionContext)
+                .withPrefixMatcher(parameters),
         )
     }
 
@@ -109,24 +118,4 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         PsiJavaPatterns.psiElement().withText(""),
         PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
     )
-    private val AFTER_INTEGER_LITERAL_AND_DOT = PsiJavaPatterns.psiElement().afterLeafSkipping(
-        PsiJavaPatterns.psiElement().withText("."),
-        PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.INTEGER_LITERAL))
-    )
-
-    private fun shouldSuppressCompletion(
-        parameters: KotlinFirCompletionParameters,
-        prefixMatcher: PrefixMatcher
-    ): Boolean {
-        val position = parameters.position
-        val invocationCount = parameters.invocationCount
-
-        // no completion inside number literals
-        if (AFTER_NUMBER_LITERAL.accepts(position)) return true
-
-        // no completion auto-popup after integer and dot
-        if (invocationCount == 0 && prefixMatcher.prefix.isEmpty() && AFTER_INTEGER_LITERAL_AND_DOT.accepts(position)) return true
-
-        return false
-    }
 }

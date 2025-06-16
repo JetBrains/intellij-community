@@ -20,17 +20,21 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.util.*
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRCompactReviewThreadViewModel.CommentItem
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadCommentComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHPRReviewThreadViewModel
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
@@ -53,7 +57,7 @@ internal object GHPRReviewEditorComponentsFactory {
       }
     }
 
-    return VerticalListPanel().apply {
+    return UiDataProvider.wrapComponent(VerticalListPanel().apply {
       name = "GitHub Thread in Editor Panel ${vm.id}"
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
       add(commentsPanel)
@@ -68,9 +72,17 @@ internal object GHPRReviewEditorComponentsFactory {
           }
         }
       }
+
+      isFocusable = true
+
+      launchOnShow("focusRequests") {
+        vm.focusRequests.collectLatest { requestFocus(false) }
+      }
     }.let {
       CodeReviewCommentUIUtil.createEditorInlayPanel(it)
-    }
+    }, UiDataProvider { sink ->
+      sink[GHPRReviewThreadViewModel.THREAD_VM_DATA_KEY] = vm
+    })
   }
 
   private fun CoroutineScope.createReplyActionsPanel(vm: GHPRCompactReviewThreadViewModel): JComponent {
@@ -151,8 +163,10 @@ internal object GHPRReviewEditorComponentsFactory {
     return CodeReviewCommentUIUtil.createEditorInlayPanel(editor)
   }
 
-  private fun CoroutineScope.createUiAction(vm: GHPRReviewNewCommentEditorViewModel,
-                                            action: GHPRReviewNewCommentEditorViewModel.SubmitAction?): Action {
+  private fun CoroutineScope.createUiAction(
+    vm: GHPRReviewNewCommentEditorViewModel,
+    action: GHPRReviewNewCommentEditorViewModel.SubmitAction?,
+  ): Action {
     val cs = this
     return when (action) {
       is GHPRReviewNewCommentEditorViewModel.SubmitAction.CreateReview ->

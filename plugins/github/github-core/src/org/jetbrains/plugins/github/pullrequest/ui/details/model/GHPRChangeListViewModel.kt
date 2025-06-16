@@ -17,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.threadsComputationFlow
 import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputationState
@@ -39,7 +40,8 @@ internal class GHPRChangeListViewModelImpl(
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
   changes: CodeReviewChangesContainer,
-  changeList: CodeReviewChangeList
+  changeList: CodeReviewChangeList,
+  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRChangeListViewModel, CodeReviewChangeListViewModelBase(parentCs, changeList) {
   private val preferences = GithubPullRequestsProjectUISettings.getInstance(project)
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
@@ -59,7 +61,7 @@ internal class GHPRChangeListViewModelImpl(
   override val grouping: StateFlow<Set<String>> = preferences.changesGroupingState
 
   override fun showDiffPreview() {
-    dataContext.filesManager.createAndOpenDiffFile(dataProvider.id, true)
+    openPullRequestDiff(dataProvider.id, true)
   }
 
   override fun showDiff() {

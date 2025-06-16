@@ -15,7 +15,6 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
-import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.*;
@@ -52,7 +51,6 @@ public class PyGotoSymbolContributor implements GotoClassContributor, ChooseByNa
     PsiManager psiManager = PsiManager.getInstance(project);
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       if (!fileIndex.getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
-        if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
         PsiFile psiFile = psiManager.findFile(file);
         return !(psiFile instanceof PyFile) || processor.process(psiFile);
       }, scope)) return;

@@ -6,9 +6,12 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.core.JavaPreviewFeatureUtil;
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
+import com.intellij.java.codeserver.core.JpmsModuleAccessInfo;
 import com.intellij.java.codeserver.highlighting.JavaCompilationErrorBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Parameterized;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKind.Simple;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -57,7 +60,7 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiElement, @NotNull JavaFeature> UNSUPPORTED_FEATURE =
     parameterized(PsiElement.class, JavaFeature.class, "insufficient.language.level")
-      .withRawDescription((element, feature) -> {
+      .withDescription((element, feature) -> {
         String name = feature.getFeatureName();
         String version = JavaSdkVersion.fromLanguageLevel(PsiUtil.getLanguageLevel(element)).getDescription();
         return message("insufficient.language.level", name, version);
@@ -73,14 +76,28 @@ public final class JavaErrorKinds {
       .withRange((psi, range) -> range);
   public static final Parameterized<PsiElement, @NotNull Character> ILLEGAL_CHARACTER =
     parameterized(PsiElement.class, Character.class, "illegal.character")
-      .withRawDescription((e, c) -> {
+      .withDescription((e, c) -> {
         boolean printable = StringUtil.isPrintableUnicode(c) && !Character.isSpaceChar(c);
         @NlsSafe String hex = String.format("U+%04X", (int)c);
         return message("illegal.character", printable ? c + " (" + hex + ")" : hex);
       });
+  public static final Simple<PsiErrorElement> SYNTAX_ERROR =
+    error(PsiErrorElement.class, "syntax.error")
+      .withRange(e -> {
+        TextRange range = e.getTextRange();
+        if (range.getLength() == 0) {
+          PsiFile file = e.getContainingFile();
+          int endOffset = range.getEndOffset();
+          if (endOffset < file.getTextLength() && file.getFileDocument().getCharsSequence().charAt(endOffset) != '\n') {
+            return TextRange.from(0, 1);
+          }
+        }
+        return null;
+      })
+      .withDescription(e -> message("syntax.error", e.getErrorDescription()));
   public static final Parameterized<PsiElement, JavaPreviewFeatureUtil.PreviewFeatureUsage> PREVIEW_API_USAGE =
     parameterized(PsiElement.class, JavaPreviewFeatureUtil.PreviewFeatureUsage.class, "preview.api.usage")
-      .withRawDescription((e, c) -> message("preview.api.usage", c.targetName()));
+      .withDescription((e, c) -> message("preview.api.usage", c.targetName()));
 
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_HERE = error("annotation.not.allowed.here");
   public static final Simple<PsiAnnotation> ANNOTATION_NOT_ALLOWED_IN_PERMIT_LIST = error("annotation.not.allowed.in.permit.list");
@@ -112,50 +129,56 @@ public final class JavaErrorKinds {
     error(PsiMethod.class, "annotation.member.clash")
       .withAnchor(curMethod -> requireNonNull(curMethod.getNameIdentifier()))
       .<PsiMethod>parameterized()
-      .withRawDescription((curMethod, clashMethod) -> {
+      .withDescription((curMethod, clashMethod) -> {
         PsiClass containingClass = requireNonNull(clashMethod.getContainingClass());
         return message("annotation.member.clash", formatMethod(clashMethod), formatClass(containingClass));
       });
   public static final Parameterized<PsiTypeElement, PsiType> ANNOTATION_METHOD_INVALID_TYPE =
     parameterized(PsiTypeElement.class, PsiType.class, "annotation.member.invalid.type")
-      .withRawDescription((element, type) ->
+      .withDescription((element, type) ->
                             message("annotation.member.invalid.type", type == null ? null : type.getPresentableText()));
   public static final Parameterized<PsiAnnotationMemberValue, AnnotationValueErrorContext> ANNOTATION_ATTRIBUTE_INCOMPATIBLE_TYPE =
     parameterized(PsiAnnotationMemberValue.class, AnnotationValueErrorContext.class, 
-                  "annotation.attribute.incompatible.type").withRawDescription((value, context) -> {
-      String text = value instanceof PsiAnnotation annotation ? requireNonNull(annotation.getNameReferenceElement()).getText() :
-                    PsiTypesUtil.removeExternalAnnotations(requireNonNull(((PsiExpression)value).getType())).getInternalCanonicalText();
+                  "annotation.attribute.incompatible.type").withDescription((value, context) -> {
+      String text;
+      if (value instanceof PsiAnnotation annotation) {
+        text = requireNonNull(annotation.getNameReferenceElement()).getText();
+      }
+      else {
+        PsiType type = ((PsiExpression)value).getType();
+        text = type == null ? JavaKeywords.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
+      }
       return message("annotation.attribute.incompatible.type", context.typeText(), text);
     });
   public static final Parameterized<PsiArrayInitializerMemberValue, AnnotationValueErrorContext> ANNOTATION_ATTRIBUTE_ILLEGAL_ARRAY_INITIALIZER =
     parameterized(PsiArrayInitializerMemberValue.class, AnnotationValueErrorContext.class, 
-                  "annotation.attribute.illegal.array.initializer").withRawDescription((element, context) -> {
+                  "annotation.attribute.illegal.array.initializer").withDescription((element, context) -> {
       return message("annotation.attribute.illegal.array.initializer", context.typeText());
     });
   public static final Parameterized<PsiNameValuePair, String> ANNOTATION_ATTRIBUTE_DUPLICATE =
     parameterized(PsiNameValuePair.class, String.class, "annotation.attribute.duplicate")
-      .withRawDescription((pair, attribute) -> message("annotation.attribute.duplicate", attribute));
+      .withDescription((pair, attribute) -> message("annotation.attribute.duplicate", attribute));
   public static final Parameterized<PsiNameValuePair, String> ANNOTATION_ATTRIBUTE_UNKNOWN_METHOD =
     error(PsiNameValuePair.class, "annotation.attribute.unknown.method")
       .withAnchor(pair -> requireNonNull(pair.getReference()).getElement())
       .withHighlightType(pair -> pair.getName() == null ? JavaErrorHighlightType.ERROR : JavaErrorHighlightType.WRONG_REF)
       .<String>parameterized()
-      .withRawDescription((pair, methodName) -> message("annotation.attribute.unknown.method", methodName));
+      .withDescription((pair, methodName) -> message("annotation.attribute.unknown.method", methodName));
   public static final Simple<PsiReferenceList> ANNOTATION_PERMITS = error(PsiReferenceList.class, "annotation.permits")
     .withAnchor(PsiReferenceList::getFirstChild);
 
   // Can be anchored on @FunctionalInterface annotation or at a call site
   public static final Parameterized<PsiElement, PsiType> LAMBDA_NOT_FUNCTIONAL_INTERFACE =
     parameterized(PsiElement.class, PsiType.class, "lambda.not.a.functional.interface")
-      .withRawDescription((element, type) -> message("lambda.not.a.functional.interface", formatType(type)));
+      .withDescription((element, type) -> message("lambda.not.a.functional.interface", formatType(type)));
   // Can be anchored on @FunctionalInterface annotation or at a call site
   public static final Parameterized<PsiElement, PsiType> LAMBDA_NO_TARGET_METHOD =
     parameterized("lambda.no.target.method.found");
   // Can be anchored on @FunctionalInterface annotation or at a call site
   public static final Parameterized<PsiElement, PsiType> LAMBDA_MULTIPLE_TARGET_METHODS =
     parameterized(PsiElement.class, PsiType.class, "lambda.multiple.sam.candidates")
-      .withRawDescription((psi, type) -> message("lambda.multiple.sam.candidates",
-                                                 (type instanceof PsiClassType cls ? cls.rawType() : type).getPresentableText()));
+      .withDescription((psi, type) -> message("lambda.multiple.sam.candidates",
+                                              (type instanceof PsiClassType cls ? cls.rawType() : type).getPresentableText()));
   public static final Parameterized<PsiAnnotation, PsiClass> FUNCTIONAL_INTERFACE_SEALED =
     parameterized("lambda.sealed.functional.interface");
   public static final Simple<PsiLambdaExpression> LAMBDA_NOT_EXPECTED = error("lambda.not.expected");
@@ -167,20 +190,20 @@ public final class JavaErrorKinds {
     parameterized("lambda.target.not.interface");
   public static final Parameterized<PsiLambdaExpression, MethodCandidateInfo> LAMBDA_INFERENCE_ERROR =
     parameterized(PsiLambdaExpression.class, MethodCandidateInfo.class, "lambda.inference.error")
-      .withRawDescription((psi, candidate) -> message("lambda.inference.error", candidate.getInferenceErrorMessage()));
+      .withDescription((psi, candidate) -> message("lambda.inference.error", candidate.getInferenceErrorMessage()));
   public static final Parameterized<PsiElement, String> LAMBDA_RETURN_TYPE_ERROR =
     parameterized(PsiElement.class, String.class, "lambda.return.type.error")
-      .withRawDescription((psi, message) -> message("lambda.return.type.error", message));
+      .withDescription((psi, message) -> message("lambda.return.type.error", message));
   public static final Parameterized<PsiLambdaExpression, PsiMethod> LAMBDA_WRONG_NUMBER_OF_PARAMETERS =
     parameterized(PsiLambdaExpression.class, PsiMethod.class, "lambda.wrong.number.of.parameters")
       .withAnchor(PsiLambdaExpression::getParameterList)
-      .withRawDescription((lambda, method) -> message("lambda.wrong.number.of.parameters",
-                                                      method.getParameterList().getParametersCount(),
-                                                      lambda.getParameterList().getParametersCount()));
+      .withDescription((lambda, method) -> message("lambda.wrong.number.of.parameters",
+                                                   method.getParameterList().getParametersCount(),
+                                                   lambda.getParameterList().getParametersCount()));
   public static final Parameterized<PsiParameter, PsiType> LAMBDA_INCOMPATIBLE_PARAMETER_TYPES =
     parameterized(PsiParameter.class, PsiType.class, "lambda.incompatible.parameter.types")
-      .withRawDescription((parameter, expectedType) -> message("lambda.incompatible.parameter.types",
-                                                      expectedType.getPresentableText(), parameter.getType().getPresentableText()));
+      .withDescription((parameter, expectedType) -> message("lambda.incompatible.parameter.types",
+                                                            expectedType.getPresentableText(), parameter.getType().getPresentableText()));
   
     
   public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_SEALED = error("method.reference.sealed");
@@ -188,27 +211,27 @@ public final class JavaErrorKinds {
   public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_RAW_CONSTRUCTOR = error("method.reference.raw.constructor");
   public static final Simple<PsiElement> METHOD_REFERENCE_QUALIFIER_CLASS_UNRESOLVED = 
     error(PsiElement.class, "method.reference.qualifier.class.unresolved")
-      .withRawDescription(qualifier -> message("method.reference.qualifier.class.unresolved", qualifier.getText()));
+      .withDescription(qualifier -> message("method.reference.qualifier.class.unresolved", qualifier.getText()));
   public static final Simple<PsiTypeElement> METHOD_REFERENCE_QUALIFIER_WILDCARD = error("method.reference.qualifier.wildcard");
   public static final Parameterized<PsiMethodReferenceExpression, String> METHOD_REFERENCE_RETURN_TYPE_ERROR =
     parameterized(PsiMethodReferenceExpression.class, String.class, "method.reference.return.type.error")
-      .withRawDescription((psi, message) -> message("method.reference.return.type.error", message));
+      .withDescription((psi, message) -> message("method.reference.return.type.error", message));
   public static final Parameterized<PsiMethodReferenceExpression, MethodCandidateInfo> METHOD_REFERENCE_INFERENCE_ERROR =
     parameterized(PsiMethodReferenceExpression.class, MethodCandidateInfo.class, "method.reference.inference.error")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, candidate) -> message("method.reference.inference.error", candidate.getInferenceErrorMessage()));
+      .withDescription((ref, candidate) -> message("method.reference.inference.error", candidate.getInferenceErrorMessage()));
   public static final Parameterized<PsiMethodReferenceExpression, PsiClass> METHOD_REFERENCE_UNRESOLVED_CONSTRUCTOR =
     parameterized(PsiMethodReferenceExpression.class, PsiClass.class, "method.reference.unresolved.constructor")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, cls) -> message("method.reference.unresolved.constructor", cls.getName()));
+      .withDescription((ref, cls) -> message("method.reference.unresolved.constructor", cls.getName()));
   public static final Simple<PsiMethodReferenceExpression> METHOD_REFERENCE_UNRESOLVED_METHOD =
     error(PsiMethodReferenceExpression.class, "method.reference.unresolved.method")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription(ref -> message("method.reference.unresolved.method", ref.getReferenceName()));
+      .withDescription(ref -> message("method.reference.unresolved.method", ref.getReferenceName()));
   public static final Parameterized<PsiMethodReferenceExpression, PsiMethod> METHOD_REFERENCE_ABSTRACT_METHOD =
     parameterized(PsiMethodReferenceExpression.class, PsiMethod.class, "method.reference.abstract.method")
-      .withRawDescription((psi, method) -> message("method.reference.abstract.method", method.getName()));
+      .withDescription((psi, method) -> message("method.reference.abstract.method", method.getName()));
   public static final Parameterized<PsiMethodReferenceExpression, PsiMethod> METHOD_REFERENCE_NON_STATIC_METHOD_IN_STATIC_CONTEXT =
     parameterized(PsiMethodReferenceExpression.class, PsiMethod.class, "method.reference.non.static.method.in.static.context");
   public static final Parameterized<PsiMethodReferenceExpression, PsiMethod> METHOD_REFERENCE_STATIC_METHOD_NON_STATIC_QUALIFIER =
@@ -217,13 +240,13 @@ public final class JavaErrorKinds {
     parameterized(PsiMethodReferenceExpression.class, PsiMethod.class, "method.reference.static.method.receiver");
   public static final Parameterized<PsiMethodReferenceExpression, PsiClass> METHOD_REFERENCE_ENCLOSING_INSTANCE_NOT_IN_SCOPE =
     parameterized(PsiMethodReferenceExpression.class, PsiClass.class, "method.reference.enclosing.instance.not.in.scope")
-      .withRawDescription((psi, cls) -> message("method.reference.enclosing.instance.not.in.scope", formatClass(cls)));
+      .withDescription((psi, cls) -> message("method.reference.enclosing.instance.not.in.scope", formatClass(cls)));
   public static final Simple<PsiReferenceParameterList> METHOD_REFERENCE_PARAMETERIZED_QUALIFIER =
     error("method.reference.parameterized.qualifier");
   
   public static final Parameterized<PsiAnnotation, @NotNull List<PsiAnnotation.@NotNull TargetType>> ANNOTATION_NOT_APPLICABLE =
     error(PsiAnnotation.class, "annotation.not.applicable").<@NotNull List<PsiAnnotation.@NotNull TargetType>>parameterized()
-      .withRawDescription((annotation, types) -> {
+      .withDescription((annotation, types) -> {
         String target = JavaPsiBundle.message("annotation.target." + types.get(0));
         PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
         return message("annotation.not.applicable", nameRef != null ? nameRef.getText() : annotation.getText(), target);
@@ -232,16 +255,16 @@ public final class JavaErrorKinds {
     error(PsiAnnotation.class, "annotation.missing.attribute")
       .withAnchor(annotation -> annotation.getNameReferenceElement())
       .<@NotNull List<String>>parameterized()
-      .withRawDescription((annotation, attributeNames) -> message(
+      .withDescription((annotation, attributeNames) -> message(
           "annotation.missing.attribute", attributeNames.stream().map(attr -> "'" + attr + "'").collect(Collectors.joining(", "))));
   public static final Simple<PsiAnnotation> ANNOTATION_CONTAINER_WRONG_PLACE =
     error(PsiAnnotation.class, "annotation.container.wrong.place")
-      .withRawDescription(annotation ->
+      .withDescription(annotation ->
                             message("annotation.container.wrong.place",
                                     requireNonNull(annotation.resolveAnnotationType()).getQualifiedName()));
   public static final Parameterized<PsiAnnotation, PsiClass> ANNOTATION_CONTAINER_NOT_APPLICABLE =
     parameterized(PsiAnnotation.class, PsiClass.class, "annotation.container.not.applicable")
-      .withRawDescription((annotation, containerClass) -> {
+      .withDescription((annotation, containerClass) -> {
         PsiAnnotation.TargetType[] targets = AnnotationTargetUtil.getTargetsForLocation(annotation.getOwner());
         String target = JavaPsiBundle.message("annotation.target." + targets[0]);
         return message("annotation.container.not.applicable", containerClass.getName(), target);
@@ -251,16 +274,16 @@ public final class JavaErrorKinds {
   public static final Simple<PsiAnnotation> ANNOTATION_DUPLICATE_NON_REPEATABLE =
     error(PsiAnnotation.class, "annotation.duplicate.non.repeatable")
       .withAnchor(annotation -> requireNonNull(annotation.getNameReferenceElement()))
-      .withRawDescription(annotation -> message(
+      .withDescription(annotation -> message(
         "annotation.duplicate.non.repeatable", requireNonNull(annotation.resolveAnnotationType()).getQualifiedName()));
   public static final Parameterized<PsiAnnotation, String> ANNOTATION_DUPLICATE_EXPLAINED =
     error(PsiAnnotation.class, "annotation.duplicate.explained")
       .withAnchor(annotation -> requireNonNull(annotation.getNameReferenceElement()))
       .<String>parameterized()
-      .withRawDescription((annotation, message) -> message("annotation.duplicate.explained", message));
+      .withDescription((annotation, message) -> message("annotation.duplicate.explained", message));
   public static final Parameterized<PsiAnnotationMemberValue, String> ANNOTATION_MALFORMED_REPEATABLE_EXPLAINED =
     parameterized(PsiAnnotationMemberValue.class, String.class, "annotation.malformed.repeatable.explained")
-      .withRawDescription((containerRef, message) -> message("annotation.malformed.repeatable.explained", message));
+      .withDescription((containerRef, message) -> message("annotation.malformed.repeatable.explained", message));
 
   public static final Simple<PsiAnnotation> SAFE_VARARGS_ON_RECORD_COMPONENT =
     error("safe.varargs.on.record.component");
@@ -290,7 +313,7 @@ public final class JavaErrorKinds {
                    member instanceof PsiEnumConstant enumConstant ? enumConstant.getNameIdentifier().getTextRangeInParent() :
                    member instanceof PsiClass aClass ? getClassDeclarationTextRange(aClass) : null)
       .<PsiMethod>parameterized()
-      .withRawDescription((member, abstractMethod) -> {
+      .withDescription((member, abstractMethod) -> {
         PsiClass aClass = member instanceof PsiEnumConstant enumConstant ?
                           requireNonNullElse(enumConstant.getInitializingClass(), member.getContainingClass()) : (PsiClass)member;
         @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String messageKey;
@@ -311,7 +334,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITS_ABSTRACT_AND_DEFAULT =
     parameterized(PsiClass.class, OverrideClashContext.class, "class.inherits.abstract.and.default")
       .withAnchor(PsiClass::getNameIdentifier)
-      .withRawDescription((cls, ctx) -> {
+      .withDescription((cls, ctx) -> {
         return message("class.inherits.abstract.and.default", formatClass(cls),
                 formatMethod(ctx.method()),
                 formatClass(requireNonNull(ctx.method().getContainingClass())),
@@ -320,7 +343,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITS_UNRELATED_DEFAULTS =
     parameterized(PsiClass.class, OverrideClashContext.class, "class.inherits.unrelated.defaults")
       .withAnchor(PsiClass::getNameIdentifier)
-      .withRawDescription((cls, ctx) -> {
+      .withDescription((cls, ctx) -> {
         return message("class.inherits.unrelated.defaults", formatClass(cls),
                 formatMethod(ctx.method()),
                 formatClass(requireNonNull(ctx.method().getContainingClass())),
@@ -328,49 +351,49 @@ public final class JavaErrorKinds {
       });
   public static final Simple<PsiClass> CLASS_ALREADY_IMPORTED =
     error(PsiClass.class, "class.already.imported").withAnchor(PsiClass::getNameIdentifier)
-      .withRawDescription(cls -> message("class.already.imported", formatClass(cls, false)));
+      .withDescription(cls -> message("class.already.imported", formatClass(cls, false)));
   public static final Parameterized<PsiClass, PsiClass> CLASS_DUPLICATE =
     error(PsiClass.class, "class.duplicate")
       .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
       .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
-      .withRawDescription(cls -> message("class.duplicate", cls.getName()))
+      .withDescription(cls -> message("class.duplicate", cls.getName()))
       .parameterized();
   public static final Parameterized<PsiClass, PsiClass> CLASS_DUPLICATE_IN_OTHER_FILE =
     error(PsiClass.class, "class.duplicate")
       .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
       .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
       .<PsiClass>parameterized()
-      .withRawDescription((cls, dupCls) -> message("class.duplicate.in.other.file",
-                                                   FileUtil.toSystemDependentName(dupCls.getContainingFile().getVirtualFile().getPath())));
+      .withDescription((cls, dupCls) -> message("class.duplicate.in.other.file",
+                                                FileUtil.toSystemDependentName(dupCls.getContainingFile().getVirtualFile().getPath())));
   public static final Simple<PsiClass> CLASS_CLASHES_WITH_PACKAGE =
     error(PsiClass.class, "class.clashes.with.package")
       .withAnchor(cls -> requireNonNullElse(cls.getNameIdentifier(), cls))
       .withHighlightType(cls -> cls instanceof PsiImplicitClass ? JavaErrorHighlightType.FILE_LEVEL_ERROR : JavaErrorHighlightType.ERROR)
-      .withRawDescription(cls -> message("class.clashes.with.package", cls.getQualifiedName()));
+      .withDescription(cls -> message("class.clashes.with.package", cls.getQualifiedName()));
   public static final Simple<PsiJavaCodeReferenceElement> PACKAGE_CLASHES_WITH_CLASS =
     error(PsiJavaCodeReferenceElement.class, "package.clashes.with.class")
-      .withRawDescription(ref -> message("package.clashes.with.class", ref.getText()));
+      .withDescription(ref -> message("package.clashes.with.class", ref.getText()));
   public static final Simple<PsiClass> CLASS_WRONG_FILE_NAME =
     error(PsiClass.class, "class.wrong.filename")
       .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange)
-      .withRawDescription(cls -> message("class.wrong.filename", cls.getName()));
+      .withDescription(cls -> message("class.wrong.filename", cls.getName()));
   public static final Parameterized<PsiClass, PsiClass> CLASS_CYCLIC_INHERITANCE =
     error(PsiClass.class, "class.cyclic.inheritance")
       .withRange(JavaErrorFormatUtil::getClassDeclarationTextRange).<PsiClass>parameterized()
-      .withRawDescription((aClass, circularClass) -> message("class.cyclic.inheritance", formatClass(circularClass)));
+      .withDescription((aClass, circularClass) -> message("class.cyclic.inheritance", formatClass(circularClass)));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_DUPLICATE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.duplicate")
-      .withRawDescription(
+      .withDescription(
         (ref, target) -> message("class.reference.list.duplicate", formatClass(target), ref.getParent().getFirstChild().getText()));
   public static final Simple<PsiJavaCodeReferenceElement> CLASS_REFERENCE_LIST_NAME_EXPECTED =
     error("class.reference.list.name.expected");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_INNER_PRIVATE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.inner.private")
-      .withRawDescription((ref, target) -> message("class.reference.list.inner.private",
-                                                   formatClass(target), formatClass(requireNonNull(target.getContainingClass()))));
+      .withDescription((ref, target) -> message("class.reference.list.inner.private",
+                                                formatClass(target), formatClass(requireNonNull(target.getContainingClass()))));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_REFERENCE_LIST_NO_ENCLOSING_INSTANCE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.reference.list.no.enclosing.instance")
-      .withRawDescription((ref, target) -> message("class.reference.list.no.enclosing.instance", formatClass(target)));
+      .withDescription((ref, target) -> message("class.reference.list.no.enclosing.instance", formatClass(target)));
   public static final Simple<PsiReferenceList> CLASS_CANNOT_EXTEND_MULTIPLE_CLASSES =
     error("class.cannot.extend.multiple.classes");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_INTERFACE = 
@@ -379,23 +402,23 @@ public final class JavaErrorKinds {
     parameterized("class.extends.sealed.local");
   public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> CLASS_EXTENDS_SEALED_NOT_PERMITTED =
     parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "class.extends.sealed.not.permitted")
-      .withRawDescription((ref, cls) -> message("class.extends.sealed.not.permitted", formatClass(cls.subClass())));
+      .withDescription((ref, cls) -> message("class.extends.sealed.not.permitted", formatClass(cls.subClass())));
   public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> CLASS_EXTENDS_SEALED_ANOTHER_MODULE =
     parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "class.extends.sealed.another.module");
   public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> CLASS_EXTENDS_SEALED_ANOTHER_PACKAGE =
     parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "class.extends.sealed.another.package")
-      .withRawDescription((ref, cls) -> {
+      .withDescription((ref, cls) -> {
         return StringUtil.capitalize(message("class.extends.sealed.another.package",
                                              JavaElementKind.fromElement(cls.subClass()).subject(), formatClass(cls.subClass()),
                                              JavaElementKind.fromElement(cls.superClass()).subject(), formatClass(cls.superClass())));
       });
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_PROHIBITED_CLASS = 
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.prohibited.class")
-      .withRawDescription((ref, cls) -> message("class.extends.prohibited.class", cls.getQualifiedName()));
+      .withDescription((ref, cls) -> message("class.extends.prohibited.class", cls.getQualifiedName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_INHERITS_TYPE_PARAMETER =
     parameterized("class.inherits.type.parameter");  
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_EXTENDS_FINAL = 
-    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.final").withRawDescription((ref, cls) -> {
+    parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.extends.final").withDescription((ref, cls) -> {
       int choice = cls.isEnum() ? 2 : cls.isRecord() ? 3 : cls.isValueClass() ? 4 : 1;
       return message("class.extends.final", formatClass(cls), choice);
     });
@@ -414,32 +437,32 @@ public final class JavaErrorKinds {
   public static final Simple<PsiClass> CLASS_SEALED_PERMITS_ON_NON_SEALED =
     error(PsiClass.class, "class.sealed.permits.on.non.sealed")
       .withAnchor(cls -> requireNonNull(cls.getPermitsList()).getFirstChild())
-      .withRawDescription(cls -> message("class.sealed.permits.on.non.sealed", cls.getName()));
+      .withDescription(cls -> message("class.sealed.permits.on.non.sealed", cls.getName()));
   public static final Parameterized<PsiElement, ClassStaticReferenceErrorContext> CLASS_NOT_ENCLOSING =
     parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.not.enclosing")
-      .withRawDescription((psi, ctx) -> message("class.not.enclosing", formatClass(ctx.outerClass())));
+      .withDescription((psi, ctx) -> message("class.not.enclosing", formatClass(ctx.outerClass())));
   public static final Parameterized<PsiElement, ClassStaticReferenceErrorContext> CLASS_CANNOT_BE_REFERENCED_FROM_STATIC_CONTEXT =
     parameterized(PsiElement.class, ClassStaticReferenceErrorContext.class, "class.cannot.be.referenced.from.static.context")
-      .withRawDescription((psi, ctx) -> message(
+      .withDescription((psi, ctx) -> message(
         "class.cannot.be.referenced.from.static.context",
-        formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? PsiKeyword.SUPER : PsiKeyword.THIS)));
+        formatClass(ctx.outerClass()) + "." + (psi instanceof PsiSuperExpression ? JavaKeywords.SUPER : JavaKeywords.THIS)));
   public static final Parameterized<PsiClass, InheritTypeClashContext> CLASS_INHERITANCE_DIFFERENT_TYPE_ARGUMENTS =
     parameterized(PsiClass.class, InheritTypeClashContext.class, "class.inheritance.different.type.arguments")
       .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
-      .withRawDescription((cls, ctx) -> message("class.inheritance.different.type.arguments",
-                                                formatClass(ctx.superClass()),
-                                                formatType(ctx.type1()),
-                                                formatType(ctx.type2())));
+      .withDescription((cls, ctx) -> message("class.inheritance.different.type.arguments",
+                                             formatClass(ctx.superClass()),
+                                             formatType(ctx.type1()),
+                                             formatType(ctx.type2())));
   public static final Parameterized<PsiClass, InheritTypeClashContext> CLASS_INHERITANCE_RAW_AND_GENERIC =
     parameterized(PsiClass.class, InheritTypeClashContext.class, "class.inheritance.raw.and.generic")
       .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
-      .withRawDescription((cls, ctx) -> message("class.inheritance.raw.and.generic",
-                                                formatClass(ctx.superClass()),
-                                                formatType(ctx.type1() != null ? ctx.type1() : ctx.type2())));
+      .withDescription((cls, ctx) -> message("class.inheritance.raw.and.generic",
+                                             formatClass(ctx.superClass()),
+                                             formatType(ctx.type1() != null ? ctx.type1() : ctx.type2())));
   public static final Parameterized<PsiClass, OverrideClashContext> CLASS_INHERITANCE_METHOD_CLASH =
     parameterized(PsiClass.class, OverrideClashContext.class, "class.inheritance.method.clash")
       .withAnchor(PsiClass::getNameIdentifier)
-      .withRawDescription((cls, ctx) -> message(
+      .withDescription((cls, ctx) -> message(
         "class.inheritance.method.clash",
         formatMethod(ctx.superMethod()), formatClass(requireNonNull(ctx.superMethod().getContainingClass())),
         formatMethod(ctx.method()), formatClass(requireNonNull(ctx.method().getContainingClass()))));
@@ -448,14 +471,14 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, PsiClass> CLASS_NOT_ACCESSIBLE =
     parameterized(PsiElement.class, PsiClass.class, "class.not.accessible")
       .withRange((psi, cls) -> psi instanceof PsiMember member ? getMemberDeclarationTextRange(member) : null)
-      .withRawDescription((psi, cls) -> message("class.not.accessible", formatClass(cls)));
+      .withDescription((psi, cls) -> message("class.not.accessible", formatClass(cls)));
   public static final Simple<PsiCodeBlock> CLASS_INITIALIZER_MUST_COMPLETE_NORMALLY =
     error("class.initializer.must.complete.normally");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> CLASS_PERMITTED_MUST_HAVE_MODIFIER =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "class.permitted.must.have.modifier");
   public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> CLASS_PERMITTED_NOT_DIRECT_SUBCLASS =
     parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "class.permitted.not.direct.subclass")
-      .withRawDescription((ref, ctx) -> message(
+      .withDescription((ref, ctx) -> message(
         "class.permitted.not.direct.subclass",
         ctx.subClass().getName(),
         ctx.subClass().isInterface() == ctx.superClass().isInterface() ? 1 : 2,
@@ -469,7 +492,7 @@ public final class JavaErrorKinds {
   public static final Simple<PsiExpression> INSTANTIATION_ENUM = error("instantiation.enum");
   public static final Parameterized<PsiExpression, PsiClass> INSTANTIATION_ABSTRACT = 
     parameterized(PsiExpression.class, PsiClass.class, "instantiation.abstract")
-      .withRawDescription((expr, aClass) -> message("instantiation.abstract", aClass.getName()));
+      .withDescription((expr, aClass) -> message("instantiation.abstract", aClass.getName()));
   
   public static final Simple<PsiClass> RECORD_NO_HEADER = error(PsiClass.class, "record.no.header")
     .withAnchor(PsiClass::getNameIdentifier);
@@ -488,28 +511,28 @@ public final class JavaErrorKinds {
   public static final Simple<PsiRecordComponent> RECORD_COMPONENT_RESTRICTED_NAME = 
     error(PsiRecordComponent.class, "record.component.restricted.name")
       .withAnchor(PsiRecordComponent::getNameIdentifier)
-      .withRawDescription(component -> message("record.component.restricted.name", component.getName()));
+      .withDescription(component -> message("record.component.restricted.name", component.getName()));
   public static final Simple<PsiRecordComponent> RECORD_COMPONENT_NOT_INITIALIZED = 
     error(PsiRecordComponent.class, "record.component.not.initialized")
       .withAnchor(PsiRecordComponent::getNameIdentifier)
-      .withRawDescription(component -> message("record.component.not.initialized", component.getName()));
+      .withDescription(component -> message("record.component.not.initialized", component.getName()));
   public static final Simple<PsiTypeParameterList> RECORD_SPECIAL_METHOD_TYPE_PARAMETERS =
     error(PsiTypeParameterList.class, "record.special.method.type.parameters")
-      .withRawDescription(tpl -> message("record.special.method.type.parameters", getRecordMethodKind(((PsiMethod)tpl.getParent()))));
+      .withDescription(tpl -> message("record.special.method.type.parameters", getRecordMethodKind(((PsiMethod)tpl.getParent()))));
   public static final Simple<PsiReferenceList> RECORD_SPECIAL_METHOD_THROWS =
     error(PsiReferenceList.class, "record.special.method.throws")
       .withAnchor(PsiReferenceList::getFirstChild)
-      .withRawDescription(throwsList -> message("record.special.method.throws", getRecordMethodKind(((PsiMethod)throwsList.getParent()))));
+      .withDescription(throwsList -> message("record.special.method.throws", getRecordMethodKind(((PsiMethod)throwsList.getParent()))));
   public static final Parameterized<PsiMethod, AccessModifier> RECORD_CONSTRUCTOR_STRONGER_ACCESS =
     parameterized(PsiMethod.class, AccessModifier.class, "record.constructor.stronger.access")
       .withAnchor(PsiMethod::getNameIdentifier)
-      .withRawDescription(
+      .withDescription(
         (method, classModifier) -> message("record.constructor.stronger.access", getRecordMethodKind(method), classModifier));
   public static final Parameterized<PsiMethod, JavaIncompatibleTypeErrorContext> RECORD_ACCESSOR_WRONG_RETURN_TYPE =
     parameterized(PsiMethod.class, JavaIncompatibleTypeErrorContext.class, "record.accessor.wrong.return.type")
       .withAnchor(PsiMethod::getReturnTypeElement)
-      .withRawDescription((method, ctx) -> message("record.accessor.wrong.return.type",
-                                                   ctx.lType().getPresentableText(), requireNonNull(ctx.rType()).getPresentableText()));
+      .withDescription((method, ctx) -> message("record.accessor.wrong.return.type",
+                                                ctx.lType().getPresentableText(), requireNonNull(ctx.rType()).getPresentableText()));
   public static final Simple<PsiMethod> RECORD_ACCESSOR_NON_PUBLIC =
     error(PsiMethod.class, "record.accessor.non.public").withAnchor(PsiMethod::getNameIdentifier);
   public static final Simple<PsiMethod> RECORD_NO_CONSTRUCTOR_CALL_IN_NON_CANONICAL =
@@ -517,13 +540,13 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiParameter, PsiRecordComponent> RECORD_CANONICAL_CONSTRUCTOR_WRONG_PARAMETER_TYPE =
     parameterized(PsiParameter.class, PsiRecordComponent.class, "record.canonical.constructor.wrong.parameter.type")
       .withAnchor(PsiParameter::getTypeElement)
-      .withRawDescription((parameter, component) -> message(
+      .withDescription((parameter, component) -> message(
         "record.canonical.constructor.wrong.parameter.type", component.getName(), component.getType().getPresentableText(),
         parameter.getType().getPresentableText()));
   public static final Parameterized<PsiParameter, PsiRecordComponent> RECORD_CANONICAL_CONSTRUCTOR_WRONG_PARAMETER_NAME =
     parameterized(PsiParameter.class, PsiRecordComponent.class, "record.canonical.constructor.wrong.parameter.name")
       .withAnchor(PsiVariable::getNameIdentifier)
-      .withRawDescription((parameter, component) -> message(
+      .withDescription((parameter, component) -> message(
         "record.canonical.constructor.wrong.parameter.name", component.getName(), parameter.getName()));
 
   public static final Simple<PsiParameter> VARARG_NOT_LAST_PARAMETER = error("vararg.not.last.parameter");
@@ -537,7 +560,7 @@ public final class JavaErrorKinds {
     .withAnchor(PsiReferenceList::getFirstChild);
   public static final Parameterized<PsiReferenceExpression, PsiField> ENUM_CONSTANT_ILLEGAL_ACCESS_IN_CONSTRUCTOR =
     parameterized(PsiReferenceExpression.class, PsiField.class, "enum.constant.illegal.access.in.constructor")
-      .withRawDescription((expr, field) -> {
+      .withDescription((expr, field) -> {
         int fieldType = field instanceof PsiEnumConstant ? 2 : 1;
         PsiMember initializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
         int initializerType = initializer instanceof PsiMethod ? 1 : initializer instanceof PsiField ? 2 : 3;
@@ -562,7 +585,7 @@ public final class JavaErrorKinds {
   public static final Simple<PsiPackageStatement> CLASS_IMPLICIT_PACKAGE = error("class.implicit.package.statement");
   
   public static final Simple<PsiIdentifier> IDENTIFIER_RESTRICTED = error(PsiIdentifier.class, "identifier.restricted")
-    .withRawDescription(psi -> message("identifier.restricted", psi.getText()));
+    .withDescription(psi -> message("identifier.restricted", psi.getText()));
   
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> TYPE_PARAMETER_EXTENDS_INTERFACE_EXPECTED = 
     parameterized("type.parameter.extends.interface.expected");
@@ -573,49 +596,50 @@ public final class JavaErrorKinds {
   public static final Simple<PsiTypeParameterList> TYPE_PARAMETER_ON_ANNOTATION_MEMBER = error("type.parameter.on.annotation.member");
   public static final Simple<PsiTypeParameter> TYPE_PARAMETER_DUPLICATE = 
     error(PsiTypeParameter.class, "type.parameter.on.annotation.member")
-      .withRawDescription(typeParameter -> message("type.parameter.duplicate", typeParameter.getName()));
+      .withDescription(typeParameter -> message("type.parameter.duplicate", typeParameter.getName()));
   public static final Parameterized<PsiMethodCallExpression, IncompatibleIntersectionContext> TYPE_PARAMETER_INCOMPATIBLE_UPPER_BOUNDS =
     parameterized(PsiMethodCallExpression.class, IncompatibleIntersectionContext.class, "type.parameter.incompatible.upper.bounds")
       .withRange((call, ctx) -> getRange(call))
-      .withRawDescription((call, ctx) -> message("type.parameter.incompatible.upper.bounds", ctx.parameter().getName(), ctx.message()));
+      .withDescription((call, ctx) -> message("type.parameter.incompatible.upper.bounds", ctx.parameter().getName(), ctx.message()));
   public static final Parameterized<PsiMethodCallExpression, TypeParameterBoundMismatchContext>
     TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_EXTEND_BOUND =
     parameterized(PsiMethodCallExpression.class, TypeParameterBoundMismatchContext.class,
                   "type.parameter.inferred.type.not.within.extend.bound")
-      .withRawDescription((call, ctx) -> message("type.parameter.inferred.type.not.within.extend.bound", formatClass(ctx.parameter()),
-                                                 formatType(ctx.bound()), formatType(ctx.actualType())));
+      .withDescription((call, ctx) -> message("type.parameter.inferred.type.not.within.extend.bound", formatClass(ctx.parameter()),
+                                              formatType(ctx.bound()), formatType(ctx.actualType())));
   public static final Parameterized<PsiMethodCallExpression, TypeParameterBoundMismatchContext>
     TYPE_PARAMETER_INFERRED_TYPE_NOT_WITHIN_IMPLEMENT_BOUND =
     parameterized(PsiMethodCallExpression.class, TypeParameterBoundMismatchContext.class,
                   "type.parameter.inferred.type.not.within.implement.bound")
-      .withRawDescription((call, ctx) -> message("type.parameter.inferred.type.not.within.implement.bound", formatClass(ctx.parameter()),
-                                                 formatType(ctx.bound()), formatType(ctx.actualType())));
+      .withDescription((call, ctx) -> message("type.parameter.inferred.type.not.within.implement.bound", formatClass(ctx.parameter()),
+                                              formatType(ctx.bound()), formatType(ctx.actualType())));
   public static final Parameterized<PsiTypeElement, TypeParameterBoundMismatchContext> TYPE_PARAMETER_TYPE_NOT_WITHIN_EXTEND_BOUND =
     parameterized(PsiTypeElement.class, TypeParameterBoundMismatchContext.class, "type.parameter.type.not.within.extend.bound")
-      .withRawDescription((call, ctx) -> message("type.parameter.type.not.within.extend.bound",
-                                                 formatClassOrType(ctx.actualType()),
-                                                 formatType(ctx.bound())));
+      .withDescription((call, ctx) -> message("type.parameter.type.not.within.extend.bound",
+                                              formatClassOrType(ctx.actualType()),
+                                              formatType(ctx.bound())));
   public static final Parameterized<PsiTypeElement, TypeParameterBoundMismatchContext> TYPE_PARAMETER_TYPE_NOT_WITHIN_IMPLEMENT_BOUND =
     parameterized(PsiTypeElement.class, TypeParameterBoundMismatchContext.class, "type.parameter.type.not.within.implement.bound")
-      .withRawDescription((call, ctx) -> message("type.parameter.type.not.within.implement.bound", 
-                                                 formatClassOrType(ctx.actualType()),
-                                                 formatType(ctx.bound())));
+      .withDescription((call, ctx) -> message("type.parameter.type.not.within.implement.bound",
+                                              formatClassOrType(ctx.actualType()),
+                                              formatType(ctx.bound())));
   public static final Parameterized<PsiReferenceParameterList, PsiClass> TYPE_PARAMETER_ABSENT_CLASS =
     parameterized(PsiReferenceParameterList.class, PsiClass.class, "type.parameter.absent.class")
-      .withRawDescription((list, cls) -> message("type.parameter.absent.class", formatClass(cls)));
+      .withDescription((list, cls) -> message("type.parameter.absent.class", formatClass(cls)));
   public static final Parameterized<PsiReferenceParameterList, PsiMethod> TYPE_PARAMETER_ABSENT_METHOD =
     parameterized(PsiReferenceParameterList.class, PsiMethod.class, "type.parameter.absent.method")
-      .withRawDescription((list, method) -> message("type.parameter.absent.method", formatMethod(method)));
+      .withDescription((list, method) -> message("type.parameter.absent.method", formatMethod(method)));
   public static final Parameterized<PsiReferenceParameterList, PsiTypeParameterListOwner> TYPE_PARAMETER_COUNT_MISMATCH =
     parameterized(PsiReferenceParameterList.class, PsiTypeParameterListOwner.class, "type.parameter.count.mismatch")
-      .withRawDescription((list, owner) -> message("type.parameter.count.mismatch", list.getTypeArgumentCount(),
-                                                   owner.getTypeParameters().length));
+      .withNavigationShift(1)
+      .withDescription((list, owner) -> message("type.parameter.count.mismatch", list.getTypeArgumentCount(),
+                                                owner.getTypeParameters().length));
   public static final Simple<PsiTypeElement> TYPE_PARAMETER_ACTUAL_INFERRED_MISMATCH = error("type.parameter.actual.inferred.mismatch");
 
   public static final Simple<PsiMethod> METHOD_DUPLICATE =
     error(PsiMethod.class, "method.duplicate")
       .withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange)
-      .withRawDescription(
+      .withDescription(
         method -> message("method.duplicate", formatMethod(method), formatClass(requireNonNull(method.getContainingClass()))));
   public static final Simple<PsiMethod> METHOD_NO_PARAMETER_LIST =
     error(PsiMethod.class, "method.no.parameter.list").withAnchor(PsiMethod::getNameIdentifier);
@@ -639,7 +663,7 @@ public final class JavaErrorKinds {
     error(PsiMethod.class, "method.default.in.class").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
   public static final Simple<PsiMethod> METHOD_DEFAULT_OVERRIDES_OBJECT_MEMBER =
     error(PsiMethod.class, "method.default.overrides.object.member").withAnchor(PsiMethod::getNameIdentifier)
-      .withRawDescription(method -> message("method.default.overrides.object.member", method.getName()));
+      .withDescription(method -> message("method.default.overrides.object.member", method.getName()));
   public static final Simple<PsiMethod> METHOD_SHOULD_HAVE_BODY =
     error(PsiMethod.class, "method.should.have.body").withRange(JavaErrorFormatUtil::getMethodDeclarationTextRange);
   public static final Simple<PsiMethod> METHOD_SHOULD_HAVE_BODY_OR_ABSTRACT =
@@ -647,23 +671,23 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiMember, @NotNull OverrideClashContext> METHOD_STATIC_OVERRIDES_INSTANCE =
     parameterized(PsiMember.class, OverrideClashContext.class, "method.static.overrides.instance")
       .withRange((member, ctx) -> getMemberDeclarationTextRange(member))
-      .withRawDescription((method, ctx) -> message("method.static.overrides.instance",
-                                                   formatMethod(ctx.method()),
-                                                   formatClass(requireNonNull(ctx.method().getContainingClass())),
-                                                   formatMethod(ctx.superMethod()),
-                                                   formatClass(requireNonNull(ctx.superMethod().getContainingClass()))));
+      .withDescription((method, ctx) -> message("method.static.overrides.instance",
+                                                formatMethod(ctx.method()),
+                                                formatClass(requireNonNull(ctx.method().getContainingClass())),
+                                                formatMethod(ctx.superMethod()),
+                                                formatClass(requireNonNull(ctx.superMethod().getContainingClass()))));
   public static final Parameterized<PsiMember, @NotNull OverrideClashContext> METHOD_INSTANCE_OVERRIDES_STATIC =
     parameterized(PsiMember.class, OverrideClashContext.class, "method.instance.overrides.static")
       .withRange((method, ctx) -> getMemberDeclarationTextRange(method))
-      .withRawDescription((method, ctx) -> message("method.instance.overrides.static",
-                                                           formatMethod(ctx.method()),
-                                                           formatClass(requireNonNull(ctx.method().getContainingClass())),
-                                                           formatMethod(ctx.superMethod()),
-                                                           formatClass(requireNonNull(ctx.superMethod().getContainingClass()))));
+      .withDescription((method, ctx) -> message("method.instance.overrides.static",
+                                                formatMethod(ctx.method()),
+                                                formatClass(requireNonNull(ctx.method().getContainingClass())),
+                                                formatMethod(ctx.superMethod()),
+                                                formatClass(requireNonNull(ctx.superMethod().getContainingClass()))));
   public static final Parameterized<PsiMethod, PsiMethod> METHOD_OVERRIDES_FINAL =
     parameterized(PsiMethod.class, PsiMethod.class, "method.overrides.final")
       .withRange((method, superMethod) -> getMethodDeclarationTextRange(method))
-      .withRawDescription((method, superMethod) -> {
+      .withDescription((method, superMethod) -> {
         PsiClass superClass = superMethod.getContainingClass();
         return message("method.overrides.final",
                        formatMethod(method),
@@ -687,7 +711,7 @@ public final class JavaErrorKinds {
         }
         return getMemberDeclarationTextRange(psi);
       })
-      .withRawDescription((psi, ctx) -> message(
+      .withDescription((psi, ctx) -> message(
         "method.inheritance.weaker.privileges",
         ctx.clashMessage(),
         VisibilityUtil.toPresentableText(PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(ctx.method().getModifierList()))),
@@ -695,7 +719,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiMember, OverrideClashContext> METHOD_GENERIC_CLASH =
     parameterized(PsiMember.class, OverrideClashContext.class, "method.generic.same.erasure")
       .withRange((member, ctx) -> getMemberDeclarationTextRange(member))
-      .withRawDescription((member, ctx) -> {
+      .withDescription((member, ctx) -> {
         @NonNls String key = ctx.sameClass() ? "method.generic.same.erasure" :
                              ctx.method().hasModifierProperty(PsiModifier.STATIC) ?
                              "method.generic.same.erasure.hide" :
@@ -706,8 +730,8 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiClass, @NotNull OverrideClashContext> METHOD_INHERITANCE_CLASH_UNRELATED_RETURN_TYPES =
     parameterized(PsiClass.class, OverrideClashContext.class, "method.inheritance.clash.unrelated.return.types")
       .withRange((cls, ctx) -> getClassDeclarationTextRange(cls))
-      .withRawDescription((cls, ctx) -> message("method.inheritance.clash.unrelated.return.types",
-                                                formatClashMethodMessage(ctx.superMethod(), ctx.method())));
+      .withDescription((cls, ctx) -> message("method.inheritance.clash.unrelated.return.types",
+                                             formatClashMethodMessage(ctx.superMethod(), ctx.method())));
   public static final Parameterized<PsiMember, @NotNull IncompatibleOverrideReturnTypeContext>
     METHOD_INHERITANCE_CLASH_INCOMPATIBLE_RETURN_TYPES =
     parameterized(PsiMember.class, IncompatibleOverrideReturnTypeContext.class, "method.inheritance.clash.incompatible.return.types")
@@ -726,28 +750,28 @@ public final class JavaErrorKinds {
         }
         return getMemberDeclarationTextRange(psi);
       })
-      .withRawDescription((cls, ctx) -> message("method.inheritance.clash.incompatible.return.types",
-                                                formatClashMethodMessage(ctx.method(), ctx.superMethod())));
+      .withDescription((cls, ctx) -> message("method.inheritance.clash.incompatible.return.types",
+                                             formatClashMethodMessage(ctx.method(), ctx.superMethod())));
   public static final Parameterized<PsiMember, @NotNull IncompatibleOverrideExceptionContext>
     METHOD_INHERITANCE_CLASH_DOES_NOT_THROW =
     parameterized(PsiMember.class, IncompatibleOverrideExceptionContext.class, "method.inheritance.clash.does.not.throw")
       .withRange((psi, ctx) ->
                    ctx.exceptionReference() != null ? ctx.exceptionReference().getTextRange().shiftLeft(psi.getTextRange().getStartOffset()) :
                    getMemberDeclarationTextRange(psi))
-      .withRawDescription((cls, ctx) -> message("method.inheritance.clash.does.not.throw",
-                                                formatClashMethodMessage(ctx.method(), ctx.superMethod()),
-                                                formatType(ctx.exceptionType())));
+      .withDescription((cls, ctx) -> message("method.inheritance.clash.does.not.throw",
+                                             formatClashMethodMessage(ctx.method(), ctx.superMethod()),
+                                             formatType(ctx.exceptionType())));
   public static final Parameterized<PsiMethod, String> METHOD_MISSING_RETURN_TYPE =
     parameterized(PsiMethod.class, String.class, "method.missing.return.type")
       .withAnchor(method -> requireNonNullElse(method.getNameIdentifier(), method));
 
   public static final Parameterized<PsiMember, AmbiguousImplicitConstructorCallContext> CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL =
     parameterized(PsiMember.class, AmbiguousImplicitConstructorCallContext.class, "constructor.ambiguous.implicit.call")
-      .withRawDescription((member, ctx) -> ctx.description())
+      .withDescription((member, ctx) -> ctx.description())
       .withRange((member, ctx) -> getMemberDeclarationTextRange(member));
   public static final Parameterized<PsiMember, PsiClass> CONSTRUCTOR_NO_DEFAULT =
     parameterized(PsiMember.class, PsiClass.class, "constructor.no.default")
-      .withRawDescription((member, cls) -> message("constructor.no.default", formatClass(requireNonNull(cls))))
+      .withDescription((member, cls) -> message("constructor.no.default", formatClass(requireNonNull(cls))))
       .withRange((member, ctx) -> getMemberDeclarationTextRange(member));
   public static final Simple<PsiMethod> CONSTRUCTOR_IN_IMPLICIT_CLASS =
     error(PsiMethod.class, "constructor.in.implicit.class")
@@ -758,44 +782,44 @@ public final class JavaErrorKinds {
       .withRange(JavaErrorFormatUtil::getRange)
       .withHighlightType(JavaErrorHighlightType.UNHANDLED_EXCEPTION)
       .<Collection<PsiClassType>>parameterized()
-      .withRawDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
+      .withDescription((psi, unhandled) -> message("exception.unhandled", formatTypes(unhandled), unhandled.size()));
   public static final Parameterized<PsiResourceListElement, Collection<PsiClassType>> EXCEPTION_UNHANDLED_CLOSE =
     error(PsiResourceListElement.class, "exception.unhandled")
       .withHighlightType(JavaErrorHighlightType.UNHANDLED_EXCEPTION)
       .<Collection<PsiClassType>>parameterized()
-      .withRawDescription((psi, unhandled) -> message("exception.unhandled.close", formatTypes(unhandled), unhandled.size()));
+      .withDescription((psi, unhandled) -> message("exception.unhandled.close", formatTypes(unhandled), unhandled.size()));
   public static final Parameterized<PsiTypeElement, SuperclassSubclassContext> EXCEPTION_MUST_BE_DISJOINT =
     parameterized(PsiTypeElement.class, SuperclassSubclassContext.class, "exception.must.be.disjoint")
-      .withRawDescription((te, ctx) -> message(
+      .withDescription((te, ctx) -> message(
         "exception.must.be.disjoint",
         PsiFormatUtil.formatClass(ctx.subClass(), PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME),
         PsiFormatUtil.formatClass(ctx.superClass(), PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME)));
   public static final Parameterized<PsiTypeElement, PsiCatchSection> EXCEPTION_ALREADY_CAUGHT =
     parameterized(PsiTypeElement.class, PsiCatchSection.class, "exception.already.caught")
-      .withRawDescription((te, upperCatch) -> message(
+      .withDescription((te, upperCatch) -> message(
         "exception.already.caught", PsiFormatUtil.formatClass(
           requireNonNull(PsiUtil.resolveClassInClassTypeOnly(te.getType())),
           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_FQ_NAME)));
   public static final Parameterized<PsiParameter, PsiClassType> EXCEPTION_NEVER_THROWN_TRY = 
     parameterized(PsiParameter.class, PsiClassType.class, "exception.never.thrown.try")
-      .withRawDescription((parameter, type) -> message("exception.never.thrown.try", formatType(type)));
+      .withDescription((parameter, type) -> message("exception.never.thrown.try", formatType(type)));
   public static final Parameterized<PsiTypeElement, PsiClassType> EXCEPTION_NEVER_THROWN_TRY_MULTI = 
     parameterized(PsiTypeElement.class, PsiClassType.class, "exception.never.thrown.try.multi")
-      .withRawDescription((parameter, type) -> message("exception.never.thrown.try.multi", formatType(type)));
+      .withDescription((parameter, type) -> message("exception.never.thrown.try.multi", formatType(type)));
 
   public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> TYPE_INCOMPATIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "type.incompatible")
-      .withAnchor(psi -> psi.getParent() instanceof PsiAssignmentExpression assignment ? assignment : psi)
-      .withRange((psi, context) -> psi.getParent() instanceof PsiAssignmentExpression ? null : getRange(psi))
+      .withAbsoluteRange((psi, context) -> psi.getParent() instanceof PsiAssignmentExpression assignment ? 
+                                           assignment.getTextRange() : getRange(psi).shiftRight(psi.getTextRange().getStartOffset()))
       .withDescription((psi, context) -> context.createDescription())
       .withTooltip((psi, context) -> context.createTooltip());
   public static final Simple<PsiKeyword> TYPE_VOID_ILLEGAL = error("type.void.illegal");
   public static final Simple<PsiExpression> TYPE_VOID_NOT_ALLOWED = error("type.void.not.allowed");
   public static final Parameterized<PsiElement, PsiClass> TYPE_INACCESSIBLE =
     parameterized(PsiElement.class, PsiClass.class, "type.inaccessible")
-      .withRawDescription((psi, cls) -> message("type.inaccessible", formatClass(cls)));
+      .withDescription((psi, cls) -> message("type.inaccessible", formatClass(cls)));
   public static final Simple<PsiTypeElement> TYPE_UNKNOWN_CLASS = error(PsiTypeElement.class, "type.unknown.class")
-    .withRawDescription(type -> message("type.unknown.class", type.getType().getDeepComponentType().getCanonicalText()));
+    .withDescription(type -> message("type.unknown.class", type.getType().getDeepComponentType().getCanonicalText()));
   public static final Simple<PsiTypeElement> TYPE_ARGUMENT_PRIMITIVE = error(PsiTypeElement.class, "type.argument.primitive");
   public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_NOT_ALLOWED = error("type.argument.not.allowed");
   public static final Simple<PsiReferenceParameterList> TYPE_ARGUMENT_ON_RAW_TYPE = error("type.argument.on.raw.type");
@@ -806,20 +830,20 @@ public final class JavaErrorKinds {
     error(PsiTypeElement.class, "type.wildcard.may.be.used.only.as.reference.parameters");
   public static final Simple<PsiTypeElement> TYPE_WILDCARD_CANNOT_BE_INSTANTIATED = 
     error(PsiTypeElement.class, "type.wildcard.cannot.be.instantiated")
-      .withRawDescription(type -> message("type.wildcard.cannot.be.instantiated", formatType(type.getType())));
+      .withDescription(type -> message("type.wildcard.cannot.be.instantiated", formatType(type.getType())));
   public static final Simple<PsiJavaCodeReferenceElement> TYPE_RESTRICTED_IDENTIFIER =
     error(PsiJavaCodeReferenceElement.class, "type.restricted.identifier")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription(ref -> message("type.restricted.identifier", ref.getReferenceName()));
+      .withDescription(ref -> message("type.restricted.identifier", ref.getReferenceName()));
   
   public static final Simple<PsiExpression> FOREACH_NOT_APPLICABLE = error(PsiExpression.class, "foreach.not.applicable")
-    .withRawDescription(expression -> message("foreach.not.applicable", formatType(expression.getType())));
+    .withDescription(expression -> message("foreach.not.applicable", formatType(expression.getType())));
 
   public static final Simple<PsiLocalVariable> LVTI_NO_INITIALIZER = error(PsiLocalVariable.class, "lvti.no.initializer")
     .withAnchor(var -> var.getTypeElement());
   public static final Parameterized<PsiReferenceExpression, PsiLocalVariable> LVTI_SELF_REFERENCED = 
     parameterized(PsiReferenceExpression.class, PsiLocalVariable.class, "lvti.self.referenced")
-      .withRawDescription((ref, var) -> message("lvti.self.referenced", var.getName()));
+      .withDescription((ref, var) -> message("lvti.self.referenced", var.getName()));
   public static final Simple<PsiLocalVariable> LVTI_COMPOUND = error(PsiLocalVariable.class, "lvti.compound");
   public static final Simple<PsiLocalVariable> LVTI_VOID = error(PsiLocalVariable.class, "lvti.void")
     .withAnchor(var -> var.getTypeElement());
@@ -836,12 +860,12 @@ public final class JavaErrorKinds {
     .withAnchor(label -> label.getLabelIdentifier());
   public static final Simple<PsiLabeledStatement> LABEL_DUPLICATE = error(PsiLabeledStatement.class, "label.duplicate")
     .withAnchor(label -> label.getLabelIdentifier())
-    .withRawDescription(statement -> message("label.duplicate", statement.getLabelIdentifier().getText()));
+    .withDescription(statement -> message("label.duplicate", statement.getLabelIdentifier().getText()));
   public static final Simple<PsiIdentifier> LABEL_UNRESOLVED = error(PsiIdentifier.class, "label.unresolved")
-    .withRawDescription(label -> message("label.unresolved", label.getText()));
+    .withDescription(label -> message("label.unresolved", label.getText()));
   public static final Parameterized<PsiContinueStatement, PsiIdentifier> LABEL_MUST_BE_LOOP = 
     parameterized(PsiContinueStatement.class, PsiIdentifier.class, "label.must.be.loop")
-      .withRawDescription((statement, label) -> message("label.must.be.loop", label.getText()));
+      .withDescription((statement, label) -> message("label.must.be.loop", label.getText()));
   
   public static final Simple<PsiBreakStatement> BREAK_OUTSIDE_SWITCH_OR_LOOP = error("break.outside.switch.or.loop");
   public static final Simple<PsiBreakStatement> BREAK_OUT_OF_SWITCH_EXPRESSION = error("break.out.of.switch.expression");
@@ -854,11 +878,11 @@ public final class JavaErrorKinds {
 
   public static final Parameterized<PsiExpression, PsiType> ARRAY_ILLEGAL_INITIALIZER =
     parameterized(PsiExpression.class, PsiType.class, "array.illegal.initializer")
-      .withRawDescription((expr, type) -> message("array.illegal.initializer", formatType(type)));
+      .withDescription((expr, type) -> message("array.illegal.initializer", formatType(type)));
   public static final Simple<PsiArrayInitializerExpression> ARRAY_INITIALIZER_NOT_ALLOWED = error("array.initializer.not.allowed");
   public static final Parameterized<PsiExpression, PsiType> ARRAY_TYPE_EXPECTED =
     parameterized(PsiExpression.class, PsiType.class, "array.type.expected")
-      .withRawDescription((expr, type) -> message("array.type.expected", formatType(type)));
+      .withDescription((expr, type) -> message("array.type.expected", formatType(type)));
   public static final Simple<PsiElement> ARRAY_GENERIC = error("array.generic");
   public static final Simple<PsiReferenceParameterList> ARRAY_EMPTY_DIAMOND = error("array.empty.diamond");
   public static final Simple<PsiReferenceParameterList> ARRAY_TYPE_ARGUMENTS = error("array.type.arguments");
@@ -870,17 +894,17 @@ public final class JavaErrorKinds {
   public static final Simple<PsiAnnotation> PATTERN_DECONSTRUCTION_ANNOTATION = error("pattern.deconstruction.annotation");
   public static final Parameterized<PsiPattern, PatternTypeContext> PATTERN_UNSAFE_CAST = 
     parameterized(PsiPattern.class, PatternTypeContext.class, "pattern.unsafe.cast")
-    .withRawDescription((psi, ctx) -> message("pattern.unsafe.cast", ctx.contextType().getPresentableText(),
-                                              ctx.patternType().getPresentableText()));
+    .withDescription((psi, ctx) -> message("pattern.unsafe.cast", ctx.contextType().getPresentableText(),
+                                           ctx.patternType().getPresentableText()));
   public static final Parameterized<PsiDeconstructionPattern, PatternTypeContext> PATTERN_NOT_EXHAUSTIVE = 
     parameterized(PsiDeconstructionPattern.class, PatternTypeContext.class, "pattern.not.exhaustive")
-    .withRawDescription((psi, ctx) -> message("pattern.not.exhaustive", formatType(ctx.patternType()), formatType(ctx.contextType())));
+    .withDescription((psi, ctx) -> message("pattern.not.exhaustive", formatType(ctx.patternType()), formatType(ctx.contextType())));
   public static final Simple<PsiTypeElement> PATTERN_DECONSTRUCTION_REQUIRES_RECORD =
     error(PsiTypeElement.class, "pattern.deconstruction.requires.record")
-      .withRawDescription(type -> message("pattern.deconstruction.requires.record", formatType(type.getType())));
+      .withDescription(type -> message("pattern.deconstruction.requires.record", formatType(type.getType())));
   public static final Parameterized<PsiTypeElement, @Nls String> PATTERN_CANNOT_INFER_TYPE =
     parameterized(PsiTypeElement.class, String.class, "pattern.cannot.infer.type")
-      .withRawDescription((te, inferenceError) -> message("pattern.cannot.infer.type", inferenceError));
+      .withDescription((te, inferenceError) -> message("pattern.cannot.infer.type", inferenceError));
   public static final Parameterized<PsiDeconstructionList, DeconstructionCountMismatchContext> PATTERN_DECONSTRUCTION_COUNT_MISMATCH =
     parameterized(PsiDeconstructionList.class, DeconstructionCountMismatchContext.class, "pattern.deconstruction.count.mismatch")
       .withRange((list, ctx) -> {
@@ -892,17 +916,18 @@ public final class JavaErrorKinds {
         }
         return null;
       })
-      .withRawDescription((list, ctx) -> message("pattern.deconstruction.count.mismatch", 
-                                                 ctx.recordComponents().length, ctx.patternComponents().length));
+      .withNavigationShift((list, ctx) -> ctx.recordComponents().length < ctx.patternComponents().length && !ctx.hasMismatch() ? 0 : 1)
+      .withDescription((list, ctx) -> message("pattern.deconstruction.count.mismatch",
+                                              ctx.recordComponents().length, ctx.patternComponents().length));
   public static final Parameterized<PsiTypeTestPattern, JavaIncompatibleTypeErrorContext> PATTERN_INSTANCEOF_SUPERTYPE =
     parameterized(PsiTypeTestPattern.class, JavaIncompatibleTypeErrorContext.class, "pattern.instanceof.supertype")
       .withAnchor(PsiTypeTestPattern::getCheckType)
-      .withRawDescription((expr, context) -> message(
+      .withDescription((expr, context) -> message(
         "pattern.instanceof.supertype", context.lType().getPresentableText(), requireNonNull(context.rType()).getPresentableText()));
   public static final Parameterized<PsiTypeTestPattern, PsiType> PATTERN_INSTANCEOF_EQUALS =
     parameterized(PsiTypeTestPattern.class, PsiType.class, "pattern.instanceof.equals")
       .withAnchor(PsiTypeTestPattern::getCheckType)
-      .withRawDescription((expr, context) -> message("pattern.instanceof.equals", context.getPresentableText()));
+      .withDescription((expr, context) -> message("pattern.instanceof.equals", context.getPresentableText()));
   public static final Simple<PsiPattern> PATTERN_EXPECTED_CLASS_OR_ARRAY_TYPE =
     error(PsiPattern.class, "pattern.expected.class.or.array.type");
   
@@ -910,20 +935,20 @@ public final class JavaErrorKinds {
   public static final Simple<PsiTypeElement> INSTANCEOF_ILLEGAL_GENERIC_TYPE = error("instanceof.illegal.generic.type");
   public static final Parameterized<PsiTypeElement, JavaIncompatibleTypeErrorContext> INSTANCEOF_UNSAFE_CAST =
     parameterized(PsiTypeElement.class, JavaIncompatibleTypeErrorContext.class, "instanceof.unsafe.cast")
-      .withRawDescription((expr, context) -> message(
+      .withDescription((expr, context) -> message(
         "instanceof.unsafe.cast", context.lType().getPresentableText(), requireNonNull(context.rType()).getPresentableText()));
   
   public static final Parameterized<PsiElement, JavaIncompatibleTypeErrorContext> CAST_INCONVERTIBLE =
     parameterized(PsiElement.class, JavaIncompatibleTypeErrorContext.class, "cast.inconvertible")
-      .withRawDescription((psi, ctx) -> message("cast.inconvertible", formatType(ctx.lType()), formatType(ctx.rType())));
+      .withDescription((psi, ctx) -> message("cast.inconvertible", formatType(ctx.lType()), formatType(ctx.rType())));
   public static final Simple<PsiTypeElement> CAST_INTERSECTION_NOT_INTERFACE = error("cast.intersection.not.interface");
   public static final Simple<PsiTypeElement> CAST_INTERSECTION_UNEXPECTED_TYPE = error("cast.intersection.unexpected.type");
   public static final Simple<PsiTypeElement> CAST_INTERSECTION_REPEATED_INTERFACE = error("cast.intersection.repeated.interface");
   public static final Parameterized<PsiTypeCastExpression, InheritTypeClashContext> CAST_INTERSECTION_INHERITANCE_CLASH = 
     parameterized(PsiTypeCastExpression.class, InheritTypeClashContext.class, "cast.intersection.inheritance.clash")
-      .withRawDescription((cast, ctx) -> message("cast.intersection.inheritance.clash", formatClass(ctx.superClass()),
-                                                 requireNonNull(ctx.type1()).getPresentableText(),
-                                                 requireNonNull(ctx.type2()).getPresentableText()));
+      .withDescription((cast, ctx) -> message("cast.intersection.inheritance.clash", formatClass(ctx.superClass()),
+                                              requireNonNull(ctx.type1()).getPresentableText(),
+                                              requireNonNull(ctx.type2()).getPresentableText()));
 
   public static final Simple<PsiExpression> RESOURCE_DECLARATION_OR_VARIABLE_EXPECTED =
     error("resource.declaration.or.variable.expected");
@@ -942,7 +967,7 @@ public final class JavaErrorKinds {
       .withAnchor(switchExpression -> requireNonNullElse(tryCast(switchExpression.getFirstChild(), PsiKeyword.class), switchExpression));
   public static final Parameterized<PsiExpression, JavaIncompatibleTypeErrorContext> SWITCH_EXPRESSION_INCOMPATIBLE_TYPE = 
     parameterized(PsiExpression.class, JavaIncompatibleTypeErrorContext.class, "switch.expression.incompatible.type")
-      .withRawDescription((expr, context) -> message("switch.expression.incompatible.type", formatType(context.rType()), formatType(context.lType())));
+      .withDescription((expr, context) -> message("switch.expression.incompatible.type", formatType(context.rType()), formatType(context.lType())));
   public static final Simple<PsiElement> SWITCH_LABEL_EXPECTED = error(PsiElement.class, "switch.label.expected");
   public static final Simple<PsiStatement> SWITCH_DIFFERENT_CASE_KINDS = error(PsiStatement.class, "switch.different.case.kinds")
     .withRange(statement -> {
@@ -956,13 +981,13 @@ public final class JavaErrorKinds {
     });
   public static final Parameterized<PsiExpression, JavaPsiSwitchUtil.SelectorKind> SWITCH_SELECTOR_TYPE_INVALID =
     parameterized(PsiExpression.class, JavaPsiSwitchUtil.SelectorKind.class, "switch.selector.type.invalid")
-      .withRawDescription((expr, kind) -> kind.getFeature() == null ?
-                                          message("switch.selector.type.invalid", formatType(expr.getType())) :
-                                          message("switch.selector.type.invalid.level", formatType(expr.getType()), 
+      .withDescription((expr, kind) -> kind.getFeature() == null ?
+                                       message("switch.selector.type.invalid", formatType(expr.getType())) :
+                                       message("switch.selector.type.invalid.level", formatType(expr.getType()), 
                                                   PsiUtil.getLanguageLevel(expr).getShortText()));
   public static final Parameterized<PsiCaseLabelElement, PsiType> SWITCH_NULL_TYPE_INCOMPATIBLE =
     parameterized(PsiCaseLabelElement.class, PsiType.class, "switch.null.type.incompatible")
-      .withRawDescription((label, selectorType) -> message("switch.null.type.incompatible", formatType(selectorType)));
+      .withDescription((label, selectorType) -> message("switch.null.type.incompatible", formatType(selectorType)));
   public static final Simple<PsiReferenceExpression> SWITCH_LABEL_QUALIFIED_ENUM = 
     error(PsiReferenceExpression.class, "switch.label.qualified.enum");
   public static final Simple<PsiExpression> SWITCH_LABEL_CONSTANT_EXPECTED = 
@@ -972,15 +997,15 @@ public final class JavaErrorKinds {
     parameterized("switch.default.label.contains.case");
   public static final Parameterized<PsiExpression, PsiType> SWITCH_LABEL_PATTERN_EXPECTED = 
     parameterized(PsiExpression.class, PsiType.class, "switch.label.pattern.expected")
-      .withRawDescription((expr, type) -> message("switch.label.pattern.expected", formatType(type)));
+      .withDescription((expr, type) -> message("switch.label.pattern.expected", formatType(type)));
   public static final Parameterized<PsiElement, Object> SWITCH_LABEL_DUPLICATE =
     parameterized(PsiElement.class, Object.class, "switch.label.duplicate")
-      .withRawDescription((label, value) -> {
+      .withDescription((label, value) -> {
         if (value instanceof JavaPsiSwitchUtil.SwitchSpecialValue specialValue) {
           return switch (specialValue) {
             case UNCONDITIONAL_PATTERN -> message("switch.label.duplicate.unconditional.pattern");
             case DEFAULT_VALUE -> message("switch.label.duplicate.default");
-            case NULL_VALUE -> message("switch.label.duplicate", PsiKeyword.NULL);
+            case NULL_VALUE -> message("switch.label.duplicate", JavaKeywords.NULL);
           };
         }
         else if (value instanceof PsiEnumConstant constant) {
@@ -993,6 +1018,38 @@ public final class JavaErrorKinds {
           return message("switch.label.duplicate", value);
         }
       });
+  public static final Simple<PsiCaseLabelElement> SWITCH_FALLTHROUGH_TO_PATTERN = error("switch.fallthrough.to.pattern");
+  public static final Simple<PsiCaseLabelElement> SWITCH_MULTIPLE_LABELS_WITH_PATTERN_VARIABLES = 
+    error("switch.multiple.labels.with.pattern.variables");
+  public static final Parameterized<PsiDefaultCaseLabelElement, PsiCaseLabelElementList> SWITCH_DEFAULT_NULL_ORDER = 
+    parameterized("switch.default.null.order");
+  public static final Simple<PsiDefaultCaseLabelElement> SWITCH_DEFAULT_LABEL_NOT_ALLOWED = 
+    error("switch.default.label.not.allowed");
+  public static final Simple<PsiExpression> SWITCH_NULL_LABEL_NOT_ALLOWED = 
+    error("switch.null.label.not.allowed");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS = 
+    error("switch.label.combination.constants.and.patterns");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS_UNNAMED = 
+    error("switch.label.combination.constants.and.patterns.unnamed");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_MULTIPLE_PATTERNS = 
+    error("switch.label.multiple.patterns");
+  public static final Simple<PsiCaseLabelElement> SWITCH_LABEL_MULTIPLE_PATTERNS_UNNAMED = 
+    error("switch.label.multiple.patterns.unnamed");
+  public static final Parameterized<PsiCaseLabelElement, PsiElement> SWITCH_DOMINANCE_VIOLATION =
+    parameterized(PsiCaseLabelElement.class, PsiElement.class, "switch.dominance.violation")
+      .withDescription((overWhom, who) -> message("switch.dominance.violation", who.getText()));
+  public static final Simple<PsiElement> SWITCH_UNCONDITIONAL_PATTERN_AND_DEFAULT =
+    error("switch.unconditional.pattern.and.default");
+  public static final Simple<PsiElement> SWITCH_DEFAULT_AND_BOOLEAN = 
+    error("switch.default.and.boolean");
+  public static final Simple<PsiCaseLabelElement> SWITCH_UNCONDITIONAL_PATTERN_AND_BOOLEAN = 
+    error("switch.unconditional.pattern.and.boolean");
+  public static final Simple<PsiSwitchBlock> SWITCH_EMPTY = error(PsiSwitchBlock.class, "switch.empty")
+    .withAnchor(block -> requireNonNullElse(block.getExpression(), block.getFirstChild()))
+    .withDescription(block -> message("switch.empty", JavaElementKind.fromElement(block).subject()));
+  public static final Simple<PsiSwitchBlock> SWITCH_INCOMPLETE = error(PsiSwitchBlock.class, "switch.incomplete")
+    .withAnchor(block -> requireNonNullElse(block.getExpression(), block.getFirstChild()))
+    .withDescription(psi -> message("switch.incomplete", JavaElementKind.fromElement(psi).subject()));
   
   public static final Simple<PsiReferenceExpression> EXPRESSION_EXPECTED = error("expression.expected");
   public static final Parameterized<PsiReferenceExpression, PsiSuperExpression> EXPRESSION_SUPER_UNQUALIFIED_DEFAULT_METHOD = 
@@ -1002,20 +1059,20 @@ public final class JavaErrorKinds {
       .withRange(expr -> TextRange.from(expr.getTextLength(), 1));
   public static final Parameterized<PsiSuperExpression, PsiClass> EXPRESSION_SUPER_NOT_ENCLOSING_CLASS = 
     parameterized(PsiSuperExpression.class, PsiClass.class, "expression.super.not.enclosing.class")
-      .withRawDescription((expr, cls) -> message("expression.super.not.enclosing.class", formatClass(cls)));
+      .withDescription((expr, cls) -> message("expression.super.not.enclosing.class", formatClass(cls)));
   public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> EXPRESSION_SUPER_BAD_QUALIFIER_REDUNDANT_EXTENDED =
     parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "expression.super.bad.qualifier.redundant.extended")
-      .withRawDescription((expr, ctx) -> message("expression.super.bad.qualifier.redundant.extended",
-                                                 formatClass(ctx.subClass()), formatClass(ctx.superClass())));
+      .withDescription((expr, ctx) -> message("expression.super.bad.qualifier.redundant.extended",
+                                              formatClass(ctx.subClass()), formatClass(ctx.superClass())));
   public static final Parameterized<PsiSuperExpression, PsiClass> EXPRESSION_SUPER_BAD_QUALIFIER_METHOD_OVERRIDDEN =
     parameterized(PsiSuperExpression.class, PsiClass.class, "expression.super.bad.qualifier.method.overridden")
       .withAnchor(PsiSuperExpression::getQualifier)
-      .withRawDescription((expr, superClass) -> message("expression.super.bad.qualifier.method.overridden",
-                                                 ((PsiReferenceExpression)expr.getParent()).getReferenceName(), 
-                                                 formatClass(superClass)));
+      .withDescription((expr, superClass) -> message("expression.super.bad.qualifier.method.overridden",
+                                                     ((PsiReferenceExpression)expr.getParent()).getReferenceName(),
+                                                     formatClass(superClass)));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> EXPRESSION_SUPER_NO_ENCLOSING_INSTANCE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "expression.super.no.enclosing.instance")
-      .withRawDescription((expr, cls) -> message("expression.super.no.enclosing.instance", formatClass(cls)));
+      .withDescription((expr, cls) -> message("expression.super.no.enclosing.instance", formatClass(cls)));
   public static final Simple<PsiJavaCodeReferenceElement> EXPRESSION_QUALIFIED_CLASS_EXPECTED = 
     error(PsiJavaCodeReferenceElement.class, "expression.qualified.class.expected");
   public static final Simple<PsiTypeElement> EXPRESSION_CLASS_TYPE_PARAMETER = error("expression.class.type.parameter");
@@ -1023,16 +1080,16 @@ public final class JavaErrorKinds {
   
   public static final Parameterized<PsiExpression, PsiVariable> ASSIGNMENT_DECLARED_OUTSIDE_GUARD =
     parameterized(PsiExpression.class, PsiVariable.class, "assignment.declared.outside.guard")
-      .withRawDescription((expr, variable) -> message("assignment.declared.outside.guard", variable.getName()));
+      .withDescription((expr, variable) -> message("assignment.declared.outside.guard", variable.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiVariable> ASSIGNMENT_TO_FINAL_VARIABLE =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "assignment.to.final.variable")
-      .withRawDescription((expr, variable) -> message("assignment.to.final.variable", variable.getName()));
+      .withDescription((expr, variable) -> message("assignment.to.final.variable", variable.getName()));
   public static final Simple<PsiExpression> LVALUE_VARIABLE_EXPECTED = error("lvalue.variable.expected"); 
   
   public static final Parameterized<PsiJavaToken, JavaIncompatibleTypeErrorContext> BINARY_OPERATOR_NOT_APPLICABLE =
     parameterized(PsiJavaToken.class, JavaIncompatibleTypeErrorContext.class, "binary.operator.not.applicable")
       .withAnchor(token -> TypeConversionUtil.convertEQtoOperation(token.getTokenType()) == null ? token.getParent() : token)
-      .withRawDescription((token, context) -> {
+      .withDescription((token, context) -> {
         String text = token.getText();
         if (TypeConversionUtil.convertEQtoOperation(token.getTokenType()) != null) {
           text = text.replace("=", "");
@@ -1041,8 +1098,8 @@ public final class JavaErrorKinds {
       });
   public static final Parameterized<PsiUnaryExpression, PsiType> UNARY_OPERATOR_NOT_APPLICABLE =
     parameterized(PsiUnaryExpression.class, PsiType.class, "unary.operator.not.applicable")
-      .withRawDescription((unary, type) -> message("unary.operator.not.applicable", 
-                                                   unary.getOperationSign().getText(), formatType(type)));
+      .withDescription((unary, type) -> message("unary.operator.not.applicable",
+                                                unary.getOperationSign().getText(), formatType(type)));
 
   public static final Simple<PsiReferenceParameterList> NEW_EXPRESSION_DIAMOND_NOT_APPLICABLE =
     error("new.expression.diamond.not.applicable");
@@ -1063,84 +1120,91 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiReferenceParameterList, PsiDiamondType.DiamondInferenceResult>
     NEW_EXPRESSION_DIAMOND_INFERENCE_FAILURE =
     parameterized(PsiReferenceParameterList.class, PsiDiamondType.DiamondInferenceResult.class, "new.expression.diamond.inference.failure")
-      .withRawDescription(
+      .withDescription(
         (list, inferenceResult) -> message("new.expression.diamond.inference.failure", inferenceResult.getErrorMessage()));
   public static final Simple<PsiConstructorCall> NEW_EXPRESSION_ARGUMENTS_TO_DEFAULT_CONSTRUCTOR_CALL =
     error(PsiConstructorCall.class, "new.expression.arguments.to.default.constructor.call")
-      .withAnchor(call -> call.getArgumentList());
+      .withAnchor(call -> call.getArgumentList())
+      .withNavigationShift(1);
   public static final Parameterized<PsiConstructorCall, UnresolvedConstructorContext> NEW_EXPRESSION_UNRESOLVED_CONSTRUCTOR =
     parameterized(PsiConstructorCall.class, UnresolvedConstructorContext.class, "new.expression.unresolved.constructor")
       .withAnchor(PsiCall::getArgumentList)
-      .withRawDescription((call, ctx) -> message("new.expression.unresolved.constructor", 
+      .withNavigationShift(1)
+      .withDescription((call, ctx) -> message("new.expression.unresolved.constructor", 
                                           ctx.psiClass().getName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> NEW_EXPRESSION_TYPE_PARAMETER =
     parameterized(PsiJavaCodeReferenceElement.class, PsiTypeParameter.class, "new.expression.type.parameter")
-      .withRawDescription((ref, typeParameter) -> message("new.expression.type.parameter", formatClass(typeParameter)));
+      .withDescription((ref, typeParameter) -> message("new.expression.type.parameter", formatClass(typeParameter)));
 
   public static final Parameterized<PsiElement, String> REFERENCE_MEMBER_BEFORE_CONSTRUCTOR =
     parameterized(PsiElement.class, String.class, "reference.member.before.constructor")
       .withRange((psi, refName) -> getRange(psi))
-      .withRawDescription((psi, refName) -> message("reference.member.before.constructor", refName));
+      .withDescription((psi, refName) -> message("reference.member.before.constructor", refName));
   public static final Parameterized<PsiReferenceParameterList, PsiClass> REFERENCE_TYPE_ARGUMENT_STATIC_CLASS =
     parameterized(PsiReferenceParameterList.class, PsiClass.class, "reference.type.argument.static.class")
-      .withRawDescription((list, cls) -> message("reference.type.argument.static.class", formatClass(cls)));
+      .withDescription((list, cls) -> message("reference.type.argument.static.class", formatClass(cls)));
   public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_TYPE_NEEDS_TYPE_ARGUMENTS =
     error(PsiJavaCodeReferenceElement.class, "reference.type.needs.type.arguments")
-      .withRawDescription(ref -> message("reference.type.needs.type.arguments", requireNonNull(ref.getReferenceNameElement()).getText()));
+      .withDescription(ref -> message("reference.type.needs.type.arguments", requireNonNull(ref.getReferenceNameElement()).getText()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> REFERENCE_LOCAL_CLASS_OTHER_SWITCH_BRANCH =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "reference.local.class.other.switch.branch")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription((ref, cls) -> message("reference.local.class.other.switch.branch", formatClass(cls)));
+      .withDescription((ref, cls) -> message("reference.local.class.other.switch.branch", formatClass(cls)));
   public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_FIELD_FORWARD =
     parameterized(PsiReferenceExpression.class, PsiField.class, "reference.field.forward")
-      .withRawDescription((ref, field) -> message("reference.field.forward", field.getName()));
+      .withDescription((ref, field) -> message("reference.field.forward", field.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_FIELD_SELF =
     parameterized(PsiReferenceExpression.class, PsiField.class, "reference.field.self")
-      .withRawDescription((ref, field) -> message("reference.field.self", field.getName()));
+      .withDescription((ref, field) -> message("reference.field.self", field.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_ENUM_FORWARD =
     parameterized(PsiReferenceExpression.class, PsiField.class, "reference.enum.forward")
-      .withRawDescription((ref, field) -> message("reference.enum.forward", field.getName()));
+      .withDescription((ref, field) -> message("reference.enum.forward", field.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiField> REFERENCE_ENUM_SELF =
     parameterized(PsiReferenceExpression.class, PsiField.class, "reference.enum.self")
-      .withRawDescription((ref, field) -> message("reference.enum.self", field.getName()));
+      .withDescription((ref, field) -> message("reference.enum.self", field.getName()));
   public static final Simple<PsiExpression> REFERENCE_QUALIFIER_NOT_EXPRESSION =
     error(PsiExpression.class, "reference.qualifier.not.expression").withHighlightType(JavaErrorHighlightType.WRONG_REF);
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiPrimitiveType> REFERENCE_QUALIFIER_PRIMITIVE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiPrimitiveType.class, "reference.qualifier.primitive")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, type) -> message("reference.qualifier.primitive", type.getPresentableText()));
+      .withDescription((ref, type) -> message("reference.qualifier.primitive", type.getPresentableText()));
   public static final Simple<PsiElement> REFERENCE_PENDING =
     error(PsiElement.class, "incomplete.project.state.pending.reference")
       .withHighlightType(JavaErrorHighlightType.PENDING_REF);
   public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_UNRESOLVED =
     error(PsiJavaCodeReferenceElement.class, "reference.unresolved")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription(ref -> message("reference.unresolved", ref.getReferenceName()))
+      .withDescription(ref -> message("reference.unresolved", ref.getReferenceName()))
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_IMPLICIT_CLASS =
     error(PsiJavaCodeReferenceElement.class, "reference.implicit.class")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription(ref -> message("reference.implicit.class", ref.getReferenceName()))
+      .withDescription(ref -> message("reference.implicit.class", ref.getReferenceName()))
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> REFERENCE_CLASS_IN_DEFAULT_PACKAGE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "reference.class.in.default.package")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription((ref, cls) -> message("reference.class.in.default.package", cls.getName()))
+      .withDescription((ref, cls) -> message("reference.class.in.default.package", cls.getName()))
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Parameterized<PsiJavaCodeReferenceElement, List<JavaResolveResult>> REFERENCE_AMBIGUOUS =
     error(PsiJavaCodeReferenceElement.class, "reference.ambiguous")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
       .<List<JavaResolveResult>>parameterized()
-      .withRawDescription((ref, results) -> message("reference.ambiguous", ref.getReferenceName(),
-                                                    format(requireNonNull(results.get(0).getElement())),
-                                                    format(requireNonNull(results.get(1).getElement()))));
+      .withDescription((ref, results) -> {
+        String element1 = format(requireNonNull(results.get(0).getElement()));
+        String element2 = format(requireNonNull(results.get(1).getElement()));
+        boolean comparison = element1.compareTo(element2) < 0;
+        return message("reference.ambiguous", ref.getReferenceName(),
+                       comparison ? element1 : element2,
+                       comparison ? element2 : element1);
+      });
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiElement> REFERENCE_NON_STATIC_FROM_STATIC_CONTEXT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiElement.class, "reference.non.static.from.static.context")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, refElement) -> {
+      .withDescription((ref, refElement) -> {
         String type = JavaElementKind.fromElement(refElement).lessDescriptive().subject();
         String name = HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY);
         return message("reference.non.static.from.static.context", type, name);
@@ -1148,9 +1212,12 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiTypeParameter> REFERENCE_OUTER_TYPE_PARAMETER_FROM_STATIC_CONTEXT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiTypeParameter.class, "reference.outer.type.parameter.from.static.context")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription((ref, refElement) -> message("reference.outer.type.parameter.from.static.context", refElement.getName()));
+      .withDescription((ref, refElement) -> message("reference.outer.type.parameter.from.static.context", refElement.getName()));
   public static final Simple<PsiJavaCodeReferenceElement> REFERENCE_SELECT_FROM_TYPE_PARAMETER =
     error(PsiJavaCodeReferenceElement.class, "reference.select.from.type.parameter");
+  public static final Parameterized<PsiElement, String> REFERENCE_PACKAGE_NOT_FOUND =
+    parameterized(PsiElement.class, String.class, "reference.package.not.found")
+      .withDescription((psi, packageName) -> message("reference.package.not.found", packageName));
   
   public static final Simple<PsiSwitchLabelStatementBase> STATEMENT_CASE_OUTSIDE_SWITCH = error("statement.case.outside.switch");
   public static final Simple<PsiStatement> STATEMENT_INVALID = error("statement.invalid");
@@ -1206,23 +1273,23 @@ public final class JavaErrorKinds {
   
   public static final Parameterized<PsiKeyword, String> MODIFIER_NOT_ALLOWED = 
     parameterized(PsiKeyword.class, String.class, "modifier.not.allowed")
-    .withRawDescription((keyword, text) -> message("modifier.not.allowed", text));
+    .withDescription((keyword, text) -> message("modifier.not.allowed", text));
   public static final Parameterized<PsiKeyword, String> MODIFIER_REPEATED = 
     parameterized(PsiKeyword.class, String.class, "modifier.repeated")
-    .withRawDescription((keyword, text) -> message("modifier.repeated", text));
+    .withDescription((keyword, text) -> message("modifier.repeated", text));
   public static final Parameterized<PsiKeyword, String> MODIFIER_INCOMPATIBLE = 
     parameterized(PsiKeyword.class, String.class, "modifier.incompatible")
-    .withRawDescription((keyword, text) -> message("modifier.incompatible", keyword.getText(), text));
+    .withDescription((keyword, text) -> message("modifier.incompatible", keyword.getText(), text));
   public static final Parameterized<PsiKeyword, String> MODIFIER_NOT_ALLOWED_LOCAL_CLASS = 
     parameterized(PsiKeyword.class, String.class, "modifier.not.allowed.local.class")
-    .withRawDescription((keyword, text) -> message("modifier.not.allowed.local.class", text));
+    .withDescription((keyword, text) -> message("modifier.not.allowed.local.class", text));
   public static final Parameterized<PsiKeyword, String> MODIFIER_NOT_ALLOWED_NON_SEALED = 
     parameterized(PsiKeyword.class, String.class, "modifier.not.allowed.non.sealed");
   
   public static final Simple<PsiMethodCallExpression> CALL_SUPER_ENUM_CONSTRUCTOR = error("call.super.enum.constructor");
   public static final Parameterized<PsiExpression, PsiClass> CALL_SUPER_QUALIFIER_NOT_INNER_CLASS = 
     parameterized(PsiExpression.class, PsiClass.class, "call.super.qualifier.not.inner.class")
-      .withRawDescription((psi, cls) -> message("call.super.qualifier.not.inner.class", formatClass(cls)));
+      .withDescription((psi, cls) -> message("call.super.qualifier.not.inner.class", formatClass(cls)));
   public static final Simple<PsiMethodCallExpression> CALL_EXPECTED = error("call.expected");
   public static final Simple<PsiDeconstructionPattern> CALL_PARSED_AS_DECONSTRUCTION_PATTERN =
     error("call.parsed.as.deconstruction.pattern");
@@ -1232,56 +1299,59 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiCall, PsiClass> CALL_FORMAL_VARARGS_ELEMENT_TYPE_INACCESSIBLE_HERE =
     parameterized(PsiCall.class, PsiClass.class, "call.formal.varargs.element.type.inaccessible.here")
       .withAnchor(call -> requireNonNullElse(call.getArgumentList(), call))
-      .withRawDescription((call, cls) -> message("call.formal.varargs.element.type.inaccessible.here", formatClass(cls)));
+      .withDescription((call, cls) -> message("call.formal.varargs.element.type.inaccessible.here", formatClass(cls)));
   public static final Parameterized<PsiCall, String> CALL_TYPE_INFERENCE_ERROR =
     parameterized(PsiCall.class, String.class, "call.type.inference.error")
       .withRange((psi, context) -> getRange(psi))
-      .withRawDescription((psi, context) -> message("call.type.inference.error", context));
+      .withDescription((psi, context) -> message("call.type.inference.error", context));
   public static final Parameterized<PsiElement, JavaMismatchedCallContext> CALL_WRONG_ARGUMENTS =
     parameterized(PsiElement.class, JavaMismatchedCallContext.class, "call.wrong.arguments")
       .withTooltip((psi, ctx) -> ctx.createTooltip())
+      .withNavigationShift((psi, ctx) -> psi instanceof PsiExpressionList ? 1 : 0)
       .withDescription((psi, ctx) -> ctx.createDescription());
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved")
       .withAnchor(PsiMethodCallExpression::getArgumentList)
-      .withRawDescription((call, results) -> message(
+      .withNavigationShift(1)
+      .withDescription((call, results) -> message(
         "call.unresolved", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_UNRESOLVED_NAME =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.unresolved.name")
       .withRange((call, cls) -> getRange(call))
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription((call, results) -> message(
+      .withDescription((call, results) -> message(
         "call.unresolved.name", call.getMethodExpression().getReferenceName() + formatArgumentTypes(call.getArgumentList(), true)));
   public static final Parameterized<PsiMethodCallExpression, JavaAmbiguousCallContext> CALL_AMBIGUOUS =
     parameterized(PsiMethodCallExpression.class, JavaAmbiguousCallContext.class, "call.ambiguous")
       .withAnchor(PsiMethodCallExpression::getArgumentList)
-      .withRawDescription((call, ctx) -> ctx.description())
+      .withNavigationShift((psi, ctx) -> 1)
+      .withDescription((call, ctx) -> ctx.description())
       .withTooltip((call, ctx) -> ctx.tooltip());
   public static final Parameterized<PsiMethodCallExpression, JavaResolveResult[]> CALL_AMBIGUOUS_NO_MATCH =
     parameterized(PsiMethodCallExpression.class, JavaResolveResult[].class, "call.ambiguous.no.match")
       .withRange((call, cls) -> getRange(call))
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription(
+      .withDescription(
         (call, cls) -> message("call.ambiguous.no.match", call.getMethodExpression().getReferenceName(),
                                requireNonNull(RefactoringChangeUtil.getQualifierClass(call.getMethodExpression())).getName()));
   public static final Parameterized<PsiMethodCallExpression, PsiPrimitiveType> CALL_QUALIFIER_PRIMITIVE =
     parameterized(PsiMethodCallExpression.class, PsiPrimitiveType.class, "call.qualifier.primitive")
       .withRange((call, type) -> getRange(call))
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription((call, type) -> message("call.qualifier.primitive", type.getPresentableText()));
+      .withDescription((call, type) -> message("call.qualifier.primitive", type.getPresentableText()));
     
   public static final Parameterized<PsiMethodCallExpression, PsiMethod> CALL_DIRECT_ABSTRACT_METHOD_ACCESS =
     parameterized(PsiMethodCallExpression.class, PsiMethod.class, "call.direct.abstract.method.access")
-      .withRawDescription((call, method) -> message("call.direct.abstract.method.access", formatMethod(method)));
+      .withDescription((call, method) -> message("call.direct.abstract.method.access", formatMethod(method)));
   public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_MUST_BE_FIRST_STATEMENT =
     error(PsiMethodCallExpression.class, "call.constructor.must.be.first.statement")
-      .withRawDescription(call -> message("call.constructor.must.be.first.statement", call.getMethodExpression().getText() + "()"));
+      .withDescription(call -> message("call.constructor.must.be.first.statement", call.getMethodExpression().getText() + "()"));
   public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_ONLY_ALLOWED_IN_CONSTRUCTOR =
     error(PsiMethodCallExpression.class, "call.constructor.only.allowed.in.constructor")
-      .withRawDescription(call -> message("call.constructor.only.allowed.in.constructor", call.getMethodExpression().getText() + "()"));
+      .withDescription(call -> message("call.constructor.only.allowed.in.constructor", call.getMethodExpression().getText() + "()"));
   public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_MUST_BE_TOP_LEVEL_STATEMENT =
     error(PsiMethodCallExpression.class, "call.constructor.must.be.top.level.statement")
-      .withRawDescription(call -> message("call.constructor.must.be.top.level.statement", call.getMethodExpression().getText() + "()"));
+      .withDescription(call -> message("call.constructor.must.be.top.level.statement", call.getMethodExpression().getText() + "()"));
   public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_DUPLICATE =
     error(PsiMethodCallExpression.class, "call.constructor.duplicate");
   public static final Simple<PsiMethodCallExpression> CALL_CONSTRUCTOR_RECURSIVE =
@@ -1291,7 +1361,7 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiElement, String> CALL_MEMBER_BEFORE_CONSTRUCTOR =
     parameterized(PsiElement.class, String.class, "call.member.before.constructor")
       .withRange((psi, refName) -> getRange(psi))
-      .withRawDescription((psi, refName) -> message("call.member.before.constructor", refName));
+      .withDescription((psi, refName) -> message("call.member.before.constructor", refName));
 
   public static final Simple<PsiExpression> STRING_TEMPLATE_VOID_NOT_ALLOWED_IN_EMBEDDED =
     error("string.template.void.not.allowed.in.embedded");
@@ -1299,49 +1369,49 @@ public final class JavaErrorKinds {
     error("string.template.processor.missing");
   public static final Parameterized<PsiExpression, PsiType> STRING_TEMPLATE_RAW_PROCESSOR =
     parameterized(PsiExpression.class, PsiType.class, "string.template.raw.processor")
-      .withRawDescription((psi, type) -> message("string.template.raw.processor", type.getPresentableText()));
+      .withDescription((psi, type) -> message("string.template.raw.processor", type.getPresentableText()));
 
-  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PRIVATE =
-    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.private")
-      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
-      .withRawDescription((psi, result) -> message("access.private", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
-  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PROTECTED =
-    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.protected")
-      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
-      .withRawDescription(
+  public static final Parameterized<PsiElement, JavaResolveResult> ACCESS_PRIVATE =
+    parameterized(PsiElement.class, JavaResolveResult.class, "access.private")
+      .withRange((psi, cls) -> getRange(psi))
+      .withDescription((psi, result) -> message("access.private", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
+  public static final Parameterized<PsiElement, JavaResolveResult> ACCESS_PROTECTED =
+    parameterized(PsiElement.class, JavaResolveResult.class, "access.protected")
+      .withRange((psi, cls) -> getRange(psi))
+      .withDescription(
         (psi, result) -> message("access.protected", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
-  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_PACKAGE_LOCAL =
-    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.package.local")
-      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
-      .withRawDescription(
+  public static final Parameterized<PsiElement, JavaResolveResult> ACCESS_PACKAGE_LOCAL =
+    parameterized(PsiElement.class, JavaResolveResult.class, "access.package.local")
+      .withRange((psi, cls) -> getRange(psi))
+      .withDescription(
         (psi, result) -> message("access.package.local", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
-  public static final Parameterized<PsiJavaCodeReferenceElement, JavaResolveResult> ACCESS_GENERIC_PROBLEM =
-    parameterized(PsiJavaCodeReferenceElement.class, JavaResolveResult.class, "access.generic.problem")
-      .withAnchor(psi -> requireNonNullElse(psi.getReferenceNameElement(), psi))
-      .withRawDescription(
+  public static final Parameterized<PsiElement, JavaResolveResult> ACCESS_GENERIC_PROBLEM =
+    parameterized(PsiElement.class, JavaResolveResult.class, "access.generic.problem")
+      .withRange((psi, cls) -> getRange(psi))
+      .withDescription(
         (psi, result) -> message("access.generic.problem", formatResolvedSymbol(result), formatResolvedSymbolContainer(result)));
 
   public static final Simple<PsiImportModuleStatement> IMPORT_MODULE_NOT_ALLOWED =
-    error(PsiImportModuleStatement.class, "import.module.not.allowed");
+    error(PsiImportModuleStatement.class, "module.import.not.allowed");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> IMPORT_SINGLE_CLASS_CONFLICT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "import.single.class.conflict")
-      .withRawDescription((ref, cls) -> message("import.single.class.conflict", cls.getQualifiedName()));
+      .withDescription((ref, cls) -> message("import.single.class.conflict", cls.getQualifiedName()));
   public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_CLASS_ALREADY_DEFINED =
     error(PsiJavaCodeReferenceElement.class, "import.single.static.class.already.defined")
-      .withRawDescription(ref -> message("import.single.static.class.already.defined", ref.getReferenceName()));
+      .withDescription(ref -> message("import.single.static.class.already.defined", ref.getReferenceName()));
   public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_CLASS_AMBIGUOUS =
     error(PsiJavaCodeReferenceElement.class, "import.single.static.class.ambiguous")
-      .withRawDescription(ref -> message("import.single.static.class.ambiguous", ref.getReferenceName()));
+      .withDescription(ref -> message("import.single.static.class.ambiguous", ref.getReferenceName()));
   public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_FIELD_ALREADY_DEFINED =
     error(PsiJavaCodeReferenceElement.class, "import.single.static.field.already.defined")
-      .withRawDescription(ref -> message("import.single.static.field.already.defined", ref.getReferenceName()));
+      .withDescription(ref -> message("import.single.static.field.already.defined", ref.getReferenceName()));
   public static final Simple<PsiJavaCodeReferenceElement> IMPORT_SINGLE_STATIC_FIELD_AMBIGUOUS =
     error(PsiJavaCodeReferenceElement.class, "import.single.static.field.ambiguous")
-      .withRawDescription(ref -> message("import.single.static.field.ambiguous", ref.getReferenceName()));
+      .withDescription(ref -> message("import.single.static.field.ambiguous", ref.getReferenceName()));
   public static final Simple<PsiJavaCodeReferenceElement> IMPORT_STATIC_ON_DEMAND_RESOLVES_TO_CLASS =
     error(PsiJavaCodeReferenceElement.class, "import.static.on.demand.resolves.to.class")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription(ref -> message("import.static.on.demand.resolves.to.class", ref.getCanonicalText()));
+      .withDescription(ref -> message("import.static.on.demand.resolves.to.class", ref.getCanonicalText()));
   public static final Simple<PsiJavaToken> IMPORT_LIST_EXTRA_SEMICOLON = error(PsiJavaToken.class, "import.list.extra.semicolon");
   
   public static final Simple<PsiIdentifier> UNDERSCORE_IDENTIFIER = error("underscore.identifier");
@@ -1387,25 +1457,25 @@ public final class JavaErrorKinds {
     parameterized(PsiReturnStatement.class, PsiMethod.class, "return.from.void.method");
   public static final Parameterized<PsiReturnStatement, PsiMethodCallExpression> RETURN_BEFORE_EXPLICIT_CONSTRUCTOR_CALL =
     parameterized(PsiReturnStatement.class, PsiMethodCallExpression.class, "return.before.explicit.constructor.call")
-      .withRawDescription((psi, call) -> message("return.before.explicit.constructor.call", call.getMethodExpression().getText() + "()"));
+      .withDescription((psi, call) -> message("return.before.explicit.constructor.call", call.getMethodExpression().getText() + "()"));
   
   public static final Simple<PsiField> FIELD_NOT_INITIALIZED =
     error(PsiField.class, "field.not.initialized")
       .withRange(JavaErrorFormatUtil::getFieldDeclarationTextRange)
-      .withRawDescription(var -> message("field.not.initialized", var.getName()));
+      .withDescription(var -> message("field.not.initialized", var.getName()));
   public static final Parameterized<PsiElement, PsiField> FIELD_INITIALIZED_BEFORE_CONSTRUCTOR_CALL =
     parameterized(PsiElement.class, PsiField.class, "field.initialized.before.constructor.call")
-      .withRawDescription((psi, field) -> message(
+      .withDescription((psi, field) -> message(
         "field.initialized.before.constructor.call",
         PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY)));
   
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_NOT_INITIALIZED =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.not.initialized")
-      .withRawDescription((ref, var) -> message("variable.not.initialized", var.getName()));
+      .withDescription((ref, var) -> message("variable.not.initialized", var.getName()));
   public static final Parameterized<PsiVariable, PsiVariable> VARIABLE_ALREADY_DEFINED =
     parameterized(PsiVariable.class, PsiVariable.class, "variable.already.defined")
       .withAnchor(var -> requireNonNullElse(var.getNameIdentifier(), var))
-      .withRawDescription((var, oldVar) -> message("variable.already.defined", var.getName()))
+      .withDescription((var, oldVar) -> message("variable.already.defined", var.getName()))
       .withTooltip((variable, oldVariable) -> {
         VirtualFile vFile = PsiUtilCore.getVirtualFile(variable);
         if (vFile == null) return HtmlChunk.empty();
@@ -1416,27 +1486,27 @@ public final class JavaErrorKinds {
       });
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned")
-      .withRawDescription((ref, var) -> message("variable.already.assigned", var.getName()));
+      .withDescription((ref, var) -> message("variable.already.assigned", var.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_CONSTRUCTOR =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.constructor")
-      .withRawDescription((ref, var) -> message("variable.already.assigned.constructor", var.getName()));
+      .withDescription((ref, var) -> message("variable.already.assigned.constructor", var.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_FIELD =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.field")
-      .withRawDescription((ref, var) -> message("variable.already.assigned.field", var.getName()));
+      .withDescription((ref, var) -> message("variable.already.assigned.field", var.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ALREADY_ASSIGNED_INITIALIZER =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.already.assigned.initializer")
-      .withRawDescription((ref, var) -> message("variable.already.assigned.initializer", var.getName()));
+      .withDescription((ref, var) -> message("variable.already.assigned.initializer", var.getName()));
   public static final Parameterized<PsiReferenceExpression, PsiVariable> VARIABLE_ASSIGNED_IN_LOOP =
     parameterized(PsiReferenceExpression.class, PsiVariable.class, "variable.assigned.in.loop")
-      .withRawDescription((ref, var) -> message("variable.assigned.in.loop", var.getName()));
+      .withDescription((ref, var) -> message("variable.assigned.in.loop", var.getName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_FINAL =
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.final")
-      .withRawDescription((ref, var) -> message("variable.must.be.final", var.getName()));
+      .withDescription((ref, var) -> message("variable.must.be.final", var.getName()));
   public static final Simple<PsiReferenceExpression> VARIABLE_MUST_BE_FINAL_RESOURCE =
     error(PsiReferenceExpression.class, "variable.must.be.final.resource");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_EFFECTIVELY_FINAL =
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.effectively.final")
-      .withRawDescription((ref, var) -> message("variable.must.be.effectively.final", var.getName()));
+      .withDescription((ref, var) -> message("variable.must.be.effectively.final", var.getName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA =
     parameterized(PsiJavaCodeReferenceElement.class, PsiVariable.class, "variable.must.be.effectively.final.lambda");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiVariable> VARIABLE_MUST_BE_EFFECTIVELY_FINAL_GUARD =
@@ -1445,7 +1515,7 @@ public final class JavaErrorKinds {
   public static final Simple<PsiPackageStatement> MODULE_NO_PACKAGE = error("module.no.package");
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiJavaModule> MODULE_CONFLICTING_PACKAGES = 
     parameterized(PsiJavaCodeReferenceElement.class, PsiJavaModule.class, "module.conflicting.packages")
-      .withRawDescription((ref, module) -> message("module.conflicting.packages", ref.getText(), module.getName()));
+      .withDescription((ref, module) -> message("module.conflicting.packages", ref.getText(), module.getName()));
   public static final Simple<PsiJavaModule> MODULE_FILE_WRONG_NAME = error(PsiJavaModule.class, "module.file.wrong.name")
     .withRange(JavaErrorFormatUtil::getRange);
   public static final Parameterized<PsiJavaModule, PsiFile> MODULE_FILE_DUPLICATE = 
@@ -1453,25 +1523,25 @@ public final class JavaErrorKinds {
     .withRange((module, file) -> getRange(module));
   public static final Parameterized<PsiRequiresStatement, String> MODULE_DUPLICATE_REQUIRES =
     parameterized(PsiRequiresStatement.class, String.class, "module.duplicate.requires")
-      .withRawDescription((requires, refName) -> message("module.duplicate.requires", refName));
+      .withDescription((requires, refName) -> message("module.duplicate.requires", refName));
   public static final Parameterized<PsiPackageAccessibilityStatement, String> MODULE_DUPLICATE_EXPORTS =
     parameterized(PsiPackageAccessibilityStatement.class, String.class, "module.duplicate.exports")
-      .withRawDescription((requires, refName) -> message("module.duplicate.exports", refName));
+      .withDescription((requires, refName) -> message("module.duplicate.exports", refName));
   public static final Parameterized<PsiPackageAccessibilityStatement, String> MODULE_DUPLICATE_OPENS =
     parameterized(PsiPackageAccessibilityStatement.class, String.class, "module.duplicate.opens")
-      .withRawDescription((requires, refName) -> message("module.duplicate.opens", refName));
+      .withDescription((requires, refName) -> message("module.duplicate.opens", refName));
   public static final Parameterized<PsiUsesStatement, String> MODULE_DUPLICATE_USES =
     parameterized(PsiUsesStatement.class, String.class, "module.duplicate.uses")
-      .withRawDescription((requires, refName) -> message("module.duplicate.uses", refName));
+      .withDescription((requires, refName) -> message("module.duplicate.uses", refName));
   public static final Parameterized<PsiProvidesStatement, String> MODULE_DUPLICATE_PROVIDES =
     parameterized(PsiProvidesStatement.class, String.class, "module.duplicate.provides")
-      .withRawDescription((requires, refName) -> message("module.duplicate.provides", refName));
+      .withDescription((requires, refName) -> message("module.duplicate.provides", refName));
   public static final Parameterized<PsiJavaModule, JavaPsiModuleUtil.ModulePackageConflict> MODULE_CONFLICTING_READS =
     parameterized(PsiJavaModule.class, JavaPsiModuleUtil.ModulePackageConflict.class, "module.conflicting.reads")
       .withRange((module, conflict) -> getRange(module))
-      .withRawDescription((module, conflict) -> message("module.conflicting.reads", 
-                                                        module.getName(), conflict.packageName(), 
-                                                        conflict.module1().getName(), conflict.module2().getName()));
+      .withDescription((module, conflict) -> message("module.conflicting.reads",
+                                                     module.getName(), conflict.packageName(),
+                                                     conflict.module1().getName(), conflict.module2().getName()));
   public static final Parameterized<PsiJavaModule, VirtualFile> MODULE_FILE_WRONG_LOCATION =
     parameterized(PsiJavaModule.class, VirtualFile.class, "module.file.wrong.location")
       .withRange((module, file) -> getRange(module));
@@ -1480,62 +1550,98 @@ public final class JavaErrorKinds {
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_ENUM =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.enum")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, cls) -> message("module.service.enum", cls.getName()));
+      .withDescription((ref, cls) -> message("module.service.enum", cls.getName()));
   public static final Simple<PsiJavaCodeReferenceElement> MODULE_SERVICE_ALIEN =
     error(PsiJavaCodeReferenceElement.class, "module.service.alien")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_NOT_FOUND =
     error(PsiJavaModuleReferenceElement.class, "module.not.found")
       .withHighlightType(JavaErrorHighlightType.WRONG_REF)
-      .withRawDescription(ref -> message("module.not.found", ref.getReferenceText()));
+      .withDescription(ref -> message("module.not.found", ref.getReferenceText()));
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_NOT_ON_PATH =
     error(PsiJavaModuleReferenceElement.class, "module.not.on.path")
-      .withRawDescription(ref -> message("module.not.on.path", ref.getReferenceText()));
+      .withDescription(ref -> message("module.not.on.path", ref.getReferenceText()));
   public static final Parameterized<PsiJavaModuleReferenceElement, Collection<PsiJavaModule>> MODULE_CYCLIC_DEPENDENCE =
     error(PsiJavaModuleReferenceElement.class, "module.cyclic.dependence")
       .<Collection<PsiJavaModule>>parameterized()
-      .withRawDescription(
+      .withDescription(
         (ref, modules) -> message("module.cyclic.dependence", modules.stream().map(PsiJavaModule::getName)
           .sorted().collect(Collectors.joining(", "))));
   public static final Simple<PsiJavaCodeReferenceElement> MODULE_DUPLICATE_IMPLEMENTATION =
     error(PsiJavaCodeReferenceElement.class, "module.duplicate.implementation")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription(ref -> message("module.duplicate.implementation", ref.getQualifiedName()));
+      .withDescription(ref -> message("module.duplicate.implementation", ref.getQualifiedName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_PROVIDER_TYPE =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.provider.type")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, impl) -> message("module.service.provider.type", impl.getName()));
+      .withDescription((ref, impl) -> message("module.service.provider.type", impl.getName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_NO_CONSTRUCTOR =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.no.constructor")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, impl) -> message("module.service.no.constructor", impl.getName()));
+      .withDescription((ref, impl) -> message("module.service.no.constructor", impl.getName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_ABSTRACT =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.abstract")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, impl) -> message("module.service.abstract", impl.getName()));
+      .withDescription((ref, impl) -> message("module.service.abstract", impl.getName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, PsiClass> MODULE_SERVICE_INNER =
     parameterized(PsiJavaCodeReferenceElement.class, PsiClass.class, "module.service.inner")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref))
-      .withRawDescription((ref, impl) -> message("module.service.inner", impl.getName()));
+      .withDescription((ref, impl) -> message("module.service.inner", impl.getName()));
   public static final Parameterized<PsiJavaCodeReferenceElement, SuperclassSubclassContext> MODULE_SERVICE_IMPLEMENTATION_TYPE =
     parameterized(PsiJavaCodeReferenceElement.class, SuperclassSubclassContext.class, "module.service.implementation.type")
       .withAnchor(ref -> requireNonNullElse(ref.getReferenceNameElement(), ref));
 
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_DUPLICATE_EXPORTS_TARGET =
     error(PsiJavaModuleReferenceElement.class, "module.duplicate.exports.target")
-      .withRawDescription(ref -> message("module.duplicate.exports.target", ref.getReferenceText()));
+      .withDescription(ref -> message("module.duplicate.exports.target", ref.getReferenceText()));
   public static final Simple<PsiJavaModuleReferenceElement> MODULE_DUPLICATE_OPENS_TARGET =
     error(PsiJavaModuleReferenceElement.class, "module.duplicate.opens.target")
-      .withRawDescription(ref -> message("module.duplicate.opens.target", ref.getReferenceText()));
+      .withDescription(ref -> message("module.duplicate.opens.target", ref.getReferenceText()));
   public static final Simple<PsiPackageAccessibilityStatement> MODULE_REFERENCE_PACKAGE_NOT_FOUND =
     error(PsiPackageAccessibilityStatement.class, "module.reference.package.not.found")
       .withAnchor(st -> st.getPackageReference())
-      .withRawDescription(st -> message("module.reference.package.not.found", st.getPackageName()));
+      .withDescription(st -> message("module.reference.package.not.found", st.getPackageName()));
   public static final Simple<PsiPackageAccessibilityStatement> MODULE_REFERENCE_PACKAGE_EMPTY =
     error(PsiPackageAccessibilityStatement.class, "module.reference.package.empty")
       .withAnchor(st -> st.getPackageReference())
-      .withRawDescription(st -> message("module.reference.package.empty", st.getPackageName()));
+      .withDescription(st -> message("module.reference.package.empty", st.getPackageName()));
 
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_FROM_NAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.from.named")
+      .withDescription((psi, info) -> message(
+        "module.access.from.named", info.getTarget().getPackageName(), requireNonNull(info.getTarget().getModule()).getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_FROM_UNNAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.from.unnamed")
+      .withDescription((psi, info) -> message("module.access.from.unnamed", info.getTarget().getPackageName(), requireNonNull(
+        info.getTarget().getModule()).getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_TO_UNNAMED =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.to.unnamed")
+      .withDescription((psi, info) -> message("module.access.to.unnamed", info.getTarget().getPackageName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_BAD_NAME =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.bad.name")
+      .withDescription((psi, info) -> message("module.access.package.bad.name", info.getTarget().getPackageName(), requireNonNull(
+        info.getTarget().getModule()).getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_BAD_NAME =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.bad.name")
+      .withDescription((psi, info) -> message("module.access.bad.name", requireNonNull(info.getTarget().getModule()).getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_NOT_IN_GRAPH =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.not.in.graph")
+      .withDescription((psi, info) -> message("module.access.package.not.in.graph", info.getTarget().getPackageName(), requireNonNull(
+        info.getTarget().getModule()).getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_NOT_IN_GRAPH =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.not.in.graph")
+      .withDescription((psi, info) -> message("module.access.not.in.graph", requireNonNull(info.getTarget().getModule()).getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_PACKAGE_DOES_NOT_READ =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.package.does.not.read")
+      .withDescription((psi, info) -> message("module.access.package.does.not.read", info.getTarget().getPackageName(), requireNonNull(
+        info.getTarget().getModule()).getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_DOES_NOT_READ =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.does.not.read")
+      .withDescription((psi, info) -> message("module.access.does.not.read", requireNonNull(info.getTarget().getModule()).getName(), info.getCurrent().getName()));
+  public static final Parameterized<PsiElement, JpmsModuleAccessInfo> MODULE_ACCESS_JPS_DEPENDENCY_PROBLEM =
+    parameterized(PsiElement.class, JpmsModuleAccessInfo.class, "module.access.jps.dependency.problem")
+      .withDescription((psi, info) -> message("module.access.jps.dependency.problem", requireNonNull(info.getTarget().getModule()).getName()));
+  
   private static @NotNull <Psi extends PsiElement> Simple<Psi> error(
     @NotNull @PropertyKey(resourceBundle = JavaCompilationErrorBundle.BUNDLE) String key) {
     return new Simple<>(key);
@@ -1560,7 +1666,7 @@ public final class JavaErrorKinds {
   }
 
   /**
-   * Context for errors related to annotation value
+   * Context for errors related to the annotation value
    * @param method corresponding annotation method
    * @param expectedType expected value type
    * @param fromDefaultValue if true, the error is reported for the method default value, rather than for use site
@@ -1591,7 +1697,7 @@ public final class JavaErrorKinds {
 
   /**
    * A context for {@link #CONSTRUCTOR_AMBIGUOUS_IMPLICIT_CALL} error kind
-   * @param psiClass a class where ambiguous call is performed
+   * @param psiClass a class where an ambiguous call is performed
    * @param candidate1 first constructor candidate in super class
    * @param candidate2 second constructor candidate in super class
    */

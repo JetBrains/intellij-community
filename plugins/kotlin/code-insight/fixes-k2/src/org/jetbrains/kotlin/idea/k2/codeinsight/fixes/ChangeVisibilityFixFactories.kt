@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-object ChangeVisibilityFixFactories {
+internal object ChangeVisibilityFixFactories {
 
     private data class ElementContext(
         val elementName: String,
@@ -61,7 +61,7 @@ object ChangeVisibilityFixFactories {
                 elementName,
                 visibilityModifier,
             )
-            return Presentation.of(actionName)
+            return Presentation.of(actionName).withFixAllOption(this)
         }
 
         override fun invoke(
@@ -136,11 +136,6 @@ object ChangeVisibilityFixFactories {
 
     val exposedPropertyTypeInConstructorError =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExposedPropertyTypeInConstructorError ->
-            createChangeVisibilityFixOnExposure(diagnostic.psi, diagnostic.elementVisibility, diagnostic.restrictingDeclaration, diagnostic.restrictingVisibility)
-        }
-
-    val exposedPropertyTypeInConstructorWarning =
-        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ExposedPropertyTypeInConstructorWarning ->
             createChangeVisibilityFixOnExposure(diagnostic.psi, diagnostic.elementVisibility, diagnostic.restrictingDeclaration, diagnostic.restrictingVisibility)
         }
 

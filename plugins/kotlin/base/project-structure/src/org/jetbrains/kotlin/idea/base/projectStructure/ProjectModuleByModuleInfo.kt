@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.computeTransitiveDependsOnDependencies
 import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -32,6 +33,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODUL
 import org.jetbrains.kotlin.idea.base.projectStructure.DependencyKeys.TEST_MODULE_DEPENDENCIES_IGNORED
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.createForwardDeclarationScope
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
+import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaLibraryFallbackDependenciesModuleImpl
 import org.jetbrains.kotlin.idea.base.projectStructure.modules.KaSourceModuleForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.LibrarySourcesScope
 import org.jetbrains.kotlin.idea.base.projectStructure.util.createAtomicReferenceFieldUpdaterForProperty
@@ -46,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
 @ApiStatus.Internal
 @K1ModeProjectStructureApi
-abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
+abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo): KaModuleBase() {
     @Volatile
     private var _directRegularDependencies: List<KaModule>? = null
 
@@ -61,7 +63,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
 
     val ideaModuleInfo: IdeaModuleInfo = moduleInfo as IdeaModuleInfo
 
-    val directRegularDependencies: List<KaModule>
+    override val directRegularDependencies: List<KaModule>
         get() {
             _directRegularDependencies?.let { return it }
 
@@ -77,7 +79,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
         ideaModuleInfo.dependenciesWithoutSelf().mapTo(ArrayList()) { it.toKaModule() }
             .also { it.trimToSize() }
 
-    val directDependsOnDependencies: List<KaModule>
+    override val directDependsOnDependencies: List<KaModule>
         get() {
             _directDependsOnDependencies?.let { return it }
 
@@ -92,7 +94,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
     protected open fun computeDirectDependsOnDependencies(): List<KaModule> =
         ideaModuleInfo.expectedBy.mapNotNull { (it as? IdeaModuleInfo)?.toKaModule() }
 
-    val transitiveDependsOnDependencies: List<KaModule>
+    override val transitiveDependsOnDependencies: List<KaModule>
         get() {
             _transitiveDependsOnDependencies?.let { return it }
 
@@ -104,7 +106,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
             }
         }
 
-    val directFriendDependencies: List<KaModule>
+    override val directFriendDependencies: List<KaModule>
         get() {
             _directFriendDependencies?.let { return it }
 
@@ -119,7 +121,7 @@ abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
     protected open fun computeDirectFriendDependencies(): List<KaModule> =
         ideaModuleInfo.modulesWhoseInternalsAreVisible().mapNotNull { (it as? IdeaModuleInfo)?.toKaModule() }
 
-    val targetPlatform: TargetPlatform get() = ideaModuleInfo.platform
+    override val targetPlatform: TargetPlatform get() = ideaModuleInfo.platform
 
     val analyzerServices: PlatformDependentAnalyzerServices get() = ideaModuleInfo.analyzerServices
 
@@ -182,7 +184,7 @@ open class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) 
     override fun computeDirectRegularDependencies(): List<KaModule> =
         moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
 
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() = moduleInfo.contentScope
 
     override val languageVersionSettings: LanguageVersionSettings get() = moduleInfo.module.languageVersionSettings
@@ -204,14 +206,19 @@ internal class KtSourceModuleByModuleInfoForOutsider(
 
     override fun hashCode(): Int = fakeVirtualFile.hashCode()
 
-    override val contentScope: GlobalSearchScope
-        get() = adjustContentScope(super.contentScope)
+    override val baseContentScope: GlobalSearchScope
+        get() = adjustContentScope(super.baseContentScope)
 }
 
 @ApiStatus.Internal
 @K1ModeProjectStructureApi
-class KtScriptLibraryModuleByModuleInfo(libraryInfo: LibraryInfo, override val file: KtFile? = null):
-    KtLibraryModuleByModuleInfo(libraryInfo), KaScriptDependencyModule
+class KtScriptLibraryModuleByModuleInfo(
+    libraryInfo: LibraryInfo,
+    override val file: KtFile? = null,
+) : KtLibraryModuleByModuleInfo(libraryInfo), KaScriptDependencyModule {
+    // Script dependency modules should not depend on any other libraries.
+    override fun createFallbackDependenciesModule(): KaLibraryFallbackDependenciesModule? = null
+}
 
 @ApiStatus.Internal
 @K1ModeProjectStructureApi
@@ -304,9 +311,17 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
 
     override val isSdk: Boolean get() = false
 
-    override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
+    override val baseContentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
 
     override val project: Project get() = libraryInfo.project
+
+    override fun computeDirectRegularDependencies(): List<KaModule> =
+        super.computeDirectRegularDependencies()
+            .takeIf { it.isNotEmpty() }
+            ?: listOfNotNull(createFallbackDependenciesModule())
+
+    protected open fun createFallbackDependenciesModule(): KaLibraryFallbackDependenciesModule? =
+        KaLibraryFallbackDependenciesModuleImpl(this)
 
     companion object {
         @JvmStatic
@@ -322,7 +337,7 @@ open class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleB
 class KtNativeKlibLibraryModuleByModuleInfo(
     private val nativeLibraryInfo: NativeKlibLibraryInfo
 ) : KtLibraryModuleByModuleInfo(nativeLibraryInfo) {
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() = GlobalSearchScope.union(
             listOfNotNull(mainScope, forwardDeclarationsScope)
         )
@@ -333,7 +348,7 @@ class KtNativeKlibLibraryModuleByModuleInfo(
     val forwardDeclarationsScope: GlobalSearchScope?
         get() {
             val libraryEntityId = (libraryInfo.library as? LibraryBridge)?.libraryId ?: return null
-            return createForwardDeclarationScope(libraryEntityId, this, project)
+            return createForwardDeclarationScope(libraryEntityId, project)
         }
 }
 
@@ -342,7 +357,7 @@ class KtNativeKlibLibraryModuleByModuleInfo(
 class KtSdkLibraryModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KaLibraryModule {
     override val libraryName: String get() = moduleInfo.sdk.name
 
-    override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
+    override val baseContentScope: GlobalSearchScope get() = moduleInfo.contentScope
 
     override val binaryRoots: Collection<Path>
         get() = binaryVirtualFiles.map { virtualFile ->
@@ -372,15 +387,15 @@ open class KtLibrarySourceModuleByModuleInfo(
         get() = moduleInfo.library.name ?: "Unnamed library"
 
     override fun computeDirectRegularDependencies(): List<KaModule> =
-        binaryLibrary.directRegularDependencies.mapNotNull { it as? KaLibraryModule }
+        binaryLibrary.directRegularDependencies.filter { it is KaLibraryModule || it is KaLibraryFallbackDependenciesModule }
 
     override fun computeDirectFriendDependencies(): List<KaModule> =
-        binaryLibrary.directFriendDependencies.mapNotNull { it as? KaLibraryModule }
+        binaryLibrary.directFriendDependencies.filter { it is KaLibraryModule }
 
     override fun computeDirectDependsOnDependencies(): List<KaModule> =
-        binaryLibrary.directDependsOnDependencies.mapNotNull { it as? KaLibraryModule }
+        binaryLibrary.directDependsOnDependencies.filter { it is KaLibraryModule }
 
-    override val contentScope: GlobalSearchScope
+    override val baseContentScope: GlobalSearchScope
         get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)
 
     override val binaryLibrary: KaLibraryModule
@@ -417,6 +432,7 @@ class NotUnderContentRootModuleByModuleInfo(
     @KaExperimentalApi
     override val moduleDescription: String get() = "Non under content root module"
 
-    override val contentScope: GlobalSearchScope get() = moduleInfo.contentScope
+    override val baseContentScope: GlobalSearchScope get() = moduleInfo.contentScope
+
     override val project: Project get() = moduleInfo.project
 }

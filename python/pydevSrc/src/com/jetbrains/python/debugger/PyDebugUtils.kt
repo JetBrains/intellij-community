@@ -35,6 +35,8 @@ object NodeTypes {
   const val SPARSE_TENSOR_NODE_TYPE: String = "SparseTensor"
   const val TENSOR_NODE_TYPE: String = "Tensor"
   const val IMAGE_NODE_TYPE: String = "Image"
+  const val PNG_IMAGE_NODE_TYPE: String = "PngImageFile"
+  const val JPEG_IMAGE_NODE_TYPE: String = "JpegImageFile"
   const val FIGURE_NODE_TYPE: String = "Figure"
   const val DATA_FRAME_NODE_TYPE: String = "DataFrame"
   const val SERIES_NODE_TYPE: String = "Series"

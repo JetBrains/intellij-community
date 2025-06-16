@@ -6,7 +6,10 @@ import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.EelNioBridgeService
 import com.intellij.util.containers.forEachGuaranteed
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -16,12 +19,19 @@ import kotlin.io.path.Path
 import kotlin.io.path.pathString
 
 @ApiStatus.Internal
-class EelNioBridgeServiceImpl : EelNioBridgeService {
+@VisibleForTesting
+class EelNioBridgeServiceImpl(coroutineScope: CoroutineScope) : EelNioBridgeService {
   private val multiRoutingFileSystemProvider = FileSystems.getDefault().provider()
 
   private val rootRegistry = ConcurrentHashMap<EelDescriptor, MutableSet<Path>>()
   private val fsRegistry = ConcurrentHashMap<String, FileSystem>()
   private val idRegistry = ConcurrentHashMap<EelDescriptor, String>()
+
+  init {
+    coroutineScope.coroutineContext.job.invokeOnCompletion {
+      idRegistry.keys().asSequence().forEach { unregister(it) }
+    }
+  }
 
   override fun tryGetEelDescriptor(nioPath: Path): EelDescriptor? {
     return rootRegistry.entries.asSequence()
@@ -62,13 +72,13 @@ class EelNioBridgeServiceImpl : EelNioBridgeService {
     idRegistry[descriptor] = internalName
   }
 
-  override fun deregister(descriptor: EelDescriptor) {
-    val roots = rootRegistry.remove(descriptor)
-    require(roots != null) { "Attempt to deregister unknown $descriptor" }
+  override fun unregister(descriptor: EelDescriptor): Boolean {
+    val roots = rootRegistry.remove(descriptor) ?: return false
+
     roots.forEachGuaranteed { localRoot ->
       fsRegistry.compute(localRoot.toString()) { _, existingFileSystem ->
         MultiRoutingFileSystemProvider.computeBackend(multiRoutingFileSystemProvider, localRoot.toString(), false, false) { underlyingProvider, actualFs ->
-          require(existingFileSystem == actualFs)
+          require(existingFileSystem == actualFs) { "$existingFileSystem != $actualFs" }
           try {
             existingFileSystem?.close()
           }
@@ -80,5 +90,7 @@ class EelNioBridgeServiceImpl : EelNioBridgeService {
         null
       }
     }
+
+    return true
   }
 }

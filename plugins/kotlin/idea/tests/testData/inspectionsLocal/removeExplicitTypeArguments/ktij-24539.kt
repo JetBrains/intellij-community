@@ -22,3 +22,4 @@ fun main() {
 }
 
 // IGNORE_K2
+// Since Kotlin 2.1, type inference can correctly infer the type without it being explicitly specified.

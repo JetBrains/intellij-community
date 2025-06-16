@@ -1,12 +1,16 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.core.nio.fs;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.Path;
+import java.nio.file.WatchService;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -15,11 +19,11 @@ import java.util.function.BiFunction;
 /**
  * @see MultiRoutingFileSystemProvider
  */
-public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFileSystemProvider> {
+public final class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFileSystemProvider> {
   private final MultiRoutingFileSystemProvider myProvider;
   private final FileSystem myLocalFS;
 
-  private static class Backend {
+  private static final class Backend {
     final @NotNull String root;
     final boolean prefix;
     final boolean caseSensitive;
@@ -90,7 +94,8 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
   /**
    * @see MultiRoutingFileSystemProvider#computeBackend(FileSystemProvider, String, boolean, boolean, BiFunction)
    */
-  void computeBackend(
+  @VisibleForTesting
+  public void computeBackend(
     @NotNull String root,
     boolean isPrefix,
     boolean caseSensitive,
@@ -142,7 +147,12 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
 
   @Override
   protected @NotNull FileSystem getDelegate(@NotNull String root) {
-    return MultiRoutingFileSystemProvider.ourForceDefaultFs ? myLocalFS : getBackend(root);
+    if (MultiRoutingFileSystemProvider.ourForceDefaultFs) {
+      return myLocalFS;
+    }
+    FileSystem result = getBackend(root);
+    myProvider.myPathSpy.accept(root, result != myLocalFS);
+    return result;
   }
 
   @Override
@@ -183,7 +193,8 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
     return myLocalFS.supportedFileAttributeViews();
   }
 
-  @NotNull FileSystem getBackend(@NotNull String path) {
+  @VisibleForTesting
+  public @NotNull FileSystem getBackend(@NotNull String path) {
     // It's important that the backends are sorted by the path length in the reverse order. Otherwise, prefixes won't work correctly.
     for (Backend backend : myBackends.get()) {
       if (backend.matchPath(path)) {
@@ -198,7 +209,7 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
    * It is reasonable to assume that if this method returns {@code false}, then the path will be handled by the local NIO file system.
    * In some sense, this method is an approximation of a predicate "is this path remote?"
    */
-  public final boolean isRoutable(@NotNull Path path) {
+  public boolean isRoutable(@NotNull Path path) {
     Path root = path.getRoot();
     if (root == null) {
       return false;

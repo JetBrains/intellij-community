@@ -95,7 +95,8 @@ public class CustomizedDataContext implements DataContext, UserDataHolder, AnAct
 
   @Override
   public @NotNull DataContext getInjectedDataContext() {
-    return new CustomizedDataContext(myParent, myDataHolder, AnActionEvent.getInjectedDataContext(myCustomized));
+    DataContext customized = AnActionEvent.getInjectedDataContext(myCustomized);
+    return customized == myCustomized ? this : new CustomizedDataContext(myParent, myDataHolder, customized);
   }
 
   /** @deprecated Use {@link #withSnapshot} */

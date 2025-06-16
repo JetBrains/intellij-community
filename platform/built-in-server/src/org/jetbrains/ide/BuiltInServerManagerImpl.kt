@@ -1,14 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
+import com.intellij.ide.ApplicationActivity
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -30,8 +33,13 @@ import java.net.NetworkInterface
 import java.net.URLConnection
 import java.util.*
 
+private const val PORTS_COUNT = 20
+private const val PROPERTY_RPC_PORT = "rpc.port"
+private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
+
+private val LOG = logger<BuiltInServerManager>()
+
 class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : BuiltInServerManager() {
-  private val authService = service<BuiltInWebServerAuth>()
   private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
   private var portOverride: Int? = null
@@ -46,19 +54,13 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     val app = ApplicationManager.getApplication()
     serverStartFuture = when {
       app.isUnitTestMode -> null
-      else -> coroutineScope.launch(Dispatchers.IO) { startServerInPooledThread() }
+      else -> coroutineScope.launch(Dispatchers.IO) {
+        startServerInPooledThread()
+      }
     }
   }
 
-  override fun createClientBootstrap(): Bootstrap = NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
-
   companion object {
-    private const val PORTS_COUNT = 20
-    private const val PROPERTY_RPC_PORT = "rpc.port"
-    private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
-
-    private val LOG = logger<BuiltInServerManager>()
-
     internal const val NOTIFICATION_GROUP = "Built-in Server"
 
     @JvmStatic
@@ -92,6 +94,8 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     }
   }
 
+  override fun createClientBootstrap(): Bootstrap = NettyUtil.nioClientBootstrap(server!!.childEventLoopGroup)
+
   fun createServerBootstrap(): ServerBootstrap = server!!.createServerBootstrap()
 
   override fun waitForStart(): BuiltInServerManager {
@@ -119,6 +123,9 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
       return
     }
 
+    // extensions may use registry to enable/disable URL handlers
+    RegistryManager.getInstanceAsync().awaitRegistryLoad()
+
     try {
       server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
@@ -138,12 +145,15 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     Disposer.register(ApplicationManager.getApplication(), server!!)
   }
 
-  override fun isOnBuiltInWebServer(url: Url?): Boolean =
-    url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
+  override fun isOnBuiltInWebServer(url: Url?): Boolean {
+    return url != null && !url.authority.isNullOrEmpty() && isOnBuiltInWebServerByAuthority(url.authority!!)
+  }
 
-  override fun addAuthToken(url: Url): Url = when {
-    url.parameters != null -> url  // the built-in server URL contains a query only if a token is specified
-    else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, authService.acquireToken()))
+  override fun addAuthToken(url: Url): Url {
+    return when {
+      url.parameters != null -> url  // the built-in server URL contains a query only if a token is specified
+      else -> Urls.newUrl(url.scheme!!, url.authority!!, url.path, Collections.singletonMap(TOKEN_PARAM_NAME, service<BuiltInWebServerAuth>().acquireToken()))
+    }
   }
 
   override fun overridePort(port: Int?) {
@@ -153,13 +163,14 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
   }
 
   override fun configureRequestToWebServer(connection: URLConnection) {
-    connection.setRequestProperty(TOKEN_HEADER_NAME, authService.acquireToken())
+    connection.setRequestProperty(TOKEN_HEADER_NAME, service<BuiltInWebServerAuth>().acquireToken())
   }
 
   // the default port will be occupied by the main IDE instance - define the custom default to avoid searching for a free port
-  private fun getDefaultPort(): Int =
-    System.getProperty(PROPERTY_RPC_PORT)?.toIntOrNull()
-    ?: if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT
+  private fun getDefaultPort(): Int {
+    return System.getProperty(PROPERTY_RPC_PORT)?.toIntOrNull()
+           ?: if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT
+  }
 
   private fun bindCustomPorts(server: BuiltInServer) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -169,5 +180,14 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     CustomPortServerManager.EP_NAME.forEachExtensionSafe { customPortServerManager ->
       SubServer(customPortServerManager, server).bind(customPortServerManager.port)
     }
+  }
+}
+
+/**
+ * Instead of preloading too early, we explicitly start the server at the end of the application boot sequence.
+ */
+private class BuiltInServerManagerLauncher : ApplicationActivity {
+  override suspend fun execute() {
+    serviceAsync<BuiltInServerManager>()
   }
 }

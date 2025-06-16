@@ -24,11 +24,11 @@ public final class FileInfoManager {
   }
 
   public static Object getFileLookupItem(PsiElement psiElement) {
-    if (!(psiElement instanceof PsiFile file) || !(psiElement.isPhysical())) {
+    if (!(psiElement instanceof PsiFile psiFile) || !(psiElement.isPhysical())) {
       return psiElement;
     }
 
-    return _getLookupItem(file, file.getName(), file.getIcon(0));
+    return _getLookupItem(psiFile, psiFile.getName(), psiFile.getIcon(0));
   }
 
   public static @Nullable String getFileAdditionalInfo(PsiElement psiElement) {
@@ -56,10 +56,10 @@ public final class FileInfoManager {
   }
 
   public static LookupElementBuilder getFileLookupItem(PsiElement psiElement, String encoded, Icon icon) {
-    if (!(psiElement instanceof PsiFile) || !(psiElement.isPhysical())) {
+    if (!(psiElement instanceof PsiFile psiFile) || !(psiElement.isPhysical())) {
       return LookupElementBuilder.create(psiElement, encoded).withIcon(icon);
     }
-    return _getLookupItem((PsiFile)psiElement, encoded, icon);
+    return _getLookupItem(psiFile, encoded, icon);
   }
 
   public static LookupElementBuilder _getLookupItem(final @NotNull PsiFile file, String name, Icon icon) {

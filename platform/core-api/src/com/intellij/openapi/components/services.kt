@@ -1,13 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientKind
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Initializes the service instance if not yet initialized, and returns the service instance.
+ * Initializes the service instance if not yet initialized and returns the service instance.
  *
  * This is primarily intended to be used by the service implementation. When introducing a new service,
  * please add a static `getInstance(Project)` method. For better tooling performance, it is always advised
@@ -66,31 +65,18 @@ inline fun <reified T : Any> ComponentManager.services(includeLocal: Boolean): L
   return getServices(T::class.java, if (includeLocal) ClientKind.ALL else ClientKind.REMOTE)
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
+suspend inline fun <reified T : Any> serviceAsync(): T {
+  return ApplicationManager.getApplication().serviceAsync()
+}
+
 @ApiStatus.Experimental
 suspend inline fun <reified T : Any> ComponentManager.serviceAsync(): T {
   return (this as ComponentManagerEx).getServiceAsync(T::class.java)
 }
 
-@ApiStatus.Internal
 @ApiStatus.Experimental
-suspend inline fun <reified T : Any> serviceAsync(): T {
-  return (ApplicationManager.getApplication() as ComponentManagerEx).getServiceAsync(T::class.java)
+suspend fun <T : Any> ComponentManager.serviceAsync(keyClass: Class<T>): T {
+  return (this as ComponentManagerEx).getServiceAsync(keyClass)
 }
 
-@ApiStatus.Internal
-interface ComponentManagerEx {
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
-    throw AbstractMethodError()
-  }
-
-  suspend fun <T : Any> getServiceAsyncIfDefined(keyClass: Class<T>): T? {
-    throw AbstractMethodError()
-  }
-
-  @ApiStatus.Obsolete
-  @ApiStatus.Internal
-  fun getCoroutineScope(): CoroutineScope
-}

@@ -8,10 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.annotations.ApiStatus
 
-/*
- * The object shouldn't be internal as it's used by MPS.
- */
-@ApiStatus.Internal
+@ApiStatus.Internal // Used in MPS
 object TrustedProjectsStatistics : CounterUsagesCollector() {
 
   val GROUP: EventLogGroup = EventLogGroup("trusted_projects", 3)

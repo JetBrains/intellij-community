@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 /**
  * @author Mikhail Golubev
@@ -313,10 +314,16 @@ public final class PyTypeHintGenerationUtil {
       @Override
       public @NotNull Traversal visitPyUnionType(@NotNull PyUnionType unionType) {
         final Collection<PyType> members = unionType.getMembers();
-        final boolean isOptional = members.size() == 2 && members.contains(PyNoneType.INSTANCE);
+        final boolean isOptional = members.size() == 2 && ContainerUtil.exists(members, member -> isNoneType(member));
         if (!PyTypingTypeProvider.isBitwiseOrUnionAvailable(context)) {
           typingTypes.add(isOptional ? "Optional" : "Union");
         }
+        return Traversal.CONTINUE;
+      }
+
+      @Override
+      public @NotNull Traversal visitPyNeverType(@NotNull PyNeverType neverType) {
+        typingTypes.add(neverType.getName());
         return Traversal.CONTINUE;
       }
 
@@ -369,8 +376,10 @@ public final class PyTypeHintGenerationUtil {
 
       @Override
       public @NotNull Traversal visitPyClassType(@NotNull PyClassType classType) {
-        symbols.add(classType.getPyClass());
-        addTypingTypeIfNeeded(classType);
+        if (!isNoneType(classType)) {
+          symbols.add(classType.getPyClass());
+          addTypingTypeIfNeeded(classType);
+        }
         return Traversal.CONTINUE;
       }
 
@@ -391,8 +400,7 @@ public final class PyTypeHintGenerationUtil {
       }
 
       private void addTypingTypeIfNeeded(@NotNull PyType type) {
-        // TODO in Python 3.9+ use the builtin "type" instead of "typing.Type"
-        if (type instanceof PyInstantiableType<?> instantiableType && instantiableType.isDefinition()) {
+        if (useGenericAliasFromTyping && type instanceof PyInstantiableType<?> instantiableType && instantiableType.isDefinition()) {
           typingTypes.add("Type");
         }
       }
@@ -401,7 +409,7 @@ public final class PyTypeHintGenerationUtil {
 
   public static void checkPep484Compatibility(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type == null ||
-        type instanceof PyNoneType ||
+        isNoneType(type) ||
         type instanceof PyTypeParameterType) {
       return;
     }

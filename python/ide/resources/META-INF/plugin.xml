@@ -15,7 +15,6 @@
 
   <xi:include href="/META-INF/tips-pycharm-community.xml"/>
   <content>
-    <module name="intellij.jupyter.viewOnly"/> <!-- notebooks preview itself-->
     <module name="intellij.pycharm.community.ide.impl.promotion"/> <!-- mostly promo of Pro -->
   </content>
 </idea-plugin>

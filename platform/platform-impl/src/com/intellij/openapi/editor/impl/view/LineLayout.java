@@ -643,7 +643,7 @@ abstract class LineLayout {
       int start = lineStartOffset + startOffset;
       int end = lineStartOffset + endOffset;
       if (LOG.isDebugEnabled()) LOG.debug("Text layout for " + editor.getVirtualFile() + " (" + start + "-" + end + ")");
-      IterationState it = new IterationState(view, start, end, null, false, true, false, false);
+      IterationState it = new IterationState(editor, start, end, null, false, true, false, false);
 
       FontFallbackIterator ffi = new FontFallbackIterator()
         .setPreferredFonts(editor.getColorsScheme().getFontPreferences())

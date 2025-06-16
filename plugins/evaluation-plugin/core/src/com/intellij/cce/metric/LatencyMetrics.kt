@@ -3,14 +3,10 @@ package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
-import com.intellij.cce.metric.util.Bootstrap
 
-abstract class LatencyMetric(override val name: String) : Metric {
-  private val sample = mutableListOf<Double>()
+abstract class LatencyMetric(override val name: String) : ConfidenceIntervalMetric<Double>() {
   override val value: Double
     get() = compute(sample)
-
-  override fun confidenceInterval(): Pair<Double, Double>? = Bootstrap.computeInterval(sample) { compute(it) }
 
   override fun evaluate(sessions: List<Session>): Double {
     val fileSample = mutableListOf<Double>()
@@ -18,13 +14,13 @@ abstract class LatencyMetric(override val name: String) : Metric {
       .flatMap { session -> session.lookups }
       .filter(::shouldInclude)
       .forEach {
-        this.sample.add(it.latency.toDouble())
+        this.coreSample.add(it.latency.toDouble())
         fileSample.add(it.latency.toDouble())
       }
     return compute(fileSample)
   }
 
-  abstract fun compute(sample: List<Double>): Double
+  abstract override fun compute(sample: List<Double>): Double
 
   open fun shouldInclude(lookup: Lookup) = true
 }

@@ -17,6 +17,12 @@ jvm_resources(
   strip_prefix = "src/main/resources"
 )
 
+jvm_resources(
+  name = "repository-search_test_resources",
+  files = glob(["src/test/resources/**/*"]),
+  strip_prefix = "src/test/resources"
+)
+
 jvm_library(
   name = "repository-search",
   module_name = "intellij.repository.search",
@@ -24,6 +30,7 @@ jvm_library(
   srcs = glob(["src/main/java/**/*.kt", "src/main/java/**/*.java", "src/main/kotlin/**/*.kt", "src/main/kotlin/**/*.java"], allow_empty = True),
   kotlinc_opts = ":custom",
   deps = [
+    "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/core-impl",
     "//platform/lang-api:lang",
@@ -40,6 +47,7 @@ jvm_library(
     "@lib//:kotlinx-serialization-json",
     "@lib//:ktor-client-logging",
     "@lib//:kotlinx-coroutines-slf4j",
+    "//libraries/io",
     "//libraries/ktor-client",
     "@lib//:package-search-api-client",
     "@lib//:kotlinx-document-store-mvstore",
@@ -56,6 +64,8 @@ jvm_library(
   kotlinc_opts = ":custom",
   associates = [":repository-search"],
   deps = [
+    "//platform/core-api:core",
+    "//platform/core-ui",
     "//platform/platform-api:ide",
     "//platform/core-impl",
     "//platform/lang-api:lang",
@@ -79,12 +89,16 @@ jvm_library(
     "@lib//:kotlinx-coroutines-slf4j",
     "@lib//:ktor-client-mock",
     "@lib//:kotlinx-coroutines-test",
+    "//libraries/io",
     "//libraries/ktor-client",
     "@lib//:package-search-api-client",
     "@lib//:kotlinx-document-store-mvstore",
     "@lib//:mvstore",
   ],
-  runtime_deps = [":repository-search_resources"]
+  runtime_deps = [
+    ":repository-search_resources",
+    ":repository-search_test_resources",
+  ]
 )
 
 jvm_test(

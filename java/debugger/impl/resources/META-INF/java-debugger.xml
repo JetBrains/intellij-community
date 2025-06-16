@@ -3,13 +3,12 @@
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
   <projectListeners>
-    <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener"
-              topic="com.intellij.execution.ui.RunContentWithExecutorListener"/>
+    <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener" topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
     <listener class="com.intellij.debugger.impl.HotSwapManager$HotSwapDebuggerManagerListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
-    <listener class="com.intellij.debugger.impl.hotswap.HotSwapDebugSessionListener"
+    <listener class="com.intellij.debugger.impl.ConsolePrintingDebuggerListener"
               topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
   </projectListeners>
 
@@ -96,6 +95,7 @@
     <applicationService serviceImplementation="com.intellij.debugger.settings.ThreadsViewSettings"/>
     <applicationService serviceImplementation="com.intellij.debugger.settings.TraceSettings"/>
     <projectService serviceInterface="com.intellij.debugger.ui.HotSwapUI" serviceImplementation="com.intellij.debugger.ui.HotSwapUIImpl"/>
+    <xdebugger.hotSwapInDebugSessionEnabler implementation="com.intellij.debugger.impl.hotswap.JvmHotSwapInDebugSessionEnabler"/>
     <projectService serviceInterface="com.intellij.debugger.DebuggerManager"
                     serviceImplementation="com.intellij.debugger.impl.DebuggerManagerImpl"/>
     <debugger.additionalContextProvider implementation="com.intellij.debugger.engine.evaluation.MarkedObjectAdditionalContextProvider"/>
@@ -137,7 +137,7 @@
 
     <debugger.asyncStackTraceProvider
       implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
-    <debugger.dumpItemsProvider implementation="com.intellij.debugger.actions.JavaThreadsProvider"/>
+    <debugger.dumpItemsProvider implementation="com.intellij.debugger.actions.JavaVirtualThreadsProvider"/>
     <xdebugger.controlExceptionBreakpointSupport implementation="com.intellij.debugger.codeinsight.ControlExceptionBreakpointJVMSupport"/>
     <iconProvider implementation="com.intellij.debugger.engine.evaluation.AdditionalContextIconProvider"/>
 
@@ -178,6 +178,33 @@
 
     <feedback.idleFeedbackSurvey implementation="com.intellij.debugger.feedback.KotlinDebuggerFeedbackSurvey"/>
     <debugger.steppingListener implementation="com.intellij.debugger.engine.CancelingSteppingListener"/>
+
+    <consoleFilterProvider implementation="com.intellij.debugger.impl.ConsolePrintingFilterProvider"/>
+
+    <registryKey key="debugger.evaluate.method.helper" defaultValue="[off|auto*|always]"
+                 description="Use helper to invoke methods avoiding the immediate return value collection"/>
+    <registryKey key="debugger.jdwp.include.virtual.threads" defaultValue="false"
+                 description="JDWP setting to include virtual threads in the list of all threads (might lead to problems in case of a huge number of virtual threads)"/>
+    <registryKey key="debugger.thread.dump.extended" defaultValue="true"
+                 description="Try to get extended thread dump (virtual threads, coroutines, ...) during debugger's Get Thread Dump action"/>
+    <registryKey key="debugger.thread.dump.suspension.timeout.ms" defaultValue="500"
+                 description="Timeout (in ms) for Get Thread Dump action to wait before suspending the VM to perform extended dump collection (virtual threads, coroutines, ...)"/>
+    <registryKey key="debugger.thread.dump.include.virtual.threads" defaultValue="true"
+                 description="Try to get virtual threads during debugger's Get Thread Dump action"/>
+    <registryKey key="debugger.thread.dump.virtual.threads.with.monitors.max.count" defaultValue="1000"
+                 description="Maximum number of virtual threads when debugger still tries to collect information about owned/contended monitors"/>
+    <registryKey key="debugger.evaluate.on.pause" defaultValue="true"
+                 description="Provide evaluatable context on Pause"/>
+    <registryKey key="debugger.evaluate.on.pause.timeout.ms" defaultValue="500"
+                 description="Maximum duration (in ms) of obtaining an evaluatable context for a Pause"/>
+    <registryKey key="debugger.navigation.from.console.prototype" defaultValue="false"
+                 description="Alpha version of navigation from the printed lines in console to the printing source code"/>
+    <registryKey key="debugger.collectible.value.retries.error" defaultValue="true"
+                 description="Drop an error if there were too many debugger collectible value retries"/>
+    <registryKey key="debugger.compiling.evaluator" defaultValue="true"
+                 description="Allow to compile the code before evaluation if needed"/>
+    <registryKey key="debugger.compiling.evaluator.force" defaultValue="false"
+                 description="Always compile the code before evaluation"/>
   </extensions>
 
   <actions>
@@ -218,9 +245,7 @@
       </action>
       <action id="Debugger.CustomizeThreadsView" class="com.intellij.debugger.actions.CustomizeThreadsViewAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
-      </action>
-      <action id="Debugger.LibraryFramesToggle" class="com.intellij.xdebugger.impl.actions.ShowLibraryFramesAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="last"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="last"/>
       </action>
       <action id="Debugger.EditFrameSource" class="com.intellij.debugger.actions.EditFrameSourceAction" use-shortcut-of="EditSource"/>
       <group id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
@@ -244,18 +269,21 @@
 
       <action id="Debugger.ForceEarlyReturn" class="com.intellij.debugger.actions.ForceEarlyReturnAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.ThrowException" class="com.intellij.debugger.actions.ThrowExceptionAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="after" relative-to-action="Debugger.PopFrame"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="after" relative-to-action="Debugger.PopFrame"/>
         <add-to-group group-id="DebuggingActionsGroup" anchor="after" relative-to-action="Debugger.ForceEarlyReturn"/>
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
       </action>
 
       <action id="Debugger.AddSteppingFilter" class="com.intellij.debugger.actions.AddSteppingFilterAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+        <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
       </action>
 
       <action id="Debugger.StepOutOfBlock" class="com.intellij.debugger.actions.StepOutOfBlockAction"
@@ -273,9 +301,6 @@
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
 
-      <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction">
-        <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
-      </action>
       <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"/>
       <action id="Debugger.CallTracer" class="com.intellij.debugger.ui.breakpoints.CallTracer$CallTracerToggleAction"
               icon="AllIcons.Debugger.Db_set_breakpoint">
@@ -367,11 +392,8 @@
 
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.ToolbarDecorator.Export">
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend"/>
       <add-to-group group-id="XDebugger.Actions"/>
-    </action>
-    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" icon="AllIcons.Actions.Dump">
-      <add-to-group group-id="DebuggingActionsGroup" anchor="last"/>
-      <add-to-group group-id="XDebugger.ToolWindow.TopToolbar3.Extra"/>
     </action>
 
     <action id="DebugListen" internal="true" class="com.intellij.debugger.actions.ThrowDebugExceptionAction">
@@ -402,5 +424,10 @@
 
     <action id="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction"
             class="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction" internal="true"/>
+
+    <reference ref="Debugger.ShowLibraryFrames">
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup" anchor="before" relative-to-action="Debugger.AsyncStacks"/>
+      <add-to-group group-id="XDebugger.Frames.Tree.Popup.Frontend" anchor="before" relative-to-action="Debugger.AsyncStacks"/>
+    </reference>
   </actions>
 </idea-plugin>

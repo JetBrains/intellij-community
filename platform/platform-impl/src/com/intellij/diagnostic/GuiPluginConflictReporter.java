@@ -15,7 +15,8 @@ final class GuiPluginConflictReporter implements PluginConflictReporter {
   @Override
   public void reportConflict(@NotNull Collection<PluginId> foundPlugins, final boolean hasConflictWithPlatform) {
     if (foundPlugins.size() < 2) {
-      Logger.getInstance(GuiPluginConflictReporter.class).warn("One should provide at least two conflicting classes to report");
+      Logger.getInstance(GuiPluginConflictReporter.class).error("One should provide at least two conflicting classes to report",
+                                                                new Throwable());
       return;
     }
 

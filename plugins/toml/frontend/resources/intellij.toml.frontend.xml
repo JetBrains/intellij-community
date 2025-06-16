@@ -1,0 +1,19 @@
+<idea-plugin>
+    <dependencies>
+        <module name="intellij.toml.core"/>
+        <!--<module name="intellij.platform.frontend"/> IJPL-189393 -->
+    </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <annotator language="TOML" implementationClass="org.toml.ide.annotator.TomlHighlightingAnnotator"/>
+
+        <lang.syntaxHighlighter language="TOML" implementationClass="org.toml.ide.TomlHighlighter"/>
+
+        <colorSettingsPage implementation="org.toml.ide.colors.TomlColorSettingsPage"/>
+
+        <enterBetweenBracesDelegate language="TOML"
+                                    implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
+
+        <extendWordSelectionHandler implementation="org.toml.ide.wordSelection.TomlStringLiteralSelectionHandler"/>
+    </extensions>
+</idea-plugin>

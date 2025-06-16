@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.transfer.backend.providers.vscod
 import com.intellij.ide.startup.importSettings.models.BuiltInFeature
 import com.intellij.ide.startup.importSettings.models.FeatureInfo
 import com.intellij.ide.startup.importSettings.models.PluginFeature
+import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -134,5 +135,9 @@ object PluginMappings {
     }
 
     return null
+  }
+
+  fun vsCodeAiMapping(settings: Settings) {
+    settings.plugins["com.intellij.ml.llm"] = PluginFeature(null, "com.intellij.ml.llm", "JetBrains AI Assistant")
   }
 }

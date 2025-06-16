@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -44,7 +44,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static com.intellij.psi.PsiKeyword.*;
+import static com.intellij.java.syntax.parser.JavaKeywords.*;
 
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance(PsiUtil.class);
@@ -880,7 +880,7 @@ public final class PsiUtil extends PsiUtilCore {
     PsiClass aClass = result.getElement();
     if (aClass == null) return type;
     PsiClassType updatedType = getSubstitutorWithWildcardsCaptured(context, result);
-    return updatedType == null ? type : updatedType;
+    return updatedType == null ? type : updatedType.withNullability(type.getNullability());
   }
 
   /**
@@ -1081,7 +1081,7 @@ public final class PsiUtil extends PsiUtilCore {
     return false;
   }
 
-  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = LanguageLevel.FILE_LANGUAGE_LEVEL_KEY;
+  public static final Key<LanguageLevel> FILE_LANGUAGE_LEVEL_KEY = LanguageLevelKey.FILE_LANGUAGE_LEVEL_KEY;
 
   public static boolean isLanguageLevel5OrHigher(@NotNull PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_5);
@@ -1143,7 +1143,7 @@ public final class PsiUtil extends PsiUtilCore {
 
     PsiFile file = element.getContainingFile();
     // Could be non-physical 'light file' created by some JVM languages
-    PsiFile navigationFile = file == null ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
+    PsiFile navigationFile = file == null || file.isPhysical() ? null : ObjectUtils.tryCast(file.getNavigationElement(), PsiFile.class);
     if (navigationFile != null) {
       file = navigationFile;
     }
@@ -1594,6 +1594,43 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean isInMarkdownDocComment(PsiElement element) {
     PsiDocComment docComment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
     return docComment != null && docComment.isMarkdownComment();
+  }
+
+  /**
+   * Returns true if a given switch block has a rule-based format (like 'case 0 ->')
+   * @param block a switch block to test
+   * @return true if a given switch block has a rule-based format; false if it has a conventional label-based format (like 'case 0:')
+   * If the switch body has no labels yet and language level permits, the rule-based format is assumed.
+   */
+  @Contract(pure = true)
+  public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
+    if (!isAvailable(JavaFeature.ENHANCED_SWITCH, block)) {
+      return false;
+    }
+
+    final PsiCodeBlock switchBody = block.getBody();
+    if (switchBody != null) {
+      for (PsiElement child = switchBody.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiSwitchLabelStatementBase && !isBeingCompleted((PsiSwitchLabelStatementBase)child)) {
+          return child instanceof PsiSwitchLabeledRuleStatement;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Checks if the label is being completed and there are no other case label elements in the list of the case label's elements
+   * @param label the label to analyze
+   * @return true if the label is currently being completed
+   */
+  @Contract(pure = true)
+  private static boolean isBeingCompleted(@NotNull PsiSwitchLabelStatementBase label) {
+    if (!(label.getLastChild() instanceof PsiErrorElement)) return false;
+
+    final PsiCaseLabelElementList list = label.getCaseLabelElementList();
+    return list != null && list.getElements().length == 1;
   }
 
   //<editor-fold desc="Deprecated stuff">

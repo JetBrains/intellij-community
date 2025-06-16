@@ -12,7 +12,11 @@ object FreezeAnalyzer {
    * If analysis fails, it returns `null`.
    */
   fun analyzeFreeze(threadDump: String, testName: String? = null): FreezeAnalysisResult? {
-    val threadDumpWithoutCoroutine = threadDump.split("---------- Coroutine dump ----------")[0]
+    val threadDumpWithoutCoroutine = threadDump.substringBefore(
+      delimiter = "---------- Coroutine dump ----------"
+    ).substringBefore(
+      delimiter = "---------- Coroutine dump (stripped) ----------"
+    )
     val threadDumpParsed = ThreadDumpParser.parse(threadDumpWithoutCoroutine)
     val edtThread = threadDumpParsed.firstOrNull { it.isEDT }
     return edtThread?.let { analyzeEDThread(it, threadDumpParsed, testName) }
@@ -35,10 +39,12 @@ object FreezeAnalyzer {
   private fun analyzeLock(edt: ThreadState, threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? {
     val relevantMethodFromEdt = findFirstRelevantMethod(edt.stackTrace)
     if (relevantMethodFromEdt == null) return null
+    if (edt.stackTrace != null && edt.stackTrace.contains("on kotlinx.coroutines.BlockingCoroutine") && getMethodList(edt.stackTrace).any { it.contains("BlockingCoroutine.joinBlocking") }) return FreezeAnalysisResult("EDT is blocked on $relevantMethodFromEdt which called runBlocking", listOf(edt),)
     var possibleThreadWithLock: ThreadState? = null
     for (it in getPotentialMethodsWithLock(edt.stackTrace)) {
       val clazz = extractClassFromMethod(it)
       possibleThreadWithLock = threadDumpParsed.asSequence()
+        .filter { it.name != "Coroutine dump" }
         .filter { !it.isWaiting }
         .firstOrNull { it.stackTrace.contains(clazz) }
       if (possibleThreadWithLock != null) {
@@ -65,11 +71,13 @@ object FreezeAnalyzer {
   private fun isWriteLockWait(threadState: ThreadState): Boolean =
     threadState.stackTrace.lineSequence().map { it.trimStart() }.any {
       it.startsWith("at com.intellij.openapi.application.impl.ReadMostlyRWLock.writeLock") ||
-      it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit")
+      it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit") ||
+      it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
     }
 
   private fun findThreadThatTookReadWriteLock(threadDumpParsed: List<ThreadState>): FreezeAnalysisResult? =
     threadDumpParsed.asSequence()
+      .filter { it.name != "Coroutine dump" }
       .filter { !isWaitingOnReadWriteLock(it) && !it.isKnownJDKThread }
       .firstOrNull { isReadWriteLockTaken(it.stackTrace) }
       ?.let { threadState ->
@@ -92,7 +100,9 @@ object FreezeAnalyzer {
       .any {
         it.startsWith("at com.intellij.openapi.application.impl.ReadMostlyRWLock.waitABit") ||
         it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getReadPermit") ||
-        it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit")
+        it.startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.getWritePermit") ||
+        it.startsWith("at com.intellij.openapi.application.impl.ComputationState.acquireReadPermit") ||
+        it.startsWith("at com.intellij.openapi.application.impl.ComputationState.upgradeWritePermit")
       }
 
   private fun isReadWriteLockTaken(stackTrace: String): Boolean =
@@ -106,7 +116,11 @@ object FreezeAnalyzer {
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.runWriteAction") ||
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.runReadAction") ||
     startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.runWriteIntentReadAction") ||
-    startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.tryRunReadAction")
+    startsWith("at com.intellij.openapi.application.impl.AnyThreadWriteThreadingSupport.tryRunReadAction") ||
+    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runWriteAction") ||
+    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runReadAction") ||
+    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.runWriteIntentReadAction") ||
+    startsWith("at com.intellij.openapi.application.impl.NestedLocksThreadingSupport.tryRunReadAction")
 
 
   private fun String.isJDKMethod(): Boolean {

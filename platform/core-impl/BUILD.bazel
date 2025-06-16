@@ -31,11 +31,10 @@ jvm_library(
     "@lib//:opentelemetry",
     "@lib//:opentelemetry-semconv",
     "//platform/util/coroutines",
+    "//platform/plugins/parser/impl",
+    "//platform/syntax/syntax-api:syntax",
   ],
-  exports = [
-    "//platform/core-api:core",
-    "@lib//:kotlin-stdlib",
-  ],
+  exports = ["@lib//:kotlin-stdlib"],
   runtime_deps = [":core-impl_resources"]
 )
 ### auto-generated section `build intellij.platform.core.impl` end

@@ -11,10 +11,9 @@ import org.jetbrains.annotations.TestOnly
 private typealias BidirectionalMap = BidirectionalLongMultiMap<SymbolicEntityId<*>>
 //private typealias BidirectionalMap = BidirectionalMultiMap<EntityId, PersistentEntityId<*>>
 
-internal open class MultimapStorageIndex private constructor(
-  internal open val index: BidirectionalMap
+internal sealed class AbstractMultimapStorageIndex protected constructor(
+  internal open val index: BidirectionalMap,
 ) {
-  constructor() : this(BidirectionalMap())
 
   internal fun getIdsByEntry(entitySource: SymbolicEntityId<*>): Set<EntityId> = index.getKeys(entitySource)
 
@@ -25,72 +24,78 @@ internal open class MultimapStorageIndex private constructor(
   internal fun toMap(): Map<Long, Set<SymbolicEntityId<*>>> {
     return index.toMap()
   }
+}
 
-  class MutableMultimapStorageIndex private constructor(
-    // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
-    override var index: BidirectionalMap
-  ) : MultimapStorageIndex(index), WorkspaceMutableIndex<SymbolicEntityId<*>> {
+internal class ImmutableMultimapStorageIndex internal constructor(
+  index: BidirectionalMap,
+) : AbstractMultimapStorageIndex(index) {
+  constructor() : this(BidirectionalMap())
+}
 
-    private var freezed = true
+internal class MutableMultimapStorageIndex private constructor(
+  // Do not write to [index] directly! Create a method in this index and call [startWrite] before write.
+  override var index: BidirectionalMap,
+) : AbstractMultimapStorageIndex(index), WorkspaceMutableIndex<SymbolicEntityId<*>> {
 
-    internal fun index(id: EntityId, elements: Set<SymbolicEntityId<*>>? = null) {
-      startWrite()
-      index.removeKey(id)
-      if (elements == null) return
-      elements.forEach { index.put(id, it) }
+  private var freezed = true
+
+  internal fun index(id: EntityId, elements: Set<SymbolicEntityId<*>>? = null) {
+    startWrite()
+    index.removeKey(id)
+    if (elements == null) return
+    elements.forEach { index.put(id, it) }
+  }
+
+  internal fun index(id: EntityId, element: SymbolicEntityId<*>) {
+    startWrite()
+    index.put(id, element)
+  }
+
+  internal fun remove(id: EntityId, element: SymbolicEntityId<*>) {
+    startWrite()
+    index.remove(id, element)
+  }
+
+  @TestOnly
+  internal fun clear() {
+    startWrite()
+    index.clear()
+  }
+
+  @TestOnly
+  internal fun copyFrom(another: AbstractMultimapStorageIndex) {
+    startWrite()
+    this.index.putAll(another.index)
+  }
+
+  private fun startWrite() {
+    if (!freezed) return
+    freezed = false
+    index = copyIndex()
+  }
+
+  private fun copyIndex(): BidirectionalMap = index.copy()
+
+  fun toImmutable(): ImmutableMultimapStorageIndex {
+    freezed = true
+    return ImmutableMultimapStorageIndex(index)
+  }
+
+  companion object {
+    fun from(other: AbstractMultimapStorageIndex): MutableMultimapStorageIndex {
+      if (other is MutableMultimapStorageIndex) other.freezed = true
+      return MutableMultimapStorageIndex(other.index)
     }
+  }
 
-    internal fun index(id: EntityId, element: SymbolicEntityId<*>) {
-      startWrite()
-      index.put(id, element)
-    }
+  override fun index(entity: WorkspaceEntityData<*>, data: SymbolicEntityId<*>) {
+    val id = entity.createEntityId()
+    this.index(id, data)
+  }
 
-    internal fun remove(id: EntityId, element: SymbolicEntityId<*>) {
-      startWrite()
-      index.remove(id, element)
-    }
-
-    @TestOnly
-    internal fun clear() {
-      startWrite()
-      index.clear()
-    }
-
-    @TestOnly
-    internal fun copyFrom(another: MultimapStorageIndex) {
-      startWrite()
-      this.index.putAll(another.index)
-    }
-
-    private fun startWrite() {
-      if (!freezed) return
-      freezed = false
-      index = copyIndex()
-    }
-
-    private fun copyIndex(): BidirectionalMap = index.copy()
-
-    fun toImmutable(): MultimapStorageIndex {
-      freezed = true
-      return MultimapStorageIndex(index)
-    }
-
-    companion object {
-      fun from(other: MultimapStorageIndex): MutableMultimapStorageIndex {
-        if (other is MutableMultimapStorageIndex) other.freezed = true
-        return MutableMultimapStorageIndex(other.index)
-      }
-    }
-
-    override fun index(entity: WorkspaceEntityData<*>, data: SymbolicEntityId<*>) {
-      val id = entity.createEntityId()
-      this.index(id, data)
-    }
-
-    override fun remove(entity: WorkspaceEntityData<*>, data: SymbolicEntityId<*>) {
-      val id = entity.createEntityId()
-      this.remove(id, data)
-    }
+  override fun remove(entity: WorkspaceEntityData<*>, data: SymbolicEntityId<*>) {
+    val id = entity.createEntityId()
+    this.remove(id, data)
   }
 }
 

@@ -17,11 +17,12 @@ import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 @ApiStatus.Internal
 public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataProvider {
@@ -257,7 +258,8 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataP
       });
     }
 
-    void setContentProvider(@NotNull ContentProvider provider) {
+    @VisibleForTesting
+    public void setContentProvider(@NotNull ContentProvider provider) {
       myContentProvider = provider;
     }
 

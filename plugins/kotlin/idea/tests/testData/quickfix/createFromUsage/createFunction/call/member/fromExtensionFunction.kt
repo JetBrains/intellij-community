@@ -1,0 +1,10 @@
+// "Create function 'foo'" "true"
+// K2_ACTION: "Create member function 'A.foo'" "true"
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateCallableFromUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableAction
+// WITH_STDLIB
+class A {
+    fun String.bar() {
+        fo<caret>o()
+    }
+}

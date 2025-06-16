@@ -1,11 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting
 
+
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.hint.EditorFragmentComponent
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
-import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.editor.highlighter.EditorHighlighter
@@ -34,6 +35,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPlainTextFile
 import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.tree.ILazyParseableElementType
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.psi.util.PsiUtilCore
@@ -46,6 +48,7 @@ import com.intellij.util.text.CharArrayUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntUnaryOperator
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
@@ -62,7 +65,6 @@ class BraceHighlightingHandler internal constructor(
   private val psiFile: PsiFile,
 ) {
   private val document = editor.document
-  private val codeInsightSettings = CodeInsightSettings.getInstance()
 
   companion object {
     const val LAYER: Int = HighlighterLayer.LAST + 1
@@ -144,18 +146,46 @@ class BraceHighlightingHandler internal constructor(
       val key = if (matched) CodeInsightColors.MATCHED_BRACE_ATTRIBUTES else CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
       return DefaultLineMarkerRenderer(key, 1, 0, LineMarkerRendererEx.Position.RIGHT, true)
     }
+
+    private fun getHighlightersList(editor: Editor): MutableList<RangeHighlighter> {
+      // braces are highlighted across the whole editor, not in each injected editor separately
+      val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
+      var highlighters = hostEditor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY)
+      if (highlighters == null) {
+        highlighters = ArrayList()
+        hostEditor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, highlighters)
+      }
+      return highlighters
+    }
+    @ApiStatus.Internal
+    @RequiresEdt
+    fun clearBraceHighlighters(editor: Editor) {
+      val highlighters = getHighlightersList(editor)
+      for (highlighter in highlighters) {
+        highlighter.dispose()
+      }
+      highlighters.clear()
+
+      editor.getUserData(HINT_IN_EDITOR_KEY)?.let { hint ->
+        hint.hide()
+        editor.putUserData(HINT_IN_EDITOR_KEY, null)
+      }
+      if (editor is EditorEx) {
+        removeLineMarkers(editor)
+      }
+    }
   }
 
   @RequiresEdt
-  fun updateBraces() {
+  @ApiStatus.Internal
+  fun updateBraces(needMatching: Boolean) {
     ThreadingAssertions.assertEventDispatchThread()
 
-    clearBraceHighlighters()
+    clearBraceHighlighters(editor)
 
-    if (!BackgroundHighlightingUtil.needMatching(editor, codeInsightSettings)) {
+    if (!needMatching) {
       return
     }
-
     var offset = editor.caretModel.offset
     val chars = editor.document.charsSequence
 
@@ -201,7 +231,7 @@ class BraceHighlightingHandler internal constructor(
       }
     }
 
-    if (codeInsightSettings.HIGHLIGHT_SCOPE) {
+    if (CodeInsightSettings.getInstance().HIGHLIGHT_SCOPE) {
       SlowOperations.knownIssue("IJPL-162400").use {
         highlightScope(offset)
       }
@@ -322,27 +352,32 @@ class BraceHighlightingHandler internal constructor(
 
   @RequiresEdt
   private fun highlightBrace(braceRange: TextRange, matched: Boolean) {
+    ThreadingAssertions.assertEventDispatchThread()
     val attributesKey = if (matched) CodeInsightColors.MATCHED_BRACE_ATTRIBUTES else CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
-    val rbraceHighlighter = editor.markupModel
+    removeExistingBraceHighlightsAround(braceRange)
+    val braceHighlighter = editor.markupModel
       .addRangeHighlighter(attributesKey, braceRange.startOffset, braceRange.endOffset, LAYER, HighlighterTargetArea.EXACT_RANGE)
-    rbraceHighlighter.isGreedyToLeft = false
-    rbraceHighlighter.isGreedyToRight = false
-    registerHighlighter(rbraceHighlighter)
+    braceHighlighter.isGreedyToLeft = false
+    braceHighlighter.isGreedyToRight = false
+    getHighlightersList(editor).add(braceHighlighter)
   }
 
-  private fun registerHighlighter(highlighter: RangeHighlighter) {
-    getHighlightersList().add(highlighter)
-  }
-
-  private fun getHighlightersList(): MutableList<RangeHighlighter> {
-    // braces are highlighted across the whole editor, not in each injected editor separately
-    val editor = if (editor is EditorWindow) editor.delegate else editor
-    var highlighters = editor.getUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY)
-    if (highlighters == null) {
-      highlighters = ArrayList()
-      editor.putUserData(BRACE_HIGHLIGHTERS_IN_EDITOR_VIEW_KEY, highlighters)
+  private fun removeExistingBraceHighlightsAround(range: TextRange): List<RangeHighlighter> {
+    ThreadingAssertions.assertEventDispatchThread()
+    val toRemove: MutableList<RangeHighlighter> = mutableListOf()
+    (editor.markupModel as MarkupModelEx).processRangeHighlightersOverlappingWith(range.startOffset, range.endOffset) { highlighter ->
+      if ((highlighter.textAttributesKey == CodeInsightColors.MATCHED_BRACE_ATTRIBUTES
+          || highlighter.textAttributesKey == CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES)
+          && highlighter.textRange == range
+          && highlighter.layer == LAYER) {
+        toRemove.add(highlighter)
+      }
+      true
     }
-    return highlighters
+    for (highlighter in toRemove) {
+      highlighter.dispose()
+    }
+    return toRemove
   }
 
   @RequiresEdt
@@ -407,23 +442,6 @@ class BraceHighlightingHandler internal constructor(
           }
         }
       }
-    }
-  }
-
-  @RequiresEdt
-  fun clearBraceHighlighters() {
-    val highlighters = getHighlightersList()
-    for (highlighter in highlighters) {
-      highlighter.dispose()
-    }
-    highlighters.clear()
-
-    editor.getUserData(HINT_IN_EDITOR_KEY)?.let { hint ->
-      hint.hide()
-      editor.putUserData(HINT_IN_EDITOR_KEY, null)
-    }
-    if (editor is EditorEx) {
-      removeLineMarkers(editor)
     }
   }
 }

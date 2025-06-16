@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.j2k
 
@@ -448,7 +448,7 @@ enum class SpecialMethod(private val qualifiedClassName: String?, val methodName
                 dot)
     }
 
-    protected fun ConvertCallData.convertWithReceiverCast(): MethodCallExpression? {
+    protected fun ConvertCallData.convertWithReceiverCast(): MethodCallExpression {
         val convertedArguments = codeConverter.convertExpressionsInList(arguments)
         val qualifierWithCast = castQualifierToType(codeConverter, qualifier!!, qualifiedClassName!!)
         return MethodCallExpression.buildNonNull(

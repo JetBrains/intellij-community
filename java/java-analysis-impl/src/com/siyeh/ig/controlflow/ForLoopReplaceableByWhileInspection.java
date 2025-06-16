@@ -21,6 +21,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -79,7 +80,7 @@ public final class ForLoopReplaceableByWhileInspection extends BaseInspection im
 
     @Override
     public @NotNull String getFamilyName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.WHILE);
+      return CommonQuickFixBundle.message("fix.replace.with.x", JavaKeywords.WHILE);
     }
 
     @Override

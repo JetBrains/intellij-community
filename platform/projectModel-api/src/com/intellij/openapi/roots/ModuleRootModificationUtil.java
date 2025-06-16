@@ -143,10 +143,15 @@ public final class ModuleRootModificationUtil {
   }
 
   public static void addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
+    addDependency(from, to, scope, exported, false);
+  }
+
+  public static void addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported, boolean productionOnTest) {
     updateModel(from, model -> {
       ModuleOrderEntry entry = model.addModuleOrderEntry(to);
       entry.setScope(scope);
       entry.setExported(exported);
+      entry.setProductionOnTestDependency(productionOnTest);
     });
   }
 

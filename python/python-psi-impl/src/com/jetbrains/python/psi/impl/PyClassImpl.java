@@ -47,6 +47,7 @@ import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -257,6 +258,22 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return value instanceof PyStringLiteralExpression
              ? Collections.singletonList(((PyStringLiteralExpression)value).getStringValue())
              : PyUtilCore.strListValue(value);
+    }
+
+    return null;
+  }
+
+  @Override
+  public @Nullable List<@NotNull String> getOwnMatchArgs() {
+    final PyClassStub stub = getStub();
+    if (stub != null) {
+      return stub.getMatchArgs();
+    }
+
+    final PyTargetExpression matchArgs = ContainerUtil.find(getClassAttributes(), target -> PyNames.MATCH_ARGS.equals(target.getName()));
+    if (matchArgs != null) {
+      final PyExpression value = matchArgs.findAssignedValue();
+      return PyUtilCore.strListValue(value);
     }
 
     return null;
@@ -674,18 +691,25 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         final PyDecoratorList decoratorList = method.getDecoratorList();
         if (decoratorList != null) {
           for (PyDecorator deco : decoratorList.getDecorators()) {
+            TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
+            List<PyKnownDecorator> knownDecorators = PyKnownDecoratorUtil.asKnownDecorators(deco, context);
+            for (PyKnownDecorator knownDecorator : knownDecorators) {
+              if (knownDecorator.isMutableProperty()) {
+                getter = new Maybe<>(method);
+                setter = new Maybe<>(method);
+                deleter = new Maybe<>(method);
+                break;
+              }
+
+              if (knownDecorator.isProperty()) {
+                getter = new Maybe<>(method);
+                break;
+              }
+            }
+
             final QualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
-              String decoName = qname.toString();
-              for (PyKnownDecoratorProvider provider : PyKnownDecoratorProvider.EP_NAME.getExtensionList()) {
-                final String knownName = provider.toKnownDecorator(decoName);
-                if (knownName != null) {
-                  decoName = knownName;
-                }
-              }
-              if (PyNames.PROPERTY.equals(decoName) ||
-                  PyKnownDecoratorUtil.isPropertyDecorator(deco, TypeEvalContext.codeInsightFallback(getProject())) ||
-                  qname.matches(decoratorName, PyNames.GETTER)) {
+              if (qname.matches(decoratorName, PyNames.GETTER)) {
                 getter = new Maybe<>(method);
               }
               else if (qname.matches(decoratorName, PyNames.SETTER)) {
@@ -1745,6 +1769,18 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public @Nullable PyDecoratorList getDecoratorList() {
     return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
+  }
+
+  @ApiStatus.Experimental
+  public static boolean canHaveAbstractMethods(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+    PyClassLikeType metaClassType = pyClass.getMetaClassType(true, context);
+    if (metaClassType != null && PyNames.ABC_META.equals(metaClassType.getClassQName())) {
+      return true;
+    }
+    return pyClass.getAncestorTypes(context).stream()
+      .filter(Objects::nonNull)
+      .map(PyClassLikeType::getClassQName)
+      .anyMatch(qName -> PyTypingTypeProvider.PROTOCOL.equals(qName) || PyTypingTypeProvider.PROTOCOL_EXT.equals(qName));
   }
 
   private @NotNull TypeEvalContext notNullizeContext(@Nullable TypeEvalContext context) {

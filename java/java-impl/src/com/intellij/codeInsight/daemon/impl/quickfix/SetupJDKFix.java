@@ -35,17 +35,17 @@ public final class SetupJDKFix implements IntentionAction, HighPriorityAction, D
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, file.getResolveScope()) == null;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    return JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, psiFile.getResolveScope()) == null;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, final PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, final PsiFile psiFile) {
     SdkPopupFactory
       .newBuilder()
       .withProject(project)
       .withSdkTypeFilter(type -> type instanceof JavaSdkType)
-      .updateSdkForFile(file)
+      .updateSdkForFile(psiFile)
       .buildPopup()
       .showInBestPositionFor(editor);
   }

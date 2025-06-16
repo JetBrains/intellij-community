@@ -4,17 +4,23 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.psi.util.parentOfType
+import com.intellij.refactoring.changeSignature.*
+import com.intellij.refactoring.util.CanonicalTypes
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaErrorCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -70,7 +76,11 @@ object ChangeSignatureFixFactory {
                 prepareChangeInfo(element, input)
             } ?: return
 
-            KotlinChangeSignatureProcessor(changeInfo.method.project, changeInfo).run()
+            when (changeInfo) {
+                is KotlinChangeInfo -> KotlinChangeSignatureProcessor(project, changeInfo).run()
+                is JavaChangeInfo -> ChangeSignatureProcessor(project, changeInfo).run()
+            }
+
         }
 
         override fun startInWriteAction(): Boolean = false
@@ -95,7 +105,7 @@ object ChangeSignatureFixFactory {
     }
 
     private fun isWritable(symbol: KaSymbol): Boolean {
-        return symbol.origin == KaSymbolOrigin.SOURCE || symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && symbol is KaConstructorSymbol
+        return symbol.origin == KaSymbolOrigin.SOURCE || symbol.origin == KaSymbolOrigin.JAVA_SOURCE || symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && symbol is KaConstructorSymbol
     }
 
     private fun getActionName(psi: PsiElement, input: Input): String {
@@ -146,7 +156,7 @@ object ChangeSignatureFixFactory {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun prepareChangeInfo(psi: PsiElement, input: Input): KotlinChangeInfo? {
+    private fun prepareChangeInfo(psi: PsiElement, input: Input): ChangeInfo? {
         if (input.type == ChangeType.CHANGE_FUNCTIONAL) {
             return prepareFunctionalLiteralChangeInfo(psi as KtLambdaExpression, input)
         }
@@ -155,12 +165,70 @@ object ChangeSignatureFixFactory {
             ((callElement.resolveToCall() as? KaErrorCallInfo)?.candidateCalls?.firstOrNull() as? KaCallableMemberCall<*, *>)
                 ?: return null
 
-        val ktCallableDeclaration = functionCall.partiallyAppliedSymbol.symbol.psi as? KtNamedDeclaration
-            ?: return null //todo change java from kotlin
+        val psiElement = functionCall.partiallyAppliedSymbol.symbol.psi
 
-        val methodDescriptor = KotlinMethodDescriptor(ktCallableDeclaration)
+        if (psiElement is PsiMethod) {
+            val result = psiElement.parameterList.parameters.mapIndexed { idx, param ->
+                ParameterInfoImpl.create(idx)
+                    .withName(param.getName())
+                    .withType(param.getType())
+            }.toMutableList()
 
-        val changeInfo = KotlinChangeInfo(methodDescriptor)
+
+            if (input.type == ChangeType.REMOVE) {
+                result.removeAt(input.idx)
+            } else {
+                val currentArgument = psi.parentOfType<KtValueArgument>(true) ?: return null
+
+                val usedNames = mutableSetOf<String>()
+
+                fun getNewParameterInfo(currentArgument: KtValueArgument): ParameterInfoImpl? {
+                    val paramName = getNewArgumentName(currentArgument) { usedNames.add(it) }
+                    val kaType = getKtType(currentArgument.getArgumentExpression())
+                    val paramType = kaType?.asPsiType(callElement, false, KaTypeMappingMode.VALUE_PARAMETER) ?: return null
+                    return ParameterInfoImpl.createNew()
+                        .withName(paramName)
+                        .withType(paramType)
+                        .withDefaultValue(currentArgument.text)
+                }
+
+                if (input.type == ChangeType.TYPE_MISMATCH) {
+                    val parameterInfo = getNewParameterInfo(currentArgument) ?: return null
+                    result.add(input.idx, parameterInfo)
+                } else {
+                    val parameters = psiElement.parameterList.parameters
+                    val arguments = callElement.valueArguments
+
+                    for (i in arguments.indices) {
+                        val argument = arguments[i]
+                        val expression = argument.getArgumentExpression() ?: continue
+
+                        if (i < parameters.size) {
+                            usedNames.add(parameters[i].name)
+                            val argumentType = getKtType(expression)?.asPsiType(callElement, false, KaTypeMappingMode.VALUE_PARAMETER)
+                            if (argumentType != null && !TypeConversionUtil.isAssignable(parameters[i].type, argumentType)) {
+                                result[i].setType(argumentType)
+                            }
+                        } else {
+                            getNewParameterInfo(argument as KtValueArgument)?.let {
+                                result.add(it)
+                            }
+                        }
+                    }
+                }
+            }
+            val changeInfo = JavaChangeInfoImpl.generateChangeInfo(
+                psiElement, false, true, null,
+                psiElement.name, psiElement.returnType?.let { CanonicalTypes.createTypeWrapper(it) },
+                result.toTypedArray(),
+                null, emptySet(), emptySet()
+            )
+            return changeInfo
+        }
+
+        val ktCallableDeclaration = psiElement as? KtNamedDeclaration ?: return null
+
+        val changeInfo = KotlinChangeInfo(KotlinMethodDescriptor(ktCallableDeclaration))
         val index = input.idx + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0
         if (input.type == ChangeType.REMOVE) {
             assert(index >= 0)
@@ -357,7 +425,8 @@ object ChangeSignatureFixFactory {
         ) return emptyList()
 
         val name = (symbol as? KaNamedSymbol)?.name?.asString() ?: return emptyList()
-        element.parentOfType<KtCallElement>(true) ?: return emptyList()
+        val callee = (element as? KtDotQualifiedExpression)?.selectorExpression ?: element
+        if (callee.parentOfType<KtCallElement>(true) == null) return emptyList()
 
         val input = Input(
             type = ChangeType.REMOVE,
@@ -367,7 +436,7 @@ object ChangeSignatureFixFactory {
             parameterCount = containingSymbol.valueParameters.size,
         )
         return listOf(
-            ParameterQuickFix(element, input),
+            ParameterQuickFix(callee, input),
         )
     }
 
@@ -393,7 +462,7 @@ object ChangeSignatureFixFactory {
 
         if (newParametersCnt <= 0 && element !is KtLambdaExpression) return emptyList()
 
-        val expectedParameterTypes = (expectedType as? KaFunctionType)
+        val expectedParameterTypes = (((expectedType as? KaFlexibleType)?.upperBound ?: expectedType) as? KaFunctionType)
             ?.let { it.parameterTypes + it.returnType }
             ?.map {
                 ParameterInfo(

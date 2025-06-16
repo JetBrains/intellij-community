@@ -11,6 +11,7 @@ import com.intellij.lang.documentation.DocumentationProvider
 import com.intellij.lang.documentation.DocumentationProvider.DocumentationParts
 import com.intellij.lang.documentation.ExternalDocumentationProvider
 import com.intellij.model.Pointer
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
@@ -23,6 +24,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.Image
 import java.util.function.Supplier
 
 @VisibleForTesting
@@ -168,8 +170,10 @@ class PsiElementDocumentationTarget private constructor(
     })
 
     val imageResolver: DocumentationImageResolver = DocumentationImageResolver { url ->
-      dereference()?.targetElement?.let { targetElement ->
-        DocumentationManager.getElementImage(targetElement, url)
+      ReadAction.compute<Image?, Throwable> {
+        dereference()?.targetElement?.let { targetElement ->
+          DocumentationManager.getElementImage(targetElement, url)
+        }
       }
     }
   }

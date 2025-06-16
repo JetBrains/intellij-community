@@ -21,6 +21,7 @@ import git4idea.GitCommit
 import git4idea.GitLocalBranch
 import git4idea.GitNotificationIdsHolder
 import git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision
+import git4idea.branch.GitBranchUtil.getTrackInfo
 import git4idea.branch.GitBranchUtil.getTrackInfoForBranch
 import git4idea.branch.GitDeleteBranchOperation.*
 import git4idea.branch.GitSmartOperationDialog.Choice.*
@@ -926,6 +927,75 @@ class GitBranchWorkerTest : GitPlatformTest() {
     myRepositories.forEach { assertBranchExists(it, "feature") }
   }
 
+  fun `test rename branch unset upstream should remove upstream`() {
+    val oldBranchName = "old-name"
+    val newBranchName = "new-name"
+
+    prepareLocalAndRemoteBranch(oldBranchName, track = true)
+
+    val brancher = GitBranchWorker(project, git, TestUiHandler(project))
+    brancher.renameBranchAndUnsetUpstream(oldBranchName, newBranchName, myRepositories)
+
+    myRepositories.forEach { repo ->
+      assertBranchDeleted(repo, oldBranchName)
+      assertBranchExists(repo, newBranchName)
+
+      val newTrackInfo = getTrackInfo(repo, newBranchName)
+      assertNull("Renamed branch should lose its upstream", newTrackInfo)
+    }
+
+    assertSuccessfulNotification("Branch ${bold(code(oldBranchName))} was renamed to ${bold(code(newBranchName))}")
+  }
+
+  fun `test rename branch should keep upstream`() {
+    val oldBranchName = "old-name"
+    val newBranchName = "new-name"
+
+    prepareLocalAndRemoteBranch(oldBranchName, track = true)
+
+    myRepositories.forEach { it.update() }
+    val upstreamBranches = GitUpstreamBranches(myRepositories, oldBranchName, git)
+
+    val brancher = GitBranchWorker(project, git, TestUiHandler(project))
+    brancher.renameBranch(oldBranchName, newBranchName, myRepositories)
+
+    myRepositories.forEach { repo ->
+      assertBranchDeleted(repo, oldBranchName)
+      assertBranchExists(repo, newBranchName)
+
+      val newTrackInfo = getTrackInfo(repo, newBranchName)
+      assertEquals("Renamed branch should keep its upstream", upstreamBranches.get()[repo], newTrackInfo?.remoteBranch)
+    }
+
+    assertSuccessfulNotification("Branch ${bold(code(oldBranchName))} was renamed to ${bold(code(newBranchName))}")
+  }
+
+  fun `test failed rename branch unset upstream can be rolled back`() {
+    val oldBranchName = "old-name"
+    val newBranchName = "new-name"
+
+    prepareLocalAndRemoteBranch(oldBranchName, track = true)
+
+    myRepositories.forEach { it.update() }
+    val upstreamBranches = GitUpstreamBranches(myRepositories, oldBranchName, git)
+
+    second.branch(newBranchName) // To fail rename
+
+    val brancher = GitBranchWorker(project, git, object : TestUiHandler(project) {
+      override fun notifyErrorWithRollbackProposal(title: String, message: String, rollbackProposal: String): Boolean {
+        return true
+      }
+    })
+    brancher.renameBranchAndUnsetUpstream(oldBranchName, newBranchName, myRepositories)
+
+    myRepositories.forEach { repo ->
+      assertBranchExists(repo, oldBranchName)
+
+      val newTrackInfo = getTrackInfo(repo, oldBranchName)
+      assertEquals("Rolled back branch should restore its upstream", upstreamBranches.get()[repo], newTrackInfo?.remoteBranch)
+    }
+  }
+
   private fun prepareLocalAndRemoteBranch(name: String, track: Boolean) {
     val parentRoot = testNioRoot.resolve("parentRoot")
     Files.createDirectories(parentRoot)
@@ -1092,6 +1162,10 @@ class GitBranchWorkerTest : GitPlatformTest() {
 
   private fun code(s: String): String {
     return "<code>$s</code>"
+  }
+
+  private fun bold(s: String): String {
+    return "<b>$s</b>"
   }
 
   private fun newGitVersion(): Boolean {

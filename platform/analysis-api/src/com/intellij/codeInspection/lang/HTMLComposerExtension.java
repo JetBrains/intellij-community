@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,7 +18,7 @@ import java.util.Collections;
 public interface HTMLComposerExtension<T extends HTMLComposerExtension<T>> {
   Key<T> getID();
   Language getLanguage();
-  default Collection<Language> getLanguages() {
+  default @Unmodifiable @NotNull Collection<Language> getLanguages() {
     return Collections.singletonList(getLanguage());
   }
 

@@ -5,9 +5,9 @@ sourcePositionForGetterWithDiamondInterfaces.kt:22
 KotlinStackFrame (sourcePositionForGetterWithDiamondInterfaces.kt:22)
     JavaValue[local] instance: sourcePositionForGetterWithDiamondInterfaces.TestClass = sourcePositionForGetterWithDiamondInterfaces.TestClass@hashCode (sourcePositionForGetterWithDiamondInterfaces.kt:20)
         DummyMessageValueNode = No fields to display
-        JavaValue[getter] i2Int: int (sourcePositionForGetterWithDiamondInterfaces.kt:8)
-        JavaValue[getter] i1Int: int (sourcePositionForGetterWithDiamondInterfaces.kt:4)
-        JavaValue[getter] i3Int: int (sourcePositionForGetterWithDiamondInterfaces.kt:12)
+        JavaValue[getter sourcePositionForGetterWithDiamondInterfaces.TestClass.getI2Int()] i2Int: int (sourcePositionForGetterWithDiamondInterfaces.kt:8)
+        JavaValue[getter sourcePositionForGetterWithDiamondInterfaces.TestClass.getI1Int()] i1Int: int (sourcePositionForGetterWithDiamondInterfaces.kt:4)
+        JavaValue[getter sourcePositionForGetterWithDiamondInterfaces.TestClass.getI3Int()] i3Int: int (sourcePositionForGetterWithDiamondInterfaces.kt:12)
 Disconnected from the target VM
 
 Process finished with exit code 0

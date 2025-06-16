@@ -11,7 +11,7 @@
     <keyboard-shortcut first-keystroke="meta N"/>
   </action>
   <action id="NewScratchFile"/>
-  <action id="CPP.CreateCMakeProject">
+  <action id="CPP.CreateNewCLionProject">
     <keyboard-shortcut first-keystroke="meta shift N"/>
   </action>
   <action id="$SelectAll">
@@ -82,6 +82,7 @@
     <keyboard-shortcut first-keystroke="meta 4"/>
   </action>
   <action id="Vcs.ToggleAmendCommitMode"/>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="ShowBookmarks">
     <keyboard-shortcut first-keystroke="alt control M"/>
   </action>

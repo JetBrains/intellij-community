@@ -5,6 +5,11 @@ import com.intellij.lang.PsiBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated Use the new Java syntax library instead.
+ *             See {@link com.intellij.java.syntax.parser.JavaParser}
+ */
+@Deprecated
 public class ExpressionParser extends BasicExpressionParser {
   public ExpressionParser(@NotNull JavaParser javaParser) {
     super(javaParser, new OldExpressionParser(javaParser), new PrattExpressionParser(javaParser));

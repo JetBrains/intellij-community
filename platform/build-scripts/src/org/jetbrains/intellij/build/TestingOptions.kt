@@ -103,7 +103,7 @@ open class TestingOptions {
    * and allows to rerun only corresponding tests for desired method or class in your project.
    *
    *
-   * For the further information please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
+   * For more information, please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
    */
   var isTestDiscoveryEnabled: Boolean = getBooleanProperty("intellij.build.test.discovery.enabled", false)
 

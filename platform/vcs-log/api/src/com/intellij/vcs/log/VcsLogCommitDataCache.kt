@@ -5,5 +5,5 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 interface VcsLogCommitDataCache<T : VcsShortCommitDetails> {
-  fun getCachedData(commit: Int): T?
+  fun getCachedData(commit: VcsLogCommitStorageIndex): T?
 }

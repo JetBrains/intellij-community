@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.include;
 
@@ -12,10 +12,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -26,23 +26,34 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public final class FileIncludeIndex extends FileBasedIndexExtension<String, List<FileIncludeInfoImpl>> {
-  private static final ID<String,List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
   public static final ExtensionPointName<FileIncludeProvider>
-    FILE_INCLUDE_PROVIDER_EP_NAME = ExtensionPointName.create("com.intellij.include.provider");
+    FILE_INCLUDE_PROVIDER_EP_NAME = new ExtensionPointName<>("com.intellij.include.provider");
+
+  private static final ID<String, List<FileIncludeInfoImpl>> INDEX_ID = ID.create("fileIncludes");
 
   public static @Unmodifiable @NotNull Stream<FileIncludeInfo> getIncludes(@NotNull VirtualFile file, @NotNull Project project) {
     Map<String, List<FileIncludeInfoImpl>> data = FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project);
     return data.values().stream().flatMap(Collection::stream);
   }
 
-  public static @NotNull MultiMap<VirtualFile, FileIncludeInfoImpl> getIncludingFileCandidates(String fileName, @NotNull GlobalSearchScope scope) {
-    final MultiMap<VirtualFile, FileIncludeInfoImpl> result = new MultiMap<>();
+  static @NotNull Map<VirtualFile, List<? extends FileIncludeInfo>> getIncludingFileCandidates(String fileName, @NotNull GlobalSearchScope scope) {
+    Map<VirtualFile, List<? extends FileIncludeInfo>> result = new HashMap<>();
     FileBasedIndex.getInstance().processValues(INDEX_ID, fileName, null, (file, value) -> {
       result.put(file, value);
       return true;
     }, scope);
     return result;
+  }
+
+  public static void collectIncludingFileCandidateFiles(@NotNull String fileName,
+                                                        @NotNull GlobalSearchScope scope,
+                                                        @NotNull Set<VirtualFile> result) {
+    FileBasedIndex.getInstance().processValues(INDEX_ID, fileName, null, (file, value) -> {
+      result.add(file);
+      return true;
+    }, scope);
   }
 
   @Override

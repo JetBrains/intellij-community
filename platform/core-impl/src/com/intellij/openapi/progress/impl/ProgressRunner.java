@@ -20,6 +20,7 @@ import com.intellij.util.concurrency.ChildContext;
 import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
+import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -31,7 +32,6 @@ import java.util.concurrent.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.application.ModalityKt.asContextElement;
-import static com.intellij.openapi.progress.CoroutinesKt.closeLockPermitContext;
 import static com.intellij.openapi.progress.CoroutinesKt.getLockPermitContext;
 
 /**
@@ -303,8 +303,9 @@ public final class ProgressRunner<R> {
   private @NotNull CompletableFuture<R> execFromEDT(@NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressFuture,
                                                     @NotNull Semaphore modalityEntered,
                                                     @NotNull Function<ProgressIndicator, R> onThreadCallable) {
-    final CoroutineContext sharedPermit = isModal && isSync ? getLockPermitContext(true) : EmptyCoroutineContext.INSTANCE;
-    CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture, sharedPermit);
+    final Pair<CoroutineContext, AccessToken> sharedPermit =
+      isModal && isSync ? getLockPermitContext(true) : new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
+    CompletableFuture<R> taskFuture = launchTask(onThreadCallable, progressFuture, sharedPermit.getFirst());
     CompletableFuture<R> resultFuture;
 
     if (isModal) {
@@ -345,7 +346,7 @@ public final class ProgressRunner<R> {
         throw new IllegalStateException("Result future must be done at this point");
       }
       // Shared permit is not needed anymore
-      closeLockPermitContext(sharedPermit);
+      sharedPermit.getSecond().finish();
     }
     return resultFuture;
   }
@@ -371,8 +372,9 @@ public final class ProgressRunner<R> {
       });
     }
 
-    final CoroutineContext sharedPermit = isModal && isSync ? getLockPermitContext(true) : EmptyCoroutineContext.INSTANCE;
-    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture, sharedPermit);
+    final Pair<CoroutineContext, AccessToken> sharedPermit =
+      isModal && isSync ? getLockPermitContext(true) : new Pair<>(EmptyCoroutineContext.INSTANCE, AccessToken.EMPTY_ACCESS_TOKEN);
+    CompletableFuture<R> resultFuture = launchTask(onThreadCallable, progressFuture, sharedPermit.getFirst());
 
     if (isModal) {
       CompletableFuture<Void> modalityExitFuture = resultFuture
@@ -393,7 +395,7 @@ public final class ProgressRunner<R> {
 
     if (isSync) {
       waitForFutureUnlockingThread(resultFuture);
-      closeLockPermitContext(sharedPermit);
+      sharedPermit.getSecond().close();
     }
     return resultFuture;
   }

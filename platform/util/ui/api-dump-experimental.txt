@@ -6,6 +6,8 @@ f:com.intellij.ui.render.RenderingUtil
 - sf:INSTANCE:com.intellij.util.ui.JLabelUtil
 - sf:setTrimOverflow(javax.swing.JLabel,Z):V
 f:com.intellij.util.ui.UIUtil
+- *s:colorHashCode(java.awt.Color):I
+- *s:equalColors(java.awt.Color,java.awt.Color):Z
 - *s:getParent(java.awt.Component):java.awt.Component
 - *s:hasFocus(java.awt.Component):Z
 - *s:isShowing(java.awt.Component):Z

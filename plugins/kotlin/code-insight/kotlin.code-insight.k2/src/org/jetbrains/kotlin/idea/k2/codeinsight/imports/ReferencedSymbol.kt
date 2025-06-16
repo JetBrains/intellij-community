@@ -140,11 +140,41 @@ private fun KaSession.canBeResolvedViaImport(reference: KtReference, target: KaS
         ?: referenceExpression?.callableReferenceExpressionForCallableReference()?.receiverExpression
 
     if (explicitReceiver != null) {
+        if (isTypeAliasedInnerClassConstructorCall(target, reference)) {
+            /*
+            Constructor call of inner class CANNOT be fully qualified,
+            it has to be called by its short name with the outer class as receiver.
+            
+            The same goes for the callable references to such constructors.
+            
+            We filter regular, not typealiased inner class constructors earlier, in `adjustSymbolIfNeeded`,
+            because they cannot ever be resolved via imports.
+            
+            However, typealiased inner classes constructors CAN rely on the fact that the typealias
+            is actually imported.
+            
+            Hence, if there is an explicit receiver, and the call resolves to a typealiased inner class constructor,
+            then we have to consider that this typealias has to be imported somehow.
+            */
+            return true
+        }
+        
         val extensionReceiver = resolveExtensionReceiverForFunctionalTypeVariable(referenceExpression, target)
         return extensionReceiver?.expression == explicitReceiver
     }
 
     return true
+}
+
+
+/**
+ * Determines whether the given [reference] resolves to a constructor call or callable reference 
+ * of a type-aliased inner class.
+ */
+private fun KaSession.isTypeAliasedInnerClassConstructorCall(target: KaSymbol, reference: KtReference): Boolean {
+    return target is KaTypeAliasSymbol &&
+            (target.expandedType.symbol as? KaNamedClassSymbol)?.isInner == true &&
+            reference.resolveToSymbols().any { it is KaConstructorSymbol && it.containingDeclaration == target }
 }
 
 private fun KaSession.resolveExtensionReceiverForFunctionalTypeVariable(

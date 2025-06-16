@@ -2,7 +2,6 @@
 // Apache 2.0 license.
 package org.jetbrains.jewel.intui.standalone.styling
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -17,7 +16,6 @@ public val SplitButtonStyle.Companion.Default: IntUiDefaultSplitButtonStyleFacto
     get() = IntUiDefaultSplitButtonStyleFactory
 
 public object IntUiDefaultSplitButtonStyleFactory {
-    @Composable
     public fun light(
         buttonStyle: ButtonStyle = ButtonStyle.Default.light(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
@@ -32,7 +30,6 @@ public object IntUiDefaultSplitButtonStyleFactory {
             colors = SplitButtonColors(dividerColor, dividerDisabledColor, chevronColor),
         )
 
-    @Composable
     public fun dark(
         buttonStyle: ButtonStyle = ButtonStyle.Default.dark(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
@@ -52,7 +49,6 @@ public val SplitButtonStyle.Companion.Outlined: IntUiOutlinedSplitButtonStyleFac
     get() = IntUiOutlinedSplitButtonStyleFactory
 
 public object IntUiOutlinedSplitButtonStyleFactory {
-    @Composable
     public fun light(
         buttonStyle: ButtonStyle = ButtonStyle.Outlined.light(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),
@@ -67,7 +63,6 @@ public object IntUiOutlinedSplitButtonStyleFactory {
             colors = SplitButtonColors(dividerColor, dividerDisabledColor, chevronColor),
         )
 
-    @Composable
     public fun dark(
         buttonStyle: ButtonStyle = ButtonStyle.Outlined.dark(),
         dividerMetrics: DividerMetrics = DividerMetrics.defaults(),

@@ -1,0 +1,10 @@
+// NO_OPTION: Add use-site target 'all'
+// CHOSEN_OPTION: PROPERTY|Add use-site target 'property'
+// COMPILER_ARGUMENTS: -Xannotation-target-all
+
+annotation class A
+
+class Property {
+    @property:A
+    val foo: String by lazy { "" }
+}

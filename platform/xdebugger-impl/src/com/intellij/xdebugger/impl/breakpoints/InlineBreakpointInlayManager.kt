@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
-import com.intellij.openapi.application.readAndWriteAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAndEdtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.impl.DiffUtil
@@ -218,14 +218,14 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
     // Double-checked now.
 
     withSemaphorePermit {
-      readAndWriteAction {
-        if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+      readAndEdtWriteAction {
+        if (postponeOnChanged()) return@readAndEdtWriteAction value(Unit)
 
         val allBreakpoints = allBreakpointsIn(document)
 
         val inlays = mutableListOf<SingleInlayDatum>()
         if (onlyLine != null) {
-          if (!DocumentUtil.isValidLine(onlyLine, document)) return@readAndWriteAction value(Unit)
+          if (!DocumentUtil.isValidLine(onlyLine, document)) return@readAndEdtWriteAction value(Unit)
 
           val breakpoints = allBreakpoints.filter { it.line == onlyLine }
           if (!breakpoints.isEmpty()) {
@@ -239,7 +239,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
           }
         }
 
-        if (postponeOnChanged()) return@readAndWriteAction value(Unit)
+        if (postponeOnChanged()) return@readAndEdtWriteAction value(Unit)
 
         if (onlyLine != null && inlays.isEmpty() &&
             allEditorsFor(document).all { getExistingInlays(it.inlayModel, document, onlyLine).isEmpty() }
@@ -247,7 +247,7 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
           // It's a fast path: no need to fire write action to remove inlays if there are already no inlays.
           // It's required to prevent performance degradations due to IDEA-339224,
           // otherwise fast insertion of twenty new lines could lead to 10 seconds of inlay recalculations.
-          return@readAndWriteAction value(Unit)
+          return@readAndEdtWriteAction value(Unit)
         }
 
         writeAction {

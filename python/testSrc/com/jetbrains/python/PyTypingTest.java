@@ -591,6 +591,15 @@ public class PyTypingTest extends PyTestCase {
              x = f()
              expr = x.foo
              """);
+    doTest("tuple[Any, Any]", """
+      from typing import Any
+      
+      class A[T]:
+          v: T
+
+      def f(a1: A[Any], a2: A):
+          expr = a1.v, a2.v
+      """);
   }
 
   // PY-18427 PY-76243
@@ -1226,7 +1235,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-27627
   public void testItemLookupNotResolvedAsParametrizedClassInstance() {
-    doTest("tuple",
+    doTest("tuple[()]",
            """
              d = {
                  int: lambda: ()
@@ -1236,7 +1245,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testClassObjectType() {
-    doTest("Type[MyClass]",
+    doTest("type[MyClass]",
            """
              from typing import Type
 
@@ -1249,7 +1258,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testConstrainedClassObjectTypeOfParam() {
-    doTest("Type[T]",
+    doTest("type[T]",
            """
              from typing import Type, TypeVar
 
@@ -1275,7 +1284,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testFunctionReturnsTypeOfInstance() {
-    doTest("Type[int]",
+    doTest("type[int]",
            """
              from typing import Type, TypeVar
 
@@ -1319,7 +1328,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-20057
   public void testUnionOfClassObjectTypes() {
-    doTest("Type[int | str]",
+    doTest("type[int | str]",
            """
              from typing import Type, Union
 
@@ -1329,7 +1338,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-23053
   public void testUnboundGenericMatchesClassObjectTypes() {
-    doTest("Type[str]",
+    doTest("type[str]",
            """
              from typing import Generic, TypeVar
 
@@ -1348,7 +1357,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-23053
   public void testListContainingClasses() {
-    doTest("Type[str]",
+    doTest("type[str]",
            "xs = [str]\n" +
            "expr = xs.pop()");
   }
@@ -1690,7 +1699,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-31004
   public void testRecursiveTypeAliasInAnotherFile() {
-    doMultiFileStubAwareTest("list | int",
+    doMultiFileStubAwareTest("list[Any] | int",
                              """
                                from other import MyType
 
@@ -1953,10 +1962,26 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-44974
   public void testBitwiseOrUnionIsSubclass() {
-    doTest("Type[str | dict | int]",
+    doTest("type[str | dict | int]",
            """
              a = list
              if issubclass(a, str | dict | int):
+                 expr = a""");
+  }
+
+  // PY-79861
+  public void testWalrusIsSubclass() {
+    doTest("type[str | dict | int]",
+           """
+             if issubclass(a := list, str | dict | int):
+                 expr = a""");
+  }
+
+  // PY-79861
+  public void testWalrusCallable() {
+    doTest("type[Callable]",
+           """
+             if callable(a := 42):
                  expr = a""");
   }
 
@@ -1975,6 +2000,14 @@ public class PyTypingTest extends PyTestCase {
            """
              a = [42]
              if isinstance(a, None | int):
+                 expr = a""");
+  }
+
+  // PY-79861
+  public void testWalrusIsInstance() {
+    doTest("int",
+           """
+             if isinstance((a := [42]), int):
                  expr = a""");
   }
 
@@ -2479,7 +2512,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicStarArgsPrefixSuffix() {
-    doTest("tuple[str, list, dict, bool, int]",
+    doTest("tuple[str, list[Any], dict[Any, Any], bool, int]",
            """
              from typing import TypeVarTuple, Tuple
 
@@ -4200,7 +4233,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-61883
   public void testRecursiveTypeAliasInAnotherFilePEP695Syntax() {
-    doMultiFileStubAwareTest("list | int",
+    doMultiFileStubAwareTest("list[Any] | int",
                              """
                                from a import MyType
 
@@ -4593,7 +4626,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassReference() {
-    doTest("Type[slice[int, int, int | None]]", """
+    doTest("type[slice[int, int, int | None]]", """
       from typing import TypeVar, Generic
       StartT = TypeVar("StartT", default=int)
       StopT = TypeVar("StopT", default=StartT)
@@ -4605,7 +4638,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassReferenceNewSyntax() {
-    doTest("Type[slice[int, int, int | None]]", """
+    doTest("type[slice[int, int, int | None]]", """
       class slice[StartT = int, StopT = StartT, StepT = int | None]: ...
       expr = slice
       """);
@@ -4673,7 +4706,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsListDefault() {
-    doTest("Type[Bar[int, list[int]]]", """
+    doTest("type[Bar[int, list[int]]]", """
       from typing import TypeVar, Generic
       
       T = TypeVar("T")
@@ -4688,7 +4721,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassWithInitMethodReference() {
-    doTest("Type[Bar[Any, list]]", """
+    doTest("type[Bar[Any, list[Any]]]", """
       from typing import TypeVar, Generic
       Z1 = TypeVar("Z1")
       ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
@@ -4700,7 +4733,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassWithInitMethodReferenceNewSyntax() {
-    doTest("Type[Bar[Any, list]]", """
+    doTest("type[Bar[Any, list[Any]]]", """
       from typing import TypeVar, Generic
       class Bar[Z1, ListDefaultT = list[Z1]]:
           def __init__(self, x: Z1, y: ListDefaultT): ...
@@ -4710,7 +4743,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsClassWithInitMethodReferenceParameterizedWithOneType() {
-    doTest("Type[Bar[int, list[int]]]", """
+    doTest("type[Bar[int, list[int]]]", """
       from typing import TypeVar, Generic
       Z1 = TypeVar("Z1")
       ListDefaultT = TypeVar("ListDefaultT", default=list[Z1])
@@ -4758,7 +4791,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testTypeVarDefaultsSubclassedClassReference() {
-    doTest("Type[Bar[str]]", """
+    doTest("type[Bar[str]]", """
       from typing import TypeVar, Generic, TypeAlias
       T1 = TypeVar("T1")
       T2 = TypeVar("T2")
@@ -4814,7 +4847,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testReferenceToTypeVarTupleWithDefaultIsParameterizedType() {
-    doTest("Type[Foo[str, int]]", """
+    doTest("type[Foo[str, int]]", """
       from typing import Generic, TypeVarTuple, Unpack
       DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[str, int]])
       class Foo(Generic[*DefaultTs]): ...
@@ -4864,7 +4897,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testParamSpecWithDefaultsClassReference() {
-    doTest("Type[Foo[[str, int]]]", """
+    doTest("type[Foo[[str, int]]]", """
       from typing import ParamSpec, Generic
       DefaultP = ParamSpec("DefaultP", default=[str, int])
       class Foo(Generic[DefaultP]): ...
@@ -4874,7 +4907,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testParamSpecWithDefaultsClassReferencesNewSyntax() {
-    doTest("Type[Foo[[str, int]]]", """
+    doTest("type[Foo[[str, int]]]", """
       class Foo[**P = [str, int]]: ...
       expr = Foo
       """);
@@ -5095,7 +5128,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-71002
   public void testMixedTypeVarsWithDefaultsAndNonDefaultsReferenceType() {
-    doTest("Type[AllTheDefaults[int, complex, str, int, bool]]", """
+    doTest("type[AllTheDefaults[int, complex, str, int, bool]]", """
       from typing import TypeVar, Generic
       T1 = TypeVar("T1")
       T2 = TypeVar("T2")
@@ -5904,6 +5937,17 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  public void testDataclassTransformDecoratedFunctionType() {
+    doTest("(cls: Any) -> None","""
+             from typing import dataclass_transform
+             
+             @dataclass_transform()
+             def my_dataclass(cls): ...
+             
+             expr = my_dataclass
+             """);
+  }
+
   // PY-76076
   public void testGenericAliasUnderVersionGuard() {
     doMultiFileStubAwareTest("list[str]", """
@@ -6344,6 +6388,128 @@ public class PyTypingTest extends PyTestCase {
       for x in C.f():
           expr = x
       """);
+  }
+
+  // PY-43122
+  public void testPropertyOfImportedClass() {
+    doMultiFileStubAwareTest("str",
+                             """
+                               from mod import A, B
+                               
+                               a = A()
+                               b = B(a)
+                               expr = b.b_attr
+                               """);
+  }
+
+  // PY-43122
+  public void testPropertyOfClass() {
+    doTest("str",
+                             """
+                               class A:
+                                   def __init__(self) -> None:
+                                       pass
+                               
+                                   @property
+                                   def a_property(self) -> str:
+                                       return 'foo'
+                               
+                               
+                               class B:
+                                   def __init__(self, a: A) -> None:
+                                       self.b_attr = a.a_property
+                               
+                               
+                               a = A()
+                               b = B(a)
+                               expr = b.b_attr
+                               """);
+  }
+
+  // PY-79480
+  public void testInheritedAttributeWithTypeAnnotationInParentConstructor() {
+    doTest("str | None", """
+      import typing
+
+      class FakeBase:
+          def __init__(self):
+              self._some_var: typing.Optional[str] = ""
+
+      class Fake(FakeBase):
+          def __init__(self):
+              super().__init__()
+              self._some_var = None
+
+          def some_method(self):
+              expr = self._some_var
+      """);
+  }
+
+  public void testInheritedAttributeWithTypeAnnotationInParent() {
+    doTest("str | None", """
+      import typing
+
+      class FakeBase:
+          _some_var: typing.Optional[str]
+
+      class Fake(FakeBase):
+          def __init__(self):
+              super().__init__()
+              self._some_var = None
+
+          def some_method(self):
+              expr = self._some_var
+      """);
+  }
+
+  public void testInheritedAttributeWithTypeAnnotationInChild() {
+    doTest("str | None", """
+      import typing
+
+      class FakeBase:
+          def __init__(self):
+              self._some_var = 1
+
+      class Fake(FakeBase):
+          def __init__(self):
+              super().__init__()
+              self._some_var: typing.Optional[str] = None
+
+          def some_method(self):
+              expr = self._some_var
+      """);
+  }
+
+  // PY-80427
+  public void testNoneTypeType() {
+    doTest("type[None]",
+           "expr = type(None)");
+  }
+
+  // PY-76908
+  public void testSequenceUnpackedTuple() {
+    doTest("Sequence[int | str]",
+           """
+            from typing import Sequence, TypeVar
+            T = TypeVar("T")
+            def test_seq(x: Sequence[T]) -> Sequence[T]:
+                return x
+            def func(p: tuple[int, *tuple[str, ...]]):
+                expr = test_seq(p)
+            """);
+  }
+
+  // PY-76908
+  public void testSequenceDeepUnpackedTuple() {
+    doTest("Sequence[int | complex | str]",
+           """
+            from typing import Sequence, TypeVar
+            T = TypeVar("T")
+            def test_seq(x: Sequence[T]) -> Sequence[T]:
+                return x
+            def func(p: tuple[int, *tuple[complex, *tuple[str, ...]]]):
+                expr = test_seq(p)
+            """);
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

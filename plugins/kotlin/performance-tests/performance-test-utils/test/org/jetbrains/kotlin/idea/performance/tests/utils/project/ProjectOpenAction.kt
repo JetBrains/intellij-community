@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.performance.tests.utils.project
 
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.setTrusted
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
@@ -164,7 +164,7 @@ enum class ProjectOpenAction {
         ProjectRootManager.getInstance(this).projectSdk = jdk
     }
 
-    protected fun Project.trusted() = this.setTrusted(true)
+    protected fun Project.trusted() = TrustedProjects.setProjectTrusted(this, true)
 
     protected fun openingProject(application: TestApplicationManager, project: Project, action: () -> Unit): Project {
         return try {

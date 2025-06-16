@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineOptionReference extends CommandLineElementReference<CommandLineOption> {
+final class CommandLineOptionReference extends CommandLineElementReference<CommandLineOption> {
   CommandLineOptionReference(final @NotNull CommandLineOption element) {
     super(element);
   }

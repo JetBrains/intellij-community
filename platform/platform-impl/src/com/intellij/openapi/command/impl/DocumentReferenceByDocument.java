@@ -28,7 +28,6 @@ public final class DocumentReferenceByDocument implements DocumentReference {
 
   @Override
   public String toString() {
-    CharSequence text = myDocument.getCharsSequence();
-    return text.subSequence(0, Math.min(80, text.length())).toString();
+    return myDocument.toString();
   }
 }

@@ -16,8 +16,10 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/util",
     "//platform/analysis-api:analysis",
-    "//java/java-analysis-api:analysis",
   ],
-  runtime_deps = [":codeInsight_resources"]
+  runtime_deps = [
+    ":codeInsight_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.dev.codeInsight` end

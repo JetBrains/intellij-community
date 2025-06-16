@@ -5,6 +5,7 @@ import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProvider;
 import com.intellij.application.options.codeStyle.group.CodeStyleGroupProviderFactory;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -40,6 +41,10 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
 
   @Override
   public JComponent createComponent() {
+    if (myPanels == null && AppMode.isRemoteDevHost()) {
+      buildConfigurables();
+    }
+
     return myPanels == null || myPanels.isEmpty() ? null : myPanels.get(0).createComponent();
   }
 
@@ -165,7 +170,7 @@ public final class CodeStyleSchemesConfigurable extends SearchableConfigurable.P
   }
 
   @Override
-  protected Configurable[] buildConfigurables() {
+  protected @NotNull Configurable @NotNull [] buildConfigurables() {
     CodeStyleGroupProviderFactory groupProviderFactory = new CodeStyleGroupProviderFactory(getModel(), this);
     myPanels = new ArrayList<>();
 

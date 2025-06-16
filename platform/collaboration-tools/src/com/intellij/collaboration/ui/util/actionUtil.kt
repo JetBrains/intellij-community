@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
+import javax.swing.Icon
 
 var Action.name: @Nls String?
   get() = getValue(Action.NAME) as? String
@@ -45,3 +46,11 @@ fun swingAction(name: @Nls String, action: (ActionEvent) -> Unit) = object : Abs
     action(e)
   }
 }
+
+@ApiStatus.Internal
+fun iconAction(icon: Icon, action: (AnActionEvent) -> Unit): DumbAwareAction =
+  object : DumbAwareAction(icon) {
+    override fun actionPerformed(e: AnActionEvent) {
+      action(e)
+    }
+  }

@@ -1,8 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
@@ -18,7 +20,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.fixes.CreateDefaultBranchFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.hasExhaustivenessError;
 
 public class DeleteSwitchLabelFix extends PsiUpdateModCommandAction<PsiCaseLabelElement> {
   private final String myName;
@@ -74,7 +77,7 @@ public class DeleteSwitchLabelFix extends PsiUpdateModCommandAction<PsiCaseLabel
     PsiSwitchBlock block = label.getEnclosingSwitchBlock();
     if (block == null) return;
     deleteLabelElement(context.project(), labelElement);
-    if (myAddDefaultIfNecessary && SwitchBlockHighlightingModel.shouldAddDefault(block)) {
+    if (myAddDefaultIfNecessary && shouldAddDefault(block)) {
       CreateDefaultBranchFix.addDefault(block, updater);
     }
   }
@@ -89,9 +92,9 @@ public class DeleteSwitchLabelFix extends PsiUpdateModCommandAction<PsiCaseLabel
         return;
       }
       else if (labelElementList.getElementCount() == 2) {
-        PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
+        PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(label);
         if (defaultElement != null && defaultElement != labelElement) {
-          assert PsiKeyword.CASE.equals(label.getFirstChild().getText()) && defaultElement instanceof PsiDefaultCaseLabelElement;
+          assert JavaKeywords.CASE.equals(label.getFirstChild().getText()) && defaultElement instanceof PsiDefaultCaseLabelElement;
           makeLabelDefault(label, project);
           return;
         }
@@ -154,5 +157,12 @@ public class DeleteSwitchLabelFix extends PsiUpdateModCommandAction<PsiCaseLabel
       ct.insertCommentsBefore(label);
     }
     new CommentTracker().deleteAndRestoreComments(label);
+  }
+
+  public static boolean shouldAddDefault(@NotNull PsiSwitchBlock block) {
+    if (!ExpressionUtil.isEnhancedSwitch(block)) return false;
+    if (JavaPsiSwitchUtil.getUnconditionalPatternLabel(block) != null) return false;
+    if (JavaPsiSwitchUtil.findDefaultElement(block) != null) return false;
+    return hasExhaustivenessError(block);
   }
 }

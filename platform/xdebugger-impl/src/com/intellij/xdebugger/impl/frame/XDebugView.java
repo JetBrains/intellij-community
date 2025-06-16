@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.execution.ui.layout.ViewContext;
@@ -46,15 +46,23 @@ public abstract class XDebugView implements Disposable {
   protected abstract void clear();
 
   @ApiStatus.Internal
+  protected void sessionStopped() {
+  }
+
+  @ApiStatus.OverrideOnly
+  @ApiStatus.Internal
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSessionProxy session) {
     if (session instanceof XDebugSessionProxy.Monolith monolith) {
       processSessionEvent(event, monolith.getSession());
     }
   }
 
+  /**
+   * Use {@link XDebugView#processSessionEvent(SessionEvent, XDebugSessionProxy)} instead
+   */
   @ApiStatus.Obsolete
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
-    processSessionEvent(event, XDebugSessionProxyKeeper.getInstance(session.getProject()).getOrCreateProxy(session));
+    processSessionEvent(event, XDebugSessionProxyKeeperKt.asProxy(session));
   }
 
   protected static @Nullable XDebugSession getSession(@NotNull EventObject e) {
@@ -62,8 +70,17 @@ public abstract class XDebugView implements Disposable {
     return component == null ? null : getSession(component);
   }
 
+  /**
+   * Use {@link #getSessionProxy} instead.
+   */
+  @ApiStatus.Obsolete
   public static @Nullable XDebugSession getSession(@NotNull Component component) {
     return getData(XDebugSession.DATA_KEY, component);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable XDebugSessionProxy getSessionProxy(@NotNull Component component) {
+    return getData(XDebugSessionProxy.DEBUG_SESSION_PROXY_KEY, component);
   }
 
   public static @Nullable <T> T getData(DataKey<T> key, @NotNull Component component) {

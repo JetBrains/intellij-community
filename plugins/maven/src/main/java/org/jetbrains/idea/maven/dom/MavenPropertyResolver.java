@@ -7,10 +7,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomParent;
-import org.jetbrains.idea.maven.dom.model.MavenDomProfile;
-import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
-import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
+import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -63,12 +60,37 @@ public final class MavenPropertyResolver {
   public static Map<String, String> collectPropertyMapFromDOM(@Nullable MavenProject project, MavenDomProjectModel projectDom) {
     var result = new HashMap<String, String>();
 
-    collectPropertyMapFromDOM(ReadAction.compute(()->projectDom.getProperties()), result);
+    collectPropertyMapFromDOM(ReadAction.compute(() -> projectDom.getProperties()), result);
 
     if (project != null) {
       collectPropertiesForActivatedProfiles(project, projectDom, result);
+      collectPropertiesForMavenDependencyPlugin(project, projectDom, result);
     }
     return result;
+  }
+
+  private static void collectPropertiesForMavenDependencyPlugin(@Nullable MavenProject project,
+                                                                MavenDomProjectModel projectDom,
+                                                                HashMap<String, String> result) {
+    if (project == null || !containsActiveDependencyPropertiesPlugin(project)) return;
+
+    project.getDependencies().forEach(d -> {
+      var clasifier = d.getClassifier();
+      var type = d.getType();
+      if (type == null || type.isBlank()) type = "jar";
+      var propName = d.getGroupId() + ":" + d.getArtifactId() + ":" + type;
+      if (clasifier != null && !clasifier.isBlank()) {
+        propName = propName + ":" + clasifier;
+      }
+      var file = d.getFile().getAbsolutePath();
+      result.put(propName, file);
+    });
+  }
+
+  public static boolean containsActiveDependencyPropertiesPlugin(MavenProject mavenProject) {
+    return mavenProject.getPlugins().stream().filter(
+      p -> p.getGroupId().equals("org.apache.maven.plugins") && p.getArtifactId().equals("maven-dependency-plugin")
+    ).flatMap(p -> p.getExecutions().stream()).flatMap(e -> e.getGoals().stream()).anyMatch(it -> "properties".equals(it));
   }
 
 
@@ -106,6 +128,7 @@ public final class MavenPropertyResolver {
       this.mavenProject = mavenProject;
       this.projectDom = projectDom;
     }
+
     @Override
     public String get(String key) {
       if (null == additionalProperties) {

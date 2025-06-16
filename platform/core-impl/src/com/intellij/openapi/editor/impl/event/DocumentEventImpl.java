@@ -64,6 +64,8 @@ public class DocumentEventImpl extends DocumentEvent {
     assert initialStartOffset >= 0 : initialStartOffset;
     assert initialOldLength >= 0 : initialOldLength;
     assert moveOffset == offset || myOldLength == 0 || myNewLength == 0 : this;
+    assert getOldFragment().length() ==  getOldLength() : "event.getOldFragment().length() = " + getOldFragment().length()+"; event.getOldLength() = " + getOldLength();
+    assert getNewFragment().length() ==  getNewLength() : "event.getNewFragment().length() = " + getNewFragment().length()+"; event.getNewLength() = " + getNewLength();
   }
 
   @Override

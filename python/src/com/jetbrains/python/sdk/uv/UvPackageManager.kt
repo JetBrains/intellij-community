@@ -1,11 +1,15 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.jetbrains.python.errorProcessing.PyExecResult
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.jetbrains.python.packaging.common.PythonPackageSpecification
+import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
@@ -15,57 +19,83 @@ import com.jetbrains.python.sdk.uv.impl.createUvLowLevel
 import java.nio.file.Path
 
 internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLowLevel) : PythonPackageManager(project, sdk) {
-  override var installedPackages: List<PythonPackage> = emptyList()
-  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project, sdk)
+  override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
-  @Volatile
-  var outdatedPackages: Map<String, PythonOutdatedPackage> = emptyMap()
-
-  override suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<Unit> {
+  override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     val result = if (sdk.uvUsePackageManagement) {
-      uv.installPackage(specification, emptyList())
+      uv.installPackage(installRequest, emptyList())
     }
     else {
-      uv.addDependency(specification, emptyList())
+      uv.addDependency(installRequest, emptyList())
     }
-
-    result.getOrElse {
-      return Result.failure(it)
-    }
-
-    return Result.success(Unit)
+    return result
   }
 
-  override suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<Unit> {
-    installPackageCommand(specification, emptyList()).getOrElse {
-      return Result.failure(it)
-    }
+  override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
+    val specsWithoutVersion = specifications.map { it.copy(versionSpec = null) }
+    val request = PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specsWithoutVersion)
+    val result = installPackageCommand(request, emptyList())
 
-    return Result.success(Unit)
+    return result
   }
 
-  override suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<Unit> {
-    val result = if (sdk.uvUsePackageManagement) {
-      uv.uninstallPackage(pkg)
-    }
-    else {
-      uv.removeDependency(pkg)
-    }
+  override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
+    if (pythonPackages.isEmpty()) return PyResult.success(Unit)
 
-    result.getOrElse {
-      return Result.failure(it)
-    }
+    val (standalonePackages, declaredPackages) = categorizePackages(pythonPackages)
 
-    return Result.success(Unit)
+    uninstallStandalonePackages(standalonePackages).getOr { return it }
+    uninstallDeclaredPackages(declaredPackages).getOr { return it }
+
+    return PyResult.success(Unit)
   }
 
-  override suspend fun reloadPackagesCommand(): Result<List<PythonPackage>> {
-    // ignoring errors as handling outdated packages is a pretty new option
-    uv.listOutdatedPackages().onSuccess {
-      outdatedPackages = it.associateBy { it.name }
-    }
+  /**
+   * Categorizes packages into standalone packages and pyproject.toml declared packages.
+   */
+  private fun categorizePackages(packages: Array<out String>): Pair<List<NormalizedPythonPackageName>, List<NormalizedPythonPackageName>> {
+    val dependencyNames = dependencies.map { it.name }.toSet()
+    return packages
+      .map { NormalizedPythonPackageName.from(it) }
+      .partition { it.name !in dependencyNames || sdk.uvUsePackageManagement }
+  }
 
+  /**
+   * Uninstalls standalone packages using UV package manager.
+   */
+  private suspend fun uninstallStandalonePackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
+    return if (packages.isNotEmpty()) {
+      uv.uninstallPackages(packages.map { it.name }.toTypedArray())
+    } else {
+      PyResult.success(Unit)
+    }
+  }
+
+  /**
+   * Removes declared dependencies using UV package manager.
+   */
+  private suspend fun uninstallDeclaredPackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
+    return if (packages.isNotEmpty()) {
+      uv.removeDependencies(packages.map { it.name }.toTypedArray())
+    } else {
+      PyResult.success(Unit)
+    }
+  }
+
+  override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
     return uv.listPackages()
+  }
+
+  override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
+    return uv.listOutdatedPackages()
+  }
+
+  suspend fun sync(): PyExecResult<String> {
+    return uv.sync()
+  }
+
+  suspend fun lock(): PyExecResult<String> {
+    return uv.lock()
   }
 }
 

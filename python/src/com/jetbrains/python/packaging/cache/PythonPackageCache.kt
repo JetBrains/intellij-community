@@ -5,7 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal interface PythonPackageCache<K> {
-  val packages: List<String>
+  val packages: Set<String>
   operator fun contains(key: K): Boolean
   fun isEmpty(): Boolean
 }

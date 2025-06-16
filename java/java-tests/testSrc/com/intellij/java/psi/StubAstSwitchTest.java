@@ -325,7 +325,7 @@ public class StubAstSwitchTest extends LightJavaCodeInsightFixtureTestCase {
     StubTree stubTree = UsefulTestCase.assertInstanceOf(file, DummyHolder.class).calcStubTree();
 
     assertTrue(ContainerUtil.exists(stubTree.getPlainList(),
-                                    it -> JavaStubElementTypes.ANONYMOUS_CLASS.equals(it.getStubType())));
+                                    it -> JavaStubElementTypes.ANONYMOUS_CLASS.equals(it.getElementType())));
   }
 
   public void test_stub_index_is_cleared_on_AST_change() {

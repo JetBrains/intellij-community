@@ -3,7 +3,9 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -38,7 +40,7 @@ public class WeakInterner<T> extends Interner<T> {
   }
 
   @Override
-  public @NotNull Set<T> getValues() {
-    return new HashSet<>(map.values());
+  public @NotNull @Unmodifiable Set<T> getValues() {
+    return Collections.unmodifiableSet(new HashSet<>(map.values()));
   }
 }

@@ -2,7 +2,7 @@
 package com.intellij.internal.inspector.accessibilityAudit
 
 import org.jetbrains.annotations.ApiStatus
-import javax.accessibility.AccessibleContext
+import javax.accessibility.Accessible
 import javax.accessibility.AccessibleRole
 
 @ApiStatus.Internal
@@ -10,19 +10,20 @@ import javax.accessibility.AccessibleRole
 class AccessibleActionNotNullInspection : UiInspectorAccessibilityInspection {
   override val propertyName: String = "AccessibleAction"
   override val severity: Severity = Severity.WARNING
+  override var accessibleRole: AccessibleRole? = null
 
-  override fun passesInspection(context: AccessibleContext): Boolean {
+  override fun passesInspection(accessible: Accessible?): Boolean {
+    val context = accessible?.accessibleContext ?: return true
     if (context.accessibleRole in arrayOf(AccessibleRole.PUSH_BUTTON,
                                           AccessibleRole.TOGGLE_BUTTON,
                                           AccessibleRole.CHECK_BOX,
                                           AccessibleRole.RADIO_BUTTON,
                                           AccessibleRole.COMBO_BOX,
-                                          AccessibleRole.HYPERLINK)
-    ) {
-      return context.accessibleAction != null
+                                          AccessibleRole.HYPERLINK)) {
+      val result = context.accessibleAction != null
+      if (!result) accessibleRole = context.accessibleRole
+      return result
     }
     return true
   }
 }
-
-// push button, toggle button, check box, radio button, combo box, hyperlink

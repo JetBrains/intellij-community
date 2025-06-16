@@ -43,8 +43,6 @@ CoroutinePreflightFrame foo (optimisedVariablesWithWhen.kt:32)
     JavaValue[local] f: java.lang.String = f (optimisedVariablesWithWhen.kt:28)
     JavaValue[local] g: java.lang.String = g (optimisedVariablesWithWhen.kt:30)
     JavaValue[continuation] e = e
-    JavaValue[continuation] $i$f$inlineBlock = 0
-    JavaValue[continuation] $i$a$-inlineBlock-OptimisedVariablesWithWhenKt$foo$3 = 0
 optimisedVariablesWithWhen.kt:36
 KotlinStackFrame (optimisedVariablesWithWhen.kt:36)
     JavaValue[local] h: java.lang.String = h (optimisedVariablesWithWhen.kt:34)

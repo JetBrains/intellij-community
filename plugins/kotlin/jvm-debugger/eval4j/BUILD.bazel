@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
-  name = "kotlin-jvm-debugger-eval4j",
+  name = "eval4j",
   module_name = "kotlin.jvm-debugger.eval4j",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -12,16 +12,16 @@ jvm_library(
     "@lib//:asm",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/util",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
   ],
   runtime_deps = ["//platform/core-api:core"]
 )
 
 jvm_library(
-  name = "kotlin-jvm-debugger-eval4j_test_lib",
+  name = "eval4j_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":kotlin-jvm-debugger-eval4j"],
+  associates = [":eval4j"],
   deps = [
     "//java/debugger/openapi:java-debugger",
     "@lib//:kotlin-stdlib",
@@ -29,12 +29,12 @@ jvm_library(
     "@lib//:junit4",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/util",
-    "//java/debugger/impl:java-debugger-impl",
+    "//java/debugger/impl",
   ]
 )
 
 jvm_test(
-  name = "kotlin-jvm-debugger-eval4j_test",
-  runtime_deps = [":kotlin-jvm-debugger-eval4j_test_lib"]
+  name = "eval4j_test",
+  runtime_deps = [":eval4j_test_lib"]
 )
 ### auto-generated section `build kotlin.jvm-debugger.eval4j` end

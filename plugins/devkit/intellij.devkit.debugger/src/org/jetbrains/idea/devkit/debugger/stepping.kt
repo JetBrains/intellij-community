@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.impl.DebuggerManagerListener
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.wrapIncompatibleThreadStateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
@@ -71,12 +72,14 @@ private class SessionThreadsData() {
    */
   fun setNonCancellableSection(suspendContext: SuspendContextImpl) {
     try {
-      if (!isPCEAdjustmentEnabled(suspendContext)) return
-      val state = getOrCreateThreadState(suspendContext) ?: return
-      state.setNonCancellable(suspendContext, true)
+      wrapIncompatibleThreadStateException {
+        if (!isPCEAdjustmentEnabled(suspendContext)) return
+        val thread = suspendContext.thread ?: return
+        val state = getOrCreateThreadState(suspendContext) ?: return
+        setNonCancelableSafe(state, thread, suspendContext, true)
+      }
     }
     catch (e: Exception) {
-      if (logIncorrectSuspendState(e)) return
       DebuggerUtilsImpl.logError(e)
     }
   }
@@ -86,17 +89,30 @@ private class SessionThreadsData() {
    */
   fun resetNonCancellableSection(suspendContext: SuspendContextImpl) {
     try {
-      if (!isPCEAdjustmentEnabled(suspendContext)) return
-      val pausedThreads = suspendContext.debugProcess.suspendManager.pausedContexts
-        .mapNotNull { it.thread }
-        .mapNotNull { threadStates[it] }
-      for (state in pausedThreads) {
-        state.setNonCancellable(suspendContext, false)
+      wrapIncompatibleThreadStateException {
+        if (!isPCEAdjustmentEnabled(suspendContext)) return
+        val pausedThreads = suspendContext.debugProcess.suspendManager.pausedContexts
+          .mapNotNull { it.thread }
+        for (thread in pausedThreads) {
+          val state = threadStates[thread] ?: continue
+          setNonCancelableSafe(state, thread, suspendContext, false)
+        }
       }
     }
     catch (e: Exception) {
-      if (logIncorrectSuspendState(e)) return
       DebuggerUtilsImpl.logError(e)
+    }
+  }
+
+  private fun setNonCancelableSafe(
+    state: ThreadState, thread: ThreadReferenceProxyImpl,
+    suspendContext: SuspendContextImpl, value: Boolean,
+  ) {
+    try {
+      state.setNonCancellable(suspendContext, value)
+    }
+    catch (_: ObjectCollectedException) {
+      threadStates.remove(thread)
     }
   }
 
@@ -125,7 +141,7 @@ private class SessionThreadsData() {
  * @see com.intellij.openapi.progress.Cancellation.isInNonCancelableSection
  */
 private fun initializeThreadState(suspendContext: SuspendContextImpl): ObjectReference? {
-  if (!suspendContext.debugProcess.isEvaluationPossibleInCurrentCommand(suspendContext)) return null
+  if (!suspendContext.debugProcess.isEvaluationPossible(suspendContext)) return null
   val evaluationContext = EvaluationContextImpl(suspendContext, suspendContext.frameProxy)
   val cancellationClass = findClassOrNull(evaluationContext, CANCELLATION_FQN) as? ClassType ?: return null
   val method = DebuggerUtilsImpl.findMethod(cancellationClass,

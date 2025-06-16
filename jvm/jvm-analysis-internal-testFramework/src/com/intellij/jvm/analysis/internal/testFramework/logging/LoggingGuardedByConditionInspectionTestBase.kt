@@ -6,7 +6,7 @@ import com.intellij.codeInspection.logging.LoggingGuardedByConditionInspection
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager.Companion.getInstance
 
 abstract class LoggingGuardedByConditionInspectionTestBase : LoggingInspectionTestBase() {
-  override val inspection = LoggingGuardedByConditionInspection()
+  override val inspection: LoggingGuardedByConditionInspection = LoggingGuardedByConditionInspection()
 
   override fun setUp() {
     super.setUp()

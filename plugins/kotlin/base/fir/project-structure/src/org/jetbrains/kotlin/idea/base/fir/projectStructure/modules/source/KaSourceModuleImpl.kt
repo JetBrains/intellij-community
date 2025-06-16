@@ -2,15 +2,23 @@
 package org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaEntityBasedModuleCreationData
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.KaModuleWithDebugData
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.InternalKaModuleConstructor
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
-import java.util.*
 
-internal class KaSourceModuleImpl(
+internal class KaSourceModuleImpl @InternalKaModuleConstructor constructor(
     override val entityId: ModuleId,
     override val kind: KaSourceModuleKind,
     override val project: Project,
-) : KaSourceModuleBase() {
+    override val creationData: KaEntityBasedModuleCreationData,
+) : KaSourceModuleBase(), KaModuleWithDebugData {
+    override val entityInterface: Class<out WorkspaceEntity> get() = ModuleEntity::class.java
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         return other is KaSourceModuleImpl
@@ -19,6 +27,6 @@ internal class KaSourceModuleImpl(
     }
 
     override fun hashCode(): Int {
-        return Objects.hash(entityId, kind)
+        return 31 * entityId.hashCode() + kind.hashCode()
     }
 }

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.util.regex.Pattern
 
-val LOG: Logger = Logger.getInstance("#com.intellij.codeInsight.navigation")
+internal val codeInsightLogger: Logger = Logger.getInstance("#com.intellij.codeInsight.navigation")
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
 /**
@@ -107,7 +107,7 @@ fun targetPresentation(element: PsiElement): TargetPresentation {
 private fun presentationError(element: PsiElement) {
   val instance = (element as? PomTargetPsiElement)?.target ?: element
   val clazz = instance.javaClass
-  LOG.error(PluginException.createByClass("${clazz.name} cannot be presented", null, clazz))
+  codeInsightLogger.error(PluginException.createByClass("${clazz.name} cannot be presented", null, clazz))
 }
 
 @ApiStatus.Experimental

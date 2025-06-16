@@ -38,9 +38,5 @@ interface TypeAccessibilityChecker {
             targetModule: Module,
             existingFqNames: Set<String> = emptySet(),
         ): TypeAccessibilityChecker = TypeAccessibilityCheckerImpl(project, targetModule, existingFqNames)
-
-        @get:TestOnly
-        @set:TestOnly
-        var testLog: StringBuilder? = null
     }
 }

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.*
 import com.intellij.openapi.application.*
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -32,13 +31,13 @@ import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.failure
+import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData
-import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.add.v1.createDetectedSdk
+import com.jetbrains.python.target.createDetectedSdk
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor
@@ -46,13 +45,11 @@ import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.SwingUtilities
-import kotlin.Result
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
@@ -87,7 +84,7 @@ fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
 }
 
-@ApiStatus.Internal
+@Internal
 fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
   // in case module contains root of the project we consider it as a project wide interpreter
   if (project.basePath == module.basePath) {
@@ -143,16 +140,24 @@ fun resetSystemWideSdksDetectors() {
   PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
 }
 
+@Internal
+
 fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance(), existingSdks, module, context)
+
+@Internal
 
 fun filterSharedCondaEnvs(module: Module?, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && PythonSdkUtil.isConda(it) && !it.isAssociatedWithAnotherModule(module) }
 }
 
+@Internal
+
 fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
   return existingSdks.filter { it.sdkType is PythonSdkType && it.isAssociatedWithModule(module) }
 }
+
+@Internal
 
 fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
@@ -165,6 +170,8 @@ fun createSdkByGenerateTask(
   associatedProjectPath: String?,
   suggestedSdkName: String?,
 ): Sdk = createSdkByGenerateTask(generateSdkHomePath, existingSdks, baseSdk, associatedProjectPath, suggestedSdkName, null)
+
+@Internal
 
 fun createSdkByGenerateTask(
   generateSdkHomePath: Task.WithResult<String, ExecutionException>,
@@ -210,11 +217,9 @@ suspend fun createSdk(
   associatedProjectPath: String?,
   suggestedSdkName: String?,
   sdkAdditionalData: PythonSdkAdditionalData? = null,
-): Result<Sdk> {
+): PyResult<Sdk> {
   val homeFile = withContext(Dispatchers.IO) { StandardFileSystems.local().refreshAndFindFileByPath(sdkHomePath.pathString) }
-                 ?: return Result.failure(ExecutionException(
-                   PyBundle.message("python.sdk.directory.not.found", sdkHomePath.pathString)
-                 ))
+                 ?: return PyResult.localizedError(PyBundle.message("python.sdk.directory.not.found", sdkHomePath.pathString))
 
   val sdkName = suggestedSdkName ?: withContext(Dispatchers.IO) {
     suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
@@ -228,9 +233,8 @@ suspend fun createSdk(
     sdkAdditionalData,
     sdkName)
 
-  return sdk?.let { Result.success(it) } ?: Result.failure(ExecutionException(
-    PyBundle.message("python.sdk.failed.to.create.interpreter.title")
-  ))
+  return sdk?.let { PyResult.success(it) }
+         ?: PyResult.localizedError(PyBundle.message("python.sdk.failed.to.create.interpreter.title"))
 }
 
 fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
@@ -240,38 +244,7 @@ fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.Dia
   }
 }
 
-@Deprecated("It doesn't persist changes", ReplaceWith("setAssociationToModule"))
-fun Sdk.associateWithModule(module: Module?, newProjectPath: String?) {
-  getOrCreateAdditionalData().apply {
-    when {
-      newProjectPath != null -> associateWithModulePath(newProjectPath)
-      module != null -> associateWithModule(module)
-    }
-  }
-}
-
-fun Sdk.setAssociationToModule(module: Module) {
-  setAssociationToPath(module.basePath)
-}
-
-fun Sdk.setAssociationToPath(path: String?) {
-  val data = getOrCreateAdditionalData().also {
-    when {
-      path != null -> it.associateWithModulePath(path)
-      else -> it.associatedModulePath = null
-    }
-  }
-
-  val modificator = sdkModificator
-  modificator.sdkAdditionalData = data
-
-  runInEdt {
-    ApplicationManager.getApplication().runWriteAction {
-      modificator.commitChanges()
-    }
-  }
-}
-
+@Internal
 fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
   val basePath = module?.basePath
   val associatedPath = associatedModulePath
@@ -280,6 +253,7 @@ fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
   return isLocatedInsideModule(module) || containsModuleName(module)
 }
 
+@Internal
 fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
   val basePath = module?.basePath ?: return false
   val associatedPath = associatedModulePath ?: return false
@@ -305,23 +279,25 @@ fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
 
 // For Java only
 internal fun PyDetectedSdk.setupAssociatedLogged(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): Sdk? {
-  return setupAssociated(existingSdks, associatedModulePath, doAssociate).getOrLogException(LOGGER)
+  return setupAssociated(existingSdks, associatedModulePath, doAssociate).orLogException(LOGGER)
 }
 
-fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): Result<Sdk> {
+@Internal
+
+fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath: String?, doAssociate: Boolean): PyResult<Sdk> {
   if (!sdkSeemsValid) {
-    return failure("sdk is not valid")
+    return PyResult.localizedError("sdk is not valid")
   }
 
   val homePath = this.homePath
   if (homePath == null) {
     // e.g. directory is not there anymore
-    return failure("homePath is null")
+    return PyResult.localizedError("homePath is null")
   }
 
   val homeDir = this.homeDirectory
   if (homeDir == null) {
-    return failure("homeDir is null")
+    return PyResult.localizedError("homeDir is null")
   }
 
   val suggestedName = if (doAssociate) {
@@ -336,7 +312,7 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
   } ?: PythonSdkAdditionalData()
 
   if (doAssociate && associatedModulePath != null) {
-    data.associateWithModulePath(associatedModulePath)
+    data.associatedModulePath = associatedModulePath
   }
 
   val sdk = SdkConfigurationUtil.setupSdk(
@@ -346,7 +322,7 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
     data,
     suggestedName)
 
-  return Result.success(sdk)
+  return PyResult.success(sdk)
 }
 
 var Module.pythonSdk: Sdk?
@@ -377,6 +353,8 @@ var Project.pythonSdk: Sdk?
     }
   }
 
+@Internal
+
 fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
   val root = getInnerVirtualEnvRoot(sdk) ?: return
 
@@ -400,6 +378,8 @@ fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
   ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(sdk)
 }
 
+@Internal
+
 fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
   val binaryPath = sdk.homePath ?: return null
 
@@ -416,7 +396,7 @@ fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
   }
 }
 
-@RequiresBackgroundThread
+@RequiresBackgroundThread(generateAssertion = false)
 internal fun suggestAssociatedSdkName(sdkHome: String, associatedPath: String?): String? {
   // please don't forget to update com.jetbrains.python.inspections.PyInterpreterInspection.Visitor#getSuitableSdkFix
   // after changing this method
@@ -450,8 +430,7 @@ private val Sdk.sitePackagesDirectory: VirtualFile?
 
 val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = getOrCreateAdditionalData().flavor
 
-val Sdk.remoteSdkAdditionalData: PyRemoteSdkAdditionalDataBase?
-  get() = sdkAdditionalData as? PyRemoteSdkAdditionalDataBase
+@Internal
 
 fun Sdk.isLocatedInsideModule(module: Module?): Boolean {
   val moduleDir = module?.baseDir
@@ -541,6 +520,8 @@ val Sdk.remoteSourcesLocalPath: Path
 /**
  * Configures [targetCommandLineBuilder] (sets a binary path and other stuff) so it could run python on this target
  */
+@Internal
+
 fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
   getOrCreateAdditionalData().flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
 }

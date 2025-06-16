@@ -14,10 +14,44 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/java-impl:impl",
+    "//platform/analysis-api:analysis",
+    "//platform/diff-api:diff",
     "//platform/diff-impl",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
     "//platform/util/jdom",
+    "//platform/core-api:core",
+  ],
+  runtime_deps = [":commander_resources"]
+)
+
+jvm_library(
+  name = "commander_test_lib",
+  visibility = ["//visibility:public"],
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
+  associates = [":commander"],
+  deps = [
+    "//java/java-impl:impl",
+    "//platform/analysis-api:analysis",
+    "//platform/diff-api:diff",
+    "//platform/diff-impl",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl:ide-impl_test_lib",
+    "//java/testFramework",
+    "//plugins/ui-designer:java-guiForms-designer",
+    "//plugins/ui-designer:java-guiForms-designer_test_lib",
+    "//platform/core-ui",
+    "//platform/lvcs-api:lvcs",
+    "//platform/projectModel-api:projectModel",
+    "//platform/structure-view-impl:structureView-impl",
+    "//platform/util/jdom",
+    "//platform/testFramework",
+    "//platform/testFramework:testFramework_test_lib",
     "//platform/core-api:core",
   ],
   runtime_deps = [":commander_resources"]
@@ -25,22 +59,6 @@ jvm_library(
 
 jvm_test(
   name = "commander_test",
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
-  associates = [":commander"],
-  deps = [
-    "//java/java-impl:impl",
-    "//platform/diff-impl",
-    "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
-    "//java/testFramework",
-    "//plugins/ui-designer:java-guiForms-designer",
-    "//plugins/ui-designer:java-guiForms-designer_test_lib",
-    "//platform/core-ui",
-    "//platform/util/jdom",
-    "//platform/testFramework",
-    "//platform/testFramework:testFramework_test_lib",
-    "//platform/core-api:core",
-  ],
-  runtime_deps = [":commander_resources"]
+  runtime_deps = [":commander_test_lib"]
 )
 ### auto-generated section `build intellij.commander` end

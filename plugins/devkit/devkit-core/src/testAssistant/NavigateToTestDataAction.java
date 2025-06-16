@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.uast.*;
 
@@ -56,7 +57,8 @@ public final class NavigateToTestDataAction extends AnAction implements TestTree
     }
   }
 
-  static @NotNull List<TestDataFile> findTestDataFiles(@NotNull DataContext dataContext, @NotNull Project project, boolean shouldGuess) {
+  @VisibleForTesting
+  public static @NotNull List<TestDataFile> findTestDataFiles(@NotNull DataContext dataContext, @NotNull Project project, boolean shouldGuess) {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       List<TestDataFile> fileNames = tryFindTestDataFiles(dataContext);
       if (fileNames.isEmpty() && shouldGuess) {

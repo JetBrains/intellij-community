@@ -5,8 +5,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -32,17 +32,19 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   }
 
   /**
-   * @return a desired anchor to put the error message at
+   * @return range of this error within the file
    */
-  public @NotNull PsiElement anchor() {
-    return kind.anchor(psi);
+  public @NotNull TextRange range() {
+    return kind.range(psi, context);
   }
 
   /**
-   * @return range within anchor to highlight; or null if the whole anchor should be highlighted
+   * @return navigation shift (non-negative) relative to the start of reported {@link #range()}.
+   * If navigation to an error is supported, this could be used to navigate to a specific offset withing the range,
+   * instead of its beginning.
    */
-  public @Nullable TextRange range() {
-    return kind.range(psi, context);
+  public int navigationShift() {
+    return kind.navigationShift(psi, context);
   }
 
   /**
@@ -53,9 +55,9 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
   }
 
   /**
-   * @return a user-readable localized error description
+   * @return a user-readable localized error description (plain text)
    */
-  public @NotNull HtmlChunk description() {
+  public @NotNull @Nls String description() {
     return kind.description(psi, context);
   }
 
@@ -64,7 +66,8 @@ public record JavaCompilationError<Psi extends PsiElement, Context>(@NotNull Jav
    * <ul>
    *   <li>"--java-display-information" for informational formatting
    *   <li>"--java-display-grayed" for grayed formatting
-   *   <li>"--java-display-error" for error formatting (typically red text or background)</li>
+   *   <li>"--java-display-parameter" for parameter name formatting (like inlay hint)
+   *   <li>"--java-display-error" for error formatting (typically red text or background)
    * </ul>
    * 
    * @return a user-readable localized error tooltip.

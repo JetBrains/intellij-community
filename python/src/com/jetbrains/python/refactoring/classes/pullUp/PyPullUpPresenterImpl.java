@@ -13,6 +13,7 @@ import com.jetbrains.python.refactoring.classes.membersManager.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.membersManager.vp.MembersBasedPresenterWithPreviewImpl;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -29,7 +30,8 @@ public final class PyPullUpPresenterImpl extends MembersBasedPresenterWithPrevie
    * @param infoStorage member storage
    * @param clazz       class to refactor
    */
-  PyPullUpPresenterImpl(final @NotNull PyPullUpView view, final @NotNull PyMemberInfoStorage infoStorage, final @NotNull PyClass clazz) {
+  @VisibleForTesting
+  public PyPullUpPresenterImpl(final @NotNull PyPullUpView view, final @NotNull PyMemberInfoStorage infoStorage, final @NotNull PyClass clazz) {
     super(view, clazz, infoStorage, new PyPullUpInfoModel(clazz, view));
     myParents = PyAncestorsUtils.getAncestorsUnderUserControl(clazz);
     Preconditions.checkArgument(!myParents.isEmpty(), "No parents found");

@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.smart;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.BackspaceHandler;
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -28,10 +28,9 @@ import org.jetbrains.yaml.psi.YAMLSequenceItem;
 
 import java.util.Objects;
 
-import static org.jetbrains.yaml.settingsSync.YamlBackendExtensionSuppressorKt.shouldDoNothingInBackendMode;
 import static org.jetbrains.yaml.smart.YamlIndentPreservationUtilsKt.preserveIndentStateBeforeProcessing;
 
-public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
+public class YAMLEnterAtIndentHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(@NotNull PsiFile file,
                                 @NotNull Editor editor,
@@ -39,8 +38,7 @@ public class YAMLEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull Ref<Integer> caretAdvance,
                                 @NotNull DataContext dataContext,
                                 EditorActionHandler originalHandler) {
-    if (shouldDoNothingInBackendMode()) return Result.Continue;
-      // this call is not related to YAMLEnterAtIndentHandler, but is needed for `YAMLInjectedElementEnterHandler`
+    // this call is not related to YAMLEnterAtIndentHandler, but is needed for `YAMLInjectedElementEnterHandler`
     // this call is placed here to avoid creating another `EnterHandlerDelegate` with `order="first"`
     preserveIndentStateBeforeProcessing(file, dataContext);
 

@@ -11,10 +11,11 @@ jvm_library(
   name = "syntax",
   module_name = "intellij.python.syntax",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//python/python-parser:parser",
     "//platform/editor-ui-api:editor-ui",
     "//python/python-syntax-core:syntax-core",
@@ -25,6 +26,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
     "@lib//:fastutil-min",
+    "@lib//:guava",
   ],
   runtime_deps = [":syntax_resources"]
 )

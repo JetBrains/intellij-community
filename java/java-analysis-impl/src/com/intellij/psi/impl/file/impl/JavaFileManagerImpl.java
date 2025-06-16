@@ -30,7 +30,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,8 +61,11 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
 
   @Override
   public @Nullable PsiPackage findPackage(@NotNull String packageName) {
-    Query<VirtualFile> dirs = PackageIndex.getInstance(myManager.getProject()).getDirsByPackageName(packageName, true);
-    if (dirs.findFirst() == null) return null;
+    PackageIndex index = PackageIndex.getInstance(myManager.getProject());
+    if (index.getDirsByPackageName(packageName, true).findFirst() == null &&
+        index.getFilesByPackageName(packageName).findFirst() == null) {
+      return null;
+    }
     return new PsiPackageImpl(myManager, packageName);
   }
 

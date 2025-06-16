@@ -1,0 +1,39 @@
+graph TD
+  KaLibraryModule_0(["KaLibraryModule(SDK)"])
+  KaSourceModule_1["KaSourceModule(A)<br />production<br />JVM (1.8)"]
+  KaSourceModule_2["KaSourceModule(A)<br />test<br />JVM (1.8)"]
+  KaSourceModule_3["KaSourceModule(B)<br />production<br />JVM (1.8)"]
+  KaSourceModule_4["KaSourceModule(B)<br />test<br />JVM (1.8)"]
+  KaSourceModule_5["KaSourceModule(C)<br />production<br />JVM (1.8)"]
+  KaSourceModule_6["KaSourceModule(C)<br />test<br />JVM (1.8)"]
+  style KaLibraryModule_0 fill:#CC2B52
+  style KaSourceModule_1 fill:#608BC1
+  style KaSourceModule_2 fill:#31511E
+  style KaSourceModule_3 fill:#608BC1
+  style KaSourceModule_4 fill:#31511E
+  style KaSourceModule_5 fill:#608BC1
+  style KaSourceModule_6 fill:#31511E
+  KaSourceModule_1 --> KaSourceModule_3
+  KaSourceModule_1 --> KaSourceModule_4
+  KaSourceModule_2 --> KaSourceModule_1
+  KaSourceModule_2 --> KaSourceModule_3
+  KaSourceModule_2 --> KaSourceModule_4
+  KaSourceModule_2 --> KaSourceModule_5
+  KaSourceModule_2 --> KaSourceModule_6
+  KaSourceModule_4 --> KaSourceModule_3
+  KaSourceModule_6 --> KaSourceModule_5
+  KaSourceModule_2 --friend--> KaSourceModule_1
+  KaSourceModule_4 --friend--> KaSourceModule_3
+  KaSourceModule_6 --friend--> KaSourceModule_5
+  linkStyle 0 stroke:black
+  linkStyle 1 stroke:black
+  linkStyle 2 stroke:black
+  linkStyle 3 stroke:black
+  linkStyle 4 stroke:black
+  linkStyle 5 stroke:black
+  linkStyle 6 stroke:black
+  linkStyle 7 stroke:black
+  linkStyle 8 stroke:black
+  linkStyle 9 stroke:#E6C767
+  linkStyle 10 stroke:#E6C767
+  linkStyle 11 stroke:#E6C767

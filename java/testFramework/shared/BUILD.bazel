@@ -2,12 +2,15 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "java-testFramework-shared",
+  name = "shared",
   module_name = "intellij.java.testFramework.shared",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//java/openapi:java",
+    "//platform/core-api:core",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "@lib//:junit4",
     "//platform/util/jdom",
@@ -16,6 +19,7 @@ jvm_library(
     "//platform/testFramework",
     "//java/idea-ui:ui",
     "@lib//:org-codehaus-groovy-groovy",
+    "//java/java-syntax:syntax",
   ],
   exports = [
     "//platform/util",

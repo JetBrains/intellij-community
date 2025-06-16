@@ -26,7 +26,7 @@ class CustomKindEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler
         return@fold holder
       }.toRootHolder().let { rootHolder ->
         if (rootHolder.isEmpty()) null
-        else CustomKindEntityIteratorImpl(it.key, rootHolder, it.value[0].presentation)
+        else CustomKindEntityIteratorImpl(it.key, rootHolder)
       }
     }
   }

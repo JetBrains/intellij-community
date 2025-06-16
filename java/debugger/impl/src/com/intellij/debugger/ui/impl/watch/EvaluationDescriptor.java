@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.DebuggerContext;
@@ -23,9 +23,11 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationOrigin;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +66,7 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
       PsiCodeFragment code = getEvaluationCode(evaluationContext);
       PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
       try {
+        if (Registry.is("debugger.compiling.evaluator.force")) throw new UnsupportedExpressionException("force compilation");
         return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
       }
       catch (UnsupportedExpressionException ex) {
@@ -94,7 +97,8 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
         throw EvaluateExceptionUtil.NULL_STACK_FRAME;
       }
 
-      Value value = evaluator.evaluate(thisEvaluationContext);
+      Value value = XEvaluationOrigin.computeWithOrigin(thisEvaluationContext, XEvaluationOrigin.RENDERER,
+                                                        () -> evaluator.evaluate(thisEvaluationContext));
       thisEvaluationContext.keep(value);
 
       myModifier = evaluator.getModifier();

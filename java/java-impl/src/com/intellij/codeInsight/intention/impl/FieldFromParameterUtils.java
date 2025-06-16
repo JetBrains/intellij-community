@@ -35,7 +35,7 @@ public final class FieldFromParameterUtils {
     PsiParameter[] parameters = parameterList.getParameters();
     for (PsiParameter parameter : parameters) {
       TextRange range = parameter.getTextRange();
-      if (range.getStartOffset() <= offset && offset <= range.getEndOffset()) return parameter;
+      if (range.containsInclusive(offset)) return parameter;
     }
     return null;
   }

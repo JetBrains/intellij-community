@@ -5,7 +5,6 @@ import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -30,7 +29,6 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +39,6 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   private static final Logger LOG = Logger.getInstance(AbstractIdeModifiableModelsProvider.class);
 
   protected ModifiableModuleModel myModifiableModuleModel;
-  private ModifiableWorkspaceModel myModifiableWorkspaceModel;
   protected final Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<>();
   protected final Map<Module, ModifiableFacetModel> myModifiableFacetModels = new HashMap<>();
   protected final Map<Module, String> myProductionModulesForTestModules = new HashMap<>();
@@ -165,18 +162,6 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       myModifiableModuleModel = doGetModifiableModuleModel();
     }
     return myModifiableModuleModel;
-  }
-
-  @Override
-  @ApiStatus.Internal
-  public @NotNull ModifiableWorkspaceModel getModifiableWorkspaceModel() {
-    if (myModifiableWorkspaceModel == null) {
-      myModifiableWorkspaceModel = ReadAction.compute(() -> {
-        var workspace = ExternalProjectsWorkspace.getInstance(myProject);
-        return workspace.getModifiableModel(this);
-      });
-    }
-    return myModifiableWorkspaceModel;
   }
 
   @Override

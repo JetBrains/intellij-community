@@ -11,22 +11,47 @@ internal object CommandCompletionCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = COUNTER_GROUP
 
   private val COUNTER_GROUP = EventLogGroup("command.completion", 1)
+
+  /**
+   * class of command, used to classify the most popular commands
+   */
   private val CLASS_NAME_COMMAND = EventFields.StringValidatedByCustomRule("class", ClassNameRuleValidator::class.java)
+
+  /**
+   * invocation_type - how the completion is invoked, with '.', '..' or with empty line
+   */
   private val INVOCATION_TYPE_COMMAND = EventFields.StringValidatedByCustomRule("invocation_type", ClassNameRuleValidator::class.java)
+
+  /**
+   * language of a file where completion lookup is shown
+   */
   private val LANGUAGE_FILE = EventFields.LanguageById
 
 
+  /**
+   * case when the command completion is shown to users
+   */
   private val COMMAND_SHOWN = COUNTER_GROUP.registerVarargEvent("command.completion.shown",
                                                                 CLASS_NAME_COMMAND,
                                                                 LANGUAGE_FILE,
                                                                 INVOCATION_TYPE_COMMAND)
 
+  /**
+   * case when the command completion is called
+   */
   private val COMMAND_CALLED = COUNTER_GROUP.registerVarargEvent("command.completion.called",
                                                                  CLASS_NAME_COMMAND,
                                                                  LANGUAGE_FILE,
                                                                  INVOCATION_TYPE_COMMAND)
 
 
+  /**
+   * Logs the command shown event with the specified class name, language, and invocation type.
+   *
+   * @param className The class object representing the name of the class for the command shown event.
+   * @param language The language associated with the command shown event.
+   * @param invocationType The class object representing the type of invocation for the command shown event ('.', '..', or empty line)
+   */
   @JvmStatic
   fun shown(
     className: Class<*>,
@@ -40,6 +65,13 @@ internal object CommandCompletionCollector : CounterUsagesCollector() {
     )
   }
 
+  /**
+   * Logs the details of a command being called, such as the class name, language, and invocation type.
+   *
+   * @param className the class representing the command being called.
+   * @param language the language context of the command being executed.
+   * @param invocationType the type of invocation for the command being called.
+   */
   @JvmStatic
   fun called(
     className: Class<*>,

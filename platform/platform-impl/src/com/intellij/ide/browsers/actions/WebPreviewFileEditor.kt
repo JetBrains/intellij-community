@@ -20,6 +20,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.ide.BuiltInServerBundle
@@ -39,6 +40,7 @@ class WebPreviewFileEditor internal constructor(file: WebPreviewVirtualFile) : U
   private val panel: JCEFHtmlPanel
   private val url = file.previewUrl.toExternalForm()
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #WebPreviewFileEditor(WebPreviewVirtualFile)}", level = DeprecationLevel.ERROR)
   constructor(project: Project, file: WebPreviewVirtualFile) : this(file)
 

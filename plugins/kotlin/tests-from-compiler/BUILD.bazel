@@ -3,15 +3,17 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "testsFromCompiler",
+  name = "tests-from-compiler",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "testsFromCompiler_test_lib",
+  name = "tests-from-compiler_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["tests/**/*.kt", "tests/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/util/base/multiplatform",
+    "//platform/util/multiplatform",
     "@lib//:kotlinc-kotlin-jps-plugin-classpath",
     "@lib//:kotlinc-kotlin-jps-plugin-tests",
     "@lib//:kotlinc-kotlin-compiler-tests",
@@ -19,11 +21,11 @@ jvm_library(
     "//plugins/kotlin/test-framework:test-framework_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/util/compiler-dependencies:kotlin-util-compiler-dependencies",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/util/compiler-dependencies",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/devkit/jps-plugin:jps",
   ],
@@ -31,7 +33,7 @@ jvm_library(
 )
 
 jvm_test(
-  name = "testsFromCompiler_test",
-  runtime_deps = [":testsFromCompiler_test_lib"]
+  name = "tests-from-compiler_test",
+  runtime_deps = [":tests-from-compiler_test_lib"]
 )
 ### auto-generated section `build kotlin.testsFromCompiler` end

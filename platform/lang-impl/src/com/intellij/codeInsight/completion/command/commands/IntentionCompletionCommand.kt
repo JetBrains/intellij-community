@@ -2,10 +2,10 @@
 package com.intellij.codeInsight.completion.command.commands
 
 import com.intellij.analysis.AnalysisBundle.message
-import com.intellij.codeInsight.completion.command.CompletionCommand
-import com.intellij.codeInsight.completion.command.HighlightInfoLookup
+import com.intellij.codeInsight.completion.command.*
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -19,12 +19,10 @@ internal class IntentionCompletionCommand(
   override val icon: Icon?,
   override val highlightInfo: HighlightInfoLookup?,
   private val myOffset: Int,
-) : CompletionCommand() {
+  private val previewProvider: () -> IntentionPreviewInfo?,
+) : CompletionCommand(), CompletionCommandWithPreview {
 
-  override val name: String
-    get() = intentionAction.text
-
-  override val i18nName: @Nls String
+  override val presentableName: @Nls String
     get() = intentionAction.text
 
   override fun execute(offset: Int, psiFile: PsiFile, editor: Editor?) {
@@ -38,11 +36,14 @@ internal class IntentionCompletionCommand(
           ShowIntentionActionsHandler.availableFor(psiFile, editor, myOffset, intentionAction.action)
         }
       }
-    if (availableFor) {
-      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction.action, name)
+    if (!intentionAction.action.startInWriteAction() && availableFor) {
+      editor.putUserData(KEY_FORCE_CARET_OFFSET, ForceOffsetData(myOffset, offset))
     }
-    if (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset) {
-      //probably, intention moves the cursor
+    if (availableFor) {
+      ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, intentionAction.action, presentableName)
+    }
+    if (!intentionAction.action.startInWriteAction() || (targetMarker.isValid && targetMarker.startOffset != editor.caretModel.offset)) {
+      //probably, intention moves the cursor or async gui
       return
     }
     if (marker.isValid) {
@@ -51,5 +52,9 @@ internal class IntentionCompletionCommand(
     else {
       editor.caretModel.moveToOffset(offset)
     }
+  }
+
+  override fun getPreview(): IntentionPreviewInfo? {
+    return previewProvider.invoke()
   }
 }

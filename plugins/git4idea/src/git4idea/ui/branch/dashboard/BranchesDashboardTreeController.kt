@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.SELECTED_ITEMS
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.Project
+import com.intellij.vcs.git.shared.actions.GitSingleRefActions
 import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
@@ -88,7 +89,7 @@ internal class BranchesDashboardTreeController(
      * Note that at the moment [GitBranchActionsDataKeys] are used only for single ref actions.
      * In other actions [GIT_BRANCHES_TREE_SELECTION] is used
      *
-     * Also see [git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.createDataContext]
+     * Also see [com.intellij.vcs.git.shared.branch.popup.GitDefaultBranchesPopupStep.Companion.createDataContext]
      */
     @VisibleForTesting
     internal fun snapshotSelectionActionsKeys(sink: DataSink, selectionPaths: Array<TreePath>?) {
@@ -104,15 +105,7 @@ internal class BranchesDashboardTreeController(
       }
 
       val selectedRef = selectedDescriptor as? BranchNodeDescriptor.Ref ?: return
-
-      when (selectedRef) {
-        is BranchNodeDescriptor.Branch -> {
-          sink[GitBranchActionsDataKeys.BRANCHES] = listOf(selectedRef.branchInfo.branch)
-        }
-        is BranchNodeDescriptor.Tag -> {
-          sink[GitBranchActionsDataKeys.TAGS] = listOf(selectedRef.tagInfo.tag)
-        }
-      }
+      sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = selectedRef.refInfo.ref
 
       val selectedRepositories = BranchesTreeSelection.Companion.getSelectedRepositories(selectedNode)
       sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = selectedRepositories

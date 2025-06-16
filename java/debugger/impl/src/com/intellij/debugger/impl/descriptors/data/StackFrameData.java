@@ -2,7 +2,6 @@
 package com.intellij.debugger.impl.descriptors.data;
 
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.ui.impl.watch.MethodsTracker;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl;
 import com.intellij.openapi.project.Project;
@@ -13,19 +12,17 @@ import java.util.Objects;
 public class StackFrameData extends DescriptorData<StackFrameDescriptorImpl> {
   private final StackFrameProxyImpl myFrame;
   private final FrameDisplayKey myDisplayKey;
-  private final MethodsTracker myMethodsTracker;
 
   public StackFrameData(@NotNull StackFrameProxyImpl frame) {
     super();
 
     myFrame = frame;
     myDisplayKey = new FrameDisplayKey(NodeManagerImpl.getContextKeyForFrame(frame));
-    myMethodsTracker = new MethodsTracker();
   }
 
   @Override
   protected StackFrameDescriptorImpl createDescriptorImpl(@NotNull Project project) {
-    return new StackFrameDescriptorImpl(myFrame, myMethodsTracker);
+    return new StackFrameDescriptorImpl(myFrame);
   }
 
   @Override

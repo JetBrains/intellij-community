@@ -3,9 +3,7 @@ package com.intellij.openapi.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.CommonShortcuts
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
@@ -24,7 +22,6 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.RootPaneUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -46,12 +43,14 @@ import java.nio.file.Path
 import java.util.function.BooleanSupplier
 import javax.swing.*
 
-open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
-                                                  @param:NonNls protected open val dimensionKey: String? = null,
-                                                  private val isDialog: Boolean = false,
-                                                  @NlsContexts.DialogTitle var title: String = "",
-                                                  open var component: JComponent? = null,
-                                                  @JvmField protected val coroutineScope: CoroutineScope? = null) : Disposable, DataProvider {
+open class FrameWrapper @JvmOverloads constructor(
+  private val project: Project?,
+  @param:NonNls protected open val dimensionKey: String? = null,
+  private val isDialog: Boolean = false,
+  @NlsContexts.DialogTitle var title: String = "",
+  open var component: JComponent? = null,
+  @JvmField protected val coroutineScope: CoroutineScope? = null,
+) : Disposable, UiCompatibleDataProvider {
   open var preferredFocusedComponent: JComponent? = null
   private var images: List<Image> = emptyList()
   private var isCloseOnEsc = false
@@ -263,15 +262,7 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
 
   internal open fun getNorthExtension(key: String?): JComponent? = null
 
-  override fun getData(@NonNls dataId: String): Any? {
-    return if (CommonDataKeys.PROJECT.`is`(dataId)) project else null
-  }
-
-  internal fun getDataInner(@NonNls dataId: String): Any? {
-    return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> project
-      else -> getData(dataId)
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
   }
 
   fun closeOnEsc() {
@@ -313,7 +304,10 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
   }
 }
 
-private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeFrame) : JFrame(), DataProvider, IdeFrame.Child, IdeFrameEx, DisposableWindow {
+private class MyJFrame(
+  private var owner: FrameWrapper,
+  private val parent: IdeFrame
+) : JFrame(), UiDataProvider, IdeFrame.Child, IdeFrameEx, DisposableWindow {
   private var frameTitle: String? = null
   private var fileTitle: String? = null
   private var file: Path? = null
@@ -400,12 +394,12 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
     menuBar = null
   }
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      IdeFrame.KEY.`is`(dataId) -> this
-      owner.isDisposing -> null
-      else -> owner.getDataInner(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[IdeFrame.KEY] = this
+    if (!owner.isDisposing) {
+      DataSink.uiDataSnapshot(sink, owner)
     }
+    sink[CommonDataKeys.PROJECT] = project
   }
 
   override fun paint(g: Graphics) {
@@ -422,8 +416,10 @@ private class MyJFrame(private var owner: FrameWrapper, private val parent: IdeF
   }
 }
 
-private class MyJDialog(private val owner: FrameWrapper, private val parent: IdeFrame) :
-  JDialog(ComponentUtil.getWindow(parent.component)), DataProvider, IdeFrame.Child, DisposableWindow {
+private class MyJDialog(
+  private val owner: FrameWrapper,
+  private val parent: IdeFrame
+) : JDialog(ComponentUtil.getWindow(parent.component)), UiDataProvider, IdeFrame.Child, DisposableWindow {
   override fun getComponent(): JComponent = getRootPane()
 
   override fun getStatusBar(): StatusBar? = null
@@ -461,12 +457,12 @@ private class MyJDialog(private val owner: FrameWrapper, private val parent: Ide
 
   override fun isWindowDisposed(): Boolean = owner.isDisposed
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      IdeFrame.KEY.`is`(dataId) -> this
-      owner.isDisposing -> null
-      else -> owner.getDataInner(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[IdeFrame.KEY] = this
+    if (!owner.isDisposing) {
+      DataSink.uiDataSnapshot(sink, owner)
     }
+    sink[CommonDataKeys.PROJECT] = project
   }
 
   override fun paint(g: Graphics) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.streamMigration;
 
-
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -35,8 +34,8 @@ import static com.siyeh.ig.psiutils.ExpressionUtils.resolveLocalVariable;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
-public class JoiningMigration extends BaseStreamApiMigration {
-  protected JoiningMigration(boolean shouldWarn) {
+final class JoiningMigration extends BaseStreamApiMigration {
+  JoiningMigration(boolean shouldWarn) {
     super(shouldWarn, "collect");
   }
 

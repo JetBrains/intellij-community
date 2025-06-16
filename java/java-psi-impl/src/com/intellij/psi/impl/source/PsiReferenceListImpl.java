@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceListStub> implements PsiReferenceList {
   public PsiReferenceListImpl(@NotNull PsiClassReferenceListStub stub) {
-    super(stub, stub.getStubType());
+    super(stub, stub.getElementType());
   }
 
   public PsiReferenceListImpl(@NotNull ASTNode node) {
@@ -41,7 +41,7 @@ public class PsiReferenceListImpl extends JavaStubPsiElement<PsiClassReferenceLi
 
   @Override
   public Role getRole() {
-    return JavaClassReferenceListElementType.elementTypeToRole(getElementType());
+    return JavaClassReferenceListElementType.elementTypeToRole(getIElementType());
   }
 
   @Override

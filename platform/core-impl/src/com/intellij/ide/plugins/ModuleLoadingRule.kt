@@ -11,13 +11,12 @@ enum class ModuleLoadingRule(val required: Boolean) {
   /** 
    * Module is the required part of the plugin. 
    * If the module cannot be loaded because some of its dependencies aren't available, the whole plugin isn't loaded, and an error is shown to the user.
-   * Classes from the module content descriptor will be loaded by the main plugin classloader.
+   * Classes from the module content descriptor will be loaded by a separate classloader.
    */                           
   REQUIRED(required = true),
 
   /**
-   * The same as [REQUIRED], but *.class files from the module will be put to the main plugin JAR, and classes from the module content descriptor will be loaded by the main plugin
-   * classloader.
+   * The same as [REQUIRED], but classes from the module content descriptor will be loaded by the main plugin classloader.
    * Use this option only for existing modules which are highly coupled with other required modules, where using a separate classloader breaks behavior or compatibility with other
    * plugins. 
    * For new modules, use [REQUIRED] instead.
@@ -36,5 +35,5 @@ enum class ModuleLoadingRule(val required: Boolean) {
    * Classes from the module content descriptor will be loaded by a separate classloader.
    * This *isn't implemented yet* and currently treated the same way as [OPTIONAL].
    */
-  ON_DEMAND(required = false)
+  ON_DEMAND(required = false);
 }

@@ -13,10 +13,14 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//platform/platform-api:ide",
     "//platform/vcs-api:vcs",
     "//platform/util/jdom",
   ],
-  runtime_deps = [":tasks_resources"]
+  runtime_deps = [
+    ":tasks_resources",
+    "//platform/backend",
+  ]
 )
 ### auto-generated section `build intellij.platform.tasks` end

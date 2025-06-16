@@ -5,6 +5,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectFunctionFqNameIndex
@@ -23,6 +24,12 @@ object ExpectActualUtils {
     fun KtDeclaration.actualsForExpect(module: Module? = null): Set<KtDeclaration> =
         ExpectActualSupport.getInstance(project).actualsForExpect(this, module)
 
+
+    fun KtDeclaration.collectAllExpectAndActualDeclaration(withSelf: Boolean = true): Set<KtDeclaration> = when {
+        isExpectDeclaration() -> actualsForExpect()
+        hasActualModifier() -> liftToExpect(this)?.let { it.actualsForExpect() + it - this }.orEmpty()
+        else -> emptySet()
+    }.let { if (withSelf) it + this else it }
 
     fun liftToExpect(declaration: KtDeclaration): KtDeclaration? {
         if (declaration is KtParameter) {
@@ -58,4 +65,8 @@ object ExpectActualUtils {
         ).flatMap { it.getAllElements<KtNamedDeclaration>(project, searchScope) }
             .toList()
     }
+
+    @get:TestOnly
+    @set:TestOnly
+    var testLog: StringBuilder? = null
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.ide.ProjectWindowCustomizerService
+import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.MainMenuDisplayMode
 import com.intellij.ide.ui.UISettings
@@ -23,6 +24,8 @@ import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.UiDispatcherKind
+import com.intellij.openapi.application.ui
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -45,7 +48,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsets
 import com.intellij.util.ui.showingScope
 import com.jetbrains.WindowDecorations
-import fleet.multiplatform.shims.ConcurrentHashSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -55,6 +57,7 @@ import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.Icon
@@ -108,7 +111,8 @@ class MainToolbar(
   private val isFullScreen: () -> Boolean,
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
-  private val widthCalculationListeners = ConcurrentHashSet<ToolbarWidthCalculationListener>()
+  private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
+  private val cachedWidths by lazy { ConcurrentHashMap<String?, Int>() }
 
   init {
     this.background = background
@@ -129,9 +133,21 @@ class MainToolbar(
       preferredSizeFunction = { component ->
         when (component) {
           is ActionToolbar -> {
-            notifyToolbarWidthCalculation(ToolbarWidthCalculationEvent(this@MainToolbar))
-            val availableSize = Dimension(this@MainToolbar.width - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
-            CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>()).getValue(component)
+            val mainToolbarWidth = this@MainToolbar.width
+            val availableSize = Dimension(mainToolbarWidth - 4 * JBUI.scale(layoutGap), this@MainToolbar.height)
+            val sizeMap = CompressingLayoutStrategy.distributeSize(availableSize, components.filterIsInstance<ActionToolbar>())
+            val dimension = sizeMap.getValue(component)
+
+            if (widthCalculationListeners.isNotEmpty()) {
+              val componentText = (component as ActionToolbar).actionGroup.templatePresentation.text
+              val cachedWidth = cachedWidths[componentText]
+              if (dimension.width != cachedWidth || cachedWidths[MAIN_TOOLBAR_ID] != mainToolbarWidth) {
+                notifyToolbarWidthCalculation(ToolbarWidthCalculationEvent(this@MainToolbar))
+                cachedWidths.put(componentText, dimension.width)
+                cachedWidths.put(MAIN_TOOLBAR_ID, mainToolbarWidth)
+              }
+            }
+            dimension
           }
           else -> {
             component.preferredSize
@@ -139,6 +155,7 @@ class MainToolbar(
         }
       }
     }
+    repaintWhenProjectGradientOffsetChanged(this)
   }
 
   fun calculatePreferredWidth(): Int {
@@ -168,7 +185,7 @@ class MainToolbar(
       CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
     }
 
-    val widgets = withContext(Dispatchers.EDT) {
+    val widgets = withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
       removeAll()
 
       flavor.addWidget()
@@ -324,7 +341,6 @@ class MainToolbar(
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
       coroutineScope.cancel()
-      widthCalculationListeners.clear()
     }
   }
 
@@ -446,7 +462,7 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   override fun getSeparatorColor(): Color {
-    return JBColor.namedColor("MainToolbar.separatorColor", super.separatorColor)
+    return JBColor.namedColor("MainToolbar.separatorColor", super.getSeparatorColor())
   }
 
   private fun findComboButton(c: Container): ComboBoxButton? {
@@ -467,6 +483,8 @@ class MyActionToolbarImpl(group: ActionGroup, customizationGroup: ActionGroup?)
   }
 
   override fun updateUI() {
+    @Suppress("UNNECESSARY_SAFE_CALL") // you know, the old "this thing is called from a superclass constructor" pitfall
+    iconUpdater?.clearCache()
     super.updateUI()
     updateFont()
   }
@@ -530,7 +548,7 @@ private fun getMainToolbarGroups(): Sequence<GroupInfo> {
 
 internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("MainToolbar.background"))
 
-fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon = icon, dark = true) else icon
+private fun adjustIconForHeader(icon: Icon): Icon = IconLoader.getDarkIcon(icon = icon, dark = isDarkHeader())
 
 private class HeaderIconUpdater {
   val iconCache = WeakHashMap<Icon, WeakReference<Icon>>()
@@ -546,6 +564,11 @@ private class HeaderIconUpdater {
     iconCache[sourceIcon] = WeakReference(replaceIcon)
     alreadyUpdated.add(replaceIcon)
     return replaceIcon
+  }
+
+  fun clearCache() {
+    iconCache.clear()
+    alreadyUpdated.clear()
   }
 }
 

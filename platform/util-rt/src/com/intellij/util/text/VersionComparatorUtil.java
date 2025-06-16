@@ -10,10 +10,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author Leonid Shalupov
+ * Provides advanced version comparison functionality with support for various version formats.
+ * Superior to {@link com.intellij.openapi.util.text.StringUtil#compareVersionNumbers} by handling complex version patterns.
+ * <p>
+ * Used for comparing versions of TeamCity plugins and Ruby gems (and probably more).
  *
- * This versions comparator is much smarter than StringUtil.compareVersionNumbers
- * E.g: is used for TeamCity plugins and Ruby gems versions
+ * @author Leonid Shalupov
  */
 public final class VersionComparatorUtil {
   public interface TokenPrioritizer {
@@ -207,4 +209,3 @@ public final class VersionComparatorUtil {
     }
   }
 }
-

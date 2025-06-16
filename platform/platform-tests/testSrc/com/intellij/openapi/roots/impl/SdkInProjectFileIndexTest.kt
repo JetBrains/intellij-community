@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -29,6 +30,10 @@ class SdkInProjectFileIndexTest {
   @RegisterExtension
   val projectModel: ProjectModelExtension = ProjectModelExtension()
 
+  @JvmField
+  @RegisterExtension
+  val baseSdkDir: TempDirectoryExtension = TempDirectoryExtension()
+
   private val fileIndex
     get() = ProjectFileIndex.getInstance(projectModel.project)
 
@@ -38,13 +43,13 @@ class SdkInProjectFileIndexTest {
   @BeforeEach
   fun setUp() {
     module = projectModel.createModule()
-    sdkRoot = projectModel.baseProjectDir.newVirtualDirectory("sdk")
+    sdkRoot = baseSdkDir.newVirtualDirectory("sdk")
   }
 
   @Test
   fun `sdk roots`() {
-    val sdkSourcesRoot = projectModel.baseProjectDir.newVirtualDirectory("sdk-sources")
-    val sdkDocRoot = projectModel.baseProjectDir.newVirtualDirectory("sdk-docs")
+    val sdkSourcesRoot = baseSdkDir.newVirtualDirectory("sdk-sources")
+    val sdkDocRoot = baseSdkDir.newVirtualDirectory("sdk-docs")
     val sdk = projectModel.addSdk {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
       it.addRoot(sdkSourcesRoot, OrderRootType.SOURCES)
@@ -107,7 +112,7 @@ class SdkInProjectFileIndexTest {
     val sdk1 = projectModel.addSdk("sdk1") {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
-    val sdk2Root = projectModel.baseProjectDir.newVirtualDirectory("sdk2")
+    val sdk2Root = baseSdkDir.newVirtualDirectory("sdk2")
     val sdk2 = projectModel.addSdk("sdk2") {
       it.addRoot(sdk2Root, OrderRootType.CLASSES)
     }
@@ -196,7 +201,7 @@ class SdkInProjectFileIndexTest {
       it.addRoot(sdkRoot, OrderRootType.CLASSES)
     }
     val sdk2 = projectModel.addSdk("sdk2") {
-      it.addRoot(projectModel.baseProjectDir.newVirtualDirectory("sdk2"), OrderRootType.CLASSES)
+      it.addRoot(baseSdkDir.newVirtualDirectory("sdk2"), OrderRootType.CLASSES)
     }
     setProjectSdk(sdk)
     ModuleRootModificationUtil.setModuleSdk(module, sdk2)

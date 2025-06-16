@@ -91,8 +91,9 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
       if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
 
       val allInFile = CachedValuesManager.getProjectPsiDependentCache(file) {
-        findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
-      }
+        val contents = findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
+        TextContentRelatedData(file, contents)
+      }.contents
       val checkedDomains = checkedDomains()
       return allInFile.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE
     }
@@ -142,6 +143,17 @@ class GrazieInspection : LocalInspectionTool(), DumbAware {
           textRangeInFile.intersects(priorityRange) -> 1
           else -> 2
         }
+      }
+    }
+
+    data class TextContentRelatedData(private val psiFile: PsiFile, val contents: Set<TextContent>) {
+      override fun toString(): String {
+        return "[fileType = ${psiFile.viewProvider.virtualFile.fileType}, " +
+               "fileLanguage = ${psiFile.language}, " +
+               "viewProviderLanguages = ${psiFile.viewProvider.allFiles.map { it.language }.toSet()}, " +
+               "parentLanguages = ${contents.map { it.commonParent }.map { it.language }.toSet()},"
+               "isPhysical = ${psiFile.isPhysical}, " +
+               "contentLengths = ${contents.map { it.length }}]"
       }
     }
   }

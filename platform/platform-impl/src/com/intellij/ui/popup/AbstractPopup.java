@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -2067,7 +2068,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   public static class MyContentPanel extends JPanel implements UiCompatibleDataProvider {
-    private @Nullable DataProvider myDataProvider;
+    private @Nullable UiDataProvider myDataProvider;
 
     public MyContentPanel(@NotNull PopupBorder border) {
       super(new BorderLayout());
@@ -2092,7 +2093,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       DataSink.uiDataSnapshot(sink, myDataProvider);
     }
 
-    public void setDataProvider(@Nullable DataProvider dataProvider) {
+    public void setDataProvider(@Nullable UiDataProvider dataProvider) {
       myDataProvider = dataProvider;
     }
   }
@@ -2659,6 +2660,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public void setDataProvider(@NotNull DataProvider dataProvider) {
+    setUiDataProvider(Utils.wrapToUiDataProvider(dataProvider));
+  }
+
+  @Override
+  public void setUiDataProvider(@NotNull UiDataProvider dataProvider) {
     if (myContent != null) {
       myContent.setDataProvider(dataProvider);
     }

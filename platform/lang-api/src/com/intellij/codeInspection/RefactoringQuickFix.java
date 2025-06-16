@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.refactoring.PreviewableRefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandler;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -22,15 +24,24 @@ public interface RefactoringQuickFix extends LocalQuickFix {
     return false;
   }
 
-  /**
-   * Usually a call to com.intellij.refactoring.RefactoringActionHandlerFactory or a language specific factory like
-   * com.intellij.refactoring.JavaRefactoringActionHandlerFactory.
-   */
-  @NotNull
-  RefactoringActionHandler getHandler();
+  @Override
+  default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+    final RefactoringActionHandler handler = getHandler();
+    if (handler instanceof PreviewableRefactoringActionHandler previewableHandler) {
+      final PsiElement element = getElementToRefactor(previewDescriptor.getPsiElement());
+      return previewableHandler.generatePreview(project, element);
+    }
+    return IntentionPreviewInfo.EMPTY;
+  }
 
   /**
-   * Override if preferred handler can be chosen based on context
+   * Implementation usually involves a call to {@link com.intellij.refactoring.RefactoringActionHandlerFactory}
+   * or a language-specific factory like {@link com.intellij.refactoring.JavaRefactoringActionHandlerFactory}.
+   */
+  @NotNull RefactoringActionHandler getHandler();
+
+  /**
+   * Override to return a different handler based on context.
    */
   default @NotNull RefactoringActionHandler getHandler(@NotNull DataContext context) {
     return getHandler();
@@ -49,7 +60,7 @@ public interface RefactoringQuickFix extends LocalQuickFix {
     final Consumer<DataContext> consumer = dataContext -> {
       dataContext = enhanceDataContext(dataContext);
       final RefactoringActionHandler handler = getHandler(dataContext);
-      handler.invoke(element.getProject(), new PsiElement[] {elementToRefactor}, dataContext);
+      handler.invoke(element.getProject(), new PsiElement[]{elementToRefactor}, dataContext);
     };
     DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(consumer);
   }

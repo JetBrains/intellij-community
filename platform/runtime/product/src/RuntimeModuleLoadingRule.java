@@ -15,6 +15,12 @@ public enum RuntimeModuleLoadingRule {
    * The module provides essential user-visible functionality, must be always loaded.
    */
   REQUIRED,
+  
+  /**
+   * The same as {@link #REQUIRED}, but also specifies, that classes from the module must be loaded by the main classloader of the 
+   * corresponding module group.
+   */
+  EMBEDDED,
 
   /**
    * The module provides optional user-visible functionality, will be loaded if all dependencies are available and skipped otherwise.

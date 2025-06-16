@@ -2,6 +2,8 @@
 package com.jetbrains.python;
 
 
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
+
 public final class PythonTestUtil {
   private PythonTestUtil() {
   }

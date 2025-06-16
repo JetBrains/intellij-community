@@ -14,7 +14,7 @@ public final class MostlyUShortIntList implements IntUnaryOperator {
   private int mySize;
   private StrippedIntOpenHashMap myMap;
 
-  MostlyUShortIntList(int initialCapacity) {
+  public MostlyUShortIntList(int initialCapacity) {
     myData = new char[initialCapacity];
   }
 
@@ -31,7 +31,7 @@ public final class MostlyUShortIntList implements IntUnaryOperator {
     }
   }
 
-  void add(int value) {
+  public void add(int value) {
     if (value < 0 || value >= IN_MAP) {
       initMap().put(mySize, value);
       value = IN_MAP;

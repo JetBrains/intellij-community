@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model
 
 import com.intellij.collaboration.async.combineState
+import com.intellij.openapi.project.Project
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorViewModelBase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -10,13 +11,16 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.createSingleProjectAndAccountState
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
-internal class GitLabRepositoryAndAccountSelectorViewModel(
+@ApiStatus.Internal
+class GitLabRepositoryAndAccountSelectorViewModel(
+  internal val project: Project,
   private val scope: CoroutineScope,
   projectsManager: GitLabProjectsManager,
   val accountManager: GitLabAccountManager,

@@ -70,7 +70,7 @@ abstract class GradleRelativeConfigCalculatingTestCase : GradleTestCase() {
   }
 
   fun assertFileExists(relativePath: String) {
-    val path = testRoot.toNioPath().getResolvedPath(relativePath)
+    val path = testPath.resolve(relativePath).normalize()
     Assertions.assertTrue(path.exists(), "File doesn't exists $path")
     Assertions.assertTrue(path.isRegularFile(), "Path doesn't reference file $path")
   }

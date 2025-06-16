@@ -4,11 +4,13 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.runInEdtAndWait
+import ru.adelf.idea.dotenv.extension.symbols.DotEnvKeySymbol
 import ru.adelf.idea.dotenv.grammars.DotEnvLexerAdapter
 
 abstract class DotEnvFileBasedTestCase : BasePlatformTestCase() {
@@ -56,7 +58,7 @@ abstract class DotEnvFileBasedTestCase : BasePlatformTestCase() {
     }
 
     fun doUsageTest() {
-        var result : String? = null
+        var result: String? = null
         runInEdtAndWait {
             result = myFixture.testFindUsagesUsingAction()
                 .sortedBy { it.navigationOffset }
@@ -74,6 +76,33 @@ abstract class DotEnvFileBasedTestCase : BasePlatformTestCase() {
             settings.AUTOCOMPLETE_ON_CODE_COMPLETION = previousCompletionState
         }
         CommandProcessor.getInstance().executeCommand(project, command, null, null, myFixture.editor.document)
+    }
+
+    fun doRenameTest(newName: String, vararg fileExtensions: String = arrayOf("env")) {
+        TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+        runWithMultipleFiles(fileExtensions) {
+            runInEdtAndWait {
+                myFixture.file.findElementAt(myFixture.caretOffset)?.let {
+                    val symbol = DotEnvKeySymbol(it.text, it.containingFile, it.textRange)
+                    myFixture.renameTarget(symbol, newName)
+                }
+            }
+        }
+    }
+
+    private fun runWithMultipleFiles(fileExtensions: Array<out String>, testOp: () -> Unit) {
+        fileExtensions
+            .map { filenamePrefixForCurrentTest(it) }
+            .toTypedArray()
+            .let { name -> myFixture.configureByFiles(*name).map { it.virtualFile } }
+            .also { testOp.invoke() }
+            .forEach {
+                myFixture.openFileInEditor(it)
+                assertSameLinesWithFile(
+                    "${testDataPath}/${it.name}.txt",
+                    myFixture.editor.document.text
+                )
+            }
     }
 
     override fun getBasePath(): String = "testResources/ru/adelf/idea/dotenv/tests"

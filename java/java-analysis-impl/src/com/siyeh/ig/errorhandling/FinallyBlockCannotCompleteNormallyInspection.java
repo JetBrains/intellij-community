@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -66,7 +67,7 @@ public final class FinallyBlockCannotCompleteNormallyInspection
       final PsiElement[] children = statement.getChildren();
       for (final PsiElement child : children) {
         final String childText = child.getText();
-        if (PsiKeyword.FINALLY.equals(childText)) {
+        if (JavaKeywords.FINALLY.equals(childText)) {
           registerError(child);
           return;
         }

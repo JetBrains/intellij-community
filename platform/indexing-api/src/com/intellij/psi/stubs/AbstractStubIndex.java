@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -15,7 +16,7 @@ public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements 
    * <em>NOTE:</em> May return stale/out-of-date data.
    * Use {@link StubIndex#getElements} to obtain/verify actual existing elements for the given key.
    */
-  public Collection<Key> getAllKeys(Project project) {
+  public @Unmodifiable Collection<Key> getAllKeys(Project project) {
     return StubIndex.getInstance().getAllKeys(getKey(), project);
   }
 
@@ -38,7 +39,7 @@ public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements 
    * Sample: {@link com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex#getClasses(CharSequence, Project, GlobalSearchScope)}
    */
   @Deprecated
-  public Collection<Psi> get(@NotNull Key key, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
+  public @Unmodifiable Collection<Psi> get(@NotNull Key key, final @NotNull Project project, final @NotNull GlobalSearchScope scope) {
     return StubIndex.getInstance().get(getKey(), key, project, scope);
   }
 

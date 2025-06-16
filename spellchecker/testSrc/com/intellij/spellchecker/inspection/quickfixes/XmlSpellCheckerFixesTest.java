@@ -15,6 +15,9 @@
  */
 package com.intellij.spellchecker.inspection.quickfixes;
 
+import com.intellij.testFramework.UsefulTestCase;
+import org.junit.Assume;
+
 public class XmlSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   @Override
   protected String getExtension() {
@@ -26,6 +29,7 @@ public class XmlSpellCheckerFixesTest extends AbstractSpellCheckerFixesTest {
   }
 
   public void testInjectionChangeTo() {
+    Assume.assumeFalse("This test is skipped on TeamCity", UsefulTestCase.IS_UNDER_TEAMCITY);
     doChangeToTest();
   }
 }

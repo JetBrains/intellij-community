@@ -30,7 +30,6 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitle
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.LightEditActionFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -40,6 +39,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -212,7 +212,7 @@ object Switcher : BaseSwitcherAction(null) {
         cbShowOnlyEditedFiles.addItemListener(ItemListener(::updateFilesByCheckBox))
         header.add(HorizontalLayout.RIGHT, cbShowOnlyEditedFiles)
         WindowMoveListener(header).installTo(header)
-        val shortcuts = KeymapUtil.getActiveKeymapShortcuts("SwitcherRecentEditedChangedToggleCheckBox")
+        val shortcuts = KeymapUtil.getActiveKeymapShortcuts("SwitcherRecentEditedChangedToggleCheckBoxFallback")
         if (shortcuts.shortcuts.isNotEmpty()) {
           val label = JLabel(KeymapUtil.getShortcutsText(shortcuts.shortcuts))
           label.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
@@ -579,11 +579,13 @@ object Switcher : BaseSwitcherAction(null) {
       )
       ReadAction.nonBlocking<List<ListItemData>> {
         items.map {
-          val parentPath = Path(it.file.presentableUrl).parent
+          val parentPath = it.file.parent?.path?.toNioPathOrNull()
           val sameNameFiles = FilenameIndex.getVirtualFilesByName(it.file.name, GlobalSearchScope.projectScope(project))
           val result = if (parentPath == null ||
                            parentPath.nameCount == 0 ||
-                           sameNameFiles.size <= 1) ""
+                           sameNameFiles.size <= 1) {
+            ""
+          }
           else {
             val filePath = parentPath.pathString
             val projectPath = project.basePath?.let { FileUtil.toSystemDependentName(it) }
@@ -717,9 +719,7 @@ object Switcher : BaseSwitcherAction(null) {
         }
         val event = AnActionEvent.createEvent(dataContext, gotoAction.templatePresentation.clone(),
                                               ACTION_PLACE, ActionUiKind.NONE, e)
-        blockingContext {
-          ActionUtil.performActionDumbAwareWithCallbacks(gotoAction, event)
-        }
+        ActionUtil.performAction(gotoAction, event)
       }
     }
 

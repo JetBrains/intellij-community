@@ -1945,15 +1945,15 @@ public class PyRequirementTest extends PyTestCase {
   // TODO: hashes
   // https://www.python.org/dev/peps/pep-0508/#names
   public void testRequirement() {
-    assertEquals(pyRequirement("Orange-Bioinformatics"), fromLine("Orange-Bioinformatics"));
-    assertEquals(pyRequirement("MOCPy"), fromLine("MOCPy"));
-    assertEquals(pyRequirement("score.webassets"), fromLine("score.webassets"));
-    assertEquals(pyRequirement("pip_helpers"), fromLine("pip_helpers"));
-    assertEquals(pyRequirement("Django"), fromLine("Django"));
-    assertEquals(pyRequirement("django"), fromLine("django"));
-    assertEquals(pyRequirement("pinax-utils"), fromLine("pinax-utils"));
-    assertEquals(pyRequirement("no_limit_nester"), fromLine("no_limit_nester"));
-    assertEquals(pyRequirement("Flask-Celery-py3"), fromLine("Flask-Celery-py3"));
+    assertEquals(pyRequirement("Orange-Bioinformatics",null), fromLine("Orange-Bioinformatics"));
+    assertEquals(pyRequirement("MOCPy",null), fromLine("MOCPy"));
+    assertEquals(pyRequirement("score.webassets",null), fromLine("score.webassets"));
+    assertEquals(pyRequirement("pip_helpers",null), fromLine("pip_helpers"));
+    assertEquals(pyRequirement("Django",null), fromLine("Django"));
+    assertEquals(pyRequirement("django",null), fromLine("django"));
+    assertEquals(pyRequirement("pinax-utils",null), fromLine("pinax-utils"));
+    assertEquals(pyRequirement("no_limit_nester",null), fromLine("no_limit_nester"));
+    assertEquals(pyRequirement("Flask-Celery-py3",null), fromLine("Flask-Celery-py3"));
   }
 
   // https://www.python.org/dev/peps/pep-0440/
@@ -2384,7 +2384,9 @@ public class PyRequirementTest extends PyTestCase {
     final VirtualFile requirementsFile = getVirtualFileByName(getTestDataPath() + "/requirement/recursive/requirements.txt");
     assertNotNull(requirementsFile);
 
-    assertEquals(Arrays.asList(pyRequirement("bitly_api"), pyRequirement("numpy"), pyRequirement("SomeProject")),
+    assertEquals(Arrays.asList(pyRequirement("bitly_api",null),
+                               pyRequirement("numpy",null),
+                               pyRequirement("SomeProject",null)),
                  PyRequirementParser.fromFile(requirementsFile));
   }
 
@@ -2429,6 +2431,30 @@ public class PyRequirementTest extends PyTestCase {
 
     assertEquals(requirement, fromLine(name + " --install-option=\"option\" # comment"));
     assertEquals(singletonList(requirement), PyRequirementParser.fromText(name + " \\\n--install-option=\"option\" # comment"));
+  }
+
+  // HASH OPTIONS
+  // Test for parsing requirements with hash options
+  public void testRequirementWithHash() {
+    doTest("certifi", "2018.4.16", "certifi==2018.4.16 --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7");
+    doTest("certifi", "2018.4.16",
+           "certifi==2018.4.16 --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7 --hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0");
+  }
+
+  // Test for parsing requirements with hash options from text (including line continuation)
+  public void testRequirementWithHashFromText() {
+    final List<PyRequirement> requirements = PyRequirementParser.fromText(
+      "certifi==2018.4.16 \\\n    --hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7 \\\n    --hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0");
+    assertFalse(requirements.isEmpty());
+
+    final PyRequirement requirement = requirements.get(0);
+    assertNotNull(requirement);
+    assertEquals("certifi", requirement.getName());
+    assertEquals("2018.4.16", requirement.getVersionSpecs().get(0).getVersion());
+
+    final List<String> installOptions = requirement.getInstallOptions();
+    assertTrue(installOptions.contains("--hash=sha256:13e698f54293db9f89122b0581843a782ad0934a4fe0172d2a980ba77fc61bb7"));
+    assertTrue(installOptions.contains("--hash=sha256:9fa520c1bacfb634fa7af20a76bcbd3d5fb390481724c597da32c719a7dca4b0"));
   }
 
   // ENV MARKERS

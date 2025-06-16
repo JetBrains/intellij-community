@@ -204,7 +204,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
             .align(AlignX.FILL)
         }
         row(GitBundle.message("branch.direction.panel.branch.label")) {
-          branchComponent = comboBox(branchModel, SimpleListCellRenderer.create("", GitBranch::getName))
+          branchComponent = comboBox(branchModel, SimpleListCellRenderer.create("", GitBranch::name))
             .align(AlignX.FILL)
             .component.apply {
               isSwingPopup = false

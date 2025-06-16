@@ -15,9 +15,11 @@ import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 import com.intellij.vcs.log.data.LoadingDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
@@ -65,7 +67,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       val root = commitEditingData.repository.root
       val logData = commitEditingData.logData
       val dataPack = logData.dataPack
-      val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<Int>
+      val permanentGraph = dataPack.permanentGraph as PermanentGraphImpl<VcsLogCommitStorageIndex>
       val commitsInfo = permanentGraph.permanentCommitsInfo
       val commitIndices = commitEditingData.selection.ids
 
@@ -113,7 +115,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       return description
     }
 
-    private fun getCommitIdByNodeId(data: VcsLogData, permanentGraph: PermanentGraphImpl<Int>, nodeId: Int): CommitId =
+    private fun getCommitIdByNodeId(data: VcsLogData, permanentGraph: PermanentGraphImpl<Int>, nodeId: VcsLogGraphNodeId): CommitId =
       data.getCommitId(permanentGraph.permanentCommitsInfo.getCommitId(nodeId))!!
 
   }

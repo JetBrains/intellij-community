@@ -626,6 +626,31 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
     doTest();
   }
+  
+  public void testAutomaticGetterUse() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+  
+  public void testNoAutomaticGetterUseGetterDoesDifferentThing() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+  
+  public void testNoAutomaticGetterUseAccessibleField() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    doTest();
+  }
+  
+  public void testAutomaticGetterSetterUse() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
+
+  public void testAutomaticGetterUsePreferRecordAccessor() {
+    TestDialogManager.setTestDialog(TestDialog.YES, getTestRootDisposable());
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());
+  }
 
   @Override
   protected Sdk getProjectJDK() {

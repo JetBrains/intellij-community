@@ -9,8 +9,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.testFramework.LightProjectDescriptor
 
 abstract class SuppressionAnnotationInspectionTestBase : JvmInspectionTestBase() {
-
-  override val inspection = SuppressionAnnotationInspection()
+  override val inspection: SuppressionAnnotationInspection = SuppressionAnnotationInspection()
 
   override fun getProjectDescriptor(): LightProjectDescriptor = object : ProjectDescriptor(LanguageLevel.HIGHEST, true) {}
 

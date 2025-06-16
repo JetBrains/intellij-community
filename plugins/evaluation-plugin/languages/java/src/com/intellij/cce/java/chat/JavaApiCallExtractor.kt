@@ -6,46 +6,70 @@ import com.intellij.cce.evaluable.METHOD_NAME_PROPERTY
 import com.intellij.cce.metric.ApiCallExtractor
 import com.intellij.cce.metric.ApiCallExtractorProvider
 import com.intellij.ide.actions.QualifiedNameProviderUtil
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.smartReadActionBlocking
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.psi.*
+import java.util.*
 import com.intellij.lang.Language as PlatformLanguage
 
 fun interface GeneratedCodeIntegrator {
-  suspend fun integrate(project: Project, method: String): String
+  suspend fun integrate(project: Project, method: String, imports: List<String>): String
 }
 
 class InEditorGeneratedCodeIntegrator : GeneratedCodeIntegrator {
-  override suspend fun integrate(project: Project, method: String): String {
+  override suspend fun integrate(
+    project: Project,
+    method: String,
+    imports: List<String>,
+  ): String {
     return readAction {
       val editorManager = FileEditorManager.getInstance(project)
       val editor = editorManager.selectedTextEditor!!
       val text = editor.document.text
       val caret = editor.caretModel.currentCaret.offset
-      text.substring(0, caret) + method + "\n" + text.substring(caret)
+
+      val packageEnd = text.indexOf("package").let { if (it >= 0) text.indexOf('\n', it) + 1 else 0 }
+      val importSection = if (imports.isNotEmpty()) imports.joinToString("\n") + "\n\n" else ""
+
+      text.substring(0, packageEnd) + importSection + text.substring(packageEnd, caret) + method + "\n" + text.substring(caret)
     }
   }
 }
 
 class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeIntegrator) : ApiCallExtractor {
-  override suspend fun extractApiCalls(code: String, project: Project, tokenProperties: TokenProperties): List<String> {
-    val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY)!!
-    val psiFileWithGeneratedCode = edtWriteAction { createPsiFile(code, project, "dummy1.java") }
-    val method = extractMethodFromGeneratedSnippet(project, psiFileWithGeneratedCode, methodName) ?: return emptyList()
+  override suspend fun extractApiCalls(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): List<String> {
+    val method = pasteGeneratedCode(code, allCodeSnippets, project, tokenProperties) ?: return emptyList()
+    return smartReadActionBlocking(project) {
+      extractCalledInternalApiMethods(method).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
+    }
+  }
 
-    val integratedCode = generatedCodeIntegrator.integrate(project, method)
+  override suspend fun extractExternalApiCalls(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): List<String> {
+    val method = pasteGeneratedCode(code, allCodeSnippets, project, tokenProperties) ?: return emptyList()
+    return smartReadActionBlocking(project) { extractCalledExternalApiMethodsQualifiedNames(method) }
+  }
+
+  private suspend fun pasteGeneratedCode(code: String, allCodeSnippets: List<String>, project: Project, tokenProperties: TokenProperties): PsiElement? {
+    val methodName = tokenProperties.additionalProperty(METHOD_NAME_PROPERTY) ?: return null
+    val psiFileWithGeneratedCode = edtWriteAction { createPsiFile(code, project, "dummy1.java") }
+    val method = extractMethodFromGeneratedSnippet(project, psiFileWithGeneratedCode, methodName) ?: return null
+
+    val imports = allCodeSnippets.flatMap {
+      val tempPsifileWithImports = edtWriteAction { createPsiFile(it, project, UUID.randomUUID().toString() + ".java") }
+      extractImportsFromGeneratedSnippet(project, tempPsifileWithImports)
+    }
+    val integratedCode = generatedCodeIntegrator.integrate(project, method, imports)
     val psiFileWithIntegratedCode = edtWriteAction { createPsiFile(integratedCode, project, "dummy2.java") }
 
     return smartReadActionBlocking(project) {
-      val method = psiFileWithIntegratedCode.findMethodsByName(methodName).firstOrNull { it.text == method }
-                   ?: return@smartReadActionBlocking emptyList()
-      extractCalledApiMethods(method).mapNotNull { QualifiedNameProviderUtil.getQualifiedName(it) }
+      psiFileWithIntegratedCode.findMethodsByName(methodName).firstOrNull { it.text == method }
     }
   }
+
 
   private fun createPsiFile(code: String, project: Project, name: String): PsiFile {
     return PsiFileFactory.getInstance(project).createFileFromText(
@@ -53,6 +77,13 @@ class JavaApiCallExtractor(private val generatedCodeIntegrator: GeneratedCodeInt
       PlatformLanguage.findLanguageByID("JAVA")!!,
       code,
     )
+  }
+
+  private suspend fun extractImportsFromGeneratedSnippet(project: Project, psiFileWithGeneratedCode: PsiFile): List<String> {
+    return smartReadActionBlocking(project) {
+      val importList = psiFileWithGeneratedCode.children.filterIsInstance<PsiImportList>().firstOrNull()
+      importList?.children?.filterIsInstance<PsiImportStatement>()?.mapNotNull { it.text } ?: emptyList()
+    }
   }
 
   private suspend fun extractMethodFromGeneratedSnippet(
@@ -86,32 +117,57 @@ private fun PsiFile.findMethodsByName(methodName: String): List<PsiMethod> {
   return foundMethods.toList()
 }
 
-fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
-  val apiMethods = extractCalledApiMethods(psiElement)
-  return apiMethods.filter { isInternalApiMethod(it) }
+fun extractCalledExternalApiMethodsQualifiedNames(psiElement: PsiElement): List<String> {
+  val externalApiMethodsQualifiedNames = mutableListOf<String>()
+  extractMethodCallExpressionsFromMethods(psiElement).forEach {
+    val psiMethodCall = (it as? PsiMethodCallExpression) ?: return@forEach
+    val referenceName = psiMethodCall.methodExpression.referenceName ?: return@forEach
+    val method = it.resolveMethod()
+    if (method != null && (isInternalApiMethod(method, psiElement) ||
+                           isFromStandardLibrary(method))) {
+      return@forEach
+    }
+    externalApiMethodsQualifiedNames.add(referenceName)
+  }
+  return externalApiMethodsQualifiedNames.toList()
 }
 
-private fun isInternalApiMethod(method: PsiMethod): Boolean {
+fun isFromStandardLibrary(method: PsiMethod): Boolean {
+  val containingClass = method.containingClass ?: return false
+  val qualifiedName = containingClass.qualifiedName ?: return false
+  return qualifiedName.startsWith("java.") ||
+         qualifiedName.startsWith("javax.") ||
+         qualifiedName.startsWith("sun.") ||
+         qualifiedName.startsWith("com.sun.") ||
+         qualifiedName.startsWith("jdk.") ||
+         qualifiedName.startsWith("org.w3c.dom") ||
+         qualifiedName.startsWith("org.xml.sax") ||
+         qualifiedName.startsWith("org.ietf.jgss") ||
+         qualifiedName.startsWith("org.omg") ||
+         qualifiedName.startsWith("netscape.javascript")
+}
+
+fun extractCalledInternalApiMethods(psiElement: PsiElement): List<PsiMethod> {
+  val apiMethods = extractMethodCallExpressionsFromMethods(psiElement).mapNotNull { it.resolveMethod() }
+  return apiMethods.filter { isInternalApiMethod(it, psiElement) }
+}
+
+private fun isInternalApiMethod(method: PsiMethod, fromWhereCalled: PsiElement): Boolean {
+  if (isInTheSameFile(method, fromWhereCalled)) return true
   val project = method.project
   val containingFile = method.containingFile?.virtualFile ?: return false
   val projectFileIndex = ProjectFileIndex.getInstance(project)
   return projectFileIndex.isInContent(containingFile)
 }
 
-fun extractCalledApiMethods(psiElement: PsiElement): List<PsiMethod> {
-  return extractMethodCallExpressionsFromMethods(psiElement) {
-    !isSuperCall(it)
-  }.mapNotNull { it.resolveMethod() }
+private fun isInTheSameFile(method: PsiMethod, fromWhereCalled: PsiElement): Boolean {
+  val containingFile = method.containingFile
+  return containingFile != null && containingFile == fromWhereCalled.containingFile
 }
 
-private fun isSuperCall(callExpression: PsiCallExpression): Boolean {
-  return (callExpression is PsiMethodCallExpression)
-         && (callExpression.methodExpression.qualifierExpression is PsiSuperExpression)
-}
 
 private fun extractMethodCallExpressionsFromMethods(
   psiElement: PsiElement,
-  filter: (PsiCallExpression) -> Boolean = { true },
 ): List<PsiCallExpression> {
   val result: MutableList<PsiCallExpression> = mutableListOf()
   val visitor = object : JavaRecursiveElementVisitor() {
@@ -121,11 +177,16 @@ private fun extractMethodCallExpressionsFromMethods(
     }
 
     override fun visitMethodCallExpression(expression: PsiMethodCallExpression) {
-      if (!filter(expression)) return
+      if (isSuperCall(expression)) return
       result.add(expression)
       super.visitMethodCallExpression(expression)
     }
   }
   psiElement.accept(visitor)
   return result
+}
+
+private fun isSuperCall(callExpression: PsiCallExpression): Boolean {
+  return (callExpression is PsiMethodCallExpression)
+         && (callExpression.methodExpression.qualifierExpression is PsiSuperExpression)
 }

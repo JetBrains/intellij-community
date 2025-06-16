@@ -36,13 +36,16 @@ public final class ExceptionUtilRt {
   public static boolean causedBy(Throwable e, Class<?> klass) {
     return findCause(e, klass) != null;
   }
-  
-  public static <T extends Throwable> T addRethrownStackAsSuppressed(T throwable) {
-    throwable.addSuppressed(new RethrownStack());
+
+  @NotNull
+  public static <T extends Throwable> T addRethrownStackAsSuppressed(@NotNull T throwable) {
+    if (!(throwable instanceof RethrownStack)) {
+      throwable.addSuppressed(new RethrownStack());
+    }
     return throwable;
   }
 
-  static class RethrownStack extends Throwable {
+  private static class RethrownStack extends Throwable {
     RethrownStack() {
       super("Rethrown at");
     }

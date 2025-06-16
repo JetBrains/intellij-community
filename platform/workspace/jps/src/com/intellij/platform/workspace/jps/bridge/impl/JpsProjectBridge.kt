@@ -31,6 +31,7 @@ internal class JpsProjectBridge(modelBridge: JpsModelBridge,
       JpsModuleBridge(this, it)
     } 
   }
+  private val modulesByName by lazy(LazyThreadSafetyMode.PUBLICATION) { modules.associateBy { it.name } }
   private val sdkReferencesTable = JpsSdkReferencesTableBridge(additionalData.projectSdkId, this)
 
   override fun getModules(): List<JpsModuleBridge> = modules
@@ -41,6 +42,8 @@ internal class JpsProjectBridge(modelBridge: JpsModelBridge,
       .filterIsInstance<JpsTypedModule<P>>()
       .asIterable()
   }
+
+  override fun findModuleByName(name: String): JpsModule? = modulesByName[name]
 
   override fun getLibraryCollection(): JpsLibraryCollection {
     return libraryBridgeCache.getLibraryCollection(LibraryTableId.ProjectLibraryTableId, this)

@@ -1,6 +1,6 @@
 <idea-plugin package="com.intellij.grazie.ide.language.json">
   <dependencies>
-    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json.backend"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

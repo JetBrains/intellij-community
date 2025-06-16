@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -31,6 +32,7 @@ import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
+import javax.swing.JComponent
 
 @Service(Service.Level.APP)
 class LineStatusMarkerPopupService {
@@ -110,18 +112,22 @@ class LineStatusMarkerPopupService {
         }
       }
 
-      val componentsWithListener = mutableListOf<EditorTextComponent>()
+      val componentsWithListener = mutableListOf<JComponent>()
 
       UIUtil.forEachComponentInHierarchy(panel) { c ->
-        if (c is EditorTextComponent) {
-          componentsWithListener.add(c)
-           c.component.addComponentListener(adapter)
+        val component = when (c) {
+          is EditorTextComponent -> c.component
+          is ActionToolbar -> c.component
+          else -> return@forEachComponentInHierarchy
         }
+
+        componentsWithListener.add(component)
+        component.addComponentListener(adapter)
       }
 
       Disposer.register(popupDisposable, Disposable {
-        for (c in componentsWithListener) {
-          c.component.removeComponentListener(adapter)
+        for (component in componentsWithListener) {
+          component.removeComponentListener(adapter)
         }
       })
     }

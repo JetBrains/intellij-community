@@ -1,17 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.syntax.impl.builder
 
-import com.intellij.platform.syntax.impl.fastutil.ints.Int2ObjectOpenHashMap
-import com.intellij.platform.syntax.impl.fastutil.ints.IntOpenHashSet
-import com.intellij.platform.syntax.impl.fastutil.ints.MutableIntMap
-import com.intellij.platform.syntax.impl.fastutil.ints.MutableIntSet
+import com.intellij.platform.syntax.impl.util.MutableBitSet
 import com.intellij.platform.syntax.parser.WhitespacesAndCommentsBinder
 import com.intellij.platform.syntax.parser.WhitespacesBinders
+import com.intellij.util.fastutil.ints.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 internal class MarkerOptionalData {
-  private var bitset = LongArray(16) { 0 }
+  private val bitSet = MutableBitSet()
 
   private val myDebugAllocationPositions: MutableIntMap<Throwable> = Int2ObjectOpenHashMap()
   private val myDoneErrors: MutableIntMap<@Nls String> = Int2ObjectOpenHashMap()
@@ -20,8 +18,8 @@ internal class MarkerOptionalData {
   private val myCollapsed: MutableIntSet = IntOpenHashSet()
 
   fun clean(markerId: Int) {
-    if (contains(markerId)) {
-      remove(markerId)
+    if (bitSet.contains(markerId)) {
+      bitSet.remove(markerId)
       myLeftBinders.remove(markerId)
       myRightBinders.remove(markerId)
       myDoneErrors.remove(markerId)
@@ -29,6 +27,12 @@ internal class MarkerOptionalData {
       myDebugAllocationPositions.remove(markerId)
     }
   }
+
+  val collapsedMarkerSize
+    get() = myCollapsed.size
+
+  val collapsedMarkerIds: IntArray
+    get() = myCollapsed.toIntArray()
 
   @ApiStatus.Internal
   fun getDoneError(markerId: Int): @Nls String? = myDoneErrors[markerId]
@@ -46,7 +50,7 @@ internal class MarkerOptionalData {
   }
 
   private fun markAsHavingOptionalData(markerId: Int) {
-    add(markerId)
+    bitSet.add(markerId)
   }
 
   fun notifyAllocated(markerId: Int) {
@@ -59,7 +63,7 @@ internal class MarkerOptionalData {
   }
 
   fun getBinder(markerId: Int, right: Boolean): WhitespacesAndCommentsBinder {
-    val binder = if (contains(markerId)) getBinderMap(right)[markerId] else null
+    val binder = if (bitSet.contains(markerId)) getBinderMap(right)[markerId] else null
     return binder ?: getDefaultBinder(right)
   }
 
@@ -81,30 +85,4 @@ internal class MarkerOptionalData {
   private fun getDefaultBinder(right: Boolean): WhitespacesAndCommentsBinder {
     return if (right) WhitespacesBinders.defaultRightBinder() else WhitespacesBinders.defaultLeftBinder()
   }
-
-  internal fun add(markerId: Int) {
-    ensureCapacity(markerId)
-    val index = markerId shr indexShift
-    bitset[index] = bitset[index] or (1L shl markerId)
-  }
-
-  internal fun contains(markerId: Int): Boolean {
-    val index = markerId shr indexShift
-    if (index >= bitset.size) return false
-    return bitset[index] and (1L shl markerId) != 0L
-  }
-
-  internal fun remove(markerId: Int) {
-    val index = markerId shr indexShift
-    bitset[index] = bitset[index] and (1L shl markerId).inv()
-  }
-
-  private fun ensureCapacity(markerId: Int) {
-    val index = markerId shr indexShift
-    if (index >= bitset.size) {
-      bitset = bitset.copyOf(bitset.size * 3 / 2)
-    }
-  }
 }
-
-private const val indexShift = 6

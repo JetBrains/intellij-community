@@ -42,9 +42,9 @@ public class ConvertIfToChooseIntention implements IntentionAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
+        final PsiElement element = psiFile.findElementAt(offset);
         assert element != null;
 
         final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
@@ -67,11 +67,11 @@ public class ConvertIfToChooseIntention implements IntentionAction {
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!XsltSupport.isXsltFile(file)) return false;
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+        if (!XsltSupport.isXsltFile(psiFile)) return false;
 
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
+        final PsiElement element = psiFile.findElementAt(offset);
         if (element == null) return false;
         final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
         if (tag == null || tag.getParentTag() == null) return false;

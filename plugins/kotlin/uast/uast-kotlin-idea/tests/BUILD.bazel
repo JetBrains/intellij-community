@@ -3,12 +3,12 @@ load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 java_library(
-  name = "kotlin-uast-uast-kotlin-idea-tests",
+  name = "tests",
   visibility = ["//visibility:public"]
 )
 
 jvm_library(
-  name = "kotlin-uast-uast-kotlin-idea-tests_test_lib",
+  name = "tests_test_lib",
   visibility = ["//visibility:public"],
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
@@ -17,36 +17,36 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//plugins/kotlin/core",
-    "//plugins/kotlin/frontend-independent:fir-frontend-independent",
-    "//plugins/kotlin/uast/uast-kotlin-idea:kotlin-uast-uast-kotlin-idea",
+    "//plugins/kotlin/frontend-independent",
+    "//plugins/kotlin/uast/uast-kotlin-idea",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//platform/util-ex",
     "//platform/core-impl",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//java/testFramework",
     "//platform/projectModel-api:projectModel",
     "//uast/uast-common:uast",
     "//uast/testFramework",
-    "//plugins/kotlin/uast/uast-kotlin:kotlin-uast-uast-kotlin",
-    "//plugins/kotlin/uast/uast-kotlin/tests:kotlin-uast-uast-kotlin-tests",
-    "//plugins/kotlin/uast/uast-kotlin/tests:kotlin-uast-uast-kotlin-tests_test_lib",
+    "//plugins/kotlin/uast/uast-kotlin",
+    "//plugins/kotlin/uast/uast-kotlin/tests",
+    "//plugins/kotlin/uast/uast-kotlin/tests:tests_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-uast-kotlin-base",
+    "//plugins/kotlin/uast/uast-kotlin-base",
     "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast-uast-kotlin-k2",
-    "//plugins/kotlin/uast/uast-kotlin-base/tests:kotlin-uast-uast-kotlin-base-tests",
-    "//plugins/kotlin/uast/uast-kotlin-base/tests:kotlin-uast-uast-kotlin-base-tests_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
-    "//plugins/kotlin/uast/uast-kotlin-idea-base/tests:kotlin-uast-uast-kotlin-idea-base-tests_test_lib",
+    "//plugins/kotlin/uast/uast-kotlin-base/tests",
+    "//plugins/kotlin/uast/uast-kotlin-base/tests:tests_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base/tests:tests_test_lib",
     "//uast/uast-common-ide:ide",
-    "//plugins/kotlin/uast/uast-kotlin-idea-base:kotlin-uast-uast-kotlin-idea-base",
+    "//plugins/kotlin/uast/uast-kotlin-idea-base",
   ]
 )
 
 jvm_test(
-  name = "kotlin-uast-uast-kotlin-idea-tests_test",
-  runtime_deps = [":kotlin-uast-uast-kotlin-idea-tests_test_lib"]
+  name = "tests_test",
+  runtime_deps = [":tests_test_lib"]
 )
 ### auto-generated section `build kotlin.uast.uast-kotlin-idea.tests` end

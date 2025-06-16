@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -99,7 +100,8 @@ public final class PySignatureCacheManagerImpl extends PySignatureCacheManager {
     writeAttribute(file, attrString);
   }
 
-  static String changeSignatureString(@NotNull String filePath, @NotNull PySignature signature, @NotNull String oldSignatureString) {
+  @VisibleForTesting
+  public static String changeSignatureString(@NotNull String filePath, @NotNull PySignature signature, @NotNull String oldSignatureString) {
     if (SHOULD_OVERWRITE_TYPES) {
       return signatureToString(signature);
     }

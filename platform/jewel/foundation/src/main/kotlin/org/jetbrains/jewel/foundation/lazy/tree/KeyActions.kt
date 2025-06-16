@@ -1,7 +1,9 @@
 package org.jetbrains.jewel.foundation.lazy.tree
 
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEvent
 import androidx.compose.ui.input.pointer.isCtrlPressed
@@ -152,6 +154,9 @@ public open class DefaultTreeViewPointerEventAction(private val treeState: TreeS
         allKeys: List<SelectableLazyListKey>,
         key: Any,
     ) {
+        // When mouse is used, we're no longer in keyboard navigation mode
+        selectableLazyListState.isKeyboardNavigating = false
+
         with(keybindings) {
             when {
                 pointerEvent.keyboardModifiers.isContiguousSelectionKeyPressed &&
@@ -223,17 +228,23 @@ public class DefaultTreeViewKeyActions(
         state: SelectableLazyListState,
         selectionMode: SelectionMode,
     ): KeyEvent.() -> Boolean = lambda@{
+        // Explicitly don't handle Tab key events - let them pass through for focus traversal
+        if (key == Key.Tab) return@lambda false
+
         if (type == KeyEventType.KeyUp) return@lambda false
         val keyEvent = this
+
+        // Always mark keyboard navigation mode active for all keyboard interactions
+        state.lastKeyEventUsedMouse = false
+        state.isKeyboardNavigating = true
+
         with(keybindings) {
             with(actions) {
-                if (selectionMode == SelectionMode.None) return@lambda false
                 when {
+                    selectionMode == SelectionMode.None -> return@lambda false
                     isSelectParent -> onSelectParent(keys, state)
                     isSelectChild -> onSelectChild(keys, state)
-                    super.handleOnKeyEvent(event, keys, state, selectionMode).invoke(keyEvent) -> return@lambda true
-
-                    else -> return@lambda false
+                    else -> return@lambda super.handleOnKeyEvent(event, keys, state, selectionMode).invoke(keyEvent)
                 }
             }
         }
@@ -259,22 +270,38 @@ public open class DefaultSelectableLazyColumnKeyActions(
         state: SelectableLazyListState,
         selectionMode: SelectionMode,
     ): KeyEvent.() -> Boolean = lambda@{
+        // Explicitly don't handle Tab key events - let them pass through for focus traversal
+        if (key == Key.Tab) return@lambda false
+
         if (type == KeyEventType.KeyUp || selectionMode == SelectionMode.None) return@lambda false
-        with(keybindings) { with(actions) { execute(keys, state, selectionMode) } }
+
+        // More aggressively mark keyboard navigation for all key interactions
+        // This improves screen reader behavior
+        state.lastKeyEventUsedMouse = false
+        state.isKeyboardNavigating = true
+
+        execute(
+            keys = keys,
+            state = state,
+            selectionMode = selectionMode,
+            keyEvent = actions,
+            keyBindings = keybindings,
+        )
     }
 
-    context(SelectableColumnKeybindings, SelectableColumnOnKeyEvent)
     private fun KeyEvent.execute(
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
         selectionMode: SelectionMode,
+        keyEvent: SelectableColumnOnKeyEvent,
+        keyBindings: SelectableColumnKeybindings,
     ): Boolean {
-        val singleSelectionEventHandled = handleSingleSelectionEvents(keys, state)
+        val singleSelectionEventHandled = handleSingleSelectionEvents(keys, state, keyEvent, keyBindings)
         if (singleSelectionEventHandled) {
             return true
         }
         if (selectionMode == SelectionMode.Multiple) {
-            val multipleSelectionEventHandled = handleMultipleSelectionEvents(keys, state)
+            val multipleSelectionEventHandled = handleMultipleSelectionEvents(keys, state, keyEvent, keyBindings)
             if (multipleSelectionEventHandled) {
                 return true
             }
@@ -282,39 +309,45 @@ public open class DefaultSelectableLazyColumnKeyActions(
         return false
     }
 
-    context(SelectableColumnKeybindings, SelectableColumnOnKeyEvent)
     private fun KeyEvent.handleSingleSelectionEvents(
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
+        keyEvent: SelectableColumnOnKeyEvent,
+        keybindings: SelectableColumnKeybindings,
     ): Boolean {
-        when {
-            isSelectNextItem -> onSelectNextItem(keys, state)
-            isSelectPreviousItem -> onSelectPreviousItem(keys, state)
-            isSelectFirstItem -> onSelectFirstItem(keys, state)
-            isSelectLastItem -> onSelectLastItem(keys, state)
-            isEdit -> onEdit()
-            else -> return false
+        with(keybindings) {
+            when {
+                isSelectNextItem -> keyEvent.onSelectNextItem(keys, state)
+                isSelectPreviousItem -> keyEvent.onSelectPreviousItem(keys, state)
+                isSelectFirstItem -> keyEvent.onSelectFirstItem(keys, state)
+                isSelectLastItem -> keyEvent.onSelectLastItem(keys, state)
+                isEdit -> keyEvent.onEdit()
+                else -> return false
+            }
+            return true
         }
-        return true
     }
 
-    context(SelectableColumnKeybindings, SelectableColumnOnKeyEvent)
     private fun KeyEvent.handleMultipleSelectionEvents(
         keys: List<SelectableLazyListKey>,
         state: SelectableLazyListState,
+        keyEvent: SelectableColumnOnKeyEvent,
+        keyBindings: SelectableColumnKeybindings,
     ): Boolean {
-        when {
-            isExtendSelectionToFirstItem -> onExtendSelectionToFirst(keys, state)
-            isExtendSelectionToLastItem -> onExtendSelectionToLastItem(keys, state)
-            isExtendSelectionWithNextItem -> onExtendSelectionWithNextItem(keys, state)
-            isExtendSelectionWithPreviousItem -> onExtendSelectionWithPreviousItem(keys, state)
-            isScrollPageDownAndExtendSelection -> onScrollPageDownAndExtendSelection(keys, state)
-            isScrollPageDownAndSelectItem -> onScrollPageDownAndSelectItem(keys, state)
-            isScrollPageUpAndExtendSelection -> onScrollPageUpAndExtendSelection(keys, state)
-            isScrollPageUpAndSelectItem -> onScrollPageUpAndSelectItem(keys, state)
-            isSelectAll -> onSelectAll(keys, state)
-            else -> return false
+        with(keyBindings) {
+            when {
+                isExtendSelectionToFirstItem -> keyEvent.onExtendSelectionToFirst(keys, state)
+                isExtendSelectionToLastItem -> keyEvent.onExtendSelectionToLastItem(keys, state)
+                isExtendSelectionWithNextItem -> keyEvent.onExtendSelectionWithNextItem(keys, state)
+                isExtendSelectionWithPreviousItem -> keyEvent.onExtendSelectionWithPreviousItem(keys, state)
+                isScrollPageDownAndExtendSelection -> keyEvent.onScrollPageDownAndExtendSelection(keys, state)
+                isScrollPageDownAndSelectItem -> keyEvent.onScrollPageDownAndSelectItem(keys, state)
+                isScrollPageUpAndExtendSelection -> keyEvent.onScrollPageUpAndExtendSelection(keys, state)
+                isScrollPageUpAndSelectItem -> keyEvent.onScrollPageUpAndSelectItem(keys, state)
+                isSelectAll -> keyEvent.onSelectAll(keys, state)
+                else -> return false
+            }
+            return true
         }
-        return true
     }
 }

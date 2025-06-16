@@ -1,2 +1,0 @@
-rootProject.name = "ide-metrics-collector"
-includeBuild "../intellij.tools.ide.starter"

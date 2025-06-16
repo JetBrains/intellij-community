@@ -1,5 +1,11 @@
 ### auto-generated section `build intellij.python.community.services.internal.impl` start
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "python-community-services-internal-impl_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "python-community-services-internal-impl",
@@ -9,13 +15,15 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-parser:parser",
-    "//python/services/shared:python-community-services-shared",
+    "//python/services/shared",
     "//platform/eel-provider",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
     "@lib//:kotlinx-coroutines-core",
     "//python/python-sdk:sdk",
-  ]
+    "//python/python-exec-service/execService.python",
+  ],
+  runtime_deps = [":python-community-services-internal-impl_resources"]
 )
 
 jvm_library(
@@ -26,7 +34,8 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//python/python-parser:parser",
-    "//python/services/shared:python-community-services-shared",
+    "//python/services/shared",
+    "//python/services/shared:shared_test_lib",
     "//platform/eel-provider",
     "@lib//:jetbrains-annotations",
     "//python/openapi:community",
@@ -39,7 +48,10 @@ jvm_library(
     "//python/python-sdk:sdk",
     "//python/python-sdk:sdk_test_lib",
     "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
-  ]
+    "//python/python-exec-service/execService.python",
+    "//python/python-exec-service/execService.python:execService.python_test_lib",
+  ],
+  runtime_deps = [":python-community-services-internal-impl_resources"]
 )
 
 jvm_test(

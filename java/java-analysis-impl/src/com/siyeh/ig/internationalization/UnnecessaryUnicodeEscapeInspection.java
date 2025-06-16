@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -16,11 +16,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -49,7 +50,7 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   }
 
   @Override
-  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+  protected @NotNull LocalQuickFix buildFix(Object... infos) {
     return new UnnecessaryUnicodeEscapeFix(((Character) infos[0]).charValue(), (RangeMarker)infos[1]);
   }
 
@@ -65,10 +66,12 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
 
     @Override
     public @NotNull String getName() {
-      if (c == '\n') {
-        return InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text");
-      }
-      return CommonQuickFixBundle.message("fix.replace.with.x", (c == '\t') ? "\\t" : c);
+      return switch (c) {
+        case '\n' -> InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text", 1);
+        case '\t' -> InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text", 2);
+        case ' ' -> InspectionGadgetsBundle.message("unnecessary.unicode.escape.fix.text", 3);
+        default -> CommonQuickFixBundle.message("fix.replace.with.x", c);
+      };
     }
 
     @Override
@@ -79,7 +82,7 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       Document document = startElement.getContainingFile().getFileDocument();
-      String replacement = c == '\t' ? "\\t" : String.valueOf(c);
+      String replacement = c == '\t' && PsiUtil.isJavaToken(startElement, ElementType.STRING_LITERALS) ? "\\t" : String.valueOf(c);
       document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), replacement);
     }
   }
@@ -92,18 +95,18 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
   private static class UnnecessaryUnicodeEscapeVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitFile(@NotNull PsiFile file) {
-      super.visitFile(file);
-      if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file) || !file.isPhysical()) {
+    public void visitFile(@NotNull PsiFile psiFile) {
+      super.visitFile(psiFile);
+      if (InjectedLanguageManager.getInstance(psiFile.getProject()).isInjectedFragment(psiFile) || !psiFile.isPhysical()) {
         return;
       }
-      final Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      final Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
       if (document == null) {
         return;
       }
-      final VirtualFile virtualFile = file.getVirtualFile();
-      final String text = file.getText();
-      final Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
+      final VirtualFile virtualFile = psiFile.getVirtualFile();
+      final String text = psiFile.getText();
+      final Charset charset = LoadTextUtil.extractCharsetFromFileContent(psiFile.getProject(), virtualFile, text);
       final CharsetEncoder encoder = charset.newEncoder().onUnmappableCharacter(CodingErrorAction.REPORT);
       final CharBuffer charBuffer = CharBuffer.allocate(1);
       final ByteBuffer byteBuffer = ByteBuffer.allocate(10);
@@ -122,37 +125,37 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
         if (!isEscape) {
           continue;
         }
-        int nextChar = i + 1;
-        while (nextChar < length && text.charAt(nextChar) == 'u') {
-          nextChar++; // \uuuuFFFD is a legal Unicode escape
-        }
-        if (nextChar == i + 1 || nextChar + 3 >= length) {
-          continue;
-        }
-        if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
-            StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
+        final int nextChar = detectUnicodeEscape(text, i, length);
+        if (nextChar != -1) {
           final int escapeEnd = nextChar + 4;
           final char d = (char)Integer.parseInt(text.substring(nextChar, escapeEnd), 16);
-          if (d == '\uFFFD') {
-            // this character is used as a replacement when a unicode character can't be displayed
+          if (d == '\uFFFD' || (d == '\\' && detectUnicodeEscape(text, escapeEnd - 1, length) != -1)) {
+            // this character is used as a replacement when a Unicode character can't be displayed
             // replacing the escape with the character may cause confusion, so ignore it.
+            // skip if another escape sequence follows '\' without being properly escaped.
             continue;
           }
           final int type = Character.getType(d);
           if (type == Character.CONTROL && d != '\n' && d != '\t') {
             continue;
           }
-          else if (type == Character.FORMAT ||
-                   type == Character.PRIVATE_USE ||
-                   type == Character.SURROGATE ||
-                   type == Character.UNASSIGNED ||
-                   type == Character.LINE_SEPARATOR ||
-                   type == Character.PARAGRAPH_SEPARATOR) {
+          else if (type == Character.SPACE_SEPARATOR && d != ' ') {
             continue;
           }
-          if (type == Character.SPACE_SEPARATOR && d != ' ') {
+          else if (type == Character.FORMAT
+                   || type == Character.PRIVATE_USE
+                   || type == Character.SURROGATE
+                   || type == Character.UNASSIGNED
+                   || type == Character.LINE_SEPARATOR
+                   || type == Character.PARAGRAPH_SEPARATOR) {
+            continue;
+          }
+          Character.UnicodeBlock block = Character.UnicodeBlock.of(d);
+          if (block == Character.UnicodeBlock.COMBINING_DIACRITICAL_MARKS
+              || block == Character.UnicodeBlock.COMBINING_DIACRITICAL_MARKS_EXTENDED
+              || block == Character.UnicodeBlock.COMBINING_DIACRITICAL_MARKS_SUPPLEMENT
+              || block == Character.UnicodeBlock.COMBINING_HALF_MARKS
+              || block == Character.UnicodeBlock.COMBINING_MARKS_FOR_SYMBOLS) {
             continue;
           }
           byteBuffer.clear();
@@ -162,7 +165,7 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           if (coderResult.isError()) {
             continue;
           }
-          PsiElement element = file.findElementAt(i);
+          PsiElement element = psiFile.findElementAt(i);
           if (element == null) {
             return;
           }
@@ -175,6 +178,23 @@ public final class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
           registerErrorAtOffset(element, i - range.getStartOffset(), escapeEnd - i, Character.valueOf(d), rangeMarker);
         }
       }
+    }
+
+    private static int detectUnicodeEscape(String text, int offset, int length) {
+      int nextChar = offset + 1;
+      while (nextChar < length && text.charAt(nextChar) == 'u') {
+        nextChar++; // \uuuuFFFD is a legal Unicode escape
+      }
+      if (nextChar == offset + 1 || nextChar + 3 >= length) {
+        return -1;
+      }
+      if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
+        return nextChar;
+      }
+      return -1;
     }
   }
 }

@@ -2,7 +2,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // LANGUAGE_VERSION: 2.2
 // K2_ERROR: Context parameters must be named. Use '_' to declare an anonymous context parameter.
-// IGNORE_K2
 
 class C {
     fun String.fn(p: String) {}
@@ -10,5 +9,5 @@ class C {
 
 context(c: C)
 fun String.test() {
-    "foo".let { with(c) { it.fn(this@test) } }
+    with(c) { "foo".fn(this@test) }
 }

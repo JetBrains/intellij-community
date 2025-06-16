@@ -58,13 +58,13 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
     return createIncompatibleTypesTooltip(tooltipComposer);
   }
 
-  @NotNull HtmlChunk createDescription() {
+  @NotNull @Nls String createDescription() {
     PsiType baseLType = PsiUtil.convertAnonymousToBaseType(lType);
     PsiType baseRType = rType == null ? null : PsiUtil.convertAnonymousToBaseType(rType);
     boolean leftAnonymous = PsiUtil.resolveClassInClassTypeOnly(lType) instanceof PsiAnonymousClass;
     String lTypeString = JavaErrorFormatUtil.formatType(leftAnonymous ? lType : baseLType);
     String rTypeString = JavaErrorFormatUtil.formatType(leftAnonymous ? rType : baseRType);
-    return raw(JavaCompilationErrorBundle.message("type.incompatible", lTypeString, rTypeString));
+    return JavaCompilationErrorBundle.message("type.incompatible", lTypeString, rTypeString);
   }
 
   static @NotNull HtmlChunk createRequiredProvidedTypeMessage(@NotNull HtmlChunk lType,

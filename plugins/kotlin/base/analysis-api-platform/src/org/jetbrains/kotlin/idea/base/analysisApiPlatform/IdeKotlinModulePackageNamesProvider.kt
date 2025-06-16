@@ -12,14 +12,16 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndex.ValueProcessor
 import org.jetbrains.kotlin.analysis.api.platform.caches.NullableConcurrentCache
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinCodeFragmentContextModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalScriptModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventListener
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationEvent
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinBinaryRootToPackageIndex
 import org.jetbrains.kotlin.idea.base.indices.names.isSupportedByBinaryRootToPackageIndex
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -54,17 +56,23 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
 
     private val binaryRootsCache = NullableConcurrentCache<String, Set<String>>()
 
-    // Listeners are currently limited to library modules, as we don't compute package names for source modules yet. Hence, we don't listen
-    // to out-of-block modification or source-only events at all.
-    internal class ModuleStateModificationListener(val project: Project) : KotlinModuleStateModificationListener {
-        override fun onModification(module: KaModule, modificationKind: KotlinModuleStateModificationKind) {
-            getInstance(project).invalidate(module)
-        }
-    }
+    /**
+     * The listener is currently limited to library modules, as we don't compute package names for source modules yet. Hence, we don't need
+     * to react to out-of-block modification or source-only events at all.
+     */
+    internal class ModificationEventListener(val project: Project) : KotlinModificationEventListener {
+        override fun onModification(event: KotlinModificationEvent) {
+            when (event) {
+                is KotlinModuleStateModificationEvent -> getInstance(project).invalidate(event.module)
+                is KotlinGlobalModuleStateModificationEvent -> getInstance(project).invalidateAll()
 
-    internal class GlobalModuleStateModificationListener(val project: Project) : KotlinGlobalModuleStateModificationListener {
-        override fun onModification() {
-            getInstance(project).invalidateAll()
+                is KotlinModuleOutOfBlockModificationEvent,
+                KotlinGlobalSourceModuleStateModificationEvent,
+                KotlinGlobalScriptModuleStateModificationEvent,
+                KotlinGlobalSourceOutOfBlockModificationEvent,
+                is KotlinCodeFragmentContextModificationEvent,
+                    -> {}
+            }
         }
     }
 
@@ -82,6 +90,9 @@ internal class IdeKotlinModulePackageNamesProvider(private val project: Project)
                 }
 
             is KaLibrarySourceModule -> computePackageNames(module.binaryLibrary)
+
+            // We cannot compute the package names for fallback dependencies, as they span almost all libraries in the project.
+            is KaLibraryFallbackDependenciesModule -> null
 
             is KaBuiltinsModule -> StandardClassIds.builtInsPackages.mapTo(mutableSetOf()) { it.asString() }
             else -> null

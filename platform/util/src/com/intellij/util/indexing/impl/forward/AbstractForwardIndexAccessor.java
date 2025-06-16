@@ -8,6 +8,7 @@ import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.ToByteArraySequenceExternalizer;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,17 +32,30 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
     myDataTypeExternalizer = externalizer;
   }
 
-  protected abstract InputDataDiffBuilder<Key, Value> createDiffBuilder(int inputId, @Nullable DataType inputData) throws IOException;
+  protected abstract InputDataDiffBuilder<Key, Value> createDiffBuilder(int inputId,
+                                                                        @Nullable DataType inputData) throws IOException;
 
   protected abstract @Nullable DataType convertToDataType(@NotNull InputData<Key, Value> data);
 
   protected @Nullable ByteArraySequence serializeIndexedData(@Nullable DataType data) throws IOException {
-    if (data == null) return null;
-    return serializeValueToByteSeq(data, myDataTypeExternalizer, getBufferInitialSize(data));
+    if (data == null) {
+      return null;
+    }
+
+    if (myDataTypeExternalizer instanceof ToByteArraySequenceExternalizer) {
+      ToByteArraySequenceExternalizer<DataType> externalizer = (ToByteArraySequenceExternalizer<DataType>)myDataTypeExternalizer;
+      return externalizer.save(data);
+    }
+    else {
+      return serializeValueToByteSeq(data, myDataTypeExternalizer, getBufferInitialSize(data));
+    }
   }
 
   public @Nullable DataType deserializeData(@Nullable ByteArraySequence sequence) throws IOException {
-    if (sequence == null) return null;
+    if (sequence == null) {
+      return null;
+    }
+
     return deserializeFromByteSeq(sequence, myDataTypeExternalizer);
   }
 
@@ -51,7 +65,8 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
 
 
   @Override
-  public @NotNull InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
+  public @NotNull InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId,
+                                                                  @Nullable ByteArraySequence sequence) throws IOException {
     return createDiffBuilder(inputId, deserializeData(sequence));
   }
 
@@ -66,28 +81,34 @@ public abstract class AbstractForwardIndexAccessor<Key, Value, DataType> impleme
   private static final ThreadLocalCachedByteArray ourSpareByteArrayForKeys = new ThreadLocalCachedByteArray();
   private static final ThreadLocalCachedByteArray ourSpareByteArrayForValues = new ThreadLocalCachedByteArray();
 
-  public static <Data> ByteArraySequence serializeKeyToByteSeq(/*must be not null if externalizer doesn't support nulls*/ Data data,
-                                                                                                                          @NotNull DataExternalizer<Data> externalizer,
-                                                                                                                          int bufferInitialSize)
-    throws IOException {
+  public static <Data> ByteArraySequence serializeKeyToByteSeq(
+    /*must be not null if externalizer doesn't support nulls*/
+    Data data,
+    @NotNull DataExternalizer<Data> externalizer,
+    int bufferInitialSize
+  ) throws IOException {
     return serializeToByteSeq(data, externalizer, bufferInitialSize, ourSpareByteArrayForKeys);
   }
 
-  public static <Data> ByteArraySequence serializeValueToByteSeq(/*must be not null if externalizer doesn't support nulls*/ Data data,
-                                                                                                                            @NotNull DataExternalizer<Data> externalizer,
-                                                                                                                            int bufferInitialSize)
-    throws IOException {
+  public static <Data> ByteArraySequence serializeValueToByteSeq(
+    /*must be not null if externalizer doesn't support nulls*/
+    Data data,
+    @NotNull DataExternalizer<Data> externalizer,
+    int bufferInitialSize
+  ) throws IOException {
     return serializeToByteSeq(data, externalizer, bufferInitialSize, ourSpareByteArrayForValues);
   }
 
-  public static @Nullable <Data> ByteArraySequence serializeToByteSeq(Data data,
-                                                                      @NotNull DataExternalizer<Data> externalizer,
-                                                                      int bufferInitialSize,
-                                                                      @NotNull ThreadLocalCachedByteArray cachedBufferToUse)
-    throws IOException {
-    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(s -> {
-      return cachedBufferToUse.getBuffer(s);
-    }, bufferInitialSize);
+  public static @Nullable <Data> ByteArraySequence serializeToByteSeq(
+    Data data,
+    @NotNull DataExternalizer<Data> externalizer,
+    int bufferInitialSize,
+    @NotNull ThreadLocalCachedByteArray cachedBufferToUse
+  ) throws IOException {
+    BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream(
+      cachedBufferToUse::getBuffer,
+      bufferInitialSize
+    );
     DataOutputStream stream = new DataOutputStream(out);
     externalizer.save(stream, data);
     return out.size() == 0 ? null : out.toByteArraySequence();

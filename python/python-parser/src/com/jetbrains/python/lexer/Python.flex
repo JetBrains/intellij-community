@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 
 %%
 
+%public
 %class _PythonLexer
 %implements FlexLexerEx
 
@@ -85,7 +86,7 @@ ONE_TWO_APOS = ('[^\\']) | ('\\[^]) | (''[^\\']) | (''\\[^])
 APOS_STRING_CHAR = [^\\'] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_APOS}
 TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 
-FSTRING_PREFIX = [UuBbCcRr]{0,3}[fF][UuBbCcRr]{0,3}
+FSTRING_PREFIX = [UuBbCcRr]{0,3}[fFtT][UuBbCcRr]{0,3}
 FSTRING_START = {FSTRING_PREFIX} (\"\"\"|'''|\"|')
 FSTRING_QUOTES = (\"{1,3}|'{1,3})
 FSTRING_ESCAPED_LBRACE = "{{"

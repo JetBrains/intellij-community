@@ -119,7 +119,7 @@ class LookupElementFactory(
             }
 
 
-            lookupElement.assignPriority(ItemPriority.GET_OPERATOR)
+            lookupElement.assignPriority(ItemPriority.BRACKET_OPERATOR)
             result += lookupElement
         }
 

@@ -13,15 +13,17 @@ java_library(
   visibility = ["//visibility:public"],
   runtime_deps = [
     ":plugin_resources",
-    "//java/compiler/impl:java-compiler-impl",
-    "//java/compiler/charts:java-compiler-charts",
-    "//java/debugger/impl:java-debugger-impl",
-    "//java/debugger/shared:java-debugger-impl-shared",
-    "//java/debugger/frontend:java-debugger-impl-frontend",
-    "//java/debugger/backend:java-debugger-impl-backend",
+    "//java/compiler/impl",
+    "//java/debugger/impl",
+    "//java/debugger/shared",
+    "//java/debugger/frontend",
+    "//java/debugger/backend",
     "//xml/dom-impl",
     "//java/debugger/memory-agent:java-debugger-memory-agent",
-    "//java/execution/impl:java-execution-impl",
+    "//java/execution/impl",
+    "//java/execution/shared",
+    "//java/execution/backend",
+    "//java/execution/frontend",
     "//platform/external-system-impl:externalSystem-impl",
     "//java/idea-ui:ui",
     "//java/manifest",
@@ -37,6 +39,7 @@ java_library(
     "//plugins/IntelliLang/java-support:java-langInjection",
     "//java/performancePlugin",
     "//java/vcs",
+    "//java/java-syntax:syntax",
   ]
 )
 ### auto-generated section `build intellij.java.plugin` end

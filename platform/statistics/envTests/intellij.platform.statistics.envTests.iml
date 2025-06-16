@@ -9,12 +9,15 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="testcontainers" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
+    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.model" level="project" />
+    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
+    <orderEntry type="library" scope="TEST" name="com.jetbrains.fus.reporting.configuration" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.statistics.uploader" scope="TEST" />
-    <orderEntry type="library" name="ap-validation" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
   </component>

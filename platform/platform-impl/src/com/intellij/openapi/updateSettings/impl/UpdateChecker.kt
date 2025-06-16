@@ -492,11 +492,7 @@ object UpdateChecker {
 
   @JvmStatic
   fun saveDisabledToUpdatePlugins() {
-    runCatching {
-      PluginManagerCore.writePluginIdsToFile(PathManager.getConfigDir().resolve(DISABLED_UPDATE), disabledToUpdate.asSequence())
-    }.onFailure {
-      LOG.error(it)
-    }
+    PluginStringSetFile.writeIdsSafe(PathManager.getConfigDir().resolve(DISABLED_UPDATE), disabledToUpdate, LOG)
   }
 
   @JvmStatic

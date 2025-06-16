@@ -17,10 +17,10 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
   /**
-   * Current {@code VirtualFile} for which the structure is built. If {@code myFile} is {@code null}
+   * Current psi file for which the structure is built. If it is {@code null}
    * then the structure is empty (contains only root node).
    */
-  private PsiFile myFile;
+  private PsiFile myPsiFile;
 
   public CurrentFileTodosTreeStructure(Project project) {
     super(project);
@@ -29,34 +29,34 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
   @Override
   protected void validateCache() {
     super.validateCache();
-    if (myFile != null && !myFile.isValid()) {
-      VirtualFile vFile = myFile.getVirtualFile();
+    if (myPsiFile != null && !myPsiFile.isValid()) {
+      VirtualFile vFile = myPsiFile.getVirtualFile();
       if (vFile.isValid()) {
-        myFile = PsiManager.getInstance(myProject).findFile(vFile);
+        myPsiFile = PsiManager.getInstance(myProject).findFile(vFile);
       }
       else {
-        myFile = null;
+        myPsiFile = null;
       }
     }
   }
 
   @Nullable
   PsiFile getFile() {
-    return myFile;
+    return myPsiFile;
   }
 
   /**
    * Sets {@code file} for which the structure is built. Alter this method is invoked caches should
    * be validated.
    */
-  public void setFile(@Nullable PsiFile file) {
-    myFile = file;
+  public void setFile(@Nullable PsiFile psiFile) {
+    myPsiFile = psiFile;
     myRootElement = createRootElement();
   }
 
   @Override
   public boolean accept(@NotNull PsiFile psiFile) {
-    if (myFile == null || !myFile.equals(psiFile) || !myFile.isValid()) {
+    if (myPsiFile == null || !myPsiFile.equals(psiFile) || !myPsiFile.isValid()) {
       return false;
     }
     return acceptTodoFilter(psiFile);
@@ -68,7 +68,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
     if (element instanceof AbstractTreeNode) {
       element = ((AbstractTreeNode<?>)element).getValue();
     }
-    if (element == myFile) {
+    if (element == myPsiFile) {
       return true;
     }
     else {
@@ -88,11 +88,11 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
 
   @Override
   protected AbstractTreeNode createRootElement() {
-    if (myFile == null) {
+    if (myPsiFile == null) {
       return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
     }
     else {
-      return new SingleFileToDoNode(myProject, myFile, myBuilder);
+      return new SingleFileToDoNode(myProject, myPsiFile, myBuilder);
     }
   }
 }

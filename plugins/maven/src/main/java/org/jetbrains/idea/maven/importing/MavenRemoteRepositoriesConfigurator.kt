@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
@@ -29,9 +30,7 @@ class MavenRemoteRepositoriesConfigurator : MavenWorkspaceConfigurator {
 
   private fun collectRepositoriesForMavenProjects(project: Project,
                                                   mavenProjects: Sequence<MavenProject>): MutableSet<RemoteRepositoryDescription> {
-    val settingsFile = runReadAction {
-      MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.effectiveUserSettingsIoFile
-    }
+    val settingsFile =  MavenSettingsCache.getInstance(project).getEffectiveUserSettingsFile()
 
     return mavenProjects.flatMap { mavenProject ->
       mavenProject.remoteRepositories.asSequence().map { repo ->

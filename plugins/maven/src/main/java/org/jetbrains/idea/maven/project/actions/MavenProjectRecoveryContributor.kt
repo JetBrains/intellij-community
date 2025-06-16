@@ -28,7 +28,7 @@ class MavenProjectRecoveryContributor : ExternalSystemRecoveryContributor {
 
     withContext(Dispatchers.IO) {
       withBackgroundProgress(project, MavenProjectBundle.message("maven.project.clean.restart.connectors"), false) {
-        MavenUtil.restartMavenConnectors(project, true)
+        MavenUtil.shutdownMavenConnectors(project)
       }
     }
   }

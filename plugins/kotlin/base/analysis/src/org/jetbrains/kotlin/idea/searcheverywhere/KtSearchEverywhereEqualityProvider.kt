@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 /**
  * @see org.jetbrains.kotlin.idea.searcheverywhere.NativePsiAndKtLightElementEqualityProviderTest
@@ -64,7 +65,12 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
                 transformation = { this },
                 shouldBeProcessed = { new, old ->
                     // [com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider] is responsible for "new == old" case
-                    (new::class != old::class || new === old) && new.manager.areElementsEquivalent(new, old)
+                    (new::class != old::class || new === old) && (
+                            new.manager?.areElementsEquivalent(new, old)
+                                // TODO: try to get more diagnostics for KTIJ-33858
+                                ?: throw KotlinExceptionWithAttachments("Couldn't get PsiManager for psiElement")
+                                    .withPsiAttachment("element", new)
+                            )
                 },
                 shouldBeReplaced = { new, old -> new is KtElement && old !is KtElement },
             ) ?: reduce(

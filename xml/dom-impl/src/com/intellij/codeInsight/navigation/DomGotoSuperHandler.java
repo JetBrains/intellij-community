@@ -15,9 +15,9 @@ public class DomGotoSuperHandler implements CodeInsightActionHandler {
   @Override
   public void invoke(@NotNull Project project,
                      @NotNull Editor editor,
-                     @NotNull PsiFile file) {
+                     @NotNull PsiFile psiFile) {
 
-    var currentElement = DomUtil.getDomElement(editor, file);
+    var currentElement = DomUtil.getDomElement(editor, psiFile);
     while (currentElement != null) {
       DomElementNavigationProvider provider = getDomElementNavigationProvider(currentElement);
       if (provider != null) {

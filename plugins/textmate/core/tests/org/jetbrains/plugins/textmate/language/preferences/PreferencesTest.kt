@@ -2,6 +2,7 @@ package org.jetbrains.plugins.textmate.language.preferences
 
 import org.jetbrains.plugins.textmate.TestUtil
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
+import org.jetbrains.plugins.textmate.plist.XmlPlistReaderForTests
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -98,20 +99,20 @@ class PreferencesTest {
   }
 
   private fun loadPreferences(bundleName: String): PreferencesRegistry {
-    val preferences = TestUtil.readBundle(bundleName).readPreferences().iterator()
+    val preferences = TestUtil.readBundle(bundleName, XmlPlistReaderForTests()).readPreferences().iterator()
     assertNotNull(preferences)
-    val preferencesRegistry = PreferencesRegistryImpl(TextMateSelectorWeigherImpl())
+    val preferencesRegistryBuilder = PreferencesRegistryBuilder(TextMateSelectorWeigherImpl())
     while (preferences.hasNext()) {
       val next = preferences.next()
-      preferencesRegistry.addPreferences(Preferences(next.scopeName,
-                                                     next.highlightingPairs,
-                                                     next.smartTypingPairs,
-                                                     setOf<TextMateBracePair>(),
-                                                     null,
-                                                     next.indentationRules,
-                                                     next.onEnterRules))
+      preferencesRegistryBuilder.add(Preferences(next.scopeName,
+                                                 next.highlightingPairs,
+                                                 next.smartTypingPairs,
+                                                 setOf(),
+                                                 null,
+                                                 next.indentationRules,
+                                                 next.onEnterRules))
     }
-    return preferencesRegistry
+    return preferencesRegistryBuilder.build()
   }
 
   private fun mergeAll(preferences: List<Preferences>): Preferences {

@@ -5,7 +5,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.java.codeserver.core.JavaPsiSingleFileSourceUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -21,16 +21,19 @@ import java.util.List;
 
 public final class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspectionTool {
   private static void addMoveToPackageFix(@NotNull PsiFile file, String packName, @NotNull List<? super LocalQuickFix> availableFixes) {
-    MoveToPackageFix moveToPackageFix = MoveToPackageFix.createIfAvailable(file, packName);
+    ModCommandAction moveToPackageFix = MoveToPackageModCommandFix.createIfAvailable(file, packName);
     if (moveToPackageFix != null) {
-      availableFixes.add(moveToPackageFix);
+      availableFixes.add(LocalQuickFix.from(moveToPackageFix));
+    } else {
+      MoveToPackageFix oldFix = MoveToPackageFix.createIfAvailable(file, packName);
+      if (oldFix != null) {
+        availableFixes.add(oldFix);
+      }
     }
   }
 
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    // does not work in tests since CodeInsightTestCase copies file into temporary location
-    if (ApplicationManager.getApplication().isUnitTestMode()) return null;
     if (!(file instanceof PsiJavaFile javaFile)) {
       return null;
     }

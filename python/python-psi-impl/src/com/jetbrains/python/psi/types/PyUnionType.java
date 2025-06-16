@@ -86,23 +86,44 @@ public class PyUnionType implements PyType {
     return union(Arrays.asList(type1, type2));
   }
 
+  /**
+   * Constructs a union of the given types.
+   * <p>
+   * If the resulting union would be empty, returns {@code null} (representing Any type).
+   * Consider using {@link #unionOrNever} instead, which falls back to {@link PyNeverType#NEVER}.
+   *
+   * @param members a collection of types to union
+   * @return a PyType representing the union, or null if no valid members
+   */
   public static @Nullable PyType union(@NotNull Collection<@Nullable PyType> members) {
-    if (members.size() < 2) {
-      return ContainerUtil.getFirstItem(members);
-    }
-    else {
-      final LinkedHashSet<PyType> newMembers = new LinkedHashSet<>();
-      for (PyType member : members) {
-        if (member instanceof PyUnionType) {
-          newMembers.addAll(((PyUnionType)member).getMembers());
-        }
-        else {
-          newMembers.add(member);
-        }
-      }
+    return unionOrDefault(members, null);
+  }
 
-      return newMembers.size() < 2 ? ContainerUtil.getFirstItem(newMembers) : new PyUnionType(newMembers);
+  /**
+   * Constructs a union of the given types, falling back to {@link PyNeverType#NEVER} instead of null (Any).
+   *
+   * @param members a collection of types to union
+   * @return a PyType representing the union, or {@link PyNeverType#NEVER} if no valid members
+   */
+  public static @Nullable PyType unionOrNever(@NotNull Collection<@Nullable PyType> members) {
+    return unionOrDefault(members, PyNeverType.NEVER);
+  }
+
+  private static @Nullable PyType unionOrDefault(@NotNull Collection<@Nullable PyType> members, @Nullable PyType defaultResult) {
+    final LinkedHashSet<PyType> newMembers = new LinkedHashSet<>();
+    for (PyType member : members) {
+      if (member instanceof PyNeverType) {
+        defaultResult = PyNeverType.NEVER;
+        continue;
+      }
+      if (member instanceof PyUnionType) {
+        newMembers.addAll(((PyUnionType)member).getMembers());
+      }
+      else {
+        newMembers.add(member);
+      }
     }
+    return newMembers.size() < 2 ? ContainerUtil.getFirstItem(newMembers, defaultResult) : new PyUnionType(newMembers);
   }
 
   public static @Nullable PyType createWeakType(@Nullable PyType type) {
@@ -140,8 +161,8 @@ public class PyUnionType implements PyType {
   /**
    * Excludes all subtypes of type from the union
    *
-   * @param type    type to exclude. If type is a union all subtypes of union members will be excluded from the union
-   *                If type is null only null will be excluded from the union.
+   * @param type type to exclude. If type is a union all subtypes of union members will be excluded from the union
+   *             If type is null only null will be excluded from the union.
    * @return union with excluded types
    */
   public @Nullable PyType exclude(@Nullable PyType type, @NotNull TypeEvalContext context) {

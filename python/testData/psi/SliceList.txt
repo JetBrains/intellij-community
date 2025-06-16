@@ -1,13 +1,13 @@
 PyFile:SliceList.py
   PyExpressionStatement
-    PySliceExpression
+    PySubscriptionExpression
       PyReferenceExpression: a
         PsiElement(Py:IDENTIFIER)('a')
       PsiElement(Py:LBRACKET)('[')
-      PySliceItem
+      PyTupleExpression
         PyReferenceExpression: b1
           PsiElement(Py:IDENTIFIER)('b1')
-      PsiElement(Py:COMMA)(',')
-      PySliceItem
-        PsiElement(Py:COLON)(':')
+        PsiElement(Py:COMMA)(',')
+        PySliceItem
+          PsiElement(Py:COLON)(':')
       PsiElement(Py:RBRACKET)(']')

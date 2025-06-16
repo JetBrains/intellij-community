@@ -2,14 +2,7 @@
 package org.jetbrains.uast.kotlin.psi
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiAnnotationMemberValue
-import com.intellij.psi.PsiAnnotationParameterList
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementFactory
-import com.intellij.psi.PsiIdentifier
-import com.intellij.psi.PsiJavaCodeReferenceElement
-import com.intellij.psi.PsiLiteralExpression
-import com.intellij.psi.PsiNameValuePair
+import com.intellij.psi.*
 import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.impl.compiled.ClsJavaCodeReferenceElementImpl
 import com.intellij.psi.impl.light.LightIdentifier
@@ -17,7 +10,7 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.renderAsSourceCode
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
@@ -30,7 +23,7 @@ import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.internal.analyzeForUast
 
 internal class UastFakeDeserializedSymbolAnnotation(
-    private val parentOriginal: KaSymbolPointer<KaNamedFunctionSymbol>,
+    private val parentOriginal: KaSymbolPointer<KaDeclarationSymbol>,
     private val classId: ClassId?,
     private val parent: KtElement,
 ) : KtLightAbstractAnnotation(parent) {
@@ -90,10 +83,10 @@ internal class UastFakeDeserializedSymbolAnnotation(
         override val kotlinOrigin: KtElement?
             get() = null
 
-        override fun getNameIdentifier(): PsiIdentifier? =
+        override fun getNameIdentifier(): PsiIdentifier =
             LightIdentifier(parent.manager, _name)
 
-        override fun getName(): @NonNls String? =
+        override fun getName(): @NonNls String =
             _name
 
         override fun getValue(): PsiAnnotationMemberValue? =
@@ -121,6 +114,6 @@ internal class UastFakeDeserializedSymbolAnnotation(
     override fun findDeclaredAttributeValue(attributeName: @NonNls String?): PsiAnnotationMemberValue? =
         PsiImplUtil.findDeclaredAttributeValue(this, attributeName)
 
-    override fun <T : PsiAnnotationMemberValue?> setDeclaredAttributeValue(attributeName: @NonNls String?, value: T?): T? =
+    override fun <T : PsiAnnotationMemberValue?> setDeclaredAttributeValue(attributeName: @NonNls String?, value: T?): T =
         cannotModify()
 }

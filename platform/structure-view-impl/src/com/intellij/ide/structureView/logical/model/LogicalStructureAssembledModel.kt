@@ -3,6 +3,7 @@ package com.intellij.ide.structureView.logical.model
 
 import com.intellij.ide.structureView.logical.*
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -22,10 +23,7 @@ class LogicalStructureAssembledModel<T> private constructor(
   }
 
   fun getChildren(): List<LogicalStructureAssembledModel<*>> {
-    if (model is LogicalContainer<*>) {
-      return model.getElements().map { LogicalStructureAssembledModel(project, it, parent) }
-    }
-    return LogicalStructureElementsProvider.getProviders(model!!)
+    val result = LogicalStructureElementsProvider.getProviders(model!!)
       .flatMap { provider ->
         if (provider is ContainerElementsProvider || provider is PropertyElementProvider) {
           listOf(ProvidedLogicalContainer(provider) { provider.getElements(model) })
@@ -36,6 +34,26 @@ class LogicalStructureAssembledModel<T> private constructor(
       }
       .map { LogicalStructureAssembledModel(project, it, this) }
       .toList()
+    if (model is LogicalContainer<*>) {
+      return ContainerUtil.concat(
+        model.getElements().map { LogicalStructureAssembledModel(project, it, parent) },
+        result
+      )
+    }
+    return result
+  }
+
+  internal fun hasSameModelParent(): Boolean {
+    var parentTmp = parent
+    while (parentTmp != null) {
+      val first = parentTmp.model
+      val second = model
+      if (first is ExtendedLogicalObject && first.isTheSameParent(second)
+          || second is ExtendedLogicalObject && second.isTheSameParent(first)
+          || first == second) return true
+      parentTmp = parentTmp.parent
+    }
+    return false
   }
 
   override fun equals(other: Any?): Boolean {

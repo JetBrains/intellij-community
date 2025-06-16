@@ -57,8 +57,7 @@ public final class AnsiTerminalEmulator {
   private AnsiTerminalColor myBackgroundColor;
   private AnsiTerminalColor myForegroundColor;
 
-  private final ClearableLazyValue<String> mySerializedSgrStateProvider = ClearableLazyValue.create(
-    () -> computeAnsiSerializedSGRState());
+  private final ClearableLazyValue<String> mySerializedSgrStateProvider = ClearableLazyValue.create(this::computeAnsiSerializedSGRState);
 
   /**
    * Consumes <a href="https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_(Select_Graphic_Rendition)_parameters">SGR - Select Graphic Rendition</a> control sequence and changes emulator's state accordingly

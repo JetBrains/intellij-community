@@ -27,7 +27,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternValuesIndex;
@@ -84,12 +83,12 @@ final class XmlLanguageInjector implements MultiHostInjector {
         final TextRange textRange = trinity.range();
         ranges.add(textRange.shiftRight(trinity.host().getTextRange().getStartOffset()));
       }
-      InjectorUtils.registerInjection(language, containingFile, list, registrar);
-      InjectorUtils.registerSupport(InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID),
-                                    true, list.get(0).host(), language);
-      if (Boolean.TRUE.equals(unparsableRef.get())) {
-        InjectorUtils.putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-      }
+      InjectorUtils.registerInjection(language, containingFile, list, registrar, it -> {
+        InjectorUtils.registerSupport(it, InjectorUtils.findNotNullInjectionSupport(XmlLanguageInjectionSupport.XML_SUPPORT_ID), true);
+        if (Boolean.TRUE.equals(unparsableRef.get())) {
+          it.frankensteinInjection(true);
+        }
+      });
       return true;
     });
   }

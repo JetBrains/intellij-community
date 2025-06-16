@@ -30,14 +30,14 @@ import java.util.function.Predicate;
 public abstract class TypeIntention extends PyBaseIntentionAction {
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) return false;
     updateText(false);
 
-    if (findOnlySuitableParameter(editor, file) != null) {
+    if (findOnlySuitableParameter(editor, psiFile) != null) {
       return true;
     }
-    if (findOnlySuitableFunction(editor, file) != null) {
+    if (findOnlySuitableFunction(editor, psiFile) != null) {
       updateText(true);
       return true;
     }

@@ -280,13 +280,13 @@ public final class DelegatingPsiElementWithSymbolPointer implements PsiElement, 
 
   @Override
   @ApiStatus.Experimental
-  public @NotNull Collection<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
+  public @NotNull @Unmodifiable Collection<? extends @NotNull PsiSymbolDeclaration> getOwnDeclarations() {
     return myDeclarationElement.getOwnDeclarations();
   }
 
   @Override
   @ApiStatus.Experimental
-  public @NotNull Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
+  public @NotNull @Unmodifiable Collection<? extends @NotNull PsiSymbolReference> getOwnReferences() {
     return myDeclarationElement.getOwnReferences();
   }
 

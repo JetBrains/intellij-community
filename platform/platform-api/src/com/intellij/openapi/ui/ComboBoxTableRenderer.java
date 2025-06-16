@@ -3,9 +3,11 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableCellState;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -136,7 +138,9 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     myCellState.updateRenderer(this);
     customizeComponent(t, table, true);
 
-    SwingUtilities.invokeLater(() -> showPopup(t, row));
+    var popupLocation = table.getCellRect(row, column, true);
+    popupLocation.y += table.getRowHeight();
+    SwingUtilities.invokeLater(() -> showPopup(t, row, new RelativePoint(table, popupLocation.getLocation())));
 
     return this;
   }
@@ -145,14 +149,15 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     return true;
   }
 
-  private void showPopup(T value, int row) {
+  private void showPopup(T value, int row, @NotNull RelativePoint location) {
     List<T> filtered = ContainerUtil.findAll(myValues, t -> isApplicable(t, row));
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(new ListStep<>(this, filtered, value));
     popup.addListener(this);
     popup.setRequestFocus(false);
 
     myPopupRef = new WeakReference<>(popup);
-    popup.showUnderneathOf(this);
+    PopupUtil.setPopupToggleComponent(popup, this);
+    popup.show(location);
   }
 
   @Override

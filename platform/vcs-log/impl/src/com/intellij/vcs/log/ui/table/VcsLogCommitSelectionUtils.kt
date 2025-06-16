@@ -4,6 +4,7 @@
 package com.intellij.vcs.log.ui.table
 
 import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.VcsLogCommitStorageIndex
 
 /**
  * Selection size.
@@ -18,11 +19,11 @@ fun VcsLogCommitSelection.isNotEmpty() = size != 0
  *
  * @param transform function which gets commit details by commit id.
  */
-fun <T> VcsLogCommitSelection.lazyMap(transform: (Int) -> T): List<T> {
+fun <T> VcsLogCommitSelection.lazyMap(transform: (VcsLogCommitStorageIndex) -> T): List<T> {
   return ids.lazyMap(transform)
 }
 
-private fun <T> List<Int>.lazyMap(transform: (Int) -> T): List<T> {
+private fun <T> List<Int>.lazyMap(transform: (VcsLogCommitStorageIndex) -> T): List<T> {
   return object : AbstractList<T>() {
     override fun get(index: Int): T = transform(this@lazyMap[index])
     override val size get() = this@lazyMap.size

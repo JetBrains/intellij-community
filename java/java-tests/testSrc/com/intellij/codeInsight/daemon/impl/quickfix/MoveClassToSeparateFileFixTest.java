@@ -21,8 +21,8 @@ public class MoveClassToSeparateFileFixTest extends LightJavaCodeInsightFixtureT
     myFixture.checkResult("public class Test {}\n");
     PsiClass another = myFixture.findClass("Another");
     assertNotNull(another);
-    PsiFile file = another.getContainingFile();
-    assertEquals("Another.java", file.getName());
-    assertEquals("public class Another {}\n", file.getText());
+    PsiFile psiFile = another.getContainingFile();
+    assertEquals("Another.java", psiFile.getName());
+    assertEquals("public class Another {}\n", psiFile.getText());
   }
 }

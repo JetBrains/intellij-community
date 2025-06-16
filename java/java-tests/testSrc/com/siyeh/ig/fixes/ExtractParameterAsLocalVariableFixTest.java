@@ -77,9 +77,9 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "}",
            "class X {\n" +
            "    void m(int i) {\n" +
-           "        int i1 = i;\n" +
-           "        (i1)++;\n" +
-           "        System.out.println(i1);\n" +
+           "        int j = i;\n" +
+           "        (j)++;\n" +
+           "        System.out.println(j);\n" +
            "    }\n" +
            "}");
   }
@@ -231,7 +231,7 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
 
            "class RecordImpl<C> {\n" +
            "    public <T extends Enum<T>> Map<T, Object> fillEnumObjectMap(Map<T, Object> map, T... selectedColumns) {\n" +
-           "        T[] o = null;\n" +
+           "        T[] columns = null;\n" +
            "        return map;\n" +
            "    }\n" +
            "\n" +

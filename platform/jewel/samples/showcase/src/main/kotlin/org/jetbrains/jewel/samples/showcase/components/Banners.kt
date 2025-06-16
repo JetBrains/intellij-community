@@ -4,7 +4,6 @@ package org.jetbrains.jewel.samples.showcase.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,6 +16,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.markdown.Markdown
+import org.jetbrains.jewel.ui.component.CheckboxRow
 import org.jetbrains.jewel.ui.component.ErrorDefaultBanner
 import org.jetbrains.jewel.ui.component.ErrorInlineBanner
 import org.jetbrains.jewel.ui.component.GroupHeader
@@ -44,7 +45,6 @@ private const val LONG_IPSUM =
         "fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa " +
         "qui officia deserunt mollit anim id est laborum."
 
-@ExperimentalLayoutApi
 @Composable
 public fun Banners() {
     Column {
@@ -110,27 +110,43 @@ public fun Banners() {
 
                 GroupHeader("Inline banner")
 
+                var showTitle by remember { mutableStateOf(false) }
+                var optionalTitle: String? by remember { mutableStateOf(null) }
+                CheckboxRow(
+                    checked = showTitle,
+                    onCheckedChange = {
+                        showTitle = it
+                        optionalTitle = if (showTitle) "I'm an optional title " + LONG_IPSUM else null
+                    },
+                ) {
+                    Text("Show optional title")
+                }
+
                 InformationInlineBanner(
                     icon = null,
                     style = JewelTheme.inlineBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+                    title = optionalTitle,
                 )
 
                 InformationInlineBanner(
                     icon = null,
                     style = JewelTheme.inlineBannerStyle.information,
-                    text = LONG_IPSUM,
+                    title = optionalTitle,
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Info inline no icon Action Icon clicked" }) {
                             Icon(AllIconsKeys.General.Close, "Close button")
                         }
                     },
-                )
+                ) {
+                    Markdown("This is a **Markdown** banner — [watch](https://youtu.be/dQw4w9WgXcQ) `this` out ;)")
+                }
 
                 InformationInlineBanner(
                     icon = null,
                     style = JewelTheme.inlineBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+                    title = optionalTitle,
                     actions = {
                         Link("Action A", onClick = { clickLabel = "Info inline no icon Action A clicked" })
                         Link("Action B", onClick = { clickLabel = "Info inline no icon Action B clicked" })
@@ -141,6 +157,7 @@ public fun Banners() {
                     icon = null,
                     style = JewelTheme.inlineBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+                    title = optionalTitle,
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Info inline no icon Action Icon clicked" }) {
                             Icon(AllIconsKeys.General.Close, "Close button")
@@ -155,10 +172,12 @@ public fun Banners() {
                 InformationInlineBanner(
                     style = JewelTheme.inlineBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+                    title = optionalTitle,
                 )
                 ErrorInlineBanner(
                     style = JewelTheme.inlineBannerStyle.error,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+                    title = optionalTitle,
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Error Inline Action Icon clicked" }) {
                             Icon(AllIconsKeys.General.Close, "Close button")
@@ -168,6 +187,7 @@ public fun Banners() {
                 InformationInlineBanner(
                     style = JewelTheme.inlineBannerStyle.information,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+                    title = optionalTitle,
                     actions = {
                         Link("Action A", onClick = { clickLabel = "Information Inline Action A clicked" })
                         Link("Action B", onClick = { clickLabel = "Information Inline Action B clicked" })
@@ -176,6 +196,7 @@ public fun Banners() {
                 SuccessInlineBanner(
                     style = JewelTheme.inlineBannerStyle.success,
                     text = LONG_IPSUM,
+                    title = optionalTitle,
                     actions = {
                         Link("Action A", onClick = { clickLabel = "Success Inline Action A clicked" })
                         Link("Action B", onClick = { clickLabel = "Success Inline Action B clicked" })
@@ -192,6 +213,7 @@ public fun Banners() {
                 WarningInlineBanner(
                     style = JewelTheme.inlineBannerStyle.warning,
                     text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt",
+                    title = optionalTitle,
                     actions = { Link("Action A", onClick = { clickLabel = "Warning Inline Action A clicked" }) },
                     actionIcons = {
                         IconButton(onClick = { clickLabel = "Error Close Icon clicked" }) {

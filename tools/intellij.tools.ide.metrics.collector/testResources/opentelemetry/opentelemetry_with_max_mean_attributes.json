@@ -1176,7 +1176,7 @@
             {
               "key": "class",
               "type": "string",
-              "value": "com.intellij.javascript.webSymbols.nodejs.PackageJsonWebSymbolsRegistryManagerStartup"
+              "value": "com.intellij.javascript.polySymbols.nodejs.PackageJsonPolySymbolsRegistryManagerStartup"
             }
           ]
         },
@@ -3217,7 +3217,7 @@
         {
           "traceID": "7e0ab35f29539e29cd325b438543cabe",
           "spanID": "0c21f7b6b0a16109",
-          "operationName": "WebSymbolsInspectionsPass",
+          "operationName": "PolySymbolsInspectionsPass",
           "processID": "p1",
           "startTime": 1685978903152000,
           "duration": 15008,
@@ -4015,7 +4015,7 @@
         {
           "traceID": "e7e554bb9ea6c18255ec51ce08fff05d",
           "spanID": "b52ae74af5e1c09f",
-          "operationName": "WebSymbolsInspectionsPass",
+          "operationName": "PolySymbolsInspectionsPass",
           "processID": "p1",
           "startTime": 1685978903953000,
           "duration": 259,

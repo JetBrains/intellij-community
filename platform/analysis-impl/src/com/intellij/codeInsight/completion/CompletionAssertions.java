@@ -91,7 +91,7 @@ public final class CompletionAssertions {
 
   @ApiStatus.Internal
   public static boolean isEditorValid(Editor editor) {
-    return !(editor instanceof EditorWindow) || ((EditorWindow)editor).isValid();
+    return !(editor instanceof EditorWindow editorWindow) || editorWindow.isValid();
   }
 
   private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {

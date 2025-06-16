@@ -28,6 +28,11 @@ elements:
             #language=Markdown
             description: |
               The `secondAttribute` description. And a [link](https://example.com).
+        - attribute:
+            # should not be included in doc_provider and parent content
+            name: notIncludedAttribute
+            renderContexts: [sdk_docs]
+            description: any
       children:
         - element:
             name: first-level-child-1
@@ -191,9 +196,47 @@ elements:
               {title="Custom Title"}
             requirement:
               required: no
+
+        - element:
+            name: elementNotIncludedInDocumentationProvider
+            # should not be rendered in doc_provider
+            renderContexts: [sdk_docs]
+            description: any
+            childrenDescription: any
+            attributes:
+              # should not be rendered as the parent is not included in doc_provider
+              - attribute:
+                  name: attributeIncludedInDocumentationProvider
+                  renderContexts: [doc_provider]
+                  description: any
+            children:
+              - element:
+                  name: childNotIncludedInDocumentationProvider
+                  description: any
+              - element:
+                  # should not be included because the parent is not included in doc_provider
+                  name: childIncludedInDocumentationProvider
+                  renderContexts: [doc_provider]
+                  description: any
+                  attributes:
+                  - attribute:
+                      name: attributeIncludedInDocumentationProvider
+                      renderContexts: [doc_provider]
+                      description: any
+        - element:
+            name: elementWithNotIncludedAttribute
+            # should not be rendered as the parent is not included in doc_provider
+            attributes:
+              - attribute:
+                  # should not be included in doc_provider
+                  name: notIncludedAttribute
+                  renderContexts: [sdk_docs]
+                  description: any
+
         - element:
             name: elementWithChildrenDescription
             description: any
+            #language=Markdown
             childrenDescription: Test children description.
             # should not be rendered
             children:
@@ -202,16 +245,75 @@ elements:
               - element:
                   name: child2
         - element:
+            name: internalElement
+            #language=Markdown
+            description: An internal element description.
+            #language=Markdown
+            internalNote: An internal note for the element.
+            attributes:
+              - attribute:
+                  name: internalAttribute
+                  #language=Markdown
+                  description: Description of `internalAttribute`.
+                  #language=Markdown
+                  internalNote: An internal note for the attribute.
+            children:
+              - element:
+                  name: internalChildElement
+                  #language=Markdown
+                  description: Description of `internalChildElement`.
+        - element:
+            name: elementWithInternalLinks
+            #language=Markdown
+            description: |
+              [First](https://example.com) and [`second` internal](https://example.com){internal}.
+            #language=Markdown
+            internalNote: |
+              An [internal link note](https://example.com/2){internal} for the [`element`](#element:root__any).
+            attributes:
+              - attribute:
+                  name: attributeWithInternalLinks
+                  #language=Markdown
+                  description: |
+                    [First](https://example.com) and [`second` internal](https://example.com){internal}.
+                  #language=Markdown
+                  internalNote: |
+                    An [internal link note](https://example.com/2){internal} for the [`attribute`](#attribute:root__any).
+            children:
+              - element:
+                  name: internalChildElement
+                  #language=Markdown
+                  description: Description of `internalChildElement`.
+        - element:
+            name: xi:include
+            namespace: xmlns:xi="http://www.w3.org/2001/XInclude"
+            #language=Markdown
+            description: Description of `xi:include`.
+            attributes:
+              - attribute:
+                  name: href
+                  #language=Markdown
+                  description: Description of `xi:include@href`.
+            children:
+              - element:
+                  name: xi:fallback
+                  namespace: xmlns:xi="http://www.w3.org/2001/XInclude"
+                  #language=Markdown
+                  description: Description of `xi:fallback`.
+        - element:
             name: "*"
             attributes:
               - attribute:
                   name: attributeUnderWildcard
+                  #language=Markdown
                   description: Description of `attributeUnderWildcard`.
             children:
               - element:
                   name: childUnderWildcard
+                  #language=Markdown
                   description: Description of `childUnderWildcard`.
                   attributes:
                     - attribute:
                         name: attributeOfElementUnderWildcard
+                        #language=Markdown
                         description: Description of `attributeOfElementUnderWildcard`.

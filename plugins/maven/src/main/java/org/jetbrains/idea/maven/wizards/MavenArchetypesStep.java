@@ -56,12 +56,7 @@ public final class MavenArchetypesStep extends ModuleWizardStep implements Dispo
   public MavenArchetypesStep(AbstractMavenModuleBuilder builder, @Nullable StepAdapter step) {
     myBuilder = builder;
     myStep = step;
-    Disposer.register(this, new Disposable() {
-      @Override
-      public void dispose() {
-        myLoadingIcon.dispose();
-      }
-    });
+    Disposer.register(this, myLoadingIcon);
 
     myArchetypesTree = new Tree();
     myArchetypesTree.setModel(new DefaultTreeModel(new DefaultMutableTreeNode()));

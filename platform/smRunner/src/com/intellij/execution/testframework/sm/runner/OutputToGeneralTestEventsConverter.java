@@ -333,6 +333,12 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
+  protected void handleUnexpectedServiceMessage(@NotNull ServiceMessage msg) {
+    String name = msg.getMessageName();
+    logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
+    fireOnUncapturedOutput(msg.asString() + "\n", ProcessOutputTypes.STDOUT);
+  }
+
   private class MyServiceMessageVisitor extends DefaultServiceMessageVisitor {
     private static final @NonNls String TESTING_STARTED = "testingStarted";
     private static final @NonNls String TESTING_FINISHED = "testingFinished";
@@ -604,8 +610,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
           }
         }
         default -> {
-          logProblem(LOG, "Unexpected service message:" + name, myTestFrameworkName);
-          fireOnUncapturedOutput(msg.asString() + "\n", ProcessOutputTypes.STDOUT);
+          handleUnexpectedServiceMessage(msg);
         }
       }
     }

@@ -25,6 +25,7 @@ open class ProjectStructureParser(private val projectRoot: File) {
         "KOTLIN_TEST_JS" to ResolveLibrary.Builder(KotlinTest.JsKotlinTest),
         "KOTLIN_TEST_JVM" to ResolveLibrary.Builder(KotlinTest.JvmKotlinTest),
         "KOTLIN_TEST" to ResolveLibrary.Builder(KotlinTest.JustKotlinTest),
+        "KOTLIN_REFLECT" to ResolveLibrary.Builder(KotlinReflect),
         "JUNIT" to ResolveLibrary.Builder(KotlinTest.Junit)
     )
 

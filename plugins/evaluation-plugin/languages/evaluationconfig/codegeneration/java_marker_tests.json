@@ -18,6 +18,7 @@
     "sourceFile": "../ml-eval/JavaKotlinBaseline/evaluation/actions.json"
   },
   "interpret": {
+    "iterationCount": 1,
     "saveLogs": true,
     "sessionProbability": 1.0,
     "sessionSeed": null,

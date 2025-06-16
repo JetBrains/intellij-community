@@ -26,5 +26,17 @@ open class SteadyUIPanel(private val steadyUi: PanelUI) : JPanel() {
 
 fun <T> ObservableProperty<T>.bind(parentDisposable: Disposable, setter: (T) -> Unit) {
   setter(get())
-  afterChange(parentDisposable) { setter(it) }
+  afterDistinctChange(parentDisposable) {
+    setter(it)
+  }
+}
+
+fun <T> ObservableProperty<T>.afterDistinctChange(parentDisposable: Disposable, setter: (T) -> Unit) {
+  var prevValue: T? = null
+  afterChange(parentDisposable) {
+    if (prevValue == it)
+      return@afterChange
+    prevValue = it
+    setter(it)
+  }
 }

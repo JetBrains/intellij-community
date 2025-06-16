@@ -22,11 +22,19 @@ internal object DeclarationCantBeInlinedFixFactories {
         val function = diagnostic.psi as? KtNamedFunction ?: return@IntentionBased emptyList()
         val containingClass = function.containingClass() ?: return@IntentionBased emptyList()
 
-        when {
-            containingClass.isInterface() -> listOf(ConvertMemberToExtensionFix(function))
-            function.hasModifier(KtTokens.OPEN_KEYWORD) -> listOf(RemoveModifierFixBase(function, KtTokens.OPEN_KEYWORD, false))
-            else -> emptyList()
-        }
+        val fix = when {
+            containingClass.isInterface() -> ConvertMemberToExtensionFix(function)
+            function.hasModifier(KtTokens.OPEN_KEYWORD) ->
+                RemoveModifierFixBase(
+                    element = function,
+                    modifier = KtTokens.OPEN_KEYWORD,
+                    isRedundant = false
+                ).asIntention()
+
+            else -> null
+        } ?: return@IntentionBased emptyList()
+
+        listOf(fix)
     }
 }
 

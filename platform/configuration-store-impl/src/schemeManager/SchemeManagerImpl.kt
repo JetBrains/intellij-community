@@ -1,4 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -63,14 +65,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   private val schemeNameToFileName: SchemeNameToFileName = CURRENT_NAME_CONVERTER,
   private val fileChangeSubscriber: FileChangeSubscriber? = null,
   private val settingsCategory: SettingsCategory = SettingsCategory.OTHER,
-  cs: CoroutineScope? = null,
+  coroutineScope: CoroutineScope? = null,
 ) : SchemeManagerBase<T, MUTABLE_SCHEME>(processor), SafeWriteRequestor, StorageManagerFileWriteRequestor {
   private val isUpdateVfs: Boolean = fileChangeSubscriber != null
 
+  @JvmField
   internal val isOldSchemeNaming: Boolean = schemeNameToFileName == OLD_NAME_CONVERTER
 
   private val isLoadingSchemes = AtomicBoolean()
 
+  @JvmField
   internal val schemeListManager: SchemeListManager<T> = SchemeListManager(this)
 
   internal val schemes: MutableList<T>
@@ -79,9 +83,11 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   @Volatile
   internal var cachedVirtualDirectory: VirtualFile? = null
 
+  @JvmField
   internal val schemeExtension: String
   private val updateExtension: Boolean
 
+  @JvmField
   internal val filesToDelete: MutableSet<String> = ConcurrentCollectionFactory.createConcurrentSet()
 
   init {
@@ -95,7 +101,8 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     if (isUpdateVfs) {
-      cs!!.launch {  // tests should explicitly provide a scope when needed
+      // tests should explicitly provide a scope when needed
+      coroutineScope!!.launch {
         runCatching { refreshVirtualDirectory() }.getOrLogException(LOG)
       }
     }
@@ -289,7 +296,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
   }
 
-  override fun reload(retainFilter: ((scheme: T) -> Boolean)?) {
+  override fun reload() {
     processor.beforeReloaded(this)
     // we must not remove non-persistent (e.g., predefined) schemes, because we cannot load them
     // do not schedule the scheme file removing because we just need to update our runtime state, not state on disk
@@ -298,22 +305,20 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   }
 
   // this method is used to reflect already performed changes on disk, so, `isScheduleToDelete = false` is passed to `retainExternalInfo`
-  internal fun removeExternalizableSchemesFromRuntimeState(retainFilter: ((scheme: T) -> Boolean)? = null) {
-    val effectiveRetainFilter = retainFilter ?: { scheme ->
-      ((scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme)) == SchemeState.NON_PERSISTENT
-    }
-
+  internal fun removeExternalizableSchemesFromRuntimeState() {
     // todo check is bundled/read-only schemes correctly handled
     val list = schemeListManager.data
     val iterator = list.list.iterator()
     for (scheme in iterator) {
-      if (effectiveRetainFilter(scheme)) {
+      if (((scheme as? SerializableScheme)?.schemeState ?: processor.getState(scheme)) == SchemeState.NON_PERSISTENT) {
         continue
       }
 
+      LOG.debug { "removeExternalizableSchemesFromRuntimeState: remove scheme '$scheme'@${System.identityHashCode(scheme)}" }
       activeScheme?.let {
         if (scheme === it) {
           currentPendingSchemeName = processor.getSchemeKey(it)
+          LOG.debug { "removeExternalizableSchemesFromRuntimeState: set currentPendingSchemeName to $currentPendingSchemeName" }
           activeScheme = null
         }
       }
@@ -448,6 +453,16 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     var fileNameWithoutExtension = currentFileNameWithoutExtension
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
       fileNameWithoutExtension = nameGenerator.generateUniqueName(schemeNameToFileName(processor.getSchemeKey(scheme)))
+      if (LOG.isDebugEnabled) {
+        val allSchemes = schemeListManager.schemes
+        LOG.debug("""
+          |Generate scheme file name '$fileNameWithoutExtension' for '$scheme'@${System.identityHashCode(scheme)}
+          | currentFileNameWithoutExtension=$currentFileNameWithoutExtension
+          | externalInfo=$externalInfo
+          | ${allSchemes.size} schemes:
+          | ${allSchemes.joinToString(separator = "\n ") { "${it.name}@${System.identityHashCode(it)} -> ${schemeListManager.getExternalInfo(it)?.fileNameWithoutExtension}" }}
+          |""".trimMargin())
+      }
     }
 
     val fileName = fileNameWithoutExtension + schemeExtension
@@ -701,17 +716,17 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
 
     return null
   }
+}
 
-  private class ErrorCollector {
-    private var error: Throwable? = null
+private class ErrorCollector {
+  private var error: Throwable? = null
 
-    fun addError(error: Throwable) {
-      if (error is CancellationException || error is ProcessCanceledException) {
-        throw error
-      }
-      this.error = addSuppressed(this.error, error)
+  fun addError(error: Throwable) {
+    if (error is CancellationException || error is ProcessCanceledException) {
+      throw error
     }
-
-    fun getError(): Throwable? = error
+    this.error = addSuppressed(this.error, error)
   }
+
+  fun getError(): Throwable? = error
 }

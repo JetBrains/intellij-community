@@ -2,8 +2,8 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.python.community.helpersLocator.PythonHelpersLocator;
 import com.intellij.util.LazyInitializer;
-import com.jetbrains.python.PythonHelpersLocator;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -11,7 +11,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,7 +21,7 @@ public final class PyStdlibUtil {
   private PyStdlibUtil() {
   }
 
-  public static @Nullable Collection<String> getPackages() {
+  public static @Nullable Set<String> getPackages() {
     return PACKAGES.get();
   }
 

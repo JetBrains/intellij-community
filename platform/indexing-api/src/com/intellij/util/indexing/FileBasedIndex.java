@@ -69,6 +69,9 @@ public abstract class FileBasedIndex {
     throw new UnsupportedOperationException();
   }
 
+  @ApiStatus.Internal
+  public abstract @Nullable IdFilter projectIndexableFiles(@Nullable Project project);
+
   @Internal
   public void onProjectClosing(@NotNull Project project) {
     throw new UnsupportedOperationException();
@@ -119,19 +122,19 @@ public abstract class FileBasedIndex {
     requestRebuild(indexId, new RebuildRequestedByUserAction(PluginUtil.getInstance().findPluginId(new Throwable())));
   }
 
-  public abstract @NotNull <K, V> List<V> getValues(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter);
+  public abstract @NotNull <K, V> @Unmodifiable List<V> getValues(@NotNull ID<K, V> indexId, @NotNull K dataKey, @NotNull GlobalSearchScope filter);
 
-  public abstract @NotNull <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
-                                                                             @NotNull K dataKey,
-                                                                             @NotNull GlobalSearchScope filter);
+  public abstract @NotNull <K, V> @Unmodifiable Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
+                                                                                           @NotNull K dataKey,
+                                                                                           @NotNull GlobalSearchScope filter);
 
   /**
    * @return lazily reified iterator of VirtualFile's.
    */
   @ApiStatus.Experimental
   public abstract @NotNull <K, V> Iterator<VirtualFile> getContainingFilesIterator(@NotNull ID<K, V> indexId,
-                                                                          @NotNull K dataKey,
-                                                                          @NotNull GlobalSearchScope filter);
+                                                                                   @NotNull K dataKey,
+                                                                                   @NotNull GlobalSearchScope filter);
 
   /**
    * @return {@code false} if ValueProcessor.process() returned {@code false}; {@code true} otherwise or if ValueProcessor was not called at all
@@ -187,7 +190,7 @@ public abstract class FileBasedIndex {
    *
    * @see FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()
    */
-  public abstract @NotNull <K> Collection<K> getAllKeys(@NotNull ID<K, ?> indexId, @NotNull Project project);
+  public abstract @NotNull @Unmodifiable <K> Collection<K> getAllKeys(@NotNull ID<K, ?> indexId, @NotNull Project project);
 
   /**
    * DO NOT CALL DIRECTLY IN CLIENT CODE
@@ -247,6 +250,9 @@ public abstract class FileBasedIndex {
    */
   public abstract <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @Nullable Project project);
 
+  /**
+   * If {@link FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()} is false {@link IdFilter} will be ignored.
+   */
   public <K> boolean processAllKeys(@NotNull ID<K, ?> indexId, @NotNull Processor<? super K> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     return processAllKeys(indexId, processor, scope.getProject());
   }
@@ -302,7 +308,7 @@ public abstract class FileBasedIndex {
     private final @Nullable Condition<? super V> valueChecker;
 
     public AllKeysQuery(@NotNull ID<K, V> id,
-                        @NotNull Collection<? extends K> keys,
+                        @NotNull @Unmodifiable Collection<? extends K> keys,
                         @Nullable Condition<? super V> checker) {
       indexId = id;
       dataKeys = keys;
@@ -313,7 +319,7 @@ public abstract class FileBasedIndex {
       return indexId;
     }
 
-    public @NotNull Collection<? extends K> getDataKeys() {
+    public @NotNull @Unmodifiable Collection<? extends K> getDataKeys() {
       return dataKeys;
     }
 

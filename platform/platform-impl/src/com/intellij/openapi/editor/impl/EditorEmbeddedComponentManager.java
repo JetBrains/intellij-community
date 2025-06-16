@@ -196,7 +196,7 @@ public final class EditorEmbeddedComponentManager {
 
     @Override
     public int calcHeightInPixels(@NotNull Inlay inlay) {
-      return Math.max(getHeight(), 0);
+      return Math.max(getPreferredHeight(), 0);
     }
 
     @Override
@@ -467,7 +467,7 @@ public final class EditorEmbeddedComponentManager {
       private ResizeInfo info;
 
       @Override
-      public void mouseMoved(EditorMouseEvent e) {
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
         ResizeInfo info = getInfoForResizeUnder(e.getMouseEvent().getPoint());
         if (info == null) {
           resetCursor();

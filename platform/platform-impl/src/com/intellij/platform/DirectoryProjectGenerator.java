@@ -67,13 +67,6 @@ public interface DirectoryProjectGenerator<T> {
                        @NotNull T settings,
                        @NotNull Module module);
 
-  /**
-   * Configure project when it's added to workspace as module.
-   */
-  default void configureModule(@NotNull Module module,
-                               @NotNull VirtualFile baseDir,
-                               @NotNull T settings) { }
-
   @NotNull
   ValidationResult validate(@NotNull String baseDirPath);
 }

@@ -31,7 +31,7 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
 
     private val experimentalFeaturesPanel: ExperimentalFeaturesPanel? = ExperimentalFeaturesPanel.createPanelIfShouldBeShown()
 
-    private val kotlinPluginKindSwitcherController: KotlinPluginKindSwitcherController? =
+    private val kotlinPluginKindSwitcherController: KotlinPluginKindSwitcherController =
         KotlinPluginKindSwitcherController.createIfPluginSwitchIsPossible()
 
     override fun getId(): String = ID
@@ -55,7 +55,7 @@ internal class KotlinLanguageConfiguration : SearchableConfigurable, Configurabl
         kotlinPluginKindSwitcherController?.applyChanges()
     }
 
-    override fun createComponent(): JComponent? {
+    override fun createComponent(): JComponent {
         return panel {
             kotlinPluginKindSwitcherController?.let { kotlinPluginKindSwitcherController ->
                 row {

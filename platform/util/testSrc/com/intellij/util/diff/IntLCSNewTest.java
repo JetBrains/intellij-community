@@ -17,8 +17,6 @@ package com.intellij.util.diff;
 
 import junit.framework.TestCase;
 
-import java.util.BitSet;
-
 public class IntLCSNewTest extends TestCase {
   public void testEqual() {
     BitSet[] change = buildChange(new int[]{1, 2, 3}, new int[]{1, 2, 3});

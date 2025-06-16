@@ -1,0 +1,34 @@
+<html>
+<body>
+Reports all strings with an interpolation prefix.
+
+<p>
+    The quick for the inspection fix removes the interpolation prefix, updates interpolation entries and escapes unsafe dollar characters.
+</p>
+
+<p><b>Example:</b></p>
+<pre><code>
+val foo = $$"""
+{
+    "foo": $ref,
+    "bar": {
+        "baz": "$20"
+        "boo": "$${100 + 200}"
+    }
+}
+"""
+</code></pre>
+<p><b>After the quick fix is applied:</b></p>
+<pre><code>
+val foo = """
+{
+    "foo": ${'$'}ref,
+    "bar": {
+        "baz": "$20"
+        "boo": "${100 + 200}"
+    }
+}
+"""
+</code></pre>
+</body>
+</html>

@@ -6,6 +6,7 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,7 +55,7 @@ public final class SingleRowPassInfo extends LayoutPassInfo {
   }
 
   @Override
-  public Rectangle getHeaderRectangle() {
+  public @NotNull Rectangle getHeaderRectangle() {
     return (Rectangle)tabRectangle.clone();
   }
 

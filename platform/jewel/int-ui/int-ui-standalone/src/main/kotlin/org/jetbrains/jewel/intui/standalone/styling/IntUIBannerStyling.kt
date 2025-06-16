@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.intui.standalone.styling
 
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -17,7 +16,6 @@ public val DefaultBannerStyles.Companion.Default: IntUiDefaultBannerStylesFactor
     get() = IntUiDefaultBannerStylesFactory
 
 public object IntUiDefaultBannerStylesFactory {
-    @Composable
     public fun light(
         information: DefaultBannerStyle = DefaultBannerStyle.Information.light(),
         success: DefaultBannerStyle = DefaultBannerStyle.Success.light(),
@@ -26,7 +24,6 @@ public object IntUiDefaultBannerStylesFactory {
     ): DefaultBannerStyles =
         DefaultBannerStyles(information = information, success = success, warning = warning, error = error)
 
-    @Composable
     public fun dark(
         information: DefaultBannerStyle = DefaultBannerStyle.Information.dark(),
         success: DefaultBannerStyle = DefaultBannerStyle.Success.dark(),
@@ -41,13 +38,11 @@ public val DefaultBannerStyle.Companion.Information: IntUiDefaultInformationBann
     get() = IntUiDefaultInformationBannerStyleFactory
 
 public object IntUiDefaultInformationBannerStyleFactory {
-    @Composable
     public fun light(
         colors: BannerColors = BannerColors.Information.light(),
         metrics: BannerMetrics = BannerMetrics.default(),
     ): DefaultBannerStyle = DefaultBannerStyle(colors = colors, metrics = metrics)
 
-    @Composable
     public fun dark(
         colors: BannerColors = BannerColors.Information.dark(),
         metrics: BannerMetrics = BannerMetrics.default(),
@@ -58,13 +53,11 @@ public val BannerColors.Companion.Information: IntUiInformationBannerColorFactor
     get() = IntUiInformationBannerColorFactory
 
 public object IntUiInformationBannerColorFactory {
-    @Composable
     public fun light(
         background: Color = IntUiLightTheme.colors.blue(13),
         border: Color = IntUiLightTheme.colors.blue(10),
     ): BannerColors = BannerColors(background = background, border = border)
 
-    @Composable
     public fun dark(
         background: Color = IntUiDarkTheme.colors.blue(1),
         border: Color = IntUiDarkTheme.colors.blue(3),
@@ -78,13 +71,11 @@ public val DefaultBannerStyle.Companion.Success: IntUiDefaultSuccessBannerStyleF
     get() = IntUiDefaultSuccessBannerStyleFactory
 
 public object IntUiDefaultSuccessBannerStyleFactory {
-    @Composable
     public fun light(
         colors: BannerColors = BannerColors.Success.light(),
         metrics: BannerMetrics = BannerMetrics.default(),
     ): DefaultBannerStyle = DefaultBannerStyle(colors = colors, metrics = metrics)
 
-    @Composable
     public fun dark(
         colors: BannerColors = BannerColors.Success.dark(),
         metrics: BannerMetrics = BannerMetrics.default(),
@@ -92,13 +83,11 @@ public object IntUiDefaultSuccessBannerStyleFactory {
 }
 
 public object IntUiSuccessBannerColorFactory {
-    @Composable
     public fun light(
         background: Color = IntUiLightTheme.colors.green(11),
         border: Color = IntUiLightTheme.colors.green(9),
     ): BannerColors = BannerColors(background = background, border = border)
 
-    @Composable
     public fun dark(
         background: Color = IntUiDarkTheme.colors.green(1),
         border: Color = IntUiDarkTheme.colors.green(3),
@@ -112,13 +101,11 @@ public val DefaultBannerStyle.Companion.Warning: IntUiDefaultWarningBannerStyleF
     get() = IntUiDefaultWarningBannerStyleFactory
 
 public object IntUiDefaultWarningBannerStyleFactory {
-    @Composable
     public fun light(
         colors: BannerColors = BannerColors.Warning.light(),
         metrics: BannerMetrics = BannerMetrics.default(),
     ): DefaultBannerStyle = DefaultBannerStyle(colors = colors, metrics = metrics)
 
-    @Composable
     public fun dark(
         colors: BannerColors = BannerColors.Warning.dark(),
         metrics: BannerMetrics = BannerMetrics.default(),
@@ -129,13 +116,11 @@ public val BannerColors.Companion.Warning: IntUiWarningBannerColorFactory
     get() = IntUiWarningBannerColorFactory
 
 public object IntUiWarningBannerColorFactory {
-    @Composable
     public fun light(
         background: Color = IntUiLightTheme.colors.yellow(10),
         border: Color = IntUiLightTheme.colors.yellow(6),
     ): BannerColors = BannerColors(background = background, border = border)
 
-    @Composable
     public fun dark(
         background: Color = IntUiDarkTheme.colors.yellow(1),
         border: Color = IntUiDarkTheme.colors.yellow(2),
@@ -149,13 +134,11 @@ public val DefaultBannerStyle.Companion.Error: IntUiDefaultErrorBannerStyleFacto
     get() = IntUiDefaultErrorBannerStyleFactory
 
 public object IntUiDefaultErrorBannerStyleFactory {
-    @Composable
     public fun light(
         colors: BannerColors = BannerColors.Error.light(),
         metrics: BannerMetrics = BannerMetrics.default(),
     ): DefaultBannerStyle = DefaultBannerStyle(colors = colors, metrics = metrics)
 
-    @Composable
     public fun dark(
         colors: BannerColors = BannerColors.Error.dark(),
         metrics: BannerMetrics = BannerMetrics.default(),
@@ -166,13 +149,11 @@ public val BannerColors.Companion.Error: IntUiErrorBannerColorFactory
     get() = IntUiErrorBannerColorFactory
 
 public object IntUiErrorBannerColorFactory {
-    @Composable
     public fun light(
         background: Color = IntUiLightTheme.colors.red(12),
         border: Color = IntUiLightTheme.colors.red(9),
     ): BannerColors = BannerColors(background = background, border = border)
 
-    @Composable
     public fun dark(
         background: Color = IntUiDarkTheme.colors.red(1),
         border: Color = IntUiDarkTheme.colors.red(3),
@@ -185,7 +166,6 @@ public val InlineBannerStyles.Companion.Default: IntUiInlineBannerStylesFactory
     get() = IntUiInlineBannerStylesFactory
 
 public object IntUiInlineBannerStylesFactory {
-    @Composable
     public fun light(
         information: InlineBannerStyle = InlineBannerStyle.Information.light(),
         success: InlineBannerStyle = InlineBannerStyle.Success.light(),
@@ -194,7 +174,6 @@ public object IntUiInlineBannerStylesFactory {
     ): InlineBannerStyles =
         InlineBannerStyles(information = information, success = success, warning = warning, error = error)
 
-    @Composable
     public fun dark(
         information: InlineBannerStyle = InlineBannerStyle.Information.dark(),
         success: InlineBannerStyle = InlineBannerStyle.Success.dark(),
@@ -211,13 +190,11 @@ public val InlineBannerStyle.Companion.Information: IntUiInlineInformationBanner
     get() = IntUiInlineInformationBannerStyleFactory
 
 public object IntUiInlineInformationBannerStyleFactory {
-    @Composable
     public fun light(
         colors: BannerColors = BannerColors.Information.light(),
         metrics: BannerMetrics = BannerMetrics.default(),
     ): InlineBannerStyle = InlineBannerStyle(colors = colors, metrics = metrics)
 
-    @Composable
     public fun dark(
         colors: BannerColors = BannerColors.Information.dark(),
         metrics: BannerMetrics = BannerMetrics.default(),
@@ -231,13 +208,11 @@ public val InlineBannerStyle.Companion.Success: IntUiInlineSuccessBannerStyleFac
     get() = IntUiInlineSuccessBannerStyleFactory
 
 public object IntUiInlineSuccessBannerStyleFactory {
-    @Composable
     public fun light(
         colors: BannerColors = BannerColors.Success.light(),
         metrics: BannerMetrics = BannerMetrics.default(),
     ): InlineBannerStyle = InlineBannerStyle(colors = colors, metrics = metrics)
 
-    @Composable
     public fun dark(
         colors: BannerColors = BannerColors.Success.dark(),
         metrics: BannerMetrics = BannerMetrics.default(),
@@ -254,13 +229,11 @@ public val InlineBannerStyle.Companion.Warning: IntUiInlineWarningBannerStyleFac
     get() = IntUiInlineWarningBannerStyleFactory
 
 public object IntUiInlineWarningBannerStyleFactory {
-    @Composable
     public fun light(
         colors: BannerColors = BannerColors.Warning.light(),
         metrics: BannerMetrics = BannerMetrics.default(),
     ): InlineBannerStyle = InlineBannerStyle(colors = colors, metrics = metrics)
 
-    @Composable
     public fun dark(
         colors: BannerColors = BannerColors.Warning.dark(),
         metrics: BannerMetrics = BannerMetrics.default(),
@@ -274,13 +247,11 @@ public val InlineBannerStyle.Companion.Error: IntUiInlineErrorBannerStyleFactory
     get() = IntUiInlineErrorBannerStyleFactory
 
 public object IntUiInlineErrorBannerStyleFactory {
-    @Composable
     public fun light(
         colors: BannerColors = BannerColors.Error.light(),
         metrics: BannerMetrics = BannerMetrics.default(),
     ): InlineBannerStyle = InlineBannerStyle(colors = colors, metrics = metrics)
 
-    @Composable
     public fun dark(
         colors: BannerColors = BannerColors.Error.dark(),
         metrics: BannerMetrics = BannerMetrics.default(),

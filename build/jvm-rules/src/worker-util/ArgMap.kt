@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.bazel.jvm
+package org.jetbrains.bazel.jvm.util
 
 import java.util.*
 
@@ -29,8 +29,6 @@ class ArgMap<T : Enum<T>> internal constructor(private val map: EnumMap<T, Mutab
       else -> throw IllegalArgumentException("$key should have a single value: $value")
     }
   }
-
-  fun mandatory(key: T): List<String> = requireNotNull(map[key]) { "$key is not optional" }
 
   fun optional(key: T): List<String>? = map[key]
 

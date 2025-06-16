@@ -2,7 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.idea.AppMode
-import com.intellij.util.lang.ZipFilePool
+import com.intellij.util.PlatformUtils
+import com.intellij.util.lang.ZipEntryResolverPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import java.nio.file.Path
@@ -10,27 +11,31 @@ import java.nio.file.Path
 internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
   // this property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of this module
   override val currentModeId: String
-    get() = if (AppMode.isRemoteDevHost()) "backend" else "monolith"
+    get() = when {
+      AppMode.isRemoteDevHost() -> "backend"
+      PlatformUtils.isJetBrainsClient() -> "frontend" //this should be removed after all tests starts using the module-based loader to run the frontend process 
+      else -> "monolith"
+    }
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
   }
 
   override fun loadPluginDescriptors(
     scope: CoroutineScope,
-    context: DescriptorListLoadingContext,
+    loadingContext: PluginDescriptorLoadingContext,
     customPluginDir: Path,
     bundledPluginDir: Path?,
     isUnitTestMode: Boolean,
     isRunningFromSources: Boolean,
-    zipFilePool: ZipFilePool,
+    zipPool: ZipEntryResolverPool,
     mainClassLoader: ClassLoader,
-  ): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  ): Deferred<List<DiscoveredPluginsList>> {
     return scope.loadPluginDescriptorsImpl(
-      context = context,
+      loadingContext = loadingContext,
       isUnitTestMode = isUnitTestMode,
       isRunningFromSources = isRunningFromSources,
       mainClassLoader = mainClassLoader,
-      zipFilePool = zipFilePool,
+      zipPool = zipPool,
       customPluginDir = customPluginDir,
       bundledPluginDir = bundledPluginDir,
     )

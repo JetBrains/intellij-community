@@ -14,6 +14,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.Maven3SpyOutputExtractor;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.Maven4SpyOutputExtractor;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenSpyOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenTaskFailedResultImpl;
 
@@ -33,18 +35,21 @@ public class MavenLogOutputParser implements BuildOutputParser {
 
   public MavenLogOutputParser(@NotNull MavenRunConfiguration runConfiguration,
                               @NotNull ExternalSystemTaskId taskId,
-                              @NotNull List<MavenLoggedEventParser> registeredEvents) {
-    this(runConfiguration, taskId, Function.identity(), registeredEvents);
+                              @NotNull List<MavenLoggedEventParser> registeredEvents,
+                              boolean useWrapperedLogging) {
+    this(runConfiguration, taskId, Function.identity(), registeredEvents, useWrapperedLogging);
   }
 
   public MavenLogOutputParser(@NotNull MavenRunConfiguration runConfiguration,
                               @NotNull ExternalSystemTaskId taskId,
                               @NotNull Function<String, String> targetFileMapper,
-                              @NotNull List<MavenLoggedEventParser> registeredEvents) {
+                              @NotNull List<MavenLoggedEventParser> registeredEvents,
+                              boolean useWrapperedLogging) {
     myRegisteredEvents = registeredEvents;
     myTaskId = taskId;
     myParsingContext = new MavenParsingContext(runConfiguration, taskId, targetFileMapper);
-    mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
+    mavenSpyOutputParser =
+      new MavenSpyOutputParser(myParsingContext, useWrapperedLogging ? new Maven4SpyOutputExtractor() : new Maven3SpyOutputExtractor());
   }
 
   public synchronized void finish(Consumer<? super BuildEvent> messageConsumer) {
@@ -75,7 +80,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     if (line == null || StringUtil.isEmptyOrSpaces(line)) {
       return false;
     }
-    if (MavenSpyOutputParser.isSpyLog(line)) {
+    if (mavenSpyOutputParser.isSpyLog(line)) {
       mavenSpyOutputParser.processLine(line, messageConsumer);
       if (myParsingContext.getSessionEnded()) completeParsers(messageConsumer);
       return true;

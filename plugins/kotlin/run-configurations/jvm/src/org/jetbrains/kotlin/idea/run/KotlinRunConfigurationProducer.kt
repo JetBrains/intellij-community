@@ -83,6 +83,7 @@ class KotlinRunConfigurationProducer : LazyRunConfigurationProducer<KotlinRunCon
     }
 
     companion object {
+        @ApiStatus.ScheduledForRemoval
         @Deprecated(
             "Use 'KotlinMainFunctionDetector.findMainOwner()' instead",
             ReplaceWith(

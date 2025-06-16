@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -6,7 +6,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -15,10 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.JBSplitter;
-import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailController;
 import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
@@ -29,19 +25,15 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.breakpoints.XBreakpoint;
-import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
+import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointCustomGroup;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import com.intellij.xdebugger.impl.rpc.XBreakpointId;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +49,8 @@ import java.util.List;
 public class BreakpointsDialog extends DialogWrapper {
   private final @NotNull Project myProject;
 
-  private final Object myInitialBreakpoint;
-  private final List<BreakpointPanelProvider<?>> myBreakpointsPanelProviders;
+  private final @Nullable XBreakpointId myInitialBreakpointId;
+  private final XBreakpointManagerProxy myBreakpointManager;
 
   private BreakpointItemsTreeController myTreeController;
 
@@ -93,15 +85,17 @@ public class BreakpointsDialog extends DialogWrapper {
   private final Disposable myListenerDisposable = Disposer.newDisposable();
   private final List<ToggleAction> myToggleRuleActions = new ArrayList<>();
 
-  private XBreakpointManagerImpl getBreakpointManager() {
-    return (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
+  private XBreakpointManagerProxy getBreakpointManager() {
+    return myBreakpointManager;
   }
 
-  protected BreakpointsDialog(@NotNull Project project, Object breakpoint, @NotNull List<BreakpointPanelProvider<?>> providers) {
+  protected BreakpointsDialog(@NotNull Project project,
+                              @Nullable XBreakpointId initialBreakpointId,
+                              XBreakpointManagerProxy breakpointManager) {
     super(project);
     myProject = project;
-    myBreakpointsPanelProviders = providers;
-    myInitialBreakpoint = breakpoint;
+    myInitialBreakpointId = initialBreakpointId;
+    myBreakpointManager = breakpointManager;
 
     collectGroupingRules();
 
@@ -156,13 +150,9 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   void collectItems() {
-    if (!myBreakpointsPanelProviders.isEmpty()) {
-      disposeItems();
-      myBreakpointItems.clear();
-      for (BreakpointPanelProvider panelProvider : myBreakpointsPanelProviders) {
-        panelProvider.provideBreakpointItems(myProject, myBreakpointItems);
-      }
-    }
+    disposeItems();
+    myBreakpointItems.clear();
+    myBreakpointItems.addAll(getBreakpointManager().getAllBreakpointItems());
   }
 
   void initSelection(Collection<BreakpointItem> breakpoints) {
@@ -188,7 +178,8 @@ public class BreakpointsDialog extends DialogWrapper {
         });
       myTreeController.selectFirstBreakpointItem();
     }
-    selectBreakpoint(myInitialBreakpoint, false);
+
+    selectBreakpoint(myInitialBreakpointId, false);
   }
 
   @Override
@@ -302,7 +293,7 @@ public class BreakpointsDialog extends DialogWrapper {
           res.add(new SetAsDefaultGroupAction((XBreakpointCustomGroup)((BreakpointsGroupNode<?>)component).getGroup()));
         }
         if (tree.getSelectionCount() == 1 && component instanceof BreakpointItemNode) {
-          res.add(new EditDescriptionAction((XBreakpointBase)((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
+          res.add(new EditDescriptionAction(((BreakpointItemNode)component).getBreakpointItem().getBreakpoint()));
         }
         return res.toArray(AnAction.EMPTY_ARRAY);
       }
@@ -318,18 +309,24 @@ public class BreakpointsDialog extends DialogWrapper {
 
     registerEditSourceAction(tree);
 
-    DefaultActionGroup breakpointTypes = XBreakpointUtil.breakpointTypes()
-      .filter(XBreakpointType::isAddBreakpointButtonVisible)
-      .map(AddXBreakpointAction::new)
-      .toListAndThen(DefaultActionGroup::new);
+    List<AddXBreakpointAction> breakpointTypeActions = getBreakpointManager().getAllBreakpointTypes().stream()
+      .filter(XBreakpointTypeProxy::isAddBreakpointButtonVisible)
+      .map(type -> new AddXBreakpointAction(
+        myProject, type,
+        () -> {
+          saveCurrentItem();
+          return Unit.INSTANCE;
+        },
+        (breakpointId) -> {
+          selectBreakpoint(breakpointId, true);
+          return Unit.INSTANCE;
+        }))
+      .toList();
 
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(tree).
       setToolbarPosition(ActionToolbarPosition.TOP).
       setPanelBorder(JBUI.Borders.empty()).
-      setAddAction(button -> JBPopupFactory.getInstance()
-        .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
-                                JBPopupFactory.ActionSelectionAid.NUMBERING, false)
-        .show(button.getPreferredPopupPoint())).
+      setAddAction(createAddActionRunnable(breakpointTypeActions)).
       setRemoveAction(button -> myTreeController.removeSelectedBreakpoints(myProject)).
       setRemoveActionUpdater(e -> {
         for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
@@ -348,9 +345,28 @@ public class BreakpointsDialog extends DialogWrapper {
 
     initSelection(myBreakpointItems);
 
-    myBreakpointsPanelProviders.forEach(provider -> provider.addListener(myRebuildAlarm::cancelAndRequest, myProject, myListenerDisposable));
+    myBreakpointManager.subscribeOnBreakpointsChanges(myListenerDisposable, () -> {
+      myRebuildAlarm.cancelAndRequest();
+      return Unit.INSTANCE;
+    });
 
     return decoratorPanel;
+  }
+
+  private static @Nullable AnActionButtonRunnable createAddActionRunnable(List<AddXBreakpointAction> breakpointTypeActions) {
+    DefaultActionGroup breakpointTypes = new DefaultActionGroup(breakpointTypeActions);
+
+    AnActionButtonRunnable addAction;
+    if (breakpointTypeActions.isEmpty()) {
+      addAction = null;
+    }
+    else {
+      addAction = button -> JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, breakpointTypes, DataManager.getInstance().getDataContext(button.getContextComponent()),
+                                JBPopupFactory.ActionSelectionAid.NUMBERING, false)
+        .show(button.getPreferredPopupPoint());
+    }
+    return addAction;
   }
 
   private void navigate(final boolean requestFocus) {
@@ -421,25 +437,6 @@ public class BreakpointsDialog extends DialogWrapper {
     }
   }
 
-  private class AddXBreakpointAction extends AnAction implements DumbAware {
-    private final XBreakpointType<?, ?> myType;
-
-    AddXBreakpointAction(XBreakpointType<?, ?> type) {
-      myType = type;
-      getTemplatePresentation().setIcon(type.getEnabledIcon());
-      getTemplatePresentation().setText(type.getTitle());
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      saveCurrentItem();
-      XBreakpoint<?> breakpoint = myType.addBreakpoint(myProject, null);
-      if (breakpoint != null) {
-        selectBreakpoint(breakpoint, true);
-      }
-    }
-  }
-
   @Override
   public void toFront() {
     Window window = getWindow();
@@ -449,13 +446,13 @@ public class BreakpointsDialog extends DialogWrapper {
     super.toFront();
   }
 
-  public boolean selectBreakpoint(Object breakpoint, boolean update) {
+  public boolean selectBreakpoint(@Nullable XBreakpointId breakpointId, boolean update) {
     if (update) {
       updateBreakpoints();
     }
-    if (breakpoint != null) {
+    if (breakpointId != null) {
       for (BreakpointItem item : myBreakpointItems) {
-        if (item.getBreakpoint() == breakpoint) {
+        if (Objects.equals(item.getId(), breakpointId)) {
           myTreeController.selectBreakpointItem(item, null);
           return true;
         }
@@ -491,9 +488,9 @@ public class BreakpointsDialog extends DialogWrapper {
         }
       }
       for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
-        Object breakpoint = item.getBreakpoint();
-        if (breakpoint instanceof XBreakpointBase) {
-          ((XBreakpointBase<?, ?, ?>)breakpoint).setGroup(groupName);
+        XBreakpointProxy breakpoint = item.getBreakpoint();
+        if (breakpoint != null) {
+          breakpoint.setGroup(groupName);
         }
       }
       myTreeController.rebuildTree(myBreakpointItems);
@@ -518,9 +515,9 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private final class EditDescriptionAction extends AnAction {
-    private final XBreakpointBase myBreakpoint;
+    private final XBreakpointProxy myBreakpoint;
 
-    private EditDescriptionAction(XBreakpointBase breakpoint) {
+    private EditDescriptionAction(XBreakpointProxy breakpoint) {
       super(XDebuggerBundle.message("breakpoints.dialog.edit.description"));
       myBreakpoint = breakpoint;
     }

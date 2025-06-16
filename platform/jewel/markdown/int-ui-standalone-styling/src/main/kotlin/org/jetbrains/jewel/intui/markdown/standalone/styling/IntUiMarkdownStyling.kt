@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
@@ -38,17 +39,13 @@ import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Ordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.List.Unordered
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.Paragraph
 import org.jetbrains.jewel.markdown.rendering.MarkdownStyling.ThematicBreak
+import org.jetbrains.jewel.ui.component.Typography
 
+@ExperimentalJewelApi
 public fun MarkdownStyling.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling =
-        InlinesStyling.light(
-            baseTextStyle,
-            editorTextStyle
-                .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
-                .toSpanStyle(),
-        ),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, editorTextStyle),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.light(inlinesStyling),
     heading: Heading = Heading.light(baseTextStyle),
@@ -61,16 +58,11 @@ public fun MarkdownStyling.Companion.light(
 ): MarkdownStyling =
     MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
+@ExperimentalJewelApi
 public fun MarkdownStyling.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
     editorTextStyle: TextStyle = defaultEditorTextStyle,
-    inlinesStyling: InlinesStyling =
-        InlinesStyling.dark(
-            baseTextStyle,
-            editorTextStyle
-                .copy(fontSize = baseTextStyle.fontSize * .85, background = inlineCodeBackgroundColorDark)
-                .toSpanStyle(),
-        ),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(defaultTextStyle, editorTextStyle),
     blockVerticalSpacing: Dp = 16.dp,
     paragraph: Paragraph = Paragraph.dark(inlinesStyling),
     heading: Heading = Heading.dark(baseTextStyle),
@@ -83,12 +75,17 @@ public fun MarkdownStyling.Companion.dark(
 ): MarkdownStyling =
     MarkdownStyling(blockVerticalSpacing, paragraph, heading, blockQuote, code, list, image, thematicBreak, htmlBlock)
 
-public fun Paragraph.Companion.light(inlinesStyling: InlinesStyling = InlinesStyling.light()): Paragraph =
-    Paragraph(inlinesStyling)
+@ExperimentalJewelApi
+public fun Paragraph.Companion.light(
+    inlinesStyling: InlinesStyling = InlinesStyling.light(defaultTextStyle, defaultEditorTextStyle)
+): Paragraph = Paragraph(inlinesStyling)
 
-public fun Paragraph.Companion.dark(inlinesStyling: InlinesStyling = InlinesStyling.dark()): Paragraph =
-    Paragraph(inlinesStyling)
+@ExperimentalJewelApi
+public fun Paragraph.Companion.dark(
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(defaultTextStyle, defaultEditorTextStyle)
+): Paragraph = Paragraph(inlinesStyling)
 
+@ExperimentalJewelApi
 public fun Heading.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
     h1: Heading.H1 =
@@ -142,6 +139,7 @@ public fun Heading.Companion.light(
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
+@ExperimentalJewelApi
 public fun Heading.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
     h1: Heading.H1 =
@@ -195,6 +193,7 @@ public fun Heading.Companion.dark(
         ),
 ): Heading = Heading(h1, h2, h3, h4, h5, h6)
 
+@ExperimentalJewelApi
 public fun Heading.H1.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -202,13 +201,14 @@ public fun Heading.H1.Companion.light(
             lineHeight = defaultTextSize * 2 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFFD8DEE4),
     underlineGap: Dp = 10.dp,
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H1 = Heading.H1(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+@ExperimentalJewelApi
 public fun Heading.H1.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -216,13 +216,14 @@ public fun Heading.H1.Companion.dark(
             lineHeight = defaultTextSize * 2 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFF21262d),
     underlineGap: Dp = 10.dp,
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H1 = Heading.H1(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+@ExperimentalJewelApi
 public fun Heading.H2.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -230,13 +231,14 @@ public fun Heading.H2.Companion.light(
             lineHeight = defaultTextSize * 1.5 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFFD8DEE4),
     underlineGap: Dp = 6.dp,
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H2 = Heading.H2(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+@ExperimentalJewelApi
 public fun Heading.H2.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -244,7 +246,7 @@ public fun Heading.H2.Companion.dark(
             lineHeight = defaultTextSize * 1.5 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 1.dp,
     underlineColor: Color = Color(0xFF21262d),
     underlineGap: Dp = 6.dp,
@@ -252,6 +254,7 @@ public fun Heading.H2.Companion.dark(
 ): Heading.H2 = Heading.H2(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
+@ExperimentalJewelApi
 public fun Heading.H3.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -259,7 +262,7 @@ public fun Heading.H3.Companion.light(
             lineHeight = defaultTextSize * 1.25 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -267,6 +270,7 @@ public fun Heading.H3.Companion.light(
 ): Heading.H3 = Heading.H3(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
+@ExperimentalJewelApi
 public fun Heading.H3.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -274,7 +278,7 @@ public fun Heading.H3.Companion.dark(
             lineHeight = defaultTextSize * 1.25 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -282,6 +286,7 @@ public fun Heading.H3.Companion.dark(
 ): Heading.H3 = Heading.H3(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
+@ExperimentalJewelApi
 public fun Heading.H4.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -289,7 +294,7 @@ public fun Heading.H4.Companion.light(
             lineHeight = defaultTextSize * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -297,6 +302,7 @@ public fun Heading.H4.Companion.light(
 ): Heading.H4 = Heading.H4(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // This doesn't match Int UI specs as there is no spec for HTML rendering
+@ExperimentalJewelApi
 public fun Heading.H4.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -304,7 +310,7 @@ public fun Heading.H4.Companion.dark(
             lineHeight = defaultTextSize * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -312,6 +318,7 @@ public fun Heading.H4.Companion.dark(
 ): Heading.H4 = Heading.H4(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // H5 is identical to H4 and H6
+@ExperimentalJewelApi
 public fun Heading.H5.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -319,7 +326,7 @@ public fun Heading.H5.Companion.light(
             lineHeight = defaultTextSize * .875 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -327,6 +334,7 @@ public fun Heading.H5.Companion.light(
 ): Heading.H5 = Heading.H5(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // H5 is identical to H4 and H6
+@ExperimentalJewelApi
 public fun Heading.H5.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -334,7 +342,7 @@ public fun Heading.H5.Companion.dark(
             lineHeight = defaultTextSize * .875 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -342,6 +350,7 @@ public fun Heading.H5.Companion.dark(
 ): Heading.H5 = Heading.H5(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // H6 is identical to H4 and H5
+@ExperimentalJewelApi
 public fun Heading.H6.Companion.light(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -350,7 +359,7 @@ public fun Heading.H6.Companion.light(
             lineHeight = defaultTextSize * .85 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.light(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
@@ -358,6 +367,7 @@ public fun Heading.H6.Companion.light(
 ): Heading.H6 = Heading.H6(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
 // H6 is identical to H4 and H5
+@ExperimentalJewelApi
 public fun Heading.H6.Companion.dark(
     baseTextStyle: TextStyle =
         defaultTextStyle.copy(
@@ -366,13 +376,14 @@ public fun Heading.H6.Companion.dark(
             lineHeight = defaultTextSize * .85 * 1.25,
             fontWeight = FontWeight.SemiBold,
         ),
-    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle),
+    inlinesStyling: InlinesStyling = InlinesStyling.dark(baseTextStyle, defaultEditorTextStyle),
     underlineWidth: Dp = 0.dp,
     underlineColor: Color = Color.Unspecified,
     underlineGap: Dp = 0.dp,
     padding: PaddingValues = PaddingValues(top = 24.dp, bottom = 16.dp),
 ): Heading.H6 = Heading.H6(inlinesStyling, underlineWidth, underlineColor, underlineGap, padding)
 
+@ExperimentalJewelApi
 public fun BlockQuote.Companion.light(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     lineWidth: Dp = 4.dp,
@@ -382,6 +393,7 @@ public fun BlockQuote.Companion.light(
     textColor: Color = Color(0xFF656d76),
 ): BlockQuote = BlockQuote(padding, lineWidth, lineColor, pathEffect, strokeCap, textColor)
 
+@ExperimentalJewelApi
 public fun BlockQuote.Companion.dark(
     padding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     lineWidth: Dp = 4.dp,
@@ -391,18 +403,21 @@ public fun BlockQuote.Companion.dark(
     textColor: Color = Color(0xFF848d97),
 ): BlockQuote = BlockQuote(padding, lineWidth, lineColor, pathEffect, strokeCap, textColor)
 
+@ExperimentalJewelApi
 public fun List.Companion.light(
     baseTextStyle: TextStyle = defaultTextStyle,
     ordered: Ordered = Ordered.light(numberStyle = baseTextStyle),
     unordered: Unordered = Unordered.light(bulletStyle = baseTextStyle.copy(fontWeight = FontWeight.Black)),
 ): List = List(ordered, unordered)
 
+@ExperimentalJewelApi
 public fun List.Companion.dark(
     baseTextStyle: TextStyle = defaultTextStyle,
     ordered: Ordered = Ordered.dark(numberStyle = baseTextStyle),
     unordered: Unordered = Unordered.dark(bulletStyle = baseTextStyle.copy(fontWeight = FontWeight.Black)),
 ): List = List(ordered, unordered)
 
+@ExperimentalJewelApi
 public fun Ordered.Companion.light(
     numberStyle: TextStyle = defaultTextStyle,
     numberContentGap: Dp = 8.dp,
@@ -422,6 +437,7 @@ public fun Ordered.Companion.light(
         padding,
     )
 
+@ExperimentalJewelApi
 public fun Ordered.Companion.dark(
     numberStyle: TextStyle = defaultTextStyle,
     numberContentGap: Dp = 8.dp,
@@ -441,6 +457,7 @@ public fun Ordered.Companion.dark(
         padding,
     )
 
+@ExperimentalJewelApi
 public fun Unordered.Companion.light(
     bullet: Char? = '•',
     bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
@@ -450,6 +467,7 @@ public fun Unordered.Companion.light(
     padding: PaddingValues = PaddingValues(start = 16.dp),
 ): Unordered = Unordered(bullet, bulletStyle, bulletContentGap, itemVerticalSpacing, itemVerticalSpacingTight, padding)
 
+@ExperimentalJewelApi
 public fun Unordered.Companion.dark(
     bullet: Char? = '•',
     bulletStyle: TextStyle = defaultTextStyle.copy(fontWeight = FontWeight.Black),
@@ -459,18 +477,21 @@ public fun Unordered.Companion.dark(
     padding: PaddingValues = PaddingValues(start = 16.dp),
 ): Unordered = Unordered(bullet, bulletStyle, bulletContentGap, itemVerticalSpacing, itemVerticalSpacingTight, padding)
 
+@ExperimentalJewelApi
 public fun Code.Companion.light(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorLight),
     indented: Indented = Indented.light(editorTextStyle),
     fenced: Fenced = Fenced.light(editorTextStyle),
 ): Code = Code(indented, fenced)
 
+@ExperimentalJewelApi
 public fun Code.Companion.dark(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorDark),
     indented: Indented = Indented.dark(editorTextStyle),
     fenced: Fenced = Fenced.dark(editorTextStyle),
 ): Code = Code(indented, fenced)
 
+@ExperimentalJewelApi
 public fun Indented.Companion.light(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorLight),
     padding: PaddingValues = PaddingValues(16.dp),
@@ -483,6 +504,7 @@ public fun Indented.Companion.light(
 ): Indented =
     Indented(editorTextStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
+@ExperimentalJewelApi
 public fun Indented.Companion.dark(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorDark),
     padding: PaddingValues = PaddingValues(16.dp),
@@ -495,6 +517,7 @@ public fun Indented.Companion.dark(
 ): Indented =
     Indented(editorTextStyle, padding, shape, background, borderWidth, borderColor, fillWidth, scrollsHorizontally)
 
+@ExperimentalJewelApi
 public fun Fenced.Companion.light(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorLight),
     padding: PaddingValues = PaddingValues(16.dp),
@@ -522,6 +545,7 @@ public fun Fenced.Companion.light(
         infoPosition,
     )
 
+@ExperimentalJewelApi
 public fun Fenced.Companion.dark(
     editorTextStyle: TextStyle = defaultEditorTextStyle.copy(color = blockContentColorDark),
     padding: PaddingValues = PaddingValues(16.dp),
@@ -549,6 +573,7 @@ public fun Fenced.Companion.dark(
         infoPosition,
     )
 
+@ExperimentalJewelApi
 public fun Image.Companion.default(
     alignment: Alignment = Alignment.Center,
     contentScale: ContentScale = ContentScale.Fit,
@@ -559,18 +584,21 @@ public fun Image.Companion.default(
     borderColor: Color = Color.Unspecified,
 ): Image = Image(alignment, contentScale, padding, shape, background, borderWidth, borderColor)
 
+@ExperimentalJewelApi
 public fun ThematicBreak.Companion.light(
     padding: PaddingValues = PaddingValues(),
     lineWidth: Dp = 2.dp,
     lineColor: Color = Color.LightGray,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
+@ExperimentalJewelApi
 public fun ThematicBreak.Companion.dark(
     padding: PaddingValues = PaddingValues(),
     lineWidth: Dp = 2.dp,
     lineColor: Color = Color.DarkGray,
 ): ThematicBreak = ThematicBreak(padding, lineWidth, lineColor)
 
+@ExperimentalJewelApi
 public fun HtmlBlock.Companion.light(
     textStyle: TextStyle = defaultEditorTextStyle.copy(color = Color.DarkGray),
     padding: PaddingValues = PaddingValues(8.dp),
@@ -581,6 +609,7 @@ public fun HtmlBlock.Companion.light(
     fillWidth: Boolean = true,
 ): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
+@ExperimentalJewelApi
 public fun HtmlBlock.Companion.dark(
     textStyle: TextStyle = defaultEditorTextStyle.copy(color = Color.Gray),
     padding: PaddingValues = PaddingValues(8.dp),
@@ -591,22 +620,35 @@ public fun HtmlBlock.Companion.dark(
     fillWidth: Boolean = true,
 ): HtmlBlock = HtmlBlock(textStyle, padding, shape, background, borderWidth, borderColor, fillWidth)
 
+@ExperimentalJewelApi
 public fun InlinesStyling.Companion.light(
     textStyle: TextStyle = defaultTextStyle,
+    editorTextStyle: TextStyle = defaultEditorTextStyle,
     inlineCode: SpanStyle =
-        defaultEditorTextStyle
-            .copy(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                background = inlineCodeBackgroundColorLight,
+                color = textStyle.color,
+            )
             .toSpanStyle(),
-    link: SpanStyle = textStyle.copy(color = IntUiLightTheme.colors.blue(2)).toSpanStyle(),
-    linkDisabled: SpanStyle = link.copy(color = IntUiLightTheme.colors.gray(8)),
-    linkHovered: SpanStyle = link.copy(textDecoration = TextDecoration.Underline),
-    linkFocused: SpanStyle = link.copy(background = Color(0x12000000), textDecoration = TextDecoration.Underline),
-    linkPressed: SpanStyle = link.copy(background = Color(0x1D000000), textDecoration = TextDecoration.Underline),
+    link: SpanStyle = SpanStyle(color = IntUiLightTheme.colors.blue(2)),
+    linkDisabled: SpanStyle = SpanStyle(color = IntUiLightTheme.colors.gray(8)),
+    linkHovered: SpanStyle =
+        SpanStyle(color = IntUiLightTheme.colors.blue(2), textDecoration = TextDecoration.Underline),
+    linkFocused: SpanStyle = SpanStyle(background = Color(0x12000000), textDecoration = TextDecoration.Underline),
+    linkPressed: SpanStyle = SpanStyle(background = Color(0x1D000000), textDecoration = TextDecoration.Underline),
     linkVisited: SpanStyle = link,
-    emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
-    strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
-    inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    renderInlineHtml: Boolean = true,
+    emphasis: SpanStyle = SpanStyle(fontStyle = FontStyle.Italic),
+    strongEmphasis: SpanStyle = SpanStyle(fontWeight = FontWeight.Bold),
+    inlineHtml: SpanStyle =
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                color = IntUiLightTheme.colors.gray(8),
+                background = Color.Unspecified,
+            )
+            .toSpanStyle(),
 ): InlinesStyling =
     InlinesStyling(
         textStyle = textStyle,
@@ -620,9 +662,93 @@ public fun InlinesStyling.Companion.light(
         emphasis = emphasis,
         strongEmphasis = strongEmphasis,
         inlineHtml = inlineHtml,
-        renderInlineHtml = renderInlineHtml,
     )
 
+@Deprecated(
+    "Use the new variant, without renderInlineHtml and with editorTextStyle, instead",
+    level = DeprecationLevel.HIDDEN,
+)
+@ExperimentalJewelApi
+public fun InlinesStyling.Companion.light(
+    textStyle: TextStyle = defaultTextStyle,
+    inlineCode: SpanStyle =
+        defaultEditorTextStyle
+            .merge(fontSize = textStyle.fontSize * .85, background = inlineCodeBackgroundColorLight)
+            .toSpanStyle(),
+    link: SpanStyle = textStyle.copy(color = IntUiLightTheme.colors.blue(2)).toSpanStyle(),
+    linkDisabled: SpanStyle = link.copy(color = IntUiLightTheme.colors.gray(8)),
+    linkHovered: SpanStyle = link.copy(textDecoration = TextDecoration.Underline),
+    linkFocused: SpanStyle = link.copy(background = Color(0x12000000), textDecoration = TextDecoration.Underline),
+    linkPressed: SpanStyle = link.copy(background = Color(0x1D000000), textDecoration = TextDecoration.Underline),
+    linkVisited: SpanStyle = link,
+    emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
+    strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
+    inlineHtml: SpanStyle = textStyle.toSpanStyle(),
+    @Suppress("UnusedParameter") renderInlineHtml: Boolean = true,
+): InlinesStyling =
+    InlinesStyling(
+        textStyle = textStyle,
+        inlineCode = inlineCode,
+        link = link,
+        linkDisabled = linkDisabled,
+        linkFocused = linkFocused,
+        linkHovered = linkHovered,
+        linkPressed = linkPressed,
+        linkVisited = linkVisited,
+        emphasis = emphasis,
+        strongEmphasis = strongEmphasis,
+        inlineHtml = inlineHtml,
+    )
+
+@ExperimentalJewelApi
+public fun InlinesStyling.Companion.dark(
+    textStyle: TextStyle = defaultTextStyle,
+    editorTextStyle: TextStyle = defaultEditorTextStyle,
+    inlineCode: SpanStyle =
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                background = inlineCodeBackgroundColorLight,
+                color = textStyle.color,
+            )
+            .toSpanStyle(),
+    link: SpanStyle = SpanStyle(color = IntUiDarkTheme.colors.blue(9)),
+    linkDisabled: SpanStyle = SpanStyle(color = IntUiDarkTheme.colors.gray(8)),
+    linkHovered: SpanStyle =
+        SpanStyle(color = IntUiDarkTheme.colors.blue(9), textDecoration = TextDecoration.Underline),
+    linkFocused: SpanStyle = SpanStyle(background = Color(0x16FFFFFF), textDecoration = TextDecoration.Underline),
+    linkPressed: SpanStyle = SpanStyle(background = Color(0x26FFFFFF), textDecoration = TextDecoration.Underline),
+    linkVisited: SpanStyle = link,
+    emphasis: SpanStyle = SpanStyle(fontStyle = FontStyle.Italic),
+    strongEmphasis: SpanStyle = SpanStyle(fontWeight = FontWeight.Bold),
+    inlineHtml: SpanStyle =
+        editorTextStyle
+            .merge(
+                fontSize = textStyle.fontSize * .85,
+                color = IntUiDarkTheme.colors.gray(8),
+                background = Color.Unspecified,
+            )
+            .toSpanStyle(),
+): InlinesStyling =
+    InlinesStyling(
+        textStyle = textStyle,
+        inlineCode = inlineCode,
+        link = link,
+        linkDisabled = linkDisabled,
+        linkFocused = linkFocused,
+        linkHovered = linkHovered,
+        linkPressed = linkPressed,
+        linkVisited = linkVisited,
+        emphasis = emphasis,
+        strongEmphasis = strongEmphasis,
+        inlineHtml = inlineHtml,
+    )
+
+@Deprecated(
+    "Use the new variant, without renderInlineHtml and with editorTextStyle, instead",
+    level = DeprecationLevel.HIDDEN,
+)
+@ExperimentalJewelApi
 public fun InlinesStyling.Companion.dark(
     textStyle: TextStyle = defaultTextStyle,
     inlineCode: SpanStyle =
@@ -638,7 +764,7 @@ public fun InlinesStyling.Companion.dark(
     emphasis: SpanStyle = textStyle.copy(fontStyle = FontStyle.Italic).toSpanStyle(),
     strongEmphasis: SpanStyle = textStyle.copy(fontWeight = FontWeight.Bold).toSpanStyle(),
     inlineHtml: SpanStyle = textStyle.toSpanStyle(),
-    renderInlineHtml: Boolean = true,
+    @Suppress("UnusedParameter") renderInlineHtml: Boolean = true,
 ): InlinesStyling =
     InlinesStyling(
         textStyle = textStyle,
@@ -652,7 +778,6 @@ public fun InlinesStyling.Companion.dark(
         emphasis = emphasis,
         strongEmphasis = strongEmphasis,
         inlineHtml = inlineHtml,
-        renderInlineHtml = renderInlineHtml,
     )
 
 private val blockBackgroundColorLight = Color(0xFFF6F8FA)
@@ -664,10 +789,18 @@ private val blockContentColorDark = Color(0xFFBCBEC4)
 private val defaultTextSize = 13.sp
 
 private val defaultTextStyle
-    get() = JewelTheme.createDefaultTextStyle(fontSize = defaultTextSize, lineHeight = defaultTextSize * 1.5)
+    get() =
+        JewelTheme.createDefaultTextStyle(
+            fontSize = defaultTextSize,
+            lineHeight = defaultTextSize * Typography.DefaultLineHeightMultiplier,
+        )
 
 private val defaultEditorTextStyle
-    get() = JewelTheme.createEditorTextStyle(fontSize = defaultTextSize, lineHeight = defaultTextSize * 1.2)
+    get() =
+        JewelTheme.createEditorTextStyle(
+            fontSize = defaultTextSize,
+            lineHeight = defaultTextSize * Typography.EditorLineHeightMultiplier,
+        )
 
 private val inlineCodeBackgroundColorLight = Color(red = 212, green = 222, blue = 231, alpha = 255 / 4)
 private val inlineCodeBackgroundColorDark = Color(red = 212, green = 222, blue = 231, alpha = 25)

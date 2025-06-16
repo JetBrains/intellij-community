@@ -17,7 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 /**
- * @see BasePlatformTestCase for light tests
+ * This is a "heavy" JUnit 3-compatible {@link UsefulTestCase} which is based around a {@link CodeInsightTestFixture}.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/testing-plugins.html">Testing Plugins (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/light-and-heavy-tests.html">Light and Heavy Tests (IntelliJ Platform Docs)</a>
+ * @see BasePlatformTestCase for "light" tests
  */
 public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<?>> extends UsefulTestCase {
   protected CodeInsightTestFixture myFixture;
@@ -66,7 +70,7 @@ public abstract class CodeInsightFixtureTestCase<T extends ModuleFixtureBuilder<
     }
   }
 
-  protected void tuneFixture(T moduleBuilder) {}
+  protected void tuneFixture(T moduleBuilder) { }
 
   /**
    * Return relative path to the test data. Path is relative to the

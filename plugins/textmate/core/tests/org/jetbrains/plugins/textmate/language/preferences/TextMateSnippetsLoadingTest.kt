@@ -6,6 +6,7 @@ import org.jetbrains.plugins.textmate.TestUtil.readBundle
 import org.jetbrains.plugins.textmate.TestUtil.scopeFromString
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope
 import org.jetbrains.plugins.textmate.language.syntax.selector.TextMateSelectorWeigherImpl
+import org.jetbrains.plugins.textmate.plist.XmlPlistReaderForTests
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -51,12 +52,12 @@ class TextMateSnippetsLoadingTest {
 
   companion object {
     private fun loadSnippets(bundleName: String): SnippetsRegistry {
-      val snippets = readBundle(bundleName).readSnippets().iterator()
-      val snippetsRegistry = SnippetsRegistryImpl(TextMateSelectorWeigherImpl())
+      val snippets = readBundle(bundleName, XmlPlistReaderForTests()).readSnippets().iterator()
+      val snippetsRegistryBuilder = SnippetsRegistryBuilder(TextMateSelectorWeigherImpl())
       while (snippets.hasNext()) {
-        snippetsRegistry.register(snippets.next())
+        snippetsRegistryBuilder.register(snippets.next())
       }
-      return snippetsRegistry
+      return snippetsRegistryBuilder.build()
     }
   }
 }

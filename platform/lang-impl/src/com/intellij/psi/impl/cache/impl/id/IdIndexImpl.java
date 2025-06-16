@@ -44,7 +44,12 @@ public final class IdIndexImpl extends IdIndex implements CustomInputsIndexFileB
   }
 
   @Override
+  public int shardlessVersion() {
+    return super.getVersion();
+  }
+
+  @Override
   public int getVersion() {
-    return super.getVersion() + (SHARDS - 1);
+    return shardlessVersion() + (SHARDS - 1);
   }
 }

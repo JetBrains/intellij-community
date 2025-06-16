@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
+import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -21,8 +22,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -252,7 +255,7 @@ public final class PluginDownloader {
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     if (myBuildNumber == null) {
-      return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), null);
+      return PluginDescriptorLoader.loadAndInitDescriptorFromArtifact(getFilePath(), null);
     }
     else {
       return PluginDescriptorLoader.readBasicDescriptorDataFromArtifact(getFilePath());
@@ -293,7 +296,9 @@ public final class PluginDownloader {
     return appliedWithoutRestart;
   }
 
-  @NotNull Path tryDownloadPlugin(@Nullable ProgressIndicator indicator) throws IOException {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public @NotNull Path tryDownloadPlugin(@Nullable ProgressIndicator indicator) throws IOException {
     ThreadingAssertions.assertBackgroundThread();
     if (indicator != null) {
       indicator.checkCanceled();
@@ -378,14 +383,34 @@ public final class PluginDownloader {
                                                   .withWaitForClassloaderUnload(true));
   }
 
+  @ApiStatus.Internal
+  public static @NotNull PluginDownloader createDownloader(@NotNull PluginUiModel pluginUiModel,
+                                                           @Nullable String host,
+                                                           @Nullable BuildNumber buildNumber) throws IOException {
+    return createDownloader(pluginUiModel.getDescriptor(), host, buildNumber, pluginUiModel.getDownloadUrl(),
+                            pluginUiModel.isFromMarketplace());
+  }
+
   public static @NotNull PluginDownloader createDownloader(
     @NotNull IdeaPluginDescriptor descriptor,
     @Nullable String host,
     @Nullable BuildNumber buildNumber
   ) throws IOException {
+    boolean fromMarketplace = descriptor instanceof PluginNode;
+    String downloadUrl = fromMarketplace ? ((PluginNode)descriptor).getDownloadUrl() : null;
+    return createDownloader(descriptor, host, buildNumber, downloadUrl, fromMarketplace);
+  }
+
+  private static @NotNull PluginDownloader createDownloader(
+    @NotNull IdeaPluginDescriptor descriptor,
+    @Nullable String host,
+    @Nullable BuildNumber buildNumber,
+    @Nullable String downloadUrl,
+    boolean isFromMarketplace
+  ) throws IOException {
     var currentVersion = PluginManagerCore.getPlugin(descriptor.getPluginId());
-    var url = descriptor instanceof PluginNode && host != null ?
-              toAbsoluteUrl(((PluginNode)descriptor).getDownloadUrl(), host) :
+    var url = isFromMarketplace && host != null ?
+              toAbsoluteUrl(downloadUrl, host) :
               MarketplaceUrls.getPluginDownloadUrl(descriptor, getMarketplaceDownloadsUUID(), buildNumber, currentVersion);
     return new PluginDownloader(descriptor, url, buildNumber, PluginDownloader::showErrorDialog, null);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes
 
 import com.intellij.openapi.application.ApplicationManager
@@ -42,7 +42,7 @@ internal class ScopeRootDescriptor(
     }
   }
 
-  // todo ijpl-339 get rid of this method
+  // todo IJPL-339 get rid of this method
   //      mock sdk changes on each test run, but we don't get events about that.
   private fun isEqualBackup(
     sdk1: Sdk,
@@ -53,7 +53,7 @@ internal class ScopeRootDescriptor(
     val result =
       sdk1.homePath == sdk2.homePath &&
       sdk1.name == sdk2.name &&
-      //sdk1.versionString == sdk2.versionString && todo ijpl-339 the version can be different
+      //sdk1.versionString == sdk2.versionString && todo IJPL-339 the version can be different
       sdk1.sdkType == sdk2.sdkType &&
       sdk1.unwrap().javaClass == sdk2.unwrap().javaClass
 

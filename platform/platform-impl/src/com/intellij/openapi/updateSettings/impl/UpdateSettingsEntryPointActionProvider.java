@@ -303,6 +303,11 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
                                                        myUpdatesForPlugins.iterator().next().getPluginName())
                                    : IdeBundle.message("settings.entry.point.update.plugins.action", size)) {
         @Override
+        public boolean isPluginUpdate() {
+          return true;
+        }
+
+        @Override
         public boolean isNewAction() {
           return isAlreadyShownPluginUpdates();
         }

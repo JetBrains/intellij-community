@@ -2,7 +2,7 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jvm_library(
-  name = "buildScripts-downloader",
+  name = "downloader",
   module_name = "intellij.platform.buildScripts.downloader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -10,7 +10,6 @@ jvm_library(
     "@lib//:jetbrains-annotations",
     "@lib//:commons-compress",
     "@lib//:tc_service_messages",
-    "@lib//:guava",
     "@lib//:zstd-jni",
     "@lib//:commons-io",
     "@lib//:kotlin-stdlib",
@@ -24,6 +23,7 @@ jvm_library(
     "@lib//:okhttp",
     "@lib//:ktor-client-core",
     "@lib//:hash4j",
-  ]
+  ],
+  runtime_deps = ["@lib//:kotlinx-io-core"]
 )
 ### auto-generated section `build intellij.platform.buildScripts.downloader` end

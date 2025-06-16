@@ -475,7 +475,7 @@ public class Notification {
   public static void fire(@NotNull Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
     var dataContext = context != null ? context : CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT, sink -> sink.set(KEY, notification));
     var event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.NOTIFICATION, ActionUiKind.NONE, null);
-    IdeUiService.getInstance().performActionDumbAwareWithCallbacks(action, event);
+    IdeUiService.getInstance().performAction(action, event);
   }
 
   /**

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.update
 
 import com.intellij.openapi.components.*
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectReloadState
 import com.intellij.openapi.startup.ProjectActivity
@@ -30,12 +29,10 @@ class RestoreUpdateTree : PersistentStateComponent<UpdateInfoState> {
         val actionInfo = updateInfo.actionInfo
         if (actionInfo != null) {
           val projectLevelVcsManager = project.serviceAsync<ProjectLevelVcsManager>() as ProjectLevelVcsManagerEx
-          blockingContext {
-            projectLevelVcsManager.showUpdateProjectInfo(updateInfo.fileInformation,
-                                                         VcsBundle.message("action.display.name.update"),
-                                                         actionInfo,
-                                                         false)
-          }
+          projectLevelVcsManager.showUpdateProjectInfo(updateInfo.fileInformation,
+                                                       VcsBundle.message("action.display.name.update"),
+                                                       actionInfo,
+                                                       false)
           project.serviceAsync<CommittedChangesCache>().refreshIncomingChangesAsync()
         }
       }

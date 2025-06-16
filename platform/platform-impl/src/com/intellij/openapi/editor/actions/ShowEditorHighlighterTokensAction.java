@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
@@ -80,13 +80,13 @@ final class ShowEditorHighlighterTokensAction extends EditorAction {
 
     @Override
     protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-      Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       return hostEditor.getUserData(Holder.LISTENER_ADDED) != null || myDelegate.isEnabled(editor, caret, dataContext);
     }
 
     @Override
     protected void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-      Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       if (hostEditor.getUserData(Holder.LISTENER_ADDED) != null) {
         cleanup(hostEditor);
       }

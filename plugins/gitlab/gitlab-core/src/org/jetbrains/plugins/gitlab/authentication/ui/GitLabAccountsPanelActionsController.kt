@@ -5,6 +5,7 @@ import com.intellij.collaboration.auth.ui.AccountsPanelActionsController
 import com.intellij.openapi.project.Project
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
 import org.jetbrains.plugins.gitlab.authentication.LoginResult
@@ -15,6 +16,7 @@ internal class GitLabAccountsPanelActionsController(private val project: Project
   : AccountsPanelActionsController<GitLabAccount> {
   override val isAddActionWithPopup: Boolean = false
 
+  @RequiresEdt
   override fun addAccount(parentComponent: JComponent, point: RelativePoint?) {
     // ignoring the point since we know there will be a simple dialog for now
     val loginResult = GitLabLoginUtil.logInViaToken(project, parentComponent, uniqueAccountPredicate = ::isAccountUnique)
@@ -22,6 +24,7 @@ internal class GitLabAccountsPanelActionsController(private val project: Project
     model.add(loginResult.account, loginResult.token)
   }
 
+  @RequiresEdt
   override fun editAccount(parentComponent: JComponent, account: GitLabAccount) {
     val loginResult = GitLabLoginUtil.updateToken(project, parentComponent, account, ::isAccountUnique)
                         .asSafely<LoginResult.Success>() ?: return

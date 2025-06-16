@@ -11,7 +11,6 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.BooleanOptionDescription.RequiresRebuild
-import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.ActionAsyncProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.GotoActionListCellRenderer
@@ -109,7 +108,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
                                      consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
     ProgressManager.getInstance().runProcess({
       runBlockingCancellable {
-        fetchWeightedElements(this, pattern, consumer)
+        fetchWeightedElements(this, pattern) { consumer.process(it) }
       }
     }, progressIndicator)
   }
@@ -117,10 +116,10 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   @Internal
   fun fetchWeightedElements(scope: CoroutineScope,
                             pattern: String,
-                            consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
+                            consumer: suspend (FoundItemDescriptor<MatchedValue>) -> Boolean) {
     model.buildGroupMappings()
     scope.runUpdateSessionForActionSearch(model.getUpdateSession()) { presentationProvider ->
-      doFetchItems(this, presentationProvider, pattern) { consumer.process(it) }
+      doFetchItems(this, presentationProvider, pattern, consumer)
     }
   }
 
@@ -142,11 +141,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   }
 
   override fun getElementsRenderer(): ListCellRenderer<in MatchedValue> {
-    return GotoActionListCellRenderer(
-      { description: OptionDescription? ->
-        model.getGroupName(
-          description!!)
-      }, true)
+    return GotoActionListCellRenderer(true)
   }
 
   override fun showInFindResults(): Boolean = false
@@ -171,7 +166,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
   }
 
   override fun processSelectedItem(item: MatchedValue, modifiers: Int, text: String): Boolean {
-    if (modifiers == InputEvent.ALT_MASK) {
+    if (modifiers == InputEvent.ALT_DOWN_MASK) {
       showAssignShortcutDialog(myProject, item)
       return true
     }

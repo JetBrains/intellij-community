@@ -12,6 +12,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.intellij.cce.commands.evaluationCommandExtensions
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.LAYOUT_NAME
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.BackgroundStepFactory
 import com.intellij.cce.evaluation.EvaluationProcess
@@ -111,7 +112,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
       val datasetContext = DatasetContext(workspace, workspace, configPath)
       runPreliminarySteps(feature, workspace)
-      feature.prepareEnvironment(config).use { environment ->
+      feature.prepareEnvironment(config, workspace).use { environment ->
         val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
         EvaluationProcess.build(environment, stepFactory) {
           customize()
@@ -152,7 +153,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val datasetContext = DatasetContext(workspace, workspace, null)
       val config = workspace.readConfig(feature.getStrategySerializer())
       runPreliminarySteps(feature, workspace)
-      feature.prepareEnvironment(config).use { environment ->
+      feature.prepareEnvironment(config, workspace).use { environment ->
         val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
         val process = EvaluationProcess.build(environment, stepFactory) {
           shouldGenerateActions = false
@@ -178,7 +179,7 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       )
       val outputWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
       val datasetContext = DatasetContext(outputWorkspace, null, null)
-      feature.prepareEnvironment(config).use { environment ->
+      feature.prepareEnvironment(config, outputWorkspace).use { environment ->
         val stepFactory = BackgroundStepFactory(feature, config, environment, workspacesToCompare, datasetContext)
         val process = EvaluationProcess.build(environment, stepFactory) {
           shouldGenerateReports = true
@@ -216,13 +217,16 @@ internal class CompletionEvaluationStarter : ApplicationStarter {
       val datasetContext = DatasetContext(outputWorkspace, null, null)
       for (workspacePath in workspacesToMerge) {
         val workspace = EvaluationWorkspace.open(workspacePath, SetupStatsCollectorStep.statsCollectorLogsDirectory)
+        workspace.readAdditionalStats(LAYOUT_NAME)?.let {
+          outputWorkspace.saveAdditionalStats(LAYOUT_NAME, it)
+        }
         val sessionFiles = workspace.sessionsStorage.getSessionFiles()
         for (sessionFile in sessionFiles) {
           outputWorkspace.sessionsStorage.saveSessions(workspace.sessionsStorage.getSessions(sessionFile.first))
         }
       }
       outputWorkspace.saveMetadata()
-      feature.prepareEnvironment(config).use { environment ->
+      feature.prepareEnvironment(config, outputWorkspace).use { environment ->
         val stepFactory = BackgroundStepFactory(feature, config, environment, null, datasetContext)
         val process = EvaluationProcess.build(environment, stepFactory) {
           shouldGenerateReports = true

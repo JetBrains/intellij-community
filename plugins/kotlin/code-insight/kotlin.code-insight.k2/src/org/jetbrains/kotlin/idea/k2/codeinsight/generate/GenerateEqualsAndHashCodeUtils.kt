@@ -6,16 +6,10 @@ import com.intellij.openapi.ui.Messages
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNonNullableBooleanType
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
@@ -29,12 +23,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
@@ -50,7 +39,13 @@ object GenerateEqualsAndHashCodeUtils {
         val param = function.valueParameters.singleOrNull() ?: return false
         val paramType = param.returnType
         val returnType = function.returnType
-        return paramType.isNullableAnyType() && returnType.isNonNullableBooleanType()
+        if (!returnType.isNonNullableBooleanType()) return false
+        if (paramType.isNullableAnyType()) return true
+        // check for CustomEqualsInValueClasses
+        if (function.psi?.languageVersionSettings?.supportsFeature(LanguageFeature.CustomEqualsInValueClasses) != true) return false
+        val classSymbol = function.containingDeclaration as? KaNamedClassSymbol ?: return false
+        if (!classSymbol.isInline) return false
+        return paramType.semanticallyEquals(classSymbol.defaultType)
     }
 
     context(KaSession)
@@ -142,8 +137,19 @@ object GenerateEqualsAndHashCodeUtils {
             it.name?.quoteIfNeeded().isIdentifier()
         }
 
+    /**
+     * @param tryToFindEqualsMethodForClass Pass `true` to attempt to find an existing `equals()` implementation in
+     * the class or its superclass.
+     *
+     * Pass `false` to bypass this check and generate an `equals()` implementation regardless of any existing method.
+     * This is especially useful when generating the method for the quick fix for the
+     * ```
+     * [ABSTRACT_SUPER_CALL] Abstract member cannot be accessed directly
+     * ```
+     * error because the method where this error appears must be ignored.
+     */
     context(KaSession)
-    fun generateEquals(info: Info): KtNamedFunction? {
+    fun generateEquals(info: Info, tryToFindEqualsMethodForClass: Boolean = true): KtNamedFunction? {
         if (info.equalsInClass != null) return null
 
         val klass = info.klass
@@ -151,7 +157,7 @@ object GenerateEqualsAndHashCodeUtils {
         val contextMap = mutableMapOf<String, Any?>()
 
 
-        val equalsFunction = findEqualsMethodForClass(klass.symbol as KaClassSymbol)
+        val equalsFunction = if (tryToFindEqualsMethodForClass) findEqualsMethodForClass(klass.symbol as KaClassSymbol) else null
 
         contextMap[BASE_PARAM_NAME] = "other"
         if (equalsFunction != null) {
@@ -177,14 +183,25 @@ object GenerateEqualsAndHashCodeUtils {
         return function
     }
 
+    /**
+     * @param tryToFindHashCodeMethodForClass Pass `true` to attempt to find an existing `hashCode()` implementation in
+     * the class or its superclass.
+     *
+     * Pass `false` to bypass this check and generate an `hashCode()` implementation regardless of any existing method.
+     * This is especially useful when generating the method for the quick fix for the
+     * ```
+     * [ABSTRACT_SUPER_CALL] Abstract member cannot be accessed directly
+     * ```
+     * error because the method where this error appears must be ignored.
+     */
     context(KaSession)
-    fun generateHashCode(info: Info): KtNamedFunction? {
+    fun generateHashCode(info: Info, tryToFindHashCodeMethodForClass: Boolean = true): KtNamedFunction? {
         if (info.hashCodeInClass != null) return null
 
         val klass = info.klass
 
         val contextMap = mutableMapOf<String, Any?>()
-        val hashCodeFunction = findHashCodeMethodForClass(klass.symbol as KaClassSymbol)
+        val hashCodeFunction = if (tryToFindHashCodeMethodForClass) findHashCodeMethodForClass(klass.symbol as KaClassSymbol) else null
         contextMap[SUPER_HAS_HASHCODE] = hashCodeFunction != null && (hashCodeFunction.containingSymbol as? KaClassSymbol)?.classId != StandardClassIds.Any
 
         // Sort variables in `hashCode()` to preserve the same order as in `equals()`

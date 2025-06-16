@@ -7,10 +7,27 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 fun dumpApi(classSignatures: List<ApiClass>): String {
+  return reifyToString { dumpApi(classSignatures) }
+}
+
+typealias ClassName = String
+typealias ClassMembers = List<String>
+
+fun dumpApiAndGroupByClasses(classSignatures: List<ApiClass>): Map<ClassName, ClassMembers> {
+  val collectingMap = mutableMapOf<ClassName, ClassMembers>()
+  for (signature in classSignatures) {
+    val header = reifyToString { printClassHeader(signature.className, signature.flags) }
+    val list = ArrayList<String>(signature.supers.size + signature.members.size)
+    signature.supers.mapTo(list) { `super` -> reifyToString { printSuper(`super`) } }
+    signature.members.mapTo(list) { member -> reifyToString { printMember(member) } }
+    collectingMap[header] = list
+  }
+  return collectingMap
+}
+
+private fun reifyToString(action: PrintWriter.() -> Unit): String {
   return StringWriter().use {
-    PrintWriter(it).use { printer ->
-      printer.dumpApi(classSignatures)
-    }
+    PrintWriter(it).use { printer -> printer.action() }
     it.buffer.toString()
   }
 }
@@ -18,8 +35,15 @@ fun dumpApi(classSignatures: List<ApiClass>): String {
 fun PrintWriter.dumpApi(classSignatures: List<ApiClass>) {
   for (classData in classSignatures) {
     printClassHeader(classData.className, classData.flags)
-    printSupers(classData.supers)
-    printMembers(classData.members)
+    printNewLine()
+    for (`super` in classData.supers) {
+      printSuper(`super`)
+      printNewLine()
+    }
+    for (member in classData.members) {
+      printMember(member)
+      printNewLine()
+    }
   }
 }
 
@@ -28,35 +52,28 @@ private fun PrintWriter.printClassHeader(className: String, flags: ApiFlags) {
     print(":")
   }
   print(className.dottedClassName())
-  printNewLine()
 }
 
-private fun PrintWriter.printSupers(supers: List<String>) {
-  for (`super` in supers) {
-    print("- ")
-    print(`super`.dottedClassName())
-    printNewLine()
+private fun PrintWriter.printSuper(`super`: String) {
+  print("- ")
+  print(`super`.dottedClassName())
+}
+
+private fun PrintWriter.printMember(member: ApiMember) {
+  print("- ")
+  if (printFlags(member.flags, false)) {
+    print(":")
   }
-}
-
-private fun PrintWriter.printMembers(members: List<ApiMember>) {
-  for (member in members) {
-    print("- ")
-    if (printFlags(member.flags, false)) {
-      print(":")
-    }
-    print(member.ref.name)
-    val type = Type.getType(member.ref.descriptor)
-    if (type.sort == Type.METHOD) {
-      print(type.argumentTypes.joinToString(prefix = "(", separator = ",", postfix = ")", transform = Type::typeString))
-      print(':')
-      print(type.returnType.typeString())
-    }
-    else {
-      print(':')
-      print(type.typeString())
-    }
-    printNewLine()
+  print(member.ref.name)
+  val type = Type.getType(member.ref.descriptor)
+  if (type.sort == Type.METHOD) {
+    print(type.argumentTypes.joinToString(prefix = "(", separator = ",", postfix = ")", transform = Type::typeString))
+    print(':')
+    print(type.returnType.typeString())
+  }
+  else {
+    print(':')
+    print(type.typeString())
   }
 }
 

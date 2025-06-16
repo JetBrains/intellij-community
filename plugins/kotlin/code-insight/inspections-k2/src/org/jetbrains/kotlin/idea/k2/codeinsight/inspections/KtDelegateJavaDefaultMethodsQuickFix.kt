@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.navigation.LOG
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -20,7 +20,7 @@ internal class KtDelegateJavaDefaultMethodsQuickFix(
         is BodyType.Delegate -> KotlinBundle.message("override.java.default.methods.delegate.fix.text")
         is BodyType.Super -> KotlinBundle.message("override.java.default.methods.superclass.fix.text")
         else -> {
-            LOG.error("Unexpected body type: $bodyType")
+            Logger.getInstance(javaClass).error("Unexpected body type: $bodyType")
             ""
         }
     }

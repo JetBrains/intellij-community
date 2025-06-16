@@ -26,10 +26,14 @@ public final class EmojiCategory implements Serializable {
     return myEmoji;
   }
 
+  /**
+   * Uses {@link com.intellij.emojipicker.icons.EmojipickerIcons}
+   */
   public Icon getIcon() {
     Icon icon = myIcon;
     if (icon == null) {
-      myIcon = icon = IconLoader.getIcon("/icons/categories/" + myId + ".svg", EmojiCategory.class.getClassLoader());
+      myIcon = icon = IconLoader.getIcon("/org/jetbrains/plugins/emojipicker/icons/categories/" + myId + ".svg",
+                                         EmojiCategory.class.getClassLoader());
     }
     return icon;
   }

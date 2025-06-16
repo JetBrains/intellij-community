@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.project
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import org.jetbrains.plugins.gradle.jvmcompat.GradleCompatibilitySupportUpdater
@@ -18,8 +17,6 @@ private class GradleVersionUpdateStartupActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val gradleCompatibilityUpdater = serviceAsync<GradleCompatibilitySupportUpdater>()
-    blockingContext {
-      gradleCompatibilityUpdater.checkForUpdates()
-    }
+    gradleCompatibilityUpdater.checkForUpdates()
   }
 }

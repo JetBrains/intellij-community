@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.facet.Facet
@@ -68,6 +69,7 @@ interface WorkspaceFacetContributor<T: ModuleSettingsFacetBridgeEntity> {
   }
 
   companion object {
-    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<ModuleSettingsFacetBridgeEntity>> = ExtensionPointName.create("com.intellij.workspaceModel.facetContributor")
+    @JvmField
+    val EP_NAME: ExtensionPointName<WorkspaceFacetContributor<ModuleSettingsFacetBridgeEntity>> = ExtensionPointName("com.intellij.workspaceModel.facetContributor")
   }
 }

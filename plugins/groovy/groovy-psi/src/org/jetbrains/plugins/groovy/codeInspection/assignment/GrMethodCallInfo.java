@@ -40,6 +40,6 @@ public class GrMethodCallInfo extends CallInfoBase<GrMethodCall> implements Call
   }
 
   public GroovyResolveResult @NotNull [] multiResolve() {
-    return getCall().multiResolve(false);
+    return getCall().multiResolveGroovy(false);
   }
 }

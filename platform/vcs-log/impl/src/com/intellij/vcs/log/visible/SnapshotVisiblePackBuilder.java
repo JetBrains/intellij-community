@@ -55,7 +55,7 @@ final class SnapshotVisiblePackBuilder {
   private @NotNull VisiblePack build(@NotNull DataPackBase oldPack,
                                      @NotNull VisibleGraphImpl<Integer> oldGraph,
                                      @NotNull VcsLogFilterCollection filters,
-                                     @NotNull Map<Key, Object> data) {
+                                     @NotNull Map<Key<?>, Object> data) {
     int visibleRow = VISIBLE_RANGE;
     int visibleRange = VISIBLE_RANGE;
     PermanentGraphInfo<Integer> info = oldGraph.buildSimpleGraphInfo(visibleRow, visibleRange);

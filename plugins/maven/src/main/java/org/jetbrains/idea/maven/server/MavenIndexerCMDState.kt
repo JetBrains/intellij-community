@@ -14,9 +14,10 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.util.registry.Registry.Companion.stringValue
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.PathUtil
 import org.jdom.Element
@@ -24,11 +25,14 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import java.io.*
+import java.io.IOException
+import java.io.InputStreamReader
 import java.net.URI
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.io.path.*
 
 class MavenIndexerCMDState(
   private val myJdk: Sdk,
@@ -59,14 +63,14 @@ class MavenIndexerCMDState(
     params.mainClass = "org.jetbrains.idea.maven.server.indexer.MavenServerIndexerMain"
     params.classPath.add(PathUtil.getJarPathForClass(StringUtilRt::class.java)) //util-rt
     params.classPath.add(PathUtil.getJarPathForClass(NotNull::class.java)) //annotations-java5
-    params.classPath.addAllFiles(collectClassPathAndLibsFolder(myDistribution))
+    params.classPath.addAllFiles(collectClassPathAndLibsFolder(myDistribution).map { it.toFile() })
     params.classPath.add(PathUtil.getJarPathForClass(Element::class.java)) //JDOM
     return params
   }
 
   companion object {
 
-    private fun addDependenciesFromMavenRepo(classPath: MutableList<File>) {
+    private fun addDependenciesFromMavenRepo(classPath: MutableList<Path>) {
 
       val communityHomePath = PathManager.getCommunityHomePath()
       val mavenIndexerIml = Paths.get(communityHomePath).resolve("plugins/maven/maven-server-indexer/intellij.maven.server.indexer.iml")
@@ -74,13 +78,21 @@ class MavenIndexerCMDState(
 
       val dependenciesUrls = parseDependenciesUrls(mavenIndexerIml) ?: throw RuntimeException("Cannot parse maven.server.indexer.iml")
       val pathMacros = PathMacros.getInstance()
-      val pathToRepo = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY) ?: throw RuntimeException("Cannot find maven repo")
+      val pathToRepo = pathMacros.getValue(PathMacrosImpl.MAVEN_REPOSITORY)
+        ?.replace('\\', '/')
+        ?.let {
+        if (FileUtil.isAbsolute(it) && SystemInfo.isWindows) {
+          // absolute paths on windows (e.g. 'C:/dir') require additional '`'/` char in the front to be a valid file:// URI.
+          "/$it"
+        } else {
+          it
+        }
+      } ?: throw RuntimeException("Cannot find maven repo")
 
       for (depTemplate in dependenciesUrls) {
         val url = depTemplate.replace('$' + PathMacrosImpl.MAVEN_REPOSITORY + '$', pathToRepo)
-        val path = Paths.get(URI(url));
-        val jar = path.toFile()
-        check(jar.isFile) { "File " + jar.path + " not found" }
+        val jar = Paths.get(URI(url));
+        check(jar.isRegularFile()) { "File $jar not found" }
         classPath.add(jar)
       }
     }
@@ -96,51 +108,50 @@ class MavenIndexerCMDState(
 
     }
 
-    private fun collectClassPathAndLibsFolder(distribution: MavenDistribution): List<File> {
-      val pluginFileOrDir = File(PathUtil.getJarPathForClass(MavenServerManager::class.java))
-
-      val root = pluginFileOrDir.parent
-
-      val classpath: MutableList<File> = ArrayList()
-
-      addMavenLibs(classpath, distribution.mavenHome.toFile())
+    private fun collectClassPathAndLibsFolder(distribution: MavenDistribution): List<Path> {
+      val classpath = ArrayList<Path>()
+      addMavenLibs(classpath, distribution.mavenHome)
       addIndexerRTLibs(classpath)
-      if (pluginFileOrDir.isDirectory) {
+      val pathToClass = PathManager.getJarForClass(MavenServerManager::class.java)
+                        ?: throw IllegalStateException("Cannot find path to maven server manager code")
+      val packed = pathToClass.isRegularFile()
+
+      if (!packed || pathToClass.parent.name == "intellij.maven") {
+        // we are running from some kind of sources build, packed or not.
         MavenLog.LOG.debug("collecting classpath for local run")
-
-        prepareClassPathForLocalRunAndUnitTests(distribution.version!!, classpath, root)
+        val root = if (packed) { pathToClass.parent.parent } else { pathToClass.parent }
+        prepareClassPathForLocalRunAndUnitTests(classpath, root, packed)
         addDependenciesFromMavenRepo(classpath)
-      }
-      else {
+      } else {
+        // we are running in production
         MavenLog.LOG.debug("collecting classpath for production")
-        prepareClassPathForProduction(distribution.version!!, classpath, root)
+        prepareClassPathForProduction(distribution.version!!, classpath, pathToClass.parent)
       }
-
       MavenLog.LOG.debug("Collected classpath = ", classpath)
       return classpath
     }
 
-    private fun addIndexerRTLibs(classpath: MutableList<File>) {
+    private fun addIndexerRTLibs(classpath: MutableList<Path>) {
       val resources = indexerRTList
-      val libDir = MavenUtil.getPluginSystemDir("rt-maven-indexer-lib").toFile()
-      if (!libDir.isDirectory) {
-        if (!libDir.mkdirs()) {
-          throw PluginException("Cannot create cache directory for maven", PluginId.getId(MavenUtil.INTELLIJ_PLUGIN_ID))
+      val libDir = MavenUtil.getPluginSystemDir("rt-maven-indexer-lib")
+      if (!libDir.isDirectory()) {
+        try {
+          libDir.createDirectories()
+        } catch (e: IOException) {
+          throw PluginException("Cannot create cache directory for maven", e, PluginId.getId(MavenUtil.INTELLIJ_PLUGIN_ID))
         }
       }
       for (jarName in resources) {
-        val file = File(libDir, jarName)
-        if (!file.isFile) {
+        val file = libDir.resolve(jarName)
+        if (!file.isRegularFile()) {
           try {
             MavenIndexerCMDState::class.java.classLoader
-              .getResourceAsStream(jarName).use { `is` ->
-                BufferedOutputStream(FileOutputStream(file)).use { bos ->
-                  if (`is` == null) {
-                    throw PluginException("Cannot find runtime library $jarName in resources",
-                                          PluginId.getId(MavenUtil.INTELLIJ_PLUGIN_ID))
-                  }
-                  StreamUtil.copy(`is`, bos)
+              .getResourceAsStream(jarName).use {
+                if (it == null) {
+                  throw PluginException("Cannot find runtime library $jarName in resources",
+                                        PluginId.getId(MavenUtil.INTELLIJ_PLUGIN_ID))
                 }
+                Files.copy(it, file)
               }
           }
           catch (e: IOException) {
@@ -169,42 +180,38 @@ class MavenIndexerCMDState(
 
     private fun prepareClassPathForProduction(
       mavenVersion: String,
-      classpath: MutableList<File>,
-      root: String,
+      classpath: MutableList<Path>,
+      root: Path,
     ) {
-      classpath.add(File(PathUtil.getJarPathForClass(MavenId::class.java)))
-      classpath.add(File(PathUtil.getJarPathForClass(MavenServer::class.java)))
-      classpath.add(File(root, "maven-server-indexer.jar"))
-      addDir(classpath, File(root, "maven-server-indexer"))
-      addDir(classpath, File(File(root, "intellij.maven.server.indexer"), "lib"))
+      classpath.add(PathManager.getJarForClass(MavenId::class.java)!!)
+      classpath.add(PathManager.getJarForClass(MavenServer::class.java)!!)
+      classpath.add( root.resolve("maven-server-indexer.jar"))
+      addDir(classpath, root.resolve("maven-server-indexer"))
+      addDir(classpath, root.resolve("intellij.maven.server.indexer").resolve("lib"))
     }
 
-    private fun prepareClassPathForLocalRunAndUnitTests(mavenVersion: String, classpath: MutableList<File>, root: String) {
-      classpath.add(File(PathUtil.getJarPathForClass(MavenId::class.java)))
-      classpath.add(File(root, "intellij.maven.server"))
-      classpath.add(File(root, "intellij.maven.server.indexer"))
-    }
-
-    private fun addMavenLibs(classpath: MutableList<File>, mavenHome: File) {
-      addDir(classpath, File(mavenHome, "lib"))
-      val bootFolder = File(mavenHome, "boot")
-      val classworldsJars = bootFolder.listFiles { dir: File?, name: String? ->
-        StringUtil.contains(
-          name!!, "classworlds")
-      }
-      if (classworldsJars != null) {
-        Collections.addAll(classpath, *classworldsJars)
-      }
-    }
-
-    private fun addDir(classpath: MutableList<File>, dir: File) {
-      val files = dir.listFiles()
-      if (files == null) return
-
-      for (jar in files) {
-        if (jar.isFile && jar.name.endsWith(".jar")) {
-          classpath.add(jar)
+    private fun prepareClassPathForLocalRunAndUnitTests(classpath: MutableList<Path>, root: Path, packed: Boolean = false) {
+      classpath.add(PathManager.getJarForClass(MavenId::class.java)!!)
+      listOf(root.resolve("intellij.maven.server"),
+             root.resolve("intellij.maven.server.indexer")).forEach {
+        if (packed) {
+          classpath.add(it.listDirectoryEntries("*.jar").first())
         }
+        else {
+          classpath.add(it)
+        }
+      }
+    }
+
+    private fun addMavenLibs(classpath: MutableList<Path>, mavenHome: Path) {
+      addDir(classpath, mavenHome.resolve("lib"))
+      val bootFolder = mavenHome.resolve("boot")
+      classpath.addAll(bootFolder.listDirectoryEntries("*classworlds*.jar"))
+    }
+
+    private fun addDir(classpath: MutableList<Path>, dir: Path) {
+      dir.listDirectoryEntries("*.jar").forEach {
+        classpath.add(it)
       }
     }
   }

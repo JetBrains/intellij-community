@@ -16,8 +16,9 @@ import org.junit.Test
 
 const val DOCTEST_MODULES_ARG = "--doctest-modules"
 const val DOCTEST_DIR_PATH = "/testRunner/env/doc/via_pytest"
+const val DOCTEST_SIMPLE_PACKAGE = "pkg"
 const val DOCTEST_SIMPLE_MODULE = "doctest_simple"
-const val DOCTEST_SIMPLE_FILE = "$DOCTEST_SIMPLE_MODULE.py"
+const val DOCTEST_SIMPLE_FILE = "${DOCTEST_SIMPLE_PACKAGE}/${DOCTEST_SIMPLE_MODULE}.py"
 const val DOCTEST_SIMPLE_CLASS = "TestFooClass"
 const val DOCTEST_SIMPLE_FUN_TRUE = "test_true"
 const val DOCTEST_SIMPLE_FUN_FALSE = "test_false"
@@ -57,37 +58,37 @@ class PythonDocTestingViaPytestTest : PyEnvTestCase() {
       override fun checkTestResults(runner: PyDocTestViaPytestRunner, stdout: String, stderr: String, all: String, exitCode: Int) {
         assertEquals(3, runner.passedTestsCount)
         assertEquals(2, runner.failedTestsCount)
-        val test = runner.findTestByName("${DOCTEST_SIMPLE_MODULE}_${DOCTEST_SIMPLE_CLASS}_$DOCTEST_SIMPLE_FUN_FALSE")
-        assertEquals("doctest_simple.py:24 ([doctest] doctest_simple.TestFooClass.test_false)", test.errorMessage?.trim())
+        val test = runner.findTestByName("${DOCTEST_SIMPLE_PACKAGE}_${DOCTEST_SIMPLE_MODULE}_${DOCTEST_SIMPLE_CLASS}_$DOCTEST_SIMPLE_FUN_FALSE")
+        assertEquals("pkg/doctest_simple.py:24 ([doctest] pkg.doctest_simple.TestFooClass.test_false)", test.errorMessage?.trim())
       }
     })
   }
 
   @Test
-  fun testCLass() {
-    runPythonTest(object : DocTestViaPytestTask("$TEST_TARGET_PREFIX$DOCTEST_SIMPLE_MODULE.$DOCTEST_SIMPLE_CLASS") {
+  fun testClass() {
+    runPythonTest(object : DocTestViaPytestTask("$TEST_TARGET_PREFIX$DOCTEST_SIMPLE_PACKAGE.$DOCTEST_SIMPLE_MODULE.$DOCTEST_SIMPLE_CLASS") {
       override fun checkTestResults(runner: PyDocTestViaPytestRunner, stdout: String, stderr: String, all: String, exitCode: Int) {
-        Assert.assertTrue(runner.findTestByName("${DOCTEST_SIMPLE_MODULE}_$DOCTEST_SIMPLE_CLASS").isPassed)
+        Assert.assertTrue(runner.findTestByName("${DOCTEST_SIMPLE_PACKAGE}_${DOCTEST_SIMPLE_MODULE}_$DOCTEST_SIMPLE_CLASS").isPassed)
       }
     })
   }
 
   @Test
   fun testFunTrue() {
-    runPythonTest(object : DocTestViaPytestTask("$TEST_TARGET_PREFIX$DOCTEST_SIMPLE_MODULE.$DOCTEST_SIMPLE_CLASS.$DOCTEST_SIMPLE_FUN_TRUE") {
+    runPythonTest(object : DocTestViaPytestTask("$TEST_TARGET_PREFIX$DOCTEST_SIMPLE_PACKAGE.$DOCTEST_SIMPLE_MODULE.$DOCTEST_SIMPLE_CLASS.$DOCTEST_SIMPLE_FUN_TRUE") {
       override fun checkTestResults(runner: PyDocTestViaPytestRunner, stdout: String, stderr: String, all: String, exitCode: Int) {
-        Assert.assertTrue(runner.findTestByName("${DOCTEST_SIMPLE_MODULE}_${DOCTEST_SIMPLE_CLASS}_$DOCTEST_SIMPLE_FUN_TRUE").isPassed)
+        Assert.assertTrue(runner.findTestByName("${DOCTEST_SIMPLE_PACKAGE}_${DOCTEST_SIMPLE_MODULE}_${DOCTEST_SIMPLE_CLASS}_$DOCTEST_SIMPLE_FUN_TRUE").isPassed)
       }
     })
   }
 
   @Test
   fun testFunFalse() {
-    runPythonTest(object : DocTestViaPytestTask("$TEST_TARGET_PREFIX$DOCTEST_SIMPLE_MODULE.$DOCTEST_SIMPLE_CLASS.$DOCTEST_SIMPLE_FUN_FALSE", 1) {
+    runPythonTest(object : DocTestViaPytestTask("$TEST_TARGET_PREFIX$DOCTEST_SIMPLE_PACKAGE.$DOCTEST_SIMPLE_MODULE.$DOCTEST_SIMPLE_CLASS.$DOCTEST_SIMPLE_FUN_FALSE", 1) {
       override fun checkTestResults(runner: PyDocTestViaPytestRunner, stdout: String, stderr: String, all: String, exitCode: Int) {
-        val test = runner.findTestByName("${DOCTEST_SIMPLE_MODULE}_${DOCTEST_SIMPLE_CLASS}_$DOCTEST_SIMPLE_FUN_FALSE")
+        val test = runner.findTestByName("${DOCTEST_SIMPLE_PACKAGE}_${DOCTEST_SIMPLE_MODULE}_${DOCTEST_SIMPLE_CLASS}_$DOCTEST_SIMPLE_FUN_FALSE")
         Assert.assertFalse(test.isPassed)
-        assertEquals("doctest_simple.py:24 ([doctest] doctest_simple.TestFooClass.test_false)", test.errorMessage?.trim())
+        assertEquals("pkg/doctest_simple.py:24 ([doctest] pkg.doctest_simple.TestFooClass.test_false)", test.errorMessage?.trim())
       }
     })
   }

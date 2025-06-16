@@ -5,6 +5,5 @@ fun main(args: Array<String>) {
     s.<caret>
 }
 
-// IGNORE_K2
 // EXIST: {"lookupString":"getInputStream","tailText":"()","typeText":"InputStream!","attributes":"bold","allLookupStrings":"getInputStream","itemText":"getInputStream"}
 // ABSENT: inputStream

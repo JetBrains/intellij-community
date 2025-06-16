@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="java.highest.language.level" defaultValue="24" description="Highest released language level" restartRequired="false"/>
+  </extensions>
+</idea-plugin>

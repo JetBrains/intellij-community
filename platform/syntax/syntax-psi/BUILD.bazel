@@ -15,11 +15,14 @@ jvm_library(
   kotlinc_opts = "@community//:k8",
   deps = [
     "//platform/util",
+    "//platform/util-rt",
     "//platform/syntax/syntax-api:syntax",
     "//platform/core-api:core",
     "@lib//:kotlin-stdlib",
     "//platform/core-impl",
     "@lib//:fastutil-min",
+    "//platform/syntax/syntax-util:util",
+    "//platform/syntax/syntax-extensions:extensions",
   ],
   exports = ["//platform/syntax/syntax-api:syntax"],
   runtime_deps = [":psi_resources"]

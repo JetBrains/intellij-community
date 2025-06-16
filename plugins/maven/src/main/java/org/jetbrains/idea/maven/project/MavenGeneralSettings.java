@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
@@ -18,19 +17,15 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.config.MavenConfig;
 import org.jetbrains.idea.maven.config.MavenConfigParser;
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions;
-import org.jetbrains.idea.maven.utils.MavenEelUtil;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNullElse;
 import static org.jetbrains.idea.maven.config.MavenConfigSettings.*;
 import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
-import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 public class MavenGeneralSettings implements Cloneable {
   private static final MavenHomeType DEFAULT_MAVEN = BundledMaven3.INSTANCE;
@@ -191,13 +186,6 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   @TestOnly
-  @Deprecated(forRemoval = true)
-  public void setMavenHomeNoFire(final @NotNull String mavenHome) {
-    //noinspection HardCodedStringLiteral
-    setMavenHome(resolveMavenHomeType(mavenHome), false);
-  }
-
-  @TestOnly
   public void setMavenHomeNoFire(final @NotNull MavenHomeType mavenHome) {
     setMavenHome(mavenHome, false);
   }
@@ -225,43 +213,12 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated(forRemoval = true)
-  public @Nullable Path getEffectiveUserSettingsIoFile() {
-    return MavenEelUtil.getUserSettings(myProject, getUserSettingsFile(), getMavenConfig());
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated
-  public @Nullable Path getEffectiveGlobalSettingsIoFile() {
-    return MavenEelUtil.getGlobalSettings(myProject, staticOrBundled(getMavenHomeType()), getMavenConfig());
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated(forRemoval = true)
-  public @Nullable VirtualFile getEffectiveUserSettingsFile() {
-    Path file = getEffectiveUserSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().findFileByNioFile(file);
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated(forRemoval = true)
-  public List<VirtualFile> getEffectiveSettingsFiles() {
-    List<VirtualFile> result = new ArrayList<>(2);
-    VirtualFile file = getEffectiveUserSettingsFile();
-    if (file != null) result.add(file);
-    file = getEffectiveGlobalSettingsFile();
-    if (file != null) result.add(file);
-    return result;
-  }
-
-  /** @deprecated use {@link MavenUtil} or {@link MavenEelUtil} instead */
-  @Deprecated(forRemoval = true)
-  public @Nullable VirtualFile getEffectiveGlobalSettingsFile() {
-    Path file = getEffectiveGlobalSettingsIoFile();
-    return file == null ? null : LocalFileSystem.getInstance().findFileByNioFile(file);
-  }
-
+  /**
+   * Do not use this variable.
+   * Use MavenSettingsCache.getEffectiveUserLocalRepo instead
+   * @return local repository string. This string should not be used to create a file directly
+   */
+  @ApiStatus.Internal
   public @NotNull String getLocalRepository() {
     return overriddenLocalRepository;
   }
@@ -272,35 +229,11 @@ public class MavenGeneralSettings implements Cloneable {
     if (!Objects.equals(this.overriddenLocalRepository, overriddenLocalRepository)) {
       this.overriddenLocalRepository = overriddenLocalRepository;
       if (myProject != null) {
-        MavenUtil.restartMavenConnectors(myProject, false);
+        MavenUtil.shutdownMavenConnectors(myProject);
       }
       changed();
     }
   }
-
-  private Path doGetEffectiveRepositoryPath(Supplier<Path> producer) {
-    Path result = myEffectiveLocalRepositoryCache;
-    if (result != null) return result;
-
-    result = producer.get();
-    myEffectiveLocalRepositoryCache = result;
-    return result;
-  }
-
-  public Path getEffectiveRepositoryPathUnderModalProgress() {
-    return doGetEffectiveRepositoryPath(() -> {
-      return MavenEelUtil.getLocalRepoUnderModalProgress(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType),
-                                                         mavenSettingsFile, getMavenConfig());
-    });
-  }
-
-  public Path getEffectiveRepositoryPath() {
-    return doGetEffectiveRepositoryPath(() -> {
-      return MavenEelUtil.getLocalRepo(myProject, overriddenLocalRepository, staticOrBundled(mavenHomeType), mavenSettingsFile,
-                                       getMavenConfig());
-    });
-  }
-
 
   public boolean isPrintErrorStackTraces() {
     return printErrorStackTraces;

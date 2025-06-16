@@ -14,18 +14,21 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
     "//platform/project/shared:project",
-    "//platform/object-serializer:objectSerializer",
+    "//platform/object-serializer",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/kernel/shared:kernel",
     "@lib//:jetbrains-annotations",
     "@lib//:kotlinx-coroutines-core",
-    "//platform/platform-impl/rpc:ide-rpc",
+    "//platform/platform-impl/rpc",
     "//platform/platform-api:ide",
     "//platform/core-ui",
     "//platform/util:util-ui",
     "//platform/platform-impl:ide-impl",
+    "//platform/analysis-api:analysis",
+    "//platform/ide-core-impl",
   ],
   runtime_deps = [":recentFiles_resources"]
 )

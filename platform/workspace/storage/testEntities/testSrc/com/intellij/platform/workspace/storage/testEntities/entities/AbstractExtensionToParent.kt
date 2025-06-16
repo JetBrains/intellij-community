@@ -87,7 +87,8 @@ var AbstractChildWithLinkToParentEntity.Builder<out AbstractChildWithLinkToParen
 interface SpecificChildWithLinkToParentEntity : AbstractChildWithLinkToParentEntity {
   //region generated code
   @GeneratedCodeApiVersion(3)
-  interface Builder : WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity>, AbstractChildWithLinkToParentEntity.Builder<SpecificChildWithLinkToParentEntity> {
+  interface Builder : WorkspaceEntity.Builder<SpecificChildWithLinkToParentEntity>,
+                      AbstractChildWithLinkToParentEntity.Builder<SpecificChildWithLinkToParentEntity> {
     override var entitySource: EntitySource
     override var data: String
   }

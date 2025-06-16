@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.rmi.ssl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.net.ssl.SSLSocketFactory;
@@ -9,7 +10,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
 
-abstract class DelegateSslSocketFactory extends SSLSocketFactory {
+@ApiStatus.Internal
+public abstract class DelegateSslSocketFactory extends SSLSocketFactory {
   private final SSLSocketFactory myFactory;
 
   DelegateSslSocketFactory(SSLSocketFactory factory) throws GeneralSecurityException {

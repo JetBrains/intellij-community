@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
+import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
@@ -37,6 +38,7 @@ internal class GHPRChangesViewModelImpl(
   private val project: Project,
   private val dataContext: GHPRDataContext,
   private val dataProvider: GHPRDataProvider,
+  private val openPullRequestDiff: (GHPRIdentifier?, Boolean) -> Unit,
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope()
 
@@ -77,7 +79,7 @@ internal class GHPRChangesViewModelImpl(
     }.stateInNow(cs, null)
 
   private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changes, changeList ->
-    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList)
+    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList, openPullRequestDiff)
   }
 
   override val selectedCommitIndex: SharedFlow<Int> = reviewCommits.combine(delegate.selectedCommit) { commits, sha ->

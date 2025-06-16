@@ -12,6 +12,10 @@ internal class ADParsingTest : ParsingTestCase(
   fun testSimple() = doTest()
   fun testField() = doTest()
 
+  fun testRecover() = doTest()
+  fun testRecover1() = doTest()
+  fun testRecover2() = doTest()
+
   private fun doTest() {
     doTest(true)
   }

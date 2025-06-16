@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.toml.frontend` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "frontend_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "frontend",
+  module_name = "intellij.toml.frontend",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "//plugins/toml/core",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/platform-api:ide",
+    "//platform/analysis-api:analysis",
+    "//platform/core-impl",
+    "//platform/lang-impl",
+  ],
+  runtime_deps = [
+    ":frontend_resources",
+    "//platform/platform-frontend:frontend",
+  ]
+)
+### auto-generated section `build intellij.toml.frontend` end

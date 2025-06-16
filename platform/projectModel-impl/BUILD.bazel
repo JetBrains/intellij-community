@@ -13,6 +13,7 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
     "//platform/projectModel-api:projectModel",
     "//platform/core-impl",
     "//jps/model-api:model",
@@ -36,13 +37,13 @@ jvm_library(
     "//platform/backend/workspace",
     "//platform/diagnostic",
     "//platform/eel-provider",
+    "//platform/util/coroutines",
+    "//platform/diagnostic/telemetry-impl",
   ],
   exports = [
     "//platform/projectModel-api:projectModel",
     "//jps/model-serialization",
     "//platform/util-ex",
-    "//platform/util/concurrency",
-    "//platform/workspace/storage",
   ],
   runtime_deps = [":projectModel-impl_resources"]
 )

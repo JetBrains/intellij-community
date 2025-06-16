@@ -304,14 +304,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
   }
 
   private fun runWithConnectInUnitTestMode(block: () -> Unit) {
-    val connectInUnitTestModeValue = TestModeFlags.get(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY)
-    TestModeFlags.set(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY, true)
-    try {
-      block()
-    }
-    finally {
-      TestModeFlags.set(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY, connectInUnitTestModeValue)
-    }
+    TestModeFlags.runWithFlag(SearchForTestsTask.CONNECT_IN_UNIT_TEST_MODE_PROPERTY_KEY, true, block)
   }
 
   /**

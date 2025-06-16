@@ -20,6 +20,9 @@ internal fun PublishingExtension.configureJewelRepositories(project: Project) {
     }
 }
 
+/**
+ * Obsolete, please use https://github.com/JetBrains/intellij-community/blob/master/build/src/org/jetbrains/intellij/build/JewelMavenArtifacts.kt instead
+ */
 internal fun MavenPom.configureJewelPom() {
     name = "Jewel"
     description = "A theme for Compose for Desktop that implements the IntelliJ Platform look and feel."
@@ -27,7 +30,7 @@ internal fun MavenPom.configureJewelPom() {
     licenses {
         license {
             name = "Apache License 2.0"
-            url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+            url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
         }
     }
     scm {

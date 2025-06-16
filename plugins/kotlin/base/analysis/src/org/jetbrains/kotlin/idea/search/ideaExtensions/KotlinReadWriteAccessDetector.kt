@@ -15,14 +15,14 @@ import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
 class KotlinReadWriteAccessDetector : ReadWriteAccessDetector() {
     companion object {
-        val INSTANCE = KotlinReadWriteAccessDetector()
+        val INSTANCE: KotlinReadWriteAccessDetector = KotlinReadWriteAccessDetector()
     }
 
-    private val javaReadWriteAccessDetector by lazy { EP_NAME.extensionList.filterIsInstance<JavaReadWriteAccessDetector>().first() }
+    private val javaReadWriteAccessDetector: JavaReadWriteAccessDetector by lazy { EP_NAME.extensionList.filterIsInstance<JavaReadWriteAccessDetector>().first() }
 
-    override fun isReadWriteAccessible(element: PsiElement) = element is KtVariableDeclaration || element is KtParameter || javaReadWriteAccessDetector.isReadWriteAccessible(element)
+    override fun isReadWriteAccessible(element: PsiElement): Boolean = element is KtVariableDeclaration || element is KtParameter || javaReadWriteAccessDetector.isReadWriteAccessible(element)
 
-    override fun isDeclarationWriteAccess(element: PsiElement) = isReadWriteAccessible(element)
+    override fun isDeclarationWriteAccess(element: PsiElement): Boolean = element is KtVariableDeclaration || element is KtParameter || javaReadWriteAccessDetector.isDeclarationWriteAccess(element)
 
     override fun getReferenceAccess(referencedElement: PsiElement, reference: PsiReference): Access {
         if (!isReadWriteAccessible(referencedElement)) {

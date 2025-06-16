@@ -1,4 +1,4 @@
-// "Replace spaces with tabs (4 spaces = 1 tab)" "true"
+// "Indent text block with spaces only" "true"
 
 class Foo {
   void test() {

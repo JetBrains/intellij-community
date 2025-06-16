@@ -65,6 +65,18 @@ public abstract class XSmartStepIntoHandler<Variant extends XSmartStepIntoVarian
   /**
    * @return title for popup which will be shown to select method/function
    * @param position current position
+   * @deprecated Use {@link #getPopupTitle()} instead.
    */
-  public abstract @NlsContexts.PopupTitle String getPopupTitle(@NotNull XSourcePosition position);
+  @Deprecated
+  public @NlsContexts.PopupTitle String getPopupTitle(@NotNull XSourcePosition position) {
+    return getPopupTitle();
+  }
+
+  /**
+   * @return title for popup which will be shown to select method/function
+   * @param position current position
+   */
+  public @NlsContexts.PopupTitle String getPopupTitle() {
+    throw new AbstractMethodError();
+  }
 }

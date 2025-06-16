@@ -14,6 +14,9 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/settings-sync-core:settingsSync-core",
     "//platform/core-ui",
     "//platform/ide-core",
@@ -35,6 +38,9 @@ jvm_library(
   associates = [":settingsSync"],
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/projectModel-api:projectModel",
     "//platform/settings-sync-core:settingsSync-core",
     "//platform/settings-sync-core:settingsSync-core_test_lib",
     "//platform/core-ui",
@@ -52,6 +58,7 @@ jvm_library(
     "//plugins/performanceTesting/core:performanceTesting_test_lib",
     "@lib//:mockito",
     "//platform/util/progress",
+    "@lib//:kotlinx-coroutines-test",
   ],
   runtime_deps = [":settingsSync_resources"]
 )

@@ -2,9 +2,6 @@
 package com.intellij.python.ml.features.imports
 
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.jetbrains.ml.api.feature.Feature
 import com.jetbrains.ml.api.feature.FeatureDeclaration
 import com.jetbrains.ml.api.feature.FeatureFilter
@@ -27,12 +24,6 @@ class ImportsRankingModelService : MLModelSuspendableService<MLModel<Double>, Do
     format = CatBoostDistributionFormat(),
   ))
 )
-
-private class QuickfixRankingModelLoading : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    service<ImportsRankingModelService>().loadModel()
-  }
-}
 
 private class MissingTypingFeaturesLoader(private val baseLoader: MLModelLoader<MLModel<Double>, Double>) : MLModelLoader<MLModel<Double>, Double> {
 
@@ -63,11 +54,11 @@ private class MissingTypingFeaturesLoader(private val baseLoader: MLModelLoader<
 }
 
 private object TypingFeatures {
-  val SINCE_LAST_TYPING = FeatureDeclaration.int("typing_speed_tracker/time_since_last_typing") { "Deprecated" }
-  val TYPING_SPEED_1S = FeatureDeclaration.double("typing_speed_tracker/typing_speed_1s") { "Deprecated" }
-  val TYPING_SPEED_2S = FeatureDeclaration.double("typing_speed_tracker/typing_speed_2s") { "Deprecated" }
-  val TYPING_SPEED_5S = FeatureDeclaration.double("typing_speed_tracker/typing_speed_5s") { "Deprecated" }
-  val TYPING_SPEED_30S = FeatureDeclaration.double("typing_speed_tracker/typing_speed_30s") { "Deprecated" }
+  val SINCE_LAST_TYPING = FeatureDeclaration.int("typing_speed_tracker_time_since_last_typing") { "Deprecated" }
+  val TYPING_SPEED_1S = FeatureDeclaration.double("typing_speed_tracker_typing_speed_1s") { "Deprecated" }
+  val TYPING_SPEED_2S = FeatureDeclaration.double("typing_speed_tracker_typing_speed_2s") { "Deprecated" }
+  val TYPING_SPEED_5S = FeatureDeclaration.double("typing_speed_tracker_typing_speed_5s") { "Deprecated" }
+  val TYPING_SPEED_30S = FeatureDeclaration.double("typing_speed_tracker_typing_speed_30s") { "Deprecated" }
 }
 
 private val allTypingFeatures: List<FeatureDeclaration<*>> = extractFeatureDeclarations(TypingFeatures)

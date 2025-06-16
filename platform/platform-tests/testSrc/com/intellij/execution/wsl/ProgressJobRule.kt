@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.junit.rules.TestRule
 import org.junit.runner.Description
@@ -17,9 +16,7 @@ class ProgressJobRule(private val coroutineTimeout: Duration) : TestRule {
   override fun apply(base: Statement, description: Description): Statement = object : Statement() {
     override fun evaluate() {
       timeoutRunBlocking(coroutineTimeout, coroutineName = description.displayName) {
-        blockingContext {
-          base.evaluate()
-        }
+        base.evaluate()
       }
     }
   }

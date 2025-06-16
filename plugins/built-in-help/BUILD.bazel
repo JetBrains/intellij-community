@@ -2,21 +2,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "builtInHelp_resources",
+  name = "built-in-help_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "builtInHelp",
+  name = "built-in-help",
   module_name = "intellij.builtInHelp",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:netty-codec-http",
-    "@lib//:lucene-core",
-    "@lib//:lucene-analysis-common",
     "@lib//:lucene-codecs",
     "@lib//:lucene-memory",
     "@lib//:lucene-queries",
@@ -24,23 +22,25 @@ jvm_library(
     "@lib//:lucene-highlighter",
     "@lib//:lucene-queryparser",
     "@lib//:lucene-suggest",
-    "@lib//:commons-compress",
     "@lib//:jsoup",
     "@lib//:jaxb-api",
+    "//platform/core-api:core",
+    "//platform/credential-store",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/core-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/util-ex",
     "//platform/built-in-server:builtInServer-impl",
+    "//libraries/lucene.common",
     "@lib//:netty-buffer",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
     "@lib//:jackson",
     "@lib//:jackson-databind",
     "@lib//:jackson-module-kotlin",
-    "//plugins/maven/maven-server-indexer:server-indexer",
   ],
-  runtime_deps = [":builtInHelp_resources"]
+  runtime_deps = [":built-in-help_resources"]
 )
 ### auto-generated section `build intellij.builtInHelp` end

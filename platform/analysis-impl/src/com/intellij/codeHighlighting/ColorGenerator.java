@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.ui.JBColor;
@@ -34,7 +34,7 @@ public final class ColorGenerator {
     return result;
   }
 
-  static @NotNull List<Color> generateLinearColorSequence(@NotNull Color color1, @NotNull Color color2, int colorsBetweenAnchors) {
+  public static @NotNull List<Color> generateLinearColorSequence(@NotNull Color color1, @NotNull Color color2, int colorsBetweenAnchors) {
     assert colorsBetweenAnchors >= 0;
 
     List<Color> result = new ArrayList<>(colorsBetweenAnchors + 2);

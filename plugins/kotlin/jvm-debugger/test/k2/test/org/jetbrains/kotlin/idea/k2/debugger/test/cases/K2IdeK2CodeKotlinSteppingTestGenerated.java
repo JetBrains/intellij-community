@@ -285,6 +285,16 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/stepInto/interfaces.kt");
         }
 
+        @TestMetadata("interfacesJvmDefaultDisable.kt")
+        public void testInterfacesJvmDefaultDisable() throws Exception {
+            runTest("../testData/stepping/stepInto/interfacesJvmDefaultDisable.kt");
+        }
+
+        @TestMetadata("localDelegatedPropertyAndClinit.kt")
+        public void testLocalDelegatedPropertyAndClinit() throws Exception {
+            runTest("../testData/stepping/stepInto/localDelegatedPropertyAndClinit.kt");
+        }
+
         @TestMetadata("localFun.kt")
         public void testLocalFun() throws Exception {
             runTest("../testData/stepping/stepInto/localFun.kt");
@@ -617,6 +627,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             @TestMetadata("inlineInObject.kt")
             public void testInlineInObject() throws Exception {
                 runTest("../testData/stepping/stepOver/inlineInObject.kt");
+            }
+
+            @TestMetadata("inplaceArgumentLineNum.kt")
+            public void testInplaceArgumentLineNum() throws Exception {
+                runTest("../testData/stepping/stepOver/inplaceArgumentLineNum.kt");
             }
 
             @TestMetadata("kt14869.kt")
@@ -1986,6 +2001,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
         @TestMetadata("smartStepWithInlineClass.kt")
         public void testSmartStepWithInlineClass() throws Exception {
             runTest("../testData/stepping/custom/smartStepWithInlineClass.kt");
+        }
+
+        @TestMetadata("ssiJavaProperty.kt")
+        public void testSsiJavaProperty() throws Exception {
+            runTest("../testData/stepping/custom/ssiJavaProperty.kt");
         }
 
         @TestMetadata("stepIntoLibWithSources.kt")

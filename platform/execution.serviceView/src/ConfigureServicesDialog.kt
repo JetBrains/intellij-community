@@ -59,6 +59,7 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
       return Pair(included, excluded)
     }
 
+    // todo retrieve list from backend - ask Kostya?
     private fun collectTypes(project: Project): Pair<List<ConfigurationType>, List<ConfigurationType>> {
       val includedTypes = ArrayList<ConfigurationType>()
       val excludedTypes = ArrayList<ConfigurationType>()

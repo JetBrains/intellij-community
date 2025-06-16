@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
@@ -32,8 +33,8 @@ public final class GenericsUtil {
 
   public static @Nullable PsiType getLeastUpperBound(PsiType type1, PsiType type2, PsiManager manager) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
-    if (TypeConversionUtil.isNullType(type1)) return type2;
-    if (TypeConversionUtil.isNullType(type2)) return type1;
+    if (TypeConversionUtil.isNullType(type1)) return type2.withNullability(TypeNullability.NULLABLE_MANDATED);
+    if (TypeConversionUtil.isNullType(type2)) return type1.withNullability(TypeNullability.NULLABLE_MANDATED);
     if (Comparing.equal(type1, type2)) return type1;
     return getLeastUpperBound(type1, type2, new LinkedHashSet<>(), manager);
   }
@@ -97,7 +98,8 @@ public final class GenericsUtil {
 
       PsiClass[] supers = getLeastUpperClasses(aClass, bClass);
       if (supers.length == 0) {
-        return PsiType.getJavaLangObject(manager, type1.getResolveScope());
+        return PsiType.getJavaLangObject(manager, type1.getResolveScope())
+          .withNullability(type1.getNullability().join(type2.getNullability()));
       }
 
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(manager.getProject());
@@ -296,7 +298,8 @@ public final class GenericsUtil {
     PsiType deepComponentType = type.getDeepComponentType();
     if (deepComponentType instanceof PsiCapturedWildcardType) {
       type = PsiTypesUtil.createArrayType(((PsiCapturedWildcardType)deepComponentType).getUpperBound(),
-                                          type.getArrayDimensions());
+                                          type.getArrayDimensions())
+        .withNullability(type.getNullability());
     }
     PsiType transformed = type.accept(new PsiTypeVisitor<PsiType>() {
       @Override
@@ -307,7 +310,8 @@ public final class GenericsUtil {
         if (type instanceof PsiWildcardType) {
           type = ((PsiWildcardType)type).getBound();
         }
-        return type != null ? type.createArrayType().annotate(arrayType.getAnnotationProvider()) : arrayType;
+        return type != null ? type.createArrayType()
+          .annotate(arrayType.getAnnotationProvider()).withNullability(arrayType.getNullability()) : arrayType;
       }
 
       @Override
@@ -380,7 +384,8 @@ public final class GenericsUtil {
         PsiManager manager = aClass.getManager();
         PsiType result = JavaPsiFacade.getElementFactory(manager.getProject())
           .createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass))
-          .annotate(TypeAnnotationProvider.Static.create(applicableAnnotations));
+          .annotate(TypeAnnotationProvider.Static.create(applicableAnnotations))
+          .withNullability(classType.getNullability());
         if (toExtend) result = PsiWildcardType.createExtends(manager, result);
         return result;
       }
@@ -445,13 +450,14 @@ public final class GenericsUtil {
 
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
         PsiSubstitutor substitutor = factory.createSubstitutor(map);
-        type = factory.createType(aClass, substitutor).annotate(classType.getAnnotationProvider());
+        type = factory.createType(aClass, substitutor).annotate(classType.getAnnotationProvider())
+          .withNullability(classType.getNullability());
       }
     }
     else if (type instanceof PsiArrayType) {
       PsiType component = eliminateWildcards(((PsiArrayType)type).getComponentType(), false);
       PsiType newArray = type instanceof PsiEllipsisType ? new PsiEllipsisType(component) : new PsiArrayType(component);
-      return newArray.annotate(type.getAnnotationProvider());
+      return newArray.annotate(type.getAnnotationProvider()).withNullability(type.getNullability());
     }
     else if (type instanceof PsiWildcardType) {
       final PsiType bound = ((PsiWildcardType)type).getBound();
@@ -468,8 +474,17 @@ public final class GenericsUtil {
     //Given a generic type declaration C<F1,...,Fn> (n > 0), the direct supertypes of the parameterized type C<R1,...,Rn> where at least one of the Ri is a wildcard
     //type argument, are the direct supertypes of the parameterized type C<X1,...,Xn> which is the result of applying capture conversion to C<R1,...,Rn>.
     PsiType capturedType = PsiUtil.captureToplevelWildcards(type, referenceParameterList);
-    //allow unchecked conversions in method calls but not in type declaration
-    return checkNotInBounds(capturedType, bound, PsiTreeUtil.getParentOfType(referenceParameterList, PsiCallExpression.class) != null);
+    //allow unchecked conversions in method calls, new expression args, or in diamond types, but not in other places
+    boolean uncheckedConversionByDefault;
+    PsiElement parent = referenceParameterList.getParent();
+    if (parent instanceof PsiReferenceExpression || parent instanceof PsiNewExpression) {
+      uncheckedConversionByDefault = true;
+    }
+    else {
+      PsiTypeElement[] elements = referenceParameterList.getTypeParameterElements();
+      uncheckedConversionByDefault = elements.length == 1 && elements[0].getType() instanceof PsiDiamondType;
+    }
+    return checkNotInBounds(capturedType, bound, uncheckedConversionByDefault);
   }
 
   public static boolean checkNotInBounds(PsiType type, PsiType bound, boolean uncheckedConversionByDefault) {

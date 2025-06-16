@@ -55,6 +55,10 @@ public final @NonNls class PyNames {
   public static final String TYPE_ENUM_MEMBER = "enum.member";
   public static final String TYPE_ENUM_NONMEMBER = "enum.nonmember";
 
+  public static final String TYPE_NONE = "_typeshed.NoneType";
+  public static final Set<String> TYPE_NONE_NAMES = Set.of("types.NoneType", TYPE_NONE);
+
+  public static final Set<String> BUILTINS_MODULES = Set.of("builtins.py", "__builtin__.py");
   public static final String PYTHON_SDK_ID_NAME = "Python SDK";
   public static final String VERBOSE_REG_EXP_LANGUAGE_ID = "PythonVerboseRegExp";
   public static final @NonNls String PYTHON_MODULE_ID = "PYTHON_MODULE";
@@ -99,6 +103,8 @@ public final @NonNls class PyNames {
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";
 
+  public static final String TEMPLATELIB_TEMPLATE = "string.templatelib.Template";
+
   public static final String CLASSMETHOD = "classmethod";
   public static final String STATICMETHOD = "staticmethod";
   public static final String OVERLOAD = "overload";
@@ -109,6 +115,7 @@ public final @NonNls class PyNames {
   public static final String SETTER = "setter";
   public static final String DELETER = "deleter";
   public static final String GETTER = "getter";
+  public static final String CACHED_PROPERTY = "cached_property";
 
   public static final String ALL = "__all__";
   public static final String SLOTS = "__slots__";
@@ -186,6 +193,7 @@ public final @NonNls class PyNames {
   public static final String ROUND = "__round__";
   public static final String CLASS_GETITEM = "__class_getitem__";
   public static final String PREPARE = "__prepare__";
+  public static final String MATCH_ARGS = "__match_args__";
 
   public static final String NAME = "__name__";
   public static final String ENTER = "__enter__";
@@ -319,7 +327,7 @@ public final @NonNls class PyNames {
     Map.entry("__contains__", _self_item_descr),
     Map.entry("__copy__", _only_self_descr),
       //_BuiltinMethodsMap.entry("__debug__", _only_self_descr);
-    Map.entry("__deepcopy__", new BuiltinDescription("(self, memodict={})")),
+    Map.entry("__deepcopy__", new BuiltinDescription("(self, memo)")),
     Map.entry("__del__", _only_self_descr),
     Map.entry("__delete__", new BuiltinDescription("(self, instance)")),
     Map.entry("__delattr__", _self_item_descr),
@@ -584,6 +592,17 @@ public final @NonNls class PyNames {
     FOR,
     LAMBDA,
     TRY
+  );
+
+  // As per: https://docs.python.org/3/reference/lexical_analysis.html#keywords
+  public static final Set<String> PY3_KEYWORDS = Set.of(
+    FALSE,  AWAIT,    ELSE,    IMPORT,   PASS,
+    NONE,   BREAK,    EXCEPT,  IN,       RAISE,
+    TRUE,   CLASS,    FINALLY, IS,       RETURN,
+    AND,    CONTINUE, FOR,     LAMBDA,   TRY,
+    AS,     DEF,      FROM,    NONLOCAL, WHILE,
+    ASSERT, DEL,      GLOBAL,  NOT,      WITH,
+    ASYNC,  ELIF,     IF,      OR,       YIELD
   );
 
   public static final Set<String> BUILTIN_INTERFACES = Set.of(

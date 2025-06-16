@@ -22,6 +22,23 @@ class PyNewTypeInspectionTest : PyInspectionTestCase() {
     )
   }
 
+  fun testNewTypeInstanceAsInitSubclassArgument() {
+    doTestByText(
+      """
+        from typing import NewType
+
+        SomeType = NewType("SomeType", str)
+
+        class Test:
+            def __init_subclass__(cls, /, some_param: SomeType, **kwargs: Any):
+                pass
+
+        class Test2(Test, some_param=SomeType("aba")):
+            pass
+      """.trimIndent()
+    )
+  }
+
   fun testVariableNameDoesNotMatchNewTypeName() {
     doTestByText(
       """

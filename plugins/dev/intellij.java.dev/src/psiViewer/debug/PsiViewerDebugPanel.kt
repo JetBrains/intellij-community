@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.dev.psiViewer.debug
 
 import com.intellij.debugger.engine.JavaDebugProcess
@@ -60,7 +60,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 
 private val LOG = Logger.getInstance(PsiViewerDebugAction::class.java)
 
-class PsiViewerDebugPanel(
+internal class PsiViewerDebugPanel(
   private val project: Project,
   private val editor: EditorEx,
   private val language: Language,
@@ -144,6 +144,10 @@ class PsiViewerDebugPanel(
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       val runnerLayout = debugSession.ui
+      if (runnerLayout == null) {
+        // TODO [Debugger.RunnerLayoutUi]
+        return
+      }
       val content = runnerLayout.contentManager.getContent(this@PsiViewerDebugPanel)
       watchMode = state
       content.displayName = getTitle(expression, state)
@@ -312,8 +316,7 @@ class PsiViewerDebugPanel(
       if (!editor.contentComponent.hasFocus()) return
       if (editor.getSelectionModel().hasSelection()) return
       val rootElement = treeStructure.rootPsiElement as? PsiFile ?: return
-      val offset = event.caret?.offset ?: return
-      val element = rootElement.findElementAt(offset) ?: return
+      val element = rootElement.findElementAt(event.caret.offset) ?: return
       structureTreeModel.select(element, psiTree) { }
     }
 
@@ -338,7 +341,7 @@ class PsiViewerDebugPanel(
     debugSession.removeSessionListener(watchListener)
   }
 
-  internal companion object {
+  companion object {
     fun getTitle(name: @Nls String, inWatchMode: Boolean): @Nls String {
       return if (inWatchMode) name else "$name ${DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis())}"
     }

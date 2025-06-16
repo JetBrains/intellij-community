@@ -2,22 +2,26 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "settingsRepository_resources",
+  name = "settings-repository_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "settingsRepository",
+  name = "settings-repository",
   module_name = "intellij.settingsRepository",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
+    "//platform/credential-store",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "@lib//:jetbrains-intellij-deps-eclipse-jgit",
     "@lib//:settings_repository-eclipse-jgit-ssh-apache-agent",
     "@lib//:settings_repository-eclipse-jgit-ssh-apache",
+    "//platform/projectModel-api:projectModel",
     "//platform/vcs-impl",
     "//platform/projectModel-impl",
     "@lib//:jzlib",
@@ -47,21 +51,25 @@ jvm_library(
     "@lib//:jzlib",
     "@lib//:apache-sshd-osgi",
   ],
-  runtime_deps = [":settingsRepository_resources"]
+  runtime_deps = [":settings-repository_resources"]
 )
 ### auto-generated section `build intellij.settingsRepository` end
 
 ### auto-generated section `build intellij.settingsRepository.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
-jvm_test(
-  name = "settingsRepository-tests_test",
+jvm_library(
+  name = "settingsRepository-tests_test_lib",
+  visibility = ["//visibility:public"],
   srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/core-api:core",
+    "//platform/credential-store",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
+    "//platform/projectModel-api:projectModel",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/projectModel-impl",
@@ -74,7 +82,7 @@ jvm_test(
     "//platform/vcs-api:vcs",
     "//platform/configuration-store-impl:configurationStore-impl",
     "//platform/util:util-tests_test_lib",
-    "//plugins/settings-repository:settingsRepository",
+    "//plugins/settings-repository",
     "@lib//:assert_j",
     "//platform/credential-store-ui:credentialStore-ui",
     "//platform/testFramework/extensions:testExtensions",
@@ -84,5 +92,10 @@ jvm_test(
     "//platform/util/jdom",
     "//platform/workspace/jps",
   ]
+)
+
+jvm_test(
+  name = "settingsRepository-tests_test",
+  runtime_deps = [":settingsRepository-tests_test_lib"]
 )
 ### auto-generated section `build intellij.settingsRepository.tests` end

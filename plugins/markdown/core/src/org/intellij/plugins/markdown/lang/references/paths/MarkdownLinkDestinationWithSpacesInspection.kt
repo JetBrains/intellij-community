@@ -60,7 +60,7 @@ class MarkdownLinkDestinationWithSpacesInspection: LocalInspectionTool() {
       return MarkdownBundle.message("markdown.link.destination.with.spaces.quick.fix.name", replacement)
     }
 
-    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(project: Project, psiFile: PsiFile, startElement: PsiElement, endElement: PsiElement) {
       require(startElement is MarkdownLinkDestination)
       val content = range.replace(startElement.text, replacement)
       val element = MarkdownPsiElementFactory.createLinkDestination(project, content)

@@ -1,6 +1,8 @@
+- name: lib/libwebp.jar.jar
+  library: libwebp.jar
+  module: intellij.webp
+  files:
+  - name: $PROJECT_DIR$/community/plugins/webp/lib/libwebp.jar
 - name: lib/webp.jar
   modules:
   - name: intellij.webp
-    libraries:
-      libwebp.jar:
-      - name: $PROJECT_DIR$/community/plugins/webp/lib/libwebp.jar

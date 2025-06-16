@@ -16,17 +16,13 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
 import com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider
-import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 import com.intellij.openapi.vcs.changes.ui.*
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.content.Content
 import com.intellij.util.messages.Topic
 import git4idea.config.GitVcsApplicationSettings
 import git4idea.i18n.GitBundle
-import git4idea.index.showToolWindowTab
-import git4idea.repo.GitRepositoryManager
 import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
 import git4idea.stash.isNotEmpty
@@ -76,7 +72,7 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     }
 
     private fun updateVisibleProviders() {
-      val isStashesAndShelvesTabEnabled = isStashesAndShelvesTabEnabled(project)
+      val isStashesAndShelvesTabEnabled = project.service<GitStashUIHandler>().isStashesAndShelvesTabAvailable()
       setVisibleProviders(if (isStashesAndShelvesTabEnabled) listOf(stashProvider, shelfProvider) else listOf(stashProvider))
     }
 
@@ -123,12 +119,12 @@ internal class GitStashContentPreloader(val project: Project) : ChangesViewConte
 }
 
 internal class GitStashContentVisibilityPredicate : Predicate<Project> {
-  override fun test(project: Project) = isStashTabVisible(project)
+  override fun test(project: Project) = project.service<GitStashUIHandler>().isStashTabVisible()
 }
 
 internal class GitStashDisplayNameSupplier(private val project: Project) : Supplier<String> {
   override fun get(): @Nls String {
-    if (isStashesAndShelvesTabEnabled(project)) {
+    if (project.service<GitStashUIHandler>().isStashesAndShelvesTabAvailable()) {
       return GitBundle.message("stashes.and.shelves.tab.name")
     }
     return GitBundle.message("stash.tab.name")
@@ -179,38 +175,6 @@ interface GitStashSettingsListener {
 }
 
 internal fun stashToolWindowRegistryOption(): RegistryValue = Registry.get("git.enable.stash.toolwindow")
-internal fun isStashTabAvailable(): Boolean = stashToolWindowRegistryOption().asBoolean()
-internal fun isStashTabVisible(project: Project): Boolean {
-  if (!isStashTabAvailable()) return false
-  return isStashesAndShelvesTabEnabled(project) || project.service<GitStashTracker>().isNotEmpty()
-}
-
-internal fun isStashesAndShelvesTabEnabled(project: Project): Boolean {
-  return ShelvedChangesViewManager.hideDefaultShelfTab(project)
-}
-
-internal fun setStashesAndShelvesTabEnabled(enabled: Boolean) {
-  val applicationSettings = GitVcsApplicationSettings.getInstance()
-  if (enabled == applicationSettings.isCombinedStashesAndShelvesTabEnabled) return
-
-  applicationSettings.isCombinedStashesAndShelvesTabEnabled = enabled
-
-  ApplicationManager.getApplication().messageBus.syncPublisher(GitStashSettingsListener.TOPIC).onCombineStashAndShelveSettingChanged()
-}
-
-@JvmOverloads
-internal fun showStashes(project: Project, root: VirtualFile? = null) {
-  val repository = root?.let { GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) }
-  showToolWindowTab(project, GitStashContentProvider.TAB_NAME) { component ->
-    val savedPatchesUi = component as? SavedPatchesUi ?: return@showToolWindowTab
-    val provider = savedPatchesUi.providers.filterIsInstance<GitStashProvider>().firstOrNull() ?: return@showToolWindowTab
-    if (repository == null) {
-      savedPatchesUi.showFirstUnderProvider(provider)
-    } else {
-      savedPatchesUi.showFirstUnderObject(provider, repository)
-    }
-  }
-}
 
 internal fun isStashTabVertical(project: Project): Boolean {
   return ChangesViewContentManager.isToolWindowTabVertical(project, GitStashContentProvider.TAB_NAME)

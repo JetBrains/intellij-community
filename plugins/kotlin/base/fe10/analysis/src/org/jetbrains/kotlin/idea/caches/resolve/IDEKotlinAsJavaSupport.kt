@@ -10,8 +10,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.platform.modification.createAllLibrariesModificationTracker
-import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideLibraryModificationTracker
+import org.jetbrains.kotlin.analysis.api.platform.modification.createProjectWideSourceModificationTracker
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
@@ -89,8 +89,8 @@ class IDEKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<IdeaMod
         else -> false
     }
 
-    override fun projectWideOutOfBlockModificationTracker(): ModificationTracker = project.createProjectWideOutOfBlockModificationTracker()
-    override fun librariesTracker(element: PsiElement): ModificationTracker = project.createAllLibrariesModificationTracker()
+    override fun projectWideOutOfBlockModificationTracker(): ModificationTracker = project.createProjectWideSourceModificationTracker()
+    override fun librariesTracker(element: PsiElement): ModificationTracker = project.createProjectWideLibraryModificationTracker()
 
     override fun getSubPackages(fqn: FqName, scope: GlobalSearchScope): Collection<FqName> =
         KotlinPackageIndexUtils.getSubPackageFqNames(

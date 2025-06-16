@@ -66,6 +66,7 @@ public class WorkspaceModelTopics {
       Topic.BroadcastDirection.NONE, true
     )
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("This service should not be used")
     public fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }

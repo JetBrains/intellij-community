@@ -1,0 +1,65 @@
+<html>
+<body>
+<p>Reports cascading <code>if</code> expressions where the last <code>else</code> branch is part of a dot-qualified or binary expression.
+</p>
+<p>This can lead to unexpected behavior because only the innermost <code>if-else</code> expression becomes the receiver or left operand of
+    the outer expression, which may not align with the intended logic.</p>
+<p><b>Example:</b></p>
+<pre><code>
+fun printNumberSign(num: Int) {
+    if (num > 0) {
+        "positive"
+    } else if (num < 0) {
+        "negative"
+    } else {
+        "zero"
+    }.let { print(it) }
+}
+
+fun main() {
+    printNumberSign(1) // Nothing is printed because the receiver of 'let' is only the inner 'if-else' expression
+}
+</code></pre>
+<p>After applying the first quick-fix (converting to <code>when</code>):</p>
+<pre><code>
+fun printNumberSign(num: Int) {
+    when {
+        num > 0 -> {
+            "positive"
+        }
+
+        num < 0 -> {
+            "negative"
+        }
+
+        else -> {
+            "zero"
+        }
+    }.let { print(it) }
+}
+
+fun main() {
+    printNumberSign(1) // Prints "positive"
+}
+</code></pre>
+<p>Alternatively, the second quick-fix adds clarifying braces to preserve the original semantics while making the nested <code>else</code>
+    branch explicit:</p>
+<pre><code>
+fun printNumberSign(num: Int) {
+    if (num > 0) {
+        "positive"
+    } else {
+        if (num < 0) {
+            "negative"
+        } else {
+            "zero"
+        }.let { print(it) }
+    }
+}
+
+fun main() {
+    printNumberSign(1) // Nothing is printed, but the code is clearer
+}
+</code></pre>
+</body>
+</html>

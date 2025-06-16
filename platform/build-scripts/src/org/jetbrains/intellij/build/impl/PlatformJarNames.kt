@@ -23,7 +23,18 @@ object PlatformJarNames {
    * Returns the name of the default JAR for a platform module.
    */
   internal fun getPlatformModuleJarName(moduleName: String, frontendModuleFilter: FrontendModuleFilter): String {
-    return if (frontendModuleFilter.isModuleIncluded(moduleName)) APP_CLIENT_JAR else APP_JAR
+    if (frontendModuleFilter.isModuleIncluded(moduleName)) {
+      if (moduleName.startsWith("fleet.")) {
+        return LIB_CLIENT_JAR
+      }
+      return APP_CLIENT_JAR
+    }
+    else {
+      if (moduleName.startsWith("fleet.")) {
+        return LIB_JAR
+      }
+      return APP_JAR
+    }
   }
 
   /**

@@ -10,15 +10,15 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public abstract class InjectedEditorWindowTracker {
-  static InjectedEditorWindowTracker getInstance() {
+  public static InjectedEditorWindowTracker getInstance() {
     return ApplicationManager.getApplication().getService(InjectedEditorWindowTracker.class);
   }
 
-  protected abstract void disposeInvalidEditors();
+  public abstract void disposeInvalidEditors();
 
-  protected abstract void disposeEditorFor(@NotNull DocumentWindow documentWindow);
+  public abstract void disposeEditorFor(@NotNull DocumentWindow documentWindow);
 
-  protected abstract @NotNull Editor createEditor(@NotNull DocumentWindow documentRange,
-                                        @NotNull Editor editor,
-                                        @NotNull PsiFile injectedFile);
+  public abstract @NotNull Editor createEditor(@NotNull DocumentWindow documentRange,
+                                               @NotNull Editor editor,
+                                               @NotNull PsiFile injectedFile);
 }

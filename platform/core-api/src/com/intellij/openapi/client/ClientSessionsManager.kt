@@ -168,7 +168,7 @@ open class ClientSessionsManager<T : ClientSession>(private val scope: Coroutine
     }
   }
 
-  @ApiStatus.Obsolete
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(message = "Use `!session.isDisposed` instead or better run coroutine from per-client scope that will be cancelled when a client has gone",
               level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("!session.isDisposed"))
   fun isValid(clientId: ClientId): Boolean {

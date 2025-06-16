@@ -31,4 +31,9 @@ interface TerminalContentView : Disposable {
 
   @RequiresEdt(generateAssertion = false)
   fun sendCommandToExecute(shellCommand: String)
+
+  @RequiresEdt(generateAssertion = false)
+  fun isCommandRunning(): Boolean {
+    return false
+  }
 }

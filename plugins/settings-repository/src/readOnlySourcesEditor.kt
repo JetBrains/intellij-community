@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurableUi
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.ide.progress.ModalTaskOwner
@@ -133,9 +132,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
                   dir.delete()
                 }
                 val progressMonitor = JGitCoroutineProgressMonitor(currentCoroutineContext().job, reporter)
-                blockingContext {
-                  cloneBare(source.url!!, dir, icsManager.credentialsStore, progressMonitor).close()
-                }
+                cloneBare(source.url!!, dir, icsManager.credentialsStore, progressMonitor).close()
               }
             }
           }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,14 @@ final class AfterLineEndInlayImpl<R extends EditorCustomElementRenderer> extends
 
   @Override
   Point getPosition() {
-    VisualPosition pos = getVisualPosition();
+    //  at com.intellij.util.concurrency.ThreadingAssertions.createThreadAccessException(ThreadingAssertions.java:212)
+    //	at com.intellij.util.concurrency.ThreadingAssertions.softAssertReadAccess(ThreadingAssertions.java:151)
+    //	at com.intellij.openapi.application.impl.ApplicationImpl.assertReadAccessAllowed(ApplicationImpl.java:1009)
+    //	at com.intellij.openapi.editor.impl.FoldingModelImpl.assertReadAccess(FoldingModelImpl.java:215)
+    //	at com.intellij.openapi.editor.impl.FoldingModelImpl.isOffsetCollapsed(FoldingModelImpl.java:192)
+    //	at com.intellij.openapi.editor.impl.AfterLineEndInlayImpl.getVisualPosition(AfterLineEndInlayImpl.java:66)
+    //	at com.intellij.openapi.editor.impl.AfterLineEndInlayImpl.getPosition(AfterLineEndInlayImpl.java:51)
+    VisualPosition pos = ReadAction.compute(() -> getVisualPosition());
     return myEditor.visualPositionToXY(pos);
   }
 

@@ -349,36 +349,24 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
   public void testNoCloseJavaDocComment() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean old = settings.CLOSE_COMMENT_ON_ENTER;
-    settings.CLOSE_COMMENT_ON_ENTER = false;
-
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.CLOSE_COMMENT_ON_ENTER = false;
       doTextTest("java",
                  "/**<caret>",
                  "/**\n <caret>");
-    }
-    finally {
-      settings.CLOSE_COMMENT_ON_ENTER = old;
-    }
+      return null;
+    });
   }
 
   public void testNoSmartIndentInJavadoc() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean indent = settings.SMART_INDENT_ON_ENTER;
-    settings.SMART_INDENT_ON_ENTER = false;
-    boolean stub = settings.JAVADOC_STUB_ON_ENTER;
-    settings.JAVADOC_STUB_ON_ENTER = false;
-
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.SMART_INDENT_ON_ENTER = false;
+      settings.JAVADOC_STUB_ON_ENTER = false;
       configureByFile("/codeInsight/enterAction/settings/NoJavadocStub.java");
       performAction();
       checkResultByFile(null, "/codeInsight/enterAction/settings/NoJavadocStub_after.java", true); // side effect...
-    }
-    finally {
-      settings.SMART_INDENT_ON_ENTER = indent;
-      settings.JAVADOC_STUB_ON_ENTER = stub;
-    }
+      return null;
+    });
   }
 
   public void testLineCommentAtTrailingSpaces() {
@@ -390,18 +378,13 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
   }
 
   public void testNoJavadocStub() {
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    boolean old = settings.JAVADOC_STUB_ON_ENTER;
-    settings.JAVADOC_STUB_ON_ENTER = false;
-
-    try {
+    CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.JAVADOC_STUB_ON_ENTER = false;
       configureByFile("/codeInsight/enterAction/settings/NoJavadocStub.java");
       performAction();
       checkResultByFile("/codeInsight/enterAction/settings/NoJavadocStub_after.java");
-    }
-    finally {
-      settings.JAVADOC_STUB_ON_ENTER = old;
-    }
+      return null;
+    });
   }
 
 

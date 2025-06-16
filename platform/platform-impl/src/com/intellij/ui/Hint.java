@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,6 +31,7 @@ public interface Hint {
    * current hint is not necessary to use anymore. Hence, it's <b>necessary</b> to call it from place where you definitely
    * know that current hint will not be used.
    */
+  @RequiresEdt
   void hide();
 
   void addHintListener(@NotNull HintListener listener);

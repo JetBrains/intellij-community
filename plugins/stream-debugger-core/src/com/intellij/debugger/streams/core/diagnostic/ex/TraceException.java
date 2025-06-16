@@ -3,12 +3,14 @@ package com.intellij.debugger.streams.core.diagnostic.ex;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class TraceException extends RuntimeExceptionWithAttachments {
+@ApiStatus.Internal
+public abstract class TraceException extends RuntimeExceptionWithAttachments {
   TraceException(@NotNull String message, @NotNull String traceExpression) {
     super(message, new Attachment("trace.txt", traceExpression));
   }

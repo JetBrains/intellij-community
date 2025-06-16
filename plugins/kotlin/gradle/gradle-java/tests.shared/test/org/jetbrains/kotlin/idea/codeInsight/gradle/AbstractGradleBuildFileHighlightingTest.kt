@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter
 import org.jetbrains.kotlin.idea.highlighter.checkHighlighting
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives
@@ -76,7 +75,7 @@ abstract class AbstractGradleBuildFileHighlightingTest : KotlinGradleImportingTe
     private fun Path.relativeToProjectRoot(): String =
         relativeTo(projectRoot.toNioPath()).pathString
 
-    private fun VirtualFile.relativeToProjectRoot(): String =
+    protected fun VirtualFile.relativeToProjectRoot(): String =
         toNioPath().relativeToProjectRoot()
 
     private fun List<VirtualFile>.relativeToProjectRoot(): List<String> =
@@ -89,8 +88,6 @@ abstract class AbstractGradleBuildFileHighlightingTest : KotlinGradleImportingTe
             runReadAction {
                 val psiFile = PsiManager.getInstance(myProject).findFile(file) as? KtFile
                     ?: error("Couldn't find psiFile for virtual file: ${file.canonicalPath}")
-
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
 
                 val ktsFileUnderTest = File(testDataDirectory(), file.relativeToProjectRoot())
                 val ktsFileHighlighting = ktsFileUnderTest.resolveSibling("${ktsFileUnderTest.path}$outputFileExt")

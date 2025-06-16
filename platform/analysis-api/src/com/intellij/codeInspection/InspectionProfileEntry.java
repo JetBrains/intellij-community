@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ex.InspectionElementsMerger;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.codeInspection.options.OptionContainer;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.diagnostic.PluginException;
@@ -31,7 +30,6 @@ import com.intellij.serialization.SerializationException;
 import com.intellij.util.ResourceUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.xmlb.SerializationFilter;
 import com.intellij.util.xmlb.annotations.Property;
@@ -135,8 +133,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
         if (object == null) {
           return 0;
         }
-        int result = object instanceof InjectionAwareSuppressQuickFix
-                     ? ((InjectionAwareSuppressQuickFix)object).isShouldBeAppliedToInjectionHost().hashCode()
+        int result = object instanceof InjectionAwareSuppressQuickFix injection
+                     ? injection.isShouldBeAppliedToInjectionHost().hashCode()
                      : 0;
         return 31 * result + object.getName().hashCode();
       }
@@ -150,9 +148,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
           return false;
         }
 
-        if (o1 instanceof InjectionAwareSuppressQuickFix && o2 instanceof InjectionAwareSuppressQuickFix) {
-          if (((InjectionAwareSuppressQuickFix)o1).isShouldBeAppliedToInjectionHost() !=
-              ((InjectionAwareSuppressQuickFix)o2).isShouldBeAppliedToInjectionHost()) {
+        if (o1 instanceof InjectionAwareSuppressQuickFix injection1 && o2 instanceof InjectionAwareSuppressQuickFix injection2) {
+          if (injection1.isShouldBeAppliedToInjectionHost() != injection2.isShouldBeAppliedToInjectionHost()) {
             return false;
           }
         }
@@ -182,8 +179,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
                                             @NotNull String toolId) {
     SuppressQuickFix[] actions = suppressor.getSuppressActions(element, toolId);
     for (SuppressQuickFix action : actions) {
-      if (action instanceof InjectionAwareSuppressQuickFix) {
-        ((InjectionAwareSuppressQuickFix)action).setShouldBeAppliedToInjectionHost(appliedToInjectionHost);
+      if (action instanceof InjectionAwareSuppressQuickFix injection) {
+        injection.setShouldBeAppliedToInjectionHost(appliedToInjectionHost);
       }
       fixes.add(action);
     }
@@ -211,39 +208,27 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     List<InspectionSuppressor> elementLanguageSuppressors = LanguageInspectionSuppressors.INSTANCE.allForLanguageOrAny(elementLanguage);
     Language baseLanguage = viewProvider.getBaseLanguage();
     if (viewProvider instanceof TemplateLanguageFileViewProvider) {
-      Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
-      suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
+      Set<InspectionSuppressor> suppressors = new LinkedHashSet<>(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
       for (Language language : viewProvider.getLanguages()) {
         suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(language));
       }
       suppressors.addAll(elementLanguageSuppressors);
-      return checkDumbMode(file, suppressors);
+      return DumbService.getInstance(file.getProject()).filterByDumbAwareness(suppressors);
     }
     if (!elementLanguage.isKindOf(baseLanguage)) {
       // handling embedding elements {@link EmbeddingElementType}
       Set<InspectionSuppressor> suppressors = new LinkedHashSet<>();
       suppressors.addAll(LanguageInspectionSuppressors.INSTANCE.allForLanguage(baseLanguage));
       suppressors.addAll(elementLanguageSuppressors);
-      return checkDumbMode(file, suppressors);
+      return DumbService.getInstance(file.getProject()).filterByDumbAwareness(suppressors);
     }
-    Collection<InspectionSuppressor> dumbProofSuppressors = checkDumbMode(file, new LinkedHashSet<>(elementLanguageSuppressors));
+    Collection<InspectionSuppressor> dumbProofSuppressors = DumbService.getInstance(file.getProject()).filterByDumbAwareness(elementLanguageSuppressors);
     int size = dumbProofSuppressors.size();
     return switch (size) {
       case 0 -> Collections.emptySet();
       case 1 -> Collections.singleton(dumbProofSuppressors.iterator().next());
       default -> dumbProofSuppressors;
     };
-  }
-
-  private static @Unmodifiable @NotNull Collection<InspectionSuppressor> checkDumbMode(@NotNull PsiFile file,
-                                                                                       @NotNull Collection<InspectionSuppressor> suppressors) {
-    DumbService dumbService = DumbService.getInstance(file.getProject());
-    if (dumbService.isDumb()) {
-      return ContainerUtil.filter(suppressors, suppressor -> DumbService.isDumbAware(suppressor));
-    }
-    else {
-      return suppressors;
-    }
   }
 
   public void cleanup(@NotNull Project project) {
@@ -412,13 +397,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
    * @see OptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
    * @see #getOptionController() if you need custom logic to read/write options
    */
+  @Override
   public @NotNull OptPane getOptionsPane() {
     return OptPane.EMPTY;
-  }
-
-  @Override
-  public @NotNull OptionController getOptionController() {
-    return OptionController.fieldsOf(this).withRootPane(this::getOptionsPane);
   }
 
   /**
@@ -476,7 +457,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return myUseNewSerializer;
   }
 
-  private static @NotNull Set<String> loadBlackList() {
+  private static @NotNull @Unmodifiable Set<String> loadBlackList() {
     Set<String> blackList = new HashSet<>();
 
     URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
@@ -500,7 +481,9 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool, O
     return Collections.unmodifiableSet(blackList);
   }
 
-  static @NotNull Collection<String> getBlackList() {
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static @NotNull @Unmodifiable Collection<String> getBlackList() {
     Set<String> blackList = ourBlackList;
     if (blackList == null) {
       synchronized (BLACK_LIST_LOCK) {

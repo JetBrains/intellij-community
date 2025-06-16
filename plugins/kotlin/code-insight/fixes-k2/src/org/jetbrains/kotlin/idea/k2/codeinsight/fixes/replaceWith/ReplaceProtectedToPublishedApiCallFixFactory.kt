@@ -94,12 +94,6 @@ internal object ReplaceProtectedToPublishedApiCallFixFactory {
         )
     }
 
-    val protectedCallFromPublicInline = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ProtectedCallFromPublicInline ->
-        val startOffset = diagnostic.textRanges.singleOrNull()?.startOffset ?: return@ModCommandBased emptyList()
-        val referenceExpression = diagnostic.psi.containingKtFile.findElementAt(startOffset)?.findParentOfType<KtReferenceExpression>() ?: return@ModCommandBased emptyList()
-        listOfNotNull(createQuickFix(referenceExpression, diagnostic.referencedDeclaration))
-    }
-
     val protectedCallFromPublicInlineError =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ProtectedCallFromPublicInlineError ->
             val startOffset = diagnostic.textRanges.singleOrNull()?.startOffset ?: return@ModCommandBased emptyList()

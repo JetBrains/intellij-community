@@ -1,12 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaErrorFixProvider;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
+import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.*;
+import java.util.function.Consumer;
 
 /**
  * @author anna
@@ -61,8 +67,8 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiVariable variable = getVariable(getElement(editor, file));
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    PsiVariable variable = getVariable(getElement(editor, psiFile));
     if (variable == null) return IntentionPreviewInfo.EMPTY;
     PsiType type = variable.getType();
     String toType = myFromToMap.get(type);
@@ -143,7 +149,7 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
     if (currentInitializer != null) return;
     PsiType type = var.getType();
     String initializerText = PsiTypesUtil.getDefaultValueOfType(type);
-    if (!PsiKeyword.NULL.equals(initializerText)) {
+    if (!JavaKeywords.NULL.equals(initializerText)) {
       WriteAction.run(() -> {
         PsiExpression initializer = JavaPsiFacade.getElementFactory(var.getProject()).createExpressionFromText(initializerText, var);
         var.setInitializer(initializer);
@@ -242,6 +248,13 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
         return ObjectUtils.tryCast(ref.resolve(), PsiLocalVariable.class);
       }
       return null;
+    }
+  }
+
+  public static final class ConvertToAtomicFixProvider implements JavaErrorFixProvider {
+    @Override
+    public void registerFixes(@NotNull JavaCompilationError<?, ?> error, @NotNull Consumer<? super @NotNull CommonIntentionAction> sink) {
+      error.psiForKind(JavaErrorKinds.VARIABLE_MUST_BE_EFFECTIVELY_FINAL_LAMBDA).map(ConvertNonFinalLocalToAtomicFix::new).ifPresent(sink);
     }
   }
 }

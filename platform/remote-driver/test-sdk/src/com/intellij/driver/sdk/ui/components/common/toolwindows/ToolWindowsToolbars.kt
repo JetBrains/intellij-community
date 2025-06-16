@@ -29,6 +29,7 @@ class ToolWindowLeftToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) {
   val moreButton = stripeButton("More")
   val debugButton = stripeButton("Debug")
   val findButton = stripeButton("Find")
+  val cmakeButton = stripeButton("CMake")
 
   fun IdeaFrameUI.openMoreToolWindow(name: String) {
     moreButton.click()
@@ -41,7 +42,7 @@ class ToolWindowRightToolbarUi(data: ComponentData) : ToolWindowToolbarUi(data) 
   val gradleButton = stripeButton("Gradle")
   val mavenButton = stripeButton("Maven")
   val databaseButton = stripeButton("Database")
-  val aiAssistantButton = stripeButton("AIAssistant")
+  val aiAssistantButton = stripeButton("AI Chat")
   val mesonButton = stripeButton("Meson")
 }
 
@@ -62,8 +63,12 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     if (!toolWindow.isActive()) {
       val activateToolWindowAction = driver.utility(ActivateToolWindowActionManager::class)
         .getActionIdForToolWindow(toolWindow.getId())
-      driver.invokeAction(activateToolWindowAction)
+      driver.invokeAction(activateToolWindowAction, component = component)
     }
+  }
+
+  fun toolwindowIsPresented(): Boolean {
+    return button.getToolWindow().isVisible()
   }
 
   fun close() {
@@ -85,6 +90,7 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
     fun isVisible(): Boolean
     fun stretchWidth(value: Int)
     fun hide()
+    fun stretchHeight(value: Int)
   }
 
   @Remote("com.intellij.ide.actions.ActivateToolWindowAction\$Manager")

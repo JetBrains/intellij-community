@@ -2,16 +2,13 @@ package com.intellij.settingsSync.core
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.settingsSync.core.communicator.SettingsSyncUserData
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
-import com.intellij.util.ConcurrencyUtil
-import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
-import com.intellij.util.progress.sleepCancellable
+import kotlinx.coroutines.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
@@ -23,7 +20,6 @@ import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
-import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.*
 import kotlin.time.Duration.Companion.seconds
@@ -37,19 +33,19 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     ideMediator = MockSettingsSyncIdeMediator()
   }
 
-  private fun initSettingsSync(
+  private fun CoroutineScope.initSettingsSync(
     initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit,
     waitForInit: Boolean = true,
   ) {
     SettingsSyncSettings.getInstance().state = SettingsSyncSettings.getInstance().state.withSyncEnabled(true)
-    val controls = SettingsSyncMain.init(currentThreadCoroutineScope(), disposable, settingsSyncStorage, configDir, ideMediator)
+    val controls = SettingsSyncMain.init(this, disposable, settingsSyncStorage, configDir, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)
     if (waitForInit) {
       timeoutRunBlocking(200.seconds) {
         while (!bridge.isInitialized) {
-          sleepCancellable(10)
+          delay(10)
         }
       }
     }
@@ -66,6 +62,37 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     assertServerSnapshot {
       fileState("options/laf.xml", "LaF Initial")
     }
+  }
+
+
+  @Test
+  fun `dispose communicator when disabling sync`() = timeoutRunBlockingAndStopBridge {
+    writeToConfig {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertServerSnapshot {
+      fileState("options/laf.xml", "LaF Initial")
+    }
+
+    Assertions.assertFalse(remoteCommunicator.wasDisposed)
+    SettingsSyncSettings.getInstance().syncEnabled = false
+    Assertions.assertTrue(remoteCommunicator.wasDisposed)
+
+  }
+
+  @Test
+  fun `reset user data if cannot find`() = timeoutRunBlockingAndStopBridge {
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().providerCode, MOCK_CODE)
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, DUMMY_USER_ID)
+    authService.userData = null
+    initSettingsSync()
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().providerCode, null)
+    Assertions.assertEquals(SettingsSyncLocalSettings.getInstance().userId, null)
+    Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
+
   }
 
   @Test
@@ -114,7 +141,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertTrue(versionOnServer.isEmpty(), "There should be no settings data after deletion: $versionOnServer")
   }
 
-  private fun deleteServerDataAndWait() {
+  private suspend fun deleteServerDataAndWait() {
     val cdl = CountDownLatch(1)
     syncSettingsAndWait(SyncSettingsEvent.DeleteServerData {
       cdl.countDown()
@@ -287,7 +314,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled on error")
     Assertions.assertFalse(SettingsSyncStatusTracker.getInstance().isSyncSuccessful(), "Sync is not marked as failed")
-    Assertions.assertEquals(errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage(), "Incorrect error message")
+    Assertions.assertEquals(errorMessage,
+                            (SettingsSyncStatusTracker.getInstance().currentStatus as? SettingsSyncStatusTracker.SyncStatus.Error)?.errorMessage,
+                            "Incorrect error message")
   }
 
   @Test
@@ -313,7 +342,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled on error")
     Assertions.assertFalse(SettingsSyncStatusTracker.getInstance().isSyncSuccessful(), "Sync is not marked as failed")
-    Assertions.assertEquals(errorMessage, SettingsSyncStatusTracker.getInstance().getErrorMessage(), "Incorrect error message")
+    Assertions.assertEquals(errorMessage,
+                            (SettingsSyncStatusTracker.getInstance().currentStatus as? SettingsSyncStatusTracker.SyncStatus.Error)?.errorMessage,
+                            "Incorrect error message")
   }
 
   @Test
@@ -341,15 +372,18 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     initSettingsSync()
 
     SettingsSyncSettings.getInstance().syncEnabled = true
-    val task1 = Callable {
+    val task1: suspend () -> Unit = {
       bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
-    val task2 = Callable {
+    val task2: suspend () -> Unit = {
       syncSettingsAndWait()
     }
 
     executeAndWaitUntilPushed {
-      ConcurrencyUtil.invokeAll(setOf(task1, task2), createBoundedScheduledExecutorService("SettingsSyncFlowTest", 2))
+      withContext(Dispatchers.IO) {
+        launch { task1() }
+        launch { task2() }
+      }
     }
 
     Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled, "Settings Sync has been disabled")
@@ -439,7 +473,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       timeoutRunBlocking {
         initSettingsSync(waitForInit = false)
         waitUntil {
-          SettingsSyncStatusTracker.getInstance().getErrorMessage() != null
+          SettingsSyncStatusTracker.getInstance().currentStatus is SettingsSyncStatusTracker.SyncStatus.Error
         }
       }
     }
@@ -450,19 +484,19 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   @Test
   fun `don't disable sync on startup if connection failed`() = timeoutRunBlockingAndStopBridge {
     SettingsSyncSettings.getInstance().syncEnabled = true
-    (remoteCommunicator as MockRemoteCommunicator).isConnected = false
+    remoteCommunicator.isConnected = false
     initSettingsSync(waitForInit = false)
     Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
     waitUntil("Waiting for bridge to initialize", 2.seconds) {
       Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
       bridge.isInitialized
     }
-    Assertions.assertEquals(MockRemoteCommunicator.DISCONNECTED_ERROR, SettingsSyncStatusTracker.getInstance().getErrorMessage())
-
-
+    Assertions.assertEquals(MockRemoteCommunicator.DISCONNECTED_ERROR,
+                            (SettingsSyncStatusTracker.getInstance().currentStatus as? SettingsSyncStatusTracker.SyncStatus.Error)?.errorMessage
+    )
   }
 
-  private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
+  private suspend fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
     SettingsSyncEvents.getInstance().fireSettingsChanged(event)
     bridge.waitForAllExecuted()
     timeoutRunBlocking(2.seconds) {
@@ -472,12 +506,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  private fun suppressFailureOnLogError(expectedException: RuntimeException, activity: () -> Unit) {
-    LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
+  private suspend fun suppressFailureOnLogError(expectedException: RuntimeException, activity: suspend () -> Unit) {
+    LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
         return if (t == expectedException) Action.NONE else Action.ALL
       }
-    }) {
+    }).use {
       activity()
     }
   }

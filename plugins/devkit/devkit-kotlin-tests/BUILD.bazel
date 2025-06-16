@@ -1,6 +1,12 @@
 ### auto-generated section `build intellij.devkit.kotlin.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "kotlin-tests_test_resources",
+  files = glob(["testData/**/*"]),
+  strip_prefix = "testData"
+)
 
 java_library(
   name = "kotlin-tests",
@@ -16,6 +22,13 @@ jvm_library(
     "//plugins/devkit/devkit-tests:testFramework",
     "//plugins/devkit/devkit-tests:testFramework_test_lib",
     "@lib//:kotlin-stdlib",
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//jps/model-api:model",
+    "//platform/projectModel-api:projectModel",
+    "//platform/refactoring",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
@@ -32,12 +45,16 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
     "@lib//:kotlin-test",
     "//plugins/devkit/devkit-core:core",
-    "//plugins/kotlin/base/test:kotlin-base-test_test_lib",
+    "//xml/xml-psi-api:psi",
+    "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/test-framework:test-framework_test_lib",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin",
-    "//plugins/kotlin/base/plugin:kotlin-base-plugin_test_lib",
+    "//plugins/kotlin/base/plugin",
+    "//plugins/kotlin/base/plugin:plugin_test_lib",
   ],
-  runtime_deps = ["//plugins/devkit/intellij.devkit:devkit"]
+  runtime_deps = [
+    ":kotlin-tests_test_resources",
+    "//plugins/devkit",
+  ]
 )
 
 jvm_test(

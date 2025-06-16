@@ -4,6 +4,7 @@ package com.intellij.find.replaceInProject;
 import com.intellij.find.*;
 import com.intellij.find.actions.FindInPathAction;
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.find.impl.FindAndReplaceExecutor;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.history.LocalHistory;
@@ -42,6 +43,7 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
+import com.intellij.usages.rules.UsageDocumentProcessor;
 import com.intellij.util.AdapterProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -130,11 +132,7 @@ public class ReplaceInProjectManager {
     }
 
     findManager.showFindDialog(findModel, () -> {
-      if (findModel.isReplaceState()) {
-        replaceInPath(findModel);
-      } else {
-        FindInProjectManager.getInstance(myProject).findInPath(findModel);
-      }
+      FindAndReplaceExecutor.getInstance().performFindAllOrReplaceAll(findModel, myProject);
     });
   }
 
@@ -244,7 +242,7 @@ public class ReplaceInProjectManager {
   }
 
   private static @Unmodifiable Set<VirtualFile> getFiles(@NotNull Collection<Usage> usages) {
-    return ContainerUtil.map2Set(usages, usage -> ((UsageInfo2UsageAdapter)usage).getFile());
+    return ContainerUtil.map2Set(usages, usage -> ((UsageInFile)usage).getFile());
   }
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
@@ -304,7 +302,7 @@ public class ReplaceInProjectManager {
 
       private Set<Usage> getSelectedUsages() {
         UsageView usageView = replaceContext.getUsageView();
-        Set<Usage> selectedUsages = usageView.getSelectedUsages();
+        Set<Usage> selectedUsages = new HashSet<>(usageView.getSelectedUsages());
         selectedUsages.removeAll(usageView.getExcludedUsages());
         return selectedUsages;
       }
@@ -398,10 +396,10 @@ public class ReplaceInProjectManager {
         return false;
       }
 
-      final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
+      final Document document = ((UsageDocumentProcessor)usage).getDocument();
       if (document == null || !document.isWritable()) return false;
 
-      return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
+      return ((UsageDocumentProcessor)usage).processRangeMarkers(segment -> {
         final int textOffset = segment.getStartOffset();
         final int textEndOffset = segment.getEndOffset();
         final Ref<String> stringToReplace = Ref.create();

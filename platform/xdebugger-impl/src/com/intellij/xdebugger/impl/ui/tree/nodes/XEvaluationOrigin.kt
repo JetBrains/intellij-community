@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree.nodes
 
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.annotations.ApiStatus
 
@@ -32,6 +33,19 @@ enum class XEvaluationOrigin {
     @JvmStatic
     fun setOrigin(holder: UserDataHolderBase, origin: XEvaluationOrigin) {
       ORIGIN_KEY.set(holder, origin.takeIf { it != UNSPECIFIED })
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun <T> computeWithOrigin(holder: UserDataHolderBase, origin: XEvaluationOrigin, block: ThrowableComputable<T, *>): T {
+      val previous = holder.getUserData(ORIGIN_KEY)
+      try {
+        holder.putUserData(ORIGIN_KEY, origin)
+        return block.compute()
+      }
+      finally {
+        holder.putUserData(ORIGIN_KEY, previous)
+      }
     }
   }
 }

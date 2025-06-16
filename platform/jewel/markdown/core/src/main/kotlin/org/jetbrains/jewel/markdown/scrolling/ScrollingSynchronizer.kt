@@ -15,6 +15,7 @@ import java.util.TreeMap
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.markdown.MarkdownBlock
+import org.jetbrains.jewel.markdown.WithChildBlocks
 import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
 
 /**
@@ -23,8 +24,8 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
  *
  * For simplicity, let's suppose that the source code is immutable. [MarkdownProcessor] parses it and yields a list of
  * [MarkdownBlock]s. Unfortunately, it doesn't contain any information about the source lines, as the need to keep them
- * and reserve more heap is not strong enough (the hypothesis is that most users just need to read the .md file and not
- * to edit it).
+ * and reserve more heap is not strong enough. (The hypothesis is that most users just need to read the .md file and not
+ * to edit it)
  *
  * However, [MarkdownProcessor] uses commonmark inside and takes the blocks this library returns to build
  * [MarkdownBlock]s, and in the editor mode, commonmark blocks still hold the information about source lines.
@@ -55,6 +56,17 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
  * [afterProcessing] can help with that, as they're invoked before and after every re-parse, i.e. every change in the
  * file. See [PerLine] as one of the possible implementations for [ScrollState].
  *
+ * # Identity
+ *
+ * Some supporting structures could require having hashmaps with [MarkdownBlock]s as keys. However, many
+ * [MarkdownBlock]s are data classes, and their hashCode are based on their contents. For example, two
+ * [MarkdownBlock.Paragraph]s are equal if their texts are equal. If there are equal blocks in the preview, layout data
+ * for one of them may overwrite the data for another one, causing the synchronizer to scroll unpredictably.
+ *
+ * To address this issue, use [LocatableMarkdownBlock]. It decorates the regular [MarkdownBlock] with the information
+ * about the source lines it spans over. If it so happens that two [MarkdownBlock]s are equal, their decorations are
+ * equal only if their source lines are somehow the same, which doesn't make any difference to the synchronizer.
+ *
  * # Keep in mind
  * - [acceptBlockSpans] accepts blocks in the **depth-first order**.
  * - Between [beforeProcessing] and [afterProcessing] every single block is processed, [acceptBlockSpans] is triggered
@@ -66,6 +78,7 @@ import org.jetbrains.jewel.markdown.processing.MarkdownProcessor
  *
  * @see [MarkdownProcessor]
  * @see [AutoScrollableBlock]
+ * @see [LocatableMarkdownBlock]
  * @see [PerLine]
  */
 @ExperimentalJewelApi
@@ -94,8 +107,11 @@ public abstract class ScrollingSynchronizer {
     /**
      * Accept mapping between the markdown [block] and the [sourceRange] of lines containing this block. Called on every
      * block after it was (re)parsed.
+     *
+     * Return [MarkdownBlock] processed by the synchronizer. For example, see [PerLine.acceptBlockSpans] which just
+     * wraps a given [block] to a unique class, to separate equal blocks located in different places in the document.
      */
-    public abstract fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange)
+    public abstract fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange): MarkdownBlock
 
     /**
      * Accept mapping between the markdown [block] and the global [coordinates] of lines containing this block. Called
@@ -124,15 +140,34 @@ public abstract class ScrollingSynchronizer {
             }
     }
 
+    /**
+     * A decorator over [MarkdownBlock] that holds information about the source lines it spans over.
+     *
+     * This is needed to support scrolling within code blocks, as they don't have their own global layout.
+     *
+     * @property originalBlock the original block that was processed by [MarkdownProcessor]
+     * @property lines the source lines this block spans over
+     * @see [acceptBlockSpans]
+     * @see [acceptGlobalPosition]
+     * @see [acceptTextLayout]
+     */
+    public class LocatableMarkdownBlock(public val originalBlock: MarkdownBlock, public val lines: IntRange) :
+        MarkdownBlock.CustomBlock {
+        override fun equals(other: Any?): Boolean =
+            other is LocatableMarkdownBlock && originalBlock == other.originalBlock && lines == other.lines
+
+        override fun hashCode(): Int = originalBlock.hashCode() * 31 + lines.hashCode() * 31
+
+        override fun toString(): String = "LocatableMarkdownBlock(originalBlock=$originalBlock, lines=$lines)"
+    }
+
     private class PerLine(private val scrollState: ScrollState) : ScrollingSynchronizer() {
         private val lines2Blocks = TreeMap<Int, MarkdownBlock>()
-        private var blocks2LineRanges = mutableMapOf<MarkdownBlock, IntRange>()
         private val blocks2Top = mutableMapOf<MarkdownBlock, Int>()
         private val previousPositions = mutableMapOf<MarkdownBlock, Int>()
 
-        // Only used to clean up obsolete keys in the maps above;
-        // otherwise stale MarkdownBlocks will keep piling up on each typed key
-        private val actualBlocks = mutableSetOf<MarkdownBlock>()
+        private var lastBlocks = listOf<LocatableMarkdownBlock>()
+        private val currentBlocks = mutableListOf<LocatableMarkdownBlock>()
 
         // It'd be a bit more performant if there were a map mapping lines to offsets,
         // and that was the initial approach,
@@ -152,7 +187,7 @@ public abstract class ScrollingSynchronizer {
             val block = findBestBlockForLine(sourceLine) ?: return
             val y = blocks2Top[block] ?: return
             if (y < 0) return
-            val lineRange = blocks2LineRanges[block] ?: return
+            val lineRange = (block as? LocatableMarkdownBlock)?.lines ?: return
             val textOffsets = blocks2TextOffsets[block]
             // The line may be empty and represent no block,
             // in this case scroll to the first line of the first block positioned after the line
@@ -176,24 +211,97 @@ public abstract class ScrollingSynchronizer {
             // acceptBlockSpans works on ALL the nodes, including those unchanged,
             // so it will be fully rebuilt during processing anyway
             lines2Blocks.clear()
-            blocks2LineRanges.clear()
         }
 
+        /**
+         * Update the internal structures based on the difference between the blocks before and after the Markdown
+         * source is edited.
+         */
         override fun afterProcessing() {
-            blocks2LineRanges.keys.retainAll(actualBlocks)
-            blocks2Top.keys.retainAll(actualBlocks)
-            blocks2TextOffsets.keys.retainAll(actualBlocks)
-            previousPositions.keys.retainAll(actualBlocks)
-            actualBlocks.clear()
+            var firstChangedIndex = -1
+            // First, find the "common prefix" before and after changes, in terms of topmost Markdown blocks whose
+            // contents didn't change.
+            // Their source lines might have changed, though; make sure all the internal maps keep the most recent
+            // blocks as keys.
+            for (i in 0..minOf(lastBlocks.lastIndex, currentBlocks.lastIndex)) {
+                val current = currentBlocks[i]
+                val last = lastBlocks[i]
+                if (!current.originallyEquals(last)) {
+                    firstChangedIndex = i
+                    break
+                }
+                if (current.lines != last.lines) {
+                    replace(last, current)
+                }
+            }
+            // Second, find the "common suffix". Here, we don't need to update all the structures,
+            // as some of them will be updated automatically during recomposition.
+            // Clean up those structures to get rid of outdated keys afterwards.
+            for (lastI in lastBlocks.lastIndex downTo firstChangedIndex + 1) {
+                val currI = currentBlocks.lastIndex - (lastBlocks.lastIndex - lastI)
+                if (currI < 0) break
+                val current = currentBlocks[currI]
+                val last = lastBlocks[lastI]
+                if (!current.originallyEquals(last)) {
+                    break
+                }
+                // compose does not recalculate text layout
+                // on unchanged code blocks positioned after the changed part,
+                // so relevant keys in blocks2TextOffsets have to be updated manually
+                if (current.originalBlock is MarkdownBlock.CodeBlock) {
+                    blocks2TextOffsets.replaceKey(last, current)
+                }
+            }
+            if (firstChangedIndex >= 0) {
+                for (i in firstChangedIndex..lastBlocks.lastIndex) {
+                    blocks2Top.remove(lastBlocks[i])
+                    previousPositions.remove(lastBlocks[i])
+                }
+            }
+            lastBlocks = ArrayList(currentBlocks)
+            currentBlocks.clear()
         }
 
-        override fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange) {
+        // literally equals check that bypasses absolute line numbers;
+        // here I rely on the fact that a block cannot have its own contents and children at the
+        // same time
+        // (or, at least, its contents always take a fixed number of lines)
+        private fun MarkdownBlock.originallyEquals(other: MarkdownBlock): Boolean {
+            if (
+                this is LocatableMarkdownBlock &&
+                    other is LocatableMarkdownBlock &&
+                    lines.endInclusive - lines.start != other.lines.endInclusive - other.lines.start
+            ) {
+                return false
+            }
+            val originalBlock = (this as? LocatableMarkdownBlock)?.originalBlock ?: this
+            val otherOriginalBlock = (other as? LocatableMarkdownBlock)?.originalBlock ?: other
+            if (originalBlock !is WithChildBlocks || otherOriginalBlock !is WithChildBlocks) {
+                return originalBlock == otherOriginalBlock
+            }
+
+            if (originalBlock.children.size != otherOriginalBlock.children.size) return false
+            return originalBlock.children.zip(otherOriginalBlock.children).all { (a, b) -> a.originallyEquals(b) }
+        }
+
+        private fun <K, V> MutableMap<K, V>.replaceKey(oldKey: K, newKey: K) {
+            remove(oldKey)?.let { put(newKey, it) }
+        }
+
+        private fun replace(oldBlock: MarkdownBlock, newBlock: MarkdownBlock) {
+            blocks2Top.replaceKey(oldBlock, newBlock)
+            blocks2TextOffsets.replaceKey(oldBlock, newBlock)
+            previousPositions.replaceKey(oldBlock, newBlock)
+        }
+
+        override fun acceptBlockSpans(block: MarkdownBlock, sourceRange: IntRange): MarkdownBlock {
+            val block = LocatableMarkdownBlock(block, sourceRange)
             for (line in sourceRange) {
                 // DFS -- keep the innermost block for the given line
                 lines2Blocks.putIfAbsent(line, block)
             }
-            blocks2LineRanges[block] = sourceRange
-            actualBlocks += block
+            currentBlocks += block
+            return block
         }
 
         override fun acceptGlobalPosition(block: MarkdownBlock, coordinates: LayoutCoordinates) {
@@ -211,13 +319,14 @@ public abstract class ScrollingSynchronizer {
         }
 
         override fun acceptTextLayout(block: MarkdownBlock, textLayout: TextLayoutResult) {
-            if (block !is MarkdownBlock.CodeBlock) return
-            val sourceLines = blocks2LineRanges[block] ?: return
+            val originalBlock = (block as? LocatableMarkdownBlock)?.originalBlock ?: return
+            if (originalBlock !is MarkdownBlock.CodeBlock) return
+            val sourceLines = block.lines
 
             var y = 0
             val list = mutableListOf<Int>()
 
-            if (block is MarkdownBlock.CodeBlock.FencedCodeBlock) {
+            if (originalBlock is MarkdownBlock.CodeBlock.FencedCodeBlock) {
                 // All source lines in the fenced code block,
                 // beside the first and the last ones, are mapped 1:1 onto preview
                 // code block:
@@ -252,7 +361,7 @@ public abstract class ScrollingSynchronizer {
                 // map the line with closing triple backticks
                 // to the bottommost point of the block in the preview
                 list += y
-            } else if (block is MarkdownBlock.CodeBlock.IndentedCodeBlock) {
+            } else if (originalBlock is MarkdownBlock.CodeBlock.IndentedCodeBlock) {
                 // Indented code blocks don't have the empty last line,
                 // and the empty opening line is not counted:
                 //

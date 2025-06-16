@@ -8,6 +8,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec;
 import one.util.streamex.StreamEx;
@@ -151,7 +152,13 @@ public final class PyRequirementParser {
   private static final @NotNull String REQUIREMENT_OPTIONS_GROUP = "options";
 
   private static final @NotNull String REQUIREMENT_OPTIONS_REGEXP =
-    "(?<" + REQUIREMENT_OPTIONS_GROUP + ">(" + LINE_WS_REGEXP + "+(--global-option|--install-option)=\"[^\"]*\")+)?";
+    "(?<" +
+    REQUIREMENT_OPTIONS_GROUP +
+    ">(" +
+    LINE_WS_REGEXP +
+    "+(--global-option|--install-option)=\"[^\"]*\"|" +
+    LINE_WS_REGEXP +
+    "+--hash=[^\\s]+)+)?";
 
   private static final @NotNull String REQUIREMENT_GROUP = "requirement";
 
@@ -194,6 +201,8 @@ public final class PyRequirementParser {
     return fromText(text, null, new HashSet<>());
   }
 
+  @RequiresReadLock(generateAssertion = false)
+
   public static @NotNull List<PyRequirement> fromFile(@NotNull VirtualFile file) {
     return fromText(loadText(file), file, new HashSet<>());
   }
@@ -220,6 +229,8 @@ public final class PyRequirementParser {
 
     return null;
   }
+
+  @RequiresReadLock(generateAssertion = false)
 
   private static @Nullable PyRequirement parseVcsProjectUrl(@NotNull String line) {
     final Matcher vcsMatcher = VCS_PROJECT_URL.matcher(line);
@@ -259,8 +270,12 @@ public final class PyRequirementParser {
     return null;
   }
 
+  @RequiresReadLock(generateAssertion = false)
+
   @ApiStatus.Internal
-  public static @NotNull List<PyRequirement> fromText(@NotNull String text, @Nullable VirtualFile containingFile, @NotNull Set<VirtualFile> visitedFiles) {
+  public static @NotNull List<PyRequirement> fromText(@NotNull String text,
+                                                      @Nullable VirtualFile containingFile,
+                                                      @NotNull Set<VirtualFile> visitedFiles) {
     if (containingFile != null) {
       visitedFiles.add(containingFile);
     }
@@ -273,6 +288,7 @@ public final class PyRequirementParser {
       .toList();
   }
 
+  @RequiresReadLock(generateAssertion = false)
   private static @NotNull String loadText(@NotNull VirtualFile file) {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
 
@@ -311,6 +327,8 @@ public final class PyRequirementParser {
 
     return Pair.create(normalizeVcsOrArchiveNameParts(nameParts), normalizeVcsOrArchiveVersionParts(versionParts));
   }
+
+  @RequiresReadLock(generateAssertion = false)
 
   private static @NotNull PyRequirement createVcsOrArchiveRequirement(@NotNull Pair<String, String> nameAndVersion,
                                                                       @NotNull List<String> installOptions,
@@ -398,6 +416,8 @@ public final class PyRequirementParser {
 
     return result;
   }
+
+  @RequiresReadLock(generateAssertion = false)
 
   private static @NotNull List<PyRequirement> parseLine(@NotNull String line,
                                                         @Nullable VirtualFile containingFile,
@@ -532,6 +552,8 @@ public final class PyRequirementParser {
 
     return null;
   }
+
+  @RequiresReadLock(generateAssertion = false)
 
   private static @NotNull List<PyRequirement> parseRecursiveLine(@NotNull String line,
                                                                  @Nullable VirtualFile containingFile,

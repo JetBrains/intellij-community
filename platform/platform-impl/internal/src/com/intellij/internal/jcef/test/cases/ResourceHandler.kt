@@ -10,7 +10,7 @@ import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JPanel
 
-internal class ResourceHandler : JBCefTestAppFrame.TestCase(){
+internal class ResourceHandler : JBCefTestAppFrame.TestCase() {
   override fun getComponent(): Component {
     return myComponent
   }
@@ -21,11 +21,11 @@ internal class ResourceHandler : JBCefTestAppFrame.TestCase(){
 
   override fun initializeImpl() {
     myComponent.removeAll()
-    var browser = JBCefBrowserBuilder().build()
+    val browser = JBCefBrowserBuilder().build()
     Disposer.register(this, browser)
 
     val localRequestHandler = JBCefLocalRequestHandler("https", "localhost")
-    var indexUrl = localRequestHandler.createResource("index.html") {
+    val indexUrl = localRequestHandler.createResource("index.html") {
       javaClass.getResourceAsStream("resources/resource_handler/index.html")?.let { JBCefStreamResourceHandler(it, "text/html", this) }
     }
     localRequestHandler.createResource("style.css") {
@@ -40,7 +40,7 @@ internal class ResourceHandler : JBCefTestAppFrame.TestCase(){
     browser.jbCefClient.addRequestHandler(localRequestHandler, browser.cefBrowser)
 
     myComponent.add(browser.component, BorderLayout.CENTER)
-    browser.loadURL(indexUrl.toString())
+    browser.loadURL(indexUrl)
   }
 
   private val myComponent = JPanel(BorderLayout())

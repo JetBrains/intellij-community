@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
+import com.intellij.codeInsight.TypeNullability;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
@@ -33,7 +34,7 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
     myExistential = existential;
     myContext = context;
     myParameter = parameter;
-    myUpperBound = PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
+    myUpperBound = getJavaLangObject(myContext.getManager(), getResolveScope());
   }
 
   private static final RecursionGuard<Object> guard = RecursionManager.createGuard("captureGuard");
@@ -83,6 +84,17 @@ public final class PsiCapturedWildcardType extends PsiType.Stub {
 
   private static PsiType getGreatestLowerBound(PsiType glb, PsiType bound, PsiWildcardType guardObject) {
     return guard.doPreventingRecursion(guardObject, true, () -> GenericsUtil.getGreatestLowerBound(glb, bound));
+  }
+
+  @Override
+  public @NotNull TypeNullability getNullability() {
+    return myExistential.getNullability();
+  }
+
+  @Override
+  public @NotNull PsiType withNullability(@NotNull TypeNullability nullability) {
+    PsiWildcardType newExistential = myExistential.withNullability(nullability);
+    return newExistential.equals(myExistential) ? this : new PsiCapturedWildcardType(newExistential, myContext, myParameter);
   }
 
   @Override

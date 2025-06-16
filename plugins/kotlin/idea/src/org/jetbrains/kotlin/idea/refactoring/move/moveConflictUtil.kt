@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.impl.scopes.JdkScope
 import com.intellij.openapi.project.Project
@@ -363,6 +364,7 @@ fun checkModuleConflictsInDeclarations(
     val referencesToSkip = HashSet<KtReferenceExpression>()
     for (declaration in moveCheckerInfo.elementsToMove) {
         if (declaration.module == targetModule) continue
+        if (ModuleType.isInternal(targetModule)) continue
         declaration.forEachDescendantOfType<KtReferenceExpression> { refExpr ->
             // NB: for unknown reason, refExpr.resolveToCall() does not work here
             val targetDescriptor =

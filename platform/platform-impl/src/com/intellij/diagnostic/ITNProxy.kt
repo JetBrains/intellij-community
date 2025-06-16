@@ -96,7 +96,7 @@ internal object ITNProxy {
     val lastActionId: String?,
   )
 
-  fun getBrowseUrl(threadId: Int): String? =
+  fun getBrowseUrl(threadId: Long): String? =
     if (PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))) NEW_THREAD_VIEW_URL + threadId
     else null
 
@@ -108,7 +108,7 @@ internal object ITNProxy {
   }
 
   @Throws(Exception::class)
-  suspend fun sendError(error: ErrorBean, newThreadPostUrl: String): Int {
+  suspend fun sendError(error: ErrorBean, newThreadPostUrl: String): Long {
     val context = currentCoroutineContext()
 
     val response = post(newThreadPostUrl, createRequest(error))
@@ -132,7 +132,7 @@ internal object ITNProxy {
     try {
       val reportId = responseText.trim()
       LOG.info("report ID: ${reportId}, host ID: ${DEVICE_ID}")
-      return reportId.toInt()
+      return reportId.toLong()
     }
     catch (_: NumberFormatException) {
       throw InternalEAPException(DiagnosticBundle.message("error.itn.returns.wrong.data"))

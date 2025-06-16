@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.generate
 
+import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
@@ -29,6 +30,7 @@ import org.jetbrains.uast.generate.UastCommentSaver
 import org.jetbrains.uast.generate.UastElementFactory
 import org.jetbrains.uast.toUElementOfType
 
+@InternalIgnoreDependencyViolation
 private class KotlinUastCodeGenerationPlugin : KotlinUastBaseCodeGenerationPlugin() {
   override fun importMemberOnDemand(reference: UQualifiedReferenceExpression): UExpression? {
     val ktQualifiedExpression = reference.sourcePsi?.asSafely<KtDotQualifiedExpression>() ?: return null

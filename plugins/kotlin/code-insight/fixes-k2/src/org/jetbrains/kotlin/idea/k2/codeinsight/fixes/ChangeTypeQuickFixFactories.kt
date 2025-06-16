@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.codeInspection.util.IntentionName
@@ -7,27 +7,24 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.successfulVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -38,7 +35,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.types.Variance
 
-object ChangeTypeQuickFixFactories {
+internal object ChangeTypeQuickFixFactories {
     enum class TargetType {
         CURRENT_DECLARATION,
         BASE_DECLARATION,
@@ -135,7 +132,12 @@ object ChangeTypeQuickFixFactories {
         val initializer = initializer
         return if (typeReference != null && initializer != null) {
             //copy property initializer to calculate initializer's type without property's declared type
-            KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement()?.expressionType
+            val newExpression = KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement() ?: return null
+
+            // A new expression has to be analyzed in the context of the newly created file. To go back to the outer session, a workaround with
+            // converting a type to a pointer and back can be used
+            @OptIn(KaExperimentalApi::class)
+            analyze(newExpression) { newExpression.expressionType?.createPointer() }?.restore()
         } else null
     }
 
@@ -143,24 +145,75 @@ object ChangeTypeQuickFixFactories {
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ReturnTypeMismatch ->
             val element = diagnostic.targetFunction.psi as? KtElement
                 ?: return@ModCommandBased emptyList()
+            val diagnosticsPsi = diagnostic.psi
 
             val declaration = element as? KtCallableDeclaration ?: (element as? KtPropertyAccessor)?.property
             ?: return@ModCommandBased emptyList()
 
             val actualType = diagnostic.actualType
+            val expectedType = diagnostic.expectedType
+
             buildList {
-                add(
-                    UpdateTypeQuickFix(
-                        declaration,
-                        if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION,
-                        createTypeInfo(element.returnType(getActualType(actualType)))
+                if (element !is KtFunctionLiteral) {
+                    add(
+                        UpdateTypeQuickFix(
+                            declaration,
+                            if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION,
+                            createTypeInfo(element.returnType(getActualType(actualType)))
+                        )
                     )
+                }
+                addAll(
+                    registerExpressionTypeFixes(diagnosticsPsi, expectedType, actualType)
                 )
                 addAll(
-                    registerExpressionTypeFixes(diagnostic.psi, diagnostic.expectedType, actualType)
+                    createTypeFixesForCalledDeclaration(diagnosticsPsi, expectedType, actualType)
                 )
             }
         }
+
+    internal fun KaSession.createTypeFixesForCalledDeclaration(
+        expression: KtExpression,
+        expectedType: KaType,
+        actualType: KaType
+    ): List<ModCommandAction> {
+        val resolvedCall = expression.resolveToCall() ?: return emptyList()
+
+        if (!isResolvableInScope(expectedType, expression, mutableSetOf())) return emptyList()
+        return buildList {
+            addIfNotNull(createUpdateTypeFixForCalledFunction(resolvedCall, expectedType))
+            addAll(createUpdateTypeFixesForCalledVariable(resolvedCall, actualType, expectedType))
+        }
+    }
+
+    context(KaSession)
+    private fun KaCallableSymbol.isSafeForChangeTypeFix(): Boolean {
+        // It's not safe to create a fix if the symbol has more than one overridden declaration
+        return this.allOverriddenSymbols.toSet().size <= 1
+    }
+
+    private fun KaSession.createUpdateTypeFixForCalledFunction(
+        resolvedCall: KaCallInfo,
+        expectedType: KaType
+    ): UpdateTypeQuickFix<KtCallableDeclaration>? {
+        val callable = resolvedCall.successfulFunctionCallOrNull()?.symbol ?: return null
+        // We can't change the constructor type
+        if (callable is KaConstructorSymbol || callable is KaSamConstructorSymbol) return null
+        if (!callable.isSafeForChangeTypeFix()) return null
+        val calledFunction = callable.psi as? KtCallableDeclaration ?: return null
+        return UpdateTypeQuickFix(calledFunction, TargetType.CALLED_FUNCTION, createTypeInfo(expectedType))
+    }
+
+    private fun KaSession.createUpdateTypeFixesForCalledVariable(
+        resolvedCall: KaCallInfo,
+        actualType: KaType,
+        expectedType: KaType
+    ): List<ModCommandAction> {
+        val callable = resolvedCall.successfulVariableAccessCall()?.symbol ?: return emptyList()
+        if (!callable.isSafeForChangeTypeFix()) return emptyList()
+        val calledVariable = callable.psi as? KtProperty ?: return emptyList()
+        return registerVariableTypeFixes(calledVariable, getActualType(actualType), expectedType)
+    }
 
     val returnTypeNullableTypeMismatch =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
@@ -184,7 +237,13 @@ object ChangeTypeQuickFixFactories {
             val declaration = diagnostic.psi as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            registerVariableTypeFixes(declaration, getActualType(diagnostic.actualType), diagnostic.expectedType)
+            val actualType = getActualType(diagnostic.actualType)
+            val expectedType = diagnostic.expectedType
+            if (actualType.semanticallyEquals(expectedType)) {
+                return@ModCommandBased emptyList()
+            }
+
+            registerVariableTypeFixes(declaration, actualType, expectedType)
         }
 
     val assignmentTypeMismatch =
@@ -206,7 +265,10 @@ object ChangeTypeQuickFixFactories {
                 if (declaration.typeReference == null) {
                     add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(type))))
                 }
-                addAll(registerExpressionTypeFixes(expression, diagnostic.expectedType, type))
+                val expectedType = diagnostic.expectedType
+                if (!expectedType.semanticallyEquals(actualType)) {
+                    addAll(registerExpressionTypeFixes(expression, expectedType, type))
+                }
             }
         }
 
@@ -216,8 +278,12 @@ object ChangeTypeQuickFixFactories {
             val property = expr.parent as? KtProperty
                 ?: return@ModCommandBased emptyList()
 
-            val actualType = property.getPropertyInitializerType() ?: diagnostic.actualType
-            registerVariableTypeFixes(property, getActualType(actualType), diagnostic.expectedType)
+            val actualType = getActualType(property.getPropertyInitializerType() ?: diagnostic.actualType)
+            val expectedType = diagnostic.expectedType
+            if (expectedType.semanticallyEquals(actualType)) {
+                return@ModCommandBased emptyList()
+            }
+            registerVariableTypeFixes(property, actualType, expectedType)
         }
 
     private fun KaSession.registerVariableTypeFixes(
@@ -225,6 +291,7 @@ object ChangeTypeQuickFixFactories {
         actualType: KaType,
         expectedTypeFromDiagnostics: KaType
     ): List<ModCommandAction> {
+        if (!isResolvableInScope(expectedTypeFromDiagnostics, declaration, mutableSetOf())) return emptyList()
         val expectedTypeFromDeclaration = declaration.returnType
         val expression = declaration.initializer ?: return emptyList()
         return buildList {
@@ -243,6 +310,9 @@ object ChangeTypeQuickFixFactories {
             val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
             val actualType = getActualType(diagnostic.actualType)
             val expectedType = diagnostic.expectedType
+            if (actualType.semanticallyEquals(expectedType)) {
+                return@ModCommandBased emptyList()
+            }
 
             val property = (expression as? KtReferenceExpression)?.mainReference?.resolve() as? KtProperty
             if (property != null) {
@@ -280,13 +350,8 @@ object ChangeTypeQuickFixFactories {
             }
             // Fixing overloaded operators
             if (expression is KtOperationExpression) {
-                val callable = expression.resolveToCall()?.successfulFunctionCallOrNull()?.symbol ?: return@buildList
-                // Do not create the fix if descriptor has more than one overridden declaration
-                if (callable.allOverriddenSymbols.toSet().size > 1) return@buildList
-
-                val singleMatchingOverriddenFunctionPsi = callable.psiSafe<KtCallableDeclaration>() ?:return@buildList
-                if (!singleMatchingOverriddenFunctionPsi.isWritable) return@buildList
-                add(UpdateTypeQuickFix(singleMatchingOverriddenFunctionPsi, TargetType.CALLED_FUNCTION, createTypeInfo(expectedType)))
+                val resolvedCall = expression.resolveToCall()
+                resolvedCall?.let { addIfNotNull(createUpdateTypeFixForCalledFunction(it, expectedType)) }
             }
         }
     }
@@ -355,6 +420,11 @@ object ChangeTypeQuickFixFactories {
         return destructuringDeclaration.entries[componentIndex - 1]
     }
 
+    val incompatibleTypes = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.IncompatibleTypes ->
+        val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
+        createTypeFixesForCalledDeclaration(expression, expectedType = diagnostic.typeA, actualType = diagnostic.typeB)
+    }
+
     @IntentionName
     private fun getActionName(
         declaration: KtCallableDeclaration,
@@ -405,6 +475,25 @@ object ChangeTypeQuickFixFactories {
             val containerName = parentOfType<KtClassOrObject>()?.nameAsName?.takeUnless { it.isSpecial }
             return ChangeTypeFixUtils.functionOrConstructorParameterPresentation(this, containerName?.asString())
         }
+
+    val implicitNothingPropertyTypeFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ImplicitNothingPropertyType ->
+        createImplicitNothingTypeFix(diagnostic.psi as? KtProperty)
+    }
+
+    val implicitNothingReturnTypeFixFactory = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ImplicitNothingReturnType ->
+        createImplicitNothingTypeFix(diagnostic.psi as? KtFunction)
+    }
+
+    private fun createImplicitNothingTypeFix(callable: KtCallableDeclaration?): List<ModCommandAction> {
+        if (callable == null) return emptyList()
+        return listOf(
+            UpdateTypeQuickFix(
+                callable,
+                TargetType.ENCLOSING_DECLARATION,
+                CallableReturnTypeUpdaterUtils.TypeInfo(CallableReturnTypeUpdaterUtils.TypeInfo.NOTHING)
+            )
+        )
+    }
 }
 
 @OptIn(KaExperimentalApi::class)

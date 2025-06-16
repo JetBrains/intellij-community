@@ -33,10 +33,6 @@ class GradlePropertiesFileFacade(private val baseDir: String) {
         addProperty(KOTLIN_CODE_STYLE_GRADLE_SETTING, value)
     }
 
-    fun addNotImportedCommonSourceSetsProperty() {
-        addProperty(KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING, true.toString())
-    }
-
     private fun addProperty(key: String, value: String) {
         val projectPropertiesPath = Path(baseDir, GRADLE_PROPERTIES_FILE_NAME)
 
@@ -58,7 +54,6 @@ class GradlePropertiesFileFacade(private val baseDir: String) {
         fun forExternalProject(externalProject: ExternalProject) = GradlePropertiesFileFacade(externalProject.projectDir.path)
 
         const val KOTLIN_CODE_STYLE_GRADLE_SETTING = "kotlin.code.style"
-        const val KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING = "kotlin.import.noCommonSourceSets"
 
         private const val GRADLE_PROPERTIES_FILE_NAME = "gradle.properties"
         private const val GRADLE_PROPERTIES_LOCAL_FILE_NAME = "local.properties"

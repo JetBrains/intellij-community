@@ -117,8 +117,8 @@ public final class LineNumberConvertor {
 
   public static @NotNull LineNumberConvertor fromIterable(@NotNull DiffIterable iterable) {
     LineNumberConvertor.Builder builder = new LineNumberConvertor.Builder();
-    for (Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
-      Range range = pair.first;
+    for (kotlin.Pair<Range, Boolean> pair : DiffIterableUtil.iterateAll(iterable)) {
+      Range range = pair.getFirst();
       builder.put(range.start1, range.start2, range.end1 - range.start1, range.end2 - range.start2);
     }
     return builder.build();

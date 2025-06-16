@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.ui.IdeUICustomization
 
-class CloseProjectAction : CloseProjectsActionBase() {
+open class CloseProjectAction : CloseProjectsActionBase() {
   init {
     val uiCustomization = IdeUICustomization.getInstance()
     templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.project.text"))

@@ -4,15 +4,16 @@ package com.intellij.python.junit5Tests.env.systemPython.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.python.community.impl.venv.createVenv
+import com.intellij.python.community.services.shared.UICustomization
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonService
-import com.intellij.python.community.services.systemPython.UICustomization
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerExtension
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
 import com.jetbrains.python.getOrThrow
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -53,7 +54,7 @@ class EnvProviderTest {
     coEvery { provider.findSystemPythons(any()) } returns Result.success(setOf(venvPython))
     coEvery { provider.uiCustomization } returns ui
     ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
-    val python = SystemPythonService().findSystemPythons().first { it.pythonBinary == venvPython }
+    val python = SystemPythonService().findSystemPythons(forceRefresh = true).first { it.pythonBinary == venvPython }
     assertEquals(ui, python.ui, "Wrong UI")
   }
 }

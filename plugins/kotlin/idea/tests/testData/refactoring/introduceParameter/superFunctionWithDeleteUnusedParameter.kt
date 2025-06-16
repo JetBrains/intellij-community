@@ -4,12 +4,11 @@ interface I {
 }
 
 open class A {
-    fun foo(i: I)
+    open fun foo(i: I) {}
 }
 
-class B: A {
+class B: A() {
     override fun foo(i: I) {
         <selection>i.bar()</selection>
     }
 }
-// IGNORE_K1

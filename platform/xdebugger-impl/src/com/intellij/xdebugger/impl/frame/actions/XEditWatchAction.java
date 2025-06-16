@@ -3,6 +3,7 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 @ApiStatus.Internal
-public class XEditWatchAction extends XWatchesTreeActionBase {
+public class XEditWatchAction extends XWatchesTreeActionBase implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
   @Override
   public void update(final @NotNull AnActionEvent e) {
     XDebuggerTree tree = XDebuggerTree.getTree(e);
@@ -32,8 +33,8 @@ public class XEditWatchAction extends XWatchesTreeActionBase {
 
     WatchNodeImpl node = watchNodes.get(0);
     XDebuggerTreeNode root = tree.getRoot();
-    if (root instanceof WatchesRootNode) {
-      ((WatchesRootNode)root).editWatch(node);
+    if (root instanceof WatchesRootNode watchesRootNode) {
+      watchesRootNode.editWatch(node);
     }
   }
 }

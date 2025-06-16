@@ -47,20 +47,20 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
   protected @NotNull CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
       @Override
-      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile file) {
-        final XmlTag tag = findTag(editor, file);
+      public void invoke(final @NotNull Project project, final @NotNull Editor editor, final @NotNull PsiFile psiFile) {
+        final XmlTag tag = findTag(editor, psiFile);
         if (tag != null) {
           new EmmetAbbreviationBalloon(EMMET_RECENT_UPDATE_ABBREVIATIONS_KEY, EMMET_LAST_UPDATE_ABBREVIATIONS_KEY,
                                        new EmmetAbbreviationBalloon.Callback() {
                                          @Override
                                          public void onEnter(@NotNull String abbreviation) {
                                            try {
-                                             doUpdateTag(abbreviation, tag, file, editor);
+                                             doUpdateTag(abbreviation, tag, psiFile, editor);
                                            }
                                            catch (EmmetException ignore) {
                                            }
                                          }
-                                       }, CONTEXT_HELP).show(new CustomTemplateCallback(editor, file));
+                                       }, CONTEXT_HELP).show(new CustomTemplateCallback(editor, psiFile));
         }
       }
 
@@ -195,8 +195,8 @@ public class EmmetUpdateTagAction extends BaseCodeInsightAction implements DumbA
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return super.isValidForFile(project, editor, file) && EmmetOptions.getInstance().isEmmetEnabled() && findTag(editor, file) != null;
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
+    return super.isValidForFile(project, editor, psiFile) && EmmetOptions.getInstance().isEmmetEnabled() && findTag(editor, psiFile) != null;
   }
 
   private static @Nullable XmlTag findTag(@NotNull Editor editor, @NotNull PsiFile file) {

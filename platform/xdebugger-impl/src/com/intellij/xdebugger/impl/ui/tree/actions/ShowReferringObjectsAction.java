@@ -4,12 +4,14 @@ package com.intellij.xdebugger.impl.ui.tree.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XReferrersProvider;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.frame.XDebugSessionProxy;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -19,7 +21,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
+// TODO Implement com.intellij.xdebugger.frame.XValue.getReferrersProvider
+// TODO Implement com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction.ReferrersTreeCustomizer.getDialog
+public class ShowReferringObjectsAction extends XDebuggerTreeActionBase
+  implements ActionRemoteBehaviorSpecification.FrontendOtherwiseBackend {
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
@@ -42,7 +48,7 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
     XDebuggerTree tree = node.getTree();
     XSourcePosition position = tree.getSourcePosition();
     XValueMarkers<?, ?> markers = tree.getValueMarkers();
-    XDebugSession session = DebuggerUIUtil.getSession(e);
+    XDebugSessionProxy session = DebuggerUIUtil.getSessionProxy(e);
     if (session == null) {
       return;
     }
@@ -53,10 +59,9 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
     }
   }
 
-  @ApiStatus.Internal
-  public static @Nullable DialogWrapper createReferringObjectsDialog(
+  private static @Nullable DialogWrapper createReferringObjectsDialog(
     XValue xValue,
-    XDebugSession session,
+    XDebugSessionProxy session,
     @NotNull String nodeName,
     XSourcePosition position,
     XValueMarkers<?, ?> markers
@@ -65,12 +70,14 @@ public class ShowReferringObjectsAction extends XDebuggerTreeActionBase {
     if (referrersProvider != null) {
       XValue referringObjectsRoot = referrersProvider.getReferringObjectsValue();
       DialogWrapper dialog;
-      if (referringObjectsRoot instanceof ReferrersTreeCustomizer referrersTreeCustomizer) {
-        dialog = referrersTreeCustomizer.getDialog(session, nodeName, position, markers);
+      if (referringObjectsRoot instanceof ReferrersTreeCustomizer referrersTreeCustomizer
+          // TODO PathsToClosestGcRootsDialog will not be available in split
+          && session instanceof XDebugSessionProxy.Monolith monolithSession) {
+        dialog = referrersTreeCustomizer.getDialog(monolithSession.getSession(), nodeName, position, markers);
       }
       else {
         dialog = new XInspectDialog(session.getProject(),
-                                    session.getDebugProcess().getEditorsProvider(),
+                                    session.getEditorsProvider(),
                                     position,
                                     nodeName,
                                     referringObjectsRoot,

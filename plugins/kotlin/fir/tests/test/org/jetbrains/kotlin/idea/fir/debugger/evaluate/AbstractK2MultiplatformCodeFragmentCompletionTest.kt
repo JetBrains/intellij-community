@@ -40,6 +40,9 @@ abstract class AbstractK2MultiplatformCodeFragmentCompletionTest : AbstractK2Cod
     }
 
     override fun getProjectDescriptor(): KotlinMultiPlatformProjectDescriptor {
-        return KotlinMultiPlatformProjectDescriptor.ALL_PLATFORMS
+        // de-optimization!
+        // recreate descriptor each time to ensure sdk is created before the project
+        // otherwise super.tearDown removes KotlinSdk and the next test method has no Sdk set
+        return KotlinMultiPlatformProjectDescriptor()
     }
 }

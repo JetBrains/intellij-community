@@ -12,10 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
 import com.intellij.terminal.TerminalShellCommandHandler
-import com.intellij.util.PathUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellType
-import java.util.*
 import kotlin.time.Duration
 
 @ApiStatus.Internal
@@ -27,7 +25,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
-  private val SHELL_STR_FIELD = EventFields.String("shell", KNOWN_SHELLS.toList())
+  private val SHELL_STR_FIELD = EventFields.String("shell", TerminalShellInfoStatistics.KNOWN_SHELLS.toList())
   private val SHELL_TYPE_FIELD = EventFields.Enum<ShellType>("shell")
   private val BLOCK_TERMINAL_FIELD = EventFields.Boolean("new_terminal")
   private val EXIT_CODE_FIELD = EventFields.Int("exit_code")
@@ -143,7 +141,7 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   fun triggerLocalShellStarted(project: Project, shellCommand: Array<String>, isBlockTerminal: Boolean) {
     localExecEvent.log(project,
                        Version.parseVersion(SystemInfo.OS_VERSION)?.toCompactString() ?: "unknown",
-                       getShellNameForStat(shellCommand.firstOrNull()),
+                       TerminalShellInfoStatistics.getShellNameForStat(shellCommand.firstOrNull()),
                        isBlockTerminal)
     if (isBlockTerminal) {
       val propertiesComponent = PropertiesComponent.getInstance()
@@ -191,25 +189,6 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   fun triggerCommandGenerationEvent(project: Project, event: TerminalCommandGenerationEvent) {
     commandGenerationEvent.log(project, event)
   }
-
-  @JvmStatic
-  private fun getShellNameForStat(shellName: String?): String {
-    if (shellName == null) return "unspecified"
-    var name = shellName.trimStart()
-    val ind = name.indexOf(" ")
-    name = if (ind < 0) name else name.substring(0, ind)
-    if (SystemInfo.isFileSystemCaseSensitive) {
-      name = name.lowercase(Locale.ENGLISH)
-    }
-    name = PathUtil.getFileName(name)
-    name = trimKnownExt(name)
-    return if (KNOWN_SHELLS.contains(name)) name else "other"
-  }
-
-  private fun trimKnownExt(name: String): String {
-    val ext = PathUtil.getFileExtension(name)
-    return if (ext != null && KNOWN_EXTENSIONS.contains(ext)) name.substring(0, name.length - ext.length - 1) else name
-  }
 }
 
 @ApiStatus.Internal
@@ -239,48 +218,6 @@ internal enum class TimeSpanType(val description: String) {
 }
 
 private const val GROUP_ID = "terminalShell"
-
-private val KNOWN_SHELLS = setOf("unspecified",
-                                 "other",
-                                 "activate",
-                                 "anaconda3",
-                                 "ash",
-                                 "bash",
-                                 "bbsh",
-                                 "cexec",
-                                 "cmd",
-                                 "cmder",
-                                 "cmder_shell",
-                                 "csh",
-                                 "cygwin",
-                                 "dash",
-                                 "es",
-                                 "eshell",
-                                 "fish",
-                                 "fsh",
-                                 "git",
-                                 "git-bash",
-                                 "git-cmd",
-                                 "hamilton",
-                                 "init",
-                                 "ion",
-                                 "ksh",
-                                 "miniconda3",
-                                 "mksh",
-                                 "msys2_shell",
-                                 "nushell",
-                                 "powershell",
-                                 "pwsh",
-                                 "rc",
-                                 "scsh",
-                                 "sh",
-                                 "tcsh",
-                                 "ubuntu",
-                                 "ubuntu1804",
-                                 "wsl",
-                                 "xonsh",
-                                 "zsh")
-private val KNOWN_EXTENSIONS = setOf("exe", "bat", "cmd")
 
 private const val BLOCK_TERMINAL_LAST_USED_VERSION = "BLOCK_TERMINAL_LAST_USED_VERSION"
 /** Timestamp in seconds */

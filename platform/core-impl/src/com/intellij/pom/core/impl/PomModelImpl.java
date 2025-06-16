@@ -39,10 +39,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.lang.CompoundRuntimeException;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -227,7 +224,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
   }
 
-  private static @NotNull List<PsiFile> getAllFiles(@NotNull PsiFile changedFile) {
+  private static @NotNull @Unmodifiable List<PsiFile> getAllFiles(@NotNull PsiFile changedFile) {
     VirtualFile file = changedFile.getVirtualFile();
     if (file == null) {
       return changedFile.getViewProvider().getAllFiles();
@@ -347,7 +344,10 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     }
     PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(getPsiManager());
     event.setParent(scope);
-    event.setFile(scope.getContainingFile());
+    PsiFile containingFile = scope.getContainingFile();
+    if (containingFile != null) {
+      event.setFile(containingFile);
+    }
     TextRange range = scope.getTextRange();
     event.setOffset(range == null ? 0 : range.getStartOffset());
     event.setOldLength(scope.getTextLength());
@@ -376,7 +376,7 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     getPsiManager().childrenChanged(event);
   }
 
-  private @NotNull PsiManagerImpl getPsiManager() {
-    return (PsiManagerImpl)PsiManager.getInstance(myProject);
+  private @NotNull PsiManagerEx getPsiManager() {
+    return PsiManagerEx.getInstanceEx(myProject);
   }
 }

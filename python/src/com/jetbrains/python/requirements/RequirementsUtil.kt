@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 
-object RequirementsUtil {
+internal object RequirementsUtil {
   fun isRequirementsFile(file: VirtualFile): Boolean {
     val sequence = file.nameSequence
     val ext = FileUtilRt.getExtension(sequence)

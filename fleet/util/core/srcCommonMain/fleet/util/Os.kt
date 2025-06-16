@@ -34,6 +34,12 @@ class Os private constructor() {
       return "aarch64" == arch || "arm64" == arch
     }
 
+  val isWasm: Boolean
+    get() {
+      val arch = this.arch
+      return "wasm" == arch
+    }
+
   val isMac: Boolean
     get() = this.type == Type.MacOS
 

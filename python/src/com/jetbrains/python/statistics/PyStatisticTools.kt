@@ -2,6 +2,7 @@
 package com.jetbrains.python.statistics
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -20,14 +21,15 @@ import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
+import com.jetbrains.python.sdk.uv.isUv
 import com.jetbrains.python.statistics.InterpreterCreationMode.*
 import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.jetbrains.python.venvReader.VirtualEnvReader
 
 val Project.modules get() = ModuleManager.getInstance(this).modules
 val Project.sdks get() = modules.mapNotNull(Module::getSdk)
@@ -50,19 +52,6 @@ fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   data.add(EXECUTION_TYPE.with(sdk.executionType.value))
   data.add(INTERPRETER_TYPE.with(sdk.interpreterType.value))
   return data
-}
-
-fun normalizePackageName(packageName: String): String {
-  var name = packageName
-  if (!name.startsWith("_")) {
-    // for cases such as __future__, etc
-    name = name.replace('_', '-')
-  }
-
-  return name
-    .replace(".", "-")
-    .replace("\"", "")
-    .lowercase()
 }
 
 @Deprecated("""
@@ -125,6 +114,7 @@ enum class InterpreterType(val value: String) {
   POETRY("poetry"),
   PYENV("pyenv"),
   UV("uv"),
+  HATCH("hatch"),
 }
 
 enum class InterpreterCreationMode(val value: String) {
@@ -138,6 +128,8 @@ val INTERPRETER_TYPE = EventFields.String("interpreterType", InterpreterType.ent
 val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
                                                                                        CUSTOM.value,
                                                                                        NA.value))
+
+internal val PREVIOUSLY_CONFIGURED: BooleanEventField = EventFields.Boolean("previously_configured")
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
@@ -154,6 +146,7 @@ val Sdk.interpreterType: InterpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv
     isPipEnv -> PIPENV
+    isUv -> UV
     isPoetry -> POETRY
     PythonSdkUtil.isConda(this) || this.sdkAdditionalData.asSafely<PythonSdkAdditionalData>()?.flavor is CondaEnvSdkFlavor -> CONDAVENV
     VirtualEnvReader.Instance.isPyenvSdk(getHomePath()) -> PYENV

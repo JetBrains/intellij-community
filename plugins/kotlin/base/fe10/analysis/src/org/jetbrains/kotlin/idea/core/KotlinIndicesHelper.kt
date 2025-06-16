@@ -488,7 +488,7 @@ class KotlinIndicesHelper(
         processor: (CallableDescriptor) -> Unit
     ) {
         val values = mutableSetOf<KtNamedDeclaration>()
-        val callableDeclarationProcessor = CancelableCollectFilterProcessor(values, CancelableCollectFilterProcessor.ALWAYS_TRUE)
+        val callableDeclarationProcessor = cancelableCollectFilterProcessor(values)
         KotlinFunctionShortNameIndex.processElements(name, project, scope, callableDeclarationProcessor)
         KotlinPropertyShortNameIndex.processElements(name, project, scope, callableDeclarationProcessor)
         val processed = HashSet<CallableDescriptor>(values.size)

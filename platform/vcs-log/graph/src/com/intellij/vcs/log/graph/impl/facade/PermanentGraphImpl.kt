@@ -1,11 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.graph.impl.facade
 
-import com.intellij.vcs.log.graph.GraphCommit
-import com.intellij.vcs.log.graph.GraphCommitImpl
-import com.intellij.vcs.log.graph.PermanentGraph
-import com.intellij.vcs.log.graph.VisibleGraph
+import com.intellij.vcs.log.graph.*
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+import com.intellij.vcs.log.graph.api.permanent.VcsLogGraphNodeId
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory
 import com.intellij.vcs.log.graph.collapsing.BranchFilterController
 import com.intellij.vcs.log.graph.collapsing.CollapsedController
@@ -24,13 +22,14 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Function
 import java.util.function.Predicate
+import kotlin.Int
 
 class PermanentGraphImpl<CommitId : Any> private constructor(private val permanentLinearGraph: PermanentLinearGraphImpl,
                                                              private val permanentGraphLayout: GraphLayoutImpl,
                                                              private val permanentCommitsInfo: PermanentCommitsInfoImpl<CommitId>,
                                                              colorGetterFactory: GraphColorGetterFactory<CommitId>,
                                                              branchesCommitId: Set<CommitId>) : PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
-  private val branchNodeIds: Set<Int> = permanentCommitsInfo.convertToNodeIds(branchesCommitId)
+  private val branchNodeIds: Set<VcsLogGraphNodeId> = permanentCommitsInfo.convertToNodeIds(branchesCommitId)
 
   private val bekIntMap: SortIndexMap by lazy {
     BekSorter.createBekMap(permanentLinearGraph, permanentGraphLayout, permanentCommitsInfo.timestampGetter)
@@ -88,7 +87,7 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
 
   override val allCommits: List<GraphCommit<CommitId>>
     get() = object : AbstractList<GraphCommit<CommitId>>() {
-      override fun get(index: Int): GraphCommit<CommitId> {
+      override fun get(index: VcsLogGraphNodeId): GraphCommit<CommitId> {
         val commitId = permanentCommitsInfo.getCommitId(index)
         val downNodes = LinearGraphUtils.getDownNodesIncludeNotLoad(permanentLinearGraph, index)
         val parentsCommitIds = permanentCommitsInfo.convertToCommitIdList(downNodes)
@@ -104,19 +103,19 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
   }
 
   override fun getContainingBranches(commit: CommitId): Set<CommitId> {
-    val commitIndex = permanentCommitsInfo.getNodeId(commit)
-    return permanentCommitsInfo.convertToCommitIdSet(reachableNodes.getContainingBranches(commitIndex, branchNodeIds))
+    val nodeId = permanentCommitsInfo.getNodeId(commit)
+    return permanentCommitsInfo.convertToCommitIdSet(reachableNodes.getContainingBranches(nodeId, branchNodeIds))
   }
 
   override fun getContainedInBranchCondition(currentBranchHead: Collection<CommitId>): Predicate<CommitId> {
     val headIds = currentBranchHead.map { head: CommitId -> permanentCommitsInfo.getNodeId(head) }
     if (currentBranchHead.firstOrNull() is Int) {
       val branchNodes: IntSet = IntOpenHashSet()
-      reachableNodes.walkDown(headIds) { node: Int -> branchNodes.add((permanentCommitsInfo.getCommitId(node) as Int)) }
+      reachableNodes.walkDown(headIds) { node: VcsLogGraphNodeId -> branchNodes.add((permanentCommitsInfo.getCommitId(node) as Int)) }
       return IntContainedInBranchCondition(branchNodes)
     }
     val branchNodes = HashSet<CommitId>()
-    reachableNodes.walkDown(headIds) { node: Int -> branchNodes.add(permanentCommitsInfo.getCommitId(node)) }
+    reachableNodes.walkDown(headIds) { node: VcsLogGraphNodeId -> branchNodes.add(permanentCommitsInfo.getCommitId(node)) }
     return ContainedInBranchCondition(branchNodes)
   }
 
@@ -128,13 +127,13 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
   @ApiStatus.Internal
   override fun getPermanentGraphLayout(): GraphLayoutImpl = permanentGraphLayout
   
-  override fun getBranchNodeIds(): Set<Int> = branchNodeIds
+  override fun getBranchNodeIds(): Set<VcsLogGraphNodeId> = branchNodeIds
 
   private class NotLoadedCommitsIdsGenerator<CommitId> : Function<CommitId, Int> {
     val notLoadedCommits: Int2ObjectMap<CommitId> = Int2ObjectOpenHashMap()
 
-    override fun apply(dom: CommitId): Int {
-      val nodeId: Int = -(notLoadedCommits.size + 2)
+    override fun apply(dom: CommitId): VcsLogGraphNodeId {
+      val nodeId: VcsLogGraphNodeId = -(notLoadedCommits.size + 2)
       notLoadedCommits.put(nodeId, dom)
       return nodeId
     }
@@ -176,7 +175,7 @@ class PermanentGraphImpl<CommitId : Any> private constructor(private val permane
       val linearGraph = PermanentLinearGraphBuilder.newInstance(graphCommits).build(idsGenerator)
       val permanentCommitsInfo = PermanentCommitsInfoImpl.newInstance(graphCommits, idsGenerator.notLoadedCommits)
       val branchIndexes = permanentCommitsInfo.convertToNodeIds(branchesCommitId, true)
-      val permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, branchIndexes) { nodeIndex1: Int, nodeIndex2: Int ->
+      val permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, branchIndexes) { nodeIndex1: VcsLogGraphNodeId, nodeIndex2: VcsLogGraphNodeId ->
         val commitId1 = permanentCommitsInfo.getCommitId(nodeIndex1)
         val commitId2 = permanentCommitsInfo.getCommitId(nodeIndex2)
         headCommitsComparator.compare(commitId1, commitId2)

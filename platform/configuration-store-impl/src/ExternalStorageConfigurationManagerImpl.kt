@@ -1,8 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
@@ -24,7 +24,7 @@ internal class ExternalStorageConfiguration : BaseState() {
  * It shouldn't be used directly, its interface [ExternalStorageConfigurationManager] should be used instead.
  */
 @State(name = "ExternalStorageConfigurationManager")
-internal class ExternalStorageConfigurationManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope)
+private class ExternalStorageConfigurationManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope)
   : SimplePersistentStateComponent<ExternalStorageConfiguration>(ExternalStorageConfiguration()), ExternalStorageConfigurationManager {
   override fun isEnabled(): Boolean = state.enabled
 
@@ -50,7 +50,7 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
 
     coroutineScope.launch {
       val workspaceModel = project.serviceAsync<WorkspaceModel>()
-      edtWriteAction {
+      backgroundWriteAction {
         updateEntitySource(workspaceModel)
       }
     }
@@ -60,7 +60,7 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
     val value = state.enabled
     workspaceModel.updateProjectModel("Change entity sources to externally imported") { updater ->
       val entitiesMap = updater.entitiesBySource { it is JpsImportedEntitySource && it.storedExternally != value }
-      entitiesMap.forEach { entity ->
+      for (entity in entitiesMap) {
         val source = entity.entitySource
         if (source is JpsImportedEntitySource) {
           updater.modifyEntity(WorkspaceEntity.Builder::class.java, entity) {

@@ -33,9 +33,10 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.ig.jdk.VarargParameterInspection;
+import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
 
   protected VariableInfo[] myVariableInfos;
   protected boolean myMakeStatic;
-  private final Set<PsiTypeParameter> myTypeParametersToCreate = new LinkedHashSet<>();
+  private final List<PsiTypeParameter> myTypeParametersToCreate = new ArrayList<>();
 
   @Override
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
@@ -224,10 +225,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     buf.append(innerClass.getName());
     if (!myTypeParametersToCreate.isEmpty()) {
       buf.append("<");
-      int idx = 0;
-      for (Iterator<PsiTypeParameter> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
+      for (int idx = 0; idx < myTypeParametersToCreate.size(); idx++) {
         if (idx > 0) buf.append(", ");
-        String typeParamName = it.next().getName();
+        String typeParamName = myTypeParametersToCreate.get(idx).getName();
         buf.append(typeParamName);
       }
       buf.append(">");
@@ -505,7 +505,19 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
     newExpressions.forEach((constructor, callSites) -> {
       fillParameterList(constructor);
-      createAssignmentStatements(constructor);
+
+      // In the case of a chained constructor call, don't set the fields and instead append the parameters to the 'this()'/'super()' call.
+      // Otherwise, set the fields in the constructor.
+      PsiMethodCallExpression thisOrSuperCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (JavaPsiConstructorUtil.isChainedConstructorCall(thisOrSuperCall)) {
+        for (VariableInfo info : myVariableInfos) {
+          if (info.passAsParameter) {
+            thisOrSuperCall.getArgumentList().add(factory.createExpressionFromText(info.parameterName, null));
+          }
+        }
+      } else {
+        createAssignmentStatements(constructor);
+      }
 
       appendInitializers(constructor);
       for (PsiNewExpression callSite : callSites) {
@@ -689,47 +701,25 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression) ((PsiExpressionStatement) statement).getExpression();
     PsiExpressionList exprList = methodCall.getArgumentList();
 
+    final PsiThisExpression qualifiedThis = (PsiThisExpression) factory.createExpressionFromText("A.this", null);
+    final PsiJavaCodeReferenceElement targetClassRef = factory.createClassReferenceElement(myTargetClass);
+    PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
+    assert thisQualifier != null;
+    thisQualifier.replace(targetClassRef);
 
-    {
-      final PsiThisExpression qualifiedThis =
-        (PsiThisExpression) factory.createExpressionFromText("A.this", null);
-      final PsiJavaCodeReferenceElement targetClassRef = factory.createClassReferenceElement(myTargetClass);
-      PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
-      assert thisQualifier != null;
-      thisQualifier.replace(targetClassRef);
-
-      for (PsiExpression expr : paramExpressions) {
-        ChangeContextUtil.encodeContextInfo(expr, true);
-        final PsiElement newExpr = exprList.add(expr);
-        ChangeContextUtil.decodeContextInfo(newExpr, myTargetClass, qualifiedThis);
-      }
+    for (PsiExpression expr : paramExpressions) {
+      ChangeContextUtil.encodeContextInfo(expr, true);
+      final PsiElement newExpr = exprList.add(expr);
+      ChangeContextUtil.decodeContextInfo(newExpr, myTargetClass, qualifiedThis);
     }
-
-    class SupersConvertor extends JavaRecursiveElementVisitor {
-      @Override public void visitThisExpression(@NotNull PsiThisExpression expression) {
-        try {
-          final PsiThisExpression qualifiedThis =
-                  (PsiThisExpression) factory.createExpressionFromText("A.this", null);
-          final PsiJavaCodeReferenceElement targetClassRef = factory.createClassReferenceElement(myTargetClass);
-          PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
-          assert thisQualifier != null;
-          thisQualifier.replace(targetClassRef);
-          expression.replace(qualifiedThis);
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-
-      @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
-      }
-    }
-
-    final SupersConvertor supersConvertor = new SupersConvertor();
-    methodCall.getArgumentList().accept(supersConvertor);
   }
 
-  private void calculateTypeParametersToCreate () {
+  private void calculateTypeParametersToCreate() {
+    Deque<PsiElement> visitQueue = new ArrayDeque<>();
+
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+      private final Set<PsiTypeParameter> myAddedTypeParameters = new HashSet<>();
+
       @Override
       public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
@@ -737,19 +727,29 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
         if (resolved instanceof PsiTypeParameter typeParameter) {
           final PsiTypeParameterListOwner owner = typeParameter.getOwner();
           if (owner != null && !PsiTreeUtil.isAncestor(myAnonOrLocalClass, owner, false) &&
-              (CommonJavaRefactoringUtil.isInStaticContext(owner, myTargetClass) || myMakeStatic)) {
-            myTypeParametersToCreate.add(typeParameter);
+              (!PsiTreeUtil.isAncestor(owner, myTargetClass, false) || myMakeStatic)) {
+            if (myAddedTypeParameters.add(typeParameter)) {
+              myTypeParametersToCreate.add(typeParameter);
+              visitQueue.add(typeParameter.getExtendsList());
+            }
           }
         }
       }
     };
-    myAnonOrLocalClass.accept(visitor);
+
+    visitQueue.add(myAnonOrLocalClass);
     for (VariableInfo info : myVariableInfos) {
       PsiTypeElement typeElement = info.variable.getTypeElement();
       if (typeElement != null) {
-        typeElement.accept(visitor);
+        visitQueue.add(typeElement);
       }
     }
+    while (!visitQueue.isEmpty()) {
+      visitQueue.remove().accept(visitor);
+    }
+
+    // Need the elements to appear in order so that type parameters aren't used before their declaration
+    myTypeParametersToCreate.sort(PsiElementOrderComparator.getInstance());
   }
 
   @Override

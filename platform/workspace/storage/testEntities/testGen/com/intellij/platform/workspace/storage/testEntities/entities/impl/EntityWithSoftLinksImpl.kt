@@ -2,15 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.SymbolicEntityId
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.annotations.Open
 import com.intellij.platform.workspace.storage.impl.EntityLink
@@ -38,13 +29,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.TooDeepCont
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLinksData) : EntityWithSoftLinks, WorkspaceEntityBase(
-  dataSource) {
+internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLinksData) : EntityWithSoftLinks,
+                                                                                          WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(EntityWithSoftLinks::class.java,
-                                                                            SoftLinkReferencedChild::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_MANY, false)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      EntityWithSoftLinks::class.java, SoftLinkReferencedChild::class.java, ConnectionId.ConnectionType.ONE_TO_MANY, false
+    )
 
     private val connections = listOf<ConnectionId>(
       CHILDREN_CONNECTION_ID,
@@ -144,8 +135,8 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
   }
 
 
-  internal class Builder(result: EntityWithSoftLinksData?) : ModifiableWorkspaceEntityBase<EntityWithSoftLinks, EntityWithSoftLinksData>(
-    result), EntityWithSoftLinks.Builder {
+  internal class Builder(result: EntityWithSoftLinksData?) :
+    ModifiableWorkspaceEntityBase<EntityWithSoftLinks, EntityWithSoftLinksData>(result), EntityWithSoftLinks.Builder {
     internal constructor() : this(EntityWithSoftLinksData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -258,7 +249,8 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
       if (this.inContainerList != dataSource.inContainerList) this.inContainerList = dataSource.inContainerList.toMutableList()
       if (this.deepContainer != dataSource.deepContainer) this.deepContainer = dataSource.deepContainer.toMutableList()
       if (this.sealedContainer != dataSource.sealedContainer) this.sealedContainer = dataSource.sealedContainer
-      if (this.listSealedContainer != dataSource.listSealedContainer) this.listSealedContainer = dataSource.listSealedContainer.toMutableList()
+      if (this.listSealedContainer != dataSource.listSealedContainer) this.listSealedContainer =
+        dataSource.listSealedContainer.toMutableList()
       if (this.justProperty != dataSource.justProperty) this.justProperty = dataSource.justProperty
       if (this.justNullableProperty != dataSource?.justNullableProperty) this.justNullableProperty = dataSource.justNullableProperty
       if (this.justListProperty != dataSource.justListProperty) this.justListProperty = dataSource.justListProperty.toMutableList()
@@ -464,8 +456,8 @@ internal class EntityWithSoftLinksImpl(private val dataSource: EntityWithSoftLin
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<SoftLinkReferencedChild.Builder>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+            .toList() as List<SoftLinkReferencedChild.Builder>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<SoftLinkReferencedChild.Builder> ?: emptyList())
         }
         else {
@@ -1167,7 +1159,8 @@ internal class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithSoftLinks") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.EntityWithSoftLinks"
+    ) as EntityMetadata
   }
 
   override fun clone(): EntityWithSoftLinksData {
@@ -1186,8 +1179,10 @@ internal class EntityWithSoftLinksData : WorkspaceEntityData<EntityWithSoftLinks
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity.Builder<*>>): WorkspaceEntity.Builder<*> {
-    return EntityWithSoftLinks(link, manyLinks, inContainer, inContainerList, deepContainer, sealedContainer, listSealedContainer,
-                               justProperty, justListProperty, deepSealedClass, entitySource) {
+    return EntityWithSoftLinks(
+      link, manyLinks, inContainer, inContainerList, deepContainer, sealedContainer, listSealedContainer, justProperty, justListProperty,
+      deepSealedClass, entitySource
+    ) {
       this.optionalLink = this@EntityWithSoftLinksData.optionalLink
       this.inOptionalContainer = this@EntityWithSoftLinksData.inOptionalContainer
       this.justNullableProperty = this@EntityWithSoftLinksData.justNullableProperty

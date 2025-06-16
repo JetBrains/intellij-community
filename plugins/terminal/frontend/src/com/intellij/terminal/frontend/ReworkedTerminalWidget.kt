@@ -12,17 +12,18 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
-import org.jetbrains.plugins.terminal.block.TerminalContentView
+import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 internal class ReworkedTerminalWidget(
   private val project: Project,
   settings: JBTerminalSystemSettingsProvider,
+  startupFusInfo: TerminalStartupFusInfo?,
   parentDisposable: Disposable,
 ) : TerminalWidget {
   private val sessionFuture = CompletableFuture<TerminalSession>()
-  private val view: TerminalContentView = ReworkedTerminalView(project, settings, sessionFuture)
+  private val view = ReworkedTerminalView(project, settings, sessionFuture, startupFusInfo)
 
   override val terminalTitle: TerminalTitle = TerminalTitle()
 
@@ -37,10 +38,6 @@ internal class ReworkedTerminalWidget(
   init {
     Disposer.register(parentDisposable, this)
     Disposer.register(this, view)
-    Disposer.register(this) {
-      // Complete to avoid memory leaks with hanging callbacks. If already completed, nothing will change.
-      sessionFuture.complete(null)
-    }
   }
 
   override fun connectToSession(session: TerminalSession) {
@@ -71,8 +68,16 @@ internal class ReworkedTerminalWidget(
     view.sendCommandToExecute(shellCommand)
   }
 
+  override fun isCommandRunning(): Boolean {
+    return view.isCommandRunning()
+  }
+
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
     view.addTerminationCallback(onTerminated, parentDisposable)
+  }
+
+  override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
+    view.setTopComponent(notificationComponent, disposable)
   }
 
   override fun writePlainMessage(message: @Nls String) {
@@ -80,10 +85,6 @@ internal class ReworkedTerminalWidget(
   }
 
   override fun setCursorVisible(visible: Boolean) {
-    // TODO: implement
-  }
-
-  override fun addNotification(notificationComponent: JComponent, disposable: Disposable) {
     // TODO: implement
   }
 

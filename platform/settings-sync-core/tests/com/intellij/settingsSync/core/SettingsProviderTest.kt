@@ -5,7 +5,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.registerExtension
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -27,7 +26,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
   fun `settings from provider should be collected`() = timeoutRunBlockingAndStopBridge {
     val ideState = TestState("IDE value")
     settingsProvider.settings = ideState
-    GeneralSettings.getInstance().initModifyAndSave {
+    initModifyAndSave(GeneralSettings.getInstance()) {
       autoSaveFiles = false
     }
 
@@ -85,7 +84,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
     assertEquals(expectedState, settingsProvider.settings, "Settings were not applied")
   }
 
-  private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
+  private suspend fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
     SettingsSyncEvents.getInstance().fireSettingsChanged(event)
     bridge.waitForAllExecuted()
     timeoutRunBlocking {

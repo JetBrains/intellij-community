@@ -209,10 +209,6 @@ abstract class RunManager {
     return oldName != settings.name
   }
 
-  @Deprecated("The method name is grammatically incorrect", replaceWith = ReplaceWith("this.setUniqueNameIfNeeded(settings)"))
-  @ApiStatus.ScheduledForRemoval
-  fun setUniqueNameIfNeed(settings: RunnerAndConfigurationSettings): Boolean = setUniqueNameIfNeeded(settings)
-
   /**
    * Sets unique name if existing one is not 'unique' for corresponding configuration type
    * @return `true` if name was changed

@@ -7,9 +7,10 @@ PsiJavaFile:ReferenceLinkMarkdown03.java
       PsiWhiteSpace(' ')
       PsiReferenceLink:
         PsiDocToken:DOC_LBRACKET('[')
-        PsiDocToken:DOC_COMMENT_DATA('[')
-        PsiDocToken:DOC_COMMENT_DATA('label with balanced brackets')
-        PsiDocToken:DOC_COMMENT_DATA(']')
+        PsiReferenceLabel:
+          PsiDocToken:DOC_COMMENT_DATA('[')
+          PsiDocToken:DOC_COMMENT_DATA('label with balanced brackets')
+          PsiDocToken:DOC_COMMENT_DATA(']')
         PsiDocToken:DOC_RBRACKET(']')
         PsiDocToken:DOC_LBRACKET('[')
         PsiElement(DOC_REFERENCE_HOLDER)

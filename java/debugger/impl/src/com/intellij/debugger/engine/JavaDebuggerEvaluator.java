@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -78,6 +79,7 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
         text.set(new TextWithImportsImpl(element));
         CodeFragmentFactory factory = DebuggerUtilsEx.getCodeFragmentFactory(element, null);
         try {
+          if (Registry.is("debugger.compiling.evaluator.force")) throw new UnsupportedExpressionException("force compilation");
           return factory.getEvaluatorBuilder().build(element, ContextUtil.getSourcePosition(evalContext));
         }
         catch (UnsupportedExpressionException ex) {

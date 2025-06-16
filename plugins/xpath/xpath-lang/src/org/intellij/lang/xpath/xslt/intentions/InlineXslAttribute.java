@@ -44,11 +44,11 @@ public class InlineXslAttribute implements IntentionAction {
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-        if (!XsltSupport.isXsltFile(file)) return false;
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
+        if (!XsltSupport.isXsltFile(psiFile)) return false;
 
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
+        final PsiElement element = psiFile.findElementAt(offset);
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
         if (tag == null) {
             return false;
@@ -102,9 +102,9 @@ public class InlineXslAttribute implements IntentionAction {
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
         final int offset = editor.getCaretModel().getOffset();
-        final PsiElement element = file.findElementAt(offset);
+        final PsiElement element = psiFile.findElementAt(offset);
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class, false);
         assert tag != null;
 

@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
 import com.intellij.psi.search.ProjectScopeImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -93,7 +94,7 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     }
 
     @Override
-    public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    public @NotNull @Unmodifiable Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return myFileIndexFacade.getUnloadedModuleDescriptions();
     }
   }

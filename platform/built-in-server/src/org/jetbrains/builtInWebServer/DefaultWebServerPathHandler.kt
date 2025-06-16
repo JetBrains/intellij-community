@@ -1,6 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.builtInWebServer
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -13,11 +14,11 @@ import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaders
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ide.orInSafeMode
 import org.jetbrains.io.send
+import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.io.path.isDirectory
 
 private class DefaultWebServerPathHandler : WebServerPathHandler {
   private val FILE_HANDLER_EP_NAME = ExtensionPointName<WebServerFileHandler>("org.jetbrains.webServerFileHandler")
@@ -61,7 +62,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler {
         return true
       }
 
-      // we must redirect only after index file check to not expose directory status
+      // we must redirect only after the index file check to avoid exposing directory status
       if (!decodedRawPath.endsWith('/')) {
         redirectToDirectory(request, channel, extraHeaders = authHeaders)
         return true
@@ -86,7 +87,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler {
       }
     }
 
-    if (!checkAccess(pathInfo)) {
+    if (!checkAccess(pathInfo, project)) {
       HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.NOT_FOUND).send(channel, request, extraHeaders = authHeaders)
       return true
     }
@@ -103,18 +104,19 @@ private class DefaultWebServerPathHandler : WebServerPathHandler {
     return false
   }
 
-  private fun checkAccess(pathInfo: PathInfo): Boolean {
-    if (pathInfo.ioFile != null || pathInfo.file!!.isInLocalFileSystem) {
-      val file = pathInfo.ioFile ?: Paths.get(pathInfo.file!!.path)
-      if (file.isDirectory() || !hasAccess(file)) {
-        // we check not only file, but all directories in the path because of WEB-21594
-        return false
-      }
-    }
-    else if (pathInfo.file!!.`is`(VFileProperty.HIDDEN)) {
-      return false
-    }
-
-    return true
+  private fun checkAccess(pathInfo: PathInfo, project: Project): Boolean = when {
+    pathInfo.ioFile != null -> checkAccess(pathInfo.ioFile!!, project)
+    pathInfo.file!!.isInLocalFileSystem -> checkAccess(pathInfo.file!!.toNioPath(), project)
+    pathInfo.file!!.`is`(VFileProperty.HIDDEN) -> false
+    else -> true
   }
+
+  private fun checkAccess(file: Path, project: Project): Boolean =
+    hasAccess(file) &&
+    TrustedProjects.isProjectTrusted(project) || runCatching { file.toRealPath().startsWith(project.basePath!!) }.getOrDefault(false)
 }
+
+// deny access to any dot-prefixed file
+@ApiStatus.Internal
+fun hasAccess(result: Path): Boolean =
+  Files.isReadable(result) && !(Files.isHidden(result) || result.fileName.toString().startsWith('.'))

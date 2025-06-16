@@ -15,19 +15,24 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+    "//platform/analysis-api:analysis",
+    "//platform/util/concurrency",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
     "//platform/kernel/shared:kernel",
     "@lib//:kotlinx-serialization-core",
     "@lib//:kotlinx-serialization-json",
     "//platform/project/shared:project",
     "//platform/platform-impl:ide-impl",
     "//platform/lang-api:lang",
-    "//platform/favoritesTreeView:ide-favoritesTreeView",
+    "//platform/favoritesTreeView",
     "//platform/core-ui",
     "//platform/lang-impl",
+    "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",
     "//platform/editor-ui-ex:editor-ex",
   ],
-  exports = ["//platform/favoritesTreeView:ide-favoritesTreeView"],
+  exports = ["//platform/favoritesTreeView"],
   runtime_deps = [":bookmarks_resources"]
 )
 ### auto-generated section `build intellij.platform.bookmarks` end

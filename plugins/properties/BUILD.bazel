@@ -1,26 +1,33 @@
-### auto-generated section `build intellij.properties` start
+### auto-generated section `build intellij.properties.backend` start
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "properties_resources",
+  name = "properties-backend_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "properties",
-  module_name = "intellij.properties",
+  name = "properties-backend",
+  module_name = "intellij.properties.backend",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/diff-api:diff",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/platform-api:ide",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/projectModel-api:projectModel",
+    "//platform/util/diff",
     "//spellchecker",
     "//xml/impl",
     "//plugins/properties/properties-psi-api:psi",
-    "//plugins/properties/properties-psi-impl:psi-impl",
+    "//plugins/properties/properties-psi-impl:backend-psi",
     "//platform/usageView",
     "//platform/core-ui",
     "//platform/refactoring",
@@ -28,7 +35,12 @@ jvm_library(
     "//platform/util/jdom",
     "//platform/ide-core-impl",
     "//platform/structuralsearch:structuralSearch",
+    "//plugins/properties/properties-common:properties",
+    "//platform/diff-impl",
   ],
-  runtime_deps = [":properties_resources"]
+  runtime_deps = [
+    ":properties-backend_resources",
+    "//platform/backend",
+  ]
 )
-### auto-generated section `build intellij.properties` end
+### auto-generated section `build intellij.properties.backend` end

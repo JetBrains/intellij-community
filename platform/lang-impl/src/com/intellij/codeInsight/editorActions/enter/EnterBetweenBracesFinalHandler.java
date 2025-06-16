@@ -1,11 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.editorActions.EnterHandler;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,6 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * Please, don't extend the class.
  * Use the {@code EnterBetweenBracesDelegate} language-specific implementation instead.
  */
-public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter {
+public class EnterBetweenBracesFinalHandler implements EnterHandlerDelegate {
   @Override
   public Result preprocessEnter(final @NotNull PsiFile file,
                                 @NotNull Editor editor,
@@ -56,9 +56,7 @@ public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter 
     if (indentInsideJavadoc != null &&
         project != null &&
         data.isLeadingAsteriskEnabled()) {
-      if (editor instanceof EditorWindow) {
-        editor = ((EditorWindow)editor).getDelegate();
-      }
+      editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       editor.getDocument().insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
     }
 
@@ -67,32 +65,32 @@ public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter 
   }
 
   private static final class Data {
-    private final @NotNull PsiFile myFile;
+    private final @NotNull PsiFile myPsiFile;
     private final @NotNull Document myDocument;
     private final @NotNull CharSequence myText;
     private final int myOffset;
 
-    private Data(@NotNull PsiFile file,
+    private Data(@NotNull PsiFile psiFile,
                  @NotNull Document document,
                  int offset) {
-      final PsiElement element = file.findElementAt(offset);
+      final PsiElement element = psiFile.findElementAt(offset);
 
       if (element != null) {
-        final PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(element);
+        final PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(psiFile.getProject()).getInjectionHost(element);
         if (injectionHost != null) {
           final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(element.getProject());
           final Document hostDocument = documentManager.getDocument(injectionHost.getContainingFile());
           if (hostDocument != null) {
             myDocument = hostDocument;
             myText = hostDocument.getCharsSequence();
-            myFile = injectionHost.getContainingFile();
+            myPsiFile = injectionHost.getContainingFile();
             myOffset = injectionHost.getTextOffset();
             return;
           }
         }
       }
 
-      myFile = file;
+      myPsiFile = psiFile;
       myDocument = document;
       myText = document.getText();
       myOffset = offset;
@@ -108,19 +106,19 @@ public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter 
     private @NotNull CodeDocumentationUtil.CommentContext getCommentContext() {
       final int line = myDocument.getLineNumber(myOffset);
       final int start = myDocument.getLineStartOffset(line);
-      return CodeDocumentationUtil.tryParseCommentContext(myFile, myText, myOffset, start);
+      return CodeDocumentationUtil.tryParseCommentContext(myPsiFile, myText, myOffset, start);
     }
 
     private boolean isInComment(final EnterBetweenBracesDelegate helper, Editor editor) {
-      return helper.isInComment(myFile, editor, myOffset);
+      return helper.isInComment(myPsiFile, editor, myOffset);
     }
 
     private boolean isLeadingAsteriskEnabled() {
-      return CodeStyleManager.getInstance(myFile.getProject()).getDocCommentSettings(myFile).isLeadingAsteriskEnabled();
+      return CodeStyleManager.getInstance(myPsiFile.getProject()).getDocCommentSettings(myPsiFile).isLeadingAsteriskEnabled();
     }
   }
 
-  protected boolean isApplicable(@NotNull PsiFile file,
+  protected boolean isApplicable(@NotNull PsiFile psiFile,
                                  @NotNull Editor editor,
                                  CharSequence documentText,
                                  int caretOffset,
@@ -130,7 +128,7 @@ public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter 
     return isValidOffset(prevCharOffset, documentText) &&
            isValidOffset(nextCharOffset, documentText) &&
            helper.isBracePair(documentText.charAt(prevCharOffset), documentText.charAt(nextCharOffset)) &&
-           !helper.bracesAreInTheSameElement(file, editor, prevCharOffset, nextCharOffset);
+           !helper.bracesAreInTheSameElement(psiFile, editor, prevCharOffset, nextCharOffset);
   }
 
   protected static @NotNull EnterBetweenBracesDelegate getLanguageImplementation(@Nullable Language language) {

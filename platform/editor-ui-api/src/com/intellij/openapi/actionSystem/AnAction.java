@@ -33,29 +33,21 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * <p>
  * For an action to be useful, implement {@link #actionPerformed(AnActionEvent)}.
  * To alter how the action is presented in UI, implement {@link #update(AnActionEvent)}.
+ * As both methods are {@link ApiStatus.OverrideOnly}, do not call them manually except for delegation.
  * <p>
  * Actions have dedicated presentations wherever they are presented to the user.
  * A single action can be present in different toolbars, popups and menus on the screen at the same time.
  * The default presentation for each place is a copy of {@link #getTemplatePresentation()}.
  * <p>
- * {@link AnActionEvent#getPlace()} is a non-unique, free form, human-readable name of a place.
- * Some standard platform place names are listed in {@link ActionPlaces}.
- * <pre>
- * public void update(AnActionEvent e) {
- *   if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
- *     e.getPresentation().setText("My Menu item name");
- *   }
- *   else if (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
- *     e.getPresentation().setText("My Toolbar item name");
- *   }
- * }
- * </pre>
+ * Actions can be wrapped. Use {@link AnActionWrapper}, {@link ActionGroupWrapper} and {@link ActionWrapperUtil} for that.
+ * <p>
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/basic-action-system.html">Actions (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
  * @see AnActionEvent
- * @see ActionPlaces
  * @see Presentation
  * @see DataContext
+ * @see AnActionWrapper
+ * @see com.intellij.openapi.actionSystem.ex.ActionUtil
  * @see com.intellij.openapi.project.DumbAwareAction
  */
 public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadAware {
@@ -355,6 +347,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * This method is always called under the {@link com.intellij.openapi.application.ReadAction}.
    *
    * @see #getActionUpdateThread()
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/action-system.html">Action System (IntelliJ Platform Docs)</a>
    */
   @ApiStatus.OverrideOnly
   @RequiresReadLock(generateAssertion = false)
@@ -366,12 +359,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * implementations MUST NOT rely on it.
    * Instead, they MUST always check whether the data context is suitable in {@link #actionPerformed(AnActionEvent)} and do nothing if it is not.
    *
-   * @deprecated Move any code to {@link #actionPerformed(AnActionEvent)}
+   * @deprecated NEVER CALLED. Move any code to {@link #actionPerformed(AnActionEvent)}
    */
   @Deprecated(forRemoval = true)
   @ApiStatus.OverrideOnly
   public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    update(e);
   }
 
   /**
@@ -415,15 +407,14 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * <p>
    * The data context of {@link AnActionEvent#getData(DataKey)} MAY occasionally NOT HAVE the necessary data.
    * <p>
-   * The implementors should not assume that {@link #update(AnActionEvent)}
-   * or {@link #beforeActionPerformedUpdate(AnActionEvent)} have been called before,
+   * The implementors should not assume that {@link #update(AnActionEvent)} has been called before,
    * and MUST to re-check that context is suitable, and do nothing if it is not.
    * <p>
    * The method must not be called directly.
-   * Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#performActionDumbAwareWithCallbacks} or
+   * Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#performAction} or
    * (when delegating) {@link ActionWrapperUtil#actionPerformed}
    *
-   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performActionDumbAwareWithCallbacks
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performAction
    * @see ActionWrapperUtil#actionPerformed
    */
   @ApiStatus.OverrideOnly
@@ -439,7 +430,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
         LOG.warn(PluginException.createByClass(
           "ShortcutSet of global AnActions should not be changed outside of KeymapManager.\n" +
           "This is likely not what you wanted to do. Consider setting shortcut in keymap defaults, inheriting from other action " +
-          "using `use-shortcut-of` or wrapping with EmptyAction.wrap(). Action: " + this,
+          "using `use-shortcut-of` or wrapping with ActionUtil.wrap(). Action: " + this,
           null,
           getClass())
         );

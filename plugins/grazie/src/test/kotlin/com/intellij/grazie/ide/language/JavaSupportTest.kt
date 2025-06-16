@@ -55,4 +55,8 @@ class JavaSupportTest : GrazieTestBase() {
       myFixture.checkHighlighting()
     }.setup { psiManager.dropPsiCaches() }.start()
   }
+
+  fun testCommentIsNotHighlightedIfThereIsReference() {
+    runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
+  }
 }

@@ -2,16 +2,11 @@
 package org.jetbrains.plugins.github.authentication.accounts
 
 import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
-import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.util.GithubNotificationIdsHolder
-import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 
 /**
@@ -20,16 +15,12 @@ import org.jetbrains.plugins.github.util.GithubUtil
 @Service(Service.Level.PROJECT)
 @State(name = "GithubDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 class GithubProjectDefaultAccountHolder(project: Project, parentCs: CoroutineScope)
-  : PersistentDefaultAccountHolder<GithubAccount>(project, parentCs.childScope()) {
+  : PersistentDefaultAccountHolder<GithubAccount>(project, parentCs.childScope(GithubProjectDefaultAccountHolder::javaClass.name)) {
 
   override fun accountManager() = service<GHAccountManager>()
 
-  override fun notifyDefaultAccountMissing() = runInEdt {
+  override fun notifyDefaultAccountMissing() {
     val title = GithubBundle.message("accounts.default.missing")
-    GithubUtil.LOG.info("${title}; ${""}")
-    VcsNotifier.importantNotification().createNotification(title, NotificationType.WARNING)
-      .setDisplayId(GithubNotificationIdsHolder.MISSING_DEFAULT_ACCOUNT)
-      .addAction(GithubNotifications.getConfigureAction(project))
-      .notify(project)
+    GithubUtil.LOG.info(title)
   }
 }

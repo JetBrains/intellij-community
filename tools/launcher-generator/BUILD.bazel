@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "launcherGenerator_resources",
+  name = "launcher-generator_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "launcherGenerator",
+  name = "launcher-generator",
   module_name = "intellij.tools.launcherGenerator",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -16,6 +16,6 @@ jvm_library(
     "//platform/util/jdom",
     "@lib//:commons-imaging",
   ],
-  runtime_deps = [":launcherGenerator_resources"]
+  runtime_deps = [":launcher-generator_resources"]
 )
 ### auto-generated section `build intellij.tools.launcherGenerator` end

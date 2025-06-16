@@ -25,13 +25,6 @@ java.FILE
         DOC_TAG
           DOC_TAG_NAME
           WHITE_SPACE
-          DOC_TAG_VALUE_ELEMENT
-            DOC_TAG_VALUE_LPAREN
-            DOC_TAG_VALUE_TOKEN
-            DOC_TAG_VALUE_TOKEN
-            DOC_TAG_VALUE_TOKEN
-            DOC_TAG_VALUE_RPAREN
-          WHITE_SPACE
           DOC_COMMENT_DATA
         WHITE_SPACE
         DOC_COMMENT_END

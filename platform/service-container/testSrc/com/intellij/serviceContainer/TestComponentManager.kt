@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
 import com.intellij.configurationStore.StateStorageManager
@@ -13,7 +13,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.TestOnly
-import java.nio.file.Path
 import kotlin.coroutines.EmptyCoroutineContext
 
 val testPluginDescriptor: DefaultPluginDescriptor = DefaultPluginDescriptor("test")
@@ -43,12 +42,11 @@ class TestComponentManager(override var isGetComponentAdapterOfTypeCheckEnabled:
 private class TestComponentStore : IComponentStore {
   override val storageManager: StateStorageManager
     get() = TODO("not implemented")
-  override val isStoreInitialized: Boolean = true
 
-  override fun setPath(path: Path) {
+  override fun initComponentBlocking(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
   }
 
-  override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
+  override suspend fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId) {
   }
 
   override fun unloadComponent(component: Any) {
@@ -72,11 +70,5 @@ private class TestComponentStore : IComponentStore {
   }
 
   override fun removeComponent(name: String) {
-  }
-
-  override fun clearCaches() {
-  }
-
-  override fun release() {
   }
 }

@@ -25,13 +25,13 @@ jvm_library(
     "//platform/util",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",
-    "@lib//:junit3",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:jackson",
     "@lib//:jackson-databind",
+    "@lib//:junit4",
   ]
 )
 

@@ -36,13 +36,13 @@ public final class LightEditOpenInProjectIntention implements IntentionAction, L
   @Override
   public boolean isAvailable(@NotNull Project project,
                              Editor editor,
-                             PsiFile file) {
+                             PsiFile psiFile) {
     return LightEdit.owns(project);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    performOn(project, file.getVirtualFile());
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    performOn(project, psiFile.getVirtualFile());
   }
 
   public static void performOn(@NotNull Project project, @NotNull VirtualFile currentFile) throws IncorrectOperationException {

@@ -271,6 +271,18 @@ class GitBrancherImpl implements GitBrancher {
   }
 
   @Override
+  public void renameBranchAndUnsetUpstream(@NotNull String currentName,
+                                           @NotNull String newName,
+                                           @NotNull List<? extends @NotNull GitRepository> repositories) {
+    new CommonBackgroundTask(myProject, GitBundle.message("branch.renaming.branch.process", currentName, newName), null) {
+      @Override
+      void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).renameBranchAndUnsetUpstream(currentName, newName, repositories);
+      }
+    }.runInBackground();
+  }
+
+  @Override
   public void deleteTag(@NotNull String name, @NotNull List<? extends GitRepository> repositories) {
     deleteTags(Collections.singletonMap(name, repositories));
   }

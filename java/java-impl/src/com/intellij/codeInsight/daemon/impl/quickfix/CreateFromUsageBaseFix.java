@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -11,6 +11,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +37,7 @@ import java.util.function.Consumer;
 public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     PsiElement element = getElement();
     if (element == null || isValidElement(element)) {
       return false;
@@ -156,7 +157,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
         if (run.getParent() instanceof PsiExpressionList &&
           run.getParent().getParent() instanceof PsiMethodCallExpression) {
           @NonNls String calleeText = ((PsiMethodCallExpression)run.getParent().getParent()).getMethodExpression().getText();
-          if (calleeText.equals(PsiKeyword.THIS) || calleeText.equals(PsiKeyword.SUPER)) return true;
+          if (calleeText.equals(JavaKeywords.THIS) || calleeText.equals(JavaKeywords.SUPER)) return true;
         }
       }
 

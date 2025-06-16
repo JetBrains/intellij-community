@@ -27,12 +27,14 @@ object MavenWrapper : MavenHomeType {
   override val description: @Nls String = MavenProjectBundle.message("maven.wrapper.version.label")
 }
 
-object BundledMaven3 : StaticResolvedMavenHomeType {
+interface BundledMaven
+
+object BundledMaven3 : StaticResolvedMavenHomeType, BundledMaven {
   override val title: @Nls String = MavenProjectBundle.message("maven.bundled.version.3.title")
   override val description: @Nls String = MavenProjectBundle.message("maven.bundled.version.label")
 }
 
-object BundledMaven4 : StaticResolvedMavenHomeType {
+object BundledMaven4 : StaticResolvedMavenHomeType, BundledMaven {
   override val title: @Nls String = MavenProjectBundle.message("maven.bundled.version.4.title")
   override val description: @Nls String = MavenProjectBundle.message("maven.bundled.version.label")
 }

@@ -2,16 +2,16 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.HelpTooltip;
+import com.intellij.ide.actions.BackAction;
+import com.intellij.ide.actions.ForwardAction;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.options.Configurable;
@@ -54,6 +54,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.createWrapperPanel;
@@ -61,7 +62,7 @@ import static com.intellij.openapi.options.newEditor.SettingsDialogExtensionsKt.
 
 @ApiStatus.Internal
 public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
-  private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
+  static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
 
@@ -78,6 +79,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final History myHistory = new History(this);
   private volatile boolean myNavigatingNow = false;
   private final boolean myIsModal;
+  private final @Nullable ResetConfigurableHandler myResetConfigurableHandler;
+  private final Map<Configurable, Boolean> myLeaveState = new ConcurrentHashMap<>();
 
   private final Map<Configurable, ConfigurableController> controllers = new HashMap<>();
   private ConfigurableController lastController;
@@ -188,22 +191,30 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           if (!myIsModal) {
             if (!myNavigatingNow && oldConfigurable != null) { // don't add to IdeDocumentHistory if just opened
               IdeDocumentHistory documentHistory = IdeDocumentHistory.getInstance(project);
+              if (myResetConfigurableHandler != null) {
+                myResetConfigurableHandler.scheduleConfigurableReset(oldConfigurable);
+              }
               CommandProcessor.getInstance().executeCommand(project, () -> {
                 documentHistory.onSelectionChanged();
               }, "ConfigurableChange", null);
             }
-            myNavigatingNow = false;
           } else {
             myHistory.pushQueryPlace();
           }
           loadingDecorator.startLoading(false);
         }
-        checkModified(oldConfigurable);
+        if (oldConfigurable != null) {
+          checkModified(oldConfigurable);
+          if (!myIsModal) {
+            myLeaveState.put(oldConfigurable, oldConfigurable.isModified());
+          }
+        }
         Promise<? super Object> result = editor.select(configurable);
         result.onSuccess(it -> {
           updateController(configurable);
           //requestFocusToEditor(); // TODO
           loadingDecorator.stopLoading();
+          myNavigatingNow = false;
         });
         return result;
       }
@@ -242,6 +253,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
         if (SettingsEditor.this.filter.context.getModified().isEmpty()) {
           return true;
         }
+        Set<String> modifiedIds = new HashSet<>() ;
         Map<Configurable, ConfigurationException> map = new LinkedHashMap<>();
         for (Configurable configurable : SettingsEditor.this.filter.context.getModified()) {
           ConfigurationException exception = ConfigurableEditor.apply(configurable);
@@ -250,6 +262,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           }
           else if (!configurable.isModified()) {
             SettingsEditor.this.filter.context.fireModifiedRemoved(configurable, null);
+            modifiedIds.add(ConfigurableVisitor.getId(configurable));
           }
         }
         search.updateToolTipText();
@@ -265,6 +278,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           return false;
         }
         updateStatus(SettingsEditor.this.filter.context.getCurrentConfigurable());
+        ApplicationManager.getApplication().getMessageBus()
+          .syncPublisher(SettingsDialogListener.TOPIC)
+          .afterApply(SettingsEditor.this, modifiedIds);
         return true;
       }
 
@@ -277,10 +293,42 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       }
 
       @Override
+      void postUpdateCurrent(Configurable configurable) {
+        if (!myIsModal && configurable != null) {
+          Boolean leaveState = myLeaveState.remove(configurable);
+          if (leaveState == Boolean.FALSE) {
+            configurable.reset();
+          }
+        }
+      }
+
+      @Override
       void openLink(Configurable configurable) {
         settings.select(configurable);
       }
     };
+
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe(SettingsDialogListener.TOPIC, new SettingsDialogListener() {
+        @Override
+        public void afterApply(@NotNull SettingsEditor settingsEditor, @NotNull Set<@NotNull String> modifiedConfigurableIds) {
+          if (settingsEditor == SettingsEditor.this)
+            return;
+          for (String id : modifiedConfigurableIds) {
+            Configurable conf = ConfigurableVisitor.findById(id, groups);
+            if (conf != null)
+              checkModified(conf);
+          }
+          for (Configurable modifiedConfigurable : SettingsEditor.this.filter.context.getModified()) {
+            String confId = ConfigurableVisitor.getId(modifiedConfigurable);
+            if (!confId.equals(getSelectedConfigurableId()) && modifiedConfigurableIds.contains(confId)) {
+              modifiedConfigurable.reset();
+              SettingsEditor.this.filter.context.fireModifiedRemoved(modifiedConfigurable, null);
+            }
+          }
+        }
+      });
+
 
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
@@ -291,9 +339,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     JComponent left = new JPanel(new BorderLayout());
     left.add(BorderLayout.CENTER, treeView);
-    left.setMinimumSize(JBUI.size(96, left.getMinimumSize().height));
-    left.setPreferredSize(JBUI.size(256, left.getPreferredSize().height));
-    left.setMaximumSize(JBUI.size(300, left.getMaximumSize().height));
     JPanel right = new JPanel(new BorderLayout());
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
     mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
@@ -326,6 +371,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       editor.setPreferredSize(JBUI.size(800, 600));
       add(BorderLayout.CENTER, mySplitter);
     }
+
+    myResetConfigurableHandler = myIsModal ? null:  new ResetConfigurableHandler(project, this.filter.context, editor.coroutineScope, parent);
 
     spotlightPainter = spotlightPainterFactory.createSpotlightPainter(project, editor, this, (painter) -> {
       Configurable currentConfigurable = this.filter.context.getCurrentConfigurable();
@@ -364,7 +411,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   public void select(Configurable configurable) {
     treeView.select(configurable);
     editor.select(configurable);
-    updateController(configurable);
   }
 
   boolean isSidebarVisible() {
@@ -438,8 +484,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   private JComponent withHistoryToolbar(JComponent component) {
-    ActionGroup group = ActionUtil.getActionGroup("Back", "Forward");
-    if (group == null) return component;
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionUtil.copyFrom(new BackAction(), "Back"));
+    group.add(ActionUtil.copyFrom(new ForwardAction(), "Forward"));
     JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();

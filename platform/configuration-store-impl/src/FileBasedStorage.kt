@@ -62,7 +62,8 @@ abstract class FileBasedStorage(
     }
   }
 
-  protected open val isUseXmlProlog: Boolean = false
+  protected open val isUseXmlProlog: Boolean
+    get() = false
 
   private val isUseUnixLineSeparator: Boolean
     // only ApplicationStore doesn't use xml prolog

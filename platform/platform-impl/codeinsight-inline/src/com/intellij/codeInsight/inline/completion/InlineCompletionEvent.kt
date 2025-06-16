@@ -5,12 +5,13 @@ import com.intellij.codeInsight.inline.completion.session.InlineCompletionSessio
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
-import com.intellij.injected.editor.EditorWindow
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
@@ -18,7 +19,10 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtilBase
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus
 import kotlin.random.Random
 
@@ -223,15 +227,7 @@ interface InlineCompletionEvent {
     @ApiStatus.Experimental
     override val editor: Editor,
     override val event: LookupEvent
-  ) : InlineLookupEvent, Builtin {
-
-    @Deprecated("It should not be created outside of the platform.")
-    @ApiStatus.ScheduledForRemoval
-    constructor(event: LookupEvent) : this(
-      runReadAction { event.lookup!!.editor },
-      event
-    )
-  }
+  ) : InlineLookupEvent, Builtin
 
   sealed interface InlineLookupEvent : InlineCompletionEvent, Builtin {
 
@@ -241,7 +237,7 @@ interface InlineCompletionEvent {
     // Since injected editors are poorly supported, we register handlers only for top-level editors.
     @get:ApiStatus.Experimental
     val topLevelEditor: Editor
-      get() = (editor as? EditorWindow)?.delegate ?: editor
+      get() = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
 
     val event: LookupEvent
 
@@ -320,6 +316,7 @@ interface InlineCompletionEvent {
    * Triggered when an editor becomes active.
    */
   @ApiStatus.Experimental
+  @Deprecated("This event is never created by the platform. Will be fixed later. See IJPL-179647 (slow ops)")
   class EditorFocused @ApiStatus.Internal constructor(val editor: Editor) : Builtin {
     override fun toRequest(): InlineCompletionRequest? {
       return getRequest(event = this, editor = editor)
@@ -328,19 +325,29 @@ interface InlineCompletionEvent {
 }
 
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
-  return runReadAction {
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(caret.editor.document) ?: return@runReadAction null
-    // * [PsiUtilBase] takes into account injected [PsiFile] (like in Jupyter Notebooks)
-    // * However, it loads a file into the memory, which is expensive
-    // * Some tests forbid loading a file when tearing down
-    // * On tearing down, Lookup Cancellation happens, which causes the event
-    // * Existence of [treeElement] guarantees that it's in the memory
-    if (file.isLoadedInMemory()) {
-      PsiUtilBase.getPsiFileInEditor(caret, project)
-    }
-    else {
-      file
-    }
+  val psiFileFromContext = when (EDT.isCurrentThreadEdt()) {
+    true -> EditorUtil.getEditorDataContext(caret.editor).getData(CommonDataKeys.PSI_FILE)
+    else -> null
+  }
+
+  val file = psiFileFromContext
+             ?: PsiDocumentManager.getInstance(project).getCachedPsiFile(caret.editor.document)
+             ?: return null
+
+  PsiUtilCore.ensureValid(file)
+
+  /*
+   * [PsiUtilBase] takes into account injected [PsiFile] (like in Jupyter Notebooks)
+   * However, it loads a file into the memory, which is expensive
+   * Some tests forbid loading a file when tearing down
+   * On tearing down, Lookup Cancellation happens, which causes the event
+   * Existence of [treeElement] guarantees that it's in the memory
+   */
+  return if (file.isLoadedInMemory()) {
+    PsiUtilBase.getPsiFileAtOffset(file, caret.offset)
+  }
+  else {
+    file
   }
 }
 

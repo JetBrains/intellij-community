@@ -159,7 +159,7 @@ class KotlinLambdaAsyncMethodFilter(
         private val lambdaReference: ObjectReference,
         lambdaMethod: Method
     ) : StepIntoMethodBreakpoint(lambdaMethod.declaringType().name(), lambdaMethod.name(), lambdaMethod.signature(), context.debugProcess.project) {
-        override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
+        override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent?): Boolean {
             super.processLocatableEvent(action, event).also { stopped ->
                 if (!stopped) return false
                 context.debugProcess.requestsManager.deleteRequest(this)

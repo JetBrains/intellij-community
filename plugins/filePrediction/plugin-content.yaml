@@ -1,6 +1,8 @@
+- name: lib/file-prediction-model.jar
+  library: file-prediction-model
+  module: intellij.filePrediction
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0/file-prediction-model-0.jar
 - name: lib/filePrediction.jar
   modules:
   - name: intellij.filePrediction
-    libraries:
-      file-prediction-model:
-      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0/file-prediction-model-0.jar

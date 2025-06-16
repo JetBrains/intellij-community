@@ -1,9 +1,16 @@
 <html>
 <body>
-Reports unnecessary unicode escape sequences. For example, when the file encoding can handle the character without escaping it.
-Unicode control characters are not reported by this inspection (except for a line feed and a tab).
+Reports unnecessary Unicode escape sequences.
+A Unicode escape sequence is unnecessary when the file encoding can handle the character without escaping it.
+This inspection does not report Unicode control characters, except for line feed and horizonal tab.
 <p><b>Example:</b></p>
-<pre><code>String s = "\u0062";</code></pre>
+<pre><code>
+  String s = "\u0078";
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  String s = "x";
+</code></pre>
 <!-- tooltip end -->
 </body>
 </html>

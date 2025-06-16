@@ -126,6 +126,24 @@ public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
     inspection.ignoreTupleUnpacking = false;
     doTest(inspection);
   }
+  
+  // PY-79910
+  public void testTryExceptInsideIfInsideFunction() {
+    doTestByText("""
+def test():
+    num = 7
+    if num < 10:
+        try:
+            next_num = input() # used
+        except ValueError:
+            next_num = None
+    else:
+        next_num = 0
+
+    return next_num
+        """
+    );
+  }
 
   // PY-16419, PY-26417
   public void testPotentiallySuppressedExceptions() {

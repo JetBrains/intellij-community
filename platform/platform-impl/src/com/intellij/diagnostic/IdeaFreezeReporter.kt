@@ -10,6 +10,7 @@ import com.intellij.idea.AppMode
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -48,7 +49,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
-    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer())) {
+    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) && !ApplicationManagerEx.isInIntegrationTest()) {
       throw ExtensionNotApplicableException.create()
     }
 
@@ -59,7 +60,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
         }
       })
 
-      if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer())) {
+      if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer()) || ApplicationManagerEx.isInIntegrationTest()) {
         reportUnfinishedFreezes()
       }
     }
@@ -157,7 +158,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
     }
 
     if (Registry.`is`("freeze.reporter.enabled", false)) {
-      if ((durationMs / 1000).toInt() > FREEZE_THRESHOLD && !stacktraceCommonPart.isNullOrEmpty()) {
+      if (((durationMs / 1000).toInt() > FREEZE_THRESHOLD || ApplicationManagerEx.isInIntegrationTest()) && !stacktraceCommonPart.isNullOrEmpty()) {
         val dumps = ArrayList(currentDumps) // defensive copy
         if (dumpTask.isValid() && dumps.size >= 2) {
           val attachments = ArrayList<Attachment>()

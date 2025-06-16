@@ -6,6 +6,7 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateFileProcessor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -14,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ final class SystemFileProcessor extends ProjectTemplateFileProcessor {
     for (String componentName : COMPONENT_NAMES) {
       Object component;
       if (componentName.equals("org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent")) {
-        component = ((ComponentManagerImpl)project).getServiceByClassName(componentName);
+        component = ((ComponentManagerEx)project).getServiceByClassName(componentName);
       }
       else if (componentName.equals(FileEditorManager.class.getName())) {
         component = FileEditorManager.getInstance(project);

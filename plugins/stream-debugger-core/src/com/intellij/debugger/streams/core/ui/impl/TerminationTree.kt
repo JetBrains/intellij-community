@@ -2,12 +2,17 @@ package com.intellij.debugger.streams.core.ui.impl
 
 import com.intellij.debugger.streams.core.trace.CollectionTreeBuilder
 import com.intellij.debugger.streams.core.trace.DebuggerCommandLauncher
+import com.intellij.debugger.streams.core.trace.GenericEvaluationContext
 import com.intellij.debugger.streams.core.trace.TraceElement
 import com.intellij.debugger.streams.core.trace.Value
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.util.ObjectUtils
-import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.frame.XCompositeNode
+import com.intellij.xdebugger.frame.XValue
+import com.intellij.xdebugger.frame.XValueChildrenList
+import com.intellij.xdebugger.frame.XValueNode
+import com.intellij.xdebugger.frame.XValuePlace
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode
@@ -20,14 +25,15 @@ class TerminationTree(
   streamResult : Value,
   traceElements: List<TraceElement>,
   launcher: DebuggerCommandLauncher,
+  context: GenericEvaluationContext,
   private val myBuilder: CollectionTreeBuilder,
   @Suppress("CanBeParameter") private val debugName: String,
-) : CollectionTree(traceElements, launcher, myBuilder, debugName) {
+) : CollectionTree(traceElements, context, myBuilder, debugName) {
 
   private val NULL_MARKER: Any = ObjectUtils.sentinel("CollectionTree.NULL_MARKER")
 
   init {
-    val root = XValueNodeImpl(this, null, "root", MyValueRoot(streamResult, launcher))
+    val root = XValueNodeImpl(this, null, "root", MyValueRoot(streamResult, context))
     setRoot(root, false)
     root.isLeaf = false
 
@@ -76,10 +82,10 @@ class TerminationTree(
     })
   }
 
-  private inner class MyValueRoot(private val myValue: Value, private val myDebuggerCommandLauncher: DebuggerCommandLauncher) : XValue() {
+  private inner class MyValueRoot(private val myValue: Value, private val myContext: GenericEvaluationContext) : XValue() {
     override fun computeChildren(node: XCompositeNode) {
       val children = XValueChildrenList()
-      children.add(myBuilder.createXNamedValue(myValue, myDebuggerCommandLauncher))
+      children.add(myBuilder.createXNamedValue(myValue, myContext))
       node.addChildren(children, true)
     }
 

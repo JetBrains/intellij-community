@@ -24,6 +24,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -39,10 +40,6 @@ import java.util.List;
 
 public final class PyiUtil {
   private PyiUtil() {}
-
-  public static boolean isInsideStubAnnotation(@NotNull PsiElement element) {
-    return isInsideStub(element) && PsiTreeUtil.getParentOfType(element, PyAnnotation.class, true, ScopeOwner.class) != null;
-  }
 
   public static boolean isInsideStub(@NotNull PsiElement element) {
     return PyiUtilCore.isInsideStub(element);
@@ -62,6 +59,21 @@ public final class PyiUtil {
   public static @Nullable PsiElement getOriginalElement(@NotNull PyElement element) {
     final PsiFile file = element.getContainingFile();
     if (!(file instanceof PyiFile)) return null;
+
+    // PY-38169 special case definitions in typing.pyi as stubs for definitions in `_collections_abc`/`_collections`
+    final var pyClass = (element instanceof PyClass elementClass ? elementClass : PsiTreeUtil.getParentOfType(element, PyClass.class));
+    if (pyClass != null) {
+      final var typingRedirection = PyTypeShed.INSTANCE.getTypingRedirections().get(pyClass.getQualifiedName());
+
+      if (typingRedirection != null) {
+        final var result = PyResolveImportUtil.resolveQualifiedName(
+          QualifiedName.fromDottedString(typingRedirection),
+          PyResolveImportUtil.fromFoothold(element).copyWithoutStubs().copyWithMembers()
+        );
+        if (result.isEmpty()) return null;
+        return result.get(0);
+      }
+    }
 
     final PyFile originalFile = getOriginalFile((PyiFile)file);
     if (originalFile == null) return null;
@@ -112,7 +124,7 @@ public final class PyiUtil {
   }
 
   public static boolean isOverload(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    final PyKnownDecoratorUtil.KnownDecorator overload = PyKnownDecoratorUtil.KnownDecorator.TYPING_OVERLOAD;
+    final PyKnownDecorator overload = PyKnownDecorator.TYPING_OVERLOAD;
 
     return element instanceof PyFunction &&
            PyKnownDecoratorUtil.getKnownDecorators((PyFunction)element, context).contains(overload);
@@ -150,9 +162,13 @@ public final class PyiUtil {
   }
 
   private static @Nullable PyFile getOriginalFile(@NotNull PyiFile file) {
-    final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
+    QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, file);
     if (name == null) {
       return null;
+    }
+    String moduleRedirect = PyTypeShed.INSTANCE.getTypeshedModuleRedirections().get(name.toString());
+    if (moduleRedirect != null) {
+      name = QualifiedName.fromDottedString(moduleRedirect);
     }
     final PyQualifiedNameResolveContext context = PyResolveImportUtil.fromFoothold(file).copyWithoutStubs();
     return PyUtil.as(PyResolveImportUtil.resolveQualifiedName(name, context)

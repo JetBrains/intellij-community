@@ -129,7 +129,7 @@ class RelaxedEditDistance(
 ) : BaseRelaxedMetric(showByDefault) {
   override val name: String = "Relaxed edit distance"
   override val description: String =
-    "Checks that for any the suggested lines of the completion, there is a line from middle that has a normalized edit distance less than $threshold."
+    "Checks that for any the suggested lines of the completion, there is a line from middle that has a normalized edit distance larger than $threshold."
   override val onlyValuable: Boolean = false
   override val metric: RelaxedSimilarityUtils.RelaxedMetric = RelaxedSimilarityUtils.RelaxedEditDistance(threshold)
 }

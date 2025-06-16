@@ -845,7 +845,6 @@ RunDashboard.OpenRunningConfigInNewTab,,PLATFORM,4,5,300609
 ResetLearningProgressAction,training,JB_BUNDLED,4,4,300609
 CreateVueSingleFileComp,org.jetbrains.plugins.vue,JB_BUNDLED,4,7,300609
 ConsoleView.ClearAll,,PLATFORM,4,16,300609
-MaintenanceAction,,PLATFORM,4,6,300609
 ProjectView.ToolWindow.Appearance.Actions,,PLATFORM,4,7,300609
 BuildWholeSolutionAction,,PLATFORM,4,5,300609
 com.intellij.space.vcs.share.SpaceShareProjectAction,com.jetbrains.space,JB_BUNDLED,4,4,300609

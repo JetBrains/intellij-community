@@ -24,21 +24,11 @@ public interface PyNamedParameter extends PyAstNamedParameter, PyParameter, PsiN
   }
 
   /**
-   * @param includeDefaultValue if true, include the default value after an "=".
-   * @param context             context to be used to resolve argument type
-   * @return canonical representation of parameter.
-   * Includes asterisks for *param and **param, and name.
-   * Also includes argument type if {@code context} is not null and resolved type is not unknown.
-   */
-  @NotNull
-  String getRepr(boolean includeDefaultValue, @Nullable TypeEvalContext context);
-
-  /**
    * @param context context to be used to resolve argument type
    * @return argument type. Returns element type for *param and value type for **param.
    * @deprecated Use {@link PyCallableParameter#getArgumentType(TypeEvalContext)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   PyType getArgumentType(@NotNull TypeEvalContext context);
 

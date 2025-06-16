@@ -278,6 +278,7 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control H"/>
   </action>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="alt PAGE_DOWN"/>
   </action>

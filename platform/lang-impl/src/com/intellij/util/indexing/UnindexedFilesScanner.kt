@@ -20,9 +20,12 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.platform.diagnostic.telemetry.IJTracer
 import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
@@ -41,8 +44,10 @@ import com.intellij.util.indexing.roots.IndexableFileScanner.ScanSession
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.kind.ModuleContentOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -272,7 +277,7 @@ class UnindexedFilesScanner (
   internal suspend fun applyDelayedPushOperations(scanningHistory: ProjectScanningHistoryImpl) {
     this.scanningHistory = scanningHistory
     markStageSus(ProjectScanningHistoryImpl.Stage.DelayedPushProperties) {
-      val pusher = blockingContext { PushedFilePropertiesUpdater.getInstance(myProject) }
+      val pusher = PushedFilePropertiesUpdater.getInstance(myProject)
       if (pusher is PushedFilePropertiesUpdaterImpl) {
         pusher.performDelayedPushTasks()
       }
@@ -422,7 +427,12 @@ class UnindexedFilesScanner (
        * because of `indexableFilesDeduplicateFilter`, and therefore the `FilePropertyPusher`s will not run for that file.
        */
       val (genericContentEntityProviders, otherProviders) = providers.partition { provider -> provider.origin is GenericContentEntityOrigin }
-      collectIndexableFilesConcurrently(otherProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+      /**
+       * Module providers typically contain more files, so they take more time to scan.
+       * We place module providers at the end of the provider list, such that other providers have a chance to "steal" files from module providers.
+       */
+      val (moduleProviders, otherNonModuleProviders) = otherProviders.partition { it.origin is ModuleContentOrigin }
+      collectIndexableFilesConcurrently(otherNonModuleProviders.plus(moduleProviders), sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
       collectIndexableFilesConcurrently(genericContentEntityProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
     }
 
@@ -433,10 +443,12 @@ class UnindexedFilesScanner (
       sharedExplanationLogger: IndexingReasonExplanationLogger,
     ) {
       runBlockingCancellable {
-        withContext(SCANNING_DISPATCHER) {
+        tracer.spanBuilder("runBlocking in scanning").useWithScope(context = SCANNING_DISPATCHER) {
           providers.forEachConcurrent(SCANNING_PARALLELISM)  { provider ->
             try {
-              scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+              tracer.spanBuilder("Scanning of ${provider.debugName}").use {
+                scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+              }
             }
             catch (t: Throwable) {
               if (t is CancellationException) throw t
@@ -462,7 +474,7 @@ class UnindexedFilesScanner (
       scanningStatistics.setProviderRoots(provider, project)
       val origin = provider.origin
 
-      val fileScannerVisitors = blockingContext { sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) } }
+      val fileScannerVisitors = sessions.mapNotNull { s: ScanSession -> s.createVisitor(origin) }
       val thisProviderDeduplicateFilter =
         IndexableFilesDeduplicateFilter.createDelegatingTo(indexableFilesDeduplicateFilter)
 
@@ -470,9 +482,13 @@ class UnindexedFilesScanner (
       try {
         progressReporter.getSubTaskReporter().use { subTaskReporter ->
           subTaskReporter.setText(provider.rootsScanningProgressText)
-          val files: ArrayDeque<VirtualFile> = getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
+          val files: ArrayDeque<VirtualFile> = tracer.spanBuilder("Getting files to scan").use {
+            getFilesToScan(fileScannerVisitors, scanningStatistics, provider, thisProviderDeduplicateFilter)
+          }
           PushedFilePropertiesUpdaterImpl.finishVisitors(fileScannerVisitors)
-          scanFiles(provider, scanningStatistics, sharedExplanationLogger, files)
+          tracer.spanBuilder("Scanning gathered files").use { span ->
+            scanFiles(provider, scanningStatistics, sharedExplanationLogger, files, span)
+          }
         }
       }
       catch (e: Exception) {
@@ -502,15 +518,21 @@ class UnindexedFilesScanner (
       scanningStatistics: ScanningStatistics,
       sharedExplanationLogger: IndexingReasonExplanationLogger,
       files: ArrayDeque<VirtualFile>,
+      span: Span,
     ) {
       val indexingQueue = project.getService(PerProjectIndexingQueue::class.java)
       scanningStatistics.startFileChecking()
       try {
+        var counter = 0
         readAction {
+          val currentCounter = counter++
+          if (currentCounter != 0) {
+            // report only restarts of scanning read action
+            span.addEvent("Read action restart #${currentCounter} (${files.size} files remain to scan)")
+          }
           val finder =
             if (ourTestMode == TestMode.PUSHING) null
-            else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger,
-                                      scanningRequest, filterHandler)
+            else UnindexedFilesFinder(project, sharedExplanationLogger, forceReindexingTrigger, scanningRequest)
           val pushingUtil = PushingUtil(project, provider)
           if (!pushingUtil.mayBeUsed()) {
             LOG.warn("Iterator based on $provider can't be used.")
@@ -520,6 +542,9 @@ class UnindexedFilesScanner (
             val file = files.removeFirst()
             try {
               if (file.isValid) {
+                if (file is VirtualFileWithId) {
+                  filterHandler.addFileId(project, file.id)
+                }
                 pushingUtil.applyPushers(file)
                 val status = finder?.getFileStatus(file)
                 if (status != null) {
@@ -562,9 +587,7 @@ class UnindexedFilesScanner (
 
       scanningStatistics.startVfsIterationAndScanningApplication()
       try {
-        blockingContext {
-          provider.iterateFiles(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
-        }
+        provider.iterateFiles(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter)
       }
       finally {
         scanningStatistics.tryFinishVfsIterationAndScanningApplication()
@@ -775,3 +798,6 @@ private fun <T> Deferred<T>.getCompletedSafe(): T? {
     null
   }
 }
+
+
+private val tracer: IJTracer get() = getInstance().getTracer(Indexes)

@@ -34,6 +34,7 @@ public class KotlinStatementSurroundDescriptor implements SurroundDescriptor {
         var element1 = getElementAtOffsetIgnoreWhitespaceBefore(file, startOffset);
         var element2 = getElementAtOffsetIgnoreWhitespaceAfter(file, endOffset);
         if (element1 == null || element2 == null) return PsiElement.EMPTY_ARRAY;
+        if (element1.getTextRange().getStartOffset() > element2.getTextRange().getEndOffset()) return PsiElement.EMPTY_ARRAY;
 
         PsiElement commonParent = PsiTreeUtil.findCommonParent(element1, element2);
         return commonParent instanceof KtExpression ? new PsiElement[] {commonParent} : PsiElement.EMPTY_ARRAY;

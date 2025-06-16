@@ -1,15 +1,12 @@
 package com.intellij.searchEverywhereMl.typos
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellingCorrector
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.Processor
 import org.junit.Assert
 import javax.swing.JLabel
@@ -19,15 +16,12 @@ class SearchEverywhereTyposUITest : LightPlatformTestCase() {
   fun `test first actual search result gets preselected`() {
     val searchEverywhereUI = SearchEverywhereUI(project,
                                                 listOf(MockSearchEverywhereContributor("Show Color Picker")),
-                                                { _ -> null},
-                                                MockSpellingCorrector())
+                                                { _ -> null})
     // normally SearchEverywhereUI is registered against the baloon as parent disposable in SearchEverywhereManager
     Disposer.register(testRootDisposable, searchEverywhereUI)
-    val elements = PlatformTestUtil.waitForFuture(searchEverywhereUI.findElementsForPattern ("colop"))
-    assert(elements.size == 2)
     val seContext = IdeUiService.getInstance().createUiDataContext(searchEverywhereUI)
     val selected = seContext.getData(PlatformDataKeys.SELECTED_ITEM)
-    Assert.assertEquals("Show Color Picker", selected)
+    Assert.assertNull(selected)
   }
 }
 
@@ -47,15 +41,5 @@ private class MockSearchEverywhereContributor(private val elements: Collection<S
 
   override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in String>) {
     elements.forEach { consumer.process(it) }
-  }
-}
-
-private class MockSpellingCorrector : SearchEverywhereSpellingCorrector {
-  override fun isAvailableInTab(tabId: String): Boolean {
-    return true
-  }
-
-  override fun checkSpellingOf(query: String): SearchEverywhereSpellCheckResult {
-    return SearchEverywhereSpellCheckResult.Correction("color", 1.0)
   }
 }

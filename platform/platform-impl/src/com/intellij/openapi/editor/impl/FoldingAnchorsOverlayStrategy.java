@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,12 +15,14 @@ import java.util.List;
 public final class FoldingAnchorsOverlayStrategy {
   private final EditorImpl myEditor;
 
-  FoldingAnchorsOverlayStrategy(EditorImpl editor) {
+  @VisibleForTesting
+  public FoldingAnchorsOverlayStrategy(EditorImpl editor) {
     myEditor = editor;
   }
 
   @NotNull
-  Collection<DisplayedFoldingAnchor> getAnchorsToDisplay(int firstVisibleOffset,
+  @VisibleForTesting
+  public Collection<DisplayedFoldingAnchor> getAnchorsToDisplay(int firstVisibleOffset,
                                                          int lastVisibleOffset,
                                                          @NotNull List<FoldRegion> activeFoldRegions) {
     Int2ObjectMap<DisplayedFoldingAnchor> result = new Int2ObjectOpenHashMap<>();
@@ -100,7 +103,7 @@ public final class FoldingAnchorsOverlayStrategy {
 
   private static boolean skipFoldingAnchor(@NotNull FoldRegion region) {
     if (!region.isExpanded()) {
-      return Boolean.TRUE.equals(region.getUserData(FoldingModelImpl.HIDE_GUTTER_RENDERER_FOR_COLLAPSED));
+      return Boolean.TRUE.equals(region.getUserData(FoldingKeys.HIDE_GUTTER_RENDERER_FOR_COLLAPSED));
     }
     return false;
   }

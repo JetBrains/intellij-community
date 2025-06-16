@@ -97,8 +97,8 @@ public class PairedBraceMatcherAdapter implements NontrivialBraceMatcher, Paired
   }
 
   @Override
-  public int getCodeConstructStart(final @NotNull PsiFile file, int openingBraceOffset) {
-    return myMatcher.getCodeConstructStart(file, openingBraceOffset);
+  public int getCodeConstructStart(final @NotNull PsiFile psiFile, int openingBraceOffset) {
+    return myMatcher.getCodeConstructStart(psiFile, openingBraceOffset);
   }
 
   @Override

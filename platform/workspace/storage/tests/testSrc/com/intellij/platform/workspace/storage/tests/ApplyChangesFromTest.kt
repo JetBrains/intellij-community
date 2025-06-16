@@ -8,7 +8,7 @@ import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.exceptions.ApplyChangesFromException
-import com.intellij.platform.workspace.storage.impl.external.ExternalEntityMappingImpl
+import com.intellij.platform.workspace.storage.impl.external.AbstractExternalEntityMappingImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.toBuilder
@@ -355,7 +355,7 @@ class ApplyChangesFromTest {
 
     target.applyChangesFrom(source)
 
-    val externalMapping = target.getExternalMapping(externalMappingName) as ExternalEntityMappingImpl<Any>
+    val externalMapping = target.getExternalMapping(externalMappingName) as AbstractExternalEntityMappingImpl<Any>
     assertEquals(1, externalMapping.index.size)
   }
 

@@ -4,7 +4,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -132,7 +132,7 @@ fun <T> runWithModalProgressBlocking(
 @RequiresEdt
 fun <T> runWithModalProgressBlocking(
   owner: ModalTaskOwner,
-  title: @ProgressTitle String,
+  title: @ModalProgressTitle String,
   cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
@@ -202,7 +202,7 @@ suspend fun <T> withModalProgressIndicator(
 @RequiresEdt
 fun <T> runBlockingModalWithRawProgressReporter(
   project: Project,
-  title: @ProgressTitle String,
+  title: @ModalProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
   @Suppress("DEPRECATION")
@@ -219,7 +219,7 @@ fun <T> runBlockingModalWithRawProgressReporter(
 @RequiresEdt
 fun <T> runBlockingModalWithRawProgressReporter(
   owner: ModalTaskOwner,
-  title: @ProgressTitle String,
+  title: @ModalProgressTitle String,
   cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {
@@ -240,7 +240,7 @@ fun <T> runBlockingModalWithRawProgressReporter(
 @RequiresEdt
 fun <T> runBlockingModal(
   project: Project,
-  title: @ProgressTitle String,
+  title: @ModalProgressTitle String,
   action: suspend CoroutineScope.() -> T,
 ): T {
   return runWithModalProgressBlocking(ModalTaskOwner.project(project), title, TaskCancellation.cancellable(), action)
@@ -258,7 +258,7 @@ fun <T> runBlockingModal(
 @RequiresEdt
 fun <T> runBlockingModal(
   owner: ModalTaskOwner,
-  title: @ProgressTitle String,
+  title: @ModalProgressTitle String,
   cancellation: TaskCancellation = TaskCancellation.cancellable(),
   action: suspend CoroutineScope.() -> T,
 ): T {

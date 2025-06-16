@@ -6,7 +6,7 @@
  * <p/>
  * This API is highly experimental and thus mark as internal for a while.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 package com.intellij.codeInsight.multiverse;
 
 import org.jetbrains.annotations.ApiStatus;

@@ -121,9 +121,9 @@ public class PyMarkAsNamespacePackageActionTest extends PyTestCase {
 
     AnAction action = new PyMarkAsNamespacePackageAction();
     AnActionEvent e = TestActionEvent.createTestEvent(action, dataContext);
-    ActionUtil.performDumbAwareUpdate(action, e, false);
+    ActionUtil.updateAction(action, e);
     if (e.getPresentation().isEnabledAndVisible()) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, e);
+      ActionUtil.performAction(action, e);
     }
 
     return e.getPresentation();

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
-import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
-class KotlinMultilineStringEnterHandler : EnterHandlerDelegateAdapter() {
+class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
     private var wasInMultilineString: Boolean = false
     private var whiteSpaceAfterCaret: String = ""
     private var isInBrace = false

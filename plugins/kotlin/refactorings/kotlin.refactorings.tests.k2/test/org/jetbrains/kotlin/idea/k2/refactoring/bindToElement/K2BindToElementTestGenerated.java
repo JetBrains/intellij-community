@@ -292,6 +292,11 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
                 runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnFunctionCall.kt");
             }
 
+            @TestMetadata("PackageVsPropertyOnFunctionCallFailedImport.kt")
+            public void testPackageVsPropertyOnFunctionCallFailedImport() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnFunctionCallFailedImport.kt");
+            }
+
             @TestMetadata("PackageVsPropertyOnNameReference.kt")
             public void testPackageVsPropertyOnNameReference() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/bindToFqn/packageVsDeclarationCollision/PackageVsPropertyOnNameReference.kt");

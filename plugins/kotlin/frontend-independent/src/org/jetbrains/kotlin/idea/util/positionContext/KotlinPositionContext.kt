@@ -89,6 +89,7 @@ class KotlinTypeNameReferencePositionContext(
     val typeReference: KtTypeReference?,
 ) : KotlinSimpleNameReferencePositionContext()
 
+
 class KotlinAnnotationTypeNameReferencePositionContext(
     override val position: PsiElement,
     override val reference: KtSimpleNameReference,
@@ -137,7 +138,18 @@ class KotlinExpressionNameReferencePositionContext(
     override val reference: KtSimpleNameReference,
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?
-) : KotlinSimpleNameReferencePositionContext()
+) : KotlinSimpleNameReferencePositionContext() {
+
+    constructor(
+        nameExpression: KtSimpleNameExpression,
+        explicitReceiver: KtExpression? = null,
+    ) : this(
+        position = nameExpression.getReferencedNameElement(),
+        reference = nameExpression.mainReference,
+        nameExpression = nameExpression,
+        explicitReceiver = explicitReceiver,
+    )
+}
 
 class KotlinInfixCallPositionContext(
     override val position: PsiElement,
@@ -148,12 +160,13 @@ class KotlinInfixCallPositionContext(
 
 /**
  * Represents an operator call - binary or unary, postfix or prefix.
- * 
+ *
  * [nameExpression] does not represent any name in this case - it references
  * an operator reference, like `+`, `+=` or unary `-`.
- * 
- * [explicitReceiver] points to the main expression in the operator call - 
- * either the LHS of the binary call, or the underlying expression in the unary call.
+ *
+ * [explicitReceiver] points to the main expression in the operator call:
+ * - the LHS in the binary call (except for the `contains` operator, where the receiver is on the RHS)
+ * - the underlying expression in the unary call
  */
 class KotlinOperatorCallPositionContext(
     override val position: PsiElement,
@@ -211,25 +224,6 @@ class KotlinMemberDeclarationExpectedPositionContext(
     override val position: PsiElement,
     val classBody: KtClassBody
 ) : KotlinRawPositionContext()
-
-/**
- * A position that describes a delegated property.
- * 
- * Example: 
- * ```
- * val foo by bar
- * ```
- * 
- * [propertyDelegate] points to the delegation part (`by bar`) of the declaration.
- * 
- * Note: This position currently is NOT detected automatically by `KotlinPositionContextDetector`;
-* it should be created explicitly.
- */
-class KotlinPropertyDelegatePositionContext(
-    val propertyDelegate: KtPropertyDelegate,
-) : KotlinRawPositionContext() {
-    override val position: KtElement = propertyDelegate
-}
 
 sealed class KDocNameReferencePositionContext : KotlinNameReferencePositionContext() {
     abstract override val reference: KDocReference
@@ -299,6 +293,9 @@ object KotlinPositionContextDetector {
         val subjectExpressionForWhenCondition = (parent as? KtWhenCondition)?.getSubjectExpression()
 
         return when {
+            nameExpression.prevSibling is PsiErrorElement ->
+                KotlinIncorrectPositionContext(position)
+
             parent is KtUserType -> {
                 detectForTypeContext(parent, position, reference, nameExpression, explicitReceiver)
             }
@@ -353,7 +350,7 @@ object KotlinPositionContextDetector {
                     KotlinOperatorCallPositionContext(position, reference, nameExpression, explicitReceiver)
                 }
             }
-            
+
             parent is KtUnaryExpression && parent.operationReference == nameExpression ->
                 KotlinOperatorCallPositionContext(position, reference, nameExpression, explicitReceiver)
 

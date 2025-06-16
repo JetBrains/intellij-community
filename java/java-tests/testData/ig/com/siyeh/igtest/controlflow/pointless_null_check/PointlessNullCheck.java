@@ -47,4 +47,8 @@ public class PointlessNullCheck {
     void testEquals(String str) {
         if (<warning descr="Unnecessary 'null' check before 'equals()' call">str != null</warning> && "foo".equals(str)) {}
     }
+
+  void x(Object x, Class<?> y) {
+    if (x != "<error descr="Illegal escape character in string literal">\l</error>" && y.isInstance(x)) {}
+  }
 }

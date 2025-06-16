@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.util;
 
 import com.intellij.ide.IdeEventQueue;
@@ -55,8 +55,17 @@ public final class PopupImplUtil {
   }
 
   public static void uiSnapshotForList(@NotNull JList<?> list, @NotNull DataSink sink) {
+    uiSnapshotForList(list, sink, false);
+  }
+
+  public static void uiSnapshotForList(@NotNull JList<?> list, @NotNull DataSink sink, boolean lazy) {
     int index = list.getSelectedIndex();
-    sink.set(PlatformCoreDataKeys.SELECTED_ITEM, index > -1 ? list.getSelectedValue() : ObjectUtils.NULL);
+    if (lazy) {
+      sink.lazy(PlatformCoreDataKeys.SELECTED_ITEM, () -> index > -1 ? list.getSelectedValue() : ObjectUtils.NULL);
+    }
+    else {
+      sink.set(PlatformCoreDataKeys.SELECTED_ITEM, index > -1 ? list.getSelectedValue() : ObjectUtils.NULL);
+    }
 
     Object[] values = list.getSelectedValues();
     for (int i = 0; i < values.length; i++) {
@@ -64,7 +73,12 @@ public final class PopupImplUtil {
         values[i] = ObjectUtils.NULL;
       }
     }
-    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, values);
+    if (lazy) {
+      sink.lazy(PlatformCoreDataKeys.SELECTED_ITEMS, () -> values);
+    }
+    else {
+      sink.set(PlatformCoreDataKeys.SELECTED_ITEMS, values);
+    }
   }
 
   public static @Nullable Component getClickSourceFromLastInputEvent() {

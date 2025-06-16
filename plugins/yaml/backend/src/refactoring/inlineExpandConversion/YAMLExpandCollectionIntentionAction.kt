@@ -60,8 +60,8 @@ internal open class YAMLExpandCollectionIntentionAction : PsiElementBaseIntentio
   override fun getFamilyName(): String = text
 
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val element: PsiElement = getElement(editor, file) ?: return EMPTY
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    val element: PsiElement = getElement(editor, psiFile) ?: return EMPTY
     var collectionPointer: SmartPsiElementPointer<PsiElement>? = null
     var expandedElement: PsiElement? = null
     runBlockingCancellable {
@@ -166,8 +166,8 @@ private class YAMLExpandAllCollectionsInsideIntentionAction : YAMLExpandCollecti
 
   override fun getFamilyName(): String = text
 
-  override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val element: PsiElement = getElement(editor, file) ?: return EMPTY
+  override fun generatePreview(project: Project, editor: Editor, psiFile: PsiFile): IntentionPreviewInfo {
+    val element: PsiElement = getElement(editor, psiFile) ?: return EMPTY
     var collectionPointer: SmartPsiElementPointer<PsiElement>? = null
     var expandedElement: PsiElement? = null
     runBlockingCancellable {

@@ -126,29 +126,11 @@ public final class JavaPostfixTemplatesUtils {
   public static final Condition<PsiElement> IS_BOOLEAN =
     wrap(element -> element instanceof PsiExpression expression && isBoolean(expression.getType()));
 
-  /**
-   * @deprecated use {@link #isThrowable(PsiType)}
-   */
-  @Deprecated(forRemoval = true)
-  public static final Condition<PsiElement> IS_THROWABLE =
-    wrap(element -> element instanceof PsiExpression expression && isThrowable(expression.getType()));
-
   public static final Condition<PsiElement> IS_NON_VOID =
     wrap(element -> element instanceof PsiExpression expression && isNonVoid(expression.getType()));
 
   public static final Condition<PsiElement> IS_NOT_PRIMITIVE =
     wrap(element -> element instanceof PsiExpression expression && isNotPrimitiveTypeExpression(expression));
-
-  /**
-   * @deprecated use {@link #isIterable(PsiType)} / {@link #isArray(PsiType)}
-   */
-  @Deprecated(forRemoval = true)
-  public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = wrap(element -> {
-    if (!(element instanceof PsiExpression expr)) return false;
-
-    PsiType type = expr.getType();
-    return isArray(type) || isIterable(type);
-  });
 
   @Contract("null -> false")
   public static boolean isNotPrimitiveTypeExpression(@Nullable PsiExpression expression) {

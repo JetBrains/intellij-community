@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 
 
 import com.jetbrains.python.ast.PyAstWithStatement;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 public interface PyWithStatement extends PyAstWithStatement, PyCompoundStatement, PyNamedElementContainer, PyStatementListContainer {
@@ -13,4 +14,6 @@ public interface PyWithStatement extends PyAstWithStatement, PyCompoundStatement
 
   @Override
   PyWithItem[] getWithItems();
+
+  boolean isSuppressingExceptions(TypeEvalContext context);
 }

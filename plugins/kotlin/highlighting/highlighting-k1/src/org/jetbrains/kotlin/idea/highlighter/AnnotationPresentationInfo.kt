@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -7,11 +7,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.SuppressableProblemGroup
-import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
@@ -55,12 +52,12 @@ class AnnotationPresentationInfo(
                 val existingInfo = highlightInfoByDiagnostic?.get(diagnostic)
                 if (existingInfo != null) {
                     if (!calculatingInProgress) {
-                        applyFixes(fixesMap, diagnostic, range, builder = null, highlightInfo = existingInfo, problemGroup = group)
+                        applyFixes(fixesMap, diagnostic, range, builder = null, highlightInfo = existingInfo)
                     }
                 } else {
                     val builder = create(diagnostic, range, group)
                     if (!calculatingInProgress || !fixesMap.isEmpty) {
-                        applyFixes(fixesMap, diagnostic, range, builder = builder, highlightInfo = null, problemGroup = group)
+                        applyFixes(fixesMap, diagnostic, range, builder = builder, highlightInfo = null)
                     }
                     val highlightInfo = builder.createUnconditionally()
                     holder.add(highlightInfo)
@@ -76,11 +73,7 @@ class AnnotationPresentationInfo(
         group: KotlinSuppressableWarningProblemGroup?
     ): HighlightInfo.Builder {
         val message = nonDefaultMessage ?: getDefaultMessage(diagnostic)
-        val textAttributesToApply = if (textAttributes != null) {
-            textAttributes
-        } else {
-            convertSeverityTextAttributes(highlightType, diagnostic.severity)
-        }
+        val textAttributesToApply = textAttributes ?: convertSeverityTextAttributes(highlightType, diagnostic.severity)
         return HighlightInfo
             .newHighlightInfo(toHighlightInfoType(highlightType, diagnostic.severity))
             .range(range)
@@ -104,7 +97,6 @@ class AnnotationPresentationInfo(
         range: TextRange,
         builder: HighlightInfo.Builder?,
         highlightInfo: HighlightInfo?,
-        problemGroup: ProblemGroup?
     ) {
         val isWarning = diagnostic.severity == Severity.WARNING
 
@@ -134,20 +126,10 @@ class AnnotationPresentationInfo(
                 }
             }
 
-            val options = mutableListOf<IntentionAction>()
-
-            if (fix is IntentionActionWithOptions) {
-                options += fix.options
-            }
-
-            if (problemGroup is SuppressableProblemGroup) {
-                options += problemGroup.getSuppressActions(element).mapNotNull { it as IntentionAction }
-            }
-
             val isError = diagnostic.severity == Severity.ERROR
             val message = KotlinBaseFe10HighlightingBundle.message(if (isError) "kotlin.compiler.error" else "kotlin.compiler.warning")
-            builder?.registerFix(fix, options, message, range, keyForSuppressOptions)
-            highlightInfo?.registerFix(fix, options, message, range, keyForSuppressOptions)
+            builder?.registerFix(fix, null, message, range, keyForSuppressOptions)
+            highlightInfo?.registerFix(fix, null, message, range, keyForSuppressOptions)
         }
     }
 
@@ -190,13 +172,12 @@ class AnnotationPresentationInfo(
     private fun convertSeverity(highlightType: ProblemHighlightType?, severity: Severity): HighlightInfoType =
         when (severity) {
             Severity.ERROR -> HighlightInfoType.ERROR
-            Severity.WARNING -> {
+            Severity.WARNING, Severity.FIXED_WARNING -> {
                 if (highlightType == ProblemHighlightType.WEAK_WARNING) {
                     HighlightInfoType.WEAK_WARNING
                 } else HighlightInfoType.WARNING
             }
             Severity.INFO -> HighlightInfoType.WEAK_WARNING
-            else -> HighlightInfoType.INFORMATION
         }
 
     private fun convertSeverityTextAttributes(highlightType: ProblemHighlightType?, severity: Severity): TextAttributesKey? =
@@ -204,9 +185,8 @@ class AnnotationPresentationInfo(
             null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING ->
                 when (severity) {
                     Severity.ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES
-                    Severity.WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
+                    Severity.WARNING, Severity.FIXED_WARNING -> CodeInsightColors.WARNINGS_ATTRIBUTES
                     Severity.INFO -> CodeInsightColors.WARNINGS_ATTRIBUTES
-                    else -> null
                 }
             ProblemHighlightType.GENERIC_ERROR -> CodeInsightColors.ERRORS_ATTRIBUTES
             else -> null

@@ -7,9 +7,9 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
@@ -57,18 +57,17 @@ public class SearchResults implements DocumentListener, CaretListener {
 
   @Override
   public void caretPositionChanged(@NotNull CaretEvent event) {
-    Caret caret = event.getCaret();
-    if (caret != null && myEditor.getCaretModel().getCaretCount() == 1) {
-      int offset = caret.getOffset();
-      FindResult occurrenceAtCaret = getOccurrenceAtCaret();
-      if (occurrenceAtCaret != null && occurrenceAtCaret != myCursor) {
-        moveCursorTo(occurrenceAtCaret, false, false);
-        myEditor.getCaretModel().moveToOffset(offset);
-        if (myFindModel.isGlobal()) {
-          myEditor.getSelectionModel().removeSelection();
-        }
-        notifyCursorMoved();
+    if (myEditor.getCaretModel().getCaretCount() != 1) {
+      return;
+    }
+
+    FindResult occurrenceAtCaret = getOccurrenceAtCaret();
+    if (occurrenceAtCaret != myCursor) {
+      moveCursorTo(occurrenceAtCaret, false, false);
+      if (myFindModel.isGlobal()) {
+        myEditor.getSelectionModel().removeSelection();
       }
+      notifyCursorMoved();
     }
   }
 
@@ -347,7 +346,7 @@ public class SearchResults implements DocumentListener, CaretListener {
       CompletableFuture<SearchArea> future = new CompletableFuture<>();
       try {
         SwingUtilities.invokeAndWait(() -> {
-          var result = getLocalSearchArea(editor, findModel);
+          var result = ReadAction.compute(() -> getLocalSearchArea(editor, findModel));
           future.complete(result);
         });
       }
@@ -748,7 +747,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     }
   }
 
-  private void moveCursorTo(@NotNull FindResult next, boolean retainOldSelection, boolean adjustScrollPosition) {
+  private void moveCursorTo(@Nullable FindResult next, boolean retainOldSelection, boolean adjustScrollPosition) {
     retainOldSelection &= myCursor != null && mySelectionManager.isSelected(myCursor);
     myCursor = next;
     updateSelection(!retainOldSelection, false, adjustScrollPosition);

@@ -13,14 +13,18 @@ jvm_library(
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/util",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
     "//java/openapi:java",
     "//platform/structuralsearch:structuralSearch",
     "//java/java-impl:impl",
-    "//java/structuralsearch-java:structuralSearch",
     "//java/java-impl-refactorings:impl-refactorings",
+    "//java/codeserver/highlighting",
   ],
   runtime_deps = [":typeMigration_resources"]
 )
@@ -31,6 +35,11 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   associates = [":typeMigration"],
   deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/core-ui",
+    "//platform/editor-ui-api:editor-ui",
+    "//platform/refactoring",
     "//platform/util",
     "//platform/lang-api:lang",
     "//platform/lang-impl",
@@ -40,10 +49,9 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//java/java-impl:impl",
     "//java/testFramework",
-    "//java/structuralsearch-java:structuralSearch",
-    "//java/structuralsearch-java:structuralSearch_test_lib",
     "//platform/code-style-impl:codeStyle-impl",
     "//java/java-impl-refactorings:impl-refactorings",
+    "//java/codeserver/highlighting",
   ],
   runtime_deps = [":typeMigration_resources"]
 )

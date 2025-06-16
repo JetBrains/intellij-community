@@ -128,7 +128,7 @@ class JdkAuto : UnknownSdkResolver {
       }
 
       val eel = coroutineScope.suspendingLazy {
-        (project?.getEelDescriptor() ?: LocalEelDescriptor).upgrade()
+        (project?.getEelDescriptor() ?: LocalEelDescriptor).toEelApi()
       }
 
       @Deprecated("Remove when EelApi is stabilized")

@@ -87,7 +87,6 @@ public final class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJ
   }
 
   static class ReplaceWithLambdaAlternativeFix extends PsiUpdateModCommandQuickFix {
-    @SafeFieldForPreview
     private final @NotNull AnonymousLambdaAlternative myAlternative;
 
     ReplaceWithLambdaAlternativeFix(@NotNull AnonymousLambdaAlternative alternative) {

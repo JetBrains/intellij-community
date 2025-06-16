@@ -42,7 +42,7 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
     final PsiJavaCodeReferenceElement element = getRefElement();
@@ -59,10 +59,10 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     PsiJavaCodeReferenceElement element = getRefElement();
     if (element == null) return IntentionPreviewInfo.EMPTY;
-    element = PsiTreeUtil.findSameElementInCopy(element, file);
+    element = PsiTreeUtil.findSameElementInCopy(element, psiFile);
     PsiClass[] targets = getPossibleTargets(element);
     if (targets.length == 0) return IntentionPreviewInfo.EMPTY;
     doInvoke(targets[0], getSuperClassName(element));
@@ -70,8 +70,8 @@ public final class CreateInnerClassFromUsageFix extends CreateClassFromUsageBase
   }
 
   @Override
-  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile file) {
-    return super.isAvailable(project, editor, file) && getPossibleTargets(getRefElement()).length > 0;
+  public boolean isAvailable(final @NotNull Project project, final Editor editor, final PsiFile psiFile) {
+    return super.isAvailable(project, editor, psiFile) && getPossibleTargets(getRefElement()).length > 0;
   }
 
   private static PsiClass @NotNull [] getPossibleTargets(final PsiJavaCodeReferenceElement element) {

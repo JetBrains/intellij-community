@@ -82,6 +82,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/dsl/ImplementsDslInterface.kt");
         }
 
+        @TestMetadata("ImplicitReceiver.kt")
+        public void testImplicitReceiver() throws Exception {
+            runTest("testData/highlighterMetaInfo/dsl/ImplicitReceiver.kt");
+        }
+
         @TestMetadata("NestedReceivers.kt")
         public void testNestedReceivers() throws Exception {
             runTest("testData/highlighterMetaInfo/dsl/NestedReceivers.kt");
@@ -95,6 +100,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("SubclassOfDslClass.kt")
         public void testSubclassOfDslClass() throws Exception {
             runTest("testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
+        }
+
+        @TestMetadata("TopLevelFunctions.kt")
+        public void testTopLevelFunctions() throws Exception {
+            runTest("testData/highlighterMetaInfo/dsl/TopLevelFunctions.kt");
         }
     }
 
@@ -148,6 +158,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("javaFields.kt")
         public void testJavaFields() throws Exception {
             runTest("testData/highlighterMetaInfo/jvm/javaFields.kt");
+        }
+
+        @TestMetadata("JavaIoImport.kt")
+        public void testJavaIoImport() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/JavaIoImport.kt");
         }
 
         @TestMetadata("JavaRecord.kt")
@@ -308,9 +323,19 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/AnnotationsInDumbMode.kt");
         }
 
+        @TestMetadata("AnnotationsUseSiteTargetAll.kt")
+        public void testAnnotationsUseSiteTargetAll() throws Exception {
+            runTest("testData/highlighterMetaInfo/AnnotationsUseSiteTargetAll.kt");
+        }
+
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
             runTest("testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
+        }
+
+        @TestMetadata("DefinitelyNotNullType.kt")
+        public void testDefinitelyNotNullType() throws Exception {
+            runTest("testData/highlighterMetaInfo/DefinitelyNotNullType.kt");
         }
 
         @TestMetadata("deprecation.kt")
@@ -371,6 +396,11 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
         @TestMetadata("Object.kt")
         public void testObject() throws Exception {
             runTest("testData/highlighterMetaInfo/Object.kt");
+        }
+
+        @TestMetadata("Parameters.kt")
+        public void testParameters() throws Exception {
+            runTest("testData/highlighterMetaInfo/Parameters.kt");
         }
 
         @TestMetadata("PropertiesWithPropertyDeclarations.kt")

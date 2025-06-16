@@ -123,22 +123,6 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
   /**
    * @deprecated Use {@link DistractionFreeModeController}
    */
-  @Deprecated(forRemoval = true)
-  public static boolean shouldMinimizeCustomHeader() {
-    return DistractionFreeModeController.shouldMinimizeCustomHeader();
-  }
-
-  /**
-   * @deprecated Use {@link DistractionFreeModeController}
-   */
-  @Deprecated(forRemoval = true)
-  public static int getStandardTabPlacement() {
-    return DistractionFreeModeController.getStandardTabPlacement();
-  }
-
-  /**
-   * @deprecated Use {@link DistractionFreeModeController}
-   */
   @Deprecated
   public static boolean isDistractionFreeModeEnabled() {
     return DistractionFreeModeController.isDistractionFreeModeEnabled();

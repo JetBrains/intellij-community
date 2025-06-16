@@ -13,6 +13,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.*
 
@@ -25,7 +26,7 @@ class PyEnumInspection : PyInspection() {
       }
 
       private fun validateSuperClasses(node: PyClass) {
-        for (superClassExpression in node.superClassExpressions) {
+        for (superClassExpression in PyClassImpl.getUnfoldedSuperClassExpressions(node)) {
           val superClassType = myTypeEvalContext.getType(superClassExpression)
           if (superClassType is PyClassType) {
             val superClass = superClassType.pyClass

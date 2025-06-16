@@ -100,6 +100,16 @@ public final class IdeBackgroundUtil {
     return MyGraphics.wrap(g, helper, component);
   }
 
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  static void addFallbackBackgroundPainter(IdeGlassPaneImpl glassPane, @NotNull Painter fallbackBackgroundPainter) {
+    PainterHelper painters = glassPane.getNamedPainters(EDITOR_PROP);
+    painters.addFallbackBackgroundPainter(fallbackBackgroundPainter);
+
+    painters = glassPane.getNamedPainters(FRAME_PROP);
+    painters.addFallbackBackgroundPainter(fallbackBackgroundPainter);
+  }
+
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
     PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
@@ -222,7 +232,8 @@ public final class IdeBackgroundUtil {
     }
   }
 
-  static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
+  @ApiStatus.Internal
+  public static final RenderingHints.Key ADJUST_ALPHA = new RenderingHints.Key(1) {
     @Override
     public boolean isCompatibleValue(Object val) {
       return val instanceof Boolean;

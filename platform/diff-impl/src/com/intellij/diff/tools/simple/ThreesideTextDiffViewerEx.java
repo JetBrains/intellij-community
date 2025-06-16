@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -43,7 +44,9 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   private final @NotNull PrevNextDifferenceIterable myPrevNextConflictIterable;
   protected final @NotNull StatusPanel myStatusPanel;
 
+  @ApiStatus.Internal
   protected final @NotNull MyFoldingModel myFoldingModel;
+  @ApiStatus.Internal
   protected final @NotNull MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
 
   private int myChangesCount = -1;
@@ -311,6 +314,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   // Helpers
   //
 
+  @ApiStatus.Internal
   @Override
   public @Nullable PrevNextDifferenceIterable getDifferenceIterable() {
     return myPrevNextDifferenceIterable;
@@ -468,7 +472,8 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     }
   }
 
-  protected class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
+  @ApiStatus.Internal
+  protected final class MyInitialScrollHelper extends MyInitialScrollPositionHelper {
     @Override
     protected boolean doScrollToChange() {
       if (myScrollToChange == null) return false;
@@ -481,7 +486,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     }
   }
 
-  private class MyChangedRangeProvider implements DiffChangedRangeProvider {
+  private final class MyChangedRangeProvider implements DiffChangedRangeProvider {
     @Override
     public @Nullable List<TextRange> getChangedRanges(@NotNull Editor editor) {
       ThreeSide side = ThreeSide.fromValue(getEditors(), editor);

@@ -20,7 +20,7 @@ public final class DelegatingFixFactory {
       return null;
     }
     final PsiClassType type = TypeUtils.getType(CommonClassNames.JAVA_IO_SERIALIZABLE, aClass);
-    return QuickFixFactory.getInstance().createExtendsListFix(aClass, type, true);
+    return LocalQuickFix.from(QuickFixFactory.getInstance().createExtendsListFix(aClass, type, true));
   }
 
   public static @Nullable LocalQuickFix createMakeCloneableFix(PsiClass aClass) {
@@ -28,6 +28,6 @@ public final class DelegatingFixFactory {
       return null;
     }
     final PsiClassType type = TypeUtils.getType(CommonClassNames.JAVA_LANG_CLONEABLE, aClass);
-    return QuickFixFactory.getInstance().createExtendsListFix(aClass, type, true);
+    return LocalQuickFix.from(QuickFixFactory.getInstance().createExtendsListFix(aClass, type, true));
   }
 }

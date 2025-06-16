@@ -7,12 +7,11 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Obsolete
-internal class WorkspaceModelLegacyBridgeImpl(private val project: Project): WorkspaceModelLegacyBridge {
+@ApiStatus.Internal
+class WorkspaceModelLegacyBridgeImpl(private val project: Project) : WorkspaceModelLegacyBridge {
   override fun findModuleEntity(module: Module): ModuleEntity? =
     module.findSnapshotModuleEntity()
 
   override fun findLegacyModule(moduleEntity: ModuleEntity): Module? =
     moduleEntity.findModule(project.workspaceModel.currentSnapshot)
-
 }

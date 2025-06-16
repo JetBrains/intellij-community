@@ -1,10 +1,15 @@
-# Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+# Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 function __jetbrains_intellij_update_environment() {
   if [[ -n "${JEDITERM_SOURCE:-}" ]]; then
-    builtin source -- "$JEDITERM_SOURCE" ${=JEDITERM_SOURCE_ARGS:-}
+    if [[ -n "${JEDITERM_SOURCE_SINGLE_ARG}" ]]; then
+      # JEDITERM_SOURCE_ARGS might be either list of args or one arg depending on JEDITERM_SOURCE_SINGLE_ARG
+      builtin source -- "$JEDITERM_SOURCE" "${JEDITERM_SOURCE_ARGS}"
+    else
+      builtin source -- "$JEDITERM_SOURCE" ${=JEDITERM_SOURCE_ARGS:-}
+    fi
   fi
-  builtin unset JEDITERM_SOURCE JEDITERM_SOURCE_ARGS
+
 
   # Enable native zsh options to make coding easier.
   builtin emulate -L zsh
@@ -30,8 +35,19 @@ function __jetbrains_intellij_update_environment() {
   done
 }
 
-__jetbrains_intellij_update_environment
-builtin unset -f __jetbrains_intellij_update_environment
+function __jetbrains_intellij_after_all_startup_files_loaded_precmd_hook() {
+  # Update the environment from inside the precmd hook, because at this point all Zsh startup configuration files are loaded.
+  __jetbrains_intellij_update_environment
+
+  # remove the hook and the functions
+  builtin typeset -ga precmd_functions
+  precmd_functions=(${precmd_functions:#__jetbrains_intellij_after_all_startup_files_loaded_precmd_hook})
+  builtin unset -f __jetbrains_intellij_after_all_startup_files_loaded_precmd_hook
+  builtin unset -f __jetbrains_intellij_update_environment
+}
+
+builtin typeset -ga precmd_functions
+precmd_functions+=(__jetbrains_intellij_after_all_startup_files_loaded_precmd_hook)
 
 builtin local command_block_support="${JETBRAINS_INTELLIJ_ZSH_DIR}/command-block-support.zsh"
 [ -r "$command_block_support" ] && builtin source "$command_block_support"

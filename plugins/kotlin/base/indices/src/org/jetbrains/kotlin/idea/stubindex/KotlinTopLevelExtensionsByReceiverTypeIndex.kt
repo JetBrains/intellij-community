@@ -21,12 +21,14 @@ class KotlinTopLevelExtensionsByReceiverTypeIndex internal constructor() : Strin
             StubIndexKey.createIndexKey(KotlinTopLevelExtensionsByReceiverTypeIndex::class.java.simpleName)
     }
 
-    override fun getKey() = indexKey
-
-    override fun getVersion(): Int = super.getVersion() + 1
+    override fun getKey(): StubIndexKey<String, KtCallableDeclaration> = indexKey
 
     @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelExtensionsByReceiverTypeIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtCallableDeclaration> {
         return Helper[key, project, scope]
     }
+
+    override fun getVersion(): Int = super.getVersion() + 2
+
+    override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 }

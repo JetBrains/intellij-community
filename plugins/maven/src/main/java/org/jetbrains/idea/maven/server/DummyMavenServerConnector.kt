@@ -4,11 +4,12 @@ package org.jetbrains.idea.maven.server
 import com.intellij.execution.rmi.IdeaWatchdog
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.model.MavenArchetype
+import org.jetbrains.idea.maven.model.MavenArtifactInfo
+import org.jetbrains.idea.maven.model.MavenIndexId
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle
 import org.jetbrains.idea.maven.server.MavenServerConnector.State
 import org.jetbrains.idea.maven.server.security.MavenToken
-import java.io.File
 import java.nio.file.Path
 import java.rmi.RemoteException
 
@@ -28,8 +29,6 @@ class DummyMavenServerConnector(override val project: Project,
 
 
   override fun isNew() = false
-
-  override fun isCompatibleWith(jdk: Sdk, vmOptions: String, distribution: MavenDistribution) = true
 
   override fun connect() {
   }
@@ -81,22 +80,6 @@ class DummyMavenServer(val project: Project) : MavenServer {
 
   override fun createIndexer(token: MavenToken?): MavenServerIndexer {
     return DummyIndexer()
-  }
-
-  override fun interpolateAndAlignModel(model: MavenModel, basedir: File?, pomDir: File?, token: MavenToken?): MavenModel {
-    return model
-  }
-
-  override fun assembleInheritance(model: MavenModel, parentModel: MavenModel?, token: MavenToken?): MavenModel {
-    return model
-  }
-
-  override fun applyProfiles(model: MavenModel,
-                             basedir: File?,
-                             explicitProfiles: MavenExplicitProfiles?,
-                             alwaysOnProfiles: HashSet<String>?,
-                             token: MavenToken?): ProfileApplicationResult {
-    return ProfileApplicationResult(model, MavenExplicitProfiles.NONE)
   }
 
   override fun createPullLogger(token: MavenToken?): MavenPullServerLogger? {

@@ -12,7 +12,11 @@ jvm_library(
   module_name = "intellij.python.community.plugin.minorRider",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
-  deps = ["//platform/analysis-impl"],
+  deps = [
+    "//platform/analysis-api:analysis",
+    "//platform/core-api:core",
+    "//platform/analysis-impl",
+  ],
   runtime_deps = [
     ":community-plugin-minorRider_resources",
     "//platform/backend",

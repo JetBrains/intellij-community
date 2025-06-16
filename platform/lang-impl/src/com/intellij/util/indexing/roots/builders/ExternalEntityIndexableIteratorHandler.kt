@@ -26,7 +26,7 @@ class ExternalEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
         return@foldRight mutableHolder
       }.toSourceRootHolder().let { holder ->
         if (holder.isEmpty()) null
-        else ExternalEntityIndexableIteratorImpl(it.key, holder, it.value[0].presentation)
+        else ExternalEntityIndexableIteratorImpl(it.key, holder)
       }
     }
   }

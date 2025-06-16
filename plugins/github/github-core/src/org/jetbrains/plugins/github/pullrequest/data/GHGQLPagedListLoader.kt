@@ -3,11 +3,14 @@ package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
 
-internal class GHGQLPagedListLoader<T>(progressManager: ProgressManager,
-                                   private val loader: SimpleGHGQLPagesLoader<T>)
-  : GHListLoaderBase<T>(progressManager) {
+internal class GHGQLPagedListLoader<T>(
+  parentCs: CoroutineScope,
+  progressManager: ProgressManager,
+  private val loader: SimpleGHGQLPagesLoader<T>,
+) : GHListLoaderBase<T>(parentCs, progressManager) {
 
   override fun canLoadMore() = !loading && (loader.hasNext || error != null)
 

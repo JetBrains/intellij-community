@@ -4,6 +4,10 @@ import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.elements.JButtonUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
+import com.intellij.driver.sdk.ui.components.elements.button
+import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.ui
 
 fun Finder.newProjectMicronautDialog(action: NewProjectMicronautDialogUI.() -> Unit) {
@@ -16,11 +20,7 @@ fun Driver.newProjectMicronautDialog(action: NewProjectMicronautDialogUI.() -> U
 
 class NewProjectMicronautDialogUI(data: ComponentData) : UiComponent(data) {
   fun setProjectName(text: String) {
-    nameTextField.doubleClick()
-    keyboard {
-      backspace()
-      typeText(text)
-    }
+    nameTextField.text = text
   }
 
   fun chooseLanguage(language: String) {
@@ -46,7 +46,7 @@ class NewProjectMicronautDialogUI(data: ComponentData) : UiComponent(data) {
       .click()
   }
 
-  val nameTextField = x("//div[@accessiblename='Name:' and @class='JBTextField']")
-  val nextButton = x("//div[@text='Next']")
-  val createButton = x("//div[@text='Create']")
+  val nameTextField: JTextFieldUI = textField({and(byAccessibleName("Name:"), byClass("JBTextField"))})
+  val nextButton: JButtonUiComponent = button("Next")
+  val createButton: JButtonUiComponent = button("Create")
 }

@@ -7,7 +7,7 @@ plugins {
     `ide-version-checker`
     alias(libs.plugins.composeDesktop)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.ideaPluginBase)
+    alias(libs.plugins.ideaPluginModule)
 }
 
 // Because we need to define IJP dependencies, the dependencyResolutionManagement
@@ -34,11 +34,10 @@ repositories {
 
 dependencies {
     api(projects.ui) { exclude(group = "org.jetbrains.kotlinx") }
-    intellijPlatform {
-        intellijIdeaCommunity(libs.versions.idea)
-        instrumentationTools()
-    }
+    intellijPlatform { intellijIdeaCommunity(libs.versions.idea) }
 
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
 }
+
+sourceSets { test { kotlin { srcDirs("ide-laf-bridge-tests/src/test/kotlin") } } }

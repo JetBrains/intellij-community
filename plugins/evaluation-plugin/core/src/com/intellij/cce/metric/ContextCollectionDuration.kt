@@ -3,14 +3,10 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.evaluable.AIA_CONTEXT_COLLECTION_DURATION_MS
-import com.intellij.cce.metric.util.Bootstrap
 
-abstract class ContextCollectionDuration : Metric {
-  private val sample = mutableListOf<Double>()
+abstract class ContextCollectionDuration : ConfidenceIntervalMetric<Double>() {
   override val value: Double
     get() = compute(sample)
-
-  override fun confidenceInterval(): Pair<Double, Double>? = Bootstrap.computeInterval(sample) { compute(it) }
 
   override fun evaluate(sessions: List<Session>): Double {
     val fileSample = mutableListOf<Double>()
@@ -20,14 +16,14 @@ abstract class ContextCollectionDuration : Metric {
       .forEach {
         val duration = it.contextCollectionDuration()
         if (duration != null) {
-          this.sample.add(duration)
+          this.coreSample.add(duration)
           fileSample.add(duration)
         }
       }
     return compute(fileSample)
   }
 
-  abstract fun compute(sample: List<Double>): Double
+  abstract override fun compute(sample: List<Double>): Double
 
   open fun shouldInclude(lookup: Lookup) = true
 }

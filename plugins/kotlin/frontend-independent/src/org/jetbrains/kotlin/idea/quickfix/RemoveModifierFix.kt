@@ -1,16 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption
-import com.intellij.codeInsight.intention.FileModifier
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.base.psi.isRedundant
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
@@ -24,41 +23,33 @@ import org.jetbrains.kotlin.types.Variance
 
 open class RemoveModifierFixBase(
     element: KtModifierListOwner,
-    @FileModifier.SafeFieldForPreview
     private val modifier: KtModifierKeywordToken,
     private val isRedundant: Boolean
-) : KotlinCrossLanguageQuickFixAction<KtModifierListOwner>(element), IntentionActionWithFixAllOption {
+) : PsiUpdateModCommandAction<KtModifierListOwner>(element) {
 
-    @Nls
-    private val text = run {
+    override fun getPresentation(context: ActionContext, element: KtModifierListOwner): Presentation? {
+        if (!element.hasModifier(modifier)) return null
         val modifierText = modifier.value
-        when {
+        val actionName = when {
             isRedundant ->
                 KotlinBundle.message("remove.redundant.0.modifier", modifierText)
+
             modifier === KtTokens.ABSTRACT_KEYWORD || modifier === KtTokens.OPEN_KEYWORD ->
                 KotlinBundle.message("make.0.not.1", getElementName(element), modifierText)
+
             else ->
                 KotlinBundle.message("remove.0.modifier", modifierText, modifier)
         }
+        return Presentation.of(actionName).withFixAllOption(this)
     }
 
-    override fun getFamilyName(): String = KotlinBundle.message("remove.modifier")
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("remove.modifier")
 
-    override fun getText(): String = text
-
-    override fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile) = element?.hasModifier(modifier) == true
-
-    override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
-        invoke()
-    }
-
-    operator fun invoke() {
-        element?.removeModifier(modifier)
-        val element = element
-        if (element is KtPrimaryConstructor && element.isRedundant()) {
-            element.delete()
-        }
-    }
+    override fun invoke(
+        context: ActionContext,
+        element: KtModifierListOwner,
+        updater: ModPsiUpdater,
+    ): Unit = invokeImpl(element, modifier)
 
     companion object {
         val removeRedundantModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFactory(isRedundant = true)
@@ -68,6 +59,16 @@ open class RemoveModifierFixBase(
         val removeOpenModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD)
         val removeInnerModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.INNER_KEYWORD)
         val removePrivateModifier: QuickFixesPsiBasedFactory<PsiElement> = createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.PRIVATE_KEYWORD)
+
+        fun invokeImpl(
+            element: KtModifierListOwner,
+            modifier: KtModifierKeywordToken,
+        ) {
+            element.removeModifier(modifier)
+            if (element is KtPrimaryConstructor && element.isRedundant()) {
+                element.delete()
+            }
+        }
 
         fun createRemoveModifierFromListOwnerPsiBasedFactory(
             modifier: KtModifierKeywordToken,
@@ -83,7 +84,7 @@ open class RemoveModifierFixBase(
             modifier: KtModifierKeywordToken,
             isRedundant: Boolean = false
         ) = quickFixesPsiBasedFactory<KtModifierListOwner> {
-            listOf(RemoveModifierFixBase(it, modifier, isRedundant))
+            listOf(RemoveModifierFixBase(it, modifier, isRedundant).asIntention())
         }
 
         private fun createRemoveModifierFactory(isRedundant: Boolean = false): QuickFixesPsiBasedFactory<PsiElement> {
@@ -91,7 +92,7 @@ open class RemoveModifierFixBase(
                 val elementType = psiElement.node.elementType as? KtModifierKeywordToken ?: return@quickFixesPsiBasedFactory emptyList()
                 val modifierListOwner = psiElement.getStrictParentOfType<KtModifierListOwner>()
                     ?: return@quickFixesPsiBasedFactory emptyList()
-                listOf(RemoveModifierFixBase(modifierListOwner, elementType, isRedundant))
+                listOf(RemoveModifierFixBase(modifierListOwner, elementType, isRedundant).asIntention())
             }
         }
 
@@ -101,7 +102,7 @@ open class RemoveModifierFixBase(
                 val projection = psiElement as KtTypeProjection
                 val elementType = projection.projectionToken?.node?.elementType as? KtModifierKeywordToken
                     ?: return@quickFixesPsiBasedFactory listOf()
-                listOf(RemoveModifierFixBase(projection, elementType, isRedundant))
+                listOf(RemoveModifierFixBase(projection, elementType, isRedundant).asIntention())
             }
         }
 
@@ -113,7 +114,7 @@ open class RemoveModifierFixBase(
                     Variance.OUT_VARIANCE -> KtTokens.OUT_KEYWORD
                     else -> return@quickFixesPsiBasedFactory emptyList()
                 }
-                listOf(RemoveModifierFixBase(psiElement, modifier, isRedundant = false))
+                listOf(RemoveModifierFixBase(psiElement, modifier, isRedundant = false).asIntention())
             }
         }
 
@@ -122,7 +123,7 @@ open class RemoveModifierFixBase(
                 val modifierList = psiElement.parent as KtDeclarationModifierList
                 val type = modifierList.parent as KtTypeReference
                 if (!type.hasModifier(KtTokens.SUSPEND_KEYWORD)) return@quickFixesPsiBasedFactory emptyList()
-                listOf(RemoveModifierFixBase(type, KtTokens.SUSPEND_KEYWORD, isRedundant = false))
+                listOf(RemoveModifierFixBase(type, KtTokens.SUSPEND_KEYWORD, isRedundant = false).asIntention())
             }
         }
 
@@ -130,7 +131,7 @@ open class RemoveModifierFixBase(
             return quickFixesPsiBasedFactory { psiElement: PsiElement ->
                 val property = psiElement as? KtProperty ?: return@quickFixesPsiBasedFactory emptyList()
                 if (!property.hasModifier(KtTokens.LATEINIT_KEYWORD)) return@quickFixesPsiBasedFactory emptyList()
-                listOf(RemoveModifierFixBase(property, KtTokens.LATEINIT_KEYWORD, isRedundant = false))
+                listOf(RemoveModifierFixBase(property, KtTokens.LATEINIT_KEYWORD, isRedundant = false).asIntention())
             }
         }
 
@@ -141,7 +142,7 @@ open class RemoveModifierFixBase(
                 val funInterface = (modifierList.parent as? KtClass)?.takeIf {
                     it.isInterface() && it.hasModifier(KtTokens.FUN_KEYWORD)
                 } ?: return@quickFixesPsiBasedFactory emptyList()
-                listOf(RemoveModifierFixBase(funInterface, KtTokens.FUN_KEYWORD, isRedundant = false))
+                listOf(RemoveModifierFixBase(funInterface, KtTokens.FUN_KEYWORD, isRedundant = false).asIntention())
             }
         }
 

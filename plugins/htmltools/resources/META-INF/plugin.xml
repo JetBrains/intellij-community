@@ -1,4 +1,4 @@
-<idea-plugin>
+<idea-plugin allow-bundled-update="true">
   <id>HtmlTools</id>
   <name>HTML Tools</name>
 
@@ -99,6 +99,11 @@
     </intentionAction>
 
     <gotoSymbolContributor implementation="com.intellij.htmltools.html.HtmlGotoSymbolProvider"/>
+
+    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="attributes" problemKind="DeprecatedSymbol"
+                                       toolShortName="HtmlDeprecatedAttribute"/>
+    <polySymbols.inspectionToolMapping symbolNamespace="html" symbolKind="elements" problemKind="DeprecatedSymbol"
+                                       toolShortName="HtmlDeprecatedTag"/>
   </extensions>
 
   <actions>

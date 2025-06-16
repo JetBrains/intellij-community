@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.api.toHttpsNormalizedURI
@@ -25,8 +26,9 @@ import javax.swing.JComponent
 
 object GitLabLoginUtil {
 
+  @ApiStatus.Internal
   @RequiresEdt
-  internal fun logInViaToken(
+  fun logInViaToken(
     project: Project, parentComponent: JComponent?,
     serverPath: GitLabServerPath = GitLabServerPath.DEFAULT_SERVER,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
@@ -55,8 +57,9 @@ object GitLabLoginUtil {
     }
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
-  internal fun updateToken(
+  fun updateToken(
     project: Project, parentComponent: JComponent?,
     account: GitLabAccount,
     uniqueAccountPredicate: (GitLabServerPath, String) -> Boolean
@@ -89,6 +92,7 @@ object GitLabLoginUtil {
     return LoginResult.Failure
   }
 
+  @RequiresEdt
   private fun showLoginDialog(
     project: Project,
     parentComponent: JComponent?,

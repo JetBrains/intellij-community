@@ -39,16 +39,14 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
@@ -60,6 +58,7 @@ import org.jetbrains.plugins.gradle.codeInspection.GradleInspectionBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile;
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria;
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper;
 import org.jetbrains.plugins.gradle.service.project.wizard.util.GradleWrapperUtil;
@@ -193,7 +192,9 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     super.setupModule(module);
     assert rootProjectPath != null;
 
-    VirtualFile buildScriptFile = createAndConfigureBuildScriptFile();
+    if (isCreatingBuildScriptFile) {
+      applyAdditionalConfigurationToBuildScriptFile();
+    }
 
     FileDocumentManager.getInstance().saveAllDocuments();
 
@@ -226,20 +227,22 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
     }
 
-    // execute when the current dialog is closed
-    ApplicationManager.getApplication().invokeLater(() -> {
-      finishModuleSetup(buildScriptFile, project);
-    }, ModalityState.nonModal(), project.getDisposed());
+    // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+    // @see com.intellij.ide.util.projectWizard.ProjectBuilder#postCommit for more details
+    StartupManager.getInstance(project).runAfterOpened(
+      () -> ApplicationManager.getApplication().invokeLater(
+        () -> finishModuleSetup(project), ModalityState.nonModal(), project.getDisposed()
+      )
+    );
   }
 
-  private void finishModuleSetup(@Nullable VirtualFile buildScriptFile, @NotNull Project project) {
-    if (!project.isOpen()) {
-      ApplicationManager.getApplication().invokeLater(() -> finishModuleSetup(buildScriptFile, project),
-                                                      ModalityState.nonModal(),
-                                                      project.getDisposed());
-      return;
-    }
+  @Override
+  @ApiStatus.Internal
+  public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    finishModuleSetup(project);
+  }
 
+  private void finishModuleSetup(@NotNull Project project) {
     if (isCreatingBuildScriptFile) {
       openBuildScriptFile(project, buildScriptFile);
     }
@@ -265,8 +268,11 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       callback.run();
       return;
     }
-    var externalProjectPath = getExternalProjectSettings().getExternalProjectPath();
+    var externalProjectPath = NioPathUtil.toCanonicalPath(rootProjectPath);
+    var vcs = GitSilentFileAdderProvider.create(project);
+    vcs.markFileForAdding(GradleDaemonJvmPropertiesFile.getPropertyPath(rootProjectPath), false);
     GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, daemonJvmCriteria)
+      .whenComplete((__, ___) -> vcs.finish())
       .whenComplete((isSuccess, exception) -> {
         if (exception != null || !isSuccess) {
           LOG.warn("Unable to update to set up Daemon JVM criteria");
@@ -311,22 +317,17 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
     vcs.finish();
   }
 
-  private @Nullable VirtualFile createAndConfigureBuildScriptFile() {
-    if (!isCreatingBuildScriptFile) {
-      return null;
-    }
+  private void applyAdditionalConfigurationToBuildScriptFile() {
     try {
       if (buildScriptFile != null && buildScriptBuilder != null) {
         buildScriptBuilder.addPrefix(StringUtil.trimTrailing(VfsUtilCore.loadText(buildScriptFile)));
         String content = StringUtil.convertLineSeparators(buildScriptBuilder.generate(), lineSeparator(buildScriptFile));
         VfsUtil.saveText(buildScriptFile, content);
-        return buildScriptFile;
       }
     }
     catch (IOException e) {
       LOG.warn("Unexpected exception on applying frameworks templates", e);
     }
-    return null;
   }
 
   private static void openBuildScriptFile(@NotNull Project project, VirtualFile buildScriptFile) {

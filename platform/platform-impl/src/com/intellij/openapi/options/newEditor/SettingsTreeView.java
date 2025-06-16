@@ -285,7 +285,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
         DefaultActionGroup group = new DefaultActionGroup();
         for (Action action : CopySettingsPathAction.createSwingActions(() -> names)) {
-          group.add(ActionUtil.createActionFromSwingAction(action));
+          group.add(ActionUtil.createActionFromSwingAction(action, true));
         }
 
         JPopupMenu popup = ActionManager.getInstance().createActionPopupMenu("settings", group).getComponent();
@@ -446,14 +446,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
           return;
         }
 
-        /*
         Runnable handler = () -> {
           fireSelected(configurable).processed(promise);
         };
-        */
 
         if (configurable == null) {
-          fireSelected(null).processed(promise);
+          handler.run();
           return;
         }
 
@@ -461,7 +459,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         FilteringTreeStructure.FilteringNode editorUiNode = myModel.getTreeStructure().getVisibleNodeFor(editorNode);
         if (editorUiNode == null) return;
 
-        myModel.select(editorUiNode, myTree, unused -> {});
+        myModel.select(editorUiNode, myTree, treePath -> handler.run());
       }
 
       @Override

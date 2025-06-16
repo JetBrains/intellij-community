@@ -2,7 +2,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
-import com.intellij.ide.plugins.PluginDescriptorTestKt;
+import com.intellij.ide.plugins.PluginDescriptorLoadUtilsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -150,8 +150,8 @@ public class ExtensionsImplTest {
     String moduleXml = "<idea-plugin><extensions>" + extensionElement + "</extensions></idea-plugin>";
     PluginId id = PluginId.getId(pluginName);
     IdeaPluginDescriptorImpl pluginDescriptor =
-      PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
-    pluginDescriptor.registerExtensions(area.getNameToPointMap(), pluginDescriptor.appContainerDescriptor, null);
+      PluginDescriptorLoadUtilsKt.readAndInitDescriptorFromBytesForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
+    pluginDescriptor.registerExtensions(area.getNameToPointMap(), null);
   }
 
   private static final class TestExtensionClassOne {

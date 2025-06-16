@@ -1,6 +1,8 @@
 package com.intellij.searchEverywhereMl.ranking.core.features
 
+import com.intellij.ide.actions.searcheverywhere.EssentialContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereEssentialContributorMarker
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -8,6 +10,7 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ContributorsGlobalSummaryManager
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.ContributorsLocalStatisticsFields
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.getContributorStatistics
+import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereEssentialContributorMlMarker
 
 internal class SearchEverywhereContributorFeaturesProvider {
   companion object {
@@ -27,6 +30,8 @@ internal class SearchEverywhereContributorFeaturesProvider {
     internal val CONTRIBUTOR_WEIGHT = EventFields.Int("contributorWeight")
     internal val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("contributorIsMostPopular")
     internal val CONTRIBUTOR_POPULARITY_INDEX = EventFields.Int("contributorPopularityIndex")
+    internal val IS_ESSENTIAL_CONTRIBUTOR = EventFields.Boolean("contributorIsEssential")
+    internal val ESSENTIAL_CONTRIBUTOR_PREDICTION = EventFields.Float("contributorIsEssentialPrediction")
 
     private val LOCAL_STATISTICS = ContributorsLocalStatisticsFields()
     private val GLOBAL_STATISTICS = ContributorsGlobalStatisticsFields()
@@ -34,7 +39,8 @@ internal class SearchEverywhereContributorFeaturesProvider {
     fun getFeaturesDeclarations(): List<EventField<*>> {
       return listOf(
         CONTRIBUTOR_INFO_ID, CONTRIBUTOR_PRIORITY, CONTRIBUTOR_WEIGHT,
-        CONTRIBUTOR_IS_MOST_POPULAR, CONTRIBUTOR_POPULARITY_INDEX
+        CONTRIBUTOR_IS_MOST_POPULAR, CONTRIBUTOR_POPULARITY_INDEX,
+        IS_ESSENTIAL_CONTRIBUTOR, ESSENTIAL_CONTRIBUTOR_PREDICTION
       ) + LOCAL_STATISTICS.getFieldsDeclaration() + GLOBAL_STATISTICS.getFieldsDeclaration()
     }
   }
@@ -43,6 +49,12 @@ internal class SearchEverywhereContributorFeaturesProvider {
     return CONTRIBUTOR_INFO_ID.with(contributor.searchProviderId)
   }
 
+  /**
+   * Collects features for a contributor.
+   * 
+   * Essential Contributor (EC) features are intentionally not included here to avoid a circular dependency.
+   * Instead, EC features are collected separately in getEssentialContributorFeatures().
+   */
   fun getFeatures(contributor: SearchEverywhereContributor<*>, mixedListInfo: SearchEverywhereMixedListInfo,
                   sessionStartTime: Long): List<EventPair<*>> {
     val contributor_id = contributor.searchProviderId
@@ -63,6 +75,25 @@ internal class SearchEverywhereContributorFeaturesProvider {
     info.addAll(GLOBAL_STATISTICS.getEventGlobalStatistics(contributorsStats, maxEventCount))
 
     return info + getStatisticianFeatures(contributor)
+  }
+
+  /**
+   * Collects Essential Contributor (EC) features for a contributor.
+   *
+   * EC features are the predictions of the EC model, which itself needs contributor features to make predictions.
+   */
+  fun getEssentialContributorFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
+    val marker = SearchEverywhereEssentialContributorMarker.getInstanceOrNull()
+    val isEssentialContributor = EssentialContributor.checkEssential(contributor)
+
+    val result = mutableListOf<EventPair<*>>()
+    result.add(IS_ESSENTIAL_CONTRIBUTOR.with(isEssentialContributor))
+
+    (marker as? SearchEverywhereEssentialContributorMlMarker)?.getContributorEssentialPrediction(contributor)?.let { prediction ->
+      result.add(ESSENTIAL_CONTRIBUTOR_PREDICTION.with(prediction))
+    }
+
+    return result
   }
 
   private fun getStatisticianFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {

@@ -102,6 +102,17 @@ public class TextAttributes implements Cloneable {
       .create(foregroundColor, backgroundColor, fontType, effectColor, effectType, Collections.emptyMap(), errorStripeColor);
   }
 
+  @ApiStatus.Internal
+  public void setAttributesNoCache(Color foregroundColor,
+                                   Color backgroundColor,
+                                   Color effectColor,
+                                   Color errorStripeColor,
+                                   EffectType effectType,
+                                   @JdkConstants.FontStyle int fontType) {
+    attrs = AttributesFlyweight
+      .createNoCache(foregroundColor, backgroundColor, fontType, effectColor, effectType, Collections.emptyMap(), errorStripeColor);
+  }
+
   public boolean isEmpty(){
     return getForegroundColor() == null && getBackgroundColor() == null && getEffectColor() == null && getFontType() == Font.PLAIN;
   }
@@ -161,6 +172,11 @@ public class TextAttributes implements Cloneable {
   @ApiStatus.Experimental
   public void setAdditionalEffects(@NotNull Map<@NotNull EffectType, ? extends @NotNull Color> effectsMap) {
     attrs = attrs.withAdditionalEffects(effectsMap);
+  }
+
+  @ApiStatus.Internal
+  public Map<@NotNull EffectType, ? extends @NotNull Color> getAdditionalEffects() {
+    return Collections.unmodifiableMap(attrs.getAdditionalEffects());
   }
 
   /**

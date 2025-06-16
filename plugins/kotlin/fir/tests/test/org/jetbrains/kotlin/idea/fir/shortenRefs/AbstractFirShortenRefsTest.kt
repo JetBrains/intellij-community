@@ -72,8 +72,11 @@ abstract class AbstractFirShortenRefsTest : AbstractImportsTest() {
             }
 
             project.executeWriteCommand("") {
-                val shortenedElements = shortenings.invokeShortening()
-                val shorteningResultAsString = shortenedElements.joinToString(System.lineSeparator()) { it.text }
+                val shorteningResultAsString = shortenings.invokeShortening()
+                    .asSequence()
+                    .mapNotNull { it.element }
+                    .map { it.text }
+                    .joinToString(System.lineSeparator())
 
                 KotlinTestUtils.assertEqualsToFile(getShorteningResultFile(), shorteningResultAsString)
             }

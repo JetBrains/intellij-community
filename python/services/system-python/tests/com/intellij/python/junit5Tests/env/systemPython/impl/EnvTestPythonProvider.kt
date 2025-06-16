@@ -6,20 +6,25 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.services.systemPython.SystemPythonProvider
+import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython
 import com.intellij.python.community.testFramework.testEnv.TypeVanillaPython3
 import com.jetbrains.python.PythonBinary
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.PyResult
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.toSet
 
 /**
  * Register tests pythons as system pythons
  */
 internal class EnvTestPythonProvider : SystemPythonProvider {
-  override suspend fun findSystemPythons(eelApi: EelApi): Result<Set<PythonBinary>> {
+  override suspend fun findSystemPythons(eelApi: EelApi): PyResult<Set<PythonBinary>> {
     var pythons = emptySet<PythonBinary>()
     if (eelApi == localEel) {
-      pythons = TypeVanillaPython3
-        .getTestEnvironments()
+      // Add Py27 temporary to test Py27
+      // It is perfectly valid not to find any python because some tests might run without a python and still have this module on a class-path
+      pythons = merge(TypeVanillaPython3.getTestEnvironments(), TypeVanillaPython2.getTestEnvironments())
         .map { (python, closeable) ->
           Disposer.register(ApplicationManager.getApplication()) {
             closeable.close()
@@ -32,3 +37,5 @@ internal class EnvTestPythonProvider : SystemPythonProvider {
     return Result.success(pythons)
   }
 }
+
+private object TypeVanillaPython2 : TypeVanillaPython("python2.7")

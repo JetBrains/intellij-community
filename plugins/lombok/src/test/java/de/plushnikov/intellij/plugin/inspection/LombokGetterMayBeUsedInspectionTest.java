@@ -44,4 +44,8 @@ public class LombokGetterMayBeUsedInspectionTest extends LightDaemonAnalyzerTest
   public void testShortMethods() {
     doTest();
   }
+
+  public void testRecord() {
+    doTest();
+  }
 }

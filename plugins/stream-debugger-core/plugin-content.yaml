@@ -1,3 +1,0 @@
-- name: lib/debugger-streams-core.jar
-  modules:
-  - name: intellij.debugger.streams.core

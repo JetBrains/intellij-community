@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -19,12 +18,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.HierarchyEvent;
@@ -72,9 +68,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   private int myTabSize; // guarded by myLock
   private int myTopOverhang; //guarded by myLock
   private int myBottomOverhang; //guarded by myLock
-  private @NotNull DoubleWidthCharacterStrategy myDoubleWidthCharacterStrategy = new DefaultDoubleWidthCharacterStrategy();
 
   private final Object myLock = new Object();
+
+  private @Nullable Runnable myPaintCallback;
 
   public EditorView(@NotNull EditorImpl editor) {
     this(editor, editor.getEditorModel());
@@ -100,6 +97,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     Disposer.register(this, mySizeManager);
   }
 
+  /**
+   * @see EditorImpl#setPaintCallback(Runnable)
+   */
+  @ApiStatus.Internal
+  public void setPaintCallback(@Nullable Runnable paintCallback) {
+    myPaintCallback = paintCallback;
+  }
+
   @RequiresEdt
   public int yToVisualLine(int y) {
     assertNotInBulkMode();
@@ -119,12 +124,12 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
-    assertReadAccess();
+    assertEditorAccessible();
     return myMapper.offsetToLogicalPosition(offset);
   }
 
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    assertReadAccess();
+    assertEditorAccessible();
     return myMapper.logicalPositionToOffset(pos);
   }
 
@@ -212,6 +217,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     getSoftWrapModel().prepareToMapping();
     checkFontRenderContext(g.getFontRenderContext());
     myPainter.paint(g);
+    if (myPaintCallback != null) {
+      myPaintCallback.run();
+    }
   }
 
   @RequiresEdt
@@ -222,7 +230,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public @NotNull Dimension getPreferredSize() {
     assert !myEditor.isPurePaintingMode();
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredSize();
     });
@@ -240,7 +248,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public int getPreferredWidth(int beginLine, int endLine) {
     assert !myEditor.isPurePaintingMode();
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredWidth(beginLine, endLine);
     });
@@ -249,7 +257,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public int getPreferredHeight() {
     assert !myEditor.isPurePaintingMode();
-    return ReadAction.compute(() -> {
+    return EditorThreading.compute(() -> {
       getSoftWrapModel().prepareToMapping();
       return mySizeManager.getPreferredHeight();
     });
@@ -583,8 +591,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myDocument;
   }
 
-  FoldingModelImpl getFoldingModel() {
-    return (FoldingModelImpl)myEditorModel.getFoldingModel();
+  FoldingModelInternal getFoldingModel() {
+    return myEditorModel.getFoldingModel();
   }
 
   InlayModelEx getInlayModel() {
@@ -641,7 +649,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return myTabFragment;
   }
 
-  LogicalPositionCache getLogicalPositionCache() {
+  @VisibleForTesting
+  public LogicalPositionCache getLogicalPositionCache() {
     return myLogicalPositionCache;
   }
 
@@ -664,14 +673,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return layout;
   }
 
-  public float getCodePointWidth(int codePoint) {
-    return getCodePointWidth(codePoint, Font.PLAIN);
-  }
-
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
-    var multiplier = myEditor.getSettings().getCharacterGridWidthMultiplier();
-    if (multiplier != null) {
-      return multiplier * (myDoubleWidthCharacterStrategy.isDoubleWidth(codePoint) ? getMaxCharWidth() * 2.0f : getMaxCharWidth());
+    var grid = myEditor.getCharacterGrid();
+    if (grid != null) {
+      return grid.codePointWidth(codePoint);
     }
     else {
       return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
@@ -687,7 +692,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   private void invalidateFoldRegionLayouts() {
-    ReadAction.run(() -> {
+    EditorThreading.run(() -> {
       for (FoldRegion region : getFoldingModel().getAllFoldRegions()) {
         invalidateFoldRegionLayout(region);
       }
@@ -779,22 +784,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return true;
   }
 
-  /**
-   * Sets the strategy to differentiate between single and double width characters.
-   * <p>
-   *   Only used when the {@link EditorSettings#setCharacterGridWidthMultiplier(Float) character grid mode}
-   *   is enabled.
-   *   If not set, then the character width will be guessed by its actual width in the font used.
-   *   Such heuristics generally works well for most regular characters,
-   *   but may fail for special characters sometimes used in fancy shell prompts, for example,
-   *   which is why an explicit strategy is needed.
-   * </p>
-   * @param doubleWidthCharacterStrategy the strategy to use
-   */
-  public void setDoubleWidthCharacterStrategy(@NotNull DoubleWidthCharacterStrategy doubleWidthCharacterStrategy) {
-    myDoubleWidthCharacterStrategy = doubleWidthCharacterStrategy;
-  }
-
   private void checkFontRenderContext(FontRenderContext context) {
     boolean contextUpdated = false;
     synchronized (myLock) {
@@ -811,9 +800,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
   }
 
-  private void assertReadAccess() {
+  private void assertEditorAccessible() {
     if (!myEditorModel.isAd()) {
-      ThreadingAssertions.assertReadAccess();
+      EditorThreading.assertInteractionAllowed();
     }
   }
 
@@ -836,13 +825,5 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     // And it has different values for component graphics (ON/OFF) and component's font metrics (DEFAULT), causing
     // unnecessary layout cache resets.
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
-  }
-
-  private class DefaultDoubleWidthCharacterStrategy implements DoubleWidthCharacterStrategy {
-    @Override
-    public boolean isDoubleWidth(int codePoint) {
-      int width = Math.round(myCharWidthCache.getCodePointWidth(codePoint, Font.PLAIN) / getMaxCharWidth());
-      return Math.min(2, Math.max(1, width)) == 2;
-    }
   }
 }

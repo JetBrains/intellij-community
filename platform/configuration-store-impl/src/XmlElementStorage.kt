@@ -12,7 +12,6 @@ import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.buildNsUnawareJdomAndClose
@@ -255,7 +254,9 @@ abstract class XmlElementStorage protected constructor(
       private val writer: DataWriter?,
       private val stateMap: StateMap
     ) : SaveSession, SafeWriteRequestor, LargeFileWriteRequestor {
-      override suspend fun save(events: MutableList<VFileEvent>?) = blockingContext { doSave(useVfs = false, events = events) }
+      override suspend fun save(events: MutableList<VFileEvent>?) {
+        doSave(useVfs = false, events = events)
+      }
 
       override fun saveBlocking() = doSave(useVfs = true, events = null)
 

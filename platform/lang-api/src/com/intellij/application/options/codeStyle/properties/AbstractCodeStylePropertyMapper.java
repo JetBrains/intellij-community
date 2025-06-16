@@ -6,6 +6,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -110,7 +111,7 @@ public abstract class AbstractCodeStylePropertyMapper {
       return myObject;
     }
 
-    private @Nullable Set<String> getSupportedFields() {
+    private @Nullable @Unmodifiable Set<String> getSupportedFields() {
       return mySupportedFields;
     }
   }

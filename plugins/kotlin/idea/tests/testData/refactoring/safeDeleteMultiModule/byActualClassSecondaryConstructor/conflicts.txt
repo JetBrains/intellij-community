@@ -1,1 +1,3 @@
-Constructor Foo(Int) has 3 usages that are not safe to delete.
+Usage of constructor Foo(Int) that is not safe to delete.
+Usage of constructor Foo(Int) that is not safe to delete.
+Usage of constructor Foo(Int) that is not safe to delete.

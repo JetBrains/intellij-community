@@ -54,7 +54,11 @@ class LoggingSimilarMessageInspection : AbstractBaseUastLocalInspectionTool() {
     session: LocalInspectionToolSession,
   ): PsiElementVisitor {
     val project = holder.project
-    val fileModule = ModuleUtilCore.findModuleForFile(holder.file.virtualFile, project)
+    val file = holder.file.originalFile.virtualFile
+    if (file == null) { // IDEA-369954
+      return PsiElementVisitor.EMPTY_VISITOR
+    }
+    val fileModule = ModuleUtilCore.findModuleForFile(file, project)
     if (!(JavaLibraryUtil.hasLibraryClass(fileModule, LoggingUtil.SLF4J_LOGGER) ||
           JavaLibraryUtil.hasLibraryClass(fileModule, LoggingUtil.LOG4J_LOGGER) ||
           JavaLibraryUtil.hasLibraryClass(fileModule, LoggingUtil.IDEA_LOGGER))) {

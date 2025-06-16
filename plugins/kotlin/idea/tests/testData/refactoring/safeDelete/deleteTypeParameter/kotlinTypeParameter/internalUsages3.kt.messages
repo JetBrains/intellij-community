@@ -1,1 +1,2 @@
-Type parameter X has 2 usages that are not safe to delete.
+Usage of type parameter X that is not safe to delete.
+Usage of type parameter X that is not safe to delete.

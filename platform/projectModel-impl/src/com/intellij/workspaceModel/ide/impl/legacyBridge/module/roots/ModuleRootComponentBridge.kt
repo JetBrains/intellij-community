@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspace.storage.CachedValue
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
+
 @ApiStatus.Internal
 class ModuleRootComponentBridge(
   private val currentModule: Module
@@ -32,9 +32,9 @@ class ModuleRootComponentBridge(
 
   private val orderRootsCache = OrderRootsCacheBridge(currentModule.project, currentModule)
 
-  private val modelValue = CachedValue { storage ->
+  private val modelValue = VersionedCache<RootModelBridgeImpl> {
     RootModelBridgeImpl(
-      moduleEntity = moduleBridge.findModuleEntity(storage),
+      moduleEntity = moduleBridge.findModuleEntity(moduleBridge.entityStorage.current),
       storage = moduleBridge.entityStorage,
       itemUpdater = null,
       // TODO
@@ -63,7 +63,7 @@ class ModuleRootComponentBridge(
   }
 
   private val model: RootModelBridgeImpl
-    get() = moduleBridge.entityStorage.cachedValue(modelValue)
+    get() = modelValue.getValue(moduleBridge.entityStorage.version)
 
   override val storage: EntityStorage
     get() = moduleBridge.entityStorage.current
@@ -86,7 +86,7 @@ class ModuleRootComponentBridge(
   }
 
   internal fun dropRootModelCache() {
-    moduleBridge.entityStorage.clearCachedValue(modelValue)
+    modelValue.clear()
   }
 
   override fun getModificationCountForTests(): Long = moduleBridge.entityStorage.version
@@ -170,5 +170,26 @@ private fun EntityStorage.toSnapshot(): ImmutableEntityStorage {
     is ImmutableEntityStorage -> this
     is MutableEntityStorage -> this.toSnapshot()
     else -> error("Unexpected storage: $this")
+  }
+}
+
+private class VersionedCache<T>(val compute: () -> T) {
+  private var version: Long = -1
+  private var valueResult: T? = null
+
+  @Synchronized
+  fun getValue(currentVersion: Long): T {
+    var res = valueResult
+    if (res != null && version == currentVersion) return res
+
+    this.version = currentVersion
+    res = compute()
+    valueResult = res
+    return res
+  }
+
+  @Synchronized
+  fun clear() {
+    valueResult = null
   }
 }

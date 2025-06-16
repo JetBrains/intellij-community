@@ -11,6 +11,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.KeyboardAwareFocusOwner
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionMenu
@@ -529,54 +530,31 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       return false
     }
     LOG.trace { "processAction(shortcut=$shortcut, actions=$actions)" }
-    val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
     val wrappedContext = Utils.createAsyncDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
     val dumb = project != null && DumbService.getInstance(project).isDumb
     val wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList<AnAction>()
 
-    fireBeforeShortcutTriggered(shortcut = shortcut, actions = actions, context = context)
+    fireBeforeShortcutTriggered(shortcut, actions, context)
 
-    val (chosen, doPerform) = Utils.runWithInputEventEdtDispatcher(contextComponent) block@ {
-      val chosen = Utils.runUpdateSessionForInputEvent(
-        actions = actions,
-        inputEvent = e,
-        dataContext = wrappedContext,
-        place = place,
-        actionProcessor = processor,
-        factory = presentationFactory) { rearranged, updater, events ->
-        doUpdateActionsInner(actions = rearranged,
-                             updater = updater,
-                             events = events,
-                             dumb = dumb,
-                             wouldBeEnabledIfNotDumb = wouldBeEnabledIfNotDumb)
-      }
-      if (chosen == null) {
-        return@block null
-      }
-      if (!this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)) {
-        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.action, chosen.event, false)) {
-          LOG.warn("Action '${chosen.event.presentation.text}' (${chosen.action.javaClass}) has become disabled" +
-                   " in `beforeActionPerformedUpdate` right after successful `update`")
-          logTimeMillis(chosen.startedAt, chosen.action)
-        }
-        else {
-          return@block Pair(chosen, true)
-        }
-      }
-      Pair(chosen, false)
-    } ?: Pair(null, false)
+    val chosen = Utils.runUpdateSessionForInputEvent(
+      actions, e, wrappedContext, place, processor, presentationFactory
+    ) { rearranged, updater, events ->
+      doUpdateActionsInner(rearranged, updater, events, dumb, wouldBeEnabledIfNotDumb)
+    }
+    val doPerform = chosen != null && !this@IdeKeyEventDispatcher.context.secondStrokeActions.contains(chosen.action)
+
     LOG.trace { "updateResult: chosen=$chosen, doPerform=$doPerform" }
     val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
     if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
       ignoreNextKeyTypedEvent = true
     }
 
-    if (doPerform && chosen != null) {
-      doPerformActionInner(e = e, processor = processor, context = context, action = chosen.action, actionEvent = chosen.event)
+    if (doPerform) {
+      doPerformActionInner(e, processor, chosen.action, chosen.event)
       logTimeMillis(chosen.startedAt, chosen.action)
     }
-    else if (hasSecondStroke && chosen != null) {
+    else if (hasSecondStroke) {
       waitSecondStroke(chosen.action, chosen.event.presentation)
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
@@ -835,15 +813,16 @@ private suspend fun doUpdateActionsInner(actions: List<AnAction>,
 
 private fun doPerformActionInner(e: InputEvent,
                                  processor: ActionProcessor,
-                                 context: DataContext,
                                  action: AnAction,
                                  actionEvent: AnActionEvent) {
   processor.onUpdatePassed(e, action, actionEvent)
   val eventCount = IdeEventQueue.getInstance().eventCount
-
-  ActionUtil.performDumbAwareWithCallbacks(action, actionEvent) {
+  val actionManager = actionEvent.actionManager as ActionManagerEx
+  actionManager.performWithActionCallbacks(action, actionEvent) {
     LOG.assertTrue(eventCount == IdeEventQueue.getInstance().eventCount, "Event counts do not match: $eventCount != ${IdeEventQueue.getInstance().eventCount}")
-    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity { processor.performAction(e, action, actionEvent) }
+    (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+      processor.performAction(e, action, actionEvent)
+    }
   }
 }
 

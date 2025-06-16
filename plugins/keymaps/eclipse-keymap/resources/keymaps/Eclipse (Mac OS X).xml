@@ -331,6 +331,7 @@
   <action id="Vcs.RollbackChangedLines">
     <keyboard-shortcut first-keystroke="control shift alt Z"/>
   </action>
+  <action id="ChangesView.ShowCommitOptions"/>
   <action id="ChangesView.Revert">
     <keyboard-shortcut first-keystroke="control shift alt Z"/>
   </action>

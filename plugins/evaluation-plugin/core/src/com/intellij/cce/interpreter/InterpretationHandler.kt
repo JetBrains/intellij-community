@@ -10,4 +10,5 @@ interface InterpretationHandler {
   fun onErrorOccurred(error: Throwable, sessionsSkipped: Int)
   fun isCancelled(): Boolean
   fun isLimitExceeded(): Boolean
+  fun isStrictLimitExceeded(): Boolean
 }

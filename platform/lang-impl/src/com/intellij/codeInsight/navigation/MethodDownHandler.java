@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Internal
 public final class MethodDownHandler implements CodeInsightActionHandler {
   @Override
-  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     LookupManager.getInstance(project).hideActiveLookup();
 
     int caretOffset = editor.getCaretModel().getOffset();
     int caretLine = editor.getCaretModel().getLogicalPosition().line;
-    int[] offsets = MethodUpDownUtil.getNavigationOffsets(file, caretOffset);
+    int[] offsets = MethodUpDownUtil.getNavigationOffsets(psiFile, caretOffset);
     for (int offset : offsets) {
       if (offset > caretOffset) {
         int line = editor.offsetToLogicalPosition(offset).line;

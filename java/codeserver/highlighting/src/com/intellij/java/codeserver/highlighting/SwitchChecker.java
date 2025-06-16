@@ -1,7 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeserver.highlighting;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
 import com.intellij.java.codeserver.highlighting.errors.JavaIncompatibleTypeErrorContext;
 import com.intellij.pom.java.JavaFeature;
@@ -11,17 +13,30 @@ import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
+
+import static com.intellij.java.codeserver.core.JavaPatternExhaustivenessUtil.hasExhaustivenessError;
 
 final class SwitchChecker {
   private final @NotNull JavaErrorVisitor myVisitor;
 
   SwitchChecker(@NotNull JavaErrorVisitor visitor) { myVisitor = visitor; }
+
+  void checkSwitchBlock(@NotNull PsiSwitchBlock block) {
+    if (!myVisitor.hasErrorResults()) checkSwitchBlockStatements(block);
+    if (!myVisitor.hasErrorResults()) checkSwitchSelectorType(block);
+    if (!myVisitor.hasErrorResults()) checkLabelSelectorCompatibility(block);
+    if (!myVisitor.hasErrorResults()) checkDuplicates(block);
+    if (!myVisitor.hasErrorResults()) checkFallthroughLegality(block);
+    if (!myVisitor.hasErrorResults()) checkDominance(block);
+    if (!myVisitor.hasErrorResults()) checkNoDefaultBranchAllowed(block);
+    if (!myVisitor.hasErrorResults()) checkExhaustiveness(block);
+  }
 
   void checkSwitchExpressionReturnTypeCompatible(@NotNull PsiSwitchExpression switchExpression) {
     if (!PsiPolyExpressionUtil.isPolyExpression(switchExpression)) {
@@ -43,7 +58,7 @@ final class SwitchChecker {
     }
   }
 
-  void checkSwitchBlockStatements(@NotNull PsiSwitchBlock block) {
+  private void checkSwitchBlockStatements(@NotNull PsiSwitchBlock block) {
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
     PsiElement first = PsiTreeUtil.skipWhitespacesAndCommentsForward(body.getLBrace());
@@ -102,7 +117,7 @@ final class SwitchChecker {
     myVisitor.report(JavaErrorKinds.SWITCH_DIFFERENT_CASE_KINDS.create(alien));
   }
 
-  void checkSwitchSelectorType(@NotNull PsiSwitchBlock block) {
+  private void checkSwitchSelectorType(@NotNull PsiSwitchBlock block) {
     PsiExpression selector = block.getExpression();
     if (selector == null) return;
     PsiType selectorType = selector.getType();
@@ -248,8 +263,7 @@ final class SwitchChecker {
       }
     }
     if (!TypeConversionUtil.isBooleanType(guardingExpr.getType())) {
-      myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-        guardingExpr, new JavaIncompatibleTypeErrorContext(PsiTypes.booleanType(), guardingExpr.getType())));
+      myVisitor.reportIncompatibleType(PsiTypes.booleanType(), guardingExpr.getType(), guardingExpr);
       return;
     }
     Object constVal = JavaPsiFacade.getInstance(myVisitor.project()).getConstantEvaluationHelper().computeConstantExpression(guardingExpr);
@@ -264,7 +278,7 @@ final class SwitchChecker {
     }
   }
 
-  void checkLabelSelectorCompatibility(@NotNull PsiSwitchBlock block) {
+  private void checkLabelSelectorCompatibility(@NotNull PsiSwitchBlock block) {
     PsiCodeBlock body = block.getBody();
     if (body == null) return;
     PsiExpression selector = block.getExpression();
@@ -279,17 +293,18 @@ final class SwitchChecker {
       PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
       if (labelElementList == null) continue;
       for (PsiCaseLabelElement label : labelElementList.getElements()) {
-        if (!(label instanceof PsiParenthesizedExpression) && isNullType(label)) {
-          if (selectorType instanceof PsiPrimitiveType && !isNullType(selector)) {
-            myVisitor.report(JavaErrorKinds.SWITCH_NULL_TYPE_INCOMPATIBLE.create(label, selectorType));
-            return;
+        if (!(label instanceof PsiParenthesizedExpression) && ExpressionUtil.isNullLiteral(label)) {
+          if (selectorType instanceof PsiPrimitiveType) {
+            if (!PsiTypes.nullType().equals(selectorType)) {
+              myVisitor.report(JavaErrorKinds.SWITCH_NULL_TYPE_INCOMPATIBLE.create(label, selectorType));
+              return;
+            }
           }
           return;
         }
         if (label instanceof PsiExpression expr) {
           if (selectorType.equals(PsiTypes.nullType())) {
-            myVisitor.report(
-              JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(selectorType, expr.getType())));
+            myVisitor.reportIncompatibleType(selectorType, expr.getType(), expr);
             continue;
           }
           if (label instanceof PsiReferenceExpression ref) {
@@ -313,22 +328,8 @@ final class SwitchChecker {
     }
   }
 
-  private static boolean isNullType(@NotNull PsiElement element) {
-    return element instanceof PsiExpression expression && TypeConversionUtil.isNullType(expression.getType());
-  }
-
-  static @Nullable PsiEnumConstant getEnumConstant(@Nullable PsiElement element) {
-    if (element instanceof PsiReferenceExpression referenceExpression &&
-        referenceExpression.resolve() instanceof PsiEnumConstant enumConstant) {
-      return enumConstant;
-    }
-    return null;
-  }
-
   static @Nullable String evaluateEnumConstantName(@NotNull PsiReferenceExpression expr) {
-    PsiEnumConstant enumConstant = getEnumConstant(expr);
-    if (enumConstant != null) return enumConstant.getName();
-    return null;
+    return expr.resolve() instanceof PsiEnumConstant enumConstant ? enumConstant.getName() : null;
   }
 
   private static @Nullable Object evaluateConstant(@NotNull PsiCaseLabelElement constant) {
@@ -379,14 +380,13 @@ final class SwitchChecker {
             (kind == JavaPsiSwitchUtil.SelectorKind.BOOLEAN && !(constValue instanceof Boolean))) {
           PsiType unboxedType = PsiPrimitiveType.getOptionallyUnboxedType(selectorType);
           if (unboxedType != null) {
-            myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-              expr, new JavaIncompatibleTypeErrorContext(unboxedType, expr.getType())));
+            myVisitor.reportIncompatibleType(unboxedType, expr.getType(), expr);
           }
         }
         return;
       }
       if (ConstantExpressionUtil.computeCastTo(constValue, selectorType) == null) {
-        myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(expr, new JavaIncompatibleTypeErrorContext(selectorType, expr.getType())));
+        myVisitor.reportIncompatibleType(selectorType, expr.getType(), expr);
         return;
       }
       if (kind == JavaPsiSwitchUtil.SelectorKind.INT || kind == JavaPsiSwitchUtil.SelectorKind.STRING) {
@@ -426,8 +426,7 @@ final class SwitchChecker {
             myVisitor.report(JavaErrorKinds.UNSUPPORTED_FEATURE.create(elementToReport, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS));
           }
           else {
-            myVisitor.report(JavaErrorKinds.TYPE_INCOMPATIBLE.create(
-              elementToReport, new JavaIncompatibleTypeErrorContext(selectorType, patternType)));
+            myVisitor.reportIncompatibleType(selectorType, patternType, elementToReport);
           }
           return;
         }
@@ -439,8 +438,8 @@ final class SwitchChecker {
     }
     myVisitor.report(JavaErrorKinds.SWITCH_LABEL_UNEXPECTED.create(label));
   }
-  
-  void checkDuplicates(@NotNull PsiSwitchBlock block) {
+
+  private void checkDuplicates(@NotNull PsiSwitchBlock block) {
     for (Map.Entry<Object, Collection<PsiElement>> entry : JavaPsiSwitchUtil.getValuesAndLabels(block).entrySet()) {
       if (entry.getValue().size() <= 1) continue;
       Object duplicateKey = entry.getKey();
@@ -448,5 +447,198 @@ final class SwitchChecker {
         myVisitor.report(JavaErrorKinds.SWITCH_LABEL_DUPLICATE.create(duplicateElement, duplicateKey));
       }
     }
+  }
+
+  private void checkFallthroughLegality(@NotNull PsiSwitchBlock block) {
+    if (!myVisitor.isApplicable(JavaFeature.PATTERNS_IN_SWITCH)) return;
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return;
+    List<List<PsiSwitchLabelStatementBase>> elementsToCheckFallThroughLegality = new SmartList<>();
+    int switchBlockGroupCounter = 0;
+    for (PsiStatement st : body.getStatements()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase labelStatement)) continue;
+      List<PsiSwitchLabelStatementBase> switchLabels;
+      if (switchBlockGroupCounter < elementsToCheckFallThroughLegality.size()) {
+        switchLabels = elementsToCheckFallThroughLegality.get(switchBlockGroupCounter);
+      }
+      else {
+        switchLabels = new SmartList<>();
+        elementsToCheckFallThroughLegality.add(switchLabels);
+      }
+      switchLabels.add(labelStatement);
+      if (!(PsiTreeUtil.skipWhitespacesAndCommentsForward(labelStatement) instanceof PsiSwitchLabelStatement)) {
+        switchBlockGroupCounter++;
+      }
+    }
+    Set<PsiElement> alreadyFallThroughElements = new HashSet<>();
+    checkFallThroughFromPatternWithSeveralLabels(elementsToCheckFallThroughLegality, alreadyFallThroughElements);
+    checkFallThroughToPatternPrecedingCompleteNormally(elementsToCheckFallThroughLegality, alreadyFallThroughElements);
+  }
+
+  private void checkFallThroughFromPatternWithSeveralLabels(@NotNull List<? extends List<PsiSwitchLabelStatementBase>> switchBlockGroup,
+                                                            @NotNull Set<? super PsiElement> alreadyFallThroughElements) {
+    if (switchBlockGroup.isEmpty()) return;
+    for (List<PsiSwitchLabelStatementBase> switchLabel : switchBlockGroup) {
+      for (PsiSwitchLabelStatementBase switchLabelElement : switchLabel) {
+        PsiCaseLabelElementList labelElementList = switchLabelElement.getCaseLabelElementList();
+        if (labelElementList == null || labelElementList.getElementCount() == 0) continue;
+        if (!checkCaseLabelCombination(labelElementList)) {
+          PsiCaseLabelElement[] elements = labelElementList.getElements();
+          final PsiCaseLabelElement first = elements[0];
+          if (JavaPsiPatternUtil.containsNamedPatternVariable(first)) {
+            PsiElement nextNotLabel = PsiTreeUtil.skipSiblingsForward(switchLabelElement, PsiWhiteSpace.class, PsiComment.class,
+                                                                      PsiSwitchLabelStatement.class);
+            //there is no statement, it is allowed to go through (14.11.1 JEP 440-441)
+            if (!(nextNotLabel instanceof PsiStatement)) {
+              continue;
+            }
+            if (PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement ||
+                PsiTreeUtil.skipWhitespacesAndCommentsBackward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
+              alreadyFallThroughElements.add(first);
+              myVisitor.report(JavaErrorKinds.SWITCH_MULTIPLE_LABELS_WITH_PATTERN_VARIABLES.create(first));
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private boolean checkCaseLabelCombination(@NotNull PsiCaseLabelElementList labelElementList) {
+    PsiCaseLabelElement[] elements = labelElementList.getElements();
+    PsiCaseLabelElement firstElement = elements[0];
+    if (elements.length == 1) {
+      if (firstElement instanceof PsiDefaultCaseLabelElement defaultLabel) {
+        myVisitor.report(JavaErrorKinds.SWITCH_DEFAULT_LABEL_CONTAINS_CASE.create(defaultLabel, labelElementList));
+        return true;
+      }
+      return false;
+    }
+    if (elements.length == 2) {
+      if (firstElement instanceof PsiDefaultCaseLabelElement defaultLabel &&
+          elements[1] instanceof PsiExpression expr && ExpressionUtil.isNullLiteral(expr)) {
+        myVisitor.report(JavaErrorKinds.SWITCH_DEFAULT_NULL_ORDER.create(defaultLabel, labelElementList));
+        return true;
+      }
+      if (firstElement instanceof PsiExpression expr && ExpressionUtil.isNullLiteral(expr) &&
+          elements[1] instanceof PsiDefaultCaseLabelElement) {
+        return false;
+      }
+    }
+
+    boolean unnamedAllowed = myVisitor.isApplicable(JavaFeature.UNNAMED_PATTERNS_AND_VARIABLES);
+    boolean reported = false;
+    for (PsiCaseLabelElement element : elements) {
+      if (element instanceof PsiDefaultCaseLabelElement defaultLabel) {
+        myVisitor.report(JavaErrorKinds.SWITCH_DEFAULT_LABEL_NOT_ALLOWED.create(defaultLabel));
+        reported = true;
+      }
+      else if (element instanceof PsiExpression expr && ExpressionUtil.isNullLiteral(expr)) {
+        myVisitor.report(JavaErrorKinds.SWITCH_NULL_LABEL_NOT_ALLOWED.create(expr));
+        reported = true;
+      }
+      else if (element instanceof PsiPattern pattern && firstElement instanceof PsiExpression) {
+        var kind = unnamedAllowed
+                   ? JavaErrorKinds.SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS_UNNAMED
+                   : JavaErrorKinds.SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS;
+        myVisitor.report(kind.create(pattern));
+        reported = true;
+      }
+    }
+    if (reported) return true;
+
+    if (firstElement instanceof PsiPattern) {
+      PsiCaseLabelElement nonPattern = ContainerUtil.find(elements, e -> !(e instanceof PsiPattern));
+      if (nonPattern != null) {
+        var kind = unnamedAllowed
+                   ? JavaErrorKinds.SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS_UNNAMED
+                   : JavaErrorKinds.SWITCH_LABEL_COMBINATION_CONSTANTS_AND_PATTERNS;
+        myVisitor.report(kind.create(nonPattern));
+        return true;
+      }
+      if (!unnamedAllowed) {
+        myVisitor.report(JavaErrorKinds.SWITCH_LABEL_MULTIPLE_PATTERNS.create(elements[1]));
+        return true;
+      }
+      PsiCaseLabelElement patternVarElement = ContainerUtil.find(elements, JavaPsiPatternUtil::containsNamedPatternVariable);
+      if (patternVarElement != null) {
+        myVisitor.report(JavaErrorKinds.SWITCH_LABEL_MULTIPLE_PATTERNS_UNNAMED.create(patternVarElement));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void checkFallThroughToPatternPrecedingCompleteNormally(@NotNull List<? extends List<? extends PsiSwitchLabelStatementBase>> switchBlockGroup,
+                                                                  @NotNull Set<PsiElement> alreadyFallThroughElements) {
+    for (int i = 1; i < switchBlockGroup.size(); i++) {
+      List<? extends PsiSwitchLabelStatementBase> switchLabels = switchBlockGroup.get(i);
+      PsiSwitchLabelStatementBase firstSwitchLabelInGroup = switchLabels.get(0);
+      for (PsiSwitchLabelStatementBase switchLabel : switchLabels) {
+        if (!(switchLabel instanceof PsiSwitchLabelStatement)) {
+          return;
+        }
+        PsiCaseLabelElementList labelElementList = switchLabel.getCaseLabelElementList();
+        if (labelElementList == null) continue;
+        List<PsiCaseLabelElement> patternElements = ContainerUtil.filter(labelElementList.getElements(),
+                                                                         labelElement -> JavaPsiPatternUtil.containsNamedPatternVariable(
+                                                                           labelElement));
+        if (patternElements.isEmpty()) continue;
+        PsiStatement prevStatement = PsiTreeUtil.getPrevSiblingOfType(firstSwitchLabelInGroup, PsiStatement.class);
+        if (prevStatement == null) continue;
+        ControlFlow flow = ControlFlowChecker.getControlFlow(prevStatement);
+        if (flow != null && ControlFlowUtil.canCompleteNormally(flow, 0, flow.getSize())) {
+          List<PsiCaseLabelElement> elements =
+            ContainerUtil.filter(patternElements, patternElement -> !alreadyFallThroughElements.contains(patternElement));
+          for (PsiCaseLabelElement patternElement : elements) {
+            myVisitor.report(JavaErrorKinds.SWITCH_FALLTHROUGH_TO_PATTERN.create(patternElement));
+          }
+        }
+      }
+    }
+  }
+
+  private void checkDominance(@NotNull PsiSwitchBlock block) {
+    Map<PsiCaseLabelElement, PsiElement> dominatedLabels = JavaPsiSwitchUtil.findDominatedLabels(block);
+    for (Map.Entry<PsiCaseLabelElement, PsiElement> entry : dominatedLabels.entrySet()) {
+      PsiCaseLabelElement overWhom = entry.getKey();
+      PsiElement who = entry.getValue();
+      myVisitor.report(JavaErrorKinds.SWITCH_DOMINANCE_VIOLATION.create(overWhom, who));
+    }
+  }
+  
+  private void checkNoDefaultBranchAllowed(@NotNull PsiSwitchBlock block) {
+    if (!myVisitor.isApplicable(JavaFeature.PATTERNS_IN_SWITCH)) return;
+    //T is an intersection type T1& ... &Tn, and P covers Ti, for one of the type Ti (1≤i≤n)
+    PsiCaseLabelElement elementCoversType = JavaPsiSwitchUtil.getUnconditionalPatternLabel(block);
+    PsiElement defaultElement = JavaPsiSwitchUtil.findDefaultElement(block);
+    if (defaultElement != null && elementCoversType != null) {
+      myVisitor.report(JavaErrorKinds.SWITCH_UNCONDITIONAL_PATTERN_AND_DEFAULT.create(defaultElement.getFirstChild()));
+      myVisitor.report(JavaErrorKinds.SWITCH_UNCONDITIONAL_PATTERN_AND_DEFAULT.create(elementCoversType));
+      return;
+    }
+    //default (or unconditional), TRUE and FALSE cannot be together
+    if ((defaultElement != null || elementCoversType != null) &&
+        JavaPsiSwitchUtil.isBooleanSwitchWithTrueAndFalse(block)) {
+      if (defaultElement != null) {
+        myVisitor.report(JavaErrorKinds.SWITCH_DEFAULT_AND_BOOLEAN.create(defaultElement.getFirstChild()));
+      }
+      if (elementCoversType != null) {
+        myVisitor.report(JavaErrorKinds.SWITCH_UNCONDITIONAL_PATTERN_AND_BOOLEAN.create(elementCoversType));
+      }
+    }
+  }
+
+  void checkExhaustiveness(@NotNull PsiSwitchBlock block) {
+    PsiCodeBlock body = block.getBody();
+    if (body == null) return;
+
+    if (!ExpressionUtil.isEnhancedSwitch(block)) return;
+    if (JavaPsiSwitchUtil.getUnconditionalPatternLabel(block) != null) return;
+    if (JavaPsiSwitchUtil.findDefaultElement(block) != null) return;
+    if (!hasExhaustivenessError(block)) return;
+
+    boolean hasAnyCaseLabels = JavaPsiSwitchUtil.hasAnyCaseLabels(block);
+    var kind = hasAnyCaseLabels ? JavaErrorKinds.SWITCH_INCOMPLETE : JavaErrorKinds.SWITCH_EMPTY;
+    myVisitor.report(kind.create(block));
   }
 }

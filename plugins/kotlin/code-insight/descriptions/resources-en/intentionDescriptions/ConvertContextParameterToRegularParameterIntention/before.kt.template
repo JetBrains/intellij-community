@@ -1,0 +1,8 @@
+context(<spot>c: String</spot>)
+fun foo() {
+}
+
+context(c: String)
+fun bar() {
+    foo()
+}

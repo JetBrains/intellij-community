@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
-import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
@@ -23,8 +22,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SpecificChi
 @GeneratedCodeApiVersion(3)
 @GeneratedCodeImplVersion(6)
 @OptIn(WorkspaceEntityInternalApi::class)
-internal class SpecificChildWithLinkToParentEntityImpl(private val dataSource: SpecificChildWithLinkToParentEntityData) : SpecificChildWithLinkToParentEntity, WorkspaceEntityBase(
-  dataSource) {
+internal class SpecificChildWithLinkToParentEntityImpl(private val dataSource: SpecificChildWithLinkToParentEntityData) :
+  SpecificChildWithLinkToParentEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
 
@@ -51,8 +50,9 @@ internal class SpecificChildWithLinkToParentEntityImpl(private val dataSource: S
   }
 
 
-  internal class Builder(result: SpecificChildWithLinkToParentEntityData?) : ModifiableWorkspaceEntityBase<SpecificChildWithLinkToParentEntity, SpecificChildWithLinkToParentEntityData>(
-    result), SpecificChildWithLinkToParentEntity.Builder {
+  internal class Builder(result: SpecificChildWithLinkToParentEntityData?) :
+    ModifiableWorkspaceEntityBase<SpecificChildWithLinkToParentEntity, SpecificChildWithLinkToParentEntityData>(result),
+    SpecificChildWithLinkToParentEntity.Builder {
     internal constructor() : this(SpecificChildWithLinkToParentEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -148,7 +148,8 @@ internal class SpecificChildWithLinkToParentEntityData : WorkspaceEntityData<Spe
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildWithLinkToParentEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.SpecificChildWithLinkToParentEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

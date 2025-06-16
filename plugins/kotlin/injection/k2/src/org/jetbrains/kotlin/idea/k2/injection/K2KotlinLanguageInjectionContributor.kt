@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.injection
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -18,16 +19,18 @@ import org.jetbrains.kotlin.idea.base.injection.KotlinLanguageInjectionContribut
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtProperty
 import org.intellij.lang.annotations.Language as LanguageAnnotation
 
 internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionContributorBase() {
     override val kotlinSupport: K2KotlinLanguageInjectionSupport? by lazy {
-        ArrayList(InjectorUtils.getActiveInjectionSupports()).filterIsInstance(K2KotlinLanguageInjectionSupport::class.java).firstOrNull()
+        InjectorUtils.getActiveInjectionSupports().filterIsInstance<K2KotlinLanguageInjectionSupport>().firstOrNull()
     }
 
     override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean = analyze(this) {
@@ -37,12 +40,18 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
 
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()
 
+    override fun getTargetProperty(ktProperty: KtProperty): KtProperty {
+        // For completion property is not physical and the whole file was copied.
+        // The references in that file are resolved to the original file's members
+        return if (ktProperty.isPhysical) ktProperty else try { PsiTreeUtil.findSameElementInCopy(ktProperty, ktProperty.containingFile.originalFile) } catch (_: IllegalStateException) { ktProperty }
+    }
+
     override fun injectionInfoByAnnotation(callableDeclaration: KtCallableDeclaration): InjectionInfo? =
         if (callableDeclaration.annotationEntries.isEmpty()) {
             null
         } else {
             analyze(callableDeclaration) {
-                val annotation = callableDeclaration.symbol.findAnnotation<LanguageAnnotation>() ?: return null
+                val annotation = callableDeclaration.symbol.findAnnotation() ?: return null
                 injectionInfoByAnnotation(annotation)
             }
         }
@@ -64,8 +73,8 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
             // For a parameter of a primary constructor, there are multiple possible locations for the annotation in the generated Java
             // bytecode e.g., getter. Thus, we cannot get annotations of the parameter symbol itself. We have to check its use-site targets.
             // We first check its generated property here.
-            val annotationForParameter = parameterSymbol.generatedPrimaryConstructorProperty?.findAnnotation<LanguageAnnotation>()
-                ?: parameterSymbol.findAnnotation<LanguageAnnotation>() ?: return null
+            val annotationForParameter = parameterSymbol.generatedPrimaryConstructorProperty?.findAnnotation()
+                ?: parameterSymbol.findAnnotation() ?: return null
             injectionInfoByAnnotation(annotationForParameter)
         }
     }
@@ -79,9 +88,11 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
     }
 }
 
-context(KaSession)
-private inline fun <reified T : Annotation> KaAnnotatedSymbol.findAnnotation(): KaAnnotation? =
-    annotations.find { it.classId?.asFqNameString() == T::class.java.name }
+private val languageAnnotationClassId =
+    ClassId(FqName(LanguageAnnotation::class.java.packageName), FqName(LanguageAnnotation::class.java.simpleName), false)
+
+private inline fun KaAnnotatedSymbol.findAnnotation(annotationClassId: ClassId = languageAnnotationClassId): KaAnnotation? =
+    annotations.firstOrNull { it.classId == annotationClassId }
 
 context(KaSession)
 private fun KaAnnotation.getStringValueOfArgument(argumentName: String): String? {

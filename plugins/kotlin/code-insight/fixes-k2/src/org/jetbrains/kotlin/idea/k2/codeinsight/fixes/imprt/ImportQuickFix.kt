@@ -4,13 +4,14 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.QuestionAction
-import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInspection.HintAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.util.SlowOperations
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -20,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
-import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
@@ -40,7 +40,9 @@ class ImportQuickFix(
     element: KtElement,
     @IntentionName private val text: String,
     importVariants: List<AutoImportVariant>
-) : ImportLikeQuickFix(element, importVariants), HintAction, HighPriorityAction {
+) : ImportLikeQuickFix(element, importVariants), HintAction, PriorityAction {
+    override fun getPriority(): PriorityAction.Priority = PriorityAction.Priority.TOP
+
     override fun getText(): String = text
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.import")
@@ -91,28 +93,30 @@ class ImportQuickFix(
 
         StatisticsManager.getInstance().incUseCount(importVariant.statisticsInfo)
 
-        val element = element ?: return
+        SlowOperations.knownIssue("LLM-15226").use {
+            val element = element ?: return
 
-        @OptIn(
-            KaAllowAnalysisOnEdt::class, 
-            KaAllowAnalysisFromWriteAction::class
-        )
-        val useShortening = allowAnalysisOnEdt {
-            allowAnalysisFromWriteAction {
-                analyze(element) {
-                    shouldBeImportedWithShortening(element, importVariant)
+            @OptIn(
+                KaAllowAnalysisOnEdt::class,
+                KaAllowAnalysisFromWriteAction::class
+            )
+            val useShortening = allowAnalysisOnEdt {
+                allowAnalysisFromWriteAction {
+                    analyze(element) {
+                        shouldBeImportedWithShortening(element, importVariant)
+                    }
                 }
             }
-        }
 
-        project.executeWriteCommand(QuickFixBundle.message("add.import")) {
-            if (useShortening) {
-                (element.mainReference as? KtSimpleNameReference)?.bindToFqName(
-                    importVariant.fqName.withRootPrefixIfNeeded(), // TODO remove this as soon as KTIJ-32932 is fixed
-                    KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
-                )
-            } else {
-                file.addImport(importVariant.fqName)
+            project.executeWriteCommand(QuickFixBundle.message("add.import")) {
+                if (useShortening) {
+                    (element.mainReference as? KtSimpleNameReference)?.bindToFqName(
+                        importVariant.fqName,
+                        KtSimpleNameReference.ShorteningMode.FORCED_SHORTENING
+                    )
+                } else {
+                    file.addImport(importVariant.fqName)
+                }
             }
         }
     }

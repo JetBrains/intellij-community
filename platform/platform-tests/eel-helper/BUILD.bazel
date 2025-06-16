@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "eelHelper_resources",
+  name = "eel-helper_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "eelHelper",
+  name = "eel-helper",
   module_name = "intellij.platform.eelHelper",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -24,6 +24,6 @@ jvm_library(
     "@lib//:jline-terminal-jansi",
     "@lib//:jline-terminal-jna",
   ],
-  runtime_deps = [":eelHelper_resources"]
+  runtime_deps = [":eel-helper_resources"]
 )
 ### auto-generated section `build intellij.platform.eelHelper` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -10,7 +10,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.sdk.pythonSdk
-import com.jetbrains.python.sdk.setAssociationToModule
+import com.jetbrains.python.sdk.setAssociationToModuleAsync
 
 internal class UvAssociationQuickFix : LocalQuickFix {
   private val quickFixName = PyBundle.message("python.sdk.quickfix.use.uv.name")
@@ -28,7 +28,7 @@ internal class UvAssociationQuickFix : LocalQuickFix {
       return
     }
 
-    module.pythonSdk?.setAssociationToModule(module)
+    module.pythonSdk?.setAssociationToModuleAsync(module)
   }
 }
 
@@ -46,7 +46,9 @@ class UvInstallQuickFix : LocalQuickFix {
     }
   }
 
-  override fun getFamilyName() = PyBundle.message("python.sdk.intention.family.name.install.requirements.from.uv.lock")
+  override fun getFamilyName(): String {
+    return PyBundle.message("python.sdk.intention.family.name.install.requirements.from.uv.lock")
+  }
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement

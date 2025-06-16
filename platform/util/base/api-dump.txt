@@ -10,16 +10,11 @@ f:com.intellij.filename.UniqueNameBuilder
 - getSeparator():java.lang.String
 - getShortPath(java.lang.Object):java.lang.String
 - size():I
-com.intellij.openapi.diagnostic.ControlFlowException
-c:com.intellij.openapi.progress.ProcessCanceledException
-- java.util.concurrent.CancellationException
-- com.intellij.openapi.diagnostic.ControlFlowException
-- <init>():V
-- p:<init>(java.lang.String):V
-- <init>(java.lang.Throwable):V
 com.intellij.openapi.util.Segment
 - sf:BY_START_OFFSET_THEN_END_OFFSET:java.util.Comparator
 - sf:EMPTY_ARRAY:com.intellij.openapi.util.Segment[]
+- contains(I):Z
+- containsInclusive(I):Z
 - a:getEndOffset():I
 - a:getStartOffset():I
 c:com.intellij.openapi.util.TextRange
@@ -58,6 +53,7 @@ c:com.intellij.openapi.util.TextRange
 - intersectsStrict(I,I):Z
 - intersectsStrict(com.intellij.openapi.util.TextRange):Z
 - isEmpty():Z
+- isProperRange():Z
 - s:isProperRange(I,I):Z
 - replace(java.lang.String,java.lang.String):java.lang.String
 - shiftLeft(I):com.intellij.openapi.util.TextRange
@@ -72,23 +68,6 @@ f:com.intellij.openapi.util.text.Formats
 - s:formatDuration(java.time.Duration):java.lang.String
 - s:formatFileSize(J):java.lang.String
 - s:formatFileSize(J,java.lang.String):java.lang.String
-f:com.intellij.openapi.util.text.LineTokenizer
-- <init>(java.lang.CharSequence):V
-- <init>(C[],I,I):V
-- advance():V
-- atEnd():Z
-- s:calcLineCount(java.lang.CharSequence,Z):I
-- getLength():I
-- getLineSeparatorLength():I
-- getOffset():I
-- s:tokenize(java.lang.CharSequence,Z):java.lang.String[]
-- s:tokenize(java.lang.CharSequence,Z,Z):java.lang.String[]
-- s:tokenize(C[],I,I,Z):java.lang.String[]
-- s:tokenize(C[],I,I,Z,Z):java.lang.String[]
-- s:tokenize(C[],Z):java.lang.String[]
-- s:tokenize(C[],Z,Z):java.lang.String[]
-- s:tokenizeIntoList(java.lang.CharSequence,Z):java.util.List
-- s:tokenizeIntoList(java.lang.CharSequence,Z,Z):java.util.List
 f:com.intellij.openapi.util.text.NaturalComparator
 - java.util.Comparator
 - sf:INSTANCE:java.util.Comparator
@@ -333,12 +312,6 @@ c:com.intellij.util.IncorrectOperationException
 - <init>(java.lang.String,java.lang.Exception):V
 - <init>(java.lang.String,java.lang.Throwable):V
 - <init>(java.lang.Throwable):V
-f:com.intellij.util.IntPair
-- f:first:I
-- f:second:I
-- <init>(I,I):V
-- equals(java.lang.Object):Z
-- hashCode():I
 f:com.intellij.util.ObjectUtilsRt
 - <init>():V
 - s:reachabilityFence(java.lang.Object):V
@@ -394,6 +367,7 @@ f:com.intellij.util.containers.CollectionFactory
 - s:createConcurrentSoftKeySoftValueMap(I,F,I):java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftMap():java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftMap(I,F,I,com.intellij.util.containers.HashingStrategy):java.util.concurrent.ConcurrentMap
+- s:createConcurrentSoftMap(com.intellij.util.containers.HashingStrategy,java.util.function.BiConsumer):java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftMap(java.util.function.BiConsumer):java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftValueMap():java.util.concurrent.ConcurrentMap
 - s:createConcurrentSoftValueMap(java.util.function.BiConsumer):java.util.concurrent.ConcurrentMap
@@ -525,17 +499,6 @@ Fa:com.intellij.util.containers.Interner
 - s:createWeakInterner():com.intellij.util.containers.Interner
 - a:getValues():java.util.Set
 - a:intern(java.lang.Object):java.lang.Object
-com.intellij.util.containers.PeekableIterator
-- java.util.Iterator
-- sf:EMPTY:com.intellij.util.containers.PeekableIterator
-- a:peek():java.lang.Object
-c:com.intellij.util.containers.PeekableIteratorWrapper
-- com.intellij.util.containers.PeekableIterator
-- <init>(java.util.Iterator):V
-- hasNext():Z
-- next():java.lang.Object
-- peek():java.lang.Object
-- remove():V
 f:com.intellij.util.containers.SoftArrayHashMap
 - java.lang.Cloneable
 - <init>():V
@@ -545,24 +508,6 @@ f:com.intellij.util.containers.SoftArrayHashMap
 - get(java.lang.Object[]):java.lang.Object
 - processLeafEntries(java.util.function.BiPredicate):Z
 - put(java.lang.Object[],java.lang.Object):V
-c:com.intellij.util.text.CharArrayCharSequence
-- java.lang.CharSequence
-- pf:myChars:C[]
-- pf:myEnd:I
-- pf:myStart:I
-- <init>(C[]):V
-- <init>(C[],I,I):V
-- f:charAt(I):C
-- equals(java.lang.Object):Z
-- getChars():C[]
-- getChars(C[],I):V
-- hashCode():I
-- f:length():I
-- readCharsTo(I,C[],I,I):I
-- subSequence(I,I):java.lang.CharSequence
-com.intellij.util.text.CharArrayExternalizable
-- java.lang.CharSequence
-- a:getChars(I,I,C[],I):V
 f:com.intellij.util.text.CharArrayUtil
 - s:containLineBreaks(java.lang.CharSequence):Z
 - s:containLineBreaks(java.lang.CharSequence,I,I):Z
@@ -612,17 +557,6 @@ f:com.intellij.util.text.CharSequenceReader
 - close():V
 - read():I
 - read(C[],I,I):I
-c:com.intellij.util.text.CharSequenceSubSequence
-- com.intellij.util.text.CharArrayExternalizable
-- java.lang.CharSequence
-- <init>(java.lang.CharSequence):V
-- <init>(java.lang.CharSequence,I,I):V
-- f:charAt(I):C
-- equals(java.lang.Object):Z
-- getChars(I,I,C[],I):V
-- hashCode():I
-- f:length():I
-- subSequence(I,I):java.lang.CharSequence
 a:com.intellij.util.text.ImmutableCharSequence
 - java.lang.CharSequence
 - <init>():V
@@ -635,12 +569,6 @@ a:com.intellij.util.text.ImmutableCharSequence
 - a:toString():java.lang.String
 com.intellij.util.text.Matcher
 - a:matches(java.lang.String):Z
-f:com.intellij.util.text.MergingCharSequence
-- java.lang.CharSequence
-- <init>(java.lang.CharSequence,java.lang.CharSequence):V
-- charAt(I):C
-- length():I
-- subSequence(I,I):java.lang.CharSequence
 f:com.intellij.util.text.NameUtilCore
 - <init>():V
 - s:isWordStart(java.lang.String,I):Z
@@ -651,8 +579,10 @@ f:com.intellij.util.text.SemVer
 - java.lang.Comparable
 - <init>(java.lang.String,I,I,I):V
 - <init>(java.lang.String,I,I,I,java.lang.String):V
+- <init>(java.lang.String,I,I,I,java.lang.String,java.lang.String):V
 - compareTo(com.intellij.util.text.SemVer):I
 - equals(java.lang.Object):Z
+- getBuildMeta():java.lang.String
 - getMajor():I
 - getMinor():I
 - getParsedVersion():java.lang.String

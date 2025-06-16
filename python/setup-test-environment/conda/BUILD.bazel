@@ -1,8 +1,14 @@
 ### auto-generated section `build intellij.python.community.testFramework.testEnv.conda` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "conda_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
-  name = "python-community-testFramework-testEnv-conda",
+  name = "conda",
   module_name = "intellij.python.community.testFramework.testEnv.conda",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -14,6 +20,8 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/execution",
     "//platform/util",
-  ]
+    "@lib//:kotlinx-coroutines-core",
+  ],
+  runtime_deps = [":conda_resources"]
 )
 ### auto-generated section `build intellij.python.community.testFramework.testEnv.conda` end

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("KDocUnresolvedReference")
 
 package com.intellij
@@ -76,15 +76,29 @@ open class AbstractBundle {
       loader: ClassLoader,
       pathToBundle: String,
       firstTry: () -> ResourceBundle,
+      errorReporter: (MissingResourceException) -> Unit,
     ): ResourceBundle {
       try {
         return firstTry()
       }
       catch (_: MissingResourceException) {
         logger<AbstractBundle>().info("Cannot load resource bundle from *.properties file, falling back to slow class loading: $pathToBundle")
-        ResourceBundle.clearCache(loader)
-        return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)
+        try {
+          ResourceBundle.clearCache(loader)
+          return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)
+        }
+        catch (e: MissingResourceException) {
+          errorReporter(e)
+          return MissingResourceBundle(pathToBundle)
+        }
       }
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    @Deprecated("do not use, for compatibility only")
+    fun resolveBundle(loader: ClassLoader, locale: Locale, pathToBundle: String): ResourceBundle {
+      return _doResolveBundle(loader = loader, locale = locale, pathToBundle = pathToBundle)
     }
   }
 
@@ -140,9 +154,11 @@ open class AbstractBundle {
     val isDefault = DefaultBundleService.isDefaultBundle()
     var bundle = getBundle(isDefault, classLoader)
     if (bundle == null) {
-      bundle = resolveResourceBundleWithFallback(loader = classLoader, pathToBundle = pathToBundle) {
+      bundle = resolveResourceBundleWithFallback(loader = classLoader, pathToBundle = pathToBundle, firstTry = {
         findBundle(pathToBundle = pathToBundle, loader = classLoader, control = IntelliJResourceControl)
-      }
+      }, errorReporter = { e ->
+        logger<AbstractBundle>().error(e)
+      })
       val ref = SoftReference(bundle)
       if (isDefault) {
         defaultBundle = ref
@@ -201,5 +217,19 @@ private object IntelliJResourceControl : ResourceBundle.Control() {
     return stream.use {
       IntelliJResourceBundle(reader = InputStreamReader(it, StandardCharsets.UTF_8))
     }
+  }
+}
+
+private class MissingResourceBundle(val baseName: String) : ResourceBundle() {
+  override fun handleGetObject(key: String?): Any? {
+    return null
+  }
+
+  override fun getKeys(): Enumeration<String> {
+    return Collections.emptyEnumeration()
+  }
+
+  override fun getBaseBundleName(): String? {
+    return baseName
   }
 }

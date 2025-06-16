@@ -5,10 +5,10 @@ package com.intellij.codeInspection.i18n;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.externalAnnotation.NonNlsAnnotationProvider;
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationModCommandAction;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
@@ -462,9 +462,10 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           }
         }
         else {
-          fixes.add(new AddAnnotationFix(fqn, target, AnnotationUtil.NON_NLS));
+          fixes.add(LocalQuickFix.from(new AddAnnotationModCommandAction(fqn, target, AnnotationUtil.NON_NLS)));
           if (addNullSafe) {
-            fixes.add(new MarkAsSafeFix(target));
+            fixes.add(LocalQuickFix.from(new AddAnnotationModCommandAction(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS)
+                                           .withPresentation(presentation -> presentation.withPriority(PriorityAction.Priority.LOW))));
           }
         }
         String description = JavaI18nBundle.message("inspection.i18n.message.non.localized.passed.to.localized");
@@ -510,7 +511,7 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
           if (NlsInfo.forModifierListOwner(element).getNlsStatus() == ThreeState.UNSURE) {
             if (!element.getManager().isInProject(element) ||
                 facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
-              fixes.add(new NonNlsAnnotationProvider().createFix(element));
+              fixes.add(LocalQuickFix.from(new NonNlsAnnotationProvider().createFix(element)));
             }
           }
         }
@@ -919,16 +920,5 @@ public final class I18nInspection extends AbstractBaseUastLocalInspectionTool im
       }
     }
     return false;
-  }
-
-  private static class MarkAsSafeFix extends AddAnnotationFix implements LowPriorityAction {
-    MarkAsSafeFix(PsiModifierListOwner target) {
-      super(NlsInfo.NLS_SAFE, target, AnnotationUtil.NON_NLS);
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return JavaI18nBundle.message("intention.family.name.mark.as.nlssafe");
-    }
   }
 }

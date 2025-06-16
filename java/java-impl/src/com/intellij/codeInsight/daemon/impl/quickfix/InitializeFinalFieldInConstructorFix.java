@@ -6,6 +6,7 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.impl.ConstantNode;
+import com.intellij.codeInspection.options.OptMultiSelector.OptElement;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -77,7 +78,7 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
                                             allMembers, chosenMembers -> getFinalCommand(field, chosenMembers));
   }
 
-  private static @NotNull ModCommand getFinalCommand(@NotNull PsiField field, List<? extends @NotNull MemberChooserElement> chosenMembers) {
+  private static @NotNull ModCommand getFinalCommand(@NotNull PsiField field, List<? extends @NotNull OptElement> chosenMembers) {
     return ModCommand.psiUpdate(field, (writableField, updater) -> {
       List<PsiMethod> writableConstructors =
         ContainerUtil.map(chosenMembers, member -> updater.getWritable(((PsiMethodMember)member).getElement()));

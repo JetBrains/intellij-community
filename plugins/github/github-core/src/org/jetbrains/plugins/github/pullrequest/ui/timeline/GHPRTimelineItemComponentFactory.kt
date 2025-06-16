@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.buildChildren
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHUser
@@ -196,7 +196,7 @@ internal class GHPRTimelineItemComponentFactory(private val project: Project,
           }
         }
         else {
-          ComponentListPanelFactory.createVertical(this, flowOf(threads), componentFactory = {
+          ComponentListPanelFactory.createVertical(this, MutableStateFlow(threads), componentFactory = {
             GHPRTimelineThreadComponentFactory.createIn(this, it)
           })
         }

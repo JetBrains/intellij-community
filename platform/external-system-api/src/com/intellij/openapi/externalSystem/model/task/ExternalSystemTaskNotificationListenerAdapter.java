@@ -6,12 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class ExternalSystemTaskNotificationListenerAdapter implements ExternalSystemTaskNotificationListener {
 
-  /**
-   * @deprecated Please use the {@link ExternalSystemTaskNotificationListener#NULL_OBJECT} directly.
-   */
-  @Deprecated(forRemoval = true)
-  public static final @NotNull ExternalSystemTaskNotificationListener NULL_OBJECT = ExternalSystemTaskNotificationListener.NULL_OBJECT;
-
   private final @Nullable ExternalSystemTaskNotificationListener myDelegate;
 
   /**

@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiDirectory
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_SOURCE_ROOT_TYPES
 
-class CreateKotlinAwareDirectoryOrPackageAction: CreateDirectoryOrPackageAction() {
+class CreateKotlinAwareDirectoryOrPackageAction: CreateDirectoryOrPackageAction(true) {
     override fun isPackage(project: Project, directories: List<PsiDirectory>): Boolean {
         if (super.isPackage(project, directories)) return true
 

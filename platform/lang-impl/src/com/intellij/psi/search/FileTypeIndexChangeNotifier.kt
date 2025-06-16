@@ -6,10 +6,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.platform.util.coroutines.flow.throttle
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class FileTypeIndexChangeNotifier(private val syncPublisher: FileTypeIndex.IndexChangeListener) : AutoCloseable {
@@ -52,10 +55,7 @@ internal class FileTypeIndexChangeNotifier(private val syncPublisher: FileTypeIn
   }
 
   override fun close() {
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
-      worker.cancelAndJoin()
-    }
+    worker.cancel()
     notifyPending()
   }
 }

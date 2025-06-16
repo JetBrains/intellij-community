@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.AbstractKotlinTestCreator
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtElement
 
 class K2TestCreator: AbstractKotlinTestCreator() {
-    override fun createTestIntention(): SelfTargetingRangeIntention<KtNamedDeclaration> =
+    override fun createTestIntention(): SelfTargetingRangeIntention<KtElement> =
         KotlinCreateTestIntention()
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.concurrency.currentThreadContext
@@ -13,7 +13,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.impl.PsiManagerEx
-import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.file.impl.FileManagerEx
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.AtomicMapCache
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -36,6 +36,7 @@ class CodeInsightContextManagerImpl(
 ) : CodeInsightContextManager, Disposable.Default {
 
   companion object {
+    @JvmStatic
     fun getInstanceImpl(project: Project): CodeInsightContextManagerImpl = CodeInsightContextManager.getInstance(project) as CodeInsightContextManagerImpl
   }
 
@@ -154,7 +155,7 @@ class CodeInsightContextManagerImpl(
   private fun findFirstContext(file: VirtualFile?): CodeInsightContext {
     if (file == null) return defaultContext()
 
-    // todo ijpl-339 implement a better way to select the current context
+    // todo IJPL-339 implement a better way to select the current context
     val firstContext = getContextSequence(file).first()
     return firstContext
   }
@@ -186,7 +187,7 @@ class CodeInsightContextManagerImpl(
     fileViewProvider: FileViewProvider,
     preferredContext: CodeInsightContext,
   ): CodeInsightContext {
-    val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as? FileManagerImpl
+    val fileManager = PsiManagerEx.getInstanceEx(project).fileManager as? FileManagerEx
     if (fileManager != null) {
       val result = fileManager.trySetContext(fileViewProvider, preferredContext)
       if (result != null) {

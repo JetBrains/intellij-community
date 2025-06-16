@@ -2,10 +2,11 @@ package com.intellij.cce.evaluation
 
 import com.intellij.cce.actions.DatasetContext
 import com.intellij.cce.actions.DatasetRef
+import com.intellij.cce.evaluation.data.Bindable
+import com.intellij.cce.evaluation.data.Binding
 import com.intellij.cce.evaluation.step.runInIntellij
 import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.EvaluationWorkspace
-import java.nio.file.Path
 
 /**
  * Environment represents resources needed for an evaluation.
@@ -14,35 +15,38 @@ import java.nio.file.Path
  */
 interface EvaluationEnvironment : AutoCloseable {
 
-  val setupSdk: EvaluationStep?
-  val checkSdk: EvaluationStep?
+  val setupSteps: List<EvaluationStep>
 
   val preparationDescription: String
 
-  fun prepare(datasetContext: DatasetContext, progress: Progress)
+  fun initialize(datasetContext: DatasetContext)
+
+  fun prepareDataset(datasetContext: DatasetContext, progress: Progress)
 
   fun sessionCount(datasetContext: DatasetContext): Int
 
   // TODO should return something closeable for large files
-  fun chunks(datasetContext: DatasetContext): Iterator<EvaluationChunk>
+  fun chunks(datasetContext: DatasetContext): Sequence<EvaluationChunk>
 
   fun execute(step: EvaluationStep, workspace: EvaluationWorkspace): EvaluationWorkspace?
+
+  // place here just for convenience, should be final protected by meaning
+  infix fun <T, B : Bindable<T>> B.bind(value: T): Binding<B> = Binding.create(this, value)
 }
 
-abstract class SimpleFileEnvironment : EvaluationEnvironment {
+interface SimpleFileEnvironment : EvaluationEnvironment {
 
-  protected abstract val datasetRef: DatasetRef
+  val datasetRef: DatasetRef
 
-  override val setupSdk: EvaluationStep? = null
-  override val checkSdk: EvaluationStep? = null
+  override val setupSteps: List<EvaluationStep> get() = emptyList()
 
-  protected open fun checkFile(datasetPath: Path) {
+  override val preparationDescription: String get() = "Checking that dataset file is available"
+
+  override fun initialize(datasetContext: DatasetContext) {
+    datasetRef.prepare(datasetContext)
   }
 
-  override fun prepare(datasetContext: DatasetContext, progress: Progress) {
-    datasetRef.prepare(datasetContext)
-    val datasetPath = datasetContext.path(datasetRef)
-    checkFile(datasetPath)
+  override fun prepareDataset(datasetContext: DatasetContext, progress: Progress) {
   }
 
   override fun execute(step: EvaluationStep, workspace: EvaluationWorkspace): EvaluationWorkspace? =

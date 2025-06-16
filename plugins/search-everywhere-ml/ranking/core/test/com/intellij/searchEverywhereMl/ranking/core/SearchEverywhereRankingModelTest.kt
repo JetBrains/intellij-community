@@ -1,13 +1,14 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.util.gotoByName.ChooseByNameModel
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup
 import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCache
 import com.intellij.searchEverywhereMl.ranking.core.features.HeavyFeaturesProviderTestCase
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereElementFeaturesProvider
@@ -17,9 +18,9 @@ import com.intellij.testFramework.VfsTestUtil
 
 internal abstract class SearchEverywhereRankingModelTest
   : HeavyFeaturesProviderTestCase<SearchEverywhereFileFeaturesProvider>(SearchEverywhereFileFeaturesProvider::class.java) {
-  abstract val tab: SearchEverywhereTabWithMlRanking
+  abstract val tab: SearchEverywhereTab.TabWithMlRanking
   private val featuresProviders by lazy { SearchEverywhereElementFeaturesProvider.getFeatureProviders() }
-  protected open val model by lazy { SearchEverywhereModelProvider().getModel(tab.tabId) }
+  protected open val model by lazy { SearchEverywhereModelProvider().getModel(tab) }
   protected val mockProgressIndicator by lazy { MockProgressIndicator() }
 
   protected abstract fun filterElements(searchQuery: String): List<FoundItemDescriptor<*>>
@@ -52,7 +53,7 @@ internal abstract class SearchEverywhereRankingModelTest
                                  featuresProviderCache: FeaturesProviderCache?): Map<String, Any?> {
     return featuresProviders.map {
       val features = it.getElementFeatures(foundItem.item, System.currentTimeMillis(), searchQuery, foundItem.weight,
-                                           featuresProviderCache)
+                                           featuresProviderCache, SearchEverywhereSpellCheckResult.NoCorrection)
       val featuresAsMap = hashMapOf<String, Any?>()
       for (feature in features) {
         featuresAsMap[feature.field.name] = feature.data

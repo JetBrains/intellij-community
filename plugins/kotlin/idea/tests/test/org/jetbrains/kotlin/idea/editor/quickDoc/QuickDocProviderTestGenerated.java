@@ -125,6 +125,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
         runTest("testData/editor/quickDoc/ConstructorVarVarargParameter.kt");
     }
 
+    @TestMetadata("ContextParameter.kt")
+    public void testContextParameter() throws Exception {
+        runTest("testData/editor/quickDoc/ContextParameter.kt");
+    }
+
     @TestMetadata("DataClass.kt")
     public void testDataClass() throws Exception {
         runTest("testData/editor/quickDoc/DataClass.kt");
@@ -233,6 +238,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("KotlinClassUsedFromJava.java")
     public void testKotlinClassUsedFromJava() throws Exception {
         runTest("testData/editor/quickDoc/KotlinClassUsedFromJava.java");
+    }
+
+    @TestMetadata("KotlinEnumEntriesUsedFromJava.java")
+    public void testKotlinEnumEntriesUsedFromJava() throws Exception {
+        runTest("testData/editor/quickDoc/KotlinEnumEntriesUsedFromJava.java");
     }
 
     @TestMetadata("KotlinPackageClassUsedFromJava.java")
@@ -453,6 +463,11 @@ public class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest 
     @TestMetadata("SuperConstructorWithArgs.kt")
     public void testSuperConstructorWithArgs() throws Exception {
         runTest("testData/editor/quickDoc/SuperConstructorWithArgs.kt");
+    }
+
+    @TestMetadata("SuspendFunctionInOverride.kt")
+    public void testSuspendFunctionInOverride() throws Exception {
+        runTest("testData/editor/quickDoc/SuspendFunctionInOverride.kt");
     }
 
     @TestMetadata("Tailrec.kt")

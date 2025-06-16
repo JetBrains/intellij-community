@@ -5,9 +5,6 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinModificationTrackerFactory"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinGlobalModificationService"/>
-    <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDirectInheritorsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeKotlinDirectInheritorsProvider"/>
     <projectService
@@ -46,7 +43,7 @@
     <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeModuleStateModificationService$SdkChangeListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
 
-    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.InvalidateCachesAfterDumbMode"
+    <listener class="org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.FirIdeDumbModeInvalidationListener"
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
   </projectListeners>
 

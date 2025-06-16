@@ -1,0 +1,10 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.jetbrains.python.pythonHelpersLocator"
+                    interface="com.intellij.python.community.helpersLocator.PythonHelpersLocator"
+                    dynamic="true"/>
+  </extensionPoints>
+  <extensions defaultExtensionNs="com.jetbrains.python">
+    <pythonHelpersLocator implementation="com.intellij.python.community.helpersLocator.PythonHelpersLocatorDefault"/>
+  </extensions>
+</idea-plugin>

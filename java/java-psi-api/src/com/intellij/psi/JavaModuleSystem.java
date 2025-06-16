@@ -2,9 +2,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,28 +9,13 @@ import org.jetbrains.annotations.Nullable;
  * Allows checking accessibility of a given class.
  * <p>
  * A given class is only accessible if all registered extensions consider it accessible
- *
- * @see com.intellij.codeInsight.JavaModuleSystemEx
+ * 
+ * @deprecated there's exactly one module system available, and it's accessible via the {@code JavaModuleGraphHelper} service. Use
+ * {@code isAccessible} methods from that service
  */
+@Deprecated
 public interface JavaModuleSystem {
-  String ADD_EXPORTS_OPTION = "--add-exports";
-  String ADD_OPENS_OPTION = "--add-opens";
-  String ADD_MODULES_OPTION = "--add-modules";
-  String ADD_READS_OPTION = "--add-reads";
-  String PATCH_MODULE_OPTION = "--patch-module";
-  String LIST_MODULES_OPTION = "--list-modules";
-
-  String ALL_UNNAMED = "ALL-UNNAMED";
-  String ALL_SYSTEM = "ALL-SYSTEM";
-  String ALL_MODULE_PATH = "ALL-MODULE-PATH";
-
   ExtensionPointName<JavaModuleSystem> EP_NAME = new ExtensionPointName<>("com.intellij.javaModuleSystem");
-
-  /**
-   * @return name of the module system which will be reported to user in case of inaccessibility
-   */
-  @Nls
-  @NotNull String getName();
 
   /**
    * Checks accessibility of the class
@@ -41,15 +23,7 @@ public interface JavaModuleSystem {
    * @param target class which accessibility should be determined
    * @param place place where accessibility of target is required
    */
-  default boolean isAccessible(@NotNull PsiClass target, @NotNull PsiElement place) {
-    PsiFile targetFile = target.getContainingFile();
-    if (targetFile == null) return true;
-
-    PsiUtilCore.ensureValid(targetFile);
-
-    String packageName = PsiUtil.getPackageName(target);
-    return packageName == null || isAccessible(packageName, targetFile, place);
-  }
+  boolean isAccessible(@NotNull PsiClass target, @NotNull PsiElement place);
 
   /**
    * Checks accessibility of element in the package

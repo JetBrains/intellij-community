@@ -68,6 +68,16 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doTest("extracted");
   }
 
+  // PY-53711
+  public void testStartInArgumentListOfMultiLineFunctionCall() {
+    doTest("extracted");
+  }
+
+  // PY-53711
+  public void testStartOnMultiLineFunctionCall() {
+    doTest("extracted");
+  }
+
   public void testParameter() {
     doTest("bar");
   }

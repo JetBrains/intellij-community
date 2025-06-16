@@ -20,6 +20,6 @@ class GHPRReloadListAction
 
   override fun actionPerformed(e: AnActionEvent) {
     val controller = e.getData(GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER) ?: return
-    controller.refreshList()
+    controller.reloadList()
   }
 }

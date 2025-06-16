@@ -151,8 +151,8 @@ fun <T> waitForOne(
   message: String? = null,
   timeout: Duration = 5.seconds,
   interval: Duration = 1.seconds,
-  errorMessage: ((List<T>) -> String)? = null,
-  getter: () -> List<T>,
+  errorMessage: ((Collection<T>) -> String)? = null,
+  getter: () -> Collection<T>,
   checker: (T) -> Boolean = { true },
 ): T {
   logAwaitStart(message, timeout)

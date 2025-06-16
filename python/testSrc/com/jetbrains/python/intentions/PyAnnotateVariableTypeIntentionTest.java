@@ -306,6 +306,10 @@ public class PyAnnotateVariableTypeIntentionTest extends PyIntentionTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  public void testAnnotationLiteralTypeWithIllegalHtmlCharacters() {
+    doAnnotationTest();
+  }
+
   private void doAnnotationTest() {
     doTest(LanguageLevel.PYTHON36);
   }

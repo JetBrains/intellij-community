@@ -79,7 +79,7 @@ class XSplitterWatchesViewImpl(
       return
     }
 
-    val session = mySession.get() ?: error("Not null session is expected here")
+    val session = session ?: error("Not null session is expected here")
     val bottomLocalsComponentProvider = tryGetBottomComponentProvider(session, useLowLevelDebugProcessPanel())
                                         ?: error("BottomLocalsComponentProvider is not implemented to use SplitterWatchesVariablesView")
 

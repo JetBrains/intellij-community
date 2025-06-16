@@ -16,7 +16,8 @@ class CompiledCodeFragmentData(
     val crossingBounds: Set<CodeFragmentParameter.Dumb>,
     val mainMethodSignature: MethodSignature,
     val compilerType: CompilerType,
-    var statisticReported: Boolean = false,
+    var statisticReported: Boolean,
+    val canBeCached: Boolean,
 ): CompilationCodeFragmentResult {
     data class MethodSignature(val parameterTypes: List<Type>, val returnType: Type)
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.comment
 
 import com.intellij.collaboration.ui.codereview.timeline.thread.CodeReviewResolvableItemViewModel
+import com.intellij.openapi.actionSystem.DataKey
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRNewThreadCommentViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -13,4 +14,8 @@ interface GHPRReviewThreadViewModel : CodeReviewResolvableItemViewModel {
 
   val canCreateReplies: StateFlow<Boolean>
   val newReplyVm: GHPRNewThreadCommentViewModel
+
+  companion object {
+    internal val THREAD_VM_DATA_KEY = DataKey.create<GHPRReviewThreadViewModel>("GitHub.PullRequests.Review.Thread.VM")
+  }
 }

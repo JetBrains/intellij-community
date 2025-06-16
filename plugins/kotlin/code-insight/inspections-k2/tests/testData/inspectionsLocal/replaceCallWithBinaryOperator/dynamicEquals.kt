@@ -1,7 +1,7 @@
 // JS_WITH_STDLIB
 // HIGHLIGHT: INFORMATION
-// K2_ERROR: Unsupported [dynamic type].
-// K2_AFTER_ERROR: Unsupported [dynamic type].
+// K2_ERROR: Dynamic type is only supported in Kotlin JS.
+// K2_AFTER_ERROR: Dynamic type is only supported in Kotlin JS.
 fun foo(a: dynamic, b: String): Boolean {
     return a.<caret>equals(b)
 }

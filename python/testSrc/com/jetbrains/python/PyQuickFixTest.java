@@ -104,30 +104,19 @@ public class PyQuickFixTest extends PyTestCase {
   public void testQualifyByImport() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     boolean oldPreferFrom = settings.PREFER_FROM_IMPORT;
-    boolean oldHighlightUnused = settings.HIGHLIGHT_UNUSED_IMPORTS;
     settings.PREFER_FROM_IMPORT = false;
-    settings.HIGHLIGHT_UNUSED_IMPORTS = false;
     try {
       doInspectionTest(new String[]{"QualifyByImport.py", "QualifyByImportFoo.py"}, PyUnresolvedReferencesInspection.class,
                        PyPsiBundle.message("ACT.qualify.with.module"), true, true);
     }
     finally {
       settings.PREFER_FROM_IMPORT = oldPreferFrom;
-      settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnused;
     }
   }
 
   public void testAddToImportFromList() {
-    final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
-    boolean oldHighlightUnused = settings.HIGHLIGHT_UNUSED_IMPORTS;
-    settings.HIGHLIGHT_UNUSED_IMPORTS = false;
-    try {
-      doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class,
-                       "Import 'add_to_import_test_unique_name from AddToImportFromFoo'", true, true);
-    }
-    finally {
-      settings.HIGHLIGHT_UNUSED_IMPORTS = oldHighlightUnused;
-    }
+    doInspectionTest(new String[]{"AddToImportFromList.py", "AddToImportFromFoo.py"}, PyUnresolvedReferencesInspection.class,
+                     "Import 'add_to_import_test_unique_name from AddToImportFromFoo'", true, true);
   }
   // TODO: add a test for multiple variants of above
 

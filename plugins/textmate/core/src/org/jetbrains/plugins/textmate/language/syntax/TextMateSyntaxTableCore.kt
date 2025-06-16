@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import org.jetbrains.plugins.textmate.getLogger
+import org.jetbrains.plugins.textmate.logging.TextMateLogger
 
 /**
  * Table of textmate syntax rules.
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
  */
 class TextMateSyntaxTableCore(private val rules: Map<CharSequence, SyntaxNodeDescriptor>) {
   companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(TextMateSyntaxTableCore::class.java)
+    private val LOG: TextMateLogger = getLogger(TextMateSyntaxTableCore::class)
   }
 
   private var rulesRepository: Array<SyntaxNodeDescriptor?>? = null
@@ -30,7 +30,7 @@ class TextMateSyntaxTableCore(private val rules: Map<CharSequence, SyntaxNodeDes
   fun getSyntax(scopeName: CharSequence): SyntaxNodeDescriptor {
     val syntaxNodeDescriptor = rules[scopeName]
     if (syntaxNodeDescriptor == null) {
-      LOG.info("Can't find syntax node for scope: '{}'", scopeName)
+      LOG.info { "Can't find syntax node for scope: '$scopeName'" }
       return SyntaxNodeDescriptor.EMPTY_NODE
     }
     return syntaxNodeDescriptor
@@ -43,7 +43,7 @@ class TextMateSyntaxTableCore(private val rules: Map<CharSequence, SyntaxNodeDes
   internal fun getRule(ruleId: Int): SyntaxNodeDescriptor {
     val syntaxNodeDescriptor = rulesRepository?.getOrNull(ruleId)
     if (syntaxNodeDescriptor == null) {
-      LOG.error("Can't find syntax node by id: '{}'", ruleId)
+      LOG.error { "Can't find syntax node by id: '$ruleId'" }
       return SyntaxNodeDescriptor.EMPTY_NODE
     }
     return syntaxNodeDescriptor

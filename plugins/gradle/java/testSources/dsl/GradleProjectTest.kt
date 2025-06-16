@@ -20,7 +20,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   fun `test resolve explicit getter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>getGroup()") {
-        val results = elementUnderCaret(GrMethodCall::class.java).multiResolve(false)
+        val results = elementUnderCaret(GrMethodCall::class.java).multiResolveGroovy(false)
         assertEquals(1, results.size)
         val method = assertInstanceOf<PsiMethod>(results[0].element)
         assertEquals("getGroup", method.name)
@@ -48,7 +48,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   fun `test resolve explicit setter`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>setGroup(1)") {
-        val results = elementUnderCaret(GrMethodCall::class.java).multiResolve(false)
+        val results = elementUnderCaret(GrMethodCall::class.java).multiResolveGroovy(false)
         assertEquals(1, results.size)
         val method = assertInstanceOf<PsiMethod>(results[0].element)
         assertEquals("setGroup", method.name)
@@ -62,7 +62,7 @@ class GradleProjectTest : GradleCodeInsightTestCase() {
   fun `test resolve explicit setter without argument`(gradleVersion: GradleVersion, decorator: String) {
     testEmptyProject(gradleVersion) {
       testBuildscript(decorator, "<caret>setGroup()") {
-        val results = elementUnderCaret(GrMethodCall::class.java).multiResolve(false)
+        val results = elementUnderCaret(GrMethodCall::class.java).multiResolveGroovy(false)
         assertEquals(1, results.size)
         val method = assertInstanceOf<PsiMethod>(results[0].element)
         assertEquals("setGroup", method.name)

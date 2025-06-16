@@ -42,7 +42,8 @@ interface SearchEverywhereMlService {
   @Contract("_, _, _ -> new")
   fun createFoundElementInfo(contributor: SearchEverywhereContributor<*>,
                                       element: Any,
-                                      priority: Int): SearchEverywhereFoundElementInfo
+                                      priority: Int,
+                                      correction: SearchEverywhereSpellCheckResult): SearchEverywhereFoundElementInfo
 
   fun onSearchRestart(project: Project?, tabId: String, reason: SearchRestartReason,
                                keysTyped: Int, backspacesTyped: Int, searchQuery: String,

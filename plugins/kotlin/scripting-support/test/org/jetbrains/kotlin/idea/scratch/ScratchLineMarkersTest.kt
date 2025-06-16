@@ -16,7 +16,7 @@ import com.intellij.testFramework.FileEditorManagerTestCase
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.codeInsight.AbstractLineMarkersTest
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.k1.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.jvm.shared.scratch.getScratchEditorForSelectedFile
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest.Companion.configureOptions
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider

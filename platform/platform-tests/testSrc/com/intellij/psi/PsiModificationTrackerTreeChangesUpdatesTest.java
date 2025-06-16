@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -19,13 +20,13 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends HeavyPlatformT
     // since we want to test PsiModificationTrackerImpl in isolation, we create a separate instance:
     // The existing PsiModificationTrackerImpl is affected by various components.
     myTracker = new PsiModificationTrackerImpl(getProject());
-    ((PsiManagerImpl)PsiManager.getInstance(getProject())).addTreeChangePreprocessor(myTracker);
+    PsiManagerEx.getInstanceEx(getProject()).addTreeChangePreprocessor(myTracker);
   }
 
   @Override
   public void tearDown() throws Exception {
     try {
-      ((PsiManagerImpl)PsiManager.getInstance(getProject())).removeTreeChangePreprocessor(myTracker);
+      PsiManagerEx.getInstanceEx(getProject()).removeTreeChangePreprocessor(myTracker);
     }
     catch (Throwable e) {
       addSuppressedException(e);

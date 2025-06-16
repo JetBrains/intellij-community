@@ -157,7 +157,7 @@ internal class InlineBreakpointInlayRenderer(private val breakpoint: XLineBreakp
         breakpoint!!.isEnabled = !breakpoint.isEnabled
       }
       ClickAction.REMOVE -> {
-        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint)
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(breakpoint?.asProxy())
       }
     }
   }

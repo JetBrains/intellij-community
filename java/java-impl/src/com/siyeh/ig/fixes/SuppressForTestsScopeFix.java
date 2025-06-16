@@ -4,6 +4,7 @@ package com.siyeh.ig.fixes;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
@@ -16,15 +17,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author Bas Leijdekkers
-*/
-public final class SuppressForTestsScopeFix extends InspectionGadgetsFix {
+ * @author Bas Leijdekkers
+ */
+public final class SuppressForTestsScopeFix implements LocalQuickFix {
 
   private final String myShortName;
 
@@ -50,9 +50,12 @@ public final class SuppressForTestsScopeFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    final PsiElement problemElement = descriptor.getPsiElement();
+    if (problemElement == null || !problemElement.isValid()) return;
+
     addRemoveTestsScope(project, true);
-    final VirtualFile vFile = descriptor.getPsiElement().getContainingFile().getVirtualFile();
+    final VirtualFile vFile = problemElement.getContainingFile().getVirtualFile();
     UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
       @Override
       public void undo() {
@@ -74,7 +77,9 @@ public final class SuppressForTestsScopeFix extends InspectionGadgetsFix {
     }
     if (add) {
       final NamedScope namedScope = NamedScopesHolder.getScope(project, "Tests");
+      assert namedScope != null : "named scope must not be null";
       final HighlightDisplayKey key = HighlightDisplayKey.find(myShortName);
+      assert key != null : "highlight display key must not be null";
       final HighlightDisplayLevel level = profile.getErrorLevel(key, namedScope, project);
       profile.addScope(tool, namedScope, level, false, project);
     }

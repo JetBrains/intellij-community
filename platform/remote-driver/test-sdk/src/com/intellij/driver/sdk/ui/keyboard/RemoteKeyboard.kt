@@ -74,7 +74,7 @@ class RemoteKeyboard(private val robot: Robot) {
     }
   }
 
-  fun typeText(text: String, delayBetweenCharsInMs: Long = 50) {
+  fun typeText(text: String, delayBetweenCharsInMs: Long = 150) {
     step("Type text '$text'") {
       LOG.info("Entering text '$text'.")
       text.forEach {

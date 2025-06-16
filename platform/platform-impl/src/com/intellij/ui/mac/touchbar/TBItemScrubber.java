@@ -8,6 +8,7 @@ import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.nio.charset.StandardCharsets;
@@ -54,7 +55,8 @@ public final class TBItemScrubber extends TBItem implements NSTLibrary.ScrubberD
   @Nullable TouchBarStats getStats() { return myStats; }
 
   // NOTE: designed to be completely filled before usage
-  TBItemScrubber addItem(Icon icon, String text, Runnable action) {
+  @VisibleForTesting
+  public TBItemScrubber addItem(Icon icon, String text, Runnable action) {
     final Runnable nativeAction = action == null && myListener == null ? null : ()-> {
       if (action != null)
         action.run();

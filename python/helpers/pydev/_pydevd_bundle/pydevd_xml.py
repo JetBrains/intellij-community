@@ -353,6 +353,15 @@ def var_to_xml(val, name, do_trim=True, additional_in_xml='', evaluate_full_valu
     except:
         pass
 
+    # data type info to xml (for arrays and tensors)
+    # we use it for view as image
+    xml_data_type = ''
+    try:
+        if hasattr(v, 'dtype') and hasattr(v.dtype, 'name'):
+            xml_data_type = ' arrayElementType="%s"' % make_valid_xml_value(v.dtype.name)
+    except:
+        pass
+
     # additional info to xml
     if is_exception_on_eval:
         xml_container = ' isErrorOnEval="True"'
@@ -362,7 +371,7 @@ def var_to_xml(val, name, do_trim=True, additional_in_xml='', evaluate_full_valu
         else:
             xml_container = ''
 
-    return ''.join((xml, xml_qualifier, xml_value, xml_container, xml_shape, xml_type_renderer_id, additional_in_xml, ' />\n'))
+    return ''.join((xml, xml_qualifier, xml_value, xml_container, xml_shape, xml_data_type, xml_type_renderer_id, additional_in_xml, ' />\n'))
 
 
 def _do_quote(elem):

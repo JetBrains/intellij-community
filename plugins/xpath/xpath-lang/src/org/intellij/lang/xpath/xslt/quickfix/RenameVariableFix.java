@@ -57,7 +57,7 @@ public class RenameVariableFix extends AbstractFix {
     }
 
   @Override
-  public void invoke(final @NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     RefactoringActionHandlerFactory.getInstance().createRenameHandler().invoke(project, new PsiElement[]{myElement},
                                                                                DataManager.getInstance().getDataContext());
   }

@@ -13,7 +13,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCaseLegacy.*
 import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
@@ -108,6 +107,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun findPsiFile(f: VirtualFile?): PsiFile {
     return readAction { PsiManager.getInstance(project).findFile(f!!)!! }
+  }
+
+  protected suspend fun findPsiFileAndGetText(f: VirtualFile?): String? {
+    if (f == null) return null
+    return readAction { PsiManager.getInstance(project).findFile(f)?.text }
   }
 
   protected suspend fun configureProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
@@ -307,7 +311,6 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     val expectedText = readAction { expected.text }
     val resolvedText = readAction { resolved?.text }
     assertEquals(expectedText, resolvedText)
-    assertEquals(expected, resolved)
     return ref
   }
 

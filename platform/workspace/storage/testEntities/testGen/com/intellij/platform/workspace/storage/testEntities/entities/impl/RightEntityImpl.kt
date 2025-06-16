@@ -2,14 +2,6 @@
 package com.intellij.platform.workspace.storage.testEntities.entities.impl
 
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.ConnectionId
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
-import com.intellij.platform.workspace.storage.WorkspaceEntityInternalApi
 import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.EntityLink
@@ -38,13 +30,13 @@ import com.intellij.platform.workspace.storage.testEntities.entities.RightEntity
 internal class RightEntityImpl(private val dataSource: RightEntityData) : RightEntity, WorkspaceEntityBase(dataSource) {
 
   private companion object {
-    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java,
-                                                                                ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
-    internal val CHILDREN_CONNECTION_ID: ConnectionId = ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java,
-                                                                            ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
-    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(HeadAbstractionEntity::class.java,
-                                                                          CompositeBaseEntity::class.java,
-                                                                          ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true)
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val CHILDREN_CONNECTION_ID: ConnectionId =
+      ConnectionId.create(CompositeBaseEntity::class.java, BaseEntity::class.java, ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, true)
+    internal val PARENT_CONNECTION_ID: ConnectionId = ConnectionId.create(
+      HeadAbstractionEntity::class.java, CompositeBaseEntity::class.java, ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, true
+    )
 
     private val connections = listOf<ConnectionId>(
       PARENTENTITY_CONNECTION_ID,
@@ -74,8 +66,8 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
   }
 
 
-  internal class Builder(result: RightEntityData?) : ModifiableWorkspaceEntityBase<RightEntity, RightEntityData>(
-    result), RightEntity.Builder {
+  internal class Builder(result: RightEntityData?) : ModifiableWorkspaceEntityBase<RightEntity, RightEntityData>(result),
+                                                     RightEntity.Builder {
     internal constructor() : this(RightEntityData())
 
     override fun applyToBuilder(builder: MutableEntityStorage) {
@@ -145,8 +137,9 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(PARENTENTITY_CONNECTION_ID,
-                                                                           this) as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
+          ((_diff as MutableEntityStorageInstrumentation).getParentBuilder(
+            PARENTENTITY_CONNECTION_ID, this
+          ) as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
           ?: (this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? CompositeBaseEntity.Builder<out CompositeBaseEntity>)
         }
         else {
@@ -186,8 +179,8 @@ internal class RightEntityImpl(private val dataSource: RightEntityData) : RightE
         val _diff = diff
         return if (_diff != null) {
           @OptIn(EntityStorageInstrumentationApi::class)
-          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID,
-                                                                                  this)!!.toList() as List<BaseEntity.Builder<out BaseEntity>>) +
+          ((_diff as MutableEntityStorageInstrumentation).getManyChildrenBuilders(CHILDREN_CONNECTION_ID, this)!!
+            .toList() as List<BaseEntity.Builder<out BaseEntity>>) +
           (this.entityLinks[EntityLink(true, CHILDREN_CONNECTION_ID)] as? List<BaseEntity.Builder<out BaseEntity>> ?: emptyList())
         }
         else {
@@ -288,7 +281,8 @@ internal class RightEntityData : WorkspaceEntityData<RightEntity>() {
 
   override fun getMetadata(): EntityMetadata {
     return MetadataStorageImpl.getMetadataByTypeFqn(
-      "com.intellij.platform.workspace.storage.testEntities.entities.RightEntity") as EntityMetadata
+      "com.intellij.platform.workspace.storage.testEntities.entities.RightEntity"
+    ) as EntityMetadata
   }
 
   override fun getEntityInterface(): Class<out WorkspaceEntity> {

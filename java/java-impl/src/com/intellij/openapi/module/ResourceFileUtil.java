@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.FilteredQuery;
 import org.jetbrains.annotations.Nullable;
 
 public final class ResourceFileUtil {
@@ -28,11 +27,16 @@ public final class ResourceFileUtil {
     String packageName = index >= 0 ? resourceName.substring(0, index).replace('/', '.') : "";
     final String fileName = index >= 0 ? resourceName.substring(index+1) : resourceName;
 
-    final VirtualFile dir = new FilteredQuery<>(
-      PackageIndex.getInstance(project).getDirsByPackageName(packageName, false), file -> {
-      final VirtualFile child = file.findChild(fileName);
-      return child != null && scope.contains(child);
-    }).findFirst();
-    return dir != null ? dir.findChild(fileName) : null;
+    PackageIndex packageIndex = PackageIndex.getInstance(project);
+    VirtualFile fileFromDir = packageIndex.getDirsByPackageName(packageName, false)
+      .mapping(file -> file.findChild(fileName))
+      .filtering(child -> child != null && scope.contains(child))
+      .findFirst();
+    if (fileFromDir != null) {
+      return fileFromDir;
+    }
+    return packageIndex.getFilesByPackageName(packageName)
+      .filtering(f -> fileName.equals(f.getName()) && scope.contains(f))
+      .findFirst();
   }
 }

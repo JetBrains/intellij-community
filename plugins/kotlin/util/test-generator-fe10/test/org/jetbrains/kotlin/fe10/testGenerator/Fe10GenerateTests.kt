@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionT
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
-import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleBuildFileHighlightingTest
+import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractK1GradleBuildFileHighlightingTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.*
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1InspectionTest
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.AbstractSharedK1LocalInspectionTest
@@ -135,8 +135,6 @@ import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.inference.common.AbstractCommonConstraintCollectorTest
 import org.jetbrains.kotlin.nj2k.inference.mutability.AbstractMutabilityInferenceTest
 import org.jetbrains.kotlin.nj2k.inference.nullability.AbstractNullabilityInferenceTest
-import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1CheckerTest
-import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK1QuickFixTest
 import org.jetbrains.kotlin.psi.patternMatching.AbstractK1PsiUnifierTest
 import org.jetbrains.kotlin.search.AbstractAnnotatedMembersSearchTest
 import org.jetbrains.kotlin.search.AbstractInheritorsSearchTest
@@ -173,7 +171,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     val excludedFirPrecondition = fun(name: String) = !name.endsWith(".fir.kt") && !name.endsWith(".fir.kts")
 
     testGroup("gradle/gradle-java/k1", category = GRADLE, testDataPath = "../../../idea/tests/testData") {
-        testClass<AbstractGradleBuildFileHighlightingTest> {
+        testClass<AbstractK1GradleBuildFileHighlightingTest> {
             model(
                 "gradle/highlighting/gradle8",
                 pattern = DIRECTORY,
@@ -287,6 +285,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
 
         testClass<AbstractFlowAsyncStackTraceTest> {
             model("asyncStackTrace/flows")
+        }
+
+        listOf(AbstractCoroutineAsyncStackTraceTest::class, AbstractK2CoroutineAsyncStackTraceTest::class).forEach {
+            testClass(it) {
+                model("asyncStackTrace/coroutines")
+            }
         }
 
         listOf(AbstractCoroutineDumpTest::class, AbstractK1IdeK2CodeCoroutineDumpTest::class).forEach {
@@ -440,6 +444,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "addAnnotationUseSiteTargetForConstructorParameter",
                     "simplifyExpression",
                     "redundantInterpolationPrefix", // K2-only multi-dollar interpolation
+                    "addInterpolationPrefixUnresolvedReference", // K2-only multi-dollar interpolation
+                    "unsupportedFeature", // K2-related features only
                 )
             )
         }
@@ -579,9 +585,16 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model(
                 "intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"),
                 excludedDirectories = listOf(
-                    "convertToMultiDollarString", // K2-only
-                    "branched/ifWhen/ifToWhen/whenGuards", // K2-only
-                    "concatenationToBuildCollection", // K2-only
+                    // disabled K2-only features
+                    "convertToMultiDollarString",
+                    "branched/ifWhen/ifToWhen/whenGuards",
+                    "concatenationToBuildCollection",
+                    "convertStringTemplateToBuildStringMultiDollarPrefix",
+                    "convertToConcatenatedStringMultiDollarPrefix",
+                    "convertToStringTemplateInterpolationPrefix",
+                    "addAnnotationUseSiteTarget/allTarget",
+                    "contextParameters",
+                    // end K2-only features
                 )
             )
         }
@@ -594,7 +607,11 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     testGroup("idea/tests", category = INSPECTIONS) {
         testClass<AbstractInspectionTest> {
             model("intentions", pattern = Patterns.forRegex("^(inspections\\.test)$"), flatten = true)
-            model("inspections", pattern = Patterns.forRegex("^(inspections\\.test)$"), flatten = true)
+            model("inspections", pattern = Patterns.forRegex("^(inspections\\.test)$"), flatten = true,
+                  excludedDirectories = listOf(
+                      "canConvertToMultiDollarString", // K2-only
+                  )
+            )
             model("inspectionsLocal", pattern = Patterns.forRegex("^(inspections\\.test)$"), flatten = true)
         }
 
@@ -608,6 +625,10 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                     "branched/introduceWhenSubject/whenGuards", // K2-only
                     "removeRedundantLabel", // quick fix in K1
                     "contextParametersMigration", // K2-only
+                    "defaultAnnotationTarget", // K2-only
+                    "orInWhenGuard", // K2-only
+                    "convertFromMultiDollarToRegularString", // K2-only
+                    "javaCollectionsWithNullableTypes", // K2-only
                 )
             )
         }
@@ -1079,10 +1100,12 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractKotlinLambdasHintsProvider> {
-            model("codeInsight/hints/lambda")
+            model("codeInsight/hints/lambda", excludedDirectories = listOf(
+                "context", // K2
+            ))
         }
-        testClass<AbstractKotlinRangesHintsProviderTest> {
-            model("codeInsight/hints/ranges")
+        testClass<AbstractKotlinValuesHintsProviderTest> {
+            model("codeInsight/hints/values")
         }
 
         testClass<AbstractKotlinCallChainHintsProviderTest> {
@@ -1108,7 +1131,8 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractMultiplatformAnalysisTest> {
-            model("multiplatform", isRecursive = false, pattern = DIRECTORY)
+            model("multiplatform", isRecursive = false, pattern = DIRECTORY, excludedDirectories = listOf("ambiguousActuals"))
+            model("multiplatform/ambiguousActuals", isRecursive = false, pattern = DIRECTORY)
         }
 
         testClass<AbstractBytecodeToolWindowTest> {
@@ -1293,15 +1317,16 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
     }
 
-    testGroup("compiler-plugins/parcelize/tests/k1", testDataPath = "../testData") {
-        testClass<AbstractParcelizeK1QuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
-        }
-
-        testClass<AbstractParcelizeK1CheckerTest> {
-            model("checker", pattern = KT)
-        }
-    }
+    // TODO: KTIJ-33510
+    //testGroup("compiler-plugins/parcelize/tests/k1", testDataPath = "../testData") {
+    //    testClass<AbstractParcelizeK1QuickFixTest> {
+    //        model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
+    //    }
+    //
+    //    testClass<AbstractParcelizeK1CheckerTest> {
+    //        model("checker", pattern = KT)
+    //    }
+    //}
 
     testGroup("completion/tests-k1", testDataPath = "../testData", category = COMPLETION) {
         testClass<AbstractCompiledKotlinInJavaCompletionTest> {
@@ -1335,7 +1360,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractJvmSmartCompletionTest> {
-            model("smart")
+            model("smart", pattern = KT_WITHOUT_FIR_PREFIX)
         }
 
         testClass<AbstractDumbCompletionTest> {

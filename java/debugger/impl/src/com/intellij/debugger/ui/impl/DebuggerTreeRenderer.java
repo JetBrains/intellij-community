@@ -15,11 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.PlatformIcons;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -80,7 +76,10 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
 
   public static Icon getValueIcon(ValueDescriptorImpl valueDescriptor, @Nullable ValueDescriptorImpl parentDescriptor) {
     Icon nodeIcon;
-    if (valueDescriptor instanceof FieldDescriptorImpl fieldDescriptor) {
+    if (valueDescriptor instanceof WatchItemDescriptor) {
+      nodeIcon = AllIcons.Debugger.Db_watch;
+    }
+    else if (valueDescriptor instanceof FieldDescriptorImpl fieldDescriptor) {
       nodeIcon = IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Field);
       if (parentDescriptor != null) {
         Value value = valueDescriptor.getValue();
@@ -113,9 +112,6 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     else if (valueDescriptor.isPrimitive()) {
       nodeIcon = AllIcons.Debugger.Db_primitive;
     }
-    else if (valueDescriptor instanceof WatchItemDescriptor) {
-      nodeIcon = AllIcons.Debugger.Db_watch;
-    }
     else {
       nodeIcon = AllIcons.Debugger.Value;
     }
@@ -125,17 +121,6 @@ public final class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
         EnumerationChildrenRenderer.getCurrent(((UserExpressionDescriptorImpl)valueDescriptor).getParentDescriptor());
       if (enumerationChildrenRenderer != null && enumerationChildrenRenderer.isAppendDefaultChildren()) {
         nodeIcon = AllIcons.Debugger.Db_watch;
-      }
-    }
-
-    // if watches in variables enabled, always use watch icon
-    if (valueDescriptor instanceof WatchItemDescriptor && nodeIcon != AllIcons.Debugger.Db_watch) {
-      XDebugSession session = XDebuggerManager.getInstance(valueDescriptor.getProject()).getCurrentSession();
-      if (session != null) {
-        XDebugSessionTab tab = ((XDebugSessionImpl)session).getSessionTab();
-        if (tab != null && tab.isWatchesInVariables()) {
-          nodeIcon = AllIcons.Debugger.Db_watch;
-        }
       }
     }
 

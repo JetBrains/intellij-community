@@ -67,6 +67,7 @@ final class UnknownInvalidSdkFix implements UnknownSdkFix {
           } else {
             LOG.warn("Newly added SDK has invalid home or version: " + sdk + ", home=" + homePath + " version=" + versionString);
           }
+          project.getService(UnknownSdkCheckerService.class).checkUnknownSdks();
         })
         .buildEditorNotificationPanelHandler();
   }

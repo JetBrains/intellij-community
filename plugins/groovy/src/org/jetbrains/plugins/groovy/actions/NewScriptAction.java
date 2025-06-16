@@ -19,14 +19,15 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
-public final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
-  public NewScriptAction() {
-    super(GroovyBundle.messagePointer("new.script.action.text"), GroovyBundle.messagePointer("new.script.action.description"),
-          () -> JetgroovyIcons.Groovy.GroovyFile, null);
+final class NewScriptAction extends JavaCreateTemplateInPackageAction<GroovyFile> implements DumbAware {
+
+  NewScriptAction() {
+    super(null);
   }
 
   @Override
-  protected void buildDialog(Project project, PsiDirectory directory, CreateFileFromTemplateDialog.Builder builder) {
+  protected void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
+                             @NotNull CreateFileFromTemplateDialog.Builder builder) {
     builder
       .setTitle(GroovyBundle.message("new.script.dialog.title"))
       .addKind(GroovyBundle.message("new.script.list.item.script"), JetgroovyIcons.Groovy.GroovyFile, GroovyTemplates.GROOVY_SCRIPT)
@@ -34,13 +35,13 @@ public final class NewScriptAction extends JavaCreateTemplateInPackageAction<Gro
   }
 
   @Override
-  protected boolean isAvailable(DataContext dataContext) {
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
     return super.isAvailable(dataContext) && LibrariesUtil.hasGroovySdk(PlatformCoreDataKeys.MODULE.getData(dataContext));
   }
 
   @Override
   protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
-    return GroovyBundle.message("new.script.action.text");
+    return GroovyBundle.message("action.Groovy.NewScript.text");
   }
 
   @Override

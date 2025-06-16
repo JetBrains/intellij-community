@@ -2,16 +2,24 @@
 package com.intellij.terminal.frontend
 
 import com.google.common.base.Ascii
+import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.impl.BackspaceHandler
+import com.intellij.codeInsight.lookup.impl.LookupActionHandler
+import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.lookup.impl.LookupTypedHandler
+import com.intellij.ide.DataManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.session.TerminalState
 import com.jediterm.terminal.emulator.mouse.MouseButtonCodes
 import com.jediterm.terminal.emulator.mouse.MouseButtonModifierFlags
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import org.jetbrains.plugins.terminal.block.output.TerminalEventsHandler
+import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
+import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import java.awt.Point
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -33,6 +41,8 @@ internal open class TerminalEventsHandlerImpl(
   private val terminalInput: TerminalInput,
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val scrollingModel: TerminalOutputScrollingModel?,
+  private val outputModel: TerminalOutputModel,
+  private val typeAhead: TerminalTypeAhead?,
 ) : TerminalEventsHandler {
   private var ignoreNextKeyTypedEvent: Boolean = false
   private var lastMotionReport: Point? = null
@@ -40,22 +50,21 @@ internal open class TerminalEventsHandlerImpl(
   private val terminalState: TerminalState
     get() = sessionModel.terminalState.value
 
-  override fun keyTyped(e: KeyEvent) {
+  override fun keyTyped(e: TimedKeyEvent) {
+    updateLookupOnTyping(e.original.keyChar)
     val selectionModel = editor.selectionModel
     if (selectionModel.hasSelection()) {
       selectionModel.removeSelection()
     }
 
-    scrollingModel?.scrollToCursor(force = true)
-
     if (ignoreNextKeyTypedEvent) {
-      e.consume()
+      e.original.consume()
       return
     }
-    if (!Character.isISOControl(e.keyChar)) { // keys filtered out here will be processed in processTerminalKeyPressed
+    if (!Character.isISOControl(e.original.keyChar)) { // keys filtered out here will be processed in processTerminalKeyPressed
       try {
         if (processCharacter(e)) {
-          e.consume()
+          e.original.consume()
         }
       }
       catch (ex: Exception) {
@@ -64,18 +73,22 @@ internal open class TerminalEventsHandlerImpl(
     }
   }
 
-  override fun keyPressed(e: KeyEvent) {
+  override fun keyPressed(e: TimedKeyEvent) {
     ignoreNextKeyTypedEvent = false
     if (processTerminalKeyPressed(e)) {
-      e.consume()
+      e.original.consume()
       ignoreNextKeyTypedEvent = true
     }
   }
 
-  private fun processTerminalKeyPressed(e: KeyEvent): Boolean {
+  private fun processTerminalKeyPressed(e: TimedKeyEvent): Boolean {
     try {
-      val keyCode = e.keyCode
-      val keyChar = e.keyChar
+      val keyCode = e.original.keyCode
+      val keyChar = e.original.keyChar
+      updateLookupOnAction(keyCode)
+      if (isNoModifiers(e.original) && keyCode == KeyEvent.VK_BACK_SPACE) {
+        typeAhead?.backspace()
+      }
 
       // numLock does not change the code sent by keypad VK_DELETE,
       // although it send the char '.'
@@ -84,24 +97,26 @@ internal open class TerminalEventsHandlerImpl(
         return true
       }
       // CTRL + Space is not handled in KeyEvent; handle it manually
-      if (keyChar == ' ' && e.modifiersEx and InputEvent.CTRL_DOWN_MASK != 0) {
+      if (keyChar == ' ' && e.original.modifiersEx and InputEvent.CTRL_DOWN_MASK != 0) {
         terminalInput.sendBytes(byteArrayOf(Ascii.NUL))
         return true
       }
-      val code = encodingManager.getCode(keyCode, e.modifiers)
+      val code = encodingManager.getCode(keyCode, e.original.modifiers)
       if (code != null) {
         terminalInput.sendBytes(code)
-        // TODO
-        //if (settings.scrollToBottomOnTyping() && TerminalPanel.isCodeThatScrolls(keyCode)) {
-        //  scrollToBottom()
-        //}
+        if (isCodeThatScrolls(keyCode)) {
+          scrollingModel?.scrollToCursor(force = true)
+        }
+        if (keyCode == KeyEvent.VK_ENTER) {
+          TerminalUsageLocalStorage.getInstance().recordEnterKeyPressed()
+        }
         return true
       }
-      if (isAltPressedOnly(e) && Character.isDefined(keyChar) && settings.altSendsEscape()) {
+      if (isAltPressedOnly(e.original) && Character.isDefined(keyChar) && settings.altSendsEscape()) {
         // Cannot use e.getKeyChar() on macOS:
         //  Option+f produces e.getKeyChar()='ƒ' (402), but 'f' (102) is needed.
         //  Option+b produces e.getKeyChar()='∫' (8747), but 'b' (98) is needed.
-        val string = String(charArrayOf(Ascii.ESC.toInt().toChar(), simpleMapKeyCodeToChar(e)))
+        val string = String(charArrayOf(Ascii.ESC.toInt().toChar(), simpleMapKeyCodeToChar(e.original)))
         terminalInput.sendString(string)
         return true
       }
@@ -115,21 +130,33 @@ internal open class TerminalEventsHandlerImpl(
     return false
   }
 
-  private fun processCharacter(e: KeyEvent): Boolean {
-    if (isAltPressedOnly(e) && settings.altSendsEscape()) {
+  private fun processCharacter(e: TimedKeyEvent): Boolean {
+    if (isAltPressedOnly(e.original) && settings.altSendsEscape()) {
       return false
     }
-    val keyChar = e.keyChar
-    if (keyChar == '`' && e.modifiersEx and InputEvent.META_DOWN_MASK != 0) {
+    val keyChar = e.original.keyChar
+    if (keyChar == '`' && e.original.modifiersEx and InputEvent.META_DOWN_MASK != 0) {
       // Command + backtick is a short-cut on Mac OSX, so we shouldn't type anything
       return false
     }
-    terminalInput.sendString(keyChar.toString())
-    // TODO
-    //if (settings.scrollToBottomOnTyping()) {
-    //scrollToBottom()
-    //}
+    val typedString = keyChar.toString()
+    if (e.original.id == KeyEvent.KEY_TYPED) {
+      typeAhead?.stringTyped(typedString)
+      terminalInput.sendTrackedString(typedString, eventTime = e.initTime)
+    }
+    else terminalInput.sendString(typedString)
+
+    scrollingModel?.scrollToCursor(force = true)
+
     return true
+  }
+
+  private fun isNoModifiers(e: KeyEvent): Boolean {
+    val modifiersEx = e.modifiersEx
+    return modifiersEx and InputEvent.ALT_DOWN_MASK == 0
+           && modifiersEx and InputEvent.ALT_GRAPH_DOWN_MASK == 0
+           && modifiersEx and InputEvent.CTRL_DOWN_MASK == 0
+           && modifiersEx and InputEvent.SHIFT_DOWN_MASK == 0
   }
 
   private fun isAltPressedOnly(e: KeyEvent): Boolean {
@@ -138,6 +165,52 @@ internal open class TerminalEventsHandlerImpl(
            && modifiersEx and InputEvent.ALT_GRAPH_DOWN_MASK == 0
            && modifiersEx and InputEvent.CTRL_DOWN_MASK == 0
            && modifiersEx and InputEvent.SHIFT_DOWN_MASK == 0
+  }
+
+  private fun isCodeThatScrolls(keycode: Int): Boolean {
+    return keycode == KeyEvent.VK_UP ||
+           keycode == KeyEvent.VK_DOWN ||
+           keycode == KeyEvent.VK_LEFT ||
+           keycode == KeyEvent.VK_RIGHT ||
+           keycode == KeyEvent.VK_BACK_SPACE ||
+           keycode == KeyEvent.VK_INSERT ||
+           keycode == KeyEvent.VK_DELETE ||
+           keycode == KeyEvent.VK_ENTER ||
+           keycode == KeyEvent.VK_HOME ||
+           keycode == KeyEvent.VK_END ||
+           keycode == KeyEvent.VK_PAGE_UP ||
+           keycode == KeyEvent.VK_PAGE_DOWN
+  }
+
+  private fun updateLookupOnAction(keycode: Int) {
+    val caret = editor.getCaretModel().getCurrentCaret()
+    val offset = outputModel.cursorOffsetState.value
+    val lookup = LookupManager.getActiveLookup(editor) as LookupImpl?
+    if (lookup == null) {
+      return
+    }
+
+    val newOffset = when (keycode) {
+      KeyEvent.VK_LEFT -> offset - 1
+      KeyEvent.VK_BACK_SPACE -> offset - 1
+      else -> offset
+    }
+    lookup.performGuardedChange(Runnable { editor.caretModel.moveToOffset(newOffset) })
+
+    val handler = when (keycode) {
+      KeyEvent.VK_LEFT -> {
+        LookupActionHandler.LeftHandler(null)
+      }
+      KeyEvent.VK_RIGHT -> {
+        LookupActionHandler.RightHandler(null)
+      }
+      KeyEvent.VK_BACK_SPACE -> {
+        BackspaceHandler(null)
+      }
+      else -> return
+    }
+
+    handler.execute(editor, caret, DataManager.getInstance().getDataContext(editor.getComponent()))
   }
 
   private fun simpleMapKeyCodeToChar(e: KeyEvent): Char {
@@ -216,7 +289,7 @@ internal open class TerminalEventsHandlerImpl(
       // mousePressed() handles mouse wheel using SCROLLDOWN and SCROLLUP buttons
       mousePressed(x, y, event)
     }
-    if (terminalState.isAlternateScreenBuffer && settings.sendArrowKeysInAlternativeMode()) {
+    else if (terminalState.isAlternateScreenBuffer && settings.sendArrowKeysInAlternativeMode()) {
       //Send Arrow keys instead
       val arrowKeys = if (event.wheelRotation < 0) {
         encodingManager.getCode(KeyEvent.VK_UP, 0)
@@ -299,6 +372,24 @@ internal open class TerminalEventsHandlerImpl(
     }
     LOG.debug(mouseFormat.toString() + " (" + charset + ") report : " + button + ", " + x + "x" + y + " = " + command)
     return command.toByteArray(Charset.forName(charset))
+  }
+
+  private fun updateLookupOnTyping(charTyped: Char) {
+    val project = editor.project ?: return
+    val lookup = LookupManager.getActiveLookup(editor)
+    if (lookup != null) {
+      if (charTyped.code != KeyEvent.VK_BACK_SPACE) {
+        val psiFile = PsiUtilBase.getPsiFileInEditor(editor, project)
+        LookupTypedHandler.beforeCharTyped(
+          charTyped,
+          project,
+          editor,
+          editor,
+          psiFile,
+          Runnable { }
+        )
+      }
+    }
   }
 
   companion object {

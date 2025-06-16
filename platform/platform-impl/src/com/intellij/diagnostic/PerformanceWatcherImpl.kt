@@ -89,7 +89,8 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
 
   init {
     if (isActive) {
-      coroutineScope.launch {
+      LOG.debug("Freeze detection started")
+      coroutineScope.launch(CoroutineName("EDT freeze detector")) {
         asyncInit()
 
         taskFlow.collectLatest { task ->
@@ -116,16 +117,22 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       return
     }
 
-    coroutineScope.launch {
-      val samplingIntervalMs = samplingInterval
-      @Suppress("KotlinConstantConditions")
-      if (samplingIntervalMs <= 0) {
-        return@launch
-      }
+    LOG.debug("EDT sampling started")
+    coroutineScope.launch(CoroutineName("EDT sampling")) {
+      try {
+        val samplingIntervalMs = samplingInterval
+        @Suppress("KotlinConstantConditions")
+        if (samplingIntervalMs <= 0) {
+          return@launch
+        }
 
-      while (true) {
-        delay(samplingIntervalMs)
-        samplePerformance(samplingIntervalMs)
+        while (true) {
+          delay(samplingIntervalMs)
+          samplePerformance(samplingIntervalMs)
+        }
+      }
+      finally {
+        LOG.debug("EDT sampling stopped")
       }
     }
   }
@@ -200,7 +207,9 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
       diffMs -= samplingIntervalMs
     }
     jitWatcher.checkJitState()
-    val latencyMs = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    LOG.trace("Scheduling EDT sample")
+    val latencyMs = withContext(Dispatchers.ui(UiDispatcherKind.STRICT) + ModalityState.any().asContextElement()) {
+      LOG.trace("Processing EDT sample")
       TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current)
     }
     swingApdex = swingApdex.withEvent(TOLERABLE_LATENCY, latencyMs)
@@ -585,11 +594,13 @@ private fun collectCrashInfo(pid: String, lastModified: Long): CrashInfo? {
   val osCrashContent = runCatching {
     if (!SystemInfoRt.isMac) return@runCatching null
     for (reportsDir in MacOSDiagnosticReportDirectories) {
-      val reportFiles = Path.of(reportsDir).useDirectoryEntries { entries -> entries
+      val reportFiles = Path.of(reportsDir)
+        .takeIf(Files::isDirectory)
+        ?.useDirectoryEntries { entries -> entries
         .filter { it.name.endsWith(".ips") && it.isRegularFile() && it.getLastModifiedTime().toMillis() > lastModified }
         .toList()
       }
-      val osCrashContent = reportFiles.firstNotNullOfOrNull { file ->
+      val osCrashContent = reportFiles?.firstNotNullOfOrNull { file ->
         if (file.fileSize() > CRASH_MAX_SIZE) {
           LOG.info("OS crash file $file is too big to process or report")
           return@firstNotNullOfOrNull null

@@ -45,13 +45,13 @@ class RegisterInspectionFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     return !DumbService.isDumb(project);
   }
 
   @Override
-  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    PluginDescriptorChooser.show(project, editor, file, element -> doFix(element, project, file));
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile psiFile) throws IncorrectOperationException {
+    PluginDescriptorChooser.show(project, editor, psiFile, element -> doFix(element, project, psiFile));
   }
 
   private void doFix(final DomFileElement<IdeaPlugin> selectedValue, final Project project, final PsiFile file) {
@@ -72,7 +72,7 @@ class RegisterInspectionFix implements IntentionAction {
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile psiFile) {
     return IntentionPreviewInfo.EMPTY;
   }
 }

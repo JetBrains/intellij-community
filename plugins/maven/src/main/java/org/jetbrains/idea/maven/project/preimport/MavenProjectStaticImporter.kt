@@ -8,7 +8,6 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.PREIMPORT_ACTIVITY
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -109,17 +108,15 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       // MavenProjectsManager.getInstance(project).projectsTree = projectTree
       return PreimportResult(withBackgroundProgress(project, MavenProjectBundle.message("maven.project.importing"), false) {
         tracer.spanBuilder("importProject").useWithScope {
-          blockingContext {
-            val importer = MavenProjectImporter.createStaticImporter(project,
-                                                                     projectTree,
-                                                                     projectChanges,
-                                                                     modelsProvider,
-                                                                     importingSettings,
-                                                                     parentActivity)
+          val importer = MavenProjectImporter.createStaticImporter(project,
+                                                                   projectTree,
+                                                                   projectChanges,
+                                                                   modelsProvider,
+                                                                   importingSettings,
+                                                                   parentActivity)
 
-            importer.importProject()
-            return@blockingContext importer.createdModules()
-          }
+          importer.importProject()
+          return@useWithScope importer.createdModules()
         }
       }, projectTree)
     }
@@ -270,7 +267,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
       Properties().apply {
         putAll(projectData.properties)
       },
-      projectData.plugins.values.map { MavenPluginInfo(it, null) }.toList(),
+      projectData.plugins.values.map { MavenPluginWithArtifact(it, null) }.toList(),
     )
   }
 
@@ -456,7 +453,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
           val file = aggregatorProjectFile.parent.findFileOrDirectory(it)?.let { fod ->
             if (fod.isDirectory) fod.findChild(MavenConstants.POM_XML) else fod
           }
-          if (file == null) return@launch
+          if (file == null || tree.hasFile(file)) return@launch
           val rootModel = MavenJDOMUtil.read(file, null) ?: return@launch
           val mavenProjectData = readProject(rootModel, file)
           tree.addChild(aggregatorProject, mavenProjectData)
@@ -555,7 +552,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
     //modelMap["build.finalName"] = mavenModel.build.finalName
     modelMap["build.directory"] = mavenModel.build.directory
     val result = MavenProjectReaderResult(mavenModel, modelMap, MavenExplicitProfiles.NONE, mutableListOf())
-    mavenProject.updateFromReaderResult(result, MavenProjectsManager.getInstance(project).generalSettings, false)
+    mavenProject.updateFromReaderResult(result, MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo(), false)
   }
 
   private fun resolveDirectories(mavenProjectData: MavenProjectData) {
@@ -721,6 +718,12 @@ private class ProjectTree {
       fullMavenIds[newMavenId] = data
       managedMavenIds[trimVersion(newMavenId)] = data
 
+    }
+  }
+
+  suspend fun hasFile(file: VirtualFile): Boolean {
+    return mutex.withLock {
+      allProjects.contains(file)
     }
   }
 

@@ -78,4 +78,9 @@ class SettingsFilteringTest : LightPlatformTestCase() {
     assertFalse(isSyncCategoryEnabled("advancedSettings.xml"))
     assertFalse(isSyncCategoryEnabled("trustedPaths.xml"))
   }
+
+  @TestFor(issues = ["IJPL-175567"])
+  fun `test sync file templates`() {
+    assertTrue(isSyncCategoryEnabled("fileTemplates/my-file-template.php"))
+  }
 }

@@ -24,7 +24,7 @@ import javax.swing.*;
 
 final class CheckRegExpIntentionAction extends QuickEditAction implements Iconable {
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
     if (PlatformUtils.isPyCharmEducational()) {
       return false;
     }
@@ -33,24 +33,24 @@ final class CheckRegExpIntentionAction extends QuickEditAction implements Iconab
       // to disable intention inside CheckRegExpForm itself
       return false;
     }
-    Pair<PsiElement, TextRange> pair = getRangePair(file, editor);
+    Pair<PsiElement, TextRange> pair = getRangePair(psiFile, editor);
     if (pair != null && pair.first != null) {
       Language language = pair.first.getLanguage();
       return language.isKindOf(RegExpLanguage.INSTANCE);
     }
-    PsiFile baseFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    PsiFile baseFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile);
     return baseFile != null && baseFile.getLanguage().isKindOf(RegExpLanguage.INSTANCE);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiFile baseFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+  public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
+    PsiFile baseFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(psiFile);
     if (baseFile == null || !baseFile.getLanguage().isKindOf(RegExpLanguage.INSTANCE)) {
-      super.invoke(project, editor, file);
+      super.invoke(project, editor, psiFile);
       return;
     }
-    JComponent component = createBalloonComponent(file);
-    if (component != null) QuickEditHandler.showBalloon(editor, file, component);
+    JComponent component = createBalloonComponent(psiFile);
+    if (component != null) QuickEditHandler.showBalloon(editor, psiFile, component);
   }
 
   @Override

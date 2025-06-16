@@ -3,6 +3,7 @@ package com.intellij.ide.projectWizard.projectTypeStep
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.logInstallPluginDialogShowed
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.logInstallPluginPopupShowed
@@ -12,12 +13,15 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.observable.util.whenTextChangedFromUi
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptor
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
@@ -35,7 +39,6 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.Graphics
@@ -43,11 +46,9 @@ import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.*
 
-@ApiStatus.Internal
 internal class ProjectTypeList(
   private val context: WizardContext
 ) {
-
   private val searchTextField: SearchTextField
   private val list: JBList<TemplateGroupItem>
   private val model: ProjectTypeListModel
@@ -149,11 +150,11 @@ internal class ProjectTypeList(
     }
   }
 
-  private fun showInstallPluginDialog(languagePlugin: LanguagePlugin) {
-    logInstallPluginDialogShowed(context, languagePlugin.name)
-    showInstallPluginDialog {
-      openMarketplaceTab(LANGUAGE_TAG + " " + languagePlugin.name)
-    }
+  private fun showInstallPluginDialog(plugin: WizardPlugin) {
+    logInstallPluginDialogShowed(context, plugin.name)
+    ProgressManager.getInstance().run(
+      getInstallAndEnableTask(null, setOf(PluginId.getId(plugin.id)), true, true, null) { }
+    )
   }
 
   private fun showInstallPluginDialog() {
@@ -165,8 +166,8 @@ internal class ProjectTypeList(
 
   private fun showInstallPluginPopup() {
     logInstallPluginPopupShowed(context)
-    val installedLanguagePlugins = model.getLanguageGeneratorItems().map { it.wizard.name }.toSet()
-    val additionalLanguagePlugins = additionalLanguagePlugins.filter { it.name !in installedLanguagePlugins }
+    val installedLanguagePlugins = PluginManager.getPlugins().map { it.pluginId.idString }.toSet()
+    val additionalLanguagePlugins = getAdditionalWizardPlugins().filter { it.id !in installedLanguagePlugins }
     if (additionalLanguagePlugins.isEmpty()) {
       showInstallPluginDialog()
     }
@@ -196,7 +197,7 @@ internal class ProjectTypeList(
     }
   }
 
-  private fun showInstallPluginPopup(additionalLanguagePlugins: List<LanguagePlugin>) {
+  private fun showInstallPluginPopup(additionalWizardPlugins: List<WizardPlugin>) {
     val link = ActionLink(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.advertiser")) { showInstallPluginDialog() }
     link.toolTipText = null
 
@@ -209,7 +210,7 @@ internal class ProjectTypeList(
     languagePluginAdvertiserLink.add(link, BorderLayout.WEST)
 
     return JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(additionalLanguagePlugins)
+      .createPopupChooserBuilder(additionalWizardPlugins)
       .setRenderer(LanguagePluginRenderer())
       .setTitle(UIBundle.message("newProjectWizard.ProjectTypeStep.InstallPluginAction.title"))
       .setAutoselectOnMouseMove(true)
@@ -402,11 +403,11 @@ internal class ProjectTypeList(
     }
   }
 
-  private class LanguagePluginRenderer : GroupedItemsListRenderer<LanguagePlugin>(LanguagePluginRendererDescriptor()) {
+  private class LanguagePluginRenderer : GroupedItemsListRenderer<WizardPlugin>(LanguagePluginRendererDescriptor()) {
 
     override fun customizeComponent(
-      list: JList<out LanguagePlugin>,
-      value: LanguagePlugin,
+      list: JList<out WizardPlugin>,
+      value: WizardPlugin,
       index: Int,
       isSelected: Boolean,
       cellHasFocus: Boolean
@@ -415,50 +416,42 @@ internal class ProjectTypeList(
     }
   }
 
-  private class LanguagePluginRendererDescriptor : ListItemDescriptor<LanguagePlugin> {
-
-    override fun getTextFor(value: LanguagePlugin): String = value.name
-
-    override fun getTooltipFor(value: LanguagePlugin): String? = null
-
-    override fun getIconFor(value: LanguagePlugin): Icon = value.icon
-
-    override fun hasSeparatorAboveOf(value: LanguagePlugin): Boolean = false
-
-    override fun getCaptionAboveOf(value: LanguagePlugin): String? = null
+  private class LanguagePluginRendererDescriptor : ListItemDescriptor<WizardPlugin> {
+    override fun getTextFor(value: WizardPlugin): String = value.name
+    override fun getTooltipFor(value: WizardPlugin): String? = null
+    override fun getIconFor(value: WizardPlugin): Icon = value.icon
+    override fun hasSeparatorAboveOf(value: WizardPlugin): Boolean = false
+    override fun getCaptionAboveOf(value: WizardPlugin): String? = null
   }
+}
 
-  private class LanguagePlugin(
-    val name: @NlsSafe String,
-    val icon: Icon
-  )
+private class WizardPlugin(
+  val id: String,
+  val name: @NlsSafe String,
+  val icon: Icon
+)
 
-  companion object {
+private const val PROJECT_WIZARD_GROUP = "project.wizard.group"
+private val LOG = Logger.getInstance("com.intellij.ide.projectWizard.ProjectTypeStep")
 
-    private const val PROJECT_WIZARD_GROUP = "project.wizard.group"
-    private val LOG = Logger.getInstance("com.intellij.ide.projectWizard.ProjectTypeStep")
-
-    private const val LANGUAGE_TAG = "/tag: \"Programming Language\""
-
-    private val additionalLanguagePlugins: List<LanguagePlugin> = buildList {
-      if (PlatformUtils.isIdeaCommunity()) {
-        add(LanguagePlugin(Language.PYTHON, AllIcons.Language.Python))
-        add(LanguagePlugin(Language.SCALA, AllIcons.Language.Scala))
-      }
-      else {
-        add(LanguagePlugin(Language.GO, AllIcons.Language.GO))
-        add(LanguagePlugin(Language.PHP, AllIcons.Language.Php))
-        add(LanguagePlugin(Language.PYTHON, AllIcons.Language.Python))
-        add(LanguagePlugin(Language.RUBY, AllIcons.Language.Ruby))
-        add(LanguagePlugin(Language.RUST, AllIcons.Language.Rust))
-        add(LanguagePlugin(Language.SCALA, AllIcons.Language.Scala))
-      }
-    }
-
-    @TestOnly
-    @JvmStatic
-    fun resetStoredSelectionForTests() {
-      PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, null)
-    }
+private fun getAdditionalWizardPlugins(): List<WizardPlugin> = buildList {
+  if (PlatformUtils.isIdeaCommunity()) {
+    add(WizardPlugin("PythonCore", Language.PYTHON, AllIcons.Language.Python))
+    add(WizardPlugin("DevKit", "Plugin DevKit", AllIcons.Nodes.Plugin))
+    add(WizardPlugin("org.intellij.scala", Language.SCALA, AllIcons.Language.Scala))
   }
+  else {
+    add(WizardPlugin("org.jetbrains.plugins.go", Language.GO, AllIcons.Language.GO))
+    add(WizardPlugin("com.jetbrains.php", Language.PHP, AllIcons.Language.Php))
+    add(WizardPlugin("Pythonid", Language.PYTHON, AllIcons.Language.Python))
+    add(WizardPlugin("DevKit", "Plugin DevKit", AllIcons.Nodes.Plugin))
+    add(WizardPlugin("org.jetbrains.plugins.ruby", Language.RUBY, AllIcons.Language.Ruby))
+    add(WizardPlugin("com.jetbrains.rust", Language.RUST, AllIcons.Language.Rust))
+    add(WizardPlugin("org.intellij.scala", Language.SCALA, AllIcons.Language.Scala))
+  }
+}
+
+@TestOnly
+fun resetStoredSelectionForTests() {
+  PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, null)
 }

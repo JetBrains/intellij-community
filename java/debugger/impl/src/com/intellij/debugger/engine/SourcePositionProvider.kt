@@ -7,7 +7,6 @@ import com.intellij.debugger.impl.computeSafeIfAny
 import com.intellij.debugger.ui.tree.NodeDescriptor
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 
@@ -31,9 +30,8 @@ abstract class SourcePositionProvider {
     project: Project,
     context: DebuggerContextImpl,
     nearest: Boolean,
-  ): SourcePosition? = blockingContext {
+  ): SourcePosition? =
     ReadAction.nonBlocking<SourcePosition> { computeSourcePosition(descriptor, project, context, nearest) }.executeSynchronously()
-  }
 
   companion object {
     private val EP_NAME: ExtensionPointName<SourcePositionProvider> = ExtensionPointName.create("com.intellij.debugger.sourcePositionProvider")

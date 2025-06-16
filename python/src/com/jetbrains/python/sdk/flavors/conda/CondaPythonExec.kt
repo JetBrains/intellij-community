@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
 import com.intellij.execution.target.TargetedCommandLineBuilder
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.packaging.getCondaBasePython
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 
@@ -21,6 +22,8 @@ val usePythonForLocalConda: Boolean get() = Registry.`is`("use.python.for.local.
  * For the legacy it either takes homePath from [sdk] or base conda but from the base env only.
  * So, you should provide sdk or (if you do not have it) base conda env. Otherwise, fallbacks to "conda run" even in legacy mode
  */
+
+@ApiStatus.Internal
 fun addCondaPythonToTargetCommandLine(targetedCommandLineBuilder: TargetedCommandLineBuilder,
                                       condaEnv: PyCondaEnv,
                                       sdk: Sdk?) {

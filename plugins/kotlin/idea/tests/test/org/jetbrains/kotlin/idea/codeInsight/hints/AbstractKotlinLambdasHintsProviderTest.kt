@@ -11,7 +11,7 @@ abstract class AbstractKotlinLambdasHintsProvider : AbstractKotlinInlayHintsProv
         org.jetbrains.kotlin.idea.codeInsight.hints.declarative.KotlinLambdasHintsProvider()
 
     override fun calculateOptions(fileContents: String): Map<String, Boolean> =
-        buildMap<String, Boolean> {
+        buildMap {
             put(SHOW_RETURN_EXPRESSIONS.name, false)
             put(SHOW_IMPLICIT_RECEIVERS_AND_PARAMS.name, false)
 

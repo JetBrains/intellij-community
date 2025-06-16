@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.isUnaryOperatorOnIntLiteralReference
 import org.jetbrains.kotlin.idea.references.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -64,23 +65,6 @@ internal class UsedReference private constructor(val reference: KtReference) {
  */
 private fun isDefaultJavaAnnotationArgumentReference(reference: KtReference): Boolean {
     return reference is KtDefaultAnnotationArgumentReference
-}
-
-/**
- * Checks if the [reference] points to unary plus or minus operator on an [Int] literal, like `-10` or `+(20)`.
- *
- * Currently, such operators are not properly resolved in K2 Mode (see KT-70774).
- */
-private fun isUnaryOperatorOnIntLiteralReference(reference: KtReference): Boolean {
-    val unaryOperationReferenceExpression = reference.element as? KtOperationReferenceExpression ?: return false
-
-    if (unaryOperationReferenceExpression.operationSignTokenType !in arrayOf(KtTokens.PLUS, KtTokens.MINUS)) return false
-
-    val prefixExpression = unaryOperationReferenceExpression.parent as? KtUnaryExpression ?: return false
-    val unwrappedBaseExpression = prefixExpression.baseExpression?.unwrapParenthesesLabelsAndAnnotations() ?: return false
-
-    return unwrappedBaseExpression is KtConstantExpression &&
-            unwrappedBaseExpression.elementType == KtNodeTypes.INTEGER_CONSTANT
 }
 
 /**

@@ -29,7 +29,9 @@ public final class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
 
   static @NotNull Pair<String, String> splitPath(@NotNull String path) {
     int separator = path.indexOf(URLUtil.JAR_SEPARATOR);
-    if (separator < 0) throw new IllegalArgumentException("Path in JarFileSystem must contain a separator: " + path);
+    if (separator < 0) { 
+      throw new IllegalArgumentException("Path in JarFileSystem must contain a separator: " + path);
+    }
     return pair(path.substring(0, separator), path.substring(separator + URLUtil.JAR_SEPARATOR.length()));
   }
 

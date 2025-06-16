@@ -4,6 +4,7 @@
   "author": "JetBrains",
   "nameKey": "dark.theme.name",
   "editorScheme": "Dark",
+  "parentTheme": "Darcula",
   "colors": {
     "Gray1": "#1E1F22",
     "Gray2": "#2B2D30",
@@ -246,7 +247,13 @@
 
     "Shortcut": {
       "backgroundOpacity": 0,
-      "borderColor":"Gray7"
+      "borderColor":"Gray7",
+      "foreground": "Gray12"
+    },
+
+    "Abbreviation": {
+      "background": "#B4B8BF40",
+      "foreground": "Gray12"
     },
 
     "ComboPopup.border": "1,1,1,1,#43454A",
@@ -1190,12 +1197,7 @@
     "ManagedIdeMenuItemHover": "Gray4",
 
     "InlineBanner.hoverBackground": "#FFFFFF14",
-    "InlineBanner.pressedBackground": "#FFFFFF1E",
-
-    "Settings.Spotlight": {
-      "borderColor": "#A36B4EFF",
-      "backgroundColor": "#2B2D3080"
-    }
+    "InlineBanner.pressedBackground": "#FFFFFF1E"
   },
 
   "icons": {

@@ -33,7 +33,7 @@ jvm_library(
     "@lib//:slf4j-jdk14",
     "@lib//:opentelemetry",
     "@lib//:kotlin-stdlib",
-    "//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+    "//platform/diagnostic/telemetry/rt",
   ],
   exports = [
     "@lib//:slf4j-api",
@@ -45,7 +45,13 @@ jvm_library(
 
 ### auto-generated section `build intellij.gradle.toolingExtension.tests` start
 load("@rules_java//java:defs.bzl", "java_library")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
+
+jvm_resources(
+  name = "toolingExtension-tests_test_resources",
+  files = glob(["testResources/**/*"]),
+  strip_prefix = "testResources"
+)
 
 java_library(
   name = "toolingExtension-tests",
@@ -65,13 +71,16 @@ jvm_library(
     "@lib//:gradle-tooling_extension-tests-io-github-classgraph-classgraph-4-8-87",
     "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
     "@lib//:ion",
+    "//platform/core-api:core",
+    "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//java/openapi:java",
     "@lib//:fastutil-min",
     "//platform/boot",
     "//plugins/gradle",
-  ]
+  ],
+  runtime_deps = [":toolingExtension-tests_test_resources"]
 )
 
 jvm_test(

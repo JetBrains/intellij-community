@@ -5,11 +5,17 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import externalApp.nativessh.NativeSshAskPassApp
 import externalApp.nativessh.NativeSshAskPassAppHandler
+import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.APP)
-class NativeSshAuthService : ExternalProcessHandlerService<NativeSshAskPassAppHandler>(
+class NativeSshAuthService(
+  coroutineScope: CoroutineScope
+) : ExternalProcessHandlerService<NativeSshAskPassAppHandler>(
   "intellij-ssh-askpass",
-  NativeSshAskPassApp::class.java
+  NativeSshAskPassApp::class.java,
+  NativeSshAskPassApp(),
+  listOf(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV, NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV),
+  coroutineScope
 ) {
   companion object {
     @JvmStatic

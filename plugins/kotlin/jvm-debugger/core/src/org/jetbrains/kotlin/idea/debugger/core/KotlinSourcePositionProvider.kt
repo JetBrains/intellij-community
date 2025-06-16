@@ -10,7 +10,6 @@ import com.intellij.debugger.ui.tree.FieldDescriptor
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor
 import com.intellij.debugger.ui.tree.NodeDescriptor
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaPsiFacade
@@ -25,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameter
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionLiteralByImplicitLambdaParameterSymbol
+import org.jetbrains.kotlin.idea.debugger.base.util.dumbAction
 import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllInterfaces
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
@@ -43,16 +43,18 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
-        if (context.frameProxy == null || DumbService.isDumb(project)) return null
+        if (context.frameProxy == null) return null
+        return dumbAction(project, fallback = null) {
+            when (descriptor) {
+                is FieldDescriptor -> computeSourcePosition(descriptor, context, nearest)
+                is GetterDescriptor -> computeSourcePosition(descriptor, context, nearest)
+                is LocalVariableDescriptor -> {
+                    val descriptorName = descriptor.name
+                    readAction { computeSourcePosition(descriptorName, context, nearest) }
+                }
 
-        return when (descriptor) {
-            is FieldDescriptor -> computeSourcePosition(descriptor, context, nearest)
-            is GetterDescriptor -> computeSourcePosition(descriptor, context, nearest)
-            is LocalVariableDescriptor -> {
-                val descriptorName = descriptor.name
-                readAction { computeSourcePosition(descriptorName, context, nearest) }
+                else -> null
             }
-            else -> null
         }
     }
 
@@ -70,7 +72,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
 
         if (localReferenceExpression !is KtSimpleNameExpression) return null
 
-        return runDumbAnalyze(localReferenceExpression, fallback = null) f@ {
+        return runDumbAnalyze(localReferenceExpression, fallback = null) f@{
             for (symbol in localReferenceExpression.mainReference.resolveToSymbols()) {
                 if (symbol !is KaVariableSymbol) continue
 
@@ -78,7 +80,10 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
                     // symbol.psi is null or lambda, so we need a bit more work to find nearest position.
                     val lambda = symbol.getFunctionLiteralByImplicitLambdaParameterSymbol() ?: continue
                     return@f when {
-                        nearest -> DebuggerContextUtil.findNearest(context, lambda.containingFile) { _ -> implicitLambdaParameterUsages(lambda) }
+                        nearest -> DebuggerContextUtil.findNearest(context, lambda.containingFile) { _ ->
+                            implicitLambdaParameterUsages(lambda)
+                        }
+
                         else -> SourcePosition.createFromOffset(lambda.containingFile, lambda.lBrace.textOffset)
                     }
                 }

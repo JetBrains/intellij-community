@@ -9,6 +9,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.List;
@@ -83,7 +84,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
    * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
    */
   @ApiStatus.Experimental
-  public @NotNull Collection<String> getGeneratedFilesRoots() {
+  public @NotNull @Unmodifiable Collection<String> getGeneratedFilesRoots() {
     return myGeneratedFiles.keySet();
   }
 
@@ -94,7 +95,7 @@ public class ProjectTaskContext extends UserDataHolderBase {
    * Or using the {@link ProjectTaskListener#started(ProjectTaskContext)} event.
    */
   @ApiStatus.Experimental
-  public @NotNull Collection<String> getGeneratedFilesRelativePaths(@NotNull String root) {
+  public @NotNull @Unmodifiable Collection<String> getGeneratedFilesRelativePaths(@NotNull String root) {
     return myGeneratedFiles.get(root);
   }
 

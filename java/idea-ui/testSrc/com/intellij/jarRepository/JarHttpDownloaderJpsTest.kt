@@ -6,6 +6,7 @@ import com.intellij.jarRepository.JarHttpDownloaderTestUtil.createContext
 import com.intellij.jarRepository.JarHttpDownloaderTestUtil.url
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.ex.PathManagerEx.findFileUnderCommunityHome
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
@@ -17,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TemporaryDirectoryExtension
 import com.intellij.testFramework.createOrLoadProject
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.replaceService
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.engine.ApplicationEngine
 import kotlinx.coroutines.runBlocking
@@ -27,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.test.assertEquals
@@ -45,8 +48,10 @@ class JarHttpDownloaderJpsTest {
   private val m2DirectoryPath by lazy { m2DirectoryExtension.createDir() }
 
   private val authUsername = "user"
+
   @Suppress("SpellCheckingInspection")
   private val authPassword = "passw0rd"
+
 
   @RegisterExtension
   @JvmField
@@ -78,15 +83,20 @@ class JarHttpDownloaderJpsTest {
     Disposer.register(disposable) {
       pathMacros.setMacro(TEST_MAVEN_LOCAL_REPOSITORY_MACRO, null)
     }
-
     pathMacros.setMacro(TEST_REMOTE_REPOSITORIES_ROOT_MACRO, server.url)
     Disposer.register(disposable) {
       pathMacros.setMacro(TEST_REMOTE_REPOSITORIES_ROOT_MACRO, null)
     }
-
     JarRepositoryManager.setLocalRepositoryPath(m2DirectoryPath.toFile())
     Disposer.register(disposable) {
       JarRepositoryManager.setLocalRepositoryPath(null)
+    }
+
+    val repo = PathMacros.getInstance().getValue("MAVEN_REPOSITORY")
+    PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", m2DirectoryPath.toString())
+
+    Disposer.register(disposable) {
+      PathMacros.getInstance().setMacro("MAVEN_REPOSITORY", repo)
     }
 
     assertTrue(JarHttpDownloader.forceHttps, "default forceHttps must be true")
@@ -115,6 +125,7 @@ class JarHttpDownloaderJpsTest {
 
   @Test
   fun happy_case() = testRepositoryLibraryUtils(projectTestData) { project, utils ->
+
     val libraryRelease = getLibrary(project, "apache.commons.math3") as LibraryEx
     val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
     promise!!.await()
@@ -124,6 +135,7 @@ class JarHttpDownloaderJpsTest {
 
     val sourcesJar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6-sources.jar")
     assertEquals("fake sources jar content", sourcesJar.readText())
+
   }
 
   @Test
@@ -132,7 +144,7 @@ class JarHttpDownloaderJpsTest {
     val promise = JarHttpDownloaderJps.getInstance(project).downloadLibraryFilesAsync(libraryRelease)
 
     val exception = assertFailsWith<IllegalStateException> {
-      promise!!.await()
+      promise.await()
     }
 
     assertTrue(exception.message!!.startsWith("Failed to download 1 artifact(s): (first exception) Wrong file checksum"), exception.message!!)
@@ -148,6 +160,24 @@ class JarHttpDownloaderJpsTest {
     // still downloaded
     val sourcesJar = m2DirectoryPath.resolve("org/apache/commons/commons-math3/3.6/commons-math3-3.6-sources.jar")
     assertEquals("fake sources jar content", sourcesJar.readText())
+
+  }
+
+  private suspend fun Project.withMavenRepoReplace(f: suspend () -> Unit) {
+    val serviceDisposable = Disposer.newDisposable(disposable)
+    val oldService = PathMacroManager.getInstance(this)
+    replaceService(PathMacroManager::class.java, object : PathMacroManager(null) {
+      override fun expandPath(text: String?): String? {
+        if (text == JarRepositoryManager.MAVEN_REPOSITORY_MACRO) return m2DirectoryPath.absolutePathString()
+        return oldService.expandPath(text)
+      }
+    }, disposable);
+    try {
+      f()
+    }
+    finally {
+      Disposer.dispose(serviceDisposable)
+    }
   }
 
   private fun getLibrary(project: Project, name: String) =
@@ -169,10 +199,12 @@ class JarHttpDownloaderJpsTest {
     doNotEnableExternalStorageByDefaultInTests {
       runBlocking {
         createOrLoadProject(projectDirectory, ::copyProjectFiles, loadComponentState = true, useDefaultProjectSettings = false) { project ->
-          val utils = RepositoryLibraryUtils.getInstance(project)
-          utils.setTestCoroutineScope(this)
-          checkProject(project, utils)
-          utils.resetTestCoroutineScope()
+          project.withMavenRepoReplace {
+            val utils = RepositoryLibraryUtils.getInstance(project)
+            utils.setTestCoroutineScope(this)
+            checkProject(project, utils)
+            utils.resetTestCoroutineScope()
+          }
         }
       }
     }

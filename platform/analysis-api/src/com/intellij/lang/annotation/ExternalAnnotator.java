@@ -41,7 +41,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> i
   /**
    * @see ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)
    */
-  public @Nullable InitialInfoType collectInformation(@NotNull PsiFile file) {
+  public @Nullable InitialInfoType collectInformation(@NotNull PsiFile psiFile) {
     return null;
   }
 
@@ -49,13 +49,13 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> i
    * Collects initial information needed for launching a tool. This method is called within a read action;
    * non-{@link DumbAware} annotators are skipped during indexing.
    *
-   * @param file      a file to annotate
+   * @param psiFile      a file to annotate
    * @param editor    an editor in which file's document reside
    * @param hasErrors indicates if file has errors detected by preceding analyses
    * @return information to pass to {@link ExternalAnnotator#doAnnotate(InitialInfoType)}, or {@code null} if not applicable
    */
-  public @Nullable InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
-    return hasErrors ? null : collectInformation(file);
+  public @Nullable InitialInfoType collectInformation(@NotNull PsiFile psiFile, @NotNull Editor editor, boolean hasErrors) {
+    return hasErrors ? null : collectInformation(psiFile);
   }
 
   /**
@@ -73,11 +73,11 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> i
   /**
    * Applies collected annotations to the given annotation holder. This method is called within a read action.
    *
-   * @param file             a file to annotate
+   * @param psiFile             a file to annotate
    * @param annotationResult annotations collected in {@link ExternalAnnotator#doAnnotate(InitialInfoType)}
    * @param holder           a container for receiving annotations
    */
-  public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) { }
+  public void apply(@NotNull PsiFile psiFile, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) { }
 
   /**
    * <p>Returns an inspection that should run in batch mode.</p>

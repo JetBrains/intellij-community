@@ -9,7 +9,9 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -116,7 +118,8 @@ final class SettingsHelper {
     return settings;
   }
 
-  static String[] loadArgs(@NotNull JCefAppConfig config, @NotNull CefSettings settings, @Nullable BoolRef doTrackGPUCrashes) {
+  @NotNull
+  static String @NotNull [] loadArgs(@NotNull JCefAppConfig config, @NotNull CefSettings settings, @Nullable BoolRef doTrackGPUCrashes) {
     String[] argsFromProviders = JBCefAppRequiredArgumentsProvider
       .getProviders()
       .stream()
@@ -205,7 +208,7 @@ final class SettingsHelper {
   static void showNotificationDisableGPU() {
     Notification notification = NOTIFICATION_GROUP.getValue().createNotification(
       IdeBundle.message("notification.content.jcef.gpucrash.title"),
-      IdeBundle.message("notification.content.jcef.gpucrash.message"),
+      IdeBundle.message("notification.content.jcef.gpucrash.message", ApplicationInfo.getInstance().getFullApplicationName()),
       NotificationType.ERROR);
 
     notification.addAction(new AnAction(IdeBundle.message("notification.content.jcef.gpucrash.action.restart")) {
@@ -249,7 +252,10 @@ final class SettingsHelper {
   }
 
   static String getLogPath() {
-    final String def = System.getProperty("user.home") + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log";
+    if (Utils.getBoolean("JCEF_USE_IDE_LOG")) // just for convenient debugging
+      return PathManager.getLogPath() + Platform.current().fileSeparator + "idea.log";
+
+    final String def = PathManager.getLogPath() + Platform.current().fileSeparator + "jcef_" + ProcessHandle.current().pid() + ".log";
     final String result = Utils.getString("ide.browser.jcef.log.path", def).trim();
     return result.isEmpty() || result.equals("null") ? null : result;
   }

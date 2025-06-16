@@ -30,8 +30,8 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
   @GeneratedCodeApiVersion(3)
   interface Builder : WorkspaceEntity.Builder<FacetEntity>, ModuleSettingsFacetBridgeEntity.Builder<FacetEntity> {
     override var entitySource: EntitySource
-    override var name: String
     override var moduleId: ModuleId
+    override var name: String
     var typeId: FacetEntityTypeId
     var configurationXmlTag: String?
     var module: ModuleEntity.Builder
@@ -43,15 +43,15 @@ interface FacetEntity : ModuleSettingsFacetBridgeEntity {
     @JvmStatic
     @JvmName("create")
     operator fun invoke(
-      name: String,
       moduleId: ModuleId,
+      name: String,
       typeId: FacetEntityTypeId,
       entitySource: EntitySource,
       init: (Builder.() -> Unit)? = null,
     ): Builder {
       val builder = builder()
-      builder.name = name
       builder.moduleId = moduleId
+      builder.name = name
       builder.typeId = typeId
       builder.entitySource = entitySource
       init?.invoke(builder)

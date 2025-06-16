@@ -4,8 +4,10 @@ package org.jetbrains.plugins.github.ui.component
 import com.intellij.collaboration.util.ComputedResult
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.jetbrains.annotations.ApiStatus
 
-internal interface LabeledListPanelViewModel<T> {
+@ApiStatus.Internal
+interface LabeledListPanelViewModel<T> {
   val isEditingAllowed: Boolean
   val items: StateFlow<List<T>>
 

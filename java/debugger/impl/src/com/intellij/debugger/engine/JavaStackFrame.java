@@ -43,6 +43,7 @@ import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ExceptionEvent;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,6 +81,12 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       myEvaluator = new JavaDebuggerEvaluator(myDebugProcess, this);
     }
     return myEvaluator;
+  }
+
+  @ApiStatus.Internal
+  @Override
+  public boolean isDocumentEvaluator() {
+    return true;
   }
 
   @Override

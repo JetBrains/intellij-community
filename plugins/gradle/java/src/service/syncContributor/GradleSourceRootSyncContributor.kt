@@ -35,7 +35,6 @@ import org.jetbrains.plugins.gradle.service.project.GradleContentRootIndex
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
-import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleBuildEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLinkedProjectEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProjectEntitySource
@@ -61,7 +60,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
   }
 
   private suspend fun configureProjectSourceRoots(context: ProjectResolverContext, storage: MutableEntityStorage) {
-    val project = context.project()
+    val project = context.project
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
 
     val sourceRootsToAdd = LinkedHashMap<GradleSourceSetEntitySource, GradleSourceRootData>()

@@ -82,8 +82,9 @@ internal class LightEditFileEditorManagerImpl(
     return arrayOf(LightEditService.getInstance().selectedFile ?: return VirtualFile.EMPTY_ARRAY)
   }
 
-  override val currentFile: VirtualFile?
-    get() = LightEditService.getInstance().selectedFile
+  override fun getCurrentFile(): VirtualFile? {
+    return LightEditService.getInstance().selectedFile
+  }
 
   override fun hasOpenFiles(): Boolean = !LightEditService.getInstance().editorManager.openFiles.isEmpty()
 

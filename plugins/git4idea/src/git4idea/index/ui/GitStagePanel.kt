@@ -15,14 +15,18 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.changes.*
+import com.intellij.openapi.vcs.changes.ChangeListListener
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.DiffPreview.Companion.setPreviewVisible
+import com.intellij.openapi.vcs.changes.InclusionListener
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
@@ -36,13 +40,10 @@ import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.*
-import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
 import com.intellij.vcs.commit.insertEditedCommitNode
-import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.ui.ProgressStripe
@@ -129,16 +130,9 @@ internal class GitStagePanel(
 
     PopupHandler.installPopupMenu(tree, "Git.Stage.Tree.Menu", "Git.Stage.Tree.Menu")
 
-    val statusPanel = CommitStatusPanel(commitPanel).apply {
-      border = empty(0, 1, 0, 6)
-      background = tree.background
-
-      addToLeft(commitPanel.toolbar.component)
-    }
     val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
     val treePanel = GitStageTreePanel()
       .addToCenter(createScrollPane(tree, sideBorder))
-      .addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this)
 
     val treePanelWithToolbar = JPanel(BorderLayout())
@@ -148,7 +142,7 @@ internal class GitStagePanel(
     treeMessageSplitter = TwoKeySplitter(true, ProportionKey("git.stage.tree.message.splitter", 0.7f,
                                                              "git.stage.tree.message.splitter.horizontal", 0.5f))
     treeMessageSplitter.firstComponent = treePanelWithToolbar
-    treeMessageSplitter.secondComponent = commitPanel
+    treeMessageSplitter.secondComponent = commitPanel.component
 
     changesStatusPanel = Wrapper()
     changesStatusPanel.minimumSize = JBUI.emptySize()

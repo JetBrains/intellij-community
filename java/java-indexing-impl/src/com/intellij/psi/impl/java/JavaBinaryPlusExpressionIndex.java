@@ -2,12 +2,13 @@
 package com.intellij.psi.impl.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.syntax.element.JavaSyntaxTokenType;
+import com.intellij.java.syntax.element.SyntaxElementTypes;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.lexer.TokenList;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.syntax.lexer.TokenList;
 import com.intellij.psi.impl.source.JavaFileElementType;
-import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.BooleanDataDescriptor;
 import com.intellij.util.io.DataExternalizer;
@@ -25,7 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.psi.JavaTokenType.PLUS;
+import static com.intellij.platform.syntax.lexer.TokenListUtil.*;
 
 public final class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> {
   public static final ID<Boolean, PlusOffsets> INDEX_ID = ID.create("java.binary.plus.expression");
@@ -44,9 +45,9 @@ public final class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension
 
       IntList result = new IntArrayList();
       for (int i = 0; i < tokens.getTokenCount(); i++) {
-        if (tokens.hasType(i, PLUS) &&
-            (tokens.hasType(tokens.forwardWhile(i + 1, JavaParserUtil.WS_COMMENTS), ElementType.ALL_LITERALS) !=
-             tokens.hasType(tokens.backWhile(i - 1, JavaParserUtil.WS_COMMENTS), ElementType.ALL_LITERALS))) {
+        if (hasType(tokens, i, JavaSyntaxTokenType.PLUS) &&
+            (hasType(tokens, forwardWhile(tokens, i + 1, JavaParserUtil.WS_COMMENTS), SyntaxElementTypes.INSTANCE.getALL_LITERALS()) !=
+             hasType(tokens, backWhile(tokens, i - 1, JavaParserUtil.WS_COMMENTS), SyntaxElementTypes.INSTANCE.getALL_LITERALS()))) {
           result.add(tokens.getTokenStart(i));
         }
       }

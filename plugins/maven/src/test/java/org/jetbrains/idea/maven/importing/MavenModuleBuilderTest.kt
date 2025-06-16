@@ -58,6 +58,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testModuleRecreation() = runBlocking {
+    assumeMaven3()
     val id = MavenId("org.foo", "module", "1.0")
 
     createNewModule(id)

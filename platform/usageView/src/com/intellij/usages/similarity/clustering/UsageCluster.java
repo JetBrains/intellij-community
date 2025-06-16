@@ -9,6 +9,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -34,7 +35,7 @@ public class UsageCluster {
     myUsages.add(usage);
   }
 
-  public @NotNull Set<@NotNull SimilarUsage> getUsages() {
+  public @NotNull @Unmodifiable Set<@NotNull SimilarUsage> getUsages() {
     return myUsages;
   }
 
@@ -55,7 +56,7 @@ public class UsageCluster {
    */
   @RequiresReadLock
   @RequiresBackgroundThread
-  public @NotNull Set<@NotNull SimilarUsage> getOnlySelectedUsages(@NotNull Set<@NotNull Usage> selectedUsages) {
+  public @NotNull @Unmodifiable Set<@NotNull SimilarUsage> getOnlySelectedUsages(@NotNull Set<@NotNull Usage> selectedUsages) {
     return myUsages.stream().filter(e -> selectedUsages.contains(e)).collect(Collectors.toSet());
   }
 

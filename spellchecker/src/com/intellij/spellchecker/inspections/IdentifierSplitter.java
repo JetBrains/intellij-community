@@ -24,7 +24,7 @@ public class IdentifierSplitter extends BaseSplitter {
   private static final @NonNls Pattern WORD_IN_QUOTES = Pattern.compile("'([^']*)'");
 
   @Override
-  public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
+  public void split(@Nullable String text, @NotNull TextRange range, @NotNull Consumer<TextRange> consumer) {
     if (text == null || range.getLength() < 1 || range.getStartOffset() < 0) {
       return;
     }
@@ -81,7 +81,8 @@ public class IdentifierSplitter extends BaseSplitter {
           ch >= '\u30A0' && ch <= '\u30ff' || // Katakana
           ch >= '\u4E00' && ch <= '\u9FFF' || // CJK Unified ideographs
           ch >= '\uF900' && ch <= '\uFAFF' || // CJK Compatibility Ideographs
-          ch >= '\uFF00' && ch <= '\uFFEF' //Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
+          ch >= '\uFF00' && ch <= '\uFFEF' || // Halfwidth and Fullwidth Forms of Katakana & Fullwidth ASCII variants
+          ch >= '\uAC00' && ch <= '\uD7AF'    // Hangul Syllables (Korean)
       ) {
         if (s >= 0) {
           add(text, result, i, s);

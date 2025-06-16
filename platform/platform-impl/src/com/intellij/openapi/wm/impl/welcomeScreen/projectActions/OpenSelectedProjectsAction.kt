@@ -22,7 +22,7 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
       when (item) {
         is ProjectsGroupItem -> item.children.forEach { child -> child.openProject(newEvent) }
         is RecentProjectItem -> item.openProject(newEvent)
-        is ProviderRecentProjectItem -> item.openProject()
+        is ProviderRecentProjectItem -> item.openProject(newEvent)
         else -> {}
       }
     }

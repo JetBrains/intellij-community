@@ -72,19 +72,21 @@ public final class ClassFileDecompilers {
   public static ClassFileDecompilers getInstance() {
     return ApplicationManager.getApplication().getService(ClassFileDecompilers.class);
   }
+  
+  public static final ExtensionPointName<Decompiler> STATIC_EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler"); 
 
-  public final ExtensionPointName<Decompiler> EP_NAME = new ExtensionPointName<>("com.intellij.psi.classFileDecompiler");
+  public final ExtensionPointName<Decompiler> EP_NAME = STATIC_EP_NAME;
 
   private ClassFileDecompilers() {
     Application app = ApplicationManager.getApplication();
     if (!app.isUnitTestMode()) {
       Runnable runnable = () -> BinaryFileTypeDecompilers.getInstance().notifyDecompilerSetChange();
-      EP_NAME.addChangeListener(runnable, null);
+      STATIC_EP_NAME.addChangeListener(runnable, null);
     }
   }
 
   @SuppressWarnings("unchecked")
   public <D extends Decompiler> D find(@NotNull VirtualFile file, @NotNull Class<D> decompilerClass) {
-    return (D)EP_NAME.findFirstSafe(d -> decompilerClass.isInstance(d) && d.accepts(file));
+    return (D)STATIC_EP_NAME.findFirstSafe(d -> decompilerClass.isInstance(d) && d.accepts(file));
   }
 }

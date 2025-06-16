@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.terminal">
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.plugins.terminal" allow-bundled-update="true">
   <name>Terminal</name>
   <category>Other Tools</category>
   <id>org.jetbrains.plugins.terminal</id>
@@ -46,6 +46,7 @@
   <content>
     <module name="intellij.terminal.backend"/>
     <module name="intellij.terminal.frontend"/>
+    <module name="intellij.terminal.frontend.split"/>
     <module name="intellij.terminal/cloud"/>
     <module name="intellij.terminal.sh"/>
   </content>
@@ -143,9 +144,6 @@
       <keyboard-shortcut first-keystroke="meta C" keymap="Mac OS X 10.5+"/>
     </action>
 
-    <action id="Terminal.CommandCompletion" class="org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction">
-      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-    </action>
     <action id="Terminal.InsertInlineCompletionItem" class="org.jetbrains.plugins.terminal.block.completion.TerminalInsertInlineCompletionAction">
       <keyboard-shortcut first-keystroke="RIGHT" keymap="$default"/>
     </action>
@@ -180,11 +178,13 @@
       <override-text place="GoToAction"/>
       <keyboard-shortcut first-keystroke="control DOWN" keymap="$default"/>
     </action>
-    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction" use-shortcut-of="EditorPageUp">
+    <action id="Terminal.PageUp" class="org.jetbrains.plugins.terminal.action.TerminalPageUpAction">
       <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_UP" keymap="$default"/>
     </action>
-    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction" use-shortcut-of="EditorPageDown">
+    <action id="Terminal.PageDown" class="org.jetbrains.plugins.terminal.action.TerminalPageDownAction">
       <override-text place="GoToAction"/>
+      <keyboard-shortcut first-keystroke="shift PAGE_DOWN" keymap="$default"/>
     </action>
 
     <group id="Terminal.PromptStyle" popup="true">
@@ -196,7 +196,7 @@
     <group id="Terminal.PromptToolbar"/>
 
     <action id="Terminal.ShowFeedbackNotification" internal="true"
-            class="org.jetbrains.plugins.terminal.block.feedback.ShowBlockTerminalFeedbackNotificationAction"/>
+            class="org.jetbrains.plugins.terminal.block.feedback.ShowReworkedTerminalFeedbackNotificationAction"/>
   </actions>
 
 </idea-plugin>

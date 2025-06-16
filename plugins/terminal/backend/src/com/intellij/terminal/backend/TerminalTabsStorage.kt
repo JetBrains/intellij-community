@@ -47,6 +47,7 @@ internal class TerminalTabsStorage(private val project: Project) : PersistentSta
         name = tabToCopy.myTabName,
         isUserDefinedName = tabToCopy.myIsUserDefinedTabTitle,
         shellCommand = tabToCopy.myShellCommand,
+        workingDirectory = tabToCopy.myWorkingDirectory,
       )
       newTabs.add(tab)
     }

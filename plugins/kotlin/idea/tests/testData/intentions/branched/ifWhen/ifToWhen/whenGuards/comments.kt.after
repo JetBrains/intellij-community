@@ -4,12 +4,11 @@
 fun test(a: Any, b: Boolean) {
     /* c1 */
     // c2
-    /* c6 */ /* c7 */
-    /* c3 */when (a) {
+    when (a /* c3 */) {
         is Int if a > 5 -> { // c4
         }
 
-        is String if a.isNotEmpty() -> /* c5 */ { //c8
+        is String if /* c5 */ /* c6 */ a.isNotEmpty() /* c7 */ -> { //c8
         }
 
         else -> {

@@ -42,8 +42,9 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
 fun main(args: Array<String>) {
     val preferences = GeneratorPreferences.parse(args)
 
-    val communityRoot = generateSequence(File(".").canonicalFile) { it.parentFile }
-        .first { it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory }.normalize()
+    val communityRoot = generateSequence(File(".").canonicalFile) { it.parentFile }.first {
+        it.resolve(".idea").isDirectory && !it.resolve("community").isDirectory && it.name != "project-model-updater"
+    }.normalize()
 
     val monorepoRoot = communityRoot.resolve("..").takeIf { it.resolve(".idea").isDirectory }?.normalize()
 

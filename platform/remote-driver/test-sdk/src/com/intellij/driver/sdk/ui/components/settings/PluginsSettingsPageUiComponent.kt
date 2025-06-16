@@ -24,6 +24,6 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
   }
 
   class PluginDetailsPage(data: ComponentData) : UiComponent(data) {
-    val optionButton = x { byType("com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction\$OptionButton") }
+    val optionButton = x { byType("com.intellij.ide.plugins.newui.SelectionBasedPluginModelAction${"$"}OptionButton") }
   }
 }

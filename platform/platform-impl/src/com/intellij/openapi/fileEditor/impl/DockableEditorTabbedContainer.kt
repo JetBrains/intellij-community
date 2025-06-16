@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DragEditorTabsFusEventFields
+import com.intellij.ide.ui.UISettings
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl.Companion.recordActionInvoked
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.Graphics2D
 import java.awt.Image
+import java.awt.Point
 import java.awt.Shape
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
@@ -45,6 +47,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JSplitPane
 import javax.swing.SwingConstants
+import javax.swing.SwingUtilities
 
 @Internal
 class DockableEditorTabbedContainer internal constructor(
@@ -85,7 +88,29 @@ class DockableEditorTabbedContainer internal constructor(
     }
   }
 
-  override fun getAcceptArea(): RelativeRectangle = RelativeRectangle(splitters)
+  override fun getAcceptArea(): RelativeRectangle {
+    val component = splitters
+    return when (val placement = UISettings.getInstance().editorTabPlacement) {
+      SwingConstants.TOP, SwingConstants.BOTTOM -> extendAcceptArea(component, direction = placement)
+      else -> RelativeRectangle(component)
+    }
+  }
+
+  private fun extendAcceptArea(component: JComponent, direction: Int): RelativeRectangle {
+    val fallback = RelativeRectangle(component)
+    if (!component.isShowing) return fallback
+    // To support accept area larger than the component, we use the root pane as the component.
+    val rootPane = SwingUtilities.getRootPane(component) ?: return fallback
+    val bounds = SwingUtilities.convertRectangle(component.parent, component.bounds, rootPane)
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    if (direction == SwingConstants.TOP) {
+      bounds.y -= tolerance
+    }
+    bounds.height += tolerance
+    if (bounds.y < 0) bounds.y = 0;
+    if (bounds.height > rootPane.height) bounds.height = rootPane.height;
+    return RelativeRectangle(rootPane, bounds)
+  }
 
   override fun getContentResponse(content: DockableContent<*>, point: RelativePoint): ContentResponse {
     val tabs = getTabsAt(content, point)
@@ -97,11 +122,36 @@ class DockableEditorTabbedContainer internal constructor(
       return null
     }
 
-    splitters.getTabsAt(point)?.let {
-      return it
+    val tabsAt = splitters.getTabsAt(point)
+    val nearestTabs = when (UISettings.getInstance().editorTabPlacement) {
+      SwingConstants.TOP -> getTabsBelow(point) // the point is slightly above the tabs placed in the header
+      SwingConstants.BOTTOM -> getTabsAbove(point) // the point is slightly below the tabs placed in the footer
+      else -> null
     }
+    if (nearestTabs != null) return nearestTabs
+    if (tabsAt != null) return tabsAt
 
     return (splitters.currentWindow ?: splitters.windows().firstOrNull())?.tabbedPane?.tabs
+  }
+
+  private fun getTabsBelow(point: RelativePoint): JBTabs? {
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    val below = RelativePoint(point.component, Point(point.point).apply { y += tolerance })
+    if (below.getPointOn(splitters).point.y < splitters.height) {
+      val tabsBelow = splitters.getTabsAt(below)
+      if (tabsBelow != null) return tabsBelow
+    }
+    return null
+  }
+
+  private fun getTabsAbove(point: RelativePoint): JBTabs? {
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    val above = RelativePoint(point.component, Point(point.point).apply { y -= tolerance })
+    if (above.getPointOn(splitters).point.y >= 0) {
+      val tabsAbove = splitters.getTabsAt(above)
+      if (tabsAbove != null) return tabsAbove
+    }
+    return null
   }
 
   override fun add(content: DockableContent<*>, dropTarget: RelativePoint?) {

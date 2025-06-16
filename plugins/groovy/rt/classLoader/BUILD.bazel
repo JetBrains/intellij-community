@@ -2,13 +2,13 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
 
 jvm_resources(
-  name = "groovy-rt-classLoader_resources",
+  name = "classLoader_resources",
   files = glob(["resources/**/*"]),
   strip_prefix = "resources"
 )
 
 jvm_library(
-  name = "groovy-rt-classLoader",
+  name = "classLoader",
   module_name = "intellij.groovy.rt.classLoader",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
@@ -17,6 +17,6 @@ jvm_library(
     "@lib//:jetbrains-annotations-java5",
     "//platform/util-rt",
   ],
-  runtime_deps = [":groovy-rt-classLoader_resources"]
+  runtime_deps = [":classLoader_resources"]
 )
 ### auto-generated section `build intellij.groovy.rt.classLoader` end

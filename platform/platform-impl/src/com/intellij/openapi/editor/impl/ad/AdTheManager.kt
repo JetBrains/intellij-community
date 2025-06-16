@@ -7,109 +7,84 @@ import com.intellij.openapi.application.isRhizomeAdEnabled
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.ScrollingModel
+import com.intellij.openapi.editor.SelectionModel
+import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.pasta.common.DocumentEntity
+import com.intellij.openapi.editor.highlighter.EditorHighlighter
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.EditorFilteringMarkupModelEx
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.FocusModeModel
+import com.intellij.openapi.editor.impl.FoldingModelInternal
+import com.intellij.openapi.editor.impl.KERNEL_EDITOR_ID_KEY
+import com.intellij.openapi.editor.impl.ad.document.AdDocument
+import com.intellij.openapi.editor.impl.ad.document.AdDocumentManager
+import com.intellij.openapi.editor.impl.ad.markup.AdMarkupModel
+import com.intellij.openapi.editor.impl.ad.markup.AdDocumentMarkupManager
+import com.intellij.openapi.editor.impl.ad.markup.AdEditorMarkupManager
+import com.intellij.openapi.editor.impl.ad.util.ThreadLocalRhizomeDB
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.ui.EDT
-import fleet.kernel.change
-import fleet.kernel.rete.each
-import fleet.kernel.rete.filter
-import fleet.kernel.rete.first
-import fleet.kernel.shared
 import fleet.kernel.transactor
 import fleet.util.UID
+import fleet.util.logging.logger
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
-import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 
-private val AD_DISPATCHER by lazy {
-  AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER_V2", 1).asCoroutineDispatcher()
-}
 
 @Experimental
 @Service(Level.APP)
-class AdTheManager(private val coroutineScope: CoroutineScope) {
+class AdTheManager(private val appCoroutineScope: CoroutineScope) {
 
   companion object {
     @JvmStatic
     fun getInstance(): AdTheManager = service()
+
+    internal val LOG = logger<AdTheManager>()
+    internal val AD_DISPATCHER by lazy {
+      AppExecutorUtil.createBoundedApplicationPoolExecutor("AD_DISPATCHER", 1).asCoroutineDispatcher()
+    }
   }
 
-  private val docToHandle = IdentityHashMap<DocumentEx, DocumentEntityHandle>()
-
-  fun bindBackendDocEntity(file: VirtualFile, lazyDocumentId: (document: DocumentEx) -> Any) {
+  fun getEditorModel(editor: EditorImpl): EditorModel? {
     if (isEnabled()) {
-      val document = FileDocumentManager.getInstance().getDocument(file)
-      if (document is DocumentEx) {
-        synchronized(docToHandle) {
-          removeLocalDocEntity(document)
-          bindBackendDocEntity(document, BindType.BACKEND, lazyDocumentId)
+      val document = editor.document
+      val editorId = document.getUserData(KERNEL_EDITOR_ID_KEY)
+      if (editorId != null) {
+        val debugName = editor.toString()
+        val editorUid = UID.fromString(editorId.serializeToString())
+        val docMarkup = DocumentMarkupModel.forDocument(document, editor.project, true) as MarkupModelEx
+        val editorMarkup = editor.markupModel
+        runCatching {
+          val docEntity = AdDocumentManager.getInstance().getDocEntityRunBlocking(document)
+          val docMarkupEntity = AdDocumentMarkupManager.getInstance().getMarkupEntityRunBlocking(docMarkup)
+          val editorMarkupEntity = AdEditorMarkupManager.getInstance().createEditorMarkupEntityRunBlocking(editorUid, editorMarkup)
+          if (docEntity != null && docMarkupEntity != null && editorMarkupEntity != null) {
+            ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
+            return object : EditorModel {
+              override fun getDocument(): DocumentEx = AdDocument(docEntity)
+              override fun getEditorMarkupModel(): MarkupModelEx = AdMarkupModel("editor", editorMarkupEntity)
+              override fun getDocumentMarkupModel(): MarkupModelEx = EditorFilteringMarkupModelEx(editor, AdMarkupModel("document", docMarkupEntity))
+              override fun getHighlighter(): EditorHighlighter = editor.highlighter
+              override fun getInlayModel(): InlayModelEx = editor.inlayModel
+              override fun getFoldingModel(): FoldingModelInternal = editor.foldingModel
+              override fun getSoftWrapModel(): SoftWrapModelEx = editor.softWrapModel
+              override fun getCaretModel(): CaretModel = editor.caretModel
+              override fun getSelectionModel(): SelectionModel = editor.selectionModel
+              override fun getScrollingModel(): ScrollingModel = editor.scrollingModel
+              override fun getFocusModel(): FocusModeModel = editor.focusModeModel
+              override fun isAd(): Boolean = true
+              override fun dispose() {
+                AdEditorMarkupManager.getInstance().deleteEditorMarkupEntityRunBlocking(editorMarkupEntity)
+              }
+            }
+          }
+        }.onFailure {
+          LOG.error(it) { "failed to create editor model $debugName" }
         }
-      }
-    }
-  }
-
-  fun bindFrontendDocEntity(documentId: Any, document: Document?) {
-    if (isEnabled() && document is DocumentEx) {
-      synchronized(docToHandle) {
-        removeLocalDocEntity(document)
-        bindDocEntity(
-          document,
-          BindType.FRONTEND,
-          { documentId },
-          createEntity = { entityId -> DocumentEntity.each().filter { it.uid == entityId }.first() },
-          deleteEntity = {},
-        )
-      }
-    }
-  }
-
-  fun bindLocalDocEntity(document: Document) {
-    if (isEnabled() && document is DocumentEx) {
-      synchronized(docToHandle) {
-        val handle = docToHandle[document]
-        if (handle == null || handle.isLocal()) {
-          bindBackendDocEntity(document, BindType.LOCAL) { UUID.randomUUID() }
-        }
-      }
-    }
-  }
-
-  fun releaseDocEntity(document: DocumentEx) {
-    if (isEnabled()) {
-      synchronized(docToHandle) {
-        val handle = docToHandle[document]
-        checkNotNull(handle) { "doc entity not found" }
-        val nextHandle = handle.decRef()
-        if (nextHandle != null) {
-          docToHandle[document] = nextHandle
-        } else {
-          handle.dispose()
-          docToHandle.remove(document)
-        }
-      }
-    }
-  }
-
-  fun getAdDocument(document: DocumentEx): DocumentEx? {
-    if (isEnabled()) {
-      val entity = synchronized(docToHandle) {
-        docToHandle[document]
-      }?.entity()
-      if (entity != null) {
-        ThreadLocalRhizomeDB.setThreadLocalDb(ThreadLocalRhizomeDB.lastKnownDb())
-        return AdDocument(entity)
       }
     }
     return null
@@ -117,7 +92,7 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
 
   fun bindEditor(editor: Editor) {
     if (isEnabled()) {
-      val cs = coroutineScope.childScope("editor repaint on doc entity change")
+      val cs = appCoroutineScope.childScope("editor repaint on doc entity change")
       val disposable = Disposable { cs.cancel() }
       EditorUtil.disposeWithEditor(editor, disposable)
       cs.launch(AD_DISPATCHER) {
@@ -132,143 +107,7 @@ class AdTheManager(private val coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun bindBackendDocEntity(
-    document: DocumentEx,
-    bindType: BindType,
-    lazyDocumentId: (document: DocumentEx) -> Any,
-  ) {
-    assert(isEnabled())
-    assert(bindType != BindType.FRONTEND)
-    val text = document.immutableCharSequence
-    bindDocEntity(
-      document,
-      bindType,
-      lazyDocumentId,
-      createEntity = { entityId ->
-        change {
-          shared {
-            DocumentEntity.fromText(entityId, text.toString())
-          }
-        }
-      },
-      deleteEntity = { entity ->
-        change {
-          shared {
-            entity.delete()
-          }
-        }
-      },
-    )
-  }
-
-  private fun bindDocEntity(
-    document: DocumentEx,
-    bindType: BindType,
-    lazyDocumentId: (document: DocumentEx) -> Any,
-    createEntity: suspend (UID) -> DocumentEntity,
-    deleteEntity: suspend (DocumentEntity) -> Unit,
-  ) {
-    assert(isEnabled())
-    if (!EDT.isCurrentThreadEdt()) {
-      ThreadingAssertions.assertReadAccess()
-    }
-    synchronized(docToHandle) {
-      val handle = docToHandle[document]
-      docToHandle[document] = if (handle != null) {
-        handle.incRef()
-      } else {
-        val documentId = lazyDocumentId(document)
-        val entityId = hackyEntityId(documentId)
-        val cs = coroutineScope.childScope("docEntityScope($entityId)", AD_DISPATCHER)
-        val entityRef = AtomicReference<DocumentEntity>()
-        val entityDeferred = cs.async {
-          val entity = createEntity(entityId)
-          entityRef.set(entity)
-          entity
-        }
-        if (bindType != BindType.FRONTEND) {
-          val documentListener = AdDocumentSynchronizer(documentId, entityId, cs, entityDeferred)
-          document.addDocumentListener(documentListener)
-          @Suppress("OPT_IN_USAGE")
-          cs.awaitCancellationAndInvoke {
-            document.removeDocumentListener(documentListener)
-            val entity = entityDeferred.await()
-            deleteEntity(entity)
-          }
-        }
-        DocumentEntityHandle(
-          documentId,
-          entityId,
-          bindType,
-          1,
-          cs,
-          entityDeferred,
-          entityRef,
-        )
-      }
-    }
-  }
-
-  private fun removeLocalDocEntity(document: DocumentEx) {
-    val handle = docToHandle[document]
-    if (handle != null && handle.isLocal()) {
-      handle.dispose()
-      docToHandle.remove(document)
-    }
-  }
-
-  private fun hackyEntityId(documentId: Any): UID {
-    val bytes = documentId.toString().toByteArray()
-    val uuid = UUID.nameUUIDFromBytes(bytes)
-    return UID.fromString(uuid.toString())
-  }
-
   private fun isEnabled(): Boolean {
     return isRhizomeAdEnabled
-  }
-}
-
-private enum class BindType {
-  LOCAL, FRONTEND, BACKEND
-}
-
-private data class DocumentEntityHandle(
-  private val documentId: Any, // RdDocumentId
-  private val entityId: UID,
-  private val bindType: BindType,
-  private val refCount: Int,
-  private val coroutineScope: CoroutineScope,
-  private val entityDeferred: Deferred<DocumentEntity>,
-  private val entityRef: AtomicReference<DocumentEntity>,
-) {
-
-  fun incRef(): DocumentEntityHandle {
-    assert(refCount > 0)
-    return copy(refCount = refCount + 1)
-  }
-
-  fun decRef(): DocumentEntityHandle? {
-    assert(refCount > 0)
-    return if (refCount > 1) copy(refCount = refCount - 1) else null
-  }
-
-  fun entity(): DocumentEntity {
-    val entity = entityRef.get()
-    if (entity != null) {
-      return entity
-    }
-    @Suppress("HardCodedStringLiteral")
-    return runWithModalProgressBlocking(
-      ModalTaskOwner.guess(),
-      "Shared document entity creation $entityId",
-    ) { entityDeferred.await() }
-  }
-
-  fun isLocal(): Boolean {
-    return bindType == BindType.LOCAL
-  }
-
-  fun dispose() {
-    coroutineScope.cancel()
   }
 }

@@ -17,6 +17,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
@@ -42,6 +43,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBTreeTable;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -181,13 +183,15 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
         resetView(() -> myStateBean.setShowOnlyModified(false));
       }
       else {
-        GotItTooltip gotIt = createGotIt();
-        if (gotIt.canShow()) {
-          final JComponent filterAction = ActionButtonUtil.findToolbarActionButton(actionToolbar, button -> button.getIcon() == FILTER_ICON);
-          if (filterAction != null) {
-            gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
+        ApplicationManager.getApplication().invokeLater(() -> {
+          GotItTooltip gotIt = createGotIt();
+          if (gotIt.canShow()) {
+            final JComponent filterAction = ActionButtonUtil.findToolbarActionButton(actionToolbar, button -> button.getIcon() == FILTER_ICON);
+            if (filterAction != null) {
+              gotIt.show(filterAction, GotItTooltip.BOTTOM_MIDDLE);
+            }
           }
-        }
+        });
       }
     }
   }
@@ -235,7 +239,9 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
 
       @Override
       public void treeStructureChanged(TreeModelEvent e) {
-        onModelUpdate(e);
+        try (AccessToken ignore = SlowOperations.knownIssue("IDEA-367691")) {
+          onModelUpdate(e);
+        }
       }
 
       private void onModelUpdate(TreeModelEvent e) {
@@ -255,8 +261,10 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
             if (nodeRoot != null) {
               called = true;
               setWidth(nodeRoot);
-              resetIfAllFiltered(nodeRoot, actionToolbar);
-              logTotalCoverage(nodeRoot);
+              ApplicationManager.getApplication().executeOnPooledThread(() -> {
+                resetIfAllFiltered(nodeRoot, actionToolbar);
+                logTotalCoverage(nodeRoot);
+              });
             }
           }
         }

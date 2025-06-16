@@ -143,15 +143,13 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         project.executeCommand(KotlinBundle.message("intention.implement.abstract.method.command.name")) {
             val targetClasses = implementableMembers.map(ImplementableMember::getTargetClass)
             if (!FileModificationService.getInstance().preparePsiElementsForWrite(targetClasses)) return@executeCommand
-            runWriteAction {
-                for (implementableMember in implementableMembers) {
-                    try {
-                        val descriptor = OpenFileDescriptor(project, implementableMember.getTargetClass().containingFile.virtualFile)
-                        val targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, /* focusEditor = */ true)
-                        implementableMember.generateMembers(targetEditor)
-                    } catch (e: IncorrectOperationException) {
-                        LOG.error(e)
-                    }
+            for (implementableMember in implementableMembers) {
+                try {
+                    val descriptor = OpenFileDescriptor(project, implementableMember.getTargetClass().containingFile.virtualFile)
+                    val targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, /* focusEditor = */ true)
+                    implementableMember.generateMembers(targetEditor)
+                } catch (e: IncorrectOperationException) {
+                    LOG.error(e)
                 }
             }
         }
@@ -302,7 +300,7 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
             }
 
             override fun generateMembers(editor: Editor?) {
-                abstractMember.toLightMethods().forEach { OverrideImplementUtil.overrideOrImplement(targetClass, it) }
+                runWriteAction {  abstractMember.toLightMethods().forEach { OverrideImplementUtil.overrideOrImplement(targetClass, it) } }
             }
 
             override fun getTargetClass(): PsiElement {

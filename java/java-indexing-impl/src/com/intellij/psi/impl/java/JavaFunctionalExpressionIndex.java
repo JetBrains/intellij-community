@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -346,7 +347,9 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
   @Override
   public @NotNull DataIndexer<FunctionalExpressionKey, List<IndexEntry>, FileContent> getIndexer() {
     return inputData -> {
+      ProgressManager.checkCanceled();
       CharSequence text = inputData.getContentAsText();
+      ProgressManager.checkCanceled();
       int[] offsets = ArrayUtil.mergeArrays(
         new StringSearcher("->", true, true).findAllOccurrences(text),
         new StringSearcher("::", true, true).findAllOccurrences(text));
@@ -356,6 +359,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
       LighterAST tree = ((PsiDependentFileContent)inputData).getLighterAST();
       FileLocalResolver resolver = new FileLocalResolver(tree);
 
+      ProgressManager.checkCanceled();
       LightTreeUtil.processLeavesAtOffsets(offsets, tree, new BiConsumer<>() {
         int index = 0;
 

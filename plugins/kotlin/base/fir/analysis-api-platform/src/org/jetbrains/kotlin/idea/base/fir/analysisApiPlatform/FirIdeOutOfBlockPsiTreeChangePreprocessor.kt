@@ -11,12 +11,11 @@ import com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishGlobalSourceOutOfBlockModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.publishModuleOutOfBlockModificationEvent
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.idea.util.publishGlobalSourceOutOfBlockModification
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -37,7 +36,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
 
         if (event.isGlobalChange()) {
             // We should not invalidate binary module content here, because global PSI tree changes have no effect on binary modules.
-            project.publishGlobalSourceOutOfBlockModification()
+            project.publishGlobalSourceOutOfBlockModificationEvent()
             return
         }
 
@@ -103,8 +102,10 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
 
     private fun invalidateCachesForInjectedKotlinCode(injectedDocument: DocumentWindow) {
         val ktFile = PsiDocumentManager.getInstance(project).getPsiFile(injectedDocument) as? KtFile ?: return
-        val module = KotlinProjectStructureProvider.getModule(project, ktFile, useSiteModule = null)
-        project.analysisMessageBus.syncPublisher(KotlinModificationTopics.MODULE_OUT_OF_BLOCK_MODIFICATION).onModification(module)
+
+        KotlinProjectStructureProvider
+            .getModule(project, ktFile, useSiteModule = null)
+            .publishModuleOutOfBlockModificationEvent()
     }
 }
 

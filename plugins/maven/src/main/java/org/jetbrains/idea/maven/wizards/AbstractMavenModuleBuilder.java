@@ -16,6 +16,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -108,18 +109,25 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
       setupNewProject(project);
     }
 
+    // The StartupManager#runAfterOpened callback will be skipped, in case of attaching to the multi-project workspace.
+    // @see com.intellij.ide.util.projectWizard.ProjectBuilder#postCommit for more details
+    StartupManager.getInstance(project).runAfterOpened(
+      () -> postCommit(project, root)
+    );
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public void postCommit(@NotNull Project project, @NotNull VirtualFile projectDir) {
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
-      configure(project, root);
+      waitForSdkDownload();
+      configureProject(project, projectDir);
     });
   }
 
-  private void configure(Project project, VirtualFile root) {
-    if (myEnvironmentForm != null) {
-      myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
-    }
-
+  private void waitForSdkDownload() {
     var future = sdkDownloadedFuture;
-    if (null != future) {
+    if (future != null) {
       try {
         future.get(); // maven sync uses project JDK
       }
@@ -127,10 +135,18 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
         MavenLog.LOG.error(e);
       }
     }
+  }
 
-    new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                 myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
-                                 MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
+  public void configureProject(@NotNull Project project, @NotNull VirtualFile projectDir) {
+    if (myEnvironmentForm != null) {
+      myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
+    }
+
+    new MavenModuleBuilderHelper(
+      myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
+      myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
+      MavenProjectBundle.message("command.name.create.new.maven.module")
+    ).configure(project, projectDir, false);
   }
 
   protected static void setupNewProject(Project project) {
@@ -326,12 +342,5 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
   public @Nullable Project createProject(String name, String path) {
     setCreatingNewProject(true);
     return super.createProject(name, path);
-  }
-
-  @Override
-  public @Nullable ProjectConfigurator createProjectConfigurator() {
-    return (project, projectDir) -> {
-      configure(project, projectDir);
-    };
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.history.ActivityId;
@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.vcs.VcsActivity;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
+@ApiStatus.Internal
+public abstract class RevertCommittedStuffAbstractAction extends AnAction implements DumbAware {
   private final boolean myReverse;
 
   protected RevertCommittedStuffAbstractAction(boolean reverse) {
@@ -59,7 +62,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
 
     LocalChangeList targetList;
     if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
-      ChangeListChooser chooser = new ChangeListChooser(project, VcsBundle.message("revert.changes.changelist.chooser.title"));
+      ChangeListChooser chooser = new MyChangeListChooser(project, VcsBundle.message("revert.changes.changelist.chooser.title"));
       if (changeLists != null && changeLists.length > 0) {
         String defaultName = VcsBundle.message("changes.revert.apply.change.list.name", myReverse ? 0 : 1, changeLists[0].getName());
         chooser.setSuggestedName(defaultName);
@@ -108,5 +111,16 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     Change[] changes = getChanges(e, true);
 
     return project != null && changes != null && changes.length > 0;
+  }
+
+  private static class MyChangeListChooser extends ChangeListChooser {
+    MyChangeListChooser(@NotNull Project project, @NlsContexts.DialogTitle String title) {
+      super(project, title);
+    }
+
+    @Override
+    final protected @NotNull String getHelpId() {
+      return "reference.dialogs.vcs.undo.commit";
+    }
   }
 }

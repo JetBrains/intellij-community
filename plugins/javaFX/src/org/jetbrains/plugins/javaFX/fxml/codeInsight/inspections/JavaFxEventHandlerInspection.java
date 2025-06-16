@@ -190,15 +190,15 @@ public final class JavaFxEventHandlerInspection extends XmlSuppressableInspectio
 
     @Override
     public boolean isAvailable(@NotNull Project project,
-                               @NotNull PsiFile file,
+                               @NotNull PsiFile psiFile,
                                @NotNull PsiElement startElement,
                                @NotNull PsiElement endElement) {
       return startElement instanceof XmlAttribute;
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+    public void invoke(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       if (!(startElement instanceof XmlAttribute attribute)) return;
 
       final List<PsiMethod> eventHandlerMethods = getEventHandlerMethods(attribute);

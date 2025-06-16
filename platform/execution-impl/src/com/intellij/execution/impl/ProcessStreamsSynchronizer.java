@@ -9,10 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  * stdout and stderr streams should be merged, this should be done on a client side when starting a process,
  * see {@link #redirectErrorStreamIfNeeded(GeneralCommandLine)}.
  */
+@ApiStatus.Internal
 public class ProcessStreamsSynchronizer {
 
   /**
@@ -38,7 +36,6 @@ public class ProcessStreamsSynchronizer {
    *
    * @see com.intellij.util.io.BaseDataReader.SleepingPolicy#NON_BLOCKING
    */
-  @ApiStatus.Internal
   public static final long AWAIT_SAME_STREAM_TEXT_NANO = TimeUnit.MILLISECONDS.toNanos(10);
 
   private final Object myLock = new Object();
@@ -50,7 +47,6 @@ public class ProcessStreamsSynchronizer {
   private long myLastFlushedChunkCreatedNanoTime = 0;
   private int myReschedules = 0;
 
-  @ApiStatus.Internal
   public ProcessStreamsSynchronizer(@NotNull Disposable parentDisposable) {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable);
     Disposer.register(parentDisposable, new Disposable() {
@@ -63,7 +59,6 @@ public class ProcessStreamsSynchronizer {
     });
   }
 
-  @ApiStatus.Internal
   public final void doWhenStreamsSynchronized(@NotNull String text, @NotNull ProcessOutputType outputType, @NotNull Runnable flushRunnable) {
     long nowNano = getNanoTime();
     synchronized (myLock) {
@@ -102,15 +97,18 @@ public class ProcessStreamsSynchronizer {
     }
   }
 
-  boolean isProcessingScheduled() {
+  @VisibleForTesting
+  protected boolean isProcessingScheduled() {
     return !myAlarm.isEmpty();
   }
 
-  long getNanoTime() {
+  @VisibleForTesting
+  protected long getNanoTime() {
     return System.nanoTime();
   }
 
-  void scheduleProcessPendingChunks(long delayNano) {
+  @VisibleForTesting
+  protected void scheduleProcessPendingChunks(long delayNano) {
     myAlarm.addRequest(() -> processPendingChunks(getNanoTime()), TimeUnit.NANOSECONDS.toMillis(delayNano));
   }
 
@@ -133,7 +131,8 @@ public class ProcessStreamsSynchronizer {
     myPendingChunks.add(new Chunk(null, first.myBaseOutputType, nowNano, myLastFlushedChunkCreatedNanoTime, flushRunnable));
   }
 
-  final void processPendingChunks(long nowNano) {
+  @VisibleForTesting
+  public final void processPendingChunks(long nowNano) {
     synchronized (myLock) {
       if (myPendingChunks.isEmpty()) {
         // There could be no pending chunks in the following case:
@@ -175,7 +174,8 @@ public class ProcessStreamsSynchronizer {
   }
 
   @TestOnly
-  void waitForAllFlushed() {
+  @ApiStatus.Internal
+  public void waitForAllFlushed() {
     while (true) {
       synchronized (myLock) {
         if (myPendingChunks.isEmpty()) {

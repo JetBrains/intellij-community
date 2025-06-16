@@ -16,11 +16,11 @@ internal class KeyboardEvents : JBCefTestAppFrame.TestCase() {
 
   override fun initializeImpl() {
     myComponent.removeAll()
-    var browser = JBCefBrowserBuilder().build()
+    val browser = JBCefBrowserBuilder().build()
     Disposer.register(this, browser)
 
     val localRequestHandler = JBCefLocalRequestHandler("https", "localhost")
-    var indexUrl = localRequestHandler.createResource("index.html") {
+    val indexUrl = localRequestHandler.createResource("index.html") {
       javaClass.getResourceAsStream("resources/keyboard_events.html")?.let { JBCefStreamResourceHandler(it, "text/html", this) }
     }
     browser.jbCefClient.addRequestHandler(localRequestHandler, browser.cefBrowser)
