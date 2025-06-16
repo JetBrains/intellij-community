@@ -24,6 +24,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/managed-cache/util.io.cache",
     "//platform/util/concurrency",
+    "//platform/core-api:core",
   ],
   runtime_deps = [":util.io.cache.backend_resources"]
 )
