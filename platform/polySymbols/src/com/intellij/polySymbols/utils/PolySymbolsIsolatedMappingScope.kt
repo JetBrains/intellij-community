@@ -30,9 +30,9 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
 
   protected abstract fun acceptSymbol(symbol: PolySymbol): Boolean
 
-  protected abstract val subScopeBuilder: (PolySymbolsQueryExecutor, T) -> List<PolySymbolsScope>
+  protected abstract val subScopeBuilder: (PolySymbolQueryExecutor, T) -> List<PolySymbolsScope>
 
-  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: PolySymbolsCodeCompletionQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> {
+  override fun getCodeCompletions(qualifiedName: PolySymbolQualifiedName, params: PolySymbolCodeCompletionQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbolCodeCompletionItem> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
@@ -47,7 +47,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName, params: PolySymbolsNameMatchQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbol> {
+  override fun getMatchingSymbols(qualifiedName: PolySymbolQualifiedName, params: PolySymbolNameMatchQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedName.qualifiedKind] ?: return emptyList()
@@ -64,7 +64,7 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     return result
   }
 
-  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolsListSymbolsQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbol> {
+  override fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolListSymbolsQueryParams, scope: Stack<PolySymbolsScope>): List<PolySymbol> {
     if (!params.queryExecutor.allowResolve || (framework != null && params.framework != framework))
       return emptyList()
     val sourceKind = mappings[qualifiedKind] ?: return emptyList()
@@ -102,13 +102,13 @@ abstract class PolySymbolsIsolatedMappingScope<T : PsiElement>(
     getCachedSubQueryExecutorAndScope().second
   }
 
-  private fun getCachedSubQueryExecutorAndScope(): Pair<PolySymbolsQueryExecutor, List<PolySymbolsScope>> {
+  private fun getCachedSubQueryExecutorAndScope(): Pair<PolySymbolQueryExecutor, List<PolySymbolsScope>> {
     val location = this@PolySymbolsIsolatedMappingScope.location
     val builder = subScopeBuilder
     val manager = CachedValuesManager.getManager(location.project)
-    val cachedValueKey = manager.getKeyForClass<Pair<PolySymbolsQueryExecutor, List<PolySymbolsScope>>>(builder.javaClass)
+    val cachedValueKey = manager.getKeyForClass<Pair<PolySymbolQueryExecutor, List<PolySymbolsScope>>>(builder.javaClass)
     return manager.getCachedValue(location, cachedValueKey, {
-      val executor = PolySymbolsQueryExecutorFactory.create(location)
+      val executor = PolySymbolQueryExecutorFactory.create(location)
       val scope = builder(executor, location)
       CachedValueProvider.Result.create(Pair(executor, scope.toList()), PsiModificationTracker.MODIFICATION_COUNT)
     }, false)

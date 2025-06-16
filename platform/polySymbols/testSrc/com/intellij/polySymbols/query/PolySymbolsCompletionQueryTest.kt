@@ -228,13 +228,13 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNestedPattern1() {
-    polySymbolsQueryExecutorFactory.addScope(
+    polySymbolQueryExecutorFactory.addScope(
       object : PolySymbolsScope {
         override fun createPointer(): Pointer<out PolySymbolsScope> = Pointer.hardPointer(this)
 
         override fun getCodeCompletions(
           qualifiedName: PolySymbolQualifiedName,
-          params: PolySymbolsCodeCompletionQueryParams,
+          params: PolySymbolCodeCompletionQueryParams,
           scope: Stack<PolySymbolsScope>,
         ): List<PolySymbolCodeCompletionItem> {
           return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
@@ -348,7 +348,7 @@ class PolySymbolsCompletionQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   ) {
     doTest(testPath) {
       registerFiles(framework, webTypes, customElementsManifests)
-      val matches = polySymbolsQueryExecutorFactory.create(null)
+      val matches = polySymbolQueryExecutorFactory.create(null)
         .codeCompletionQuery(parseWebTypesPath(path, null), position)
         .exclude(PolySymbolModifier.ABSTRACT)
         .run()

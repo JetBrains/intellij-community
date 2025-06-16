@@ -170,7 +170,7 @@ internal fun Reference.getSymbolKind(context: PolySymbol?): PolySymbolQualifiedK
 internal fun Reference.resolve(
   name: String,
   scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean = true,
   abstractSymbols: Boolean = false,
 ): List<PolySymbol> =
@@ -184,7 +184,7 @@ internal fun Reference.resolve(
 
 internal fun Reference.resolve(
   scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean = true,
   abstractSymbols: Boolean = false,
 ): List<PolySymbol> =
@@ -208,7 +208,7 @@ internal fun Reference.resolve(
 
 internal fun Reference.list(
   scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  queryExecutor: PolySymbolQueryExecutor,
   expandPatterns: Boolean,
   virtualSymbols: Boolean = true,
   abstractSymbols: Boolean = false,
@@ -227,10 +227,10 @@ internal fun Reference.list(
 private fun Reference.processPolySymbols(
   name: String?,
   scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  queryExecutor: PolySymbolQueryExecutor,
   virtualSymbols: Boolean,
   abstractSymbols: Boolean,
-  queryRunner: PolySymbolsQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>,
+  queryRunner: PolySymbolQueryExecutor.(List<PolySymbolQualifiedName>, Boolean, Boolean) -> List<PolySymbol>,
 ): List<PolySymbol> {
   ProgressManager.checkCanceled()
   return when (val reference = this.value) {
@@ -264,7 +264,7 @@ private fun Reference.processPolySymbols(
 internal fun Reference.codeCompletion(
   name: String,
   scope: List<PolySymbolsScope>,
-  queryExecutor: PolySymbolsQueryExecutor,
+  queryExecutor: PolySymbolQueryExecutor,
   position: Int = 0,
   virtualSymbols: Boolean = true,
 ): List<PolySymbolCodeCompletionItem> {

@@ -5,42 +5,42 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.query.impl.PolySymbolsCompoundQueryResultsCustomizer
+import com.intellij.polySymbols.query.impl.PolySymbolCompoundQueryResultsCustomizer
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
-interface PolySymbolsQueryResultsCustomizerFactory {
+interface PolySymbolQueryResultsCustomizerFactory {
 
-  fun create(location: PsiElement, context: PolyContext): PolySymbolsQueryResultsCustomizer?
+  fun create(location: PsiElement, context: PolyContext): PolySymbolQueryResultsCustomizer?
 
   @Suppress("TestOnlyProblems")
   companion object {
     @TestOnly
     @JvmField
-    val EP_NAME: ExtensionPointName<PolySymbolsQueryResultsCustomizerFactory> =
-      ExtensionPointName.create<PolySymbolsQueryResultsCustomizerFactory>("com.intellij.polySymbols.queryResultsCustomizerFactory")
+    val EP_NAME: ExtensionPointName<PolySymbolQueryResultsCustomizerFactory> =
+      ExtensionPointName.create<PolySymbolQueryResultsCustomizerFactory>("com.intellij.polySymbols.queryResultsCustomizerFactory")
 
     @JvmStatic
     fun getQueryResultsCustomizer(
       location: PsiElement?,
       context: PolyContext,
-    ): PolySymbolsQueryResultsCustomizer =
+    ): PolySymbolQueryResultsCustomizer =
       if (location == null) {
-        PolySymbolsCompoundQueryResultsCustomizer(emptyList())
+        PolySymbolCompoundQueryResultsCustomizer(emptyList())
       }
       else {
         val internalMode = ApplicationManager.getApplication().isInternal
-        PolySymbolsCompoundQueryResultsCustomizer(EP_NAME.extensionList.mapNotNull { factory ->
+        PolySymbolCompoundQueryResultsCustomizer(EP_NAME.extensionList.mapNotNull { factory ->
           factory.create(location, context)
             ?.also { scope ->
               if (internalMode && Math.random() < 0.2) {
                 val newScope = factory.create(location, context)
                 if (newScope != scope) {
-                  logger<PolySymbolsQueryResultsCustomizerFactory>().error(
+                  logger<PolySymbolQueryResultsCustomizerFactory>().error(
                     "Factory $factory should provide customizer, which is the same (by equals()), when called with the same arguments: $scope != $newScope")
                 }
                 if (newScope.hashCode() != scope.hashCode()) {
-                  logger<PolySymbolsQueryResultsCustomizerFactory>().error(
+                  logger<PolySymbolQueryResultsCustomizerFactory>().error(
                     "Factory $factory should provide customizer, which has the same hashCode(), when called with the same arguments: $scope != $newScope")
                 }
               }

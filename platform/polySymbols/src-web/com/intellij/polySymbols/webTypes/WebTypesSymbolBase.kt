@@ -25,7 +25,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   internal lateinit var base: WebTypesJsonContributionAdapter
 
-  protected lateinit var queryExecutor: PolySymbolsQueryExecutor
+  protected lateinit var queryExecutor: PolySymbolQueryExecutor
 
   private var _superContributions: List<PolySymbol>? = null
 
@@ -91,14 +91,14 @@ open class WebTypesSymbolBase : WebTypesSymbol {
     }
   }
 
-  internal fun init(webTypesJsonContributionAdapter: WebTypesJsonContributionAdapter, queryExecutor: PolySymbolsQueryExecutor) {
+  internal fun init(webTypesJsonContributionAdapter: WebTypesJsonContributionAdapter, queryExecutor: PolySymbolQueryExecutor) {
     this.base = webTypesJsonContributionAdapter
     this.queryExecutor = queryExecutor
   }
 
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
+    params: PolySymbolNameMatchQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     base.rootScope
@@ -107,7 +107,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
-    params: PolySymbolsListSymbolsQueryParams,
+    params: PolySymbolListSymbolsQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     base.rootScope
@@ -116,7 +116,7 @@ open class WebTypesSymbolBase : WebTypesSymbol {
 
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbolCodeCompletionItem> =
     base.rootScope

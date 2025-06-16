@@ -18,7 +18,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   private val namesProviderCache: MutableMap<PolySymbolNamesProvider, NameProvidersCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var namesProviderCacheMisses = 0
 
-  private val queryExecutorCache: MutableMap<PolySymbolsQueryExecutor, QueryExecutorContributionsCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
+  private val queryExecutorCache: MutableMap<PolySymbolQueryExecutor, QueryExecutorContributionsCache> = ContainerUtil.createConcurrentSoftKeySoftValueMap()
   private var queryExecutorCacheMisses = 0
 
   private val roots = mutableMapOf<Root, Origin>()
@@ -33,7 +33,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   final override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
+    params: PolySymbolNameMatchQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     getMaps(params).flatMap {
@@ -42,7 +42,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   final override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
-    params: PolySymbolsListSymbolsQueryParams,
+    params: PolySymbolListSymbolsQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     getMaps(params).flatMap {
@@ -51,7 +51,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   final override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbolCodeCompletionItem> =
     getMaps(params).flatMap {
@@ -62,7 +62,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     contribution: Contribution,
     origin: Origin,
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
+    params: PolySymbolNameMatchQueryParams,
     scopeStack: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
@@ -73,7 +73,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     contribution: Contribution,
     origin: Origin,
     qualifiedKind: PolySymbolQualifiedKind,
-    params: PolySymbolsListSymbolsQueryParams,
+    params: PolySymbolListSymbolsQueryParams,
   ): List<PolySymbol> =
     getMap(params.queryExecutor, contribution, origin)
       .getSymbols(qualifiedKind, params)
@@ -83,7 +83,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     contribution: Contribution,
     origin: Origin,
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
     scopeStack: Stack<PolySymbolsScope>,
   ): List<PolySymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)
@@ -98,7 +98,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
   protected abstract fun matchContext(origin: Origin, context: PolyContext): Boolean
 
-  private fun getMaps(params: PolySymbolsQueryParams): Sequence<ContributionSearchMap> =
+  private fun getMaps(params: PolySymbolQueryParams): Sequence<ContributionSearchMap> =
     roots.asSequence()
       .filter { (_, origin) -> matchContext(origin, params.queryExecutor.context) }
       .map { (contributions, origin) ->
@@ -118,7 +118,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
   ): Sequence<StaticSymbolContributionAdapter>
 
   private fun getMap(
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     contribution: Contribution,
     origin: Origin,
   ): ContributionSearchMap =
@@ -128,7 +128,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
 
 
   private fun getMapForRoot(
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     root: Root,
     origin: Origin,
   ): ContributionSearchMap =
@@ -137,7 +137,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     }
 
   private fun getOrCreateMap(
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     key: Any,
     mapInitializer: (consumer: (StaticSymbolContributionAdapter) -> Unit) -> Unit,
   ): ContributionSearchMap =
@@ -155,7 +155,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
       .also { it.checkForModifications() }
   }
 
-  private fun getQueryExecutorContributionsCache(queryExecutor: PolySymbolsQueryExecutor): QueryExecutorContributionsCache {
+  private fun getQueryExecutorContributionsCache(queryExecutor: PolySymbolQueryExecutor): QueryExecutorContributionsCache {
     if (queryExecutorCacheMisses > 100) {
       // Get rid of old soft keys
       queryExecutorCacheMisses = 0
@@ -184,7 +184,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     val name: String
     val pattern: PolySymbolsPattern?
     val framework: FrameworkId?
-    fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol
+    fun withQueryExecutorContext(queryExecutor: PolySymbolQueryExecutor): PolySymbol
     fun matchContext(context: PolyContext): Boolean =
       framework == null || context.framework == null || context.framework == framework
   }
@@ -196,7 +196,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
       add(item.qualifiedKind.withName(item.name), item.pattern, item)
     }
 
-    override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol> {
+    override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> {
       val cache = getQueryExecutorContributionsCache(params.queryExecutor)
       return filter { it.matchContext(params.queryExecutor.context) }
         .map { cache.getOrCreateSymbol(it) }
@@ -229,7 +229,7 @@ abstract class StaticPolySymbolsScopeBase<Root : Any, Contribution : Any, Origin
     }
   }
 
-  private inner class QueryExecutorContributionsCache(private val queryExecutor: PolySymbolsQueryExecutor) {
+  private inner class QueryExecutorContributionsCache(private val queryExecutor: PolySymbolQueryExecutor) {
     private val symbolsCache: MutableMap<StaticSymbolContributionAdapter, PolySymbol> = ConcurrentHashMap()
     private var queryExecutorModificationCount: Long = -1
 

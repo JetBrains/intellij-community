@@ -62,7 +62,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
 
     override fun requiresResolve(): Boolean = false
 
-    override fun build(queryExecutor: PolySymbolsQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
+    override fun build(queryExecutor: PolySymbolQueryExecutor, consumer: (PolySymbolsScope) -> Unit) {
       val context = location.parentOfTypes(XmlTag::class, XmlAttribute::class)
       val element = (context as? XmlTag) ?: (context as? XmlAttribute)?.parent ?: return
       val elementScope =
@@ -140,7 +140,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
 
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
-      params: PolySymbolsListSymbolsQueryParams,
+      params: PolySymbolListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbol> =
       if (params.queryExecutor.allowResolve) {
@@ -167,7 +167,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
 
     override fun getMatchingSymbols(
       qualifiedName: PolySymbolQualifiedName,
-      params: PolySymbolsNameMatchQueryParams,
+      params: PolySymbolNameMatchQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbol> {
       if (params.queryExecutor.allowResolve) {
@@ -311,7 +311,7 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
 
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
-      params: PolySymbolsListSymbolsQueryParams,
+      params: PolySymbolListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbol> =
       if (qualifiedKind == HTML_ATTRIBUTE_VALUES && descriptor.isEnumerated)

@@ -12,11 +12,11 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
 /**
- * Use the factory to create [PolySymbolsQueryExecutor] for a particular location in the source code.
+ * Use the factory to create [PolySymbolQueryExecutor] for a particular location in the source code.
  */
-interface PolySymbolsQueryExecutorFactory : Disposable {
+interface PolySymbolQueryExecutorFactory : Disposable {
 
-  fun create(location: PsiElement?, allowResolve: Boolean = true): PolySymbolsQueryExecutor
+  fun create(location: PsiElement?, allowResolve: Boolean = true): PolySymbolQueryExecutor
 
   @TestOnly
   fun addScope(scope: PolySymbolsScope, contextDirectory: VirtualFile?, disposable: Disposable)
@@ -26,7 +26,7 @@ interface PolySymbolsQueryExecutorFactory : Disposable {
 
     fun addRootScopes(scope: List<PolySymbolsScope>): PolySymbolsQueryExecutorBuilder
 
-    fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): PolySymbolsQueryExecutorBuilder
+    fun addCustomizer(customizer: PolySymbolQueryResultsCustomizer): PolySymbolsQueryExecutorBuilder
 
     fun addNameConversionRules(rules: PolySymbolNameConversionRules): PolySymbolsQueryExecutorBuilder
 
@@ -36,21 +36,21 @@ interface PolySymbolsQueryExecutorFactory : Disposable {
 
     fun allowResolve(allowResolve: Boolean): PolySymbolsQueryExecutorBuilder
 
-    fun create(): PolySymbolsQueryExecutor
+    fun create(): PolySymbolQueryExecutor
   }
 
   companion object {
 
     @JvmStatic
-    fun getInstance(project: Project): PolySymbolsQueryExecutorFactory = project.service()
+    fun getInstance(project: Project): PolySymbolQueryExecutorFactory = project.service()
 
-    fun create(location: PsiElement, allowResolve: Boolean = true): PolySymbolsQueryExecutor =
+    fun create(location: PsiElement, allowResolve: Boolean = true): PolySymbolQueryExecutor =
       getInstance(location.project).create(location, allowResolve)
 
     fun createCustom(): PolySymbolsQueryExecutorBuilder =
       PolySymbolsQueryExecutorBuilderImpl()
 
-    fun createCustom(setup: PolySymbolsQueryExecutorBuilder.() -> Unit): PolySymbolsQueryExecutor =
+    fun createCustom(setup: PolySymbolsQueryExecutorBuilder.() -> Unit): PolySymbolQueryExecutor =
       PolySymbolsQueryExecutorBuilderImpl()
         .let { setup(it); it.create() }
 

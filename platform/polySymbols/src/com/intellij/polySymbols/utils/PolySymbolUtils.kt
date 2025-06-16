@@ -149,7 +149,7 @@ fun PolySymbolMatch.withSegments(segments: List<PolySymbolNameSegment>): PolySym
 
 fun PolySymbol.match(
   nameToMatch: String,
-  params: PolySymbolsNameMatchQueryParams,
+  params: PolySymbolNameMatchQueryParams,
   context: Stack<PolySymbolsScope>,
 ): List<PolySymbol> {
   (this as? PolySymbolWithPattern)?.pattern?.let { pattern ->
@@ -182,7 +182,7 @@ fun PolySymbol.match(
 
 fun PolySymbol.toCodeCompletionItems(
   name: String,
-  params: PolySymbolsCodeCompletionQueryParams,
+  params: PolySymbolCodeCompletionQueryParams,
   context: Stack<PolySymbolsScope>,
 ): List<PolySymbolCodeCompletionItem> =
   (this as? PolySymbolWithPattern)?.pattern?.let { pattern ->
@@ -200,7 +200,7 @@ fun PolySymbol.toCodeCompletionItems(
     .getNames(qualifiedName, PolySymbolNamesProvider.Target.CODE_COMPLETION_VARIANTS)
     .map { PolySymbolCodeCompletionItem.create(it, 0, symbol = this) }
 
-fun PolySymbol.nameMatches(name: String, queryExecutor: PolySymbolsQueryExecutor): Boolean {
+fun PolySymbol.nameMatches(name: String, queryExecutor: PolySymbolQueryExecutor): Boolean {
   val queryNames = queryExecutor.namesProvider.getNames(qualifiedKind.withName(name), PolySymbolNamesProvider.Target.NAMES_QUERY)
   val symbolNames = queryExecutor.namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_MAP_STORAGE).toSet()
   return queryNames.any { symbolNames.contains(it) }
@@ -384,11 +384,11 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
 
 fun PolySymbolsScope.getDefaultCodeCompletions(
   qualifiedName: PolySymbolQualifiedName,
-  params: PolySymbolsCodeCompletionQueryParams,
+  params: PolySymbolCodeCompletionQueryParams,
   scope: Stack<PolySymbolsScope>,
 ): List<PolySymbolCodeCompletionItem> =
   getSymbols(qualifiedName.qualifiedKind,
-             PolySymbolsListSymbolsQueryParams.create(
+             PolySymbolListSymbolsQueryParams.create(
                params.queryExecutor,
                expandPatterns = false) {
                copyFiltersFrom(params)

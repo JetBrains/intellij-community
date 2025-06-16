@@ -6,9 +6,9 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 
-interface PolySymbolsQueryResultsCustomizer : ModificationTracker {
+interface PolySymbolQueryResultsCustomizer : ModificationTracker {
 
-  fun createPointer(): Pointer<out PolySymbolsQueryResultsCustomizer>
+  fun createPointer(): Pointer<out PolySymbolQueryResultsCustomizer>
 
   fun apply(matches: List<PolySymbol>,
             strict: Boolean,

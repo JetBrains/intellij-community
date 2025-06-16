@@ -37,7 +37,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
   override val framework: FrameworkId?
     get() = null
 
-  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolQueryExecutor): PolySymbol =
     CustomElementClassOrMixinDeclarationSymbol(this, queryExecutor)
 
   private fun createPointer(): Pointer<CustomElementsClassOrMixinDeclarationAdapter> {
@@ -54,7 +54,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
   private class CustomElementClassOrMixinDeclarationSymbol(
     private val base: CustomElementsClassOrMixinDeclarationAdapter,
-    private val queryExecutor: PolySymbolsQueryExecutor,
+    private val queryExecutor: PolySymbolQueryExecutor,
   ) : CustomElementsSymbol, PsiSourcedPolySymbol {
 
     private var _superContributions: List<PolySymbol>? = null
@@ -109,7 +109,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getMatchingSymbols(
       qualifiedName: PolySymbolQualifiedName,
-      params: PolySymbolsNameMatchQueryParams,
+      params: PolySymbolNameMatchQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbol> =
       base.rootScope
@@ -118,7 +118,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getSymbols(
       qualifiedKind: PolySymbolQualifiedKind,
-      params: PolySymbolsListSymbolsQueryParams,
+      params: PolySymbolListSymbolsQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbol> =
       base.rootScope
@@ -127,7 +127,7 @@ class CustomElementsClassOrMixinDeclarationAdapter private constructor(
 
     override fun getCodeCompletions(
       qualifiedName: PolySymbolQualifiedName,
-      params: PolySymbolsCodeCompletionQueryParams,
+      params: PolySymbolCodeCompletionQueryParams,
       scope: Stack<PolySymbolsScope>,
     ): List<PolySymbolCodeCompletionItem> =
       base.rootScope

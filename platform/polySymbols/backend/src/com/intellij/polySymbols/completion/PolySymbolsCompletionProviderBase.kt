@@ -14,8 +14,8 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer.Companion.customizeItems
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.startOffset
@@ -24,7 +24,7 @@ import com.intellij.util.ProcessingContext
 abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionProvider<CompletionParameters>() {
   final override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
     val psiContext = getContext(parameters.position.originalElement) ?: return
-    val queryExecutor = PolySymbolsQueryExecutorFactory.create(psiContext)
+    val queryExecutor = PolySymbolQueryExecutorFactory.create(psiContext)
 
     val elementOffset = parameters.position.startOffset
     val position: Int
@@ -54,7 +54,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
 
   protected abstract fun addCompletions(
     parameters: CompletionParameters, result: CompletionResultSet,
-    position: Int, name: String, queryExecutor: PolySymbolsQueryExecutor, context: T,
+    position: Int, name: String, queryExecutor: PolySymbolQueryExecutor, context: T,
   )
 
   companion object {
@@ -75,7 +75,7 @@ abstract class PolySymbolsCompletionProviderBase<T : PsiElement> : CompletionPro
 
     @JvmStatic
     fun processCompletionQueryResults(
-      queryExecutor: PolySymbolsQueryExecutor,
+      queryExecutor: PolySymbolQueryExecutor,
       result: CompletionResultSet,
       qualifiedKind: PolySymbolQualifiedKind,
       name: String,

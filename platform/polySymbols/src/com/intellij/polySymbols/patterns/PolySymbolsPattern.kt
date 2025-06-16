@@ -4,9 +4,9 @@ package com.intellij.polySymbols.patterns
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.patterns.impl.*
-import com.intellij.polySymbols.query.PolySymbolsCodeCompletionQueryParams
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsNameMatchQueryParams
+import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
@@ -22,7 +22,7 @@ abstract class PolySymbolsPattern internal constructor() {
     owner: PolySymbol?,
     scope: Stack<PolySymbolsScope>,
     name: String,
-    params: PolySymbolsNameMatchQueryParams,
+    params: PolySymbolNameMatchQueryParams,
   ): List<MatchResult> =
     match(owner, scope, null, MatchParameters(name, params), 0, name.length)
       .map { it.removeEmptySegments() }
@@ -30,7 +30,7 @@ abstract class PolySymbolsPattern internal constructor() {
   internal fun list(
     owner: PolySymbol?,
     scope: Stack<PolySymbolsScope>,
-    params: PolySymbolsListSymbolsQueryParams,
+    params: PolySymbolListSymbolsQueryParams,
   ): List<ListResult> =
     list(owner, scope, null, ListParameters(params))
       .map { it.removeEmptySegments() }
@@ -39,7 +39,7 @@ abstract class PolySymbolsPattern internal constructor() {
     owner: PolySymbol?,
     scope: Stack<PolySymbolsScope>,
     name: String,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
   ): List<PolySymbolCodeCompletionItem> =
     complete(owner, Stack(scope), null,
              CompletionParameters(name, params), 0, name.length).items

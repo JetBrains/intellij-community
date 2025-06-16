@@ -12,7 +12,7 @@ import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 import com.intellij.polySymbols.search.PolySymbolSearchTarget
@@ -214,7 +214,7 @@ interface PolySymbol : Symbol, NavigatableSymbol, PolySymbolsPrioritizedScope {
    * Poly Symbols can have various naming conventions.
    * This method is used by the framework to determine a new name for a symbol based on its occurrence
    */
-  fun adjustNameForRefactoring(queryExecutor: PolySymbolsQueryExecutor, newName: String, occurence: String): String =
+  fun adjustNameForRefactoring(queryExecutor: PolySymbolQueryExecutor, newName: String, occurence: String): String =
     queryExecutor.namesProvider.adjustRename(qualifiedName, newName, occurence)
 
 

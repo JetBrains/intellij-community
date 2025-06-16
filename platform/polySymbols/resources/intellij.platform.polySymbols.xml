@@ -43,7 +43,7 @@
                     interface="com.intellij.polySymbols.query.PolySymbolDefaultIconProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.queryResultsCustomizerFactory"
-                    interface="com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizerFactory"
+                    interface="com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizerFactory"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.declarationProvider"
                     interface="com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider"
@@ -60,8 +60,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <projectService serviceInterface="com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory"
-                    serviceImplementation="com.intellij.polySymbols.query.impl.PolySymbolsQueryExecutorFactoryImpl"/>
+    <projectService serviceInterface="com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory"
+                    serviceImplementation="com.intellij.polySymbols.query.impl.PolySymbolQueryExecutorFactoryImpl"/>
 
     <metaLanguage implementation="com.intellij.polySymbols.PolySymbolsEnabledLanguage"/>
 

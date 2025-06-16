@@ -11,7 +11,7 @@ import com.intellij.polySymbols.impl.copy
 import com.intellij.polySymbols.impl.selectBest
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
 import com.intellij.polySymbols.patterns.PolySymbolsPatternSymbolsResolver
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.utils.coalesceWith
 import com.intellij.polySymbols.utils.isCritical
@@ -162,7 +162,7 @@ internal class ComplexPattern(private val configProvider: ComplexPatternConfigPr
 
   private fun <T> process(
     scopeStack: Stack<PolySymbolsScope>,
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     action: (
       patterns: List<PolySymbolsPattern>,
       symbolsResolver: PolySymbolsPatternSymbolsResolver?,

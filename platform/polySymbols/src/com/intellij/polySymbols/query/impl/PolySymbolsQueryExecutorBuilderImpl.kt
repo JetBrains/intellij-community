@@ -7,14 +7,14 @@ import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory.PolySymbolsQueryExecutorBuilder
-import com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory.PolySymbolsQueryExecutorBuilder
+import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 import com.intellij.polySymbols.query.PolySymbolsScope
 
 class PolySymbolsQueryExecutorBuilderImpl() : PolySymbolsQueryExecutorBuilder {
   private val rootScopes = mutableListOf<PolySymbolsScope>()
-  private val customizers = mutableListOf<PolySymbolsQueryResultsCustomizer>()
+  private val customizers = mutableListOf<PolySymbolQueryResultsCustomizer>()
   private val nameConversionRules = mutableListOf<PolySymbolNameConversionRules>()
   private val context = mutableMapOf<PolyContextKind, PolyContextName>()
   private var allowResolve = true
@@ -27,7 +27,7 @@ class PolySymbolsQueryExecutorBuilderImpl() : PolySymbolsQueryExecutorBuilder {
     rootScopes.addAll(scope)
   }
 
-  override fun addCustomizer(customizer: PolySymbolsQueryResultsCustomizer): PolySymbolsQueryExecutorBuilder = apply {
+  override fun addCustomizer(customizer: PolySymbolQueryResultsCustomizer): PolySymbolsQueryExecutorBuilder = apply {
     customizers.add(customizer)
   }
 
@@ -50,12 +50,12 @@ class PolySymbolsQueryExecutorBuilderImpl() : PolySymbolsQueryExecutorBuilder {
     this.allowResolve = allowResolve
   }
 
-  override fun create(): PolySymbolsQueryExecutor =
-    PolySymbolsQueryExecutorImpl(
+  override fun create(): PolySymbolQueryExecutor =
+    PolySymbolQueryExecutorImpl(
       null,
       rootScopes,
       PolySymbolNamesProviderImpl(context[KIND_FRAMEWORK], nameConversionRules, ModificationTracker.NEVER_CHANGED),
-      PolySymbolsCompoundQueryResultsCustomizer(customizers),
+      PolySymbolCompoundQueryResultsCustomizer(customizers),
       PolyContextImpl(context),
       allowResolve
     )

@@ -10,7 +10,7 @@ import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.psi.PsiElement
 
 /**
- * To create a query executor use [PolySymbolsQueryExecutorFactory].
+ * To create a query executor use [PolySymbolQueryExecutorFactory].
  * The query executor will be configured by all the registered [PolySymbolQueryConfigurator]'s
  * based on the provided source code location. Configurators will provide initial Poly Symbol scopes,
  * rules for calculating PolyContext and rules for symbol names conversion.
@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement
  * INAPPLICABLE_JVM_NAME -> https://youtrack.jetbrains.com/issue/KT-31420
  **/
 @Suppress("INAPPLICABLE_JVM_NAME")
-interface PolySymbolsQueryExecutor : ModificationTracker {
+interface PolySymbolQueryExecutor : ModificationTracker {
 
   val location: PsiElement?
 
@@ -32,11 +32,11 @@ interface PolySymbolsQueryExecutor : ModificationTracker {
 
   val namesProvider: PolySymbolNamesProvider
 
-  val resultsCustomizer: PolySymbolsQueryResultsCustomizer
+  val resultsCustomizer: PolySymbolQueryResultsCustomizer
 
   var keepUnresolvedTopLevelReferences: Boolean
 
-  fun createPointer(): Pointer<PolySymbolsQueryExecutor>
+  fun createPointer(): Pointer<PolySymbolQueryExecutor>
 
   fun nameMatchQuery(
     path: List<PolySymbolQualifiedName>,
@@ -119,25 +119,25 @@ interface PolySymbolsQueryExecutor : ModificationTracker {
   ): List<PolySymbolCodeCompletionItem> =
     codeCompletionQuery(listOf(qualifiedKind.withName(name)), position).apply(configurator).run()
 
-  fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolsQueryExecutor
+  fun withNameConversionRules(rules: List<PolySymbolNameConversionRules>): PolySymbolQueryExecutor
 
   fun hasExclusiveScopeFor(qualifiedKind: PolySymbolQualifiedKind, scope: List<PolySymbolsScope> = emptyList()): Boolean
 
-  interface QueryBuilder<T>: PolySymbolsQueryParams.Builder<T> {
+  interface QueryBuilder<T>: PolySymbolQueryParams.Builder<T> {
     fun additionalScope(scope: PolySymbolsScope): T
     fun additionalScope(vararg scopes: PolySymbolsScope): T
     fun additionalScope(scopes: Collection<PolySymbolsScope>): T
   }
 
-  interface NameMatchQueryBuilder : QueryBuilder<NameMatchQueryBuilder>, PolySymbolsNameMatchQueryParams.BuilderMixin<NameMatchQueryBuilder> {
+  interface NameMatchQueryBuilder : QueryBuilder<NameMatchQueryBuilder>, PolySymbolNameMatchQueryParams.BuilderMixin<NameMatchQueryBuilder> {
     fun run(): List<PolySymbol>
   }
 
-  interface ListSymbolsQueryBuilder : QueryBuilder<ListSymbolsQueryBuilder>, PolySymbolsListSymbolsQueryParams.BuilderMixin<ListSymbolsQueryBuilder> {
+  interface ListSymbolsQueryBuilder : QueryBuilder<ListSymbolsQueryBuilder>, PolySymbolListSymbolsQueryParams.BuilderMixin<ListSymbolsQueryBuilder> {
     fun run(): List<PolySymbol>
   }
 
-  interface CodeCompletionQueryBuilder : QueryBuilder<CodeCompletionQueryBuilder>, PolySymbolsCodeCompletionQueryParams.BuilderMixin<CodeCompletionQueryBuilder> {
+  interface CodeCompletionQueryBuilder : QueryBuilder<CodeCompletionQueryBuilder>, PolySymbolCodeCompletionQueryParams.BuilderMixin<CodeCompletionQueryBuilder> {
     fun run(): List<PolySymbolCodeCompletionItem>
   }
 

@@ -9,7 +9,7 @@ import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.html.HTML_ATTRIBUTE_VALUES
 import com.intellij.polySymbols.html.PolySymbolHtmlAttributeValue
 import com.intellij.polySymbols.html.htmlAttributeValue
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import javax.swing.Icon
@@ -89,7 +89,7 @@ internal data class PolySymbolHtmlAttributeInfoImpl(
   companion object {
     fun create(
       name: String,
-      queryExecutor: PolySymbolsQueryExecutor,
+      queryExecutor: PolySymbolQueryExecutor,
       symbol: PolySymbol,
       context: PsiElement,
     ): PolySymbolHtmlAttributeInfo {

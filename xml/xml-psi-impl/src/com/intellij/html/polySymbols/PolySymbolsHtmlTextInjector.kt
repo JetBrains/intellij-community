@@ -10,7 +10,7 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
@@ -34,7 +34,7 @@ class PolySymbolsHtmlTextInjector : MultiHostInjector {
         ?.parent?.asSafely<HtmlTag>()
         ?.let { tag ->
           CachedValuesManager.getCachedValue(tag) {
-            val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
+            val queryExecutor = PolySymbolQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
               queryExecutor.nameMatchQuery(HTML_ELEMENTS, tag.name)
                 .exclude(PolySymbolModifier.ABSTRACT)
@@ -50,7 +50,7 @@ class PolySymbolsHtmlTextInjector : MultiHostInjector {
         ?.let { attr ->
           CachedValuesManager.getCachedValue(attr) {
             val tag = attr.parent as HtmlTag
-            val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag, false)
+            val queryExecutor = PolySymbolQueryExecutorFactory.create(tag, false)
             CachedValueProvider.Result.create(
               queryExecutor.nameMatchQuery(
                 listOf(

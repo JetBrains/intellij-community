@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
 class HtmlElementSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<HtmlTag>() {
 
@@ -25,7 +25,7 @@ class HtmlElementSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<H
     result: CompletionResultSet,
     position: Int,
     name: String,
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     context: HtmlTag
   ) {
     var endTag = false

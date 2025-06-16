@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlText
 import com.intellij.util.asSafely
 import com.intellij.polySymbols.html.HTML_ELEMENTS
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
 internal class HtmlElementNameSymbolsInTextCompletionProvider : PolySymbolsCompletionProviderBase<XmlElement>() {
 
@@ -26,7 +26,7 @@ internal class HtmlElementNameSymbolsInTextCompletionProvider : PolySymbolsCompl
     result: CompletionResultSet,
     position: Int,
     name: String,
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     context: XmlElement
   ) {
     if (!canProvideHtmlElementInTextCompletion(parameters)) return

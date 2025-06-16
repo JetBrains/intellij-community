@@ -59,7 +59,7 @@ import com.intellij.polySymbols.declarations.PolySymbolDeclaration
 import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.impl.canUnwrapSymbols
 import com.intellij.polySymbols.query.PolySymbolMatch
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
@@ -626,7 +626,7 @@ fun doCompletionItemsTest(
 ) {
   val fileNameNoExt = FileUtil.getNameWithoutExtension(fileName)
   fixture.configureByFile(fileName)
-  WriteAction.runAndWait<Throwable> { PolySymbolsQueryExecutorFactory.getInstance(fixture.project) }
+  WriteAction.runAndWait<Throwable> { PolySymbolQueryExecutorFactory.getInstance(fixture.project) }
 
   val document = fixture.getDocument(fixture.file)
 

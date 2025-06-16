@@ -12,7 +12,7 @@ import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.nameSegments
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
@@ -44,7 +44,7 @@ open class PolySymbolElementDescriptor private constructor(
     abstractSymbols: Boolean = false,
     strictScope: Boolean = false,
   ): List<PolySymbol> =
-    PolySymbolsQueryExecutorFactory.create(tag)
+    PolySymbolQueryExecutorFactory.create(tag)
       .nameMatchQuery(listOf(qualifiedName)) {
         strictScope(strictScope)
         if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
@@ -59,7 +59,7 @@ open class PolySymbolElementDescriptor private constructor(
     abstractSymbols: Boolean = false,
     strictScope: Boolean = false,
   ): List<PolySymbol> =
-    PolySymbolsQueryExecutorFactory.create(tag)
+    PolySymbolQueryExecutorFactory.create(tag)
       .listSymbolsQuery(qualifiedKind, expandPatterns) {
         strictScope(strictScope)
         if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
@@ -74,7 +74,7 @@ open class PolySymbolElementDescriptor private constructor(
     position: Int,
     virtualSymbols: Boolean = true,
   ): List<PolySymbolCodeCompletionItem> =
-    PolySymbolsQueryExecutorFactory.create(tag)
+    PolySymbolQueryExecutorFactory.create(tag)
       .codeCompletionQuery(qualifiedKind, name, position) {
         if (!virtualSymbols) exclude(PolySymbolModifier.VIRTUAL)
         exclude(PolySymbolModifier.ABSTRACT)

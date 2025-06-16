@@ -122,7 +122,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
+    params: PolySymbolNameMatchQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
@@ -134,7 +134,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
-    params: PolySymbolsListSymbolsQueryParams,
+    params: PolySymbolListSymbolsQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
@@ -146,7 +146,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
 
   override fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbolCodeCompletionItem> =
     if ((params.queryExecutor.allowResolve || !requiresResolve)
@@ -156,7 +156,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
     }
     else emptyList()
 
-  private fun getMap(queryExecutor: PolySymbolsQueryExecutor): PolySymbolsSearchMap =
+  private fun getMap(queryExecutor: PolySymbolQueryExecutor): PolySymbolsSearchMap =
     getNamesProviderToMapCache().getOrCreateMap(queryExecutor.namesProvider, this::createCachedSearchMap)
 
   private class NamesProviderToMapCache {
@@ -182,7 +182,7 @@ abstract class PolySymbolsScopeWithCache<T : UserDataHolder, K>(
   private class PolySymbolsSearchMap(namesProvider: PolySymbolNamesProvider, private val framework: FrameworkId?)
     : SearchMap<PolySymbol>(namesProvider) {
 
-    override fun Sequence<PolySymbol>.mapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol> = this
+    override fun Sequence<PolySymbol>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> = this
 
     fun add(symbol: PolySymbol) {
       assert(framework == null || symbol.origin.framework == framework || symbol.origin.framework == null) {

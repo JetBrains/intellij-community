@@ -7,7 +7,7 @@ import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.project.DumbService
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider
 import com.intellij.psi.xml.XmlTag
@@ -19,7 +19,7 @@ class PolySymbolElementDescriptorsProvider : XmlElementDescriptorProvider {
     if (tag == null || DumbService.isDumb(tag.project) || tag.containingFile !is HtmlCompatibleFile)
       null
     else {
-      val queryExecutor = PolySymbolsQueryExecutorFactory.create(tag)
+      val queryExecutor = PolySymbolQueryExecutorFactory.create(tag)
       queryExecutor
         .nameMatchQuery(HTML_ELEMENTS, tag.name)
         .exclude(PolySymbolModifier.ABSTRACT)

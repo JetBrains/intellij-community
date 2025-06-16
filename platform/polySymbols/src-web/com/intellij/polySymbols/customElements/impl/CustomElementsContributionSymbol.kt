@@ -14,7 +14,7 @@ import com.intellij.polySymbols.customElements.json.mapToReferenceList
 import com.intellij.polySymbols.customElements.json.toApiStatus
 import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
 abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> protected constructor(
   final override val name: String,
@@ -44,7 +44,7 @@ abstract class CustomElementsContributionSymbol<T : CustomElementsContribution> 
       else -> super<CustomElementsSymbol>.get(property)
     }
 
-  final override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
+  final override fun withQueryExecutorContext(queryExecutor: PolySymbolQueryExecutor): PolySymbol =
     this
 
   override fun matchContext(context: PolyContext): Boolean =

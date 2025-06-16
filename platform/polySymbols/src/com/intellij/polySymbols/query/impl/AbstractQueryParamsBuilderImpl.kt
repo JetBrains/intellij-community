@@ -2,13 +2,13 @@
 package com.intellij.polySymbols.query.impl
 
 import com.intellij.polySymbols.PolySymbolModifier
-import com.intellij.polySymbols.query.PolySymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryParams
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Suppress("UNCHECKED_CAST")
-abstract class AbstractQueryParamsBuilderImpl<T>() : PolySymbolsQueryParams.Builder<T> {
+abstract class AbstractQueryParamsBuilderImpl<T>() : PolySymbolQueryParams.Builder<T> {
   protected val requiredModifiers: MutableList<PolySymbolModifier> = SmartList<PolySymbolModifier>()
   protected val excludeModifiers: MutableList<PolySymbolModifier> = SmartList<PolySymbolModifier>()
 

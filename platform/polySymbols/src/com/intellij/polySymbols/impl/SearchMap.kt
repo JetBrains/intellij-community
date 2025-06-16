@@ -21,7 +21,7 @@ internal abstract class SearchMap<T> internal constructor(
   private val patterns: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
   private val statics: TreeMap<SearchMapEntry, MutableList<T>> = TreeMap()
 
-  internal abstract fun Sequence<T>.mapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol>
+  internal abstract fun Sequence<T>.mapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol>
 
   internal fun add(
     qualifiedName: PolySymbolQualifiedName,
@@ -50,7 +50,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
+    params: PolySymbolNameMatchQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): Sequence<PolySymbol> =
     namesProvider.getNames(qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY)
@@ -60,7 +60,7 @@ internal abstract class SearchMap<T> internal constructor(
       .map { it.withMatchedName(qualifiedName.name) }
       .plus(collectPatternContributions(qualifiedName, params, scope))
 
-  internal fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolsListSymbolsQueryParams): Sequence<PolySymbol> =
+  internal fun getSymbols(qualifiedKind: PolySymbolQualifiedKind, params: PolySymbolListSymbolsQueryParams): Sequence<PolySymbol> =
     statics.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true))
       .values.asSequence()
       .plus(patterns.subMap(SearchMapEntry(qualifiedKind), SearchMapEntry(qualifiedKind, kindExclusive = true)).values)
@@ -69,7 +69,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   internal fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): Sequence<PolySymbolCodeCompletionItem> =
     collectStaticCompletionResults(qualifiedName, params, scope)
@@ -79,7 +79,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectStaticCompletionResults(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbolCodeCompletionItem> =
     statics.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
@@ -92,7 +92,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectPatternCompletionResults(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbolCodeCompletionItem> =
     patterns.subMap(SearchMapEntry(qualifiedName.qualifiedKind), SearchMapEntry(qualifiedName.qualifiedKind, kindExclusive = true))
@@ -106,7 +106,7 @@ internal abstract class SearchMap<T> internal constructor(
 
   private fun collectPatternContributions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
+    params: PolySymbolNameMatchQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     collectPatternsToProcess(qualifiedName)
@@ -136,12 +136,12 @@ internal abstract class SearchMap<T> internal constructor(
     return toProcess
   }
 
-  private fun Sequence<T>.innerMapAndFilter(params: PolySymbolsQueryParams): Sequence<PolySymbol> =
+  private fun Sequence<T>.innerMapAndFilter(params: PolySymbolQueryParams): Sequence<PolySymbol> =
     mapAndFilter(params)
       .filterByQueryParams(params)
 
 
-  private fun Sequence<Collection<T>>.flatMapWithQueryParameters(params: PolySymbolsQueryParams): Sequence<PolySymbol> =
+  private fun Sequence<Collection<T>>.flatMapWithQueryParameters(params: PolySymbolQueryParams): Sequence<PolySymbol> =
     this.flatMap { it.asSequence().innerMapAndFilter(params) }
 
   private data class SearchMapEntry(

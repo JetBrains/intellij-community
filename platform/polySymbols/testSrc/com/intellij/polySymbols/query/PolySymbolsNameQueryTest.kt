@@ -388,11 +388,11 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   }
 
   fun testNestedPattern1() {
-    polySymbolsQueryExecutorFactory.addScope(
+    polySymbolQueryExecutorFactory.addScope(
       object : PolySymbolsScope {
         override fun getMatchingSymbols(
           qualifiedName: PolySymbolQualifiedName,
-          params: PolySymbolsNameMatchQueryParams,
+          params: PolySymbolNameMatchQueryParams,
           scope: Stack<PolySymbolsScope>,
         ): List<PolySymbol> {
           return if (qualifiedName.qualifiedKind == HTML_ATTRIBUTES) {
@@ -437,7 +437,7 @@ class PolySymbolsNameQueryTest : PolySymbolsMockQueryExecutorTestBase() {
   ) {
     doTest(testPath) {
       registerFiles(framework, webTypes, customElementsManifests)
-      val matches = polySymbolsQueryExecutorFactory.create(null)
+      val matches = polySymbolQueryExecutorFactory.create(null)
         .nameMatchQuery(parseWebTypesPath(path, null)) {
           if (!includeVirtual) exclude(PolySymbolModifier.VIRTUAL)
           exclude(PolySymbolModifier.ABSTRACT)

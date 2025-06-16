@@ -12,7 +12,7 @@ import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.impl.StaticPolySymbolsScopeBase
 import com.intellij.polySymbols.patterns.PolySymbolsPattern
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.webTypes.WebTypesJsonOrigin
 import com.intellij.polySymbols.webTypes.WebTypesScopeBase
 import com.intellij.polySymbols.webTypes.WebTypesSymbolBase
@@ -89,7 +89,7 @@ abstract class WebTypesJsonContributionAdapter private constructor(
      }.also { exclusiveContributions = it }
     ).contains(qualifiedKind)
 
-  override fun withQueryExecutorContext(queryExecutor: PolySymbolsQueryExecutor): PolySymbol =
+  override fun withQueryExecutorContext(queryExecutor: PolySymbolQueryExecutor): PolySymbol =
     (this.contribution.pattern?.let { WebTypesSymbolBase.WebTypesSymbolWithPattern(it) }
      ?: WebTypesSymbolFactoryEP.get(qualifiedKind)?.create()
      ?: WebTypesSymbolBase()

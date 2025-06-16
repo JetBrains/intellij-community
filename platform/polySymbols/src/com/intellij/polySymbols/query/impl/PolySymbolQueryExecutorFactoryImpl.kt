@@ -24,12 +24,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.asSafely
 import com.intellij.util.containers.MultiMap
 
-class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySymbolsQueryExecutorFactory, Disposable {
+class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySymbolQueryExecutorFactory, Disposable {
 
   private val customScope = MultiMap<VirtualFile?, PolySymbolsScope>()
   private var modificationCount = 0L
 
-  override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolsQueryExecutor {
+  override fun create(location: PsiElement?, allowResolve: Boolean): PolySymbolQueryExecutor {
     val application = ApplicationManager.getApplication()
     application.assertReadAccessAllowed()
 
@@ -49,11 +49,11 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
           if (internalMode && Math.random() < 0.2) {
             val newScope = queryConfigurator.getScope(project, originalLocation, context, allowResolve)
             if (newScope != it) {
-              logger<PolySymbolsQueryExecutorFactory>().error(
+              logger<PolySymbolQueryExecutorFactory>().error(
                 "Query configurator $queryConfigurator should provide scope, which is the same (by equals()), when called with the same arguments: $it != $newScope")
             }
             if (newScope.hashCode() != it.hashCode()) {
-              logger<PolySymbolsQueryExecutorFactory>().error(
+              logger<PolySymbolQueryExecutorFactory>().error(
                 "Query configurator $queryConfigurator should provide scope, which has the same hashCode(), when called with the same arguments: $it != $newScope")
             }
           }
@@ -62,12 +62,12 @@ class PolySymbolsQueryExecutorFactoryImpl(private val project: Project) : PolySy
 
     scopeList.sortBy { (it.asSafely<PolySymbolsPrioritizedScope>()?.priority ?: PolySymbol.Priority.NORMAL).value }
 
-    return PolySymbolsQueryExecutorImpl(location,
-                                        scopeList,
-                                        createNamesProvider(project, originalLocation, context),
-                                        PolySymbolsQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
-                                        context,
-                                        allowResolve)
+    return PolySymbolQueryExecutorImpl(location,
+                                       scopeList,
+                                       createNamesProvider(project, originalLocation, context),
+                                       PolySymbolQueryResultsCustomizerFactory.getQueryResultsCustomizer(location, context),
+                                       context,
+                                       allowResolve)
   }
 
   override fun addScope(

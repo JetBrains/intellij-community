@@ -40,11 +40,11 @@ interface PolySymbolsScope : ModificationTracker {
    */
   fun getMatchingSymbols(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsNameMatchQueryParams,
+    params: PolySymbolNameMatchQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     getSymbols(qualifiedName.qualifiedKind,
-               PolySymbolsListSymbolsQueryParams.create(
+               PolySymbolListSymbolsQueryParams.create(
                  params.queryExecutor, expandPatterns = false) {
                  strictScope(params.strictScope)
                  copyFiltersFrom(params)
@@ -59,7 +59,7 @@ interface PolySymbolsScope : ModificationTracker {
    */
   fun getSymbols(
     qualifiedKind: PolySymbolQualifiedKind,
-    params: PolySymbolsListSymbolsQueryParams,
+    params: PolySymbolListSymbolsQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbol> =
     emptyList()
@@ -75,7 +75,7 @@ interface PolySymbolsScope : ModificationTracker {
    */
   fun getCodeCompletions(
     qualifiedName: PolySymbolQualifiedName,
-    params: PolySymbolsCodeCompletionQueryParams,
+    params: PolySymbolCodeCompletionQueryParams,
     scope: Stack<PolySymbolsScope>,
   ): List<PolySymbolCodeCompletionItem> =
     getDefaultCodeCompletions(qualifiedName, params, scope)

@@ -12,8 +12,8 @@ import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
 import com.intellij.polySymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -29,7 +29,7 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
     result: CompletionResultSet,
     position: Int,
     name: String,
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     context: XmlAttribute,
   ) {
     val tag = context.parent ?: return
@@ -69,8 +69,8 @@ class HtmlAttributeSymbolsCompletionProvider : PolySymbolsCompletionProviderBase
           { insertionContext, lookupItem ->
             // At this instant the file is already modified by LookupElement, so every PsiElement inside PolySymbolsRegistry is invalid
             // We need freshly constructed registry to avoid PsiInvalidElementAccessException when calling runNameMatchQuery
-            val freshRegistry = PolySymbolsQueryExecutorFactory.create(context,
-                                                                       queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
+            val freshRegistry = PolySymbolQueryExecutorFactory.create(context,
+                                                                      queryExecutor.allowResolve) // TODO Fix pointer dereference and use it here
 
             val fullName = name.substring(0, item.offset) + item.name
             val info = XmlTagInsertHandler.runWithTimeoutOrNull {

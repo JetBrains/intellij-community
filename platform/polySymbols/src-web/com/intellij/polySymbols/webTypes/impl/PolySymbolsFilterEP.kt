@@ -5,7 +5,7 @@ import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsScope
 import com.intellij.polySymbols.webTypes.filters.PolySymbolsFilter
 import com.intellij.util.xmlb.annotations.Attribute
@@ -22,7 +22,7 @@ class PolySymbolsFilterEP() : CustomLoadingExtensionPointBean<PolySymbolsFilter>
     private val NOOP_FILTER = object : PolySymbolsFilter {
       override fun filterCodeCompletions(
         codeCompletions: List<PolySymbolCodeCompletionItem>,
-        queryExecutor: PolySymbolsQueryExecutor,
+        queryExecutor: PolySymbolQueryExecutor,
         scope: List<PolySymbolsScope>,
         properties: Map<String, Any>,
       ): List<PolySymbolCodeCompletionItem> =
@@ -30,7 +30,7 @@ class PolySymbolsFilterEP() : CustomLoadingExtensionPointBean<PolySymbolsFilter>
 
       override fun filterNameMatches(
         matches: List<PolySymbol>,
-        queryExecutor: PolySymbolsQueryExecutor,
+        queryExecutor: PolySymbolQueryExecutor,
         scope: List<PolySymbolsScope>,
         properties: Map<String, Any>,
       ): List<PolySymbol> =

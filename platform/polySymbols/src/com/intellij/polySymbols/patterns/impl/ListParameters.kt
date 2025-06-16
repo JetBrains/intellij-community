@@ -1,15 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.polySymbols.patterns.impl
 
-import com.intellij.polySymbols.query.PolySymbolsListSymbolsQueryParams
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolListSymbolsQueryParams
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
 internal open class ListParameters(
-  val queryExecutor: PolySymbolsQueryExecutor,
+  val queryExecutor: PolySymbolQueryExecutor,
   val expandPatterns: Boolean,
 ) {
 
-  constructor(params: PolySymbolsListSymbolsQueryParams)
+  constructor(params: PolySymbolListSymbolsQueryParams)
     : this(params.queryExecutor, params.expandPatterns)
 
   val framework: String? get() = queryExecutor.framework

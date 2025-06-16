@@ -3,7 +3,7 @@ package com.intellij.polySymbols.webTypes.filters
 
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolsScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -12,7 +12,7 @@ class PolySymbolsMatchPrefixFilter : PolySymbolsFilter {
 
   override fun filterCodeCompletions(
     codeCompletions: List<PolySymbolCodeCompletionItem>,
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     scope: List<PolySymbolsScope>,
     properties: Map<String, Any>,
   ): List<PolySymbolCodeCompletionItem> {
@@ -22,7 +22,7 @@ class PolySymbolsMatchPrefixFilter : PolySymbolsFilter {
 
   override fun filterNameMatches(
     matches: List<PolySymbol>,
-    queryExecutor: PolySymbolsQueryExecutor,
+    queryExecutor: PolySymbolQueryExecutor,
     scope: List<PolySymbolsScope>,
     properties: Map<String, Any>,
   ): List<PolySymbol> {

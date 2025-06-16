@@ -5,12 +5,12 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.query.impl.AbstractQueryParamsBuilderImpl
 
-sealed interface PolySymbolsQueryParams {
+sealed interface PolySymbolQueryParams {
 
   val framework: String?
     get() = queryExecutor.framework
 
-  val queryExecutor: PolySymbolsQueryExecutor
+  val queryExecutor: PolySymbolQueryExecutor
 
   val requiredModifiers: List<PolySymbolModifier>
   val excludeModifiers: List<PolySymbolModifier>
@@ -33,15 +33,15 @@ sealed interface PolySymbolsQueryParams {
     fun exclude(vararg modifiers: PolySymbolModifier): T
     fun exclude(modifiers: Collection<PolySymbolModifier>): T
 
-    fun copyFiltersFrom(params: PolySymbolsQueryParams) {
+    fun copyFiltersFrom(params: PolySymbolQueryParams) {
       require(params.requiredModifiers)
       exclude(params.excludeModifiers)
     }
   }
 }
 
-sealed interface PolySymbolsListSymbolsQueryParams : PolySymbolsQueryParams {
-  override val queryExecutor: PolySymbolsQueryExecutor
+sealed interface PolySymbolListSymbolsQueryParams : PolySymbolQueryParams {
+  override val queryExecutor: PolySymbolQueryExecutor
   val expandPatterns: Boolean
   val strictScope: Boolean
 
@@ -50,23 +50,23 @@ sealed interface PolySymbolsListSymbolsQueryParams : PolySymbolsQueryParams {
     @JvmStatic
     @JvmOverloads
     fun create(
-      queryExecutor: PolySymbolsQueryExecutor,
+      queryExecutor: PolySymbolQueryExecutor,
       expandPatterns: Boolean,
       configurator: Builder.() -> Unit = {},
-    ): PolySymbolsListSymbolsQueryParams =
+    ): PolySymbolListSymbolsQueryParams =
       PolySymbolsListSymbolsQueryParamsBuilderImpl(queryExecutor, expandPatterns).apply(configurator).build()
   }
 
-  interface BuilderMixin<T> : PolySymbolsQueryParams.Builder<T> {
+  interface BuilderMixin<T> : PolySymbolQueryParams.Builder<T> {
     fun strictScope(value: Boolean): T
   }
 
-  interface Builder : PolySymbolsQueryParams.Builder<Builder>, BuilderMixin<Builder>
+  interface Builder : PolySymbolQueryParams.Builder<Builder>, BuilderMixin<Builder>
 }
 
 
-sealed interface PolySymbolsNameMatchQueryParams : PolySymbolsQueryParams {
-  override val queryExecutor: PolySymbolsQueryExecutor
+sealed interface PolySymbolNameMatchQueryParams : PolySymbolQueryParams {
+  override val queryExecutor: PolySymbolQueryExecutor
   val strictScope: Boolean
 
   companion object {
@@ -74,9 +74,9 @@ sealed interface PolySymbolsNameMatchQueryParams : PolySymbolsQueryParams {
     @JvmStatic
     @JvmOverloads
     fun create(
-      queryExecutor: PolySymbolsQueryExecutor,
+      queryExecutor: PolySymbolQueryExecutor,
       configurator: Builder.() -> Unit = {},
-    ): PolySymbolsNameMatchQueryParams =
+    ): PolySymbolNameMatchQueryParams =
       PolySymbolsNameMatchQueryParamsBuilderImpl(queryExecutor).apply(configurator).build()
 
   }
@@ -85,11 +85,11 @@ sealed interface PolySymbolsNameMatchQueryParams : PolySymbolsQueryParams {
     fun strictScope(value: Boolean): T
   }
 
-  interface Builder : PolySymbolsQueryParams.Builder<Builder>, BuilderMixin<Builder>
+  interface Builder : PolySymbolQueryParams.Builder<Builder>, BuilderMixin<Builder>
 }
 
-sealed interface PolySymbolsCodeCompletionQueryParams : PolySymbolsQueryParams {
-  override val queryExecutor: PolySymbolsQueryExecutor
+sealed interface PolySymbolCodeCompletionQueryParams : PolySymbolQueryParams {
+  override val queryExecutor: PolySymbolQueryExecutor
 
   /** Position to complete at in the last segment of the path **/
   val position: Int
@@ -99,78 +99,78 @@ sealed interface PolySymbolsCodeCompletionQueryParams : PolySymbolsQueryParams {
     @JvmStatic
     @JvmOverloads
     fun create(
-      queryExecutor: PolySymbolsQueryExecutor,
+      queryExecutor: PolySymbolQueryExecutor,
       position: Int,
       configurator: Builder.() -> Unit = {},
-    ): PolySymbolsCodeCompletionQueryParams =
+    ): PolySymbolCodeCompletionQueryParams =
       PolySymbolsCodeCompletionQueryParamsBuilderImpl(queryExecutor, position).apply(configurator).build()
 
   }
 
   interface BuilderMixin<T>
 
-  interface Builder : PolySymbolsQueryParams.Builder<Builder>, BuilderMixin<Builder>
+  interface Builder : PolySymbolQueryParams.Builder<Builder>, BuilderMixin<Builder>
 }
 
 private class PolySymbolsListSymbolsQueryParamsBuilderImpl(
-  private val queryExecutor: PolySymbolsQueryExecutor,
+  private val queryExecutor: PolySymbolQueryExecutor,
   private val expandPatterns: Boolean,
-) : PolySymbolsListSymbolsQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolsListSymbolsQueryParams.Builder>() {
+) : PolySymbolListSymbolsQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolListSymbolsQueryParams.Builder>() {
   private var strictScope: Boolean = false
 
   override fun strictScope(value: Boolean) = apply {
     this.strictScope = value
   }
 
-  fun build(): PolySymbolsListSymbolsQueryParams =
-    PolySymbolsListSymbolsQueryParamsData(queryExecutor, expandPatterns, strictScope, requiredModifiers.toList(),
-                                          excludeModifiers.toList())
+  fun build(): PolySymbolListSymbolsQueryParams =
+    PolySymbolListSymbolsQueryParamsData(queryExecutor, expandPatterns, strictScope, requiredModifiers.toList(),
+                                         excludeModifiers.toList())
 
 }
 
 private class PolySymbolsNameMatchQueryParamsBuilderImpl(
-  private val queryExecutor: PolySymbolsQueryExecutor,
-) : PolySymbolsNameMatchQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolsNameMatchQueryParams.Builder>() {
+  private val queryExecutor: PolySymbolQueryExecutor,
+) : PolySymbolNameMatchQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolNameMatchQueryParams.Builder>() {
   private var strictScope: Boolean = false
 
   override fun strictScope(value: Boolean) = apply {
     this.strictScope = value
   }
 
-  fun build(): PolySymbolsNameMatchQueryParams =
-    PolySymbolsNameMatchQueryParamsData(queryExecutor, strictScope, requiredModifiers.toList(),
-                                        excludeModifiers.toList())
+  fun build(): PolySymbolNameMatchQueryParams =
+    PolySymbolNameMatchQueryParamsData(queryExecutor, strictScope, requiredModifiers.toList(),
+                                       excludeModifiers.toList())
 
 }
 
 private class PolySymbolsCodeCompletionQueryParamsBuilderImpl(
-  private val queryExecutor: PolySymbolsQueryExecutor,
+  private val queryExecutor: PolySymbolQueryExecutor,
   private val position: Int,
-) : PolySymbolsCodeCompletionQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolsCodeCompletionQueryParams.Builder>() {
+) : PolySymbolCodeCompletionQueryParams.Builder, AbstractQueryParamsBuilderImpl<PolySymbolCodeCompletionQueryParams.Builder>() {
 
-  fun build(): PolySymbolsCodeCompletionQueryParams =
-    PolySymbolsCodeCompletionQueryParamsData(queryExecutor, position, requiredModifiers.toList(), excludeModifiers.toList())
+  fun build(): PolySymbolCodeCompletionQueryParams =
+    PolySymbolCodeCompletionQueryParamsData(queryExecutor, position, requiredModifiers.toList(), excludeModifiers.toList())
 
 }
 
-internal data class PolySymbolsCodeCompletionQueryParamsData(
-  override val queryExecutor: PolySymbolsQueryExecutor,
+internal data class PolySymbolCodeCompletionQueryParamsData(
+  override val queryExecutor: PolySymbolQueryExecutor,
   override val position: Int,
   override val requiredModifiers: List<PolySymbolModifier>,
   override val excludeModifiers: List<PolySymbolModifier>,
-) : PolySymbolsCodeCompletionQueryParams
+) : PolySymbolCodeCompletionQueryParams
 
-internal data class PolySymbolsListSymbolsQueryParamsData(
-  override val queryExecutor: PolySymbolsQueryExecutor,
+internal data class PolySymbolListSymbolsQueryParamsData(
+  override val queryExecutor: PolySymbolQueryExecutor,
   override val expandPatterns: Boolean,
   override val strictScope: Boolean,
   override val requiredModifiers: List<PolySymbolModifier>,
   override val excludeModifiers: List<PolySymbolModifier>,
-) : PolySymbolsListSymbolsQueryParams
+) : PolySymbolListSymbolsQueryParams
 
-internal data class PolySymbolsNameMatchQueryParamsData(
-  override val queryExecutor: PolySymbolsQueryExecutor,
+internal data class PolySymbolNameMatchQueryParamsData(
+  override val queryExecutor: PolySymbolQueryExecutor,
   override val strictScope: Boolean,
   override val requiredModifiers: List<PolySymbolModifier>,
   override val excludeModifiers: List<PolySymbolModifier>,
-) : PolySymbolsNameMatchQueryParams
+) : PolySymbolNameMatchQueryParams

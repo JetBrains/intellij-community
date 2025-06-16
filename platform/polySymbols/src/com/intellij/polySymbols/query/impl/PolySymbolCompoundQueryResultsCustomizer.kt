@@ -6,9 +6,9 @@ import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.query.PolySymbolsQueryResultsCustomizer
+import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 
-internal class PolySymbolsCompoundQueryResultsCustomizer(private val customizers: List<PolySymbolsQueryResultsCustomizer>) : PolySymbolsQueryResultsCustomizer {
+internal class PolySymbolCompoundQueryResultsCustomizer(private val customizers: List<PolySymbolQueryResultsCustomizer>) : PolySymbolQueryResultsCustomizer {
 
   override fun apply(matches: List<PolySymbol>, strict: Boolean,
                      qualifiedName: PolySymbolQualifiedName): List<PolySymbol> =
@@ -22,13 +22,13 @@ internal class PolySymbolsCompoundQueryResultsCustomizer(private val customizers
       i?.let { scope.apply(it, qualifiedKind) }
     }
 
-  override fun createPointer(): Pointer<out PolySymbolsQueryResultsCustomizer> {
+  override fun createPointer(): Pointer<out PolySymbolQueryResultsCustomizer> {
     val customizersPointers = customizers.map { it.createPointer() }
     return Pointer {
       val customizers = customizersPointers.map { it.dereference() }
       if (customizers.any { it == null }) return@Pointer null
       @Suppress("UNCHECKED_CAST")
-      (PolySymbolsCompoundQueryResultsCustomizer(customizers as List<PolySymbolsQueryResultsCustomizer>))
+      (PolySymbolCompoundQueryResultsCustomizer(customizers as List<PolySymbolQueryResultsCustomizer>))
     }
   }
 
@@ -37,7 +37,7 @@ internal class PolySymbolsCompoundQueryResultsCustomizer(private val customizers
 
   override fun equals(other: Any?): Boolean =
     other === this ||
-    other is PolySymbolsCompoundQueryResultsCustomizer
+    other is PolySymbolCompoundQueryResultsCustomizer
     && other.customizers == customizers
 
   override fun hashCode(): Int =

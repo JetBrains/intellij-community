@@ -24,7 +24,7 @@ import com.intellij.util.Query
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.utils.qualifiedName
 import java.util.*
@@ -44,7 +44,7 @@ object PolySymbolUsageQueries {
 
   fun buildPolySymbolUsagesQueries(symbol: PolySymbol, project: Project, searchScope: SearchScope): List<Query<out PsiUsage>> =
     (symbol.psiContext
-       ?.let { PolySymbolsQueryExecutorFactory.create(it, true) }
+       ?.let { PolySymbolQueryExecutorFactory.create(it, true) }
        ?.namesProvider
        ?.getNames(symbol.qualifiedName, PolySymbolNamesProvider.Target.NAMES_QUERY)?.asSequence()
      ?: sequenceOf(symbol.name))

@@ -11,8 +11,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolModifier
 import com.intellij.polySymbols.html.HTML_ATTRIBUTES
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.utils.asSingleSymbol
 import com.intellij.polySymbols.utils.hasOnlyExtensions
 import com.intellij.psi.xml.XmlTag
@@ -26,7 +26,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
     if (context == null || DumbService.isDumb(context.project) || context.containingFile !is HtmlCompatibleFile)
       XmlAttributeDescriptor.EMPTY
     else {
-      val queryExecutor = PolySymbolsQueryExecutorFactory.create(context)
+      val queryExecutor = PolySymbolQueryExecutorFactory.create(context)
       val additionalScope = listOf(HtmlSymbolQueryConfigurator.HtmlContextualSymbolScope(context.firstChild))
       queryExecutor
         .listSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true)
@@ -45,7 +45,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       null
     else {
       val attribute = context.getAttribute(attributeName)
-      val queryExecutor = PolySymbolsQueryExecutorFactory.create(attribute ?: context)
+      val queryExecutor = PolySymbolQueryExecutorFactory.create(attribute ?: context)
       val elementDescriptor = context.descriptor
       val additionalScope = if (attribute != null)
         emptyList()
@@ -66,7 +66,7 @@ class PolySymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
         ?.getAttributeDescriptor(attributeName, context, queryExecutor)
     }
 
-  private fun PolySymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: PolySymbolsQueryExecutor) =
+  private fun PolySymbol.getAttributeDescriptor(attributeName: String, context: XmlTag, registry: PolySymbolQueryExecutor) =
     this
       .asSafely<HtmlSymbolQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor

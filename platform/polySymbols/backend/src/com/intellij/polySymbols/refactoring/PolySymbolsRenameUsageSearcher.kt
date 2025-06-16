@@ -7,8 +7,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
 import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutor
-import com.intellij.polySymbols.query.PolySymbolsQueryExecutorFactory
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.search.PolySymbolUsageQueries
 
 internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
@@ -21,8 +21,8 @@ internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
           .map { query ->
             query.mapping {
               PolySymbolPsiModifiableRenameUsage(
-                PolySymbolsQueryExecutorFactory.create(PsiTreeUtil.findElementOfClassAtRange(it.file, it.range.startOffset, it.range.endOffset, PsiElement::class.java)
-                                                       ?: it.file), symbol,
+                PolySymbolQueryExecutorFactory.create(PsiTreeUtil.findElementOfClassAtRange(it.file, it.range.startOffset, it.range.endOffset, PsiElement::class.java)
+                                                      ?: it.file), symbol,
                 PsiRenameUsage.defaultPsiRenameUsage(it))
             }
           }
@@ -30,7 +30,7 @@ internal class PolySymbolsRenameUsageSearcher : RenameUsageSearcher {
     ?: emptyList()
 
   private class PolySymbolPsiModifiableRenameUsage(
-    private val queryExecutor: PolySymbolsQueryExecutor,
+    private val queryExecutor: PolySymbolQueryExecutor,
     private val symbol: PolySymbol,
     private val psiRenameUsage: PsiRenameUsage,
   )
