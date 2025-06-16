@@ -170,7 +170,7 @@
     <registryKey defaultValue="false"
                  description="Close Commit dialog (Commit TW opened in either floating or windowed mode) by pressing ESC"
                  key="vcs.commit.dialog.esc.close"/>
-    <registryKey defaultValue="false" description="Always open diff in window in either floating or windowed commit TW"
+    <registryKey defaultValue="true" description="Always open diff in window in either floating or windowed commit TW"
                  key="vcs.commit.dialog.force.diff.in.window"/>
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
