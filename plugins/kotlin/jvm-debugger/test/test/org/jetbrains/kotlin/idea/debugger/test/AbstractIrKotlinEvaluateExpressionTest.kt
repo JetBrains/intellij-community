@@ -32,6 +32,7 @@ import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findStringWithPrefixes
 import org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization.KotlinSerializationEnabledChecker
@@ -304,20 +305,28 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
 
     private fun loadExpressions(testFile: KotlinBaseTest.TestFile): List<CodeFragment> {
         val directives = findLinesWithPrefixesRemoved(testFile.content, "// EXPRESSION: ")
+
         val expected = findLinesWithPrefixesRemoved(testFile.content, "// RESULT: ")
-        val expectedK2 = findLinesWithPrefixesRemoved(testFile.content, "// RESULT_K2: ")
         assert(directives.size == expected.size) { "Sizes of test directives are different" }
-        if (expectedK2.isNotEmpty()) {
-            assert(expected.size == expectedK2.size) { "Sizes of test directives are different" }
+
+        fun findSpecificExpected(testDirective: String): List<String> {
+            val specificExpected = findLinesWithPrefixesRemoved(testFile.content, "// $testDirective: ")
+            assert(specificExpected.isEmpty() || expected.size == specificExpected.size) {
+                "A '$testDirective' directive must exist below each 'RESULT' directive"
+            }
+            return specificExpected
         }
 
-        val expectations =
-            if (compileWithK2 && expectedK2.isNotEmpty()) {
-                expectedK2
-            } else {
-                expected
-            }
-        return directives.zip(expectations).map { (text, result) -> CodeFragment(text, result, CodeFragmentKind.EXPRESSION) }
+        val expectedK2Compiler = findSpecificExpected("RESULT_K2_COMPILER")
+        val expectedK2Ide = findSpecificExpected("RESULT_K2_IDE")
+
+        val effectiveExpected = when {
+            compileWithK2 && expectedK2Compiler.isNotEmpty() -> expectedK2Compiler
+            KotlinPluginModeProvider.isK2Mode() && expectedK2Ide.isNotEmpty() -> expectedK2Ide
+            else -> expected
+        }
+
+        return directives.zip(effectiveExpected).map { (text, result) -> CodeFragment(text, result, CodeFragmentKind.EXPRESSION) }
     }
 
     private fun loadCodeBlocks(wholeFile: File): List<CodeFragment> {
