@@ -118,8 +118,35 @@ private fun undoRedoInfo(document: Document,
   val groupsToUndoAttributes = groupsToUndoRange.map { it.value.attributes }
   val description = groupsToUndoRange.last().value.attributes.map[UndoGroupAttributes.description]
 
-  if (groupsToUndoRange.any { it.value !is DocumentUndoGroup || it.value.globalGroups.isNotEmpty() }) {
-    return UndoInfo(
+  return if (groupsToUndoRange.all { it.value is DocumentUndoGroup }) {
+    val groupsToUndo = groupsToUndoRange.map { it.value as DocumentUndoGroup }
+    val entryIndexFrom = groupsToUndo.first().entryIndexFrom
+    val entryIndexTo = groupsToUndo.last().entryIndexTo
+    val entryIndices = groupsToUndo.flatMap(DocumentUndoGroup::entryIndices)
+
+    val entries = document.edits
+    val baseAfter = undoLog.computeComposition(document.edits, entryIndexTo, entries.timestamp)
+    val baseInside = entries.slice(entryIndexFrom, entryIndexTo).compose()
+    val undoOperation = entries.composeSpreadInverted(entryIndexFrom, entryIndexTo, entryIndices).transform(baseAfter, Sticky.RIGHT)
+
+    val caretStateBefore = groupsToUndo.first().caretStateBefore
+      ?.rebase(baseInside.compose(baseAfter).compose(undoOperation).normalizeHard())
+    val caretStateAfter = groupsToUndo.last().caretStateAfter?.rebase(baseAfter)
+
+    val hasAnyGlobalGroups = groupsToUndo.any { it.globalGroups.isNotEmpty() }
+    UndoInfo(
+      edit = if (hasAnyGlobalGroups) Operation.empty() else undoOperation,
+      isRedo = isRedo,
+      groupsToUndo = groupsToUndoReferences,
+      groupsToUndoAttributes = groupsToUndoAttributes,
+      caretStateBefore = caretStateBefore,
+      caretStateAfter = caretStateAfter,
+      global = hasAnyGlobalGroups,
+      description = description
+    )
+  }
+  else {
+    UndoInfo(
       edit = Operation.empty(),
       isRedo = isRedo,
       groupsToUndo = groupsToUndoReferences,
@@ -130,29 +157,6 @@ private fun undoRedoInfo(document: Document,
       description = description
     )
   }
-
-  val groupsToUndo = groupsToUndoRange.map { it.value as DocumentUndoGroup }
-  val globalGroups = groupsToUndo.flatMap { it.globalGroups }
-  val entryIndexFrom = groupsToUndo.first().entryIndexFrom
-  val entryIndexTo = groupsToUndo.last().entryIndexTo
-  val entryIndices = groupsToUndo.flatMap(DocumentUndoGroup::entryIndices)
-  val caretStateBefore = groupsToUndo.first().caretStateBefore
-  val caretStateAfter = groupsToUndo.last().caretStateAfter
-
-  val entries: EditLog = document.edits
-  val baseAfter: Operation = undoLog.computeComposition(document.edits, entryIndexTo, entries.timestamp)
-  val baseInside: Operation = entries.slice(entryIndexFrom, entryIndexTo).compose()
-  val undoOperation = entries.composeSpreadInverted(entryIndexFrom, entryIndexTo, entryIndices).transform(baseAfter, Sticky.RIGHT)
-  return UndoInfo(
-    edit = undoOperation,
-    isRedo = isRedo,
-    groupsToUndo = groupsToUndoReferences,
-    groupsToUndoAttributes = groupsToUndoAttributes,
-    caretStateBefore = caretStateBefore?.rebase(baseInside.compose(baseAfter).compose(undoOperation).normalizeHard()),
-    caretStateAfter = caretStateAfter?.rebase(baseAfter),
-    global = globalGroups.isNotEmpty(),
-    description = description
-  )
 }
 
 private fun List<CaretPosition>.rebase(base: Operation): List<CaretPosition> = map { pos ->
