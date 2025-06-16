@@ -187,7 +187,7 @@ internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
 
     val elapsed = currentTime.get() - initialTime
     val t = (elapsed % ANIMATION_DURATION_MS).toDouble() / ANIMATION_DURATION_MS.toDouble()
-    val opacity = 0.5 + 0.5 * sin(2 * Math.PI * t)
+    val opacity = 0.3 + 0.3 * sin(2 * Math.PI * t)
     return ColorUtil.withAlpha(BACKGROUND_COLOR, opacity)
   }
 
