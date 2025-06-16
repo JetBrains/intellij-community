@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class HtmlPolySymbolDocumentationCustomizer : PolySymbolDocumentationCustomizer {
+class HtmlSymbolDocumentationCustomizer : PolySymbolDocumentationCustomizer {
   override fun customize(symbol: PolySymbol, location: PsiElement?, documentation: PolySymbolDocumentation): PolySymbolDocumentation {
     if (symbol.qualifiedKind.namespace != NAMESPACE_HTML) return documentation
     if (symbol.modifiers.contains(PolySymbolModifier.REQUIRED))

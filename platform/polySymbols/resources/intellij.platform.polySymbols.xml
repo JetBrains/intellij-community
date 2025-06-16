@@ -73,7 +73,7 @@
       implementation="com.intellij.polySymbols.webTypes.WebTypesDocumentationCustomizer"/>
     <polySymbols.documentationCustomizer
       id="html"
-      implementation="com.intellij.polySymbols.html.HtmlPolySymbolDocumentationCustomizer"/>
+      implementation="com.intellij.polySymbols.html.HtmlSymbolDocumentationCustomizer"/>
     <polySymbols.matchCustomizerFactory
       implementation="com.intellij.polySymbols.html.HtmlPolySymbolMatchCustomizer$Factory"/>
   </extensions>
