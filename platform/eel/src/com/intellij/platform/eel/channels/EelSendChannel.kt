@@ -22,7 +22,7 @@ interface EelSendChannel {
    * Throws an exception in case of IO error.
    */
   @EelSendApi
-  @ApiStatus.Experimental
+  @ApiStatus.Internal
   suspend fun send(src: ByteBuffer)
 
   /**

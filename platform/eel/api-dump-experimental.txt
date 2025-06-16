@@ -269,12 +269,9 @@ f:com.intellij.platform.eel.EelTunnelsApiHelpersKt
 *:com.intellij.platform.eel.channels.EelReceiveChannel
 - a:close(kotlin.coroutines.Continuation):java.lang.Object
 - a:receive(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
-*@:com.intellij.platform.eel.channels.EelSendApi
-- java.lang.annotation.Annotation
 *:com.intellij.platform.eel.channels.EelSendChannel
 - *a:close(kotlin.coroutines.Continuation):java.lang.Object
 - *a:isClosed():Z
-- *a:send(java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.eel.channels.EelSendChannelKt
 - *sf:sendWholeBuffer(com.intellij.platform.eel.channels.EelSendChannel,java.nio.ByteBuffer,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.path.EelPath
