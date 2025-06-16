@@ -14,6 +14,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
@@ -22,7 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FSRecordsImplTest {
-
 
   private FSRecordsImpl vfs;
   private Path vfsDir;
@@ -34,20 +34,17 @@ public class FSRecordsImplTest {
 
     //shuffle roots to make sure rootUrlIds are not sequential:
     for (int i = 0; i < totalRoots; i++) {
-      String rootUrl = "file:///root/" + i;
-      rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
-    }
-    for (int i = 0; i < totalRoots; i++) {
       String rootUrl = "file:///root/" + (totalRoots - i - 1);
       vfs.connection().names().enumerate(rootUrl);
     }
     for (int i = 0; i < totalRoots; i++) {
       String rootUrl = "file:///root/" + i;
-      vfs.connection().names().enumerate(rootUrl);
       rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
     }
 
     int[] rootIdsReadBack = vfs.listRoots();
+    Arrays.sort(rootIds);
+    Arrays.sort(rootIdsReadBack);
     assertArrayEquals(
       rootIds,
       rootIdsReadBack,
@@ -56,27 +53,56 @@ public class FSRecordsImplTest {
   }
 
   @Test
-  public void insertedRoots_CouldBeReadBack_AfterReinitialization() throws Exception {
+  public void insertedRoots_CouldBeReadBack_AfterVFSReinitialization() throws Exception {
     int totalRoots = 100_000;               //too many roots could exceed attribute storage max record size
     int[] rootIds = new int[totalRoots];
     //shuffle roots to make sure rootUrlIds are not sequential:
     for (int i = 0; i < totalRoots; i++) {
-      String rootUrl = "file:///root/" + i;
-      rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
-    }
-    for (int i = 0; i < totalRoots; i++) {
       String rootUrl = "file:///root/" + (totalRoots - i - 1);
       vfs.connection().names().enumerate(rootUrl);
+    }
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + i;
+      rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
     }
 
     vfs = reloadVFS();
 
     int[] rootIdsReadBack = vfs.listRoots();
+    Arrays.sort(rootIds);
+    Arrays.sort(rootIdsReadBack);
     assertArrayEquals(
       rootIds,
       rootIdsReadBack,
       "rootIds stored must be equal to rootIds read back even after VFS was re-initialized"
     );
+  }
+
+  @Test
+  public void insertedRoots_CouldBeResolvedByUrl_AfterVFSReinitialization() throws Exception {
+    int totalRoots = 100_000;               //too many roots could exceed attribute storage max record size
+    int[] rootIds = new int[totalRoots];
+    //shuffle roots to make sure rootUrlIds are not sequential:
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + (totalRoots - i - 1);
+      vfs.connection().names().enumerate(rootUrl);
+    }
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + i;
+      rootIds[i] = vfs.findOrCreateRootRecord(rootUrl);
+    }
+
+    vfs = reloadVFS();
+
+    for (int i = 0; i < totalRoots; i++) {
+      String rootUrl = "file:///root/" + i;
+      int rootId = vfs.findOrCreateRootRecord(rootUrl);
+      assertEquals(
+        rootIds[i],
+        rootId,
+        "root[" + i + "](url:"+rootUrl+") must be resolved to rootId: #" + rootIds[i] + ", but got #" + rootId + " instead"
+      );
+    }
   }
 
 

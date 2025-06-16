@@ -1675,8 +1675,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     if (attributes == null || !attributes.isDirectory()) {
-      //FIXME RC: put special sentinel value into rootsByUrl & idToDirCache so next attempt to resolve the root
-      //          doesn't need to repeat the whole lookup process (which is slow)
       return null;
     }
     // assume roots have the FS default case sensitivity
@@ -1688,7 +1686,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       FileAttributes parentAttributes = loadAttributes(fs, parentPath);
       if (parentAttributes != null) {
         throw new IllegalArgumentException(
-          "Must pass FS root path, but got: '" + path + "' (url: " + rootUrl + "), " +
+          "Must pass FS root path, but got: '" + path + "' (url: '" + rootUrl + "'), " +
           "which has a parent '" + parentPath + "'. " +
           "Use NewVirtualFileSystem.extractRootPath() for obtaining root path");
       }
@@ -1804,17 +1802,20 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return;
     }
 
-    String rootUrl = missedRootUrlRef.get();
-    String rootName = vfsPeer.getName(rootId);
-    String rootPath = getRootPath(rootUrl, rootName);
-    NewVirtualFile root = ensureRootCached(rootPath, rootUrl);
+    //TODO RC: tuple (rootUrl, rootPath/name, rootFS) is better to be wrapped as 'record Root(url,path,fs)',
+    //         with all the normalization methods encapsulated. It will be much better than all the components
+    //         dancing/messing around individually
+    String missedRootUrl = missedRootUrlRef.get();
+    String missedRootName = vfsPeer.getName(rootId);
+    String missedRootPath = getRootPath(missedRootUrl, missedRootName);
+    NewVirtualFile root = ensureRootCached(missedRootPath, missedRootUrl);
     if (root != null) {
       if (root.getId() != rootId) {
         //Diogen reports like 49432216: rootId is _found_ among existing roots, but somehow ensureRootCached(rootPath, rootUrl)
         // leads to insertion of a _new_ root.
         // I suspect this is a bug, and this check is to provide more diagnostics for it:
         throw new IllegalStateException(
-          "root[#" + rootId + "]{rootName:'" + rootName + "', rootPath:'" + rootPath + "'} cached to something else: " +
+          "root[#" + rootId + "]{rootName: '" + missedRootName + "', rootPath: '" + missedRootPath + "'} cached to something else: " +
           "cached [#" + root.getId() + "]" +
           "{rootName: '" + root.getName() + "', rootPath: '" + root.getPath() + "', rootUrl: '" + root.getUrl() + "'}"
         );
@@ -1823,10 +1824,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   /**
-   * rootName == rootPath in case of roots that are not archives
-   * but for archives e.g. jars rootName will be just name (see {@link PersistentFSImpl#findRoot})
-   * so we need to extract path from url (IDEA-341011)
-   * Path should not end with '!' because then '!' won't be stripped and file won't be found (see {@link ArchiveFileSystem#findLocalByRootPath})
+   * rootPath == rootName in case of roots that are not archives
+   * But for archives e.g. jars rootName will be just file name (see {@link PersistentFSImpl#findRoot(String, NewVirtualFileSystem)})
+   * so we need to extract a path from url (IDEA-341011)
+   * (Path should not end with '!' because then '!' won't be stripped and the apt file won't be found, see
+   * {@link ArchiveFileSystem#findLocalByRootPath})
    */
   private static @NotNull String getRootPath(@NotNull String rootUrl, @NotNull String rootName) {
     NewVirtualFileSystem fs = detectFileSystem(rootUrl);
@@ -1837,8 +1839,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return rootName;
   }
 
-  @VisibleForTesting
-  NewVirtualFile ensureRootCached(@NotNull String missedRootPath, @NotNull String missedRootUrl) {
+  private NewVirtualFile ensureRootCached(@NotNull String missedRootPath,
+                                          @NotNull String missedRootUrl) {
     NewVirtualFileSystem fs = detectFileSystem(missedRootUrl);
     if (fs == null) {
       return null;
@@ -1847,8 +1849,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     try {
       NewVirtualFile cachedRoot = findRoot(missedRootPath, fs);
       if (LOG.isTraceEnabled()) {
-        LOG.trace("\tforce caching " + missedRootUrl +
-                  " (protocol: " + fs.getProtocol() + ", path: " + missedRootPath + ") -> " + cachedRoot);
+        LOG.trace("\tforce caching " + missedRootUrl + " (protocol: " + fs.getProtocol() + ", path: " + missedRootPath + ")" +
+                  " -> " + cachedRoot);
       }
       return cachedRoot;
     }
