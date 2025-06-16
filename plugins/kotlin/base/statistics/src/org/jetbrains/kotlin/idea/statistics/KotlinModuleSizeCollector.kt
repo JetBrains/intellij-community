@@ -14,6 +14,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.KotlinFileType
 import java.time.Duration
 import java.time.Instant
@@ -174,11 +176,24 @@ internal class KotlinModuleSizeCollector : ProjectUsagesCollector() {
         return projectStatistics.generateEvents()
     }
 
+    private fun Project.hasKotlinFiles(): Boolean {
+        return FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(this))
+    }
+
     override suspend fun collect(project: Project): Set<MetricEvent> {
         if (!KotlinModuleSizeCollectorTracker.getInstance(project).shouldCollectData()) return emptySet()
 
         val startTime = System.currentTimeMillis()
-        val result = project.gatherProjectStatistics()
+        val hasKotlinFiles = readAction {
+            project.hasKotlinFiles()
+        }
+        // If there are no Kotlin files, then we do not want to collect any statistics for the project.
+        // We still want to mark it as having finished collecting statistics, so that we do not check for Kotlin files too often.
+        val result = if (hasKotlinFiles) {
+            project.gatherProjectStatistics()
+        } else {
+            emptySet()
+        }
         KotlinModuleSizeCollectorTracker.getInstance(project).onCollectionFinished()
         logger.debug("Collecting stats for project took ${System.currentTimeMillis() - startTime} ms")
 
