@@ -5,8 +5,6 @@ import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.patterns.impl.*
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryStack
-import com.intellij.polySymbols.query.PolySymbolScope
-import com.intellij.util.containers.Stack
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

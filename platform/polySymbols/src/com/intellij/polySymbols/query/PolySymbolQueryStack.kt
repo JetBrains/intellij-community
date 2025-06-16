@@ -11,11 +11,11 @@ class PolySymbolQueryStack() {
 
   private val stack = SmartList<PolySymbolScope>()
 
-  constructor(initialStack: Collection<PolySymbolScope>): this() {
+  constructor(initialStack: Collection<PolySymbolScope>) : this() {
     stack.addAll(initialStack)
   }
 
-  constructor(vararg initialStack: PolySymbolScope): this() {
+  constructor(vararg initialStack: PolySymbolScope) : this() {
     stack.addAll(initialStack)
   }
 

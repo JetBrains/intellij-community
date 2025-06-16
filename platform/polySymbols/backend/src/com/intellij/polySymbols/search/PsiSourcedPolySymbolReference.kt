@@ -4,13 +4,13 @@ package com.intellij.polySymbols.search
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.psi.*
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.util.NonCodeUsageInfo
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

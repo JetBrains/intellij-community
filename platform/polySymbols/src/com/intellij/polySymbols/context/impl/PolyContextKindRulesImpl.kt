@@ -8,5 +8,5 @@ import com.intellij.polySymbols.context.PolyContextKindRules.EnablementRules
 
 internal data class PolyContextKindRulesImpl(
   override val enable: Map<PolyContextName, List<EnablementRules>>,
-  override val disable: Map<PolyContextName, List<DisablementRules>>
+  override val disable: Map<PolyContextName, List<DisablementRules>>,
 ) : PolyContextKindRules

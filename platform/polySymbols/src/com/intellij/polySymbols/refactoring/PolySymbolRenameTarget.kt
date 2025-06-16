@@ -2,10 +2,10 @@
 package com.intellij.polySymbols.refactoring
 
 import com.intellij.model.Pointer
-import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.refactoring.impl.PolySymbolRenameTargetImpl
 import com.intellij.polySymbols.utils.acceptSymbolForPsiSourcedPolySymbolRenameHandler
+import com.intellij.refactoring.rename.api.RenameTarget
 
 interface PolySymbolRenameTarget : RenameTarget {
 

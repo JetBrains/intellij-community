@@ -3,14 +3,14 @@ package com.intellij.polySymbols.refactoring.impl
 
 import com.intellij.model.Pointer
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
+import com.intellij.polySymbols.utils.PolySymbolDelegate
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.api.RenameValidator
 import com.intellij.refactoring.rename.api.ReplaceTextTarget
 import com.intellij.refactoring.rename.api.ReplaceTextTargetContext
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.utils.PolySymbolDelegate
-import com.intellij.polySymbols.refactoring.PolySymbolRenameTarget
 
 /**
  * Used when creating a [PolySymbolRenameTarget] in [PolySymbolDelegate]. Allows to wrap a [RenameTarget] symbol

@@ -2,14 +2,14 @@
 package com.intellij.polySymbols.refactoring
 
 import com.intellij.model.Pointer
-import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.refactoring.rename.api.*
-import com.intellij.util.Query
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.search.PolySymbolUsageQueries
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.rename.api.*
+import com.intellij.util.Query
 
 internal class PolySymbolRenameUsageSearcher : RenameUsageSearcher {
 
@@ -33,8 +33,7 @@ internal class PolySymbolRenameUsageSearcher : RenameUsageSearcher {
     private val queryExecutor: PolySymbolQueryExecutor,
     private val symbol: PolySymbol,
     private val psiRenameUsage: PsiRenameUsage,
-  )
-    : PsiRenameUsage by psiRenameUsage, PsiModifiableRenameUsage {
+  ) : PsiRenameUsage by psiRenameUsage, PsiModifiableRenameUsage {
 
     override val fileUpdater: ModifiableRenameUsage.FileUpdater
       get() = fileRangeUpdater {

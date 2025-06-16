@@ -10,7 +10,7 @@ class PolySymbolMatchCompoundCustomizer(private val list: List<PolySymbolMatchCu
   override fun mergeModifiers(
     current: Set<PolySymbolModifier>?,
     toMerge: Set<PolySymbolModifier>,
-    symbol: PolySymbol
+    symbol: PolySymbol,
   ): Set<PolySymbolModifier>? =
     list.firstNotNullOfOrNull { it.mergeModifiers(current, toMerge, symbol) }
 

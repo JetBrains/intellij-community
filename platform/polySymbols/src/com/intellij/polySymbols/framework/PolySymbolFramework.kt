@@ -4,11 +4,11 @@ package com.intellij.polySymbols.framework
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
 import com.intellij.polySymbols.PolySymbolQualifiedName
 import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.context.PolyContext.Companion.KIND_FRAMEWORK
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
+import com.intellij.psi.PsiElement
 import javax.swing.Icon
 
 abstract class PolySymbolFramework {
@@ -17,7 +17,9 @@ abstract class PolySymbolFramework {
     internal set
 
   // required to accommodate com.intellij.javascript.web.WebFramework.UnregisteredWebFramework
-  protected fun setIdFromAnotherModule(id: String) { this.id = id }
+  protected fun setIdFromAnotherModule(id: String) {
+    this.id = id
+  }
 
   abstract val displayName: String
 

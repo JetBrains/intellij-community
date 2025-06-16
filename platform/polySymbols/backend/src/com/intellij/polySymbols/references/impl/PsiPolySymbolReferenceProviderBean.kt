@@ -6,8 +6,8 @@ import com.intellij.lang.Language
 import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 import com.intellij.openapi.extensions.RequiredElement
-import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.polySymbols.references.PsiPolySymbolReferenceProvider
+import com.intellij.util.xmlb.annotations.Attribute
 
 class PsiPolySymbolReferenceProviderBean : CustomLoadingExtensionPointBean<PsiPolySymbolReferenceProvider<*>>() {
   /**

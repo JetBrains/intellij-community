@@ -10,14 +10,18 @@ import com.intellij.polySymbols.query.PolySymbolQueryResultsCustomizer
 
 internal class PolySymbolCompoundQueryResultsCustomizer(private val customizers: List<PolySymbolQueryResultsCustomizer>) : PolySymbolQueryResultsCustomizer {
 
-  override fun apply(matches: List<PolySymbol>, strict: Boolean,
-                     qualifiedName: PolySymbolQualifiedName): List<PolySymbol> =
+  override fun apply(
+    matches: List<PolySymbol>, strict: Boolean,
+    qualifiedName: PolySymbolQualifiedName,
+  ): List<PolySymbol> =
     customizers.foldRight(matches) { scope, list ->
       scope.apply(list, strict, qualifiedName)
     }
 
-  override fun apply(item: PolySymbolCodeCompletionItem,
-                     qualifiedKind: PolySymbolQualifiedKind): PolySymbolCodeCompletionItem? =
+  override fun apply(
+    item: PolySymbolCodeCompletionItem,
+    qualifiedKind: PolySymbolQualifiedKind,
+  ): PolySymbolCodeCompletionItem? =
     customizers.foldRight(item as PolySymbolCodeCompletionItem?) { scope, i ->
       i?.let { scope.apply(it, qualifiedKind) }
     }

@@ -30,6 +30,18 @@ import com.intellij.openapi.vfs.VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS
 import com.intellij.openapi.vfs.findFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.polySymbols.PolyContextKind
+import com.intellij.polySymbols.PolyContextName
+import com.intellij.polySymbols.context.PolyContext
+import com.intellij.polySymbols.context.PolyContextChangeListener
+import com.intellij.polySymbols.context.PolyContextKindRules
+import com.intellij.polySymbols.context.PolyContextKindRules.EnablementRules
+import com.intellij.polySymbols.context.PolyContextSourceProximityProvider
+import com.intellij.polySymbols.context.PolyContextSourceProximityProvider.Companion.mergeProximity
+import com.intellij.polySymbols.context.PolyContextSourceProximityProvider.SourceKind
+import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
+import com.intellij.polySymbols.query.impl.PolySymbolQueryExecutorFactoryImpl
+import com.intellij.polySymbols.utils.findOriginalFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -39,23 +51,9 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.lazyUnsafe
-import com.intellij.polySymbols.PolyContextKind
-import com.intellij.polySymbols.PolyContextName
-import com.intellij.polySymbols.context.PolyContextChangeListener
-import com.intellij.polySymbols.context.PolyContext
-import com.intellij.polySymbols.context.PolyContextKindRules
-import com.intellij.polySymbols.context.PolyContextKindRules.EnablementRules
-import com.intellij.polySymbols.context.PolyContextSourceProximityProvider
-import com.intellij.polySymbols.context.PolyContextSourceProximityProvider.Companion.mergeProximity
-import com.intellij.polySymbols.context.PolyContextSourceProximityProvider.SourceKind
-import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
-import com.intellij.polySymbols.query.impl.PolySymbolQueryExecutorFactoryImpl
-import com.intellij.polySymbols.utils.findOriginalFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 private val POLY_SYMBOLS_CONTEXT_EP get() = PolyContext.POLY_SYMBOLS_CONTEXT_EP as PolyContextProviderExtensionCollector
 private val CONTEXT_RELOAD_MARKER_KEY = Key<Any>("polyContext.reloadMarker")
@@ -111,7 +109,7 @@ private fun <T> forVfsLocation(
   project: Project,
   location: VirtualFile,
   psiFile: PsiFile? = null,
-  action: (LocationInfo) -> T
+  action: (LocationInfo) -> T,
 ): T? {
   ProgressManager.checkCanceled()
   if (project.isDisposed) return null
@@ -186,9 +184,11 @@ private fun findContextInDirOrFileCached(kind: PolyContextKind, locationInfo: Lo
     ?.takeIf { file == null || !isAnyForbidden(kind, file, project) }
 }
 
-private fun calcProximityPerContextFromRules(project: Project,
-                                             directory: VirtualFile,
-                                             enableWhen: Map<PolyContextKind, Map<PolyContextName, List<EnablementRules>>>)
+private fun calcProximityPerContextFromRules(
+  project: Project,
+  directory: VirtualFile,
+  enableWhen: Map<PolyContextKind, Map<PolyContextName, List<EnablementRules>>>,
+)
   : Pair<Map<PolyContextKind, Map<PolyContextName, Double>>, Set<ModificationTracker>> {
 
   val result = mutableMapOf<PolyContextKind, MutableMap<String, Double>>()
@@ -257,10 +257,12 @@ private fun loadContextRulesConfiguration(project: Project, directory: VirtualFi
   return ContextRulesConfigInDir(project, directory, flatRules, listOf(tracker))
 }
 
-private class ContextRulesConfigInDir(val project: Project,
-                                      val directory: VirtualFile,
-                                      val rules: Map<PolyContextKind, PolyContextKindRules>,
-                                      val dependencies: List<Any>) {
+private class ContextRulesConfigInDir(
+  val project: Project,
+  val directory: VirtualFile,
+  val rules: Map<PolyContextKind, PolyContextKindRules>,
+  val dependencies: List<Any>,
+) {
 
   private val contextByFile = ConcurrentHashMap<Pair<PolyContextKind, String>, PolyContextName>()
 
@@ -310,7 +312,7 @@ private fun loadContextFilesConfiguration(directory: VirtualFile): ContextFileCo
 
 private class ContextFileConfigInDir(
   val contexts: List<PolyContextFileData.DirectoryContext>,
-  val dependencies: List<Any>
+  val dependencies: List<Any>,
 ) {
   val kinds: Set<PolyContextKind> = setOf()
 
@@ -320,11 +322,13 @@ private class ContextFileConfigInDir(
     }
 }
 
-private fun isForbiddenFromProviders(kind: PolyContextKind,
-                                     name: PolyContextName,
-                                     file: VirtualFile,
-                                     project: Project,
-                                     disableWhen: List<PolyContextKindRules.DisablementRules>?): Boolean =
+private fun isForbiddenFromProviders(
+  kind: PolyContextKind,
+  name: PolyContextName,
+  file: VirtualFile,
+  project: Project,
+  disableWhen: List<PolyContextKindRules.DisablementRules>?,
+): Boolean =
   POLY_SYMBOLS_CONTEXT_EP.allFor(kind, name).any { it.isForbidden(file, project) }
   || disableWhen?.any { matchFileName(file.name, it.fileNamePatterns) || matchFileExt(file.name, it.fileExtensions) } == true
 
@@ -341,10 +345,12 @@ private fun findEnabledFromProviders(kind: PolyContextKind, file: VirtualFile, p
     .firstOrNull { (_, providers) -> providers.any { it.isEnabled(file, project) } }
     ?.key
 
-private fun webContextProximityFromProviders(kind: PolyContextKind,
-                                             name: PolyContextName,
-                                             project: Project,
-                                             directory: VirtualFile): CachedValueProvider.Result<Int?> {
+private fun webContextProximityFromProviders(
+  kind: PolyContextKind,
+  name: PolyContextName,
+  project: Project,
+  directory: VirtualFile,
+): CachedValueProvider.Result<Int?> {
   val dependencies = mutableSetOf<Any>()
   var proximity: Int? = null
   for (provider in POLY_SYMBOLS_CONTEXT_EP.allFor(kind, name)) {
@@ -354,7 +360,7 @@ private fun webContextProximityFromProviders(kind: PolyContextKind,
         proximity = it
       }
       else {
-        proximity!!.coerceAtMost(it)
+        proximity.coerceAtMost(it)
       }
     }
     dependencies.addAll(result.dependencyItems)
@@ -451,7 +457,7 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
         }
       }
     })
-    POLY_SYMBOLS_CONTEXT_EP.point!!.addChangeListener(Runnable{
+    POLY_SYMBOLS_CONTEXT_EP.point!!.addChangeListener(Runnable {
       cachedData.clear()
     }, project)
   }
@@ -483,8 +489,10 @@ private class PolyContextDiscoveryInfo(private val project: Project, private val
 
   override fun dispose() {}
 
-  private class CachedData(private val project: Project,
-                           private val directory: VirtualFile) {
+  private class CachedData(
+    private val project: Project,
+    private val directory: VirtualFile,
+  ) {
 
     val proximity: MutableMap<Pair<PolyContextKind, PolyContextName>, CachedValue<Int?>> =
       ConcurrentHashMap<Pair<PolyContextKind, PolyContextName>, CachedValue<Int?>>()

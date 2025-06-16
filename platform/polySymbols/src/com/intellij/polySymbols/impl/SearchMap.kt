@@ -10,7 +10,6 @@ import com.intellij.polySymbols.utils.match
 import com.intellij.polySymbols.utils.toCodeCompletionItems
 import com.intellij.polySymbols.utils.withMatchedName
 import com.intellij.util.SmartList
-import com.intellij.util.containers.Stack
 import com.intellij.util.text.CharSequenceSubSequence
 import java.util.*
 

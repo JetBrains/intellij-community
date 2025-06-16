@@ -15,8 +15,10 @@ interface PolySymbolCodeCompletionItemInsertHandler {
 
   companion object {
 
-    internal fun adapt(insertHandler: InsertHandler<LookupElement>,
-                       priority: PolySymbol.Priority): PolySymbolCodeCompletionItemInsertHandler =
+    internal fun adapt(
+      insertHandler: InsertHandler<LookupElement>,
+      priority: PolySymbol.Priority,
+    ): PolySymbolCodeCompletionItemInsertHandler =
       object : PolySymbolCodeCompletionItemInsertHandler {
 
         override val priority: PolySymbol.Priority

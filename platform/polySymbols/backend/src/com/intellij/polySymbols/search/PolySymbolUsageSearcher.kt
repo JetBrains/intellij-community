@@ -16,19 +16,18 @@ import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.search.SearchScope
-import com.intellij.psi.util.startOffset
-import com.intellij.psi.util.walkUp
-import com.intellij.util.Query
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.declarations.PolySymbolDeclarationProvider
 import com.intellij.polySymbols.query.PolySymbolNamesProvider
 import com.intellij.polySymbols.query.PolySymbolQueryExecutorFactory
 import com.intellij.polySymbols.references.PolySymbolReference
 import com.intellij.polySymbols.utils.qualifiedName
+import com.intellij.psi.PsiNameIdentifierOwner
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.startOffset
+import com.intellij.psi.util.walkUp
+import com.intellij.util.Query
 import java.util.*
-import kotlin.collections.iterator
 
 internal class PolySymbolUsageSearcher : UsageSearcher {
 

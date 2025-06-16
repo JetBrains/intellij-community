@@ -4,9 +4,11 @@ package com.intellij.polySymbols.patterns.impl
 import com.intellij.polySymbols.query.PolySymbolCodeCompletionQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
-internal class CompletionParameters(name: String,
-                                    queryExecutor: PolySymbolQueryExecutor,
-                                    val position: Int) : MatchParameters(name, queryExecutor) {
+internal class CompletionParameters(
+  name: String,
+  queryExecutor: PolySymbolQueryExecutor,
+  val position: Int,
+) : MatchParameters(name, queryExecutor) {
   constructor(name: String, params: PolySymbolCodeCompletionQueryParams)
     : this(name, params.queryExecutor, params.position)
 

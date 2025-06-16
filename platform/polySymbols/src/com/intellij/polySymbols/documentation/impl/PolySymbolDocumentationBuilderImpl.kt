@@ -3,15 +3,12 @@ package com.intellij.polySymbols.documentation.impl
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
-import com.intellij.platform.backend.documentation.DocumentationResult
 import com.intellij.polySymbols.PolySymbol
 import com.intellij.polySymbols.PolySymbolApiStatus
-import com.intellij.polySymbols.PolySymbolOrigin
 import com.intellij.polySymbols.documentation.PolySymbolDocumentation
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationBuilder
 import com.intellij.polySymbols.documentation.PolySymbolDocumentationCustomizer
 import com.intellij.polySymbols.documentation.PolySymbolWithDocumentation
-import com.intellij.polySymbols.query.PolySymbolDefaultIconProvider
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
@@ -33,7 +30,8 @@ internal class PolySymbolDocumentationBuilderImpl(
       if (context.version?.takeIf { it != "0.0.0" } != null) "@${context.version}" else ""
     }
   override var icon: Icon? = symbol.icon
-  override var descriptionSections: MutableMap<@Nls String, @Nls String> = (symbol as? PolySymbolWithDocumentation)?.descriptionSections?.toMutableMap() ?: mutableMapOf()
+  override var descriptionSections: MutableMap<@Nls String, @Nls String> = (symbol as? PolySymbolWithDocumentation)?.descriptionSections?.toMutableMap()
+                                                                           ?: mutableMapOf()
   override var footnote: @Nls String? = null
   override var header: @Nls String? = null
 

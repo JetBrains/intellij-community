@@ -4,8 +4,10 @@ package com.intellij.polySymbols.patterns.impl
 import com.intellij.polySymbols.query.PolySymbolNameMatchQueryParams
 import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
-internal open class MatchParameters(val name: String,
-                                    val queryExecutor: PolySymbolQueryExecutor) {
+internal open class MatchParameters(
+  val name: String,
+  val queryExecutor: PolySymbolQueryExecutor,
+) {
 
   constructor(name: String, params: PolySymbolNameMatchQueryParams)
     : this(name, params.queryExecutor)

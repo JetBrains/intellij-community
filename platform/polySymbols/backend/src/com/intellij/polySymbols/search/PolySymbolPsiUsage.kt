@@ -8,9 +8,11 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PolySymbolPsiUsage(override val file: PsiFile,
-                         override val range: TextRange,
-                         override val declaration: Boolean) : PsiUsage {
+class PolySymbolPsiUsage(
+  override val file: PsiFile,
+  override val range: TextRange,
+  override val declaration: Boolean,
+) : PsiUsage {
 
   override fun createPointer(): Pointer<PolySymbolPsiUsage> {
     val declaration = declaration

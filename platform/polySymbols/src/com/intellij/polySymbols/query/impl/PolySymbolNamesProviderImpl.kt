@@ -4,11 +4,11 @@ package com.intellij.polySymbols.query.impl
 import com.intellij.model.Pointer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.polySymbols.FrameworkId
-import com.intellij.polySymbols.css.NAMESPACE_CSS
-import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.PolySymbolQualifiedKind
 import com.intellij.polySymbols.PolySymbolQualifiedName
+import com.intellij.polySymbols.css.NAMESPACE_CSS
 import com.intellij.polySymbols.framework.PolySymbolFramework
+import com.intellij.polySymbols.html.NAMESPACE_HTML
 import com.intellij.polySymbols.query.PolySymbolNameConversionRules
 import com.intellij.polySymbols.query.PolySymbolNameConverter
 import com.intellij.polySymbols.query.PolySymbolNamesProvider

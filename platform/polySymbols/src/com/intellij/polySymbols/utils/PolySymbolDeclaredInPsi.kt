@@ -10,11 +10,11 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.declarations.PolySymbolDeclaration
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.declarations.PolySymbolDeclaration
 
 interface PolySymbolDeclaredInPsi : PolySymbol, SearchTarget, RenameTarget {
 
@@ -74,12 +74,14 @@ interface PolySymbolDeclaredInPsi : PolySymbol, SearchTarget, RenameTarget {
 
 private fun buildDeclaration(symbol: PolySymbolDeclaredInPsi): PolySymbolDeclaration? {
   return PolySymbolDeclaredInPsiDeclaration(symbol, symbol.sourceElement ?: return null,
-                                           symbol.textRangeInSourceElement ?: return null)
+                                            symbol.textRangeInSourceElement ?: return null)
 }
 
-private class PolySymbolDeclaredInPsiDeclaration(private val symbol: PolySymbol,
-                                                 private val element: PsiElement,
-                                                 private val range: TextRange) : PolySymbolDeclaration {
+private class PolySymbolDeclaredInPsiDeclaration(
+  private val symbol: PolySymbol,
+  private val element: PsiElement,
+  private val range: TextRange,
+) : PolySymbolDeclaration {
   override fun getDeclaringElement(): PsiElement = element
   override fun getRangeInDeclaringElement(): TextRange = range
   override fun getSymbol(): PolySymbol = symbol

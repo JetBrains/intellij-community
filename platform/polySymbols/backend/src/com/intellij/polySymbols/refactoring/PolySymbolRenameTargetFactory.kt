@@ -3,9 +3,9 @@ package com.intellij.polySymbols.refactoring
 
 import com.intellij.model.Symbol
 import com.intellij.openapi.project.Project
+import com.intellij.polySymbols.PolySymbol
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
-import com.intellij.polySymbols.PolySymbol
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

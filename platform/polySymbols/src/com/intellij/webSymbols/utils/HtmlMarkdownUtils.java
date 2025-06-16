@@ -29,5 +29,4 @@ public final class HtmlMarkdownUtils {
   public static @NotNull String toHtml(@NotNull @Nls String markdownText, boolean convertTagCodeBlocks) {
     return DocMarkdownToHtmlConverter.convert(DefaultProjectFactory.getInstance().getDefaultProject(), markdownText);
   }
-
 }

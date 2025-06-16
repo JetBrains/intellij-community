@@ -10,17 +10,17 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileCachedValue
 import com.intellij.openapi.vfs.getCachedValue
-import com.intellij.util.text.CharSequenceReader
-import com.intellij.util.text.minimatch.Minimatch
-import com.intellij.util.text.minimatch.MinimatchOptions
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
 import com.intellij.polySymbols.context.PolyContext
+import com.intellij.util.text.CharSequenceReader
+import com.intellij.util.text.minimatch.Minimatch
+import com.intellij.util.text.minimatch.MinimatchOptions
 import java.io.IOException
 
 internal class PolyContextFileData private constructor(
   private val file: VirtualFile,
-  private val contexts: List<ContextEntry>
+  private val contexts: List<ContextEntry>,
 ) {
 
   fun getContextsInDirectory(directory: VirtualFile, priorityOffset: Int): List<DirectoryContext> {

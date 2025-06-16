@@ -5,13 +5,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.KeyedExtensionCollector
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
+import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.PolyContextKind
 import com.intellij.polySymbols.PolyContextName
-import com.intellij.polySymbols.FrameworkId
 import com.intellij.polySymbols.context.impl.PolyContextImpl
 import com.intellij.polySymbols.context.impl.PolyContextProviderExtensionCollector
 import com.intellij.polySymbols.context.impl.findPolyContext
+import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 
 interface PolyContext {

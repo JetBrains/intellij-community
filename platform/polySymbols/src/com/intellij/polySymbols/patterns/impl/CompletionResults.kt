@@ -3,12 +3,16 @@ package com.intellij.polySymbols.patterns.impl
 
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 
-internal data class CompletionResults(val items: List<PolySymbolCodeCompletionItem>,
-                                      val required: Boolean = true) {
+internal data class CompletionResults(
+  val items: List<PolySymbolCodeCompletionItem>,
+  val required: Boolean = true,
+) {
 
-  constructor(item: PolySymbolCodeCompletionItem,
-              required: Boolean = true,
-              stop: Boolean = false) : this(listOf(item.withStopSequencePatternEvaluation(stop)), required)
+  constructor(
+    item: PolySymbolCodeCompletionItem,
+    required: Boolean = true,
+    stop: Boolean = false,
+  ) : this(listOf(item.withStopSequencePatternEvaluation(stop)), required)
 
   val stop: Boolean get() = items.any { it.stopSequencePatternEvaluation }
 

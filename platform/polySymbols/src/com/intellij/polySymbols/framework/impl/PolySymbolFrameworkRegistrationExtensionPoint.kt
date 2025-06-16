@@ -4,10 +4,10 @@ package com.intellij.polySymbols.framework.impl
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.RequiredElement
+import com.intellij.polySymbols.framework.PolySymbolFramework
 import com.intellij.serviceContainer.BaseKeyedLazyInstance
 import com.intellij.util.KeyedLazyInstance
 import com.intellij.util.xmlb.annotations.Attribute
-import com.intellij.polySymbols.framework.PolySymbolFramework
 import org.jetbrains.annotations.TestOnly
 
 class PolySymbolFrameworkRegistrationExtensionPoint<T : PolySymbolFramework> : BaseKeyedLazyInstance<T>, KeyedLazyInstance<T> {

@@ -58,8 +58,10 @@ interface PolyContextKindRules {
   companion object {
 
     @JvmStatic
-    fun create(enable: Map<PolyContextName, List<EnablementRules>>,
-               disable: Map<PolyContextName, List<DisablementRules>>): PolyContextKindRules =
+    fun create(
+      enable: Map<PolyContextName, List<EnablementRules>>,
+      disable: Map<PolyContextName, List<DisablementRules>>,
+    ): PolyContextKindRules =
       PolyContextKindRulesImpl(enable, disable)
 
 
