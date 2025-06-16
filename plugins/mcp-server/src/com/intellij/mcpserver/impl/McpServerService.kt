@@ -14,19 +14,18 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.diagnostic.traceThrowable
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.AsyncFileListener
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.application
 import com.intellij.util.asDisposable
 import io.ktor.server.cio.CIO
@@ -48,7 +47,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 
 
@@ -61,8 +59,6 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private val server = MutableStateFlow(startServerIfEnabled())
-
-  private val trackedDocuments = ConcurrentHashMap<Document, VirtualFile>()
 
   val isRunning: Boolean
     get() = server.value != null
@@ -94,27 +90,6 @@ class McpServerService(val cs: CoroutineScope) {
         // reuse old or start new
         return@update currentServer ?: startServer()
       }
-    }
-  }
-
-  private fun documentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
-    if (oldFile != null) {
-      trackedDocuments.remove(document)
-    }
-    val originalDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
-    // the document is a wrapper, the real one will be processed in another event
-    if (originalDocument != document) return
-    if (file != null && file.fileSystem is LocalFileSystem) {
-      trackedDocuments[originalDocument] = file
-    }
-    else {
-      trackedDocuments.remove(originalDocument)
-    }
-  }
-
-  class MyDocumentBindingListener : FileDocumentBindingListener {
-    override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
-      getInstance().documentBindingChanged(document, oldFile, file)
     }
   }
 
@@ -214,7 +189,9 @@ class McpServerService(val cs: CoroutineScope) {
         getLastFocusedOrOpenedProject()
       }
 
-      val contentBefore = ConcurrentMap<Document, String>()
+      class DocumentContent(val document: Document, val content: String)
+
+      val contentBefore = ConcurrentMap<VirtualFile, DocumentContent>()
 
       val callResult = coroutineScope {
 
@@ -233,23 +210,14 @@ class McpServerService(val cs: CoroutineScope) {
         val documentListener = object : DocumentListener {
           // record content before any change
           override fun beforeDocumentChange(event: DocumentEvent) {
-            contentBefore.putIfAbsent(event.document, event.document.text)
+            val virtualFile = FileDocumentManager.getInstance().getFile(event.document) ?: return
+            contentBefore.putIfAbsent(virtualFile, DocumentContent(event.document, event.document.text))
           }
 
           override fun documentChanged(event: DocumentEvent) = Unit
         }
 
-        for ((document, _) in trackedDocuments) {
-          document.addDocumentListener(documentListener, this.asDisposable())
-        }
-
-        application.messageBus.connect(this).subscribe(FileDocumentBindingListener.TOPIC, object : FileDocumentBindingListener {
-          override fun fileDocumentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
-            if (file != null && file.fileSystem is LocalFileSystem) {
-              document.addDocumentListener(documentListener, this@coroutineScope.asDisposable())
-            }
-          }
-        })
+        EditorFactory.getInstance().eventMulticaster.addDocumentListener(documentListener, this.asDisposable())
 
         @Suppress("IncorrectCancellationExceptionHandling")
         try {
@@ -260,9 +228,7 @@ class McpServerService(val cs: CoroutineScope) {
           logger.trace { "Tool call successful '${this@mcpToolToRegisteredTool.descriptor.name}'" }
           try {
             val events = contentBefore.mapNotNull { entry ->
-              val virtualFile = trackedDocuments[entry.key] ?: return@mapNotNull null
-              //FileDocumentManager.getInstance().getDocument(virtualFile, project)
-              DocumentChangeEvent(entry.key, virtualFile, entry.value, readAction { entry.key.text })
+              DocumentChangeEvent(entry.value.document, entry.key,entry.value.content, readAction { entry.value.document.text })
             }
             application.messageBus.syncPublisher(ToolCallDocumentChangeListener.TOPIC).documentsChanged(this@mcpToolToRegisteredTool.descriptor, events)
           }
