@@ -22,12 +22,13 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentBindingListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.application
 import com.intellij.util.asDisposable
-import com.intellij.util.containers.CollectionFactory
 import io.ktor.server.cio.CIO
 import io.ktor.server.cio.CIOApplicationEngine
 import io.ktor.server.engine.EmbeddedServer
@@ -47,6 +48,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 
 
@@ -60,7 +62,7 @@ class McpServerService(val cs: CoroutineScope) {
 
   private val server = MutableStateFlow(startServerIfEnabled())
 
-  private val trackedDocuments = CollectionFactory.createConcurrentWeakKeyWeakValueMap<Document, VirtualFile>()
+  private val trackedDocuments = ConcurrentHashMap<Document, VirtualFile>()
 
   val isRunning: Boolean
     get() = server.value != null
@@ -96,8 +98,12 @@ class McpServerService(val cs: CoroutineScope) {
   }
 
   private fun documentBindingChanged(document: Document, oldFile: VirtualFile?, file: VirtualFile?) {
+    if (oldFile != null) {
+      trackedDocuments.remove(document)
+    }
     val originalDocument = PsiDocumentManagerBase.getTopLevelDocument(document)
-    if (originalDocument != document) return // the document is a wrapper, the real one will be processed in another event
+    // the document is a wrapper, the real one will be processed in another event
+    if (originalDocument != document) return
     if (file != null && file.fileSystem is LocalFileSystem) {
       trackedDocuments[originalDocument] = file
     }
@@ -213,9 +219,16 @@ class McpServerService(val cs: CoroutineScope) {
       val callResult = coroutineScope {
 
         // TODO support file move/delete events
-        //VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
-        //  return@AsyncFileListener object : AsyncFileListener.ChangeApplier {}
-        //})
+        VirtualFileManager.getInstance().addAsyncFileListener(this, AsyncFileListener { events ->
+          for (event in events) {
+
+          }
+          return@AsyncFileListener object : AsyncFileListener.ChangeApplier {
+            override fun afterVfsChange() {
+
+            }
+          }
+        })
 
         val documentListener = object : DocumentListener {
           // record content before any change
@@ -248,6 +261,7 @@ class McpServerService(val cs: CoroutineScope) {
           try {
             val events = contentBefore.mapNotNull { entry ->
               val virtualFile = trackedDocuments[entry.key] ?: return@mapNotNull null
+              //FileDocumentManager.getInstance().getDocument(virtualFile, project)
               DocumentChangeEvent(entry.key, virtualFile, entry.value, readAction { entry.key.text })
             }
             application.messageBus.syncPublisher(ToolCallDocumentChangeListener.TOPIC).documentsChanged(this@mcpToolToRegisteredTool.descriptor, events)
