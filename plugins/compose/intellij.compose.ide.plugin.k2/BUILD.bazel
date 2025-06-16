@@ -56,6 +56,7 @@ jvm_library(
   kotlinc_opts = ":custom_ide-plugin-k2-tests",
   associates = ["//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2"],
   deps = [
+    "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
     "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
@@ -73,6 +74,9 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
     "@lib//:kotlin-test-assertions-core-jvm",
+    "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
+    "//plugins/gradle:gradle-tests_test_lib",
+    "//platform/external-system-impl:externalSystem-tests_test_lib",
   ]
 )
 
