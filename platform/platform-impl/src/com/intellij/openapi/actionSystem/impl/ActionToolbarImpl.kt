@@ -1262,8 +1262,6 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       override fun getDataContext() = this@ActionToolbarImpl.getDataContext()
     }
     popupToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
-    // set explicitly to avoid auto-setting in updateActionsImpl, which would prevent auto-resizing
-    popupToolbar.putClientProperty(SUPPRESS_FAST_TRACK, false)
 
     val location: Point
     if (myOrientation == SwingConstants.HORIZONTAL) {
