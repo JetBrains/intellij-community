@@ -3,13 +3,19 @@ package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.impl.fus.FreezeUiUsageCollector
+import com.intellij.openapi.progress.util.ui.NiceOverlayUi
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
+import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -18,6 +24,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.KeyboardFocusManager
 import java.awt.event.InvocationEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
@@ -78,8 +86,54 @@ object SuvorovProgress {
         thisLogger().warn("Spinning progress would not work without enabled registry value `editor.allow.raw.access.on.edt`")
         processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
+      "NiceOverlay" -> showNiceOverlay(awaitedValue)
       "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, isBar = value == "Bar")
       else -> throw IllegalArgumentException("Unknown value for registry key `ide.freeze.fake.progress.kind`: $value")
+    }
+  }
+
+  private fun showNiceOverlay(awaitedValue: Deferred<*>) {
+    val niceOverlay = NiceOverlayUi()
+
+    val disposable = Disposer.newDisposable()
+    val stealer = PotemkinProgress.startStealingInputEvents(
+      { event ->
+        var dumpThreads = false
+        if (event is MouseEvent && event.id == MouseEvent.MOUSE_CLICKED) {
+          event.consume()
+          val reaction = niceOverlay.mouseClicked(event.point)
+          when (reaction) {
+            NiceOverlayUi.ClickOutcome.DUMP_THREADS -> dumpThreads = true
+            NiceOverlayUi.ClickOutcome.CLOSED, NiceOverlayUi.ClickOutcome.NOTHING -> Unit
+          }
+        }
+        if (event is MouseEvent && event.id == MouseEvent.MOUSE_MOVED) {
+          event.consume()
+          niceOverlay.mouseMoved(event.point)
+        }
+        if (event is KeyEvent && niceOverlay.dumpThreadsButtonShortcut == KeyStrokeAdapter.getDefaultKeyStroke(event)?.let { KeyboardShortcut(it, null) }) {
+          event.consume()
+          dumpThreads = true
+        }
+        if (dumpThreads) {
+          ApplicationManager.getApplication().executeOnPooledThread(Runnable {
+            val dumpDir = PerformanceWatcher.getInstance().dumpThreads("freeze-popup", true, false)
+            if (dumpDir != null) {
+              RevealFileAction.openFile(dumpDir)
+            }
+          })
+        }
+      }, disposable)
+
+    try {
+      while (!awaitedValue.isCompleted) {
+        niceOverlay.redrawMainComponent()
+        stealer.dispatchEvents(0)
+        Thread.sleep(10)
+      }
+    }
+    finally {
+      Disposer.dispose(disposable)
     }
   }
 
