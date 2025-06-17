@@ -346,7 +346,8 @@ public class UndoManagerImpl extends UndoManager {
     mySharedUndoStacksHolder.trimStacks(Collections.singleton(docRef));
   }
 
-  void onCommandStarted(
+  @ApiStatus.Internal
+  protected void onCommandStarted(
     @Nullable Project project,
     @NotNull UndoConfirmationPolicy undoConfirmationPolicy,
     boolean recordOriginalReference

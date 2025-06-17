@@ -184,6 +184,7 @@ final class UndoClientState implements Disposable {
         currentProject = commandProject;
       }
       if (project != null && project == commandProject && recordOriginalReference) {
+        // note: originatorReference depends on FocusedComponent :sad_trombone_for_rd:, see IJPL-192250
         originatorReference = UndoDocumentUtil.getDocReference(project, editorProvider);
       }
     }
