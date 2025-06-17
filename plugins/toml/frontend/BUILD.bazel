@@ -22,9 +22,6 @@ jvm_library(
     "//platform/core-impl",
     "//platform/lang-impl",
   ],
-  runtime_deps = [
-    ":frontend_resources",
-    "//platform/platform-frontend:frontend",
-  ]
+  runtime_deps = [":frontend_resources"]
 )
 ### auto-generated section `build intellij.toml.frontend` end
