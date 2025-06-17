@@ -937,8 +937,8 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
     cancelCurrentUpdate()
 
-    val firstTimeFastTrack = !hasVisibleActions() && componentCount == 1 && getClientProperty(SUPPRESS_FAST_TRACK) == null
-    if (firstTimeFastTrack) putClientProperty(SUPPRESS_FAST_TRACK, true)
+    val firstTimeFastTrack = !hasVisibleActions() && componentCount == 1 && !ClientProperty.isTrue(this, SUPPRESS_FAST_TRACK)
+    if (firstTimeFastTrack) ClientProperty.put(this, SUPPRESS_FAST_TRACK, true)
 
     val cs = service<CoreUiCoroutineScopeHolder>().coroutineScope
     val job = cs.launch(
@@ -1596,7 +1596,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
 
   companion object {
     const val DO_NOT_ADD_CUSTOMIZATION_HANDLER: String = "ActionToolbarImpl.suppressTargetComponentWarning"
-    const val SUPPRESS_FAST_TRACK: String = "ActionToolbarImpl.suppressFastTrack"
+    val SUPPRESS_FAST_TRACK: Key<Boolean> = Key.create("ActionToolbarImpl.suppressFastTrack")
 
     /**
      * Put `TRUE` into [.putClientProperty] to mark that toolbar
