@@ -16,6 +16,14 @@ interface LocalProcessService {
     redirectErrorStream: Boolean,
   ): Process
 
+  fun startPtyProcess(
+    command: RawCommandLineString,
+    directory: String?,
+    env: Map<String, String>,
+    options: LocalPtyOptions,
+    redirectErrorStream: Boolean,
+  ): Process
+
   @Deprecated("Use the other `startPtyProcess` instead")
   fun startPtyProcess(
     command: Array<String>,
@@ -62,3 +70,6 @@ interface LocalProcessService {
     fun getInstance(): LocalProcessService = service<LocalProcessService>()
   }
 }
+
+@ApiStatus.Internal
+data class RawCommandLineString(val commandLine: String)
