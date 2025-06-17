@@ -40,6 +40,7 @@ import com.intellij.spellchecker.engine.Transformation
 import com.intellij.spellchecker.grazie.async.WordListLoader
 import com.intellij.spellchecker.grazie.dictionary.ExtendedWordListWithFrequency
 import com.intellij.spellchecker.grazie.dictionary.WordListAdapter
+import com.intellij.spellchecker.grazie.ranker.DiacriticSuggestionRanker
 import kotlinx.coroutines.*
 
 private const val MAX_WORD_LENGTH = 32
@@ -124,11 +125,13 @@ internal class GrazieSpellCheckerEngine(
         IgnoreRuleDictionary.standard(tooShortLength = 2),
         DictionaryResources.getReplacingRules("/rule/en", FromResourcesDataLoader)
       ),
-      ranker = LinearAggregatingSuggestionRanker(
-        JaroWinklerSuggestionRanker() to 0.43,
-        LevenshteinSuggestionRanker() to 0.20,
-        PhoneticSuggestionRanker(DoubleMetaphone()) to 0.11,
-        FrequencySuggestionRanker(wordList) to 0.23
+      ranker = DiacriticSuggestionRanker(
+        LinearAggregatingSuggestionRanker(
+          JaroWinklerSuggestionRanker() to 0.43,
+          LevenshteinSuggestionRanker() to 0.20,
+          PhoneticSuggestionRanker(DoubleMetaphone()) to 0.11,
+          FrequencySuggestionRanker(wordList) to 0.23
+        )
       ),
       filter = RadiusSuggestionFilter(0.05),
       normalizer = StripAccentsNormalizer(),
