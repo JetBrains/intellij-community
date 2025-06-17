@@ -854,14 +854,16 @@
       </group>
       <separator/>
       <reference ref="Maven.AddManagedFiles"/>
+      <reference ref="Maven.RemoveManagedFiles"/>
       <separator/>
-      <reference ref="Maven.RunBuild"/>
       <reference ref="Maven.ExecuteGoal"/>
       <reference ref="Maven.ToggleOffline"/>
       <reference ref="Maven.ToggleSkipTests"/>
-      <reference ref="Maven.CollapseAll"/>
       <separator/>
       <reference ref="Maven.NavigatorDependencyAnalyzer"/>
+      <separator/>
+      <reference ref="Maven.ExpandAll"/>
+      <reference ref="Maven.CollapseAll"/>
       <separator/>
       <reference ref="Maven.ShowSettingsGroup"/>
     </group>
