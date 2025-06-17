@@ -48,7 +48,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -473,9 +472,24 @@ public final class PluginManagerConfigurable
 
         Project project = ProjectUtil.getActiveProject();
 
-        Runnable runnable = () -> {
-          List<PluginsGroup> groups = new ArrayList<>();
+        myMarketplaceRunnable = () -> {
+          myMarketplacePanel.clear();
+          myMarketplacePanel.startLoading();
+          doCreateMarketplaceTab(selectionListener, project);
+        };
 
+        myMarketplacePanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.marketplace.plugins.not.loaded"))
+          .appendSecondaryText(IdeBundle.message("message.check.the.internet.connection.and") + " ", StatusText.DEFAULT_ATTRIBUTES, null)
+          .appendSecondaryText(IdeBundle.message("message.link.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+                               e -> myMarketplaceRunnable.run());
+
+        doCreateMarketplaceTab(selectionListener, project);
+        return createScrollPane(myMarketplacePanel, false);
+      }
+
+      private void doCreateMarketplaceTab(@NotNull Consumer<? super PluginsGroupComponent> selectionListener, Project project) {
+        PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, model -> {
+          List<PluginsGroup> groups = new ArrayList<>();
           try {
             Map<String, List<PluginUiModel>> customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap();
             try {
@@ -498,33 +512,38 @@ public final class PluginManagerConfigurable
                 );
               }
 
+              Map<String, PluginSearchResult> marketplaceData = model.getMarketplaceData();
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.staff.picks"),
                 PluginsGroupType.STAFF_PICKS,
                 "is_featured_search=true",
-                SearchWords.STAFF_PICKS.getValue()
+                SearchWords.STAFF_PICKS.getValue(),
+                marketplaceData
               );
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.new.and.updated"),
                 PluginsGroupType.NEW_AND_UPDATED,
                 "orderBy=update+date",
-                "/sortBy:updated"
+                "/sortBy:updated",
+                marketplaceData
               );
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.top.downloads"),
                 PluginsGroupType.TOP_DOWNLOADS,
                 "orderBy=downloads",
-                "/sortBy:downloads"
+                "/sortBy:downloads",
+                marketplaceData
               );
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.top.rated"),
                 PluginsGroupType.TOP_RATED,
                 "orderBy=rating",
-                "/sortBy:rating"
+                "/sortBy:rating",
+                marketplaceData
               );
             }
             catch (IOException e) {
@@ -581,21 +600,9 @@ public final class PluginManagerConfigurable
               });
             }, ModalityState.any());
           }
-        };
 
-        myMarketplaceRunnable = () -> {
-          myMarketplacePanel.clear();
-          myMarketplacePanel.startLoading();
-          ApplicationManager.getApplication().executeOnPooledThread(runnable);
-        };
-
-        myMarketplacePanel.getEmptyText().setText(IdeBundle.message("plugins.configurable.marketplace.plugins.not.loaded"))
-          .appendSecondaryText(IdeBundle.message("message.check.the.internet.connection.and") + " ", StatusText.DEFAULT_ATTRIBUTES, null)
-          .appendSecondaryText(IdeBundle.message("message.link.refresh"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                               e -> myMarketplaceRunnable.run());
-
-        ApplicationManager.getApplication().executeOnPooledThread(runnable);
-        return createScrollPane(myMarketplacePanel, false);
+          return null;
+        });
       }
 
       @Override
@@ -1918,9 +1925,10 @@ public final class PluginManagerConfigurable
                                           @NotNull @Nls String name,
                                           @NotNull PluginsGroupType type,
                                           @NotNull @NonNls String query,
-                                          @NotNull @NonNls String showAllQuery) throws IOException {
+                                          @NotNull @NonNls String showAllQuery,
+                                          @NotNull Map<String, PluginSearchResult> marketplaceData) throws IOException {
     LOG.info("Marketplace tab: '" + name + "' group load started");
-    PluginSearchResult searchResult = UiPluginManager.getInstance().executeMarketplaceQuery(query, ITEMS_PER_GROUP * 2, false);
+    PluginSearchResult searchResult = marketplaceData.get(query);
     if (searchResult.getError() != null) {
       throw new IOException(searchResult.getError());
     }
