@@ -1474,6 +1474,52 @@ interface UastResolveApiFixtureTestBase {
         )
     }
 
+    fun checkResolveAnnotationOnSetparam(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt",
+            """
+                package test.pkg
+                
+                annotation class Anno(val attr: Int)
+                
+                class Test {
+                  @get:Anno(attr = 42)
+                  @setparam:Anno(attr = 21)
+                  var prop = 0
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        var cnt = 0
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitMethod(node: UMethod): Boolean {
+                    val txt = node.sourcePsi?.text
+                    when (node.name) {
+                        "getProp" -> {
+                            cnt++
+                            val anno = node.uAnnotations.single()
+                            val resolved = anno.resolve()
+                            TestCase.assertNotNull(txt, resolved)
+                            TestCase.assertEquals("test.pkg.Anno", resolved!!.qualifiedName)
+                        }
+                        "setProp" -> {
+                            cnt++
+                            val param = node.uastParameters.single()
+                            val anno = param.uAnnotations.single()
+                            val resolved = anno.resolve()
+                            TestCase.assertNotNull(txt, resolved)
+                            TestCase.assertEquals("test.pkg.Anno", resolved!!.qualifiedName)
+                        }
+                    }
+                    return super.visitMethod(node)
+                }
+            }
+        )
+        TestCase.assertEquals(2, cnt)
+    }
+
     fun checkResolveDataClassSyntheticMember(myFixture: JavaCodeInsightTestFixture, isK2: Boolean) {
         myFixture.configureByText(
             "main.kt",
