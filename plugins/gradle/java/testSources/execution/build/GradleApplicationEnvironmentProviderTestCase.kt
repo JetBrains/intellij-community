@@ -22,11 +22,9 @@ abstract class GradleApplicationEnvironmentProviderTestCase : GradleSettingsImpo
   }
 
   fun assertAppRunOutput(configurationSettings: RunnerAndConfigurationSettings, vararg checks: String) {
-    val tracer = ExternalSystemExecutionTracer()
-    tracer.traceExecution {
+    val output = ExternalSystemExecutionTracer.traceExecutionOutput {
       runAppAndWait(configurationSettings)
     }
-    val output = tracer.output.joinToString("")
     for (check in checks) {
       Assertions.assertThat(output)
         .contains(check)
