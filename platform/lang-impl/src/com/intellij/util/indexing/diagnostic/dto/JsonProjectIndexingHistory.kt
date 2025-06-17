@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic.dto
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
@@ -71,6 +71,7 @@ data class JsonProjectDumbIndexingHistory(
   @JsonIgnoreProperties(ignoreUnknown = true)
   data class JsonStatsPerIndexer(
     val indexId: String = "",
+    val shardsCount: Int,
     val partOfTotalIndexingTime: JsonPercentages = JsonPercentages(),
     val totalNumberOfFiles: Int = 0,
     val totalNumberOfFilesIndexedByExtensions: Int = 0,
