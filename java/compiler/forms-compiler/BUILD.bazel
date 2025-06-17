@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.java.guiForms.compiler` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
 jvm_library(
@@ -36,7 +37,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "java-guiForms-compiler_test",
   runtime_deps = [":java-guiForms-compiler_test_lib"]
 )

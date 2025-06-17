@@ -1,4 +1,5 @@
 ### auto-generated section `build intellij.platform.inspect` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 jvm_resources(
@@ -92,7 +93,7 @@ jvm_library(
   runtime_deps = [":inspect_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "inspect_test",
   runtime_deps = [":inspect_test_lib"]
 )

@@ -1,5 +1,6 @@
 ### auto-generated section `build intellij.devkit.workspaceModel.k1` start
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
 create_kotlinc_options(
@@ -76,7 +77,7 @@ jvm_library(
   runtime_deps = [":k1_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "k1_test",
   runtime_deps = [":k1_test_lib"]
 )

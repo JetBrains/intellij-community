@@ -95,6 +95,7 @@ java_library(
 ### auto-generated section `build intellij.gradle.common` end
 
 ### auto-generated section `build intellij.gradle.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -172,7 +173,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "gradle-tests_test",
   runtime_deps = [":gradle-tests_test_lib"]
 )

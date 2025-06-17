@@ -116,6 +116,7 @@ java_library(
 ### auto-generated section `build intellij.pycharm.community.main` end
 
 ### auto-generated section `build intellij.python.commonTests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_test")
 
@@ -149,7 +150,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "python-commonTests_test",
   runtime_deps = [":python-commonTests_test_lib"]
 )
@@ -340,6 +341,7 @@ java_library(
 ### auto-generated section `build intellij.python.community.plugin.modules` end
 
 ### auto-generated section `build intellij.python.community.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -457,7 +459,7 @@ jvm_library(
   ]
 )
 
-jvm_test(
+jps_test(
   name = "python-community-tests_test",
   runtime_deps = [":python-community-tests_test_lib"]
 )
@@ -490,6 +492,7 @@ java_library(
 ### auto-generated section `build intellij.python.helpers` end
 
 ### auto-generated section `build intellij.python.helpers.tests` start
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_java//java:defs.bzl", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources", "jvm_test")
 
@@ -514,7 +517,7 @@ jvm_library(
   runtime_deps = [":python-helpers-tests_test_resources"]
 )
 
-jvm_test(
+jps_test(
   name = "python-helpers-tests_test",
   runtime_deps = [":python-helpers-tests_test_lib"]
 )
