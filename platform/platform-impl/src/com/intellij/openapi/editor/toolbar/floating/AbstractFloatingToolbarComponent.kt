@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
@@ -102,7 +103,7 @@ abstract class AbstractFloatingToolbarComponent(
     private var opacity: Float = 0.0f
 
     init {
-      toolbar.putClientProperty(SUPPRESS_FAST_TRACK, true)
+      ClientProperty.put(toolbar, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
     }
 
     fun getOpacity(): Float = opacity
