@@ -12,8 +12,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -21,29 +19,11 @@ private const val DEFAULT_FILE_NAME = "Main.java"
 private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME = "SampleCodeWithOnboardingTips.java"
 private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME = "SampleCodeWithRenderedOnboardingTips.java"
 
-private const val DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "SampleCodeWithOnboardingTipsInstanceMain.java"
-private const val DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN = "SampleCodeWithRenderedOnboardingTipsInstanceMain.java"
-
 object AssetsJava {
 
   @Deprecated("The onboarding tips generated unconditionally")
   fun getJavaSampleTemplateName(generateOnboardingTips: Boolean): String =
     getJavaSampleTemplateName()
-
-  @ApiStatus.Internal
-  fun getJavaSampleTemplateName(sdk: Sdk): String {
-    val javaVersion = (sdk.sdkType as? JavaSdkImpl)?.getJavaVersion(sdk)?.feature ?: 0
-    if (javaVersion >= 25) {
-      //use compact source file
-      return when (shouldRenderOnboardingTips()) {
-        true -> DEFAULT_TEMPLATE_WITH_RENDERED_ONBOARDING_TIPS_NAME_INSTANCE_MAIN
-        else -> DEFAULT_TEMPLATE_WITH_ONBOARDING_TIPS_NAME_INSTANCE_MAIN
-      }
-    }
-    else {
-      return getJavaSampleTemplateName()
-    }
-  }
 
   @ApiStatus.Internal
   fun getJavaSampleTemplateName(): String {
@@ -87,7 +67,7 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
   sourceRootPath: String,
   packageName: String? = null,
   fileName: String = DEFAULT_FILE_NAME,
-  templateName: String = AssetsJava.getJavaSampleTemplateName(this.context.projectJdk),
+  templateName: String = AssetsJava.getJavaSampleTemplateName(),
 ) {
   val sourcePath = AssetsJava.getJavaSampleSourcePath(sourceRootPath, packageName, fileName)
   AssetsJava.prepareJavaSampleOnboardingTips(project, fileName)
