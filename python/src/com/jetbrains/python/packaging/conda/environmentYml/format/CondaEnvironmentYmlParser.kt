@@ -2,18 +2,24 @@
 package com.jetbrains.python.packaging.conda.environmentYml.format
 
 import com.charleskorn.kaml.*
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readText
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.packaging.parser.RequirementsParserHelper
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
 object CondaEnvironmentYmlParser {
-  fun fromFile(file: VirtualFile): List<PyRequirement> {
-    val pyRequirements = readDeps(file)
+  fun fromFile(file: VirtualFile): List<PyRequirement>? {
+    val pyRequirements = runCatching { readDeps(file) }.onFailure {
+      thisLogger().info("Cannot parse deps from ${file.readText()}", it)
+      return null
+    }.getOrNull() ?: return null
     return pyRequirements.filter { it.name != "python" }.distinct()
   }
 
@@ -65,10 +71,9 @@ object CondaEnvironmentYmlParser {
       dep
     }
 
+    val operations = PyRequirementRelation.entries.map { it.presentableText }
     // Check if the dependency already has version operators (>=, <=, >, <, !=)
-    if (packageSpec.contains(">=") || packageSpec.contains("<=") ||
-        packageSpec.contains(">") || packageSpec.contains("<") ||
-        packageSpec.contains("!=")) {
+    if (operations.any { dep.contains(it) }) {
       return PyRequirementParser.fromLine(packageSpec)
     }
 

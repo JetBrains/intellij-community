@@ -18,7 +18,7 @@ object EnvironmentYmlModifier {
   fun addRequirement(project: Project, file: VirtualFile, packageName: String): Boolean {
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return false
 
-    val pyRequirements = CondaEnvironmentYmlParser.fromFile(file)
+    val pyRequirements = CondaEnvironmentYmlParser.fromFile(file) ?: return false
     if (pyRequirements.any { it.name == packageName }) {
       return false
     }

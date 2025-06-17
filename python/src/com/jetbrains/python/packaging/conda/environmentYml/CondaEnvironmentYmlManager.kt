@@ -32,7 +32,7 @@ class CondaEnvironmentYmlManager private constructor(project: Project, val sdk: 
     return CondaEnvYamlModificationTracker.getInstance(project)
   }
 
-  override fun parseRequirements(requirementsFile: VirtualFile): List<PyRequirement> {
+  override fun parseRequirements(requirementsFile: VirtualFile): List<PyRequirement>? {
     return CondaEnvironmentYmlParser.fromFile(requirementsFile)
   }
 
