@@ -10,6 +10,7 @@ import com.intellij.driver.model.RemoteMouseButton
 import com.intellij.driver.sdk.*
 import com.intellij.driver.sdk.remoteDev.BeControlClass
 import com.intellij.driver.sdk.remoteDev.EditorComponentImplBeControlBuilder
+import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.center
 import com.intellij.driver.sdk.ui.components.ComponentData
@@ -18,6 +19,7 @@ import com.intellij.driver.sdk.ui.remote.Component
 import org.intellij.lang.annotations.Language
 import java.awt.Point
 import java.awt.Rectangle
+import kotlin.time.Duration
 
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
@@ -238,6 +240,9 @@ class GutterUiComponent(data: ComponentData) : UiComponent(data) {
 
   val iconAreaOffset
     get() = gutter.getIconAreaOffset()
+
+  fun icon(timeout: Duration = DEFAULT_FIND_TIMEOUT, errorMessage: String = "icon not found", predicate: (GutterIcon) -> Boolean): GutterIcon =
+    waitFor(timeout = timeout, errorMessage = { errorMessage }, getter = { icons.filter(predicate) }, checker = { it.singleOrNull() != null }).single()
 
   fun getGutterIcons(): List<GutterIcon> {
     waitFor { this.icons.isNotEmpty() }
