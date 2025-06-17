@@ -1399,7 +1399,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   }
 
   private fun applyCustomization() {
-    if (plugin == null) return
+    if (plugin == null || pluginManagerCustomizer == null) return
     customizeEnableDisableButton()
     customizeInstallButton()
     updateAdditionalText()
