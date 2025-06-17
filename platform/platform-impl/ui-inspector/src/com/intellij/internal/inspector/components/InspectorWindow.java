@@ -543,7 +543,8 @@ public final class InspectorWindow extends JDialog implements Disposable {
 
     private ToggleShowAccessibilityIssuesAction() {
       super(InternalActionsBundle.messagePointer("action.Anonymous.text.ShowAccessibilityIssues"));
-      showAccessibilityIssues = PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
+      showAccessibilityIssues =
+        isAccessibilityAuditEnabled && PropertiesComponent.getInstance().getBoolean(SHOW_ACCESSIBILITY_ISSUES_KEY, false);
       getTemplatePresentation().setDescription(
         InternalActionsBundle.messagePointer("action.Anonymous.description.ShowAccessibilityIssues"));
     }
