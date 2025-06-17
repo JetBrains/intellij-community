@@ -1474,6 +1474,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey CommitNode = new IntelliJIconKey("vcs/commitNode.svg", "expui/vcs/commit.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Equal = new IntelliJIconKey("vcs/equal.svg", "vcs/equal.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Fetch = new IntelliJIconKey("vcs/fetch.svg", "expui/vcs/fetch.svg", AllIconsKeys.class);
+    /** 20x20 */ public static final @NotNull IntelliJIconKey Fetch_20x20 = new IntelliJIconKey("expui/vcs/fetch@20x20.svg", "expui/vcs/fetch@20x20.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Folders = new IntelliJIconKey("vcs/folders.svg", "expui/nodes/copyOfFolder.svg", AllIconsKeys.class);
     /** 24x24 */ public static final @NotNull IntelliJIconKey FromVCSDialog = new IntelliJIconKey("vcs/fromVCSDialog.svg", "vcs/fromVCSDialog.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey History = new IntelliJIconKey("vcs/history.svg", "expui/general/history.svg", AllIconsKeys.class);
@@ -1486,11 +1487,13 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey Patch_applied = new IntelliJIconKey("vcs/patch_applied.svg", "vcs/patch_applied.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Patch_file = new IntelliJIconKey("vcs/patch_file.svg", "expui/fileTypes/patch.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Push = new IntelliJIconKey("vcs/push.svg", "expui/vcs/push.svg", AllIconsKeys.class);
+    /** 20x20 */ public static final @NotNull IntelliJIconKey Push_20x20 = new IntelliJIconKey("expui/vcs/push@20x20.svg", "expui/vcs/push@20x20.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Remove = new IntelliJIconKey("vcs/remove.svg", "expui/vcs/remove.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ShelveSilent = new IntelliJIconKey("vcs/shelveSilent.svg", "expui/vcs/shelve.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ShowUnversionedFiles = new IntelliJIconKey("vcs/ShowUnversionedFiles.svg", "vcs/ShowUnversionedFiles.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Unshelve = new IntelliJIconKey("vcs/Unshelve.svg", "expui/vcs/unshelve.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey UnshelveSilent = new IntelliJIconKey("vcs/unshelveSilent.svg", "expui/vcs/unshelve.svg", AllIconsKeys.class);
+    /** 20x20 */ public static final @NotNull IntelliJIconKey Update_20x20 = new IntelliJIconKey("expui/vcs/update@20x20.svg", "expui/vcs/update@20x20.svg", AllIconsKeys.class);
 
     public static final class Vendors {
       /** 16x16 */ public static final @NotNull IntelliJIconKey Github = new IntelliJIconKey("vcs/vendors/github.svg", "vcs/vendors/github.svg", AllIconsKeys.class);

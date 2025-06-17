@@ -1345,6 +1345,7 @@ f:com.intellij.icons.AllIcons$Vcs
 - sf:CommitNode:javax.swing.Icon
 - sf:Equal:javax.swing.Icon
 - sf:Fetch:javax.swing.Icon
+- sf:Fetch_20x20:javax.swing.Icon
 - sf:Folders:javax.swing.Icon
 - sf:FromVCSDialog:javax.swing.Icon
 - sf:History:javax.swing.Icon
@@ -1357,11 +1358,13 @@ f:com.intellij.icons.AllIcons$Vcs
 - sf:Patch_applied:javax.swing.Icon
 - sf:Patch_file:javax.swing.Icon
 - sf:Push:javax.swing.Icon
+- sf:Push_20x20:javax.swing.Icon
 - sf:Remove:javax.swing.Icon
 - sf:ShelveSilent:javax.swing.Icon
 - sf:ShowUnversionedFiles:javax.swing.Icon
 - sf:Unshelve:javax.swing.Icon
 - sf:UnshelveSilent:javax.swing.Icon
+- sf:Update_20x20:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Vcs$Vendors
 - sf:Github:javax.swing.Icon

@@ -1481,6 +1481,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("expui/vcs/commit.svg", "vcs/commitNode.svg", 334394479, 0);
     /** 16x16 */ public static final @NotNull Icon Equal = load("vcs/equal.svg", -1196383288, 2);
     /** 16x16 */ public static final @NotNull Icon Fetch = load("expui/vcs/fetch.svg", "vcs/fetch.svg", -1252692037, 2);
+    /** 20x20 */ public static final @NotNull Icon Fetch_20x20 = load("expui/vcs/fetch@20x20.svg", -1632890854, 2);
     /** 16x16 */ public static final @NotNull Icon Folders = load("expui/nodes/copyOfFolder.svg", "vcs/folders.svg", 1810604817, 2);
     /** 24x24 */ public static final @NotNull Icon FromVCSDialog = load("vcs/fromVCSDialog.svg", -500633666, 2);
     /** 16x16 */ public static final @NotNull Icon History = load("expui/general/history.svg", "vcs/history.svg", 995622878, 2);
@@ -1493,11 +1494,13 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Patch_applied = load("vcs/patch_applied.svg", -2166485, 2);
     /** 16x16 */ public static final @NotNull Icon Patch_file = load("expui/fileTypes/patch.svg", "vcs/patch_file.svg", -1991117101, 0);
     /** 16x16 */ public static final @NotNull Icon Push = load("expui/vcs/push.svg", "vcs/push.svg", 1768616645, 2);
+    /** 20x20 */ public static final @NotNull Icon Push_20x20 = load("expui/vcs/push@20x20.svg", 1083651890, 2);
     /** 16x16 */ public static final @NotNull Icon Remove = load("expui/vcs/remove.svg", "vcs/remove.svg", -930385649, 2);
     /** 16x16 */ public static final @NotNull Icon ShelveSilent = load("expui/vcs/shelve.svg", "vcs/shelveSilent.svg", -370626475, 2);
     /** 16x16 */ public static final @NotNull Icon ShowUnversionedFiles = load("vcs/ShowUnversionedFiles.svg", -1565476650, 2);
     /** 16x16 */ public static final @NotNull Icon Unshelve = load("expui/vcs/unshelve.svg", "vcs/Unshelve.svg", -81545320, 2);
     /** 16x16 */ public static final @NotNull Icon UnshelveSilent = load("expui/vcs/unshelve.svg", "vcs/unshelveSilent.svg", -20176584, 2);
+    /** 20x20 */ public static final @NotNull Icon Update_20x20 = load("expui/vcs/update@20x20.svg", 518676462, 2);
 
     public static final class Vendors {
       /** 16x16 */ public static final @NotNull Icon Github = load("vcs/vendors/github.svg", 588882631, 2);
