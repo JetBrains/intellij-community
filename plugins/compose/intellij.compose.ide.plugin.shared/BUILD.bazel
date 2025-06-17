@@ -30,6 +30,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common-provided",
     "@lib//:kotlinc-analysis-api-provided",
     "//java/java-psi-api:psi",
+    "//platform/lang-impl",
   ],
   runtime_deps = [":ide-plugin-shared_resources"]
 )
