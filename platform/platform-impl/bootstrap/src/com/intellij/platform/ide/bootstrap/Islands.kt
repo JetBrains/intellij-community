@@ -10,14 +10,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 fun applyIslandsTheme(afterImportSettings: Boolean) {
   val application = ApplicationManager.getApplication()
-  if (PlatformUtils.isRider() || !application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
+  if (Registry.`is`("llm.riderNext.enabled", false) || !application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
     return
   }
 
@@ -54,7 +54,7 @@ private fun enableTheme(oneIsland: Boolean) {
   }
 
   if ((currentTheme != "ExperimentalDark" && currentTheme != "ExperimentalLight" && currentTheme != "ExperimentalLightWithLightHeader") ||
-      (currentEditorTheme != "Light" && currentEditorTheme != "Dark")) {
+      (currentEditorTheme != "Light" && currentEditorTheme != "Dark" && currentEditorTheme != "Rider Light" && currentEditorTheme != "Rider Dark")) {
     return
   }
 
