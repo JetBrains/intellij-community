@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -19,9 +18,7 @@ import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnv
 import com.jetbrains.python.sdk.conda.isConda
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 
@@ -56,15 +53,7 @@ suspend fun PythonMutableTargetAddInterpreterModel.setupVirtualenv(venvPath: Pat
   val newSdk = createSdk(homeFile, projectPathFlows.projectPathWithDefault.first(), existingSdks.toTypedArray())
 
   // todo check exclude
-  val module = when (moduleOrProject) {
-    is ModuleOrProject.ModuleAndProject -> moduleOrProject.module
-    is ModuleOrProject.ProjectOnly -> {
-      withContext(Dispatchers.IO) {
-        ModuleUtil.findModuleForFile(homeFile, moduleOrProject.project)
-      }
-    }
-    null -> null
-  }
+  val module = PyProjectCreateHelpers.getModule(moduleOrProject, homeFile)
 
 
   if (module != null) {

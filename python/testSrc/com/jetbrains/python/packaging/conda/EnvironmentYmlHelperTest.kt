@@ -29,7 +29,7 @@ class EnvironmentYmlHelperTest : PyTestCase() {
     EnvironmentYmlModifier.addRequirement(myFixture.project, tempVirtualFile, newPackageName)
 
     // Parse the updated file and check if the package was added
-    val requirements = CondaEnvironmentYmlParser.fromFile(tempVirtualFile)
+    val requirements = CondaEnvironmentYmlParser.fromFile(tempVirtualFile)!!
     val newPackageRequirement = PyRequirementParser.fromLine(newPackageName)!!
 
     Assertions.assertTrue(requirements.contains(newPackageRequirement),
@@ -39,7 +39,7 @@ class EnvironmentYmlHelperTest : PyTestCase() {
     EnvironmentYmlModifier.addRequirement(myFixture.project, tempVirtualFile, newPackageName)
 
     // Parse the file again and check that the package appears only once
-    val updatedRequirements = CondaEnvironmentYmlParser.fromFile(tempVirtualFile)
+    val updatedRequirements = CondaEnvironmentYmlParser.fromFile(tempVirtualFile)!!
     val count = updatedRequirements.count { it.name == newPackageRequirement.name }
 
     Assertions.assertEquals(1, count,

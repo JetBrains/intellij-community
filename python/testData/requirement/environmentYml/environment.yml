@@ -19,8 +19,8 @@ dependencies:
   
   # Exact version specifications
   - scipy=1.9.3
-  - requests=2.28.1
-  - flask=2.2.2
+  - requests~=2.28.1
+  - flask==2.2.2
   
   # Version ranges with operators
   - django>=4.0

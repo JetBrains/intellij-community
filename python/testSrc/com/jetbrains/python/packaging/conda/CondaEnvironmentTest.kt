@@ -19,7 +19,7 @@ class CondaEnvironmentTest {
   fun testParse() {
     val virtualFile = getVirtualFileByName("$testDataPath/requirement/environmentYml/environment.yml")!!
     val actual = runReadAction {
-      CondaEnvironmentYmlParser.fromFile(virtualFile)
+      CondaEnvironmentYmlParser.fromFile(virtualFile)!!
     }
 
     // Create expected dependencies based on environment.yml
