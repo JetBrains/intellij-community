@@ -38,7 +38,10 @@ class OpenSelectedProjectsAction : RecentProjectsWelcomeScreenActionBase() {
     }
 
     if (ActionPlaces.WELCOME_SCREEN == event.place) {
-      presentation.isEnabledAndVisible = items.all { item -> item is RecentProjectItem || item is ProjectsGroupItem || item is ProviderRecentProjectItem }
+      presentation.isEnabledAndVisible = items.all { item ->
+        item is RecentProjectItem || item is ProjectsGroupItem ||
+        item is ProviderRecentProjectItem && item.canOpenProject()
+      }
       when {
         items.size == 1 && items.first() is ProjectsGroupItem -> presentation.setText(
           IdeBundle.messagePointer("action.presentation.OpenSelectedProjectsAction.text.open.all.projects.in.group")
