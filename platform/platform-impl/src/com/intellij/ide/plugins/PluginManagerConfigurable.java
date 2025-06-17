@@ -64,6 +64,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.*;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.*;
 
 import javax.accessibility.AccessibleContext;
@@ -127,6 +130,7 @@ public final class PluginManagerConfigurable
   private final JLabel myUpdateCounter = new CountComponent();
   private final JLabel myUpdateCounterBundled = new CountComponent();
   private final CountIcon myCountIcon = new CountIcon();
+  private final CoroutineScope myCoroutineScope;
 
   private final PluginModelFacade myPluginModelFacade;
 
@@ -164,6 +168,11 @@ public final class PluginManagerConfigurable
   public PluginManagerConfigurable() {
     myPluginModelFacade = new PluginModelFacade(new MyPluginModel(null));
     myPluginManagerCustomizer = PluginManagerCustomizer.getInstance();
+    CoroutineScope parentScope =
+      ApplicationManager.getApplication().getService(PluginManagerCoroutineScopeHolder.class).getCoroutineScope();
+    CoroutineScope childScope =
+      com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope(parentScope, getClass().getName(), Dispatchers.getIO(), true);
+    myCoroutineScope = childScope;
   }
 
   @Override
@@ -281,7 +290,8 @@ public final class PluginManagerConfigurable
       UpdateOptions state = UpdateSettings.getInstance().getState();
       myPluginsAutoUpdateEnabled = state.isPluginsAutoUpdateEnabled();
 
-      MessageBusConnection connect = ApplicationManager.getApplication().getMessageBus().connect(myDisposer);
+      MessageBusConnection connect =
+        ApplicationManager.getApplication().getMessageBus().connect(com.intellij.util.CoroutineScopeKt.asDisposable(myCoroutineScope));
       connect.subscribe(PluginAutoUpdateListener.Companion.getTOPIC(), new PluginAutoUpdateListener() {
         @Override
         public void settingsChanged() {
@@ -1018,7 +1028,8 @@ public final class PluginManagerConfigurable
             myInstalledPanel.addGroup(installing);
           }
 
-          PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
+          PluginsGroup downloaded =
+                  new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
           downloaded.addModels(UiPluginManager.getInstance().getInstalledPlugins());
 
           Map<Boolean, List<PluginUiModel>> visiblePlugins = uiPluginManager
@@ -1958,7 +1969,7 @@ public final class PluginManagerConfigurable
     pluginsState.resetChangesAppliedWithoutRestart();
 
     if (myDisposer != null) {
-      Disposer.dispose(myDisposer);
+      CoroutineScopeKt.cancel(myCoroutineScope, null);
       myDisposer = null;
     }
   }
