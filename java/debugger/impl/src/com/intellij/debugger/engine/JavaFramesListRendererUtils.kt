@@ -6,7 +6,6 @@ import com.intellij.debugger.impl.PrioritizedTask
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.frame.XStackFrameUiPresentationContainer
-import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeProxy
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
@@ -37,7 +36,7 @@ internal fun computeUiPresentation(
     send(container)
   }
 
-  if (!useFeProxy() || descriptor == null || selectedDescriptor == null) {
+  if (descriptor == null || selectedDescriptor == null) {
     close()
     return@channelFlow
   }
