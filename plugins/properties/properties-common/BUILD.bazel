@@ -27,6 +27,7 @@ jvm_library(
     "//platform/code-style-impl:codeStyle-impl",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/refactoring",
   ],
   runtime_deps = [":properties_resources"]
 )
