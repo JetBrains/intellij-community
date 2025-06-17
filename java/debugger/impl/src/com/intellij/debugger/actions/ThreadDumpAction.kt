@@ -300,9 +300,9 @@ private fun buildThreadStates(
         is ObjectReference -> value to value.referenceType()
         else -> null to null
       }
-      isDaemon = (getThreadField("daemon", threadType, threadReference, holderType, holderObj) as BooleanValue?)?.booleanValue() ?: false
-      prio = (getThreadField("priority", threadType, threadReference, holderType, holderObj) as IntegerValue?)?.intValue()
-      tid = (getThreadField("tid", threadType, threadReference, holderType, holderObj) as LongValue?)?.longValue()
+      isDaemon = (getThreadField("daemon", threadType, threadReference, holderType, holderObj) as? BooleanValue)?.booleanValue() ?: false
+      prio = (getThreadField("priority", threadType, threadReference, holderType, holderObj) as? IntegerValue)?.intValue()
+      tid = (getThreadField("tid", threadType, threadReference, holderType, holderObj) as? LongValue)?.longValue()
     }
 
     val threadState = ThreadState(threadName, stateString)
