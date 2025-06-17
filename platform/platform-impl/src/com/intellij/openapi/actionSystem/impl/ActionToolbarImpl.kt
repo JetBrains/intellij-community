@@ -938,7 +938,6 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     cancelCurrentUpdate()
 
     val firstTimeFastTrack = !hasVisibleActions() && componentCount == 1 && !ClientProperty.isTrue(this, SUPPRESS_FAST_TRACK)
-    if (firstTimeFastTrack) ClientProperty.put(this, SUPPRESS_FAST_TRACK, true)
 
     val cs = service<CoreUiCoroutineScopeHolder>().coroutineScope
     val job = cs.launch(
@@ -951,6 +950,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
           firstTimeFastTrack || isUnitTestMode)
         myLastNewButtonActionClass = null
         actionsUpdated(forcedActual, actions)
+        if (firstTimeFastTrack) ClientProperty.put(this@ActionToolbarImpl, SUPPRESS_FAST_TRACK, true)
         reportActionButtonChangedEveryTimeIfNeeded()
       }
       catch (ex: CancellationException) {
