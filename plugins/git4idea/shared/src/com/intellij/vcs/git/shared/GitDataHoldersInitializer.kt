@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 internal class GitDataHoldersInitializer : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (application.isUnitTestMode) return
+    if (application.isUnitTestMode || isCodeWithMe()) return
 
     coroutineScope {
       launch {
