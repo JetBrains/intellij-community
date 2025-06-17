@@ -42,11 +42,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatusManager
-import com.intellij.openapi.vfs.FileIdAdapter
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileWithoutContent
+import com.intellij.openapi.vfs.*
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
@@ -410,11 +406,6 @@ open class EditorsSplitters internal constructor(
   }
 
   internal fun updateFileIconImmediately(file: VirtualFile, icon: Icon) {
-    if (icon is DeferredIconImpl<*>) {
-      // Since `DeferredIcon.retrieveIcon` does not run,
-      // asyncEvaluator evaluation should be triggered manually to avoid blinking when loading spinner is done
-      icon.triggerEvaluation()
-    }
     val uiSettings = UISettings.getInstance()
     for (window in windows) {
       val (composite, tab) = window.findCompositeAndTab(file) ?: continue
@@ -1137,11 +1128,7 @@ private fun computeFileEntry(
       val file = fileProvider()
       readAction {
         computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = fileEditorManager.project)
-      }.also {
-        if (it is DeferredIconImpl<*>)
-          it.triggerEvaluation()
       }
-
     }
   }
   else {

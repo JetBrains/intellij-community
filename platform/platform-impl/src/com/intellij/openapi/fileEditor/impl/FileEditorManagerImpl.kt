@@ -74,14 +74,12 @@ import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.pom.Navigatable
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -2216,17 +2214,19 @@ open class FileEditorManagerImpl(
           composite.isPreview = true
         }
       }
-      val tab = createTabInfo(
+      val customizer = { tab: TabInfo ->
+        tab.setIconHolder(CompositeTabIconHolderCreator.getInstance().createTabIconHolder(composite, tab))
+        item.customizer(tab)
+      }
+
+      tabs.add(createTabInfo(
         component = composite.component,
         file = file,
         parentDisposable = composite,
         window = window,
         editorActionGroup = editorActionGroup,
-        customizer = item.customizer,
-        coroutineScope = coroutineScope,
-      )
-      tab.setupLoadingIcon(composite)
-      tabs.add(tab)
+        customizer = customizer,
+      ))
 
       val editorCompositeEntry = EditorCompositeEntry(composite = composite, delayedState = fileEntry)
       openedCompositeEntries.add(editorCompositeEntry)
@@ -2536,30 +2536,6 @@ fun navigateAndSelectEditor(editor: NavigatableFileEditor, descriptor: Navigatab
 
 private fun getEditorTypeIds(composite: EditorComposite): Set<String> {
   return composite.providerSequence.mapTo(HashSet()) { it.editorTypeId }
-}
-
-internal fun TabInfo.setupLoadingIcon(composite: EditorComposite) {
-  val isFeatureFlagEnabled = ExperimentalUI.isNewUI() && Registry.`is`("editor.loading.spinner.enabled", false)
-  val delayFromRegistry = Registry.intValue("editor.loading.spinner.delay.ms", 0).milliseconds
-  if (!isFeatureFlagEnabled) {
-    setLoaded()
-    return
-  }
-  composite.coroutineScope.launch {
-    coroutineScope {
-      launch(CoroutineName("EditorComposite(file=${composite.file.name}).setLoadingSpinner")) {
-        delay(delayFromRegistry)
-        withContext(Dispatchers.EDT) {
-          this@setupLoadingIcon.setupAsyncIconLoading()
-        }
-      }
-      launch(CoroutineName("EditorComposite(file=${composite.file.name}).disableLoadingSpinner")) {
-        composite.waitForAvailable()
-        this@setupLoadingIcon.setLoaded()
-        this@coroutineScope.cancel()
-      }
-    }
-  }.cancelOnDispose(composite)
 }
 
 private data class ProviderChange(
