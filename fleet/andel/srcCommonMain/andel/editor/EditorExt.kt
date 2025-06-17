@@ -13,7 +13,7 @@ val MutableEditor.carets: List<Caret> get() = multiCaret.carets
 val MutableEditor.primaryCaret: Caret get() = multiCaret.primaryCaret
 fun MutableEditor.addCaret(position: CaretPosition): Caret = with(multiCaret) {
   addCarets(listOf(position))
-  requireNotNull(multiCaret.carets.find { it.position == position })
+  requireNotNull(multiCaret.carets.find { it.position == position } ?: multiCaret.carets.find { it.selection.contains(position.offset) })
 }
 fun MutableEditor.addCarets(positions: List<CaretPosition>) { multiCaret.addCarets(positions) }
 fun MutableEditor.removeCaret(caret: Caret) = multiCaret.removeCarets(listOf(caret))
