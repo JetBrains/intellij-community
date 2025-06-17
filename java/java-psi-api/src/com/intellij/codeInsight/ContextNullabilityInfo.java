@@ -16,6 +16,9 @@ import java.util.function.Predicate;
 @FunctionalInterface
 public
 interface ContextNullabilityInfo {
+  /**
+   * An empty context nullability info that returns {@code null} for all contexts
+   */
   @NotNull ContextNullabilityInfo EMPTY = new ContextNullabilityInfo() {
     @Override
     public @Nullable NullabilityAnnotationInfo forContext(@NotNull PsiElement context) {
@@ -66,6 +69,9 @@ interface ContextNullabilityInfo {
     return context -> contextFilter.test(context) ? forContext(context) : null;
   }
 
+  /**
+   * @return a new {@code ContextNullabilityInfo} that filters out the cast contexts.
+   */
   default @NotNull ContextNullabilityInfo disableInCast() {
     return filtering(context -> {
       PsiExpression parentExpression = PsiTreeUtil.getParentOfType(context, PsiExpression.class);
