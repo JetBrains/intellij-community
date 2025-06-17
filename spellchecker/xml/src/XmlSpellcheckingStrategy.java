@@ -32,7 +32,7 @@ import static java.util.Collections.singletonList;
 public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy implements DumbAware {
 
   private final Tokenizer<? extends PsiElement> myXmlTextTokenizer = createTextTokenizer();
-
+  private final Tokenizer<? extends PsiElement> myXmlCommentTokenizer = createCommentTokenizer();
   private final Tokenizer<? extends PsiElement> myXmlAttributeTokenizer = createAttributeValueTokenizer();
 
   @Override
@@ -40,13 +40,14 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
     if (element instanceof XmlText) {
       return myXmlTextTokenizer;
     }
+    if (isComment(element)) {
+      return myXmlCommentTokenizer;
+    }
     if (element instanceof XmlToken
         && ((XmlToken)element).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS
         && !isXmlDataCharactersParentHandledByItsStrategy(element.getParent())) {
       // Special case for all other XML_DATA_CHARACTERS, which are not handled through parent PSI
-      if (isInTemplateLanguageFile(element))
-        return EMPTY_TOKENIZER;
-      return TEXT_TOKENIZER;
+      return isInTemplateLanguageFile(element) ? EMPTY_TOKENIZER : TEXT_TOKENIZER;
     }
     if (element instanceof XmlAttributeValue) {
       return myXmlAttributeTokenizer;
@@ -62,7 +63,6 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
         return true;
       }
     }
-
     return false;
   }
 
@@ -94,8 +94,22 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
     return file == null || file.getLanguage() instanceof TemplateLanguage;
   }
 
+  @Override
+  protected boolean isLiteral(@NotNull PsiElement element) {
+    return element instanceof XmlAttributeValue || element instanceof XmlText;
+  }
+
+  @Override
+  protected boolean isComment(@NotNull PsiElement element) {
+    return element instanceof XmlComment;
+  }
+
   protected Tokenizer<? extends PsiElement> createTextTokenizer() {
     return new XmlTextTokenizer(PlainTextSplitter.getInstance());
+  }
+
+  protected Tokenizer<? extends PsiElement> createCommentTokenizer() {
+    return new XmlCommentTokenizer(PlainTextSplitter.getInstance());
   }
 
   protected abstract static class XmlTextContentTokenizer<T extends XmlElement> extends XmlTokenizerBase<T> {
@@ -125,7 +139,30 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
     }
   }
 
+  private static class XmlCommentTokenizer extends XmlTokenizerBase<XmlComment> {
+
+    private XmlCommentTokenizer(Splitter splitter) {
+      super(splitter);
+    }
+
+    @Override
+    protected @NotNull List<@NotNull SpellcheckRange> getSpellcheckRanges(@NotNull XmlComment comment) {
+      var ranges = new SmartList<SpellcheckRange>();
+      comment.acceptChildren(new XmlElementVisitor() {
+        @Override
+        public void visitXmlToken(@NotNull XmlToken token) {
+          if (token.getNode().getElementType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
+            var text = token.getText();
+            ranges.add(new SpellcheckRange(text, false, token.getStartOffsetInParent(), TextRange.allOf(text)));
+          }
+        }
+      });
+      return ranges;
+    }
+  }
+
   protected static class XmlTextTokenizer extends XmlTextContentTokenizer<XmlText> {
+
     public XmlTextTokenizer(Splitter splitter) {
       super(splitter);
     }
