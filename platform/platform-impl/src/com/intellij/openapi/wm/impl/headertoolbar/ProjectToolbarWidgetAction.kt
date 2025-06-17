@@ -340,17 +340,13 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
               }
 
               if (projectStatus?.progressText != null) {
-                panel {
-                  row {
-                    label(projectStatus.progressText)
-                      .align(AlignY.CENTER)
-                      .applyToComponent {
-                        icon = AnimatedIcon.Default.INSTANCE
-                        font = JBFont.smallOrNewUiMedium()
-                      }
-                  }
-                }
+                label(projectStatus.progressText)
+                  .align(AlignY.CENTER)
                   .align(AlignX.RIGHT)
+                  .applyToComponent {
+                    icon = AnimatedIcon.Default.INSTANCE
+                    font = JBFont.smallOrNewUiMedium()
+                  }
               }
             }
             val providerPath = action.providerPathToDisplay
