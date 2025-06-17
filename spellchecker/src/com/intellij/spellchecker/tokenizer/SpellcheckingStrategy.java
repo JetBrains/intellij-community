@@ -13,7 +13,6 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spellchecker.DictionaryLayer;
 import com.intellij.spellchecker.DictionaryLayersProvider;
@@ -94,18 +93,16 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
   }
 
   public boolean elementFitsScope(@NotNull PsiElement element, Set<SpellCheckingInspection.SpellCheckingScope> scope) {
-
-    final Language language = element.getLanguage();
-    final IElementType elementType = element.getNode().getElementType();
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    Language language = element.getLanguage();
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
 
     if (parserDefinition != null) {
-      if (parserDefinition.getStringLiteralElements().contains(elementType)) {
+      if (isLiteral(element)) {
         if (!scope.contains(SpellCheckingInspection.SpellCheckingScope.Literals)) {
           return false;
         }
       }
-      else if (parserDefinition.getCommentTokens().contains(elementType)) {
+      else if (isComment(element)) {
         if (!scope.contains(SpellCheckingInspection.SpellCheckingScope.Comments)) {
           return false;
         }
@@ -115,6 +112,16 @@ public class SpellcheckingStrategy implements PossiblyDumbAware {
       }
     }
     return true;
+  }
+
+  protected boolean isLiteral(@NotNull PsiElement psiElement) {
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(psiElement.getLanguage());
+    return parserDefinition.getStringLiteralElements().contains(psiElement.getNode().getElementType());
+  }
+
+  protected boolean isComment(@NotNull PsiElement psiElement) {
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(psiElement.getLanguage());
+    return parserDefinition.getCommentTokens().contains(psiElement.getNode().getElementType());
   }
 
   protected static boolean isInjectedLanguageFragment(@Nullable PsiElement element) {

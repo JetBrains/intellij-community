@@ -11,7 +11,6 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -20,19 +19,16 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.tokenizer.*;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.StringSearcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -279,15 +275,20 @@ public final class SpellCheckingInspection extends LocalInspectionTool implement
       }
 
       PsiFile file = myElement.getContainingFile();
-      Map<String, Boolean> referenceWords = CachedValuesManager.getProjectPsiDependentCache(file, (element) -> new ConcurrentHashMap<>());
-      return referenceWords.computeIfAbsent(word, (key) -> hasSameNamedReferenceInFile(file, key));
+      Map<String, Boolean> references = CachedValuesManager.getProjectPsiDependentCache(file, (psi) -> new ConcurrentHashMap<>());
+      return references.computeIfAbsent(word, key -> hasSameNamedReferencesInFile(file, key));
     }
 
-    private boolean hasSameNamedReferenceInFile(PsiFile file, String word) {
-      for (int occurrence : new StringSearcher(word, true, true).findAllOccurrences(file.getText())) {
+    private static boolean hasSameNamedReferencesInFile(PsiFile file, String word) {
+      int[] occurrences = new StringSearcher(word, true, true).findAllOccurrences(file.getText());
+      if (occurrences.length <= 1) {
+        return false;
+      }
+
+      for (int occurrence : occurrences) {
         PsiReference reference = file.findReferenceAt(occurrence);
-        PsiElement element = reference != null ? reference.resolve() : null;
-        if (reference != null && element != null && reference.getElement() != element) {
+        PsiElement resolvedReference = reference != null ? reference.resolve() : null;
+        if (reference != null && resolvedReference != null && reference.getElement() != resolvedReference) {
           return true;
         }
       }
