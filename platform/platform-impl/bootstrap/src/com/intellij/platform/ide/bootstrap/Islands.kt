@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 fun applyIslandsTheme(afterImportSettings: Boolean) {
   val application = ApplicationManager.getApplication()
-  if (PlatformUtils.isRider() || !application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment) {
+  if (PlatformUtils.isRider() || !application.isEAP || application.isUnitTestMode || application.isHeadlessEnvironment || AppMode.isRemoteDevHost()) {
     return
   }
 
