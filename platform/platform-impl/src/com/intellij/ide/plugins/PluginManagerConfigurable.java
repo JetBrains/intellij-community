@@ -115,7 +115,7 @@ public final class PluginManagerConfigurable
   private PluginsTab myInstalledTab;
 
   private PluginsGroupComponentWithProgress myMarketplacePanel;
-  private PluginsGroupComponent myInstalledPanel;
+  private PluginsGroupComponentWithProgress myInstalledPanel;
 
   private final PluginsGroup myBundledUpdateGroup =
     new PluginsGroup(IdeBundle.message("plugins.configurable.bundled.updates"), PluginsGroupType.BUNDLED_UPDATE);
@@ -1002,7 +1002,7 @@ public final class PluginManagerConfigurable
       protected @NotNull JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         UiPluginManager uiPluginManager = UiPluginManager.getInstance();
-        myInstalledPanel = new PluginsGroupComponent(eventHandler) {
+        myInstalledPanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
                                                                      @NotNull PluginsGroup group) {
@@ -1016,99 +1016,101 @@ public final class PluginManagerConfigurable
 
         //noinspection ConstantConditions
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
+        myInstalledPanel.startLoading();
+        PluginLogo.startBatchMode();
+        PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, model -> {
+          try {
+            PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
+            installing.addModels(MyPluginModel.getInstallingPlugins());
+            if (!installing.getModels().isEmpty()) {
+              installing.sortByName();
+              installing.titleWithCount();
+              myInstalledPanel.addGroup(installing);
+            }
 
-        try {
-          PluginLogo.startBatchMode();
+            PluginsGroup downloaded =
+              new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
+            downloaded.addModels(model.getInstalledPlugins());
 
-          PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
-          installing.addModels(MyPluginModel.getInstallingPlugins());
-          if (!installing.getModels().isEmpty()) {
-            installing.sortByName();
-            installing.titleWithCount();
-            myInstalledPanel.addGroup(installing);
-          }
+            Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
+              .stream()
+              .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
 
-          PluginsGroup downloaded =
-                  new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
-          downloaded.addModels(UiPluginManager.getInstance().getInstalledPlugins());
+            List<PluginUiModel> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
+            downloaded.addModels(nonBundledPlugins);
 
-          Map<Boolean, List<PluginUiModel>> visiblePlugins = uiPluginManager
-            .getVisiblePlugins(RegistryManager.getInstance().is("plugins.show.implementation.details"))
-            .stream()
-            .collect(Collectors.partitioningBy(PluginUiModel::isBundled));
+            LinkListener<Object> updateAllListener = new LinkListener<>() {
+              @Override
+              public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
+                myUpdateAll.setEnabled(false);
+                myUpdateAllBundled.setEnabled(false);
 
-          List<PluginUiModel> nonBundledPlugins = visiblePlugins.get(Boolean.FALSE);
-          downloaded.addModels(nonBundledPlugins);
-
-          LinkListener<Object> updateAllListener = new LinkListener<>() {
-            @Override
-            public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
-              myUpdateAll.setEnabled(false);
-              myUpdateAllBundled.setEnabled(false);
-
-              for (UIPluginGroup group : getInstalledGroups()) {
-                if (group.excluded) {
-                  continue;
-                }
-                for (ListPluginComponent plugin : group.plugins) {
-                  plugin.updatePlugin();
+                for (UIPluginGroup group : getInstalledGroups()) {
+                  if (group.excluded) {
+                    continue;
+                  }
+                  for (ListPluginComponent plugin : group.plugins) {
+                    plugin.updatePlugin();
+                  }
                 }
               }
+            };
+            myUpdateAll.setListener(updateAllListener, null);
+            downloaded.addRightAction(myUpdateAll);
+            downloaded.addRightAction(myUpdateCounter);
+
+            if (!downloaded.getModels().isEmpty()) {
+              downloaded.sortByName();
+
+              long enabledNonBundledCount = nonBundledPlugins.stream()
+                .filter(descriptor -> !uiPluginManager.isPluginDisabled(descriptor.getPluginId()))
+                .count();
+              downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
+              myInstalledPanel.addGroup(downloaded);
+              myPluginModelFacade.getModel().addEnabledGroup(downloaded);
             }
-          };
-          myUpdateAll.setListener(updateAllListener, null);
-          downloaded.addRightAction(myUpdateAll);
-          downloaded.addRightAction(myUpdateCounter);
 
-          if (!downloaded.getModels().isEmpty()) {
-            downloaded.sortByName();
+            myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
 
-            long enabledNonBundledCount = nonBundledPlugins.stream()
-              .filter(descriptor -> !uiPluginManager.isPluginDisabled(descriptor.getPluginId()))
-              .count();
-            downloaded.titleWithCount(Math.toIntExact(enabledNonBundledCount));
-            myInstalledPanel.addGroup(downloaded);
-            myPluginModelFacade.getModel().addEnabledGroup(downloaded);
-          }
+            String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
+            visiblePlugins.get(Boolean.TRUE)
+              .stream()
+              .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
+              .entrySet()
+              .stream()
+              .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
+              .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
+                                  defaultCategory.equals(o2.title) ? -1 :
+                                  o1.compareTo(o2))
+              .forEachOrdered(group -> {
+                myInstalledPanel.addGroup(group);
+                myPluginModelFacade.getModel().addEnabledGroup(group);
+              });
 
-          myPluginModelFacade.getModel().setDownloadedGroup(myInstalledPanel, downloaded, installing);
+            myUpdateAllBundled.setListener(updateAllListener, null);
+            myBundledUpdateGroup.addRightAction(myUpdateAllBundled);
+            myBundledUpdateGroup.addRightAction(myUpdateCounterBundled);
 
-          String defaultCategory = IdeBundle.message("plugins.configurable.other.bundled");
-          visiblePlugins.get(Boolean.TRUE)
-            .stream()
-            .collect(Collectors.groupingBy(descriptor -> StringUtil.defaultIfEmpty(descriptor.getDisplayCategory(), defaultCategory)))
-            .entrySet()
-            .stream()
-            .map(entry -> new ComparablePluginsGroup(entry.getKey(), entry.getValue()))
-            .sorted((o1, o2) -> defaultCategory.equals(o1.title) ? 1 :
-                                defaultCategory.equals(o2.title) ? -1 :
-                                o1.compareTo(o2))
-            .forEachOrdered(group -> {
-              myInstalledPanel.addGroup(group);
-              myPluginModelFacade.getModel().addEnabledGroup(group);
+            myPluginUpdatesService.calculateUpdates(updates -> {
+              if (ContainerUtil.isEmpty(updates)) {
+                clearUpdates(myInstalledPanel);
+                clearUpdates(myInstalledSearchPanel.getPanel());
+              }
+              else {
+                applyUpdates(myInstalledPanel, updates);
+                applyUpdates(myInstalledSearchPanel.getPanel(), updates);
+              }
+              applyBundledUpdates(updates);
+              selectionListener.accept(myInstalledPanel);
+              selectionListener.accept(myInstalledSearchPanel.getPanel());
             });
-
-          myUpdateAllBundled.setListener(updateAllListener, null);
-          myBundledUpdateGroup.addRightAction(myUpdateAllBundled);
-          myBundledUpdateGroup.addRightAction(myUpdateCounterBundled);
-
-          myPluginUpdatesService.calculateUpdates(updates -> {
-            if (ContainerUtil.isEmpty(updates)) {
-              clearUpdates(myInstalledPanel);
-              clearUpdates(myInstalledSearchPanel.getPanel());
-            }
-            else {
-              applyUpdates(myInstalledPanel, updates);
-              applyUpdates(myInstalledSearchPanel.getPanel(), updates);
-            }
-            applyBundledUpdates(updates);
-            selectionListener.accept(myInstalledPanel);
-            selectionListener.accept(myInstalledSearchPanel.getPanel());
-          });
-        }
-        finally {
-          PluginLogo.endBatchMode();
-        }
+          }
+          finally {
+            PluginLogo.endBatchMode();
+            myInstalledPanel.stopLoading();
+          }
+          return null;
+        });
 
         return createScrollPane(myInstalledPanel, true);
       }
