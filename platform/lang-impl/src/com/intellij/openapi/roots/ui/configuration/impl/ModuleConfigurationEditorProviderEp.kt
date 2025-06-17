@@ -20,7 +20,7 @@ import java.lang.invoke.MethodType
  * [Module] as a constructor parameter.
  * When this possibility is removed, the extension point can be converted to a regular 'interface' extension point.
  */
-class ModuleConfigurationEditorProviderEp : PluginAware {
+class ModuleConfigurationEditorProviderEp @ApiStatus.Internal constructor(): PluginAware {
   private var pluginDescriptor: PluginDescriptor? = null
   
   @Attribute("implementation")
