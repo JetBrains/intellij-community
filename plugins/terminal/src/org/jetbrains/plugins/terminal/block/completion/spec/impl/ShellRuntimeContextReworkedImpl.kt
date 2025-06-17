@@ -17,7 +17,6 @@ import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.util.execution.ParametersListUtil
-import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.*
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.Path
 
@@ -31,15 +30,8 @@ class ShellRuntimeContextReworkedImpl(
 
   override suspend fun runShellCommand(command: String): ShellCommandResult {
     val commandList = ParametersListUtil.parse(command)
-    var commandName = commandList.firstOrNull() ?: return ShellCommandResult.create("{}", 0)
-    var arguments = commandList.drop(1)
-    when {
-      command.startsWith(GET_DIRECTORY_FILES.functionName) -> {
-        commandName = "ls"
-        val path = command.removePrefix(GET_DIRECTORY_FILES.functionName).trim()
-        arguments = listOf<String>("-1ap", path)
-      }
-    }
+    val commandName = commandList.firstOrNull() ?: return ShellCommandResult.create("{}", 0)
+    val arguments = commandList.drop(1)
     return executeCommandViaEel(commandName, arguments)
   }
 

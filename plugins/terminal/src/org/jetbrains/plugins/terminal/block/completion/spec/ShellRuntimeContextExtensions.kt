@@ -16,7 +16,7 @@ val ShellRuntimeContext.project: Project
 internal val PROJECT_KEY: Key<Project> = Key.create("Project")
 
 @get:ApiStatus.Experimental
-val ShellRuntimeContext.isReworked: Boolean
+val ShellRuntimeContext.isReworkedTerminal: Boolean
   get() = getUserData(IS_REWORKED_KEY) ?: false
 
 internal val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
@@ -31,10 +31,16 @@ internal val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
 @ApiStatus.Experimental
 suspend fun ShellRuntimeContext.getChildFiles(
   path: String,
-  onlyDirectories: Boolean = false
+  onlyDirectories: Boolean = false,
 ): List<String> {
   val adjustedPath = path.ifEmpty { "." }
-  val result = runShellCommand("${GET_DIRECTORY_FILES.functionName} $adjustedPath")
+  val command = if (isReworkedTerminal) {
+    "ls -1ap $adjustedPath"
+  }
+  else {
+    "${GET_DIRECTORY_FILES.functionName} $adjustedPath"
+  }
+  val result = runShellCommand(command)
   if (result.exitCode != 0) {
     logger<ShellRuntimeContext>().warn("Get files command for path '$adjustedPath' failed with exit code ${result.exitCode}, output: ${result.output}")
     return emptyList()
