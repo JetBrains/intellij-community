@@ -50,4 +50,12 @@ class XStackFrameUiPresentationContainer : ColoredTextContainer {
       container.append(fragment, attrs)
     }
   }
+
+  fun copy(): XStackFrameUiPresentationContainer {
+    val copy = XStackFrameUiPresentationContainer()
+    copy.myIcon = myIcon
+    copy.myTooltipText = myTooltipText
+    copy.myFragments.addAll(myFragments)
+    return copy
+  }
 }

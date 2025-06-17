@@ -49,9 +49,10 @@ internal fun computeUiPresentation(
 
   descriptor.exactRecursiveIndex.asDeferred().await()?.let { index ->
     if (index > 0) {
-      container.append(" [$index]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      send(container.copy().apply {
+        append(" [$index]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
+      })
     }
   }
-  send(container)
   close()
 }.buffer(Channel.CONFLATED)
