@@ -45,6 +45,9 @@ class SePopupVm(
   val currentTab: SeTabVm get() = tabVms[currentTabIndex.value.coerceIn(tabVms.indices)]
   val currentTabFlow: Flow<SeTabVm>
 
+  private val canBeShownInFindResultsFlow = MutableStateFlow(false)
+  val canBeShownInFindResults: Boolean get() = canBeShownInFindResultsFlow.value
+
   private var historyIterator: HistoryIterator = historyList.getIterator(currentTab.tabId)
     get() {
       val selectedContributorID = currentTab.tabId
@@ -79,6 +82,12 @@ class SePopupVm(
     coroutineScope.launch {
       deferredTabVms.collect { tabVm ->
         tabVmsSateFlow.update { it + tabVm }
+      }
+    }
+
+    coroutineScope.launch {
+      currentTabFlow.collect { tabVm ->
+        canBeShownInFindResultsFlow.update { tabVm.canBeShownInFindResults() }
       }
     }
 
@@ -155,11 +164,10 @@ class SePopupVm(
 
     override fun update(e: AnActionEvent) {
       if (project == null) {
+        e.presentation.isEnabled = false
         return
       }
-      coroutineScope.launch {
-        e.presentation.isEnabled = canBeShownInFindResults()
-      }
+      e.presentation.isEnabled = canBeShownInFindResults
       e.presentation.icon = getInstance(project).getShowInFindToolWindowIcon()
     }
 

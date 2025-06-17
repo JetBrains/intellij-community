@@ -18,10 +18,8 @@ import com.intellij.platform.searchEverywhere.providers.SeProvidersHolder
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.jetbrains.rhizomedb.EID
 import fleet.kernel.DurableRef
-import fleet.kernel.change
 import fleet.kernel.onDispose
 import fleet.kernel.rete.Rete
-import fleet.kernel.shared
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -183,22 +181,9 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     val providersHolder = getProvidersHolder(sessionRef, dataContextId)
     if (providersHolder == null) return false
 
-    coroutineScope.launch {
-      try {
-        SeFindToolWindowManager(project).openInFindToolWindow(
-          providerIds, params, isAllTab, providersHolder, projectId,
-        )
-      }
-      finally {
-        withContext(NonCancellable) {
-          change {
-            shared {
-              sessionRef.derefOrNull()?.delete()
-            }
-          }
-        }
-      }
-    }
+    SeFindToolWindowManager(project).openInFindToolWindow(
+      providerIds, params, isAllTab, providersHolder, projectId,
+    )
     return true
   }
 

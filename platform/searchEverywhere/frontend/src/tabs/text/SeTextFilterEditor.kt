@@ -7,16 +7,16 @@ import com.intellij.find.impl.JComboboxAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeSearchScopesInfo
-import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
-import com.intellij.platform.searchEverywhere.frontend.SeFilterPresentation
 import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeScopeChooserActionProvider
 import com.intellij.platform.searchEverywhere.frontend.tabs.utils.SeFilterEditorBase
 import com.intellij.platform.searchEverywhere.providers.SeTextFilter
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class SeTextFilterEditor(private val project: Project?,
-                         private val scopesInfo: SeSearchScopesInfo?) : SeFilterEditorBase<SeTextFilter>(
+class SeTextFilterEditor(
+  private val project: Project?,
+  private val scopesInfo: SeSearchScopesInfo?,
+) : SeFilterEditorBase<SeTextFilter>(
   SeTextFilter(scopesInfo?.selectedScopeId, null)
 ) {
   private val scopeFilterAction: AnAction? = scopesInfo?.let {
@@ -45,9 +45,5 @@ class SeTextFilterEditor(private val project: Project?,
     return typesFilterAction
   }
 
-  override fun getPresentation(): SeFilterPresentation {
-    return object : SeFilterActionsPresentation {
-      override fun getActions(): List<AnAction> = listOfNotNull(getScopeFilterAction(), getTypeFilterAction())
-    }
-  }
+  override fun getActions(): List<AnAction> = listOfNotNull(getScopeFilterAction(), getTypeFilterAction())
 }
