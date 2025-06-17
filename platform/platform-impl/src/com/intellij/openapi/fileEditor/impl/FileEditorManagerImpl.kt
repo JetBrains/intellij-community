@@ -81,6 +81,7 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -2558,7 +2559,7 @@ internal fun TabInfo.setupLoadingIcon(composite: EditorComposite) {
         this@coroutineScope.cancel()
       }
     }
-  }
+  }.cancelOnDispose(composite)
 }
 
 private data class ProviderChange(

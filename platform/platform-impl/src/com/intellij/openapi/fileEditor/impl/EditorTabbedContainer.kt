@@ -208,6 +208,7 @@ class EditorTabbedContainer internal constructor(
     indexToInsert: Int,
     selectedEditor: FileEditor?,
     parentDisposable: Disposable,
+    compositeCoroutineScope: CoroutineScope,
   ): TabInfo {
     editorTabs.findInfo(file)?.let {
       return it
@@ -219,7 +220,7 @@ class EditorTabbedContainer internal constructor(
       parentDisposable = parentDisposable,
       window = window,
       editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup"),
-      coroutineScope = coroutineScope,
+      coroutineScope = compositeCoroutineScope,
       customizer = {
         it.setText(file.presentableName)
         it.setTooltipText(tooltip)

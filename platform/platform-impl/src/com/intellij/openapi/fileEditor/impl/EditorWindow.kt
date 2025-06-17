@@ -357,6 +357,7 @@ class EditorWindow internal constructor(
         indexToInsert = indexToInsert,
         selectedEditor = composite.selectedEditor,
         parentDisposable = composite,
+        compositeCoroutineScope = composite.coroutineScope
       )
       tab.setupLoadingIcon(composite)
 
