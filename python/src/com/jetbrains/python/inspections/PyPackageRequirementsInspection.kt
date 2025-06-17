@@ -15,15 +15,8 @@ import com.jetbrains.python.psi.PyFile
 import one.util.streamex.StreamEx
 
 class PyPackageRequirementsInspection() : PyInspection() {
+  var ignoredPackages: MutableList<String> = mutableListOf()
 
-  private val ignoredPackages: MutableList<String> = mutableListOf()
-
-  fun getIgnoredPackages(): List<String> = ignoredPackages
-
-  fun setIgnoredPackages(packages: Set<String>) {
-    ignoredPackages.clear()
-    ignoredPackages.addAll(packages.distinct())
-  }
 
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(OptPane.stringList("ignoredPackages", PyPsiBundle.message(IGNORED_PACKAGES)))

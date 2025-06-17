@@ -1,12 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.conda
 
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.writeText
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrThrow
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlManager
+import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
@@ -16,7 +24,7 @@ import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
-class CondaWithPipFallbackPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
+class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   private val condaPackageEngine = CondaPackageManagerEngine(project, sdk)
   private val condaRepositoryManger = CondaRepositoryManger(project, sdk)
   private val pipRepositoryManger = PipRepositoryManager(project)
@@ -24,6 +32,38 @@ class CondaWithPipFallbackPackageManager(project: Project, sdk: Sdk) : PythonPac
 
   override var repositoryManager: PythonRepositoryManager = CompositePythonRepositoryManager(project,
                                                                                              listOf(condaRepositoryManger, pipRepositoryManger))
+
+  override fun getDependencyManager(): PythonDependenciesManager? {
+    return CondaEnvironmentYmlManager.getInstance(project, sdk)
+  }
+
+  override suspend fun syncCommand(): PyResult<Unit> {
+    val requirementsFile = getDependencyManager()?.getDependenciesFile()
+                           ?: return PyResult.localizedError(PyBundle.message("python.sdk.conda.requirements.file.not.found"))
+    return updateEnv(requirementsFile)
+  }
+
+  private suspend fun updateEnv(envFile: VirtualFile): PyResult<Unit> {
+    condaPackageEngine.updateFromEnvironmentFile(envFile).onFailure {
+      return PyResult.failure(it)
+    }.getOrThrow()
+
+    return reloadPackages().mapSuccess { }
+  }
+
+
+  suspend fun exportEnv(envFile: VirtualFile): PyResult<Unit> {
+    val envText = condaPackageEngine.exportToEnvironmentFile().onFailure {
+      return PyResult.failure(it)
+    }.getOrThrow()
+
+    writeAction {
+      envFile.writeText(envText)
+    }
+
+    return PyResult.success(Unit)
+  }
+
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> = condaPackageEngine.loadPackagesCommand()
 
@@ -50,7 +90,6 @@ class CondaWithPipFallbackPackageManager(project: Project, sdk: Sdk) : PythonPac
   }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> = when (installRequest) {
-    PythonPackageInstallRequest.AllRequirements -> condaPackageEngine.installPackageCommand(installRequest, options)
     is PythonPackageInstallRequest.ByLocation -> pipPackageEngine.installPackageCommand(installRequest, options)
     is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> installSeveralPackages(installRequest.specifications, options)
   }

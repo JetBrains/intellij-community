@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.errorProcessing.PyExecResult
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.NormalizedPythonPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
@@ -66,7 +65,8 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   private suspend fun uninstallStandalonePackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       uv.uninstallPackages(packages.map { it.name }.toTypedArray())
-    } else {
+    }
+    else {
       PyResult.success(Unit)
     }
   }
@@ -77,7 +77,8 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
   private suspend fun uninstallDeclaredPackages(packages: List<NormalizedPythonPackageName>): PyResult<Unit> {
     return if (packages.isNotEmpty()) {
       uv.removeDependencies(packages.map { it.name }.toTypedArray())
-    } else {
+    }
+    else {
       PyResult.success(Unit)
     }
   }
@@ -90,12 +91,15 @@ internal class UvPackageManager(project: Project, sdk: Sdk, private val uv: UvLo
     return uv.listOutdatedPackages()
   }
 
-  suspend fun sync(): PyExecResult<String> {
-    return uv.sync()
+  override suspend fun syncCommand(): PyResult<Unit> {
+    return uv.sync().mapSuccess { }
   }
 
-  suspend fun lock(): PyExecResult<String> {
-    return uv.lock()
+  suspend fun lock(): PyResult<Unit> {
+    uv.lock().getOr {
+      return it
+    }
+    return reloadPackages().mapSuccess { }
   }
 }
 

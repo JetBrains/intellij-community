@@ -6,7 +6,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManagerUI
 import com.jetbrains.python.packaging.PyRequirement
-import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.installPyRequirementsBackground
 import kotlinx.coroutines.launch
@@ -19,12 +18,7 @@ internal object PyPackagesManagerUIBridge {
     PyPackageCoroutine.getScope(project).launch {
       val manager = PythonPackageManagerUI.forSdk(project, sdk)
       listener?.started()
-      if (requirements.isNullOrEmpty()) {
-        manager.installPackagesBackground(PythonPackageInstallRequest.AllRequirements, emptyList())
-      }
-      else {
-        manager.installPyRequirementsBackground(requirements.toList(), extraArgs)
-      }
+      manager.installPyRequirementsBackground(requirements?.toList() ?: emptyList(), extraArgs)
       listener?.finished(emptyList())
     }
   }

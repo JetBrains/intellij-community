@@ -284,6 +284,7 @@ jvm_library(
     "@lib//:com-jetbrains-fus-reporting-ap-validation",
     "@lib//:http-client",
     "@lib//:commons-lang3",
+    "@lib//:kaml",
     "//python/impl.helperLocator:community-helpersLocator",
     "//python/python-exec-service/execService.python",
   ],

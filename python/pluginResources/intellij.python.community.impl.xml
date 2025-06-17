@@ -903,7 +903,8 @@
     <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
 
     <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.pip.PipPackagingToolwindowActionProvider"/>
-    <PythonPackagingToolwindowActionProvider implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
+    <PythonPackagingToolwindowActionProvider
+      implementation="com.jetbrains.python.packaging.conda.CondaPackagingToolwindowActionProvider"/>
   </extensions>
 
   <actions resource-bundle="messages.PyBundle">
@@ -1079,6 +1080,15 @@
 
       <action id="HatchRunAction"
               class="com.jetbrains.python.hatch.packaging.HatchRunAction"
+              icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
+
+      <separator/>
+
+      <action id="CondaExportAction"
+              class="com.jetbrains.python.packaging.conda.actions.CondaExportEnvAction"
+              icon="com.intellij.icons.AllIcons.General.Export"/>
+      <action id="CondaUpdateEnvAction"
+              class="com.jetbrains.python.packaging.conda.actions.CondaUpdateEnvAction"
               icon="com.intellij.icons.AllIcons.Actions.Refresh"/>
 
       <separator/>

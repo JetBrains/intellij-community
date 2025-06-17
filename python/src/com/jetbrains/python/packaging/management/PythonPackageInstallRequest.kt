@@ -7,7 +7,6 @@ import java.net.URI
 
 @ApiStatus.Internal
 sealed class PythonPackageInstallRequest(val title: String) {
-  data object AllRequirements : PythonPackageInstallRequest("All Requirements")
   data class ByLocation(val location: URI) : PythonPackageInstallRequest(location.toString())
   data class ByRepositoryPythonPackageSpecifications(val specifications: List<PythonRepositoryPackageSpecification>) : PythonPackageInstallRequest(
     specifications.joinToString(", ") { it.nameWithVersionSpec })

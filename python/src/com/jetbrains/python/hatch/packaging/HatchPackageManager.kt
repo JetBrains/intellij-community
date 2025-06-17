@@ -20,6 +20,11 @@ internal class HatchPackageManager(project: Project, sdk: Sdk) : PipPythonPackag
                     "but was ${sdk.sdkAdditionalData?.javaClass?.name}")
   }
 
+  override suspend fun syncCommand(): PyResult<Unit> {
+    val hatchService = getHatchService().getOr { return it }
+    return hatchService.syncDependencies().mapSuccess { }
+  }
+
   suspend fun getHatchService(): PyResult<HatchService> {
     val data = getSdkAdditionalData()
     val workingDirectory = data.hatchWorkingDirectory

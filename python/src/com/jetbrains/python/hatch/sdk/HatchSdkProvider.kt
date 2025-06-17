@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.hatch.sdk
 
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
@@ -23,5 +22,4 @@ class HatchSdkProvider : PySdkProvider {
     module: Module, sdk: Sdk, isPyCharm: Boolean, associatedModulePath: @NlsSafe String?,
   ): PyInterpreterInspectionQuickFixData? = null
 
-  override fun createInstallPackagesQuickFix(module: Module): LocalQuickFix? = null
 }

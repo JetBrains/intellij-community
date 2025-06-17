@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.IdeUtilIoBundle
 import com.intellij.util.net.HttpConfigurable
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.errorProcessing.PyResult
@@ -34,8 +34,6 @@ import com.jetbrains.python.run.prepareHelperScriptExecution
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.TestOnly
 import kotlin.math.min
 
 internal class PipPackageManagerEngine(
@@ -47,17 +45,14 @@ internal class PipPackageManagerEngine(
     PipManagementInstaller(sdk, manager).installManagementIfNeeded()
     val result = runPackagingTool(
       operation = "install",
-      arguments = installRequest.indexUrlIfApplicable() + options,
-      text = PyBundle.message("python.packaging.install.progress", installRequest.title),
-      withBackgroundProgress = false
+      arguments = installRequest.indexUrlIfApplicable() + options
     )
 
     return result.mapSuccess { }
   }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
-    val output = runPackagingTool("list_outdated", listOf(), PyBundle.message("python.packaging.list.outdated.progress"),
-                                  withBackgroundProgress = false).getOr { return it }
+    val output = runPackagingTool("list_outdated", listOf()).getOr { return it }
     val packages = PipParseUtils.parseOutdatedOutputs(output)
     return PyResult.success(packages)
   }
@@ -67,18 +62,30 @@ internal class PipPackageManagerEngine(
     val packages = specifications.map { it.name }
     val result = runPackagingTool(
       operation = "install",
-      arguments = packages + listOf("--upgrade") + indexUrlIfApplicable,
-      text = PyBundle.message("python.packaging.update.progress", packages.joinToString(", "))
+      arguments = packages + listOf("--upgrade") + indexUrlIfApplicable
     )
     return result.mapSuccess { }
   }
 
+  suspend fun syncProject(): PyResult<Unit> {
+    return runPackagingTool(
+      operation = "install",
+      arguments = listOf(".")
+    ).mapSuccess { }
+  }
+
+  suspend fun syncRequirementsTxt(file: VirtualFile): PyResult<Unit> {
+    return runPackagingTool(
+      operation = "install",
+      arguments = listOf("-r", file.path)
+    ).mapSuccess { }
+  }
+
+
   override suspend fun uninstallPackageCommand(vararg pythonPackages: String): PyResult<Unit> {
     val result = runPackagingTool(
       operation = "uninstall",
-      arguments = pythonPackages.toList(),
-      text = PyBundle.message("python.packaging.uninstall.progress", pythonPackages.joinToString(", ")),
-      withBackgroundProgress = false
+      arguments = pythonPackages.toList()
     )
     return result.mapSuccess { }
   }
@@ -86,8 +93,7 @@ internal class PipPackageManagerEngine(
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
     val output = runPackagingTool(
       operation = "list",
-      arguments = emptyList(),
-      text = PyBundle.message("python.packaging.list.progress")
+      arguments = emptyList()
     ).getOr { return it }
 
     val packages = PipParseUtils.parseListResult(output)
@@ -95,10 +101,7 @@ internal class PipPackageManagerEngine(
   }
 
   @ApiStatus.Internal
-  suspend fun runPackagingTool(
-    operation: String, arguments: List<String>, @Nls text: String,
-    withBackgroundProgress: Boolean = true,
-  ): PyResult<String> = withContext(Dispatchers.IO) {
+  suspend fun runPackagingTool(operation: String, arguments: List<String>): PyResult<String> = withContext(Dispatchers.IO) {
     // todo[akniazev]: check for package management tools
     val helpersAwareTargetRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
     val targetEnvironmentRequest = helpersAwareTargetRequest.targetEnvironmentRequest
@@ -155,11 +158,9 @@ internal class PipPackageManagerEngine(
     thisLogger().debug("Running python packaging tool. Operation: $operation")
 
     val result = PythonPackageManagerRunner.runProcess(
-      project,
       process,
-      commandLineString,
-      text,
-      withBackgroundProgress)
+      commandLineString
+    )
     if (result.isCancelled) {
       return@withContext PyResult.localizedError(IdeUtilIoBundle.message("run.canceled.by.user.message"))
     }
@@ -198,7 +199,6 @@ internal class PipPackageManagerEngine(
 
   private fun PythonPackageInstallRequest.indexUrlIfApplicable(): List<String> = when (this) {
     is PythonPackageInstallRequest.ByLocation -> listOf(location.toString())
-    is PythonPackageInstallRequest.AllRequirements -> emptyList()
     is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications -> {
       val pypiSpecs = specifications.filter { it.repository is PyPIPackageRepository }
       val index = pypiSpecs.firstNotNullOfOrNull { spec -> spec.indexUrlIfApplicable() } ?: emptyList()
@@ -212,10 +212,4 @@ internal class PipPackageManagerEngine(
       return null
     return listOf("--index-url", urlForInstallation)
   }
-}
-
-@ApiStatus.Internal
-@TestOnly
-suspend fun runPackagingTool(project: Project, sdk: Sdk, operation: String, arguments: List<String>, @Nls text: String): PyResult<String> {
-  return PipPackageManagerEngine(project, sdk).runPackagingTool(operation, arguments, text)
 }

@@ -22,6 +22,7 @@ import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBund
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.CondaEnvResult
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.InputData
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
+import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -30,22 +31,18 @@ import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
+import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlSdkUtils
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.PythonSdkUpdater
-import com.intellij.pycharm.community.ide.impl.configuration.ui.PyAddNewCondaEnvFromFilePanel
-import com.jetbrains.python.sdk.basePath
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.suggestCondaPath
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
-import com.jetbrains.python.sdk.findAmongRoots
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.listCondaEnvironments
-import com.jetbrains.python.sdk.setAssociationToModuleAsync
-import com.jetbrains.python.sdk.showSdkExecutionException
 import kotlinx.coroutines.Dispatchers
 import java.awt.BorderLayout
 import java.nio.file.Path
@@ -65,12 +62,13 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
   override fun getIntention(module: Module): @IntentionName String? = getEnvironmentYml(module)?.let {
     PyCharmCommunityCustomizationBundle.message("sdk.create.condaenv.suggestion")
   }
+
   @RequiresBackgroundThread
   override fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSdk(module, Source.INSPECTION)
 
   private fun getEnvironmentYml(module: Module) = listOf(
-    "environment.yml",
-    "environment.yaml",
+    CondaEnvironmentYmlSdkUtils.ENV_YAML_FILE_NAME,
+    CondaEnvironmentYmlSdkUtils.ENV_YML_FILE_NAME,
   ).firstNotNullOfOrNull { findAmongRoots(module, it) }
 
   @RequiresBackgroundThread

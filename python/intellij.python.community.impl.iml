@@ -182,6 +182,7 @@
     <orderEntry type="library" name="com.jetbrains.fus.reporting.ap.validation" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="library" name="kaml" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" />
   </component>

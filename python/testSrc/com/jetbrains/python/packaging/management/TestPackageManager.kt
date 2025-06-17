@@ -3,12 +3,13 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.testFramework.replaceService
+import com.intellij.openapi.util.Key
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.common.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
+import com.jetbrains.python.packaging.conda.environmentYml.CondaEnvironmentYmlManager
+import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager
+import com.jetbrains.python.packaging.setupPy.SetupPyManager
 import org.jetbrains.annotations.TestOnly
 
 @TestOnly
@@ -21,8 +22,21 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   override val repositoryManager: PythonRepositoryManager
     get() = TestPythonRepositoryManager(project).withPackageNames(packageNames).withPackageDetails(packageDetails)
 
+  override fun getDependencyManager(): PythonDependenciesManager? {
+    val data = sdk.getUserData(REQUIREMENTS_PROVIDER_KEY) ?: return null
+    return when (data) {
+      RequirementsProviderType.REQUIREMENTS_TXT -> PythonRequirementsTxtManager.getInstance(project, sdk)
+      RequirementsProviderType.SETUP_PY -> SetupPyManager.getInstance(project, sdk)
+      RequirementsProviderType.ENVIRONMENT_YML -> CondaEnvironmentYmlManager.getInstance(project, sdk)
+    }
+  }
+
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
     return PyResult.success(emptyList())
+  }
+
+  override suspend fun syncCommand(): PyResult<Unit> {
+    return PyResult.success(Unit)
   }
 
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
@@ -79,6 +93,9 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
   }
 
   companion object {
+    @JvmField
+    val REQUIREMENTS_PROVIDER_KEY: Key<RequirementsProviderType> = Key<RequirementsProviderType>("REQUIREMENTS_PROVIDER_KEY")
+
     private val DEFAULT_PACKAGES = listOf(
       PythonPackage(PIP_PACKAGE, EMPTY_STRING, false),
       PythonPackage(SETUP_TOOLS_PACKAGE, EMPTY_STRING, false)
@@ -89,56 +106,5 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     private const val PACKAGE_INSTALL_FAILURE_MESSAGE = "Failed to install package"
     private const val PACKAGE_UNINSTALL_FAILURE_MESSAGE = "No such package found"
     private const val EMPTY_STRING = ""
-  }
-}
-
-@TestOnly
-class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()) : PythonPackageManagerService {
-
-  override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    installedPackages.ifEmpty {
-      return TestPythonPackageManager(project, sdk)
-    }
-
-    return TestPythonPackageManager(project, sdk)
-      .withPackageInstalled(installedPackages)
-      .withPackageNames(installedPackages.map { it.name })
-      .withPackageDetails(PythonSimplePackageDetails(installedPackages.first().name, listOf(installedPackages.first().version), TestPackageRepository(installedPackages.map { it.name }.toSet())))
-  }
-
-  override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
-    return PythonPackageManagementServiceBridge(project, sdk)
-  }
-
-  override fun getServiceScope(): CoroutineScope {
-    return CoroutineScope(Job())
-  }
-
-  companion object {
-    @JvmStatic
-    fun replacePythonPackageManagerServiceWithTestInstance(project: Project, installedPackages: List<PythonPackage> = emptyList()) {
-      project.replaceService(PythonPackageManagerService::class.java, TestPythonPackageManagerService(installedPackages), project)
-    }
-  }
-}
-
-@TestOnly
-class TestPackageManagerProvider : PythonPackageManagerProvider {
-  private var packageNames: List<String> = emptyList()
-  private var packageDetails: PythonPackageDetails? = null
-  private var packageInstalled: List<PythonPackage> = emptyList()
-
-  fun withPackageNames(packageNames: List<String>): TestPackageManagerProvider {
-    this.packageNames = packageNames
-    return this
-  }
-
-  fun withPackageDetails(details: PythonPackageDetails): TestPackageManagerProvider {
-    this.packageDetails = details
-    return this
-  }
-
-  override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager {
-    return TestPythonPackageManager(project, sdk).withPackageNames(packageNames).withPackageDetails(packageDetails).withPackageInstalled(packageInstalled)
   }
 }

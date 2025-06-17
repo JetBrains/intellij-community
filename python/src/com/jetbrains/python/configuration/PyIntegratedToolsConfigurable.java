@@ -42,7 +42,7 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.packaging.PyPackageManagerUI;
 import com.jetbrains.python.packaging.PyPackageRequirementsSettings;
 import com.jetbrains.python.packaging.PyRequirementsKt;
-import com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils;
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvCommandExecutorKt;
@@ -148,7 +148,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
       return;
     }
     try {
-      PythonRequirementTxtUtils.saveRequirementsTxtPath(myModule.getProject(), sdk, Path.of(requirementsPath));
+      PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(myModule.getProject(), sdk, Path.of(requirementsPath));
     }
     catch (Throwable t) {
       Logger.getInstance(PyIntegratedToolsConfigurable.class).warn("Failed to save requirements path", t);

@@ -7,10 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -28,10 +25,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.ResolveResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -39,13 +32,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiPackageUtil;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
-import com.jetbrains.python.packaging.requirements.PythonRequirementTxtUtils;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementsTxtManager;
+import com.jetbrains.python.packaging.setupPy.SetupPyHelpers;
+import com.jetbrains.python.packaging.setupPy.SetupPyManager;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCallExpression;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
@@ -54,7 +48,6 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,11 +55,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ApiStatus.Internal
-
 public final class PyPackageUtil {
   public static final String SETUPTOOLS = "setuptools";
   public static final String PIP = "pip";
@@ -77,16 +67,6 @@ public final class PyPackageUtil {
     private static final Logger LOG = Logger.getInstance(InterpreterChangeEvents.class);
   }
 
-  private static final @NotNull String REQUIRES = "requires";
-
-  private static final @NotNull String INSTALL_REQUIRES = "install_requires";
-
-  private static final String @NotNull [] SETUP_PY_REQUIRES_KWARGS_NAMES = new String[]{
-    REQUIRES, INSTALL_REQUIRES, "setup_requires", "tests_require"
-  };
-
-  private static final @NotNull String DEPENDENCY_LINKS = "dependency_links";
-
   private PyPackageUtil() {
   }
 
@@ -94,153 +74,71 @@ public final class PyPackageUtil {
     return findSetupPy(module) != null;
   }
 
+  @ApiStatus.Internal
+  public static @Nullable VirtualFile findSetupPyFile(@NotNull Module module) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) return null;
+    return SetupPyManager.getInstance(module.getProject(), sdk).getDependenciesFile();
+  }
+
   public static @Nullable PyFile findSetupPy(@NotNull Module module) {
-    for (VirtualFile root : PyUtil.getSourceRoots(module)) {
-      final VirtualFile child = root.findChild("setup.py");
-      if (child != null) {
-        final PsiFile file = ReadAction.compute(() -> PsiManager.getInstance(module.getProject()).findFile(child));
-        if (file instanceof PyFile) {
-          return (PyFile)file;
-        }
-      }
-    }
-    return null;
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) return null;
+    return SetupPyManager.getInstance(module.getProject(), sdk).getRequirementsPsiFile();
   }
 
   public static boolean hasRequirementsTxt(@NotNull Module module) {
     return findRequirementsTxt(module) != null;
   }
 
+  @SuppressWarnings("unused")
   public static @Nullable VirtualFile findRequirementsTxt(@NotNull Module module) {
     Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk == null) {
-      return null;
+    if (sdk == null) return null;
+    return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).getDependenciesFile();
+  }
+
+  @RequiresReadLock(generateAssertion = false)
+  public static @Nullable List<PyRequirement> getRequirementsFromTxt(@NotNull Module module) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) return null;
+
+    return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).getDependencies();
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable VirtualFile findRootFile(@NotNull Module module, String rootFile) {
+    if (!rootFile.isEmpty()) {
+      final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(rootFile);
+      if (file != null) {
+        return file;
+      }
+      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
+      for (VirtualFile root : manager.getContentRoots()) {
+        final VirtualFile fileInRoot = root.findFileByRelativePath(rootFile);
+        if (fileInRoot != null) {
+          return fileInRoot;
+        }
+      }
     }
-    return PythonRequirementTxtUtils.findRequirementsTxt(sdk);
+    return null;
   }
 
-  private static @Nullable PsiElement findSetupPyInstallRequires(@Nullable PyCallExpression setupCall) {
-    if (setupCall == null) return null;
-
-    return StreamEx
-      .of(REQUIRES, INSTALL_REQUIRES)
-      .map(setupCall::getKeywordArgument)
-      .map(PyPackageUtil::resolveValue)
-      .findFirst(Objects::nonNull)
-      .orElse(null);
-  }
 
   public static @Nullable List<PyRequirement> findSetupPyRequires(@NotNull Module module) {
-    final PyCallExpression setupCall = findSetupCall(module);
-    if (setupCall == null) return null;
-
-    final List<PyRequirement> requirementsFromRequires = getSetupPyRequiresFromArguments(setupCall, SETUP_PY_REQUIRES_KWARGS_NAMES);
-    final List<PyRequirement> requirementsFromLinks = getSetupPyRequiresFromArguments(setupCall, DEPENDENCY_LINKS);
-
-    return mergeSetupPyRequirements(requirementsFromRequires, requirementsFromLinks);
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) return null;
+    return SetupPyManager.getInstance(module.getProject(), sdk).getDependencies();
   }
 
   public static @Nullable Map<String, List<PyRequirement>> findSetupPyExtrasRequire(@NotNull Module module) {
-    final PyCallExpression setupCall = findSetupCall(module);
-    if (setupCall == null) return null;
-
-    final PyDictLiteralExpression extrasRequire =
-      PyUtil.as(resolveValue(setupCall.getKeywordArgument("extras_require")), PyDictLiteralExpression.class);
-    if (extrasRequire == null) return null;
-
-    final Map<String, List<PyRequirement>> result = new HashMap<>();
-
-    for (PyKeyValueExpression extraRequires : extrasRequire.getElements()) {
-      final Pair<String, List<PyRequirement>> extraResult = getExtraRequires(extraRequires.getKey(), extraRequires.getValue());
-      if (extraResult != null) {
-        result.put(extraResult.first, extraResult.second);
-      }
-    }
-
-    return result;
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) return null;
+    PyFile pyFile = SetupPyManager.getInstance(module.getProject(), sdk).getRequirementsPsiFile();
+    if (pyFile == null) return null;
+    return SetupPyHelpers.findSetupPyExtrasRequire(pyFile);
   }
 
-  private static @Nullable Pair<String, List<PyRequirement>> getExtraRequires(@NotNull PyExpression extra,
-                                                                              @Nullable PyExpression requires) {
-    if (extra instanceof PyStringLiteralExpression) {
-      final List<String> requiresValue = resolveRequiresValue(requires);
-
-      if (requiresValue != null) {
-        return Pair.createNonNull(((PyStringLiteralExpression)extra).getStringValue(),
-                                  PyRequirementParser.fromText(StringUtil.join(requiresValue, "\n")));
-      }
-    }
-
-    return null;
-  }
-
-  private static @NotNull List<PyRequirement> getSetupPyRequiresFromArguments(@NotNull PyCallExpression setupCall,
-                                                                              String @NotNull ... argumentNames) {
-    return PyRequirementParser.fromText(
-      StreamEx
-        .of(argumentNames)
-        .map(setupCall::getKeywordArgument)
-        .flatCollection(PyPackageUtil::resolveRequiresValue)
-        .joining("\n")
-    );
-  }
-
-  private static @NotNull List<PyRequirement> mergeSetupPyRequirements(@NotNull List<PyRequirement> requirementsFromRequires,
-                                                                       @NotNull List<PyRequirement> requirementsFromLinks) {
-    if (!requirementsFromLinks.isEmpty()) {
-      final Map<String, List<PyRequirement>> nameToRequirements =
-        requirementsFromRequires.stream().collect(Collectors.groupingBy(PyRequirement::getName, LinkedHashMap::new, Collectors.toList()));
-
-      for (PyRequirement requirementFromLinks : requirementsFromLinks) {
-        nameToRequirements.replace(requirementFromLinks.getName(), Collections.singletonList(requirementFromLinks));
-      }
-
-      return nameToRequirements.values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    return requirementsFromRequires;
-  }
-
-  /**
-   * @param expression expression to resolve
-   * @return {@code expression} if it is not a reference or element that is found by following assignments chain.
-   * <em>Note: if result is {@link PyExpression} then parentheses around will be flattened.</em>
-   */
-  private static @Nullable PsiElement resolveValue(@Nullable PyExpression expression) {
-    final PsiElement elementToAnalyze = PyPsiUtils.flattenParens(expression);
-
-    if (elementToAnalyze instanceof PyReferenceExpression) {
-      final TypeEvalContext context = TypeEvalContext.deepCodeInsight(elementToAnalyze.getProject());
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-
-      return StreamEx
-        .of(((PyReferenceExpression)elementToAnalyze).multiFollowAssignmentsChain(resolveContext))
-        .map(ResolveResult::getElement)
-        .findFirst(Objects::nonNull)
-        .map(e -> e instanceof PyExpression ? PyPsiUtils.flattenParens((PyExpression)e) : e)
-        .orElse(null);
-    }
-
-    return elementToAnalyze;
-  }
-
-  private static @Nullable List<String> resolveRequiresValue(@Nullable PyExpression expression) {
-    final PsiElement elementToAnalyze = resolveValue(expression);
-
-    if (elementToAnalyze instanceof PyStringLiteralExpression) {
-      return Collections.singletonList(((PyStringLiteralExpression)elementToAnalyze).getStringValue());
-    }
-    else if (elementToAnalyze instanceof PyListLiteralExpression || elementToAnalyze instanceof PyTupleExpression) {
-      return StreamEx
-        .of(((PySequenceExpression)elementToAnalyze).getElements())
-        .map(PyPackageUtil::resolveValue)
-        .select(PyStringLiteralExpression.class)
-        .map(PyStringLiteralExpression::getStringValue)
-        .toList();
-    }
-
-    return null;
-  }
 
   public static @NotNull List<String> getPackageNames(@NotNull Module module) {
     // TODO: Cache found module packages, clear cache on module updates
@@ -260,33 +158,13 @@ public final class PyPackageUtil {
     return StringUtil.join(requirements, requirement -> String.format("'%s'", requirement.getPresentableText()), ", ");
   }
 
-  private static @Nullable PyCallExpression findSetupCall(@NotNull PyFile file) {
-    final Ref<PyCallExpression> result = new Ref<>(null);
-    file.acceptChildren(new PyRecursiveElementVisitor() {
-      @Override
-      public void visitPyCallExpression(@NotNull PyCallExpression node) {
-        final PyExpression callee = node.getCallee();
-        final String name = PyUtil.getReadableRepr(callee, true);
-        if ("setup".equals(name)) {
-          result.set(node);
-        }
-      }
-
-      @Override
-      public void visitPyElement(@NotNull PyElement node) {
-        if (!(node instanceof ScopeOwner)) {
-          super.visitPyElement(node);
-        }
-      }
-    });
-    return result.get();
-  }
 
   public static @Nullable PyCallExpression findSetupCall(@NotNull Module module) {
-    return Optional
-      .ofNullable(findSetupPy(module))
-      .map(PyPackageUtil::findSetupCall)
-      .orElse(null);
+    PyFile pyFile = findSetupPy(module);
+    if (pyFile == null) {
+      return null;
+    }
+    return SetupPyHelpers.findSetupCall(pyFile);
   }
 
   private static void collectPackageNames(final @NotNull Project project,
@@ -437,105 +315,30 @@ public final class PyPackageUtil {
 
 
   public static boolean hasManagement(@NotNull List<PyPackage> packages) {
-    return (PyPsiPackageUtil.findPackage(packages, SETUPTOOLS) != null || PyPsiPackageUtil.findPackage(packages, DISTRIBUTE) != null) ||
+    return PyPsiPackageUtil.findPackage(packages, SETUPTOOLS) != null ||
+           PyPsiPackageUtil.findPackage(packages, DISTRIBUTE) != null ||
            PyPsiPackageUtil.findPackage(packages, PIP) != null;
-  }
-
-  @RequiresReadLock(generateAssertion = false)
-  public static @Nullable List<PyRequirement> getRequirementsFromTxt(@NotNull Module module) {
-    final VirtualFile requirementsTxt = findRequirementsTxt(module);
-    if (requirementsTxt != null) {
-      return PyRequirementParser.fromFile(requirementsTxt);
-    }
-    return null;
   }
 
   public static void addRequirementToTxtOrSetupPy(@NotNull Module module,
                                                   @NotNull String requirementName,
                                                   @NotNull LanguageLevel languageLevel) {
-    final VirtualFile requirementsTxt = findRequirementsTxt(module);
-    if (requirementsTxt != null && requirementsTxt.isWritable()) {
-      final Document document = FileDocumentManager.getInstance().getDocument(requirementsTxt);
-      if (document != null) {
-        document.insertString(0, requirementName + "\n");
-      }
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) return;
+    boolean isSuccess = PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).addDependency(requirementName);
+    if (isSuccess) {
       return;
     }
-
-    final PyFile setupPy = findSetupPy(module);
-    if (setupPy == null) return;
-
-    final PyCallExpression setupCall = findSetupCall(setupPy);
-    if (setupCall == null) return;
-
-    final PsiElement installRequires = findSetupPyInstallRequires(setupCall);
-    if (installRequires != null) {
-      addRequirementToInstallRequires(installRequires, requirementName, languageLevel);
-    }
-    else {
-      final PyArgumentList argumentList = setupCall.getArgumentList();
-      final PyKeywordArgument requiresArg = generateRequiresKwarg(setupPy, requirementName, languageLevel);
-
-      if (argumentList != null && requiresArg != null) {
-        argumentList.addArgument(requiresArg);
-      }
-    }
+    SetupPyManager.getInstance(module.getProject(), sdk).addDependency(requirementName);
   }
 
-  private static void addRequirementToInstallRequires(@NotNull PsiElement installRequires,
-                                                      @NotNull String requirementName,
-                                                      @NotNull LanguageLevel languageLevel) {
-    final PyElementGenerator generator = PyElementGenerator.getInstance(installRequires.getProject());
-    final PyExpression newRequirement = generator.createExpressionFromText(languageLevel, "'" + requirementName + "'");
-
-    if (installRequires instanceof PyListLiteralExpression) {
-      installRequires.add(newRequirement);
-    }
-    else if (installRequires instanceof PyTupleExpression) {
-      final String newInstallRequiresText = StreamEx
-        .of(((PyTupleExpression)installRequires).getElements())
-        .append(newRequirement)
-        .map(PyExpression::getText)
-        .joining(",", "(", ")");
-
-      final PyExpression expression = generator.createExpressionFromText(languageLevel, newInstallRequiresText);
-
-      Optional
-        .ofNullable(PyUtil.as(expression, PyParenthesizedExpression.class))
-        .map(PyParenthesizedExpression::getContainedExpression)
-        .map(e -> PyUtil.as(e, PyTupleExpression.class))
-        .ifPresent(e -> installRequires.replace(e));
-    }
-    else if (installRequires instanceof PyStringLiteralExpression) {
-      final PyListLiteralExpression newInstallRequires = generator.createListLiteral();
-
-      newInstallRequires.add(installRequires);
-      newInstallRequires.add(newRequirement);
-
-      installRequires.replace(newInstallRequires);
-    }
+  @ApiStatus.Internal
+  public static boolean addToRequirementsTxt(@NotNull Module module, @NotNull String requirementName) {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) return false;
+    return PythonRequirementsTxtManager.getInstance(module.getProject(), sdk).addDependency(requirementName);
   }
 
-  private static @Nullable PyKeywordArgument generateRequiresKwarg(@NotNull PyFile setupPy,
-                                                                   @NotNull String requirementName,
-                                                                   @NotNull LanguageLevel languageLevel) {
-    final String keyword = PyPsiUtils.containsImport(setupPy, "setuptools") ? INSTALL_REQUIRES : REQUIRES;
-    final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
-    final PyExpression generated = PyElementGenerator.getInstance(setupPy.getProject()).createExpressionFromText(languageLevel, text);
-
-    if (generated instanceof PyCallExpression callExpression) {
-
-      return Stream
-        .of(callExpression.getArguments())
-        .filter(PyKeywordArgument.class::isInstance)
-        .map(PyKeywordArgument.class::cast)
-        .filter(kwarg -> keyword.equals(kwarg.getKeyword()))
-        .findFirst()
-        .orElse(null);
-    }
-
-    return null;
-  }
 
   /**
    * Execute the given executable on a pooled thread whenever there is a VFS event happening under some of the roots of the SDK.

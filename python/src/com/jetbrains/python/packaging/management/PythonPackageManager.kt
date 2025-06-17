@@ -20,6 +20,7 @@ import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
+import com.jetbrains.python.packaging.dependencies.PythonDependenciesManager
 import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
@@ -66,6 +67,11 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   abstract val repositoryManager: PythonRepositoryManager
 
   @ApiStatus.Internal
+  open fun getDependencyManager(): PythonDependenciesManager? {
+    return null
+  }
+
+  @ApiStatus.Internal
   fun findPackageSpecificationWithVersionSpec(
     packageName: String,
     versionSpec: PyRequirementVersionSpec? = null,
@@ -73,6 +79,12 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
     return repositoryManager.repositories.firstNotNullOfOrNull {
       it.findPackageSpecificationWithSpec(packageName, versionSpec)
     }
+  }
+
+  @ApiStatus.Internal
+  suspend fun sync(): PyResult<List<PythonPackage>> {
+    syncCommand().getOr { return it }
+    return reloadPackages()
   }
 
   @ApiStatus.Internal
@@ -177,6 +189,10 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   suspend fun waitForInit() {
     lazyInitialization.await()
   }
+
+  @ApiStatus.Internal
+  @CheckReturnValue
+  protected abstract suspend fun syncCommand(): PyResult<Unit>
 
 
   @ApiStatus.Internal

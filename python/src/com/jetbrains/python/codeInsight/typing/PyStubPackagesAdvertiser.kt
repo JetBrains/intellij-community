@@ -15,7 +15,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
@@ -70,7 +69,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
   private class Visitor(private val ignoredPackages: MutableList<String>,
                         holder: ProblemsHolder,
-                        session: LocalInspectionToolSession) : PyInspectionVisitor(holder, PyInspectionVisitor.getContext(session)) {
+                        session: LocalInspectionToolSession) : PyInspectionVisitor(holder, getContext(session)) {
 
     private val BALLOON_NOTIFICATIONS
       get() = NotificationGroupManager.getInstance().getNotificationGroup("Python Stub Packages Advertiser")
@@ -273,7 +272,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       val project = module.project
       val stubPkgNamesToInstall = reqs.mapTo(mutableSetOf()) { it.name }
 
-      val installationListener = object : PyPackageManagerUI.Listener {
+      object : PyPackageManagerUI.Listener {
         override fun started() {
           project.getService(PyStubPackagesInstallingStatus::class.java).markAsInstalling(stubPkgNamesToInstall)
         }
@@ -312,7 +311,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       }
 
       val name = PyBundle.message("code.insight.stub.packages.install.requirements.fix.name", reqs.size)
-      return PyInstallRequirementsFix(name, module, sdk, reqs, args)
+      return PyInstallRequirementsFix(name, sdk, reqs, args)
     }
 
     private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, packageManager: PyPackageManager): LocalQuickFix {

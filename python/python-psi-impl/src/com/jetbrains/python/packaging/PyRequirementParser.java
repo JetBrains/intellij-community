@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static com.jetbrains.python.packaging.parser.RequirementsParserHelper.VCS_REGEX_STRING;
+
 /**
  * @see <a href="https://pip.pypa.io/en/stable/reference/pip_install/"><code>pip install</code> documentation</a>
  * @see <a href="https://www.python.org/dev/peps/pep-0508/">PEP-508</a>
@@ -129,7 +131,7 @@ public final class PyRequirementParser {
 
   // supports: (bzr|git|hg|svn)(+smth)?://...
   private static final @NotNull Pattern VCS_PROJECT_URL =
-    Pattern.compile(VCS_URL_PREFIX + "(bzr|git|hg|svn)(\\+[A-Za-z]+)?://?[^/]+/" + VCS_URL_SUFFIX);
+    Pattern.compile(VCS_URL_PREFIX + VCS_REGEX_STRING + "://?[^/]+/" + VCS_URL_SUFFIX);
 
   // requirement-related regular expressions
   // don't forget to update calculateRequirementInstallOptions(Matcher) after this section changing

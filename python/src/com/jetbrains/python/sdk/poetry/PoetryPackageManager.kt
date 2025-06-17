@@ -19,6 +19,18 @@ import org.jetbrains.annotations.TestOnly
 class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager(project)
 
+  override suspend fun syncCommand(): PyResult<Unit> {
+    return runPoetryWithSdk(sdk, "install").mapSuccess { }
+  }
+
+  suspend fun lockProject(): PyResult<Unit> {
+    runPoetryWithSdk(sdk, "lock").getOr {
+      return it
+    }
+    return reloadPackages().mapSuccess { }
+  }
+
+
   override suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit> {
     if (installRequest !is PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications) {
       return PyResult.localizedError("Poetry supports installing only  packages from repositories")
@@ -62,7 +74,8 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
         sdk = sdk,
         packages = packages.map { it.name }.toTypedArray()
       ).mapSuccess { }
-    } else {
+    }
+    else {
       PyResult.success(Unit)
     }
   }
@@ -76,7 +89,8 @@ class PoetryPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pr
         sdk = sdk,
         packages = packages.map { it.name }.toTypedArray()
       ).mapSuccess { }
-    } else {
+    }
+    else {
       PyResult.success(Unit)
     }
   }
