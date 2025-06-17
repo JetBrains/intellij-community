@@ -23,7 +23,6 @@ public class ThemeDefinition(
     public val iconData: ThemeIconData,
     public val disabledAppearanceValues: DisabledAppearanceValues,
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -61,6 +60,18 @@ public class ThemeDefinition(
     }
 
     override fun toString(): String {
-        return "ThemeDefinition(name='$name', isDark=$isDark, globalColors=$globalColors, globalMetrics=$globalMetrics, defaultTextStyle=$defaultTextStyle, editorTextStyle=$editorTextStyle, consoleTextStyle=$consoleTextStyle, contentColor=$contentColor, colorPalette=$colorPalette, iconData=$iconData, grayFilterValues=$disabledAppearanceValues)"
+        return "ThemeDefinition(" +
+            "name='$name', " +
+            "isDark=$isDark, " +
+            "globalColors=$globalColors, " +
+            "globalMetrics=$globalMetrics, " +
+            "defaultTextStyle=$defaultTextStyle, " +
+            "editorTextStyle=$editorTextStyle, " +
+            "consoleTextStyle=$consoleTextStyle, " +
+            "contentColor=$contentColor, " +
+            "colorPalette=$colorPalette, " +
+            "iconData=$iconData, " +
+            "grayFilterValues=$disabledAppearanceValues" +
+            ")"
     }
 }

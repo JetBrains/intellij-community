@@ -24,7 +24,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 @Immutable
 @GenerateDataFunctions
 public class DisabledAppearanceValues(public val brightness: Int, public val contrast: Int, public val alpha: Int) {
-
     init {
         require(brightness in -100..100) { "The brightness must be in [-100, 100], but was $brightness" }
         require(contrast in -100..100) { "The contrast must be in [-100, 100], but was $contrast" }
@@ -51,9 +50,7 @@ public class DisabledAppearanceValues(public val brightness: Int, public val con
         return result
     }
 
-    override fun toString(): String {
-        return "GrayFilterValues(brightness=$brightness, contrast=$contrast, alpha=$alpha)"
-    }
+    override fun toString(): String = "GrayFilterValues(brightness=$brightness, contrast=$contrast, alpha=$alpha)"
 
     public companion object
 }
