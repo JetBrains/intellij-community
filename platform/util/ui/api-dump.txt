@@ -451,6 +451,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:ActualZoom:javax.swing.Icon
 - sf:Add:javax.swing.Icon
 - sf:AddJdk:javax.swing.Icon
+- sf:Add_20x20:javax.swing.Icon
 - sf:Alpha:javax.swing.Icon
 - sf:ArrowDown:javax.swing.Icon
 - sf:ArrowDownSmall:javax.swing.Icon

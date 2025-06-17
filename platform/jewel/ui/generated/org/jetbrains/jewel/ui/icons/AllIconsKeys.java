@@ -477,6 +477,7 @@ public final class AllIconsKeys {
   public static final class General {
     /** 16x16 */ public static final @NotNull IntelliJIconKey ActualZoom = new IntelliJIconKey("general/actualZoom.svg", "expui/image/actualZoom.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Add = new IntelliJIconKey("general/add.svg", "expui/general/add.svg", AllIconsKeys.class);
+    /** 20x20 */ public static final @NotNull IntelliJIconKey Add_20x20 = new IntelliJIconKey("expui/general/add@20x20.svg", "expui/general/add@20x20.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey AddJdk = new IntelliJIconKey("general/addJdk.svg", "general/addJdk.svg", AllIconsKeys.class);
     /** 38x15 */ public static final @NotNull IntelliJIconKey Alpha = new IntelliJIconKey("general/alpha.svg", "general/alpha.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ArrowDown = new IntelliJIconKey("general/arrowDown.svg", "expui/general/chevronDown.svg", AllIconsKeys.class);
