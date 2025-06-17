@@ -399,10 +399,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     try {
-      var commands = myProcessCreator != null || tryGetEel() != null
-                     ? ContainerUtil.concat(List.of(myExePath), myProgramParams.getList())
-                     : validateAndPrepareCommandLineForLocalRun();
-      var process = startProcess(commands);
+      var process = startProcess();
       String pidString = null;
       if (LOG.isDebugEnabled()) {
         try {
@@ -424,6 +421,16 @@ public class GeneralCommandLine implements UserDataHolder {
       }
       throw new ProcessNotCreatedException(e.getMessage(), e, this);
     }
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.OverrideOnly
+  protected @NotNull Process startProcess() throws ExecutionException, IOException {
+    var commands = myProcessCreator != null || tryGetEel() != null
+                   ? ContainerUtil.concat(List.of(myExePath), myProgramParams.getList())
+                   : validateAndPrepareCommandLineForLocalRun();
+    var process = startProcess(commands);
+    return process;
   }
 
   /**
