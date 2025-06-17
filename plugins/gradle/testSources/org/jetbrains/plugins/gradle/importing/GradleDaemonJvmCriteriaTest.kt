@@ -5,7 +5,10 @@ import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.JETBRAINS
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper
+import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
+import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Assume
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
@@ -14,14 +17,23 @@ class GradleDaemonJvmCriteriaTest : GradleImportingTestCase() {
   @Test
   @TargetVersions("8.8+")
   fun testUpdatingDaemonJvmCriteria() {
-    createSettingsFile(settingsScript {
-      it.withFoojayPlugin()
-    })
+    createSettingsFile {
+      withFoojayPlugin()
+    }
     importProject()
 
     val daemonJvmCriteria = GradleDaemonJvmCriteria("17", JETBRAINS.asJvmVendor())
-    GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, projectRoot.path, daemonJvmCriteria)
-      .get(1, TimeUnit.MINUTES)
+
+    val output = ExternalSystemExecutionTracer.traceExecutionOutput {
+      GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, projectRoot.path, daemonJvmCriteria)
+        .get(1, TimeUnit.MINUTES)
+    }
+
+    Assume.assumeFalse(output.contains(
+      "Toolchain resolvers did not return download URLs providing a JDK matching " +
+      "{languageVersion=17, vendor=JetBrains, implementation=vendor-specific, nativeImageCapable=false} " +
+      "for any of the requested platforms"
+    ))
 
     assertEquals(daemonJvmCriteria, GradleDaemonJvmPropertiesFile.getProperties(projectRoot.toNioPath()).criteria)
   }
