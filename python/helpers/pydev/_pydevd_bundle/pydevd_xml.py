@@ -357,8 +357,8 @@ def var_to_xml(val, name, do_trim=True, additional_in_xml='', evaluate_full_valu
     # we use it for view as image
     xml_data_type = ''
     try:
-        if hasattr(v, 'dtype') and hasattr(v.dtype, 'name'):
-            xml_data_type = ' arrayElementType="%s"' % make_valid_xml_value(v.dtype.name)
+        if hasattr(v, 'dtype'):
+            xml_data_type = ' arrayElementType="%s"' % make_valid_xml_value(str(v.dtype))
     except:
         pass
 
