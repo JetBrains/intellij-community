@@ -167,4 +167,8 @@ internal class FrontendXLineBreakpointProxy(
   override fun createBreakpointDraggableObject(): GutterDraggableObject? {
     return visualRepresentation.createBreakpointDraggableObject()
   }
+
+  override fun toString(): String {
+    return this::class.simpleName + "(id=$id, type=${type.id}, line=${getLine()}, file=${getFileUrl()})"
+  }
 }
