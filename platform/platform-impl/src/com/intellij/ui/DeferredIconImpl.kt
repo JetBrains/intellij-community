@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.Icon
 import javax.swing.JTree
+import kotlin.coroutines.resume
 
 private val repaintScheduler = DeferredIconRepaintScheduler()
 
@@ -247,6 +248,35 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   @ApiStatus.Internal
   fun triggerEvaluation() {
     scheduleCalculationIfNeeded()
+  }
+
+  @ApiStatus.Internal
+  suspend fun awaitEvaluation() {
+    // fast-path: note that modificationCount is incremented before setDone(),
+    // but after setting scaledDelegateIcon to the evaluated value,
+    // so it pretty much guarantees that the icon is ready to be painted
+    if (modificationCount.get() > 0) return
+    triggerEvaluation()
+    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      // using isDone instead of modificationCount now to avoid races, as it's EDT-only
+      if (isDone) return@withContext
+      val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
+      try {
+        suspendCancellableCoroutine { continuation ->
+          val listener = object : DeferredIconListener {
+            override fun evaluated(deferred: DeferredIcon, result: Icon) {
+              if (deferred === this@DeferredIconImpl) {
+                continuation.resume(Unit)
+              }
+            }
+          }
+          connection.subscribe(DeferredIconListener.TOPIC, listener)
+        }
+      }
+      finally {
+        connection.disconnect()
+      }
+    }
   }
 
   private suspend fun processRepaints(oldWidth: Int, result: Icon) {

@@ -208,7 +208,7 @@ class EditorTabbedContainer internal constructor(
     indexToInsert: Int,
     selectedEditor: FileEditor?,
     parentDisposable: Disposable,
-    compositeCoroutineScope: CoroutineScope,
+    holderCreator: (TabInfo) -> TabInfoIconHolder,
   ): TabInfo {
     editorTabs.findInfo(file)?.let {
       return it
@@ -220,12 +220,11 @@ class EditorTabbedContainer internal constructor(
       parentDisposable = parentDisposable,
       window = window,
       editorActionGroup = ActionManager.getInstance().getAction("EditorTabActionGroup"),
-      coroutineScope = compositeCoroutineScope,
       customizer = {
         it.setText(file.presentableName)
         it.setTooltipText(tooltip)
         if (UISettings.getInstance().showFileIconInTabs) {
-          it.setIconImmediately(icon)
+          it.setIconHolder(holderCreator(it)).setIcon(icon)
         }
         InternalUICustomization.getInstance()?.aiComponentMarker?.markAiComponent(it.component, file)
       }
@@ -488,10 +487,9 @@ internal fun createTabInfo(
   parentDisposable: Disposable,
   window: EditorWindow,
   editorActionGroup: AnAction,
-  coroutineScope: CoroutineScope,
   customizer: (TabInfo) -> Unit,
 ): TabInfo {
-  val tab = TabInfo(component, coroutineScope).setObject(file)
+  val tab = TabInfo(component).setObject(file)
   customizer(tab)
   tab.setTestableUi { it.put("editorTab", tab.text) }
 
