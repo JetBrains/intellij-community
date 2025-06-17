@@ -9,6 +9,7 @@ import com.intellij.ide.ui.AppearanceConfigurable
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.AppMode
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -38,7 +39,10 @@ internal class IslandsFeedback : ProjectActivity {
       return if (oneIsland) "https://surveys.jetbrains.com/s3/JetBrains-EAP-UI-Feedback-Survey" else "https://surveys.jetbrains.com/s3/Feedback-Survey-About-UI-EAP"
     }
 
-    private var myFirstProject = !PlatformUtils.isRider() && !ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment
+    private var myFirstProject = !PlatformUtils.isRider() &&
+                                 !ApplicationManager.getApplication().isUnitTestMode &&
+                                 !ApplicationManager.getApplication().isHeadlessEnvironment &&
+                                 !AppMode.isRemoteDevHost()
   }
 
   override suspend fun execute(project: Project) {
