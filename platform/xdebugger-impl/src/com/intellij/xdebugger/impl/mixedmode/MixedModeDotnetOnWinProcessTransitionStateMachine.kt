@@ -181,6 +181,7 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
           }
           is OnlyHighStoppedWaitingForLowStepToComplete -> {
             val highSuspendCtx: XSuspendContext? = run {
+
               lowExtension.handleBreakpointDuringStep()
 
               // If we've set the null object instead of a real suspend context, we don't need to refresh it
