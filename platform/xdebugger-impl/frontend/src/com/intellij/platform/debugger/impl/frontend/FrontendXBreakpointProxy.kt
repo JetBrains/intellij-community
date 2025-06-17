@@ -316,6 +316,10 @@ internal open class FrontendXBreakpointProxy(
   override fun hashCode(): Int {
     return id.hashCode()
   }
+
+  override fun toString(): String {
+    return this::class.simpleName + "(id=$id, type=${type.id})"
+  }
 }
 
 @Service(Service.Level.PROJECT)
