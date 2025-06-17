@@ -847,6 +847,10 @@ com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver$UnknownSdkLookup
 - a:proposeDownload(com.intellij.openapi.roots.ui.configuration.UnknownSdk,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
 - proposeDownload(com.intellij.openapi.roots.ui.configuration.UnknownSdk,com.intellij.openapi.progress.ProgressIndicator,java.lang.String):com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
 - a:proposeLocalFix(com.intellij.openapi.roots.ui.configuration.UnknownSdk,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
+f:com.intellij.openapi.roots.ui.configuration.impl.ModuleConfigurationEditorProviderEp
+- com.intellij.openapi.extensions.PluginAware
+- implementationClass:java.lang.String
+- setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V
 com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 - a:addExcludedRoot(java.lang.String):V
 - a:addJarDirectory(com.intellij.openapi.vfs.VirtualFile,Z,com.intellij.openapi.roots.OrderRootType):V
