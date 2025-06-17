@@ -2,7 +2,7 @@
   <id>com.intellij.dev</id>
   <name>DevKit Runtime</name>
   <vendor>JetBrains</vendor>
-  <category>Other Tools</category>
+  <category>Plugin Development</category>
   <description><![CDATA[
     <p>Provides tools for IDE and plugin development,
     actions that make sense in debug IDE instance, such as <b>View PSI Structure</b>.</p>
