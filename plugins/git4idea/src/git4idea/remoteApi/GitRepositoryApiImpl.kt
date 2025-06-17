@@ -33,6 +33,8 @@ private typealias SharedRefUtil = com.intellij.vcs.git.shared.ref.GitRefUtil
 
 class GitRepositoryApiImpl : GitRepositoryApi {
   override suspend fun getRepositoriesEvents(projectId: ProjectId): Flow<GitRepositoryEvent> {
+    requireOwner()
+
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
 
     return callbackFlow {
@@ -70,11 +72,15 @@ class GitRepositoryApiImpl : GitRepositoryApi {
   }
 
   override suspend fun forceSync(projectId: ProjectId) {
+    requireOwner()
+
     val project = projectId.findProjectOrNull() ?: return
     project.messageBus.syncPublisher(GitRepositoryFrontendSynchronizer.TOPIC).forceSync()
   }
 
   override suspend fun toggleFavorite(projectId: ProjectId, repositories: List<RepositoryId>, reference: GitReferenceName, favorite: Boolean) {
+    requireOwner()
+
     val project = projectId.findProjectOrNull() ?: return
 
     val resolvedRepositories = resolveRepositories(project, repositories)
