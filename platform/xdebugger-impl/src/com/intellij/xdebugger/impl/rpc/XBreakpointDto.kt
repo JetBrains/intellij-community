@@ -129,14 +129,15 @@ data class XLineBreakpointTypeInfo(
 @ApiStatus.Internal
 suspend fun XBreakpointBase<*, *, *>.toRpc(): XBreakpointDto {
   val editorsProvider = getEditorsProvider(type, this, project)
+  val xDebuggerManager = XDebuggerManager.getInstance(project) as XDebuggerManagerImpl
   return XBreakpointDto(
     id = breakpointId,
-    initialState = getDtoState((XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).currentSession),
+    initialState = getDtoState(xDebuggerManager.currentSession),
     typeId = XBreakpointTypeId(type.id),
     localEditorsProvider = editorsProvider,
     editorsProviderFileTypeId = editorsProvider?.fileType?.name,
     state = channelFlow {
-      val currentSessionFlow = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).currentSessionFlow
+      val currentSessionFlow = xDebuggerManager.currentSessionFlow
       breakpointChangedFlow().combine(currentSessionFlow) { _, currentSession ->
         currentSession
       }.collectLatest { currentSession ->
