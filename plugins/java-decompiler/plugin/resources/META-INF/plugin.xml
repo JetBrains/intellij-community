@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>org.jetbrains.java.decompiler</id>
   <name>Java Bytecode Decompiler</name>
-  <category>Other Tools</category>
+  <category>JVM Tools</category>
   <description>
     Extends standard .class file viewer with the FernFlower Java decompiler
   </description>

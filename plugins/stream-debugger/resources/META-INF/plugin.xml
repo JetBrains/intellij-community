@@ -2,7 +2,7 @@
   <id>org.jetbrains.debugger.streams</id>
   <name>Java Stream Debugger</name>
   <vendor>JetBrains</vendor>
-  <category>Other Tools</category>
+  <category>JVM Tools</category>
   <dependencies>
     <plugin id="com.intellij.java"/>
     <module name="intellij.debugger.streams.core"/>
