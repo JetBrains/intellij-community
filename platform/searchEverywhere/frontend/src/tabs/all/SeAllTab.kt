@@ -68,7 +68,8 @@ class SeAllTab(private val delegate: SeTabDelegate) : SeTab {
   }
 
   override suspend fun openInFindToolWindow(sessionRef: DurableRef<SeSessionEntity>, params: SeParams, initEvent: AnActionEvent): Boolean {
-    return delegate.openInFindToolWindow(sessionRef, params, initEvent, true)
+    val allTabFilter = SeEverywhereFilter.from(params.filter)
+    return delegate.openInFindToolWindow(sessionRef, params, initEvent, true,allTabFilter.disabledProviderIds)
   }
 
   override fun dispose() {
