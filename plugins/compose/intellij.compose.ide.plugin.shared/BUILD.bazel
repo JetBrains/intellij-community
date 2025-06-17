@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api-provided",
     "//java/java-psi-api:psi",
     "//plugins/kotlin/code-insight/api",
+    "//platform/lang-impl",
   ],
   runtime_deps = [":ide-plugin-shared_resources"]
 )
