@@ -35,7 +35,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.registry.Registry.Companion.intValue
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.*
@@ -1004,7 +1004,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
       else {
         val icon = AnimatedIcon.Default.INSTANCE
         label.setIcon(EmptyIcon.create(icon.iconWidth, icon.iconHeight))
-        EdtScheduler.getInstance().schedule(intValue("actionSystem.toolbar.progress.icon.delay", 500)) {
+        EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), UiDispatcherKind.STRICT) {
           label.setIcon(icon)
         }
       }
