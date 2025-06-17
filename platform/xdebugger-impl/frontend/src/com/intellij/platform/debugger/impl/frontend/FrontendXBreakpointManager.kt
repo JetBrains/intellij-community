@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.project.projectId
 import com.intellij.platform.util.coroutines.childScope
@@ -19,7 +20,10 @@ import com.intellij.xdebugger.impl.frame.XDebugSessionProxy.Companion.useFeLineB
 import com.intellij.xdebugger.impl.rpc.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.shareIn
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.ConcurrentHashMap
@@ -32,6 +36,7 @@ private val log = logger<FrontendXBreakpointManager>()
 @VisibleForTesting
 class FrontendXBreakpointManager(private val project: Project, private val cs: CoroutineScope) : XBreakpointManagerProxy {
   private val breakpointsChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val breakpointsChangedWithReplay = breakpointsChanged.shareIn(cs, SharingStarted.Eagerly, replay = 1)
 
   private val breakpoints: ConcurrentMap<XBreakpointId, XBreakpointProxy> = ConcurrentCollectionFactory.createConcurrentMap()
 
@@ -89,48 +94,18 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
    * [addBreakpoint] is not called in parallel, to have only one source of truth and avoid races.
    */
   override suspend fun awaitBreakpointCreation(breakpointDto: XBreakpointDto): XBreakpointProxy? {
-    val breakpointId = breakpointDto.id
-    // check now
-    val currentBreakpoint = breakpoints[breakpointDto.id]
-    if (currentBreakpoint != null) return currentBreakpoint
-    if (breakpointId in breakpointIdsRemovedLocally) return null
-
-    // await creation
-    val flow = MutableSharedFlow<Unit>(replay = 1)
-    val result = CompletableDeferred<XBreakpointProxy?>()
-    val job = cs.launch {
-      launch {
-        breakpointsChanged.collect {
-          flow.emit(Unit)
-        }
+    return findOrAwaitElement(breakpointsChangedWithReplay, logMessage = breakpointDto.id.toString()) {
+      val breakpointId = breakpointDto.id
+      val currentBreakpoint = breakpoints[breakpointDto.id]
+      if (currentBreakpoint != null) {
+        Ref.create(currentBreakpoint)
       }
-      flow.collect {
-        log.info("Breakpoint creation flow for ${breakpointId} is triggered")
-        val currentBreakpoint = breakpoints[breakpointId]
-        if (currentBreakpoint != null) {
-          result.complete(currentBreakpoint)
-        }
-        if (breakpointId in breakpointIdsRemovedLocally) {
-          result.complete(null)
-        }
+      else if (breakpointId in breakpointIdsRemovedLocally) {
+        Ref.create(null)
       }
-    }
-
-    log.info("Waiting for breakpoint creation $breakpointId")
-    // ensure creation event is not lost during adding listener, trigger it at least once
-    flow.emit(Unit)
-    val timeout = 60
-    try {
-      return withTimeout(timeout.seconds) {
-        result.await()
+      else {
+        null
       }
-    }
-    catch (_: TimeoutCancellationException) {
-      log.error("Failed to await breakpoint from backend in $timeout seconds. Skipped breakpoint creation $breakpointId")
-      return null
-    }
-    finally {
-      job.cancel()
     }
   }
 
@@ -328,5 +303,49 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   private fun FrontendXLineBreakpointProxy.unregisterInManager() {
     registrationInLineManagerStatus.set(RegistrationStatus.DEREGISTERED)
     lineBreakpointManager.unregisterBreakpoint(this)
+  }
+}
+
+/**
+ * Searches element with [search] or suspends until the element appears.
+ * Uses [updateFlow] as a trigger for updates.
+ * [updateFlow] must be a flow with replay
+ */
+internal suspend fun <T> findOrAwaitElement(
+  updateFlow: Flow<*>,
+  logMessage: String? = null,
+  timeoutS: Int = 60, search: () -> Ref<T>?,
+): T? {
+  val existing = search()
+  if (existing != null) return existing.get()
+
+  if (logMessage != null) {
+    log.info("[findOrAwaitElement] Waiting for creation event for $logMessage")
+  }
+  return coroutineScope {
+    val result = CompletableDeferred<T>()
+    val job = launch {
+      updateFlow.collect {
+        if (logMessage != null) {
+          log.info("[findOrAwaitElement] Flow updated, check for $logMessage")
+        }
+        val existing = search()
+        if (existing != null) {
+          result.complete(existing.get())
+        }
+      }
+    }
+    try {
+      return@coroutineScope withTimeout(timeoutS.seconds) {
+        result.await()
+      }
+    }
+    catch (_: TimeoutCancellationException) {
+      log.error("[findOrAwaitElement] Failed to await for event for $logMessage in $timeoutS seconds")
+      return@coroutineScope null
+    }
+    finally {
+      job.cancel()
+    }
   }
 }
