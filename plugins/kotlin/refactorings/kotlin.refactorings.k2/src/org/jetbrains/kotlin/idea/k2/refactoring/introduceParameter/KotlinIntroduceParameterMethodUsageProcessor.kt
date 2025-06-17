@@ -47,7 +47,7 @@ class KotlinIntroduceParameterMethodUsageProcessor : IntroduceParameterMethodUsa
             data.parameterListToRemove.sortedDescending().forEach { changeInfo.removeParameter(it) }
 
             val typeText = analyze(function) {
-                data.forcedType.asKaType(function)?.render(position = Variance.INVARIANT)
+                data.forcedType.asKaType(function)?.render(position = Variance.IN_VARIANCE)
             }
 
             //todo j2k
