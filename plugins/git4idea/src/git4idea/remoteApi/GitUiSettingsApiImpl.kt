@@ -13,6 +13,7 @@ import git4idea.repo.GitRepositoryManager
 
 internal class GitUiSettingsApiImpl : GitUiSettingsApi {
   override suspend fun setGroupingByPrefix(projectId: ProjectId, groupByPrefix: Boolean) {
+    requireOwner()
     val project = projectId.findProjectOrNull() ?: return
     GitVcsSettings.getInstance(project).setBranchGroupingSettings(GroupingKey.GROUPING_BY_DIRECTORY, groupByPrefix)
     withCurrentThreadCoroutineScope {
@@ -21,6 +22,7 @@ internal class GitUiSettingsApiImpl : GitUiSettingsApi {
   }
 
   override suspend fun initBranchSyncPolicyIfNotInitialized(projectId: ProjectId) {
+    requireOwner()
     val project = projectId.findProjectOrNull() ?: return
 
     DvcsBranchSyncPolicyUpdateNotifier(project,

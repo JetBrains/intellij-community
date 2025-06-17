@@ -19,6 +19,8 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class GitIncomingOutgoingStateApiImpl : GitIncomingOutgoingStateApi {
   @OptIn(FlowPreview::class)
   override suspend fun syncState(projectId: ProjectId): Flow<GitInOutProjectState> {
+    requireOwner()
+
     val project = projectId.findProjectOrNull() ?: return emptyFlow()
 
     return callbackFlow {
