@@ -19,7 +19,6 @@ import java.nio.file.spi.FileTypeDetector;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 
 /**
  * A file system that can delegate specific paths to other file systems.
@@ -391,7 +390,7 @@ public final class MultiRoutingFileSystemProvider
     if (path instanceof MultiRoutingFsPath) {
       // `MultiRoutingFsPath` is encapsulated and can't be created outside this package.
       // Tricks with classloaders are not expected here.
-      return ((MultiRoutingFsPath)path).getDelegate();
+      return ((MultiRoutingFsPath)path).getInitialDelegate();
     }
     else {
       return path;

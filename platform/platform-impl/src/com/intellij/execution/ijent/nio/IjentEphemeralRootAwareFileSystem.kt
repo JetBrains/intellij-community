@@ -17,10 +17,9 @@ import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 import kotlin.io.path.Path
 import kotlin.io.path.invariantSeparatorsPathString
-import kotlin.io.path.isSameFileAs
 import kotlin.io.path.pathString
 
-private fun Path.unwrap(): Path = if (this is MultiRoutingFsPath) delegate else this
+private fun Path.unwrap(): Path = if (this is MultiRoutingFsPath) currentDelegate else this
 
 private fun Path.toIjentPathOrNull(): IjentNioPath? = when (val path = unwrap()) {
   is IjentEphemeralRootAwarePath -> path.originalPath
