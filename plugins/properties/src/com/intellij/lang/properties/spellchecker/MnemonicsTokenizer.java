@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.properties.spellchecker.tokenizer;
+package com.intellij.lang.properties.spellchecker;
 
 import com.intellij.lang.properties.psi.impl.PropertyValueImpl;
 import com.intellij.spellchecker.tokenizer.TokenConsumer;
