@@ -24,7 +24,6 @@ import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionScope
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellDataGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorReworkedImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellEnvBasedGenerators
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderReworkedImpl
 import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
@@ -77,8 +76,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     }
     tracer.spanBuilder("terminal-completion-all").use {
       val suggestions = runBlockingCancellable {
-        val expandedTokens = expandAliases(context, allTokens)
-        computeSuggestions(expandedTokens, context)
+        computeSuggestions(allTokens, context)
       }
       tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
         submitSuggestions(suggestions, allTokens, result, ShellType.ZSH)
@@ -114,8 +112,7 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
                                                 context.runtimeContextProvider)
     val commandExecutable = tokens.first()
     val commandArguments = tokens.subList(1, tokens.size)
-    val availableCommandsProvider = suspend { context.generatorsExecutor.execute(runtimeContext,
-                                                                                 ShellDataGenerators.availableCommandsGenerator()) }
+
     val fileProducer = suspend { context.generatorsExecutor.execute(runtimeContext, ShellDataGenerators.fileSuggestionsGenerator()) }
     val specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>? = { commandName ->
       tracer.spanBuilder("terminal-completion-compute-completion-items").useWithScope {
@@ -128,26 +125,12 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
         // Return no completions for command name to pass the completion to the PowerShell
         return emptyList()
       }
-      return computeSuggestionsIfNoArguments(fileProducer, availableCommandsProvider)
+      val suggestions = fileProducer()
+      return suggestions.filter { !it.isHidden }
     }
     else {
       return computeSuggestionsIfHasArguments(commandExecutable, context, fileProducer, specCompletionFunction)
     }
-  }
-
-  private suspend fun computeSuggestionsIfNoArguments(
-    fileProducer: suspend () -> List<ShellCompletionSuggestion>,
-    availableCommandsProvider: suspend () -> List<ShellCompletionSuggestion>,
-  ): List<ShellCompletionSuggestion> {
-    val files = fileProducer()
-    val suggestions = if (files.firstOrNull()?.prefixReplacementIndex != 0) {
-      files  // Return only files if some file path prefix is already typed
-    }
-    else {
-      val commands = availableCommandsProvider()
-      commands + files
-    }
-    return suggestions.filter { !it.isHidden }
   }
 
   private suspend fun computeSuggestionsIfHasArguments(
@@ -182,20 +165,6 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
       result += commandExecutable.removeSuffix(".exe")
     }
     return result
-  }
-
-  private suspend fun expandAliases(
-    context: TerminalCompletionContext,
-    tokens: List<String>,
-  ): List<String> {
-    if (tokens.size < 2) {
-      return tokens
-    }
-    // aliases generator does not requires actual typed prefix
-    val dummyRuntimeContext = context.runtimeContextProvider.getContext("")
-    val aliases: Map<String, String> = context.generatorsExecutor.execute(dummyRuntimeContext, ShellEnvBasedGenerators.aliasesGenerator())
-    val expandedTokens = expandAliases(tokens, aliases, context)
-    return expandedTokens
   }
 
   /**

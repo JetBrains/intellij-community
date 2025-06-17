@@ -90,6 +90,7 @@ object ShellDataGenerators {
    */
   fun availableCommandsGenerator(): ShellRuntimeDataGenerator<List<ShellCommandSpec>> {
     return ShellRuntimeDataGenerator(cacheKeyAndDebugName = "commands") { context ->
+      if (context.isReworked) return@ShellRuntimeDataGenerator emptyList()
       val shellEnv = ShellEnvBasedGenerators.getShellEnv(context)
                      ?: return@ShellRuntimeDataGenerator emptyList()
       val commandSpecManager = ShellCommandSpecsManagerImpl.getInstance()

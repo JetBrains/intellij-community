@@ -39,10 +39,6 @@ class ShellRuntimeContextReworkedImpl(
         val path = command.removePrefix(GET_DIRECTORY_FILES.functionName).trim()
         arguments = listOf<String>("-1ap", path)
       }
-      command.startsWith(GET_ALIASES.functionName)
-      || command.startsWith(GET_ENVIRONMENT.functionName) -> {
-        return ShellCommandResult.create("{}", 0)
-      }
     }
     return executeCommandViaEel(commandName, arguments)
   }

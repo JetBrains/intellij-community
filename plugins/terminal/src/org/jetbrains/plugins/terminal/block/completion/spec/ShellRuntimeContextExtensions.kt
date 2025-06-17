@@ -15,6 +15,12 @@ val ShellRuntimeContext.project: Project
 
 internal val PROJECT_KEY: Key<Project> = Key.create("Project")
 
+@get:ApiStatus.Experimental
+val ShellRuntimeContext.isReworked: Boolean
+  get() = getUserData(IS_REWORKED_KEY) ?: false
+
+internal val IS_REWORKED_KEY: Key<Boolean> = Key.create("isReworked")
+
 /**
  * Returns the list of [path] child file names.
  * [path] can be either an absolute path or relative path.
