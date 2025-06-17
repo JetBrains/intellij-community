@@ -242,15 +242,17 @@
             nameKey="hints.settings.parameters"
             descriptionKey="inlay.kotlin.parameters.hints">
       <option bundle="messages.KotlinBundle"
-              optionId="hints.parameters.excluded"
-              enabledByDefault="false"
-              nameKey="hints.settings.excluded.parameters"
-              descriptionKey="inlay.kotlin.parameters.hints.excluded"/>
-      <option bundle="messages.KotlinBundle"
               optionId="hints.parameters.compiled"
               enabledByDefault="true"
               nameKey="hints.settings.compiled.parameters"
-              descriptionKey="inlay.kotlin.parameters.hints.compiled"/>
+              descriptionKey="inlay.kotlin.parameters.hints.compiled"
+              showInTree="false"/>
+      <option bundle="messages.KotlinBundle"
+              optionId="hints.parameters.excluded"
+              enabledByDefault="false"
+              nameKey="hints.settings.excluded.parameters"
+              descriptionKey="inlay.kotlin.parameters.hints.excluded"
+              showInTree="false"/>
     </codeInsight.declarativeInlayProvider>
 
     <codeInsight.declarativeInlayProviderCustomSettingsProvider
