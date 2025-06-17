@@ -6,17 +6,19 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.ui.AddEditRemovePanel;
-import com.intellij.ui.ColoredTableCellRenderer;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -42,9 +44,17 @@ public final class PythonDocumentationConfigurable implements SearchableConfigur
 
   @Override
   public JComponent createComponent() {
+    Border border = IdeBorderFactory.createEmptyBorder(JBUI.insets(10, 0));
+    JPanel panelWithDescription = JBUI.Panels.simplePanel(new JBLabel(PyBundle.message("external.documentation.description"))).withBorder(border);
+
     SwingUtilities.updateComponentTreeUI(myPanel); // TODO: create Swing components in this method (see javadoc)
     myPanel.getTable().setShowGrid(false);
-    return myPanel;
+
+    BorderLayoutPanel myComponent = new BorderLayoutPanel()
+      .addToTop(panelWithDescription)
+      .addToCenter(myPanel);
+
+    return myComponent;
   }
 
   @Override
