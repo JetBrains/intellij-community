@@ -102,7 +102,10 @@ internal fun generateDeps(
         )
 
         if (!isCommunityLib) {
-          require(!module.isCommunity)
+          require(!module.isCommunity) {
+            "Module ${module.module.name} must not depend on a non-community libraries because it is a community module" +
+            "(library=${untypedLib.name}, files=$files, bazelTargetName=$targetName)"
+          }
         }
 
         val prefix = when {
