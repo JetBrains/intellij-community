@@ -9,8 +9,7 @@ import com.intellij.webcore.packaging.PackageManagementService;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated replaced by {@link com.jetbrains.python.packaging.common.PackageManagerHolder }.
- * To get an instance of PythonPackageManager consider using
+ * @deprecated To get an instance of PythonPackageManager consider using
  * {@link com.jetbrains.python.packaging.management.PythonPackageManager.Companion#forSdk(Project, Sdk)}
  */
 @Deprecated(forRemoval = true)
