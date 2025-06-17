@@ -15,19 +15,24 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.junit.Test
+import org.junit.runners.Parameterized.Parameter
 import org.junit.runners.Parameterized.Parameters
 import kotlin.test.assertEquals as kAssertEquals
 import kotlin.test.assertNotNull as kAssertNotNull
 
 private const val TARGET_GRADLE_VERSION = "8.13"
 private const val COMMON_MAIN = "commonMain"
-
 private const val ANDROID_MAIN = "androidMain"
 private const val IOS_MAIN = "iosMain"
+
+private val SOURCE_SETS = setOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN)
 
 @TestRoot("../../../community/plugins/compose/intellij.compose.ide.plugin.resources/testData")
 @TestMetadata("")
 class ComposeResourcesGradleImportTest : KotlinGradleImportingTestCase() {
+
+  @Parameter(1)
+  lateinit var sourceSetName: String
 
   @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
@@ -37,14 +42,11 @@ class ComposeResourcesGradleImportTest : KotlinGradleImportingTestCase() {
     kAssertEquals(false, composeResourcesModel.isPublicResClass)
 
     assertNotEmpty(composeResourcesModel.customComposeResourcesDirs.entries)
-    listOf(COMMON_MAIN, ANDROID_MAIN, IOS_MAIN).forEach {
-      val composeResources = composeResourcesModel.customComposeResourcesDirs[it]
-      kAssertNotNull(composeResources)
-      val directoryPath = composeResources.first
-      val isCustom = composeResources.second
-      assertTrue(directoryPath.endsWith("src/$it/composeResources"))
-      kAssertEquals(false, isCustom)
-    }
+    val composeResources = composeResourcesModel.customComposeResourcesDirs[sourceSetName]
+    kAssertNotNull(composeResources)
+    val (directoryPath, isCustom) = composeResources
+    assertTrue(directoryPath.endsWith("src/$sourceSetName/composeResources"))
+    kAssertEquals(false, isCustom)
   }
 
 
@@ -56,7 +58,7 @@ class ComposeResourcesGradleImportTest : KotlinGradleImportingTestCase() {
         nameOfResClass = "CustomRes"
         publicResClass = true
         customDirectory(
-          sourceSetName = "commonMain",
+          sourceSetName = "${sourceSetName}",
           directoryProvider = provider { layout.projectDirectory.dir("customDir") }
         )
         
@@ -66,20 +68,17 @@ class ComposeResourcesGradleImportTest : KotlinGradleImportingTestCase() {
     kAssertEquals(true, composeResourcesModel.isPublicResClass)
     assertNotEmpty(composeResourcesModel.customComposeResourcesDirs.entries)
 
-    val commonMainComposeResources = composeResourcesModel.customComposeResourcesDirs[COMMON_MAIN]
-    kAssertNotNull(commonMainComposeResources)
-    assertTrue(commonMainComposeResources.first.endsWith("composeApp/customDir"))
-    assertTrue(commonMainComposeResources.second)
+    val composeResources = composeResourcesModel.customComposeResourcesDirs[sourceSetName]
+    kAssertNotNull(composeResources)
+    assertTrue(composeResources.first.endsWith("composeApp/customDir"))
+    assertTrue(composeResources.second)
 
-    val androidMainComposeResources = composeResourcesModel.customComposeResourcesDirs[ANDROID_MAIN]
-    kAssertNotNull(androidMainComposeResources)
-    assertTrue(androidMainComposeResources.first.endsWith("src/androidMain/composeResources"))
-    assertFalse(androidMainComposeResources.second)
-
-    val iosMainComposeResources = composeResourcesModel.customComposeResourcesDirs[IOS_MAIN]
-    kAssertNotNull(iosMainComposeResources)
-    assertTrue(iosMainComposeResources.first.endsWith("src/iosMain/composeResources"))
-    assertFalse(iosMainComposeResources.second)
+    SOURCE_SETS.minus(sourceSetName).forEach { sourceSetName ->
+      val composeResourcesModel = composeResourcesModel.customComposeResourcesDirs[sourceSetName]
+      kAssertNotNull(composeResourcesModel)
+      assertTrue(composeResourcesModel.first.endsWith("src/${sourceSetName}/composeResources"))
+      assertFalse(composeResourcesModel.second)
+    }
   }
 
   private fun doTestWithComposeResourcesModel(config: String = "", block: (ComposeResourcesModel) -> Unit) {
@@ -115,8 +114,8 @@ class ComposeResourcesGradleImportTest : KotlinGradleImportingTestCase() {
   companion object {
     @JvmStatic
     @Suppress("ACCIDENTAL_OVERRIDE")
-    @Parameters(name = "{index}: with Gradle-{0}")
-    fun data(): Collection<Any> = listOf(TARGET_GRADLE_VERSION)
+    @Parameters(name = "{index}: source set {1} with Gradle-{0}")
+    fun data(): Collection<Any> = SOURCE_SETS.map { arrayOf(TARGET_GRADLE_VERSION, it) }
   }
 }
 
