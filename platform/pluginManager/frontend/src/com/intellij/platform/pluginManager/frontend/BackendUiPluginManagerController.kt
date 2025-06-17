@@ -270,7 +270,7 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
   @Deprecated("Test method ")
   private fun <T> awaitForResult(body: suspend () -> T): T {
     val deferred = CompletableDeferred<T>()
-    service<BackendRpcCoroutineContext>().coroutineScope.launch {
+    service<BackendRpcCoroutineContext>().coroutineScope.launch(Dispatchers.IO) {
       deferred.complete(body())
     }
     return runBlocking { deferred.await() }
