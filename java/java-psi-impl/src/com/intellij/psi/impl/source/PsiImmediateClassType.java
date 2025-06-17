@@ -32,7 +32,7 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
   private final PsiSubstitutor mySubstitutor;
   private final PsiManager myManager;
   private final @Nullable PsiElement myPsiContext;
-  private final @Nullable TypeNullability myNullability;
+  private @Nullable TypeNullability myNullability;
   private String myCanonicalText;
   private String myCanonicalTextAnnotated;
   private String myPresentableText;
@@ -149,8 +149,11 @@ public class PsiImmediateClassType extends PsiClassType.Stub {
 
   @Override
   public @NotNull TypeNullability getNullability() {
-    if (myNullability != null) return myNullability;
-    return JavaTypeNullabilityUtil.getTypeNullability(this);
+    TypeNullability nullability = myNullability;
+    if (nullability == null) {
+      myNullability = nullability = JavaTypeNullabilityUtil.getTypeNullability(this);
+    }
+    return nullability;
   }
 
   @Override
