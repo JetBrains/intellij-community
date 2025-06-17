@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfo
 import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoChunk
-import com.intellij.platform.searchEverywhere.frontend.SeFilterActionsPresentation
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.ui.SimpleTextAttributes
 import org.jetbrains.annotations.ApiStatus
@@ -46,7 +45,7 @@ class SeTextTabEmptyResultInfoProvider(
   }
 
   private val toggleScopeAction: SearchEverywhereToggleAction?
-    get() = (filterEditor?.getPresentation() as? SeFilterActionsPresentation)?.getActions()?.firstOrNull {
+    get() = filterEditor?.getActions()?.firstOrNull {
       it is SearchEverywhereToggleAction
     } as? SearchEverywhereToggleAction
 

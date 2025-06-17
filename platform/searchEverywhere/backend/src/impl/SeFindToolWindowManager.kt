@@ -50,7 +50,7 @@ class SeFindToolWindowManager(private val project: Project) {
     projectId: ProjectId,
   ) {
     val contributorsString = providerIds.mapNotNull { providerId ->
-      providersHolder.get(providerId, false)?.displayName
+      providersHolder.get(providerId, isAllTab)?.displayName
     }.joinToString(separator = ", ")
     val presentation = UsageViewPresentation()
     val tabCaptionText = IdeBundle.message("searcheverywhere.found.matches.title", params.inputQuery, contributorsString)
