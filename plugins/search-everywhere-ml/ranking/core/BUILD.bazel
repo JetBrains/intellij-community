@@ -70,6 +70,7 @@ jvm_library(
     "@lib//:caffeine",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",

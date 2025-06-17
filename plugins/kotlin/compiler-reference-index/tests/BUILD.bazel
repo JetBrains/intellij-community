@@ -20,6 +20,7 @@ jvm_library(
     "@lib//:junit4",
     "//java/java-indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/base/psi",
     "//plugins/kotlin/base/plugin",

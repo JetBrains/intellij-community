@@ -20,6 +20,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-api:lang",
     "//platform/platform-api:ide",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/platform-impl:ide-impl_test_lib",

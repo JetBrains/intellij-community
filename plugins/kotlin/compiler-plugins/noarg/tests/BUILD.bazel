@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:junit4",
     "//platform/core-api:core",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/plugin/k1",
     "//plugins/kotlin/tests-common:tests-common_test_lib",

@@ -40,6 +40,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
+    "//platform/lang-core",
     "//java/java-psi-api:psi",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

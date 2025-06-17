@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/jvm/shared",
     "//platform/util:util-ui",

@@ -20,6 +20,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//java/debugger/impl",
     "//java/execution/openapi:java-execution",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//java/debugger/openapi:java-debugger",
     "//platform/projectModel-api:projectModel",

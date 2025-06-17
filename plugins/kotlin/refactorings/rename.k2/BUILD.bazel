@@ -60,6 +60,7 @@ jvm_library(
     "@lib//:kotlinc-analysis-api",
     "//platform/analysis-api:analysis",
     "//platform/core-ui",
+    "//platform/lang-core",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/base/plugin",

@@ -24,6 +24,7 @@ jvm_library(
     "//jps/model-serialization",
     "//platform/lang-api:lang",
     "//platform/editor-ui-ex:editor-ex",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/statistics",
     "//platform/platform-impl:ide-impl",

@@ -14,6 +14,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/refactoring",
     "//platform/testFramework",
     "//plugins/maven",

@@ -43,6 +43,7 @@
     <orderEntry type="module" module-name="intellij.platform.kernel" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang" />

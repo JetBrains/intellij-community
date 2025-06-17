@@ -33,6 +33,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/refactoring",
     "//platform/smRunner",
     "//platform/smRunner:smRunner_test_lib",

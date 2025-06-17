@@ -25,6 +25,7 @@ jvm_library(
     "@lib//:guava",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/vcs-api:vcs",
     "//platform/observable",

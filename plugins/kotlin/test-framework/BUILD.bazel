@@ -26,6 +26,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "@lib//:kotlinc-kotlin-jps-common",

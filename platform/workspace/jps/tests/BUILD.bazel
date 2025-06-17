@@ -23,6 +23,7 @@ jvm_library(
     "//platform/core-api:core",
     "//jps/model-api:model",
     "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/workspace/storage",
     "//platform/smRunner",

@@ -34,6 +34,7 @@ jvm_library(
     "//java/debugger/impl",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testRunner",
     "//platform/vcs-api:vcs",

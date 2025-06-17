@@ -19,6 +19,7 @@ jvm_library(
     "//plugins/kotlin/jvm-debugger/test/k2:k2_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
+    "//platform/lang-core",
     "//plugins/kotlin/jvm-debugger/test:test_test_lib",
     "//plugins/kotlin/tests-common:tests-common_test_lib",
     "//plugins/kotlin/base/plugin",

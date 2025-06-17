@@ -98,6 +98,7 @@ jvm_library(
     "//plugins/configuration-script:configuration-script_test_lib",
     "//java/execution/impl",
     "@lib//:kotlin-stdlib",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

@@ -29,6 +29,7 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
     "//jps/model-serialization",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "@lib//:junit4",
     "@lib//:jmock",

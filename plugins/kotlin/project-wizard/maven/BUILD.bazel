@@ -17,6 +17,7 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/external-system-impl:externalSystem-impl",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/base/frontend-agnostic",
     "//plugins/kotlin/base/util",

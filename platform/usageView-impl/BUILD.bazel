@@ -10,6 +10,7 @@ jvm_library(
     "@lib//:fastutil-min",
     "@lib//:jackson",
     "@lib//:kotlinx-coroutines-core",
+    "//platform/lang-core",
     "//platform/statistics",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",

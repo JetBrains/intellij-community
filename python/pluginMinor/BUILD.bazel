@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/core-api:core",
     "//platform/lang-api:lang",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/projectModel-api:projectModel",
     "//python:python-community-impl",

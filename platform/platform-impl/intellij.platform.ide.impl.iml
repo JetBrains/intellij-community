@@ -47,6 +47,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />

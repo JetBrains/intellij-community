@@ -27,6 +27,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "//platform/analysis-api:analysis",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/util/jdom",

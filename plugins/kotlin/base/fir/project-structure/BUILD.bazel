@@ -26,6 +26,7 @@ jvm_library(
   kotlinc_opts = ":custom",
   deps = [
     "@lib//:kotlin-stdlib",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/workspace/storage",
     "//platform/backend/workspace",
@@ -61,6 +62,7 @@ jvm_library(
     "//platform/core-ui",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/plugin/k2",
     "//platform/workspace/storage",

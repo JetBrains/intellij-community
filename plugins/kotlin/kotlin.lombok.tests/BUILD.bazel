@@ -13,6 +13,7 @@ jvm_library(
   srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True),
   deps = [
     "//platform/core-api:core",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//plugins/kotlin/plugin/k2",
     "//plugins/kotlin/tests-common:tests-common_test_lib",

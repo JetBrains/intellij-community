@@ -41,6 +41,7 @@
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />

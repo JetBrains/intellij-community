@@ -129,6 +129,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/observable",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/util/diff",
     "//platform/vcs-api:vcs",

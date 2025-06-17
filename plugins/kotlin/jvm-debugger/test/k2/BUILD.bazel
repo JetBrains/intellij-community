@@ -19,6 +19,7 @@ jvm_library(
     "@lib//:kotlin-test",
     "@lib//:asm",
     "//platform/core-api:core",
+    "//platform/lang-core",
     "@lib//:guava",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

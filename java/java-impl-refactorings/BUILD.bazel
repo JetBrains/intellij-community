@@ -19,6 +19,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/java-psi-api:psi",
     "//platform/core-impl",
+    "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/lvcs-api:lvcs",

@@ -26,6 +26,7 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/external-system-impl:externalSystem-impl",
     "//jps/model-api:model",
+    "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",
