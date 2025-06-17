@@ -4,6 +4,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.serializerOrNull
+import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KCallable
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
@@ -44,7 +45,12 @@ class CallableBridge(private val callable: KCallable<*>, private val thisRef: An
       argMap[parameter] = decodedArg
     }
 
-    val result = callable.callSuspendBy(argMap)
+    val result = try {
+      callable.callSuspendBy(argMap)
+    }
+    catch (e: InvocationTargetException) {
+      throw e.cause ?: e
+    }
     return Result(result, callable.returnType, json)
   }
 }

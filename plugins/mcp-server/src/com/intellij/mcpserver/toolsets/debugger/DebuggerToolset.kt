@@ -7,8 +7,9 @@ import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
 import com.intellij.mcpserver.project
 import com.intellij.mcpserver.util.resolveRel
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.guessProjectDir
@@ -18,7 +19,9 @@ import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
-import kotlin.coroutines.coroutineContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.withContext
 
 class DebuggerToolset : McpToolset {
     @McpTool
@@ -39,23 +42,23 @@ class DebuggerToolset : McpToolset {
         @McpDescription("Line number where to toggle the breakpoint (1-based)")
         line: Int
     ): String {
-        val project = coroutineContext.project
+        val project = currentCoroutineContext().project
         val projectDir = project.guessProjectDir()?.toNioPathOrNull()
             ?: return "can't find project dir"
         val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(projectDir.resolveRel(filePathInProject))
             ?: return "can't find file '$filePathInProject'"
 
-        val editors = FileEditorManager.getInstance(project).openFile(virtualFile, true)
+        val editors = withContext(Dispatchers.EDT) { FileEditorManager.getInstance (project).openFile(virtualFile, true) }
         val editor = editors.filterIsInstance<TextEditor>().firstOrNull()?.editor
                      ?: return "can't find editor for file '$filePathInProject'"
-        runWriteAction {
-            val position = XSourcePositionImpl.create(virtualFile, line - 1)
-            XBreakpointUtil.toggleLineBreakpoint(project, position, false, editor, false, true, true).onSuccess {
-                 invokeLater {
-                     position.createNavigatable(project).navigate(true)
-                 }
-            }
-        }
+      writeAction {
+          val position = XSourcePositionImpl.create(virtualFile, line - 1)
+          XBreakpointUtil.toggleLineBreakpoint(project, position, false, editor, false, true, true).onSuccess {
+               invokeLater {
+                   position.createNavigatable(project).navigate(true)
+               }
+          }
+      }
 
         return "ok"
     }
@@ -71,7 +74,7 @@ class DebuggerToolset : McpToolset {
         Note: Only includes line breakpoints, not other breakpoint types (e.g., method breakpoints)
     """)
     suspend fun get_debugger_breakpoints(): String {
-        val project = coroutineContext.project
+        val project = currentCoroutineContext().project
         val breakpointManager = XDebuggerManager.getInstance(project).breakpointManager
         return breakpointManager.allBreakpoints
             .filterIsInstance<XLineBreakpoint<*>>() // Only consider line breakpoints
