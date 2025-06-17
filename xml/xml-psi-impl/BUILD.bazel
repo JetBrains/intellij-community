@@ -30,7 +30,6 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/core-impl",
     "//xml/xml-parser:parser",
-    "@lib//:xerces",
     "//RegExpSupport:regexp",
     "//platform/ide-core-impl",
     "//platform/lang-api:lang",
