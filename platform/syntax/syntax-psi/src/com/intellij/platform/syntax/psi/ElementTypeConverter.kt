@@ -10,20 +10,49 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Mapping between [IElementType] and [SyntaxElementType] for a given language.
  *
- * Register an implementation as a language extension point `com.intellij.syntax.elementTypeConverter`
+ * In most cases, it's recommended to use [elementTypeConverterOf] instead of implementing this interface directly.
+ * In this case, the conversion will be done in a more optimized way.
+ * The only case when you want to implement this interface directly is when you need to support a language with dynamically created
+ * element types.
+ *
+ * @see ElementTypeConverterFactory
+ * @see elementTypeConverterOf
  */
 interface ElementTypeConverter {
+  /**
+   * Converts an [IElementType] to a [SyntaxElementType]. Returns `null` if the conversion is not possible.
+   */
   fun convert(type: IElementType): SyntaxElementType?
+
+  /**
+   * Converts an [SyntaxElementType] to a [IElementType]. Returns `null` if the conversion is not possible.
+   */
   fun convert(type: SyntaxElementType): IElementType?
 
+  /**
+   * Converts an array of [SyntaxElementType] to an array of [IElementType].
+   * The result array has the same length as the input array and contains `null`s for elements that are not convertible.
+   */
   fun convert(types: Array<SyntaxElementType>): Array<IElementType?>
 }
 
+/**
+ * Register an implementation as a language extension point `com.intellij.syntax.elementTypeConverter`
+ *
+ * @see ElementTypeConverter
+ * @see elementTypeConverterOf
+ */
 @ApiStatus.OverrideOnly
 interface ElementTypeConverterFactory {
+  /**
+   * Provides an [ElementTypeConverter] for the language this factory is registered for.
+   */
   fun getElementTypeConverter(): ElementTypeConverter
 }
 
+/**
+ * Creates an [ElementTypeConverter] from the given mapping.
+ */
 fun elementTypeConverterOf(vararg syntaxToOld: Pair<SyntaxElementType, IElementType>): ElementTypeConverter {
   return ElementTypeConverterImpl(syntaxToOld.asList())
 }
