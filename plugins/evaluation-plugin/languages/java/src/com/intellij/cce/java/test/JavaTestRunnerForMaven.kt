@@ -20,7 +20,7 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 
 private val LOG = fileLogger()
 
-internal class JavaTestRunnerForMaven: TestRunner {
+internal class JavaTestRunnerForMaven : TestRunner {
   override fun isApplicable(params: TestRunnerParams): Boolean {
     return params.language == Language.JAVA
            || params.language == Language.KOTLIN // TODO temporary solution for docker testing
@@ -64,10 +64,20 @@ internal class JavaTestRunnerForMaven: TestRunner {
         }
       })
     }
+
+    // in multi-module projects tests will be prefixed with module:test
+    request.tests.map { it.substringBeforeLast(":", "") }
+      .filter { it.isNotBlank() }
+      .also {
+        if (it.isNotEmpty()) {
+          params.projectsCmdOptionValues = it
+        }
+      }
+
     val runnerSettings = MavenRunnerSettings().also {
       if (request.tests.any()) {
         //todo check
-        it.setVmOptions("-Dtest=${request.tests.joinToString(separator = ",") { it.split(":").last() }}")
+        it.setVmOptions("-Dtest=${request.tests.joinToString(separator = ",") { it.substringAfterLast(":") }}")
       }
     }
 
