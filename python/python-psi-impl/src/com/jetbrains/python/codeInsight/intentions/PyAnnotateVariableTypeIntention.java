@@ -217,11 +217,12 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     final PyType inferredType = getInferredTypeOrObject(target, context);
     PyTypeHintGenerationUtil.checkPep484Compatibility(inferredType, context);
     final String annotationText = PythonDocumentationProvider.getTypeHint(inferredType, context);
-    final AnnotationInfo info = new AnnotationInfo(annotationText, inferredType);
+    final String fqnTypeExr = PythonDocumentationProvider.getFullyQualifiedTypeHint(inferredType, context);
+    final AnnotationInfo info = new AnnotationInfo(annotationText, fqnTypeExr);
     if (isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
-        PyTypeHintGenerationUtil.insertStandaloneAttributeAnnotation(target, context, info, true);
+        PyTypeHintGenerationUtil.insertStandaloneAttributeAnnotation(target, info, true);
       }
       else {
         PyTypeHintGenerationUtil.insertVariableAnnotation(classLevelAttrs.get(0), context, info, true);
@@ -238,15 +239,15 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     if (isInstanceAttribute(target, context)) {
       final List<PyTargetExpression> classLevelAttrs = findClassLevelDefinitions(target, context);
       if (classLevelAttrs.isEmpty()) {
-        PyTypeHintGenerationUtil.insertStandaloneAttributeTypeComment(target, context, info, true);
+        PyTypeHintGenerationUtil.insertStandaloneAttributeTypeComment(target, info, true);
       }
       else {
         // Use existing class level definition (say, assignment of the default value) for annotation
-        PyTypeHintGenerationUtil.insertVariableTypeComment(classLevelAttrs.get(0), context, info, true);
+        PyTypeHintGenerationUtil.insertVariableTypeComment(classLevelAttrs.get(0), info, true);
       }
     }
     else {
-      PyTypeHintGenerationUtil.insertVariableTypeComment(target, context, info, true);
+      PyTypeHintGenerationUtil.insertVariableTypeComment(target, info, true);
     }
   }
 
@@ -255,21 +256,21 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
     assert validTargetParent != null;
     final PsiElement topmostTarget = PsiTreeUtil.findPrevParent(validTargetParent, target);
     final StringBuilder builder = new StringBuilder();
-    final List<PyType> types = new ArrayList<>();
+    final List<String> fullyQualifiedTypeHints = new ArrayList<>();
     final ArrayList<TextRange> typeRanges = new ArrayList<>();
-    generateNestedTypeHint(topmostTarget, context, builder, types, typeRanges);
-    return new AnnotationInfo(builder.toString(), types, typeRanges);
+    generateNestedTypeHint(topmostTarget, context, builder, fullyQualifiedTypeHints, typeRanges);
+    return new AnnotationInfo(builder.toString(), fullyQualifiedTypeHints, typeRanges);
   }
 
   private static void generateNestedTypeHint(@NotNull PsiElement target,
                                              @NotNull TypeEvalContext context,
                                              @NotNull StringBuilder builder,
-                                             @NotNull List<PyType> types,
+                                             @NotNull List<String> fullyQualifiedTypeHints,
                                              @NotNull List<TextRange> typeRanges) {
     if (target instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)target).getContainedExpression();
       if (contained != null) {
-        generateNestedTypeHint(contained, context, builder, types, typeRanges);
+        generateNestedTypeHint(contained, context, builder, fullyQualifiedTypeHints, typeRanges);
       }
     }
     else if (target instanceof PyTupleExpression) {
@@ -279,7 +280,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
         if (i > 0) {
           builder.append(", ");
         }
-        generateNestedTypeHint(elements[i], context, builder, types, typeRanges);
+        generateNestedTypeHint(elements[i], context, builder, fullyQualifiedTypeHints, typeRanges);
       }
       builder.append(")");
     }
@@ -287,7 +288,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
       final PyType singleTargetType = getInferredTypeOrObject((PyTypedElement)target, context);
       PyTypeHintGenerationUtil.checkPep484Compatibility(singleTargetType, context);
       final String singleTargetAnnotation = PythonDocumentationProvider.getTypeHint(singleTargetType, context);
-      types.add(singleTargetType);
+      fullyQualifiedTypeHints.add(PythonDocumentationProvider.getFullyQualifiedTypeHint(singleTargetType, context));
       typeRanges.add(TextRange.from(builder.length(), singleTargetAnnotation.length()));
       builder.append(singleTargetAnnotation);
     }

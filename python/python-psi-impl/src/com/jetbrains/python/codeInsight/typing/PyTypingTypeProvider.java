@@ -58,7 +58,7 @@ import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypingTypeProvider.Context> {
 
-  public static final String TYPING = "typing";
+  public static final @NlsSafe String TYPING = "typing";
 
   public static final String GENERATOR = "typing.Generator";
   public static final String ASYNC_GENERATOR = "typing.AsyncGenerator";
@@ -163,7 +163,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
     .put(CHAIN_MAP, "collections.ChainMap")
     .build();
 
-  public static final ImmutableMap<String, String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
+  public static final ImmutableMap<String, @NlsSafe String> TYPING_COLLECTION_CLASSES = ImmutableMap.<String, String>builder()
     .put("list", "List")
     .put("dict", "Dict")
     .put("set", "Set")

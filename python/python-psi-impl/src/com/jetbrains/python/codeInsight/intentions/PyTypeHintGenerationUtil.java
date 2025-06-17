@@ -14,19 +14,17 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.ast.impl.PyUtilCore;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper;
-import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser;
-import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.Traversal;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +44,6 @@ public final class PyTypeHintGenerationUtil {
   private PyTypeHintGenerationUtil() { }
 
   public static void insertStandaloneAttributeTypeComment(@NotNull PyTargetExpression target,
-                                                          @NotNull TypeEvalContext context,
                                                           AnnotationInfo info,
                                                           boolean startTemplate) {
 
@@ -69,7 +66,7 @@ public final class PyTypeHintGenerationUtil {
       PsiComment insertedComment = as(inserted.getLastChild(), PsiComment.class);
       if (insertedComment == null) return;
 
-      addImportsForTypeAnnotations(info.getTypes(), context, target.getContainingFile());
+      addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
 
       insertedComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedComment);
       if (startTemplate && insertedComment != null) {
@@ -79,7 +76,6 @@ public final class PyTypeHintGenerationUtil {
   }
 
   public static void insertStandaloneAttributeAnnotation(@NotNull PyTargetExpression target,
-                                                         @NotNull TypeEvalContext context,
                                                          @NotNull AnnotationInfo info,
                                                          boolean startTemplate) {
     final LanguageLevel langLevel = LanguageLevel.forElement(target);
@@ -102,7 +98,7 @@ public final class PyTypeHintGenerationUtil {
     WriteAction.run(() -> {
       PyTypeDeclarationStatement inserted = (PyTypeDeclarationStatement)pyClass.getStatementList().addAfter(declaration, anchorBefore);
 
-      addImportsForTypeAnnotations(info.getTypes(), context, target.getContainingFile());
+      addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
 
       inserted = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(inserted);
       if (startTemplate && inserted != null) {
@@ -158,7 +154,7 @@ public final class PyTypeHintGenerationUtil {
       if (createdAnnotationOwner == null) return;
 
       if (context != null) {
-        addImportsForTypeAnnotations(info.getTypes(), context, target.getContainingFile());
+        addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
       }
 
       createdAnnotationOwner = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(createdAnnotationOwner);
@@ -197,7 +193,6 @@ public final class PyTypeHintGenerationUtil {
   }
 
   public static void insertVariableTypeComment(@NotNull PyTargetExpression target,
-                                               TypeEvalContext context,
                                                @NotNull AnnotationInfo info,
                                                boolean startTemplate) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(target)) return;
@@ -244,7 +239,7 @@ public final class PyTypeHintGenerationUtil {
       PsiComment insertedComment = target.getTypeComment();
       if (insertedComment == null) return;
 
-      addImportsForTypeAnnotations(info.getTypes(), context, target.getContainingFile());
+      addImportsForTypeAnnotations(info.getFullyQualifiedTypeHints(), target);
 
       insertedComment = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedComment);
       if (startTemplate && insertedComment != null) {
@@ -277,124 +272,39 @@ public final class PyTypeHintGenerationUtil {
     }
   }
 
-  public static void addImportsForTypeAnnotations(@NotNull List<PyType> types,
-                                                  @NotNull TypeEvalContext context,
-                                                  @NotNull PsiFile file) {
+  public static void addImportsForTypeAnnotations(@NotNull List<String> types, @NotNull PsiElement anchor) {
     final Set<PsiNamedElement> symbols = new LinkedHashSet<>();
-    final Set<String> namesFromTyping = new LinkedHashSet<>();
 
-    for (PyType type : types) {
-      collectImportTargetsFromType(type, context, symbols, namesFromTyping);
+    for (String type : types) {
+      collectImportTargetsFromTypeExpression(type, anchor, symbols);
     }
 
-    final boolean builtinTyping = LanguageLevel.forElement(file).isAtLeast(LanguageLevel.PYTHON35);
-    final ImportPriority priority = builtinTyping ? ImportPriority.BUILTIN : ImportPriority.THIRD_PARTY;
-    for (String name : namesFromTyping) {
-      AddImportHelper.addOrUpdateFromImportStatement(file, "typing", name, null, priority, null);
-    }
-
+    PsiFile file = anchor.getContainingFile();
     for (PsiNamedElement symbol : symbols) {
       PyPsiRefactoringUtil.insertImport(file, symbol, null, true);
     }
   }
 
-  private static void collectImportTargetsFromType(@Nullable PyType type,
-                                                   @NotNull TypeEvalContext context,
-                                                   @NotNull Set<PsiNamedElement> symbols,
-                                                   @NotNull Set<String> typingTypes) {
-    boolean useGenericAliasFromTyping =
-      context.getOrigin() != null && LanguageLevel.forElement(context.getOrigin()).isOlderThan(LanguageLevel.PYTHON39);
-    PyRecursiveTypeVisitor.traverse(type, context, new PyTypeTraverser() {
+  private static void collectImportTargetsFromTypeExpression(@NotNull String typeExpressionText,
+                                                             @NotNull PsiElement anchor,
+                                                             @NotNull Set<PsiNamedElement> symbols) {
+    PyExpression typeExpression = PyUtil.createExpressionFromFragment(typeExpressionText, anchor);
+    assert typeExpression != null;
+    PyQualifiedNameResolveContext qNameResolveContext = PyResolveImportUtil.fromFoothold(anchor);
+    typeExpression.accept(new PyRecursiveElementVisitor() {
       @Override
-      public @NotNull Traversal visitUnknownType() {
-        typingTypes.add("Any");
-        return Traversal.CONTINUE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyUnionType(@NotNull PyUnionType unionType) {
-        final Collection<PyType> members = unionType.getMembers();
-        final boolean isOptional = members.size() == 2 && ContainerUtil.exists(members, member -> isNoneType(member));
-        if (!PyTypingTypeProvider.isBitwiseOrUnionAvailable(context)) {
-          typingTypes.add(isOptional ? "Optional" : "Union");
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
+        if (node.isQualified()) {
+          QualifiedName qualifiedName = node.asQualifiedName();
+          if (qualifiedName != null) {
+            PsiElement element = PyResolveImportUtil.resolveTopLevelMember(qualifiedName, qNameResolveContext);
+            if (element instanceof PsiNamedElement namedElement) {
+              symbols.add(namedElement);
+              return;
+            }
+          }
         }
-        return Traversal.CONTINUE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyNeverType(@NotNull PyNeverType neverType) {
-        typingTypes.add(neverType.getName());
-        return Traversal.CONTINUE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyNamedTupleType(@NotNull PyNamedTupleType namedTupleType) {
-        final PyQualifiedNameOwner element = namedTupleType.getDeclarationElement();
-        if (element instanceof PsiNamedElement) {
-          symbols.add((PsiNamedElement)element);
-        }
-        addTypingTypeIfNeeded(namedTupleType);
-        return Traversal.CONTINUE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyGenericType(@NotNull PyCollectionType genericType) {
-        final PyClass pyClass = genericType.getPyClass();
-        final String typingCollectionName = PyTypingTypeProvider.TYPING_COLLECTION_CLASSES.get(pyClass.getQualifiedName());
-        if (typingCollectionName != null && genericType.isBuiltin() && useGenericAliasFromTyping) {
-          typingTypes.add(typingCollectionName);
-        }
-        else {
-          symbols.add(pyClass);
-        }
-        addTypingTypeIfNeeded(genericType);
-        return Traversal.CONTINUE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyTupleType(@NotNull PyTupleType tupleType) {
-        if (useGenericAliasFromTyping) {
-          typingTypes.add("Tuple");
-        }
-        return Traversal.CONTINUE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyTypedDictType(@NotNull PyTypedDictType typedDictType) {
-        symbols.add((PsiNamedElement)typedDictType.getDeclarationElement());
-        // Don't go through its type arguments
-        return Traversal.PRUNE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyClassType(@NotNull PyClassType classType) {
-        if (!isNoneType(classType)) {
-          symbols.add(classType.getPyClass());
-          addTypingTypeIfNeeded(classType);
-        }
-        return Traversal.CONTINUE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyCallableType(@NotNull PyCallableType callableType) {
-        typingTypes.add("Callable");
-        return Traversal.CONTINUE;
-      }
-
-      @Override
-      public @NotNull Traversal visitPyTypeParameterType(@NotNull PyTypeParameterType typeParameterType) {
-        final PyTargetExpression target = as(typeParameterType.getDeclarationElement(), PyTargetExpression.class);
-        if (target != null) {
-          symbols.add(target);
-        }
-        addTypingTypeIfNeeded(typeParameterType);
-        return Traversal.PRUNE;
-      }
-
-      private void addTypingTypeIfNeeded(@NotNull PyType type) {
-        if (useGenericAliasFromTyping && type instanceof PyInstantiableType<?> instantiableType && instantiableType.isDefinition()) {
-          typingTypes.add("Type");
-        }
+        super.visitPyReferenceExpression(node);
       }
     });
   }
@@ -442,20 +352,22 @@ public final class PyTypeHintGenerationUtil {
 
   public static final class AnnotationInfo {
     private final String myAnnotationText;
-    private final List<PyType> myTypes;
+    private final List<String> myFullyQualifiedTypeHints;
     private final List<TextRange> myTypeRanges;
 
     public AnnotationInfo(@NotNull String annotationText) {
       this(annotationText, Collections.emptyList(), Collections.singletonList(TextRange.allOf(annotationText)));
     }
 
-    public AnnotationInfo(@NotNull String annotationText, @Nullable PyType type) {
-      this(annotationText, Collections.singletonList(type), Collections.singletonList(TextRange.allOf(annotationText)));
+    public AnnotationInfo(@NotNull String annotationText, @NotNull String fullyQualifiedTypeHint) {
+      this(annotationText, Collections.singletonList(fullyQualifiedTypeHint), Collections.singletonList(TextRange.allOf(annotationText)));
     }
 
-    public AnnotationInfo(@NotNull String annotationText, @NotNull List<PyType> types, @NotNull List<TextRange> typeRanges) {
+    public AnnotationInfo(@NotNull String annotationText,
+                          @NotNull List<String> fullyQualifiedTypeHints,
+                          @NotNull List<TextRange> typeRanges) {
       myAnnotationText = annotationText;
-      myTypes = types;
+      myFullyQualifiedTypeHints = fullyQualifiedTypeHints;
       myTypeRanges = typeRanges;
     }
 
@@ -463,8 +375,8 @@ public final class PyTypeHintGenerationUtil {
       return myAnnotationText;
     }
 
-    public @NotNull List<PyType> getTypes() {
-      return myTypes;
+    public @NotNull List<String> getFullyQualifiedTypeHints() {
+      return myFullyQualifiedTypeHints;
     }
 
     public @NotNull List<TextRange> getTypeRanges() {

@@ -952,6 +952,15 @@ public class Py3TypeTest extends PyTestCase {
              expr = f()""");
   }
 
+  // PY-81606
+  public void testCallable() {
+    doTest("(x: int, /, s: str, *, k: bytes) -> None",
+           """
+             def func(x: int, /, s: str, *, k: bytes) -> None:
+                 pass
+             expr = func""");
+  }
+
   // PY-24445
   public void testIsSubclassInsideListComprehension() {
     doTest("list[type[A]]",

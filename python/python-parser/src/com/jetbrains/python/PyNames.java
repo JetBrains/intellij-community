@@ -91,7 +91,7 @@ public final @NonNls class PyNames {
   public static final String SUPER = "super";
 
   public static final String OBJECT = "object";
-  public static final String NONE = "None";
+  public static final @NlsSafe String NONE = "None";
   public static final String TRUE = "True";
   public static final String FALSE = "False";
   public static final String ELLIPSIS = "...";

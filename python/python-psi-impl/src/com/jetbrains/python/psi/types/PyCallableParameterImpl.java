@@ -21,10 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -159,6 +156,16 @@ public final class PyCallableParameterImpl implements PyCallableParameter {
   @Override
   public boolean isSelf() {
     return myElement != null && myElement.isSelf();
+  }
+
+  @Override
+  public boolean isPositionOnlySeparator() {
+    return myElement instanceof PySlashParameter;
+  }
+
+  @Override
+  public boolean isKeywordOnlySeparator() {
+    return myElement instanceof PySingleStarParameter;
   }
 
   @Override
