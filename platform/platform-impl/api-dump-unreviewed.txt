@@ -11334,6 +11334,7 @@ a:com.intellij.platform.ide.impl.customization.BaseJetBrainsExternalProductResou
 - f:computePatchUrl(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.util.BuildNumber):com.intellij.util.Url
 - a:getBasePatchDownloadUrl():com.intellij.util.Url
 - a:getBaseWebHelpUrl():com.intellij.util.Url
+- f:getBaseWebSiteUrl():com.intellij.util.Url
 - getBugReportUrl():kotlin.jvm.functions.Function1
 - getDownloadPageUrl():com.intellij.util.Url
 - getFeedbackReporter():com.intellij.platform.ide.customization.FeedbackReporter
