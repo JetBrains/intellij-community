@@ -17,7 +17,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.util.PlatformUtils
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.util.concurrent.TimeUnit
 
@@ -39,7 +40,7 @@ internal class IslandsFeedback : ProjectActivity {
       return if (oneIsland) "https://surveys.jetbrains.com/s3/JetBrains-EAP-UI-Feedback-Survey" else "https://surveys.jetbrains.com/s3/Feedback-Survey-About-UI-EAP"
     }
 
-    private var myFirstProject = !PlatformUtils.isRider() &&
+    private var myFirstProject = !Registry.`is`("llm.riderNext.enabled", false) && ExperimentalUI.isNewUI() &&
                                  !ApplicationManager.getApplication().isUnitTestMode &&
                                  !ApplicationManager.getApplication().isHeadlessEnvironment &&
                                  !AppMode.isRemoteDevHost()
