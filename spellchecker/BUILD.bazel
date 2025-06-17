@@ -35,9 +35,7 @@ jvm_library(
     "//platform/platform-impl:ide-impl",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/projectModel-api:projectModel",
-    "//xml/openapi:xml",
     "//platform/refactoring",
-    "//xml/dom-openapi:dom",
     "@lib//:guava",
     "//platform/statistics",
     "//libraries/ai.grazie.spell.gec.engine.local",
@@ -51,6 +49,7 @@ jvm_library(
   runtime_deps = [
     ":spellchecker_resources",
     ":spellchecker_resources_1",
+    "//platform/backend",
   ]
 )
 
@@ -71,11 +70,9 @@ jvm_library(
     "//platform/platform-impl:ide-impl_test_lib",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/projectModel-api:projectModel",
-    "//xml/openapi:xml",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/refactoring",
-    "//xml/dom-openapi:dom",
     "@lib//:guava",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
