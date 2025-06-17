@@ -45,6 +45,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.IdeSampleIconKeys
 import icons.JewelIcons
+import javax.swing.BoxLayout
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JLabel
+import javax.swing.JPanel
 import org.jetbrains.jewel.bridge.JewelComposePanel
 import org.jetbrains.jewel.bridge.medium
 import org.jetbrains.jewel.bridge.retrieveEditorColorScheme
@@ -62,10 +66,6 @@ import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.disabledAppearance
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.theme.textAreaStyle
-import javax.swing.BoxLayout
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JLabel
-import javax.swing.JPanel
 
 internal class SwingComparisonTabPanel : BorderLayoutPanel() {
     private val mainContent =
