@@ -77,6 +77,12 @@ private class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope)
           .debounce(300.milliseconds)
           .collect {
             if (!isSyncBlocked(settings)) {
+              for (listener in EP_NAME.extensionList) {
+                runCatching {
+                  listener.beforeRefresh()
+                }.getOrLogException(LOG)
+              }
+
               doRefreshAllKnownLocalRoots(refreshQueue, refreshSession)
             }
           }
