@@ -550,7 +550,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.internal.ml.MLFeatureProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.completion.ml.MLFeatureProvider"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="com.intellij.platform.ml.environmentExtender"

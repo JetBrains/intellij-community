@@ -33,7 +33,6 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/execution",
     "//platform/refactoring",
-    "//platform/ml-api:ml",
   ],
   exports = [
     "//platform/platform-api:ide",

@@ -159,6 +159,11 @@ class InlineCompletionLogsContainer() {
     return logs.values.flatten()
   }
 
+  suspend fun awaitAndGetCurrentLogsPhased(): Map<Phase, List<EventPair<*>>> {
+    awaitAllAlreadyRunningAsyncAdds()
+    return logs.mapValues { it.value.toList() }
+  }
+
   companion object {
     private val KEY: Key<InlineCompletionLogsContainer> = Key("inline.completion.logs.container")
 
