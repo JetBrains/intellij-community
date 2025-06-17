@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.Cancellation
@@ -28,6 +29,7 @@ import com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache.Com
 import com.jetbrains.python.inspections.PyInspection
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.quickfix.PyInstallRequirementsFix
+import com.jetbrains.python.inspections.requirement.RunningPackagingTasksListener
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
@@ -63,7 +65,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
   override fun getOptionsPane() =
     pane(stringList("ignoredPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
-  
+
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = Visitor(ignoredPackages, holder, session)
@@ -112,7 +114,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       if (availablePackages.isEmpty()) return
 
       val ignoredStubPackages = (IGNORE + ignoredPackages).mapNotNull { packageManager.parseRequirement(it) }
-      val cache = ApplicationManager.getApplication().getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk)
+      val cache = ApplicationManager.getApplication().service<PyStubPackagesAdvertiserCache>().forSdk(sdk)
 
       val forcedToLoad = processForcedPackages(file, sources, module, sdk, packageManager, ignoredStubPackages, cache)
       val checkedToLoad = processCheckedPackages(file, sources, module, sdk, packageManager, ignoredStubPackages, cache)
@@ -162,7 +164,12 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
       val (sourcesToLoad, cached) = splitIntoNotCachedAndCached(checkedSourcesToProcess(sources), cache)
 
-      val (reqs, args) = toRequirementsAndExtraArgs(cached, ignoredStubPackages)
+      val (unfilteredReqs, args) = toRequirementsAndExtraArgs(cached, ignoredStubPackages)
+
+      val status = file.project.service<PyStubPackagesInstallingStatus>()
+
+      val reqs = unfilteredReqs.filterNot { status.markedAsInstalling(it.name) }
+
       if (reqs.isNotEmpty()) {
         val plural = reqs.size > 1
         val reqsToString = PyPackageUtil.requirementsToString(reqs)
@@ -273,13 +280,13 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       val project = module.project
       val stubPkgNamesToInstall = reqs.mapTo(mutableSetOf()) { it.name }
 
-      val installationListener = object : PyPackageManagerUI.Listener {
+      val installationListener = object : RunningPackagingTasksListener(module) {
         override fun started() {
-          project.getService(PyStubPackagesInstallingStatus::class.java).markAsInstalling(stubPkgNamesToInstall)
+          project.service<PyStubPackagesInstallingStatus>().markAsInstalling(stubPkgNamesToInstall)
         }
 
-        override fun finished(exceptions: MutableList<ExecutionException>?) {
-          val status = project.getService(PyStubPackagesInstallingStatus::class.java)
+        override fun finished(exceptions: List<ExecutionException>) {
+          val status = project.service<PyStubPackagesInstallingStatus>()
 
           val stubPkgsToUninstall = PyStubPackagesCompatibilityInspection
             .findIncompatibleRuntimeToStubPackages(sdk) { it.name in stubPkgNamesToInstall }
@@ -312,7 +319,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       }
 
       val name = PyBundle.message("code.insight.stub.packages.install.requirements.fix.name", reqs.size)
-      return PyInstallRequirementsFix(name, module, sdk, reqs, args)
+      return PyInstallRequirementsFix(name, module, sdk, reqs, args, installationListener)
     }
 
     private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, packageManager: PyPackageManager): LocalQuickFix {
