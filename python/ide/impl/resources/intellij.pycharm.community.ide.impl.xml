@@ -58,7 +58,7 @@
                        weight="1000"
                        bundle="messages.PyBundle"
                        displayNameKey="settings.python.group.title"
-                       descriptionKey="settings.python.group.title"/>
+                       descriptionKey="settings.python.group.description"/>
 
     <projectConfigurable groupId="python.group.settings"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
