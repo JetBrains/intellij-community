@@ -124,7 +124,7 @@ internal val moduleWithForm: Set<String> = setOf(
   "intellij.appcode",
   "intellij.ruby.coverage",
   "intellij.ruby.docker",
-  "intellij.profiler.ruby",
+  "intellij.ruby.profiler",
   "intellij.ruby.cucumber",
   "intellij.ruby.cucumber.java",
   "intellij.diagram.java",
