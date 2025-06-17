@@ -118,9 +118,7 @@ class UiPluginManager {
   }
 
   fun setPluginStatus(sessionId: String, pluginIds: List<PluginId>, enable: Boolean) {
-    service<FrontendRpcCoroutineContext>().coroutineScope.launch {
-      getController().setPluginStatus(sessionId, pluginIds, enable)
-    }
+    getController().setPluginStatus(sessionId, pluginIds, enable)
   }
 
   fun applySession(sessionId: String, parent: JComponent? = null, project: Project?): ApplyPluginsStateResult {
