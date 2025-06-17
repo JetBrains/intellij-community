@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.coroutines.runBlocking
+import okio.Path.Companion.toPath
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
@@ -71,7 +72,7 @@ object BuildDependenciesJps {
         val fileUrl = "file://\$MAVEN_REPOSITORY\$/${relativePath}"
         val remoteUrl = mavenRepositoryUrl.trimEnd('/') + "/${relativePath}"
 
-        val localMavenFile = getLocalArtifactRepositoryRoot().resolve(relativePath)
+        val localMavenFile = Path.of(getMavenRepositoryPath()).resolve(relativePath)
 
         val file = when {
           Files.isRegularFile(localMavenFile) && Files.size(localMavenFile) > 0 -> localMavenFile
@@ -184,10 +185,5 @@ object BuildDependenciesJps {
   }
   catch (t: Throwable) {
     throw IllegalStateException("Unable to find module library '$libraryName' in '$libraryXml'", t)
-  }
-
-  fun getLocalArtifactRepositoryRoot(): Path {
-    val root = System.getProperty("user.home", null) ?: error("'user.home' system property is not found")
-    return Path.of(root, ".m2/repository")
   }
 }

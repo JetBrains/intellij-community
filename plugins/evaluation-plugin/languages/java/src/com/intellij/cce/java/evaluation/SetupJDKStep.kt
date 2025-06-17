@@ -29,6 +29,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.GradleWarmupConfigurator
@@ -155,7 +156,7 @@ private fun forceUseProjectJdkForImporter(project: Project, projectDir: VirtualF
     }
     JvmBuildSystem.JpsIntellij -> {
       val projectHome = projectDir.path
-      val m2Repo = Paths.get(SystemProperties.getUserHome(), ".m2/repository").invariantSeparatorsPathString
+      val m2Repo = Paths.get(getMavenRepositoryPath()).invariantSeparatorsPathString
       val jpsProject = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf(PathMacrosImpl.MAVEN_REPOSITORY to m2Repo),
                                                                          true)
       val outPath = Path.of(PathUtil.getJarPathForClass(PathUtil::class.java)).parent.parent

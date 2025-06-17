@@ -34,6 +34,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.jps.model.serialization.JpsMavenSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,6 +134,8 @@ public final class VfsRootAccess {
     Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
+    File globalMavenSettings = JpsMavenSettings.getGlobalMavenSettingsXml();
+    if (globalMavenSettings != null) allowed.add(globalMavenSettings.getAbsolutePath());
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
     // The following is to avoid errors in tests like "File accessed outside allowed roots: file://C:/Program Files/idea/lib/idea.jar"

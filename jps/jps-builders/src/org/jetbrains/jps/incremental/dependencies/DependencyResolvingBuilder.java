@@ -68,6 +68,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
+import static org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath;
 
 /**
  * Downloads missing Maven repository libraries on which a module depends. IDE should download them automatically when the project is opened,
@@ -78,7 +79,6 @@ import java.util.zip.ZipFile;
 public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
-  private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
 
   private static final Key<Pair<ArtifactRepositoryManager, Map<String, ArtifactRepositoryManager>>> MANAGERS_KEY = GlobalContextKey.create("_artifact_repository_manager_"); // pair[unnamedManager: {namedManagers}]
 
@@ -842,8 +842,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     if (localRepoPath != null) {
       return new File(localRepoPath);
     }
-    final String root = System.getProperty("user.home", null);
-    return root != null ? new File(root, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
+    return new File(getMavenRepositoryPath());
   }
 
   private static @NotNull @Nls String getBuilderName() {
