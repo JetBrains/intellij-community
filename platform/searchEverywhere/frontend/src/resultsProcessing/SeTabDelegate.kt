@@ -81,6 +81,7 @@ class SeTabDelegate(
     params: SeParams,
     initEvent: AnActionEvent,
     isAllTab: Boolean,
+    disabledProviders: List<SeProviderId>? = null
   ): Boolean {
     if (project == null) return false
 
@@ -90,7 +91,7 @@ class SeTabDelegate(
     return SeRemoteApi.getInstance().openInFindToolWindow(project.projectId(),
                                                           sessionRef,
                                                           dataContextId,
-                                                          providerIds,
+                                                          providers.getValue().getProviderIds(disabledProviders ?: emptyList()),
                                                           params,
                                                           isAllTab)
   }
@@ -162,6 +163,15 @@ class SeTabDelegate(
       return localProviders[itemData.providerId]?.itemSelected(itemData, modifiers, searchText) ?: run {
         frontendProvidersFacade?.itemSelected(itemData, modifiers, searchText) ?: false
       }
+    }
+
+    fun getProviderIds(
+      disabledProviders: List<SeProviderId>,
+    ): List<SeProviderId> {
+      val localProviders = localProviders.filterKeys { !disabledProviders.contains(it) }.keys
+      val frontedProviders = frontendProvidersFacade?.providerIds?.filter { !disabledProviders.contains(it) }
+                             ?: emptyList()
+      return localProviders.toList() + frontedProviders
     }
   }
 
