@@ -30,10 +30,6 @@ public class TokenizerBase<T extends PsiElement> extends Tokenizer<T> {
       return;
     }
 
-    consumeToken(element, consumer, mySplitter);
-  }
-
-  public void consumeToken(@NotNull T element, @NotNull TokenConsumer consumer, @NotNull Splitter splitter) {
-    consumer.consumeToken(element, splitter);
+    consumer.consumeToken(element, mySplitter);
   }
 }

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.properties.spellchecker;
+package com.intellij.lang.properties.spellchecker.tokenizer;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.lang.properties.psi.Property;
@@ -10,7 +10,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.PropertiesSplitter;
-import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +19,7 @@ final class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy implem
     ExtensionPointName.create("com.intellij.properties.spellcheckerMnemonicsTokenizer");
 
   private final Tokenizer<PropertyValueImpl> myPropertyValueTokenizer = new PropertyValueTokenizer();
-  private final Tokenizer<PropertyKeyImpl> myPropertyTokenizer = new PropertyKeyTokenizer();
+  private final Tokenizer<PropertyKeyImpl> myPropertyTokenizer = TokenizerBase.create(PropertiesSplitter.getInstance());
 
   @Override
   public @NotNull Tokenizer<?> getTokenizer(PsiElement element) {
@@ -37,17 +36,6 @@ final class PropertiesSpellcheckingStrategy extends SpellcheckingStrategy implem
       return EMPTY_TOKENIZER;
     }
     return super.getTokenizer(element);
-  }
-
-  private static class PropertyKeyTokenizer extends TokenizerBase<PropertyKeyImpl> {
-    private PropertyKeyTokenizer() {
-      super(PropertiesSplitter.getInstance());
-    }
-
-    @Override
-    public void consumeToken(@NotNull PropertyKeyImpl element, @NotNull TokenConsumer consumer, @NotNull Splitter splitter) {
-      consumer.consumeToken(element, true, splitter);
-    }
   }
 
   private static class PropertyValueTokenizer extends EscapeSequenceTokenizer<PropertyValueImpl> {

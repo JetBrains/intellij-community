@@ -6,10 +6,16 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.currentThreadCoroutineScope
+import com.intellij.openapi.progress.withCurrentThreadCoroutineScopeBlocking
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -20,13 +26,19 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.startOffset
+import com.intellij.refactoring.rename.PsiElementRenameHandler
+import com.intellij.spellchecker.handler.SpellcheckingElementHandler
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 internal class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) : DefaultIntentionActionWithChoice, LazySuggestions(typo) {
   private val pointer = SmartPointerManager.getInstance(element.project).createSmartPsiElementPointer(element, element.containingFile)
 
   companion object {
+    private val EP_NAME = ExtensionPointName.create<SpellcheckingElementHandler>("com.intellij.spellchecker.renamer")
+
     @JvmStatic
     val fixName: String by lazy {
       SpellCheckerBundle.message("change.to.title")
@@ -60,12 +72,41 @@ internal class ChangeTo(typo: String, element: PsiElement, private val range: Te
 
     override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
       val suggestion = suggestion ?: return
-
       val document = psiFile.viewProvider.document
       val myRange = getRange(document) ?: return
 
+      pointer.element?.let { element ->
+        getElementHandler(element)?.let { handler ->
+          val typo = document.text.substring(range.startOffset, range.endOffset)
+          val value = element.text.replace(typo, suggestion)
+
+          handler.getNamedElement(element)?.let { namedElement ->
+            runOnEdt {
+              if (namedElement.isValid) {
+                PsiElementRenameHandler.rename(namedElement, project, namedElement, editor, value)
+              }
+            }
+            return@applyFix
+          }
+        }
+      }
+
       removeHighlightersWithExactRange(document, project, myRange)
       document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
+    }
+
+    private fun getElementHandler(element: PsiElement): SpellcheckingElementHandler? {
+      return EP_NAME.extensionList.asSequence().filter { it.isEligibleForRenaming(element) }.firstOrNull()
+    }
+
+    fun runOnEdt(runnable: Runnable) {
+      withCurrentThreadCoroutineScopeBlocking {
+        currentThreadCoroutineScope().launch(Dispatchers.EDT) {
+          writeIntentReadAction {
+            runnable.run()
+          }
+        }
+      }
     }
 
     private fun getRange(document: Document): TextRange? {
@@ -79,10 +120,23 @@ internal class ChangeTo(typo: String, element: PsiElement, private val range: Te
     }
 
     override fun getFileModifierForPreview(target: PsiFile): FileModifier {
-      return this
+      return ForPreview(index)
     }
 
     override fun startInWriteAction(): Boolean = true
+
+    private inner class ForPreview(
+      index: Int,
+    ) : ChangeToVariantAction(index = index), IntentionPreviewInfo {
+      override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+        val suggestion = suggestion ?: return
+        val document = psiFile.viewProvider.document
+        val myRange = getRange(document) ?: return
+
+        removeHighlightersWithExactRange(document, project, myRange)
+        document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
+      }
+    }
   }
 
 
