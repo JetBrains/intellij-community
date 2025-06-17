@@ -2,19 +2,20 @@
 package com.jetbrains.python.codeInsight.typing
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.CatchingConsumer
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.RepoPackage
 import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.jetbrains.python.packaging.PyPackage
+import com.jetbrains.python.packaging.common.PythonPackage
 import java.util.*
 import java.util.function.BiConsumer
 
 
 fun loadStubPackagesForSources(sourcesToLoad: Set<String>,
                                sourceToPackage: Map<String, String>,
-                               installedPackages: List<PyPackage>,
+                               installedPackages: List<PythonPackage>,
                                availablePackages: List<RepoPackage>,
                                packageManagementService: PackageManagementService,
                                sdk: Sdk) {
@@ -27,15 +28,15 @@ fun loadStubPackagesForSources(sourcesToLoad: Set<String>,
     sourceToStubPackagesAvailableToInstall,
     packageManagementService,
     BiConsumer { source, stubPackagesForSource ->
-      ApplicationManager.getApplication().getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk).put(source, stubPackagesForSource)
+      ApplicationManager.getApplication().service<PyStubPackagesAdvertiserCache>().forSdk(sdk).put(source, stubPackagesForSource)
     }
   )
 }
 
 private fun sourceToInstalledRuntimeAndStubPackages(sourcesToLoad: Set<String>,
                                                     sourceToPackage: Map<String, String>,
-                                                    installedPackages: List<PyPackage>): Map<String, List<Pair<PyPackage, PyPackage?>>> {
-  val result = mutableMapOf<String, List<Pair<PyPackage, PyPackage?>>>()
+                                                    installedPackages: List<PythonPackage>): Map<String, List<Pair<PythonPackage, PythonPackage?>>> {
+  val result = mutableMapOf<String, List<Pair<PythonPackage, PythonPackage?>>>()
 
   for (source in sourcesToLoad) {
     val pkgName = sourceToPackage[source] ?: continue
@@ -45,7 +46,7 @@ private fun sourceToInstalledRuntimeAndStubPackages(sourcesToLoad: Set<String>,
   return result
 }
 
-private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndStubPkgs: Map<String, List<Pair<PyPackage, PyPackage?>>>,
+private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndStubPkgs: Map<String, List<Pair<PythonPackage, PythonPackage?>>>,
                                                    availablePackages: List<RepoPackage>): Map<String, Set<RepoPackage>> {
   if (sourceToInstalledRuntimeAndStubPkgs.isEmpty()) return emptyMap()
 
@@ -83,9 +84,9 @@ private fun loadRequirementsAndExtraArgs(sourceToStubPackagesAvailableToInstall:
   }
 }
 
-private fun installedRuntimeAndStubPackages(pkgName: String, installedPackages: List<PyPackage>): Pair<PyPackage, PyPackage?>? {
-  var runtime: PyPackage? = null
-  var stub: PyPackage? = null
+private fun installedRuntimeAndStubPackages(pkgName: String, installedPackages: List<PythonPackage>): Pair<PythonPackage, PythonPackage?>? {
+  var runtime: PythonPackage? = null
+  var stub: PythonPackage? = null
   val stubPkgName = "$pkgName$STUBS_SUFFIX"
   val typesPkgName = "$TYPES_PREFIX$pkgName"
   val typesSuffixPkgName = "$pkgName$TYPES_SUFFIX"
