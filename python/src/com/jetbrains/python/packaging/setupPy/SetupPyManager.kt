@@ -30,7 +30,9 @@ class SetupPyManager private constructor(project: Project, val sdk: Sdk) : Pytho
 
   fun getRequirementsPsiFile(): PyFile? {
     val file = getDependenciesFile() ?: return null
-    return PsiManager.getInstance(project).findFile(file) as? PyFile
+    return runReadAction {
+      PsiManager.getInstance(project).findFile(file) as? PyFile
+    }
   }
 
   override fun getModificationTracker(): FilesModificationTrackerBase {
