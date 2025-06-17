@@ -38,6 +38,7 @@
   <dependencies>
     <plugin id="com.intellij.completion.ml.ranking"/>
     <plugin id="com.intellij.stats.completion"/>
+    <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.platform.warmup"/>
   </dependencies>
