@@ -32,9 +32,12 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Dispatchers;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -77,6 +80,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   private Runnable myInvalidFixCallback;
   private Consumer<PluginUiModel> myCancelInstallCallback;
+  private CoroutineScope myCoroutineScope;
 
   private final Map<PluginId, Boolean> myRequiredPluginsForProject = new HashMap<>();
   private final Set<PluginId> myUninstalled = new HashSet<>();
@@ -99,6 +103,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   @ApiStatus.Internal
   public void setInstallSource(@Nullable FUSEventSource source) {
     this.myInstallSource = source;
+  }
+
+  public void setCoroutineScope(CoroutineScope scope) {
+    myCoroutineScope = scope;
   }
 
   private static @Nullable StatusBarEx getStatusBar(@Nullable Window frame) {
@@ -437,7 +445,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.getDescriptorForActions() == descriptor) {
-        panel.showProgress();
+        panel.showInstallProgress();
       }
     }
   }
@@ -575,7 +583,9 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   static void removeProgress(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicatorEx indicator) {
-    myInstallingInfos.get(descriptor.getPluginId()).indicator.removeStateDelegate(indicator);
+    InstallPluginInfo info = myInstallingInfos.get(descriptor.getPluginId());
+    if(info == null) return;
+    info.indicator.removeStateDelegate(indicator);
   }
 
   public void addEnabledGroup(@NotNull PluginsGroup group) {
@@ -946,22 +956,32 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   @ApiStatus.Internal
   public void uninstallAndUpdateUi(@NotNull PluginUiModel descriptor, UiPluginManagerController controller) {
-    boolean needRestartForUninstall = performUninstall(descriptor, controller);
-    needRestart |= descriptor.isEnabled() && needRestartForUninstall;
-    if (myPluginManagerCustomizer != null) {
-      myPluginManagerCustomizer.updateAfterModification(() -> {
-        updateUiAfterUninstall(descriptor, needRestartForUninstall);
+    CoroutineScope scope = CoroutineScopeKt.childScope(myCoroutineScope, getClass().getName(), Dispatchers.getIO(), true);
+    myTopController.showProgress(true);
+    for (PluginDetailsPageComponent panel : myDetailPanels) {
+      if (panel.getDescriptorForActions() == descriptor) {
+        panel.showUninstallProgress(scope);
+      }
+    }
+    PluginModelAsyncOperationsExecutor.INSTANCE
+      .performUninstall(scope, descriptor, sessionId.toString(), controller, needRestartForUninstall -> {
+        needRestart |= descriptor.isEnabled() && needRestartForUninstall;
+        if (myPluginManagerCustomizer != null) {
+          myPluginManagerCustomizer.updateAfterModification(() -> {
+            updateUiAfterUninstall(descriptor, needRestartForUninstall);
+            return null;
+          });
+        }
+        else {
+          updateUiAfterUninstall(descriptor, needRestartForUninstall);
+        }
         return null;
       });
-    }
-    else {
-      updateUiAfterUninstall(descriptor, needRestartForUninstall);
-    }
   }
 
   private void updateUiAfterUninstall(@NotNull PluginUiModel descriptor, boolean needRestartForUninstall) {
     PluginId pluginId = descriptor.getPluginId();
-
+    myTopController.showProgress(false);
     List<ListPluginComponent> listComponents = myInstalledPluginComponentMap.get(pluginId);
     if (listComponents != null) {
       for (ListPluginComponent listComponent : listComponents) {
@@ -991,6 +1011,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
     for (PluginDetailsPageComponent panel : myDetailPanels) {
       if (panel.getDescriptorForActions() == descriptor) {
+        panel.hideProgress();
         panel.updateAfterUninstall(needRestartForUninstall);
       }
     }
