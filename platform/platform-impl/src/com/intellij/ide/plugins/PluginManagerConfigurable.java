@@ -171,6 +171,7 @@ public final class PluginManagerConfigurable
       ApplicationManager.getApplication().getService(PluginManagerCoroutineScopeHolder.class).getCoroutineScope();
     CoroutineScope childScope =
       com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope(parentScope, getClass().getName(), Dispatchers.getIO(), true);
+    myPluginModelFacade.getModel().setCoroutineScope(childScope);
     myCoroutineScope = childScope;
   }
 
