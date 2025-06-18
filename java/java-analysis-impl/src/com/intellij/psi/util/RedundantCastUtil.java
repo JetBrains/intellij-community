@@ -320,6 +320,7 @@ public final class RedundantCastUtil {
 
           JavaResolveResult newResult = newExpression.advancedResolve(false);
           if (!newResult.isValidResult() || !oldMember.equals(newResult.getElement())) return false;
+          if (!Objects.equals(newExpression.getType(), refExpression.getType())) return false;
           if (parent instanceof PsiReferenceExpression parentRef && !newResult.getSubstitutor().equals(resolveResult.getSubstitutor())) {
             return isCastInReferenceQualifierRedundant(parentRef);
           }
