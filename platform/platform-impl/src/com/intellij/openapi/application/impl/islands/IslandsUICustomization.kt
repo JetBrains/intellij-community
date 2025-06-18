@@ -205,6 +205,8 @@ internal class IslandsUICustomization : InternalUICustomization() {
       return object : OnePixelDivider(isVertical, splitter) {
         override fun paint(g: Graphics) {
         }
+      }.also {
+        it.putClientProperty("DividerWidth", 0)
       }
     }
     return null
