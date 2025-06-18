@@ -10,6 +10,7 @@ import org.joni.Region
 import org.joni.exception.JOniException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import kotlin.time.Duration.Companion.milliseconds
 
 class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
   override fun match(string: TextMateString, checkCancelledCallback: Runnable?): MatchData {
@@ -28,25 +29,37 @@ class JoniRegexFacade(private val myRegex: Regex) : RegexFacade {
 
     checkCancelledCallback?.run()
 
-    val matcher = myRegex.matcher(string.bytes)
+    val matcher = myRegex.matcher(string.bytes, 0, string.bytes.size, MATCHING_TIMEOUT)
     try {
       val matchIndex = matcher.search(gosOffset, byteOffset, string.bytes.size, options)
-      val matchData = if (matchIndex > -1) matchData(matcher.eagerRegion) else NOT_MATCHED
-      checkMatched(matchData, string)
-      return matchData
+      return when (matchIndex) {
+        org.joni.Matcher.FAILED -> {
+          NOT_MATCHED
+        }
+        org.joni.Matcher.INTERRUPTED -> {
+          LOGGER.info("Matching regex was interrupted on string: {}", string.bytes.decodeToString())
+          NOT_MATCHED
+        }
+        else -> {
+          matchData(matcher.eagerRegion).also {
+            checkMatched(it, string)
+          }
+        }
+      }
     }
     catch (e: JOniException) {
-      LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", string, e.javaClass.getName(), e.message)
+      LOGGER.info("Failed to match textmate regex '{}' with {}: {}", string.bytes.decodeToString(), e.javaClass.getName(), e.message)
       return NOT_MATCHED
     }
     catch (e: ArrayIndexOutOfBoundsException) {
-      LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", string, e.javaClass.getName(), e.message)
+      LOGGER.info("Failed to match textmate regex '{}' with {}: {}", string.bytes.decodeToString(), e.javaClass.getName(), e.message)
       return NOT_MATCHED
     }
   }
 
 
   companion object {
+    private val MATCHING_TIMEOUT = 300.milliseconds.inWholeNanoseconds
     private val LOGGER: Logger = LoggerFactory.getLogger(JoniRegexFacade::class.java)
 
     private fun checkMatched(match: MatchData, string: TextMateString) {
