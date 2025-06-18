@@ -27,6 +27,10 @@ data class EvalMetric(
       fun value(t: T, props: DataProps): Double = if (data.problemIndicators.any { it.check(props, t) }) 0.0 else 1.0
       return EvalMetric(1.0) { DataMetric(data, ::value, name) }
     }
+
+    fun <T> fromIndicators(data: EvalDataDescription<*, T>): EvalMetric {
+      return fromIndicators(data.name, data)
+    }
   }
 }
 

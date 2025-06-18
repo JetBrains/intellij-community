@@ -29,7 +29,7 @@ internal class JavaTestRunnerForMaven : TestRunner {
   override fun runTests(request: TestRunRequest): TestRunResult {
     LOG.info("Running tests: ${request.tests.joinToString()}")
     if (request.tests.isEmpty()) {
-      return TestRunResult(0, emptyList(), emptyList(), true, "")
+      return TestRunResult(0, emptyList(), emptyList(), true, true, "")
     }
 
     val project = request.project
@@ -94,8 +94,9 @@ internal class JavaTestRunnerForMaven : TestRunner {
 
     val output = sb.toString()
     val compilationSuccessful = MavenOutputParser.compilationSuccessful(output)
+    val projectIsResolvable = MavenOutputParser.checkIfProjectIsResolvable(output)
     val (passed, failed) = MavenOutputParser.parse(output)
-    return TestRunResult(exitCode, passed, failed, compilationSuccessful, output)
+    return TestRunResult(exitCode, passed, failed, compilationSuccessful, projectIsResolvable, output)
   }
 }
 
@@ -118,6 +119,9 @@ object MavenOutputParser {
   }
 
   fun compilationSuccessful(text: String): Boolean = !text.contains("COMPILATION ERROR")
+
+  fun checkIfProjectIsResolvable(text: String): Boolean =
+    !text.contains("[ERROR] Some problems were encountered while processing the POMs")
 
   private fun trimTestLinePrefix(source: String): String {
     var res = source

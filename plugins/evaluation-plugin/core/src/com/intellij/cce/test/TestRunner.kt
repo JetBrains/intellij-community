@@ -11,6 +11,7 @@ class TestRunResult(
   val exitCode: Int, val passed: List<String>,
   val failed: List<String>,
   val compilationSuccessful: Boolean,
+  val projectIsResolvable: Boolean,
   val output: String,
 )
 
