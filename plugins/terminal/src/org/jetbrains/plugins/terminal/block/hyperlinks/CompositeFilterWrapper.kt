@@ -59,8 +59,10 @@ internal class CompositeFilterWrapper(private val project: Project, private val 
       it.setForceUseAllFilters(true)
     }
     cachedFilter = compositeFilter
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      fireFiltersUpdated()
+    if (areFiltersInUse) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        fireFiltersUpdated()
+      }
     }
     compositeFilter
   }
