@@ -49,7 +49,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.macro" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.macro" />
     <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />

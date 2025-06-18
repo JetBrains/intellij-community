@@ -21,6 +21,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/lvcs-api:lvcs",
+    "//platform/macro",
     "//platform/projectModel-api:projectModel",
     "//platform/projectModel-impl",
     "//platform/platform-impl:ide-impl",

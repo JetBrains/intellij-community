@@ -67,7 +67,6 @@ jvm_library(
     "//platform/project/shared:project",
     "//platform/platform-impl/rpc",
   ],
-  exports = ["//platform/macro"],
   runtime_deps = [":execution-impl_resources"]
 )
 ### auto-generated section `build intellij.platform.execution.impl` end

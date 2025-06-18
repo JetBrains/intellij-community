@@ -24,6 +24,7 @@ jvm_library(
     "//jps/model-serialization",
     "//platform/lang-core",
     "//platform/lvcs-api:lvcs",
+    "//platform/macro",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
     "//platform/structure-view-impl:structureView-impl",

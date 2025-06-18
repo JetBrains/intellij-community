@@ -35,6 +35,7 @@ jvm_library(
     "//platform/lang-api:lang",
     "//java/java-impl:impl",
     "//platform/lang-core",
+    "//platform/macro",
     "//platform/projectModel-api:projectModel",
     "//platform/platform-impl/concurrency",
     "//platform/refactoring",
