@@ -7857,6 +7857,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("comparingWithObject.kt")
+            public void testComparingWithObject() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/comparingWithObject.kt");
+            }
+
             @TestMetadata("ifElseBranches.kt")
             public void testIfElseBranches() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");

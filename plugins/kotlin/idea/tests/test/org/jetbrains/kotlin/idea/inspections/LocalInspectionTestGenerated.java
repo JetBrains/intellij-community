@@ -1011,6 +1011,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("comparingWithObject.kt")
+            public void testComparingWithObject() throws Exception {
+                runTest("testData/inspectionsLocal/branched/introduceWhenSubject/comparingWithObject.kt");
+            }
+
             @TestMetadata("ifElseBranches.kt")
             public void testIfElseBranches() throws Exception {
                 runTest("testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
