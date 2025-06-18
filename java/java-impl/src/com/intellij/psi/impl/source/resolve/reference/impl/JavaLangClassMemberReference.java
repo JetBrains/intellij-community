@@ -185,9 +185,11 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
 
   private static int matchMethodArguments(PsiMethod method, List<ReflectiveType> argumentTypes) {
     List<PsiType> allTypes = ContainerUtil.map(method.getParameterList().getParameters(), p -> p.getType());
-    PsiType enclosingType = enclosingArgumentType(method);
-    if (enclosingType != null) {
-      allTypes = ContainerUtil.prepend(allTypes, enclosingType);
+    if (method.isConstructor()) {
+      PsiType enclosingType = enclosingArgumentType(method);
+      if (enclosingType != null) {
+        allTypes = ContainerUtil.prepend(allTypes, enclosingType);
+      }
     }
 
     if (allTypes.size() != argumentTypes.size()) {
