@@ -26,6 +26,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class PsiClassReferenceType extends PsiClassType.Stub {
   private final ClassReferencePointer myReference;
+  private TypeNullability myNullability = null;
 
   public PsiClassReferenceType(@NotNull PsiJavaCodeReferenceElement reference, LanguageLevel level) {
     this(reference, level, collectAnnotations(reference));
@@ -109,7 +110,18 @@ public class PsiClassReferenceType extends PsiClassType.Stub {
 
   @Override
   public @NotNull TypeNullability getNullability() {
-    return JavaTypeNullabilityUtil.getTypeNullability(this);
+    TypeNullability nullability = myNullability;
+    if (nullability == null) {
+      myNullability = nullability = JavaTypeNullabilityUtil.getTypeNullability(this);
+    }
+    return nullability;
+  }
+
+  @Override
+  public @NotNull PsiClassType annotate(@NotNull TypeAnnotationProvider provider) {
+    PsiClassReferenceType annotated = (PsiClassReferenceType)super.annotate(provider);
+    annotated.myNullability = null;
+    return annotated;
   }
 
   @Override
