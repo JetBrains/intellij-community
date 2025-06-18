@@ -208,7 +208,7 @@ class DeclarativeHintsProviderSettingsModel(
     for (option in options) {
       option.isEnabled = (settings.isOptionEnabled(option.description.requireOptionId(), id) ?: option.description.enabledByDefault)
     }
-    settings.setProviderEnabled(providerDescription.requiredProviderId(), isProviderEnabledInSettings())
+    isEnabled = isProviderEnabledInSettings()
     customSettingsProvider.persistSettings(project, savedSettings, language)
   }
 
