@@ -1,45 +1,65 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.ArgumentElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.*
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.*
 import java.util.*
+import kotlin.text.contains
+import kotlin.text.replace
 
-abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : GradleScriptBuilder {
+internal class GradleScriptBuilderImpl(
+  override val gradleDsl: GradleDsl,
+) : GradleScriptBuilder {
+
   private val lines = ArrayList<String>()
 
   override fun generate(root: BlockElement): String {
     lines.clear()
-    root.statements.forEach { add(it, indent, true) }
+    root.statements.forEach { add(it, 0, true) }
     val joiner = StringJoiner("\n")
     lines.forEach(joiner::add)
     return joiner.toString()
   }
 
-  protected open fun addArgumentElement(element: ArgumentElement, indent: Int, isNewLine: Boolean) {
+  private fun addArgumentElement(element: ArgumentElement, indent: Int, isNewLine: Boolean) {
+    val argumentNameSeparator = when (gradleDsl) {
+      GradleDsl.GROOVY -> ": "
+      GradleDsl.KOTLIN -> " = "
+    }
     if (element.name != null) {
       add(element.name, indent, isNewLine)
-      add(" = ", indent, false)
+      add(argumentNameSeparator, indent, false)
     }
     add(element.value, indent, false)
   }
 
-  protected abstract fun addPropertyElement(element: PropertyElement, indent: Int, isNewLine: Boolean)
+  private fun addPropertyElement(element: PropertyElement, indent: Int, isNewLine: Boolean) {
+    val propertyDefinition = when (gradleDsl) {
+      GradleDsl.GROOVY -> "def"
+      GradleDsl.KOTLIN -> "var"
+    }
+    add(propertyDefinition, indent, isNewLine)
+    add(" ", indent, false)
+    add(element.name, indent, false)
+    add(" = ", indent, false)
+    add(element.value, indent, false)
+  }
 
-  protected open fun addAssignElement(element: AssignElement, indent: Int, isNewLine: Boolean) {
+  private fun addAssignElement(element: AssignElement, indent: Int, isNewLine: Boolean) {
     add(element.left, indent, isNewLine)
     add(" = ", indent, false)
     add(element.right, indent, false)
   }
 
-  protected open fun addPlusAssignElement(element: PlusAssignElement, indent: Int, isNewLine: Boolean) {
+  private fun addPlusAssignElement(element: PlusAssignElement, indent: Int, isNewLine: Boolean) {
     add(element.name, indent, isNewLine)
     add(" += ", indent, false)
     add(element.value, indent, false)
   }
 
-  protected open fun addBlockElement(element: BlockElement, indent: Int, isNewLine: Boolean) {
+  private fun addBlockElement(element: BlockElement, indent: Int, isNewLine: Boolean) {
     add("{", indent, isNewLine)
     for (statement in element.statements) {
       add(statement, indent + 1, true)
@@ -47,7 +67,7 @@ abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : Gradle
     add("}", indent, true)
   }
 
-  protected open fun addCallElement(element: CallElement, indent: Int, isNewLine: Boolean) {
+  private fun addCallElement(element: CallElement, indent: Int, isNewLine: Boolean) {
     add(element.name, indent, isNewLine)
     if (hasTrailingBlock(element.arguments)) {
       if (element.arguments.size > 1) {
@@ -58,6 +78,10 @@ abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : Gradle
       add(" ", indent, false)
       add(element.arguments.last().value, indent, false)
     }
+    else if (gradleDsl == GradleDsl.GROOVY && isNewLine && element.arguments.isNotEmpty()) {
+      add(" ", indent, false)
+      add(element.arguments, indent)
+    }
     else {
       add("(", indent, false)
       add(element.arguments, indent)
@@ -65,13 +89,13 @@ abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : Gradle
     }
   }
 
-  protected open fun addCodeElement(element: CodeElement, indent: Int, isNewLine: Boolean) {
+  private fun addCodeElement(element: CodeElement, indent: Int, isNewLine: Boolean) {
     for (line in element.text) {
       add(line, indent, isNewLine)
     }
   }
 
-  protected open fun addInfixCallElement(element: InfixCall, indent: Int, isNewLine: Boolean) {
+  private fun addInfixCallElement(element: InfixCall, indent: Int, isNewLine: Boolean) {
     add(element.left, indent, isNewLine)
     add(" ", indent, false)
     add(element.name, indent, false)
@@ -79,23 +103,49 @@ abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : Gradle
     add(element.right, indent, false)
   }
 
-  protected open fun addIntElement(element: IntElement, indent: Int, isNewLine: Boolean) {
+  private fun addIntElement(element: IntElement, indent: Int, isNewLine: Boolean) {
     add(element.value.toString(), indent, isNewLine)
   }
 
-  protected open fun addBooleanElement(element: BooleanElement, indent: Int, isNewLine: Boolean) {
+  private fun addBooleanElement(element: BooleanElement, indent: Int, isNewLine: Boolean) {
     add(element.value.toString(), indent, isNewLine)
   }
 
-  protected abstract fun addStringElement(element: StringElement, indent: Int, isNewLine: Boolean)
+  private fun addStringElement(element: StringElement, indent: Int, isNewLine: Boolean) {
+    val isUseDoubleQuotes = when (gradleDsl) {
+      GradleDsl.GROOVY -> '$' in element.value
+      GradleDsl.KOTLIN -> true
+    }
+    val escapedString = element.value
+      .replace("\\", "\\\\")
+      .replace("\n", "\\n")
+    val string = when (isUseDoubleQuotes) {
+      true -> "\"" + escapedString.replace("\"", "\\\"") + "\""
+      else -> "\'" + escapedString.replace("\'", "\\\'") + "\'"
+    }
+    add(string, indent, isNewLine)
+  }
 
-  protected abstract fun addListElement(element: ListElement, indent: Int, isNewLine: Boolean)
+  private fun addListElement(element: ListElement, indent: Int, isNewLine: Boolean) {
+    when (gradleDsl) {
+      GradleDsl.GROOVY -> {
+        add("[", indent, isNewLine)
+        add(element.elements, indent)
+        add("]", indent, false)
+      }
+      GradleDsl.KOTLIN -> {
+        add("listOf(", indent, isNewLine)
+        add(element.elements, indent)
+        add(")", indent, false)
+      }
+    }
+  }
 
-  protected open fun addNewLineElement(indent: Int, isNewLine: Boolean) {
+  private fun addNewLineElement(indent: Int, isNewLine: Boolean) {
     add("", indent, isNewLine)
   }
 
-  protected fun add(element: GradleScriptElement, indent: Int, isNewLine: Boolean) {
+  private fun add(element: GradleScriptElement, indent: Int, isNewLine: Boolean) {
     when (element) {
       is ArgumentElement -> addArgumentElement(element, indent, isNewLine)
       is NewLineElement -> addNewLineElement(indent, isNewLine)
@@ -113,7 +163,7 @@ abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : Gradle
     }
   }
 
-  protected fun add(elements: List<GradleScriptElement>, indent: Int) {
+  private fun add(elements: List<GradleScriptElement>, indent: Int) {
     for ((i, argument) in elements.withIndex()) {
       if (i != 0) {
         add(", ", indent, false)
@@ -122,7 +172,7 @@ abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : Gradle
     }
   }
 
-  protected fun add(code: String, indent: Int, isNewLine: Boolean) {
+  private fun add(code: String, indent: Int, isNewLine: Boolean) {
     if (isNewLine || lines.isEmpty()) {
       if (code.isBlank()) {
         lines.add(code)
@@ -136,7 +186,7 @@ abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : Gradle
     }
   }
 
-  protected fun hasTrailingBlock(arguments: List<ArgumentElement>): Boolean {
+  private fun hasTrailingBlock(arguments: List<ArgumentElement>): Boolean {
     val last = arguments.lastOrNull() ?: return false
     return last.value is BlockElement && last.name == null
   }
