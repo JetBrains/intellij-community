@@ -55,7 +55,18 @@ internal abstract class TerminalEventDispatcher(
   private var myRegistered = false
   private var actionsToSkip: List<AnAction> = emptyList()
 
-  private var ignoreNextKeyTypedEvent: Boolean = false
+  /**
+   * A flag to ignore the key typed event if the key pressed event was handled elsewhere.
+   * 
+   * Initialized to `true` because in some cases the very first key event may be a key typed event.
+   * It can only happen if the corresponding key pressed event happened before the terminal
+   * was opened. A typical case is invoking the terminal with Ctrl+Backquote.
+   * 
+   * If the first event is not a key typed event, this flag will be immediately reset to `false`
+   * when handling that event. So the initial value affects only the first event,
+   * and only if it's a key typed event.
+   */
+  private var ignoreNextKeyTypedEvent: Boolean = true
 
   override fun dispatch(e: AWTEvent): Boolean {
     if (e is KeyEvent) {
