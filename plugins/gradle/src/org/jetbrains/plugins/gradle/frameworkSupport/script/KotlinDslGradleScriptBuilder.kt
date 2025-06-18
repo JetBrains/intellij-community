@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.ListElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.StringElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.PropertyElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.ListElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.StringElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.PropertyElement
 
-class KotlinScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
+class KotlinDslGradleScriptBuilder(indent: Int = 0) : AbstractGradleScriptBuilder(indent) {
 
   override fun addListElement(element: ListElement, indent: Int, isNewLine: Boolean) {
     add("listOf(", indent, isNewLine)

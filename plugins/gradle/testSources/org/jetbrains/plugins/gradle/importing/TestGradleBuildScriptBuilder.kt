@@ -4,9 +4,9 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.util.Version
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 import java.io.File
 import java.util.function.Consumer
 import kotlin.apply as applyKt
@@ -20,8 +20,8 @@ open class TestGradleBuildScriptBuilder(
 
   fun withTask(name: String) = withTask(name, null)
   fun withTask(name: String, type: String?) = withTask(name, type) {}
-  fun withTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = withTask(name, null, configure)
-  fun withTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit) =
+  fun withTask(name: String, configure: GradleScriptTreeBuilder.() -> Unit) = withTask(name, null, configure)
+  fun withTask(name: String, type: String?, configure: GradleScriptTreeBuilder.() -> Unit) =
     withPostfix {
       val arguments = listOfNotNull(
         argument(name),

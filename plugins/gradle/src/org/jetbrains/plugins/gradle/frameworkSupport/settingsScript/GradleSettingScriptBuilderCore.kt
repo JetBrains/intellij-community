@@ -3,14 +3,14 @@ package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElementBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 
 @ApiStatus.NonExtendable
 interface GradleSettingScriptBuilderCore<Self : GradleSettingScriptBuilderCore<Self>>
-  : ScriptElementBuilder {
+  : GradleScriptElementBuilder {
 
   val gradleVersion: GradleVersion
 
@@ -24,7 +24,7 @@ interface GradleSettingScriptBuilderCore<Self : GradleSettingScriptBuilderCore<S
 
   fun includeBuild(name: String): Self
 
-  fun pluginManagement(configure: ScriptTreeBuilder.() -> Unit): Self
+  fun pluginManagement(configure: GradleScriptTreeBuilder.() -> Unit): Self
 
   fun enableFeaturePreview(featureName: String): Self
 
@@ -32,9 +32,9 @@ interface GradleSettingScriptBuilderCore<Self : GradleSettingScriptBuilderCore<S
 
   fun addCode(expression: Expression): Self
 
-  fun addCode(configure: ScriptTreeBuilder.() -> Unit): Self
+  fun addCode(configure: GradleScriptTreeBuilder.() -> Unit): Self
 
-  fun withPlugin(configure: ScriptTreeBuilder.() -> Unit): Self
+  fun withPlugin(configure: GradleScriptTreeBuilder.() -> Unit): Self
 
   fun withPlugin(id: String, version: String?): Self
 

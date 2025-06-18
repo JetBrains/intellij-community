@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.frameworkSupport
 
 import org.junit.jupiter.api.Test
 
-class ScriptBuilderTest : ScriptBuilderTestCase() {
+class GradleScriptBuilderTest : GradleScriptBuilderTestCase() {
 
   @Test
   fun `test script properties`() {

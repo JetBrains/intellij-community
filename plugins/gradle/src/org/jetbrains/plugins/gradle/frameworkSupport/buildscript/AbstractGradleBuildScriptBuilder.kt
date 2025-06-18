@@ -5,8 +5,8 @@ import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import kotlin.apply as applyKt
 
@@ -27,7 +27,7 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun addVersion(version: String): Self =
     withPrefix { assign("version", version) }
 
-  override fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): Self =
+  override fun configureTestTask(configure: GradleScriptTreeBuilder.() -> Unit): Self =
     configureTask("test", "Test", configure)
 
   override fun addDependency(scope: String, dependency: String, sourceSet: String?): Self =
@@ -234,7 +234,7 @@ abstract class AbstractGradleBuildScriptBuilder<Self : GradleBuildScriptBuilder<
   override fun project(name: String, configuration: String): Expression =
     call("project", "path" to name, "configuration" to configuration)
 
-  override fun ScriptTreeBuilder.mavenCentral(): ScriptTreeBuilder = applyKt {
+  override fun GradleScriptTreeBuilder.mavenCentral(): GradleScriptTreeBuilder = applyKt {
     val mavenRepositoryUrl = GradleEnvironment.Urls.getMavenRepositoryUrl()
     if (mavenRepositoryUrl != null) {
       // it is possible to configure the mavenCentral repository via closure only since Gradle 5.3

@@ -4,9 +4,9 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder.Companion.tree
 import kotlin.apply as applyKt
 
 @ApiStatus.Internal
@@ -17,7 +17,7 @@ abstract class GroovyDslGradleBuildScriptBuilder<Self : GroovyDslGradleBuildScri
 
   private val PREDEFINED_TASKS = setOf("test", "compileJava", "compileTestJava")
 
-  override fun registerTask(name: String, type: String?, configure: ScriptTreeBuilder.() -> Unit): Self =
+  override fun registerTask(name: String, type: String?, configure: GradleScriptTreeBuilder.() -> Unit): Self =
     withPostfix {
       val arguments = listOfNotNull(
         argument(name),
@@ -32,7 +32,7 @@ abstract class GroovyDslGradleBuildScriptBuilder<Self : GroovyDslGradleBuildScri
       }
     }
 
-  override fun configureTask(name: String, type: String, configure: ScriptTreeBuilder.() -> Unit): Self =
+  override fun configureTask(name: String, type: String, configure: GradleScriptTreeBuilder.() -> Unit): Self =
     withPostfix {
       val block = tree(configure)
       if (!block.isEmpty()) {
@@ -59,20 +59,20 @@ abstract class GroovyDslGradleBuildScriptBuilder<Self : GroovyDslGradleBuildScri
     }
   }
 
-  override fun ScriptTreeBuilder.mavenRepository(url: String): ScriptTreeBuilder = applyKt {
+  override fun GradleScriptTreeBuilder.mavenRepository(url: String): GradleScriptTreeBuilder = applyKt {
     call("maven") {
       assign("url", url)
     }
   }
 
-  override fun ScriptTreeBuilder.mavenLocal(url: String): ScriptTreeBuilder = applyKt {
+  override fun GradleScriptTreeBuilder.mavenLocal(url: String): GradleScriptTreeBuilder = applyKt {
     call("mavenLocal") {
       assign("url", url)
     }
   }
 
   override fun generate(): String {
-    return ScriptBuilder.script(GradleDsl.GROOVY, generateTree())
+    return GradleScriptBuilder.script(GradleDsl.GROOVY, generateTree())
   }
 
   internal class Impl(gradleVersion: GradleVersion) : GroovyDslGradleBuildScriptBuilder<Impl>(gradleVersion) {

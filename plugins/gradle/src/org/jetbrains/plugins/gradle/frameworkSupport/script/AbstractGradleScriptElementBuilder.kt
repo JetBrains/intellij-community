@@ -2,17 +2,17 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.*
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.ArgumentElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder.Companion.tree
 import java.util.function.Consumer
 
 @ApiStatus.NonExtendable
-abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
+abstract class AbstractGradleScriptElementBuilder : GradleScriptElementBuilder {
 
   override fun newLine(): NewLineElement = NewLineElement
-  override fun ScriptElement?.ln(): NewLineElement? = if (this == null || this is BlockElement && isEmpty()) null else newLine()
+  override fun GradleScriptElement?.ln(): NewLineElement? = if (this == null || this is BlockElement && isEmpty()) null else newLine()
 
   override fun int(value: Int): IntElement = IntElement(value)
   override fun boolean(value: Boolean): BooleanElement = BooleanElement(value)
@@ -49,33 +49,33 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
 
   override fun call(name: Expression, arguments: List<ArgumentElement>): CallElement = CallElement(name, arguments)
   override fun call(name: String, arguments: List<ArgumentElement>): CallElement = call(code(name), arguments)
-  override fun call(name: String, arguments: List<ArgumentElement>, configure: ScriptTreeBuilder.() -> Unit): CallElement =
+  override fun call(name: String, arguments: List<ArgumentElement>, configure: GradleScriptTreeBuilder.() -> Unit): CallElement =
     call(name, arguments + argument(configure))
 
   override fun call(name: String): CallElement = call(name, emptyList())
-  override fun call(name: String, configure: Consumer<ScriptTreeBuilder>): CallElement = call(name, configure::accept)
-  override fun call(name: String, configure: ScriptTreeBuilder.() -> Unit): CallElement =
+  override fun call(name: String, configure: Consumer<GradleScriptTreeBuilder>): CallElement = call(name, configure::accept)
+  override fun call(name: String, configure: GradleScriptTreeBuilder.() -> Unit): CallElement =
     call(name, emptyList(), configure)
 
   override fun call(name: String, vararg arguments: ArgumentElement): CallElement = call(name, arguments.toList())
-  override fun call(name: String, vararg arguments: ArgumentElement, configure: ScriptTreeBuilder.() -> Unit): CallElement =
+  override fun call(name: String, vararg arguments: ArgumentElement, configure: GradleScriptTreeBuilder.() -> Unit): CallElement =
     call(name, arguments.toList(), configure)
 
   override fun call(name: String, vararg arguments: Expression): CallElement = call(name, arguments.map(::argument))
-  override fun call(name: String, vararg arguments: Expression, configure: ScriptTreeBuilder.() -> Unit): CallElement =
+  override fun call(name: String, vararg arguments: Expression, configure: GradleScriptTreeBuilder.() -> Unit): CallElement =
     call(name, arguments.map(::argument), configure)
 
   override fun call(name: String, vararg arguments: String): CallElement = call(name, arguments.map(::argument))
-  override fun call(name: String, vararg arguments: String, configure: ScriptTreeBuilder.() -> Unit): CallElement =
+  override fun call(name: String, vararg arguments: String, configure: GradleScriptTreeBuilder.() -> Unit): CallElement =
     call(name, arguments.map(::argument), configure)
 
   override fun call(name: String, vararg arguments: Pair<String, String>): CallElement = call(name, arguments.map(::argument))
-  override fun call(name: String, vararg arguments: Pair<String, String>, configure: ScriptTreeBuilder.() -> Unit): CallElement =
+  override fun call(name: String, vararg arguments: Pair<String, String>, configure: GradleScriptTreeBuilder.() -> Unit): CallElement =
     call(name, arguments.map(::argument), configure)
 
   override fun callIfNotEmpty(name: String, block: BlockElement): CallElement? = if (block.isEmpty()) null else call(name, block)
-  override fun callIfNotEmpty(name: String, builder: ScriptTreeBuilder): CallElement? = callIfNotEmpty(name, builder.generate())
-  override fun callIfNotEmpty(name: String, configure: ScriptTreeBuilder.() -> Unit): CallElement? = callIfNotEmpty(name, tree(configure))
+  override fun callIfNotEmpty(name: String, builder: GradleScriptTreeBuilder): CallElement? = callIfNotEmpty(name, builder.generate())
+  override fun callIfNotEmpty(name: String, configure: GradleScriptTreeBuilder.() -> Unit): CallElement? = callIfNotEmpty(name, tree(configure))
 
   override fun infixCall(left: Expression, name: String, right: Expression): InfixCall = InfixCall(left, name, right)
 
@@ -84,7 +84,7 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
   override fun argument(argument: Pair<String, String>): ArgumentElement = argument(argument.first, argument.second)
   override fun argument(value: Expression): ArgumentElement = argument(null, value)
   override fun argument(value: String): ArgumentElement = argument(null, value)
-  override fun argument(configure: ScriptTreeBuilder.() -> Unit): ArgumentElement = argument(block(configure))
+  override fun argument(configure: GradleScriptTreeBuilder.() -> Unit): ArgumentElement = argument(block(configure))
 
-  override fun block(configure: ScriptTreeBuilder.() -> Unit): BlockElement = tree(configure)
+  override fun block(configure: GradleScriptTreeBuilder.() -> Unit): BlockElement = tree(configure)
 }

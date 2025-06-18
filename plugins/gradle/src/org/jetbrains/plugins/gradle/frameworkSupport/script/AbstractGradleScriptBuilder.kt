@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.*
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.ArgumentElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.*
 import java.util.*
 
-abstract class AbstractScriptBuilder(private val indent: Int = 0) : ScriptBuilder {
+abstract class AbstractGradleScriptBuilder(private val indent: Int = 0) : GradleScriptBuilder {
   private val lines = ArrayList<String>()
 
   override fun generate(root: BlockElement): String {
@@ -95,7 +95,7 @@ abstract class AbstractScriptBuilder(private val indent: Int = 0) : ScriptBuilde
     add("", indent, isNewLine)
   }
 
-  protected fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
+  protected fun add(element: GradleScriptElement, indent: Int, isNewLine: Boolean) {
     when (element) {
       is ArgumentElement -> addArgumentElement(element, indent, isNewLine)
       is NewLineElement -> addNewLineElement(indent, isNewLine)
@@ -113,7 +113,7 @@ abstract class AbstractScriptBuilder(private val indent: Int = 0) : ScriptBuilde
     }
   }
 
-  protected fun add(elements: List<ScriptElement>, indent: Int) {
+  protected fun add(elements: List<GradleScriptElement>, indent: Int) {
     for ((i, argument) in elements.withIndex()) {
       if (i != 0) {
         add(", ", indent, false)

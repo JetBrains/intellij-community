@@ -2,16 +2,16 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.ArgumentElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.*
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.ArgumentElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.*
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.*
 import java.util.function.Consumer
 
 @ApiStatus.NonExtendable
-interface ScriptElementBuilder {
+interface GradleScriptElementBuilder {
 
   fun newLine(): NewLineElement
-  fun ScriptElement?.ln(): NewLineElement?
+  fun GradleScriptElement?.ln(): NewLineElement?
 
   fun int(value: Int): IntElement
   fun boolean(value: Boolean): BooleanElement
@@ -48,27 +48,27 @@ interface ScriptElementBuilder {
 
   fun call(name: Expression, arguments: List<ArgumentElement>): CallElement
   fun call(name: String, arguments: List<ArgumentElement>): CallElement
-  fun call(name: String, arguments: List<ArgumentElement>, configure: ScriptTreeBuilder.() -> Unit): CallElement
+  fun call(name: String, arguments: List<ArgumentElement>, configure: GradleScriptTreeBuilder.() -> Unit): CallElement
 
   fun call(name: String): CallElement
-  fun call(name: String, configure: Consumer<ScriptTreeBuilder>): CallElement
-  fun call(name: String, configure: ScriptTreeBuilder.() -> Unit): CallElement
+  fun call(name: String, configure: Consumer<GradleScriptTreeBuilder>): CallElement
+  fun call(name: String, configure: GradleScriptTreeBuilder.() -> Unit): CallElement
 
   fun call(name: String, vararg arguments: ArgumentElement): CallElement
-  fun call(name: String, vararg arguments: ArgumentElement, configure: ScriptTreeBuilder.() -> Unit): CallElement
+  fun call(name: String, vararg arguments: ArgumentElement, configure: GradleScriptTreeBuilder.() -> Unit): CallElement
 
   fun call(name: String, vararg arguments: Expression): CallElement
-  fun call(name: String, vararg arguments: Expression, configure: ScriptTreeBuilder.() -> Unit): CallElement
+  fun call(name: String, vararg arguments: Expression, configure: GradleScriptTreeBuilder.() -> Unit): CallElement
 
   fun call(name: String, vararg arguments: String): CallElement
-  fun call(name: String, vararg arguments: String, configure: ScriptTreeBuilder.() -> Unit): CallElement
+  fun call(name: String, vararg arguments: String, configure: GradleScriptTreeBuilder.() -> Unit): CallElement
 
   fun call(name: String, vararg arguments: Pair<String, String>): CallElement
-  fun call(name: String, vararg arguments: Pair<String, String>, configure: ScriptTreeBuilder.() -> Unit): CallElement
+  fun call(name: String, vararg arguments: Pair<String, String>, configure: GradleScriptTreeBuilder.() -> Unit): CallElement
 
   fun callIfNotEmpty(name: String, block: BlockElement): CallElement?
-  fun callIfNotEmpty(name: String, builder: ScriptTreeBuilder): CallElement?
-  fun callIfNotEmpty(name: String, configure: ScriptTreeBuilder.() -> Unit): CallElement?
+  fun callIfNotEmpty(name: String, builder: GradleScriptTreeBuilder): CallElement?
+  fun callIfNotEmpty(name: String, configure: GradleScriptTreeBuilder.() -> Unit): CallElement?
 
   fun infixCall(left: Expression, name: String, right: Expression): InfixCall
 
@@ -77,7 +77,7 @@ interface ScriptElementBuilder {
   fun argument(argument: Pair<String, String>): ArgumentElement
   fun argument(value: Expression): ArgumentElement
   fun argument(value: String): ArgumentElement
-  fun argument(configure: ScriptTreeBuilder.() -> Unit): ArgumentElement
+  fun argument(configure: GradleScriptTreeBuilder.() -> Unit): ArgumentElement
 
-  fun block(configure: ScriptTreeBuilder.() -> Unit): BlockElement
+  fun block(configure: GradleScriptTreeBuilder.() -> Unit): BlockElement
 }

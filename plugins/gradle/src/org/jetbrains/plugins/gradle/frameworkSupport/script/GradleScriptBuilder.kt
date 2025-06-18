@@ -2,18 +2,18 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.script
 
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
 
-interface ScriptBuilder {
+interface GradleScriptBuilder {
 
   fun generate(root: BlockElement): String
 
   companion object {
 
-    private fun create(gradleDsl: GradleDsl): ScriptBuilder {
+    private fun create(gradleDsl: GradleDsl): GradleScriptBuilder {
       return when (gradleDsl) {
-        GradleDsl.GROOVY -> GroovyScriptBuilder()
-        GradleDsl.KOTLIN -> KotlinScriptBuilder()
+        GradleDsl.GROOVY -> GroovyDslGradleScriptBuilder()
+        GradleDsl.KOTLIN -> KotlinDslGradleScriptBuilder()
       }
     }
 

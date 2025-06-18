@@ -3,26 +3,26 @@ package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractScriptElementBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractGradleScriptElementBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 
 @ApiStatus.NonExtendable
 abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSettingScriptBuilderCore<Self>>(
   override val gradleVersion: GradleVersion,
 ) : GradleSettingScriptBuilderCore<Self>,
-    AbstractScriptElementBuilder() {
+    AbstractGradleScriptElementBuilder() {
 
   private var projectName: String? = null
-  private val script = ScriptTreeBuilder()
-  private var plugins = ScriptTreeBuilder()
-  private var pluginManagement: ScriptTreeBuilder.() -> Unit = {}
+  private val script = GradleScriptTreeBuilder()
+  private var plugins = GradleScriptTreeBuilder()
+  private var pluginManagement: GradleScriptTreeBuilder.() -> Unit = {}
 
   protected abstract fun apply(action: Self.() -> Unit): Self
 
-  private fun applyAndMerge(builder: ScriptTreeBuilder, configure: ScriptTreeBuilder.() -> Unit): Self = apply {
-    builder.addNonExistedElements(ScriptTreeBuilder.tree(configure))
+  private fun applyAndMerge(builder: GradleScriptTreeBuilder, configure: GradleScriptTreeBuilder.() -> Unit): Self = apply {
+    builder.addNonExistedElements(GradleScriptTreeBuilder.tree(configure))
   }
 
   override fun setProjectName(projectName: String): Self = apply {
@@ -45,7 +45,7 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
     script.call("enableFeaturePreview", featureName)
   }
 
-  override fun pluginManagement(configure: ScriptTreeBuilder.() -> Unit): Self = apply {
+  override fun pluginManagement(configure: GradleScriptTreeBuilder.() -> Unit): Self = apply {
     pluginManagement = configure
   }
 
@@ -57,11 +57,11 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
     script.addElement(expression)
   }
 
-  override fun addCode(configure: ScriptTreeBuilder.() -> Unit): Self = apply {
-    script.addElements(ScriptTreeBuilder.tree(configure))
+  override fun addCode(configure: GradleScriptTreeBuilder.() -> Unit): Self = apply {
+    script.addElements(GradleScriptTreeBuilder.tree(configure))
   }
 
-  override fun withPlugin(configure: ScriptTreeBuilder.() -> Unit): Self =
+  override fun withPlugin(configure: GradleScriptTreeBuilder.() -> Unit): Self =
     applyAndMerge(plugins, configure)
 
   override fun withPlugin(id: String, version: String?): Self =
@@ -72,7 +72,7 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
       }
     }
 
-  override fun generateTree(): BlockElement = ScriptTreeBuilder.tree {
+  override fun generateTree(): BlockElement = GradleScriptTreeBuilder.tree {
     callIfNotEmpty("plugins", plugins)
     callIfNotEmpty("pluginManagement", pluginManagement)
     assignIfNotNull("rootProject.name", projectName)
