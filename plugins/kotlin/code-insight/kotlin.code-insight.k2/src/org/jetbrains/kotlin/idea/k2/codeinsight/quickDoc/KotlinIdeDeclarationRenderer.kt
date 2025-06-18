@@ -542,11 +542,6 @@ internal class KotlinIdeDeclarationRenderer(
                     val callableSymbol = (symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol
                     " ".separated(
                         {
-                            if (symbol is KaValueParameterSymbol && symbol == rootSymbol && callableSymbol == symbol) {
-                                printer.append(highlight("value-parameter") { asKeyword })
-                            }
-                        },
-                        {
                             val replacedKeyword = when {
                                 keyword != null -> keyword
                               callableSymbol is KaPropertySymbol -> if (callableSymbol.isVal) KtTokens.VAL_KEYWORD else KtTokens.VAR_KEYWORD
