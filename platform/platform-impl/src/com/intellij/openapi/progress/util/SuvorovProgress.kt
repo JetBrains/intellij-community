@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.locking.impl.getGlobalThreadingSupport
 import com.intellij.ui.KeyStrokeAdapter
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -71,7 +72,7 @@ object SuvorovProgress {
 
     FreezeUiUsageCollector.reportUiFreezePopupVisible()
 
-    val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+    val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred || !JBUIScale.isInitialized()) {
       "None"
     }
     else {
