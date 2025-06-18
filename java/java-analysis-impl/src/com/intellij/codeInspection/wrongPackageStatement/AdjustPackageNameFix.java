@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -8,6 +8,7 @@ import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SingleFileSourcesTracker;
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class AdjustPackageNameFix extends ModCommandQuickFix {
@@ -56,7 +57,7 @@ public class AdjustPackageNameFix extends ModCommandQuickFix {
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
       final PsiPackageStatement packageStatement = factory.createPackageStatement(myTargetPackageName);
       if (statement != null) {
-        statement.getPackageReference().replace(packageStatement.getPackageReference());
+        new CommentTracker().replaceAndRestoreComments(statement.getPackageReference(), packageStatement.getPackageReference());
       }
       else {
         file.addAfter(packageStatement, null);
