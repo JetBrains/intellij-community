@@ -23,9 +23,17 @@ object SearchEverywhereFeature {
     else if (isGuest) "search.everywhere.new.cwm.client.enabled"
     else "search.everywhere.new.enabled"
 
+  // Enable the first Search Everywhere implementation (`com.intellij.ide.actions.searcheverywhere`).
   @get:TestOnly
-  val additionalRegistryToTurnOffSplitInTests: Map<String, String>
+  val additionalRegistryToTurnOffSplitSEInTests: Map<String, String>
     get() = mapOf("search.everywhere.new.enabled" to "false",
                   "search.everywhere.new.rider.enabled" to "false",
                   "search.everywhere.new.cwm.client.enabled" to "false")
+
+  // Enable the new Search Everywhere implementation (`com.intellij.platform.searchEverywhere`).
+  @get:TestOnly
+  val additionalRegistryToTurnOnSplitSEInTests: Map<String, String>
+    get() = mapOf("search.everywhere.new.enabled" to "true",
+                  "search.everywhere.new.rider.enabled" to "true",
+                  "search.everywhere.new.cwm.client.enabled" to "true")
 }

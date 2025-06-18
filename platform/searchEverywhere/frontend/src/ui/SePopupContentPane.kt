@@ -50,6 +50,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.*
@@ -810,6 +811,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       resultList.selectedIndex = newIndex
       ScrollingUtil.ensureIndexIsVisible(resultList, newIndex, -1)
     }
+  }
+
+  @TestOnly
+  fun getResultListModel(): SeResultListModel {
+    return resultListModel
   }
 
   override fun dispose() {}
