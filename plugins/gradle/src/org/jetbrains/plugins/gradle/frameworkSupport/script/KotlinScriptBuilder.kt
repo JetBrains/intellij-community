@@ -6,31 +6,26 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statem
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.PropertyElement
 
 class KotlinScriptBuilder(indent: Int = 0) : AbstractScriptBuilder(indent) {
-  override fun add(element: ScriptElement, indent: Int, isNewLine: Boolean) {
-    when (element) {
-      is ListElement -> {
-        add("listOf(", indent, isNewLine)
-        add(element.elements, indent)
-        add(")", indent, false)
-        return
-      }
-      is PropertyElement -> {
-        add("var", indent, isNewLine)
-        add(" ", indent, false)
-        add(element.name, indent, false)
-        add(" = ", indent, false)
-        add(element.value, indent, false)
-      }
-      is StringElement -> {
-        val escapedString = element.value
-          .replace("\\", "\\\\")
-          .replace("\n", "\\n")
-        val string = "\"" + escapedString.replace("\"", "\\\"") + "\""
-        add(string, indent, isNewLine)
-      }
-      else -> {
-        super.add(element, indent, isNewLine)
-      }
-    }
+
+  override fun addListElement(element: ListElement, indent: Int, isNewLine: Boolean) {
+    add("listOf(", indent, isNewLine)
+    add(element.elements, indent)
+    add(")", indent, false)
+  }
+
+  override fun addPropertyElement(element: PropertyElement, indent: Int, isNewLine: Boolean) {
+    add("var", indent, isNewLine)
+    add(" ", indent, false)
+    add(element.name, indent, false)
+    add(" = ", indent, false)
+    add(element.value, indent, false)
+  }
+
+  override fun addStringElement(element: StringElement, indent: Int, isNewLine: Boolean) {
+    val escapedString = element.value
+      .replace("\\", "\\\\")
+      .replace("\n", "\\n")
+    val string = "\"" + escapedString.replace("\"", "\\\"") + "\""
+    add(string, indent, isNewLine)
   }
 }
