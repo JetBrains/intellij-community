@@ -124,6 +124,15 @@ public final class FindPopupDirectoryChooser extends JPanel {
     int mnemonicModifiers = ClientSystemInfo.isMac() ? InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK : InputEvent.ALT_DOWN_MASK;
     recursiveDirectoryAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_Y, mnemonicModifiers)), myFindPopupPanel);
 
+    // Disable directory selection in CWM client environment to prevent exposure of host filesystem structure
+    boolean isCwmClient = FindKey.isCwmClient();
+    if (isCwmClient) {
+      mySelectDirectoryButton.setEnabled(false);
+      myDirectoryComboBox.setEnabled(false);
+      mySelectDirectoryButton.setToolTipText(FindBundle.message("directory.selection.not.available.cwm"));
+      myDirectoryComboBox.setToolTipText(FindBundle.message("directory.selection.not.available.cwm"));
+    }
+
     RowBuilder builder = new RowBuilder(this);
     builder
       .addResizable(myDirectoryComboBox)
