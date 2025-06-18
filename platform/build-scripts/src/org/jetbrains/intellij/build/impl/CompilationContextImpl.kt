@@ -460,8 +460,8 @@ private suspend fun defineJavaSdk(context: CompilationContext) {
   for ((sdkRef, module) in sdkReferenceToFirstModule) {
     val sdkName = sdkRef.sdkName
     val vendorPrefixEnd = sdkName.indexOf('-')
-    val sdkNameWithoutVendor = (if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1)).removeSuffix(" (WSL)")
-    check(sdkNameWithoutVendor == "17") {
+    val sdkNameWithoutVendor = (if (vendorPrefixEnd == -1) sdkName else sdkName.substring(vendorPrefixEnd + 1))
+    check(sdkNameWithoutVendor.startsWith("17")) {
       "Project model at ${context.paths.projectHome} [module ${module.name}] requested SDK $sdkNameWithoutVendor, " +
       "but only '17' is supported as SDK in intellij project"
     }
