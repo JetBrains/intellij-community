@@ -48,6 +48,8 @@ jvm_library(
     "@lib//:mockito",
     "@lib//:mockito-kotlin",
     "//jps/model-serialization",
+    "//jps/model-api:model",
+    "@lib//:jsoup",
   ],
   runtime_deps = [":tests_test_resources"]
 )

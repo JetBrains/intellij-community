@@ -11052,6 +11052,34 @@ http_file(
 )
 
 http_file(
+  name = "intellij-coverage-reporter-1_0_766_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.766/intellij-coverage-reporter-1.0.766.jar",
+  sha256 = "25393a60c2f7552955e7f5719a73b044cec83e05a62a3b0b1c75ad3e6953275b",
+  downloaded_file_path = "intellij-coverage-reporter-1.0.766.jar"
+)
+
+http_file(
+  name = "intellij-coverage-agent-1_0_766_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766.jar",
+  sha256 = "52f66c83318dcacb879f2a07fe448eccd1313b077809190810c83aa4b875611c",
+  downloaded_file_path = "intellij-coverage-agent-1.0.766.jar"
+)
+
+http_file(
+  name = "intellij-coverage-reporter-1_0_766-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-reporter/1.0.766/intellij-coverage-reporter-1.0.766-sources.jar",
+  sha256 = "838350cde8d469beb4d6bbcd2efe82ae7e6f986a40f258039f4f23d7ce8618a7",
+  downloaded_file_path = "intellij-coverage-reporter-1.0.766-sources.jar"
+)
+
+http_file(
+  name = "intellij-coverage-agent-1_0_766-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766-sources.jar",
+  sha256 = "dc9542df564c939c18d6721d45d937a6a643ec991f25dbd98b822dbec1da9452",
+  downloaded_file_path = "intellij-coverage-agent-1.0.766-sources.jar"
+)
+
+http_file(
   name = "netty-all-4_2_0_RC2_http",
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/netty/netty-all/4.2.0.RC2/netty-all-4.2.0.RC2.jar",
   sha256 = "4a12af2ac8345bfc7e0987ad8748787de033a9e27357cace7f45c7d40be522e0",
@@ -11273,20 +11301,6 @@ http_file(
   url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/compiler/compiler-hosted/1.5.14/compiler-hosted-1.5.14-sources.jar",
   sha256 = "ad05e3b8d51509092e10e782df0ac8e1e04ccc4072313bb1403d398daf6a82a8",
   downloaded_file_path = "compiler-hosted-1.5.14-sources.jar"
-)
-
-http_file(
-  name = "intellij-coverage-agent-1_0_766_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766.jar",
-  sha256 = "52f66c83318dcacb879f2a07fe448eccd1313b077809190810c83aa4b875611c",
-  downloaded_file_path = "intellij-coverage-agent-1.0.766.jar"
-)
-
-http_file(
-  name = "intellij-coverage-agent-1_0_766-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.766/intellij-coverage-agent-1.0.766-sources.jar",
-  sha256 = "dc9542df564c939c18d6721d45d937a6a643ec991f25dbd98b822dbec1da9452",
-  downloaded_file_path = "intellij-coverage-agent-1.0.766-sources.jar"
 )
 
 http_file(

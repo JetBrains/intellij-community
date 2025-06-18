@@ -35,5 +35,7 @@
     <orderEntry type="library" scope="TEST" name="mockito" level="project" />
     <orderEntry type="library" scope="TEST" name="mockito-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="jsoup" level="project" />
   </component>
 </module>

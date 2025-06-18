@@ -7771,6 +7771,29 @@ jvm_import(
 )
 
 java_library(
+  name = "platform-build_scripts-jetbrains-intellij-deps-coverage-reporter",
+  exports = [
+    ":intellij-coverage-reporter-1_0_766_http_import",
+    ":coverage-report-1_0_25_http_import",
+    ":freemarker-2_3_32_http_import",
+    ":intellij-coverage-agent-1_0_766_http_import",
+  ],
+  visibility = ["//visibility:public"]
+)
+
+jvm_import(
+  name = "intellij-coverage-reporter-1_0_766_http_import",
+  jar = "@intellij-coverage-reporter-1_0_766_http//file",
+  source_jar = "@intellij-coverage-reporter-1_0_766-sources_http//file"
+)
+
+jvm_import(
+  name = "intellij-coverage-agent-1_0_766_http_import",
+  jar = "@intellij-coverage-agent-1_0_766_http//file",
+  source_jar = "@intellij-coverage-agent-1_0_766-sources_http//file"
+)
+
+java_library(
   name = "platform-build_scripts-netty",
   exports = [
     ":netty-all-4_2_0_RC2_http_import",

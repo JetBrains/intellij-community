@@ -34,6 +34,7 @@ import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.impl.coverage.CoverageImpl
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.runProcess
@@ -71,6 +72,7 @@ private const val NO_TESTS_ERROR = 42
 
 internal class TestingTasksImpl(context: CompilationContext, private val options: TestingOptions) : TestingTasks {
   private val context: CompilationContext = if (options.useArchivedCompiledClasses) context.asArchived else context
+  override lateinit var coverage: CoverageImpl
 
   private fun loadRunConfigurations(name: String): List<JUnitRunConfigurationProperties> {
     return try {
@@ -148,6 +150,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                                    additionalSystemProperties: Map<String, String>,
                                    defaultMainModule: String?,
                                    rootExcludeCondition: ((Path) -> Boolean)?) {
+    if (options.enableCoverage && options.isPerformanceTestsOnly) {
+      context.messages.buildStatus("Skipping performance testing with Coverage, {build.status.text}")
+      return
+    }
     if (options.isTestDiscoveryEnabled && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
       return
@@ -204,6 +210,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       if (options.isTestDiscoveryEnabled) {
         loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)
       }
+      if (options.enableCoverage) {
+        coverage = CoverageImpl(
+          context,
+          coveredModuleNames = runConfigurations?.map { it.moduleName } ?: listOfNotNull(mainModule),
+          coveredClasses = requireNotNull(options.coveredClassesPatterns) {
+            "Test coverage is enabled but the classes pattern is not specified"
+          }.splitToSequence(';').map(::Regex).toList(),
+        )
+        coverage.enable(jvmOptions = effectiveAdditionalJvmOptions, systemProperties = systemProperties)
+      }
       if (runConfigurations == null) {
         runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, checkNotNull(mainModule) {
           "Main module is not specified"
@@ -214,6 +230,9 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
       if (options.isTestDiscoveryEnabled) {
         publishTestDiscovery(context.messages, testDiscoveryTraceFilePath)
+      }
+      if (options.enableCoverage) {
+        coverage.generateReport()
       }
     }
   }
@@ -626,6 +645,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       "kotlinx.coroutines.debug" to "on",
       "sun.io.useCanonCaches" to "false",
       "user.home" to System.getProperty("user.home"),
+      TestingOptions.USE_ARCHIVED_COMPILED_CLASSES to "${options.useArchivedCompiledClasses}",
     )) {
       if (v != null) {
         systemProperties.putIfAbsent(k, v)
