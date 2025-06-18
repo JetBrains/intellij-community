@@ -26,6 +26,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
+    "//platform/remote-core",
     "//platform/statistics",
     "//platform/platform-impl:ide-impl",
     "//platform/macro",

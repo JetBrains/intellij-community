@@ -38,6 +38,7 @@ jvm_library(
     "//platform/observable",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",
+    "//platform/remote-core",
     "//platform/structure-view-impl:structureView-impl",
     "//platform/usageView-impl",
     "//platform/util/diff",

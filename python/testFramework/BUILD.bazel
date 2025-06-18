@@ -14,6 +14,7 @@ jvm_library(
     "//jps/model-api:model",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",
+    "//platform/remote-core",
     "//platform/testFramework",
     "//python/python-sdk:sdk",
     "//platform/execution",
