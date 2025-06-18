@@ -310,7 +310,8 @@ f:com.intellij.collaboration.api.json.JsonHttpApiHelperKt
 - sf:LoadingLabel():javax.swing.JLabel
 - sf:LoadingLabel(java.lang.String):javax.swing.JLabel
 - bs:LoadingLabel$default(java.lang.String,I,java.lang.Object):javax.swing.JLabel
-- sf:LoadingTextLabel():javax.swing.JLabel
+- sf:LoadingTextLabel(java.lang.String):javax.swing.JLabel
+- bs:LoadingTextLabel$default(java.lang.String,I,java.lang.Object):javax.swing.JLabel
 - sf:ScrollablePanel(I,java.awt.LayoutManager):javax.swing.JPanel
 - bs:ScrollablePanel$default(I,java.awt.LayoutManager,I,java.lang.Object):javax.swing.JPanel
 - sf:TransparentScrollPane(javax.swing.JComponent):javax.swing.JScrollPane
