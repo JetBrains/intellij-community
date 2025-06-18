@@ -280,7 +280,8 @@ object UpdateChecker {
         else {
           RepositoryHelper.loadPlugins(host, buildNumber, indicator).forEach { descriptor ->
             val id = descriptor.pluginId
-            if (updateable.remove(id) != null) {
+            if (updateable.contains(id)) {
+              updateable.remove(id)
               prepareDownloader(state, descriptor, buildNumber, toUpdate, toUpdateDisabled, indicator, host)
             }
             // collect latest plugins from custom repos
