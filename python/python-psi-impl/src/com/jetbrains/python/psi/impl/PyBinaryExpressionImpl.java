@@ -70,6 +70,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     PyType callResultType = PyCallExpressionHelper.getCallType(this, context, key);
     if (callResultType != null) {
       boolean bothOperandsAreKnown = operandIsKnown(getLeftExpression(), context) && operandIsKnown(getRightExpression(), context);
+      // TODO requires weak union. See PyTypeCheckerInspectionTest#testBinaryExpressionWithUnknownOperand
       return bothOperandsAreKnown ? callResultType : PyUnionType.createWeakType(callResultType);
     }
     if (referencedName != null && PyNames.COMPARISON_OPERATORS.contains(referencedName)) {
