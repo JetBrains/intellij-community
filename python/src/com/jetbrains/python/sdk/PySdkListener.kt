@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 interface PySdkListener {
   @ApiStatus.Internal
-  fun moduleSdkUpdated(module: Module, sdk: Sdk?)
+  fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?)
 
   companion object {
     @ApiStatus.Internal

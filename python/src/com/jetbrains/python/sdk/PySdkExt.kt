@@ -337,13 +337,15 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
 
 var Module.pythonSdk: Sdk?
   get() = PythonSdkUtil.findPythonSdk(this)
-  set(value) {
-    thisLogger().info("Setting PythonSDK $value to module $this")
-    ModuleRootModificationUtil.setModuleSdk(this, value)
+  set(newSdk) {
+    val prevSdk = pythonSdk
+    if (newSdk == prevSdk) return
+    thisLogger().info("Setting PythonSDK $newSdk to module $this")
+    ModuleRootModificationUtil.setModuleSdk(this, newSdk)
     runInEdt {
       DaemonCodeAnalyzer.getInstance(project).restart()
     }
-    ApplicationManager.getApplication().messageBus.syncPublisher(PySdkListener.TOPIC).moduleSdkUpdated(this, value)
+    ApplicationManager.getApplication().messageBus.syncPublisher(PySdkListener.TOPIC).moduleSdkUpdated(this, prevSdk, newSdk)
   }
 
 var Project.pythonSdk: Sdk?
