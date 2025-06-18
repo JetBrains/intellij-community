@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColors;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 

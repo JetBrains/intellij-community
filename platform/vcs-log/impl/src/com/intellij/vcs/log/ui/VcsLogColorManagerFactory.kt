@@ -3,6 +3,8 @@ package com.intellij.vcs.log.ui
 
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorGenerator
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColorGeneratorFactory
 import com.intellij.ui.JBColor
 import com.intellij.vcsUtil.VcsUtil
 import java.awt.Color
