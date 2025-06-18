@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyInstantTypeProvider;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PyNoneLiteralExpressionImpl extends PyElementImpl implements PyNoneLiteralExpression {
+public class PyNoneLiteralExpressionImpl extends PyElementImpl implements PyNoneLiteralExpression, PyInstantTypeProvider {
   public PyNoneLiteralExpressionImpl(ASTNode astNode) {
     super(astNode);
   }
