@@ -34,7 +34,7 @@ internal class IslandsFeedback : ProjectActivity {
 
     internal fun isManyIslandTheme(themeId: String) = themeId == "Many Islands Dark" || themeId == "Many Islands Light"
 
-    internal fun getReadMoreUrl() = "https://jetbrains.com" // XXX
+    internal fun getReadMoreUrl() = "https://blog.jetbrains.com/platform/2025/06/testing-a-fresh-look-for-jetbrains-ides/"
 
     internal fun getFeedbackUrl(oneIsland: Boolean): String {
       return if (oneIsland) "https://surveys.jetbrains.com/s3/JetBrains-EAP-UI-Feedback-Survey" else "https://surveys.jetbrains.com/s3/Feedback-Survey-About-UI-EAP"
