@@ -18,10 +18,11 @@ package com.jetbrains.python.psi.impl
 import com.intellij.lang.ASTNode
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
+import com.jetbrains.python.psi.PyInstantTypeProvider
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyEllipsisLiteralExpressionImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyEllipsisLiteralExpression {
+class PyEllipsisLiteralExpressionImpl(astNode: ASTNode?) : PyElementImpl(astNode), PyEllipsisLiteralExpression, PyInstantTypeProvider {
   override fun getType(context: TypeEvalContext, key: TypeEvalContext.Key): PyClassType? {
     return PyBuiltinCache.getInstance(this).ellipsisType
   }

@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.psi.PyInstantTypeProvider;
 import com.jetbrains.python.psi.PySliceItem;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public class PySliceItemImpl extends PyElementImpl implements PySliceItem {
+public class PySliceItemImpl extends PyElementImpl implements PySliceItem, PyInstantTypeProvider {
   public PySliceItemImpl(ASTNode astNode) {
     super(astNode);
   }
