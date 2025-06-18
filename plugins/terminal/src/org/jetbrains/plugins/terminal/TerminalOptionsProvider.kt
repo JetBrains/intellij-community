@@ -90,8 +90,6 @@ class TerminalOptionsProvider(private val coroutineScope: CoroutineScope) : Pers
    * But the setter applies the provided value to both monolith and RemDev modes.
    * So, when a user changes the default in any mode, it will be applied everywhere.
    */
-  @get:ApiStatus.Internal
-  @set:ApiStatus.Internal
   var terminalEngine: TerminalEngine
     get() {
       return if (AppMode.isRemoteDevHost() || PlatformUtils.isJetBrainsClient()) {
