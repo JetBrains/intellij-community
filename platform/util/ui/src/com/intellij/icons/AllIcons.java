@@ -1271,7 +1271,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Stop = load("expui/run/stop.svg", 1749021823, 10);
 
     public static final class Widget {
-      /** 16x16 */ public static final @NotNull Icon Build = load("expui/run/widget/build.svg", 1366482764, 2);
+      /** 16x16 */ public static final @NotNull Icon Build = load("expui/run/widget/build.svg", 182002070, 2);
       /** 16x16 */ public static final @NotNull Icon Restart = load("expui/run/widget/restart.svg", -509572269, 2);
     }
   }
