@@ -92,6 +92,7 @@ abstract class CommonStarterInitialStep(
   protected fun Panel.addProjectLocationUi() {
     row(UIBundle.message("label.project.wizard.new.project.name")) {
       textField()
+        .accessibleName(UIBundle.message("label.project.wizard.new.project.name"))
         .bindText(entityNameProperty)
         .withSpecialValidation(listOf(CHECK_NOT_EMPTY, CHECK_SIMPLE_NAME_FORMAT),
                                createLocationWarningValidator(locationProperty))
@@ -178,6 +179,7 @@ abstract class CommonStarterInitialStep(
         .applyToComponent { toolTipText = ExternalSystemBundle.message("external.system.mavenized.structure.wizard.group.id.help") }
 
       textField()
+        .accessibleName(JavaStartersBundle.message("title.project.group.label"))
         .bindText(groupIdProperty)
         .columns(COLUMNS_MEDIUM)
         .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_GROUP_FORMAT, CHECK_NO_RESERVED_WORDS,
@@ -195,6 +197,7 @@ abstract class CommonStarterInitialStep(
                                                                        wizardContext.presentationName) }
 
       textField()
+        .accessibleName(JavaStartersBundle.message("title.project.artifact.label"))
         .bindText(artifactIdProperty)
         .columns(COLUMNS_MEDIUM)
         .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_ARTIFACT_SIMPLE_FORMAT, CHECK_NO_RESERVED_WORDS,
