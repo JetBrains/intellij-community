@@ -8,7 +8,7 @@ import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder.Companion.tree
 import java.util.function.Consumer
 
-@ApiStatus.NonExtendable
+@ApiStatus.Internal
 abstract class AbstractGradleScriptElementBuilder : GradleScriptElementBuilder {
 
   override fun newLine(): NewLineElement = NewLineElement

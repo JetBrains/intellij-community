@@ -3,14 +3,17 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractGradleScriptElementBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 import java.util.function.Consumer
 
-@ApiStatus.NonExtendable
+@ApiStatus.Internal
 abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuilderCore<Self>>(
   override val gradleVersion: GradleVersion,
+  override val gradleDsl: GradleDsl
 ) : GradleBuildScriptBuilderCore<Self>,
     AbstractGradleScriptElementBuilder() {
 
@@ -85,5 +88,9 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
     callIfNotEmpty("dependencies", dependencies).ln()
     callIfNotEmpty("java", java).ln()
     join(postfixes).ln()
+  }
+
+  override fun generate(): String {
+    return GradleScriptBuilder.script(gradleDsl, generateTree())
   }
 }

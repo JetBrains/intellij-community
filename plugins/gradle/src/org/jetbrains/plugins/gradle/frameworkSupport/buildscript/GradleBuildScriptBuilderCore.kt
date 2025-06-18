@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
@@ -13,6 +14,8 @@ interface GradleBuildScriptBuilderCore<out Self : GradleBuildScriptBuilderCore<S
   : GradleScriptElementBuilder {
 
   val gradleVersion: GradleVersion
+
+  val gradleDsl: GradleDsl
 
   /**
    * ...

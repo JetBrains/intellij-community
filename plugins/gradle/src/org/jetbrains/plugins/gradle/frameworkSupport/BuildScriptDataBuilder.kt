@@ -53,6 +53,7 @@ class BuildScriptDataBuilder(
 
   // @formatter:off
   override val gradleVersion: GradleVersion by backend::gradleVersion
+  override val gradleDsl: GradleDsl by backend::gradleDsl
   override fun addImport(import: String): BuildScriptDataBuilder = apply { backend.addImport(import) }
   override fun addBuildScriptPrefix(vararg prefix: String): BuildScriptDataBuilder = apply { backend.addBuildScriptPrefix(*prefix) }
   override fun withBuildScriptPrefix(configure: GradleScriptTreeBuilder.() -> Unit): BuildScriptDataBuilder = apply { backend.withBuildScriptPrefix(configure) }
