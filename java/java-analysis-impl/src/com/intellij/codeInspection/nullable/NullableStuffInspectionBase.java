@@ -67,6 +67,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOT_ANNOTATED_GETTER = true;
   @SuppressWarnings("WeakerAccess") public boolean IGNORE_EXTERNAL_SUPER_NOTNULL;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED;
+  @SuppressWarnings("WeakerAccess") public boolean REPORT_NULLABILITY_ANNOTATION_ON_LOCALS = true;
   /**
    * @deprecated the field remains to minimize changes to users' inspection profiles.
    */
@@ -92,6 +93,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       if ("IGNORE_EXTERNAL_SUPER_NOTNULL".equals(name) && "false".equals(value) ||
           "REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED".equals(name) && "false".equals(value) ||
           "REQUIRE_NOTNULL_FIELDS_INITIALIZED".equals(name) && "true".equals(value) ||
+          "REPORT_NULLABILITY_ANNOTATION_ON_LOCALS".equals(name) && "true".equals(value) ||
           "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER".equals(name) && "true".equals(value)) {
         node.removeContent(child);
       }
@@ -338,6 +340,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       private void checkIllegalLocalAnnotation(@NotNull PsiAnnotation annotation, @Nullable PsiElement owner) {
+        if (!REPORT_NULLABILITY_ANNOTATION_ON_LOCALS) return;
         if (owner instanceof PsiLocalVariable ||
             owner instanceof PsiParameter parameter &&
             parameter.getDeclarationScope() instanceof PsiCatchSection) {
