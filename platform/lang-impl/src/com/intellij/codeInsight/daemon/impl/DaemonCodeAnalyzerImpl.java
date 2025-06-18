@@ -72,6 +72,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.gist.GistManagerImpl;
@@ -213,6 +214,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @TestOnly
   public @NotNull List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile psiFile) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     assertMyFile(psiFile.getProject(), psiFile);
     assertMyFile(project, psiFile);
     VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
@@ -507,6 +509,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   private volatile boolean mustWaitForSmartMode = true;
   @TestOnly
   public void mustWaitForSmartMode(boolean mustWait, @NotNull Disposable parent) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     boolean old = mustWaitForSmartMode;
     mustWaitForSmartMode = mustWait;
     Disposer.register(parent, () -> mustWaitForSmartMode = old);
@@ -530,9 +533,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     assert textEditor.getEditor().getDocument() == document : "Expected document "+document+" but one of the passed TextEditors points to a different document: "+textEditor.getEditor().getDocument();
     Document associatedDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
     assert associatedDocument == document : "Expected document " + document + " but the passed PsiFile points to a different document: " + associatedDocument;
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not start highlighting from within write action, or deadlock is imminent");
     }
+    assert application.isUnitTestMode();
     boolean isDebugMode = !ApplicationManagerEx.isInStressTest();
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     do {
@@ -722,6 +727,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @TestOnly
   public void prepareForTest() throws InterruptedException, ExecutionException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     setUpdateByTimerEnabled(false);
     waitForTermination();
     clearReferences();
@@ -729,6 +735,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @TestOnly
   public void cleanupAfterTest() throws InterruptedException, ExecutionException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     if (myProject.isOpen()) {
       prepareForTest();
     }
@@ -736,6 +743,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @TestOnly
   public void waitForTermination() throws InterruptedException, ExecutionException {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     AppExecutorUtil.getAppExecutorService().submit(() -> {
       // wait outside EDT to avoid stealing work from FJP
       myPassExecutorService.cancelAll(true, "DaemonCodeAnalyzerImpl.waitForTermination");
@@ -919,6 +927,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   @TestOnly
+  @RequiresEdt
   public boolean isRunningOrPending() {
     ThreadingAssertions.assertEventDispatchThread();
     return isRunning() || !myUpdateRunnableFuture.isDone() || GeneralHighlightingPass.isRestartPending();
@@ -1662,6 +1671,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @TestOnly
   public synchronized @Unmodifiable @NotNull Map<FileEditor, DaemonProgressIndicator> getUpdateProgress() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     return Map.copyOf(myUpdateProgress);
   }
 
@@ -1778,6 +1788,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
   @TestOnly
   public void waitForUpdateFileStatusBackgroundQueueInTests() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     myListeners.waitForUpdateFileStatusQueue();
   }
 

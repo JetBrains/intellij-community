@@ -47,6 +47,7 @@ public final class IdentifierHighlighterPassFactory {
   @RequiresEdt
   @ApiStatus.Internal
   public static void doWithIdentifierHighlightingEnabled(@NotNull Project project, @NotNull Runnable r) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     ThreadingAssertions.assertEventDispatchThread();
     BackgroundHighlighter.Companion.runWithEnabledListenersInTest(project, ()-> {
       try {
@@ -66,6 +67,7 @@ public final class IdentifierHighlighterPassFactory {
   @TestOnly
   @RequiresEdt
   public static void waitForIdentifierHighlighting(@NotNull Editor editor) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     Project project = editor.getProject();
     UIUtil.dispatchAllInvocationEvents();
     if (project != null) {

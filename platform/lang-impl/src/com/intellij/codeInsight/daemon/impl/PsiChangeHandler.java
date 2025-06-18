@@ -303,6 +303,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
 
   @TestOnly
   void waitForUpdateFileStatusQueue() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     CountDownLatch s = new CountDownLatch(1);
     // synchronized to avoid data race when myUpdateFileStatusAlarm.cancel() in updateChangesForDocument called, then (from interleaved thread) waitForUpdateFileStatusQueue() called, then myUpdateFileStatusAlarm.addRequest() called, resulting in immediate return from waitForUpdateFileStatusQueue method because alarm is temporarily empty
     synchronized (myUpdateFileStatusAlarm) {
