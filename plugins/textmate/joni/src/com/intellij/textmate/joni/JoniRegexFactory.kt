@@ -18,13 +18,14 @@ class JoniRegexFactory : RegexFactory {
   }
 
   override fun regex(pattern: CharSequence): RegexFacade {
-    val bytes = pattern.toString().toByteArray(Charsets.UTF_8)
+    val patternString = pattern.toString()
+    val bytes = patternString.encodeToByteArray()
     return try {
       val regex = Regex(bytes, 0, bytes.size, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE, WarnCallback.NONE)
       JoniRegexFacade(regex)
     }
     catch (e: JOniException) {
-      LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", pattern, e::class.java.getName(), e.message)
+      LOGGER.info("Failed to parse textmate regex '{}' with {}: {}", patternString, e::class.java.getName(), e.message)
       NotMatchingRegexFacade
     }
   }
