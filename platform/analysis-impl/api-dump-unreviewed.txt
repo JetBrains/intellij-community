@@ -3486,6 +3486,7 @@ a:com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo
 - com.intellij.refactoring.rename.CollisionUsageInfo
 - <init>(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
 - a:getDescription():java.lang.String
+- getShortDescription():java.lang.String
 c:com.intellij.refactoring.util.AbstractVariableData
 - name:java.lang.String
 - originalName:java.lang.String
