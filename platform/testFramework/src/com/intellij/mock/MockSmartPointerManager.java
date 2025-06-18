@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class MockSmartPointerManager extends SmartPointerManager {
   @Override
-  public @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range) {
+  public @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile psiFile, @NotNull TextRange range) {
     throw new IncorrectOperationException();
   }
 

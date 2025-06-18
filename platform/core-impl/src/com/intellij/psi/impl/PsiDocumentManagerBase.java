@@ -195,17 +195,17 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public Document getDocument(@NotNull PsiFile file) {
-    Document document = getCachedDocument(file);
+  public Document getDocument(@NotNull PsiFile psiFile) {
+    Document document = getCachedDocument(psiFile);
     if (document != null) {
-      if (!file.getViewProvider().isPhysical()) {
-        PsiUtilCore.ensureValid(file);
-        associatePsi(document, file);
+      if (!psiFile.getViewProvider().isPhysical()) {
+        PsiUtilCore.ensureValid(psiFile);
+        associatePsi(document, psiFile);
       }
       return document;
     }
 
-    FileViewProvider viewProvider = file.getViewProvider();
+    FileViewProvider viewProvider = psiFile.getViewProvider();
     if (!viewProvider.isEventSystemEnabled()) {
       return null;
     }
@@ -213,15 +213,15 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     VirtualFile virtualFile = viewProvider.getVirtualFile();
     document = FileDocumentManager.getInstance().getDocument(virtualFile, myProject);
     if (document != null) {
-      if (document.getTextLength() != file.getTextLength()) {
+      if (document.getTextLength() != psiFile.getTextLength()) {
         // We have internal state inconsistency, it might be a good idea to contact the core team if you are able to reproduce this error.
-        String message = "Document/PSI mismatch: " + file + " of " + file.getClass() +
+        String message = "Document/PSI mismatch: " + psiFile + " of " + psiFile.getClass() +
                          "; viewProvider=" + viewProvider +
                          "; uncommitted=" + Arrays.toString(getUncommittedDocuments());
         String documentText = document.getText();
         String fileText;
         try {
-          fileText = file.getText();
+          fileText = psiFile.getText();
         }
         catch (AssertionError e) {
           fileText = "file.getText() failed with an error: " + e;
@@ -232,9 +232,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       }
 
       if (!viewProvider.isPhysical()) {
-        PsiUtilCore.ensureValid(file);
-        associatePsi(document, file);
-        file.putUserData(HARD_REF_TO_DOCUMENT, document);
+        PsiUtilCore.ensureValid(psiFile);
+        associatePsi(document, psiFile);
+        psiFile.putUserData(HARD_REF_TO_DOCUMENT, document);
       }
     }
 
@@ -242,9 +242,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public Document getCachedDocument(@NotNull PsiFile file) {
-    if (!file.isPhysical()) return null;
-    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+  public Document getCachedDocument(@NotNull PsiFile psiFile) {
+    if (!psiFile.isPhysical()) return null;
+    VirtualFile vFile = psiFile.getViewProvider().getVirtualFile();
     return FileDocumentManager.getInstance().getCachedDocument(vFile);
   }
 
@@ -410,10 +410,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
 
   @ApiStatus.Internal
   public boolean finishCommit(@NotNull Document document,
-                       @NotNull List<? extends BooleanRunnable> finishProcessors,
-                       @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
-                       boolean synchronously,
-                       @NotNull Object reason) {
+                              @NotNull List<? extends BooleanRunnable> finishProcessors,
+                              @NotNull List<? extends BooleanRunnable> reparseInjectedProcessors,
+                              boolean synchronously,
+                              @NotNull Object reason) {
     assert !myProject.isDisposed() : "Already disposed";
     if (isEventSystemEnabled(document)) {
       ThreadingAssertions.assertEventDispatchThread();
@@ -513,7 +513,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @ApiStatus.Internal
-  public void forceReload(@Nullable VirtualFile virtualFile, @NotNull List<FileViewProvider> viewProviders) {
+  public void forceReload(@Nullable VirtualFile virtualFile, @NotNull List<? extends FileViewProvider> viewProviders) {
     if (!viewProviders.isEmpty()) {
       DebugUtil.performPsiModification("psi.forceReload", () -> {
         for (FileViewProvider viewProvider : viewProviders) {
@@ -758,7 +758,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     }
   }
 
-  private static void runActions(@NotNull List<Runnable> actions) {
+  private static void runActions(@NotNull List<? extends Runnable> actions) {
     List<Pair<Runnable, Throwable>> exceptions = new ArrayList<>();
     for (Runnable action : actions) {
       //noinspection IncorrectCancellationExceptionHandling
@@ -806,12 +806,12 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public boolean isDocumentBlockedByPsi(@NotNull Document doc) {
+  public boolean isDocumentBlockedByPsi(@NotNull Document document) {
     return false;
   }
 
   @Override
-  public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
+  public void doPostponedOperationsAndUnblockDocument(@NotNull Document document) {
   }
 
   private void fireDocumentCreated(@NotNull Document document, PsiFile file) {
@@ -839,8 +839,8 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   @Override
-  public @Nullable Document getLastCommittedDocument(@NotNull PsiFile file) {
-    Document document = getDocument(file);
+  public @Nullable Document getLastCommittedDocument(@NotNull PsiFile psiFile) {
+    Document document = getDocument(psiFile);
     return document == null ? null : getLastCommittedDocument(document);
   }
 

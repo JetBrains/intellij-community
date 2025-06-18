@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * element in the PSI tree after the reparse.
  */
 public abstract class SmartPointerManager {
-  public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile file, @NotNull TextRange range);
+  public abstract @NotNull SmartPsiFileRange createSmartPsiFileRangePointer(@NotNull PsiFile psiFile, @NotNull TextRange range);
 
   public static SmartPointerManager getInstance(Project project) {
     return project.getService(SmartPointerManager.class);

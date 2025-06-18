@@ -71,18 +71,18 @@ public abstract class PsiDocumentManager {
   /**
    * Returns the document for the specified PSI file.
    *
-   * @param file the file for which the document is requested.
+   * @param psiFile the file for which the document is requested.
    * @return the document instance, or {@code null} if the file is binary or has no associated document.
    */
-  public abstract @Nullable Document getDocument(@NotNull PsiFile file);
+  public abstract @Nullable Document getDocument(@NotNull PsiFile psiFile);
 
   /**
    * Returns the cached document for the specified PSI file.
    *
-   * @param file the file for which the document is requested.
+   * @param psiFile the file for which the document is requested.
    * @return the document instance, or {@code null} if there is currently no cached document for the file.
    */
-  public abstract @Nullable Document getCachedDocument(@NotNull PsiFile file);
+  public abstract @Nullable Document getCachedDocument(@NotNull PsiFile psiFile);
 
   /**
    * Commits (updates the PSI tree for) all modified but not committed documents.
@@ -139,12 +139,12 @@ public abstract class PsiDocumentManager {
   /**
    * Returns the document for specified PsiFile intended to be used when working with committed PSI, e.g., outside dispatch thread.
    *
-   * @param file the file for which the document is requested.
+   * @param psiFile the file for which the document is requested.
    * @return an immutable document corresponding to the current PSI state. For committed documents, the contents and timestamp are equal to
    * the ones of {@link #getDocument(PsiFile)}. For uncommitted documents, the text is {@link #getLastCommittedText(Document)} and
    * the modification stamp is {@link #getLastCommittedStamp(Document)}.
    */
-  public abstract @Nullable Document getLastCommittedDocument(@NotNull PsiFile file);
+  public abstract @Nullable Document getLastCommittedDocument(@NotNull PsiFile psiFile);
 
   /**
    * Returns the array of documents which have been modified but not committed.
@@ -221,11 +221,11 @@ public abstract class PsiDocumentManager {
     /**
      * Called when a file instance is created for a document.
      *
-     * @param file     the created file instance.
+     * @param psiFile     the created file instance.
      * @param document the document for which the file was created.
      * @see PsiDocumentManager#getDocument(PsiFile)
      */
-    default void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
+    default void fileCreated(@NotNull PsiFile psiFile, @NotNull Document document) {
     }
   }
 
@@ -235,17 +235,17 @@ public abstract class PsiDocumentManager {
    * would conflict with the pending PSI changes. Changes made through PSI are always applied at the end of a write action,
    * and can be applied in the middle of a write action by calling {@link #doPostponedOperationsAndUnblockDocument}.
    *
-   * @param doc the document to check.
+   * @param document the document to check.
    * @return true if the corresponding PSI has changes that haven't been applied to the document.
    */
-  public abstract boolean isDocumentBlockedByPsi(@NotNull Document doc);
+  public abstract boolean isDocumentBlockedByPsi(@NotNull Document document);
 
   /**
    * Applies pending changes made through the PSI to the specified document.
    *
-   * @param doc the document to apply the changes to.
+   * @param document the document to apply the changes to.
    */
-  public abstract void doPostponedOperationsAndUnblockDocument(@NotNull Document doc);
+  public abstract void doPostponedOperationsAndUnblockDocument(@NotNull Document document);
 
   /**
    * Defer action until all documents with event-system-enabled PSI are committed.

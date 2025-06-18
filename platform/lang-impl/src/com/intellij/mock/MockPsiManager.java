@@ -79,7 +79,7 @@ public final /* not final for Android Studio tests */ class MockPsiManager exten
   }
 
   @Override
-  public void reloadFromDisk(@NotNull PsiFile file) {
+  public void reloadFromDisk(@NotNull PsiFile psiFile) {
   }
 
   @Override

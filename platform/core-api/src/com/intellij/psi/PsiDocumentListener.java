@@ -24,10 +24,10 @@ public interface PsiDocumentListener {
   /**
    * Called when a file instance is created for a document.
    *
-   * @param file the created file instance.
+   * @param psiFile the created file instance.
    * @param document the document for which the file was created.
    * @see PsiDocumentManager#getDocument(PsiFile)
    */
-  default void fileCreated(@NotNull PsiFile file, @NotNull Document document) {
+  default void fileCreated(@NotNull PsiFile psiFile, @NotNull Document document) {
   }
 }
