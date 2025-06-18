@@ -935,9 +935,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
                                               @Nullable Point inspectAt,
                                               boolean isMouseWheelEventEnabled,
                                               CefBrowserSettings settings) {
+    final String validUrl = ObjectUtils.notNull(url, "");
     if (JBCefApp.isRemoteEnabled()) {
       Supplier<CefRendering> renderingSupplier = () -> createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
-      CefBrowser browser = client.createBrowser(url, renderingSupplier, true, context, settings);
+      CefBrowser browser = client.createBrowser(validUrl, renderingSupplier, true, context, settings);
 
       if (browser.getUIComponent() instanceof JBCefOsrComponent)
         ((JBCefOsrComponent)browser.getUIComponent()).setBrowser(browser);
@@ -947,7 +948,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     final CefRendering.CefRenderingWithHandler rendering = createCefRenderingWithHandler(osrHandlerFactory, isMouseWheelEventEnabled);
     CefBrowserOsrWithHandler browser =
-      new CefBrowserOsrWithHandler(client, ObjectUtils.notNull(url, ""), context, rendering.getRenderHandler(), rendering.getComponent(), parentBrowser, inspectAt, settings) {
+      new CefBrowserOsrWithHandler(client, validUrl, context, rendering.getRenderHandler(), rendering.getComponent(), parentBrowser, inspectAt, settings) {
         @Override
         protected CefBrowser createDevToolsBrowser(CefClient client,
                                                    String url,
