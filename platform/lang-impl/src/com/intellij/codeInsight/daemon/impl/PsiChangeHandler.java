@@ -97,8 +97,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
       }, ModalityState.stateForComponent(selectedEditor.getComponent()), myProject.getDisposed());
     }
 
-    myUpdateFileStatusAlarm.cancelAllRequests();
-    myUpdateFileStatusAlarm.addRequest(this, 0);
+    synchronized (myUpdateFileStatusAlarm) {
+      myUpdateFileStatusAlarm.cancelAllRequests();
+      myUpdateFileStatusAlarm.addRequest(this, 0);
+    }
   }
 
   @Override
@@ -302,7 +304,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
   @TestOnly
   void waitForUpdateFileStatusQueue() {
     CountDownLatch s = new CountDownLatch(1);
-    myUpdateFileStatusAlarm.addRequest(() -> s.countDown(), 0);
+    // synchronized to avoid data race when myUpdateFileStatusAlarm.cancel() in updateChangesForDocument called, then (from interleaved thread) waitForUpdateFileStatusQueue() called, then myUpdateFileStatusAlarm.addRequest() called, resulting in immediate return from waitForUpdateFileStatusQueue method because alarm is temporarily empty
+    synchronized (myUpdateFileStatusAlarm) {
+      myUpdateFileStatusAlarm.addRequest(() -> s.countDown(), 0);
+    }
     try {
       s.await();
     }
