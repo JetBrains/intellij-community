@@ -21,6 +21,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nls;
@@ -50,21 +51,21 @@ final class CheckRequiredPluginsActivity implements StartupActivity.RequiredForS
 
   private static List<DependencyOnPlugin> getRequiredPlugins(@NotNull ExternalDependenciesManager dependencyManager) {
     List<DependencyOnPlugin> dependencies = new ArrayList<>(dependencyManager.getDependencies(DependencyOnPlugin.class));
-    List<DependencyOnPlugin> result = new ArrayList<>();
-    if (PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) {
-      // Free IDE
-      for (DependencyOnPlugin plugin : dependencies) {
-        String pluginId = plugin.getPluginId();
-        IdeaPluginDescriptorImpl descriptor = PluginManagerCore.findPlugin(PluginId.getId(pluginId));
-        if (descriptor == null) {
-          continue;
-        }
+    if (!PlatformUtils.isPyCharm()) return dependencies;
+    if (!PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) return dependencies;
 
-        var canBeEnabled =
-          !ContainerUtil.exists(descriptor.pluginDependencies, it -> it.getPluginId().equals(PluginManagerCore.ULTIMATE_PLUGIN_ID));
-        if (canBeEnabled) {
-          result.add(plugin);
-        }
+    // Free mode
+    List<DependencyOnPlugin> result = new ArrayList<>();
+    for (DependencyOnPlugin plugin : dependencies) {
+      String pluginId = plugin.getPluginId();
+      IdeaPluginDescriptorImpl descriptor = PluginManagerCore.findPlugin(PluginId.getId(pluginId));
+      if (descriptor == null) {
+        continue;
+      }
+      var canBeEnabled =
+        !ContainerUtil.exists(descriptor.getDependencies(), it -> it.getPluginId().equals(PluginManagerCore.ULTIMATE_PLUGIN_ID));
+      if (canBeEnabled) {
+        result.add(plugin);
       }
     }
     return result;
