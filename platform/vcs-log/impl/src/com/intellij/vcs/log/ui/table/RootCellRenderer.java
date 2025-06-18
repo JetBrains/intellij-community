@@ -16,7 +16,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
-import com.intellij.vcs.log.ui.RepositoryColors;
+import com.intellij.platform.vcs.impl.shared.ui.RepositoryColors;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
 import com.intellij.vcs.log.ui.render.RootCell;
