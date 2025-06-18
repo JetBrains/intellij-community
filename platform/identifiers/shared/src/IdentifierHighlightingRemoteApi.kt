@@ -57,6 +57,5 @@ interface IdentifierHighlightingRemoteApi : RemoteApi<Unit> {
   data class HighlightInfoTypeModel (
       val severity: String,
       val attributeKey: String,
-      val needsUpdateOnTyping: Boolean
   )
 }

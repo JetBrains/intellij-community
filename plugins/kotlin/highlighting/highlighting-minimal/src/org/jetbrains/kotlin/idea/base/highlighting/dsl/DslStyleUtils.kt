@@ -41,7 +41,7 @@ object DslStyleUtils {
     private val DSL_TYPE_SEVERITY = HighlightSeverity("DSL_TYPE_SEVERITY", HighlightInfoType.SYMBOL_TYPE_SEVERITY.myVal + 1);
 
     internal val types: List<HighlightInfoType> = styles.map { attributeKey  ->
-        HighlightInfoType.HighlightInfoTypeImpl(DSL_TYPE_SEVERITY, attributeKey, false)
+        HighlightInfoType.HighlightInfoTypeImpl(DSL_TYPE_SEVERITY, attributeKey)
     }
 
     val DSL_MARKER_CLASS_ID = ClassId.topLevel(FqName("kotlin.DslMarker"))

@@ -399,8 +399,6 @@ public final class UpdateHighlightersUtil {
 
     List<HighlightInfo> toRemove = new ArrayList<>();
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, start, end, info -> {
-      if (!info.needUpdateOnTyping()) return true;
-
       RangeHighlighter highlighter = info.getHighlighter();
       int highlighterStart = highlighter.getStartOffset();
       int highlighterEnd = highlighter.getEndOffset();
@@ -412,7 +410,7 @@ public final class UpdateHighlightersUtil {
           highlighterEnd += 1;
         }
       }
-      if (!highlighter.isValid() || start < highlighterEnd && highlighterStart <= end) {
+      if (!highlighter.isValid() && start < highlighterEnd && highlighterStart <= end) {
         toRemove.add(info);
       }
       return true;
@@ -420,9 +418,7 @@ public final class UpdateHighlightersUtil {
 
     for (HighlightInfo info : toRemove) {
       RangeHighlighterEx highlighter = info.getHighlighter();
-      if (!highlighter.isValid()) {
-        disposeWithFileLevelIgnoreErrorsInEDT(highlighter, project, info);
-      }
+      disposeWithFileLevelIgnoreErrorsInEDT(highlighter, project, info);
     }
 
     if (!toRemove.isEmpty()) {

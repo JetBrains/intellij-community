@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.identifiers.highlighting.backend
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingComputer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.impl.EditorId
@@ -28,8 +27,7 @@ internal class IdentifierHighlightingRemoteApiImpl : IdentifierHighlightingRemot
 
       val remoteOccurrences = occurrences.map {
         val serializableRange = SerializableRange(it.range.startOffset, it.range.endOffset)
-        val needsUpdateOnTyping = ((it.highlightInfoType as? HighlightInfoType.UpdateOnTypingSuppressible)?.needsUpdateOnTyping() ?: false)
-        val serializableInfoType = HighlightInfoTypeModel(it.highlightInfoType.getSeverity(null).name, it.highlightInfoType.attributesKey.externalName, needsUpdateOnTyping)
+        val serializableInfoType = HighlightInfoTypeModel(it.highlightInfoType.getSeverity(null).name, it.highlightInfoType.attributesKey.externalName)
         IdentifierOccurrenceRemote(serializableRange, serializableInfoType)
       }
       val remoteTargets = targets.map { SerializableRange(it.startOffset, it.endOffset) }

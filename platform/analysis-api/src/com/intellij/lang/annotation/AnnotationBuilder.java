@@ -133,20 +133,19 @@ public interface AnnotationBuilder {
   @NotNull AnnotationBuilder tooltip(@NotNull @NlsContexts.Tooltip String tooltip);
 
   /**
-   * Optimization method specifying whether the annotation should be re-calculated when the user types in it.
-   * This is an intermediate method in the creating new annotation pipeline.
+   * @deprecated Does nothing
    * @return this builder for chaining convenience
    */
   @Contract(pure = true)
+  @Deprecated
   @NotNull AnnotationBuilder needsUpdateOnTyping();
 
   /**
-   * Optimization method which explicitly specifies whether the annotation should be re-calculated when the user types in it.
-   * This is an intermediate method in the creating new annotation pipeline.
-   * @param value if true, this annotation will be updated more often
+   * @deprecated Does nothing
    * @return this builder for chaining convenience
    */
   @Contract(pure = true)
+  @Deprecated
   @NotNull AnnotationBuilder needsUpdateOnTyping(boolean value);
 
   /**

@@ -31,7 +31,6 @@ import java.util.function.Consumer;
 @ApiStatus.Internal
 class HighlightInfoB implements HighlightInfo.Builder {
   private static final Logger LOG = Logger.getInstance(HighlightInfoB.class);
-  private Boolean myNeedsUpdateOnTyping;
   private TextAttributes forcedTextAttributes;
   private TextAttributesKey forcedTextAttributesKey;
 
@@ -192,8 +191,6 @@ class HighlightInfoB implements HighlightInfo.Builder {
   @Override
   public @NotNull HighlightInfo.Builder needsUpdateOnTyping(boolean update) {
     assertNotCreated();
-    assertNotSet(this.myNeedsUpdateOnTyping, "needsUpdateOnTyping");
-    myNeedsUpdateOnTyping = update;
     return this;
   }
 
@@ -272,7 +269,7 @@ class HighlightInfoB implements HighlightInfo.Builder {
     //noinspection deprecation
     HighlightInfo info = new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
                                            escapedToolTip, severity, isAfterEndOfLine != null && isAfterEndOfLine,
-                                           myNeedsUpdateOnTyping, isFileLevelAnnotation != null && isFileLevelAnnotation,
+                                           isFileLevelAnnotation != null && isFileLevelAnnotation,
                                            getValueOrDefault(navigationShift),
                                            problemGroup, null, gutterIconRenderer, getValueOrDefault(group), false, myLazyFixes);
     // fill IntentionActionDescriptor.problemGroup and IntentionActionDescriptor.severity - they can be null because .registerFix() might have been called before .problemGroup() and .severity()

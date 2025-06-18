@@ -82,7 +82,6 @@ public class HighlightInfo implements Segment {
   private static final byte FROM_INJECTION_MASK = 0x2;
   private static final byte AFTER_END_OF_LINE_MASK = 0x4;
   private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x8;
-  private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x10;
 
   @NotNull
   @Unmodifiable
@@ -103,7 +102,7 @@ public class HighlightInfo implements Segment {
     }));
   }
 
-  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK})
+  @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK})
   private @interface FlagConstant {
   }
 
@@ -181,7 +180,6 @@ public class HighlightInfo implements Segment {
                           @Nullable @Tooltip String escapedToolTip,
                           @NotNull HighlightSeverity severity,
                           boolean afterEndOfLine,
-                          @Nullable Boolean needsUpdateOnTyping,
                           boolean isFileLevelAnnotation,
                           int navigationShift,
                           @Nullable ProblemGroup problemGroup,
@@ -204,7 +202,6 @@ public class HighlightInfo implements Segment {
     toolTip = encodeTooltip(escapedToolTip, escapedDescription);
     this.severity = severity;
     myFlags = (byte)((afterEndOfLine ? AFTER_END_OF_LINE_MASK : 0) |
-                     (calcNeedUpdateOnTyping(needsUpdateOnTyping, type) ? NEEDS_UPDATE_ON_TYPING_MASK : 0) |
                      (isFileLevelAnnotation ? FILE_LEVEL_ANNOTATION_MASK : 0) |
                      (hasHint ? HAS_HINT_MASK : 0)
     );
@@ -511,20 +508,6 @@ public class HighlightInfo implements Segment {
     return customScheme != null ? customScheme : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
-  public boolean needUpdateOnTyping() {
-    return isFlagSet(NEEDS_UPDATE_ON_TYPING_MASK);
-  }
-
-  private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, @NotNull HighlightInfoType type) {
-    if (needsUpdateOnTyping != null) {
-      return needsUpdateOnTyping;
-    }
-    if (type instanceof HighlightInfoType.UpdateOnTypingSuppressible suppressible) {
-      return suppressible.needsUpdateOnTyping();
-    }
-    return true;
-  }
-
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
@@ -671,6 +654,10 @@ public class HighlightInfo implements Segment {
 
     @NotNull Builder endOfLine();
 
+    /**
+     * @deprecated Does nothing
+     */
+    @Deprecated
     @NotNull Builder needsUpdateOnTyping(boolean update);
 
     @NotNull Builder severity(@NotNull HighlightSeverity severity);
@@ -763,7 +750,6 @@ public class HighlightInfo implements Segment {
     HighlightInfo info = new HighlightInfo(
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
-      annotation.needsUpdateOnTyping(),
       annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotatorClass, annotation.getGutterIconRenderer(), HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP,
       false, annotation.getLazyQuickFixes());
 
@@ -1506,7 +1492,6 @@ public class HighlightInfo implements Segment {
     if (toolTip != null) {
       builder.escapedToolTip(toolTip);
     }
-    builder.needsUpdateOnTyping(needUpdateOnTyping());
     if (isFileLevelAnnotation()) {
       builder.fileLevelAnnotation();
     }

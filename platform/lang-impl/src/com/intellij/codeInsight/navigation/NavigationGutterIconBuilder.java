@@ -179,7 +179,7 @@ public class NavigationGutterIconBuilder<T> {
     if (!myLazy && myTargets.getValue().isEmpty() || element == null) return null;
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
       .gutterIconRenderer(createGutterIconRenderer(element.getProject(), null))
-      .needsUpdateOnTyping(false).create();
+      .create();
     return null;
   }
 
@@ -191,7 +191,6 @@ public class NavigationGutterIconBuilder<T> {
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
       .range(element)
       .gutterIconRenderer(renderer)
-      .needsUpdateOnTyping(false)
       .create();
   }
 

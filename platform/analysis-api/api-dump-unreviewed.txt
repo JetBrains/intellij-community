@@ -1855,7 +1855,6 @@ f:com.intellij.lang.annotation.Annotation
 - getTooltip():java.lang.String
 - isAfterEndOfLine():Z
 - isFileLevelAnnotation():Z
-- needsUpdateOnTyping():Z
 - registerBatchFix(com.intellij.codeInsight.intention.IntentionAction,com.intellij.codeInspection.LocalQuickFix,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - registerBatchFix(com.intellij.codeInsight.intention.IntentionAction,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):V
 - registerFix(com.intellij.codeInsight.intention.IntentionAction):V
