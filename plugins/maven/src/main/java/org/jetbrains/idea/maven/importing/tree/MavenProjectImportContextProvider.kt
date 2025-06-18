@@ -31,6 +31,7 @@ import org.jetbrains.idea.maven.importing.workspaceModel.WorkspaceModuleImporter
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectModifications
 import org.jetbrains.idea.maven.project.MavenProjectsTree
@@ -302,7 +303,7 @@ internal class MavenProjectImportContextProvider(
 
     if (languageLevels.mainAndTestLevelsDiffer()) return true
     if (hasTestCompilerArgs(project)) return true
-    if (hasExecutionsForTests(project)) return true
+    if (mainAndTestCompilerArgsDiffer(project)) return true
     if (getNonDefaultCompilerExecutions(project).isNotEmpty()) return true
 
     return false
@@ -327,16 +328,19 @@ internal class MavenProjectImportContextProvider(
                               config.getChild("testCompilerArguments") != null)
   }
 
-  private fun hasExecutionsForTests(project: MavenProject): Boolean {
-    val plugin = project.findCompilerPlugin()
-    if (plugin == null) return false
+  private fun mainAndTestCompilerArgsDiffer(project: MavenProject): Boolean {
+    val plugin = project.findCompilerPlugin() ?: return false
     val executions = plugin.executions
     if (executions == null || executions.isEmpty()) return false
-    val compileExec = executions.find { isCompileExecution(it) }
-    val testExec = executions.find { isTestCompileExecution(it) }
-    if (compileExec == null) return testExec != null
-    if (testExec == null) return true
-    return !JDOMUtil.areElementsEqual(compileExec.configurationElement, testExec.configurationElement)
+    val compilerArgs = executions.find { isCompileExecution(it) }?.getCompilerArgs()
+    val testCompilerArgs = executions.find { isTestCompileExecution(it) }?.getCompilerArgs()
+    if (compilerArgs == null) return testCompilerArgs != null
+    if (testCompilerArgs == null) return true
+    return !JDOMUtil.areElementsEqual(compilerArgs, testCompilerArgs)
+  }
+
+  private fun MavenPlugin.Execution.getCompilerArgs(): Element? {
+    return this.configurationElement?.getChild("compilerArgs")
   }
 
   private fun getModuleImportDataSingle(

@@ -107,9 +107,8 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "    </plugin>" +
                    "  </plugins>" +
                    "</build>"))
-    assertModules("project", "project.main", "project.test")
-    TestCase.assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getCustomLanguageLevel(getModule("project.main")))
-    TestCase.assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getCustomLanguageLevel(getModule("project.test")))
+    assertModules("project")
+    assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")))
   }
 
   @Test
@@ -416,11 +415,9 @@ class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "    </plugin>" +
                    "  </plugins>" +
                    "</build>"))
-    assertModules("project", "project.main", "project.test")
-    TestCase.assertEquals(LanguageLevel.JDK_1_9, LanguageLevel.parse(
-      ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project.main"))))
-    TestCase.assertEquals(defaultLanguageLevel, LanguageLevel.parse(
-      ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project.test"))))
+    assertModules("project")
+    assertEquals(LanguageLevel.JDK_1_9, LanguageLevel.parse(
+      ideCompilerConfiguration.getBytecodeTargetLevel(getModule("project"))))
   }
 
   @Test
