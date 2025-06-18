@@ -95,7 +95,7 @@ class NiceOverlayUi {
   /**
    * The location of popup including its shadow; we need it to replace it with the screehshot later
    */
-  private val popupWithShadowLocation: Rectangle = Rectangle(popupOffsetX - shadowSize, popupOffsetY - shadowSize, popupWidth + shadowSize * 2, popupWidth + shadowSize * 2)
+  private val popupWithShadowLocation: Rectangle = Rectangle(popupOffsetX - shadowSize, popupOffsetY - shadowSize, popupWidth + shadowSize * 2, popupHeight + shadowSize * 2)
 
   /**
    * The "model" of the popup
@@ -173,7 +173,14 @@ class NiceOverlayUi {
 
   private fun takeScreenshot(): MultiResolutionImage {
     val window = SwingUtilities.getWindowAncestor(rootPane)
-    return Robot().createMultiResolutionScreenCapture(Rectangle(window.x + popupWithShadowLocation.x, window.y + popupWithShadowLocation.y, popupWithShadowLocation.width, popupWithShadowLocation.height))
+    // for some reason, on Windows the location of `java.awt.Window` may start with negative coordinates
+    // I am clueless why it is like this, but adjusting the coordinates to the location of IdeRootPane
+    // allows interacting with actual positions on the screen
+    val targetX = window.x + rootPane.x + popupWithShadowLocation.x
+    val targetY = window.y + rootPane.y + popupWithShadowLocation.y
+    val screen = Robot(window.graphicsConfiguration.device).createMultiResolutionScreenCapture(Rectangle(targetX, targetY, popupWithShadowLocation.width, popupWithShadowLocation.height))
+    val x = 1
+    return screen
   }
 
   /**
@@ -208,19 +215,15 @@ class NiceOverlayUi {
   }
 
   private fun restoreScreenshot() {
-    val innerGraphics = GraphicsUtil.safelyGetGraphics(rootPane)
+    val innerGraphics = GraphicsUtil.safelyGetGraphics(rootPane) as Graphics2D
     try {
-      val variant = screenshot.getResolutionVariant(popupWithShadowLocation.width.toDouble() * JBUIScale.sysScale().toDouble(), popupWithShadowLocation.height.toDouble() * JBUIScale.sysScale().toDouble())
-      if (JreHiDpiUtil.isJreHiDPI(innerGraphics as Graphics2D)) {
-        val scaledGraphics = innerGraphics.create() as Graphics2D
-        val s: Float = 1 / JBUIScale.sysScale(innerGraphics)
-        scaledGraphics.scale(s.toDouble(), s.toDouble())
-        UIUtil.drawImage(scaledGraphics, variant, (popupWithShadowLocation.x * JBUIScale.sysScale().toDouble()).toInt(), (popupWithShadowLocation.y * JBUIScale.sysScale().toDouble()).toInt(), null)
-        scaledGraphics.dispose()
-      }
-      else {
-        UIUtil.drawImage(innerGraphics, variant, popupWithShadowLocation.x, popupWithShadowLocation.y, null)
-      }
+      val variant = screenshot.resolutionVariants.run { if (size > 1) get(1) else get(0) }
+      val scaledGraphics = innerGraphics.create() as Graphics2D
+      val scale = JBUIScale.sysScale(innerGraphics)
+      val s: Float = 1 / scale
+      scaledGraphics.scale(s.toDouble(), s.toDouble())
+      UIUtil.drawImage(scaledGraphics, variant, (popupWithShadowLocation.x * scale).toInt(), (popupWithShadowLocation.y * scale).toInt(), null)
+      scaledGraphics.dispose()
     }
     finally {
       innerGraphics.dispose()
