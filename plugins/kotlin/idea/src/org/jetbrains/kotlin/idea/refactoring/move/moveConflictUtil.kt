@@ -399,7 +399,6 @@ fun checkVisibilityInUsages(
     usages: Collection<UsageInfo>
 ): MultiMap<PsiElement, String> {
     val conflicts = MultiMap<PsiElement, String>()
-    val declarationToContainers = HashMap<KtNamedDeclaration, MutableSet<PsiElement>>()
     for (usage in usages) {
         val element = usage.element
         if (element == null || usage !is MoveRenameUsageInfo || usage is NonCodeUsageInfo) continue
@@ -413,7 +412,6 @@ fun checkVisibilityInUsages(
             && moveTarget.targetElement.parentsWithSelf.filterIsInstance<KtClassOrObject>().all { it.isPublic}
         ) continue
         val container = element.getUsageContext()
-        if (!declarationToContainers.getOrPut(referencedElement) { HashSet() }.add(container)) continue
         val targetContainer = moveTarget.getContainerDescriptor(moveCheckerInfo.context) ?: continue
         val referencingDescriptor = when (container) {
             is KtDeclaration -> container.resolveToDescriptorIfAny()
