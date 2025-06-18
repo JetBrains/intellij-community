@@ -1,4 +1,4 @@
-// "Inline variable|->Keep the 'vExposure' variable" "true-preview"
+// "Inline variable|->Keep 'vExposure' name" "true-preview"
 package com.example;
 
 import java.util.ArrayList;

@@ -257,8 +257,8 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
       }
       if (defToInline == local.getInitializer() && PsiUtil.skipParenthesizedExprDown(defToInline) instanceof PsiReferenceExpression ref &&
           ControlFlowUtil.isEffectivelyFinal(local, containerBlock)) {
-        PsiElement target = ref.resolve();
-        if (PsiUtil.isJvmLocalVariable(target)) {
+        if (ref.resolve() instanceof PsiVariable var && PsiUtil.isJvmLocalVariable(var) &&
+            var.getType().equals(local.getType())) {
           return createRenameChooser(local, refsToInlineList);
         }
       }
@@ -587,10 +587,9 @@ public final class InlineLocalHandler extends JavaInlineActionHandler {
         case ASK -> JavaRefactoringBundle.message("inline.popup.ignore.conflicts");
         case INLINE_ONE -> RefactoringBundle.message("inline.popup.this.only");
         case INLINE_ALL_AND_DELETE -> RefactoringBundle.message("inline.popup.all", myAllRefs.size());
-        case INLINE_ALL_KEEP_OLD_NAME -> RefactoringBundle.message("inline.popup.all.keep", requireNonNull(
+        case INLINE_ALL_KEEP_OLD_NAME -> RefactoringBundle.message("inline.popup.all.keep.name", requireNonNull(
           PsiUtil.skipParenthesizedExprDown(myVariable.getInitializer())).getText());
-        case INLINE_ALL_RENAME_INITIALIZER -> RefactoringBundle.message("inline.popup.all.rename", requireNonNull(
-          PsiUtil.skipParenthesizedExprDown(myVariable.getInitializer())).getText(), myVariable.getName());
+        case INLINE_ALL_RENAME_INITIALIZER -> RefactoringBundle.message("inline.popup.all.keep.name", myVariable.getName());
         default -> throw new IllegalStateException("Unexpected value: " + myMode);
       };
     }
