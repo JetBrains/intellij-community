@@ -44,4 +44,9 @@ internal class FrontendTerminalSession(private val id: TerminalSessionId) : Term
       }
     }
   }
+
+  override suspend fun hasRunningCommands(): Boolean {
+    if (isClosed) return false
+    return TerminalSessionApi.getInstance().hasRunningCommands(id)
+  }
 }
