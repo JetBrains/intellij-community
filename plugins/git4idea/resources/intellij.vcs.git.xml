@@ -34,6 +34,11 @@
     <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction"/>
     <action id="Git.Squash.Commits" class="git4idea.rebase.log.squash.GitSquashLogAction"/>
     <action id="Git.Drop.Commits" class="git4idea.rebase.log.drop.GitDropLogAction"/>
+
+    <action id="Git.Drop.Selected.Changes" class="git4idea.rebase.log.changes.GitDropSelectedChangesAction">
+      <add-to-group group-id="Vcs.RepositoryChangesBrowserMenu" relative-to-action="Vcs.ApplySelectedChanges" anchor="after"/>
+    </action>
+
     <action id="Git.New.Branch.In.Log" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NewBranchAction"/>
     <action id="Git.Log.Branches.Change.Branch.Filter"
             class="git4idea.ui.branch.dashboard.BranchesDashboardActions$UpdateBranchFilterInLogAction">
@@ -611,6 +616,8 @@
                  description="When enabled, read the '.git/refs' directory contents. When disabled, delegate to 'git branch' call."/>
     <registryKey key="git.tracked.branch.actions.in.widget" defaultValue="true"
                  description="Show actions for a tracked branch as a sub-popup in the local branch actions popup in Git branches popup."/>
+    <registryKey key="git.drop.selected.changes.enabled" defaultValue="true"
+                 description="Enables the 'Drop Selected Changes' action in Git log changes tree context menu."/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

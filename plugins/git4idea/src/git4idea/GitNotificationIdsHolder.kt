@@ -42,6 +42,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       BRANCH_CREATE_ROLLBACK_SUCCESS,
       BRANCH_CREATE_ROLLBACK_ERROR,
       DELETE_BRANCH_ON_MERGE,
+      DROP_CHANGES_FAILED,
       FETCH_ERROR,
       FETCH_SUCCESS,
       FETCH_DETAILS,
@@ -164,6 +165,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val BRANCH_CREATE_ROLLBACK_SUCCESS = "git.create.branch.rollback.successful"
     const val BRANCH_CREATE_ROLLBACK_ERROR = "git.create.branch.rollback.error"
     const val DELETE_BRANCH_ON_MERGE = "git.delete.branch.on.merge"
+    const val DROP_CHANGES_FAILED = "git.rebase.log.changes.drop.failed"
     const val FETCH_ERROR = "git.fetch.error"
     const val FETCH_SUCCESS = "git.fetch.success"
     const val FETCH_DETAILS = "git.fetch.details"

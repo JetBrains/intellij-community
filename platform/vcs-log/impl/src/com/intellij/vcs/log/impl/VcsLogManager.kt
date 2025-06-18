@@ -78,6 +78,8 @@ open class VcsLogManager @Internal constructor(
   private val isLogVisible: Boolean
     get() = managedUis.any { it.value.isVisible() }
 
+  private var frozen = false
+
   /**
    * If this Log has a full data pack and there are no postponed refreshes. Does not check if there are refreshes in progress.
    */
@@ -96,6 +98,36 @@ open class VcsLogManager @Internal constructor(
   fun initializeIfNeeded() {
     if (isLogVisible) {
       dataManager.initialize()
+    }
+  }
+
+  @Internal
+  @RequiresEdt
+  private fun freezeLog() {
+    frozen = true
+  }
+
+  @Internal
+  @RequiresEdt
+  private fun unfreezeLog() {
+    if (frozen) {
+      frozen = false
+      scheduleUpdate()
+    }
+  }
+
+  @Internal
+  suspend fun <R> runWithFreezing(operation: () -> R): R {
+    withContext(Dispatchers.EDT) {
+      freezeLog()
+    }
+    try {
+      return operation()
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        unfreezeLog()
+      }
     }
   }
 
@@ -303,7 +335,7 @@ open class VcsLogManager @Internal constructor(
 
     val wrappedRefresher = VcsLogRefresher { root ->
       ApplicationManager.getApplication().invokeLater({
-                                                        refresher.refresh(root, !(keepUpToDate() || isLogVisible))
+                                                        refresher.refresh(root, frozen || !(keepUpToDate() || isLogVisible))
                                                       }, ModalityState.any())
     }
     for ((key, value) in providers2roots.entrySet()) {

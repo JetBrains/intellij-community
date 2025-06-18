@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase
 
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsLogCommitSelection
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitUtil
@@ -13,12 +14,13 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
   override fun createCommitEditingData(
     repository: GitRepository,
     selection: VcsLogCommitSelection,
-    logData: VcsLogData
+    logData: VcsLogData,
+    selectedChanges: List<Change>,
   ): CommitEditingDataCreationResult<SingleCommitEditingData> {
     if (selection.commits.size != 1) {
       return CommitEditingDataCreationResult.Prohibited()
     }
-    return CommitEditingDataCreationResult.Created(SingleCommitEditingData(repository, selection, logData))
+    return CommitEditingDataCreationResult.Created(SingleCommitEditingData(repository, selection, logData, selectedChanges))
   }
 
   override fun lastCheckCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {
@@ -40,9 +42,11 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
   class SingleCommitEditingData(
     repository: GitRepository,
     selection: VcsLogCommitSelection,
-    logData: VcsLogData
+    logData: VcsLogData,
+    val selectedChanges: List<Change>,
   ) : MultipleCommitEditingData(repository, selection, logData) {
     val selectedCommit = selection.cachedMetadata.first()
+    val selectedCommitFullDetails = selection.cachedFullDetails.first()
     val isHeadCommit = selectedCommit.id.asString() == repository.currentRevision
   }
 }
