@@ -13,6 +13,7 @@ import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.intui.standalone.IntUiTypography
 import org.jetbrains.jewel.intui.standalone.StandalonePainterHintsProvider
 import org.jetbrains.jewel.intui.standalone.icon.StandaloneNewUiChecker
 import org.jetbrains.jewel.intui.standalone.styling.Default
@@ -23,6 +24,7 @@ import org.jetbrains.jewel.intui.standalone.styling.dark
 import org.jetbrains.jewel.intui.standalone.styling.light
 import org.jetbrains.jewel.ui.ComponentStyling
 import org.jetbrains.jewel.ui.DefaultComponentStyling
+import org.jetbrains.jewel.ui.LocalTypography
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -303,6 +305,7 @@ public fun IntUiTheme(
         CompositionLocalProvider(
             LocalPainterHintsProvider provides StandalonePainterHintsProvider(theme),
             LocalNewUiChecker provides StandaloneNewUiChecker,
+            LocalTypography provides IntUiTypography,
         ) {
             content()
         }
