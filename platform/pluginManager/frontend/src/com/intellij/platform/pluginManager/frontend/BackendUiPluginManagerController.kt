@@ -120,6 +120,10 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return awaitForResult { PluginManagerApi.getInstance().checkPluginCanBeDownloaded(PluginDto.fromModel(pluginUiModel)) }
   }
 
+  override suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
+    return PluginManagerApi.getInstance().loadErrors(sessionId)
+  }
+
   override fun hasPluginsAvailableForEnableDisable(pluginIds: List<PluginId>): Boolean {
     return awaitForResult { PluginManagerApi.getInstance().hasPluginsAvailableForEnableDisable(pluginIds) }
   }
