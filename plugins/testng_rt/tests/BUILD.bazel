@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//java/java-tests:tests_test_lib",
     "//platform/core-api:core",
+    "//platform/execution-impl",
     "//jps/model-api:model",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",

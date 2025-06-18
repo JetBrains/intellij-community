@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//platform/core-api:core",
+    "//platform/execution-impl",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/facet",
     "//platform/smRunner",

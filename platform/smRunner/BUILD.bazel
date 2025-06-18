@@ -36,7 +36,6 @@ jvm_library(
     "//platform/util/jdom",
   ],
   exports = [
-    "//platform/execution-impl",
     "//platform/testRunner",
     "@lib//:tc_service_messages",
   ],

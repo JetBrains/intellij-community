@@ -17,6 +17,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "//java/java-indexing-api:indexing",
     "//platform/core-api:core",
+    "//platform/execution-impl",
     "//platform/indexing-api:indexing",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/facet",

@@ -10,6 +10,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/projectModel-api:projectModel",
     "//platform/testFramework",
     "//platform/xdebugger-impl:debugger-impl",

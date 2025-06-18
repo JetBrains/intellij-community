@@ -32,6 +32,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-ir",
     "@lib//:kotlinc-analysis-api",
     "//platform/core-api:core",
+    "//platform/execution-impl",
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/psi",
     "//platform/util",

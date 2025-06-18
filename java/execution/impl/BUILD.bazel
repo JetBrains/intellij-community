@@ -28,6 +28,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
     "//java/execution/openapi:java-execution",
     "//java/java-runtime:rt",

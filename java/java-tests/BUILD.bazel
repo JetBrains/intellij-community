@@ -24,6 +24,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//platform/foldings",
     "//platform/indexing-api:indexing",
     "//jps/model-api:model",

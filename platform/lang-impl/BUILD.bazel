@@ -157,6 +157,7 @@ jvm_library(
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/lang-api:lang",

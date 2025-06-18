@@ -27,7 +27,6 @@ jvm_library(
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/util/jdom",
-  ],
-  exports = ["//platform/execution-impl"]
+  ]
 )
 ### auto-generated section `build intellij.platform.scriptDebugger.ui` end

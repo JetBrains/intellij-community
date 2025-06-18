@@ -13,6 +13,7 @@ jvm_library(
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
+    "//platform/execution-impl",
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/lang-core",
