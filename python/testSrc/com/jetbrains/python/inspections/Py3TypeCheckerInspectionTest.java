@@ -2894,4 +2894,35 @@ def foo(param: str | int) -> TypeGuard[str]:
                    f(<warning descr="Expected type 'Literal[1]', got 'Literal[2]' instead">a=2</warning>)
                    """);
   }
+
+  // PY-55691
+  public void testAttrsDataclassProtocolMatchingDefine() {
+    runWithAdditionalClassEntryInSdkRoots("packages", () ->
+      doTestByText("""
+                     import attrs
+                     
+                     @attrs.define
+                     class User:
+                         password: str
+                     
+                     attrs.fields(User)
+                     """)
+    );
+  }
+  
+  // PY-55691
+  public void testAttrsDataclassProtocolMatchingFrozen() {
+    runWithAdditionalClassEntryInSdkRoots("packages", () ->
+      doTestByText("""
+                     import attrs
+                     
+                     @attrs.frozen
+                     class User:
+                         password: str
+                     
+                     attrs.fields(User)
+                     """)
+    );
+  }
+
 }
