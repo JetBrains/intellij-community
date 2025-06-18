@@ -3,7 +3,8 @@ package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import kotlin.apply as applyKt
@@ -71,7 +72,7 @@ abstract class GroovyDslGradleBuildScriptBuilder<Self : GroovyDslGradleBuildScri
   }
 
   override fun generate(): String {
-    return GroovyScriptBuilder().generate(generateTree())
+    return ScriptBuilder.script(GradleDsl.GROOVY, generateTree())
   }
 
   internal class Impl(gradleVersion: GradleVersion) : GroovyDslGradleBuildScriptBuilder<Impl>(gradleVersion) {

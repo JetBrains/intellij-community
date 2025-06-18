@@ -3,7 +3,8 @@ package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.frameworkSupport.script.KotlinScriptBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
+import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptBuilder
 import kotlin.apply as applyKt
 
 @ApiStatus.Internal
@@ -16,7 +17,7 @@ abstract class KotlinDslGradleSettingScriptBuilder<Self : KotlinDslGradleSetting
     addCode("""project("$name").projectDir = file("$relativePath")""")
 
   override fun generate(): String {
-    return KotlinScriptBuilder().generate(generateTree())
+    return ScriptBuilder.script(GradleDsl.KOTLIN, generateTree())
   }
 
   internal class Impl(gradleVersion: GradleVersion) : KotlinDslGradleSettingScriptBuilder<Impl>(gradleVersion) {

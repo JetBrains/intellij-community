@@ -89,14 +89,5 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
 
     fun tree(configure: ScriptTreeBuilder.() -> Unit): BlockElement =
       ScriptTreeBuilder(configure).generate()
-
-    fun script(builder: ScriptBuilder, configure: ScriptTreeBuilder.() -> Unit): String =
-      builder.generate(tree(configure))
-
-    fun script(useKotlinDsl: Boolean = false, configure: ScriptTreeBuilder.() -> Unit): String =
-      when (useKotlinDsl) {
-        true -> script(KotlinScriptBuilder(), configure)
-        else -> script(GroovyScriptBuilder(), configure)
-      }
   }
 }
