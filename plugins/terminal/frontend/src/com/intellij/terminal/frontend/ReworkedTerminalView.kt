@@ -199,6 +199,10 @@ internal class ReworkedTerminalView(
     terminalInput.sendBytes(bytes)
   }
 
+  override fun getText(): CharSequence {
+    return getCurEditor().document.immutableCharSequence
+  }
+
   override fun isCommandRunning(): Boolean {
     // Will work only if there is a shell integration.
     // If there is no shell integration, then it is always false.

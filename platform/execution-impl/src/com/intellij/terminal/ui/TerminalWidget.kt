@@ -73,6 +73,15 @@ interface TerminalWidget : ComponentContainer {
   fun sendCommandToExecute(shellCommand: String)
 
   /**
+   * Returns the **immutable** state of the terminal output text.
+   */
+  @ApiStatus.Experimental
+  @RequiresEdt(generateAssertion = false)
+  fun getText(): CharSequence {
+    return ""
+  }
+
+  /**
    * Note that implementations might not guarantee that the result is 100% correct.
    */
   @ApiStatus.Experimental

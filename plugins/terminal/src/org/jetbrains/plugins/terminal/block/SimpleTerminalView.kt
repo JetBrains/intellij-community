@@ -81,6 +81,10 @@ internal class SimpleTerminalView(
 
   fun isFocused(): Boolean = editor.contentComponent.hasFocus()
 
+  fun getText(): CharSequence {
+    return editor.document.immutableCharSequence
+  }
+
   override fun dispose() {
     EditorFactory.getInstance().releaseEditor(editor)
     Disposer.dispose(controller)
