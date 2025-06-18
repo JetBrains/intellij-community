@@ -81,8 +81,8 @@ public class UndoManagerImpl extends UndoManager {
   protected UndoManagerImpl(@Nullable ComponentManager componentManager) {
     myProject = componentManager instanceof Project project ? project : null;
     myAdjustableUndoableActionsHolder = new SharedAdjustableUndoableActionsHolder();
-    mySharedUndoStacksHolder = new SharedUndoRedoStacksHolder(true, myAdjustableUndoableActionsHolder);
-    mySharedRedoStacksHolder = new SharedUndoRedoStacksHolder(false, myAdjustableUndoableActionsHolder);
+    mySharedUndoStacksHolder = new SharedUndoRedoStacksHolder(myAdjustableUndoableActionsHolder, isPerClientSupported(), true);
+    mySharedRedoStacksHolder = new SharedUndoRedoStacksHolder(myAdjustableUndoableActionsHolder, isPerClientSupported(), false);
   }
 
   @Override
@@ -332,6 +332,11 @@ public class UndoManagerImpl extends UndoManager {
 
   @ApiStatus.Internal
   protected boolean isGlobalSplitSupported() {
+    return true;
+  }
+
+  @ApiStatus.Internal
+  protected boolean isPerClientSupported() {
     return true;
   }
 
