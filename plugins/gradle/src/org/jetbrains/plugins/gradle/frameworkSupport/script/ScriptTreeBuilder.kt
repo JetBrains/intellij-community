@@ -33,14 +33,10 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
   }
 
   fun addElements(block: BlockElement): ScriptTreeBuilder = addElements(block) { true }
-  fun addElements(builder: ScriptTreeBuilder): ScriptTreeBuilder = addElements(builder.generate())
-  fun addElements(configure: ScriptTreeBuilder.() -> Unit): ScriptTreeBuilder = addElements(ScriptTreeBuilder(configure))
 
   fun addNonExistedElements(block: BlockElement): ScriptTreeBuilder = addElements(block) { it !in roots }
-  fun addNonExistedElements(builder: ScriptTreeBuilder): ScriptTreeBuilder = addNonExistedElements(builder.generate())
-  fun addNonExistedElements(configure: ScriptTreeBuilder.() -> Unit): ScriptTreeBuilder = addNonExistedElements(ScriptTreeBuilder(configure))
 
-  fun addElements(block: BlockElement, filter: (ScriptElement) -> Boolean): ScriptTreeBuilder = apply {
+  private fun addElements(block: BlockElement, filter: (ScriptElement) -> Boolean): ScriptTreeBuilder = apply {
     for (statement in block.statements) {
       if (filter(statement)) {
         addElement(statement)
@@ -84,10 +80,7 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
   companion object {
     private val LOG = Logger.getInstance(ScriptTreeBuilder::class.java)
 
-    operator fun invoke(configure: ScriptTreeBuilder.() -> Unit): ScriptTreeBuilder =
-      ScriptTreeBuilder().apply(configure)
-
     fun tree(configure: ScriptTreeBuilder.() -> Unit): BlockElement =
-      ScriptTreeBuilder(configure).generate()
+      ScriptTreeBuilder().apply(configure).generate()
   }
 }

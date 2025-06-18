@@ -6,7 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder.Companion.tree
 import java.util.function.Consumer
 
 @ApiStatus.NonExtendable
@@ -30,7 +29,7 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
   protected abstract fun apply(action: Self.() -> Unit): Self
 
   private fun applyAndMerge(builder: ScriptTreeBuilder, configure: ScriptTreeBuilder.() -> Unit) =
-    apply { builder.addNonExistedElements(configure) }
+    apply { builder.addNonExistedElements(ScriptTreeBuilder.tree(configure)) }
 
   override fun addImport(import: String): Self = applyAndMerge(imports) { code("import $import") }
 
@@ -72,7 +71,7 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
   override fun withJava(configure: ScriptTreeBuilder.() -> Unit): Self = applyAndMerge(java, configure)
   override fun withJava(configure: Consumer<ScriptTreeBuilder>): Self = withPostfix(configure::accept)
 
-  override fun generateTree(): BlockElement = tree {
+  override fun generateTree(): BlockElement = ScriptTreeBuilder.tree {
     join(imports).ln()
     callIfNotEmpty("buildscript") {
       join(buildScriptPrefixes).ln()

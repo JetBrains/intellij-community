@@ -22,7 +22,7 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
   protected abstract fun apply(action: Self.() -> Unit): Self
 
   private fun applyAndMerge(builder: ScriptTreeBuilder, configure: ScriptTreeBuilder.() -> Unit): Self = apply {
-    builder.addNonExistedElements(configure)
+    builder.addNonExistedElements(ScriptTreeBuilder.tree(configure))
   }
 
   override fun setProjectName(projectName: String): Self = apply {
@@ -58,7 +58,7 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
   }
 
   override fun addCode(configure: ScriptTreeBuilder.() -> Unit): Self = apply {
-    script.addElements(configure)
+    script.addElements(ScriptTreeBuilder.tree(configure))
   }
 
   override fun withPlugin(configure: ScriptTreeBuilder.() -> Unit): Self =
