@@ -24,6 +24,7 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -342,14 +343,17 @@ open class MergingUpdateQueue @JvmOverloads constructor(
 
       isFlushing = true
       try {
-        val all = flushScheduledUpdates() ?: return@scheduleTask
 
         try {
-          coroutineContext.ensureActive()
+          currentCoroutineContext().ensureActive()
         } catch (e : CancellationException) {
-          all.forEachGuaranteed(Update::setRejected)
+          if (waiterForMerge.isDisposed) {
+            flushScheduledUpdates()?.forEachGuaranteed(Update::setRejected)
+          }
           throw e
         }
+
+        val all = flushScheduledUpdates() ?: return@scheduleTask
 
         for (update in all) {
           update.setProcessed()
