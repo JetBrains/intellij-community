@@ -4,13 +4,12 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
-import com.jetbrains.python.psi.PyCallable;
-import com.jetbrains.python.psi.PyNoneLiteralExpression;
-import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 
-public final class TypeEvalContext {
+public sealed class TypeEvalContext {
 
   /**
    * This class ensures that only {@link TypeEvalContext} instances can directly invoke
@@ -97,7 +96,7 @@ public final class TypeEvalContext {
    * Inspections should not create a new type evaluation context. They should re-use the context of the inspection session.
    */
   public static TypeEvalContext codeAnalysis(final @NotNull Project project, final @Nullable PsiFile origin) {
-    return getContextFromCache(project, new TypeEvalContext(false, false, false, origin));
+    return getContextFromCache(project, buildCodeAnalysisContext(origin));
   }
 
   /**
@@ -122,6 +121,13 @@ public final class TypeEvalContext {
    */
   public static TypeEvalContext deepCodeInsight(final @NotNull Project project) {
     return getContextFromCache(project, new TypeEvalContext(false, true, false, null));
+  }
+
+  private static TypeEvalContext buildCodeAnalysisContext(@Nullable PsiFile origin) {
+    if (Registry.is("python.optimized.type.eval.context")) {
+      return new OptimizedTypeEvalContext(false, false, false, origin);
+    }
+    return new TypeEvalContext(false, false, false, origin);
   }
 
   /**
@@ -281,6 +287,50 @@ public final class TypeEvalContext {
     }
     else {
       return getContextFile(context);
+    }
+  }
+
+  final static class OptimizedTypeEvalContext extends TypeEvalContext {
+    private volatile TypeEvalContext codeInsightFallback;
+
+    OptimizedTypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
+      super(allowDataFlow, allowStubToAST, allowCallContext, origin);
+    }
+
+    private boolean shouldSwitchToFallbackContext(PsiElement element) {
+      PsiFile file = element.getContainingFile();
+      if (file instanceof PyExpressionCodeFragment codeFragment) {
+        PsiElement context = codeFragment.getContext();
+        if (context != null) {
+          file = context.getContainingFile();
+        }
+      }
+      TypeEvalConstraints constraints = getConstraints();
+      return constraints.myOrigin != null && file != constraints.myOrigin && (file instanceof PyFile) &&
+             !constraints.myAllowDataFlow && !constraints.myAllowStubToAST && !constraints.myAllowCallContext;
+    }
+
+    private TypeEvalContext getFallbackContext(Project project) {
+      if (codeInsightFallback == null) {
+        codeInsightFallback = codeInsightFallback(project);
+      }
+      return codeInsightFallback;
+    }
+
+    @Override
+    public @Nullable PyType getType(@NotNull PyTypedElement element) {
+      if (shouldSwitchToFallbackContext(element)) {
+        return getFallbackContext(element.getProject()).getType(element);
+      }
+      return super.getType(element);
+    }
+
+    @Override
+    public @Nullable PyType getReturnType(@NotNull PyCallable callable) {
+      if (shouldSwitchToFallbackContext(callable)) {
+        return getFallbackContext(callable.getProject()).getReturnType(callable);
+      }
+      return super.getReturnType(callable);
     }
   }
 }
