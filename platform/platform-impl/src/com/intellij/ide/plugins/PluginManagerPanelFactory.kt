@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.marketplace.PluginSearchResult
+import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.openapi.application.EDT
@@ -9,7 +10,9 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.registry.RegistryManager.Companion.getInstance
+import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -20,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus
 object PluginManagerPanelFactory {
   private val LOG = Logger.getInstance(PluginManagerPanelFactory::class.java)
 
-  fun createMarketplacePanel(cs: CoroutineScope, callback: (CreateMarketplacePanelModel) -> Unit) {
+  fun createMarketplacePanel(cs: CoroutineScope, myPluginModel: MyPluginModel, callback: (CreateMarketplacePanelModel) -> Unit) {
     cs.launch {
       val pluginManager = UiPluginManager.getInstance()
       val marketplaceData = mutableMapOf<String, PluginSearchResult>()
@@ -32,6 +35,8 @@ object PluginManagerPanelFactory {
         "orderBy=rating"
       )
 
+      val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
+      val errors = myPluginModel.getErrors(errorCheckResults)
       try {
         for (query in queries) {
           val result = pluginManager.executeMarketplaceQuery(query, 18, false)
@@ -39,24 +44,27 @@ object PluginManagerPanelFactory {
             marketplaceData[query] = result
           }
         }
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         LOG.info("Main plugin repository is not available (${e.message}). Please check your network settings.")
       }
 
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(CreateMarketplacePanelModel(marketplaceData))
+        callback(CreateMarketplacePanelModel(marketplaceData, errors))
       }
     }
   }
 
   @ApiStatus.Internal
-  fun createInstalledPanel(cs: CoroutineScope, callback: (CreateInstalledPanelModel) -> Unit) {
+  fun createInstalledPanel(cs: CoroutineScope, myPluginModel: MyPluginModel, callback: (CreateInstalledPanelModel) -> Unit) {
     cs.launch {
       val pluginManager = UiPluginManager.getInstance()
       val installedPlugins = pluginManager.getInstalledPlugins()
       val visiblePlugins = pluginManager.getVisiblePlugins(Registry.`is`("plugins.show.implementation.details"))
+      val errorCheckResults = pluginManager.loadErrors(myPluginModel.sessionId.toString())
+      val errors = myPluginModel.getErrors(errorCheckResults)
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins))
+        callback(CreateInstalledPanelModel(installedPlugins, visiblePlugins, errors))
       }
     }
   }
@@ -66,11 +74,15 @@ object PluginManagerPanelFactory {
 @ApiStatus.Internal
 class PluginManagerCoroutineScopeHolder(val coroutineScope: CoroutineScope)
 
+@ApiStatus.Internal
 data class CreateInstalledPanelModel(
   val installedPlugins: List<PluginUiModel>,
   val visiblePlugins: List<PluginUiModel>,
+  val errors: Map<PluginId, List<HtmlChunk>>,
 )
 
+@ApiStatus.Internal
 data class CreateMarketplacePanelModel(
   val marketplaceData: Map<String, PluginSearchResult>,
+  val errors: Map<PluginId, List<HtmlChunk>>,
 )

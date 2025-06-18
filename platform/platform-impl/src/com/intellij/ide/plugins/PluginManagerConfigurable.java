@@ -48,6 +48,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -459,8 +460,9 @@ public final class PluginManagerConfigurable
         myMarketplacePanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, true);
+                                                                     @NotNull PluginsGroup group,
+                                                                     @NotNull List<HtmlChunk> errors) {
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, true);
           }
         };
 
@@ -489,13 +491,13 @@ public final class PluginManagerConfigurable
       }
 
       private void doCreateMarketplaceTab(@NotNull Consumer<? super PluginsGroupComponent> selectionListener, Project project) {
-        PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, model -> {
+        PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
           List<PluginsGroup> groups = new ArrayList<>();
           try {
             Map<String, List<PluginUiModel>> customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap();
             try {
               if (project != null) {
-                addSuggestedGroup(groups, project, customRepositoriesMap);
+                addSuggestedGroup(groups, project, customRepositoriesMap, model.getErrors());
               }
 
               PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
@@ -509,7 +511,8 @@ public final class PluginManagerConfigurable
                   PluginsGroupType.INTERNAL,
                   SearchWords.INTERNAL.getValue(),
                   customPlugins,
-                  group -> customPlugins.size() >= ITEMS_PER_GROUP
+                  group -> customPlugins.size() >= ITEMS_PER_GROUP,
+                  model.getErrors()
                 );
               }
 
@@ -520,7 +523,8 @@ public final class PluginManagerConfigurable
                 PluginsGroupType.STAFF_PICKS,
                 "is_featured_search=true",
                 SearchWords.STAFF_PICKS.getValue(),
-                marketplaceData
+                marketplaceData,
+                model.getErrors()
               );
               addGroupViaLightDescriptor(
                 groups,
@@ -528,7 +532,8 @@ public final class PluginManagerConfigurable
                 PluginsGroupType.NEW_AND_UPDATED,
                 "orderBy=update+date",
                 "/sortBy:updated",
-                marketplaceData
+                marketplaceData,
+                model.getErrors()
               );
               addGroupViaLightDescriptor(
                 groups,
@@ -536,7 +541,8 @@ public final class PluginManagerConfigurable
                 PluginsGroupType.TOP_DOWNLOADS,
                 "orderBy=downloads",
                 "/sortBy:downloads",
-                marketplaceData
+                marketplaceData,
+                model.getErrors()
               );
               addGroupViaLightDescriptor(
                 groups,
@@ -544,7 +550,8 @@ public final class PluginManagerConfigurable
                 PluginsGroupType.TOP_RATED,
                 "orderBy=rating",
                 "/sortBy:rating",
-                marketplaceData
+                marketplaceData,
+                model.getErrors()
               );
             }
             catch (IOException e) {
@@ -564,7 +571,8 @@ public final class PluginManagerConfigurable
                          group -> {
                            PluginsGroup.sortByName(group.getModels());
                            return allDescriptors.size() > ITEMS_PER_GROUP;
-                         });
+                         },
+                         model.getErrors());
               }
             }
             if (myPluginManagerCustomizer != null) {
@@ -838,8 +846,9 @@ public final class PluginManagerConfigurable
         PluginsGroupComponentWithProgress panel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, true);
+                                                                     @NotNull PluginsGroup group,
+                                                                     @NotNull List<HtmlChunk> errors) {
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, true);
           }
         };
 
@@ -1013,8 +1022,9 @@ public final class PluginManagerConfigurable
         myInstalledPanel = new PluginsGroupComponentWithProgress(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, false);
+                                                                     @NotNull PluginsGroup group,
+                                                                     @NotNull List<HtmlChunk> errors) {
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, false);
           }
         };
 
@@ -1026,9 +1036,10 @@ public final class PluginManagerConfigurable
         ((SearchUpDownPopupController)myInstalledSearchPanel.controller).setEventHandler(eventHandler);
         myInstalledPanel.startLoading();
         PluginLogo.startBatchMode();
-        PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, model -> {
+        PluginManagerPanelFactory.INSTANCE.createInstalledPanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
           try {
             PluginsGroup installing = new PluginsGroup(IdeBundle.message("plugins.configurable.installing"), PluginsGroupType.INSTALLING);
+            installing.setErrors(model.getErrors());
             installing.addModels(MyPluginModel.getInstallingPlugins());
             if (!installing.getModels().isEmpty()) {
               installing.sortByName();
@@ -1038,7 +1049,10 @@ public final class PluginManagerConfigurable
 
             PluginsGroup downloaded =
               new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"), PluginsGroupType.INSTALLED);
+            downloaded.setErrors(model.getErrors());
             downloaded.addModels(model.getInstalledPlugins());
+
+            myBundledUpdateGroup.setErrors(model.getErrors());
 
             Map<Boolean, List<PluginUiModel>> visiblePlugins = model.getVisiblePlugins()
               .stream()
@@ -1183,8 +1197,9 @@ public final class PluginManagerConfigurable
         PluginsGroupComponent panel = new PluginsGroupComponent(eventHandler) {
           @Override
           protected @NotNull ListPluginComponent createListComponent(@NotNull PluginUiModel model,
-                                                                     @NotNull PluginsGroup group) {
-            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, false);
+                                                                     @NotNull PluginsGroup group,
+                                                                     @NotNull List<HtmlChunk> errors) {
+            return new ListPluginComponent(myPluginModelFacade, model, group, searchListener, errors, false);
           }
         };
 
@@ -1392,7 +1407,9 @@ public final class PluginManagerConfigurable
 
   private void addSuggestedGroup(@NotNull List<? super PluginsGroup> groups,
                                  @NotNull Project project,
-                                 Map<String, @NotNull List<PluginUiModel>> customMap) {
+                                 Map<String, @NotNull List<PluginUiModel>> customMap,
+                                 @NotNull Map<@NotNull PluginId,
+                                 @NotNull List<@NotNull HtmlChunk>> errors) {
     String groupName = IdeBundle.message("plugins.configurable.suggested");
     LOG.info("Marketplace tab: '" + groupName + "' group load started");
     List<PluginUiModel> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customMap);
@@ -1404,7 +1421,7 @@ public final class PluginManagerConfigurable
 
       FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
     }
-    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
+    addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false, errors);
   }
 
 
@@ -1900,9 +1917,10 @@ public final class PluginManagerConfigurable
                         @NotNull PluginsGroupType type,
                         @NotNull String showAllQuery,
                         @NotNull List<PluginUiModel> customPlugins,
-                        @NotNull Predicate<? super PluginsGroup> showAllPredicate) {
+                        @NotNull Predicate<? super PluginsGroup> showAllPredicate,
+                        @NotNull Map<PluginId, List<HtmlChunk>> errors) {
     PluginsGroup group = new PluginsGroup(name, type);
-
+    group.setErrors(errors);
     int i = 0;
     for (Iterator<PluginUiModel> iterator = customPlugins.iterator(); iterator.hasNext() && i < ITEMS_PER_GROUP; i++) {
       group.addModel(iterator.next());
@@ -1927,7 +1945,8 @@ public final class PluginManagerConfigurable
                                           @NotNull PluginsGroupType type,
                                           @NotNull @NonNls String query,
                                           @NotNull @NonNls String showAllQuery,
-                                          @NotNull Map<String, PluginSearchResult> marketplaceData) throws IOException {
+                                          @NotNull Map<String, PluginSearchResult> marketplaceData,
+                                          @NotNull Map<PluginId, List<HtmlChunk>> errors) throws IOException {
     LOG.info("Marketplace tab: '" + name + "' group load started");
     PluginSearchResult searchResult = marketplaceData.get(query);
     if (searchResult.getError() != null) {
@@ -1945,7 +1964,8 @@ public final class PluginManagerConfigurable
              type,
              showAllQuery,
              plugins,
-             __ -> plugins.size() >= ITEMS_PER_GROUP);
+             __ -> plugins.size() >= ITEMS_PER_GROUP,
+             errors);
   }
 
   @Override

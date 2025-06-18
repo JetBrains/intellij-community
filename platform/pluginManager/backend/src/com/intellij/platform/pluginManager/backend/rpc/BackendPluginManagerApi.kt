@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.PluginReviewComment
@@ -14,7 +15,6 @@ import com.intellij.ide.plugins.marketplace.PluginSearchResult
 import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginManagerSessionService
-import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.project.ProjectId
@@ -206,4 +206,7 @@ class BackendPluginManagerApi : PluginManagerApi {
     return DefaultUiPluginManagerController.checkPluginCanBeDownloaded(plugin, null)
   }
 
+  override suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
+    return DefaultUiPluginManagerController.loadErrors(sessionId)
+  }
 }

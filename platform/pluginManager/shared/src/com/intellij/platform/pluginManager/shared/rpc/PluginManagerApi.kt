@@ -3,6 +3,7 @@ package com.intellij.platform.pluginManager.shared.rpc
 
 import com.intellij.ide.plugins.marketplace.MarketplaceSearchPluginData
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.ide.plugins.marketplace.CheckErrorsResult
 import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate
 import com.intellij.ide.plugins.marketplace.IntellijPluginMetadata
 import com.intellij.ide.plugins.marketplace.IntellijUpdateMetadata
@@ -63,6 +64,7 @@ interface PluginManagerApi : RemoteApi<Unit> {
   suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
   suspend fun getPluginInstallationStates(pluginIds: List<PluginId>): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(plugin: PluginDto): Boolean
+  suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
 
   companion object {
     suspend fun getInstance(): PluginManagerApi {

@@ -64,7 +64,7 @@ final class InstallPluginInfo {
   }
 
   public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired,
-                                  List<? extends HtmlChunk> errors) {
+                                  List<HtmlChunk> errors) {
     if (myClosed) {
       return;
     }
