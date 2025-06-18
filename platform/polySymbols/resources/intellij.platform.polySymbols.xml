@@ -26,6 +26,9 @@
     <extensionPoint qualifiedName="com.intellij.polySymbols.queryConfigurator"
                     interface="com.intellij.polySymbols.query.PolySymbolQueryConfigurator"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.polySymbols.queryScopeContributor"
+                    interface="com.intellij.polySymbols.query.PolySymbolQueryScopeContributor"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.polySymbols.webTypes.filter"
                     beanClass="com.intellij.polySymbols.webTypes.impl.PolySymbolFilterEP"
                     dynamic="true">

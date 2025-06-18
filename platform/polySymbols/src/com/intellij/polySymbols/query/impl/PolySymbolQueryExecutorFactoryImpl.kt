@@ -5,6 +5,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Pointer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -59,6 +60,10 @@ class PolySymbolQueryExecutorFactoryImpl(private val project: Project) : PolySym
           }
         }
     })
+    scopeList.addAll(
+      application.service<PolySymbolQueryScopeService>()
+        .buildScope(project, originalLocation, context, allowResolve)
+    )
 
     scopeList.sortBy { (it.asSafely<PolySymbolPrioritizedScope>()?.priority ?: PolySymbol.Priority.NORMAL).value }
 
