@@ -108,6 +108,8 @@ internal class StateAwareTerminalSession(
   override val isClosed: Boolean
     get() = delegate.isClosed
 
+  override suspend fun hasRunningCommands(): Boolean = delegate.hasRunningCommands()
+
   private suspend fun handleOriginalEvents(events: List<TerminalOutputEvent>) {
     val versionedEvents = VersionedEvents(events)
     try {

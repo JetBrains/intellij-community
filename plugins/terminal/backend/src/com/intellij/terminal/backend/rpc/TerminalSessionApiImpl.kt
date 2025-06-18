@@ -21,6 +21,10 @@ internal class TerminalSessionApiImpl : TerminalSessionApi {
     return getSession(sessionId).getOutputFlow()
   }
 
+  override suspend fun hasRunningCommands(sessionId: TerminalSessionId): Boolean {
+    return getSession(sessionId).hasRunningCommands()
+  }
+
   private fun getSession(sessionId: TerminalSessionId): TerminalSession {
     return TerminalSessionsManager.getInstance().getSession(sessionId)
            ?: error("Failed to find TerminalSession with ID: $sessionId")
