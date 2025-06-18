@@ -11,7 +11,7 @@ object FindKey {
   @JvmStatic
   val isCwmClient: Boolean get() {
     val frontendType = FrontendApplicationInfo.getFrontendType()
-    return (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported)
+    return (frontendType is FrontendType.Remote && frontendType.isGuest())
   }
 
   val isEnabled: Boolean

@@ -64,7 +64,7 @@ internal class XQuickEvaluateHandler : QuickEvaluateHandler() {
       }
       val frontendType = FrontendApplicationInfo.getFrontendType()
 
-      if (frontendType is FrontendType.RemoteDev && Registry.`is`("xdebugger.lux.evaluation.popup")) {
+      if (frontendType is FrontendType.Remote && Registry.`is`("xdebugger.lux.evaluation.popup")) {
         RemoteValueHint(project, projectId, editor, point, type, adjustedOffset, expressionInfo)
       }
       else {

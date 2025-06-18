@@ -13,14 +13,14 @@ import org.jetbrains.annotations.TestOnly
 object SearchEverywhereFeature {
   val isSplit: Boolean get() = Registry.`is`(registryKey, false) && SearchEverywhereSplitIncompatible.EP_NAME.extensionList.isEmpty()
 
-  private val isCwmClient: Boolean get() {
+  private val isGuest: Boolean get() {
     val frontendType = FrontendApplicationInfo.getFrontendType()
-    return (frontendType is FrontendType.RemoteDev && !frontendType.isLuxSupported)
+    return (frontendType is FrontendType.Remote && frontendType.isGuest())
   }
 
   val registryKey: String get() =
     if (PlatformUtils.isRider()) "search.everywhere.new.rider.enabled"
-    else if (isCwmClient) "search.everywhere.new.cwm.client.enabled"
+    else if (isGuest) "search.everywhere.new.cwm.client.enabled"
     else "search.everywhere.new.enabled"
 
   @get:TestOnly

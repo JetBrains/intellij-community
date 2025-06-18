@@ -10,6 +10,6 @@ fun Registry.Companion.isRdBranchWidgetEnabled(): Boolean =
   `is`("git.branches.widget.rd", true) && !isCodeWithMe()
 
 internal fun isCodeWithMe(): Boolean {
-  val frontendType = FrontendApplicationInfo.getFrontendType() as? FrontendType.RemoteDev ?: return false
-  return !frontendType.isLuxSupported
+  val frontendType = FrontendApplicationInfo.getFrontendType() as? FrontendType.Remote ?: return false
+  return frontendType.isGuest()
 }
