@@ -15,8 +15,8 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
     AbstractGradleScriptElementBuilder() {
 
   private var projectName: String? = null
-  private val script = GradleScriptTreeBuilder()
-  private var plugins = GradleScriptTreeBuilder()
+  private val script = GradleScriptTreeBuilder.create()
+  private var plugins = GradleScriptTreeBuilder.create()
   private var pluginManagement: GradleScriptTreeBuilder.() -> Unit = {}
 
   protected abstract fun apply(action: Self.() -> Unit): Self

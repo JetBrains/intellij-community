@@ -14,17 +14,17 @@ abstract class AbstractGradleBuildScriptBuilderCore<Self : GradleBuildScriptBuil
 ) : GradleBuildScriptBuilderCore<Self>,
     AbstractGradleScriptElementBuilder() {
 
-  private val imports = GradleScriptTreeBuilder()
-  private val buildScriptPrefixes = GradleScriptTreeBuilder()
-  private val buildScriptDependencies = GradleScriptTreeBuilder()
-  private val buildScriptRepositories = GradleScriptTreeBuilder()
-  private val buildScriptPostfixes = GradleScriptTreeBuilder()
-  private val plugins = GradleScriptTreeBuilder()
-  private val java = GradleScriptTreeBuilder()
-  private val prefixes = GradleScriptTreeBuilder()
-  private val dependencies = GradleScriptTreeBuilder()
-  private val repositories = GradleScriptTreeBuilder()
-  private val postfixes = GradleScriptTreeBuilder()
+  private val imports = GradleScriptTreeBuilder.create()
+  private val buildScriptPrefixes = GradleScriptTreeBuilder.create()
+  private val buildScriptDependencies = GradleScriptTreeBuilder.create()
+  private val buildScriptRepositories = GradleScriptTreeBuilder.create()
+  private val buildScriptPostfixes = GradleScriptTreeBuilder.create()
+  private val plugins = GradleScriptTreeBuilder.create()
+  private val java = GradleScriptTreeBuilder.create()
+  private val prefixes = GradleScriptTreeBuilder.create()
+  private val dependencies = GradleScriptTreeBuilder.create()
+  private val repositories = GradleScriptTreeBuilder.create()
+  private val postfixes = GradleScriptTreeBuilder.create()
 
   protected abstract fun apply(action: Self.() -> Unit): Self
 
