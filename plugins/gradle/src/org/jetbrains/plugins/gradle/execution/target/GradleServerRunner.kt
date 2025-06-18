@@ -97,7 +97,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     processHandler.addProcessListener(serverProcessListener)
     processHandler.runProcessWithProgressIndicator(targetProgressIndicator.progressIndicator, -1, true)
 
-    serverProcessListener.awaitServerShutdown()
+    serverProcessListener.waitForServerShutdown()
   }
 
   private fun String.useLocalLineSeparators(targetPlatform: TargetPlatform) =

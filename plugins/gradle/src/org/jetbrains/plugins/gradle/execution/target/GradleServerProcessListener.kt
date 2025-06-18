@@ -28,6 +28,7 @@ internal class GradleServerProcessListener(
   private val buildEventConsumer: BuildEventConsumer,
 ) : ProcessListener {
 
+  @Volatile
   private var listenerJob: Future<*>? = null
 
   companion object {
@@ -38,20 +39,14 @@ internal class GradleServerProcessListener(
   private val connectionAddressReceived: AtomicBoolean = AtomicBoolean(false)
 
   @RequiresBackgroundThread
-  fun awaitServerShutdown() {
-    ProgressManager.getInstance()
-      .executeNonCancelableSection {
-        listenerJob?.get()
-      }
+  fun waitForServerShutdown() {
+    listenerJob?.get()
   }
 
   override fun processTerminated(event: ProcessEvent) {
     val outputType = if (event.exitCode == 0) ProcessOutputType.STDOUT else ProcessOutputType.STDERR
     if (event.text != null) {
       targetProgressIndicator.addText(event.text, outputType)
-    }
-    if (targetProgressIndicator.isCanceled) {
-      resultHandler.onFailure(BuildCancelledException("Build cancelled."))
     }
   }
 
@@ -67,7 +62,7 @@ internal class GradleServerProcessListener(
       if (connectionAddressReceived.compareAndSet(false, true)) {
         val hostName = event.text.substringAfter(CONNECTION_CONF_LINE_PREFIX).substringBefore(" port: ")
         val port = event.text.substringAfter(" port: ").trim().toInt()
-        listenerJob = runListener(hostName, port)
+        runListener(hostName, port)
       }
     }
   }
@@ -76,14 +71,14 @@ internal class GradleServerProcessListener(
     text.nullize(true)?.also { trace { it.trimEnd() } }
   }
 
-  private fun runListener(host: String, port: Int): Future<*> {
-    return ApplicationManager.getApplication()
+  private fun runListener(host: String, port: Int) {
+    listenerJob = ApplicationManager.getApplication()
       .executeOnPooledThread {
         ProgressManager.getInstance()
           .executeProcessUnderProgress(
             {
               val toolingProxyConnection = connectorFactory.getConnector(host, port)
-              toolingProxyConnection.start(
+              toolingProxyConnection.collectAllEvents(
                 serverEnvironmentSetup.getTargetBuildParameters(),
                 resultHandler,
                 buildEventConsumer,

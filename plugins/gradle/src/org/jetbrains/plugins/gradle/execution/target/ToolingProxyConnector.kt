@@ -6,12 +6,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.remote.MultiLoaderObjectInputStream
 import com.intellij.openapi.externalSystem.util.wsl.connectRetrying
 import com.intellij.openapi.progress.ProgressManager
+import kotlinx.coroutines.CancellationException
 import org.gradle.initialization.BuildEventConsumer
 import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
 import org.gradle.internal.remote.internal.inet.TcpOutgoingConnector
 import org.gradle.internal.serialize.Serializers
 import org.gradle.launcher.daemon.protocol.*
+import org.gradle.tooling.BuildCancelledException
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.ResultHandler
 import org.gradle.tooling.internal.provider.action.BuildActionSerializer
@@ -30,9 +32,7 @@ internal class ToolingProxyConnector(
     private val log = logger<ToolingProxyConnector>()
   }
 
-  private var atLeastOneMessageReceived: Boolean = false
-
-  fun start(
+  fun collectAllEvents(
     targetBuildParameters: TargetBuildParameters,
     resultHandler: ResultHandler<Any?>,
     buildEventConsumer: BuildEventConsumer,
@@ -42,23 +42,27 @@ internal class ToolingProxyConnector(
       withConnection(hostPort) {
         dispatch(BuildEvent(targetBuildParameters))
         flush()
-
         listen(resultHandler, buildEventConsumer, intermediateResultHandler)
-
         dispatch(BuildEvent("ack"))
         flush()
       }
     }
-    finally {
-      if (!atLeastOneMessageReceived) {
-        resultHandler.onFailure(GradleConnectionException("Operation result has not been received."))
-      }
+    catch (e: CancellationException) {
+      resultHandler.onFailure(BuildCancelledException("Build cancelled."))
+      throw e
+    }
+    catch (e: Exception) {
+      resultHandler.onFailure(GradleConnectionException("An error occurred", e))
+      throw e
     }
   }
 
   private fun withConnection(hostPort: HostPort, handler: RemoteConnection<Message>.() -> Unit) {
     val inetAddress = InetAddress.getByName(hostPort.host)
-    val connectCompletion = connectRetrying(5000) { TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostPort.port)) }
+    val connectCompletion = connectRetrying(5000) {
+      ProgressManager.checkCanceled()
+      TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostPort.port))
+    }
     val serializer = DaemonMessageSerializer.create(BuildActionSerializer.create())
     val connection = connectCompletion.create(Serializers.stateful(serializer))
     try {
@@ -99,7 +103,10 @@ internal class ToolingProxyConnector(
         intermediateResultHandler.onResult(message.type, value)
         return false
       }
-      else -> return true
+      else -> {
+        log.warn("An unexpected message of type [${message.javaClass}] was received from the daemon")
+        return true
+      }
     }
   }
 
@@ -112,7 +119,6 @@ internal class ToolingProxyConnector(
       ProgressManager.checkCanceled()
       val message = receive()
       if (message != null) {
-        atLeastOneMessageReceived = true
         if (processMessages(message, resultHandler, buildEventConsumer, intermediateResultHandler)) {
           return
         }
