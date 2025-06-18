@@ -31,6 +31,8 @@ private val defaultMavenHome get() = Path.of(getUserHome(), ".m2")
  * 2. localRepository settings in ~/.m2/settings.xml
  * 3. Default location at ~/.m2/repository
  *
+ * Equivalent to `org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRepositoryPath()`.
+ *
  * @return Path to the Maven repository as String
  */
 fun getMavenRepositoryPath(): String {
