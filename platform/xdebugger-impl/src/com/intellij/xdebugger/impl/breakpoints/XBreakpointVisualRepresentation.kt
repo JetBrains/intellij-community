@@ -16,7 +16,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.*
+import com.intellij.openapi.editor.markup.GutterDraggableObject
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
+import com.intellij.openapi.editor.markup.MarkupEditorFilter
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
@@ -117,10 +120,12 @@ class XBreakpointVisualRepresentation(
 
           var highlighter = this.highlighter
           if (highlighter != null &&
-              (!highlighter.isValid() || range != null && highlighter.textRange != range //breakpoint range marker is out-of-sync with actual breakpoint text range
-               || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument) || !Comparing.equal<TextAttributes?>(
-                highlighter.getTextAttributes(null),
-                attributes) // it seems that this check is not needed - we always update line number from the highlighter
+              (!highlighter.isValid()
+               || range != null && highlighter.textRange != range
+               //breakpoint range marker is out-of-sync with actual breakpoint text range
+               || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
+               || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
+                // it seems that this check is not needed - we always update line number from the highlighter
                 // and highlighter is removed on line and file change anyway
                 /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/
               )
