@@ -5,7 +5,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 
@@ -13,16 +13,20 @@ import org.jetbrains.annotations.ApiStatus
 class GradleServerProgressIndicator(
   private val taskId: ExternalSystemTaskId,
   private val taskListener: ExternalSystemTaskNotificationListener?,
+  val progressIndicator: ProgressIndicator,
 ) : TargetProgressIndicator {
-  val progressIndicator = EmptyProgressIndicator().apply { start() }
 
   override fun addText(text: String, outputType: Key<*>) {
     taskListener?.onTaskOutput(taskId, text, outputType != ProcessOutputTypes.STDERR)
   }
 
-  override fun stop() = progressIndicator.stop()
+  override fun stop(): Unit = progressIndicator.stop()
+
   override fun isStopped(): Boolean = !progressIndicator.isRunning
-  fun cancel() = progressIndicator.cancel()
+
+  fun cancel(): Unit = progressIndicator.cancel()
+
   override fun isCanceled(): Boolean = progressIndicator.isCanceled
-  fun checkCanceled() = progressIndicator.checkCanceled()
+
+  fun checkCanceled(): Unit = progressIndicator.checkCanceled()
 }

@@ -8,6 +8,7 @@ import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.BaseOutputReader
@@ -26,9 +27,14 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     resultHandler: ResultHandler<Any?>,
   ) {
     val project: Project = connection.taskId?.findProject() ?: return
-    val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener)
-    consumerOperationParameters.cancellationToken.addCallback(progressIndicator::cancel)
+    val taskProgressIndicator = ProgressManager.getInstance()
+      .progressIndicator ?: throw IllegalStateException("There are no progress indicator assigned. " +
+                                                        "GradleServerRunner should be runned with a correct ProgressIndicator " +
+                                                        "available in the thread context!")
+    consumerOperationParameters.cancellationToken.addCallback(taskProgressIndicator::cancel)
     val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, connection, prepareTaskState)
+
+    val progressIndicator = GradleServerProgressIndicator(connection.taskId, connection.taskListener, taskProgressIndicator)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters, progressIndicator)
     runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler, classloaderHolder)
   }
