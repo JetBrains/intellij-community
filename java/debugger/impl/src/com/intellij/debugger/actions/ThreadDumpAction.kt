@@ -224,20 +224,43 @@ private fun threadName(threadReference: ThreadReference): String =
 private fun threadName(threadNameRaw: String, threadReference: ObjectReference): String =
   threadNameRaw + "@" + threadReference.uniqueID()
 
-private fun getThreadField(
-  fieldName: String,
-  threadType: ReferenceType, threadObj: ThreadReference,
-  holderType: ReferenceType?, holderObj: ObjectReference?,
-): Value? {
-  DebuggerUtils.findField(threadType, fieldName)?.let {
-    return threadObj.getValue(it)
+private inline fun <reified T : Type> findThreadFieldImpl(fieldName: String, typeToSearch: ReferenceType): Field? {
+  val field = DebuggerUtils.findField(typeToSearch, fieldName)
+  if (field == null) {
+    return null
+  }
+  if (field.type() !is T) {
+    val vm = typeToSearch.virtualMachine()
+    logger<ThreadDumpAction>().error(
+      "$typeToSearch has field '$fieldName' with an unexpected type ${field.type()}, skipping it. " +
+      "VM: ${vm.name()}, ${vm.version()}.")
+    return null
   }
 
-  if (holderType != null) {
-    checkNotNull(holderObj)
-    DebuggerUtils.findField(holderType, fieldName)?.let {
-      return holderObj.getValue(it)
+  return field
+}
+
+private inline fun <reified T : Type> findThreadField(fieldName: String, jlThreadType: ReferenceType, fieldHolderType: ReferenceType?, optional: Boolean = false): Field? {
+  findThreadFieldImpl<T>(fieldName, jlThreadType)?.let {
+    return it
+  }
+
+  if (fieldHolderType != null) {
+    findThreadFieldImpl<T>(fieldName, fieldHolderType)?.let {
+      return it
     }
+  }
+
+  if (!optional) {
+    val vm = jlThreadType.virtualMachine()
+    logger<ThreadDumpAction>().error(
+      if (fieldHolderType != null) {
+        "$jlThreadType and $fieldHolderType have "
+      } else {
+        "$jlThreadType has "
+      } +
+      "no field '$fieldName'. " +
+      "VM: ${vm.name()}, ${vm.version()}.")
   }
 
   return null
@@ -252,6 +275,28 @@ private fun buildThreadStates(
   val result = mutableListOf<ThreadState>()
   val nameToThreadMap = mutableMapOf<String, ThreadState>()
   val waitingMap = mutableMapOf<String, String>() // key 'waits_for' value
+
+
+  val jlThreadType = vmProxy.classesByName("java.lang.Thread").single()
+
+  // Since Project Loom some of Thread's fields have been encapsulated into FieldHolder,
+  // so we try to look up fields in the thread itself and in its holder.
+  val holderField = findThreadField<ClassType>("holder", jlThreadType, null, optional = true)
+
+  val fieldHolderType = holderField?.type()?.let { it as ClassType }
+  val daemonField = findThreadField<BooleanType>("daemon", jlThreadType, fieldHolderType)
+  val priorityField = findThreadField<IntegerType>("priority", jlThreadType, fieldHolderType)
+  val tidField = findThreadField<LongType>("tid", jlThreadType, fieldHolderType)
+
+  fun getFieldValue(field: Field?, threadReference: ThreadReference, fieldHolder: ObjectReference?): Value? {
+    if (field == null) return null
+
+    return when (val fieldHost = field.declaringType()) {
+      jlThreadType -> threadReference.getValue(field)
+      fieldHolderType -> fieldHolder!!.getValue(field)
+      else -> { logger<ThreadDumpAction>().error("unexpected declaring type of field $field: $fieldHost"); null }
+    }
+  }
 
   fun processOne(threadReference: ThreadReference, virtualThreadInfo: Pair<String, Long>?) {
     ProgressManager.checkCanceled()
@@ -293,16 +338,10 @@ private fun buildThreadStates(
 
       rawStackTrace = getStackTrace(threadReference)
 
-      // Since Project Loom some of Thread's fields are encapsulated into FieldHolder,
-      // so we try to look up fields in the thread itself and in its holder.
-      val threadType = threadReference.referenceType()
-      val (holderObj, holderType) = when (val value = getThreadField("holder", threadType, threadReference, null, null)) {
-        is ObjectReference -> value to value.referenceType()
-        else -> null to null
-      }
-      isDaemon = (getThreadField("daemon", threadType, threadReference, holderType, holderObj) as? BooleanValue)?.booleanValue() ?: false
-      prio = (getThreadField("priority", threadType, threadReference, holderType, holderObj) as? IntegerValue)?.intValue()
-      tid = (getThreadField("tid", threadType, threadReference, holderType, holderObj) as? LongValue)?.longValue()
+      val holderObj = getFieldValue(holderField, threadReference, null)?.let { it as ObjectReference }
+      isDaemon = getFieldValue(daemonField, threadReference, holderObj)?.let { (it as BooleanValue).booleanValue() } ?: false
+      prio = getFieldValue(priorityField, threadReference, holderObj)?.let { (it as IntegerValue).intValue() }
+      tid = getFieldValue(tidField, threadReference, holderObj)?.let { (it as LongValue).longValue() }
     }
 
     val threadState = ThreadState(threadName, stateString)
