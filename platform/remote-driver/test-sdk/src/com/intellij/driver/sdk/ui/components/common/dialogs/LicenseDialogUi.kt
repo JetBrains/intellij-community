@@ -74,3 +74,12 @@ class ExitConfirmationDialogUi(data: ComponentData): DialogUiComponent(data) {
   val exitConfirmButton: UiComponent = x { byAccessibleName("Exit") }
   val backToActivationButton: UiComponent = x { byAccessibleName("Back to Activation") }
 }
+
+fun LicenseDialogUi.removeLicenseConfirmationDialog(action: RemoveLicenseConfirmationDialogUi.() -> Unit) {
+  x(RemoveLicenseConfirmationDialogUi::class.java) { byTitle("Remove License") or byTitle("Deactivate Subscription") }.action()
+}
+
+class RemoveLicenseConfirmationDialogUi(data: ComponentData): DialogUiComponent(data) {
+  val confirmButton: UiComponent = x { byAccessibleName("Remove License") or byAccessibleName("Deactivate and Restart") }
+  val cancelRemoveButton: UiComponent = x { byAccessibleName("TODO") or byAccessibleName("Keep Subscription") }
+}
