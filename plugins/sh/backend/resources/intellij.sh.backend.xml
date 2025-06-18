@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.sh.core"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.spellchecker"/>
   </dependencies>
 
   <resource-bundle>messages.ShBundle</resource-bundle>
@@ -23,6 +24,7 @@
     <programRunner implementation="com.intellij.sh.backend.run.ShRunProgramRunner"/>
     <runConfigurationBeforeRunProviderDelegate implementation="com.intellij.sh.run.ShBeforeRunProviderDelegate"/>
     <runLineMarkerContributor language="" implementationClass="com.intellij.sh.backend.run.ShRunLineMarkerContributor"/>
+    <spellchecker.support language="Shell Script" implementationClass="com.intellij.sh.backend.spellchecker.ShSpellcheckingStrategy"/>
   </extensions>
 
   <actions>

@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="gson" level="project" />
-    <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />

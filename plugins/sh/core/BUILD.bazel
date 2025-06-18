@@ -24,7 +24,6 @@ jvm_library(
     "//platform/usageView",
     "@lib//:pty4j",
     "@lib//:gson",
-    "//spellchecker",
     "//platform/indexing-impl",
     "//platform/refactoring",
     "//platform/statistics",

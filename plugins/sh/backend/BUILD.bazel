@@ -31,6 +31,7 @@ jvm_library(
     "//platform/xdebugger-api:debugger",
     "//platform/util/jdom",
     "//platform/indexing-api:indexing",
+    "//spellchecker",
   ],
   runtime_deps = [
     ":backend_resources",

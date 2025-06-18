@@ -1,5 +1,5 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.sh.spellchecker;
+package com.intellij.sh.backend.spellchecker;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.DumbAware;
@@ -19,8 +19,8 @@ public class ShSpellcheckingStrategy extends SpellcheckingStrategy implements Du
   @Override
   public @NotNull Tokenizer getTokenizer(PsiElement element) {
     final ASTNode node = element.getNode();
-    if (node != null && TOKENS_WITH_TEXT.contains(node.getElementType())) return TEXT_TOKENIZER;
+    if (node != null && TOKENS_WITH_TEXT.contains(node.getElementType())) return SpellcheckingStrategy.TEXT_TOKENIZER;
     if (element instanceof PsiNameIdentifierOwner) return ShIdentifierOwnerTokenizer.INSTANCE;
-    return EMPTY_TOKENIZER;
+    return SpellcheckingStrategy.EMPTY_TOKENIZER;
   }
 }
