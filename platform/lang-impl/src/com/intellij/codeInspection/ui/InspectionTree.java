@@ -55,8 +55,8 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -115,7 +115,7 @@ public final class InspectionTree extends Tree {
             expandPath(new TreePath(myModel.getRoot()));
             SmartExpander.installOn(InspectionTree.this);
             if (!myView.isDisposed()) {
-              myView.syncRightPanel();
+              ReadAction.run(() -> myView.syncRightPanel());
             }
           });
         }
