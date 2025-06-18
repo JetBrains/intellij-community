@@ -15,10 +15,10 @@ class GradleDaemonJvmHelperTest : LightPlatformTestCase() {
     assertTrue(GradleDaemonJvmHelper.isDaemonJvmCriteriaSupported(GradleVersion.version("8.20")))
   }
 
-  fun testDamonJvmVendorCriteriaSupported() {
-    assertFalse(GradleDaemonJvmHelper.isDamonJvmVendorCriteriaSupported(GradleVersion.version("8.0")))
-    assertTrue(GradleDaemonJvmHelper.isDamonJvmVendorCriteriaSupported(GradleVersion.version("8.10")))
-    assertTrue(GradleDaemonJvmHelper.isDamonJvmVendorCriteriaSupported(GradleVersion.version("8.20")))
+  fun testDaemonJvmVendorCriteriaSupported() {
+    assertFalse(GradleDaemonJvmHelper.isDaemonJvmVendorCriteriaSupported(GradleVersion.version("8.0")))
+    assertTrue(GradleDaemonJvmHelper.isDaemonJvmVendorCriteriaSupported(GradleVersion.version("8.10")))
+    assertTrue(GradleDaemonJvmHelper.isDaemonJvmVendorCriteriaSupported(GradleVersion.version("8.20")))
   }
 
   fun testDaemonJvmCriteriaRequired() {
