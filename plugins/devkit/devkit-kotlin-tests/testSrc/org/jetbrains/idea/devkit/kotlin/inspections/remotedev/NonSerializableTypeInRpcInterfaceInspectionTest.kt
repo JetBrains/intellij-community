@@ -374,13 +374,9 @@ Type reference chain: SerializableTypeWithPropertyOfGenericTypeParameterizedByNo
         val duration: Duration,
       
         val collection: Collection
-        val mutableCollection: MutableCollection
         val list: List
-        val mutableList: MutableList
         val set: Set
-        val mutableSet: MutableSet
         val map: Map
-        val mutableMap: MutableMap
         val array: Array
       
         val booleanArray: BooleanArray

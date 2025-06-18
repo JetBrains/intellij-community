@@ -60,13 +60,9 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
 
     // collections:
     "kotlin.collections.Collection",
-    "kotlin.collections.MutableCollection",
     "kotlin.collections.List",
-    "kotlin.collections.MutableList",
     "kotlin.collections.Set",
-    "kotlin.collections.MutableSet",
     "kotlin.collections.Map",
-    "kotlin.collections.MutableMap",
     "kotlin.Array",
 
     // primitive type arrays:
