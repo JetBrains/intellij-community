@@ -15,6 +15,7 @@ import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.application.impl.pumpEDT
 import com.intellij.openapi.application.impl.withModality
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
@@ -28,6 +29,7 @@ import com.intellij.util.application
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCancellablePromise
 import org.junit.jupiter.api.Assertions.*
@@ -872,6 +874,36 @@ class CancellationPropagationTest {
     semaphore.timeoutWaitUp()
     job.cancel()
   }
+
+  @Test
+  fun `invokeAndWait propagates cancellation 2`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    val job1 = Job(coroutineContext.job)
+    val job2 = Job(coroutineContext.job)
+    val job3 = Job(coroutineContext.job)
+    launch {
+      readAction {
+        job1.complete()
+        job2.asCompletableFuture().join()
+      }
+    }
+    job1.join()
+    val job = launch(Dispatchers.Default) {
+      blockingContext {
+        application.invokeAndWait {
+          job3.complete()
+          runWriteAction {
+          }
+        }
+      }
+    }
+    job3.join()
+    delay(100)
+    job.cancelAndJoin()
+    job2.cancelAndJoin()
+  }
+
+
+
 
   @Test
   fun `coroutine non-cancellable section coherence`() = timeoutRunBlocking {

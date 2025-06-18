@@ -8,6 +8,7 @@ import com.intellij.core.rwmutex.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.locking.impl.listeners.ErrorHandler
 import com.intellij.platform.locking.impl.listeners.LegacyProgressIndicatorProvider
@@ -925,8 +926,16 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       finally {
         writeLockInitResult.release()
       }
-    } catch (e : Throwable) {
-      throw e
+    }
+    catch (e: CancellationException) {
+      val job = currentThreadContext()[Job]
+      if (job != null && job.isCancelled && e !is ProcessCanceledException) {
+        // the lock acquisition was promptly canceled, so we need to rethrow a PCE from here to comply with blocking context
+        throw ProcessCanceledException(e)
+      }
+      else {
+        throw e
+      }
     }
     finally {
       writeIntentInitResult.release()
