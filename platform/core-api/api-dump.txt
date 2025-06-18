@@ -927,6 +927,8 @@ com.intellij.patterns.ElementPattern
 - a:accepts(java.lang.Object):Z
 - a:accepts(java.lang.Object,com.intellij.util.ProcessingContext):Z
 - a:getCondition():com.intellij.patterns.ElementPatternCondition
+c:com.intellij.patterns.PsiFilePattern
+- withLanguage(java.util.function.Predicate):com.intellij.patterns.PsiFilePattern
 com.intellij.pom.Navigatable
 - sf:EMPTY_NAVIGATABLE_ARRAY:com.intellij.pom.Navigatable[]
 - canNavigate():Z
