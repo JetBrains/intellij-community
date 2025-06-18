@@ -561,6 +561,7 @@
     <inspectionExtension implementation="com.jetbrains.python.codeInsight.typing.PyTypingInspectionExtension"/>
     <customPackageIdentifier implementation="com.jetbrains.python.pyi.PyiCustomPackageIdentifier"/>
     <knownDecoratorProvider implementation="com.jetbrains.python.psi.PyStdKnownDecoratorProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.PyAttrsClassMembersProvider"/>
 
     <!-- IPython -->
     <pyReferenceResolveProvider implementation="com.jetbrains.python.psi.resolve.PyIPythonBuiltinReferenceResolveProvider"/>
