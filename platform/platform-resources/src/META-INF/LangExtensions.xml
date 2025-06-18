@@ -99,7 +99,7 @@
                  description="Use WorkspaceFileIndex instead of IndexableFileIndex to generate IndexingIterators"/>
     <registryKey defaultValue="true" key="search.in.non.indexable" restartRequired="false"
                  description="Search files in non-indexable filesets with NonIndexableFileNavigationContributor"/>
-    <registryKey defaultValue="true"
+    <registryKey defaultValue="false"
                  description="Enable reformat action execution on frontend in remote development"
                  key="reformat.action.execute.on.frontend"
                  restartRequired="false"/>
