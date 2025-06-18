@@ -54,7 +54,7 @@ public abstract class ProjectJdkTable {
     if (existingJdk == null || existingJdk.getSdkAdditionalData() != jdk.getSdkAdditionalData()) {
       addJdk(jdk);
     }
-    // Anyway we need to call remove method otherwise the created VirtualFilePonters will not be removed
+    // Anyway, we need to call remove method otherwise the created `VirtualFilePonters` will not be removed
     Disposer.register(parentDisposable, () -> WriteAction.runAndWait(()-> removeJdk(jdk)));
   }
 

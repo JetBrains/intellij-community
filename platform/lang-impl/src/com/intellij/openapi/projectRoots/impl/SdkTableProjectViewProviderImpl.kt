@@ -11,12 +11,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Unmodifiable
 import java.nio.file.Path
 
-@ApiStatus.Internal
-class SdkTableProjectViewProviderImpl(val project: Project) : SdkTableProjectViewProvider {
+private class SdkTableProjectViewProviderImpl(project: Project) : SdkTableProjectViewProvider {
   private val descriptor = project.basePath?.toNioPathOrNull()?.getEelDescriptor() ?: LocalEelDescriptor
 
   override fun getSdkTableView(): ProjectJdkTable {
@@ -36,7 +34,7 @@ private class ProjectJdkTableProjectView(val descriptor: EelDescriptor, val dele
   }
 
   override fun findJdk(name: String, type: String): Sdk? {
-    // sometimes delegate.findJdk can do mutating operations, like in case of ProjectJdkTableImpl
+    // sometimes delegate.findJdk can do mutating operations, like in the case of ProjectJdkTableImpl
     return allJdks.find { it.name == name && it.sdkType.name == type } ?: delegate.findJdk(name, type)
   }
 
