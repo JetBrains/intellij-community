@@ -120,7 +120,7 @@ public sealed class TypeEvalContext {
    * Inspections should not create a new type evaluation context. They should re-use the context of the inspection session.
    */
   public static TypeEvalContext codeAnalysis(final @NotNull Project project, final @Nullable PsiFile origin) {
-    return getContextFromCache(project, new TypeEvalContext(false, false, false, origin));
+    return getContextFromCache(project, buildCodeAnalysisContext(origin));
   }
 
   /**
@@ -145,6 +145,13 @@ public sealed class TypeEvalContext {
    */
   public static TypeEvalContext deepCodeInsight(final @NotNull Project project) {
     return getContextFromCache(project, new TypeEvalContext(false, true, false, null));
+  }
+
+  private static TypeEvalContext buildCodeAnalysisContext(@Nullable PsiFile origin) {
+    if (Registry.is("python.optimized.type.eval.context")) {
+      return new OptimizedTypeEvalContext(false, false, false, origin);
+    }
+    return new TypeEvalContext(false, false, false, origin);
   }
 
   /**
@@ -215,7 +222,7 @@ public sealed class TypeEvalContext {
   }
 
   protected @Nullable PyType getKnownType(final @NotNull PyTypedElement element) {
-    if (element instanceof PyNoneLiteralExpression) {
+    if (element instanceof PyInstantTypeProvider) {
       return element.getType(this, Key.INSTANCE);
     }
     final PyType cachedType = myEvaluated.get(element);
@@ -442,6 +449,66 @@ public sealed class TypeEvalContext {
     public boolean equals(Object o) {
       // Otherwise, it can be equal to other AssumptionContext with same constraints
       return this == o;
+    }
+  }
+
+  final static class OptimizedTypeEvalContext extends TypeEvalContext {
+    private volatile TypeEvalContext codeInsightFallback;
+
+    OptimizedTypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, boolean allowCallContext, @Nullable PsiFile origin) {
+      super(allowDataFlow, allowStubToAST, allowCallContext, origin);
+    }
+
+    private boolean shouldSwitchToFallbackContext(PsiElement element) {
+      PsiFile file = element.getContainingFile();
+      if (file instanceof PyExpressionCodeFragment codeFragment) {
+        PsiElement context = codeFragment.getContext();
+        if (context != null) {
+          file = context.getContainingFile();
+        }
+      }
+      TypeEvalConstraints constraints = getConstraints();
+      return constraints.myOrigin != null && file != constraints.myOrigin && (file instanceof PyFile) &&
+             !constraints.myAllowDataFlow && !constraints.myAllowStubToAST && !constraints.myAllowCallContext;
+    }
+
+    private TypeEvalContext getFallbackContext(Project project) {
+      if (codeInsightFallback == null) {
+        codeInsightFallback = codeInsightFallback(project);
+      }
+      return codeInsightFallback;
+    }
+
+    @Override
+    protected @Nullable PyType getKnownType(@NotNull PyTypedElement element) {
+      if (shouldSwitchToFallbackContext(element)) {
+        return getFallbackContext(element.getProject()).getKnownType(element);
+      }
+      return super.getKnownType(element);
+    }
+
+    @Override
+    protected @Nullable PyType getKnownReturnType(@NotNull PyCallable callable) {
+      if (shouldSwitchToFallbackContext(callable)) {
+        return getFallbackContext(callable.getProject()).getKnownReturnType(callable);
+      }
+      return super.getKnownReturnType(callable);
+    }
+
+    @Override
+    public @Nullable PyType getType(@NotNull PyTypedElement element) {
+      if (shouldSwitchToFallbackContext(element)) {
+        return getFallbackContext(element.getProject()).getType(element);
+      }
+      return super.getType(element);
+    }
+
+    @Override
+    public @Nullable PyType getReturnType(@NotNull PyCallable callable) {
+      if (shouldSwitchToFallbackContext(callable)) {
+        return getFallbackContext(callable.getProject()).getReturnType(callable);
+      }
+      return super.getReturnType(callable);
     }
   }
 
