@@ -661,7 +661,6 @@ a:com.intellij.vcs.log.ui.AbstractVcsLogUi
 - setVisiblePack(com.intellij.vcs.log.visible.VisiblePack):V
 - tryJumpTo(java.lang.Object,java.util.function.BiFunction,com.google.common.util.concurrent.SettableFuture,Z):V
 com.intellij.vcs.log.ui.VcsLogColorManager
-- sf:DEFAULT_COLOR_MODE:java.lang.String
 - getLongName(com.intellij.openapi.vcs.FilePath):java.lang.String
 - getPathColor(com.intellij.openapi.vcs.FilePath):java.awt.Color
 - a:getPathColor(com.intellij.openapi.vcs.FilePath,java.lang.String):java.awt.Color
