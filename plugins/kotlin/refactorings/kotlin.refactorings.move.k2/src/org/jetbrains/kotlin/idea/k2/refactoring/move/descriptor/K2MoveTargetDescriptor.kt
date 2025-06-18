@@ -9,6 +9,7 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.core.getFqNameByDirectoryOrRoot
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.getOrCreateKotlinFile
@@ -38,8 +39,18 @@ sealed interface K2MoveTargetDescriptor {
     ) : K2MoveTargetDescriptor {
         override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): PsiFileSystemItem {
             if (!dirStructureMatchesPkg) return baseDirectory
-            val implicitPkgPrefix = baseDirectory.getFqNameWithImplicitPrefixOrRoot()
-            val pkgSuffix = pkgName.asString().removePrefix(implicitPkgPrefix.asString()).removePrefix(".")
+            val pkgPrefixWithImplicit = baseDirectory.getFqNameWithImplicitPrefixOrRoot()
+            // if the new package does not match with the implicit prefix of the target, ignore (and break) the implicit prefix
+            return if (pkgName.startsWith(pkgPrefixWithImplicit)) {
+                findOrCreateSubdirectories(pkgPrefixWithImplicit)
+            } else {
+                val pkgPrefixByDirectory = baseDirectory.getFqNameByDirectoryOrRoot()
+                findOrCreateSubdirectories(pkgPrefixByDirectory)
+            }
+        }
+
+        private fun findOrCreateSubdirectories(pkgPrefix: FqName): PsiDirectory {
+            val pkgSuffix = pkgName.asString().removePrefix(pkgPrefix.asString()).removePrefix(".")
             val file = VfsUtilCore.findRelativeFile(pkgSuffix.replace('.', java.io.File.separatorChar), baseDirectory.virtualFile)
             if (file != null) return file.toPsiDirectory(baseDirectory.project) ?: error("Could not find directory $pkgName")
             return DirectoryUtil.createSubdirectories(pkgSuffix, baseDirectory, ".")

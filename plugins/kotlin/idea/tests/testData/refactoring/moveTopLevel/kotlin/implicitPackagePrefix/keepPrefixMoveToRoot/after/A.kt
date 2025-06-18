@@ -1,0 +1,3 @@
+package implicit
+
+object A
