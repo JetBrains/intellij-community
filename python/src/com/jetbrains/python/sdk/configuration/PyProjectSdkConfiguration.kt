@@ -92,6 +92,7 @@ object PyProjectSdkConfiguration {
     PyInterpreterInspectionSuppressor.suppress(project)?.let { Disposer.register(lifetime, it) }
     Disposer.register(lifetime, PyPackageRequirementsInspectionSuppressor(module))
 
+    PythonSdkCreationWaiter.register(module, lifetime)
     return lifetime
   }
 
