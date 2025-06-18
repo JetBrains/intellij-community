@@ -68,6 +68,10 @@ internal class ReworkedTerminalWidget(
     view.sendCommandToExecute(shellCommand)
   }
 
+  override fun getText(): CharSequence {
+    return view.getText()
+  }
+
   override fun isCommandRunning(): Boolean {
     return view.isCommandRunning()
   }
