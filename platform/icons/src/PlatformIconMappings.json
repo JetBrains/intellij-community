@@ -662,6 +662,7 @@
       "classAbstract.svg": "nodes/abstractClass.svg",
       "classAnonymous.svg": "nodes/anonymousClass.svg",
       "classInitializer.svg": "nodes/classInitializer.svg",
+      "compiledClassesFolder.svg": "nodes/compiledClassesFolder.svg",
       "constant.svg": "nodes/constant.svg",
       "constructor.svg": "nodes/constructor.svg",
       "controller.svg": "nodes/controller.svg",

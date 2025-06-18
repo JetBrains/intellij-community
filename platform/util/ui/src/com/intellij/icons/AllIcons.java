@@ -926,7 +926,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon C_public = load("expui/nodes/accessPublic.svg", "nodes/c_public.svg", -440432317, 0);
     /** 16x16 */ public static final @NotNull Icon Class = load("expui/nodes/class.svg", "nodes/class.svg", 1223421377, 0);
     /** 16x16 */ public static final @NotNull Icon ClassInitializer = load("expui/nodes/classInitializer.svg", "nodes/classInitializer.svg", -65487192, 0);
-    /** 16x16 */ public static final @NotNull Icon CompiledClassesFolder = load("nodes/compiledClassesFolder.svg", -698597684, 0);
+    /** 16x16 */ public static final @NotNull Icon CompiledClassesFolder = load("expui/nodes/compiledClassesFolder.svg", "nodes/compiledClassesFolder.svg", -698597684, 0);
     /** 16x16 */ public static final @NotNull Icon ConfigFolder = load("expui/build/taskGroup.svg", "nodes/configFolder.svg", -1322890185, 0);
     /** 16x16 */ public static final @NotNull Icon Console = load("expui/fileTypes/shell.svg", "nodes/console.svg", 1497553448, 0);
     /** 16x16 */ public static final @NotNull Icon Constant = load("expui/nodes/constant.svg", "nodes/constant.svg", -1342227936, 0);
@@ -1271,7 +1271,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Stop = load("expui/run/stop.svg", 1749021823, 10);
 
     public static final class Widget {
-      /** 16x16 */ public static final @NotNull Icon Build = load("expui/run/widget/build.svg", 182002070, 2);
+      /** 16x16 */ public static final @NotNull Icon Build = load("expui/run/widget/build.svg", 744666306, 2);
       /** 16x16 */ public static final @NotNull Icon Restart = load("expui/run/widget/restart.svg", -509572269, 2);
     }
   }

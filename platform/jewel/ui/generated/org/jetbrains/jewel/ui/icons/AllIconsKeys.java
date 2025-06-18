@@ -919,7 +919,7 @@ public final class AllIconsKeys {
     /** 16x16 */ public static final @NotNull IntelliJIconKey C_public = new IntelliJIconKey("nodes/c_public.svg", "expui/nodes/accessPublic.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Class = new IntelliJIconKey("nodes/class.svg", "expui/nodes/class.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ClassInitializer = new IntelliJIconKey("nodes/classInitializer.svg", "expui/nodes/classInitializer.svg", AllIconsKeys.class);
-    /** 16x16 */ public static final @NotNull IntelliJIconKey CompiledClassesFolder = new IntelliJIconKey("nodes/compiledClassesFolder.svg", "nodes/compiledClassesFolder.svg", AllIconsKeys.class);
+    /** 16x16 */ public static final @NotNull IntelliJIconKey CompiledClassesFolder = new IntelliJIconKey("nodes/compiledClassesFolder.svg", "expui/nodes/compiledClassesFolder.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey ConfigFolder = new IntelliJIconKey("nodes/configFolder.svg", "expui/build/taskGroup.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Console = new IntelliJIconKey("nodes/console.svg", "expui/fileTypes/shell.svg", AllIconsKeys.class);
     /** 16x16 */ public static final @NotNull IntelliJIconKey Constant = new IntelliJIconKey("nodes/constant.svg", "expui/nodes/constant.svg", AllIconsKeys.class);
