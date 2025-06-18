@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -25,6 +26,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectIt
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
 import com.intellij.ui.UIBundle
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.forEachLoggingErrors
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -232,6 +234,20 @@ open class RecentProjectListActionProvider {
 
       RemoteRecentProjectAction(projectId, project)
     }
+  }
+
+  @ApiStatus.Internal
+  fun countLocalProjects(): Int {
+    return RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size
+  }
+
+  @ApiStatus.Internal
+  fun countProjectsFromProviders(): Int {
+    var sum = 0
+    EP.extensionList.forEachLoggingErrors(logger<RecentProjectListActionProvider>()) {
+      sum += it.getRecentProjects().size
+    }
+    return sum
   }
 
   /**
