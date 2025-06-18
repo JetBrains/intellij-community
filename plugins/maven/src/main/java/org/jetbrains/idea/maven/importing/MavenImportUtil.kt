@@ -13,7 +13,6 @@ import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -148,38 +147,11 @@ object MavenImportUtil {
     return maxLevel
   }
 
-  internal fun hasTestCompilerArgs(project: MavenProject): Boolean {
-    val plugin = project.findCompilerPlugin() ?: return false
-    val executions = plugin.executions
-    if (executions == null || executions.isEmpty()) {
-      return hasTestCompilerArgs(plugin.configurationElement)
-    }
-
-    return executions.any { hasTestCompilerArgs(it.configurationElement) }
-  }
-
-  private fun hasTestCompilerArgs(config: Element?): Boolean {
-    return config != null && (config.getChild("testCompilerArgument") != null ||
-                              config.getChild("testCompilerArguments") != null)
-  }
-
-  internal fun hasExecutionsForTests(project: MavenProject): Boolean {
-    val plugin = project.findCompilerPlugin()
-    if (plugin == null) return false
-    val executions = plugin.executions
-    if (executions == null || executions.isEmpty()) return false
-    val compileExec = executions.find { isCompileExecution(it) }
-    val testExec = executions.find { isTestCompileExecution(it) }
-    if (compileExec == null) return testExec != null
-    if (testExec == null) return true
-    return !JDOMUtil.areElementsEqual(compileExec.configurationElement, testExec.configurationElement)
-  }
-
-  private fun isTestCompileExecution(e: MavenPlugin.Execution): Boolean {
+  internal fun isTestCompileExecution(e: MavenPlugin.Execution): Boolean {
     return checkExecution(e, PHASE_TEST_COMPILE, GOAL_TEST_COMPILE, EXECUTION_TEST_COMPILE)
   }
 
-  private fun isCompileExecution(e: MavenPlugin.Execution): Boolean {
+  internal fun isCompileExecution(e: MavenPlugin.Execution): Boolean {
     return checkExecution(e, PHASE_COMPILE, GOAL_COMPILE, EXECUTION_COMPILE)
   }
 
@@ -340,10 +312,6 @@ object MavenImportUtil {
 
   private fun isReleaseCompilerProp(mavenProject: MavenProject): Boolean {
     return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "3.6") >= 0
-  }
-
-  internal fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
-    return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
   }
 
   internal fun isMainOrTestModule(module: Module): Boolean {
@@ -677,7 +645,7 @@ object MavenImportUtil {
       return getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
     }
 
-  private fun MavenProject.findCompilerPlugin(): MavenPlugin? {
+  internal fun MavenProject.findCompilerPlugin(): MavenPlugin? {
     return findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
   }
 

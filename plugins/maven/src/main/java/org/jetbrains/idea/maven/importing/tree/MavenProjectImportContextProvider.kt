@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.importing.tree
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
@@ -10,18 +11,19 @@ import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId.Companion.SOURCES
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.containers.ContainerUtil
+import org.jdom.Element
 import org.jetbrains.idea.maven.importing.MavenImportUtil.MAIN_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.TEST_SUFFIX
 import org.jetbrains.idea.maven.importing.MavenImportUtil.adjustLevelAndNotify
 import org.jetbrains.idea.maven.importing.MavenImportUtil.escapeCompileSourceRootModuleSuffix
+import org.jetbrains.idea.maven.importing.MavenImportUtil.findCompilerPlugin
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getNonDefaultCompilerExecutions
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getSourceLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTargetLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestSourceLanguageLevel
 import org.jetbrains.idea.maven.importing.MavenImportUtil.getTestTargetLanguageLevel
-import org.jetbrains.idea.maven.importing.MavenImportUtil.hasExecutionsForTests
-import org.jetbrains.idea.maven.importing.MavenImportUtil.hasTestCompilerArgs
-import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompilerTestSupport
+import org.jetbrains.idea.maven.importing.MavenImportUtil.isCompileExecution
+import org.jetbrains.idea.maven.importing.MavenImportUtil.isTestCompileExecution
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.selectScope
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.dependency.*
@@ -34,6 +36,7 @@ import org.jetbrains.idea.maven.project.MavenProjectModifications
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.SupportedRequestType
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.*
 import java.util.function.Function
 
@@ -50,7 +53,7 @@ internal class MavenProjectImportContextProvider(
   fun getAllModules(projectsWithChanges: Map<MavenProject, MavenProjectModifications>): List<MavenTreeModuleImportData> {
     val allModules: MutableList<MavenProjectImportData> = ArrayList<MavenProjectImportData>()
     val moduleImportDataByMavenId: MutableMap<MavenId, MavenProjectImportData> = TreeMap<MavenId, MavenProjectImportData>(
-      Comparator.comparing<MavenId?, String?>(Function { obj: MavenId? -> obj!!.getKey() }))
+      Comparator.comparing(Function { obj: MavenId? -> obj!!.getKey() }))
 
     for (each in projectsWithChanges.entries) {
       val project = each.key
@@ -303,6 +306,37 @@ internal class MavenProjectImportContextProvider(
     if (getNonDefaultCompilerExecutions(project).isNotEmpty()) return true
 
     return false
+  }
+
+  private fun isCompilerTestSupport(mavenProject: MavenProject): Boolean {
+    return StringUtil.compareVersionNumbers(MavenUtil.getCompilerPluginVersion(mavenProject), "2.1") >= 0
+  }
+
+  private fun hasTestCompilerArgs(project: MavenProject): Boolean {
+    val plugin = project.findCompilerPlugin() ?: return false
+    val executions = plugin.executions
+    if (executions == null || executions.isEmpty()) {
+      return hasTestCompilerArgs(plugin.configurationElement)
+    }
+
+    return executions.any { hasTestCompilerArgs(it.configurationElement) }
+  }
+
+  private fun hasTestCompilerArgs(config: Element?): Boolean {
+    return config != null && (config.getChild("testCompilerArgument") != null ||
+                              config.getChild("testCompilerArguments") != null)
+  }
+
+  private fun hasExecutionsForTests(project: MavenProject): Boolean {
+    val plugin = project.findCompilerPlugin()
+    if (plugin == null) return false
+    val executions = plugin.executions
+    if (executions == null || executions.isEmpty()) return false
+    val compileExec = executions.find { isCompileExecution(it) }
+    val testExec = executions.find { isTestCompileExecution(it) }
+    if (compileExec == null) return testExec != null
+    if (testExec == null) return true
+    return !JDOMUtil.areElementsEqual(compileExec.configurationElement, testExec.configurationElement)
   }
 
   private fun getModuleImportDataSingle(
