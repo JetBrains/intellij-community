@@ -146,7 +146,7 @@ public final class PythonSdkUtil {
       if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
         return true;
       }
-      if (PyTypeShed.INSTANCE.isInStandardLibrary(vFile) && PyTypeShed.INSTANCE.isInside(vFile)) {
+      if (PyTypeShed.INSTANCE.isInStandardLibrary(vFile)) {
         return true;
       }
     }
