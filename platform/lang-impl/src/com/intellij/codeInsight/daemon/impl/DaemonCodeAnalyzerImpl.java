@@ -1509,7 +1509,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         });
         return null;
       }
-      TextRange compositeDocumentDirtyRange = myFileStatusMap.getCompositeDocumentDirtyRange(document);
+      TextRange compositeDocumentDirtyRange = ObjectUtils.notNull(myFileStatusMap.getCompositeDocumentDirtyRange(document), TextRange.EMPTY_RANGE);
       session = HighlightingSessionImpl.createHighlightingSession(psiFileToSubmit, context, editor, scheme, progress, daemonCancelEventCount, compositeDocumentDirtyRange);
       JobLauncher.getInstance().submitToJobThread(ThreadContext.captureThreadContext(Context.current().wrap(() ->
             submitInBackground(fileEditor, document, virtualFile, psiFileToSubmit, highlighter, passesToIgnore, progress, session, mainDocumentPasses))),
@@ -1654,6 +1654,11 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     @Override
     public void onStop() {
+      Document document = myFileEditor instanceof TextEditor text ? text.getEditor().getDocument() : FileDocumentManager.getInstance().getCachedDocument(myFileEditor.getFile());
+      if (document != null && myFileStatusMap.allDirtyScopesAreNull(document)) {
+        // dispose composite dirty range before firing daemon listeners because some of them count on the getfileDirtyRange()==null (e.g. OptimizeImportRestarter)
+        myFileStatusMap.disposeDirtyDocumentRangeStorage(document);
+      }
       removeIndicatorFromMap(myFileEditor, this);
       myDaemonListenerPublisher.daemonFinished(List.of(myFileEditor));
       HighlightingSessionImpl.clearAllHighlightingSessions(this);
