@@ -93,7 +93,7 @@ def jps_test(name, jvm_flags = [], runtime_deps = [], tags = [], args = [], **kw
 
     jvm_test(
         name = name,
-        main_class = "com.intellij.tests.JUnit5TeamCityRunnerForTestsOnClasspath",
+        main_class = "com.intellij.tests.JUnit5BazelRunner",
         jvm_flags = all_jvm_flags,
         args = all_args,
         runtime_deps = all_runtime_deps,
