@@ -2,15 +2,16 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.AbstractGradleScriptElementBuilder
+import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptTreeBuilder
 
-@ApiStatus.NonExtendable
-abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSettingScriptBuilderCore<Self>>(
+internal abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSettingScriptBuilderCore<Self>>(
   override val gradleVersion: GradleVersion,
+  override val gradleDsl: GradleDsl,
 ) : GradleSettingScriptBuilderCore<Self>,
     AbstractGradleScriptElementBuilder() {
 
@@ -27,6 +28,13 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
 
   override fun setProjectName(projectName: String): Self = apply {
     this.projectName = projectName
+  }
+
+  override fun setProjectDir(name: String, relativePath: String): Self = apply {
+    when (gradleDsl) {
+      GradleDsl.GROOVY -> addCode("""project('$name').projectDir = file('$relativePath')""")
+      GradleDsl.KOTLIN -> addCode("""project("$name").projectDir = file("$relativePath")""")
+    }
   }
 
   override fun include(vararg name: String): Self = apply {
@@ -77,5 +85,9 @@ abstract class AbstractGradleSettingScriptBuilderCore<Self : AbstractGradleSetti
     callIfNotEmpty("pluginManagement", pluginManagement)
     assignIfNotNull("rootProject.name", projectName)
     join(script)
+  }
+
+  override fun generate(): String {
+    return GradleScriptBuilder.script(gradleDsl, generateTree())
   }
 }

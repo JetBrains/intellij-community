@@ -2,19 +2,22 @@
 package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import java.nio.file.Path
 import kotlin.io.path.name
+import kotlin.apply as applyKt
 
-@ApiStatus.NonExtendable
-abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingScriptBuilder<Self>>(
+internal class GradleSettingScriptBuilderImpl(
   gradleVersion: GradleVersion,
-) : AbstractGradleSettingScriptBuilderCore<Self>(gradleVersion),
-    GradleSettingScriptBuilder<Self> {
+  gradleDsl: GradleDsl,
+) : AbstractGradleSettingScriptBuilderCore<GradleSettingScriptBuilderImpl>(gradleVersion, gradleDsl),
+    GradleSettingScriptBuilder<GradleSettingScriptBuilderImpl> {
 
   private val foojayPluginVersion = getFoojayPluginVersion()
 
-  override fun include(relativePath: Path): Self = apply {
+  override fun apply(action: GradleSettingScriptBuilderImpl.() -> Unit) = applyKt(action)
+
+  override fun include(relativePath: Path) = apply {
     val projectName = relativePath
       .dropWhile { it.name == ".." }
       .joinToString(":") { it.name }
@@ -32,7 +35,7 @@ abstract class AbstractGradleSettingScriptBuilder<Self : AbstractGradleSettingSc
     }
   }
 
-  override fun withFoojayPlugin(): Self = apply {
+  override fun withFoojayPlugin() = apply {
     assert(isFoojayPluginSupported(gradleVersion))
     withPlugin("org.gradle.toolchains.foojay-resolver-convention", foojayPluginVersion)
   }

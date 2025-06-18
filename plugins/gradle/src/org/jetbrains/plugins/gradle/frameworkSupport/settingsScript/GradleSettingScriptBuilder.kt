@@ -24,10 +24,7 @@ interface GradleSettingScriptBuilder<Self : GradleSettingScriptBuilder<Self>>
 
     @JvmStatic
     fun create(gradleVersion: GradleVersion, gradleDsl: GradleDsl): GradleSettingScriptBuilder<*> {
-      return when (gradleDsl) {
-        GradleDsl.GROOVY -> GroovyDslGradleSettingScriptBuilder.Impl(gradleVersion)
-        GradleDsl.KOTLIN -> KotlinDslGradleSettingScriptBuilder.Impl(gradleVersion)
-      }
+      return GradleSettingScriptBuilderImpl(gradleVersion, gradleDsl)
     }
 
     @JvmStatic

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.frameworkSupport.settingsScript
 
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElement.Statement.Expression.BlockElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GradleScriptElementBuilder
@@ -13,6 +14,8 @@ interface GradleSettingScriptBuilderCore<Self : GradleSettingScriptBuilderCore<S
   : GradleScriptElementBuilder {
 
   val gradleVersion: GradleVersion
+
+  val gradleDsl: GradleDsl
 
   fun setProjectName(projectName: String): Self
 
