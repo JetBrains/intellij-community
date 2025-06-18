@@ -11,7 +11,9 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.util.registry.RegistryManager.Companion.getInstance
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.findSuggestedPlugins
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlChunk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,8 +25,10 @@ import org.jetbrains.annotations.ApiStatus
 object PluginManagerPanelFactory {
   private val LOG = Logger.getInstance(PluginManagerPanelFactory::class.java)
 
-  fun createMarketplacePanel(cs: CoroutineScope, myPluginModel: MyPluginModel, callback: (CreateMarketplacePanelModel) -> Unit) {
+  fun createMarketplacePanel(cs: CoroutineScope, myPluginModel: MyPluginModel, project: Project?, callback: (CreateMarketplacePanelModel) -> Unit) {
     cs.launch {
+      val customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap()
+      val suggestedPlugins = if (project != null) findSuggestedPlugins(project, customRepositoriesMap) else emptyList()
       val pluginManager = UiPluginManager.getInstance()
       val marketplaceData = mutableMapOf<String, PluginSearchResult>()
 
@@ -50,7 +54,7 @@ object PluginManagerPanelFactory {
       }
 
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        callback(CreateMarketplacePanelModel(marketplaceData, errors))
+        callback(CreateMarketplacePanelModel(marketplaceData, errors, suggestedPlugins))
       }
     }
   }
@@ -85,4 +89,5 @@ data class CreateInstalledPanelModel(
 data class CreateMarketplacePanelModel(
   val marketplaceData: Map<String, PluginSearchResult>,
   val errors: Map<PluginId, List<HtmlChunk>>,
+  val suggestedPlugins: List<PluginUiModel>,
 )

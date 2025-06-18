@@ -491,13 +491,13 @@ public final class PluginManagerConfigurable
       }
 
       private void doCreateMarketplaceTab(@NotNull Consumer<? super PluginsGroupComponent> selectionListener, Project project) {
-        PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, myPluginModelFacade.getModel(), model -> {
+        PluginManagerPanelFactory.INSTANCE.createMarketplacePanel(myCoroutineScope, myPluginModelFacade.getModel(), project,  model -> {
           List<PluginsGroup> groups = new ArrayList<>();
           try {
             Map<String, List<PluginUiModel>> customRepositoriesMap = UiPluginManager.getInstance().getCustomRepositoryPluginMap();
             try {
               if (project != null) {
-                addSuggestedGroup(groups, project, customRepositoriesMap, model.getErrors());
+                addSuggestedGroup(groups, project, customRepositoriesMap, model.getErrors(), model.getSuggestedPlugins());
               }
 
               PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
@@ -1409,10 +1409,10 @@ public final class PluginManagerConfigurable
                                  @NotNull Project project,
                                  Map<String, @NotNull List<PluginUiModel>> customMap,
                                  @NotNull Map<@NotNull PluginId,
-                                 @NotNull List<@NotNull HtmlChunk>> errors) {
+                                 @NotNull List<@NotNull HtmlChunk>> errors,
+                                 @NotNull List<@NotNull PluginUiModel> plugins) {
     String groupName = IdeBundle.message("plugins.configurable.suggested");
     LOG.info("Marketplace tab: '" + groupName + "' group load started");
-    List<PluginUiModel> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customMap);
 
     for (PluginUiModel plugin : plugins) {
       if (plugin.isFromMarketplace()) {
