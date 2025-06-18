@@ -57,7 +57,7 @@ def f():
 
 class MyTestCase(unittest.TestCase):
     def test_something(self):
-        with self.assertRaises():
+        with self.assertRaises(Exception):
             raise Foo
         foo() # pass
 
