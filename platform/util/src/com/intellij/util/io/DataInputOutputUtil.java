@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.ThrowableConsumer;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,16 +189,30 @@ public final class DataInputOutputUtil {
    * which saves space by compressing smaller values. If values in the array are +/- sorted, the diffs are typically quite
    * small, and savings are quite significant.
    *
-   * BEWARE: the array is NOT sorted inside the method -- if you want maximum compression, sort the array before calling this method.
+   * BEWARE: the array is NOT sorted inside the method -- if you want an effective compression, sort the array before calling this method.
    */
   @ApiStatus.Internal
   public static void writeDiffCompressed(@NotNull DataOutput out,
-                                         int[] arrayPreferrablySorted,
+                                         int[] arrayPreferablySorted,
                                          int length) throws IOException {
     writeINT(out, length);
     int previousItem = 0;
     for (int i = 0; i < length; ++i) {
-      int currentItem = arrayPreferrablySorted[i];
+      int currentItem = arrayPreferablySorted[i];
+      writeLONG(out, (long)currentItem - previousItem);
+      previousItem = currentItem;
+    }
+  }
+
+  /** @see #writeDiffCompressed(DataOutput, int[], int) */
+  @ApiStatus.Internal
+  public static void writeDiffCompressed(@NotNull DataOutput out,
+                                         @NotNull IntList dataPreferablySorted) throws IOException {
+    int length = dataPreferablySorted.size();
+    writeINT(out, length);
+    int previousItem = 0;
+    for (int i = 0; i < length; ++i) {
+      int currentItem = dataPreferablySorted.getInt(i);
       writeLONG(out, (long)currentItem - previousItem);
       previousItem = currentItem;
     }
