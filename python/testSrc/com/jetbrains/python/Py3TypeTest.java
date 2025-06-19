@@ -3832,6 +3832,22 @@ public class Py3TypeTest extends PyTestCase {
                  def nuf():
                      nonlocal a
                      expr = a""");
+
+    // PY-82115
+    doTest("str",
+           """
+             def outer1():
+                 s = "aba"
+             
+                 def outer2():
+                     def inner1():
+                         nonlocal s
+                         expr = s
+             
+                     def inner2():
+                         global s
+                         s = 1
+             """);
   }
 
   private void doTest(final String expectedType, final String text) {

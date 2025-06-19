@@ -63,14 +63,17 @@ public final class PyResolveUtil {
     PsiElement parent = element.getParent();
     ScopeOwner owner = originalOwner;
     if (parent instanceof PyNonlocalStatement) {
-      /* wee need to search in one step out scope for nonlocal statements */
-      final ScopeOwner outerScopeOwner = ScopeUtil.getScopeOwner(owner);
-      if (outerScopeOwner != null) {
-        owner = outerScopeOwner;
+      /* we need to search in one step out scope for nonlocal statements */
+      if (owner == roof) {
+        return;
+      }
+      owner = ScopeUtil.getScopeOwner(owner);
+      if (owner == null) {
+        return;
       }
     }
     else if (parent instanceof PyGlobalStatement) {
-      /* wee need to search directly in global scope of the module for global statements */
+      /* we need to search directly in the global scope of the module for global statements */
       final PsiFile globalScope = element.getContainingFile();
       if (globalScope instanceof PyFile) {
         owner = (PyFile)globalScope;

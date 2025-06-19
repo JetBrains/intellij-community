@@ -2064,6 +2064,17 @@ public class PyTypeTest extends PyTestCase {
                  def nuf():
                      global a
                      expr = a""");
+
+    // PY-82115
+    doTest("Any",
+           """
+             def outer():
+                 s = "aba"
+
+                 def inner():
+                     global s
+                     expr = s # 's' is unbound
+             """);
   }
 
   // PY-21906
