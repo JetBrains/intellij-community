@@ -39,7 +39,7 @@ class B extends A {
     }
   }
   B(boolean b, int i) {
-    if (false) <error descr="return not allowed before 'super()' call">return;</error>
+    if (false) <error descr="'return' not allowed before 'super()' call">return;</error>
     super(i);
   }
 
