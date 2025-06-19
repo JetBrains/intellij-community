@@ -10,9 +10,6 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 /**
  * This helper is not an API, consider using methods listed below.
  *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
- *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromFile
@@ -25,9 +22,6 @@ fun pyRequirement(name: String, versionSpec: PyRequirementVersionSpec? = null): 
 /**
  * This helper is not an API, consider using methods listed below.
  *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
- *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromFile
@@ -39,9 +33,6 @@ fun pyRequirement(name: String, relation: PyRequirementRelation, version: String
 /**
  * This helper is not an API, consider using methods listed below.
  * If given version could not be normalized, then specified relation will be replaced with [PyRequirementRelation.STR_EQ].
- *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
  *
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromText

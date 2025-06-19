@@ -62,7 +62,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
   override fun getOptionsPane() =
     pane(stringList("ignoredPackages", PyPsiBundle.message("INSP.stub.packages.compatibility.ignored.packages.label")))
-  
+
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
                             session: LocalInspectionToolSession): PsiElementVisitor = Visitor(ignoredPackages, holder, session)
@@ -110,7 +110,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       val availablePackages = packageManagementService.allPackagesCached
       if (availablePackages.isEmpty()) return
 
-      val ignoredStubPackages = (IGNORE + ignoredPackages).mapNotNull { packageManager.parseRequirement(it) }
+      val ignoredStubPackages = (IGNORE + ignoredPackages).mapNotNull { PyRequirementParser.fromLine(it) }
       val cache = ApplicationManager.getApplication().getService(PyStubPackagesAdvertiserCache::class.java).forSdk(sdk)
 
       val forcedToLoad = processForcedPackages(file, sources, module, sdk, packageManager, ignoredStubPackages, cache)
@@ -143,7 +143,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
         registerProblem(file,
                         message,
                         createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager),
-                        createIgnorePackagesQuickFix(reqs, packageManager))
+                        createIgnorePackagesQuickFix(reqs))
       }
 
       return sourcesToLoad
@@ -194,7 +194,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
           )
           .addAction(
             NotificationAction.createSimpleExpiring(PyBundle.message("code.insight.ignore.type.hints")) {
-              createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor)
+              createIgnorePackagesQuickFix(reqs).applyFix(project, problemDescriptor)
             }
           )
           .addAction(
@@ -293,7 +293,7 @@ private class PyStubPackagesAdvertiser : PyInspection() {
               override fun finished(exceptions: MutableList<ExecutionException>?) {
                 status.unmarkAsInstalling(stubPkgNamesToUninstall)
                 val reqsToIgnore = stubPkgsToUninstall.map { pyRequirement(it.name, PyRequirementRelation.EQ, it.version) }
-                addStubPackagesToIgnore(reqsToIgnore, stubPkgNamesToUninstall, project, packageManager)
+                addStubPackagesToIgnore(reqsToIgnore, stubPkgNamesToUninstall, project)
               }
             }
 
@@ -314,21 +314,20 @@ private class PyStubPackagesAdvertiser : PyInspection() {
       return PyInstallRequirementsFix(name, sdk, reqs, args)
     }
 
-    private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>, packageManager: PyPackageManager): LocalQuickFix {
+    private fun createIgnorePackagesQuickFix(reqs: List<PyRequirement>): LocalQuickFix {
       return object : LocalQuickFix {
         override fun getFamilyName() = PyBundle.message("code.insight.ignore.packages.qfix", reqs.size)
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-          this@Visitor.addStubPackagesToIgnore(reqs, reqs.mapTo(mutableSetOf()) { it.name }, project, packageManager)
+          this@Visitor.addStubPackagesToIgnore(reqs, reqs.mapTo(mutableSetOf()) { it.name }, project)
         }
       }
     }
 
     private fun addStubPackagesToIgnore(stubPackages: List<PyRequirement>,
                                         stubPackagesNames: Set<String>,
-                                        project: Project,
-                                        packageManager: PyPackageManager) {
-      ignoredPackages.removeIf { packageManager.parseRequirement(it)?.name in stubPackagesNames }
+                                        project: Project) {
+      ignoredPackages.removeIf { PyRequirementParser.fromLine(it)?.name in stubPackagesNames }
       ignoredPackages.addAll(stubPackages.map { it.presentableText })
 
       ProjectInspectionProfileManager.getInstance(project).fireProfileChanged()

@@ -71,7 +71,7 @@ public abstract class PyTargetEnvironmentPackageManager extends PyPackageManager
 
   @Override
   public void install(@NotNull String requirementString) throws ExecutionException {
-    install(Collections.singletonList(parseRequirement(requirementString)), Collections.emptyList());
+    install(Collections.singletonList(PyRequirementParser.fromLine(requirementString)), Collections.emptyList());
   }
 
   @Override

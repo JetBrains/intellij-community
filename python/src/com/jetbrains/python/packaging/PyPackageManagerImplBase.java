@@ -153,21 +153,6 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
 
   protected PyPackageManagerImplBase(@NotNull Sdk sdk) { super(sdk); }
 
-  @Override
-  public @NotNull Set<PyPackage> getDependents(@NotNull PyPackage pkg) throws ExecutionException {
-    final List<PyPackage> packages = refreshAndGetPackages(false);
-    final Set<PyPackage> dependents = new HashSet<>();
-    for (PyPackage p : packages) {
-      final List<PyRequirement> requirements = p.getRequirements();
-      for (PyRequirement requirement : requirements) {
-        if (requirement.getName().equals(pkg.getName())) {
-          dependents.add(p);
-        }
-      }
-    }
-    return dependents;
-  }
-
   @RequiresReadLock(generateAssertion = false)
   protected static @NotNull LanguageLevel getOrRequestLanguageLevelForSdk(@NotNull Sdk sdk) throws ExecutionException {
     if (sdk instanceof PyDetectedSdk) {
@@ -186,21 +171,6 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
     return Optional
       .ofNullable(PyPackageUtil.getRequirementsFromTxt(module))
       .orElseGet(() -> PyPackageUtil.findSetupPyRequires(module));
-  }
-
-  @Override
-  public @Nullable PyRequirement parseRequirement(@NotNull String line) {
-    return PyRequirementParser.fromLine(line);
-  }
-
-  @Override
-  public @NotNull List<PyRequirement> parseRequirements(@NotNull String text) {
-    return PyRequirementParser.fromText(text);
-  }
-
-  @Override
-  public @NotNull List<PyRequirement> parseRequirements(@NotNull VirtualFile file) {
-    return PyRequirementParser.fromFile(file);
   }
 
   @Override

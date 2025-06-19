@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.getOrThrow
@@ -36,7 +35,7 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
 
   @RequiresBackgroundThread
   override fun install(requirementString: String) {
-    install(parseRequirements(requirementString), emptyList())
+    install(PyRequirementParser.fromText(requirementString), emptyList())
   }
 
   @RequiresBackgroundThread
@@ -103,20 +102,6 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   @RequiresBackgroundThread
   override fun getRequirements(module: Module): List<PyRequirement>? =
     runBlockingCancellable { module.pythonSdk?.let { pipFileLockRequirements(it) } }
-
-  override fun parseRequirements(text: String): List<PyRequirement> =
-    PyRequirementParser.fromText(text)
-
-  override fun parseRequirement(line: String): PyRequirement? =
-    PyRequirementParser.fromLine(line)
-
-  override fun parseRequirements(file: VirtualFile): List<PyRequirement> =
-    PyRequirementParser.fromFile(file)
-
-  override fun getDependents(pkg: PyPackage): Set<PyPackage> {
-    // TODO: Parse the dependency information from `pipenv graph`
-    return emptySet()
-  }
 
   companion object {
     @ApiStatus.Internal

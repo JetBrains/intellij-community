@@ -7,9 +7,6 @@ import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 /**
  * This class is not an API, consider using methods listed below.
  *
- * @see PyPackageManager.parseRequirement
- * @see PyPackageManager.parseRequirements
- *
  * @see PyRequirementParser.fromText
  * @see PyRequirementParser.fromLine
  * @see PyRequirementParser.fromFile
