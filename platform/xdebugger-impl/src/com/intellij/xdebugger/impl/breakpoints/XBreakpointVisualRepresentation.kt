@@ -2,11 +2,12 @@
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diff.impl.DiffUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -24,35 +25,57 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ThreeState
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.ui.DebuggerColors
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DragSource
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
+import java.lang.Runnable
+
+private data class UpdateUICallback(val callOnUpdate: Runnable)
 
 @ApiStatus.Internal
 class XBreakpointVisualRepresentation(
+  cs: CoroutineScope,
   private val myBreakpoint: XLightLineBreakpointProxy,
-  private val myIsEnabled: Boolean,
+  isEnabled: Boolean,
   private val myBreakpointManager: XBreakpointManagerProxy,
 ) {
   private val myProject: Project = myBreakpoint.project
+  private val channel = Channel<UpdateUICallback>(Channel.UNLIMITED)
 
-  // Avoid races between highlighter creation and disposal
-  private val lock = ReentrantLock()
+  init {
+    if (isEnabled && !ApplicationManager.getApplication().isUnitTestMode()) {
+      cs.launch(start = CoroutineStart.ATOMIC) {
+        try {
+          for (event in channel) {
+            try {
+              internalUpdateUI(event.callOnUpdate)
+            }
+            catch (e: Throwable) {
+              if (e is CancellationException) throw e
+              fileLogger().error(e)
+            }
+          }
+        }
+        finally {
+          // Guarantee that the highlighter is removed when the scope is canceled
+          removeHighlighter()
+        }
+      }
+    }
+    else {
+      channel.close()
+    }
+  }
 
   var rangeMarker: RangeMarker? = null
-    get() = lock.withLock { field }
     private set
 
   val highlighter: RangeHighlighter?
@@ -65,61 +88,52 @@ class XBreakpointVisualRepresentation(
     }
   }
 
-
-  @RequiresBackgroundThread
   fun doUpdateUI(callOnUpdate: Runnable) {
-    if (myBreakpoint.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
-      return
-    }
-    if (!myIsEnabled) {
-      return
-    }
+    channel.trySend(UpdateUICallback(callOnUpdate))
+  }
 
+  private suspend fun internalUpdateUI(callOnUpdate: Runnable) {
     val file = myBreakpoint.getFile() ?: return
 
-    ReadAction.nonBlocking {
-      if (myBreakpoint.isDisposed()) return@nonBlocking
-      val document = findDocument(file)
-      if (document == null) {
-        // currently LazyRangeMarkerFactory creates document for non binary files
-        if (file.fileType.isBinary()) {
-          invokeLaterWithLockAndChecks {
-            if (this.rangeMarker == null) {
-              this.rangeMarker = LazyRangeMarkerFactory.getInstance(myProject).createRangeMarker(file, myBreakpoint.getLine(), 0, true)
-              callOnUpdate.run()
-            }
+    val document = readAction { findDocument(file) }
+    if (document == null) {
+      // currently LazyRangeMarkerFactory creates document for non binary files
+      if (readAction { file.fileType.isBinary() }) {
+        withContext(Dispatchers.EDT) {
+          if (rangeMarker == null) {
+            rangeMarker = LazyRangeMarkerFactory.getInstance(myProject).createRangeMarker(file, myBreakpoint.getLine(), 0, true)
+            callOnUpdate.run()
           }
         }
-        return@nonBlocking
+      }
+      return
+    }
+    val range = myBreakpoint.getHighlightRange()
+    withContext(Dispatchers.EDT) {
+      if (rangeMarker != null && rangeMarker !is RangeHighlighter) {
+        removeHighlighter()
+        assert(highlighter == null)
       }
 
-      val range = myBreakpoint.getHighlightRange()
-      invokeLaterWithLockAndChecks {
-        if (this.rangeMarker != null && this.rangeMarker !is RangeHighlighter) {
-          removeHighlighter()
-          assert(this.highlighter == null)
-        }
+      val attributes = getBreakpointAttributes()
+      val highlighter = getHighlighterIfValid(range, document, attributes)
 
-        val attributes = getBreakpointAttributes()
-        val highlighter = getHighlighterIfValid(range, document, attributes)
+      myBreakpoint.updateIcon()
 
-        myBreakpoint.updateIcon()
-
-        if (highlighter == null) {
-          creteHighlighter(document, range, attributes)
-        }
-        else {
-          val markupModel = DocumentMarkupModel.forDocument(document, myProject, false) as MarkupModelEx?
-          if (markupModel != null) {
-            // renderersChanged false - we don't change gutter size
-            val filter = highlighter.getEditorFilter()
-            highlighter.setEditorFilter(MarkupEditorFilter.EMPTY)
-            highlighter.setEditorFilter(filter) // to fireChanged
-          }
-        }
-        callOnUpdate.run()
+      if (highlighter == null) {
+        creteHighlighter(document, range, attributes)
       }
-    }.executeSynchronously()
+      else {
+        val markupModel = DocumentMarkupModel.forDocument(document, myProject, false) as MarkupModelEx?
+        if (markupModel != null) {
+          // renderersChanged false - we don't change gutter size
+          val filter = highlighter.getEditorFilter()
+          highlighter.setEditorFilter(MarkupEditorFilter.EMPTY)
+          highlighter.setEditorFilter(filter) // to fireChanged
+        }
+      }
+      callOnUpdate.run()
+    }
   }
 
   private fun getHighlighterIfValid(
@@ -196,26 +210,14 @@ class XBreakpointVisualRepresentation(
     return document
   }
 
-  private inline fun invokeLaterWithLockAndChecks(crossinline runnable: () -> Unit) {
-    ApplicationManager.getApplication().invokeLater(
-      {
-        lock.withLock {
-          if (myBreakpoint.isDisposed()) return@invokeLater
-          runnable()
-        }
-      }, myProject.getDisposed())
-  }
-
   fun removeHighlighter() {
-    lock.withLock {
-      try {
-        rangeMarker?.dispose()
-      }
-      catch (e: Exception) {
-        LOG.error(e)
-      }
-      rangeMarker = null
+    try {
+      rangeMarker?.dispose()
     }
+    catch (e: Exception) {
+      LOG.error(e)
+    }
+    rangeMarker = null
   }
 
   private fun redrawInlineInlays() {

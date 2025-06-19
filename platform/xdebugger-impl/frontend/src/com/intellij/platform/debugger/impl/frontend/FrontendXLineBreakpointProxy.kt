@@ -37,7 +37,7 @@ internal class FrontendXLineBreakpointProxy(
 ) : FrontendXBreakpointProxy(project, parentCs, dto, type, onBreakpointChange), XLineBreakpointProxy {
   private var lineSourcePosition: XSourcePosition? = null
 
-  private val visualRepresentation = XBreakpointVisualRepresentation(this, useFeLineBreakpointProxy(), manager)
+  private val visualRepresentation = XBreakpointVisualRepresentation(cs, this, useFeLineBreakpointProxy(), manager)
 
   private val lineBreakpointInfo: XLineBreakpointInfo
     get() = _state.value.lineBreakpointInfo!!
@@ -153,9 +153,7 @@ internal class FrontendXLineBreakpointProxy(
   }
 
   override fun doUpdateUI(callOnUpdate: () -> Unit) {
-    if (useFeLineBreakpointProxy()) {
-      visualRepresentation.doUpdateUI(callOnUpdate)
-    }
+    visualRepresentation.doUpdateUI(callOnUpdate)
   }
 
   override fun getGutterIconRenderer(): GutterIconRenderer? {
