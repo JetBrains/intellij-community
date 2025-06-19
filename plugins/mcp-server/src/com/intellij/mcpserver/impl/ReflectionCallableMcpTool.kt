@@ -14,6 +14,7 @@ class ReflectionCallableMcpTool(override val descriptor: McpToolDescriptor, priv
     return when {
       result.result == null -> McpToolCallResult.text("[null]")
       result.result is Unit -> McpToolCallResult.text("[success]")
+      result.result is Char -> McpToolCallResult.text("'${result.result}'") // special case for String to avoid extra quotes added by Any?.toString()
       result.result is String -> McpToolCallResult.text(result.result) // special case for String to avoid extra quotes added by Any?.toString()
       result.result.javaClass.isPrimitive -> McpToolCallResult.text(result.result.toString())
       result.result is McpToolCallResult -> result.result
