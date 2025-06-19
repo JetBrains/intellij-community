@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:jetbrains-annotations",
+    "//platform/util",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/util-class-loader:util-classLoader",

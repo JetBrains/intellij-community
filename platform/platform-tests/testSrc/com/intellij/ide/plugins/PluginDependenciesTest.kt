@@ -136,7 +136,6 @@ internal class PluginDependenciesTest {
 
   @Test
   fun `plugin is not loaded if required module is not available`() {
-    PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
     plugin("sample.plugin") {
       content {
         module("required.module", ModuleLoadingRule.REQUIRED) {
@@ -207,7 +206,6 @@ internal class PluginDependenciesTest {
   
   @Test
   fun `required content module with unresolved dependency in the core plugin`() {
-    PluginManagerCore.getAndClearPluginLoadingErrors() //clear errors which may be registered by other tests
     val corePluginDir = pluginDirPath.resolve("core")
     plugin(PluginManagerCore.CORE_PLUGIN_ID) {
       content {
