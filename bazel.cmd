@@ -22,7 +22,7 @@ case $os in
         target_dir="$HOME/Library/Caches/JetBrains/monorepo-bazelisk"
         ;;
     *)
-        echo "Unsupported OS: $os"
+        echo "Unsupported OS: $os" >&2
         exit 1
         ;;
 esac
@@ -36,7 +36,7 @@ case $arch in
         arch="arm64"
         ;;
     *)
-        echo "Unsupported architecture: $arch"
+        echo "Unsupported architecture: $arch" >&2
         exit 1
         ;;
 esac
@@ -47,7 +47,7 @@ mkdir -p "$target_dir"
 
 if [ ! -x "$binary_path" ]; then
     download_url="https://cache-redirector.jetbrains.com/github.com/bazelbuild/bazelisk/releases/download/v$bazelisk_version/bazelisk-${os}-${arch}"
-    echo "Downloading $download_url to $binary_path"
+    echo "Downloading $download_url to $binary_path" >&2
     curl -fsSL -o "$binary_path.tmp.$$" $download_url
     mv "$binary_path.tmp.$$" "$binary_path"
     chmod +x "$binary_path"
@@ -80,7 +80,7 @@ Set-StrictMode -Version 3.0; ^
  ^
  Move-Item -Path $tmpFile -Destination \"%BAZELISK_TARGET_FILE%\" -Force;
 
-IF NOT EXIST "%BAZELISK_TARGET_FILE%" "%POWERSHELL%" -nologo -noprofile -Command %POWERSHELL_COMMAND%
+IF NOT EXIST "%BAZELISK_TARGET_FILE%" "%POWERSHELL%" -nologo -noprofile -Command %POWERSHELL_COMMAND% >&2
 
 %BAZELISK_TARGET_FILE% %*
 exit /B %ERRORLEVEL%
