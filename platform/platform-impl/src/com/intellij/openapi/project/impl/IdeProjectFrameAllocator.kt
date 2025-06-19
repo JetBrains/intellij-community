@@ -24,11 +24,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
-import com.intellij.openapi.fileEditor.impl.EditorComposite
-import com.intellij.openapi.fileEditor.impl.EditorsSplitters
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
-import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
-import com.intellij.openapi.fileEditor.impl.stopOpenFilesActivity
+import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -394,7 +390,7 @@ private suspend fun focusSelectedEditor(editorComponent: EditorsSplitters) {
   else {
     // in Remote Dev we cannot wait for composite availability synchronously,
     // since editors come from the backend and this is a too long process
-    composite.coroutineScope.launch(Dispatchers.EDT) {
+    composite.coroutineScope.launch(Dispatchers.EDT + FUSProjectHotStartUpMeasurer.getContextElementToPass()) {
       composite.waitForAvailable()
       focusSelectedEditorInComposite(composite)
     }
