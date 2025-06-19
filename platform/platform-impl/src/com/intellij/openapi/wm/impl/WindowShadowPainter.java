@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.impl.ShadowPainter;
 import com.intellij.ui.ComponentUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,7 +55,7 @@ final class WindowShadowPainter extends AbstractPainter {
   }
 
   @Override
-  public void executePaint(Component component, Graphics2D g) {
+  public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
     Window window = ComponentUtil.getWindow(component);
     if (window != null) {
       if (myComponent != component) {

@@ -11,7 +11,7 @@ import java.awt.*;
 public interface Painter {
   boolean needsRepaint();
 
-  void paint(Component component, final Graphics2D g);
+  void paint(@NotNull Component component, @NotNull Graphics2D g);
 
   void addListener(@NotNull Listener listener);
 

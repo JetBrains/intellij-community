@@ -80,7 +80,7 @@ open class SpotlightPainter(
     }
   }
 
-  override fun executePaint(component: Component?, g: Graphics2D?) {
+  override fun executePaint(component: Component, g: Graphics2D) {
     if (isVisible && glassPanel.isVisible) {
       glassPanel.paintSpotlight(g, target)
     }

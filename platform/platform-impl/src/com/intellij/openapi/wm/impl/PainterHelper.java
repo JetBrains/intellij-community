@@ -19,7 +19,6 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
-import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,7 +84,7 @@ final class PainterHelper implements Painter.Listener {
     painterToComponent.clear();
   }
 
-  public void paint(Graphics g) {
+  public void paint(@NotNull Graphics g) {
     runAllPainters(g, computeOffsets(g, rootComponent));
   }
 
@@ -188,7 +187,7 @@ final class PainterHelper implements Painter.Listener {
       }
 
       @Override
-      public void executePaint(Component component, Graphics2D g) {
+      public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
         executePaint(g, component, image, fillType, anchor, alpha, insets);
       }
     };
@@ -471,7 +470,7 @@ final class PainterHelper implements Painter.Listener {
     }
 
     @Override
-    public void executePaint(Component component, Graphics2D g) {
+    public void executePaint(@NotNull Component component, @NotNull Graphics2D g) {
       if (image == null) {
         // covered by needsRepaint()
         return;
