@@ -525,14 +525,10 @@ public class SimplifyBooleanExpressionFix extends PsiUpdateModCommandAction<PsiE
         tracker.delete(element);
         continue;
       }
-      boolean deleteCaseElement = false;
       if (element instanceof PsiCaseLabelElement caseLabelElement &&
           (caseLabelElement instanceof PsiDefaultCaseLabelElement ||
            JavaPsiPatternUtil.isUnconditionalForType(caseLabelElement, selectorType, false) ||
            JavaPsiSwitchUtil.isDominated(caseLabelElement, target, selectorType))) {
-        deleteCaseElement = true;
-      }
-      if (deleteCaseElement) {
         PsiSwitchLabelStatementBase statementBase = PsiTreeUtil.getParentOfType(element, PsiSwitchLabelStatementBase.class);
         if (statementBase == null) continue;
         PsiCaseLabelElementList labelElementList = statementBase.getCaseLabelElementList();
