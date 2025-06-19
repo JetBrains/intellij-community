@@ -31,7 +31,7 @@ class CondaEnvironmentTest {
 
       // Exact version specifications
       PyRequirementParser.fromLine("scipy==1.9.3")!!,
-      PyRequirementParser.fromLine("requests==2.28.1")!!,
+      PyRequirementParser.fromLine("requests~=2.28.1")!!,
       PyRequirementParser.fromLine("flask==2.2.2")!!,
 
       // Version ranges with operators

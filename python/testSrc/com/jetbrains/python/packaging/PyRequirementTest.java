@@ -1969,6 +1969,18 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(pyRequirement("no_limit_nester", EQ, "1.0+local.version.10"), fromLine("no_limit_nester==1.0+local.version.10"));
   }
 
+  public void testRequirementVersionWithBraces() {
+    assertEquals(pyRequirement("Orange-Bioinformatics", EQ, "2.5a20"), fromLine("Orange-Bioinformatics (==2.5a20)"));
+    assertEquals(pyRequirement("MOCPy", EQ, "0.1.0.dev0"), fromLine("MOCPy (==0.1.0.dev0)"));
+    assertEquals(pyRequirement("score.webassets", EQ, "0.2.3"), fromLine("score.webassets (==0.2.3)"));
+    assertEquals(pyRequirement("pip_helpers", EQ, "0.5.post6"), fromLine("pip_helpers (==0.5.post6)"));
+    assertEquals(pyRequirement("Django", EQ, "1.9rc1"), fromLine("Django (==1.9rc1)"));
+    assertEquals(pyRequirement("django", EQ, "1!1"), fromLine("django (==1!1)"));
+    assertEquals(pyRequirement("pinax-utils", EQ, "1.0b1.dev3"), fromLine("pinax-utils (==1.0b1.dev3)"));
+    assertEquals(pyRequirement("Flask-Celery-py3", EQ, "0.1.*"), fromLine("Flask-Celery-py3 (==0.1.*)"));
+    assertEquals(pyRequirement("no_limit_nester", EQ, "1.0+local.version.10"), fromLine("no_limit_nester (==1.0+local.version.10)"));
+  }
+
   // https://www.python.org/dev/peps/pep-0440/#normalization
   public void testRequirementAlternatePreReleaseVersion() {
     doRequirementVersionNormalizationTest("1.9rc1", "1.9RC1");
