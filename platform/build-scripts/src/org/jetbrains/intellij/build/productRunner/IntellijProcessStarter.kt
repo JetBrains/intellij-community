@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.getCommandLineArgumentsForOpenPackages
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.io.runJava
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import java.lang.RuntimeException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -71,13 +72,17 @@ suspend fun runApplicationStarter(
 
   val effectiveIdeClasspath = if (isFinalClassPath) classpath else prepareFlatClasspath(classpath = classpath, tempDir = tempDir, context = context)
   try {
-    runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = actualTimeout) {
-      val logFile = findLogFile(systemDir)
-      if (logFile != null) {
-        val logFileToPublish = Files.createTempFile(appStarterId, ".log")
-        Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
-        context.notifyArtifactBuilt(logFileToPublish)
-        Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
+    // a second attempt is performed as a hacky workaround for various sporadic exceptions from the IDE side like:
+    // com.intellij.util.IncorrectOperationException: Sorry but parent has already been disposed so the child will never be disposed
+    retryWithExponentialBackOff(attempts = 2) {
+      runJava(mainClass = context.ideMainClassName, args = args, jvmArgs = jvmArgs, classPath = effectiveIdeClasspath, javaExe = context.stableJavaExecutable, timeout = actualTimeout) {
+        val logFile = findLogFile(systemDir)
+        if (logFile != null) {
+          val logFileToPublish = Files.createTempFile(appStarterId, ".log")
+          Files.copy(logFile, logFileToPublish, StandardCopyOption.REPLACE_EXISTING)
+          context.notifyArtifactBuilt(logFileToPublish)
+          Span.current().addEvent("log file $logFileToPublish attached to build artifacts")
+        }
       }
     }
   }
