@@ -197,7 +197,7 @@ class ProjectWindowCustomizerService : Disposable {
         setupWorkspaceStorage(colorStorage.project)
       }
 
-      // get a custom project color and transform it for the toolbar
+      // get the custom project color and transform it for the toolbar
       val customColors = colorStorage.customColor?.takeIf { it.isNotEmpty() }?.let {
         val color = ColorHexUtil.fromHex(it)
         val toolbarColor = ColorUtil.toAlpha(color, 90)
