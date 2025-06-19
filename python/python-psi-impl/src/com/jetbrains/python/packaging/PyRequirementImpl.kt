@@ -45,12 +45,12 @@ class PyRequirementImpl(
 
     return when (other) {
       is String -> name == normalizePackageName(other)
-      is PyRequirementImpl -> name == other.name // TODO: should we match specs & options ?
+      is PyRequirementImpl -> name == other.name && versionSpecs == other.versionSpecs
       else -> false
     }
   }
 
-  override fun hashCode(): Int = name.hashCode()
+  override fun hashCode(): Int =  31 * name.hashCode() + versionSpecs.hashCode()
 
   override fun toString(): String {
     return presentableText
