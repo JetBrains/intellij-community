@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2
 
 import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -36,8 +35,6 @@ abstract class AbstractScriptGotoDeclarationMultifileTest : KotlinMultiFileLight
             val fileEditorManager = FileEditorManager.getInstance(project) as FileEditorManagerEx
             return fileEditorManager.selectedTextEditor?.document ?: error("no document found")
         }
-
-    val logger = Logger.getInstance("#org.jetbrains.kotlin.idea.script")
 
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val expectedText = globalDirectives[EXPECTED_TEXT]
