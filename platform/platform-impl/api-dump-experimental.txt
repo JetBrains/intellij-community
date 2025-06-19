@@ -235,6 +235,7 @@ a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - a:handleUpdate():V
 *:com.intellij.openapi.project.impl.P3Support
 - a:canBeOpenedInThisProcess(java.nio.file.Path):Z
+- getDisabledPluginsFileName():java.lang.String
 - a:isEnabled():Z
 - a:openInChildProcess(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.project.impl.P3SupportKt
