@@ -50,5 +50,5 @@ private class PlatformProjectCheckoutListener : CheckoutListener {
 }
 
 private fun willOpenFromWelcomeScreenProject(project: Project): Boolean {
-  return WelcomeScreenProjectProvider.EP_NAME.lazySequence().singleOrNull { it.isWelcomeScreenProject(project) } != null
+  return WelcomeScreenProjectProvider.isSingleWelcomeScreenProject(project)
 }
