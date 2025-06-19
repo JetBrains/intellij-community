@@ -3,6 +3,7 @@ package com.intellij.mcpserver.impl
 import com.intellij.mcpserver.*
 import com.intellij.mcpserver.impl.util.network.findFirstFreePort
 import com.intellij.mcpserver.settings.McpServerSettings
+import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -46,7 +47,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
-import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.coroutines.cancellation.CancellationException
@@ -58,6 +58,7 @@ private val logger = logger<McpServerService>()
 class McpServerService(val cs: CoroutineScope) {
   companion object {
     fun getInstance(): McpServerService = service()
+    suspend fun getInstanceAsync(): McpServerService = serviceAsync()
   }
 
   private val server = MutableStateFlow(startServerIfEnabled())
@@ -291,16 +292,17 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
           logger.traceThrowable { Exception(errorMessage, t) }
           McpToolCallResult.error(errorMessage)
         }
-      }
-
-
-      val contents = callResult.content.map { content ->
-        when (content) {
-          is McpToolCallResultContent.Text -> TextContent(content.text)
+        finally {
+          McpServerCounterUsagesCollector.reportMcpCall(descriptor)
         }
-      }
-      return@RegisteredTool CallToolResult(content = contents, callResult.isError)
     }
+
+    val contents = callResult.content.map { content ->
+      when (content) {
+        is McpToolCallResultContent.Text -> TextContent(content.text)
+      }
+    }
+    return@RegisteredTool CallToolResult(content = contents, callResult.isError)}
   }
 }
 

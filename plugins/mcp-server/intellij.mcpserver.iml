@@ -88,6 +88,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.projectStructure" scope="TEST" />
     <orderEntry type="library" name="ktor-client-cio" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>
 </module>
