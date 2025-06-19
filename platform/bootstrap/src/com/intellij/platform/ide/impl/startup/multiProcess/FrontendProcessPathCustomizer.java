@@ -82,6 +82,8 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     cleanDirectory(newConfig);
     cleanDirectory(newSystem);
 
+    P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
+    
     String originalPluginsPath = PathManager.getPluginsPath();
     boolean customizePluginsPath = useCustomPluginsPath(originalPluginsPath);
     String pluginsPath = customizePluginsPath ? originalPluginsPath + File.separator + "frontend" : originalPluginsPath;
@@ -89,7 +91,6 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     PerProcessPathCustomization.prepareConfig(newConfig, PathManager.getConfigDir(), migratePlugins);
 
     Path startupScriptDir = PerProcessPathCustomization.getStartupScriptDir().resolve("frontend");
-    P3SupportInstaller.INSTANCE.installPerProcessInstanceSupportImplementation(new ClientP3Support());
     enabled = true;
     return new CustomPaths(newConfig.toString(), newSystem.toString(), pluginsPath, newLog.toString(), startupScriptDir);
   }

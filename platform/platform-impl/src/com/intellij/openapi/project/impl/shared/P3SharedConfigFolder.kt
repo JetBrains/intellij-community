@@ -97,7 +97,9 @@ private class ProcessPerProjectSharedConfigFolderApplicationInitializedListener 
 
   private fun syncCustomConfigFile(originalConfigDir: Path, fileName: String) {
     val sourceFile = PathManager.getConfigDir().resolve(fileName)
-    val targetFile = originalConfigDir.resolve(fileName)
+    val targetFileName = fileName.takeIf { it != DisabledPluginsState.DISABLED_PLUGINS_FILENAME }
+                         ?: processPerProjectSupport().disabledPluginsFileName
+    val targetFile = originalConfigDir.resolve(targetFileName)
     if (sourceFile.exists()) {
       SharedConfigFolderUtil.writeToSharedFile(targetFile, sourceFile.readBytes())
     }
