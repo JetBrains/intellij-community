@@ -280,9 +280,8 @@ private class WidgetPositionListeners(private val widget: ToolbarComboButton, pr
 }
 
 private class ProjectWidgetSpeedsearchFilter : SpeedSearchFilter<PopupFactoryImpl.ActionItem> {
-  override fun getIndexedString(value: PopupFactoryImpl.ActionItem): String? {
-    val action = value.action as? ProjectToolbarWidgetPresentable
-    if (action == null) return value.text
+  override fun getIndexedString(value: PopupFactoryImpl.ActionItem): String {
+    val action = value.action as? ProjectToolbarWidgetPresentable ?: return value.text
     return action.projectNameToDisplay + " " + action.projectPathToDisplay.orEmpty() + " " + action.providerPathToDisplay.orEmpty()
   }
 }
