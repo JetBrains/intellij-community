@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.JpsCompilationRunner
 import org.jetbrains.intellij.build.impl.cleanOutput
 import org.jetbrains.intellij.build.impl.generateRuntimeModuleRepository
+import org.jetbrains.intellij.build.impl.isBazelTestRun
 import org.jetbrains.intellij.build.jpsCache.isForceDownloadJpsCache
 import org.jetbrains.intellij.build.jpsCache.isPortableCompilationCacheEnabled
 import org.jetbrains.intellij.build.jpsCache.jpsCacheRemoteGitUrl
@@ -23,6 +24,7 @@ import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 internal fun checkCompilationOptions(context: CompilationContext) {
   val options = context.options
@@ -121,6 +123,16 @@ internal suspend fun reuseOrCompile(context: CompilationContext, moduleNames: Co
   val pathToCompiledClassArchiveMetadata = context.options.pathToCompiledClassesArchivesMetadata
   when {
     context.options.useCompiledClassesFromProjectOutput -> {
+      check(isBazelTestRun() || context.classesOutputDirectory.exists()) {
+        "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory ${context.classesOutputDirectory} doesn't exist"
+      }
+      val production = context.classesOutputDirectory.resolve("production")
+      if (!production.exists()) {
+        val msg = "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory $production doesn't exist " +
+                  "which may cause issues like 'Error: Could not find or load main class'"
+        context.messages.warning(msg)
+        span.addEvent(msg)
+      }
       span.addEvent("compiled classes reused", Attributes.of(AttributeKey.stringKey("dir"), context.classesOutputDirectory.toString()))
     }
     context.options.pathToCompiledClassesArchive != null -> {

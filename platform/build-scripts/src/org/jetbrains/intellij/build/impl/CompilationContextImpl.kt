@@ -307,20 +307,13 @@ class CompilationContextImpl private constructor(
     }
   }
 
-  private fun isBazelTestRun(): Boolean {
-    return Stream.of("TEST_TMPDIR", "RUNFILES_DIR", "JAVA_RUNFILES").allMatch { bazelTestEnv: String? -> System.getenv(bazelTestEnv) != null }
-  }
-
   private fun overrideClassesOutputDirectory() {
     val override = options.classOutDir
     when {
       !override.isNullOrEmpty() -> classesOutputDirectory = Path.of(override)
-      //TODO: need to use bazel path, but options.useCompiledClassesFromProjectOutput is true even if intellij.build.use.compiled.classes == false
-      // see com.intellij.platform.buildScripts.testFramework.BuildScriptTestUtilsKt.createBuildOptionsForTest(org.jetbrains.intellij.build.ProductProperties, java.nio.file.Path, boolean, org.junit.jupiter.api.TestInfo)
-      options.useCompiledClassesFromProjectOutput && !isBazelTestRun() -> check(Files.exists(classesOutputDirectory)) {
-        "${BuildOptions.USE_COMPILED_CLASSES_PROPERTY} is enabled but the classes output directory $classesOutputDirectory doesn't exist"
+      !options.useCompiledClassesFromProjectOutput || isBazelTestRun() -> {
+        classesOutputDirectory = paths.buildOutputDir.resolve("classes")
       }
-      else -> classesOutputDirectory = paths.buildOutputDir.resolve("classes")
     }
     Span.current().addEvent("set class output directory", Attributes.of(AttributeKey.stringKey("classOutputDirectory"), classesOutputDirectory.toString()))
   }
@@ -595,4 +588,12 @@ suspend fun CompilationContext.hasModuleOutputPath(module: JpsModule, relativePa
       throw IllegalStateException("Module '${module.name}' output is neither directory, nor jar $output")
     }
   }
+}
+
+/**
+ * TODO: need to use bazel path, but options.useCompiledClassesFromProjectOutput is true even if intellij.build.use.compiled.classes == false
+ *  see com.intellij.platform.buildScripts.testFramework.BuildScriptTestUtilsKt.createBuildOptionsForTest(org.jetbrains.intellij.build.ProductProperties, java.nio.file.Path, boolean, org.junit.jupiter.api.TestInfo)
+ */
+internal fun isBazelTestRun(): Boolean {
+  return Stream.of("TEST_TMPDIR", "RUNFILES_DIR", "JAVA_RUNFILES").allMatch { bazelTestEnv: String? -> System.getenv(bazelTestEnv) != null }
 }
