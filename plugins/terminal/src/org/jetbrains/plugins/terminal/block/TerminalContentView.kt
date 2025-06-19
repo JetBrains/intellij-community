@@ -38,8 +38,4 @@ interface TerminalContentView : Disposable {
   @RequiresEdt(generateAssertion = false)
   fun getText(): CharSequence
 
-  @RequiresEdt(generateAssertion = false)
-  fun isCommandRunning(): Boolean {
-    return false
-  }
 }

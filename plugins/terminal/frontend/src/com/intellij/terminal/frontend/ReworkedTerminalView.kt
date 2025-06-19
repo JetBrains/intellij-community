@@ -203,14 +203,6 @@ internal class ReworkedTerminalView(
     return getCurEditor().document.immutableCharSequence
   }
 
-  override fun isCommandRunning(): Boolean {
-    // Will work only if there is a shell integration.
-    // If there is no shell integration, then it is always false.
-    val session = sessionFuture.getNow(null) ?: return false
-    return blocksModel.blocks.last().outputStartOffset != -1
-           && !session.isClosed
-  }
-
   override fun getTerminalSize(): TermSize? {
     return getCurEditor().calculateTerminalSize()
   }
