@@ -11,6 +11,7 @@ import com.intellij.openapi.util.removeUserData
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
+import kotlin.reflect.KMutableProperty0
 
 /**
  * Manages the lifecycle of a "typing session" for inline completion.
@@ -30,6 +31,18 @@ class InlineCompletionTypingSessionTracker(
   private val sendEvent: (InlineCompletionEvent) -> Unit,
   private val invalidateOnUnknownChange: () -> Unit,
 ) {
+
+  var ignoreCaretMovements: Boolean = false
+    set(value) {
+      ThreadingAssertions.assertEventDispatchThread()
+      field = value
+    }
+
+  var ignoreDocumentChanges: Boolean = false
+    set(value) {
+      ThreadingAssertions.assertEventDispatchThread()
+      field = value
+    }
 
   /**
    * Starts a new typing session for the given editor.
@@ -53,7 +66,9 @@ class InlineCompletionTypingSessionTracker(
     ThreadingAssertions.assertEventDispatchThread()
     val session = editor.getUserData(TYPING_SESSION_KEY)
     if (session == null) {
-      invalidateOnUnknownChange()
+      if (!ignoreDocumentChanges) {
+        invalidateOnUnknownChange()
+      }
       return
     }
     session.handleDocumentChange(documentEvent, editor)
@@ -92,6 +107,38 @@ class InlineCompletionTypingSessionTracker(
   fun isAlive(editor: Editor): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
     return editor.getUserData(TYPING_SESSION_KEY) != null
+  }
+
+  @RequiresEdt
+  fun <T> withIgnoringDocumentChanges(block: () -> T): T = withIgnoringChanges(
+    property = ::ignoreDocumentChanges,
+    block = block,
+    getLazyErrorMessage = { "The state of disabling document changes tracker is switched outside." }
+  )
+
+  @ApiStatus.Experimental
+  @RequiresEdt
+  internal fun <T> withIgnoringCaretMovement(block: () -> T): T = withIgnoringChanges(
+    property = ::ignoreCaretMovements,
+    block = block,
+    getLazyErrorMessage = { "The state of disabling caret movements tracker is switched outside." }
+  )
+
+  private inline fun <T> withIgnoringChanges(
+    property: KMutableProperty0<Boolean>,
+    block: () -> T,
+    getLazyErrorMessage: () -> String,
+  ): T {
+    ThreadingAssertions.assertEventDispatchThread()
+    val currentIgnoreChanges = property.get()
+    property.set(true)
+    return try {
+      block()
+    }
+    finally {
+      check(property.get(), getLazyErrorMessage)
+      property.set(currentIgnoreChanges)
+    }
   }
 
   /**
