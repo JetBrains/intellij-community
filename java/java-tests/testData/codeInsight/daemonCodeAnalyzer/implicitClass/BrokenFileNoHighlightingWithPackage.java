@@ -1,4 +1,4 @@
-<error descr="Package statement is not allowed for implicitly declared class">package a;</error>
+<error descr="Package statement is not allowed in compact source files">package a;</error>
 
 int ab;
 

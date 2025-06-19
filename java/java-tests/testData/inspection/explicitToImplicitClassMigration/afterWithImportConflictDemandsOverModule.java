@@ -1,6 +1,6 @@
 import p.List;
 
-void main() {
-    List a = nu<caret>ll;
+void ma<caret>in() {
+    List a = null;
     System.out.println("Hello, world!");
 }

@@ -1,5 +1,5 @@
 
-<warning descr="Explicit class declaration can be converted into implicitly declared class">/**
+<warning descr="Explicit class declaration can be converted into a compact source file">/**
  * comments
  */
 
