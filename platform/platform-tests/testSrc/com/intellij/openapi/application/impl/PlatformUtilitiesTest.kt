@@ -280,10 +280,10 @@ class PlatformUtilitiesTest {
       }
     }).use {
       try {
-        ProgressManager.getInstance().run(object : Task.Backgroundable(null, "kek") {
+        ProgressManager.getInstance().run(object : Task.Backgroundable(null, "title1") {
           override fun run(indicator: ProgressIndicator) {
             invokeLater {
-              ProgressManager.getInstance().run(object : Task.Backgroundable(null, "kek2") {
+              ProgressManager.getInstance().run(object : Task.Backgroundable(null, "title2") {
                 override fun run(indicator: ProgressIndicator) {
                   application.invokeLater {
                     throw CustomException()
