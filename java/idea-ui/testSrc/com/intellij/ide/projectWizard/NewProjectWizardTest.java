@@ -1,19 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.SystemProperties;
+
+import java.io.File;
+import java.util.Collection;
 
 import static com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA;
 import static com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.getJavaData;
@@ -132,6 +139,20 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     });
     final var mainSearch = FilenameIndex.getVirtualFilesByName("Main.java", GlobalSearchScope.projectScope(project));
     assertFalse(mainSearch.isEmpty());
+  }
+
+  public void testSampleCodeInstanceMethodWithoutPackages() throws Exception {
+    Project project = createProjectFromTemplate(JAVA, step -> {
+      IntelliJJavaNewProjectWizardData data = getJavaData(step);
+      data.setSdk(new JavaSdkImpl().createJdk("java version \"25.0.1\"", SystemProperties.getJavaHome()));
+      data.setAddSampleCode(true);
+    });
+    Collection<VirtualFile> mainSearch = FilenameIndex.getVirtualFilesByName("Main.java", GlobalSearchScope.projectScope(project));
+    VirtualFile virtualFile = mainSearch.iterator().next();
+    String path = virtualFile.getPath();
+    String text = FileUtilRt.loadFile(new File(path));
+    assertTrue(text.contains("\nvoid main()"));
+    assertFalse(text.contains("class Main"));
   }
 
   private static void setProjectSdk(final Project project, final Sdk jdk17) {
