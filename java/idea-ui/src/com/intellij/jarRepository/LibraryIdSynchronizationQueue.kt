@@ -47,9 +47,6 @@ internal class LibraryIdSynchronizationQueue(private val project: Project, priva
               toSynchronize.clear()
             }
             Request.AllLibrariesSynchronization -> {
-              launch {
-                removeDuplicatedUrlsFromRepositoryLibraries(project = project)
-              }
               val newLibrariesToSync = collectLibrariesToSync(project)
 
               toSynchronize.addAll(newLibrariesToSync.map { lib -> (lib as LibraryBridge).libraryId })

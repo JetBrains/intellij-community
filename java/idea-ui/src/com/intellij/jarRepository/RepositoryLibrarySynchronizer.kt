@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.jarRepository
 
-import com.intellij.ide.JavaUiBundle
-import com.intellij.notification.NotificationType
-import com.intellij.notification.Notifications
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.ModuleManager
@@ -18,8 +17,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription
@@ -96,68 +93,11 @@ internal fun isLibraryNeedToBeReloaded(library: LibraryEx, properties: Repositor
          OrderRootType.getAllTypes().any { library.getFiles(it).size != library.getUrls(it).size }
 }
 
-internal suspend fun removeDuplicatedUrlsFromRepositoryLibraries(project: Project) {
-  val moduleManager = project.serviceAsync<ModuleManager>()
-  val projectLibraryTable = project.serviceAsync<ProjectLibraryTable>()
-  val validLibraries = readAction {
-    doCollectLibraries(moduleManager, projectLibraryTable) {
-      it is LibraryEx && it.properties is RepositoryLibraryProperties && hasDuplicatedRoots(it)
-    }
-      .filter { LibraryTableImplUtil.isValidLibrary(it) }
-  }
-  if (validLibraries.isEmpty()) {
-    return@removeDuplicatedUrlsFromRepositoryLibraries
-  }
-
-  backgroundWriteAction {
-    for (library in validLibraries) {
-      val model = library.modifiableModel
-      for (type in OrderRootType.getAllTypes()) {
-        val urls = model.getUrls(type!!)
-        val uniqueUrls = ObjectLinkedOpenHashSet(urls)
-        if (uniqueUrls.size != urls.size) {
-          for (url in urls) {
-            model.removeRoot(url, type)
-          }
-          for (url in uniqueUrls) {
-            model.addRoot(url, type)
-          }
-        }
-      }
-      model.commit()
-    }
-  }
-  val libraryText = if (validLibraries.size == 1) {
-    "'${validLibraries.iterator().next().presentableName}' library"
-  }
-  else {
-    "${validLibraries.size} libraries"
-  }
-  Notifications.Bus.notify(JarRepositoryManager.getNotificationGroup().createNotification(
-    JavaUiBundle.message("notification.title.repository.libraries.cleanup"),
-    JavaUiBundle.message("notification.text.duplicated.urls.were.removed",
-                         libraryText,
-                         ApplicationNamesInfo.getInstance().fullProductName),
-    NotificationType.INFORMATION
-  ), project)
-}
-
 internal suspend fun collectLibrariesToSync(project: Project): Set<Library> {
   return collectLibraries(project) { library ->
     library is LibraryEx &&
     isLibraryNeedToBeReloaded(library, library.properties as? RepositoryLibraryProperties ?: return@collectLibraries false)
   }
-}
-
-private fun hasDuplicatedRoots(library: Library): Boolean {
-  for (type in OrderRootType.getAllTypes()) {
-    val urls = library.getUrls(type)
-    @Suppress("SSBasedInspection")
-    if (urls.size != ObjectOpenHashSet(urls).size) {
-      return true
-    }
-  }
-  return false
 }
 
 suspend fun syncLibraries(project: Project) {
