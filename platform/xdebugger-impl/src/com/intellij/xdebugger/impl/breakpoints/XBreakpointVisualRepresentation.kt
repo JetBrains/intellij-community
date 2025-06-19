@@ -95,7 +95,7 @@ class XBreakpointVisualRepresentation(
   private suspend fun internalUpdateUI(callOnUpdate: Runnable) {
     val file = myBreakpoint.getFile() ?: return
 
-    val document = readAction { findDocument(file) }
+    val document = readAction { findDocument(file, mayDecompile = false) }
     if (document == null) {
       // currently LazyRangeMarkerFactory creates document for non binary files
       if (readAction { file.fileType.isBinary() }) {
@@ -190,17 +190,13 @@ class XBreakpointVisualRepresentation(
     redrawInlineInlays()
   }
 
-  private fun findDocument(file: VirtualFile): Document? {
+  private fun findDocument(file: VirtualFile, mayDecompile: Boolean): Document? {
     var document = FileDocumentManager.getInstance().getCachedDocument(file)
     if (document == null) {
-      if (file.fileType.isBinary()) {
-        // try not to decompile files
+      if (!mayDecompile && file.fileType.isBinary()) {
         return null
       }
-      document = FileDocumentManager.getInstance().getDocument(file)
-      if (document == null) {
-        return null
-      }
+      document = FileDocumentManager.getInstance().getDocument(file) ?: return null
     }
 
     // TODO IJPL-185322 support XBreakpointTypeWithDocumentDelegation
@@ -230,13 +226,7 @@ class XBreakpointVisualRepresentation(
 
     val service = RedrawInlaysService.getInstance(myProject)
     service.launch {
-      val document = readAction {
-        val document = FileDocumentManager.getInstance().getDocument(file) ?: return@readAction null
-
-        val type = myBreakpoint.type
-        if (type !is XBreakpointTypeWithDocumentDelegation) return@readAction document
-        type.getDocumentForHighlighting(document)
-      } ?: return@launch
+      val document = readAction { findDocument(file, mayDecompile = true) } ?: return@launch
       InlineBreakpointInlayManager.getInstance(myProject).redrawLine(document, line)
     }
   }
