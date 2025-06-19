@@ -3797,6 +3797,43 @@ public class Py3TypeTest extends PyTestCase {
     });
   }
 
+  // PY-37755
+  public void testNonLocalType() {
+    doTest("bool",
+           """
+             def fun():
+                 expr = True
+
+                 def nuf():
+                     nonlocal expr
+                     expr""");
+
+    doTest("bool",
+           """
+             a = []
+
+             def fun():
+                 a = True
+
+                 def nuf():
+                     nonlocal a
+                     expr = a""");
+
+    doTest("bool | int",
+           """
+             a = []
+
+             def fun():
+                 if True:
+                     a = True
+                 else:
+                     a = 5
+
+                 def nuf():
+                     nonlocal a
+                     expr = a""");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

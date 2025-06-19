@@ -2066,43 +2066,6 @@ public class PyTypeTest extends PyTestCase {
                      expr = a""");
   }
 
-  // PY-37755
-  public void testNonLocalType() {
-    doTest("bool",
-           """
-             def fun():
-                 expr = True
-
-                 def nuf():
-                     nonlocal expr
-                     expr""");
-
-    doTest("bool",
-           """
-             a = []
-
-             def fun():
-                 a = True
-
-                 def nuf():
-                     nonlocal a
-                     expr = a""");
-
-    doTest("Union[bool, int]",
-           """
-             a = []
-
-             def fun():
-                 if True:
-                     a = True
-                 else:
-                     a = 5
-
-                 def nuf():
-                     nonlocal a
-                     expr = a""");
-  }
-
   // PY-21906
   public void testSOFOnTransitiveNamedTupleFields() {
     final PyExpression expression = parseExpr("""
