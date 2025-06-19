@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
@@ -339,14 +340,32 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
                   }
               }
 
-              if (projectStatus?.progressText != null) {
-                label(projectStatus.progressText)
-                  .align(AlignY.CENTER)
-                  .align(AlignX.RIGHT)
-                  .applyToComponent {
+              val hasSubmenuArrow = value.isEnabled && action is ActionGroup && !value.isSubstepSuppressed
+              if (projectStatus?.progressText != null || hasSubmenuArrow) {
+                // UI DSL is broken for AlignX.RIGHT
+                val rightPanel = JPanel()
+                rightPanel.layout = BoxLayout(rightPanel, BoxLayout.X_AXIS)
+                rightPanel.isOpaque = false
+
+                if (projectStatus?.progressText != null) {
+                  val progressLabel = JBLabel(projectStatus.progressText).apply {
                     icon = AnimatedIcon.Default.INSTANCE
                     font = JBFont.smallOrNewUiMedium()
                   }
+                  rightPanel.add(progressLabel)
+                }
+
+                if (hasSubmenuArrow) {
+                  val arrowLabel = JBLabel().apply {
+                    icon = if (isSelected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
+                    border = JBUI.Borders.emptyLeft(6)
+                  }
+                  rightPanel.add(arrowLabel)
+                }
+
+                cell(rightPanel)
+                  .align(AlignY.CENTER)
+                  .align(AlignX.RIGHT)
               }
             }
             val providerPath = action.providerPathToDisplay
@@ -383,19 +402,6 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
                   }.component
               }
             }
-          }
-
-          val hasSubstep = value.isEnabled && action is ActionGroup && !value.isSubstepSuppressed
-          if (hasSubstep) {
-            panel {
-              row {
-                val arrow = if (isSelected) AllIcons.Icons.Ide.MenuArrowSelected else AllIcons.Icons.Ide.MenuArrow
-                icon(arrow)
-                  .customize(rowGaps.copy(left = 6))
-              }
-            }
-              .align(AlignX.RIGHT)
-              .align(AlignY.TOP)
           }
         }
       }
