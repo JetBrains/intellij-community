@@ -14,14 +14,13 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 /**
  * @return whether an [PsiElement] should be moved when it's in between moved declarations.
@@ -73,10 +72,6 @@ internal fun KtFile.updatePackageDirective(pkgName: FqName) {
     }
 }
 
-internal fun KtFile.updatePackageDirective(destination: PsiDirectory) {
-    updatePackageDirective(destination.getFqNameWithImplicitPrefixOrRoot())
-}
-
 @JvmOverloads
 fun getOrCreateKotlinFile(
     fileName: String,
@@ -85,11 +80,7 @@ fun getOrCreateKotlinFile(
 ): KtFile =
     (targetDir.findFile(fileName) ?: createKotlinFile(fileName, targetDir, packageName)) as KtFile
 
-
-internal fun isValidTargetForImplicitCompanionAsDispatchReceiver(
-    moveTarget: K2MoveTargetDescriptor,
-    companionObject: KtObjectDeclaration
-): Boolean {
-    // TODO: Add support for moving into other classes!
-    return false
+internal fun PsiDirectory.getPossiblyForcedPackageFqName(): FqName {
+    val forcedPkg = parentsWithSelf.filterIsInstance<PsiDirectory>().map { it.forcedTargetPackage }.firstNotNullOfOrNull { it }
+    return forcedPkg ?: getFqNameWithImplicitPrefixOrRoot()
 }

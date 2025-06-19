@@ -45,6 +45,11 @@ public class K1MultiModuleMoveTestGenerated extends AbstractK1MultiModuleMoveTes
         runTest("testData/refactoring/moveMultiModule/moveDeclarationActual/moveDeclarationActual.test");
     }
 
+    @TestMetadata("moveDeclarationBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test")
+    public void testMoveDeclarationBreakImplicitPrefix_MoveDeclarationBreakImplicitPrefix() throws Exception {
+        runTest("testData/refactoring/moveMultiModule/moveDeclarationBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test");
+    }
+
     @TestMetadata("moveDeclarationExpectedToPlatform/moveDeclarationActual.test")
     public void testMoveDeclarationExpectedToPlatform_MoveDeclarationActual() throws Exception {
         runTest("testData/refactoring/moveMultiModule/moveDeclarationExpectedToPlatform/moveDeclarationActual.test");

@@ -45,6 +45,11 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationActual/moveDeclarationActual.test");
     }
 
+    @TestMetadata("moveDeclarationBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test")
+    public void testMoveDeclarationBreakImplicitPrefix_MoveDeclarationBreakImplicitPrefix() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationBreakImplicitPrefix/moveDeclarationBreakImplicitPrefix.test");
+    }
+
     @TestMetadata("moveDeclarationExpectedToPlatform/moveDeclarationActual.test")
     public void testMoveDeclarationExpectedToPlatform_MoveDeclarationActual() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationExpectedToPlatform/moveDeclarationActual.test");

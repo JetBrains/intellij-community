@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.processor
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -15,12 +16,14 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
-import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
+import org.jetbrains.kotlin.idea.core.getImplicitPackagePrefix
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtFile
 
-internal class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
+internal class K2MoveFilesOrDirectoriesRefactoringProcessor(private val descriptor: K2MoveOperationDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
     descriptor.project,
     descriptor.sourceElements.toTypedArray(),
     runWriteAction { descriptor.moveDescriptors.first().target.getOrCreateTarget(descriptor.dirStructureMatchesPkg) as PsiDirectory }, // TODO how to do multi target move?
@@ -29,7 +32,38 @@ internal class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOp
     descriptor.searchForText,
     descriptor.moveCallBack,
     Runnable { }
-)
+) {
+    private val moveTarget: K2MoveTargetDescriptor.Directory by lazy {
+        descriptor.moveDescriptors.first().target
+    }
+
+    private fun setForcedPackageIfNeeded() {
+        val implicitPackagePrefix = moveTarget.baseDirectory.getImplicitPackagePrefix() ?: return
+        if (moveTarget.pkgName.startsWith(implicitPackagePrefix)) return
+        moveTarget.baseDirectory.forcedTargetPackage = moveTarget.pkgName
+    }
+
+    private fun cleanForcedPackage() {
+        moveTarget.baseDirectory.forcedTargetPackage = null
+    }
+
+    override fun performRefactoring(_usages: Array<out UsageInfo?>) {
+        setForcedPackageIfNeeded()
+        super.performRefactoring(_usages)
+        cleanForcedPackage()
+    }
+
+    /**
+     * Setting up a forced package is necessary for correct conflict checking.
+     * It's done separately because in case of cancellation [performRefactoring] is not called and uncleaned user data would leak.
+     */
+    override fun preprocessUsages(refUsages: Ref<Array<out UsageInfo?>?>): Boolean {
+        setForcedPackageIfNeeded()
+        return super.preprocessUsages(refUsages).also {
+            cleanForcedPackage()
+        }
+    }
+}
 
 class K2MoveFilesHandler : MoveFileHandler() {
     /**
@@ -49,7 +83,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
         file.packageNeedsUpdate = true
     }
 
-    fun needsUpdate(file: KtFile) = file.containingDirectory?.getFqNameWithImplicitPrefix() == file.packageFqName
+    fun needsUpdate(file: KtFile): Boolean = file.containingDirectory?.getFqNameWithImplicitPrefix() == file.packageFqName
 
     override fun findUsages(
         psiFile: PsiFile,
@@ -60,7 +94,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
         require(psiFile is KtFile) { "Can only find usages from Kotlin files" }
         return if (needsUpdate(psiFile) && ProjectFileIndex.getInstance(psiFile.project).isInSourceContent(newParent.virtualFile)) {
             markRequiresUpdate(psiFile)
-            val newPkgName = newParent.getFqNameWithImplicitPrefix() ?: return emptyList()
+            val newPkgName = newParent.getPossiblyForcedPackageFqName()
             psiFile.findUsages(searchInComments, searchInNonJavaFiles, newPkgName)
         } else emptyList() // don't need to update usages when package doesn't change
     }
@@ -71,7 +105,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
         usages: Array<out UsageInfo>,
         targetDirectory: PsiDirectory
     ) {
-        val targetPkgFqn = targetDirectory.getFqNameWithImplicitPrefixOrRoot()
+        val targetPkgFqn = targetDirectory.getPossiblyForcedPackageFqName()
         conflicts.putAllValues(findAllMoveConflicts(
             elementsToMove.filterIsInstance<KtFile>().toSet(),
             targetDirectory,
@@ -82,8 +116,9 @@ class K2MoveFilesHandler : MoveFileHandler() {
 
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
         require(file is KtFile) { "Can only prepare Kotlin files" }
-        if (file.packageNeedsUpdate == true && file.packageFqName != moveDestination.getFqNameWithImplicitPrefix()) {
-            file.updatePackageDirective(moveDestination)
+        val destinationPackage = moveDestination.getPossiblyForcedPackageFqName()
+        if (file.packageNeedsUpdate == true && file.packageFqName != destinationPackage) {
+            file.updatePackageDirective(destinationPackage)
         }
         file.packageNeedsUpdate = null
         oldToNewMap[file] = file
@@ -98,3 +133,5 @@ class K2MoveFilesHandler : MoveFileHandler() {
         retargetUsagesAfterMove(usageInfos.toList(), oldToNewMap)
     }
 }
+
+internal var PsiDirectory.forcedTargetPackage: FqName? by CopyablePsiUserDataProperty(Key.create("FORCED_TARGET_PACKAGE"))
