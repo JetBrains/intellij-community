@@ -9,6 +9,7 @@ jvm_library(
   deps = [
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/diff-api:diff",

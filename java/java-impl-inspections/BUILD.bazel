@@ -13,6 +13,7 @@ jvm_library(
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-impl:ide-impl",

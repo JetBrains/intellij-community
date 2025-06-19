@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "//plugins/java-decompiler/engine",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/projectModel-api:projectModel",
@@ -42,6 +43,7 @@ jvm_library(
     "//plugins/java-decompiler/engine",
     "//plugins/java-decompiler/engine:engine_test_lib",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/editor-ui-api:editor-ui",
     "//platform/lang-api:lang",
     "//platform/projectModel-api:projectModel",

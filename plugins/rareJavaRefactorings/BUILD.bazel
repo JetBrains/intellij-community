@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",
@@ -41,6 +42,7 @@ jvm_library(
   deps = [
     "//java/java-impl:impl",
     "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-ui",
     "//java/testFramework",

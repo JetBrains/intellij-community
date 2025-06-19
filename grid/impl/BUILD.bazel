@@ -26,6 +26,7 @@ jvm_library(
     "//grid/csv:csv-core-impl",
     "//grid/types",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",

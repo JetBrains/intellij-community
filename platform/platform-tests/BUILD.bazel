@@ -20,6 +20,7 @@ jvm_library(
   srcs = glob(["testGen/**/*.kt", "testGen/**/*.java", "testSrc/**/*.kt", "testSrc/**/*.java", "testSrc/**/*.form"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-api:core",

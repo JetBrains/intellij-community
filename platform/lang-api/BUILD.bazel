@@ -36,7 +36,6 @@ jvm_library(
   ],
   exports = [
     "//platform/platform-api:ide",
-    "//platform/code-style-api:codeStyle",
     "//platform/execution",
   ],
   runtime_deps = [":lang_resources"]

@@ -16,6 +16,7 @@ jvm_library(
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinx-collections-immutable",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/observable",

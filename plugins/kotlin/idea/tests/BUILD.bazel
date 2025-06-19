@@ -25,6 +25,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "//java/java-indexing-api:indexing",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/core-ui",

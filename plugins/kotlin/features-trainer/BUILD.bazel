@@ -18,6 +18,7 @@ jvm_library(
     "//java/java-features-trainer:featuresTrainer",
     "//java/java-psi-api:psi",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/lang-core",
     "//platform/projectModel-api:projectModel",

@@ -34,6 +34,7 @@ jvm_library(
   deps = [
     "@lib//:eawtstub-provided",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
@@ -188,6 +189,7 @@ jvm_library(
   deps = [
     "@lib//:eawtstub-provided",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",

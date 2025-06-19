@@ -21,6 +21,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-tests",
     "//java/idea-ui:ui",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "@lib//:test_n_g",
     "//platform/core-ui",

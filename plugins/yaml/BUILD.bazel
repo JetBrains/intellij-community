@@ -15,6 +15,7 @@ jvm_library(
   srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",
@@ -44,6 +45,7 @@ jvm_library(
   associates = [":yaml"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/core-impl",
     "//platform/analysis-impl",

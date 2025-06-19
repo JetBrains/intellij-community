@@ -16,6 +16,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/base/code-insight",
@@ -36,6 +37,7 @@ jvm_library(
   deps = [
     "@lib//:kotlin-stdlib",
     "@lib//:kotlinc-kotlin-compiler-common",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//plugins/kotlin/base/fe10/analysis",
     "//plugins/kotlin/base/code-insight",

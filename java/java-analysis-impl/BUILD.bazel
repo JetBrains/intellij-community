@@ -18,6 +18,7 @@ jvm_library(
     "//platform/analysis-impl",
     "//java/java-indexing-impl:indexing-impl",
     "//java/java-psi-impl:psi-impl",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",

@@ -31,6 +31,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-jps-common",
     "@lib//:kotlinc-analysis-api",
     "@lib//:guava",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/execution-impl",
     "//plugins/kotlin/base/util",

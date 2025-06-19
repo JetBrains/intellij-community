@@ -25,6 +25,7 @@ jvm_library(
     "//plugins/markdown/frontmatter/toml",
     "//plugins/markdown/frontmatter/yaml",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-ex:editor-ex",
     "//plugins/markdown/images",

@@ -15,6 +15,7 @@ jvm_library(
   srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"], allow_empty = True),
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/credential-store",
     "//platform/editor-ui-api:editor-ui",
@@ -61,6 +62,7 @@ jvm_library(
   associates = [":collaboration-tools"],
   deps = [
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/util/concurrency",
     "//platform/util/concurrency:concurrency_test_lib",
     "//platform/credential-store",

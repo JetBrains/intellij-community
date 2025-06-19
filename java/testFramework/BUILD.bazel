@@ -16,6 +16,7 @@ jvm_library(
     "//java/openapi:java",
     "//java/testFramework/shared",
     "//platform/analysis-api:analysis",
+    "//platform/code-style-api:codeStyle",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/indexing-api:indexing",
