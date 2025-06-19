@@ -26,8 +26,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <plugin id="com.intellij.modules.python-core-capable"/>
     <module name="intellij.json.backend"/>
     <plugin id="org.toml.lang"/>
-    <module name="intellij.libraries.ktor.client"/>
-    <module name="intellij.libraries.ktor.client.cio"/>
+    <module name="intellij.libraries.kotlinx.io"/>
   </dependencies>
 
   <content>
