@@ -52,7 +52,14 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
         srcModule: Module
     )
 
-    override fun applicabilityRange(element: KtElement): TextRange? {
+    @Deprecated("Kept for Backward compatibility, please override `applicabilityRange` function", level = DeprecationLevel.ERROR)
+    fun applicabilityRange(element: KtNamedDeclaration): TextRange? =
+        calculateApplicabilityRange(element)
+
+    override fun applicabilityRange(element: KtElement): TextRange? =
+        calculateApplicabilityRange(element)
+
+    private fun calculateApplicabilityRange(element: KtElement): TextRange? {
         when (element) {
             is KtNamedDeclaration -> if (element.hasExpectModifier() || element.nameIdentifier == null) return null
             is KtFile -> {} // nothing
