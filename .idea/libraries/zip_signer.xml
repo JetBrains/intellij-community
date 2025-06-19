@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="zip-signer" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains:marketplace-zip-signer:0.1.24">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains:marketplace-zip-signer:0.1.38">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.24/marketplace-zip-signer-0.1.24.jar">
-          <sha256sum>da98a08c22bb20e2e37e11445a222281d71751eb0b04c217b219d1d43faf2423</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.38/marketplace-zip-signer-0.1.38.jar">
+          <sha256sum>cd80d5d699fe5efb273146a10924b58c350051c96df6eece8011e99c816d5c5e</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.24/marketplace-zip-signer-0.1.24.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.38/marketplace-zip-signer-0.1.38.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.24/marketplace-zip-signer-0.1.24-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/marketplace-zip-signer/0.1.38/marketplace-zip-signer-0.1.38-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

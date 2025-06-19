@@ -9152,8 +9152,8 @@ jvm_import(
 
 jvm_import(
   name = "zip-signer",
-  jar = "@marketplace-zip-signer-0_1_24_http//file",
-  source_jar = "@marketplace-zip-signer-0_1_24-sources_http//file",
+  jar = "@marketplace-zip-signer-0_1_38_http//file",
+  source_jar = "@marketplace-zip-signer-0_1_38-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
