@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager.Companion.getInstance
@@ -191,12 +192,36 @@ class StructureViewWrapperImpl(
           }
         }
         .collectLatest {
-          writeIntentReadAction {
-            if (!myToolWindow.contentManager.isDisposed) {
-              launch {
-                rebuildImpl()
+          LOG.debug("starting rebuild request processing")
+          // A nested coroutine scope so we can cancel it without terminating the whole collector.
+          coroutineScope {
+            // Not using simple cancelOnDispose because the content manager may be disposed at any moment,
+            // which can create a race condition here.
+            // What we want is:
+            // 1) be sure that our job is cancelled if it's disposed;
+            // 2) not even start the rebuild if it's already disposed.
+            // So we end up with pretty much a copy-paste from cancelOnDispose except we use tryRegister.
+            val parentDisposable: Disposable = myToolWindow.contentManager
+            val thisJob = coroutineContext.job
+            val thisDisposable = Disposable {
+              thisJob.cancel("disposed")
+            }
+            thisJob.invokeOnCompletion { e ->
+              Disposer.dispose(thisDisposable)
+              if (e != null) {
+                LOG.debug("finished rebuild request processing with an exception", e)
               }
-                .cancelOnDispose(myToolWindow.contentManager)
+            }
+            if (!Disposer.tryRegister(parentDisposable, thisDisposable)) {
+              LOG.debug("canceled rebuild request processing because the tool window content manager is already disposed")
+              return@coroutineScope
+            }
+            runCatching {
+              rebuildImpl()
+              LOG.debug("finished rebuild request processing successfully")
+            }.getOrLogException { e ->
+              // catch and hope the next request will succeed, instead of just crashing the whole thing
+              LOG.error("failed rebuild request processing", e)
             }
           }
         }
