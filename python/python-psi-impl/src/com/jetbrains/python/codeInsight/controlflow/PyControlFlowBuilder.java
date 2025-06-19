@@ -949,8 +949,10 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   @Override
   public void visitPyAssertStatement(final @NotNull PyAssertStatement node) {
     myBuilder.startNode(node);
-    super.visitPyAssertStatement(node);
     final PyExpression[] args = node.getArguments();
+    for (PyExpression arg : args) {
+      arg.accept(this);
+    }
     // assert False
     if (args.length >= 1) {
       if (!PyEvaluator.evaluateAsBooleanNoResolve(args[0], true)) {
