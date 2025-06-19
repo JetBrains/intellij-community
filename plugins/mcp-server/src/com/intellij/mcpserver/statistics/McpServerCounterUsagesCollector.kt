@@ -53,5 +53,7 @@ internal object McpServerCounterUsagesCollector : CounterUsagesCollector() {
       }
       return ValidationResultType.REJECTED
     }
+
+    override fun getRuleId(): String = "tool_name_validator_id"
   }
 }

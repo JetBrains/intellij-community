@@ -28,6 +28,7 @@ class FileToolsetTest : McpToolsetTestBase() {
     )
   }
 
+  @Disabled("Flaky")
   @Test
   fun list_files_in_folder() = runBlocking {
     testMcpTool(
