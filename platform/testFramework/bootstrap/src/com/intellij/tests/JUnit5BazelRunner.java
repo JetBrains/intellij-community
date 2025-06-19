@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.Filter;
 import org.junit.platform.engine.TestEngine;
@@ -14,6 +16,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
+
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class JUnit5BazelRunner extends JUnit5BaseRunner {
   private static final String bazelEnvSelfLocation = "SELF_LOCATION";
@@ -21,6 +26,7 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
   private static final String bazelEnvRunFilesDir = "RUNFILES_DIR";
   private static final String bazelEnvJavaRunFilesDir = "JAVA_RUNFILES";
   private static final String bazelEnvTestSrdDir = "TEST_SRCDIR";
+  private static final String bazelEnvTestBridgeTestOnly = "TESTBRIDGE_TEST_ONLY";
 
   public static void main(String[] args) throws IOException {
     try {
@@ -78,6 +84,11 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
 
   @Override
   public List<? extends DiscoverySelector> getTestsSelectors(ClassLoader classLoader) {
+    List<? extends DiscoverySelector> bazelTestClassSelector = getBazelTestClassSelectors(classLoader);
+    if (!bazelTestClassSelector.isEmpty()) {
+      return bazelTestClassSelector;
+    }
+
     return getTestSelectorsByClassPathRoots(classLoader);
   }
 
@@ -87,6 +98,48 @@ public final class JUnit5BazelRunner extends JUnit5BaseRunner {
   }
 
   // bazel-specific
+
+  private static List<DiscoverySelector> getBazelTestClassSelectors(ClassLoader classLoader) {
+    // value of --test_filter, if specified
+    // https://bazel.build/reference/test-encyclopedia
+    String testFilter = System.getenv(bazelEnvTestBridgeTestOnly);
+    if (testFilter == null || testFilter.isBlank()) {
+      return Collections.emptyList();
+    }
+
+    String[] parts = testFilter.split("#", 2);
+    String classNamePart = parts[0];
+    String className;
+    if (!classNamePart.contains(".")) {
+      className = findFullyQualifiedName(classNamePart, classLoader);
+    }
+    else {
+      className = classNamePart;
+    }
+
+    if (parts.length == 2) {
+      String methodName = parts[1];
+      return List.of(selectMethod(classLoader, className, methodName));
+    }
+    else {
+      return List.of(selectClass(classLoader, className));
+    }
+  }
+
+  private static String findFullyQualifiedName(String simpleClassName, ClassLoader classLoader) {
+    try (ScanResult scanResult = new ClassGraph()
+      .enableClassInfo()
+      .ignoreClassVisibility()
+      .addClassLoader(classLoader)
+      .scan()
+    ) {
+      return scanResult.getAllClasses().stream()
+        .filter(classInfo -> classInfo.getSimpleName().equals(simpleClassName))
+        .map(classInfo -> classInfo.getName())
+        .findFirst()
+        .orElse(null);
+    }
+  }
 
   private static Boolean isBazelTestRun() {
     return Stream.of(bazelEnvSelfLocation, bazelEnvTestTmpDir, bazelEnvRunFilesDir, bazelEnvJavaRunFilesDir)
