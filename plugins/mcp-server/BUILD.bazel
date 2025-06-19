@@ -61,8 +61,8 @@ jvm_library(
     "//platform/ide-core-impl",
     "//plugins/mcp-server/mcpserver.stdio",
     "@lib//:ktor-client-cio",
-    "//platform/util/concurrency",
     "//platform/statistics",
+    "//platform/util/concurrency",
   ],
   runtime_deps = [":mcpserver_resources"]
 )

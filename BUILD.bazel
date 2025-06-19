@@ -256,6 +256,7 @@ java_library(
     "//plugins/maven/maven3-server-impl:server-m3-impl",
     "//plugins/maven/maven36-server-impl:server-m36-impl",
     "//plugins/maven/maven40-server-impl:server-m40",
+    "//plugins/mcp-server:mcpserver",
   ]
 )
 ### auto-generated section `build intellij.idea.community.main` end
