@@ -20,7 +20,15 @@ public final class IdDataConsumer {
   private final @NotNull IdEntryToScopeMapImpl hashToScopeMap = new IdEntryToScopeMapImpl();
 
   public @NotNull Map<IdIndexEntry, Integer> getResult() {
-    hashToScopeMap.ensureSerializedDataCached();
+    //We serialise the data in he indexer's thread(s) to reduce load on the IndexWriter's thread -- which are <=1 per
+    // index, while there are many more indexer threads. But indexer thread keeps an RA, which makes it vulnerable to
+    // RA-by-WA cancellations & retries, which are both more probable AND more expensive the longer RA is.
+    //So the tradeoff: serialise the data for reasonably small maps, and leave largest (but infrequent) maps to be
+    // serialised later, in the IndexWriter.
+    //Threshold 500 is chosen by observing Ultimate sourcetree indexing
+    if(hashToScopeMap.size() < 500) {
+      hashToScopeMap.ensureSerializedDataCached();
+    }
     return hashToScopeMap;
   }
 

@@ -171,7 +171,8 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
 
   ByteArraySequence ensureSerializedDataCached() {
     if (serializedData == null) {
-      UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream();
+      int estimatedBufferSize = size() * 2 + 2;//assumed diff-compression: 2bytes per ID hash
+      UnsyncByteArrayOutputStream stream = new UnsyncByteArrayOutputStream(estimatedBufferSize);
       try (DataOutputStream dos = new DataOutputStream(stream)) {
         writeTo(this, dos);
       }
@@ -218,11 +219,12 @@ public class IdEntryToScopeMapImpl extends AbstractMap<IdIndexEntry, Integer> im
 
     Int2ObjectMap<IntSet> scopeMaskToHashes = new Int2ObjectOpenHashMap<>(8);
     idToScopeMap.forEach((idHash, scopeMask) -> {
-      scopeMaskToHashes.computeIfAbsent(scopeMask, __ -> new IntOpenHashSet()).add(idHash);
+      IntSet idHashes = scopeMaskToHashes.computeIfAbsent(scopeMask, __ -> new IntOpenHashSet());
+      idHashes.add(idHash);
       return true;
     });
 
-    //MAYBE RC: use IntArrayList() instead of IntOpenHashSet() -- we sort the resulting set anyway, so we could
+    //MAYBE RC: use IntArrayList() instead of IntOpenHashSet()? -- we sort the resulting set anyway, so we could
     //          very well skip duplicates after the sort, in O(N)
     for (int scopeMask : scopeMaskToHashes.keySet()) {
       out.writeByte(scopeMask & UsageSearchContext.ANY);
