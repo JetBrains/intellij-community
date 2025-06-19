@@ -34,8 +34,8 @@ import javax.swing.UIManager
  * We have to use AWT here, as we cannot spin the EventQueue for Swing
  */
 @ApiStatus.Internal
-class NiceOverlayUi {
-  private val rootPane: JRootPane = SwingUtilities.getRootPane(KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner)
+class NiceOverlayUi(component: Component) {
+  private val rootPane: JRootPane = SwingUtilities.getRootPane(component)
 
 
   private val mainText = DiagnosticBundle.message("freeze.popup.application.is.not.responding", ApplicationInfo.getInstance().versionName)
@@ -111,14 +111,15 @@ class NiceOverlayUi {
 
     val startOfThreadDumpText = popupOffsetX + horizontalInset + getTextLength(mainText) + gapBetweenText1AndText2
     val offsetFromTop = popupOffsetY + (popupHeight - closeIconLength) / 2 - JBUIScale.scale(2)
+    // see the comment in takeScreenshot for the reason of shifting by the start of `rootPane`
     locationOfThreadDumpButton = Rectangle(
-      startOfThreadDumpText - buttonMargin,
-      offsetFromTop - buttonMargin,
+      rootPane.x + startOfThreadDumpText - buttonMargin,
+      rootPane.y + offsetFromTop - buttonMargin,
       getTextLength(dumpThreadsButtonText) + gapBetweenText2AndText3 + getTextLength(dumpThreadsButtonShortcutText) + buttonMargin * 2,
       buttonHeight)
     locationOfCross = Rectangle(
-      startOfThreadDumpText + getTextLength(dumpThreadsButtonText) + gapBetweenText2AndText3 + getTextLength(dumpThreadsButtonShortcutText) + separatorInset + JBUIScale.scale(1) + separatorInset - buttonMargin,
-      offsetFromTop - buttonMargin,
+      rootPane.x + startOfThreadDumpText + getTextLength(dumpThreadsButtonText) + gapBetweenText2AndText3 + getTextLength(dumpThreadsButtonShortcutText) + separatorInset + JBUIScale.scale(1) + separatorInset - buttonMargin,
+      rootPane.y + offsetFromTop - buttonMargin,
       closeIconLength + buttonMargin * 2,
       buttonHeight)
 
@@ -137,10 +138,13 @@ class NiceOverlayUi {
       // unfortunately, our shadow-handling code is not scale-aware
       if (JreHiDpiUtil.isJreHiDPI(originalGraphics as Graphics2D)) {
         val scaledGraphics = originalGraphics.create() as Graphics2D
-        val s: Float = 1 / JBUIScale.sysScale(originalGraphics)
-        scaledGraphics.scale(s.toDouble(), s.toDouble())
-        UIUtil.drawImage(scaledGraphics, shadow.getImage(), shadow.getX() + shadowSize + 1, shadow.getY() - shadowSize + 1, null)
-        scaledGraphics.dispose()
+        try {
+          val s: Float = 1 / JBUIScale.sysScale(originalGraphics)
+          scaledGraphics.scale(s.toDouble(), s.toDouble())
+          UIUtil.drawImage(scaledGraphics, shadow.getImage(), shadow.getX() + shadowSize + 1, shadow.getY() - shadowSize + 1, null)
+        } finally {
+          scaledGraphics.dispose()
+        }
       }
       else {
         UIUtil.drawImage(originalGraphics, shadow.image, shadow.x, shadow.y, null)
@@ -179,7 +183,6 @@ class NiceOverlayUi {
     val targetX = window.x + rootPane.x + popupWithShadowLocation.x
     val targetY = window.y + rootPane.y + popupWithShadowLocation.y
     val screen = Robot(window.graphicsConfiguration.device).createMultiResolutionScreenCapture(Rectangle(targetX, targetY, popupWithShadowLocation.width, popupWithShadowLocation.height))
-    val x = 1
     return screen
   }
 
@@ -219,11 +222,14 @@ class NiceOverlayUi {
     try {
       val variant = screenshot.resolutionVariants.run { if (size > 1) get(1) else get(0) }
       val scaledGraphics = innerGraphics.create() as Graphics2D
-      val scale = JBUIScale.sysScale(innerGraphics)
-      val s: Float = 1 / scale
-      scaledGraphics.scale(s.toDouble(), s.toDouble())
-      UIUtil.drawImage(scaledGraphics, variant, (popupWithShadowLocation.x * scale).toInt(), (popupWithShadowLocation.y * scale).toInt(), null)
-      scaledGraphics.dispose()
+      try {
+        val scale = JBUIScale.sysScale(innerGraphics)
+        val s: Float = 1 / scale
+        scaledGraphics.scale(s.toDouble(), s.toDouble())
+        UIUtil.drawImage(scaledGraphics, variant, (popupWithShadowLocation.x * scale).toInt(), (popupWithShadowLocation.y * scale).toInt(), null)
+      } finally {
+        scaledGraphics.dispose()
+      }
     }
     finally {
       innerGraphics.dispose()

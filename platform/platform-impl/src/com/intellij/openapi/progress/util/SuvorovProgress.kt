@@ -26,6 +26,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
+import java.awt.Component
 import java.awt.KeyboardFocusManager
 import java.util.concurrent.atomic.AtomicReference
 import java.awt.event.InvocationEvent
@@ -105,14 +106,22 @@ object SuvorovProgress {
         thisLogger().warn("Spinning progress would not work without enabled registry value `editor.allow.raw.access.on.edt`")
         processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
       }
-      "NiceOverlay" -> showNiceOverlay(awaitedValue)
+      "NiceOverlay" -> {
+        val currentFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
+        if (currentFocusOwner == null) {
+          // can happen also in tests
+          processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
+        } else {
+          showNiceOverlay(awaitedValue, currentFocusOwner)
+        }
+      }
       "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, isBar = value == "Bar")
       else -> throw IllegalArgumentException("Unknown value for registry key `ide.freeze.fake.progress.kind`: $value")
     }
   }
 
-  private fun showNiceOverlay(awaitedValue: Deferred<*>) {
-    val niceOverlay = NiceOverlayUi()
+  private fun showNiceOverlay(awaitedValue: Deferred<*>, currentFocusOwner: Component) {
+    val niceOverlay = NiceOverlayUi(currentFocusOwner)
 
     val disposable = Disposer.newDisposable()
     val stealer = PotemkinProgress.startStealingInputEvents(
