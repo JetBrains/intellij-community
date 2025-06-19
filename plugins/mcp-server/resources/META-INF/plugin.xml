@@ -25,6 +25,10 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <statistics.counterUsagesCollector implementationClass="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector$McpToolNameValidator"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>
+
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
     <postStartupActivity implementation="com.intellij.mcpserver.impl.McpClientDetectionActivity" />
     <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"/>
