@@ -23,7 +23,7 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
   private final @NotNull DefaultGradleLightProject myRootProject;
   private final @NotNull List<DefaultGradleLightProject> myProjects;
 
-  private @Nullable DefaultBuildIdentifier myParentBuildIdentifier = null;
+  private @Nullable DefaultGradleLightBuild myParentBuild = null;
 
   public DefaultGradleLightBuild(@NotNull GradleBuild gradleBuild) {
     BasicGradleProject rootGradleProject = gradleBuild.getRootProject();
@@ -66,12 +66,12 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
   }
 
   @Override
-  public @Nullable DefaultBuildIdentifier getParentBuildIdentifier() {
-    return myParentBuildIdentifier;
+  public @Nullable DefaultGradleLightBuild getParentBuild() {
+    return myParentBuild;
   }
 
-  public void setParentBuildIdentifier(@Nullable DefaultBuildIdentifier parentBuildIdentifier) {
-    myParentBuildIdentifier = parentBuildIdentifier;
+  public void setParentBuild(@Nullable DefaultGradleLightBuild parentBuild) {
+    myParentBuild = parentBuild;
   }
 
   @Override
@@ -80,10 +80,6 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
            "name='" + myName + '\'' +
            ", id=" + myBuildIdentifier +
            '}';
-  }
-
-  public static @NotNull DefaultGradleLightBuild convertGradleBuild(@NotNull GradleBuild gradleBuild) {
-    return new DefaultGradleLightBuild(gradleBuild);
   }
 
   public static <ModelA, ModelB> void replicateModelHierarchy(
@@ -112,6 +108,42 @@ public final class DefaultGradleLightBuild implements GradleLightBuild, Serializ
         queue.add(new Pair<>(childModelA, childModelB));
 
         addChildModel.accept(parentModelB, childModelB);
+      }
+    }
+  }
+
+  /**
+   * @return {@code gradleBuilds} converted to {@link DefaultGradleLightBuild} instances.
+   * Original order is preserved: if a root build is a first element of {@code gradleBuilds},
+   * then the first element of returned list is also a root build.
+   */
+  public static @NotNull List<DefaultGradleLightBuild> convertGradleBuilds(
+    @NotNull Collection<? extends GradleBuild> gradleBuilds
+  ) {
+    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted = new HashMap<>();
+    List<DefaultGradleLightBuild> convertedBuilds = new ArrayList<>();
+    // TODO traverse builds via graph to avoid separated parent build field initialization
+    for (GradleBuild gradleBuild : gradleBuilds) {
+      DefaultGradleLightBuild build = new DefaultGradleLightBuild(gradleBuild);
+      gradleBuildsToConverted.put(gradleBuild, build);
+      convertedBuilds.add(build);
+    }
+    setHierarchy(gradleBuilds, gradleBuildsToConverted);
+    return convertedBuilds;
+  }
+
+  private static void setHierarchy(
+    @NotNull Collection<? extends GradleBuild> gradleBuilds,
+    Map<GradleBuild, DefaultGradleLightBuild> gradleBuildsToConverted
+  ) {
+    for (GradleBuild gradleBuild : gradleBuilds) {
+      DefaultGradleLightBuild build = gradleBuildsToConverted.get(gradleBuild);
+      assert build != null;
+
+      for (GradleBuild includedGradleBuild : gradleBuild.getIncludedBuilds()) {
+        DefaultGradleLightBuild buildToUpdate = gradleBuildsToConverted.get(includedGradleBuild);
+        assert buildToUpdate != null;
+        buildToUpdate.setParentBuild(build);
       }
     }
   }

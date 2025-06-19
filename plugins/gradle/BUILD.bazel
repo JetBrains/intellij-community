@@ -146,6 +146,7 @@ jvm_library(
     "//platform/external-system-impl:externalSystem-tests_test_lib",
     "//platform/external-system-api/testFramework",
     "//java/testFramework",
+    "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
     "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     "//java/execution/impl",
     "@lib//:assert_j",
