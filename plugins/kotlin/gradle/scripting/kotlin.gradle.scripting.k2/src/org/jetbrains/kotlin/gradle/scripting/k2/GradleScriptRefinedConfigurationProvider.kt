@@ -83,7 +83,7 @@ class GradleScriptRefinedConfigurationProvider(
             return null
         }
         return ExternalSystemJdkUtil.lookupJdkByPath(this).also {
-            scriptingDebugLog { "resolved sdk=$it, javaHome=$this" }
+            scriptingDebugLog { "resolved gradle sdk=$it, javaHome=$this" }
         }
     }
 
