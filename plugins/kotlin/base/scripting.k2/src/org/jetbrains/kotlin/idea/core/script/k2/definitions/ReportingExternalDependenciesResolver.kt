@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConf
 import java.io.File
 import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.dependencies.ArtifactWithLocation
 import kotlin.script.experimental.dependencies.ExternalDependenciesResolver
 import kotlin.script.experimental.dependencies.RepositoryCoordinates
 
@@ -34,13 +33,6 @@ internal class ReportingExternalDependenciesResolver(
       sourceCodeLocation: SourceCode.LocationWithId?
     ): ResultWithDiagnostics<List<File>> {
         configurationProvider.reporter?.indeterminateStep(KotlinBaseScriptingBundle.message("progress.text.resolving", artifactCoordinates))
-        return super.resolve(artifactCoordinates, options, sourceCodeLocation)
-    }
-
-    override suspend fun resolve(
-      artifactsWithLocations: List<ArtifactWithLocation>,
-      options: ExternalDependenciesResolver.Options
-    ): ResultWithDiagnostics<List<File>> {
-        return super.resolve(artifactsWithLocations, options)
+        return delegate.resolve(artifactCoordinates, options, sourceCodeLocation)
     }
 }

@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.idea.core.script.ScriptClassPathUtil.Companion.findV
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
-import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import java.io.File
@@ -45,33 +44,23 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
 
     override fun get(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data[virtualFile]
 
+    fun removeConfiguration(virtualFile: VirtualFile): ScriptConfigurationWithSdk? = data.remove(virtualFile)
+
     override suspend fun create(virtualFile: VirtualFile, definition: ScriptDefinition): ScriptConfigurationWithSdk? {
-      withBackgroundProgress(project, title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution")) {
-        reportSequentialProgress { theReporter ->
-          try {
-            reporter = theReporter
-            val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
-            val importedScripts = mainKtsConfiguration.importedScripts
-            if (importedScripts.isNotEmpty()) {
-              val results = ConcurrentHashMap.newKeySet<ScriptConfigurationWithSdk>()
-              coroutineScope.resolveConfigurations(importedScripts, results).await()
-            }
-
-            data[virtualFile] = mainKtsConfiguration
-
-          }
-          finally {
-            reporter = null
-          }
+        val mainKtsConfiguration = resolveMainKtsConfiguration(virtualFile, definition)
+        val importedScripts = mainKtsConfiguration.importedScripts
+        if (importedScripts.isNotEmpty()) {
+            val results = ConcurrentHashMap.newKeySet<ScriptConfigurationWithSdk>()
+            coroutineScope.resolveConfigurations(importedScripts, results).await()
         }
-      }
+
+        data[virtualFile] = mainKtsConfiguration
 
         return data[virtualFile]
     }
 
     fun CoroutineScope.resolveConfigurations(
-      scripts: Collection<VirtualFile>,
-      results: MutableSet<ScriptConfigurationWithSdk>
+        scripts: Collection<VirtualFile>, results: MutableSet<ScriptConfigurationWithSdk>
     ): Deferred<Unit> {
         return async {
             for (it in scripts) {
@@ -96,10 +85,18 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             }
         }
 
-        val result = smartReadAction(project) {
-          refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
+        val result = withBackgroundProgress(project, title = KotlinBaseScriptingBundle.message("progress.title.dependency.resolution")) {
+            reportSequentialProgress { theReporter ->
+                try {
+                    reporter = theReporter
+                    smartReadAction(project) {
+                        refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
+                    }
+                } finally {
+                    reporter = null
+                }
+            }
         }
-        project.service<ScriptReportSink>().attachReports(mainKts, result.reports)
 
         return ScriptConfigurationWithSdk(result, sdk)
     }
@@ -127,9 +124,9 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             ?: emptyList()
 
     private fun getUpdatedStorage(
-      project: Project,
-      configurationsData: Map<VirtualFile, ScriptConfigurationWithSdk>,
-      workspaceModel: WorkspaceModel,
+        project: Project,
+        configurationsData: Map<VirtualFile, ScriptConfigurationWithSdk>,
+        workspaceModel: WorkspaceModel,
     ): MutableEntityStorage {
         val virtualFileManager = workspaceModel.getVirtualFileUrlManager()
         val storageToUpdate = MutableEntityStorage.Companion.from(workspaceModel.currentSnapshot)
@@ -141,8 +138,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
 
             val source = MainKtsKotlinScriptEntitySource(scriptFile.toVirtualFileUrl(virtualFileManager))
             val locationName = project.scriptModuleRelativeLocation(scriptFile)
-            val libraryDependencies =
-                storageToUpdate.getDependencies(configuration, source, definition, locationName)
+            val libraryDependencies = storageToUpdate.getDependencies(configuration, source, definition, locationName)
 
             val sdkDependency = configurationWithSdk.sdk?.let { SdkDependency(SdkId(it.name, it.sdkType.name)) }
             val allDependencies = listOfNotNull(sdkDependency) + libraryDependencies
@@ -151,7 +147,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
             val existingModule = storageToUpdate.resolve(scriptModuleId)
             if (existingModule == null) {
                 storageToUpdate.addEntity(
-                  ModuleEntity.Companion(scriptModuleId.name, allDependencies, source)
+                    ModuleEntity.Companion(scriptModuleId.name, allDependencies, source)
                 )
             } else {
                 storageToUpdate.modifyModuleEntity(existingModule) {
@@ -164,10 +160,7 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
     }
 
     private fun MutableEntityStorage.getDependencies(
-      wrapper: ScriptCompilationConfigurationWrapper,
-      source: KotlinScriptEntitySource,
-      definition: ScriptDefinition,
-      locationName: String
+        wrapper: ScriptCompilationConfigurationWrapper, source: KotlinScriptEntitySource, definition: ScriptDefinition, locationName: String
     ): List<LibraryDependency> {
         val definitionDependency = getOrCreateDefinitionDependency(definition, project, source)
         val storage = this
@@ -175,7 +168,8 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
         return buildList {
             if (wrapper.isUberDependencyAllowed()) {
                 val classes = wrapper.configuration?.get(ScriptCompilationConfiguration.Companion.dependencies).findVirtualFiles()
-                val sources = wrapper.configuration?.get(ScriptCompilationConfiguration.Companion.ide.dependenciesSources).findVirtualFiles()
+                val sources =
+                    wrapper.configuration?.get(ScriptCompilationConfiguration.Companion.ide.dependenciesSources).findVirtualFiles()
 
                 addIfNotNull(storage.createUberDependency(locationName, classes, sources, source))
             } else {
@@ -185,17 +179,16 @@ class MainKtsScriptConfigurationProvider(val project: Project, val coroutineScop
                 addAll(
                     classes.map {
                         getOrCreateLibrary(it.name, listOf(it.compiledLibraryRoot(project)), source)
-                    }
-                )
+                    })
             }
         }
     }
 
     private fun MutableEntityStorage.createUberDependency(
-      locationName: String,
-      classes: List<VirtualFile>,
-      sources: List<VirtualFile>,
-      source: KotlinScriptEntitySource,
+        locationName: String,
+        classes: List<VirtualFile>,
+        sources: List<VirtualFile>,
+        source: KotlinScriptEntitySource,
     ): LibraryDependency? {
         if (classes.isEmpty() && sources.isEmpty()) return null
 

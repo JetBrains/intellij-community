@@ -6,27 +6,27 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
+import org.jetbrains.kotlin.idea.core.script.k2.configurations.MainKtsScriptConfigurationProvider
 import org.jetbrains.kotlin.idea.core.script.k2.highlighting.DefaultScriptResolutionStrategy
+import org.jetbrains.kotlin.idea.core.script.scriptDiagnostics
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.concurrent.ConcurrentHashMap
 
-fun KtFile.getScriptAnnotationsList(): List<String> = annotationEntries.map { it.text }.sorted()
-
 internal class ReloadMainKtsScriptDependenciesAction : AnAction() {
-    private val annotations = ConcurrentHashMap<KtFile, List<String>>()
+    private val modifications = ConcurrentHashMap<KtFile, Long>()
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val editor = e.getData(CommonDataKeys.EDITOR) ?: return
         val ktFile = getKotlinScriptFile(editor) ?: return
 
+        MainKtsScriptConfigurationProvider.getInstance(project).removeConfiguration(ktFile.alwaysVirtualFile)
         DefaultScriptResolutionStrategy.getInstance(project).execute(ktFile)
-        annotations[ktFile] = runReadAction { ktFile.getScriptAnnotationsList() }
+        modifications[ktFile] = ktFile.alwaysVirtualFile.modificationStamp
         EditorNotifications.getInstance(project).updateNotifications(ktFile.alwaysVirtualFile)
     }
 
@@ -41,16 +41,11 @@ internal class ReloadMainKtsScriptDependenciesAction : AnAction() {
         val file = getKotlinScriptFile(editor) ?: return false
         if (!file.name.endsWith(".main.kts")) return false
         if (DiffUtil.isDiffEditor(editor)) return false
+        if (!file.alwaysVirtualFile.scriptDiagnostics.isNullOrEmpty()) return true
 
-        val actualAnnotations = file.getScriptAnnotationsList()
+        val previous = modifications[file] ?: Long.MIN_VALUE
 
-        val previous = annotations[file] ?: emptyList()
-
-        return if (previous.isEmpty() && actualAnnotations.isEmpty()) {
-            false
-        } else {
-            previous != actualAnnotations
-        }
+        return file.alwaysVirtualFile.modificationStamp > previous
     }
 
     private fun getKotlinScriptFile(editor: Editor): KtFile? {
