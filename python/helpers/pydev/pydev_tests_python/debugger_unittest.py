@@ -555,7 +555,7 @@ class AbstractWriterThread(threading.Thread):
             line = line.strip()
             if not line:
                 continue
-            if not self._ignore_stderr_line(line):
+            if not self._ignore_stderr_line(line) and sys.version_info.major >= 3:
                 lines_with_error.append(line)
 
         if lines_with_error:
