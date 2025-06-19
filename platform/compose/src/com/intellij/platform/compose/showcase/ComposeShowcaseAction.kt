@@ -7,12 +7,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.PaintingParent.Wrapper
+import com.intellij.ui.components.JBPanel
+import org.jetbrains.jewel.bridge.JBPanel
 import org.jetbrains.jewel.bridge.JewelComposePanel
+import org.jetbrains.jewel.bridge.compose
 import java.awt.Dimension
 import javax.swing.JComponent
 
 private fun createComposeShowcaseComponent(): JComponent {
-  return JewelComposePanel {
+  return compose {
     ComposeShowcase()
   }
 }
