@@ -405,11 +405,10 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override fun enableRequiredPlugins(sessionId: String, pluginId: PluginId): Set<PluginId> {
-    val pluginsToEnable = mutableSetOf<PluginId>()
-    val session = PluginManagerSessionService.getInstance().getSession(sessionId) ?: return pluginsToEnable
+    val session = PluginManagerSessionService.getInstance().getSession(sessionId) ?: return emptySet()
     val requiredPluginIds = getRequiredPluginIds(session, pluginId)
     if (requiredPluginIds.isEmpty()) {
-      return pluginsToEnable
+      return emptySet()
     }
 
     val requiredPlugins: MutableSet<IdeaPluginDescriptor> = mutableSetOf()
@@ -419,22 +418,14 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       if (result == null && looksLikePlatformPluginAlias(pluginId)) {
         result = plugins.find { it is IdeaPluginDescriptorImpl && it.pluginAliases.contains(pluginId) }
         if (result != null) {
-          session.pluginStates[pluginId] = PluginEnabledState.ENABLED
-          pluginsToEnable.add(pluginId)
+          requiredPlugins.add(result)
         }
       }
       if (result != null) {
         requiredPlugins.add(result)
       }
     }
-
-    if (!requiredPlugins.isEmpty()) {
-      requiredPlugins.forEach {
-        session.pluginStates[it.pluginId] = PluginEnabledState.ENABLED
-        pluginsToEnable.add(it.pluginId)
-      }
-    }
-    return pluginsToEnable
+    return enableDependencies(session, requiredPlugins.toList(), PluginEnableDisableAction.ENABLE_GLOBALLY, buildPluginIdMap()).pluginsIdsToSwitch
   }
 
   override fun isDisabledInDiff(sessionId: String, pluginId: PluginId): Boolean {

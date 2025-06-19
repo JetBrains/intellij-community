@@ -1105,6 +1105,7 @@ public final class PluginManagerConfigurable
                                   defaultCategory.equals(o2.title) ? -1 :
                                   o1.compareTo(o2))
               .forEachOrdered(group -> {
+                group.setErrors(model.getErrors());
                 myInstalledPanel.addGroup(group);
                 myPluginModelFacade.getModel().addEnabledGroup(group);
               });
