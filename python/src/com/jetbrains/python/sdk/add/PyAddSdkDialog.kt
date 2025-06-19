@@ -26,7 +26,6 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.sdk.add.PyAddSdkDialog.Companion.show
 import com.jetbrains.python.showErrorDialog
-import io.ktor.utils.io.CancellationException
 import java.awt.CardLayout
 import java.awt.event.ActionEvent
 import java.io.IOException
@@ -242,9 +241,6 @@ class PyAddSdkDialog private constructor(
   override fun doOKAction() {
     try {
       selectedPanel?.complete()
-    }
-    catch (e: CancellationException) {
-      throw e
     }
     catch (e: IOException) {
       Messages.showErrorDialog(e.localizedMessage, CommonBundle.message("title.error"))
