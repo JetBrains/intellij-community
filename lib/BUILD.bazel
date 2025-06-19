@@ -8517,36 +8517,36 @@ jvm_import(
 
 jvm_import(
   name = "rd-core",
-  jar = "@rd-core-2025_1_1_http//file",
-  source_jar = "@rd-core-2025_1_1-sources_http//file",
+  jar = "@rd-core-2025_2_2_http//file",
+  source_jar = "@rd-core-2025_2_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-framework",
-  jar = "@rd-framework-2025_1_1_http//file",
-  source_jar = "@rd-framework-2025_1_1-sources_http//file",
+  jar = "@rd-framework-2025_2_2_http//file",
+  source_jar = "@rd-framework-2025_2_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-gen",
-  jar = "@rd-gen-2025_1_1_http//file",
-  source_jar = "@rd-gen-2025_1_1-sources_http//file",
+  jar = "@rd-gen-2025_2_2_http//file",
+  source_jar = "@rd-gen-2025_2_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-swing",
-  jar = "@rd-swing-2025_1_1_http//file",
-  source_jar = "@rd-swing-2025_1_1-sources_http//file",
+  jar = "@rd-swing-2025_2_2_http//file",
+  source_jar = "@rd-swing-2025_2_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "rd-text",
-  jar = "@rd-text-2025_1_1_http//file",
-  source_jar = "@rd-text-2025_1_1-sources_http//file",
+  jar = "@rd-text-2025_2_2_http//file",
+  source_jar = "@rd-text-2025_2_2-sources_http//file",
   visibility = ["//visibility:public"]
 )
 
