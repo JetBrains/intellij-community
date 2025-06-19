@@ -34,7 +34,7 @@ internal class RecentFilesVfsListener : AsyncFileListener {
           val projectFilesToRename = filterProjectFiles(renamedFiles, project)
           if (projectFilesToRename.isNotEmpty()) {
             thisLogger().trace { "Renamed files to apply changes for: ${projectFilesToRename.joinToString { it.name }}" }
-            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRename, FileChangeKind.ADDED, project)
+            BackendRecentFileEventsController.applyRelevantEventsToModel(projectFilesToRename, FileChangeKind.UPDATED, project)
           }
 
           val projectFilesToMove = filterProjectFiles(movedFiles, project)
