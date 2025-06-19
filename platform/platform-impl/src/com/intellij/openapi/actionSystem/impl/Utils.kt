@@ -1324,14 +1324,18 @@ internal suspend inline fun <R> readActionUndispatchedForActionExpand(noinline b
 }
 
 @ApiStatus.Internal
-interface SuspendingUpdateSession: UpdateSession {
-  suspend fun presentationSuspend(action: AnAction): Presentation
-  suspend fun childrenSuspend(actionGroup: ActionGroup): List<AnAction>
-  suspend fun expandSuspend(action: ActionGroup): List<AnAction>
+interface SuspendingUpdateSession : UpdateSession {
+  suspend fun presentationEx(action: AnAction): Presentation
+  suspend fun childrenEx(group: ActionGroup): List<AnAction>
+  suspend fun expandedChildrenEx(group: ActionGroup): List<AnAction>
 
-  fun <T : Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T
+  suspend fun <T : Any?> readAction(block: () -> T): T
+}
+
+@ApiStatus.Internal
+interface SuspendingUpdateSessionInternal: SuspendingUpdateSession {
+  fun <T : Any?> sharedDataSuspendSupplier(key: Key<T>, supplier: suspend () -> T): T
 
   fun visitCaches(visitor: (AnAction, String, Any) -> Unit)
   fun dropCaches(predicate: (Any) -> Boolean)
-  suspend fun <T: Any?> readAction(block: () -> T) : T
 }
