@@ -28,7 +28,7 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
   private static final int IS_LIBRARY_OVERRIDE_MASK   = 0b10_00000000_00000000; // 18th bit
   private static final int IS_CONSTRUCTOR_MASK        = 0b100_00000000_00000000; // 19th bit
   private static final int IS_ABSTRACT_MASK           = 0b1000_00000000_00000000; // 20th bit
-  public static final int IS_BODY_EMPTY_MASK          = 0b10000_00000000_00000000; // 21st bit
+  private static final int IS_BODY_EMPTY_MASK          = 0b10000_00000000_00000000; // 21st bit
   private static final int IS_ONLY_CALLS_SUPER_MASK   = 0b100000_00000000_00000000; // 22nd bit
   private static final int IS_RETURN_VALUE_USED_MASK  = 0b1000000_00000000_00000000; // 23rd bit
   private static final int IS_RECORD_ACCESSOR_MASK    = 0b10000000_00000000_00000000; // 24th bit
