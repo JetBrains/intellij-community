@@ -25,12 +25,11 @@ import com.jetbrains.python.packaging.normalizePackageName
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
 import com.jetbrains.python.sdk.PythonSdkCoroutineService
 import com.jetbrains.python.sdk.pythonSdk
-import kotlinx.coroutines.future.asCompletableFuture
-import kotlinx.coroutines.future.await
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
-import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CancellationException
 
 
 /**
@@ -39,17 +38,18 @@ import java.util.concurrent.CompletableFuture
  */
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
-  private val lazyInitialization: CompletableFuture<Unit> by lazy {
-    service<PythonSdkCoroutineService>().cs.launch {
-      try {
-        repositoryManager.initCaches()
-        reloadPackages()
-        Unit
-      }
-      catch (t: Throwable) {
-        thisLogger().error("Failed to initialize PythonPackageManager for $sdk", t)
-      }
-    }.asCompletableFuture()
+  private val lazyInitialization = service<PythonSdkCoroutineService>().cs.launch(start = CoroutineStart.LAZY) {
+    try {
+      repositoryManager.initCaches()
+      reloadPackages()
+      Unit
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (t: Throwable) {
+      thisLogger().error("Failed to initialize PythonPackageManager for $sdk", t)
+    }
   }
 
   @get:ApiStatus.Internal
@@ -187,7 +187,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
 
   @ApiStatus.Internal
   suspend fun waitForInit() {
-    lazyInitialization.await()
+    lazyInitialization.join()
   }
 
   @ApiStatus.Internal
@@ -229,7 +229,7 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       val pythonPackageManagerService = project.service<PythonPackageManagerService>()
       val manager = pythonPackageManagerService.forSdk(project, sdk)
       //We need to call the lazy load if not inited
-      manager.lazyInitialization
+      manager.lazyInitialization.start()
       return manager
     }
 
