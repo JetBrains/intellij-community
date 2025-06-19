@@ -663,7 +663,7 @@ private class SwitcherScrollPane(view: Component, noBorder: Boolean)
   init {
     border = if (noBorder) JBUI.Borders.empty() else JBUI.Borders.customLineRight(JBUI.CurrentTheme.Popup.separatorColor())
     viewportBorder = JBUI.Borders.empty()
-    minimumSize = JBUI.size(if (noBorder) 250 else 0, 100)
+    minimumSize = JBUI.DialogSizes.medium()
   }
 
   override fun getPreferredSize(): Dimension {
