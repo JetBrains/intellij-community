@@ -11,5 +11,7 @@
                     serviceImplementation="com.intellij.terminal.backend.TerminalNoPortForwardingManager"/>
     <applicationService serviceImplementation="com.intellij.terminal.backend.rpc.TerminalInputChannelsManager"
                         client="remote"/>
+    <applicationService serviceInterface="com.intellij.terminal.backend.TerminalActivityTracker"
+                        serviceImplementation="com.intellij.terminal.backend.TerminalNoOpActivityTracker"/>
   </extensions>
 </idea-plugin>
