@@ -7,8 +7,11 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.relativizeToClosestAncestor
+import com.intellij.openapi.util.io.toNioPathOrNull
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -18,6 +21,7 @@ import org.jetbrains.kotlin.idea.core.script.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.ScriptConfigurationsProviderImpl
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getConfigurationResolver
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.getWorkspaceModelManager
+import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -51,6 +55,15 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
             .associateWith {
                 findScriptDefinition(project, KtFileScriptSource(it))
             }
+
+        scriptingDebugLog {
+            val baseDirPath = project.basePath?.toNioPathOrNull()
+
+            definitionByFile.entries.joinToString(prefix = "processing scripts:\n", separator = "\n") { (script, definition) ->
+                val path = baseDirPath?.relativizeToClosestAncestor(script.alwaysVirtualFile.path)?.second ?: script.alwaysVirtualFile.path
+                "$path -> ${definition.name}(${definition.definitionId})"
+            }
+        }
 
         if (definitionByFile.isEmpty()) return Job()
 
@@ -95,5 +108,8 @@ class DefaultScriptResolutionStrategy(val project: Project, val coroutineScope: 
     companion object {
         @JvmStatic
         fun getInstance(project: Project): DefaultScriptResolutionStrategy = project.service()
+
+        private val logger: Logger
+            get() = Logger.getInstance(DefaultScriptResolutionStrategy::class.java)
     }
 }

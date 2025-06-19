@@ -78,13 +78,13 @@ class GradleScriptRefinedConfigurationProvider(
         data.set(configurations)
     }
 
-  private fun String?.resolveSdk(): Sdk? {
+    private fun String?.resolveSdk(): Sdk? {
         if (this == null) {
-            LOG.warn("[KOTLIN_SCRIPTING] Gradle javaHome is null")
+            scriptingWarnLog("Gradle javaHome is null")
             return null
         }
         return ExternalSystemJdkUtil.lookupJdkByPath(this).also {
-            LOG.info("[KOTLIN_SCRIPTING] resolved sdk=$it, javaHome=$this")
+            scriptingDebugLog { "resolved gradle sdk=$it, javaHome=$this" }
         }
     }
 

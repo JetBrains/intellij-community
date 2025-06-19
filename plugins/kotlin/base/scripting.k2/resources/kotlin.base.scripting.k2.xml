@@ -37,6 +37,9 @@
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.MainKtsScriptNotificationProvider"/>
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.notifications.ScriptingSupportChecker"/>
 
+    <registryKey defaultValue="false" key="kotlin.scripting.show.widget"
+                 description="Enable displaying Kotlin Script definition name in status bar" restartRequired="false" />
+
     <registryKey defaultValue="false"
                  key="kotlin.k2.scripting.show.modules"
                  description="Enable displaying Kotlin Script modules in 'Project Structure' | 'Modules' view "/>
