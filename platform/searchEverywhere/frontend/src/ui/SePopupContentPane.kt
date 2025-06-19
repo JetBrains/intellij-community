@@ -28,6 +28,8 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPr
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.providers.SeLog
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SearchTextField
@@ -97,6 +99,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     val textSearchItemListCellRenderer = SeTextSearchItemPresentationRenderer().get()
     val defaultRenderer = SeDefaultListItemRenderer().get()
 
+    ClientProperty.put(resultList, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
     resultList.setCellRenderer(ListCellRenderer { list, value, index, isSelected, cellHasFocus ->
       when (value) {
         is SeResultListItemRow if value.item.presentation is SeActionItemPresentation -> {
