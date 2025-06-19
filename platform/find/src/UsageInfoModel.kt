@@ -10,13 +10,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.*
-import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findDocument
 import com.intellij.psi.*
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.TextChunk
@@ -30,7 +28,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.util.concurrent.CompletableFuture
 import javax.swing.Icon
 
-
 private val LOG = logger<UsageInfoModel>()
 
 internal class UsageInfoModel private constructor(val project: Project, val model: FindInFilesResult) : UsageInfoAdapter, UsageInFile, UsageDocumentProcessor {
@@ -41,26 +38,9 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   private val psiFile: PsiFile? = run {
-    val psiFile = virtualFile?.let { virtualFile ->
-      val psiManager = PsiManager.getInstance(project)
-      var psiFile = psiManager.findFile(virtualFile)
-      if (psiFile != null && virtualFile.modificationStamp != psiFile.modificationStamp) {
-        val document = virtualFile.findDocument()
-        if (document != null) {
-          runCatching {
-            (FileDocumentManager.getInstance() as? FileDocumentManagerBase)?.unbindFileFromDocument(virtualFile, document)
-            val documentManager = PsiDocumentManager.getInstance(project)
-            documentManager.commitDocument(document)
-
-            psiFile = psiManager.findFile(virtualFile) ?: psiFile
-          }.onFailure { e ->
-              LOG.error("Failed to update PSI file", e)
-            }
-        }
-      }
-      psiFile
+    val psiFile = virtualFile?.let {
+      PsiManager.getInstance(project).findFile(it)
     }
-
     if (psiFile == null) LOG.error("Cannot find psiFile for file ${model.presentablePath}")
     psiFile
   }
