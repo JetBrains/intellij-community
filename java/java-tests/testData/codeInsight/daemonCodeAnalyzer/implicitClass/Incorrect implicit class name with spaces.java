@@ -1,1 +1,1 @@
-<error descr="The file name of an implicitly declared class is not a valid identifier">void main() {}</error>
+<error descr="The file name of a compact source file is not a valid identifier">void main() {}</error>
