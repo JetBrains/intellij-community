@@ -24,6 +24,7 @@ jvm_library(
     "//platform/ide-core-impl",
     "//java/java-impl-refactorings:impl-refactorings",
     "//platform/indexing-api:indexing",
+    "//platform/platform-impl/concurrency",
     "//jps/model-api:model",
     "//jps/model-serialization",
     "//platform/lang-core",

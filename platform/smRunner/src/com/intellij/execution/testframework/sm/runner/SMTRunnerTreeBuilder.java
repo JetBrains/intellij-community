@@ -4,19 +4,17 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.util.Alarm;
 
 import javax.swing.*;
 
-public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase<SMTestProxy> {
+public final class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilderBase<SMTestProxy> {
   private final JTree myTree;
   private final SMTRunnerTreeStructure myTreeStructure;
   private boolean myDisposed;
-  private StructureTreeModel myTreeModel;
+  private StructureTreeModel<?> myTreeModel;
   private final Alarm mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
   public SMTRunnerTreeBuilder(final JTree tree, final SMTRunnerTreeStructure structure) {
@@ -55,13 +53,8 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
     return myTreeStructure;
   }
 
-  protected StructureTreeModel getTreeModel() {
+  private StructureTreeModel<?> getTreeModel() {
     return myTreeModel;
-  }
-
-  //todo
-  protected boolean isSmartExpand() {
-    return false;
   }
 
   @Override
@@ -73,7 +66,7 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
     myTreeModel.invalidateAsync();
   }
 
-  public void setModel(StructureTreeModel asyncTreeModel) {
+  public void setModel(StructureTreeModel<?> asyncTreeModel) {
     myTreeModel = asyncTreeModel;
   }
 
@@ -88,22 +81,5 @@ public class SMTRunnerTreeBuilder implements Disposable, AbstractTestTreeBuilder
     mySelectionAlarm.addRequest(() -> getTreeModel().select(proxy, getTree(), path -> {
       if (onDone != null) onDone.run();
     }), 50);
-  }
-
-  //todo
-  protected boolean isAutoExpandNode(final NodeDescriptor nodeDescriptor) {
-    final AbstractTreeStructure treeStructure = getTreeStructure();
-    final Object rootElement = treeStructure.getRootElement();
-    final Object nodeElement = nodeDescriptor.getElement();
-
-    if (nodeElement == rootElement) {
-      return true;
-    }
-
-    if (((SMTestProxy)nodeElement).getParent() == rootElement
-        && ((SMTestProxy)rootElement).getChildren().size() == 1) {
-      return true;
-    }
-    return false;
   }
 }

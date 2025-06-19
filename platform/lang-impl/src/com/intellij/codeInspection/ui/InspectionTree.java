@@ -45,6 +45,7 @@ import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +66,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
 
+@ApiStatus.Internal
 public final class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
 

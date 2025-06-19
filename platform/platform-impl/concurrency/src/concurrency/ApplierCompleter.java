@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -26,10 +26,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Executes {@link #processor} on {@link #array} elements in range from {@link #lo} (inclusive) to {@link #hi} (exclusive).
- * To do this, it starts executing processor on first array items and, if it takes too much time, splits the work and forks the right half.
- * The series of splits lead to a linked list of forked subtasks, each of which is a CountedCompleter of its own,
+ * To do this, it starts executing the processor on the first array items and, if it takes too much time, splits the work and forks the right half.
+ * The series of splits leads to a linked list of forked subtasks, each of which is a CountedCompleter of its own,
  * having this task as its parent.
- * After the first pass on the array, this task attempts to steal work from the recently forked off subtasks,
+ * After the first pass on the array, this task attempts to steal work from the recently forked off subtasks
  * by traversing the linked subtasks list, unforking each subtask and calling execAndForkSubTasks() on each recursively.
  * After that, the task completes itself.
  * The process of completing traverses task parent hierarchy, decrementing each pending count until it either
@@ -142,7 +142,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   }
   void wrapAndRun(final @NotNull Runnable process) {
     if (failFastOnAcquireReadAction) {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(process));
+      ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(process));
     }
     else {
       wrapInReadActionAndIndicator(process);
@@ -206,8 +206,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   }
 
   static @NotNull Throwable accumulateException(@NotNull AtomicReference<Throwable> thrown, @NotNull Throwable e) {
-    Throwable throwable = thrown.accumulateAndGet(e, (throwable1, throwable2) -> moreImportant(throwable1, throwable2));
-    return throwable;
+    return thrown.accumulateAndGet(e, ApplierCompleter::moreImportant);
   }
 
   private void processArray() {
@@ -238,7 +237,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
       if (!completer.isFinishedAll()) {
         completer.processArray();
       }
-      // else skip entire [completer.lo ... completer.hi] range
+      // else skip the entire [completer.lo... completer.hi] range
     }
   }
 
@@ -256,7 +255,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     ApplierCompleter<?>[] array = tasks.toArray(new ApplierCompleter[0]);
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
-    boolean inReadAction = ApplicationManager.getApplication().isReadAccessAllowed(); // we are going to reset thread context here, so the information about locks will be lost
+    boolean inReadAction = ApplicationManager.getApplication().isReadAccessAllowed(); // we are going to reset the thread context here, so the information about locks will be lost
     try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       for (ApplierCompleter<?> task : array) {
         ProgressManager.checkCanceled();

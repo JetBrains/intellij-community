@@ -8,5 +8,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.concurrency" scope="RUNTIME" />
   </component>
 </module>

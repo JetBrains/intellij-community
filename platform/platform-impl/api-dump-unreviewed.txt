@@ -7364,7 +7364,6 @@ c:com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl
 - addListener(com.intellij.openapi.fileChooser.FileSystemTree$Listener,com.intellij.openapi.Disposable):V
 - addOkAction(java.lang.Runnable):V
 - areHiddensShown():Z
-- p:createFileTreeModel(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.ui.treeStructure.Tree):com.intellij.openapi.fileChooser.tree.FileTreeModel
 - createNewFile(com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.openapi.fileTypes.FileType,java.lang.String):java.lang.Exception
 - createNewFolder(com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.lang.Exception
 - dispose():V
@@ -7476,18 +7475,6 @@ f:com.intellij.openapi.fileChooser.tree.FileRefresher
 - pause():V
 - register(com.intellij.openapi.vfs.VirtualFile):V
 - start():V
-f:com.intellij.openapi.fileChooser.tree.FileTreeModel
-- com.intellij.util.ui.tree.AbstractTreeModel
-- com.intellij.util.concurrency.InvokerSupplier
-- <init>(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.fileChooser.tree.FileRefresher):V
-- <init>(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.fileChooser.tree.FileRefresher,Z,Z):V
-- getChild(java.lang.Object,I):java.lang.Object
-- getChildCount(java.lang.Object):I
-- getIndexOfChild(java.lang.Object,java.lang.Object):I
-- getInvoker():com.intellij.util.concurrency.Invoker
-- getRoot():java.lang.Object
-- invalidate():V
-- isLeaf(java.lang.Object):Z
 f:com.intellij.openapi.fileEditor.FileEditorManagerKeys
 - sf:CLOSING_TO_REOPEN:com.intellij.openapi.util.Key
 - sf:FORBID_PREVIEW_TAB:com.intellij.openapi.util.Key
@@ -14797,7 +14784,6 @@ a:com.intellij.ui.tree.BaseTreeModel
 - isLeaf(java.lang.Object):Z
 f:com.intellij.ui.tree.FilteringTreeModel
 - com.intellij.ui.tree.StructureTreeModel
-- s:createModel(com.intellij.ide.util.treeView.AbstractTreeStructure,com.intellij.ui.speedSearch.ElementFilter,com.intellij.openapi.Disposable):com.intellij.ui.tree.FilteringTreeModel
 - s:createModel(com.intellij.ide.util.treeView.AbstractTreeStructure,com.intellij.ui.speedSearch.ElementFilter,com.intellij.util.concurrency.Invoker,com.intellij.openapi.Disposable):com.intellij.ui.tree.FilteringTreeModel
 - updateTree(javax.swing.JTree,Z,java.lang.Object):V
 f:com.intellij.ui.tree.RestoreSelectionListener
@@ -14820,7 +14806,6 @@ c:com.intellij.ui.tree.StructureTreeModel
 - f:getChildCount(java.lang.Object):I
 - f:getChildren(java.lang.Object):java.util.List
 - f:getIndexOfChild(java.lang.Object,java.lang.Object):I
-- f:getInvoker():com.intellij.util.concurrency.Invoker
 - f:getRoot():javax.swing.tree.TreeNode
 - f:getRootImmediately():javax.swing.tree.TreeNode
 - getTreeStructure():com.intellij.ide.util.treeView.AbstractTreeStructure
@@ -15065,31 +15050,6 @@ f:com.intellij.util.UriUtilKt
 - sf:withPort(java.net.URI,I):java.net.URI
 - sf:withQuery(java.net.URI,java.lang.String):java.net.URI
 - sf:withScheme(java.net.URI,java.lang.String):java.net.URI
-a:com.intellij.util.concurrency.Invoker
-- com.intellij.openapi.Disposable
-- f:compute(java.util.function.Supplier):org.jetbrains.concurrency.CancellablePromise
-- f:computeAsync(java.util.function.Supplier):org.jetbrains.concurrency.CancellablePromise
-- f:computeLater(java.util.function.Supplier):org.jetbrains.concurrency.CancellablePromise
-- dispose():V
-- s:forBackgroundPoolWithReadAction(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
-- s:forBackgroundPoolWithoutReadAction(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
-- s:forBackgroundThreadWithReadAction(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
-- s:forBackgroundThreadWithoutReadAction(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
-- s:forEventDispatchThread(com.intellij.openapi.Disposable):com.intellij.util.concurrency.Invoker
-- f:getTaskCount():I
-- f:invoke(java.lang.Runnable):org.jetbrains.concurrency.CancellablePromise
-- f:invokeLater(java.lang.Runnable):org.jetbrains.concurrency.CancellablePromise
-- f:invokeLater(java.lang.Runnable,I):org.jetbrains.concurrency.CancellablePromise
-- isValidThread():Z
-- f:runOrInvokeLater(java.lang.Runnable):org.jetbrains.concurrency.CancellablePromise
-f:com.intellij.util.concurrency.Invoker$Background
-- com.intellij.util.concurrency.Invoker
-- <init>(com.intellij.openapi.Disposable,I):V
-- isValidThread():Z
-f:com.intellij.util.concurrency.Invoker$EDT
-- com.intellij.util.concurrency.Invoker
-- <init>(com.intellij.openapi.Disposable):V
-- isValidThread():Z
 com.intellij.util.io.InputHandle
 - java.io.Closeable
 - close():V

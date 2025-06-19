@@ -15,6 +15,7 @@ jvm_library(
   deps = [
     "//platform/analysis-api:analysis",
     "//platform/util/concurrency",
+    "//platform/platform-impl/concurrency",
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/foldings",

@@ -29,6 +29,7 @@ jvm_library(
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl:ide-impl",
     "//platform/core-ui",
+    "//platform/platform-impl/concurrency",
     "//platform/util/coroutines",
   ],
   runtime_deps = [":psiViewer_resources"]

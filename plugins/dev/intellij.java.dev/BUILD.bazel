@@ -22,6 +22,7 @@ jvm_library(
     "//platform/core-api:core",
     "//platform/editor-ui-api:editor-ui",
     "//platform/core-ui",
+    "//platform/platform-impl/concurrency",
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/platform-impl:ide-impl",
     "//platform/projectModel-api:projectModel",

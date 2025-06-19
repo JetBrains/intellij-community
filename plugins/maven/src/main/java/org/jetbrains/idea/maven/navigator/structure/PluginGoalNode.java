@@ -12,7 +12,7 @@ import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel;
 
 import java.util.Objects;
 
-class PluginGoalNode extends MavenGoalNode {
+final class PluginGoalNode extends MavenGoalNode {
 
   private final String myUnqualifiedGoal;
 

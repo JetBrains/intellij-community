@@ -61,6 +61,7 @@
     <orderEntry type="module" module-name="intellij.platform.threadDumpParser" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" />
+    <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
     <orderEntry type="module" module-name="intellij.java.codeserver.core" />
   </component>
   <component name="copyright">

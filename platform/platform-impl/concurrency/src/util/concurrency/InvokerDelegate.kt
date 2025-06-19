@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency
 
 import com.intellij.codeWithMe.clientIdContextElement
@@ -23,22 +23,27 @@ internal interface InvokerDelegate : Disposable {
 @Service(Service.Level.APP)
 internal class InvokerService(private val scope: CoroutineScope) {
   companion object {
-    @JvmStatic fun getInstance(): InvokerService = service()
+    @JvmStatic
+    fun getInstance(): InvokerService = service()
+
+    private val useCoroutineInvoker: Boolean
+      get() = Registry.`is`("ide.tree.invoker.use.coroutines", true)
   }
 
-  fun forEdt(description: String): InvokerDelegate =
+  fun forEdt(description: String): InvokerDelegate {
     if (useCoroutineInvoker) {
       val clientIdContextElement = currentThreadContext().clientIdContextElement ?: EmptyCoroutineContext
-      EdtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdContextElement))
+      return EdtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdContextElement))
     }
     else {
-      EdtLegacyInvokerDelegate(description)
+      return EdtLegacyInvokerDelegate(description)
     }
+  }
 
-  fun forBgt(description: String, useReadAction: Boolean, maxThreads: Int): InvokerDelegate =
+  fun forBgt(description: String, useReadAction: Boolean, maxThreads: Int): InvokerDelegate {
     if (useCoroutineInvoker) {
       val clientIdContextElement = currentThreadContext().clientIdContextElement ?: EmptyCoroutineContext
-      if (maxThreads == 1) {
+      return if (maxThreads == 1) {
         SequentialBgtCoroutineInvokerDelegate(description, scope.childScope(description, clientIdContextElement), useReadAction)
       }
       else {
@@ -46,9 +51,7 @@ internal class InvokerService(private val scope: CoroutineScope) {
       }
     }
     else {
-      BgtLegacyInvokerDelegate(description, useReadAction, maxThreads)
+      return BgtLegacyInvokerDelegate(description, useReadAction, maxThreads)
     }
-
-  private val useCoroutineInvoker: Boolean
-    get() = Registry.`is`("ide.tree.invoker.use.coroutines", true)
+  }
 }

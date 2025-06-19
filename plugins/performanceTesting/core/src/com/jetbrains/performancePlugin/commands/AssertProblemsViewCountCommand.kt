@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 
-class AssertProblemsViewCountCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
+internal class AssertProblemsViewCountCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
 
   companion object {
     const val PREFIX: String = "${CMD_PREFIX}assertProblemsViewCount"

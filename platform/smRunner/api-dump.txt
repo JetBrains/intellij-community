@@ -274,18 +274,15 @@ c:com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor
 - com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor
 - <init>(com.intellij.openapi.project.Project,com.intellij.execution.testframework.sm.runner.SMTestProxy,com.intellij.ide.util.treeView.NodeDescriptor):V
 - getWeight():I
-c:com.intellij.execution.testframework.sm.runner.SMTRunnerTreeBuilder
+f:com.intellij.execution.testframework.sm.runner.SMTRunnerTreeBuilder
 - com.intellij.execution.testframework.ui.AbstractTestTreeBuilderBase
 - com.intellij.openapi.Disposable
 - <init>(javax.swing.JTree,com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure):V
 - dispose():V
 - expand(com.intellij.execution.testframework.AbstractTestProxy):V
 - getTree():javax.swing.JTree
-- p:getTreeModel():com.intellij.ui.tree.StructureTreeModel
 - getTreeStructure():com.intellij.execution.testframework.sm.runner.SMTRunnerTreeStructure
-- p:isAutoExpandNode(com.intellij.ide.util.treeView.NodeDescriptor):Z
 - isDisposed():Z
-- p:isSmartExpand():Z
 - repaintWithParents(com.intellij.execution.testframework.sm.runner.SMTestProxy):V
 - select(java.lang.Object,java.lang.Runnable):V
 - setModel(com.intellij.ui.tree.StructureTreeModel):V

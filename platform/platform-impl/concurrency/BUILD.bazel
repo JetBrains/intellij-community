@@ -1,0 +1,30 @@
+### auto-generated section `build intellij.platform.ide.concurrency` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "concurrency_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "concurrency",
+  module_name = "intellij.platform.ide.concurrency",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:jetbrains-annotations",
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/util",
+    "//platform/core-api:core",
+    "//platform/util/concurrency",
+    "//platform/ide-core-impl",
+    "//platform/analysis-impl",
+    "//platform/util/coroutines",
+    "//platform/indexing-api:indexing",
+    "@lib//:guava",
+  ],
+  runtime_deps = [":concurrency_resources"]
+)
+### auto-generated section `build intellij.platform.ide.concurrency` end

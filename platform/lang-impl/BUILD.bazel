@@ -122,6 +122,7 @@ jvm_library(
     "//platform/syntax/syntax-psi:psi",
     "//platform/workspace/storage",
     "//platform/experiment",
+    "//platform/platform-impl/concurrency",
     "//platform/project/shared:project",
   ],
   exports = [

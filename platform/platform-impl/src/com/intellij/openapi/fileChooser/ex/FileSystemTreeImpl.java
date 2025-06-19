@@ -28,6 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,6 +114,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
     return FileComparator.getInstance();
   }
 
+  @ApiStatus.Internal
   protected @NotNull FileTreeModel createFileTreeModel(@NotNull FileChooserDescriptor descriptor, @NotNull Tree tree) {
     return new FileTreeModel(descriptor, new FileRefresher(true, 3, () -> ModalityState.stateForComponent(tree)));
   }

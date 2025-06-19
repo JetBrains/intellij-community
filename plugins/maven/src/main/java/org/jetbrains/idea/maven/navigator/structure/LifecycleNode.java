@@ -6,7 +6,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 
 import static org.jetbrains.idea.maven.project.MavenProjectBundle.message;
 
-class LifecycleNode extends GoalsGroupNode {
+final class LifecycleNode extends GoalsGroupNode {
   LifecycleNode(MavenProjectsStructure structure, ProjectNode parent) {
     super(structure, parent);
 

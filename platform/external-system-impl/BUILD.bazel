@@ -31,6 +31,7 @@ jvm_library(
     "//platform/configuration-store-impl:configurationStore-impl",
     "@lib//:kotlin-reflect",
     "//platform/object-serializer",
+    "//platform/platform-impl/concurrency",
     "//platform/object-serializer:objectSerializer-annotations",
     "//platform/xdebugger-api:debugger",
     "//platform/statistics",

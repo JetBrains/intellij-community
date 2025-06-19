@@ -67,6 +67,7 @@ jvm_library(
     "//platform/threadDumpParser",
     "//platform/eel-provider",
     "//java/debugger/shared",
+    "//platform/platform-impl/concurrency",
     "//java/codeserver/core",
   ],
   exports = [

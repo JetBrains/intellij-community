@@ -82,6 +82,7 @@ jvm_library(
     "@lib//:stream_ex",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
+    "//platform/platform-impl/concurrency",
     "@lib//:kotlinx-coroutines-core",
     "@lib//:fastutil-min",
     "@lib//:jcef",

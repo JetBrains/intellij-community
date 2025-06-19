@@ -50,6 +50,7 @@ jvm_library(
     "@lib//:kotlin-reflect",
     "@lib//:jna",
     "//platform/workspace/storage",
+    "//platform/platform-impl/concurrency",
     "@lib//:jbr-api",
   ],
   runtime_deps = [":internal_resources"]

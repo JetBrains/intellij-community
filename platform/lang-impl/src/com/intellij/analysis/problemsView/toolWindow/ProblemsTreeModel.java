@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.tree.BaseTreeModel;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ public final class ProblemsTreeModel extends BaseTreeModel<Node> implements Invo
   }
 
   @Override
+  @ApiStatus.Internal
   public @NotNull Invoker getInvoker() {
     return invoker;
   }

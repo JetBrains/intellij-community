@@ -16,7 +16,7 @@ import java.awt.event.InputEvent;
 
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 
-class RunConfigurationNode extends MavenSimpleNode {
+final class RunConfigurationNode extends MavenSimpleNode {
   private final RunnerAndConfigurationSettings mySettings;
 
   RunConfigurationNode(MavenProjectsStructure structure, RunConfigurationsNode parent, RunnerAndConfigurationSettings settings) {

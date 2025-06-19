@@ -503,10 +503,6 @@
     <applicationService serviceInterface="com.intellij.util.graph.GraphAlgorithms"
                         serviceImplementation="com.intellij.util.graph.impl.GraphAlgorithmsImpl"/>
 
-    <!--suppress DeprecatedClassUsageInspection -->
-    <applicationService serviceInterface="com.intellij.concurrency.AsyncFutureFactory"
-                        serviceImplementation="com.intellij.concurrency.AsyncFutureFactoryImpl"/>
-
     <applicationService serviceImplementation="com.intellij.openapi.keymap.impl.DefaultKeymap"/>
 
     <applicationService serviceInterface="com.intellij.openapi.options.SchemeManagerFactory"

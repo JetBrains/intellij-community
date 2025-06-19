@@ -22,6 +22,7 @@ jvm_library(
     "//platform/lang-core",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
+    "//platform/platform-impl/concurrency",
     "//platform/lvcs-api:lvcs",
     "//platform/projectModel-api:projectModel",
     "//platform/refactoring",

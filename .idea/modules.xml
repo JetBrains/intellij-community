@@ -785,6 +785,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/bootstrap/eel/intellij.platform.ide.bootstrap.eel.iml" filepath="$PROJECT_DIR$/platform/platform-impl/bootstrap/eel/intellij.platform.ide.bootstrap.eel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/bootstrap/kernel/intellij.platform.ide.bootstrap.kernel.iml" filepath="$PROJECT_DIR$/platform/platform-impl/bootstrap/kernel/intellij.platform.ide.bootstrap.kernel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/codeinsight-inline/intellij.platform.ide.codeinsight.inline.iml" filepath="$PROJECT_DIR$/platform/platform-impl/codeinsight-inline/intellij.platform.ide.codeinsight.inline.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/platform-impl/concurrency/intellij.platform.ide.concurrency.iml" filepath="$PROJECT_DIR$/platform/platform-impl/concurrency/intellij.platform.ide.concurrency.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ide-core/intellij.platform.ide.core.iml" filepath="$PROJECT_DIR$/platform/ide-core/intellij.platform.ide.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ide-core-impl/intellij.platform.ide.core.impl.iml" filepath="$PROJECT_DIR$/platform/ide-core-impl/intellij.platform.ide.core.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/ide-core/plugins/intellij.platform.ide.core.plugins.iml" filepath="$PROJECT_DIR$/platform/ide-core/plugins/intellij.platform.ide.core.plugins.iml" />

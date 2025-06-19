@@ -6,12 +6,11 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextImpl
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ui.InspectionResultsView
 import com.intellij.codeInspection.ui.InspectionTree
-import com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider.Companion.LOCATION_PROPERTY_NAME
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -30,24 +29,29 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-private val LOG: Logger = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
+private val LOG = logger<InspectionResultsExportActionProvider>()
+private const val LOCATION_PROPERTY_NAME = "com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider.location"
 
 /**
  * Extension point to add actions in the inspection results export popup.
  */
-abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
-                                                     description: Supplier<String?>,
-                                                     icon: Icon?) : InspectionViewActionBase(text, description, icon) {
+@ApiStatus.Internal
+abstract class InspectionResultsExportActionProvider(
+  text: Supplier<String?>,
+  description: Supplier<String?>,
+  icon: Icon?,
+) : InspectionViewActionBase(text, description, icon) {
 
   companion object {
-    val EP_NAME: ExtensionPointName<InspectionResultsExportActionProvider> = ExtensionPointName.create("com.intellij.inspectionResultsExportActionProvider")
-    const val LOCATION_PROPERTY_NAME: String = "com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider.location"
+    @JvmField
+    internal val EP_NAME: ExtensionPointName<InspectionResultsExportActionProvider> = ExtensionPointName("com.intellij.inspectionResultsExportActionProvider")
   }
 
   abstract val progressTitle: @ProgressTitle String
@@ -94,11 +98,13 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
    * Performs the actual inspection results export.
    */
   @RequiresBackgroundThread
-  abstract fun writeResults(tree: InspectionTree,
-                            profile: InspectionProfileImpl,
-                            globalInspectionContext: GlobalInspectionContextImpl,
-                            project: Project,
-                            outputPath: Path)
+  abstract fun writeResults(
+    tree: InspectionTree,
+    profile: InspectionProfileImpl,
+    globalInspectionContext: GlobalInspectionContextImpl,
+    project: Project,
+    outputPath: Path,
+  )
 
   @RequiresEdt
   open fun onExportSuccessful(data: UserDataHolderEx) {}

@@ -149,6 +149,7 @@ jvm_library(
     "//platform/eel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",
+    "//platform/platform-impl/concurrency",
   ],
   exports = [
     "//platform/platform-api:ide",
@@ -309,6 +310,7 @@ jvm_library(
     "//platform/eel",
     "//platform/platform-util-io:ide-util-io",
     "//platform/locking.impl",
+    "//platform/platform-impl/concurrency",
   ],
   runtime_deps = [":ide-impl_resources"]
 )

@@ -1277,8 +1277,6 @@ com.intellij.ui.tree.ui.Control$Painter
 - a:getRendererOffset(com.intellij.ui.tree.ui.Control,I,Z):I
 - a:paint(java.awt.Component,java.awt.Graphics,I,I,I,I,com.intellij.ui.tree.ui.Control,I,Z,Z,Z):V
 com.intellij.ui.tree.ui.PlainSelectionTree
-com.intellij.util.concurrency.InvokerSupplier
-- a:getInvoker():com.intellij.util.concurrency.Invoker
 com.intellij.util.textCompletion.TextCompletionCache
 - a:getItems(java.lang.String,com.intellij.codeInsight.completion.CompletionParameters):java.util.Collection
 - a:setItems(java.util.Collection):V

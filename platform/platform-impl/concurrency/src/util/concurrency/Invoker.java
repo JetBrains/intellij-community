@@ -1,9 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -24,7 +25,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static java.awt.EventQueue.isDispatchThread;
 
 public abstract class Invoker implements Disposable {
@@ -66,7 +66,7 @@ public abstract class Invoker implements Disposable {
    */
   public boolean isValidThread() {
     if (useReadAction != ThreeState.NO) return true;
-    Application application = getApplication();
+    Application application = ApplicationManager.getApplication();
     return application == null || !application.isReadAccessAllowed();
   }
 
@@ -302,7 +302,7 @@ public abstract class Invoker implements Disposable {
           return null;
         }
         if (res.getState() == Promise.State.PENDING) {
-          return res.onSuccess(r -> setDone(r));
+          return res.onSuccess(this::setDone);
         }
         try {
           setDone(res.blockingGet(0));
