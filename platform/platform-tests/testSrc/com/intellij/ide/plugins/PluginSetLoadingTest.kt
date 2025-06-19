@@ -217,7 +217,6 @@ class PluginSetLoadingTest {
 
   @Test
   fun `package prefix collision prevents plugin from loading`() {
-    PluginManagerCore.getAndClearPluginLoadingErrors()
     // FIXME these plugins are not related, but one of them loads => depends on implicit order
     plugin("foo") {
       content {
@@ -255,7 +254,6 @@ class PluginSetLoadingTest {
 
   @Test
   fun `package prefix collision prevents plugin from loading - same plugin`() {
-    PluginManagerCore.getAndClearPluginLoadingErrors()
     plugin("foo") {
       packagePrefix = "common.module"
       content {
@@ -271,7 +269,6 @@ class PluginSetLoadingTest {
 
   @Test
   fun `package prefix collision does not prevent plugin from loading if module is optional`() {
-    PluginManagerCore.getAndClearPluginLoadingErrors()
     plugin("foo") {
       content {
         module("foo.module", loadingRule = ModuleLoadingRule.OPTIONAL) { packagePrefix = "common.module" }
