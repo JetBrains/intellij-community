@@ -26,10 +26,10 @@ import kotlin.time.Duration.Companion.minutes
  * @return A [Result] object containing the output of the command execution.
  */
 @Internal
-suspend fun runExecutableWithProgress(executable: Path, workDir: Path?, timeout: Duration = 10.minutes, vararg args: String): PyExecResult<String> {
+suspend fun runExecutableWithProgress(executable: Path, workDir: Path?, timeout: Duration = 10.minutes, env: Map<String,String> = emptyMap(), vararg args: String): PyExecResult<String> {
   val ansiDecoder = AnsiEscapeDecoder()
   reportRawProgress { reporter ->
-    return ExecService().execGetStdout(executable, args.toList(), ExecOptions(workingDirectory = workDir, timeout = timeout), procListener = {
+    return ExecService().execGetStdout(executable, args.toList(), ExecOptions(workingDirectory = workDir, timeout = timeout, env = env), procListener = {
       when (it) {
         is ProcessEvent.ProcessStarted, is ProcessEvent.ProcessEnded -> Unit
         is ProcessEvent.ProcessOutput -> {

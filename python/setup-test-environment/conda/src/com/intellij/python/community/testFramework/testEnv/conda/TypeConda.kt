@@ -1,7 +1,6 @@
 package com.intellij.python.community.testFramework.testEnv.conda
 
 import com.intellij.execution.processTools.getResultStdout
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.testFramework.testEnv.PythonType
@@ -9,7 +8,6 @@ import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.packaging.findCondaExecutableRelativeToEnv
-import com.jetbrains.python.sdk.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +50,8 @@ data object TypeConda : PythonType<PyCondaEnv>("conda") {
   }
 
   private suspend fun getCondaNames(condaPath: Path) =
-    PyCondaEnv.getEnvs(TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest()),
-                                 condaPath.toString()).getOrThrow()
+    PyCondaEnv.getEnvs(
+      condaPath.toString()).getOrThrow()
       .map { it.envIdentity.userReadableName }
       .toMutableSet()
 }

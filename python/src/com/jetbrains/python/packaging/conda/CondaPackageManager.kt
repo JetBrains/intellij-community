@@ -25,7 +25,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
 class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  private val condaPackageEngine = CondaPackageManagerEngine(project, sdk)
+  private val condaPackageEngine = CondaPackageManagerEngine(sdk)
   private val condaRepositoryManger = CondaRepositoryManger(project, sdk)
   private val pipRepositoryManger = PipRepositoryManager(project)
   private val pipPackageEngine = PipPackageManagerEngine(project, sdk)
@@ -33,12 +33,12 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(pro
   override var repositoryManager: PythonRepositoryManager = CompositePythonRepositoryManager(project,
                                                                                              listOf(condaRepositoryManger, pipRepositoryManger))
 
-  override fun getDependencyManager(): PythonDependenciesManager? {
+  override fun getDependencyManager(): PythonDependenciesManager {
     return CondaEnvironmentYmlManager.getInstance(project, sdk)
   }
 
   override suspend fun syncCommand(): PyResult<Unit> {
-    val requirementsFile = getDependencyManager()?.getDependenciesFile()
+    val requirementsFile = getDependencyManager().getDependenciesFile()
                            ?: return PyResult.localizedError(PyBundle.message("python.sdk.conda.requirements.file.not.found"))
     return updateEnv(requirementsFile)
   }

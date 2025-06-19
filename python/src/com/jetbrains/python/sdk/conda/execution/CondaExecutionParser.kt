@@ -1,13 +1,31 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.packaging.conda
+package com.jetbrains.python.sdk.conda.execution
 
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
+import com.jetbrains.python.packaging.conda.CondaPackage
+import com.jetbrains.python.sdk.conda.execution.models.CondaEnvInfo
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-internal object CondaParseUtils {
+internal object CondaExecutionParser {
+  private val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
+  fun parseCondaPackageList(text: String): List<CondaPackage> {
+    return text.lineSequence()
+      .filterNot { it.startsWith("#") }
+      .map { line -> line.split(listLineParser) }
+      .filterNot { it.size < 2 }
+      //TODO: fix
+      .map { CondaPackage(it[0], it[1], editableMode = false, installedWithPip = (it.size >= 4 && it[3] == "pypi")) }
+      .sortedWith(compareBy(CondaPackage::name))
+      .toList()
+  }
+
+
+  fun parseListEnvironmentsOutput(jsonContent: String): CondaEnvInfo {
+    return json.decodeFromString<CondaEnvInfo>(jsonContent)
+  }
+
   fun parseOutdatedOutputs(jsonContent: String): List<PythonOutdatedPackage> {
-    val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
     val condaOutput = json.decodeFromString<CondaOutput>(jsonContent)
     val prevVersions = condaOutput.actions.unlink.associateBy { it.name }
     val newVersions = condaOutput.actions.link.associateBy { it.name }
@@ -33,4 +51,6 @@ internal object CondaParseUtils {
 
   @Serializable
   private data class CondaPackageInfo(val name: String, val version: String)
+
+  private val listLineParser = "\\s+".toRegex()
 }

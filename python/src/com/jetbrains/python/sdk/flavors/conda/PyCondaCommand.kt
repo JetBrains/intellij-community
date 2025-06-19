@@ -10,6 +10,8 @@ import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatform
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import kotlin.io.path.Path
 
 /**
  * Encapsulates conda binary command to simplify target request creation
@@ -22,6 +24,7 @@ class PyCondaCommand(
   internal val project: Project? = null,
   internal val indicator: TargetProgressIndicator = TargetProgressIndicator.EMPTY
 ) {
+  fun getCondaPath(): Path = Path(fullCondaPathOnTarget)
 
   @RequiresBackgroundThread
   private fun createRequest(): PyResult<TargetEnvironmentRequest> {

@@ -2,7 +2,6 @@
 package com.jetbrains.env.python.conda
 
 import com.intellij.execution.processTools.getResultStdoutStr
-import com.intellij.execution.processTools.mapFlat
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
@@ -32,8 +31,7 @@ internal class CondaYamlFileRule(private val condaRule: LocalCondaRule,
     val command = PyCondaCommand(fullPathOnTarget, null, null)
     val condaEnvRequest = NewCondaEnvRequest.EmptyNamedEnv(languageLevel, envName)
     runBlocking {
-      val process = PyCondaEnv.createEnv(command, condaEnvRequest).getOrThrow()
-      Result.success(process).mapFlat { it.getResultStdoutStr() }.getOrThrow()
+      PyCondaEnv.createEnv(command, condaEnvRequest).getOrThrow()
     }
     val targetReq = LocalTargetEnvironmentRequest()
     val builder = TargetedCommandLineBuilder(targetReq).apply {

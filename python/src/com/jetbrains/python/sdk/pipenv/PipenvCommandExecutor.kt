@@ -26,7 +26,7 @@ import kotlin.time.Duration.Companion.minutes
 @Internal
 suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> {
   val executable = getPipEnvExecutable().getOr { return it }
-  return runExecutableWithProgress(executable, dirPath, 10.minutes, *args)
+  return runExecutableWithProgress(executable, dirPath, 10.minutes, args = args)
 }
 
 /**
@@ -99,7 +99,7 @@ suspend fun setupPipEnvSdkUnderProgress(
     setUpPipEnv(projectPath, python, installPackages)
   }.getOr { return it }
 
-  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(projectPath),PyPipEnvSdkAdditionalData())
+  return createSdk(pythonExecutablePath, existingSdks, projectPath, suggestedSdkName(projectPath), PyPipEnvSdkAdditionalData())
 }
 
 /**

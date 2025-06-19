@@ -71,7 +71,7 @@ internal class CondaPackageCache : PythonPackageCache<String> {
       val targetConfig = sdk.targetEnvConfiguration
       val targetRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
       val commandExecutor = TargetEnvironmentRequestCommandExecutor(targetRequest)
-      val baseConda = PyCondaEnv.getEnvs(commandExecutor, pathOnTarget).getOrThrow()
+      val baseConda = PyCondaEnv.getEnvs(pathOnTarget).getOrThrow()
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)

@@ -6,7 +6,6 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
@@ -20,7 +19,6 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationCollector.Source
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -46,14 +44,11 @@ internal class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
   private val LOGGER = Logger.getInstance(PyPipfileSdkConfiguration::class.java)
 
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForConfigurator(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, Source.CONFIGURATOR) }
+  override suspend fun createAndAddSdkForConfigurator(module: Module): Sdk? = createAndAddSDk(module, Source.CONFIGURATOR)
 
-  @RequiresBackgroundThread
-  override fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
+  override suspend fun getIntention(module: Module): @IntentionName String? = findAmongRoots(module, PIP_FILE)?.let { PyCharmCommunityCustomizationBundle.message("sdk.create.pipenv.suggestion", it.name) }
 
-  @RequiresBackgroundThread
-  override fun createAndAddSdkForInspection(module: Module): Sdk? = runBlockingCancellable { createAndAddSDk(module, Source.INSPECTION) }
+  override suspend fun createAndAddSdkForInspection(module: Module): Sdk? = createAndAddSDk(module, Source.INSPECTION)
 
   private suspend fun createAndAddSDk(module: Module, source: Source): Sdk? {
     val pipEnvExecutable = askForEnvData(module, source) ?: return null

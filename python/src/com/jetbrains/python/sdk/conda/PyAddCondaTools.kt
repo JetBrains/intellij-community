@@ -127,12 +127,7 @@ suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   project: Project,
   reporter: RawProgressReporter? = null,
 ): PyResult<Sdk> {
-  val process = PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
-
-  ProcessHandlerReader(process).runProcessAndGetError(uiContext, reporter)?.let {
-    return PyResult.localizedError(it)
-  }
-
+  PyCondaEnv.createEnv(this, newCondaEnvInfo).getOr { return it }
   val sdk = createCondaSdkFromExistingEnv(newCondaEnvInfo.toIdentity(), existingSdks, project)
   saveLocalPythonCondaPath(Path.of(this@createCondaSdkAlongWithNewEnv.fullCondaPathOnTarget))
 

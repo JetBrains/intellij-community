@@ -138,7 +138,6 @@ public final class PyInterpreterInspection extends PyInspection {
 
           if (fixData != null) {
             fixes.add(fixData.getQuickFix());
-            // noinspection HardCodedStringLiteral
             registerProblemWithCommonFixes(node, fixData.getMessage(), module, sdk, fixes, pyCharm);
             return;
           }
@@ -493,8 +492,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension,
-                                                                    () -> myExtension.createAndAddSdkForInspection(myModule));
+      PyProjectSdkConfiguration.INSTANCE.configureSdkUsingExtension(myModule, myExtension);
     }
 
     @Override

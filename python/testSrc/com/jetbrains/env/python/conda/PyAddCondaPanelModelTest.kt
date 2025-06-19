@@ -102,7 +102,7 @@ class PyAddCondaPanelModelTest {
 
     // Create env
     PyCondaEnv.createEnv(condaRule.condaCommand,
-                         NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).asKotlinResult().map { it.getResultStdoutStr() }.getOrThrow()
+                         NewCondaEnvRequest.EmptyNamedEnv(LanguageLevel.PYTHON38, name)).getOrThrow()
 
     val model = PyAddCondaPanelModel(null, emptyList(), projectRule.project)
 

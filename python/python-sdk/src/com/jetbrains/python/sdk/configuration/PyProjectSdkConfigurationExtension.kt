@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.configuration
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
@@ -23,8 +24,10 @@ interface PyProjectSdkConfigurationExtension {
     val EP_NAME = ExtensionPointName.create<PyProjectSdkConfigurationExtension>("Pythonid.projectSdkConfigurationExtension")
 
     @JvmStatic
-    fun findForModule(module: Module): Pair<@IntentionName String, PyProjectSdkConfigurationExtension>? =
-      EP_NAME.computeSafeIfAny { ext -> ext.getIntention(module)?.let { Pair(it, ext) } }
+    @RequiresBackgroundThread
+    fun findForModule(module: Module): Pair<@IntentionName String, PyProjectSdkConfigurationExtension>? = runBlockingMaybeCancellable {
+      EP_NAME.extensionsIfPointIsRegistered.firstNotNullOfOrNull { ext -> ext.getIntention(module)?.let { Pair(it, ext) } }
+    }
   }
 
   /**
@@ -33,8 +36,15 @@ interface PyProjectSdkConfigurationExtension {
    *
    * Rule of thumb is to explicitly ask a user if sdk creation is desired and allowed.
    */
-  @RequiresBackgroundThread
-  fun createAndAddSdkForConfigurator(module: Module): Sdk?
+  suspend fun createAndAddSdkForConfigurator(module: Module): Sdk?
+
+  /**
+   * An implementation is responsible for interpreter setup and registration in IDE.
+   * In case of failures `null` should be returned, the implementation is responsible for errors displaying.
+   *
+   * You're free here to create sdk immediately, without any user permission since quick fix is explicitly clicked.
+   */
+  suspend fun createAndAddSdkForInspection(module: Module): Sdk?
 
   /**
    * Called by sdk configurator and interpreter inspection
@@ -51,16 +61,7 @@ interface PyProjectSdkConfigurationExtension {
    * Example: `Create a virtual environment using requirements.txt`.
    */
   @IntentionName
-  fun getIntention(module: Module): String?
-
-  /**
-   * An implementation is responsible for interpreter setup and registration in IDE.
-   * In case of failures `null` should be returned, the implementation is responsible for errors displaying.
-   *
-   * You're free here to create sdk immediately, without any user permission since quick fix is explicitly clicked.
-   */
-  @RequiresBackgroundThread
-  fun createAndAddSdkForInspection(module: Module): Sdk?
+  suspend fun getIntention(module: Module): String?
 
   /**
    * If headless supported implementation is responsible for interpreter setup and registration

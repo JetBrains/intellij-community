@@ -55,7 +55,7 @@ private val VERSION_2 = "2.0.0".toVersion()
 @Internal
 suspend fun runPoetry(projectPath: Path?, vararg args: String): PyResult<String> {
   val executable = getPoetryExecutable().getOr { return it }
-  return runExecutableWithProgress(executable, projectPath, 10.minutes, *args)
+  return runExecutableWithProgress(executable, projectPath, 10.minutes, args = args)
 }
 
 
@@ -98,7 +98,8 @@ suspend fun validatePoetryExecutable(poetryExecutable: Path?): ValidationInfo? =
  */
 @Internal
 suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
-  val projectPath = sdk.associatedModulePath?.let { Path.of(it) } ?: return PyResult.localizedError(poetryNotFoundException) // Choose a correct sdk
+  val projectPath = sdk.associatedModulePath?.let { Path.of(it) }
+                    ?: return PyResult.localizedError(poetryNotFoundException) // Choose a correct sdk
   runPoetry(projectPath, "env", "use", sdk.homePath!!)
   return runPoetry(projectPath, *args)
 }
