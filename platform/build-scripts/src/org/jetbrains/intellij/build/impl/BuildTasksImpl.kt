@@ -445,7 +445,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = block("build distr
   context.compileModules(moduleNames = null) // compile all
   logFreeDiskSpace("after compilation", context)
 
-  val distributionState = context.distributionState
+  val distributionState = context.distributionState()
 
   coroutineScope {
     createMavenArtifactJob(context, distributionState)

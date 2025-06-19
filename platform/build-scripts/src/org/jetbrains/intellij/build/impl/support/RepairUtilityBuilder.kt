@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.OsFamily.Companion.currentOs
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.Docker
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
+import org.jetbrains.intellij.build.impl.asyncLazy
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -118,9 +119,7 @@ class RepairUtilityBuilder {
         binaryCache.get(context)?.let {
           return it
         }
-
-        @Suppress("OPT_IN_USAGE")
-        val deferred = GlobalScope.async(CoroutineName("build repair-utility")) { buildBinaries(context) }
+        val deferred = asyncLazy("build repair-utility") { buildBinaries(context) }
         binaryCache.put(context, deferred)
         return deferred
       }

@@ -106,7 +106,7 @@ internal suspend fun buildDistribution(
   context: BuildContext,
   isUpdateFromSources: Boolean = false,
 ): ContentReport = coroutineScope {
-  val state = context.distributionState
+  val state = context.distributionState()
   validateModuleStructure(state.platform, context)
   context.productProperties.validateLayout(state.platform, context)
   createBuildBrokenPluginListJob(context)

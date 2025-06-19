@@ -189,8 +189,8 @@ interface BuildContext : CompilationContext {
 
   val isNightlyBuild: Boolean
 
-  @get:ApiStatus.Internal
-  val distributionState: DistributionBuilderState
+  @ApiStatus.Internal
+  suspend fun distributionState(): DistributionBuilderState
 }
 
 suspend inline fun <T> BuildContext.executeStep(
