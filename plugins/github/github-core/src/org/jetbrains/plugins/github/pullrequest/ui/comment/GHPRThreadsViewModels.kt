@@ -101,10 +101,8 @@ internal class GHPRThreadsViewModelsImpl(
   override val compactThreads: StateFlow<Collection<GHPRCompactReviewThreadViewModel>> =
     unorderedCompactThreads.combineState(threadOrder) { threads, threadOrder -> threads to threadOrder }
       .combineState(threadPositionsById) { (threads, threadOrder), threadPositionsById ->
-        // if order is not ready, do not expose the list yet
-        val threadOrder = threadOrder?.getOrNull() ?: return@combineState emptyList()
-        val threadPositionsById = threadPositionsById?.getOrNull() ?: return@combineState emptyList()
-        if (threads.size != threadOrder.size || threadOrder.size != threadPositionsById.size) return@combineState emptyList()
+        val threadOrder = threadOrder?.getOrNull() ?: return@combineState threads
+        val threadPositionsById = threadPositionsById?.getOrNull() ?: return@combineState threads
 
         threads.sortedBy {
           val position = threadPositionsById[it.id] ?: return@sortedBy Int.MAX_VALUE
