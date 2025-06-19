@@ -12,6 +12,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.OnePixelSplitter;
@@ -237,7 +238,7 @@ public class MainFrame extends JPanel implements UiDataProvider, Disposable {
     return myToolbar;
   }
 
-  public @NotNull VcsLogChangesBrowser getChangesBrowser() {
+  public @NotNull ChangesBrowserBase getChangesBrowser() {
     return myChangesBrowser;
   }
 

@@ -63,10 +63,13 @@ import javax.swing.tree.DefaultTreeModel
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
-class VcsLogChangesBrowser @ApiStatus.Internal constructor(project: Project,
-                                                           private val uiProperties: VcsLogUiProperties,
-                                                           private val dataGetter: (CommitId) -> VcsShortCommitDetails,
-                                                           parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
+@ApiStatus.Internal
+class VcsLogChangesBrowser(
+  project: Project,
+  private val uiProperties: VcsLogUiProperties,
+  private val dataGetter: (CommitId) -> VcsShortCommitDetails,
+  parent: Disposable,
+) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
   private val toolbarWrapper: Wrapper
 
