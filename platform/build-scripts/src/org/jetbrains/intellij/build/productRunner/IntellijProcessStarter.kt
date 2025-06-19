@@ -6,6 +6,7 @@ import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.xml.dom.readXmlAsModel
 import com.jetbrains.plugin.structure.base.utils.exists
 import io.opentelemetry.api.trace.Span
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.VmProperties
@@ -28,6 +29,7 @@ import kotlin.time.Duration.Companion.minutes
 /**
  * Internal function which runs IntelliJ process. Use [IntellijProductRunner.runProduct] instead.
  */
+@ApiStatus.Internal
 suspend fun runApplicationStarter(
   context: BuildContext,
   classpath: Collection<String>,
