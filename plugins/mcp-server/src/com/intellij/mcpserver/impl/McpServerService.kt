@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonPrimitive
-import org.jetbrains.ide.RestService.Companion.getLastFocusedOrOpenedProject
 import kotlin.coroutines.cancellation.CancellationException
 
 
@@ -170,10 +169,10 @@ private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
   return RegisteredTool(tool) { request ->
     val projectPath = (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content
     val project = if (!projectPath.isNullOrBlank()) {
-      ProjectManager.getInstance().openProjects.find { it.basePath == projectPath } ?: getLastFocusedOrOpenedProject()
+      ProjectManager.getInstance().openProjects.find { it.basePath == projectPath }
     }
     else {
-      getLastFocusedOrOpenedProject()
+      null
     }
 
     @Suppress("IncorrectCancellationExceptionHandling")
