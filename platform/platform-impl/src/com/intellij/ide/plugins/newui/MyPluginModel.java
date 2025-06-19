@@ -639,6 +639,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private void setStatesByIds(Set<PluginId> ids, boolean enabled) {
     PluginEnabledState newState = enabled ? PluginEnabledState.ENABLED : PluginEnabledState.DISABLED;
     ids.forEach(id -> super.setEnabled(id, newState));
+    updateEnabledStateInUi();
   }
 
   private void appendOrUpdateDescriptor(@NotNull PluginUiModel descriptor) {
