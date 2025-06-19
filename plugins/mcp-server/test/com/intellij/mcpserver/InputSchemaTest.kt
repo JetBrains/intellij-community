@@ -82,8 +82,6 @@ class InputSchemaTest {
     "properties": {
         "intArg": {
             "type": "integer",
-            "minimum": -2147483648,
-            "maximum": 2147483647,
             "description": "int description on parameter"
         }
     },
@@ -137,8 +135,6 @@ class InputSchemaTest {
             "properties": {
                 "a": {
                     "type": "integer",
-                    "minimum": -2147483648,
-                    "maximum": 2147483647,
                     "description": "Field description a"
                 },
                 "b": {
@@ -166,9 +162,7 @@ class InputSchemaTest {
                     ],
                     "properties": {
                         "e": {
-                            "type": "number",
-                            "minimum": 4.9E-324,
-                            "maximum": 1.7976931348623157E308
+                            "type": "number"
                         }
                     },
                     "description": "Field description d"
@@ -180,9 +174,7 @@ class InputSchemaTest {
                     ],
                     "properties": {
                         "e": {
-                            "type": "number",
-                            "minimum": 4.9E-324,
-                            "maximum": 1.7976931348623157E308
+                            "type": "number"
                         }
                     },
                     "description": "Field description dOptional"
@@ -211,8 +203,6 @@ class InputSchemaTest {
             "properties": {
                 "a": {
                     "type": "integer",
-                    "minimum": -2147483648,
-                    "maximum": 2147483647,
                     "description": "Field description a"
                 },
                 "b": {
@@ -240,9 +230,7 @@ class InputSchemaTest {
                     ],
                     "properties": {
                         "e": {
-                            "type": "number",
-                            "minimum": 4.9E-324,
-                            "maximum": 1.7976931348623157E308
+                            "type": "number"
                         }
                     },
                     "description": "Field description d"
@@ -254,9 +242,7 @@ class InputSchemaTest {
                     ],
                     "properties": {
                         "e": {
-                            "type": "number",
-                            "minimum": 4.9E-324,
-                            "maximum": 1.7976931348623157E308
+                            "type": "number"
                         }
                     },
                     "description": "Field description dOptional"
