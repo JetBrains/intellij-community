@@ -64,8 +64,6 @@ object Durable : Mixin<Entity>("fleet.kernel.DurableEntity", "fleet.kernel") {
   val StorageKeyAttr = optionalValue("storageKey", StorageKey.serializer(), Indexing.INDEXED)
 }
 
-fun KClass<*>.isDurable(): Boolean = false
-
 fun <T : Entity> byUid(uid: UID): T =
   requireNotNull(byUidOrNull(uid)) {
     "cannot find an entity for uid $uid"
