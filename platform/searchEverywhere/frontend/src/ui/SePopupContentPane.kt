@@ -19,11 +19,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.searchEverywhere.SeActionItemPresentation
 import com.intellij.platform.searchEverywhere.SeTargetItemPresentation
 import com.intellij.platform.searchEverywhere.SeTextSearchItemPresentation
 import com.intellij.platform.searchEverywhere.frontend.AutoToggleAction
+import com.intellij.platform.searchEverywhere.frontend.SeFrontendService.Companion.POPUP_LOCATION_SETTINGS_KEY
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
@@ -51,6 +53,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
+import java.awt.Dimension
 import java.awt.event.*
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
@@ -62,7 +65,7 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalAtomicApi::class, ExperimentalCoroutinesApi::class)
 @Internal
-class SePopupContentPane(private val project: Project?, private val vm: SePopupVm, onShowFindToolWindow: () -> Unit) : JPanel(), Disposable, UiDataProvider {
+class SePopupContentPane(private val project: Project?, private val vm: SePopupVm, private val resizePopupHandler: (Dimension) -> Unit, onShowFindToolWindow: () -> Unit) : JPanel(), Disposable, UiDataProvider {
   val preferableFocusedComponent: JComponent get() = textField
   val searchFieldDocument: Document get() = textField.document
 
@@ -89,6 +92,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   private val extendedInfoContainer: JComponent = JPanel(BorderLayout())
   private var extendedInfoComponent: ExtendedInfoComponent? = null
+
+  var popupViewMode: PopupViewMode = PopupViewMode.COMPACT
+    private set
+  var popupExtendedSize: Dimension? = (project?.let { WindowStateService.getInstance(it) }
+                                       ?: WindowStateService.getInstance()).getSize(POPUP_LOCATION_SETTINGS_KEY)
 
   init {
     layout = GridLayout()
@@ -125,6 +133,9 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       .row().cell(textField, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
       .row(resizable = true).cell(resultsScrollPane, horizontalAlign = HorizontalAlign.FILL, verticalAlign = VerticalAlign.FILL, resizableColumn = true)
       .row().cell(extendedInfoContainer, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
+
+    // hide resultsScrollPane and extendedInfoContainer
+    switchViewMode()
 
     textField.launchOnShow("Search Everywhere text field text binding") {
       withContext(Dispatchers.EDT) {
@@ -177,6 +188,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
                 textField.setSearchInProgress(false)
                 updateEmptyStatus()
               }
+
+              switchViewMode()
             }
           }.collect { event ->
             withContext(Dispatchers.EDT) {
@@ -193,6 +206,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
               if (resultListModel.size > 0 && resultList.selectedIndices.isEmpty()) {
                 resultList.selectedIndex = 0
               }
+
+              switchViewMode()
             }
           }
         }
@@ -582,6 +597,43 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     }
   }
 
+  private fun switchViewMode() {
+    if (textField.text.isEmpty() && resultList.isEmpty) {
+      switchViewMode(true)
+    }
+    else {
+      switchViewMode(false)
+    }
+  }
+
+  private fun switchViewMode(compact: Boolean) {
+    if (compact == (popupViewMode == PopupViewMode.COMPACT)) return
+    popupViewMode = if (compact) PopupViewMode.COMPACT else PopupViewMode.EXPANDED
+
+    resizePopupHandler(calcPreferredSize(popupViewMode))
+
+    extendedInfoContainer.isVisible = !compact && isExtendedInfoEnabled()
+    resultsScrollPane.isVisible = !compact
+  }
+
+  fun getExpandedSize(): Dimension {
+    return calcPreferredSize(PopupViewMode.EXPANDED)
+  }
+
+  override fun getPreferredSize(): Dimension {
+    return calcPreferredSize(popupViewMode)
+  }
+
+  private fun calcPreferredSize(popupViewMode: PopupViewMode): Dimension {
+    val preferredHeight = when (popupViewMode) {
+      PopupViewMode.COMPACT ->
+        headerPane.preferredSize.height + textField.preferredSize.height
+      PopupViewMode.EXPANDED ->
+        popupExtendedSize?.height ?: JBUI.CurrentTheme.BigPopup.maxListHeight()
+    }
+    return Dimension(popupExtendedSize?.width ?: 670, preferredHeight)
+  }
+
   private fun logTabSwitchedEvent(e: AnActionEvent) {
     SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(project,
                                                            SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(vm.currentTab.tabId),
@@ -591,6 +643,11 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.PREDEFINED_TEXT] = textField.text
+  }
+
+  enum class PopupViewMode {
+    COMPACT,
+    EXPANDED
   }
 
   override fun dispose() {}
