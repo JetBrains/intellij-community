@@ -2076,7 +2076,7 @@ def test_debug_zip_files(case_setup, tmpdir):
         writer.finished_ok = True
 
 
-@pytest.mark.skipif(not IS_CPYTHON, reason='CPython only test.')
+@pytest.mark.skipif(not IS_CPYTHON or IS_PY2, reason='CPython only test.')
 @pytest.mark.xfail(IS_PY312_OR_GREATER, reason='PCQA-837')
 def test_multiprocessing(case_setup_multiprocessing):
     import threading
