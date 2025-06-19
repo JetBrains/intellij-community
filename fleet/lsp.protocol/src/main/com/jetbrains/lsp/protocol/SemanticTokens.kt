@@ -29,6 +29,21 @@ data class SemanticTokensParams(
 
 
 @Serializable
+data class SemanticTokensRangeParams(
+  /**
+   * The text document.
+   */
+  val textDocument: TextDocumentIdentifier,
+  /**
+   * The range the semantic tokens are requested for.
+   */
+  val range: Range,
+  override val workDoneToken: ProgressToken?,
+  override val partialResultToken: ProgressToken?,
+) : WorkDoneProgressParams, PartialResultParams
+
+
+@Serializable
 data class SemanticTokens(
     /**
      * An optional result id. If provided and clients support delta updating
@@ -51,4 +66,10 @@ object SemanticTokensRequests {
             "textDocument/semanticTokens/full", SemanticTokensParams.serializer(), SemanticTokens.serializer(),
             NothingSerializer().nullable
         )
+
+    val SemanticTokensRangeRequest: RequestType<SemanticTokensRangeParams, SemanticTokens, Nothing?> =
+      RequestType(
+        "textDocument/semanticTokens/range", SemanticTokensRangeParams.serializer(), SemanticTokens.serializer(),
+        NothingSerializer().nullable
+      )
 }
