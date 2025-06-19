@@ -36,6 +36,7 @@
     <orderEntry type="library" exported="" name="assertJ" level="project" />
     <orderEntry type="library" exported="" name="assertj-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
