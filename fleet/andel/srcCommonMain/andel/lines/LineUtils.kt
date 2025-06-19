@@ -429,7 +429,7 @@ private fun rebuildLines(
   }
   val ropeLength = cache.textLength.toInt()
   require(ropeLength == after.charCount) {
-    "${ropeLength} does not cover text length ${after.charCount} exactly after edit $edit\n${before.view().charSequence()}"
+    "${ropeLength} does not cover text length ${after.charCount} exactly after edit ${edit?.ops?.toList()}\n${before.view().charSequence()}"
   }
   return cache
 }
