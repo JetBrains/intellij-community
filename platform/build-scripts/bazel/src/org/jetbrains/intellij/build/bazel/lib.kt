@@ -15,6 +15,7 @@ internal data class LibOwnerDescriptor(
   @JvmField val moduleFile: Path,
   @JvmField val visibility: String? = "//visibility:public",
   @JvmField val sectionName: String = "maven libs",
+  @JvmField val isCommunity: Boolean,
 )
 
 internal data class Library(
@@ -166,7 +167,8 @@ internal fun generateBazelModuleSectionsForLibs(
   owner: LibOwnerDescriptor,
   jarRepositories: List<JarRepository>,
   m2Repo: Path,
-  urlCache: UrlCache,
+  ultimateUrlCache: UrlCache?,
+  communityUrlCache: UrlCache,
   moduleFileToLabelTracker: MutableMap<Path, MutableSet<String>>,
   fileToUpdater: MutableMap<Path, BazelFileUpdater>,
 ) {
@@ -180,6 +182,16 @@ internal fun generateBazelModuleSectionsForLibs(
   val labelTracker = moduleFileToLabelTracker.computeIfAbsent(owner.moduleFile) { HashSet() }
   buildFile(bazelFileUpdater, owner.sectionName) {
     for (lib in list) {
+      val urlCache = if (owner.isCommunity) {
+        communityUrlCache
+      } else {
+        check(ultimateUrlCache != null) {
+          error("generating library ${lib.lib.targetName} for ultimate part while ultimate root is missing")
+        }
+
+        ultimateUrlCache
+      }
+
       for (jar in lib.jars) {
         val label = fileToHttpRuleRepoName(jar.path)
         if (!labelTracker.add(label)) {

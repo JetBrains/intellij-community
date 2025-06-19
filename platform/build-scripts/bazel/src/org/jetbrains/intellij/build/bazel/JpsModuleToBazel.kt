@@ -6,14 +6,15 @@ package org.jetbrains.intellij.build.bazel
 import com.intellij.openapi.util.JDOMUtil
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.moveTo
 
@@ -23,19 +24,39 @@ import kotlin.io.path.moveTo
 internal class JpsModuleToBazel {
   companion object {
     const val BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV = "BUILD_WORKSPACE_DIRECTORY"
+    const val RUN_WITHOUT_ULTIMATE_ROOT_ENV = "RUN_WITHOUT_ULTIMATE_ROOT"
 
     @JvmStatic
     fun main(args: Array<String>) {
       val workspaceDir: Path? = System.getenv(BAZEL_BUILD_WORKSPACE_DIRECTORY_ENV)?.let { Path.of(it).normalize() }
-      val projectDir = searchUltimateRootUpwards(workspaceDir ?: Path.of(System.getProperty("user.dir")))
+      val runWithoutUltimateRoot = (System.getenv(RUN_WITHOUT_ULTIMATE_ROOT_ENV) ?: "false").toBooleanStrict()
+
+      val communityRoot = searchCommunityRoot(workspaceDir ?: Path.of(System.getProperty("user.dir")))
+      val ultimateRoot: Path? = if (!runWithoutUltimateRoot && communityRoot.parent.resolve(".ultimate.root.marker").exists()) {
+        communityRoot.parent
+      } else {
+        null
+      }
+
+      println("Community root: $communityRoot")
+      println("Ultimate root: $ultimateRoot")
+
+      val projectDir = ultimateRoot ?: communityRoot
 
       val m2Repo = Path.of(System.getProperty("user.home"), ".m2/repository")
       val project = JpsSerializationManager.getInstance().loadProject(projectDir.toString(), mapOf("MAVEN_REPOSITORY" to m2Repo.toString()), true)
       val jarRepositories = loadJarRepositories(projectDir)
 
-      val urlCache = UrlCache(cacheFile = projectDir.resolve("build/lib-lock.json"))
+      val ultimateUrlCache = ultimateRoot?.let { UrlCache(cacheFile = it.resolve("build/lib-lock.json")) }
+      val communityUrlCache = UrlCache(cacheFile = communityRoot.resolve("build/lib-lock.json"))
 
-      val generator = BazelBuildFileGenerator(projectDir = projectDir, project = project, urlCache = urlCache)
+      val generator = BazelBuildFileGenerator(
+        ultimateRoot = ultimateRoot,
+        communityRoot = communityRoot,
+        project = project,
+        ultimateUrlCache = ultimateUrlCache,
+        communityUrlCache = communityUrlCache,
+      )
       val moduleList = generator.computeModuleList()
       // first, generate community to collect libs, that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, isCommunity = true)
@@ -44,20 +65,33 @@ internal class JpsModuleToBazel {
       generator.save(ultimateResult.moduleBuildFiles)
 
       deleteOldFiles(
-        projectDir = projectDir,
-        generatedFiles = (communityResult.moduleBuildFiles.keys.asSequence() + ultimateResult.moduleBuildFiles.keys.asSequence())
-          .filter { it != projectDir }
-          .sortedBy { projectDir.relativize(it).invariantSeparatorsPathString }
+        projectDir = communityRoot,
+        generatedFiles = communityResult.moduleBuildFiles.keys
+          .filter { it != communityRoot }
+          .sortedBy { communityRoot.relativize(it).invariantSeparatorsPathString }
           .toSet(),
       )
 
+      if (ultimateRoot != null) {
+        deleteOldFiles(
+          projectDir = ultimateRoot,
+          generatedFiles = ultimateResult.moduleBuildFiles.keys
+            .filter { it != ultimateRoot }
+            .sortedBy { ultimateRoot.relativize(it).invariantSeparatorsPathString }
+            .toSet(),
+        )
+      }
+
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2Repo)
 
-      val targetsFile = projectDir.resolve("build/bazel-targets.json")
-      saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList.skippedModules)
+      if (ultimateRoot != null) {
+        val targetsFile = ultimateRoot.resolve("build/bazel-targets.json")
+        saveTargets(targetsFile, communityResult.moduleTargets + ultimateResult.moduleTargets, moduleList.skippedModules)
+      }
 
       // save cache only on success. do not surround with try/finally
-      urlCache.save()
+      communityUrlCache.save()
+      ultimateUrlCache?.save()
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -78,8 +112,9 @@ internal class JpsModuleToBazel {
       val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
       try {
         Files.writeString(
-          tempFile, jsonSerializer.encodeToString(
-          TargetsFile(
+          tempFile, jsonSerializer.encodeToString<TargetsFile>(
+          serializer = jsonSerializer.serializersModule.serializer(),
+          value = TargetsFile(
             modules = targets.associate { moduleTarget ->
               moduleTarget.moduleDescriptor.module.name to TargetsFileModuleDescription(
                 productionTargets = moduleTarget.productionTargets,
@@ -95,14 +130,17 @@ internal class JpsModuleToBazel {
       }
     }
 
-    fun searchUltimateRootUpwards(start: Path): Path {
+    fun searchCommunityRoot(start: Path): Path {
       var current = start
       while (true) {
-        if (Files.exists(current.resolve(".ultimate.root.marker"))) {
+        if (Files.exists(current.resolve("intellij.idea.community.main.iml"))) {
           return current
         }
+        if (Files.exists(current.resolve("community/intellij.idea.community.main.iml"))) {
+          return current.resolve("community")
+        }
 
-        current = current.parent ?: throw IllegalStateException("Cannot find ultimate root starting from $start")
+        current = current.parent ?: throw IllegalStateException("Cannot find community root starting from $start")
       }
     }
 
