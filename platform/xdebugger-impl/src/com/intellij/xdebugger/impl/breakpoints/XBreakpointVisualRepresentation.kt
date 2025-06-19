@@ -39,6 +39,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 import java.awt.dnd.DnDConstants
 import java.awt.dnd.DragSource
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 @ApiStatus.Internal
 class XBreakpointVisualRepresentation(
@@ -48,7 +50,11 @@ class XBreakpointVisualRepresentation(
 ) {
   private val myProject: Project = myBreakpoint.project
 
+  // Avoid races between highlighter creation and disposal
+  private val lock = ReentrantLock()
+
   var rangeMarker: RangeMarker? = null
+    get() = lock.withLock { field }
     private set
 
   val highlighter: RangeHighlighter?
@@ -80,13 +86,12 @@ class XBreakpointVisualRepresentation(
       if (document == null) {
         // currently LazyRangeMarkerFactory creates document for non binary files
         if (file.fileType.isBinary()) {
-          ApplicationManager.getApplication().invokeLater(
-            {
-              if (this.rangeMarker == null) {
-                this.rangeMarker = LazyRangeMarkerFactory.getInstance(myProject).createRangeMarker(file, myBreakpoint.getLine(), 0, true)
-                callOnUpdate.run()
-              }
-            }, myProject.getDisposed())
+          invokeLaterWithLockAndChecks {
+            if (this.rangeMarker == null) {
+              this.rangeMarker = LazyRangeMarkerFactory.getInstance(myProject).createRangeMarker(file, myBreakpoint.getLine(), 0, true)
+              callOnUpdate.run()
+            }
+          }
           return@nonBlocking
         }
         document = FileDocumentManager.getInstance().getDocument(file)
@@ -103,92 +108,102 @@ class XBreakpointVisualRepresentation(
       val range = myBreakpoint.getHighlightRange()
 
       val finalDocument: Document = document
-      ApplicationManager.getApplication().invokeLater(
-        {
-          if (myBreakpoint.isDisposed()) return@invokeLater
-          if (this.rangeMarker != null && this.rangeMarker !is RangeHighlighter) {
-            removeHighlighter()
-            assert(this.highlighter == null)
+      invokeLaterWithLockAndChecks {
+        if (this.rangeMarker != null && this.rangeMarker !is RangeHighlighter) {
+          removeHighlighter()
+          assert(this.highlighter == null)
+        }
+
+        var attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES)
+
+        if (!myBreakpoint.isEnabled()) {
+          attributes = attributes.clone()
+          attributes.backgroundColor = null
+        }
+
+        var highlighter = this.highlighter
+        if (highlighter != null &&
+            (!highlighter.isValid()
+             || range != null && highlighter.textRange != range
+             //breakpoint range marker is out-of-sync with actual breakpoint text range
+             || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
+             || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
+              // it seems that this check is not needed - we always update line number from the highlighter
+              // and highlighter is removed on line and file change anyway
+              /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/
+            )
+        ) {
+          removeHighlighter()
+          redrawInlineInlays()
+          highlighter = null
+        }
+
+        myBreakpoint.updateIcon()
+
+        if (highlighter == null) {
+          val line = myBreakpoint.getLine()
+          if (line >= finalDocument.getLineCount()) {
+            callOnUpdate.run()
+            return@invokeLaterWithLockAndChecks
           }
-
-          var attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES)
-
-          if (!myBreakpoint.isEnabled()) {
-            attributes = attributes.clone()
-            attributes.backgroundColor = null
+          val markupModel = DocumentMarkupModel.forDocument(finalDocument, myProject, true) as MarkupModelEx
+          if (range != null && !range.isEmpty) {
+            val lineRange = DocumentUtil.getLineTextRange(finalDocument, line)
+            if (range.intersectsStrict(lineRange)) {
+              highlighter = markupModel.addRangeHighlighter(range.startOffset, range.endOffset,
+                                                            DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
+                                                            HighlighterTargetArea.EXACT_RANGE)
+            }
           }
-
-          var highlighter = this.highlighter
-          if (highlighter != null &&
-              (!highlighter.isValid()
-               || range != null && highlighter.textRange != range
-               //breakpoint range marker is out-of-sync with actual breakpoint text range
-               || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
-               || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
-                // it seems that this check is not needed - we always update line number from the highlighter
-                // and highlighter is removed on line and file change anyway
-                /*|| document.getLineNumber(highlighter.getStartOffset()) != getLine()*/
-              )
-          ) {
-            removeHighlighter()
-            redrawInlineInlays()
-            highlighter = null
-          }
-
-          myBreakpoint.updateIcon()
-
           if (highlighter == null) {
-            val line = myBreakpoint.getLine()
-            if (line >= finalDocument.getLineCount()) {
-              callOnUpdate.run()
-              return@invokeLater
-            }
-            val markupModel = DocumentMarkupModel.forDocument(finalDocument, myProject, true) as MarkupModelEx
-            if (range != null && !range.isEmpty) {
-              val lineRange = DocumentUtil.getLineTextRange(finalDocument, line)
-              if (range.intersectsStrict(lineRange)) {
-                highlighter = markupModel.addRangeHighlighter(range.startOffset, range.endOffset,
-                                                              DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
-                                                              HighlighterTargetArea.EXACT_RANGE)
-              }
-            }
-            if (highlighter == null) {
-              highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes)
-            }
-            if (highlighter == null) {
-              callOnUpdate.run()
-              return@invokeLater
-            }
-
-            highlighter.setGutterIconRenderer(myBreakpoint.createGutterIconRenderer())
-            highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, true)
-            highlighter.setEditorFilter(MarkupEditorFilter { editor -> isHighlighterAvailableIn(editor) })
-            this.rangeMarker = highlighter
-
-            redrawInlineInlays()
+            highlighter = markupModel.addPersistentLineHighlighter(line, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes)
           }
-          else {
-            val markupModel = DocumentMarkupModel.forDocument(finalDocument, myProject, false) as MarkupModelEx?
-            if (markupModel != null) {
-              // renderersChanged false - we don't change gutter size
-              val filter = highlighter.getEditorFilter()
-              highlighter.setEditorFilter(MarkupEditorFilter.EMPTY)
-              highlighter.setEditorFilter(filter) // to fireChanged
-            }
+          if (highlighter == null) {
+            callOnUpdate.run()
+            return@invokeLaterWithLockAndChecks
           }
-          callOnUpdate.run()
-        }, myProject.getDisposed())
+
+          highlighter.setGutterIconRenderer(myBreakpoint.createGutterIconRenderer())
+          highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, true)
+          highlighter.setEditorFilter(MarkupEditorFilter { editor -> isHighlighterAvailableIn(editor) })
+          this.rangeMarker = highlighter
+
+          redrawInlineInlays()
+        }
+        else {
+          val markupModel = DocumentMarkupModel.forDocument(finalDocument, myProject, false) as MarkupModelEx?
+          if (markupModel != null) {
+            // renderersChanged false - we don't change gutter size
+            val filter = highlighter.getEditorFilter()
+            highlighter.setEditorFilter(MarkupEditorFilter.EMPTY)
+            highlighter.setEditorFilter(filter) // to fireChanged
+          }
+        }
+        callOnUpdate.run()
+      }
     }.executeSynchronously()
   }
 
+  private inline fun invokeLaterWithLockAndChecks(crossinline runnable: () -> Unit) {
+    ApplicationManager.getApplication().invokeLater(
+      {
+        lock.withLock {
+          if (myBreakpoint.isDisposed()) return@invokeLater
+          runnable()
+        }
+      }, myProject.getDisposed())
+  }
+
   fun removeHighlighter() {
-    try {
-      rangeMarker?.dispose()
+    lock.withLock {
+      try {
+        rangeMarker?.dispose()
+      }
+      catch (e: Exception) {
+        LOG.error(e)
+      }
+      rangeMarker = null
     }
-    catch (e: Exception) {
-      LOG.error(e)
-    }
-    rangeMarker = null
   }
 
   private fun redrawInlineInlays() {
