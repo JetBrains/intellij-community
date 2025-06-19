@@ -30,7 +30,9 @@ class ClsStubConsistencyTest : KotlinLightCodeInsightFixtureTestCase() {
         val expectedText = stubTreeFromDecompiledText.serializeToString()
 
         val fileStub = KotlinClsStubBuilder().buildFileStub(FileContentImpl.createByFile(packageFile))!!
-        Assert.assertEquals(expectedText, fileStub.serializeToString())
+        // KT-74547: K1 descriptors do not support MustUseReturnValue feature recorded to metadata
+        val actualText = fileStub.serializeToString().replace(" MustUseReturnValue", "")
+        Assert.assertEquals(expectedText, actualText)
     }
 
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
