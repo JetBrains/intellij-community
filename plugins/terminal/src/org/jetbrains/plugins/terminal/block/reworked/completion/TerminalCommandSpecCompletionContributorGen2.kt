@@ -18,6 +18,7 @@ import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
+import com.intellij.terminal.session.TerminalAliasesStorage
 import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionScope
@@ -70,20 +71,22 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
     else {
       tokens
     }
+    val aliasesStorage = parameters.editor.getUserData(TerminalAliasesStorage.KEY)
 
     if (allTokens.isEmpty()) {
       return
     }
     tracer.spanBuilder("terminal-completion-all").use {
       val suggestions = runBlockingCancellable {
-        computeSuggestions(allTokens, context)
+        val expandedTokens = expandAliases(context, allTokens, aliasesStorage)
+        computeSuggestions(expandedTokens, context)
       }
       tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
         submitSuggestions(suggestions, allTokens, result, ShellType.ZSH)
       }
     }
   }
-
+  
   private fun submitSuggestions(
     suggestions: List<ShellCompletionSuggestion>,
     allTokens: List<String>,
@@ -165,6 +168,21 @@ internal class TerminalCommandSpecCompletionContributorGen2 : CompletionContribu
       result += commandExecutable.removeSuffix(".exe")
     }
     return result
+  }
+
+  private fun expandAliases(
+    context: TerminalCompletionContext,
+    tokens: List<String>,
+    aliasesStorage: TerminalAliasesStorage?,
+  ): List<String> {
+    if (tokens.size < 2) {
+      return tokens
+    }
+    if (aliasesStorage != null) {
+      val expandedTokens = expandAliases(tokens, aliasesStorage.getAliasesInfo().aliases, context)
+      return expandedTokens
+    }
+    return tokens
   }
 
   /**

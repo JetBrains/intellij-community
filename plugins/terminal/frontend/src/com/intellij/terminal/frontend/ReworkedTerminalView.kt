@@ -31,6 +31,7 @@ import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalFontSizeProvider
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
+import com.intellij.terminal.session.TerminalAliasesStorage
 import com.intellij.terminal.session.TerminalSession
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.asDisposable
@@ -163,6 +164,8 @@ internal class ReworkedTerminalView(
       alternateBufferEditor = alternateBufferEditor as EditorImpl,
     )
 
+    val terminalAliasesStorage = TerminalAliasesStorage()
+
     controller = TerminalSessionController(
       project,
       sessionModel,
@@ -172,7 +175,9 @@ internal class ReworkedTerminalView(
       settings,
       coroutineScope.childScope("TerminalSessionController"),
       fusActivity,
+      terminalAliasesStorage
     )
+    outputEditor.putUserData(TerminalAliasesStorage.KEY, terminalAliasesStorage)
     controller.addShellIntegrationListener(this, typeAhead)
 
     sessionFuture.thenAccept { session ->

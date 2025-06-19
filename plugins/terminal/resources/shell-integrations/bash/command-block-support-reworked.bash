@@ -164,6 +164,15 @@ __jetbrains_intellij_append_to_prompt_command() {
     fi
 }
 
+__jetbrains_intellij_get_aliases() {
+  __jetbrains_intellij_escape_json "$(alias)"
+}
+
+__jetbrains_intellij_escape_json() {
+  builtin command sed -e 's/\\/\\\\/g'\
+      -e 's/"/\\"/g'\
+      <<< "$1"
+}
 __jetbrains_intellij_original_ps1=""
 __jetbrains_intellij_custom_ps1=""
 

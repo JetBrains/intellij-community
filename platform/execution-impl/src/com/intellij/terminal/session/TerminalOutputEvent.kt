@@ -74,3 +74,7 @@ data object TerminalPromptStartedEvent : TerminalShellIntegrationEvent
 @ApiStatus.Internal
 @Serializable
 data object TerminalPromptFinishedEvent : TerminalShellIntegrationEvent
+
+@ApiStatus.Internal
+@Serializable
+data class TerminalAliasesReceivedEvent(val aliases: TerminalAliasesInfo) : TerminalShellIntegrationEvent

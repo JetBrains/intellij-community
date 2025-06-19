@@ -21,10 +21,8 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalBlocksModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModel
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
-import org.jetbrains.plugins.terminal.fus.*
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isReworkedTerminalEditor
-import org.jetbrains.plugins.terminal.fus.FrontendOutputActivity
-import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
+import org.jetbrains.plugins.terminal.fus.*
 import java.awt.Toolkit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.TimeSource
@@ -38,6 +36,7 @@ internal class TerminalSessionController(
   private val settings: JBTerminalSystemSettingsProviderBase,
   private val coroutineScope: CoroutineScope,
   private val fusActivity: FrontendOutputActivity,
+  private val terminalAliasesStorage: TerminalAliasesStorage,
 ) {
 
   private val terminationListeners: DisposableWrapperList<Runnable> = DisposableWrapperList()
@@ -136,6 +135,9 @@ internal class TerminalSessionController(
           blocksModel.commandFinished(event.exitCode)
         }
         shellIntegrationEventDispatcher.multicaster.commandFinished(event.command, event.exitCode, event.currentDirectory)
+      }
+      is TerminalAliasesReceivedEvent -> {
+        terminalAliasesStorage.setAliasesInfo(event.aliases)
       }
     }
   }
