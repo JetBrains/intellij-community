@@ -504,13 +504,16 @@ object PluginManagerCore {
       if (loadingError is PluginDependencyIsDisabled) {
         val disabledDependencyId = loadingError.dependencyId
         if (initContext.isPluginDisabled(disabledDependencyId)) {
-          pluginsToEnable[disabledDependencyId] = idMap[disabledDependencyId]!!.getName()
+          pluginsToEnable[disabledDependencyId] = fullIdMap[disabledDependencyId]!!.getName()
         }
       }
     }
 
-    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(currentProductModeEvaluator = initContext::currentProductModeId, disabler = { descriptor ->
-      val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, fullIdMap, initContext::isPluginDisabled, pluginErrorsById)
+    val additionalErrors = pluginSetBuilder.computeEnabledModuleMap(
+      incompletePlugins = loadingResult.getIncompleteIdMap().values,
+      currentProductModeEvaluator = initContext::currentProductModeId, 
+      disabler = { descriptor, disabledModuleToProblematicPlugin ->
+      val loadingError = pluginSetBuilder.initEnableState(descriptor, idMap, fullIdMap, initContext::isPluginDisabled, pluginErrorsById, disabledModuleToProblematicPlugin)
       if (loadingError != null) {
         registerLoadingError(loadingError)
       }
