@@ -51,8 +51,7 @@ class GradleKotlinNewProjectWizardTest : GradleKotlinNewProjectWizardTestCase() 
     }
 
     @ParameterizedTest
-    @CsvCrossProductSource("GROOVY", "true,false")
-    //@CsvCrossProductSource("KOTLIN,GROOVY", "true,false") See KTIJ-34593
+    @CsvCrossProductSource("KOTLIN,GROOVY", "true,false")
     fun testMultiModuleProject(gradleDsl: GradleDsl, addSampleCode: Boolean): Unit = runBlocking {
         createProjectByWizard(KOTLIN) {
             setGradleWizardData("project", gradleDsl = gradleDsl, addSampleCode = addSampleCode, generateMultipleModules = true)
