@@ -343,8 +343,8 @@ def test_describe_shape_all_types(setup_dataframe):
         assert describe_df.shape[0] == 13
     # the number of columns should be the same
     assert describe_df.shape[1] == df.shape[1]
-    # check that we excluded only 2 columns from describe
-    assert len(describe_df.columns[describe_df.isna().all()].tolist()) == 2
+    # check that we don't exclude any column from the describe function
+    assert len(describe_df.columns[describe_df.isna().all()].tolist()) == 0
 
 
 # 11
@@ -403,7 +403,10 @@ def test_describe_series(setup_dataframe):
                     reason="The exception will be raised during df creation in Python2")
 def test_overflow_error_is_caught(setup_df_with_big_int_values):
     df = setup_df_with_big_int_values
-    assert pandas_tables_helpers.__get_describe(df) is None
+    actual_result = pandas_tables_helpers.__get_describe(df)
+    assert actual_result is not None
+    expected_result = pd.Series(data={"count": 2}, index=["count"], name="BitIntValues")
+    assert (actual_result.values == expected_result.values).all()
 
 
 # 15
