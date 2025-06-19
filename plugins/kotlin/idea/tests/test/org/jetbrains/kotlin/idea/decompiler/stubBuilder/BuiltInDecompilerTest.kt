@@ -23,7 +23,10 @@ abstract class AbstractBuiltInDecompilerTest : KotlinLightCodeInsightFixtureTest
         val stubTreeFromDecompiler = configureAndBuildFileStub(packageFqName, classNameForDirectorySearch)
         val stubTreeFromDecompiledText = KtFileStubBuilder().buildStubTree(myFixture.file)
         val expectedText = stubTreeFromDecompiledText.serializeToString()
-        Assert.assertEquals("Stub mismatch for package $packageFqName", expectedText, stubTreeFromDecompiler.serializeToString())
+
+        // KT-74547: K1 descriptors do not support MustUseReturnValue feature recorded to metadata
+        val actualText = stubTreeFromDecompiler.serializeToString().replace(" MustUseReturnValue", "")
+        Assert.assertEquals("Stub mismatch for package $packageFqName", expectedText, actualText)
         return expectedText
     }
 

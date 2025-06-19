@@ -1,4 +1,5 @@
-// "Specify override for 'add(String): Boolean' explicitly" "true"
+// K1_ACTION: "Specify override for 'add(String): Boolean' explicitly" "true"
+// K2_ACTION: "Specify override for '@IgnorableReturnValue add(String): Boolean' explicitly" "true"
 // WITH_STDLIB
 
 import java.util.*
