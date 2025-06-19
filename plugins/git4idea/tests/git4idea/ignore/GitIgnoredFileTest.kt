@@ -93,7 +93,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       fail("Workspace file doesn't exist and cannot be created")
     }
 
-    GitUtil.generateGitignoreFileIfNeeded(project, LocalFileSystem.getInstance().refreshAndFindFileByNioFile(project.stateStore.directoryStorePath!!)!!)
+    generateGitIgnoreAndRefresh( LocalFileSystem.getInstance().refreshAndFindFileByNioFile(project.stateStore.directoryStorePath!!)!!)
 
     assertGitignoreValid(gitIgnore,
                          """
@@ -124,7 +124,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
   }
 
   fun `test gitignore content in project root`() {
-    GitUtil.generateGitignoreFileIfNeeded(project, projectRoot)
+    generateGitIgnoreAndRefresh(projectRoot)
 
     val gitIgnore = File("$projectPath/$GITIGNORE")
 
@@ -135,6 +135,11 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
         /$EXCLUDED_CHILD/
         /$OUT/
     """)
+  }
+
+  private fun generateGitIgnoreAndRefresh(ignoreFileRoot: VirtualFile) {
+    GitUtil.generateGitignoreFileIfNeeded(project, ignoreFileRoot)
+    refresh()
   }
 
   fun `test update first ignore block`() {
@@ -555,8 +560,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
       writeText("/subdir/shelf")
       LocalFileSystem.getInstance().refreshIoFiles(setOf(this))
     }.exists())
-
-    GitUtil.generateGitignoreFileIfNeeded(project, shelfDir.parent)
+    generateGitIgnoreAndRefresh( shelfDir.parent)
 
     val subdirGitIgnore = File("${shelfDir.parent.path}/$GITIGNORE")
 
