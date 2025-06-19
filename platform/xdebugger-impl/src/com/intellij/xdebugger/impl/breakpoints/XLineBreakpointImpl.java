@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -41,7 +40,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
                              final @Nullable P properties, LineBreakpointState state) {
     super(type, breakpointManager, properties, state);
     myType = type;
-    myVisualRepresentation = new XBreakpointVisualRepresentation(asProxy(this), !useFeLineBreakpointProxy(), new XBreakpointManagerProxy.Monolith(breakpointManager));
+    myVisualRepresentation = new XBreakpointVisualRepresentation(getCoroutineScope(), asProxy(this), !useFeLineBreakpointProxy(),
+                                                                 new XBreakpointManagerProxy.Monolith(breakpointManager));
   }
 
   // TODO IJPL-185322 migrate to backend -> frontend rpc flow notification
