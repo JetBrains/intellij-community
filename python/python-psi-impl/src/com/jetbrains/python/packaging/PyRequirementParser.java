@@ -30,9 +30,6 @@ import static com.jetbrains.python.packaging.parser.RequirementsParserHelper.VCS
  * @see <a href="https://www.python.org/dev/peps/pep-0440/">PEP-440</a>
  * @see PyRequirement
  * @see PyPackageVersionNormalizer
- * @see PyPackageManager#parseRequirement(String)
- * @see PyPackageManager#parseRequirements(String)
- * @see PyPackageManager#parseRequirements(VirtualFile)
  */
 public final class PyRequirementParser {
 
@@ -148,8 +145,8 @@ public final class PyRequirementParser {
   private static final @NotNull String REQUIREMENT_VERSION_SPEC_REGEXP = "(<=?|!=|===?|>=?|~=)" + LINE_WS_REGEXP + "*[\\.\\*\\+!\\w-]+";
 
   private static final @NotNull String REQUIREMENT_VERSIONS_SPECS_REGEXP =
-    "(?<" + REQUIREMENT_VERSIONS_SPECS_GROUP + ">" + REQUIREMENT_VERSION_SPEC_REGEXP +
-    "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + REQUIREMENT_VERSION_SPEC_REGEXP + ")*)?";
+    "(?<" + REQUIREMENT_VERSIONS_SPECS_GROUP + ">\\(?" + REQUIREMENT_VERSION_SPEC_REGEXP +
+    "(" + LINE_WS_REGEXP + "*," + LINE_WS_REGEXP + "*" + REQUIREMENT_VERSION_SPEC_REGEXP + ")*\\)?)?";
 
   private static final @NotNull String REQUIREMENT_OPTIONS_GROUP = "options";
 
@@ -370,6 +367,11 @@ public final class PyRequirementParser {
 
   private static @NotNull List<PyRequirementVersionSpec> parseVersionSpecs(@Nullable String versionSpecs) {
     if (versionSpecs == null) return Collections.emptyList();
+
+    versionSpecs = versionSpecs.trim();
+    if (versionSpecs.startsWith("(") && versionSpecs.endsWith(")")) {
+      versionSpecs = versionSpecs.substring(1, versionSpecs.length() - 1);
+    }
 
     return StreamSupport
       .stream(StringUtil.tokenize(versionSpecs, ",").spliterator(), false)
