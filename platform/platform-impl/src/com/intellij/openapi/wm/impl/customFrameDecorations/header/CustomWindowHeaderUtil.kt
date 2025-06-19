@@ -8,7 +8,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomisedActionGroup
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.*
@@ -35,7 +34,7 @@ object CustomWindowHeaderUtil {
   internal fun isMenuButtonInToolbar(uiSettings: UISettings): Boolean {
     return ExperimentalUI.isNewUI() &&
            (SystemInfoRt.isUnix && !SystemInfoRt.isMac && uiSettings.mainMenuDisplayMode != MainMenuDisplayMode.SEPARATE_TOOLBAR && !hideNativeLinuxTitle(uiSettings) ||
-            SystemInfo.isMac && !Menu.isJbScreenMenuEnabled())
+            SystemInfoRt.isMac && !Menu.isJbScreenMenuEnabled())
   }
 
   internal fun hideNativeLinuxTitle(uiSettings: UISettings): Boolean {
@@ -75,7 +74,7 @@ object CustomWindowHeaderUtil {
             Registry.`is`("ide.linux.hide.native.title", false)
 
   internal val isFloatingMenuBarSupported: Boolean
-    get() = !SystemInfoRt.isMac && FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs()
+    get() = !SystemInfoRt.isMac && FrameInfoHelper.isFullScreenSupportedInCurrentOs()
 
   internal fun isDecoratedMenu(uiSettings: UISettings): Boolean {
     return (SystemInfoRt.isWindows || SystemInfoRt.isMac && ExperimentalUI.isNewUI()) &&

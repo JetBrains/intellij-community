@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
@@ -73,11 +75,11 @@ private sealed interface MainToolbarFlavor {
   }
 }
 
-private class MenuButtonInToolbarMainToolbarFlavor(coroutineScope: CoroutineScope,
-                                                   private val headerContent: JComponent,
-                                                   frame: JFrame, toolbar: MainToolbar) : MainToolbarFlavor {
-
-
+private class MenuButtonInToolbarMainToolbarFlavor(
+  coroutineScope: CoroutineScope,
+  private val headerContent: JComponent,
+  frame: JFrame, toolbar: MainToolbar,
+) : MainToolbarFlavor {
   private val mainMenuWithButton = MainMenuWithButton(coroutineScope, frame)
   private val mainMenuButton = mainMenuWithButton.mainMenuButton
 
@@ -112,7 +114,7 @@ class MainToolbar(
 ) : JPanel(HorizontalLayout(layoutGap)) {
   private val flavor: MainToolbarFlavor
   private val widthCalculationListeners = mutableSetOf<ToolbarWidthCalculationListener>()
-  private val cachedWidths by lazy { ConcurrentHashMap<String?, Int>() }
+  private val cachedWidths by lazy { ConcurrentHashMap<String, Int>() }
 
   init {
     this.background = background
@@ -336,7 +338,6 @@ class MainToolbar(
     widthCalculationListeners.forEach { it.onToolbarCompressed(event) }
   }
 
-
   override fun removeNotify() {
     super.removeNotify()
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
@@ -357,6 +358,7 @@ class MainToolbar(
     return accessibleContext
   }
 
+  @Suppress("RedundantInnerClassModifier")
   private inner class AccessibleMainToolbar : AccessibleJPanel() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
   }
