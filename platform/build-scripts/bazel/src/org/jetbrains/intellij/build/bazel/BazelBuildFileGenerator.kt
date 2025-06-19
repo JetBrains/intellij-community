@@ -1,5 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "CanConvertToMultiDollarString")
 
 package org.jetbrains.intellij.build.bazel
 
@@ -20,12 +20,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.util.JpsPathUtil
 import org.jetbrains.kotlin.jps.model.JpsKotlinFacetModuleExtension
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.IdentityHashMap
 import java.util.TreeMap
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.relativeTo
 
@@ -102,10 +99,6 @@ internal class BazelBuildFileGenerator(
     }
 
     val resourceDescriptors = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.RESOURCE)
-    val extraResourceTarget = computeExtraResourceTarget(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir)
-    if (extraResourceTarget.any() && !module.name.contains(".android.")) {
-      throw IllegalStateException("Extra resource target for module ${module.name} is not null")
-    }
 
     val moduleContent = ModuleDescriptor(
       imlFile = imlDir.resolve("${module.name}.iml"),
@@ -114,7 +107,7 @@ internal class BazelBuildFileGenerator(
       bazelBuildFileDir = bazelBuildDir,
       isCommunity = isCommunity,
       sources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.SOURCE),
-      resources = resourceDescriptors + extraResourceTarget,
+      resources = resourceDescriptors,
       testSources = computeSources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaSourceRootType.TEST_SOURCE),
       testResources = computeResources(module = module, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, type = JavaResourceRootType.TEST_RESOURCE),
       targetName = jpsModuleNameToBazelBuildName(module = module, baseBuildDir = bazelBuildDir, projectDir = projectDir),
@@ -703,50 +696,6 @@ private fun computeResources(module: JpsModule, contentRoots: List<Path>, bazelB
       ResourceDescriptor(baseDirectory = prefix, files = listOf("${if (prefix.isEmpty()) "" else "$prefix/"}**/*"), relativeOutputPath = relativeOutputPath)
     }
     .toList()
-}
-
-@OptIn(ExperimentalPathApi::class)
-private fun computeExtraResourceTarget(
-  module: JpsModule,
-  contentRoots: List<Path>,
-  bazelBuildDir: Path,
-): Sequence<ResourceDescriptor> {
-  return module.sourceRoots
-    .asSequence()
-    .filter { it.rootType == JavaSourceRootType.SOURCE }
-    .mapNotNull { sourceRoot ->
-      val sourceRootDir = sourceRoot.path
-      val metaInf = sourceRootDir.resolve("META-INF")
-      if (Files.notExists(metaInf)) {
-        return@mapNotNull null
-      }
-
-      val isEmptyDir = Files.newDirectoryStream(metaInf).use { stream ->
-        val iterator = stream.iterator()
-        while (iterator.hasNext()) {
-          if (!iterator.next().toString().startsWith('.')) {
-            return@use false
-          }
-        }
-        true
-      }
-      if (isEmptyDir) {
-        metaInf.deleteRecursively()
-        return@mapNotNull null
-      }
-
-      val metaInfRelative = resolveRelativeToBazelBuildFileDirectory(childDir = metaInf, contentRoots = contentRoots, bazelBuildDir = bazelBuildDir, module = module)
-        .invariantSeparatorsPathString
-
-      val existingResourceRoot = module.sourceRoots.firstOrNull { it.rootType == JavaResourceRootType.RESOURCE }
-      if (existingResourceRoot != null) {
-        //FileUtil.moveDirWithContent(sourceRootDir.resolve("META-INF").toFile(), existingResourceRoot.file.resolve("META-INF"))
-        println("WARN: Move META-INF to resource root (module=${module.name})")
-      }
-
-      val prefix = resolveRelativeToBazelBuildFileDirectory(sourceRootDir, contentRoots, bazelBuildDir, module = module).invariantSeparatorsPathString
-      ResourceDescriptor(baseDirectory = prefix, files = listOf("$metaInfRelative/**/*"), relativeOutputPath = "")
-    }
 }
 
 private fun isReferencedAsTestDep(
