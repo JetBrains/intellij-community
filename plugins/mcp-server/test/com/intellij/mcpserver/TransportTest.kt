@@ -23,6 +23,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlinx.io.asSink
 import kotlinx.io.buffered
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.concurrent.TimeUnit
@@ -52,8 +54,13 @@ class TransportTest {
     assert(listTools.tools.isNotEmpty()) { "No tools returned" }
   }
 
-  @ParameterizedTest
-  @MethodSource("getTransports")
+  @Test
+  fun tool_call_has_project_stdio() = tool_call_has_project(StdioTransportHolder(project))
+
+  @Test
+  @Disabled("Headers passing should be implemented in kotlin mcp server sdk")
+  fun tool_call_has_project_sse() = tool_call_has_project(StdioTransportHolder(project))
+
   fun tool_call_has_project(transport: TransportHolder) = transportTest(transport) { client ->
     Disposer.newDisposable().use { disposable ->
       application.extensionArea.getExtensionPoint(McpToolsProvider.EP).registerExtension(object : McpToolsProvider {
@@ -73,7 +80,7 @@ class TransportTest {
   @com.intellij.mcpserver.annotations.McpTool()
   @McpDescription("Test description")
   suspend fun test_tool() {
-    projectFromTool.complete(currentCoroutineContext().projectOrNull)
+    projectFromTool.complete(currentCoroutineContext().getProjectOrNull(lookForAnyProject = false))
   }
 
   private fun transportTest(transportHolder: TransportHolder, action: suspend (Client) -> Unit) = runBlocking {

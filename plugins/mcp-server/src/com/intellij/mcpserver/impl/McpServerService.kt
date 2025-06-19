@@ -176,19 +176,19 @@ class McpServerService(val cs: CoroutineScope) {
     }
   }.map { it.mcpToolToRegisteredTool() }
 
-  private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
-    val tool = Tool(name = descriptor.name,
-                    description = descriptor.description,
-                    inputSchema = Tool.Input(
-                      properties = descriptor.inputSchema.properties,
-                      required = descriptor.inputSchema.requiredParameters.toList()))
-    return RegisteredTool(tool) { request ->
-      val projectPath = (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content
-      val project = if (!projectPath.isNullOrBlank()) {
-        ProjectManager.getInstance().openProjects.find { it.basePath == projectPath } ?: getLastFocusedOrOpenedProject()
+private fun McpTool.mcpToolToRegisteredTool(): RegisteredTool {
+  val tool = Tool(name = descriptor.name,
+                  description = descriptor.description,
+                  inputSchema = Tool.Input(
+                    properties = descriptor.inputSchema.properties,
+                    required = descriptor.inputSchema.requiredParameters.toList()))
+  return RegisteredTool(tool) { request ->
+    val projectPath = (request._meta[IJ_MCP_SERVER_PROJECT_PATH] as? JsonPrimitive)?.content
+    val project = if (!projectPath.isNullOrBlank()) {
+      ProjectManager.getInstance().openProjects.find { it.basePath == projectPath }
       }
       else {
-        getLastFocusedOrOpenedProject()
+        null
       }
 
       val vfsEvent = CopyOnWriteArrayList<VFileEvent>()
