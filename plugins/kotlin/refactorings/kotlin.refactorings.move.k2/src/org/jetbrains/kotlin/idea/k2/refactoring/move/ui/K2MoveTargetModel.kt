@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.core.getImplicitPackagePrefix
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinDestinationFolderComboBox
@@ -73,7 +74,8 @@ sealed interface K2MoveTargetModel {
             row(KotlinBundle.message("label.text.destination")) {
                 destinationChooser = cell(object : KotlinDestinationFolderComboBox() {
                     override fun getTargetPackage(): String {
-                        return pkgChooser.text
+                        val dirImplicitPackagePrefix = directory.getImplicitPackagePrefix()?.asString().orEmpty()
+                        return pkgChooser.text.removePrefix(dirImplicitPackagePrefix).removePrefix(".")
                     }
                 }).align(AlignX.FILL).component.apply {
                     setTextFieldPreferredWidth(PREFERED_TEXT_WIDTH)
