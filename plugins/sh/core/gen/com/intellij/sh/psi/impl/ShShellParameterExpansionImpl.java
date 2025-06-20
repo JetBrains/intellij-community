@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import static com.intellij.sh.ShTypes.*;
 import com.intellij.sh.psi.*;
 
-public class ShShellParameterExpansionImpl extends ShCompositeElementImpl implements ShShellParameterExpansion {
+public class ShShellParameterExpansionImpl extends ShShellParameterExpansionMixin implements ShShellParameterExpansion {
 
   public ShShellParameterExpansionImpl(ASTNode node) {
     super(node);
