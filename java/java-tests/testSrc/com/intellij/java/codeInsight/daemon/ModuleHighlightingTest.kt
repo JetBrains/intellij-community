@@ -189,7 +189,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   }
 
   fun testWrongFileName() {
-    highlight("M.java", """/* ... */ <error descr="Module declaration should be in a file named 'module-info.java'">module M</error> { }""")
+    highlight("M.java", """/* ... */ <error descr="Module declarations only allowed in a 'module-info.java' file">module M</error> { }""")
   }
 
   fun testFileDuplicate() {
