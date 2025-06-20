@@ -1,3 +1,4 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTemplateListener
@@ -28,7 +29,7 @@ internal class InlineCompletionTypedHandler(originalHandler: TypedActionHandler?
       return
     }
 
-    if (editor.getUserData(InlineCompletionTemplateListener.TEMPLATE_IN_PROGRESS_KEY) != null) {
+    if (editor.getUserData(InlineCompletionTemplateListener.Companion.TEMPLATE_IN_PROGRESS_KEY) != null) {
       myOriginalHandler?.execute(editor, charTyped, dataContext)
       return // ML-1684 Do now show inline completion while refactoring
     }
