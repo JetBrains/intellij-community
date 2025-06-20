@@ -281,6 +281,14 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       CommentTracker tracker = new CommentTracker();
       String body = tracker.rangeText(lBrace.getNextSibling(), rBrace.getPrevSibling());
       PsiImplicitClass newClass = PsiElementFactory.getInstance(project).createImplicitClassFromText(body, psiClass);
+      if(!(newClass.getContainingFile() instanceof PsiJavaFile dummyFile) ||
+         dummyFile.getImportList() == null ||
+         javaFile.getImportList() == null) {
+        return;
+      }
+      //it is necessary to resolve accurately inside a new implicit class
+      //collisions will be resolved after it
+      dummyFile.getImportList().replace(javaFile.getImportList());
       PsiElement replaced = tracker.replace(psiClass, newClass);
       if (!(replaced instanceof PsiImplicitClass implicitClass)) {
         return;
@@ -289,7 +297,6 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
       tracker.insertCommentsBefore(implicitClass);
 
       cleanMainMethod(implicitClass);
-
 
       PsiFile replacedContainingFile = replaced.getContainingFile();
       if (replacedContainingFile != null) {

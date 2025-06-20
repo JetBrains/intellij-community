@@ -21,7 +21,7 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_23;
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 
   @Override
