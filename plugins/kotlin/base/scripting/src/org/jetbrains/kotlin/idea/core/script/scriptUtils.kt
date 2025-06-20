@@ -17,6 +17,7 @@ import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
@@ -128,27 +129,32 @@ inline fun <reified T : ScriptDefinitionsSource> Project.scriptDefinitionsSource
 val SCRIPT_DEFINITIONS_SOURCES: ProjectExtensionPointName<ScriptDefinitionsSource> =
     ProjectExtensionPointName("org.jetbrains.kotlin.scriptDefinitionsSource")
 
-@set: org.jetbrains.annotations.TestOnly
-var Application.isScriptChangesNotifierDisabled by NotNullableUserDataProperty(
+@set: TestOnly
+var Application.isScriptChangesNotifierDisabled: Boolean by NotNullableUserDataProperty(
     Key.create("SCRIPT_CHANGES_NOTIFIER_DISABLED"), true
 )
 
-val logger = Logger.getInstance("#org.jetbrains.kotlin.idea.script")
+@ApiStatus.Internal
+val logger: Logger = Logger.getInstance("#org.jetbrains.kotlin.idea.script")
 
+@ApiStatus.Internal
 fun scriptingDebugLog(file: KtFile, message: () -> String) {
     scriptingDebugLog(file.originalFile.virtualFile, message)
 }
 
+@ApiStatus.Internal
 fun scriptingDebugLog(file: VirtualFile? = null, message: () -> String) {
     if (logger.isDebugEnabled) {
         logger.debug("[KOTLIN_SCRIPTING] ${file?.let { file.path + " " } ?: ""}" + message())
     }
 }
 
+@ApiStatus.Internal
 fun scriptingInfoLog(message: String) {
     logger.info("[KOTLIN_SCRIPTING] $message")
 }
 
+@ApiStatus.Internal
 fun scriptingWarnLog(message: String) {
     logger.warn("[KOTLIN_SCRIPTING] $message")
 }

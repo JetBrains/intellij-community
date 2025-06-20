@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.gradle.scripting.k2
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -80,13 +79,13 @@ class GradleScriptRefinedConfigurationProvider(
         data.set(configurations)
     }
 
-  private fun String?.resolveSdk(): Sdk? {
+    private fun String?.resolveSdk(): Sdk? {
         if (this == null) {
-            LOG.warn("[KOTLIN_SCRIPTING] Gradle javaHome is null")
+            scriptingWarnLog("Gradle javaHome is null")
             return null
         }
         return ExternalSystemJdkUtil.lookupJdkByPath(this).also {
-            LOG.info("[KOTLIN_SCRIPTING] resolved sdk=$it, javaHome=$this")
+            scriptingDebugLog { "resolved sdk=$it, javaHome=$this" }
         }
     }
 
@@ -272,8 +271,6 @@ class GradleScriptRefinedConfigurationProvider(
     }
 
     companion object {
-        private val LOG = Logger.getInstance(GradleScriptRefinedConfigurationProvider::class.java)
-
         @JvmStatic
         fun getInstance(project: Project): GradleScriptRefinedConfigurationProvider = project.service()
     }
