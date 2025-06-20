@@ -83,10 +83,6 @@ class UiPluginManager {
     }
   }
 
-  fun uninstallDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return getController().uninstallDynamicPlugin(parentComponent, pluginId, isUpdate)
-  }
-
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult> {
     return getController().loadErrors(sessionId)
   }
