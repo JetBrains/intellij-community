@@ -160,6 +160,6 @@ abstract class LanguageLevelCombo @JvmOverloads constructor(
   }
 
   companion object {
-    private val LTS = arrayOf(LanguageLevel.JDK_21, LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8)
+    private val LTS = arrayOf(LanguageLevel.JDK_25, LanguageLevel.JDK_21, LanguageLevel.JDK_17, LanguageLevel.JDK_11, LanguageLevel.JDK_1_8)
   }
 }
