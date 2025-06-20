@@ -1,8 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.html.polySymbols
 
-import com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor.HtmlAttributeDescriptorBasedSymbol
-import com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor.HtmlElementDescriptorBasedSymbol
+import com.intellij.html.polySymbols.attributes.asHtmlSymbol
+import com.intellij.html.polySymbols.elements.asHtmlSymbol
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.project.Project
@@ -36,7 +36,7 @@ object HtmlSymbolQueryHelper {
     override fun initialize(consumer: (PolySymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
       HtmlDescriptorUtils.getHtmlNSDescriptor(project)
         ?.getAllElementsDescriptors(null)
-        ?.map { HtmlElementDescriptorBasedSymbol(it, null) }
+        ?.map { it.asHtmlSymbol(null) }
         ?.forEach(consumer)
 
       cacheDependencies.add(ModificationTracker.NEVER_CHANGED)
@@ -58,7 +58,7 @@ object HtmlSymbolQueryHelper {
         ?.getDefaultAttributeDescriptors(null)
         ?.asSequence()
         ?.filter { !it.getName(null).contains(':') }
-        ?.map { HtmlAttributeDescriptorBasedSymbol(it, key) }
+        ?.map { it.asHtmlSymbol(key) }
         ?.forEach(consumer)
 
       cacheDependencies.add(ModificationTracker.NEVER_CHANGED)

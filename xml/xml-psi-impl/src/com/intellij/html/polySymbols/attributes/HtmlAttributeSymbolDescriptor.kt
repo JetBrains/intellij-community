@@ -3,7 +3,6 @@ package com.intellij.html.polySymbols.attributes
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.polySymbols.HtmlFrameworkSymbolsSupport
-import com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.polySymbols.PolySymbol
@@ -121,12 +120,12 @@ open class HtmlAttributeSymbolDescriptor private constructor(
 
   override fun hasIdType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<HtmlSymbolQueryScopeContributor.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdType() }
 
   override fun hasIdRefType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<HtmlSymbolQueryScopeContributor.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdRefType() }
 
   private fun matchEnum(value: String): List<PolySymbolCodeCompletionItem> =
