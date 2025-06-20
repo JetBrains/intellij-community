@@ -1572,8 +1572,6 @@ c:com.intellij.ide.RecentProjectListActionProvider
 - p:createOpenAction(java.lang.String,java.util.Set,com.intellij.ide.RecentProjectsManagerBase):com.intellij.ide.ReopenProjectAction
 - f:getActions():java.util.List
 - f:getActions(Z):java.util.List
-- getActions(Z,Z):java.util.List
-- bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,I,java.lang.Object):java.util.List
 - sf:getInstance():com.intellij.ide.RecentProjectListActionProvider
 - isCurrentProjectAction(com.intellij.openapi.project.Project,com.intellij.ide.ReopenProjectAction):Z
 f:com.intellij.ide.RecentProjectListActionProvider$Companion

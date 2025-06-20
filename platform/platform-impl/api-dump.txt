@@ -150,6 +150,10 @@ com.intellij.ide.ProtocolHandler
 - sf:PLEASE_QUIT:I
 - a:getScheme():java.lang.String
 - a:process(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.ide.RecentProjectListActionProvider
+- f:getActions(Z,Z):java.util.List
+- getActions(Z,Z,Z):java.util.List
+- bs:getActions$default(com.intellij.ide.RecentProjectListActionProvider,Z,Z,Z,I,java.lang.Object):java.util.List
 c:com.intellij.ide.RecentProjectsManagerBase
 - f:getCurrentBranch(java.lang.String,Z):java.lang.String
 - willReopenProjectOnStart(kotlin.coroutines.Continuation):java.lang.Object
