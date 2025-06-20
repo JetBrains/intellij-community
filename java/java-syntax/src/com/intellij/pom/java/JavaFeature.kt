@@ -126,6 +126,7 @@ enum class JavaFeature {
   //jep 463,477
   INHERITED_STATIC_MAIN_METHOD(LanguageLevel.JDK_22_PREVIEW, "feature.inherited.static.main.method"),
   IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_23_PREVIEW, "feature.implicit.import.in.implicit.classes"),
+  //JEP 507
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
 
   //see together with PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS and TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
