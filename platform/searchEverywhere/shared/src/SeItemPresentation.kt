@@ -13,6 +13,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.ui.JBColor
+import com.intellij.ui.SimpleTextAttributes
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -106,6 +108,7 @@ class SeTargetItemPresentation(
   val presentableText: @NlsSafe String,
   val presentableTextMatchedRanges: List<SerializableRange>? = null,
   private val presentableTextFgColorId: ColorId? = null,
+  val presentableTextErrorHighlight: Boolean = false,
   val containerText: @NlsSafe String? = null,
   val containerTextMatchedRanges: List<SerializableRange>? = null,
   val locationText: @NlsSafe String? = null,
@@ -133,6 +136,10 @@ class SeTargetItemPresentation(
                                presentableText = tp.presentableText,
                                presentableTextMatchedRanges = matchers?.calcMatchedRanges(tp.presentableText),
                                presentableTextFgColorId = tp.presentableTextAttributes?.foregroundColor?.rpcId(),
+                               presentableTextErrorHighlight = tp.presentableTextAttributes?.let { attrs ->
+                                 val simpleAttrs = SimpleTextAttributes.fromTextAttributes(attrs)
+                                 simpleAttrs.isWaved && attrs.effectColor == JBColor.RED
+                               } ?: false,
                                containerText = tp.containerText,
                                containerTextMatchedRanges = matchers?.calcMatchedRanges(tp.containerText),
                                locationText = tp.locationText,
