@@ -8,8 +8,8 @@ import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 
 fun List<PolySymbol>.hasOnlyStandardHtmlSymbols(): Boolean =
   flatMap { it.unwrapMatchedSymbols() }
-    .all { it is HtmlSymbolQueryConfigurator.StandardHtmlSymbol }
+    .all { it is StandardHtmlSymbol }
 
 fun PolySymbol.hasOnlyStandardHtmlSymbolsOrExtensions(): Boolean =
   unwrapMatchedSymbols()
-    .all { it is HtmlSymbolQueryConfigurator.StandardHtmlSymbol || it.extension }
+    .all { it is StandardHtmlSymbol || it.extension }

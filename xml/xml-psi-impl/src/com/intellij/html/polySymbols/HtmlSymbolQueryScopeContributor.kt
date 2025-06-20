@@ -10,17 +10,14 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.polySymbols.*
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
 import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItemCustomizer
-import com.intellij.polySymbols.context.PolyContext
 import com.intellij.polySymbols.html.*
 import com.intellij.polySymbols.js.JS_EVENTS
 import com.intellij.polySymbols.query.*
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
 import com.intellij.polySymbols.utils.PolySymbolPrioritizedScope
 import com.intellij.polySymbols.utils.match
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.createSmartPointer
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.psi.xml.XmlAttribute
@@ -32,21 +29,18 @@ import com.intellij.xml.XmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.annotations.ApiStatus
 
-class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
+class HtmlSymbolQueryScopeContributor : PolySymbolQueryScopeContributor {
 
-  override fun getScope(
-    project: Project,
-    location: PsiElement?,
-    context: PolyContext,
-    allowResolve: Boolean,
-  ): List<PolySymbolScope> =
-    if (location is XmlElement) {
-      listOfNotNull(
-        location.takeIf { it !is XmlTag }?.let { HtmlContextualSymbolScope(it) },
-        location.parentOfType<XmlTag>(withSelf = true)?.let { StandardHtmlSymbolScope(it) },
-      )
-    }
-    else emptyList()
+  override fun registerProviders(registrar: PolySymbolQueryScopeProviderRegistrar) {
+    registrar
+      .forPsiLocation(XmlElement::class.java)
+      .contributeScopeProvider { location ->
+        listOfNotNull(
+          location.takeIf { it !is XmlTag }?.let { HtmlContextualSymbolScope(it) },
+          location.parentOfType<XmlTag>(withSelf = true)?.let { StandardHtmlSymbolScope(it) },
+        )
+      }
+  }
 
   @ApiStatus.Internal
   class HtmlContextualSymbolScope(private val location: PsiElement)
@@ -191,12 +185,6 @@ class HtmlSymbolQueryConfigurator : PolySymbolQueryConfigurator {
       }
       return emptyList()
     }
-  }
-
-  abstract class StandardHtmlSymbol : MdnDocumentedSymbol(), PsiSourcedPolySymbol, PolySymbolScope {
-    abstract val project: Project?
-    override fun getModificationCount(): Long = project?.let { PsiModificationTracker.getInstance(it).modificationCount } ?: 0
-    abstract override fun createPointer(): Pointer<out StandardHtmlSymbol>
   }
 
   class HtmlElementDescriptorBasedSymbol(

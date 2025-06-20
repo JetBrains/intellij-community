@@ -48,7 +48,10 @@ class PolySymbolQueryScopeService {
       providerWrappers
     else
       providerWrappers.filter {
-        it.elementClasses.any { cls -> cls.isAssignableFrom(elementClass) }
+        it.elementClasses.let { list ->
+          list.isEmpty() ||
+          list.any { cls -> cls.isAssignableFrom(elementClass) }
+        }
       }
 
   private fun buildWrappers(contributor: PolySymbolQueryScopeContributor): List<ScopeProviderWrapper> =
@@ -59,7 +62,7 @@ class PolySymbolQueryScopeService {
   private data class PolySymbolQueryScopeProviderRegistrarImpl(
     private val filePatterns: Collection<PsiFilePattern<out PsiFile, *>> = emptyList(),
     private val contextFilter: Predicate<PolyContext>? = null,
-    private val withResolve: Boolean = true,
+    private val withResolve: Boolean = false,
     val scopeProviderWrappers: MutableList<ScopeProviderWrapper> = SmartList(),
   ) : PolySymbolQueryScopeProviderRegistrar {
 
@@ -81,10 +84,10 @@ class PolySymbolQueryScopeService {
     override fun inContext(contextFilter: Predicate<PolyContext>): PolySymbolQueryScopeProviderRegistrar =
       copy(contextFilter = contextFilter)
 
-    override fun withoutResolve(): PolySymbolQueryScopeProviderRegistrar =
-      copy(withResolve = false)
+    override fun withResolveRequired(): PolySymbolQueryScopeProviderRegistrar =
+      copy(withResolve = true)
 
-    override fun forAnyPsiLocation(): PolySymbolLocationQueryScopeProviderRegistrar<PsiElement> =
+    override fun forAnyPsiLocationInFile(): PolySymbolLocationQueryScopeProviderRegistrar<PsiElement> =
       forPsiLocations(listOf(psiElement()))
 
     override fun <T : PsiElement> forPsiLocation(psiLocationClass: Class<T>): PolySymbolLocationQueryScopeProviderRegistrar<T> =
@@ -102,8 +105,8 @@ class PolySymbolQueryScopeService {
     override fun <T : PsiElement> forPsiLocations(psiLocationPatterns: Collection<PsiElementPattern<out T, *>>): PolySymbolLocationQueryScopeProviderRegistrar<T> =
       PolySymbolQueryScopeProviderBuilder(scopeProviderWrappers, psiLocationPatterns, filePatterns, contextFilter, withResolve)
 
-    override fun forProject(): PolySymbolProjectQueryScopeProviderRegistrar =
-      PolySymbolProjectQueryScopeProviderRegistrarImpl(scopeProviderWrappers, contextFilter, withResolve)
+    override fun forAnywhere(): PolySymbolAnyQueryScopeProviderRegistrar =
+      PolySymbolAnyQueryScopeProviderRegistrarImpl(scopeProviderWrappers, contextFilter, withResolve)
   }
 
   private interface ScopeProviderWrapper {
@@ -124,8 +127,8 @@ class PolySymbolQueryScopeService {
       this.contextFilter = contextFilter
     }
 
-    override fun withoutResolve(): PolySymbolLocationQueryScopeProviderRegistrar<T> = apply {
-      this.withResolve = false
+    override fun withResolveRequired(): PolySymbolLocationQueryScopeProviderRegistrar<T> = apply {
+      this.withResolve = true
     }
 
     override fun inFile(filePattern: PsiFilePattern<out PsiFile, *>): PolySymbolLocationQueryScopeProviderRegistrar<T> = apply {
@@ -149,25 +152,26 @@ class PolySymbolQueryScopeService {
     }
 
     override fun contributeScopeProvider(provider: PolySymbolLocationQueryScopeProvider<T>) {
-      scopeProviderWrappers.add(LocationScopeProviderWrapper(psiLocationPatterns, filePatterns, provider, ScopeProviderWrapperFilters(contextFilter, withResolve)))
+      scopeProviderWrappers.add(LocationScopeProviderWrapper(psiLocationPatterns, filePatterns, provider,
+                                                             ScopeProviderWrapperFilters(contextFilter, withResolve)))
     }
   }
 
-  private class PolySymbolProjectQueryScopeProviderRegistrarImpl(
+  private class PolySymbolAnyQueryScopeProviderRegistrarImpl(
     private val scopeProviderWrappers: MutableList<ScopeProviderWrapper>,
     private var contextFilter: Predicate<PolyContext>?,
     private var withResolve: Boolean,
-  ) : PolySymbolProjectQueryScopeProviderRegistrar {
+  ) : PolySymbolAnyQueryScopeProviderRegistrar {
 
-    override fun inContext(contextFilter: Predicate<PolyContext>): PolySymbolProjectQueryScopeProviderRegistrar = apply {
+    override fun inContext(contextFilter: Predicate<PolyContext>): PolySymbolAnyQueryScopeProviderRegistrar = apply {
       this.contextFilter = contextFilter
     }
 
-    override fun withoutResolve(): PolySymbolProjectQueryScopeProviderRegistrar = apply {
-      this.withResolve = false
+    override fun withResolveRequired(): PolySymbolAnyQueryScopeProviderRegistrar = apply {
+      this.withResolve = true
     }
 
-    override fun contributeScopeProvider(provider: PolySymbolProjectQueryScopeProvider) {
+    override fun contributeScopeProvider(provider: PolySymbolAnyQueryScopeProvider) {
       scopeProviderWrappers.add(ProjectScopeProviderWrapper(provider, ScopeProviderWrapperFilters(contextFilter, withResolve)))
     }
   }
@@ -193,8 +197,8 @@ class PolySymbolQueryScopeService {
     override fun getScopes(project: Project, location: PsiElement?): Collection<PolySymbolScope> {
       if (location == null) return emptyList()
       val containingFile = location.containingFile
-      if (!filePatterns.any { it.accepts(containingFile) }) return emptyList()
-      if (!locationPatterns.any { it.accepts(location) }) return emptyList()
+      if (containingFile == null || (filePatterns.isNotEmpty() && filePatterns.none { it.accepts(containingFile) })) return emptyList()
+      if (locationPatterns.none { it.accepts(location) }) return emptyList()
 
       @Suppress("UNCHECKED_CAST")
       location as T
@@ -218,18 +222,18 @@ class PolySymbolQueryScopeService {
   }
 
   private class ProjectScopeProviderWrapper(
-    val provider: PolySymbolProjectQueryScopeProvider,
+    val provider: PolySymbolAnyQueryScopeProvider,
     override val filters: ScopeProviderWrapperFilters,
   ) : ScopeProviderWrapper {
 
     override val elementClasses: List<Class<*>> = emptyList()
 
     override fun getScopes(project: Project, location: PsiElement?): List<PolySymbolScope> =
-      provider.getScopes(project)
+      provider.getScopes(project, location)
         .also { oldScope ->
           // check scope stability
           if (Math.random() < 0.2 && ApplicationManager.getApplication().isInternal) {
-            val newScope = provider.getScopes(project)
+            val newScope = provider.getScopes(project, location)
             if (newScope != oldScope) {
               logger<PolySymbolQueryExecutorFactory>().error(
                 "PolySymbolProjectQueryScopeProvider $provider should provide scope, which is the same (by equals()), when called with the same arguments: $oldScope != $newScope")

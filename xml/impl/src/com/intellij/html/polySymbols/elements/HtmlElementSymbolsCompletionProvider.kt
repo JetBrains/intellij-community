@@ -5,15 +5,15 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.LegacyCompletionContributor
 import com.intellij.codeInsight.completion.XmlTagInsertHandler
-import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator
+import com.intellij.html.polySymbols.StandardHtmlSymbol
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
+import com.intellij.polySymbols.html.HTML_ELEMENTS
+import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.impl.source.xml.TagNameReference
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.polySymbols.html.HTML_ELEMENTS
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.completion.PolySymbolsCompletionProviderBase
-import com.intellij.polySymbols.query.PolySymbolQueryExecutor
 
 class HtmlElementSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<HtmlTag>() {
 
@@ -26,7 +26,7 @@ class HtmlElementSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<H
     position: Int,
     name: String,
     queryExecutor: PolySymbolQueryExecutor,
-    context: HtmlTag
+    context: HtmlTag,
   ) {
     var endTag = false
     LegacyCompletionContributor.processReferences(parameters, result) { reference, _ ->
@@ -45,7 +45,7 @@ class HtmlElementSymbolsCompletionProvider : PolySymbolsCompletionProviderBase<H
   companion object {
 
     fun filterStandardHtmlSymbols(item: PolySymbolCodeCompletionItem): Boolean =
-      item.symbol !is HtmlSymbolQueryConfigurator.StandardHtmlSymbol
+      item.symbol !is StandardHtmlSymbol
       || item.offset != 0
       || item.symbol?.name != item.name
 

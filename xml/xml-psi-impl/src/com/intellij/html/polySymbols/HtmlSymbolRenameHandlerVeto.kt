@@ -5,10 +5,10 @@ import com.intellij.html.polySymbols.attributes.HtmlAttributeSymbolDescriptor
 import com.intellij.html.polySymbols.elements.HtmlElementSymbolDescriptor
 import com.intellij.lang.html.HtmlCompatibleFile
 import com.intellij.openapi.util.Condition
+import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.psi.PsiElement
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.xml.XmlAttribute
-import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 
 class HtmlSymbolRenameHandlerVeto : Condition<PsiElement> {
 
@@ -20,7 +20,7 @@ class HtmlSymbolRenameHandlerVeto : Condition<PsiElement> {
         else -> null
       }
       if (symbol != null && symbol.unwrapMatchedSymbols().any {
-          !it.extension && it !is HtmlSymbolQueryConfigurator.StandardHtmlSymbol
+          !it.extension && it !is StandardHtmlSymbol
         }) {
         return true
       }

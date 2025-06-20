@@ -32,9 +32,9 @@ fun interface PolySymbolLocationQueryScopeProvider<T : PsiElement?> {
 
 }
 
-fun interface PolySymbolProjectQueryScopeProvider {
+fun interface PolySymbolAnyQueryScopeProvider {
 
-  fun getScopes(project: Project): List<PolySymbolScope>
+  fun getScopes(project: Project, location: PsiElement?): List<PolySymbolScope>
 
 }
 
@@ -42,9 +42,9 @@ interface PolySymbolQueryScopeProviderRegistrarInFileContext {
 
   fun inContext(contextFilter: Predicate<PolyContext>): PolySymbolQueryScopeProviderRegistrarInFileContext
 
-  fun withoutResolve(): PolySymbolQueryScopeProviderRegistrarInFileContext
+  fun withResolveRequired(): PolySymbolQueryScopeProviderRegistrarInFileContext
 
-  fun forAnyPsiLocation(): PolySymbolLocationQueryScopeProviderRegistrar<PsiElement>
+  fun forAnyPsiLocationInFile(): PolySymbolLocationQueryScopeProviderRegistrar<PsiElement>
 
   fun <T : PsiElement> forPsiLocation(psiLocationClass: Class<T>): PolySymbolLocationQueryScopeProviderRegistrar<T>
 
@@ -57,7 +57,7 @@ interface PolySymbolQueryScopeProviderRegistrarInFileContext {
   fun <T : PsiElement> forPsiLocations(psiLocationPatterns: Collection<PsiElementPattern<out T, *>>): PolySymbolLocationQueryScopeProviderRegistrar<T>
 }
 
-interface PolySymbolQueryScopeProviderRegistrar: PolySymbolQueryScopeProviderRegistrarInFileContext {
+interface PolySymbolQueryScopeProviderRegistrar : PolySymbolQueryScopeProviderRegistrarInFileContext {
 
   fun inFile(filePattern: PsiFilePattern<out PsiFile, *>): PolySymbolQueryScopeProviderRegistrarInFileContext
 
@@ -71,27 +71,27 @@ interface PolySymbolQueryScopeProviderRegistrar: PolySymbolQueryScopeProviderReg
 
   override fun inContext(contextFilter: Predicate<PolyContext>): PolySymbolQueryScopeProviderRegistrar
 
-  override fun withoutResolve(): PolySymbolQueryScopeProviderRegistrar
+  override fun withResolveRequired(): PolySymbolQueryScopeProviderRegistrar
 
-  fun forProject(): PolySymbolProjectQueryScopeProviderRegistrar
-
-}
-
-interface PolySymbolProjectQueryScopeProviderRegistrar {
-
-  fun inContext(contextFilter: Predicate<PolyContext>): PolySymbolProjectQueryScopeProviderRegistrar
-
-  fun withoutResolve(): PolySymbolProjectQueryScopeProviderRegistrar
-
-  fun contributeScopeProvider(provider: PolySymbolProjectQueryScopeProvider)
+  fun forAnywhere(): PolySymbolAnyQueryScopeProviderRegistrar
 
 }
 
-interface PolySymbolLocationQueryScopeProviderRegistrar<T: PsiElement> {
+interface PolySymbolAnyQueryScopeProviderRegistrar {
+
+  fun inContext(contextFilter: Predicate<PolyContext>): PolySymbolAnyQueryScopeProviderRegistrar
+
+  fun withResolveRequired(): PolySymbolAnyQueryScopeProviderRegistrar
+
+  fun contributeScopeProvider(provider: PolySymbolAnyQueryScopeProvider)
+
+}
+
+interface PolySymbolLocationQueryScopeProviderRegistrar<T : PsiElement> {
 
   fun inContext(contextFilter: Predicate<PolyContext>): PolySymbolLocationQueryScopeProviderRegistrar<T>
 
-  fun withoutResolve(): PolySymbolLocationQueryScopeProviderRegistrar<T>
+  fun withResolveRequired(): PolySymbolLocationQueryScopeProviderRegistrar<T>
 
   fun inFile(filePattern: PsiFilePattern<out PsiFile, *>): PolySymbolLocationQueryScopeProviderRegistrar<T>
 

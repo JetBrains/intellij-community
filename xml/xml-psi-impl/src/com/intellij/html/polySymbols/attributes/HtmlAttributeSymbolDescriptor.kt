@@ -3,9 +3,14 @@ package com.intellij.html.polySymbols.attributes
 
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.html.polySymbols.HtmlFrameworkSymbolsSupport
-import com.intellij.html.polySymbols.HtmlSymbolQueryConfigurator
+import com.intellij.html.polySymbols.HtmlSymbolQueryScopeContributor
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.polySymbols.PolySymbol
+import com.intellij.polySymbols.PolySymbolsBundle
+import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
+import com.intellij.polySymbols.search.PsiSourcedPolySymbol
+import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.meta.PsiPresentableMetaData
@@ -13,26 +18,23 @@ import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.ArrayUtil
-import com.intellij.polySymbols.search.PsiSourcedPolySymbol
-import com.intellij.polySymbols.PolySymbol
-import com.intellij.polySymbols.PolySymbolsBundle
-import com.intellij.polySymbols.completion.PolySymbolCodeCompletionItem
-import com.intellij.polySymbols.utils.unwrapMatchedSymbols
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor
 import com.intellij.xml.impl.XmlAttributeDescriptorEx
 import javax.swing.Icon
 
-open class HtmlAttributeSymbolDescriptor private constructor(val tag: XmlTag?,
-                                                             private val name: String,
-                                                             val symbol: PolySymbol,
-                                                             private val acceptsNoValue: Boolean,
-                                                             private val acceptsValue: Boolean,
-                                                             private val enumValues: List<PolySymbolCodeCompletionItem>?,
-                                                             private val strictEnumValues: Boolean,
-                                                             val type: Any?,
-                                                             private val icon: Icon?,
-                                                             private val isRequired: Boolean,
-                                                             private val defaultValue: String?)
+open class HtmlAttributeSymbolDescriptor private constructor(
+  val tag: XmlTag?,
+  private val name: String,
+  val symbol: PolySymbol,
+  private val acceptsNoValue: Boolean,
+  private val acceptsValue: Boolean,
+  private val enumValues: List<PolySymbolCodeCompletionItem>?,
+  private val strictEnumValues: Boolean,
+  val type: Any?,
+  private val icon: Icon?,
+  private val isRequired: Boolean,
+  private val defaultValue: String?,
+)
   : BasicXmlAttributeDescriptor(), XmlAttributeDescriptorEx, PsiPresentableMetaData {
 
   constructor(info: HtmlAttributeSymbolInfo, tag: XmlTag?)
@@ -119,12 +121,12 @@ open class HtmlAttributeSymbolDescriptor private constructor(val tag: XmlTag?,
 
   override fun hasIdType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<HtmlSymbolQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<HtmlSymbolQueryScopeContributor.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdType() }
 
   override fun hasIdRefType(): Boolean =
     symbol.unwrapMatchedSymbols()
-      .filterIsInstance<HtmlSymbolQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
+      .filterIsInstance<HtmlSymbolQueryScopeContributor.HtmlAttributeDescriptorBasedSymbol>()
       .any { it.descriptor.hasIdRefType() }
 
   private fun matchEnum(value: String): List<PolySymbolCodeCompletionItem> =
