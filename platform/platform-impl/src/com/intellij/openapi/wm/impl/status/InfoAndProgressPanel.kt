@@ -1000,8 +1000,14 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
           if (indicator != null) {
             addVisibleToPreferred(indicator!!.component, withGap = false)
           }
-          val componentToAdd: JComponent = if (showCounterInsteadOfMultiProcessLink) counterComponent else multiProcessLink
-          addVisibleToPreferred(componentToAdd, withGap = true, enforceOnInvisible = true)
+
+          if (showCounterInsteadOfMultiProcessLink) {
+            addVisibleToPreferred(counterComponent, withGap = true, enforceOnInvisible = true)
+          }
+          else {
+            addVisibleToPreferred(multiProcessLink, withGap = true)
+          }
+
           if (progressIcon.isVisible) {
             result.height = max(result.height, progressIcon.getPreferredSize().height)
           }
@@ -1109,9 +1115,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
             multiProcessLink.isVisible /* && !showCounterInsteadOfMultiProcessLink */ -> {
               rightX = setBounds(multiProcessLink, rightX, centerY, null, true) - gap
             }
-            else /* !showCounterInsteadOfMultiProcessLink && !multiProcessLink.isVisible */ -> {
-              additionalWidth = multiProcessLink.preferredSize.width + gap
-            }
+            //for single progress with `showCounterInsteadOfMultiProcessLink == false` do nothing, see IJPL-192911
           }
 
           if (additionalWidth != 0) {
