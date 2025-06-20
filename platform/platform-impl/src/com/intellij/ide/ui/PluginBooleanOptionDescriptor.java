@@ -63,9 +63,10 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
     }
 
     Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
+    Map<@NotNull String, @NotNull ContentModuleDescriptor> contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap();
     Collection<? extends IdeaPluginDescriptor> autoSwitchedDescriptors = enable ?
-                                                                         getDependenciesToEnable(descriptors, pluginIdMap) :
-                                                                         getDependentsToDisable(descriptors, pluginIdMap);
+                                                                         getDependenciesToEnable(descriptors, pluginIdMap, contentModuleIdMap) :
+                                                                         getDependentsToDisable(descriptors, pluginIdMap, contentModuleIdMap);
 
     PluginEnabler pluginEnabler = PluginEnabler.getInstance();
     boolean appliedWithoutRestart = enable ?
@@ -131,7 +132,8 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
   }
 
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+                                                                                             @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                                                             @NotNull Map<String, ContentModuleDescriptor> contentModuleIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
@@ -141,7 +143,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         continue;
       }
 
-      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, dependency ->
+      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies((IdeaPluginDescriptorImpl)descriptor, pluginIdMap, contentModuleIdMap, dependency ->
         PluginManagerCore.CORE_ID.equals(dependency.getPluginId()) ||
         (PluginManagerCore.ULTIMATE_PLUGIN_ID.equals(dependency.getPluginId()) &&
          PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) ||
@@ -155,14 +157,15 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
   }
 
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependentsToDisable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
-                                                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap) {
+                                                                                            @NotNull Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap,
+                                                                                            @NotNull Map<String, ContentModuleDescriptor> contentModuleIdMap) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
 
     for (IdeaPluginDescriptor descriptor : descriptors) {
       result.add(descriptor);
 
-      result.addAll(DefaultUiPluginManagerController.INSTANCE.getDependents(descriptor.getPluginId(), applicationInfo, pluginIdMap));
+      result.addAll(DefaultUiPluginManagerController.INSTANCE.getDependents(descriptor.getPluginId(), applicationInfo, pluginIdMap, contentModuleIdMap));
     }
 
     return Collections.unmodifiableSet(result);

@@ -80,4 +80,21 @@ class PluginSet internal constructor(
     // FIXME this is a bad way to treat ambiguous plugin ids
     return pluginIdResolutionMap.asSequence().filter { it.value.size == 1 }.associateTo(HashMap()) { it.key to it.value[0] }
   }
+
+  /**
+   * Returns a map from content module ID (name) to the corresponding descriptor from all plugins, not only enabled.
+   */
+  fun buildContentModuleIdMap(): Map<String, ContentModuleDescriptor> {
+    val result = HashMap<String, ContentModuleDescriptor>()
+    val enabledPluginIds = enabledPlugins.mapTo(HashSet()) { it.pluginId }
+    for (plugin in allPlugins) {
+      if (plugin.pluginId !in enabledPluginIds) {
+        plugin.contentModules.associateByTo(result, ContentModuleDescriptor::moduleName)
+      }
+    }
+    for (plugin in enabledPlugins) {
+      plugin.contentModules.associateByTo(result, ContentModuleDescriptor::moduleName)
+    }
+    return result
+  }
 }

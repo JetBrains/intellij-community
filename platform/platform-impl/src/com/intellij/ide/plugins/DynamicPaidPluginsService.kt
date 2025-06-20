@@ -76,13 +76,14 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
     val disabledPlugins = DisabledPluginsState.getDisabledIds()
     val pluginSet = PluginManagerCore.getPluginSet()
     val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+    val contentModuleIdMap = pluginSet.buildContentModuleIdMap()
     val loadedPlugins = pluginSet.enabledPlugins.toSet()
 
     val pluginsToEnable = pluginSet.allPlugins.filter {
       !disabledPlugins.contains(it.pluginId) &&
       !loadedPlugins.contains(it) &&
-      pluginRequiresUltimatePlugin(it.pluginId, pluginIdMap) &&
-      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, disabledPlugins)
+      pluginRequiresUltimatePlugin(it.pluginId, pluginIdMap, contentModuleIdMap) &&
+      !pluginRequiresDisabledPlugin(it.pluginId, pluginIdMap, contentModuleIdMap, disabledPlugins)
     }
 
     if (pluginsToEnable.isEmpty()) {
@@ -179,10 +180,11 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
   }
 }
 
-private fun pluginRequiresDisabledPlugin(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>, disabledPluginIds: Set<PluginId>): Boolean {
+private fun pluginRequiresDisabledPlugin(plugin: PluginId, pluginMap: Map<PluginId, IdeaPluginDescriptorImpl>, 
+                                         contentModuleIdMap: Map<String, ContentModuleDescriptor>, disabledPluginIds: Set<PluginId>): Boolean {
   if (disabledPluginIds.isEmpty()) return false
   val rootDescriptor = pluginMap[plugin] ?: return false
-  return !processAllNonOptionalDependencies(rootDescriptor, pluginMap) { descriptorImpl ->
+  return !processAllNonOptionalDependencies(rootDescriptor, pluginMap, contentModuleIdMap) { descriptorImpl ->
     if (disabledPluginIds.contains(descriptorImpl.pluginId)) FileVisitResult.TERMINATE
     else FileVisitResult.CONTINUE
   }

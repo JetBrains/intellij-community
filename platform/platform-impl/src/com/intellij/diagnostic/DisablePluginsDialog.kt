@@ -67,11 +67,13 @@ internal object DisablePluginsDialog {
   @JvmStatic
   private fun morePluginsAffected(pluginIdsToDisable: Set<PluginId>): Boolean {
     val pluginIdMap = PluginManagerCore.buildPluginIdMap()
+    val contentModuleIdMap = PluginManagerCore.getPluginSet().buildContentModuleIdMap()
+
     for (rootDescriptor in PluginManagerCore.plugins) {
       if (!rootDescriptor.isEnabled || pluginIdsToDisable.contains(rootDescriptor.pluginId)) {
         continue
       }
-      if (!PluginManagerCore.processAllNonOptionalDependencies((rootDescriptor as IdeaPluginDescriptorImpl), pluginIdMap) { descriptor ->
+      if (!PluginManagerCore.processAllNonOptionalDependencies((rootDescriptor as IdeaPluginDescriptorImpl), pluginIdMap, contentModuleIdMap) { descriptor ->
           when {
             descriptor.isEnabled -> if (pluginIdsToDisable.contains(descriptor.pluginId)) FileVisitResult.TERMINATE
             else FileVisitResult.CONTINUE
