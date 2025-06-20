@@ -61,6 +61,7 @@ import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -71,7 +72,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static com.intellij.maven.server.m40.utils.Maven40ModelConverter.convertRemoteRepositories;
-import static org.apache.maven.cling.invoker.Utils.getCanonicalPath;
+import static java.util.Objects.requireNonNull;
 
 public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private final @NotNull Maven40Invoker myMavenInvoker;
@@ -184,6 +185,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
           context.topDirectory,
           context.rootDirectory,
           context.extensions,
+          context.ciInfo,
           (MavenOptions)context.options);
       }
 
@@ -1135,4 +1137,14 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       throw wrapToSerializableRuntimeException(e);
     }
   }
+
+  protected static Path getCanonicalPath(Path path) {
+      requireNonNull(path, "path");
+      try {
+          return path.toRealPath();
+      } catch (IOException e) {
+          return getCanonicalPath(path.getParent()).resolve(path.getFileName());
+      }
+  }
+
 }
