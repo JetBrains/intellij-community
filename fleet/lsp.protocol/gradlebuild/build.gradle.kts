@@ -29,7 +29,7 @@ kotlin {
     "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
     "-Xlambdas=class",
     "-opt-in=kotlinx.serialization.ExperimentalSerializationApi",
-    "-Xcontext-receivers",
+    "-Xcontext-parameters",
     "-Xjvm-default=all",
   )
   jvm {}

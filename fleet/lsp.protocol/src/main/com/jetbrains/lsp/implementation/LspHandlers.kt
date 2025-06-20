@@ -41,6 +41,9 @@ class LspHandlerContext(
     val lspClient: LspClient,
 )
 
+context(context: LspHandlerContext)
+val lspClient: LspClient get() = context.lspClient
+
 fun <P : WorkDoneProgress> LspClient.reportProgress(
     params: WorkDoneProgressParams,
     progress: P,
