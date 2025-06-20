@@ -60,6 +60,7 @@ import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.ListSelectionEvent
 import javax.swing.text.Document
+import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.math.roundToInt
 
@@ -92,6 +93,8 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
 
   private val extendedInfoContainer: JComponent = JPanel(BorderLayout())
   private var extendedInfoComponent: ExtendedInfoComponent? = null
+
+  private val isSearchCompleted: AtomicBoolean = AtomicBoolean(false)
 
   var popupViewMode: PopupViewMode = PopupViewMode.COMPACT
     private set
@@ -156,6 +159,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       }.collectLatest { throttledResultEventFlow ->
         coroutineScope {
           withContext(Dispatchers.EDT) {
+            isSearchCompleted.store(false)
             resultListModel.invalidate()
 
             if (vm.searchPattern.value.isNotEmpty()) {
@@ -173,6 +177,7 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
           throttledResultEventFlow.onCompletion {
             withContext(Dispatchers.EDT) {
               SeLog.log(SeLog.THROTTLING) { "Throttled flow completed" }
+              isSearchCompleted.store(true)
               resultListModel.removeLoadingItem()
 
               if (!resultListModel.isValid) {
@@ -363,7 +368,12 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   }
 
   private fun installScrollingActions() {
-    ScrollingUtil.installMoveUpAction(resultList, textField)
+    val moveUpAction = MoveUpAction()
+    moveUpAction.registerCustomShortcutSet(
+      CommonShortcuts.getMoveUp(),
+      textField
+    )
+
     ScrollingUtil.installMoveDownAction(resultList, textField)
 
     resultList.addListSelectionListener { _: ListSelectionEvent ->
@@ -669,6 +679,29 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   enum class PopupViewMode {
     COMPACT,
     EXPANDED
+  }
+
+  /**
+   * Custom move up action that moves to the end if the index is 0 and the search is completed
+   */
+  private inner class MoveUpAction() : DumbAwareAction() {
+    override fun actionPerformed(e: AnActionEvent) {
+      val currentIndex = resultList.selectedIndex
+      if (currentIndex == -1) return
+
+      val newIndex = if (currentIndex == 0) {
+        if (!isSearchCompleted.load()) return
+        // Move to the last item if the search is completed
+        resultList.model.size - 1
+      }
+      else {
+        // Move to the previous item
+        currentIndex - 1
+      }
+
+      resultList.selectedIndex = newIndex
+      ScrollingUtil.ensureIndexIsVisible(resultList, newIndex, -1)
+    }
   }
 
   override fun dispose() {}
