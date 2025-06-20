@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.codeInsight.inline.completion.editor.InlineCompletionEditorType
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.listeners.InlineSessionWiseCaretListener
 import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker
@@ -403,10 +402,6 @@ abstract class InlineCompletionHandler @ApiStatus.Internal constructor(
       if (event.providerId != this@isEnabledConsideringEventRequirements.id && this !is RemDevAggregatorInlineCompletionProvider) {
         return false
       }
-    }
-    val editorType = InlineCompletionEditorType.get(editor)
-    if (!isEditorTypeSupported(editorType)) {
-      return false
     }
     return isEnabled(event)
   }
