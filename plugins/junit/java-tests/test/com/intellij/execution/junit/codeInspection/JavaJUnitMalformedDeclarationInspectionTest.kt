@@ -221,6 +221,373 @@ class JavaJUnitMalformedDeclarationInspectionTest {
     """.trimIndent(), hint = "Fix 'B' class signature", testPreview = true)
     }
 
+    fun `test malformed parameterized class no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        enum TestEnum { FIRST, SECOND, THIRD }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(ints = {1})
+        class ValueSourcesTest {
+          @org.junit.jupiter.params.Parameter
+          int i;
+  
+          @org.junit.jupiter.api.Test
+          void testWithIntValues() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(longs = {1L})
+        class LongValueSourcesTest {
+          @org.junit.jupiter.params.Parameter
+          long i;
+  
+          @org.junit.jupiter.api.Test
+          void testWithLongValues() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(doubles = {0.5})
+        class DoubleValueSourcesTest {
+          @org.junit.jupiter.params.Parameter
+          double d;
+  
+          @org.junit.jupiter.api.Test
+          void testWithDoubleValues() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(strings = {""})
+        class StringValueSourcesTest {
+          @org.junit.jupiter.params.Parameter
+          String s;
+  
+          @org.junit.jupiter.api.Test
+          void testWithStringValues() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(strings = "foo")
+        class ImplicitParameterTest {
+          @org.junit.jupiter.params.Parameter
+          String argument;
+  
+          @org.junit.jupiter.api.Test
+          void implicitParameter(org.junit.jupiter.api.TestInfo testReporter) { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(strings = { "FIRST" })
+        class ImplicitConversionEnumTest {
+          @org.junit.jupiter.params.Parameter
+          TestEnum e;
+  
+          @org.junit.jupiter.api.Test
+          void implicitConversionEnum() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(strings = { "1" })
+        class ImplicitConversionStringTest {
+          @org.junit.jupiter.params.Parameter
+          int i;
+  
+          @org.junit.jupiter.api.Test
+          void implicitConversionString() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(strings = "title")
+        class ImplicitConversionClassTest {
+          @org.junit.jupiter.params.Parameter
+          Book book;
+  
+          @org.junit.jupiter.api.Test
+          void implicitConversionClass() { }
+  
+          static class Book { public Book(String title) { } }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.MethodSource("stream")
+        class MethodSourceTest {
+          @org.junit.jupiter.params.Parameter(0)
+          int x;
+  
+          @org.junit.jupiter.params.Parameter(1)
+          int y;
+  
+          @org.junit.jupiter.api.Test
+          void simpleStream() { System.out.println(x + ", " + y); }
+  
+          static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments> stream() { 
+            return java.util.stream.Stream.of(org.junit.jupiter.params.provider.Arguments.of(1, 2)); 
+          }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.MethodSource("iterable")
+        class IterableMethodSourceTest {
+          @org.junit.jupiter.params.Parameter(0)
+          int x;
+  
+          @org.junit.jupiter.params.Parameter(1)
+          int y;
+  
+          @org.junit.jupiter.api.Test
+          void simpleIterable() { System.out.println(x + ", " + y); }
+  
+          static Iterable<org.junit.jupiter.params.provider.Arguments> iterable() { 
+            return java.util.Arrays.asList(org.junit.jupiter.params.provider.Arguments.of(1, 2)); 
+          }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.EnumSource(names = "FIRST")
+        class EnumSourceTest {
+          @org.junit.jupiter.params.Parameter
+          TestEnum value;
+  
+          @org.junit.jupiter.api.Test
+          void runTest() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.EnumSource(
+          value = TestEnum.class,
+          names = "regexp-value",
+          mode = org.junit.jupiter.params.provider.EnumSource.Mode.MATCH_ALL
+        )
+        class EnumSourceModeTest {
+          @org.junit.jupiter.params.Parameter
+          TestEnum value;
+  
+          @org.junit.jupiter.api.Test
+          void disable() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.CsvSource(value = "src, 1")
+        class CsvSourceTest {
+          @org.junit.jupiter.params.Parameter(0)
+          String first;
+  
+          @org.junit.jupiter.params.Parameter(1)
+          int second;
+  
+          @org.junit.jupiter.api.Test
+          void testWithCsvSource() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.CsvSource(value = "src, 1")
+        class CsvSourceTestWithConstructor {
+          public CsvSourceTestWithConstructor() {}
+          public CsvSourceTestWithConstructor(String first, int second) { }
+  
+          @org.junit.jupiter.api.Test
+          void testWithCsvSource() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.NullSource
+        class NullSourceTest {
+          @org.junit.jupiter.params.Parameter
+          Object o;
+  
+          @org.junit.jupiter.api.Test
+          void testWithNullSrc() { }
+        }
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.NullSource
+        class TestWithNullSrcNoParam {
+          public TestWithNullSrcNoParam(String str) {}
+          @org.junit.jupiter.api.Test
+          void test() {}
+        }
+        
+        class OuterClass {
+          @org.junit.jupiter.api.Nested
+          @org.junit.jupiter.params.ParameterizedClass
+          @org.junit.jupiter.params.provider.NullSource
+          class NestedClassTest {
+            @org.junit.jupiter.params.Parameter
+            Object o;
+          
+            @org.junit.jupiter.api.Test
+            void test() { }
+          }
+        }
+        """.trimIndent()
+      )
+    }
+
+    fun `test malformed parameterized inner class should be nested highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        class OuterClass {
+          @org.junit.jupiter.params.ParameterizedClass
+          @org.junit.jupiter.params.provider.ValueSource(booleans = {false})
+          class <error descr="Tests in nested class will not be executed">TestInnerClass</error> {
+            @org.junit.jupiter.params.Parameter
+            boolean argument;
+          
+            @org.junit.jupiter.api.Test
+            void test() { }
+          }
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized class must specify a method name when using MethodSource`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.<error descr="You must specify a method name when using @MethodSource with @ParameterizedClass">MethodSource</error>
+        class TestInnerClass {        
+          @org.junit.jupiter.api.Test
+          void test() { }
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized inner class should be static highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        class OuterClass {
+          @org.junit.jupiter.api.Nested
+          @org.junit.jupiter.params.ParameterizedClass
+          @org.junit.jupiter.params.provider.ValueSource(booleans = {false})
+          static class <error descr="Tests in nested class will not be executed">TestInnerClass</error> {
+            @org.junit.jupiter.params.Parameter
+            boolean argument;
+          
+            @org.junit.jupiter.api.Test
+            void test() { }
+          }
+        }
+        """.trimIndent())
+    }
+
+
+    fun `test malformed parameterized class value source wrong type highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.ValueSource(booleans = {
+          <error descr="No implicit conversion found to convert 'boolean' to 'int'">false</error>
+        })
+        class TestWithBooleanSource {
+          @org.junit.jupiter.params.Parameter
+          int argument;
+        
+          @org.junit.jupiter.api.Test
+          void test() { }
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized class enum source wrong type highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        enum TestEnum { FIRST, SECOND, THIRD }      
+        
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.EnumSource(<error descr="No implicit conversion found to convert 'TestEnum' to 'int'">TestEnum.class</error>)
+        class TestWithEnumSource {
+          @org.junit.jupiter.params.Parameter
+          int i;
+        
+          @org.junit.jupiter.api.Test
+          void test() { }
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized class multiple types highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.<error descr="Exactly one type of input must be provided">ValueSource</error>(
+          ints = {1}, strings = "str"
+        )
+        class TestWithMultipleValues {
+          @org.junit.jupiter.params.Parameter
+          int i;
+        
+          @org.junit.jupiter.api.Test
+          void test() { }
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized class no value defined highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.<error descr="No value source is defined">ValueSource</error>()
+        class TestWithNoValues {
+          @org.junit.jupiter.params.Parameter
+          int i;
+
+          @org.junit.jupiter.api.Test
+          void test() { }
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized class no argument defined highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        <error descr="'@NullSource' cannot provide an argument to constructor ['TestWithNullSrcNoParam']: no formal parameters declared">@org.junit.jupiter.params.provider.NullSource</error>
+        class TestWithNullSrcNoParam {
+          @org.junit.jupiter.api.Test
+          void test() {}
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized class must declare a single constructor highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.MethodSource("a")
+        class TestMethodSource {
+          public <error descr="Class TestMethodSource must declare a single constructor">TestMethodSource</error>(String argument) { }
+          public <error descr="Class TestMethodSource must declare a single constructor">TestMethodSource</error>(String argument1, String argument2) { }
+
+          @org.junit.jupiter.api.Test
+          void test() { }
+          
+          static String[] a() { return new String[] {"a", "b"}; }
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized class method source should be static highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.MethodSource({ <error descr="Method source 'a' must be static">"a"</error> })
+        class TestMethodSource {
+          @org.junit.jupiter.params.Parameter
+          String param;
+
+          @org.junit.jupiter.api.Test
+          void test() { }
+          
+          String[] a() { return new String[] {"a", "b"}; }
+        }
+        """.trimIndent())
+    }
+
+    fun `test malformed parameterized class method source should have no parameters highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        @org.junit.jupiter.params.ParameterizedClass
+        @org.junit.jupiter.params.provider.MethodSource({ <error descr="Method source 'a' should have no parameters">"a"</error> })
+        class TestMethodSource {
+          @org.junit.jupiter.params.Parameter
+          String param;
+
+          @org.junit.jupiter.api.Test
+          void test() { }
+          
+          static String[] a(int i) { return new String[] {"a", "b"}; }
+        }        
+        """.trimIndent())
+    }
+
     /* Malformed parameterized */
     fun `test malformed parameterized no highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """
