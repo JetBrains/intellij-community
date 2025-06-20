@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.searchEverywhere.frontend.vm
+package com.intellij.ide.rpc
 
-import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
@@ -13,13 +12,16 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
 
+private const val DEFAULT_RESULT_THROTTLING_MS: Long = 900
+private const val DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING: Int = 15
+
 /**
  * Accumulate results until DEFAULT_RESULT_THROTTLING_MS has past or DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING items where received,
- * then send the first batch of items inside SeThrottledAccumulatedItems, and then send on demand one by one SeThrottledOneItem.
+ * then send the first batch of items inside ThrottledAccumulatedItems, and then send on demand one by one ThrottledOneItem.
  */
 @OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Internal
-fun <T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItems<T>> {
+fun <T> Flow<T>.throttledWithAccumulation(resultThrottlingMs: Long = DEFAULT_RESULT_THROTTLING_MS, resultCountToStopThrottling: Int = DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING): Flow<ThrottledItems<T>> {
   val originalFlow = this
   return channelFlow {
     var pendingFirstBatch: MutableList<T>? = mutableListOf<T>() // null -> no more throttling
@@ -31,12 +33,12 @@ fun <T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItems<T>> {
         val firstBatch = pendingFirstBatch
         pendingFirstBatch = null
         if (!firstBatch.isNullOrEmpty()) {
-          send(SeThrottledAccumulatedItems(firstBatch))
+          send(ThrottledAccumulatedItems(firstBatch))
         }
       }
     }
     launch {
-      delay(SePopupContentPane.DEFAULT_RESULT_THROTTLING_MS)
+      delay(resultThrottlingMs)
       sendFirstBatchIfNeeded()
     }
     launch {
@@ -45,13 +47,13 @@ fun <T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItems<T>> {
           val firstBatch = pendingFirstBatch
           if (firstBatch != null) {
             firstBatch += item
-            if (firstBatch.size >= SePopupContentPane.DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING) {
+            if (firstBatch.size >= resultCountToStopThrottling) {
               pendingFirstBatch = null
-              send(SeThrottledAccumulatedItems(firstBatch))
+              send(ThrottledAccumulatedItems(firstBatch))
             }
           }
           else {
-            send(SeThrottledOneItem(item))
+            send(ThrottledOneItem(item))
           }
         }
       }
@@ -64,8 +66,8 @@ fun <T> Flow<T>.throttledWithAccumulation(): Flow<SeThrottledItems<T>> {
 }
 
 @ApiStatus.Internal
-sealed interface SeThrottledItems<T>
+sealed interface ThrottledItems<T>
 @ApiStatus.Internal
-class SeThrottledAccumulatedItems<T>(val items: List<T>) : SeThrottledItems<T>
+class ThrottledAccumulatedItems<T>(val items: List<T>) : ThrottledItems<T>
 @ApiStatus.Internal
-class SeThrottledOneItem<T>(val item: T) : SeThrottledItems<T>
+class ThrottledOneItem<T>(val item: T) : ThrottledItems<T>

@@ -1192,7 +1192,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
         Set<String> filePaths = ConcurrentHashMap.newKeySet();
 
-        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages, (usage)-> {
+        projectExecutor.findUsages(project, myResultsPreviewSearchProgress, processPresentation, findModel, previousUsages, !myResultsPreviewTable.isEmpty(), (usage)-> {
           if (isCancelled()) {
             onStop(hash);
             return false;
