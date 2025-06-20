@@ -30,6 +30,7 @@ interface FindAndReplaceExecutor {
     presentation: FindUsagesProcessPresentation,
     findModel: FindModel,
     previousUsages: Set<UsageInfoAdapter>,
+    shouldThrottle: Boolean,
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
   )

@@ -29,12 +29,8 @@ import com.intellij.platform.searchEverywhere.frontend.tabs.files.SeTargetItemPr
 import com.intellij.platform.searchEverywhere.frontend.tabs.text.SeTextSearchItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.providers.SeLog
-import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.ClientProperty
+import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
-import com.intellij.ui.ScrollingUtil
-import com.intellij.ui.SearchTextField
-import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -53,12 +49,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.event.*
@@ -608,8 +598,6 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
   companion object {
     const val DEFAULT_FROZEN_COUNT: Int = 10
     const val DEFAULT_FREEZING_DELAY_MS: Long = 800
-    const val DEFAULT_RESULT_THROTTLING_MS: Long = 900
-    const val DEFAULT_RESULT_COUNT_TO_STOP_THROTTLING: Int = 15
 
     @JvmStatic
     fun isExtendedInfoEnabled(): Boolean {

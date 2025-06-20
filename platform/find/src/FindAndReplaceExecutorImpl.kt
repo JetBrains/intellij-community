@@ -8,6 +8,9 @@ import com.intellij.find.impl.FindAndReplaceExecutor
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.find.impl.FindKey
 import com.intellij.find.replaceInProject.ReplaceInProjectManager
+import com.intellij.ide.rpc.ThrottledAccumulatedItems
+import com.intellij.ide.rpc.ThrottledOneItem
+import com.intellij.ide.rpc.throttledWithAccumulation
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.application.readAction
@@ -21,20 +24,24 @@ import fleet.rpc.client.RpcTimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @Internal
 open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : FindAndReplaceExecutor {
   private var validationJob: Job? = null
   private var findUsagesJob: Job? = null
 
+  @OptIn(ExperimentalAtomicApi::class)
   override fun findUsages(
     project: Project,
     progressIndicator: ProgressIndicatorEx,
     presentation: FindUsagesProcessPresentation,
     findModel: FindModel,
     previousUsages: Set<UsageInfoAdapter>,
+    shouldThrottle: Boolean,
     onResult: (UsageInfoAdapter) -> Boolean,
     onFinish: () -> Unit?,
   ) {
@@ -45,11 +52,25 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
       findUsagesJob = coroutineScope.launch {
         val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
 
-        FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() }).collect { findResult ->
-          val usage = readAction {
-            UsageInfoModel.createUsageInfoModel(project, findResult)
-          }
-          onResult(usage)
+        FindRemoteApi.getInstance().findByModel(findModel, project.projectId(), filesToScanInitially.map { it.rpcId() })
+          .let {
+            if (shouldThrottle) it.throttledWithAccumulation()
+            else it.map { event -> ThrottledOneItem(event) }
+          }.collect { throttledItems ->
+            when (throttledItems) {
+              is ThrottledOneItem -> {
+                val usage = readAction {
+                  UsageInfoModel.createUsageInfoModel(project, throttledItems.item)
+                }
+                onResult(usage)
+              }
+              is ThrottledAccumulatedItems -> {
+                val usages = readAction {
+                  throttledItems.items.map{UsageInfoModel.createUsageInfoModel(project, it) }
+                }
+                usages.forEach { onResult(it) }
+              }
+            }
 
         }
         onFinish()
