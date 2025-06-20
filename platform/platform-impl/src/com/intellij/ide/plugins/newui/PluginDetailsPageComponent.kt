@@ -318,7 +318,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     nameAndButtons!!.add(versionPanel)
 
     createButtons()
-    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else updateButton)!!)
+    nameAndButtons!!.setProgressDisabledButton((if (isMarketplace) installButton?.getComponent() else if(updateDescriptor != null) updateButton else gearButton)!!)
 
     topPanel.add(ErrorComponent().also { errorComponent = it }, VerticalLayout.FILL_HORIZONTAL)
     topPanel.add(licensePanel)
@@ -1445,7 +1445,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
 
   fun hideProgress() {
     indicator = null
-    nameAndButtons?.hideProgress()
+    nameAndButtons?.removeProgressComponent()
   }
 
   fun hideProgress(success: Boolean, restartRequired: Boolean) {
