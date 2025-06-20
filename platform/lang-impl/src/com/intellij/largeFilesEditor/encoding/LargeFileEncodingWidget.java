@@ -36,11 +36,11 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
   private static final Logger logger = Logger.getInstance(LargeFileEncodingWidget.class);
 
   private final LazyValue<TextPanel> myComponent;
-  private Alarm myUpdateAlarm;
+  private final Alarm myUpdateAlarm = new Alarm(this);
 
   private boolean myActionEnabled;
 
-  public LargeFileEncodingWidget(final @NotNull Project project) {
+  LargeFileEncodingWidget(final @NotNull Project project) {
     super(project);
     myComponent = LazyInitializer.create(() -> {
       var result = new TextPanel.WithIconAndArrows();
@@ -80,7 +80,6 @@ public class LargeFileEncodingWidget extends EditorBasedWidget implements Status
       }
     });
 
-    myUpdateAlarm = new Alarm(this);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
