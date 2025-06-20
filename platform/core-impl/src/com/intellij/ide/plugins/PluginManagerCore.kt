@@ -754,21 +754,7 @@ object PluginManagerCore {
   fun buildPluginIdMap(): Map<PluginId, IdeaPluginDescriptorImpl> {
     // FIXME deduplicate with com.intellij.ide.plugins.ModulesWithDependenciesKt.createModulesWithDependenciesAndAdditionalEdges
     LoadingState.COMPONENTS_REGISTERED.checkOccurred()
-    val pluginIdResolutionMap = HashMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>()
-    for (plugin in getPluginSet().allPlugins) {
-      pluginIdResolutionMap.computeIfAbsent(plugin.pluginId) { ArrayList() }.add(plugin)
-      for (pluginAlias in plugin.pluginAliases) {
-        pluginIdResolutionMap.computeIfAbsent(pluginAlias) { ArrayList() }.add(plugin)
-      }
-      for (contentModule in plugin.contentModules) {
-        // plugin aliases in content modules are resolved as plugin id references
-        for (pluginAlias in contentModule.pluginAliases) {
-          pluginIdResolutionMap.computeIfAbsent(pluginAlias) { ArrayList() }.add(contentModule)
-        }
-      }
-    }
-    // FIXME this is a bad way to treat ambiguous plugin ids
-    return pluginIdResolutionMap.asSequence().filter { it.value.size == 1 }.associateTo(HashMap()) { it.key to it.value[0] }
+    return getPluginSet().buildPluginIdMap()
   }
 
   @ApiStatus.Internal
