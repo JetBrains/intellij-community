@@ -129,16 +129,36 @@ enum class JavaFeature {
   //JEP 507
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
 
-  //see together with PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS and TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
-  MODULE_IMPORT_DECLARATIONS(LanguageLevel.JDK_23_PREVIEW, "feature.module.import.declarations"),
+  //JEP 511 see together with PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS and TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
+  MODULE_IMPORT_DECLARATIONS(LanguageLevel.JDK_25, "feature.module.import.declarations") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) ||
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel
+    }
+  },
 
   /**
    * Usually, this type of comments is shown as Javadoc despite language level.
    * This option can be used only to adjust behavior for cases with conflicts between different types of comments (markdown and old-style)
    */
   MARKDOWN_COMMENT(LanguageLevel.JDK_23, "feature.markdown.comment"),
-  PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_24_PREVIEW, "feature.package.import.shadow.module.import"),
-  TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_24_PREVIEW, "feature.package.transitive.dependency.on.java.base"),
+
+  //JEP 511 see together with MODULE_IMPORT_DECLARATIONS and TRANSITIVE_DEPENDENCY_ON_JAVA_BASE
+  PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS(LanguageLevel.JDK_25, "feature.package.import.shadow.module.import"){
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel
+    }
+  },
+
+  //JEP 511 see together with MODULE_IMPORT_DECLARATIONS and PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS
+  TRANSITIVE_DEPENDENCY_ON_JAVA_BASE(LanguageLevel.JDK_25, "feature.package.transitive.dependency.on.java.base"){
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel
+    }
+  },
 
   JAVA_LANG_IO(LanguageLevel.JDK_25, "feature.java.lang.io"),
 

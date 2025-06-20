@@ -120,6 +120,23 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     })
   }
 
+  fun testImplicitWithStaticPackagesPackagesOverModule() {
+    IdeaTestUtil.withLevel(module, JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.minimumLevel, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public class Other {
+            public static class List {
+        
+            }
+        }""".trimIndent())
+      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+      val element = psiFile.findElementAt(myFixture.caretOffset)
+      assertEquals("a.b.Other.List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
+    })
+  }
+
   fun testImplicitWithPackagesPackagesOverModule() {
     IdeaTestUtil.withLevel(module, JavaFeature.PACKAGE_IMPORTS_SHADOW_MODULE_IMPORTS.minimumLevel, Runnable {
       myFixture.addClass("""
@@ -132,6 +149,35 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
       myFixture.checkHighlighting()
       val element = psiFile.findElementAt(myFixture.caretOffset)
       assertEquals("a.b.List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
+    })
+  }
+
+  fun testImplicitWithPackagesPackagesOverModule25() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_25, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public final class List {
+        }
+        """.trimIndent())
+      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+      val element = psiFile.findElementAt(myFixture.caretOffset)
+      assertEquals("a.b.List", element?.parentOfType<PsiField>()?.type.resolve()?.qualifiedName)
+    })
+  }
+
+
+  fun testImplicitWithPackagesPackagesOverModule24() {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_24, Runnable {
+      myFixture.addClass("""
+        package a.b;
+        
+        public final class List {
+        }
+        """.trimIndent())
+      myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
     })
   }
 
