@@ -119,8 +119,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   override fun applySession(sessionId: String, parent: JComponent?, project: Project?): ApplyPluginsStateResult {
-    var needRestart = false
     val session = findSession(sessionId) ?: return ApplyPluginsStateResult()
+    var needRestart = session.needRestart
     if (ApplicationManager.getApplication().isExitInProgress) {
       needRestart = true
     }
@@ -136,7 +136,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       val pluginId: PluginId = pluginDescriptor.getPluginId()
 
       if (!needRestart) {
-        needRestart = !uninstallDynamicPlugin(parent, pluginDescriptor.getPluginId(), false)
+        needRestart = !uninstallDynamicPlugin(parent, sessionId, pluginDescriptor.getPluginId(), false)
       }
 
       if (needRestart) {
@@ -294,6 +294,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     result.cancel = cancel
     result.showErrors = showErrors
     result.restartRequired = restartRequired
+    session.needRestart = session.needRestart || restartRequired
 
     ApplicationManager.getApplication().invokeLater(Runnable {
       installDynamicPluginsSynchronously(request, pluginsToInstallSynchronously, session, parentComponent, result, installCallback)
@@ -306,19 +307,22 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override fun performUninstall(sessionId: String, pluginId: PluginId): Boolean {
     val uninstalledPlugin = uninstallPlugin(pluginId)
-    val session = findSession(sessionId)
-    if (session != null) {
-      session.uninstalledPlugins.add(pluginId)
-      if (uninstalledPlugin != null) {
-        session.dynamicPluginsToUninstall.add(uninstalledPlugin)
-      }
+    val session = findSession(sessionId) ?: return false
+
+    session.uninstalledPlugins.add(pluginId)
+    if (uninstalledPlugin != null) {
+      session.dynamicPluginsToUninstall.add(uninstalledPlugin)
     }
-    return uninstalledPlugin != null
+    session.needRestart = session.needRestart || uninstalledPlugin == null
+    return uninstalledPlugin == null
   }
 
-  override fun uninstallDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
+  override fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
+    val session = findSession(sessionId) ?: return true
     val descriptorImpl = PluginManagerCore.findPlugin(pluginId) ?: return false
-    return PluginInstaller.uninstallDynamicPlugin(parentComponent, descriptorImpl, isUpdate)
+    val uninstalledWithoutRestart = PluginInstaller.uninstallDynamicPlugin(parentComponent, descriptorImpl, isUpdate)
+    session.needRestart = session.needRestart || !uninstalledWithoutRestart
+    return uninstalledWithoutRestart
   }
 
   override fun deletePluginFiles(pluginId: PluginId) {

@@ -34,7 +34,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
@@ -231,8 +230,8 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     }
   }
 
-  override fun uninstallDynamicPlugin(parentComponent: JComponent?, pluginId: PluginId, isUpdate: Boolean): Boolean {
-    return awaitForResult { PluginInstallerApi.getInstance().uninstallDynamicPlugin(pluginId, isUpdate) }
+  override fun uninstallDynamicPlugin(parentComponent: JComponent?, sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
+    return awaitForResult { PluginInstallerApi.getInstance().uninstallDynamicPlugin(sessionId,pluginId, isUpdate) }
   }
 
   override fun deletePluginFiles(pluginId: PluginId) {

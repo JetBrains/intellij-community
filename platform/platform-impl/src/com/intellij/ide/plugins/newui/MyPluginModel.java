@@ -286,6 +286,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
       else if (controller.allowLoadUnloadSynchronously(descriptor.getPluginId())) {
         allowInstallWithoutRestart.set(controller.uninstallDynamicPlugin(parentComponent,
+                                                                         sessionId.toString(),
                                                                          descriptor.getPluginId(),
                                                                          true));
       }

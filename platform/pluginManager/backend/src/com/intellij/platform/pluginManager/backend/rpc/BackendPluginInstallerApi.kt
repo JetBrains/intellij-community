@@ -87,9 +87,8 @@ class BackendPluginInstallerApi : PluginInstallerApi {
     return result.await().apply { pluginsToDisable = enabler.pluginsToDisable }
   }
 
-  override suspend fun uninstallDynamicPlugin(pluginId: PluginId, isUpdate: Boolean): Boolean {
-    val pluginDescriptor = PluginManagerCore.findPlugin(pluginId) ?: return false
-    return PluginInstaller.uninstallDynamicPlugin(null, pluginDescriptor, isUpdate)
+  override suspend fun uninstallDynamicPlugin(sessionId: String, pluginId: PluginId, isUpdate: Boolean): Boolean {
+    return DefaultUiPluginManagerController.uninstallDynamicPlugin(null, sessionId, pluginId, isUpdate)
   }
 
   override suspend fun deletePluginFiles(pluginId: PluginId) {
