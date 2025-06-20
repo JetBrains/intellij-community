@@ -38,11 +38,22 @@ import com.intellij.openapi.editor.event.DocumentEvent
 
 internal sealed class InlineCompletionTypingState {
 
-  open fun onPairedEnclosure(ctx: InlineCompletionTypingSession.TypingSessionStateContext, expectedEnclosure: String): InlineCompletionTypingState = invalidate(ctx)
+  open fun onPairedEnclosure(
+    ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+    expectedEnclosure: String,
+  ): InlineCompletionTypingState = invalidate(ctx)
 
-  open fun onDocumentChange(ctx: InlineCompletionTypingSession.TypingSessionStateContext, event: DocumentEvent, editor: Editor): InlineCompletionTypingState = invalidate(ctx)
+  open fun onDocumentChange(
+    ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+    event: DocumentEvent,
+    editor: Editor,
+  ): InlineCompletionTypingState = invalidate(ctx)
 
-  open fun onCaretMove(ctx: InlineCompletionTypingSession.TypingSessionStateContext, event: CaretEvent, editor: Editor): InlineCompletionTypingState = invalidate(ctx)
+  open fun onCaretMove(
+    ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+    event: CaretEvent,
+    editor: Editor,
+  ): InlineCompletionTypingState = invalidate(ctx)
 
   /**
    * Centralized function to handle the transition to an invalid state.
@@ -57,9 +68,16 @@ internal sealed class InlineCompletionTypingState {
    * The first event can be either a paired enclosure or a single symbol
    */
   data object AwaitInitialEvent : InlineCompletionTypingState() {
-    override fun onPairedEnclosure(ctx: InlineCompletionTypingSession.TypingSessionStateContext, expectedEnclosure: String): InlineCompletionTypingState = PairedEnclosureReceivedAwaitDocumentEvent(expectedEnclosure)
+    override fun onPairedEnclosure(
+      ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+      expectedEnclosure: String,
+    ): InlineCompletionTypingState = PairedEnclosureReceivedAwaitDocumentEvent(expectedEnclosure)
 
-    override fun onDocumentChange(ctx: InlineCompletionTypingSession.TypingSessionStateContext, event: DocumentEvent, editor: Editor): InlineCompletionTypingState {
+    override fun onDocumentChange(
+      ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+      event: DocumentEvent,
+      editor: Editor,
+    ): InlineCompletionTypingState {
       val symbol = event.newFragment.singleOrNull() ?: return invalidate(ctx)
       val typingEvent = TypingEvent.OneSymbol(symbol, event.offset)
       return AwaitCaretMovement(typingEvent)
@@ -72,7 +90,11 @@ internal sealed class InlineCompletionTypingState {
    * but if the caret will be moved, [invalidate] will be called in next step, because [AwaitInitialEvent] doesn't handle caret movements.
    */
   data class PairedEnclosureReceivedAwaitDocumentEvent(val expectedEnclosure: String) : InlineCompletionTypingState() {
-    override fun onDocumentChange(ctx: InlineCompletionTypingSession.TypingSessionStateContext, event: DocumentEvent, editor: Editor): InlineCompletionTypingState {
+    override fun onDocumentChange(
+      ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+      event: DocumentEvent,
+      editor: Editor,
+    ): InlineCompletionTypingState {
       if (event.newFragment.toString() != expectedEnclosure) return invalidate(ctx)
       val typingEvent = TypingEvent.PairedEnclosureInsertion(event.newFragment.toString(), event.offset)
       ctx.sendEvent(InlineCompletionEvent.DocumentChange(typingEvent, editor))
@@ -85,7 +107,11 @@ internal sealed class InlineCompletionTypingState {
    * After checking in movement was expected, we can send [InlineCompletionEvent.DocumentChange]
    */
   data class AwaitCaretMovement(val typingEvent: TypingEvent.OneSymbol) : InlineCompletionTypingState() {
-    override fun onCaretMove(ctx: InlineCompletionTypingSession.TypingSessionStateContext, event: CaretEvent, editor: Editor): InlineCompletionTypingState {
+    override fun onCaretMove(
+      ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+      event: CaretEvent,
+      editor: Editor,
+    ): InlineCompletionTypingState {
       return if (event.matchTypingEvent(typingEvent)) {
         ctx.sendEvent(InlineCompletionEvent.DocumentChange(typingEvent, editor))
         AwaitInitialEvent
