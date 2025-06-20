@@ -106,7 +106,7 @@ class SeActionItemPresentationRenderer(private val resultsList: JList<SeResultLi
       }
 
       is SeOptionActionItemPresentation -> {
-        if (!presentation.isBooleanOption) {
+        if (!presentation.isBooleanOption && switcherState == null) {
           val descriptorBg = if (isUnderDarcula) {
             ColorUtil.brighter(UIUtil.getListBackground(), 1)
           }
