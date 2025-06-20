@@ -17,12 +17,14 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.allOccurrencesOf
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalOutputModel
@@ -297,7 +299,15 @@ internal class TerminalHyperlinkHighlighterTest : BasePlatformTestCase() {
 }
 
 private fun <T> timeoutRunBlockingInBackground(action: suspend CoroutineScope.() -> T) {
-  timeoutRunBlocking(timeout = 30.seconds, context = Dispatchers.Default, action = action)
+  timeoutRunBlocking(timeout = 30.seconds, context = Dispatchers.Default) {
+    val testScope = childScope("child scope to run the test")
+    try {
+      testScope.action()
+    }
+    finally {
+      testScope.cancel() // stop async coroutines launched by the test
+    }
+  }
 }
 
 private fun joinLines(vararg lines: String): String = lines.joinToString("\n")

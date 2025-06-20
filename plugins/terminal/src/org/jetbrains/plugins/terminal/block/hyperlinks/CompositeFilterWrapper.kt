@@ -11,64 +11,58 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.concurrency.SynchronizedClearableLazy
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicBoolean
 
-internal class CompositeFilterWrapper(private val project: Project, private val coroutineScope: CoroutineScope) {
+private data class ComputedFilter(
+  val filter: CompositeFilter?,
+  val listenersFired: Boolean,
+)
+
+private val NULL_RESULT = ComputedFilter(null, false)
+
+internal class CompositeFilterWrapper(private val project: Project, coroutineScope: CoroutineScope) {
   private val filtersUpdatedListeners: MutableList<() -> Unit> = CopyOnWriteArrayList()
 
   private val customFilters: MutableList<Filter> = CopyOnWriteArrayList()
 
-  @Volatile
-  private var cachedFilter: CompositeFilter? = null
+  private val computationInitialized = AtomicBoolean()
 
-  @Volatile
-  private var areFiltersInUse: Boolean = false
+  private val filterComputationRequests = MutableSharedFlow<Unit>(
+    replay = 1, // ensures that the first update isn't lost even if it's emitted before the collector starts working
+    onBufferOverflow = BufferOverflow.DROP_OLDEST, // ensures non-blocking tryEmit that always succeeds
+  )
 
-  private val filterDeferredLazy: SynchronizedClearableLazy<Deferred<CompositeFilter>> = SynchronizedClearableLazy {
-    startFilterComputation()
-  }
+  private val filterFlow = MutableStateFlow(NULL_RESULT)
 
   init {
-    ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener(coroutineScope, ::dropFilter)
-  }
-
-  fun addFilter(filter: Filter) {
-    customFilters.add(filter)
-    dropFilter()
-  }
-
-  private fun dropFilter() {
-    cachedFilter = null
-    filterDeferredLazy.drop()?.cancel("Filters updated")
-    if (areFiltersInUse) {
-      // If filters have been requested already, there is some text in the editor.
-      // This text needs to be reprocessed with the updated filters.
-      // Trigger filter recomputation to fire the `filtersUpdated` event.
-      filterDeferredLazy.value
+    ConsoleFilterProvider.FILTER_PROVIDERS.addChangeListener(coroutineScope, ::rescheduleFilterComputation)
+    coroutineScope.launch { 
+      filterComputationRequests.collectLatest { 
+        filterFlow.value = NULL_RESULT // tell the clients the value is being computed
+        filterFlow.value = ComputedFilter(computeFilter(), false)
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          fireFiltersUpdated()
+          filterFlow.update { it.copy(listenersFired = true) }
+        }
+      }
     }
   }
 
-  private fun startFilterComputation(): Deferred<CompositeFilter> = coroutineScope.async {
+  private suspend fun computeFilter(): CompositeFilter {
     val filters = readAction {
       ConsoleViewUtil.computeConsoleFilters(project, null, GlobalSearchScope.allScope(project))
     }
-    val compositeFilter = CompositeFilter(project, customFilters + filters).also {
+    return CompositeFilter(project, customFilters + filters).also {
       it.setForceUseAllFilters(true)
     }
-    cachedFilter = compositeFilter
-    if (areFiltersInUse) {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        fireFiltersUpdated()
-      }
-    }
-    compositeFilter
-  }
-
-  fun addFiltersUpdatedListener(listener: () -> Unit) {
-    filtersUpdatedListeners.add(listener)
   }
 
   private fun fireFiltersUpdated() {
@@ -77,21 +71,46 @@ internal class CompositeFilterWrapper(private val project: Project, private val 
     }
   }
 
+  fun addFilter(filter: Filter) {
+    customFilters.add(filter)
+    rescheduleFilterComputation()
+  }
+
+  fun addFiltersUpdatedListener(listener: () -> Unit) {
+    filtersUpdatedListeners.add(listener)
+  }
+
   /**
    * @return [Filter] instance if cached. Otherwise, returns `null` and starts computing filters in background;
    *         when filters are ready, `filtersUpdated` event will be fired.
    */
   fun getFilter(): CompositeFilter? {
-    cachedFilter?.let {
+    filterFlow.value.filter?.let {
       return it
     }
-    areFiltersInUse = true
-    filterDeferredLazy.value
+    ensureComputationInitialized()
     return null
+  }
+
+  private fun ensureComputationInitialized() {
+    if (computationInitialized.compareAndSet(false, true)) {
+      scheduleFilterComputation()
+    }
+  }
+
+  private fun rescheduleFilterComputation() {
+    if (computationInitialized.get()) {
+      scheduleFilterComputation()
+    }
+  }
+
+  private fun scheduleFilterComputation() {
+    check(filterComputationRequests.tryEmit(Unit))
   }
 
   @TestOnly
   internal suspend fun awaitFiltersComputed() {
-    filterDeferredLazy.value.await()
+    ensureComputationInitialized()
+    filterFlow.first { it.filter != null && it.listenersFired }
   }
 }
