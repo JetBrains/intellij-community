@@ -5,10 +5,7 @@ import com.intellij.execution.filters.CompositeFilter
 import com.intellij.execution.filters.ConsoleFilterProvider
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.ConsoleViewUtil
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.CoroutineScope
@@ -48,7 +45,9 @@ internal class CompositeFilterWrapper(private val project: Project, coroutineSco
       filterComputationRequests.collectLatest { 
         filterFlow.value = NULL_RESULT // tell the clients the value is being computed
         filterFlow.value = ComputedFilter(computeFilter(), false)
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        // Using UiDispatcherKind.RELAX because the listeners interact with the editor and its document,
+        // so they need to take locks, and therefore the strict dispatcher won't do.
+        withContext(Dispatchers.ui(UiDispatcherKind.RELAX) + ModalityState.any().asContextElement()) {
           fireFiltersUpdated()
           filterFlow.update { it.copy(listenersFired = true) }
         }
