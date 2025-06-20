@@ -27,7 +27,7 @@ public final class IdentifierHighlighterPassFactory {
   private static final Key<Boolean> ourTestingIdentifierHighlighting = Key.create("TestingIdentifierHighlighting");
 
   @ApiStatus.Internal
-  public boolean shouldHighlightingIdentifiers(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+  public static boolean shouldHighlightIdentifiers(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     return CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET &&
            (!editor.isOneLineMode() || !((EditorEx)editor).isEmbeddedIntoDialogWrapper()) &&
            checkDumbMode(psiFile) &&
