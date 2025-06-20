@@ -10,13 +10,14 @@ import com.intellij.openapi.roots.impl.assertIteratedContent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.workspaceModel.update
+import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
+import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
@@ -51,8 +52,8 @@ class NonIndexableFileSetTest {
   fun setUp() {
     customContentFileSetRoot = baseNonProjectDir.newVirtualDirectory("root")
     module = projectModel.createModule()
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetContributor(), disposable)
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(IndexableKindFileSetTestContributor(), disposable)
   }
 
   @Test
@@ -123,21 +124,4 @@ class NonIndexableFileSetTest {
     }
   }
 
-  private class NonIndexableKindFileSetContributor : WorkspaceFileIndexContributor<NonIndexableTestEntity> {
-    override val entityClass: Class<NonIndexableTestEntity> = NonIndexableTestEntity::class.java
-
-    override fun registerFileSets(entity: NonIndexableTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-      registrar.registerFileSet(entity.root, WorkspaceFileKind.CONTENT_NON_INDEXABLE, entity, null)
-    }
-  }
-
-  private class IndexableKindFileSetContributor : WorkspaceFileIndexContributor<IndexingTestEntity> {
-    override val entityClass: Class<IndexingTestEntity> = IndexingTestEntity::class.java
-
-    override fun registerFileSets(entity: IndexingTestEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-      for (root in entity.roots) {
-        registrar.registerFileSet(root, WorkspaceFileKind.CONTENT, entity, null)
-      }
-    }
-  }
 }

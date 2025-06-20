@@ -531,6 +531,8 @@ f:com.intellij.codeInsight.navigation.UtilKt
 c:com.intellij.find.actions.FindUsagesAction
 - com.intellij.openapi.actionSystem.AnAction
 - *sf:SEARCH_TARGETS:com.intellij.openapi.actionSystem.DataKey
+f:com.intellij.find.impl.FindInProjectUtil
+- *sf:FIND_IN_FILES_SEARCH_IN_NON_INDEXABLE:com.intellij.openapi.util.Key
 *:com.intellij.find.impl.livePreview.EditorSearchAreaProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - s:getEnabled(com.intellij.openapi.editor.Editor,com.intellij.find.FindModel):java.util.List
