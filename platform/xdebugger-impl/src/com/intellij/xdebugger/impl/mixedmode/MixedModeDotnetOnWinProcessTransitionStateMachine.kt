@@ -184,11 +184,12 @@ internal class MixedModeDotnetOnWinProcessTransitionStateMachine(
 
               lowExtension.handleBreakpointDuringStep()
 
+              highExtension.refreshSuspendContextOnLowLevelStepFinish(currentState.highSuspendContext)
               // If we've set the null object instead of a real suspend context, we don't need to refresh it
-              if (currentState.highSuspendContext != nullObjectHighLevelSuspendContext && lowExtension.lowToHighTransitionDuringLastStepHappened())
-                highExtension.refreshSuspendContextOnLowLevelStepFinish(currentState.highSuspendContext) ?: currentState.highSuspendContext
-              else
-                currentState.highSuspendContext
+              //if (currentState.highSuspendContext != nullObjectHighLevelSuspendContext && lowExtension.lowToHighTransitionDuringLastStepHappened())
+              //  highExtension.refreshSuspendContextOnLowLevelStepFinish(currentState.highSuspendContext) ?: currentState.highSuspendContext
+              //else
+              //  currentState.highSuspendContext
             }
 
             val lowSuspendCtx = event.suspendContext
