@@ -642,9 +642,10 @@ class StructureViewWrapperImpl(
       val project = CommonDataKeys.PROJECT.getData(asyncDataContext)
       return when {
         commonFiles != null && commonFiles.size == 1 -> commonFiles[0]
-        AppMode.isRemoteDevHost() && project != null && focusOwner is IdeFrame -> {
-          // In RD when focus is set to a frontend-component
-          // (e.g., tabs, editors, notification tool window) on the backend it will be set to `IdeFrame`
+        AppMode.isRemoteDevHost() && project != null -> {
+          // In RD, when focus is set to a frontend-component (e.g., tabs, editors, notification tool window),
+          // on the backend it can be set to anything, unfortunately.
+          // So we fall back to the active editor, or else the structure view may stop updating completely.
           FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
         }
         else -> null
