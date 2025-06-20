@@ -230,6 +230,15 @@ open class EditorComposite internal constructor(
           )
         }
 
+        span("Artificially wait if the skeleton has been set recently to avoid flickering") {
+          compositePanel.skeleton?.let { editorSkeleton ->
+            val hasBeenShownFor = System.currentTimeMillis() - editorSkeleton.initialTime
+            if (hasBeenShownFor < SKELETON_DELAY) {
+              delay(SKELETON_DELAY - hasBeenShownFor)
+            }
+          }
+        }
+
         applyFileEditorsInEdt(
           states = states,
           fileEditorWithProviders = fileEditorWithProviders,
@@ -850,6 +859,8 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     private set
 
   private val skeletonScope = composite.coroutineScope.childScope("Editor Skeleton")
+  var skeleton: EditorSkeleton? = null
+    private set
 
   init {
     addFocusListener(object : FocusAdapter() {
@@ -883,7 +894,8 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
         delay(SKELETON_DELAY)
         // show skeleton if editor is not added after [SKELETON_DELAY]
         if (components.isEmpty()) {
-          add(EditorSkeleton(skeletonScope), BorderLayout.CENTER)
+          skeleton = EditorSkeleton(skeletonScope)
+          add(skeleton, BorderLayout.CENTER)
         }
       }
     }
@@ -932,11 +944,6 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     sink[PlatformCoreDataKeys.FILE_EDITOR] = composite.selectedEditor
     sink[CommonDataKeys.VIRTUAL_FILE] = composite.file
     sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = arrayOf(composite.file)
-  }
-
-  companion object {
-    private val SKELETON_DELAY
-      get() = Registry.intValue("editor.skeleton.delay.ms", 300).toLong()
   }
 }
 
@@ -1105,3 +1112,7 @@ private fun stateToElement(state: FileEditorState, provider: FileEditorProvider,
   }
   return null
 }
+
+
+private val SKELETON_DELAY
+  get() = Registry.intValue("editor.skeleton.delay.ms", 300).toLong()

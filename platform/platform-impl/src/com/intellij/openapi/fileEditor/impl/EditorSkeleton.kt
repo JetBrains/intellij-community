@@ -33,7 +33,7 @@ import kotlin.time.Duration.Companion.milliseconds
 internal class EditorSkeleton(cs: CoroutineScope) : JComponent() {
   private val withAnimation = Registry.`is`("editor.skeleton.animation.enabled", true)
   private val currentTime = AtomicLong(System.currentTimeMillis())
-  private val initialTime = currentTime.get()
+  val initialTime = currentTime.get()
 
   init {
     if (withAnimation) {
