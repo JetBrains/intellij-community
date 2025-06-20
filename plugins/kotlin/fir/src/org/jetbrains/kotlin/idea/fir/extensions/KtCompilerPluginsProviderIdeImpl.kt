@@ -53,7 +53,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgu
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
-import org.jetbrains.kotlin.idea.util.getOriginalOrDelegateFile
+import org.jetbrains.kotlin.idea.util.getOriginalOrDelegateFileOrSelf
 import org.jetbrains.kotlin.idea.workspaceModel.KotlinSettingsEntity
 import org.jetbrains.kotlin.scripting.compiler.plugin.impl.makeScriptCompilerArguments
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
@@ -152,7 +152,7 @@ internal class KtCompilerPluginsProviderIdeImpl(
             is KaScriptModule -> {
                 val registrarForModule = pluginsCache?.registrarForScriptModule ?: return emptyList()
                 val cacheKey = module.file.virtualFile
-                    .getOriginalOrDelegateFile()
+                    .getOriginalOrDelegateFileOrSelf()
 
                 module.getExtensionsForModule(registrarForModule, cacheKey, extensionType)
             }
