@@ -106,6 +106,25 @@ public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase 
   }
 
   @NeedsIndex.Full
+  public void testVariableImplicitClassNoQualifier() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+      myFixture.configureByText("Test.java", """
+        void main(){
+          String a = "1";
+          a.<caret>
+        }
+        """);
+      LookupElement[] items = myFixture.completeBasic();
+      LookupElement item = ContainerUtil.find(items, it -> {
+        LookupElementPresentation presentation = new LookupElementPresentation();
+        it.renderElement(presentation);
+        return "String[] args".equals(presentation.getTypeText());
+      });
+      assertNull(item);
+    });
+  }
+
+  @NeedsIndex.Full
   public void testVariableImplicitClassNoCompletionDefinedArgs() {
     IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
       myFixture.configureByText("Test.java", """
