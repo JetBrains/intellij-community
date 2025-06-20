@@ -212,6 +212,7 @@
   <technology name="kodein-db" root="org.kodein.db"/>
   <technology name="kodein-di" root="org.kodein.di"/>
   <technology name="koin" root="org.koin"/>
+  <technology name="koog" root="ai.koog"/>
   <technology name="korge" root="com.soywiz.korge"/>
   <technology name="kotest" root="io.kotest"/>
   <technology name="kotless" root="io.kotless"/>
