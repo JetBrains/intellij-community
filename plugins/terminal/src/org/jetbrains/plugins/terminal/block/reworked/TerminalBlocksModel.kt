@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal.block.reworked
 
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.session.TerminalAliasesInfo
 import com.intellij.terminal.session.TerminalBlocksModelState
 import com.intellij.terminal.session.TerminalOutputBlock
 import com.intellij.util.concurrency.annotations.RequiresEdt
