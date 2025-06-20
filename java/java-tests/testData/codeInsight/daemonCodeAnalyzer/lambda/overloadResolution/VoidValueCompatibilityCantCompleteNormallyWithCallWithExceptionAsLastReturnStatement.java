@@ -34,7 +34,7 @@ class Test {
     System.out.println(s);
   }
 
-  public static void main(String[] args) {
+  public static void main() {
 
     method(() -> {
       voids("-> B");

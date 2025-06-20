@@ -231,7 +231,7 @@ public class TemplatesCompletionTest extends JavaCompletionAutoPopupTestCase {
 
     myFixture.configureByText("a.java", "class Foo { ps<caret> } class psvClass {}");
     type("v");
-    myFixture.assertPreferredCompletionItems(0, "psvm", "psvClass");
+    myFixture.assertPreferredCompletionItems(0, "psvm", "psvma", "psvClass");
 
     myFixture.configureByText("a.xml", "CARBON C<caret>");
     myFixture.completeBasic();

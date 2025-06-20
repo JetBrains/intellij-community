@@ -32,7 +32,7 @@ class KtPropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase() {
           private const val BUNDLE_NAME = "i18n";
           private val BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 
-          fun main(args: Array<String>) {
+          fun main() {
             System.out.print(getMessage("com.example.localization.welcomeMessage"));
           }
 
@@ -66,7 +66,7 @@ class KtPropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase() {
           private const val BUNDLE_NAME = "i18n";
           private val BUNDLE = ResourceBundle.getBundle(BUNDLE_NAME);
 
-          fun main(args: Array<String>) {
+          fun main() {
             System.out.print(getMessage("com.example.localization.welcomeMessage", "My Friend"));
           }
 

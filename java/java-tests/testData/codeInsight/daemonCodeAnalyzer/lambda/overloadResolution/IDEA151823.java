@@ -12,7 +12,7 @@ class Main {
     System.out.println("Integer... x");
   }
 
-  public static void main(String[] args) {
+  public static void main() {
     int i = 0;
     Integer i2 = 127;
     var<error descr="Ambiguous method call: both 'Main.var(int...)' and 'Main.var(Integer...)' match">(i, i2)</error>;

@@ -1,5 +1,5 @@
 class Devk1 {
-  public void main(String args[]) {
+  public void main() {
     foo();
   }
 

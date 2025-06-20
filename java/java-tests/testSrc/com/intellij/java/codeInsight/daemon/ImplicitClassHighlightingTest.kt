@@ -13,7 +13,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.intentions.style.inference.resolve
 
 class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
-  override fun getProjectDescriptor() = JAVA_23
+  override fun getProjectDescriptor() = JAVA_LATEST_WITH_LATEST_JDK
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/implicitClass"
 
   fun testHighlightInsufficientLevel() {
@@ -108,7 +108,7 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testImplicitWithPackages() {
-    IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.minimumLevel, Runnable {
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_23_PREVIEW, Runnable {
       myFixture.addClass("""
         package a.b;
         

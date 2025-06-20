@@ -95,8 +95,26 @@ enum class JavaFeature {
     }
   },
   //jep 463,477
-  IMPLICIT_CLASSES(LanguageLevel.JDK_21_PREVIEW, "feature.implicit.classes"),
-  INSTANCE_MAIN_METHOD(LanguageLevel.JDK_21_PREVIEW, "feature.instance.main.method"),
+  //todo change everything related to implicit_classes
+  IMPLICIT_CLASSES(LanguageLevel.JDK_25, "feature.implicit.classes") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) ||
+             LanguageLevel.JDK_21_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_22_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel
+    }
+  },
+  //todo change everything related to implicit_classes
+  INSTANCE_MAIN_METHOD(LanguageLevel.JDK_25, "feature.instance.main.method") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) ||
+             LanguageLevel.JDK_21_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_22_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel
+    }
+  },
 
   SCOPED_VALUES(LanguageLevel.JDK_21_PREVIEW, "feature.scoped.values"),
   STRUCTURED_CONCURRENCY(LanguageLevel.JDK_21_PREVIEW, "feature.structured.concurrency"),
@@ -108,7 +126,16 @@ enum class JavaFeature {
   
   STRUCTURED_CONCURRENCY_TASK_SCOPE_STATIC_FACTORY_METHODS(LanguageLevel.JDK_25_PREVIEW, "feature.structured.concurrency.static.factory.methods"),
 
-  IMPLICIT_CLASS_NAME_OUT_OF_SCOPE(LanguageLevel.JDK_22_PREVIEW, "feature.implicit.class.name.out.of.scope"),
+  //todo change everything related to implicit_classes
+  IMPLICIT_CLASS_NAME_OUT_OF_SCOPE(LanguageLevel.JDK_25, "feature.implicit.class.name.out.of.scope"){
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) ||
+             LanguageLevel.JDK_22_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel
+    }
+  },
+
   CLASSFILE_API(LanguageLevel.JDK_22_PREVIEW, "feature.classfile.api"),
   STREAM_GATHERERS(LanguageLevel.JDK_22_PREVIEW, "feature.stream.gatherers"),
   STATEMENTS_BEFORE_SUPER(LanguageLevel.JDK_22_PREVIEW, "feature.statements.before.super") {
@@ -125,7 +152,14 @@ enum class JavaFeature {
 
   //jep 463,477
   INHERITED_STATIC_MAIN_METHOD(LanguageLevel.JDK_22_PREVIEW, "feature.inherited.static.main.method"),
-  IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_23_PREVIEW, "feature.implicit.import.in.implicit.classes"),
+  //todo change everything related to implicit_classes
+  IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_25, "feature.implicit.import.in.implicit.classes"){
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) ||
+             LanguageLevel.JDK_23_PREVIEW == useSiteLevel ||
+             LanguageLevel.JDK_24_PREVIEW == useSiteLevel
+    }
+  },
   //JEP 507
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
 

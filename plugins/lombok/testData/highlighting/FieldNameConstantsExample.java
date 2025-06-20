@@ -27,7 +27,7 @@ public class FieldNameConstantsExample {
     }
   }
 
-  public static void main(String[] args) {
+  public static void main() {
     new FieldNameConstantsExample().logFieldValue(new Foo("a", "b"), "foo");
   }
 }

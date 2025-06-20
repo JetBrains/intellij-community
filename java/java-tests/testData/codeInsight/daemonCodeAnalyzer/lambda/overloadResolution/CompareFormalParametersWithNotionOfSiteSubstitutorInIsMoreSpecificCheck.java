@@ -11,7 +11,7 @@ class TestIntelliJ<T, S extends List<T>> extends SubInterface<T, S> {
     return t;
   }
 
-  public static void main(String... args) {
+  public static void main() {
     TestIntelliJ<String, List<String>> testIntelliJ = new TestIntelliJ<>();
     testIntelliJ.test(testIntelliJ);
   }

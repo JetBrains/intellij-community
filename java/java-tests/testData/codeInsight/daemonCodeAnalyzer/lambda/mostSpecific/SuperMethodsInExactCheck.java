@@ -12,7 +12,7 @@ class Test {
     System.out.println(callable);
   }
 
-  public static void main(String[] args) {
+  public static void main() {
     final Collection<Void> collection = new ArrayList<>();
     final Iterable<Void> iterable = collection;
     foo(iterable::iterator);

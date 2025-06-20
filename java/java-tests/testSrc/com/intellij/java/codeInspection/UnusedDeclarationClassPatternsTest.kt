@@ -70,7 +70,7 @@ class UnusedDeclarationClassPatternsTest : LightJavaCodeInsightFixtureTestCase()
     val patterns = EntryPointsManagerBase.getInstance(project).patterns
     try {
       patterns.add(classPattern)
-      myFixture.configureByText("C.java", "public abstract class C { void fooBar() {} public static void main(String[] args) {}}")
+      myFixture.configureByText("C.java", "public abstract class C { void fooBar() {} public static void main() {}}")
       myFixture.checkHighlighting()
     }
     finally {
