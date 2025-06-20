@@ -429,10 +429,10 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
       }
     }
     registerAction(SeActions.NAVIGATE_TO_NEXT_GROUP) { _ ->
-      shiftSelectedIndexAndEnsureIsVisible(1)
+      scrollList(true)
     }
     registerAction(SeActions.NAVIGATE_TO_PREV_GROUP) { _ ->
-      shiftSelectedIndexAndEnsureIsVisible(-1)
+      scrollList(false)
     }
 
     val escape = ActionManager.getInstance().getAction("EditorEscape")
@@ -446,13 +446,34 @@ class SePopupContentPane(private val project: Project?, private val vm: SePopupV
     })
   }
 
-  private fun shiftSelectedIndexAndEnsureIsVisible(shift: Int) {
-    val currentIndex: Int = resultList.selectedIndex
-    val newIndex: Int = (currentIndex + shift).coerceIn(0, resultList.model.size - 1)
+  /**
+   * @param down if true, jumps down by approximately one page. If the target element is not loaded, jumps to the last available item;
+   *             if false, jumps to the first item in the list
+   */
+  private fun scrollList(down: Boolean) {
+    if (resultList.model.size == 0) return
+    if (down) {
+      val cellHeight = resultList.getCellBounds(0, 0)?.height ?: return
+      val viewportHeight = resultsScrollPane.viewport.height
+      val visibleRowCount = viewportHeight / cellHeight
 
-    if (newIndex != currentIndex) {
-      resultList.selectedIndex = newIndex
-      ScrollingUtil.ensureIndexIsVisible(resultList, newIndex, 0)
+      val shiftSize = maxOf(1, visibleRowCount - 3)
+      val targetIndex = resultList.selectedIndex + shiftSize
+      val modelSize = resultList.model.size
+      val hasMoreRow = modelSize > 0 && resultList.model.getElementAt(modelSize - 1) is SeResultListMoreRow
+
+      val newSelectedIndex = when {
+        targetIndex >= modelSize - 1 && hasMoreRow -> maxOf(modelSize - 2, 0)
+        targetIndex >= modelSize -> modelSize - 1
+        else -> targetIndex
+      }
+
+      resultList.selectedIndex = newSelectedIndex
+      ScrollingUtil.ensureIndexIsVisible(resultList, newSelectedIndex, 1)
+    }
+    else {
+      resultList.selectedIndex = 0
+      ScrollingUtil.ensureIndexIsVisible(resultList, 0, -1)
     }
   }
 
