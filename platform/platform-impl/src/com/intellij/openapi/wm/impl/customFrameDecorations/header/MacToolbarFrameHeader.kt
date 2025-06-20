@@ -184,7 +184,7 @@ internal class MacToolbarFrameHeader(
   }
 
   private suspend fun updateView(isCompactHeader: Boolean): Boolean {
-    val view = withContext(Dispatchers.EDT) {
+    val view = withContext(Dispatchers.UI) {
       if (isCompactHeader == (view is CompactHeaderView)) {
         // IDEA-324521 Colored toolbar rendering is broken when enabling/disabling colored toolbar via main toolbar context menu
         repaint()
