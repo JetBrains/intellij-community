@@ -111,7 +111,7 @@ internal class IdeProjectFrameAllocator(
 
         launch {
           val windowManager = serviceAsync<WindowManager>() as WindowManagerImpl
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
             windowManager.assignFrame(frameHelper, project)
             frameHelper.setRawProject(project)
           }
@@ -120,7 +120,7 @@ internal class IdeProjectFrameAllocator(
         launch {
           val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
           fileEditorManager.initJob.join()
-          withContext(Dispatchers.EDT) {
+          withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
             frameHelper.toolWindowPane.setDocumentComponent(fileEditorManager.mainSplitters)
           }
         }
@@ -199,7 +199,7 @@ internal class IdeProjectFrameAllocator(
     val frame = getFrame()
     val frameInfo = getFrameInfo()
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
       if (frame != null) {
         if (!frame.isVisible) {
           throw CancellationException("Pre-allocated frame was already closed")
@@ -244,8 +244,8 @@ internal class IdeProjectFrameAllocator(
     catch (@Suppress("IncorrectCancellationExceptionHandling") _: CancellationException) {
     }
 
-    // make sure that in case of some error we close frame for a not loaded project
-    withContext(Dispatchers.EDT + NonCancellable) {
+    // make sure that in case of some error we close the frame for a not loaded project
+    withContext(Dispatchers.ui(UiDispatcherKind.STRICT) + NonCancellable) {
       (serviceAsync<WindowManager>() as WindowManagerImpl).releaseFrame(frameHelper)
     }
   }
@@ -419,8 +419,7 @@ internal fun applyBoundsOrDefault(frame: JFrame, bounds: Rectangle?, restoreOnly
   else {
     if (restoreOnlyLocation) {
       frame.location = bounds.location
-      // We need to guarantee that the size is smaller than this screen,
-      // to be able to maximize the frame after this.
+      // we need to guarantee that the size is smaller than this screen to be able to maximize the frame after this
       setDefaultSize(frame, ScreenUtil.getScreenRectangle(bounds.location))
     }
     else {
@@ -482,12 +481,12 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
 
   // todo should we use `runOnceForProject(project, "OpenProjectViewOnStart")` or not?
   val toolWindowManager = project.serviceAsync<ToolWindowManager>()
-  withContext(Dispatchers.EDT) {
+  withContext(Dispatchers.ui(UiDispatcherKind.STRICT)) {
     if (toolWindowManager.activeToolWindowId == null) {
       val toolWindow = toolWindowManager.getToolWindow("Project")
       if (toolWindow != null) {
         // maybe readAction
-        writeIntentReadAction {
+        withContext(Dispatchers.ui(UiDispatcherKind.RELAX)) {
           toolWindow.activate(null, !AppMode.isRemoteDevHost())
         }
       }
