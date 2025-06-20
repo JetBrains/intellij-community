@@ -137,7 +137,6 @@ jvm_library(
     "//platform/util/diff",
     "//platform/vcs-api:vcs",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/vcs-impl/shared",

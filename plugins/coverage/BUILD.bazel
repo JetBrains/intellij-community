@@ -99,7 +99,6 @@ jvm_library(
     "@lib//:java-coverage-coverage-report",
     "//platform/util/jdom",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
     "@lib//:fastutil-min",
   ],

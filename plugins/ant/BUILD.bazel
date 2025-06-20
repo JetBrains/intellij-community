@@ -96,7 +96,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/execution-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/ant/jps-plugin:jps",
     "//xml/dom-impl",
     "//plugins/properties/properties-psi-api:psi",

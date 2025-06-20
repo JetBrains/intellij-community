@@ -45,7 +45,6 @@ jvm_library(
     "//platform/credential-store",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/built-in-server-api:builtInServer",
     "//platform/external-process-auth-helper/rt",
     "//platform/built-in-server:builtInServer-impl",

@@ -56,7 +56,6 @@ jvm_library(
     "//platform/util",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "//platform/core-ui",
     "//java/openapi:java",

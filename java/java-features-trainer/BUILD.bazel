@@ -60,7 +60,6 @@ jvm_library(
     "//plugins/ide-features-trainer:featuresTrainer",
     "//plugins/ide-features-trainer:featuresTrainer_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",
     "//java/debugger/impl",

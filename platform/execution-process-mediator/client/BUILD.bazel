@@ -49,7 +49,6 @@ jvm_library(
     "//platform/util",
     "//platform/util-ex",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-util-io:ide-util-io",
     "@lib//:junit5",
     "@lib//:jetbrains-annotations",

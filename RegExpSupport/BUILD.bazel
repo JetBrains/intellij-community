@@ -48,7 +48,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util:util-ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:junit4",
     "//platform/lang-impl",
     "//platform/refactoring",

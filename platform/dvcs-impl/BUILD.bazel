@@ -71,7 +71,6 @@ jvm_library(
     "//platform/kernel/shared:kernel",
     "//platform/core-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/vcs-log/api:vcs-log",
     "//platform/vcs-log/impl",
     "//platform/vcs-log/impl:impl_test_lib",

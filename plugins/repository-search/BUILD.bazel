@@ -70,7 +70,6 @@ jvm_library(
     "//platform/core-impl",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//plugins/maven-model",

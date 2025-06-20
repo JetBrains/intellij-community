@@ -114,7 +114,6 @@ jvm_library(
     "@lib//:jaxb-api",
     "@lib//:fastutil-min",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//jps/model-impl",
     "//platform/core-ui",
     "//platform/code-style-impl:codeStyle-impl",

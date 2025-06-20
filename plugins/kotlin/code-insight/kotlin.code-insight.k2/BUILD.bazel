@@ -130,7 +130,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/lang-core",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/util:util-ui",
     "//java/java-psi-api:psi",

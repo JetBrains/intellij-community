@@ -96,7 +96,6 @@ jvm_library(
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2",
     "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-k2_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/kotlin/base/indices",
     "//plugins/kotlin/code-insight/line-markers-shared:kotlin-code-insight-line-markers-shared",
     "//platform/analysis-impl",

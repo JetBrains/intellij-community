@@ -90,7 +90,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/editor-ui-ex:editor-ex",
     "@lib//:junit4",

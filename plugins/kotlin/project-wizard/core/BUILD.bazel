@@ -70,7 +70,6 @@ jvm_library(
     "//plugins/gradle:gradle-common",
     "//java/idea-ui:ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:kotlinc-kotlin-compiler-common",
     "//java/java-psi-api:psi",
     "//java/java-impl:impl",

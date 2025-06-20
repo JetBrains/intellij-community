@@ -55,7 +55,6 @@ jvm_library(
     "//json/backend",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/workspace/jps",
     "//platform/execution-impl",
     "//platform/testFramework",

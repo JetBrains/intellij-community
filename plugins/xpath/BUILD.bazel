@@ -76,7 +76,6 @@ jvm_library(
     "//platform/platform-impl/concurrency",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/refactoring",
     "//platform/indexing-impl",
     "//platform/lang-impl",

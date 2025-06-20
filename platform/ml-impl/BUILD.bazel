@@ -68,7 +68,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/analysis-api:analysis",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/internal",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

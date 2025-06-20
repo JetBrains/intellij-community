@@ -61,7 +61,6 @@ jvm_library(
     "//platform/xdebugger-impl:debugger-impl",
     "//platform/xdebugger-impl:debugger-impl_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/xdebugger-api:debugger",
     "//platform/lang-impl",
     "//platform/platform-impl/rpc",

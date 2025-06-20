@@ -63,7 +63,6 @@ jvm_library(
     "//platform/usageView",
     "//platform/editor-ui-ex:editor-ex",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/core-ui",

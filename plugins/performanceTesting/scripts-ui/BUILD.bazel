@@ -42,7 +42,6 @@ jvm_library(
     "//platform/analysis-impl",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

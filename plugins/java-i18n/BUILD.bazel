@@ -78,7 +78,6 @@ jvm_library(
     "//platform/usageView-impl",
     "//plugins/properties:properties-backend",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "//platform/lang-impl",
     "//platform/lang-core",

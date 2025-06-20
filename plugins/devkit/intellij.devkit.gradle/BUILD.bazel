@@ -69,7 +69,6 @@ jvm_library(
     "//platform/util:util-ui",
     "//java/java-psi-api:psi",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",

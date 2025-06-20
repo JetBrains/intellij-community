@@ -88,7 +88,6 @@ jvm_library(
     "//platform/indexing-api:indexing",
     "//platform/lang-api:lang",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "@lib//:guava",
     "@lib//:pty4j",

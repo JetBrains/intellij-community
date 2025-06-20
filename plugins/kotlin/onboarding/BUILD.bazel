@@ -60,7 +60,6 @@ jvm_library(
     "//platform/feedback",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/kotlin/base/plugin",
     "//plugins/kotlin/base/plugin:plugin_test_lib",
     "@lib//:kotlinx-datetime-jvm",

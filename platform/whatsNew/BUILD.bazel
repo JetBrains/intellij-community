@@ -58,7 +58,6 @@ jvm_library(
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/platform-util-io:ide-util-io",
     "//platform/ide-core-impl",

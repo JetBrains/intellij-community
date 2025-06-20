@@ -27,7 +27,6 @@ jvm_library(
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/util/diff",
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",

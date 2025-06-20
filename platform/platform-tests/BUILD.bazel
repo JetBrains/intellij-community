@@ -49,7 +49,6 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/usageView",
     "//platform/ide-core-impl",
     "//platform/ide-core/plugins",

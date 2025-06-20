@@ -155,7 +155,6 @@ jvm_library(
     "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/observable",
     "//platform/platform-util-io:ide-util-io",
     "//platform/platform-util-io-impl:ide-util-io-impl",

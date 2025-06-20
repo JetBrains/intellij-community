@@ -30,7 +30,6 @@ jvm_library(
     "//plugins/kotlin/base/util",
     "//plugins/kotlin/base/util:util_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/kotlin/base/project-model",
     "//plugins/kotlin/base/compiler-configuration",
     "//plugins/kotlin/base/plugin",

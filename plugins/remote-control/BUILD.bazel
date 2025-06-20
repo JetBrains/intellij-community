@@ -43,7 +43,6 @@ jvm_library(
     "//platform/editor-ui-api:editor-ui",
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:netty-buffer",
     "@lib//:netty-codec-http",
     "@lib//:gson",

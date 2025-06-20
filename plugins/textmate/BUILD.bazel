@@ -67,7 +67,6 @@ jvm_library(
     "@lib//:jackson",
     "@lib//:jackson-databind",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:kotlinx-serialization-core",
     "//platform/code-style-impl:codeStyle-impl",
     "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",

@@ -60,7 +60,6 @@ jvm_library(
     "//platform/projectModel-api:projectModel",
     "//platform/util",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/extensions",
     "//platform/testRunner",
     "//platform/testRunner:testRunner_test_lib",

@@ -111,7 +111,6 @@ jvm_library(
     "//platform/diagnostic/telemetry",
     "//platform/diagnostic/telemetry:telemetry_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:fastutil-min",
     "//platform/xdebugger-api:debugger",
     "//platform/xdebugger-impl:debugger-impl",

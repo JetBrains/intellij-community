@@ -11,7 +11,6 @@ jvm_library(
     "//platform/analysis-api:analysis",
     "//platform/core-api:core",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:jmh-core",
     "@lib//:jmh-generator-annprocess",
     "//platform/indexing-api:indexing",

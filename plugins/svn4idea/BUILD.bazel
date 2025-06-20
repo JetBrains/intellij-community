@@ -77,7 +77,6 @@ jvm_library(
     "//platform/vcs-impl",
     "//platform/vcs-impl:vcs-impl_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/ide-core-impl",

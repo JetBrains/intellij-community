@@ -93,7 +93,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/platform-util-io-impl:ide-util-io-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/analysis-impl",
     "//platform/util/jdom",
     "@lib//:kotlinx-coroutines-core",

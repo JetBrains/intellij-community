@@ -60,7 +60,6 @@ jvm_library(
     "//plugins/java-i18n:java-i18n_test_lib",
     "//jvm/jvm-analysis-api:analysis",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//xml/dom-openapi:dom",
     "//xml/xml-psi-api:psi",
     "//xml/xml-analysis-api:analysis",

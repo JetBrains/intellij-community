@@ -68,7 +68,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:jna",
     "//libraries/skiko",
     "//platform/core-ui",

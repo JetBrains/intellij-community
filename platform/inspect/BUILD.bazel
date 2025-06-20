@@ -69,7 +69,6 @@ jvm_library(
     "//platform/vcs-api/vcs-api-core:vcs-core",
     "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/diff-api:diff",
     "//platform/vcs-api:vcs",
     "@lib//:stream_ex",

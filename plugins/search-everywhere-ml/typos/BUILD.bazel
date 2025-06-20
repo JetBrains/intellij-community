@@ -51,7 +51,6 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//libraries/ai.grazie.spell.gec.engine.local",
     "//platform/statistics",
     "//platform/statistics:statistics_test_lib",

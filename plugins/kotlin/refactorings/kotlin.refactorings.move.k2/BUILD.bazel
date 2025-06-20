@@ -82,7 +82,6 @@ jvm_library(
     "//plugins/kotlin/plugin/k2",
     "//platform/lang-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/core-ui",
     "//platform/core-api:core",
     "//java/java-impl:impl",

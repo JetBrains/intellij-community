@@ -63,7 +63,6 @@ jvm_library(
     "//platform/testRunner:testRunner_test_lib",
     "//platform/xdebugger-api:debugger",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "@lib//:tc_service_messages",
     "@lib//:objenesis",
     "//platform/platform-impl/concurrency",

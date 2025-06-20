@@ -151,7 +151,6 @@ jvm_library(
     "//platform/projectModel-impl",
     "//platform/external-system-api:externalSystem",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/diff-impl",
     "//platform/xdebugger-api:debugger",
     "//platform/core-ui",

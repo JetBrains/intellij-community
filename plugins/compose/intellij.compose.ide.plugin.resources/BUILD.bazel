@@ -90,7 +90,6 @@ jvm_library(
     "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-common",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//plugins/kotlin/base/test:test_test_lib",
     "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
     "//plugins/gradle:gradle-tests_test_lib",

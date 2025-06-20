@@ -63,7 +63,6 @@ jvm_library(
     "//platform/lang-impl",
     "//platform/ide-core-impl",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/diff-api:diff",
     "//platform/diff-impl",
     "@lib//:fastutil-min",

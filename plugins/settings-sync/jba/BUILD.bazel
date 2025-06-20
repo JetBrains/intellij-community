@@ -47,7 +47,6 @@ jvm_library(
     "//platform/core-ui",
     "//platform/ide-core",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/lang-impl",
     "//platform/util/jdom",
     "@lib//:cloud-config-client",

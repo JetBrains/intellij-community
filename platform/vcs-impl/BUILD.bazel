@@ -99,7 +99,6 @@ jvm_library(
     "//platform/vcs-api:vcs",
     "//platform/platform-api:ide",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/lang-api:lang",
     "//jps/model-serialization",
     "@lib//:guava",

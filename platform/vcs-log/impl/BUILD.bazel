@@ -79,7 +79,6 @@ jvm_library(
     "//platform/vcs-log/graph:vcs-log-graph-impl",
     "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/ide-core-impl",
     "//platform/analysis-impl",
     "//platform/vcs-impl",

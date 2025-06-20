@@ -104,7 +104,6 @@ jvm_library(
     "//platform/testFramework",
     "//platform/testFramework:testFramework_test_lib",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/platform-impl/concurrency",
     "//platform/usageView-impl",
     "//platform/util",

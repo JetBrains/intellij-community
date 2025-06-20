@@ -122,7 +122,6 @@ jvm_library(
     "//platform/platform-util-netty:ide-util-netty",
     "//platform/core-ui",
     "//platform/platform-impl:ide-impl",
-    "//platform/platform-impl:ide-impl_test_lib",
     "//platform/dvcs-impl:vcs-dvcs-impl",
     "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     "//platform/vcs-log/api:vcs-log",
