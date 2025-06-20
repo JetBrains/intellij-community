@@ -32,13 +32,13 @@ if (window.__IntelliJTools === undefined) {
 
   window.document.onclick = function(e) {
     let target = e.target;
-    while (target && target.tagName.toLowerCase() !== 'a') {
+    while (target && target.tagName?.toLowerCase() !== 'a') {
       target = target.parentNode;
     }
     if (!target) {
       return true;
     }
-    if (target.tagName.toLowerCase() === 'a' && hasHrefAttribute(target)) {
+    if (target.tagName?.toLowerCase() === 'a' && hasHrefAttribute(target)) {
       e.stopPropagation();
       return window.__IntelliJTools.processClick(target);
     }
