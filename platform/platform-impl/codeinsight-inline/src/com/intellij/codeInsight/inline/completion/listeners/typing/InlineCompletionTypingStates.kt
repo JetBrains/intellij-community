@@ -3,7 +3,7 @@ package com.intellij.codeInsight.inline.completion.listeners.typing
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.TypingEvent
-import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker.InlineCompletionTypingSession
+import com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTypingSessionTracker.TypingSession
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -32,25 +32,25 @@ import com.intellij.openapi.editor.event.DocumentEvent
  * [Invalid]
  *  └── (Terminal state: no recovery)
  * ```
- * @see InlineCompletionTypingSession.TypingSessionStateContext
+ * @see TypingSession.TypingSessionStateContext
  * @see InlineCompletionTypingSessionTracker
  */
 
 internal sealed class InlineCompletionTypingState {
 
   open fun onPairedEnclosure(
-    ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+    ctx: TypingSession.TypingSessionStateContext,
     expectedEnclosure: String,
   ): InlineCompletionTypingState = invalidate(ctx)
 
   open fun onDocumentChange(
-    ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+    ctx: TypingSession.TypingSessionStateContext,
     event: DocumentEvent,
     editor: Editor,
   ): InlineCompletionTypingState = invalidate(ctx)
 
   open fun onCaretMove(
-    ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+    ctx: TypingSession.TypingSessionStateContext,
     event: CaretEvent,
     editor: Editor,
   ): InlineCompletionTypingState = invalidate(ctx)
@@ -58,7 +58,7 @@ internal sealed class InlineCompletionTypingState {
   /**
    * Centralized function to handle the transition to an invalid state.
    */
-  fun invalidate(ctx: InlineCompletionTypingSession.TypingSessionStateContext): InlineCompletionTypingState {
+  fun invalidate(ctx: TypingSession.TypingSessionStateContext): InlineCompletionTypingState {
     ctx.invalidateOnUnknownChange()
     return Invalid
   }
@@ -69,12 +69,12 @@ internal sealed class InlineCompletionTypingState {
    */
   data object AwaitInitialEvent : InlineCompletionTypingState() {
     override fun onPairedEnclosure(
-      ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+      ctx: TypingSession.TypingSessionStateContext,
       expectedEnclosure: String,
     ): InlineCompletionTypingState = PairedEnclosureReceivedAwaitDocumentEvent(expectedEnclosure)
 
     override fun onDocumentChange(
-      ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+      ctx: TypingSession.TypingSessionStateContext,
       event: DocumentEvent,
       editor: Editor,
     ): InlineCompletionTypingState {
@@ -91,7 +91,7 @@ internal sealed class InlineCompletionTypingState {
    */
   data class PairedEnclosureReceivedAwaitDocumentEvent(val expectedEnclosure: String) : InlineCompletionTypingState() {
     override fun onDocumentChange(
-      ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+      ctx: TypingSession.TypingSessionStateContext,
       event: DocumentEvent,
       editor: Editor,
     ): InlineCompletionTypingState {
@@ -108,7 +108,7 @@ internal sealed class InlineCompletionTypingState {
    */
   data class AwaitCaretMovement(val typingEvent: TypingEvent.OneSymbol) : InlineCompletionTypingState() {
     override fun onCaretMove(
-      ctx: InlineCompletionTypingSession.TypingSessionStateContext,
+      ctx: TypingSession.TypingSessionStateContext,
       event: CaretEvent,
       editor: Editor,
     ): InlineCompletionTypingState {
